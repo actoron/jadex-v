@@ -227,11 +227,10 @@ public class SharedPersistentMap<K, V>
 	public V get(K key)
 	{
 		V ret = null;
-		byte[] enckey = encoder.apply(key);
 		long hash = key.hashCode() & 0xFFFFFFFFL;
-		try (FileLock l = readLock())
+		ret = readTransaction((m) ->
 		{
-			
+			V lret = null;
 			long isize = readIndexSize();
 			long modhash = hash % isize;
 			rafile.seek(HEADER_SIZE + modhash);
@@ -260,20 +259,54 @@ public class SharedPersistentMap<K, V>
 			{
 				@SuppressWarnings("unchecked")
 				V val = (V) readObject(valpos);
-				ret = val;
+				lret = val;
 			}
-		}
-		catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
+			return lret;
+		});
 		return ret;
 	}
 	
-	/*public V put(K key, V value)
+	public V put(K key, V value)
 	{
-		
-	}*/
+		V ret = null;
+		long hash = key.hashCode() & 0xFFFFFFFFL;
+		ret = readTransaction((m) ->
+		{
+			V lret = null;
+			long isize = readIndexSize();
+			long modhash = hash % isize;
+			rafile.seek(HEADER_SIZE + modhash);
+			long next = rafile.readLong();
+			K currentkey = null;
+			long valpos = 0;
+			while (valpos == 0 && next != 0)
+			{
+				long curr = next;
+				rafile.seek(curr + 8);
+				
+				next = rafile.readLong();
+				long readvalpos = rafile.readLong();
+				
+				@SuppressWarnings("unchecked")
+				K readkey = (K) readObject();
+				currentkey = readkey;
+				
+				if (key.equals(currentkey))
+					valpos = readvalpos;
+				else
+					currentkey = null;
+			}
+			
+			if (valpos != 0)
+			{
+				@SuppressWarnings("unchecked")
+				V val = (V) readObject(valpos);
+				lret = val;
+			}
+			return lret;
+		});
+		return ret;
+	}
 	
 	/**
 	 *  Performs a read transaction on the map.
@@ -281,40 +314,38 @@ public class SharedPersistentMap<K, V>
 	 *  exception.
 	 *  
 	 *  @param transaction Transaction to perform.
-	 *  @return This map.
+	 *  @return Return value of lambda expression.
 	 */
-	public SharedPersistentMap<K, V> readTransaction(Consumer<SharedPersistentMap<K, V>> transaction)
+	public <R> R readTransaction(IOFunction<SharedPersistentMap<K, V>, R> transaction)
 	{
 		try(FileLock l = readLock())
 		{
-			transaction.accept(this);
+			return transaction.apply(this);
 		}
 		catch (IOException e)
 		{
 			throw new RuntimeException(e);
 		}
-		return this;
 	}
 	
 	/**
 	 *  Performs a write transaction on the map.
-	 *  Engages write (exclusive( lock and automatically releases on
-	 *  success or exception.
+	 *  Engages write lock and automatically releases on success or
+	 *  exception.
 	 *  
 	 *  @param transaction Transaction to perform.
-	 *  @return This map.
+	 *  @return Return value of lambda expression.
 	 */
-	public SharedPersistentMap<K, V> writeTransaction(Consumer<SharedPersistentMap<K, V>> transaction)
+	public <R> R writeTransaction(IOFunction<SharedPersistentMap<K, V>, R> transaction)
 	{
 		try(FileLock l = writeLock())
 		{
-			transaction.accept(this);
+			return transaction.apply(this);
 		}
 		catch (IOException e)
 		{
 			throw new RuntimeException(e);
 		}
-		return this;
 	}
 	
 	/**
@@ -410,6 +441,24 @@ public class SharedPersistentMap<K, V>
 	}
 	
 	/**
+	 *  Ensures that the file is properly initialized.
+	 */
+	/*protected void initializeFile() throws IOException
+	{
+		long minsize = HEADER_SIZE + getIndexSizeFromExp(INITIAL_INDEX_EXP);
+		if (rafile.length() < minsize)
+		{
+			rafile.seek(0);
+			rafile.setLength(0);
+			rafile.write
+			int topheader = ((MAGIC_WORD & 0xFFFF) << 16) | (INITIAL_INDEX_EXP & 0xFF); 
+			rafile.writeInt(topheader);
+			
+			
+		}
+	}*/
+	
+	/**
 	 *  Determines the index size based on the exponent by
 	 *  calculating the Mersenne prime or if it does not exist
 	 *  the nearest prime smaller than 2^exp.
@@ -431,5 +480,10 @@ public class SharedPersistentMap<K, V>
 			size -= 2;
 		}
 		return (int) size;
+	}
+	
+	@FunctionalInterface
+	public interface IOFunction<T, R> {
+	    R apply(T t) throws IOException;
 	}
 }
