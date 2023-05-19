@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import jadex.bridge.nonfunctional.annotation.NameValue;
-import jadex.commons.Boolean3;
+import jadex.common.Boolean3;
 
 /**
  *  Component annotation.

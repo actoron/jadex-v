@@ -1,0 +1,17 @@
+includeBuild('util/common') {
+    dependencySubstitution {
+        substitute module('jadex:util-common:1.0.0') with project(':util:common')
+    }
+}
+
+includeBuild('util/collection') {
+    dependencySubstitution {
+        substitute module('jadex:util-collection:1.0.0') with project(':util:collection')
+    }
+}
+
+includeBuild('engine/microagent') {
+    dependencySubstitution {
+        substitute module('jadex:engine-microagent:1.0.0') with project(':engine:microagent')
+    }
+}
