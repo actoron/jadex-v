@@ -12,6 +12,6 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:util-common:5.0.0'
+	implementation 'jadex:common:5.0.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
