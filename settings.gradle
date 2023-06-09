@@ -4,5 +4,21 @@ includeBuild('util/common') {
 includeBuild('util/collection') {
 }
 
+includeBuild('util/concurrent') {
+}
+
+includeBuild('util/future') {
+}
+
+includeBuild('util/bean') {
+}
+
+includeBuild('util/classreader') {
+}
+
 includeBuild('engine/microagent') {
 }
+
+includeBuild('engine/core') {
+}
+

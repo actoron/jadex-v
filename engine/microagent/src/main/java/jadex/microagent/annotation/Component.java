@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.bridge.nonfunctional.annotation.NameValue;
+import jadex.enginecore.annotation.NameValue;
 import jadex.common.Boolean3;
 
 /**

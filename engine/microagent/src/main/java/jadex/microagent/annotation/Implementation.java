@@ -1,6 +1,6 @@
 package jadex.microagent.annotation;
 
-import jadex.bridge.service.annotation.Value;
+import jadex.enginecore.annotation.Value;
 import jadex.bridge.service.component.BasicServiceInvocationHandler;
 
 /**

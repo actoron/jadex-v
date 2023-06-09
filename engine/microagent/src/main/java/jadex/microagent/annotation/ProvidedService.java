@@ -5,7 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.bridge.nonfunctional.annotation.NameValue;
+//import jadex.bridge.nonfunctional.annotation.NameValue;
+import jadex.enginecore.annotation.NameValue;
 import jadex.bridge.service.ServiceScope;
 import jadex.bridge.service.annotation.Security;
 import jadex.bridge.service.types.publish.IPublishService;

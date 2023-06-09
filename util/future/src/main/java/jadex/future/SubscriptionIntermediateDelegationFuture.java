@@ -1,0 +1,435 @@
+package jadex.future;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+
+import jadex.common.SUtil;
+
+
+/**
+ * 
+ */
+public class SubscriptionIntermediateDelegationFuture<E> extends TerminableIntermediateDelegationFuture<E>
+	implements ISubscriptionIntermediateFuture<E>
+{
+	//-------- attributes --------
+	
+	/** The local results for a single thread. */
+    protected Map<Thread, List<E>> ownresults;
+	
+    /** Flag if results should be stored till first listener is. */
+    protected boolean storeforfirst = true;
+	
+    /** The number of results. */
+    protected int resultssize;
+    
+	/**
+	 *  Create a new future.
+	 */
+	public SubscriptionIntermediateDelegationFuture()
+	{
+	}
+	
+	/**
+	 *  Create a new future.
+	 */
+	public SubscriptionIntermediateDelegationFuture(ITerminableIntermediateFuture<E> src)
+	{
+		super();
+		//super(src); does not work as storeforfirst is not yet set :-(
+		delegateFrom(src);
+	}
+	
+	//-------- methods (hack!!! copied from subscription future) --------
+	
+	/**
+	 *  Unsupported for subscriptions.
+	 * /
+	@Override
+	public void setMaxResultCount(int max)
+	{
+		throw new UnsupportedOperationException("Subscription futures do not allow max result setting.");
+	}*/
+	
+	/**
+	 *  Add a result.
+	 *  @param result The result.
+	 *  @param scheduled	True, if any listener notification has been scheduled for this result. (used for subscription futures to check for lost values)
+	 */
+	@Override
+	protected void	storeResult(E result, boolean scheduled)
+	{
+		resultssize++;
+		
+		// Store results only if not yet any listener added or thread waiting
+		if(storeforfirst)
+		{
+			super.storeResult(result, scheduled);
+		}
+		else if(!scheduled && ownresults==null)
+		{
+			throw new RuntimeException("lost value: "+result);
+		}
+		
+		if(ownresults!=null)
+		{
+			for(List<E> res: ownresults.values())
+			{
+				res.add(result);
+			}
+		}
+		
+		resumeIntermediate();
+	}
+	
+	/** 
+     *  Get the number of results already collected.
+     *  @return The number of results.
+     */
+    protected int getResultCount()
+    {
+    	return resultssize;
+    }
+	
+	/**
+	 *  Add a listener which is only informed about new results,
+	 *  i.e. the initial results are not posted to this listener,
+	 *  even if it is the first listener to be added to this future.
+	 */
+	public void	addQuietListener(IResultListener<Collection<E>> listener)
+	{
+    	if(!(listener instanceof IIntermediateResultListener))
+    		throw new IllegalArgumentException("Subscription futures require intermediate listeners.");
+    	
+    	super.addResultListener(listener);		
+	}
+
+	
+	/**
+     *  Add a result listener.
+     *  @param listsner The listener.
+     */
+	@Override
+    public void	addResultListener(IResultListener<Collection<E>> listener)
+    {
+    	if(!(listener instanceof IIntermediateResultListener))
+    		throw new IllegalArgumentException("Subscription futures require intermediate listeners.");
+    	
+//    	System.out.println("adding listener: "+this+" "+listener);
+    	
+    	super.addResultListener(listener);
+    	
+    	boolean first;
+    	synchronized(this)
+		{
+			first = storeforfirst;
+			storeforfirst = false;
+			//System.out.println("store false: "+this);
+		}
+    	
+		if(first)
+			results = null;
+    }
+	
+    /**
+     *  Get the intermediate results that are available.
+     *  Note: The semantics of this method is different to the normal intermediate future
+     *  due to the fire-and-forget-semantics!
+     *  
+     *  @return
+     *  1) <i>Non-blocking</I> access only: An empty collection, unless if the future is in "store-for-first" mode (default)
+     *  	and no listeners has yet been added, in which case the results until now are returned.<br>
+     *  2) Also <i>blocking</i> access from same thread: All results since the first blocking access
+     *  	that have not yet been consumed by getNextIntermediateResult().
+     */
+	public Collection<E> getIntermediateResults()
+	{
+		List<E>	ret;
+
+    	synchronized(this)
+    	{
+			if(storeforfirst)
+			{
+				ret	= results;
+			}
+			else
+			{
+	    		ret	= ownresults!=null ? ownresults.get(Thread.currentThread()) : null;
+			}
+    	}
+
+    	return ret!=null ? ret : Collections.emptyList();
+	}
+	
+    /**
+     *  Iterate over the intermediate results in a blocking fashion.
+     *  Manages results independently for different callers, i.e. when called
+     *  from different threads, each thread receives all intermediate results.
+     *  
+     *  The operation is guaranteed to be non-blocking, if hasNextIntermediateResult()
+     *  has returned true before for the same caller. Otherwise the caller is blocked
+     *  until a result is available or the future is finished.
+     *  
+     *  @return	The next intermediate result.
+     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     */
+	@Override
+    public E getNextIntermediateResult(long timeout, boolean realtime)
+    {
+    	return doGetNextIntermediateResult(0, timeout, realtime);
+    }
+
+    /**
+     *  Check if there are more results for iteration for the given caller.
+     *  If there are currently no unprocessed results and future is not yet finished,
+     *  the caller is blocked until either new results are available and true is returned
+     *  or the future is finished, thus returning false.
+     *  
+	 *  @param timeout The timeout in millis.
+	 *  @param realtime Flag, if wait should be realtime (in constrast to simulation time).
+     *  @return	True, when there are more intermediate results for the caller.
+     */
+	@Override
+    public boolean hasNextIntermediateResult(long timeout, boolean realtime)
+    {
+    	boolean	ret;
+    	boolean	suspend;
+		ISuspendable caller = ISuspendable.SUSPENDABLE.get();
+	   	if(caller==null)
+	   		caller = new ThreadSuspendable();
+
+		List<E>	ownres;
+
+    	synchronized(this)
+    	{
+			if(storeforfirst)
+			{
+				storeforfirst	= false;
+				//System.out.println("store false: "+this);
+				ownres	= results;
+				results	= null;
+			}
+			else
+			{
+	    		ownres	= ownresults!=null ? ownresults.get(Thread.currentThread()) : null;
+			}
+
+			if(ownres==null)
+			{
+    			ownres	= new LinkedList<E>();
+			}
+			
+			if(ownresults==null || !ownresults.containsKey(Thread.currentThread()))
+			{
+				ownresults	= ownresults!=null ? ownresults : new HashMap<Thread, List<E>>();
+				ownresults.put(Thread.currentThread(), ownres);
+			}
+			
+    		ret	= !ownres.isEmpty() || isDone() && getException()!=null;
+    		suspend	= !ret && !isDone();
+    		if(suspend)
+    		{
+	    	   	if(icallers==null)
+	    	   	{
+	    	   		icallers	= Collections.synchronizedMap(new HashMap<ISuspendable, String>());
+	    	   	}
+	    	   	icallers.put(caller, CALLER_QUEUED);
+    		}
+    	}
+    	
+    	if(suspend)
+    	{
+	    	Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
+	    	synchronized(mon)
+	    	{
+    			Object	state	= icallers.get(caller);
+    			if(CALLER_QUEUED.equals(state))
+    			{
+    	    	   	icallers.put(caller, CALLER_SUSPENDED);
+    				caller.suspend(this, timeout, realtime);
+    	    	   	icallers.remove(caller);
+    			}
+    			// else already resumed.
+    		}
+	    	ret	= hasNextIntermediateResult(timeout, realtime);
+    	}
+    	
+    	return ret;
+    }
+	
+    /**
+     *  Perform the get without increasing the index.
+     */
+    @Override
+    protected E doGetNextIntermediateResult(int index, long timeout, boolean realtime)
+    {
+       	E	ret	= null;
+    	boolean	suspend	= false;
+		ISuspendable caller = ISuspendable.SUSPENDABLE.get();
+	   	if(caller==null)
+	   		caller = new ThreadSuspendable();
+
+		List<E>	ownres;
+
+    	synchronized(this)
+    	{
+			if(storeforfirst)
+			{
+				storeforfirst	= false;
+				//System.out.println("store false: "+this);
+				ownres	= results;
+				results	= null;
+			}
+			else
+			{
+	    		ownres	= ownresults!=null ? ownresults.get(Thread.currentThread()) : null;
+			}
+
+			if(ownres==null)
+			{
+    			ownres	= new LinkedList<E>();
+			}
+			
+			if(ownresults==null || !ownresults.containsKey(Thread.currentThread()))
+			{
+				ownresults	= ownresults!=null ? ownresults : new HashMap<Thread, List<E>>();
+				ownresults.put(Thread.currentThread(), ownres);
+			}
+			
+    		if(!ownres.isEmpty())
+    		{
+    			ret	= ownres.remove(0);
+    		}
+    		else if(isDone())
+    		{
+    			if(getException()!=null)
+    				throw SUtil.throwUnchecked(getException());
+    			else
+    				throw new NoSuchElementException("No more intermediate results.");
+    		}
+    		else
+    		{
+    			suspend	= true;
+	    	   	if(icallers==null)
+	    	   		icallers	= Collections.synchronizedMap(new HashMap<ISuspendable, String>());
+	    	   	icallers.put(caller, CALLER_QUEUED);
+    		}
+    	}
+    	
+    	if(suspend)
+    	{
+	    	Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
+	    	synchronized(mon)
+	    	{
+    			Object	state	= icallers.get(caller);
+    			if(CALLER_QUEUED.equals(state))
+    			{
+    	    	   	icallers.put(caller, CALLER_SUSPENDED);
+    				caller.suspend(this, timeout, realtime);
+    	    	   	icallers.remove(caller);
+    			}
+    			// else already resumed.
+	    	}
+	    	
+	    	// Re-call outside synchronized!
+    		ret	= doGetNextIntermediateResult(index, timeout, realtime);
+    	}
+    	
+    	return ret;
+    }
+    
+	/**
+	 *  Called on exception.
+	 *  @param consumer The function called with the exception.
+	 */
+    public IIntermediateFuture<E> catchEx(final Consumer<? super Exception> consumer, Class<?> futuretype)
+    {
+		IResultListener<Collection<E>> reslis = new IntermediateEmptyResultListener<>()
+		{
+			public void exceptionOccurred(Exception exception)
+			{
+				 consumer.accept(exception);
+			}
+		};
+		addQuietListener(reslis);
+		
+        return this;
+    }
+    
+    /**
+	 *  Called on exception.
+	 *  @param delegate The future the exception will be delegated to.
+	 */
+	public <T> IIntermediateFuture<E> catchEx(Future<T> delegate)
+	{
+		IResultListener<Collection<E>> reslis = new IntermediateEmptyResultListener<>()
+		{
+			public void exceptionOccurred(Exception exception)
+			{
+				delegate.setException(exception);
+			}
+		};
+		addQuietListener(reslis);
+		
+		return this;
+	}
+	
+	/**
+	 *  Called on exception.
+	 *  @param delegate The future the exception will be delegated to.
+	 * /
+	public IFuture<E> catchErr(final Consumer<? super Exception> consumer)
+    {
+        return catchErr(consumer, null);
+    }*/
+	
+	// todo: subscriptions need special treatment for first listener
+	
+    // next is a consuming listener and must not be overridden
+	/**
+     *  Called when the next intermediate value is available.
+     *  @param function Called when value arrives.
+     *  @return The future for chaining.
+     * /
+	public IIntermediateFuture<? extends E> next(Consumer<? super E> function)
+	
+	/**
+     *  Called when the maximum number of results is available.
+     *  @param function Called when max value arrives.
+     *  @return The future for chaining.
+     */
+	public IIntermediateFuture<? extends E> max(Consumer<Integer> function)
+	{
+		addQuietListener(new IntermediateEmptyResultListener<E>()
+		{
+			public void maxResultCountAvailable(int max) 
+			{
+				function.accept(max);
+			}
+		});
+		return this;
+	}
+	
+	/**
+     *  Called when the future is finished.
+     *  @param function Called when max value arrives.
+     *  @return The future for chaining.
+     */
+	public IIntermediateFuture<? extends E> finished(Consumer<Void> function)
+	{
+		addQuietListener(new IntermediateEmptyResultListener<E>()
+		{
+			public void finished() 
+			{
+				function.accept(null);
+			}
+		});
+		return this;
+	}
+}

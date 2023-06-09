@@ -5,9 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.bridge.nonfunctional.annotation.NameValue;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.commons.Boolean3;
+//import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
+import jadex.enginecore.annotation.NameValue;
+import jadex.common.Boolean3;
 
 /**
  *  Component annotation.
@@ -49,7 +49,7 @@ public @interface CreationInfo
 	/**
 	 *  The monitoring flag.
 	 */
-	public PublishEventLevel monitoring() default PublishEventLevel.OFF;
+	//public PublishEventLevel monitoring() default PublishEventLevel.OFF;
 	
 	/**
 	 *  The component name.

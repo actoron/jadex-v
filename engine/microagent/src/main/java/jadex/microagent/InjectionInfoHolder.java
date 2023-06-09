@@ -1,4 +1,4 @@
-package jadex.micro;
+package jadex.microagent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,12 +8,12 @@ import java.util.Map;
 
 import jadex.bridge.ServiceCallInfo;
 import jadex.bridge.service.RequiredServiceInfo;
-import jadex.commons.FieldInfo;
-import jadex.commons.MethodInfo;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple2;
-import jadex.commons.Tuple3;
-import jadex.commons.collection.MultiCollection;
+import jadex.common.FieldInfo;
+import jadex.common.MethodInfo;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.common.Tuple3;
+import jadex.common.collection.MultiCollection;
 import jadex.micro.MicroModel.ServiceInjectionInfo;
 
 /**

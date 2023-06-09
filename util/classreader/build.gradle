@@ -1,0 +1,17 @@
+plugins 
+{
+    id 'java-library'
+}
+
+group = 'jadex'
+
+repositories
+{
+    mavenCentral()
+}
+
+dependencies
+{
+	implementation 'jadex:util-classreader:5.0.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}
