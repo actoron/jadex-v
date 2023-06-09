@@ -1,4 +1,4 @@
-package jadex.common;
+package jadex.classreader;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import jadex.collection.LRU;
 
 /**
  *  Class using the internal fast class path scanner to provide
