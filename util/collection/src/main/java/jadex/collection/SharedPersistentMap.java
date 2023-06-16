@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.nio.channels.FileLock;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -189,7 +190,7 @@ public class SharedPersistentMap<K, V>
 	 */
 	public V get(K key)
 	{
-		V ret = readTransaction((m) ->
+		V ret = readTransaction(() ->
 		{
 			V lret = null;
 			KVNode keynode = findKVPair(key);
@@ -209,7 +210,7 @@ public class SharedPersistentMap<K, V>
 	 */
 	public boolean containsKey(K key)
 	{
-		boolean ret = readTransaction((m) ->
+		boolean ret = readTransaction(() ->
 		{
 			boolean lret = false;
 			KVNode keynode = findKVPair(key);
@@ -230,14 +231,85 @@ public class SharedPersistentMap<K, V>
 	 */
 	public V put(K key, V value)
 	{
-		V ret = writeTransaction((m) ->
+		V ret = writeTransaction(() ->
 		{
 			V lret = null;
 			
 			KVNode keynode = findKVPair(key);
 			if (keynode == null)
-				keynode = appendNewKVPair(key);
+			{
+				keynode = appendKVPair(key);
+				addSize(1);
+			}
 			lret = keynode.setValue(value);
+			
+			return lret;
+		});
+		return ret;
+	}
+	
+	/**
+	 *  Adds all entries of another map to this one.
+	 *  
+	 *  @param m The other map.
+	 */
+	public void putAll(Map<? extends K, ? extends V> m)
+	{
+		writeTransaction(() -> 
+		{
+			long entriesadded = 0;
+			for (Map.Entry<? extends K, ? extends V> entry : m.entrySet())
+			{
+				KVNode keynode = findKVPair(entry.getKey());
+				if (keynode == null)
+				{
+					keynode = appendKVPair(entry.getKey());
+					++entriesadded;
+				}
+				keynode.setValue(entry.getValue());
+			}
+			addSize(entriesadded);
+		});
+	}
+	
+	/**
+	 *  Removes key from the map.
+	 *  
+	 *  @param key The key.
+	 *  @return The old value associates with the key or null if there was no mapping..
+	 */
+	public V remove(K key)
+	{
+		V ret = writeTransaction((m) ->
+		{
+			V lret = null;
+			
+			KVNode keynode = findKVPair(key);
+			if (keynode != null)
+			{
+				long garbage = keynode.getKeySize();
+				garbage += keynode.getValueSize();
+				garbage += KVNode.NODE_SIZE;
+				
+				lret = keynode.getValue();
+				long prevpos = keynode.getPrevious();
+				long nextpos = keynode.getNext();
+				
+				if (prevpos != 0)
+				{
+					KVNode prev = new KVNode(prevpos);
+					prev.setNext(nextpos);
+				}
+				
+				if (nextpos != 0)
+				{
+					KVNode next = new KVNode(nextpos);
+					next.setPrevious(prevpos);
+				}
+				
+				addSize(-1);
+				addGarbage(garbage);
+			}
 			
 			return lret;
 		});
@@ -249,14 +321,53 @@ public class SharedPersistentMap<K, V>
 	 */
 	public void clear() 
 	{
-		writeTransaction((m) -> 
+		writeTransaction(() -> 
 		{
 			initializeMap();
-			return null;
 		});
 	}
 	
 	// ****************************** Lock methods ******************************
+	
+	/**
+	 *  Performs a read transaction on the map.
+	 *  Engages read lock and automatically releases on success or
+	 *  exception.
+	 *  
+	 *  @param transaction Transaction to perform.
+	 *  @return Return value of lambda expression.
+	 */
+	public void readTransaction(IORunnable transaction)
+	{
+		try(FileLock l = readLock())
+		{
+			transaction.run();
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 *  Performs a read transaction on the map.
+	 *  Engages read lock and automatically releases on success or
+	 *  exception.
+	 *  
+	 *  @param transaction Transaction to perform.
+	 *  @return Return value of lambda expression.
+	 */
+	public <R> R readTransaction(IOSupplier<R> transaction)
+	{
+		try(FileLock l = readLock())
+		{
+			return transaction.get();
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
 	
 	/**
 	 *  Performs a read transaction on the map.
@@ -271,6 +382,46 @@ public class SharedPersistentMap<K, V>
 		try(FileLock l = readLock())
 		{
 			return transaction.apply(this);
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 *  Performs a write transaction on the map.
+	 *  Engages write lock and automatically releases on success or
+	 *  exception.
+	 *  
+	 *  @param transaction Transaction to perform.
+	 *  @return Return value of lambda expression.
+	 */
+	public void writeTransaction(IORunnable transaction)
+	{
+		try(FileLock l = writeLock())
+		{
+			transaction.run();
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 *  Performs a write transaction on the map.
+	 *  Engages write lock and automatically releases on success or
+	 *  exception.
+	 *  
+	 *  @param transaction Transaction to perform.
+	 *  @return Return value of lambda expression.
+	 */
+	public <R> R writeTransaction(IOSupplier<R> transaction)
+	{
+		try(FileLock l = writeLock())
+		{
+			return transaction.get();
 		}
 		catch (IOException e)
 		{
@@ -404,7 +555,7 @@ public class SharedPersistentMap<K, V>
 	 *  @return KVNode object for the newly created node.
 	 *  @throws IOException Thrown on IO issues.
 	 */
-	protected KVNode appendNewKVPair(K key) throws IOException
+	protected KVNode appendKVPair(K key) throws IOException
 	{
 		// 8 byte alignment
 		long start = getNextAlignedPosition();
@@ -432,6 +583,70 @@ public class SharedPersistentMap<K, V>
 		
 		KVNode ret = new KVNode(start);
 		return ret;
+	}
+	
+	/**
+	 *  Removes a KV node, including all data associated with it.
+	 *  
+	 *  Note: This only adds the node, not the key.
+	 *  There is also no check if the key is already in the map.
+	 *  
+	 *  @param key The key that needs the KVNode.
+	 *  @return Value of the key node or null .
+	 *  @throws IOException Thrown on IO issues.
+	 */
+	/*protected V removeKVPair(K key) throws IOException
+	{
+		
+		long isize = readIndexSize();
+		long modhash = key.hashCode() % isize;
+		rafile.seek(HEADER_SIZE + modhash);
+		long nodepos = rafile.readLong();
+		if (nodepos != 0)
+		{
+			KVNode kvnode = new KVNode(nodepos);
+			do
+			{
+				K currentkey = kvnode.getKey();
+				if (Objects.equals(key, currentkey))
+				{
+					
+				}
+				
+				kvnode = kvnode.next();
+			}
+			while (kvnode != null);
+		}
+		
+		return null;
+	}*/
+	
+	/**
+	 *  Adds an amount to the garbage counter.
+	 * 
+	 *  @param garbage Amount of garbage to add to the garbage counter.
+	 *  @throws IOException Thrown on IO issues.
+	 */
+	protected void addGarbage(long garbage) throws IOException
+	{
+		rafile.seek(HDR_POS_GARBAGE_SIZE);
+		garbage += rafile.readLong();
+		rafile.seek(HDR_POS_GARBAGE_SIZE);
+		rafile.writeLong(garbage);
+	}
+	
+	/**
+	 *  Adds an amount to the map item size.
+	 * 
+	 *  @param size Amount of garbage to added to the map size.
+	 *  @throws IOException Thrown on IO issues.
+	 */
+	protected void addSize(long size) throws IOException
+	{
+		rafile.seek(HDR_POS_MAP_SIZE);
+		size += rafile.readLong();
+		rafile.seek(HDR_POS_MAP_SIZE);
+		rafile.writeLong(size);
 	}
 	
 	// ****************************** Static methods ******************************
@@ -593,6 +808,25 @@ public class SharedPersistentMap<K, V>
 		}
 		
 		/**
+		 *  Returns the size of the key object.
+		 *  
+		 *  @return Size of the key object.
+		 *  @throws IOException Thrown on IO issues.
+		 */
+		public long getKeySize() throws IOException
+		{
+			long size = 0;
+			goToPos(KEY_OFFSET);
+			long pos = rafile.readLong();
+			if (pos != 0)
+			{
+				rafile.seek(pos);
+				size = rafile.readLong();
+			}
+			return size;
+		}
+		
+		/**
 		 *  Sets the key object.
 		 *  TODO: needed?
 		 *  @param key Key object.
@@ -634,6 +868,25 @@ public class SharedPersistentMap<K, V>
 			if (!Objects.equals(value, oldval))
 				writeObject(VAL_OFFSET, oldval);
 			return oldval;
+		}
+		
+		/**
+		 *  Returns the size of the value object.
+		 *  
+		 *  @return Size of the value object.
+		 *  @throws IOException Thrown on IO issues.
+		 */
+		public long getValueSize() throws IOException
+		{
+			long size = 0;
+			goToPos(VAL_OFFSET);
+			long pos = rafile.readLong();
+			if (pos != 0)
+			{
+				rafile.seek(pos);
+				size = rafile.readLong();
+			}
+			return size;
 		}
 		
 		// Low-level methods
@@ -711,11 +964,7 @@ public class SharedPersistentMap<K, V>
 			{
 				// Old object lost, update garbage
 				rafile.seek(rafile.readLong());
-				long garbage = rafile.readLong();
-				rafile.seek(HDR_POS_GARBAGE_SIZE);
-				garbage += rafile.readLong();
-				rafile.seek(HDR_POS_GARBAGE_SIZE);
-				rafile.writeLong(garbage);
+				addGarbage(rafile.readLong());
 			}
 			
 			long newpos = appendObject(o);
@@ -799,6 +1048,16 @@ public class SharedPersistentMap<K, V>
 	
 	@FunctionalInterface
 	public interface IOFunction<T, R> {
-	    R apply(T t) throws IOException;
+	    public R apply(T t) throws IOException;
+	}
+	
+	@FunctionalInterface
+	public interface IOSupplier<R> {
+		public R get() throws IOException;
+	}
+	
+	@FunctionalInterface
+	public interface IORunnable {
+		public void run() throws IOException;
 	}
 }
