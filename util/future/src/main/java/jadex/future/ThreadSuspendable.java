@@ -1,14 +1,21 @@
 package jadex.future;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
-import jadex.commons.concurrent.ThreadPool;
 
 /**
  *  Suspendable for threads.
  */
 public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISuspendable
 {
+	/** Threads waiting due to thread suspendable. */
+	// Stored here and not in thread suspendable, because thread suspendable is closer to user.
+	public static final Map<Thread, Future<?>>	WAITING_THREADS	= Collections.synchronizedMap(new HashMap<Thread, Future<?>>());
+	
 	//-------- attributes --------
 	
 	/** The future. */
@@ -35,8 +42,8 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 		{
 			this.future	= future;
 			this.resumed	= false;
-			assert !ThreadPool.WAITING_THREADS.containsKey(Thread.currentThread());
-			ThreadPool.WAITING_THREADS.put(Thread.currentThread(), future);
+			assert !WAITING_THREADS.containsKey(Thread.currentThread());
+			WAITING_THREADS.put(Thread.currentThread(), future);
 			try
 			{
 				// Loop to catch "spurious wake-ups"
@@ -61,8 +68,8 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 			}
 			finally
 			{
-				assert ThreadPool.WAITING_THREADS.get(Thread.currentThread())==future;
-				ThreadPool.WAITING_THREADS.remove(Thread.currentThread());
+				assert WAITING_THREADS.get(Thread.currentThread())==future;
+				WAITING_THREADS.remove(Thread.currentThread());
 				// Restore the thread local values after switch
 				afterSwitch();
 				this.future	= null;

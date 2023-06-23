@@ -3,8 +3,8 @@ package jadex.future;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.function.Function;
 
-import jadex.binary.SBinarySerializer;
 import jadex.collection.BloomFilter;
 import jadex.common.SUtil;
 
@@ -16,13 +16,16 @@ public class DuplicateRemovalIntermediateResultListener<E> extends IntermediateD
 	/** The bloom filter. */
 	protected BloomFilter filter;
 	
+	/** The serializer function. */
+	protected Function<Object, byte[]> serializer;
+	
 	/**
 	 * Create a new listener.
 	 * @param delegate The delegation target.
 	 */
-	public DuplicateRemovalIntermediateResultListener(IIntermediateResultListener<E> delegate)
+	public DuplicateRemovalIntermediateResultListener(IIntermediateResultListener<E> delegate, Function<Object, byte[]> serializer)
 	{
-		this(delegate, false);
+		this(delegate, false, serializer);
 	}
 
 	/**
@@ -30,7 +33,7 @@ public class DuplicateRemovalIntermediateResultListener<E> extends IntermediateD
 	 * @param delegate The delegation target.
 	 * @param undone use undone methods.
 	 */
-	public DuplicateRemovalIntermediateResultListener(IIntermediateResultListener<E> delegate, boolean undone)
+	public DuplicateRemovalIntermediateResultListener(IIntermediateResultListener<E> delegate, boolean undone, Function<Object, byte[]> serializer)
 	{
 		super(delegate, undone);
 		this.filter = new BloomFilter();
@@ -114,7 +117,8 @@ public class DuplicateRemovalIntermediateResultListener<E> extends IntermediateD
 		}	
 		else 
 		{
-			ret = SBinarySerializer.writeObjectToByteArray(value, null);
+			ret = serializer.apply(value);
+			//SBinarySerializer.writeObjectToByteArray(value, null);
 		}
 		
 		return ret;
