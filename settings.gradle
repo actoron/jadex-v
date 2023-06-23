@@ -22,3 +22,11 @@ includeBuild('engine/microagent') {
 includeBuild('engine/core') {
 }
 
+includeBuild('serialization/traverser') {
+}
+
+includeBuild('serialization/binary') {
+}
+
+includeBuild('serialization/json') {
+}

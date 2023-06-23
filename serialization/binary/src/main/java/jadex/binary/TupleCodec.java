@@ -1,0 +1,89 @@
+package jadex.binary;
+
+import java.lang.reflect.Field;
+import java.util.List;
+
+import jadex.common.SAccess;
+import jadex.common.SReflect;
+import jadex.common.Tuple;
+import jadex.common.Tuple2;
+import jadex.common.Tuple3;
+import jadex.common.transformation.IStringConverter;
+import jadex.common.transformation.traverser.ITraverseProcessor;
+import jadex.common.transformation.traverser.Traverser;
+import jadex.common.transformation.traverser.Traverser.MODE;
+
+/**
+ *  Codec for encoding and decoding URL objects.
+ */
+public class TupleCodec extends AbstractCodec
+{
+	/**
+	 *  Tests if the decoder can decode the class.
+	 *  @param clazz The class.
+	 *  @return True, if the decoder can decode this class.
+	 */
+	public boolean isApplicable(Class<?> clazz)
+	{
+		return SReflect.isSupertype(Tuple.class, clazz);
+	}
+	
+	/**
+	 *  Creates the object during decoding.
+	 *  
+	 *  @param clazz The class of the object.
+	 *  @param context The decoding context.
+	 *  @return The created object.
+	 */
+	public Object createObject(Class<?> clazz, IDecodingContext context)
+	{
+		Tuple ret = null;
+		if(clazz.equals(Tuple3.class))
+		{
+			ret = new Tuple3(null, null, null);
+		}
+		else if (clazz.equals(Tuple2.class))
+		{
+			ret = new Tuple2(null, null);
+		}
+		else
+		{
+			ret =  new Tuple(null);
+		}
+		return ret;
+	}
+	
+	/**
+	 *  Decodes and adds sub-objects during decoding.
+	 *  
+	 *  @param object The instantiated object.
+	 *  @param clazz The class of the object.
+	 *  @param context The decoding context.
+	 *  @return The finished object.
+	 */
+	public Object decodeSubObjects(Object object, Class<?> clazz, IDecodingContext context)
+	{
+		Object[] entities = (Object[])SBinarySerializer.decodeObject(context);
+		try
+		{
+			Field fentities = SReflect.getField(object.getClass(), "entities");
+			SAccess.setAccessible(fentities, true);
+			fentities.set(object, entities);
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+		return object;
+	}
+
+	/**
+	 *  Encode the object.
+	 */
+	public Object encode(Object object, Class<?> clazz, List<ITraverseProcessor> preprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, Traverser traverser, ClassLoader targetcl, IEncodingContext ec)
+	{
+		Object[] entities = ((Tuple)object).getEntities();
+		traverser.doTraverse(entities, entities.getClass(), preprocessors, processors, converter, mode, targetcl, ec);
+		return object;
+	}
+}
