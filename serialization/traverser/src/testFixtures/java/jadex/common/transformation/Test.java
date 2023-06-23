@@ -53,6 +53,7 @@ public abstract class Test
 	/**
 	 * 
 	 */
+	@org.junit.jupiter.api.Test
 	public void performTests()
 	{
 		performTests(1000);
@@ -61,7 +62,6 @@ public abstract class Test
 	/**
 	 * 
 	 */
-	@org.junit.jupiter.api.Test
 	public void performTests(int cnt)
 	{
 //		try
