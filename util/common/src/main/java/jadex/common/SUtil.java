@@ -2137,8 +2137,8 @@ public class SUtil
 	protected static AtomicLong convidcnt = new AtomicLong();
 	
 	/**
-	 * Create a globally unique conversation id.
-	 * @return The conversation id.
+	 * Create a securely generated, globally unique id with low collision probability.
+	 * @return The id.
 	 */
 	public static String createUniqueId()
 	{
@@ -2146,8 +2146,9 @@ public class SUtil
 	}
 	
 	/**
-	 * Create a globally unique conversation id.
-	 * @return The conversation id.
+	 * Create a securely generated, globally unique id with low collision probability.
+	 * @param name Name to include in the ID.
+	 * @return The id.
 	 */
 	public static String createUniqueId(String name)
 	{

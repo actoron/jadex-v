@@ -1,15 +1,29 @@
 package jadex.collection;
 
+import java.awt.image.DataBuffer;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import jadex.common.BufferOutputStream;
+import jadex.common.SUtil;
+import jadex.common.BufferInputStream;
 
 /**
  *  A file-based map that can be shared across the operating system
@@ -25,13 +39,30 @@ import java.util.function.Function;
  *  [Object size 8 byte]
  *  [Object data variable]
  */
-public class SharedPersistentMap<K, V>
+public class SharedPersistentMap<K, V> implements Map<K, V>
 {
+	/** Default maximum percentage of garbage in the map file that needs to be cleaned up. */
+	protected static final double MAX_GARBAGE_PERCENTAGE = 20.0;
+	
+	/** Default maximum percentage for the load factor of the hash table before re-indexing. */
+	protected static final double MAX_LOAD_FACTOR = 70.0;
+	
 	/** Magic word starting the file. */
 	protected static final short MAGIC_WORD = (short) 0xbd15;
 	
 	/** Type of map - normal shared map. */
 	protected static final byte MAP_TYPE = 0;
+	
+	/** Thread local for tracking the write lock for reentrant acquisition. */
+	protected static final ThreadLocal<ReentrantLock> WRITE_LOCK = new ThreadLocal<>()
+	{
+		protected ReentrantLock initialValue()
+		{
+			return null;
+		};
+	};
+	
+	
 	
 	/**
 	 *  Size of the header:
@@ -53,6 +84,12 @@ public class SharedPersistentMap<K, V>
 	/** Position of the garbage size in the header. */
 	protected static final long HDR_POS_GARBAGE_SIZE = 16; 
 	
+	/** Size of reference in the map (8 bytes / long). */
+	protected static final int REF_SIZE = 8;
+	
+	/** Bit shift to convert a counter to a reference offset. */
+	protected static final int REF_SIZE_SHIFT = Long.numberOfTrailingZeros(REF_SIZE) + 1;
+	
 	/** Initial index exponent, nearest prime < 2^8 = 251. */
 	protected static final int INITIAL_INDEX_EXP = 8;
 	
@@ -60,7 +97,43 @@ public class SharedPersistentMap<K, V>
 	protected static final int MAX_INDEX_EXP = 32;
 	
 	/** Minimum file size (header size + initial index size). */
-	protected static final long MIN_FILE_SIZE = HEADER_SIZE + getPaddedIndexSize(INITIAL_INDEX_EXP);
+	protected static final long MIN_FILE_SIZE = HEADER_SIZE + (getIndexSizeFromExp(INITIAL_INDEX_EXP) << REF_SIZE_SHIFT);
+	
+	/** Default Encoder using Java serialization. */
+	protected static final Function<Object, ByteBuffer> DEF_ENCODER = (o) -> {
+		try {
+			var bos = new BufferOutputStream();
+			var oos = new ObjectOutputStream(bos);
+			oos.writeObject(o);
+			oos.close();
+			return bos.toDirectBuffer();
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		};
+		return null;
+	};
+	
+	protected static final Function<ByteBuffer, Object> DEF_DECODER = (a) -> {
+		try {
+			a.rewind();
+			//var bais = new ByteBufferInputStream(a);
+			byte[] b = new byte[a.capacity()];
+			a.rewind();
+			a.get(b);
+			var bais = new ByteArrayInputStream(b);
+			var ois = new ObjectInputStream(bais);
+			Object ret = ois.readObject();
+			ois.close();
+			return ret;
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		};
+		return null;
+	};
 	
 	/** The file backing the map */
 	protected File file;
@@ -69,13 +142,19 @@ public class SharedPersistentMap<K, V>
 	protected String mode = "rw";
 	
 	/** The memory-mapped file when opened. */
-	protected RandomAccessFile rafile;
+	protected RandomAccessFile rfile;
 	
 	/** The serialization/encoder functionality. */
-	protected Function<Object, byte[]> encoder;
+	protected Function<Object, ByteBuffer> encoder = DEF_ENCODER;
 	
-	/** The deserialization/decoder functionality. */
-	protected Function<byte[], Object> decoder;
+	/** The decoder functionality. */
+	protected Function<ByteBuffer, Object> decoder = DEF_DECODER;
+	
+	/** Factor (not percentage) for maximum garbage tolerated. */
+	protected double maxgarbagefactor = MAX_GARBAGE_PERCENTAGE / 100.0;
+	
+	/** Maximum load factor (not percentage) of the index. */
+	protected double maxloadfactor = MAX_LOAD_FACTOR / 100.0;
 	
 	/**
 	 *  Creates a new map, configure with builder pattern.
@@ -104,15 +183,27 @@ public class SharedPersistentMap<K, V>
 	}
 	
 	/**
-	 *  Configures the map for synchronized/non-synchronized writes.
-	 *  If true, writes to the map are immediately written to
-	 *  persistent storage
-	 * @param sync
-	 * @return
+	 *  Sets a percentage for the maximum load of the index (load factor), default: 70%
+	 * 
+	 *  @param percentage Desired load percentage.
+	 *  @return
 	 */
-	public SharedPersistentMap<K, V> setSynchronized(boolean sync)
+	public SharedPersistentMap<K, V> setLoadPercentage(double percentage)
 	{
-		mode = sync ? "rwd" : "rw";
+		maxloadfactor = percentage / 100.0;
+		return this;
+	}
+	
+	/**
+	 *  Sets the maximum percentage of the file that can be garbage before garbage
+	 *  collection is triggered (default: 20%).
+	 *  
+	 *  @param percentage Maximum allowed percentage of garbage.
+	 *  @return This map.
+	 */
+	public SharedPersistentMap<K, V> setMaxGarbage(double percentage)
+	{
+		maxgarbagefactor = percentage / 100.0;
 		return this;
 	}
 	
@@ -122,21 +213,35 @@ public class SharedPersistentMap<K, V>
 	 *  @param encoder Encoder for encoding/serializing objects.
 	 *  @return This map.
 	 */
-	public SharedPersistentMap<K, V> setEncoder(Function<Object, byte[]> encoder)
+	public SharedPersistentMap<K, V> setEncoder(Function<Object, ByteBuffer> encoder)
 	{
 		this.encoder = encoder;
 		return this;
 	}
 	
 	/**
-	 *  Sets the encoder for decoding/deserializing objects.
+	 *  Sets the encoder for decoding objects.
 	 *  
-	 *  @param decoder Encoder for decoding/deserializing objects.
+	 *  @param decoder Encoder for decoding objects.
 	 *  @return This map.
 	 */
-	public SharedPersistentMap<K, V> setDecoder(Function<byte[], Object> decoder)
+	public SharedPersistentMap<K, V> setDecoder(Function<ByteBuffer, Object> decoder)
 	{
 		this.decoder = decoder;
+		return this;
+	}
+	
+	/**
+	 *  Configures the map for synchronized/non-synchronized writes.
+	 *  If true, writes to the map are immediately written to
+	 *  persistent storage. This will reduce the data loss in case of a crash.
+	 *  
+	 *  @param sync True, if writes should be written to storage immediately.
+	 *  @return This map.
+	 */
+	public SharedPersistentMap<K, V> setSynchronized(boolean sync)
+	{
+		mode = sync ? "rwd" : "rw";
 		return this;
 	}
 	
@@ -148,8 +253,7 @@ public class SharedPersistentMap<K, V>
 	{
 		try
 		{
-			file.createNewFile();
-			this.rafile = new RandomAccessFile(file, mode);
+			this.rfile = new RandomAccessFile(file, mode);
 		}
 		catch (FileNotFoundException e)
 		{
@@ -171,8 +275,8 @@ public class SharedPersistentMap<K, V>
 	{
 		try
 		{
-			rafile.close();
-			rafile = null;
+			rfile.close();
+			rfile = null;
 		}
 		catch (IOException e)
 		{
@@ -188,14 +292,17 @@ public class SharedPersistentMap<K, V>
 	 *  @param key The key to be found.
 	 *  @return The associated value or null if not found.
 	 */
-	public V get(K key)
+	public V get(Object key)
 	{
 		V ret = readTransaction(() ->
 		{
 			V lret = null;
 			KVNode keynode = findKVPair(key);
 			if (keynode != null)
+			{
 				lret = keynode.getValue();
+				
+			}
 			return lret;
 		});
 		return ret;
@@ -208,7 +315,7 @@ public class SharedPersistentMap<K, V>
 	 *  @return True, if the key is contained, even if the associated value is null,
 	 *  		false otherwise.
 	 */
-	public boolean containsKey(K key)
+	public boolean containsKey(Object key)
 	{
 		boolean ret = readTransaction(() ->
 		{
@@ -219,6 +326,39 @@ public class SharedPersistentMap<K, V>
 			return lret;
 		});
 		return ret;
+	}
+	
+	/**
+	 *  Checks if a value is contained in the map.
+	 *  
+	 *  @param value The value.
+	 *  @return True, if the map contains the value.
+	 */
+	public boolean containsValue(Object value)
+	{
+		return readTransaction(() ->
+		{
+			long isize = readIndexSize();
+			
+			for (long i = 0; i < isize; ++i)
+			{
+				long pos = readLong(HEADER_SIZE + (i << REF_SIZE_SHIFT));
+				
+				if (pos != 0)
+				{
+					KVNode node = new KVNode(pos);
+					do
+					{
+						V mapval = node.getValue();
+						if (mapval.equals(value))
+							return true;
+						node = node.next();
+					}
+					while (node != null);
+				}
+			}
+			return false;
+		});
 	}
 	
 	/**
@@ -278,7 +418,7 @@ public class SharedPersistentMap<K, V>
 	 *  @param key The key.
 	 *  @return The old value associates with the key or null if there was no mapping..
 	 */
-	public V remove(K key)
+	public V remove(Object key)
 	{
 		V ret = writeTransaction((m) ->
 		{
@@ -317,6 +457,106 @@ public class SharedPersistentMap<K, V>
 	}
 	
 	/**
+	 *  Returns the entry set for the Map.
+	 *  WARNING: Do not use without holding at least a read lock
+	 *  while getting and using the returned set.
+	 *  
+	 *  @return Returns the entry set of the map.
+	 *  
+	 */
+	public Set<Entry<K, V>> entrySet()
+	{
+		HashSet<Entry<K, V>> ret = new HashSet<>();
+		
+		long isize = readIndexSize();
+		
+		try
+		{	
+			for (long i = 0; i < isize; ++i)
+			{
+				long pos = readLong(HEADER_SIZE + (i << REF_SIZE_SHIFT));
+				
+				if (pos != 0)
+				{
+					KVNode node = new KVNode(pos);
+					do
+					{
+						ret.add(new KVNode(node.getPos()));
+						node = node.next();
+					}
+					while (node != null);
+				}
+			}
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  Returns the key set for the Map.
+	 *  
+	 *  WARNING: This will load all keys into memory, please consider
+	 *  using entrySet() instead.
+	 *  
+	 *  WARNING: Do not use without holding at least a read lock
+	 *  while getting and using the returned set.
+	 *  
+	 *  @return Returns the key set of the map.
+	 *  
+	 */
+	public Set<K> keySet()
+	{
+		Set<Entry<K, V>> eset = entrySet();
+		return eset.stream().map((e) -> e.getKey()).collect(Collectors.toSet());
+	}
+	
+	/**
+	 *  Returns the values of the Map.
+	 *  
+	 *  WARNING: This will load all values into memory, please consider
+	 *  using entrySet() instead.
+	 *  
+	 *  WARNING: Do not use without holding at least a read lock
+	 *  while getting and using the returned collection.
+	 *  
+	 *  @return Returns the key set of the map.
+	 *  
+	 */
+	public Collection<V> values()
+	{
+		Set<Entry<K, V>> eset = entrySet();
+		return eset.stream().map((e) -> e.getValue()).toList();
+	}
+	
+	/**
+     * Returns the number of key-values in this map.
+     *
+     * @return the number of key-values in this map
+     */
+    public int size()
+    {
+    	long size = readTransaction(() ->
+		{
+			return readLong(HDR_POS_MAP_SIZE);
+		});
+    	return (int) Math.min(size, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Returns true, if this map contains no key-value mappings.
+     *
+     * @return True, if this map contains no key-value mappings
+     */
+    public boolean isEmpty()
+    {
+    	return size() == 0;
+    }
+	
+	/**
 	 *  Clears the map, deleting all elements.
 	 */
 	public void clear() 
@@ -339,14 +579,10 @@ public class SharedPersistentMap<K, V>
 	 */
 	public void readTransaction(IORunnable transaction)
 	{
-		try(FileLock l = readLock())
-		{
+		readTransaction((m) -> {
 			transaction.run();
-		}
-		catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
+			return null;
+		});
 	}
 	
 	/**
@@ -359,14 +595,7 @@ public class SharedPersistentMap<K, V>
 	 */
 	public <R> R readTransaction(IOSupplier<R> transaction)
 	{
-		try(FileLock l = readLock())
-		{
-			return transaction.get();
-		}
-		catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
+		return readTransaction((m) -> transaction.get());
 	}
 	
 	/**
@@ -379,7 +608,7 @@ public class SharedPersistentMap<K, V>
 	 */
 	public <R> R readTransaction(IOFunction<SharedPersistentMap<K, V>, R> transaction)
 	{
-		try(FileLock l = readLock())
+		try(IAutoLock l = readLock())
 		{
 			return transaction.apply(this);
 		}
@@ -399,14 +628,10 @@ public class SharedPersistentMap<K, V>
 	 */
 	public void writeTransaction(IORunnable transaction)
 	{
-		try(FileLock l = writeLock())
-		{
+		writeTransaction((m) -> {
 			transaction.run();
-		}
-		catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
+			return null;
+		});
 	}
 	
 	/**
@@ -419,14 +644,7 @@ public class SharedPersistentMap<K, V>
 	 */
 	public <R> R writeTransaction(IOSupplier<R> transaction)
 	{
-		try(FileLock l = writeLock())
-		{
-			return transaction.get();
-		}
-		catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
+		return writeTransaction((m) -> transaction.get());
 	}
 	
 	/**
@@ -439,7 +657,7 @@ public class SharedPersistentMap<K, V>
 	 */
 	public <R> R writeTransaction(IOFunction<SharedPersistentMap<K, V>, R> transaction)
 	{
-		try(FileLock l = writeLock())
+		try(IAutoLock l = writeLock())
 		{
 			return transaction.apply(this);
 		}
@@ -456,9 +674,46 @@ public class SharedPersistentMap<K, V>
 	 *  
 	 *  @throws IOException Thrown on IO issues.
 	 */
-	public FileLock readLock() throws IOException
+	public IAutoLock readLock() throws IOException
 	{
-		return rafile.getChannel().lock(0, Long.MAX_VALUE, true);
+		IAutoLock ret = WRITE_LOCK.get();
+		
+		if (ret == null)
+		{
+			FileLock f = rfile.getChannel().lock(0, Long.MAX_VALUE, true);
+			ret = new IAutoLock()
+			{
+				public void release()
+				{
+					try
+					{
+						f.release();
+					}
+					catch (IOException e)
+					{
+						throw new RuntimeException(e);
+					}
+				}
+				
+				public void close()
+				{
+					try
+					{
+						f.close();
+					}
+					catch (IOException e)
+					{
+						throw new RuntimeException(e);
+					}
+				}
+			};
+		}
+		else
+		{
+			((ReentrantLock) ret).inc();
+		}
+		
+		return ret;
 	}
 	
 	/**
@@ -468,15 +723,104 @@ public class SharedPersistentMap<K, V>
 	 *  
 	 *  @throws IOException Thrown on IO issues.
 	 */
-	public FileLock writeLock() throws IOException
+	public IAutoLock writeLock() throws IOException
 	{
-		return rafile.getChannel().lock(0, Long.MAX_VALUE, false);
+		ReentrantLock ret = WRITE_LOCK.get();
+		
+		if (ret == null)
+		{
+			FileLock f = rfile.getChannel().lock(0, Long.MAX_VALUE, false);
+			ret = new ReentrantLock()
+			{
+				public void release()
+				{
+					int recount = dec();
+					
+					if (recount < 0)
+					{
+						WRITE_LOCK.remove();
+						try
+						{
+							performMaintenanceIfRequired();
+						}
+						catch (Exception e)
+						{
+							e.printStackTrace(); // Should not happen, print on console.
+						}
+						
+						try
+						{
+							f.release();
+						}
+						catch (IOException e)
+						{
+							throw new RuntimeException(e);
+						}
+					}
+				}
+				
+				public void close()
+				{
+					release();
+				}
+			};
+		}
+		else
+		{
+			ret.inc();
+		}
+		
+		return ret;
 	}
 	
 	// ****************************** Internal methods ******************************
 	
 	/**
-	 *  Reads the current index size.
+	 *  Performs maintenance tasks if required.
+	 *  Note: Write lock must be held before method is called.
+	 *  
+	 *  @throws IOException Thrown on IO issues. 
+	 */
+	protected void performMaintenanceIfRequired() throws IOException
+	{
+		long garbage = readLong(HDR_POS_GARBAGE_SIZE);
+		
+		long size = readLong(HDR_POS_MAP_SIZE);
+		
+		long indexsize = readIndexSize();
+		
+		/*if (garbage > rafile.length() * maxgarbagefactor ||
+			size > indexsize * maxloadfactor)
+		{
+			File file = File.createTempFile("sharedmap", "tmp");
+			SharedPersistentMap<K, V> tmpmap = new SharedPersistentMap<K, V>().setFile(file).open();
+			
+			//tmpmap.putAll(this);
+			
+			tmpmap.close();
+			
+			RandomAccessFile tmpraf = new RandomAccessFile(file, "r");
+			rafile.setLength(tmpraf.length());
+			tmpraf.seek(0);
+			rafile.seek(0);
+			byte[] buf = new byte[65536];
+			int read = tmpraf.read(buf);
+			while (read != -1)
+			{
+				rafile.write(buf, 0, read);
+				read = tmpraf.read(buf);
+			}
+			while (buf == null);
+			
+			rafile.close();
+			tmpraf.close();
+			tmpraf = null;
+			file.delete();
+		}*/
+	}
+	
+	/**
+	 *  Reads the current index size in long words.
 	 *  NOTE: Called MUST lock the file with, at minimum, a read lock.
 	 *  
 	 *  @return Index size or -1, if the file is invalid or empty.
@@ -486,17 +830,23 @@ public class SharedPersistentMap<K, V>
 		long ret = -1;
 		try
 		{
-			rafile.seek(0);
-			int fword = rafile.readInt();
+			int fword = readInt(0);
 			int maptype = fword & 0x0000FF00;
 			int exp = fword & 0x000000FF;
-			if ((fword & 0xFFFF0000) == MAGIC_WORD && exp < 63 && maptype == MAP_TYPE)
+			if ((fword >>> 16) == (MAGIC_WORD & 0xFFFF) && exp < MAX_INDEX_EXP && maptype == MAP_TYPE)
 			{
 				ret = getIndexSizeFromExp(exp);
+			}
+			else
+			{
+				//System.out.println(Integer.toHexString((fword >>> 16)));
+				initializeMap();
+				return readIndexSize();
 			}
 		}
 		catch (IOException e)
 		{
+			throw new RuntimeException(e);
 		}
 		return ret;
 	}
@@ -508,11 +858,9 @@ public class SharedPersistentMap<K, V>
 	 */
 	protected void initializeMap() throws IOException
 	{
-		rafile.setLength(MIN_FILE_SIZE);
-		rafile.write(new byte[(int) MIN_FILE_SIZE]);
-		
-		rafile.seek(0);
-		rafile.writeInt((MAGIC_WORD << 16) | INITIAL_INDEX_EXP);
+		rfile.setLength(MIN_FILE_SIZE);
+		rfile.getChannel().write(ByteBuffer.allocateDirect((int) MIN_FILE_SIZE), 0);
+		writeInt(0, (MAGIC_WORD << 16) | INITIAL_INDEX_EXP);
 	}
 	
 	/**
@@ -522,12 +870,11 @@ public class SharedPersistentMap<K, V>
 	 *  @return The KVNode containing the key or null if not found.
 	 *  @throws IOException Thrown on IO issues.
 	 */
-	protected KVNode findKVPair(K key) throws IOException
+	protected KVNode findKVPair(Object key) throws IOException
 	{
 		long isize = readIndexSize();
 		long modhash = key.hashCode() % isize;
-		rafile.seek(HEADER_SIZE + modhash);
-		long nodepos = rafile.readLong();
+		long nodepos = readLong(HEADER_SIZE + (modhash << REF_SIZE_SHIFT));
 		if (nodepos != 0)
 		{
 			KVNode kvnode = new KVNode(nodepos);
@@ -559,17 +906,16 @@ public class SharedPersistentMap<K, V>
 	{
 		// 8 byte alignment
 		long start = getNextAlignedPosition();
-		int padding = (int) (start - rafile.length());
+		int padding = (int) (start - rfile.length());
 		
-		rafile.setLength(rafile.length() + padding + KVNode.NODE_SIZE);
-		rafile.seek(start);
-		rafile.write(new byte[KVNode.NODE_SIZE]);
+		ByteBuffer buf = ByteBuffer.allocateDirect(KVNode.NODE_SIZE);
+		rfile.setLength(rfile.length() + padding + KVNode.NODE_SIZE);
+		rfile.getChannel().write(ByteBuffer.allocateDirect(KVNode.NODE_SIZE), start);
 		
 		long isize = readIndexSize();
 		long modhash = key.hashCode() % isize;
-		long refpos = HEADER_SIZE + modhash;
-		rafile.seek(refpos);
-		long nodepos = rafile.readLong();
+		long refpos = HEADER_SIZE + (modhash << REF_SIZE_SHIFT);
+		long nodepos = readLong(refpos);
 		if (nodepos != 0)
 		{
 			KVNode prevnode = new KVNode(nodepos);
@@ -578,48 +924,12 @@ public class SharedPersistentMap<K, V>
 			refpos = prevnode.getNextReferencePosition();
 		}
 		
-		rafile.seek(refpos);
-		rafile.writeLong(start);
+		writeLong(refpos, start);
 		
 		KVNode ret = new KVNode(start);
+		ret.setKey(key);
 		return ret;
 	}
-	
-	/**
-	 *  Removes a KV node, including all data associated with it.
-	 *  
-	 *  Note: This only adds the node, not the key.
-	 *  There is also no check if the key is already in the map.
-	 *  
-	 *  @param key The key that needs the KVNode.
-	 *  @return Value of the key node or null .
-	 *  @throws IOException Thrown on IO issues.
-	 */
-	/*protected V removeKVPair(K key) throws IOException
-	{
-		
-		long isize = readIndexSize();
-		long modhash = key.hashCode() % isize;
-		rafile.seek(HEADER_SIZE + modhash);
-		long nodepos = rafile.readLong();
-		if (nodepos != 0)
-		{
-			KVNode kvnode = new KVNode(nodepos);
-			do
-			{
-				K currentkey = kvnode.getKey();
-				if (Objects.equals(key, currentkey))
-				{
-					
-				}
-				
-				kvnode = kvnode.next();
-			}
-			while (kvnode != null);
-		}
-		
-		return null;
-	}*/
 	
 	/**
 	 *  Adds an amount to the garbage counter.
@@ -629,10 +939,8 @@ public class SharedPersistentMap<K, V>
 	 */
 	protected void addGarbage(long garbage) throws IOException
 	{
-		rafile.seek(HDR_POS_GARBAGE_SIZE);
-		garbage += rafile.readLong();
-		rafile.seek(HDR_POS_GARBAGE_SIZE);
-		rafile.writeLong(garbage);
+		garbage += readLong(HDR_POS_GARBAGE_SIZE);
+		writeLong(HDR_POS_GARBAGE_SIZE, garbage);
 	}
 	
 	/**
@@ -643,10 +951,8 @@ public class SharedPersistentMap<K, V>
 	 */
 	protected void addSize(long size) throws IOException
 	{
-		rafile.seek(HDR_POS_MAP_SIZE);
-		size += rafile.readLong();
-		rafile.seek(HDR_POS_MAP_SIZE);
-		rafile.writeLong(size);
+		size += readLong(HDR_POS_MAP_SIZE);
+		writeLong(HDR_POS_MAP_SIZE, size);
 	}
 	
 	// ****************************** Static methods ******************************
@@ -672,7 +978,7 @@ public class SharedPersistentMap<K, V>
 				break;
 			size -= 2;
 		}
-		return (int) size;
+		return size;
 	}
 	
 	/**
@@ -682,7 +988,81 @@ public class SharedPersistentMap<K, V>
 	 */
 	private long getNextAlignedPosition() throws IOException
 	{
-		return (rafile.length() + 7) & ~7L;
+		return (rfile.length() + 7) & ~7L;
+	}
+	
+	/**
+	 *  Reads an int value from the file.
+	 *  
+	 *  @param position Position of the int value in the file.
+	 *  @return The long value.
+	 *  @throws IOException Thrown on IO issues.
+	 */
+	private int readInt(long position) throws IOException
+	{
+		ByteBuffer buf = ByteBuffer.allocateDirect(4);
+		rfile.getChannel().read(buf, position);
+		buf.rewind();
+		return buf.getInt();
+	}
+	
+	/**
+	 *  Writes an int value from the file.
+	 *  
+	 *  @param position Position of the long value in the file.
+	 *  param value The long value.
+	 *  @throws IOException Thrown on IO issues.
+	 */
+	private void writeInt(long position, int value) throws IOException
+	{
+		ByteBuffer buf = ByteBuffer.allocateDirect(4);
+		buf.putInt(value);
+		buf.rewind();
+		rfile.getChannel().write(buf, position);
+	}
+	
+	/**
+	 *  Reads a long value from the file.
+	 *  
+	 *  @param position Position of the long value in the file.
+	 *  @return The long value.
+	 *  @throws IOException Thrown on IO issues.
+	 */
+	private long readLong(long position) throws IOException
+	{
+		ByteBuffer buf = ByteBuffer.allocateDirect(8);
+		rfile.getChannel().read(buf, position);
+		buf.rewind();
+		return buf.getLong();
+	}
+	
+	/**
+	 *  Writes a long value from the file.
+	 *  
+	 *  @param position Position of the long value in the file.
+	 *  param value The long value.
+	 *  @throws IOException Thrown on IO issues.
+	 */
+	private void writeLong(long position, long value) throws IOException
+	{
+		ByteBuffer buf = ByteBuffer.allocateDirect(8);
+		buf.putLong(value);
+		buf.rewind();
+		rfile.getChannel().write(buf, position);
+	}
+	
+	/**
+	 *  Fully reads a buffer at a give position.
+	 *  
+	 *  @param position Position in the file.
+	 *  @param buffer The buffer to be filled.
+	 *  @throws IOException Thrown on IO issues.
+	 */
+	private final void readBuffer(long position, ByteBuffer buffer) throws IOException
+	{
+		int read = 0;
+		while (read < buffer.capacity())
+			read += rfile.getChannel().read(buffer, position + read);
 	}
 	
 	/**
@@ -692,10 +1072,10 @@ public class SharedPersistentMap<K, V>
 	 *  @param exp The exponent.
 	 *  @return Size of the padded index.
 	 */
-	private static long getPaddedIndexSize(int exp)
-	{
-		return 1L << exp;
-	}
+//	private static long getPaddedIndexSize(int exp)
+//	{
+//		return 1L << exp;
+//	}
 	
 	// ****************************** Helper classes and types ******************************
 	
@@ -708,7 +1088,7 @@ public class SharedPersistentMap<K, V>
 	 *  [Value Object Node offset 8 byte]
 	 *
 	 */
-	protected class KVNode
+	protected class KVNode implements Entry<K, V>
 	{
 		/** Size of a KVNode */
 		private static final int NODE_SIZE = 32;
@@ -717,13 +1097,13 @@ public class SharedPersistentMap<K, V>
 		private static final long PREV_OFFSET = 0;
 		
 		/** Offset for previous location. */
-		private static final long NEXT_OFFSET = 8;
+		private static final long NEXT_OFFSET = PREV_OFFSET + REF_SIZE;
 		
 		/** Offset for key object location. */
-		private static final long KEY_OFFSET = 16;
+		private static final long KEY_OFFSET = NEXT_OFFSET + REF_SIZE;
 		
 		/** Offset for value object location. */
-		private static final long VAL_OFFSET = 24;
+		private static final long VAL_OFFSET = KEY_OFFSET + REF_SIZE;
 		
 		/** Position of the KV node within the file. */
 		private long pos;
@@ -747,8 +1127,7 @@ public class SharedPersistentMap<K, V>
 		 */
 		public KVNode previous() throws IOException
 		{
-			goToPos(PREV_OFFSET);
-			pos = rafile.readLong();
+			pos = readLong(pos + PREV_OFFSET);
 			return this;
 		}
 		/**
@@ -759,8 +1138,7 @@ public class SharedPersistentMap<K, V>
 		 */
 		public boolean hasPrevious() throws IOException
 		{
-			goToPos(PREV_OFFSET);
-			return rafile.readLong() != 0;
+			return readLong(pos + PREV_OFFSET) != 0;
 		}
 		
 		/**
@@ -773,8 +1151,7 @@ public class SharedPersistentMap<K, V>
 		 */
 		public KVNode next() throws IOException
 		{
-			goToPos(NEXT_OFFSET);
-			pos = rafile.readLong();
+			pos = readLong(pos + NEXT_OFFSET);
 			if (pos == 0)
 				return null;
 			return this;
@@ -788,8 +1165,7 @@ public class SharedPersistentMap<K, V>
 		 */
 		public boolean hasNext() throws IOException
 		{
-			goToPos(NEXT_OFFSET);
-			return rafile.readLong() != 0;
+			return readLong(pos + NEXT_OFFSET) != 0;
 		}
 		
 		/**
@@ -798,13 +1174,28 @@ public class SharedPersistentMap<K, V>
 		 *  @return Key object.
 		 *  @throws IOException Thrown on IO issues.
 		 */
-		public K getKey() throws IOException
+		public K getKey()
 		{
-			goToPos(KEY_OFFSET);
-			rafile.seek(rafile.readLong());
-			@SuppressWarnings("unchecked")
-			K ret = (K) readObject();
-			return ret;
+			try
+			{
+				long keypos = readLong(pos + KEY_OFFSET);
+				@SuppressWarnings("unchecked")
+				K ret = (K) readObject(keypos);
+				return ret;
+			}
+			catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+		
+		/**
+		 *  Returns the position of the KVNode.
+		 *  @return Position of the KVNode.
+		 */
+		public long getPos()
+		{
+			return pos;
 		}
 		
 		/**
@@ -816,25 +1207,13 @@ public class SharedPersistentMap<K, V>
 		public long getKeySize() throws IOException
 		{
 			long size = 0;
-			goToPos(KEY_OFFSET);
-			long pos = rafile.readLong();
+			long pos = readLong(this.pos + KEY_OFFSET);
+			
 			if (pos != 0)
-			{
-				rafile.seek(pos);
-				size = rafile.readLong();
-			}
+				size = readLong(pos);
+			
 			return size;
 		}
-		
-		/**
-		 *  Sets the key object.
-		 *  TODO: needed?
-		 *  @param key Key object.
-		 */
-		/*public void setKey(K key)
-		{
-			writeObject(KEY_OFFSET, key);
-		}*/
 		
 		/**
 		 *  Gets the value object.
@@ -842,13 +1221,18 @@ public class SharedPersistentMap<K, V>
 		 *  @return Value object.
 		 *  @throws IOException Thrown on IO issues.
 		 */
-		public V getValue() throws IOException
+		public V getValue()
 		{
-			goToPos(VAL_OFFSET);
-			rafile.seek(rafile.readLong());
-			@SuppressWarnings("unchecked")
-			V ret = (V) readObject();
-			return ret;
+			try
+			{
+				@SuppressWarnings("unchecked")
+				V ret = (V) readObject(readLong(pos + VAL_OFFSET));
+				return ret;
+			}
+			catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
 		}
 		
 		/**
@@ -858,16 +1242,21 @@ public class SharedPersistentMap<K, V>
 		 *  @return The previous value.
 		 *  @throws IOException Thrown on IO issues.
 		 */
-		public V setValue(V value) throws IOException
+		public V setValue(V value)
 		{
-			goToPos(VAL_OFFSET);
-			long oldpos = rafile.readLong();
-			rafile.seek(oldpos);
-			@SuppressWarnings("unchecked")
-			V oldval = (V) readObject();
-			if (!Objects.equals(value, oldval))
-				writeObject(VAL_OFFSET, oldval);
-			return oldval;
+			try
+			{
+				long oldpos = readLong(pos + VAL_OFFSET);
+				@SuppressWarnings("unchecked")
+				V oldval = (V) readObject(oldpos);
+				if (!Objects.equals(value, oldval))
+					writeObject(VAL_OFFSET, value);
+				return oldval;
+			}
+			catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
 		}
 		
 		/**
@@ -879,12 +1268,10 @@ public class SharedPersistentMap<K, V>
 		public long getValueSize() throws IOException
 		{
 			long size = 0;
-			goToPos(VAL_OFFSET);
-			long pos = rafile.readLong();
+			long pos = readLong(this.pos + VAL_OFFSET);
 			if (pos != 0)
 			{
-				rafile.seek(pos);
-				size = rafile.readLong();
+				size = readLong(pos);
 			}
 			return size;
 		}
@@ -899,8 +1286,7 @@ public class SharedPersistentMap<K, V>
 		 */
 		public long getPrevious() throws IOException
 		{
-			goToPos(PREV_OFFSET);
-			return rafile.readLong();
+			return readLong(pos + PREV_OFFSET);
 		}
 		
 		/**
@@ -911,8 +1297,7 @@ public class SharedPersistentMap<K, V>
 		 */
 		protected void setPrevious(long prev) throws IOException
 		{
-			goToPos(PREV_OFFSET);
-			rafile.writeLong(prev);
+			writeLong(pos + PREV_OFFSET, prev);
 		}
 		
 		/**
@@ -923,8 +1308,7 @@ public class SharedPersistentMap<K, V>
 		 */
 		public long getNext() throws IOException
 		{
-			goToPos(NEXT_OFFSET);
-			return rafile.readLong();
+			return readLong(pos + NEXT_OFFSET);
 		}
 		
 		/**
@@ -935,8 +1319,7 @@ public class SharedPersistentMap<K, V>
 		 */
 		public void setNext(long next) throws IOException
 		{
-			goToPos(NEXT_OFFSET);
-			rafile.writeLong(next);
+			writeLong(pos + NEXT_OFFSET, next);
 		}
 		
 		/**
@@ -950,26 +1333,43 @@ public class SharedPersistentMap<K, V>
 		}
 		
 		/**
+		 *  Sets the key object.
+		 *  
+		 *  @param key Key object.
+		 *  @throws IOException Thrown on IO issues.
+		 */
+		protected void setKey(K key)
+		{
+			try
+			{
+				writeObject(KEY_OFFSET, key);
+			}
+			catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+		
+		/**
 		 *  Writes an object (key or value), replacing the existing one.
 		 *  Private and final to maximize in-lining potential.
 		 *  
 		 *  @param offset Offset in the KV pair KEY_OFFSET or VALUE_OFFSET
 		 *  @param o Object to write.
+		 *  @throws IOException Thrown on IO issues.
 		 */
 		private final void writeObject(long offset, Object o) throws IOException
 		{
-			goToPos(offset);
-			long oldpos = rafile.readLong();
+			long oldpos = readLong(pos + offset);
 			if (oldpos != 0)
 			{
 				// Old object lost, update garbage
-				rafile.seek(rafile.readLong());
-				addGarbage(rafile.readLong());
+				long size = readLong(oldpos);
+				addGarbage(size);
 			}
 			
 			long newpos = appendObject(o);
-			goToPos(offset);
-			rafile.writeLong(newpos);
+			writeLong(pos + offset, newpos);
 		}
 		
 		/**
@@ -982,20 +1382,25 @@ public class SharedPersistentMap<K, V>
 		 *  
 		 *  @param The object being written.
 		 *  @return The object's starting position.
+		 *  @throws IOException Thrown on IO issues.
 		 */
 		private final long appendObject(Object o) throws IOException
 		{
 			// TODO: Implement Huge Object Support, also possibly user memory mapping for large objects in general
 			
-			byte[] encobj = encoder.apply(o);
+			ByteBuffer encobj = encoder.apply(o);
 			
 			// 8 byte alignment
 			long start = getNextAlignedPosition();
-			int padding = (int) (start - rafile.length());
-			rafile.setLength(rafile.length() + padding + KVNode.NODE_SIZE);
+			int padding = (int) (start - rfile.length());
+			rfile.setLength(rfile.length() + padding + encobj.capacity() + 8);
 			
-			rafile.seek(start);
-			rafile.write(encobj);
+			int size = encobj.capacity();
+			writeLong(start, size);
+			encobj.rewind();
+			decoder.apply(encobj);
+			encobj.rewind();
+			rfile.getChannel().write(encobj, start + 8);
 			
 			return start;
 		}
@@ -1008,56 +1413,93 @@ public class SharedPersistentMap<K, V>
 		 *  [size 8 bytes]
 		 *  [Object data variable]
 		 *  
+		 *  @param position Position in the file.
 		 *  @return The object.
+		 *  @throws IOException Thrown on IO issues.
 		 */
-		private final Object readObject() throws IOException
+		private final Object readObject(long position) throws IOException
 		{
 			Object ret = null;
-			long longsize = rafile.readLong();
-			if (longsize <= Integer.MAX_VALUE)
+			if (position != 0)
 			{
-				int size = (int) longsize;
-				byte[] objbytes = new byte[size];
-				rafile.readFully(objbytes);
-				ret = decoder.apply(objbytes);
-			}
-			else
-			{
-				// TODO: Implement Huge Object Support, also possibly user memory mapping for large objects in general
-				throw new UnsupportedOperationException("Huge Objects not supported by this version of SharedPersistentMap");
+				long longsize = readLong(position);
+				if (longsize <= Integer.MAX_VALUE)
+				{
+					ByteBuffer buf = ByteBuffer.allocateDirect((int) longsize);
+					readBuffer(position + 8, buf);
+					ret = decoder.apply(buf);
+				}
+				else
+				{
+					// TODO: Implement Huge Object Support, also possibly user memory mapping for large objects in general
+					throw new UnsupportedOperationException("Huge Objects not supported by this version of SharedPersistentMap");
+				}
 			}
 			return ret;
 		}
 		
+		
+	}
+	
+	/**
+	 *  Adds reentrant functionality to the locking mechanism by counting
+	 *
+	 */
+	private static abstract class ReentrantLock implements IAutoLock
+	{
+		/** Count of reentrant locks. */
+		private int reentrantcount = 0;
+		
 		/**
-		 *  Seeks the file to the target position.
-		 *  Private and final to maximize in-lining potential.
-		 *  
-		 *  @param offset Offset from the view position.
-		 * @throws IOException Thrown on IO issues.
+		 *  Increases the reentrant count.
 		 */
-		private final void goToPos(long offset) throws IOException
+		public void inc()
 		{
-			long tpos = pos + offset;
-			if (rafile.getFilePointer() != tpos)
-			{
-				rafile.seek(tpos);
-			}
+			++reentrantcount;
+		}
+		
+		/**
+		 *  Decreases reentrant count.
+		 *  @return Reentrant count after Decrease
+		 */
+		public int dec()
+		{
+			return --reentrantcount;
 		}
 	}
 	
+	/**
+	 *  Lambda interface throwing IOExceptions.
+	 *
+	 *  @param <T> Input parameter, usually the map.
+	 *  @param <R> Return value.
+	 *  @throws IOException Thrown on IO issues.
+	 */
 	@FunctionalInterface
 	public interface IOFunction<T, R> {
 	    public R apply(T t) throws IOException;
 	}
 	
+	/**
+	 *  Lambda interface throwing IOExceptions without map being passed.
+	 *
+	 *  @param <R> Return value.
+	 *  @throws IOException Thrown on IO issues.
+	 */
 	@FunctionalInterface
 	public interface IOSupplier<R> {
 		public R get() throws IOException;
 	}
 	
+	/**
+	 *  Lambda interface throwing IOExceptions without any input or output.
+	 *  
+	 *  @throws IOException Thrown on IO issues.
+	 */
 	@FunctionalInterface
 	public interface IORunnable {
 		public void run() throws IOException;
 	}
+	
+	
 }
