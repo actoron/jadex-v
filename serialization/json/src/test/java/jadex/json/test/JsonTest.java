@@ -1,0 +1,102 @@
+package jadex.json.test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import jadex.common.transformation.A;
+import jadex.common.transformation.B;
+import jadex.common.transformation.Test;
+import jadex.transformation.jsonserializer.JsonString;
+import jadex.transformation.jsonserializer.JsonTraverser;
+
+/**
+ * Testcases for writer and reader.
+ */
+public class JsonTest extends Test
+{
+	//-------- methods --------
+
+	/**
+	 * 
+	 */
+	public Object doWrite(Object wo)
+	{
+		return JsonTraverser.objectToByteArray(wo, null, /*StandardCharsets.UTF_8.name()*/"UTF-8"); 
+	}
+
+	/**
+	 * 
+	 */
+	public Object doRead(Object ro)
+	{
+		return JsonTraverser.objectFromByteArray((byte[])ro, null, null, /*StandardCharsets.UTF_8.name()*/"UTF-8", null);
+	}
+
+	/**
+	 * Main for testing single methods.
+	 * /
+	public static void main(String[] args)
+	{
+		JsonTest t = new JsonTest();
+		UnparsedExpression ue = new UnparsedExpression("name", "new String[]{'a', 'b'}");
+		
+		System.out.println(new String((byte[])t.doWrite(ue)));
+		
+		/*t.performTests(1);
+		t.testExcludes();
+		t.testRawJson();* /
+	}*/
+	
+	/**
+	 *  Test raw JSON handling.
+	 */
+	public void testRawJson()
+	{
+		String json = "{ \"fruit\": \"Apple\", \"size\": \"Large\", \"color\": \"Red\" }";
+		JsonString jsonstring = new JsonString(json);
+		String ret = JsonTraverser.objectToString(jsonstring, null, false);
+		assertTrue(ret.equals(json));
+		
+		Object output = JsonTraverser.objectFromString(json, null, JsonString.class);
+		assertTrue(output instanceof JsonString);
+	}
+	
+	/**
+	 *  Test if excludes work.
+	 */
+	public void testExcludes()
+	{
+		A a = new A(3, "s", new B(), new B[0]);
+		Map<Class<?>, Set<String>> ex = new HashMap<Class<?>, Set<String>>();
+		Set<String> exs = new HashSet<String>();
+		exs.add("b");
+		ex.put(A.class, exs);
+		String ret = JsonTraverser.objectToString(a, null, false, ex);
+//		System.out.println("ret: " + ret);
+		
+		assertTrue(ret.contains("\"s\""));
+		assertTrue(!ret.contains("\"b\":"));
+	}
+
+
+	public void testException() {
+		String nullString = null;
+		NullPointerException npe = null;
+		try {
+			nullString.length();
+		} catch (NullPointerException e) {
+			npe = e;
+		}
+		String s = JsonTraverser.objectToString(npe, null);
+		NullPointerException fromString = JsonTraverser.objectFromString(s, null, NullPointerException.class);
+		assertEquals(fromString.getMessage(), npe.getMessage());
+		assertEquals(fromString.getCause(), npe.getCause());
+		assertTrue(Arrays.equals(fromString.getStackTrace(), npe.getStackTrace()));
+	}
+}

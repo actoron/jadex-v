@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import jadex.collection.LRU;
+import jadex.common.SUtil;
 
 /**
  *  Class using the internal fast class path scanner to provide

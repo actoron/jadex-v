@@ -39,11 +39,11 @@ import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import jadex.commons.SClassReader.ClassFileInfo;
+/*import jadex.commons.SClassReader.ClassFileInfo;
 import jadex.commons.SClassReader.ClassInfo;
 import jadex.commons.collection.SCollection;
 import jadex.commons.collection.WeakValueMap;
-
+*/
 
 /**
  *  This class provides several useful static reflection methods.
@@ -54,9 +54,12 @@ public class SReflect
 	
 	/** Class lookup cache (classloader(weak)->Map([name, import]->class)). */
 //	protected static final Map classcache	= Collections.synchronizedMap(new WeakHashMap());
+	//protected static final Map<Tuple2<String, Integer>, Class<?>> classcache	
+	//	= new WeakValueMap<Tuple2<String, Integer>, Class<?>>();
 	protected static final Map<Tuple2<String, Integer>, Class<?>> classcache	
-		= new WeakValueMap<Tuple2<String, Integer>, Class<?>>();
-
+		= new HashMap<Tuple2<String, Integer>, Class<?>>();
+	// todo: do we need the weak value map again?!
+	
 	/** Inner class name lookup cache. */
 	protected static final Map innerclassnamecache	= Collections.synchronizedMap(new WeakHashMap());
 
@@ -661,16 +664,16 @@ public class SReflect
 	/**
 	 *  Select the first available resource from a choice of potential resources.
 	 *  Allows, e.g. swapping alternative implementations in the classpath. 
-	 */
+	 * /
 	public static String chooseAvailableResource(String... choices)
 	{
 		return chooseAvailableResource(SReflect.class.getClassLoader(), choices);
-	}
+	}*/
 	
 	/**
 	 *  Select the first available resource from a choice of potential resources.
 	 *  Allows, e.g. swapping alternative implementations in the classpath. 
-	 */
+	 * /
 	public static String chooseAvailableResource(ClassLoader cl, String... choices)
 	{
 		String	ret	= null;
@@ -705,7 +708,7 @@ public class SReflect
 			}
 		}
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Get the generic signature of a method.
@@ -1969,15 +1972,15 @@ public class SReflect
 	
 	/**
 	 *  Scan for classes that fulfill certain criteria as specified by the file and classfilters.
-	 */
+	 * /
 	public static Class<?>[] scanForClasses(ClassLoader classloader, IFilter filefilter, IFilter classfilter, boolean includebootpath)
 	{
 		return scanForClasses(SUtil.getClasspathURLs(classloader, includebootpath).toArray(new URL[0]), classloader, filefilter, classfilter);
-	}
+	}*/
 	
 	/**
 	 *  Scan for classes that fulfill certain criteria as specified by the file and classfilters.
-	 */
+	 * /
 	public static Class<?>[] scanForClasses(URL[] urls, ClassLoader classloader, IFilter filefilter, IFilter classfilter)
 	{
 		Set<Class<?>>	ret	= new HashSet<Class<?>>();
@@ -2009,7 +2012,7 @@ public class SReflect
 			e.printStackTrace();
 		}
 		return ret.toArray(new Class[ret.size()]);
-	}
+	}*/
 
 	/**
 	 *  Scan for files in a given list of urls.
@@ -2073,7 +2076,7 @@ public class SReflect
 	
 	/**
 	 *  Scan for component classes in the classpath.
-	 */
+	 * /
 	public static Set<ClassInfo> scanForClassInfos(URL[] urls, IFilter<Object> filefilter, IFilter<ClassInfo> classfilter)
 	{
 //		Tuple3<Set<URL>, IFilter<Object>, IFilter<ClassInfo>>	key
@@ -2138,11 +2141,11 @@ public class SReflect
 		}
 		
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Scan for component classes in the classpath.
-	 */
+	 * /
 	public static Set<ClassFileInfo> scanForClassFileInfos(URL[] urls, IFilter<Object> filefilter, IFilter<ClassFileInfo> classfilter)
 	{
 //		Tuple3<Set<URL>, IFilter<Object>, IFilter<ClassInfo>>	key
@@ -2212,7 +2215,7 @@ public class SReflect
 		}
 		
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Scan for files in a given list of urls.

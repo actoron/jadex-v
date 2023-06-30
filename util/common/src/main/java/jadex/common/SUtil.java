@@ -85,14 +85,14 @@ import java.util.zip.ZipOutputStream;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileSystemView;
 
-import jadex.common.collection.IAutoLock;
+/*import jadex.common.collection.IAutoLock;
 import jadex.common.collection.IRwMap;
 import jadex.common.collection.LRU;
 import jadex.common.collection.RwMapWrapper;
 import jadex.common.collection.SCollection;
 import jadex.common.collection.WeakKeyValueMap;
 import jadex.common.random.FastThreadedRandom;
-
+*/
 
 /**
  * This class provides several useful static util methods.
@@ -139,7 +139,7 @@ public class SUtil
 	public static final Charset ISO8859_1 = Charset.forName("ISO-8859-1");
 	
 	/** Access to non-secure fast random source. */
-	public static final Random FAST_RANDOM = new FastThreadedRandom();
+	//public static final Random FAST_RANDOM = new FastThreadedRandom();
 	
 	/** Access to secure random source. */
 	public static volatile SecureRandom SECURE_RANDOM = null;
@@ -2218,7 +2218,7 @@ public class SUtil
 	 * Create a random id with only alphanumeric chars.
 	 * 
 	 * @return The id.
-	 */
+	 * /
 	public static String createPlainRandomId(String name, int length)
 	{
 //		String rand = createUniqueId(name);
@@ -2240,7 +2240,7 @@ public class SUtil
 			retchars[++offset] = ID_CHARS[(random[i] & 0xFF) % 36];
 		}
 		return name+new String(retchars);
-	}
+	}*/
 	
 	/**
 	 * 
@@ -3236,7 +3236,7 @@ public class SUtil
 	}
 	
 	/** The pool used for interning strings. */
-	static final IRwMap<String, String> internpool = new RwMapWrapper<String, String>(new WeakKeyValueMap<>());
+	//static final IRwMap<String, String> internpool = new RwMapWrapper<String, String>(new WeakKeyValueMap<>());
 	
 	/**
 	 *  Optimized version of String.intern() that actually uses String.intern() but
@@ -3244,7 +3244,7 @@ public class SUtil
 	 * 
 	 *  @param string The String being interned.
 	 *  @return The interned String.
-	 */
+	 * /
 	public static final String intern(String string)
 	{
 		String ret = internpool.get(string);
@@ -3261,7 +3261,7 @@ public class SUtil
 			}
 		}
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Removes the (.jar) URLs contained in directories associated
@@ -5703,10 +5703,10 @@ public class SUtil
 	//-------- file/jar hash --------
 	
 	/** LRU for hashes. */
-	protected static LRU<String, Tuple2<Long, String>>	HASHES	= loadHashCache();
+//	protected static LRU<String, Tuple2<Long, String>>	HASHES	= loadHashCache();
 	
 	/** LRU for directory modification dates. */
-	protected static LRU<String, Long>	LASTMODS	= new LRU<String, Long>(1000);
+//	protected static LRU<String, Long>	LASTMODS = new LRU<String, Long>(1000);
 	
 	// Hash code cannot be done here since commons no longer has access to binaryserializer.
 	
@@ -5803,7 +5803,7 @@ public class SUtil
 	
 	/**
 	 *  Load the stored hashes.
-	 */
+	 * /
 	protected static LRU<String, Tuple2<Long, String>>	loadHashCache()
 	{
 		LRU<String, Tuple2<Long, String>>	ret	= null;
@@ -5822,7 +5822,7 @@ public class SUtil
 //		}
 
 		return ret!=null ? ret : new LRU<String, Tuple2<Long,String>>(1000);
-	}
+	}*/
 	
 	/**
 	 *  Save the caclulated hashes.
@@ -5844,7 +5844,7 @@ public class SUtil
 	
 	/**
 	 *  Recursively get the newest last modified of a file or directory tree.
-	 */
+	 * /
 	public static long	getLastModified(File f)
 	{
 		long ret;
@@ -5878,11 +5878,11 @@ public class SUtil
 			ret	= f.lastModified();
 		}
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Recursively get the newest last modified of a file or directory tree.
-	 */
+	 * /
 	public static long	getLastModified(File f, boolean nocache)
 	{
 		long ret;
@@ -5899,7 +5899,7 @@ public class SUtil
 			ret	= f.lastModified();
 		}
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Get the hash code of a directory recursively.
@@ -6105,7 +6105,7 @@ public class SUtil
 	 *  Tries bin (e.g. eclipse), build/classes/main (gradle), target/classes (maven)
 	 *  and uses the directory with the newest file.
 	 *  @return an expression string of the fpr 'new String[]{...}'.
-	 */
+	 * /
 	public static String	getOutputDirsExpression(String projectroot, boolean includeTestClasses)
 	{
 		StringBuffer	ret	= new StringBuffer("new String[]{");
@@ -6129,13 +6129,13 @@ public class SUtil
 		}
 		ret.append("}");
 		return  ret.toString();
-	}
+	}*/
 	
 	/**
 	 *  Try to find the correct classpath root directories for current build tool chain.
 	 *  Tries bin and bin/main (e.g. eclipse), build/classes/main (gradle), target/classes (maven)
 	 *  and uses the directory with the newest file.
-	 */
+	 * /
 	public static File[]	findOutputDirs(String projectroot, boolean includeTestClasses)
 	{
 		File projectDir = findDirForProject(projectroot);
@@ -6210,7 +6210,7 @@ public class SUtil
 		}
 
 		return found!=null ? found.toArray(new File[found.size()]) : new File[0];
-	}
+	}*/
 
 	/**
 	 * Find dir for given project.
