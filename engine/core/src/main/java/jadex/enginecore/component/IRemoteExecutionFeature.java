@@ -1,7 +1,7 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.future.IFuture;
 
 /**
  *  Feature for securely sending and handling remote execution commands.

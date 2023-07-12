@@ -1,16 +1,16 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
 
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.annotation.Timeout;
-import jadex.commons.Tuple2;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.Tuple2;
+import jadex.enginecore.IComponentStep;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.annotation.Timeout;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Handler that sits between connection and message service.

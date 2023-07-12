@@ -1,11 +1,11 @@
-package jadex.bridge.service.annotation;
+package jadex.enginecore.service.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.commons.future.Future;
+import jadex.future.Future;
 
 /**
  *  Specify a timeout period after which the remote invocation

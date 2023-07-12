@@ -1,13 +1,13 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 import java.util.Map;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.service.annotation.FutureReturnType;
-import jadex.bridge.service.annotation.Raw;
-import jadex.bridge.service.annotation.Reference;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.IFuture;
+import jadex.common.ClassInfo;
+import jadex.common.MethodInfo;
+import jadex.enginecore.service.annotation.FutureReturnType;
+import jadex.enginecore.service.annotation.Raw;
+import jadex.enginecore.service.annotation.Reference;
+import jadex.future.IFuture;
 
 
 /**

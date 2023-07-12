@@ -1,4 +1,4 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
 /**
  *  Marker interface for external component feature interfaces.

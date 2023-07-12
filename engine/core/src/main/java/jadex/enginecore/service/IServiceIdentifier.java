@@ -1,10 +1,10 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 import java.util.Set;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.IComponentIdentifier;
 import jadex.bridge.IResourceIdentifier;
+import jadex.common.ClassInfo;
+import jadex.enginecore.IComponentIdentifier;
 
 
 /**

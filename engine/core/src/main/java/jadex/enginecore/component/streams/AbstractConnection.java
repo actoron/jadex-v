@@ -1,10 +1,10 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IConnection;
-import jadex.commons.future.IResultListener;
+import jadex.enginecore.IConnection;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.future.IResultListener;
 
 /**
  *  Abstract base class for connections.

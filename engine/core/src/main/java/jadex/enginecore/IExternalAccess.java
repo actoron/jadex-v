@@ -1,6 +1,5 @@
 package jadex.enginecore;
 
-import jadex.commons.future.IFuture;
 import jadex.enginecore.component.IExternalArgumentsResultsFeature;
 import jadex.enginecore.component.IExternalExecutionFeature;
 import jadex.enginecore.component.IExternalMonitoringComponentFeature;
@@ -13,6 +12,7 @@ import jadex.enginecore.service.annotation.Tag;
 import jadex.enginecore.service.annotation.Tags;
 import jadex.enginecore.service.component.IExternalProvidedServicesFeature;
 import jadex.enginecore.service.component.IExternalRequiredServicesFeature;
+import jadex.future.IFuture;
 
 /**
  *  The interface for accessing components from the outside.

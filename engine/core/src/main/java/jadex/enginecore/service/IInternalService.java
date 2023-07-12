@@ -1,8 +1,8 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.annotation.Reference;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.annotation.Reference;
+import jadex.future.IFuture;
 
 /**
  *  Internal service interface for managing services in service container.

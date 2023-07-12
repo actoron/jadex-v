@@ -1,4 +1,4 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -6,18 +6,18 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IExternalAccess;
 import jadex.bridge.IInputConnection;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateResultListener;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.ITerminationCommand;
-import jadex.commons.future.SubscriptionIntermediateFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IComponentStep;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateResultListener;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminationCommand;
+import jadex.future.SubscriptionIntermediateFuture;
 
 /**
  *  Input connection implementation for byte streams.

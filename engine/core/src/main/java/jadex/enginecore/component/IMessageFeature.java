@@ -1,11 +1,11 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
 import jadex.bridge.IInputConnection;
 import jadex.bridge.IOutputConnection;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.future.IFuture;
 
 /**
  *  Feature for sending messages and handling incoming messages via handlers.

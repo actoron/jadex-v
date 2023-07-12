@@ -1,9 +1,9 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.commons.transformation.annotations.Alias;
+import jadex.common.transformation.annotations.Alias;
+import jadex.enginecore.IComponentIdentifier;
 
 /**
  *  Info sent as content of the init message.

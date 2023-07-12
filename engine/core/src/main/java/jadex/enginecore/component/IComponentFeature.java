@@ -2,7 +2,7 @@ package jadex.enginecore.component;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
-import jadex.commons.future.IFuture;
+import jadex.future.IFuture;
 
 /**
  *  A component feature is a pluggable part of the state and behavior

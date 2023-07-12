@@ -1,6 +1,6 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
-import jadex.commons.transformation.annotations.Alias;
+import jadex.common.transformation.annotations.Alias;
 
 /**
  * 

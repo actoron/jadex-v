@@ -16,6 +16,9 @@ includeBuild('util/bean') {
 includeBuild('util/classreader') {
 }
 
+includeBuild('util/javaparser') {
+}
+
 includeBuild('engine/microagent') {
 }
 
@@ -30,3 +33,4 @@ includeBuild('serialization/binary') {
 
 includeBuild('serialization/json') {
 }
+

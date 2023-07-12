@@ -1,8 +1,8 @@
 package jadex.enginecore;
 
-import jadex.common.future.IFuture;
-import jadex.common.future.ThreadLocalTransferHelper;
 import jadex.enginecore.component.impl.ExecutionComponentFeature.StepInfo;
+import jadex.future.IFuture;
+import jadex.future.ThreadLocalTransferHelper;
 
 /**
  *  Interface for a component step.

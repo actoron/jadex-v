@@ -1,4 +1,4 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,17 +6,17 @@ import java.util.TimerTask;
 
 import jadex.base.Starter;
 import jadex.bridge.ComponentTerminatedException;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.IMessageFeature;
-import jadex.bridge.service.annotation.Timeout;
-import jadex.commons.Tuple;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.Tuple;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IComponentStep;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.component.IMessageFeature;
+import jadex.enginecore.service.annotation.Timeout;
+import jadex.future.DelegationResultListener;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Abstract base class for connection handlers.

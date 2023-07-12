@@ -1,8 +1,8 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.IFuture;
 
 /**
  *  Interface for remotely executable commands.

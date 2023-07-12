@@ -1,8 +1,8 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
-import jadex.bridge.nonfunctional.INFMixedPropertyProvider;
-import jadex.bridge.nonfunctional.INFPropertyProvider;
-import jadex.bridge.service.IServiceIdentifier;
+import jadex.enginecore.nonfunctional.INFMixedPropertyProvider;
+import jadex.enginecore.nonfunctional.INFPropertyProvider;
+import jadex.enginecore.service.IServiceIdentifier;
 
 /**
  *  Feature for non-functional properties.

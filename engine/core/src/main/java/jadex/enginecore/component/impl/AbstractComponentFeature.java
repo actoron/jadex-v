@@ -1,21 +1,17 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.util.Collections;
 
-import jadex.base.Starter;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeature;
-import jadex.bridge.service.component.IInternalRequiredServicesFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.bridge.service.types.cms.PlatformComponent;
-import jadex.bridge.service.types.execution.IExecutionService;
-import jadex.bridge.service.types.factory.IPlatformComponentAccess;
-import jadex.commons.IParameterGuesser;
-import jadex.commons.IValueFetcher;
-import jadex.commons.SimpleParameterGuesser;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeature;
+import jadex.enginecore.service.component.IInternalRequiredServicesFeature;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.enginecore.service.types.clock.IClockService;
+import jadex.enginecore.service.types.cms.PlatformComponent;
+import jadex.enginecore.service.types.execution.IExecutionService;
+import jadex.enginecore.service.types.factory.IPlatformComponentAccess;
+
 
 /**
  *  Abstract feature that implements basic feature methods. 

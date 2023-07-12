@@ -1,6 +1,6 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
-import jadex.bridge.IComponentIdentifier;
+import jadex.enginecore.IComponentIdentifier;
 
 /**
  *   Interface for message headers with meta information / link-level security.
