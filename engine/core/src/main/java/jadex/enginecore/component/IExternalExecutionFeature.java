@@ -1,14 +1,14 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.service.types.cms.CMSStatusEvent;
-import jadex.bridge.service.types.cms.IComponentDescription;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IComponentStep;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.service.types.cms.CMSStatusEvent;
+import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  External perspective of the execution feature. 

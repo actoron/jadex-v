@@ -2,16 +2,16 @@ package jadex.bridge.component;
 
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IExternalAccess;
 import jadex.bridge.ISearchConstraints;
-import jadex.bridge.service.types.cms.CMSStatusEvent;
-import jadex.bridge.service.types.cms.CreationInfo;
-import jadex.bridge.service.types.cms.IComponentDescription;
-import jadex.commons.Tuple2;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.common.Tuple2;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.service.types.cms.CMSStatusEvent;
+import jadex.enginecore.service.types.cms.CreationInfo;
+import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  External perspective of the subcomponents feature.

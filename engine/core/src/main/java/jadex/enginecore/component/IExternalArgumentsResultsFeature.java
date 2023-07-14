@@ -2,9 +2,9 @@ package jadex.enginecore.component;
 
 import java.util.Map;
 
-import jadex.commons.Tuple2;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.common.Tuple2;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  * 

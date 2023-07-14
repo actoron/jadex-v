@@ -1,6 +1,6 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
-import jadex.bridge.service.types.security.ISecurityInfo;
+import jadex.enginecore.service.types.security.ISecurityInfo;
 
 /**
  *  Interface for message handlers.

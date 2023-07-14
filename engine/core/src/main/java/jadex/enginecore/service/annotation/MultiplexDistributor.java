@@ -1,12 +1,12 @@
-package jadex.bridge.service.annotation;
+package jadex.enginecore.service.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.bridge.service.component.multiinvoke.IMultiplexDistributor;
-import jadex.bridge.service.component.multiinvoke.SimpleMultiplexDistributor;
+import jadex.enginecore.service.component.multiinvoke.IMultiplexDistributor;
+import jadex.enginecore.service.component.multiinvoke.SimpleMultiplexDistributor;
 
 /**
  *  

@@ -1,8 +1,8 @@
 package jadex.enginecore.component;
 
-import jadex.commons.future.IIntermediateResultListener;
-import jadex.commons.future.IResultListener;
 import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.future.IIntermediateResultListener;
+import jadex.future.IResultListener;
 
 /**
  *  The execution feature allows to schedule steps

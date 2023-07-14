@@ -1,6 +1,6 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
-import jadex.bridge.component.impl.remotecommands.ProxyReference;
+import jadex.enginecore.component.impl.remotecommands.ProxyReference;
 
 /**
  *  Marker interface for broken proxies.

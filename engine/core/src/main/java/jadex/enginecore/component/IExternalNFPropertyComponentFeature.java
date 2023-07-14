@@ -1,13 +1,12 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
 import java.util.Map;
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.nonfunctional.INFProperty;
-import jadex.bridge.nonfunctional.INFPropertyMetaInfo;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.enginecore.nonfunctional.INFProperty;
+import jadex.enginecore.nonfunctional.INFPropertyMetaInfo;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.future.IFuture;
 
 /**
  * External perspective of the monitoring feature.

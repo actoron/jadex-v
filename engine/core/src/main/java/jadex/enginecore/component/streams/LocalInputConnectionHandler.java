@@ -1,4 +1,4 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
 import java.util.Map;
 

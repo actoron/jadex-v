@@ -1,8 +1,8 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
 import java.util.Map;
 
-import jadex.commons.future.IFuture;
+import jadex.future.IFuture;
 
 /**
  * 

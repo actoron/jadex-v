@@ -1,4 +1,4 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -8,16 +8,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
 
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.annotation.Timeout;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple2;
-import jadex.commons.future.CounterResultListener;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.enginecore.IComponentStep;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.annotation.Timeout;
+import jadex.future.CounterResultListener;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 //import javax.swing.JPanel;
 //import javax.swing.JTextField;

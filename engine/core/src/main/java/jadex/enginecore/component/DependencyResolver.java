@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.commons.transformation.traverser.SCloner;
+import jadex.common.transformation.traverser.SCloner;
 
 /**
  *  The dependency resolver can be used to find a valid

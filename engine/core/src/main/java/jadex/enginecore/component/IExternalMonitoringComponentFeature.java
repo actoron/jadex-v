@@ -1,11 +1,11 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
-import jadex.bridge.service.types.monitoring.IMonitoringEvent;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishTarget;
-import jadex.commons.IFilter;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.common.IFilter;
+import jadex.enginecore.service.types.monitoring.IMonitoringEvent;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishTarget;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  External perspective of the monitoring feature.

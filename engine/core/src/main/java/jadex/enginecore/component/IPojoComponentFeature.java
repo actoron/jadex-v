@@ -1,4 +1,4 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
 /**
  *  Feature to retrieve a pojo for the component.

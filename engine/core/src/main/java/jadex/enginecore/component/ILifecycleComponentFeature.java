@@ -1,4 +1,4 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
 /**
  *  Lifecycle feature for components.

@@ -1,4 +1,4 @@
-package jadex.bridge.service.annotation;
+package jadex.enginecore.service.annotation;
 
 
 import java.lang.annotation.ElementType;

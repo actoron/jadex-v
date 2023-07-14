@@ -1,6 +1,6 @@
-package jadex.bridge.component.streams;
+package jadex.enginecore.component.streams;
 
-import jadex.bridge.IComponentIdentifier;
+import jadex.enginecore.IComponentIdentifier;
 
 /**
  *  Data container for a streaming packet.
