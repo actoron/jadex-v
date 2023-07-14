@@ -61,12 +61,11 @@ public class BufferInputStream extends InputStream
 		if (rem == 0)
 			return -1;
 		
-		if (rem < len)
-		{
-			buffer.get(b, off, rem);
-			return rem;
-		}
-		return b.length;
+		int maxread = Math.min(len, rem);
+		
+		buffer.get(b, off, maxread);
+		
+		return maxread;
 	}
 	
 	/**
