@@ -41,7 +41,7 @@ import jadex.common.SUtil;
  *  [Object size 8 byte]
  *  [Object data variable]
  */
-public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
+public class SharedPersistentMap<K, V> implements Map<K, V>
 {
 	/** Default maximum percentage of garbage in the map file that needs to be cleaned up. */
 	protected static final double MAX_GARBAGE_PERCENTAGE = 20.0;
@@ -205,7 +205,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	/**
 	 *  Creates a new map, configure with builder pattern.
 	 */
-	public SharedMemMapPersistentMap()
+	public SharedPersistentMap()
 	{
 		//mapping.duplicate()
 	}
@@ -218,12 +218,12 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  @param path P
 	 *  @return 
 	 */
-	public SharedMemMapPersistentMap<K, V> setFile(String path)
+	public SharedPersistentMap<K, V> setFile(String path)
 	{
 		return setFile(new File(path));
 	}
 	
-	public SharedMemMapPersistentMap<K, V> setFile(File file)
+	public SharedPersistentMap<K, V> setFile(File file)
 	{
 		this.file = file;
 		return this;
@@ -235,7 +235,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  @param percentage Desired load percentage.
 	 *  @return
 	 */
-	public SharedMemMapPersistentMap<K, V> setLoadPercentage(double percentage)
+	public SharedPersistentMap<K, V> setLoadPercentage(double percentage)
 	{
 		maxloadfactor = percentage / 100.0;
 		return this;
@@ -248,7 +248,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  @param percentage Maximum allowed percentage of garbage.
 	 *  @return This map.
 	 */
-	public SharedMemMapPersistentMap<K, V> setMaxGarbage(double percentage)
+	public SharedPersistentMap<K, V> setMaxGarbage(double percentage)
 	{
 		maxgarbagefactor = percentage / 100.0;
 		return this;
@@ -260,7 +260,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  @param encoder Encoder for encoding/serializing objects.
 	 *  @return This map.
 	 */
-	public SharedMemMapPersistentMap<K, V> setEncoder(Function<Object, ByteBuffer> encoder)
+	public SharedPersistentMap<K, V> setEncoder(Function<Object, ByteBuffer> encoder)
 	{
 		this.encoder = encoder;
 		return this;
@@ -272,7 +272,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  @param decoder Encoder for decoding objects.
 	 *  @return This map.
 	 */
-	public SharedMemMapPersistentMap<K, V> setDecoder(Function<ByteBuffer, Object> decoder)
+	public SharedPersistentMap<K, V> setDecoder(Function<ByteBuffer, Object> decoder)
 	{
 		this.decoder = decoder;
 		return this;
@@ -286,7 +286,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  @param sync True, if writes should be written to storage immediately.
 	 *  @return This map.
 	 */
-	public SharedMemMapPersistentMap<K, V> setSynchronized(boolean sync)
+	public SharedPersistentMap<K, V> setSynchronized(boolean sync)
 	{
 		mode = sync ? "rwd" : "rw";
 		return this;
@@ -296,7 +296,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  Opens the backing file, after this operation the map is ready for use.
 	 *  @return This map.
 	 */
-	public SharedMemMapPersistentMap<K, V> open()
+	public SharedPersistentMap<K, V> open()
 	{
 		try
 		{
@@ -318,7 +318,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  Closes the backing file, after this operation the map must be opened again before use.
 	 *  @return This map.
 	 */
-	public SharedMemMapPersistentMap<K, V> close()
+	public SharedPersistentMap<K, V> close()
 	{
 		try
 		{
@@ -653,7 +653,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  @param transaction Transaction to perform.
 	 *  @return Return value of lambda expression.
 	 */
-	public <R> R readTransaction(IOFunction<SharedMemMapPersistentMap<K, V>, R> transaction)
+	public <R> R readTransaction(IOFunction<SharedPersistentMap<K, V>, R> transaction)
 	{
 		try(IAutoLock l = readLock())
 		{
@@ -702,7 +702,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 	 *  @param transaction Transaction to perform.
 	 *  @return Return value of lambda expression.
 	 */
-	public <R> R writeTransaction(IOFunction<SharedMemMapPersistentMap<K, V>, R> transaction)
+	public <R> R writeTransaction(IOFunction<SharedPersistentMap<K, V>, R> transaction)
 	{
 		try(IAutoLock l = writeLock())
 		{
@@ -1809,7 +1809,7 @@ public class SharedMemMapPersistentMap<K, V> implements Map<K, V>
 		t = System.currentTimeMillis() - t;
 		System.out.println("HashMap filled with " + tsize + " K-V pairs: " + t + "ms.");
 		
-		SharedMemMapPersistentMap<String, String> smap = new SharedMemMapPersistentMap<>();
+		SharedPersistentMap<String, String> smap = new SharedPersistentMap<>();
 		smap.setFile(file.getAbsolutePath()).open();
 		smap.clear();
 		
