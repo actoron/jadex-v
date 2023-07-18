@@ -1,10 +1,10 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
-import jadex.bridge.component.IExternalComponentFeature;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.ITerminableIntermediateFuture;
+import jadex.enginecore.component.IExternalComponentFeature;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableIntermediateFuture;
 
 /**
  *  External perspective of the required services feature.

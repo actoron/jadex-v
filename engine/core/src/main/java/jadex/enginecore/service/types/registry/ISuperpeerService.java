@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.registry;
+package jadex.enginecore.service.types.registry;
 
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.annotation.Service;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.service.annotation.Security;
+import jadex.enginecore.service.annotation.Service;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Service for service registry superpeers.

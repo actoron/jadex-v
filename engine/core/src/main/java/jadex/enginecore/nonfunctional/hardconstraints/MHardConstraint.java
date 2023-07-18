@@ -1,6 +1,6 @@
-package jadex.bridge.nonfunctional.hardconstraints;
+package jadex.enginecore.nonfunctional.hardconstraints;
 
-import jadex.bridge.modelinfo.UnparsedExpression;
+import jadex.common.UnparsedExpression;
 
 /**
  *  A hard constraint for non-functional properties.

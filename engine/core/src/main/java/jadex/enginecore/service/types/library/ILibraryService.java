@@ -1,21 +1,19 @@
-package jadex.bridge.service.types.library;
+package jadex.enginecore.service.types.library;
 
 import java.net.URL;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.IInputConnection;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.service.annotation.CheckNotNull;
-import jadex.bridge.service.annotation.Excluded;
-import jadex.bridge.service.annotation.GuiClassName;
-import jadex.bridge.service.annotation.Reference;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.Tuple2;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.common.Tuple2;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.component.streams.IInputConnection;
+import jadex.enginecore.service.annotation.CheckNotNull;
+import jadex.enginecore.service.annotation.Excluded;
+import jadex.enginecore.service.annotation.GuiClassName;
+import jadex.enginecore.service.annotation.Reference;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /** 
  *  Interface for the Library Service. It provides a platform service

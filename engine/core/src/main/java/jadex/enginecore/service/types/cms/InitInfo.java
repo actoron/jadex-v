@@ -1,7 +1,7 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
-import jadex.bridge.service.types.factory.IPlatformComponentAccess;
-import jadex.commons.future.Future;
+import jadex.enginecore.service.types.factory.IPlatformComponentAccess;
+import jadex.future.Future;
 
 /**
  *  Struct that stores information about initing components.

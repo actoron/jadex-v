@@ -1,9 +1,9 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.future.IForwardCommandFuture;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.IForwardCommandFuture;
+import jadex.future.IFuture;
 
 /**
  *  Remote command for sending future commands in ICommandFuture.

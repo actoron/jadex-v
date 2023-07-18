@@ -1,4 +1,4 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -8,18 +8,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.SFuture;
-import jadex.bridge.service.annotation.CheckIndex;
-import jadex.bridge.service.annotation.CheckNotNull;
-import jadex.bridge.service.annotation.CheckState;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.IValueFetcher;
-import jadex.commons.SReflect;
-import jadex.commons.SUtil;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.IValueFetcher;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.annotation.CheckIndex;
+import jadex.enginecore.service.annotation.CheckNotNull;
+import jadex.enginecore.service.annotation.CheckState;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.javaccimpl.ExpressionNode;
 import jadex.javaparser.javaccimpl.ParameterNode;

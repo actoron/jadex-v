@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.threadpool;
+package jadex.enginecore.service.types.threadpool;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import jadex.commons.SUtil;
-import jadex.commons.concurrent.IThreadPool;
+import jadex.common.SUtil;
+import jadex.concurrent.IThreadPool;
 
 /**
  *  

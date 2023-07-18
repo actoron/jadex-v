@@ -1,4 +1,4 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,18 +7,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.sensor.service.TagProperty;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.RequiredServiceBinding;
-import jadex.bridge.service.RequiredServiceInfo;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.component.BasicServiceInvocationHandler;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple3;
+import jadex.common.ClassInfo;
+import jadex.common.SUtil;
+import jadex.common.Tuple3;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.sensor.service.TagProperty;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.RequiredServiceBinding;
+import jadex.enginecore.service.RequiredServiceInfo;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.component.BasicServiceInvocationHandler;
 
 /**
  *  Service query definition. T is the return type for search methods.

@@ -1,4 +1,4 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.service.IServiceIdentifier;
+import jadex.common.ClassInfo;
+import jadex.enginecore.service.IServiceIdentifier;
 
 /**
  *  Responsible for extracting values.

@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.settings;
+package jadex.enginecore.service.types.settings;
 
 public interface IPlatformSettings
 {

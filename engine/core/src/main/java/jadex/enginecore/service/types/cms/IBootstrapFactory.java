@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.service.types.factory.IComponentFactory;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.service.types.factory.IComponentFactory;
+import jadex.future.IFuture;
 
 /**
  *  Interface for bootstrap component factories, i.e.

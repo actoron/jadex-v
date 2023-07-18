@@ -1,11 +1,11 @@
-package jadex.bridge.service.types.servicepool;
+package jadex.enginecore.service.types.servicepool;
 
-import jadex.bridge.service.PublishInfo;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.annotation.Service;
-import jadex.bridge.service.types.cms.CreationInfo;
-import jadex.commons.IPoolStrategy;
-import jadex.commons.future.IFuture;
+import jadex.common.IPoolStrategy;
+import jadex.enginecore.service.PublishInfo;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.annotation.Service;
+import jadex.enginecore.service.types.cms.CreationInfo;
+import jadex.future.IFuture;
 
 /**
  *  Service pool service that allows for adding and

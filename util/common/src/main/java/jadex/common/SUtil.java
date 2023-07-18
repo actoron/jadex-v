@@ -85,15 +85,6 @@ import java.util.zip.ZipOutputStream;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileSystemView;
 
-/*import jadex.common.collection.IAutoLock;
-import jadex.common.collection.IRwMap;
-import jadex.common.collection.LRU;
-import jadex.common.collection.RwMapWrapper;
-import jadex.common.collection.SCollection;
-import jadex.common.collection.WeakKeyValueMap;
-import jadex.common.random.FastThreadedRandom;
-*/
-
 /**
  * This class provides several useful static util methods.
  */
@@ -139,7 +130,7 @@ public class SUtil
 	public static final Charset ISO8859_1 = Charset.forName("ISO-8859-1");
 	
 	/** Access to non-secure fast random source. */
-	//public static final Random FAST_RANDOM = new FastThreadedRandom();
+	public static final Random FAST_RANDOM = new FastThreadedRandom();
 	
 	/** Access to secure random source. */
 	public static volatile SecureRandom SECURE_RANDOM = null;
@@ -2217,7 +2208,7 @@ public class SUtil
 	 * Create a random id with only alphanumeric chars.
 	 * 
 	 * @return The id.
-	 * /
+	 */
 	public static String createPlainRandomId(String name, int length)
 	{
 //		String rand = createUniqueId(name);
@@ -2239,7 +2230,7 @@ public class SUtil
 			retchars[++offset] = ID_CHARS[(random[i] & 0xFF) % 36];
 		}
 		return name+new String(retchars);
-	}*/
+	}
 	
 	/**
 	 * 
@@ -3243,7 +3234,7 @@ public class SUtil
 	 * 
 	 *  @param string The String being interned.
 	 *  @return The interned String.
-	 * /
+	 */
 	public static final String intern(String string)
 	{
 		String ret = internpool.get(string);
@@ -3260,7 +3251,7 @@ public class SUtil
 			}
 		}
 		return ret;
-	}*/
+	}
 	
 	/**
 	 *  Removes the (.jar) URLs contained in directories associated

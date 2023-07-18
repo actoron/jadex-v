@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.email;
+package jadex.enginecore.service.types.email;
 
 import java.util.Arrays;
 

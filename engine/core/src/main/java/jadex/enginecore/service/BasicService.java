@@ -16,20 +16,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.IResourceIdentifier;
 import jadex.bridge.SFuture;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.INFPropertyComponentFeature;
-import jadex.bridge.component.impl.NFPropertyComponentFeature;
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.component.INFPropertyComponentFeature;
+import jadex.enginecore.component.impl.NFPropertyComponentFeature;
 import jadex.enginecore.sensor.service.TagProperty;
 import jadex.enginecore.service.annotation.GuiClass;
 import jadex.enginecore.service.annotation.GuiClassName;
@@ -40,6 +37,9 @@ import jadex.enginecore.service.annotation.Timeout;
 import jadex.enginecore.service.component.BasicServiceInvocationHandler;
 import jadex.enginecore.service.component.IProvidedServicesFeature;
 import jadex.enginecore.service.search.ServiceRegistry;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  *  Basic service provide a simple default isValid() implementation

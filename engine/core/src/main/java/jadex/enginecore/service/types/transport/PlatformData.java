@@ -1,7 +1,7 @@
-package jadex.bridge.service.types.transport;
+package jadex.enginecore.service.types.transport;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.commons.transformation.annotations.Include;
+import jadex.common.transformation.annotations.Include;
+import jadex.enginecore.IComponentIdentifier;
 
 /**
  *  Transfer object for information about a connected platform.

@@ -1,10 +1,10 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.reflect.Method;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.collection.LRU;
+import jadex.collection.LRU;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.component.ServiceInvocationContext;
 
 /**
  *  Abstract interceptor class that uses a LRU for caching applicable states of invocations

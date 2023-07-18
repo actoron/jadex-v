@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
 import java.lang.reflect.Method;
 import java.util.Locale;
@@ -10,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import jadex.bridge.service.types.clock.IClockService;
+import jadex.enginecore.service.types.clock.IClockService;
 
 
 /**

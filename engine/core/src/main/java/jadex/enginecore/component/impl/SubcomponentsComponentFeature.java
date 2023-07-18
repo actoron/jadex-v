@@ -1,4 +1,4 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,54 +11,53 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.ComponentTerminatedException;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.IPriorityComponentStep;
-import jadex.bridge.ISearchConstraints;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.DependencyResolver;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.IMonitoringComponentFeature;
-import jadex.bridge.component.ISubcomponentsFeature;
-import jadex.bridge.modelinfo.ComponentInstanceInfo;
-import jadex.bridge.modelinfo.ConfigurationInfo;
-import jadex.bridge.modelinfo.IModelInfo;
-import jadex.bridge.modelinfo.SubcomponentTypeInfo;
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.bridge.service.RequiredServiceBinding;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.bridge.service.types.cms.CMSComponentDescription;
-import jadex.bridge.service.types.cms.CMSStatusEvent;
-import jadex.bridge.service.types.cms.CreationInfo;
-import jadex.bridge.service.types.cms.IComponentDescription;
-import jadex.bridge.service.types.cms.PlatformComponent;
-import jadex.bridge.service.types.cms.SComponentManagementService;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishTarget;
-import jadex.bridge.service.types.monitoring.MonitoringEvent;
-import jadex.commons.MultiException;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple2;
-import jadex.commons.Tuple3;
-import jadex.commons.collection.MultiCollection;
-import jadex.commons.future.CollectionResultListener;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.FutureBarrier;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.IntermediateDefaultResultListener;
-import jadex.commons.future.IntermediateDelegationResultListener;
-import jadex.commons.future.IntermediateFuture;
-import jadex.commons.future.SubscriptionIntermediateFuture;
+import jadex.collection.MultiCollection;
+import jadex.common.MultiException;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.common.Tuple3;
+import jadex.common.UnparsedExpression;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.IPriorityComponentStep;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.ComponentTerminatedException;
+import jadex.enginecore.component.DependencyResolver;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.component.IMonitoringComponentFeature;
+import jadex.enginecore.component.ISubcomponentsFeature;
+import jadex.enginecore.modelinfo.ComponentInstanceInfo;
+import jadex.enginecore.modelinfo.ConfigurationInfo;
+import jadex.enginecore.modelinfo.IModelInfo;
+import jadex.enginecore.modelinfo.SubcomponentTypeInfo;
+import jadex.enginecore.service.RequiredServiceBinding;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.enginecore.service.types.clock.IClockService;
+import jadex.enginecore.service.types.cms.CMSComponentDescription;
+import jadex.enginecore.service.types.cms.CMSStatusEvent;
+import jadex.enginecore.service.types.cms.CreationInfo;
+import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.enginecore.service.types.cms.PlatformComponent;
+import jadex.enginecore.service.types.cms.SComponentManagementService;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishTarget;
+import jadex.enginecore.service.types.monitoring.MonitoringEvent;
+import jadex.future.CollectionResultListener;
+import jadex.future.DelegationResultListener;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.FutureBarrier;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IResultListener;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.IntermediateDefaultResultListener;
+import jadex.future.IntermediateDelegationResultListener;
+import jadex.future.IntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
 
@@ -1082,11 +1081,11 @@ public class SubcomponentsComponentFeature extends AbstractComponentFeature impl
 	/**
 	 * Search for components matching the given description.
 	 * @return An array of matching component descriptions.
-	 */
+	 * /
 	public IFuture<IComponentDescription[]> searchComponents(IComponentDescription adesc, ISearchConstraints con)
 	{
 		return getComponent().searchComponents(adesc, con);
-	}
+	}*/
 	
 	/**
 	 *  Create a subcomponent.

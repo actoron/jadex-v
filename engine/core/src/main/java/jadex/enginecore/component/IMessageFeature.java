@@ -2,9 +2,9 @@ package jadex.enginecore.component;
 
 import java.util.Map;
 
-import jadex.bridge.IInputConnection;
-import jadex.bridge.IOutputConnection;
 import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.component.streams.IInputConnection;
+import jadex.enginecore.component.streams.IOutputConnection;
 import jadex.future.IFuture;
 
 /**

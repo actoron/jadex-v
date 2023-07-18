@@ -1,20 +1,20 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.util.Collection;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IIntermediateResultListener;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.IntermediateEmptyResultListener;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.component.IProvidedServicesFeature;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IIntermediateResultListener;
+import jadex.future.IResultListener;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.IntermediateEmptyResultListener;
 
 /**
  *  Interceptor for observing method calls start and end e.g. for timing.

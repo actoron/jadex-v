@@ -1,4 +1,4 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -6,9 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bridge.sensor.service.IMethodInvocationListener;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.MethodInfo;
+import jadex.common.MethodInfo;
+import jadex.enginecore.sensor.service.IMethodInvocationListener;
+import jadex.enginecore.service.IServiceIdentifier;
 
 /**
  * 

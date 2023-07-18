@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.library;
+package jadex.enginecore.service.types.library;
 
 import java.io.IOException;
 import java.io.InputStream;

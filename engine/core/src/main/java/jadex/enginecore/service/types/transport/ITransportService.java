@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.transport;
+package jadex.enginecore.service.types.transport;
 
-import jadex.bridge.component.IMsgHeader;
-import jadex.bridge.service.annotation.Reference;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.ITerminableFuture;
+import jadex.enginecore.component.IMsgHeader;
+import jadex.enginecore.service.annotation.Reference;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.ITerminableFuture;
 
 /**
  *  Interface for a transport service.

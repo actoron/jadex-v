@@ -1,13 +1,12 @@
 package jadex.enginecore.nonfunctional.hardconstraints;
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.nonfunctional.SNFPropertyProvider;
-import jadex.bridge.service.IService;
-import jadex.common.IAsyncFilter;
-import jadex.common.future.DelegationResultListener;
-import jadex.common.future.ExceptionDelegationResultListener;
-import jadex.common.future.Future;
-import jadex.common.future.IFuture;
+import jadex.enginecore.IAsyncFilter;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.service.IService;
+import jadex.future.DelegationResultListener;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  * 

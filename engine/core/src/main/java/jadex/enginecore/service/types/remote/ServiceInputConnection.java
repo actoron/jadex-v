@@ -1,19 +1,19 @@
-package jadex.bridge.service.types.remote;
+package jadex.enginecore.service.types.remote;
 
 
 import java.io.OutputStream;
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInputConnection;
-import jadex.bridge.IOutputConnection;
-import jadex.commons.ICommand;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.ITerminableIntermediateFuture;
-import jadex.commons.future.IntermediateDelegationResultListener;
-import jadex.commons.future.SubscriptionIntermediateDelegationFuture;
-import jadex.commons.future.SubscriptionIntermediateFuture;
+import jadex.common.ICommand;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.component.streams.IInputConnection;
+import jadex.enginecore.component.streams.IOutputConnection;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.IntermediateDelegationResultListener;
+import jadex.future.SubscriptionIntermediateDelegationFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 
 /**
  * 

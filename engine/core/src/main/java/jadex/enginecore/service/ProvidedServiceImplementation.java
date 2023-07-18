@@ -3,7 +3,7 @@ package jadex.enginecore.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import jadex.bridge.modelinfo.UnparsedExpression;
+import jadex.common.UnparsedExpression;
 import jadex.enginecore.service.component.BasicServiceInvocationHandler;
 
 /**

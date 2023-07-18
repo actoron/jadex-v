@@ -1,4 +1,4 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
 /**
  *  Interface to be implemented by the user

@@ -1,12 +1,12 @@
-package jadex.bridge.service.types.chat;
+package jadex.enginecore.service.types.chat;
 
-import jadex.bridge.IInputConnection;
-import jadex.bridge.IOutputConnection;
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ITerminableFuture;
-import jadex.commons.future.ITerminableIntermediateFuture;
+import jadex.enginecore.component.streams.IInputConnection;
+import jadex.enginecore.component.streams.IOutputConnection;
+import jadex.enginecore.service.annotation.Security;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
+import jadex.future.ITerminableIntermediateFuture;
 
 
 /**

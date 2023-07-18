@@ -1,9 +1,9 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 import java.util.Collection;
 
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ITerminableIntermediateFuture;
+import jadex.future.IFuture;
+import jadex.future.ITerminableIntermediateFuture;
 
 /**
  *  Interface for fetching required services.

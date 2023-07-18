@@ -1,8 +1,8 @@
-package jadex.bridge.component;
+package jadex.enginecore.component;
 
 import java.util.Map;
 
-import jadex.bridge.ISearchConstraints;
+//import jadex.enginecore.ISearchConstraints;
 import jadex.common.Tuple2;
 import jadex.enginecore.IComponentIdentifier;
 import jadex.enginecore.IExternalAccess;
@@ -81,7 +81,7 @@ public interface IExternalSubcomponentsFeature extends IExternalComponentFeature
 	 * Search for subcomponents matching the given description.
 	 * @return An array of matching component descriptions.
 	 */
-	public IFuture<IComponentDescription[]> searchComponents(IComponentDescription adesc, ISearchConstraints con);
+	//public IFuture<IComponentDescription[]> searchComponents(IComponentDescription adesc, ISearchConstraints con);
 	
 	/**
 	 *  Get the children (if any) component identifiers.

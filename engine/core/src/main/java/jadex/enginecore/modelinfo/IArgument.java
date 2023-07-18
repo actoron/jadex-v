@@ -1,6 +1,7 @@
 package jadex.enginecore.modelinfo;
 
 import jadex.common.ClassInfo;
+import jadex.common.UnparsedExpression;
 
 
 /**

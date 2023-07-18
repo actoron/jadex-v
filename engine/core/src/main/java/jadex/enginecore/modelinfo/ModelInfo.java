@@ -9,10 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.IErrorReport;
-import jadex.bridge.IResourceIdentifier;
 import jadex.common.SUtil;
-import jadex.commons.transformation.annotations.Exclude;
+import jadex.common.UnparsedExpression;
+import jadex.common.transformation.annotations.Exclude;
+import jadex.enginecore.IErrorReport;
+import jadex.enginecore.IResourceIdentifier;
 import jadex.enginecore.component.IComponentFeatureFactory;
 import jadex.enginecore.service.ProvidedServiceInfo;
 import jadex.enginecore.service.RequiredServiceInfo;

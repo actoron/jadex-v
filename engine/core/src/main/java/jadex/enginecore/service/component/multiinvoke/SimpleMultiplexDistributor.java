@@ -1,13 +1,13 @@
-package jadex.bridge.service.component.multiinvoke;
+package jadex.enginecore.service.component.multiinvoke;
 
 import java.lang.reflect.Method;
 
-import jadex.bridge.service.IService;
-import jadex.commons.ConstantFilter;
-import jadex.commons.IFilter;
-import jadex.commons.Tuple2;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IntermediateFuture;
+import jadex.common.ConstantFilter;
+import jadex.common.IFilter;
+import jadex.common.Tuple2;
+import jadex.enginecore.service.IService;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IntermediateFuture;
 
 /**
  *  Simple multiplex call distributor.

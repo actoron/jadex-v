@@ -2,6 +2,9 @@ package jadex.enginecore.component.impl;
 
 import java.util.Collections;
 
+import jadex.common.IParameterGuesser;
+import jadex.common.IValueFetcher;
+import jadex.common.SimpleParameterGuesser;
 import jadex.enginecore.IInternalAccess;
 import jadex.enginecore.component.ComponentCreationInfo;
 import jadex.enginecore.component.IComponentFeature;
@@ -11,6 +14,7 @@ import jadex.enginecore.service.types.clock.IClockService;
 import jadex.enginecore.service.types.cms.PlatformComponent;
 import jadex.enginecore.service.types.execution.IExecutionService;
 import jadex.enginecore.service.types.factory.IPlatformComponentAccess;
+import jadex.future.IFuture;
 
 
 /**
@@ -21,7 +25,7 @@ public abstract class AbstractComponentFeature	implements IComponentFeature
 	//-------- attributes --------
 	
 	/** The component. */
-	protected IInternalAccess	component;
+	protected IInternalAccess component;
 	
 	/** The creation info. */
 	protected ComponentCreationInfo	cinfo;

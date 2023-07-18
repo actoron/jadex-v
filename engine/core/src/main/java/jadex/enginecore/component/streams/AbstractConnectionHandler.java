@@ -4,12 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
 
-import jadex.base.Starter;
-import jadex.bridge.ComponentTerminatedException;
 import jadex.common.Tuple;
 import jadex.enginecore.IComponentIdentifier;
 import jadex.enginecore.IComponentStep;
 import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentTerminatedException;
 import jadex.enginecore.component.IExecutionFeature;
 import jadex.enginecore.component.IMessageFeature;
 import jadex.enginecore.service.annotation.Timeout;

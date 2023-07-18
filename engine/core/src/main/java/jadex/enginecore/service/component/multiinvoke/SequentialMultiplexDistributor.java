@@ -1,18 +1,18 @@
-package jadex.bridge.service.component.multiinvoke;
+package jadex.enginecore.service.component.multiinvoke;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import jadex.bridge.service.IService;
-import jadex.commons.IFilter;
-import jadex.commons.SReflect;
-import jadex.commons.Tuple2;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.IFilter;
+import jadex.common.SReflect;
+import jadex.common.Tuple2;
+import jadex.enginecore.service.IService;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IResultListener;
 
 /**
  *  Sequential call distributor.

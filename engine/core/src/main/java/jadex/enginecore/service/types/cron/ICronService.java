@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.cron;
+package jadex.enginecore.service.types.cron;
 
-import jadex.bridge.service.annotation.CheckNotNull;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.service.annotation.CheckNotNull;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Interface for adding and removing cron jobs.

@@ -1,7 +1,7 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
-import jadex.bridge.component.IMsgHeader;
-import jadex.bridge.service.types.security.ISecurityInfo;
+import jadex.enginecore.component.IMsgHeader;
+import jadex.enginecore.service.types.security.ISecurityInfo;
 
 /**
  *  Represents the event of a sent or received message for monitoring of communication.

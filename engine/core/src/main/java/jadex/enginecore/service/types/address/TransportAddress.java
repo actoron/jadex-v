@@ -1,12 +1,12 @@
-package jadex.bridge.service.types.address;
+package jadex.enginecore.service.types.address;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import jadex.bridge.ComponentIdentifier;
-import jadex.bridge.IComponentIdentifier;
+import jadex.enginecore.ComponentIdentifier;
+import jadex.enginecore.IComponentIdentifier;
 
 /**
  *  Class representing a transport address of a specific platform.

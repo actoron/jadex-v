@@ -1,6 +1,6 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
-import jadex.commons.future.TerminableIntermediateFuture;
+import jadex.future.TerminableIntermediateFuture;
 
 /**
  *  Info with query and result future.

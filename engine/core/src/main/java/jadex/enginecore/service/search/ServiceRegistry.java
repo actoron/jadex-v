@@ -1,4 +1,4 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,20 +12,20 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import jadex.base.Starter;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.ServiceScope;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple2;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.SubscriptionIntermediateFuture;
-import jadex.commons.future.TerminableIntermediateFuture;
-import jadex.commons.future.TerminationCommand;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.Starter;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.ServiceScope;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
+import jadex.future.TerminableIntermediateFuture;
+import jadex.future.TerminationCommand;
 
 /**
  *  Local service registry. 

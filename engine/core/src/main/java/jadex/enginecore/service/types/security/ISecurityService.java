@@ -1,18 +1,18 @@
-package jadex.bridge.service.types.security;
+package jadex.enginecore.service.types.security;
 
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.JadexVersion;
-import jadex.bridge.component.IMsgHeader;
-import jadex.bridge.service.annotation.GuiClassName;
-import jadex.bridge.service.annotation.GuiClassNames;
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.Tuple2;
-import jadex.commons.collection.MultiCollection;
-import jadex.commons.future.IFuture;
+import jadex.collection.MultiCollection;
+import jadex.common.Tuple2;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.JadexVersion;
+import jadex.enginecore.component.IMsgHeader;
+import jadex.enginecore.service.annotation.GuiClassName;
+import jadex.enginecore.service.annotation.GuiClassNames;
+import jadex.enginecore.service.annotation.Security;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /**
  *  The security service is responsible for

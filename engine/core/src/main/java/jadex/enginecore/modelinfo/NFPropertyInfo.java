@@ -3,6 +3,7 @@ package jadex.enginecore.modelinfo;
 import java.util.List;
 
 import jadex.common.ClassInfo;
+import jadex.common.UnparsedExpression;
 
 /**
  *  Info struct for a nf property.

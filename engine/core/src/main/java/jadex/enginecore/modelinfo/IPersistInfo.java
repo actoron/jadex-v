@@ -1,6 +1,6 @@
-package jadex.bridge.modelinfo;
+package jadex.enginecore.modelinfo;
 
-import jadex.bridge.service.types.cms.IComponentDescription;
+import jadex.enginecore.service.types.cms.IComponentDescription;
 
 /**
  *  Interface for a persistable component state

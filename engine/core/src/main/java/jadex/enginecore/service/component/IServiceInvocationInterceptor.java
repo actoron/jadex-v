@@ -1,7 +1,6 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
-import jadex.commons.future.IFuture;
-
+import jadex.future.IFuture;
 
 /**
  *  Service invocation interceptor interface.

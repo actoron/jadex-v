@@ -1,4 +1,4 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 /**
  *  Exception that is thrown when a service is called that is invalid.

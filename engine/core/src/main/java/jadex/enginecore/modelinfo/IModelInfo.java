@@ -1,15 +1,15 @@
-package jadex.bridge.modelinfo;
+package jadex.enginecore.modelinfo;
 
 import java.util.List;
 import java.util.Map;
 
-import jadex.bridge.IErrorReport;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.service.ProvidedServiceInfo;
-import jadex.bridge.service.RequiredServiceInfo;
-import jadex.bridge.service.annotation.Reference;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
+import jadex.enginecore.IErrorReport;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.service.ProvidedServiceInfo;
+import jadex.enginecore.service.RequiredServiceInfo;
+import jadex.enginecore.service.annotation.Reference;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
 
 
 /**

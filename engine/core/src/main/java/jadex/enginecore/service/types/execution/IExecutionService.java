@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.execution;
+package jadex.enginecore.service.types.execution;
 
-import jadex.bridge.service.annotation.Excluded;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.concurrent.IExecutable;
-import jadex.commons.future.IFuture;
+import jadex.concurrent.IExecutable;
+import jadex.enginecore.service.annotation.Excluded;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /**
  *  Common interface for different execution services.

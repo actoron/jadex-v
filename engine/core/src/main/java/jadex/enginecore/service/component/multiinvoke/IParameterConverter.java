@@ -1,4 +1,4 @@
-package jadex.bridge.service.component.multiinvoke;
+package jadex.enginecore.service.component.multiinvoke;
 
 /**
  * 

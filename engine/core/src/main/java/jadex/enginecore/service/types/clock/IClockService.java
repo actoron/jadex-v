@@ -1,12 +1,12 @@
-package jadex.bridge.service.types.clock;
+package jadex.enginecore.service.types.clock;
 
 import java.util.TimerTask;
 
-import jadex.bridge.service.annotation.Excluded;
-import jadex.bridge.service.annotation.Service;
-import jadex.bridge.service.annotation.Uncached;
-import jadex.commons.IChangeListener;
-import jadex.commons.concurrent.IThreadPool;
+import jadex.common.IChangeListener;
+import jadex.concurrent.IThreadPool;
+import jadex.enginecore.service.annotation.Excluded;
+import jadex.enginecore.service.annotation.Service;
+import jadex.enginecore.service.annotation.Uncached;
 
 
 /**

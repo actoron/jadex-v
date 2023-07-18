@@ -1,26 +1,12 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.SFuture;
-import jadex.bridge.nonfunctional.search.IRankingSearchTerminationDecider;
-import jadex.bridge.nonfunctional.search.IServiceRanker;
-import jadex.bridge.nonfunctional.search.ServiceRankingDelegationResultListener;
-import jadex.bridge.nonfunctional.search.ServiceRankingDelegationResultListener2;
-import jadex.bridge.service.types.cms.SComponentManagementService;
-import jadex.commons.SReflect;
-import jadex.commons.Tuple2;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.ITerminableIntermediateFuture;
-import jadex.commons.future.TerminableIntermediateDelegationFuture;
+import jadex.common.Tuple2;
+import jadex.enginecore.nonfunctional.search.IRankingSearchTerminationDecider;
+import jadex.enginecore.nonfunctional.search.IServiceRanker;
+import jadex.enginecore.nonfunctional.search.ServiceRankingDelegationResultListener;
+import jadex.enginecore.nonfunctional.search.ServiceRankingDelegationResultListener2;
+import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.TerminableIntermediateDelegationFuture;
 
 /**
  *  Static helper class for searching services.

@@ -1,8 +1,8 @@
-package jadex.bridge.service.types.library;
+package jadex.enginecore.service.types.library;
 
-import jadex.bridge.IResourceIdentifier;
-import jadex.commons.IRemotable;
-import jadex.commons.future.IFuture;
+import jadex.common.IRemotable;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.future.IFuture;
 
 
 /** 

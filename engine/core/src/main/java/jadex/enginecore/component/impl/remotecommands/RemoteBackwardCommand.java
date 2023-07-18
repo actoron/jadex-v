@@ -1,10 +1,10 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.impl.IRemoteConversationCommand;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.future.IBackwardCommandFuture;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.impl.IRemoteConversationCommand;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.IBackwardCommandFuture;
+import jadex.future.IFuture;
 
 /**
  *  Command for sending backward command data.

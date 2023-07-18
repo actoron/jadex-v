@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.message;
+package jadex.enginecore.service.types.message;
 
 /**
  *  Encode and decode an object from a string representation.

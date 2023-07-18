@@ -1,11 +1,11 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
 import java.util.Map;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IntermediateFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.IFuture;
+import jadex.future.IntermediateFuture;
 
 /**
  * Command for intermediate results.

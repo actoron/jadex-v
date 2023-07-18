@@ -1,13 +1,13 @@
-package jadex.bridge.service.types.serialization;
+package jadex.enginecore.service.types.serialization;
 
 import java.util.List;
 import java.util.Map;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IMsgHeader;
-import jadex.bridge.service.types.message.ISerializer;
-import jadex.commons.transformation.IStringConverter;
-import jadex.commons.transformation.traverser.ITraverseProcessor;
+import jadex.common.transformation.IStringConverter;
+import jadex.common.transformation.traverser.ITraverseProcessor;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.IMsgHeader;
+import jadex.enginecore.service.types.message.ISerializer;
 
 /**
  *  Functionality for managing serialization.

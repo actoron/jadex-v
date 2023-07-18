@@ -1,13 +1,13 @@
-package jadex.bridge.service.types.simulation;
+package jadex.enginecore.service.types.simulation;
 
-import jadex.bridge.service.annotation.Excluded;
-import jadex.bridge.service.annotation.GuiClassName;
-import jadex.bridge.service.annotation.GuiClassNames;
-import jadex.bridge.service.annotation.Service;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.bridge.service.types.execution.IExecutionService;
-import jadex.commons.IChangeListener;
-import jadex.commons.future.IFuture;
+import jadex.common.IChangeListener;
+import jadex.enginecore.service.annotation.Excluded;
+import jadex.enginecore.service.annotation.GuiClassName;
+import jadex.enginecore.service.annotation.GuiClassNames;
+import jadex.enginecore.service.annotation.Service;
+import jadex.enginecore.service.types.clock.IClockService;
+import jadex.enginecore.service.types.execution.IExecutionService;
+import jadex.future.IFuture;
 
 /**
  *  Interface for the time simulation service.

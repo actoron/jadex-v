@@ -1,14 +1,14 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.util.Collection;
 
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.RequiredServiceInfo;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.ITerminableIntermediateFuture;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.RequiredServiceInfo;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableIntermediateFuture;
 
 /**
  *  Component feature for required services.

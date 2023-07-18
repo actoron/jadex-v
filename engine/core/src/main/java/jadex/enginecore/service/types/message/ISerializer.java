@@ -1,10 +1,10 @@
-package jadex.bridge.service.types.message;
+package jadex.enginecore.service.types.message;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import jadex.commons.transformation.traverser.IErrorReporter;
-import jadex.commons.transformation.traverser.ITraverseProcessor;
+import jadex.common.transformation.traverser.IErrorReporter;
+import jadex.common.transformation.traverser.ITraverseProcessor;
 
 /**
  *  Encode and decode an object from a byte representation.

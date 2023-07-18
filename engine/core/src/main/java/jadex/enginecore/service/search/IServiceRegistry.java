@@ -1,12 +1,12 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Interface for a service registry.

@@ -1,13 +1,12 @@
-package jadex.bridge.service.types.awareness;
+package jadex.enginecore.service.types.awareness;
 
 import java.util.List;
-import java.util.Set;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.annotation.Service;
-import jadex.bridge.service.types.address.TransportAddress;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.annotation.Service;
+import jadex.enginecore.service.types.address.TransportAddress;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
 
 /**
  *  Locate other platforms without polling.

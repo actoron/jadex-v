@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-import jadex.bridge.IComponentIdentifier;
+import jadex.enginecore.IComponentIdentifier;
 
 
 /**

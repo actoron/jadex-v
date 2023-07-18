@@ -1,4 +1,4 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 
 import java.util.ArrayList;
@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.search.ServiceKeyExtractor.SetWrapper;
-import jadex.bridge.service.types.library.ILibraryService;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple2;
-import jadex.commons.Tuple3;
+import jadex.collection.SetWrapper;
+import jadex.common.ClassInfo;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.common.Tuple3;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.types.library.ILibraryService;
 
 /**
  *  Indexer for values.

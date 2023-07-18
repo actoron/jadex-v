@@ -1,6 +1,6 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
-import jadex.bridge.service.BasicService;
+import jadex.enginecore.service.BasicService;
 
 /**
  *  Simple struct for storing a pojo/domain service 

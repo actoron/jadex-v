@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.commons.SReflect;
+import jadex.common.SReflect;
+import jadex.enginecore.IComponentIdentifier;
 
 /**
  *  Base change event. If used w/o subclass denotes change in description. 

@@ -1,4 +1,4 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 /**
  *  Interface for determining if the method invocation interceptor should

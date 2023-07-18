@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.registry;
+package jadex.enginecore.service.types.registry;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.annotation.Service;
-import jadex.bridge.service.search.QueryEvent;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.annotation.Service;
+import jadex.enginecore.service.search.QueryEvent;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Monitoring service for displaying information about a superpeer, e.g. for GUI.

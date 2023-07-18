@@ -1,6 +1,6 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
-import jadex.bridge.service.IServiceIdentifier;
+import jadex.enginecore.service.IServiceIdentifier;
 
 /**
  *  Service event used if the service registry is used in event mode.

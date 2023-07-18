@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import jadex.bridge.IInputConnection;
 import jadex.enginecore.IComponentIdentifier;
 import jadex.enginecore.IComponentStep;
 import jadex.enginecore.IExternalAccess;

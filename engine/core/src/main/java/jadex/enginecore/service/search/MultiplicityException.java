@@ -1,6 +1,6 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
-import jadex.commons.future.FutureTerminatedException;
+import jadex.future.FutureTerminatedException;
 
 /**
  *  Exception that the multiplicity has been violated.

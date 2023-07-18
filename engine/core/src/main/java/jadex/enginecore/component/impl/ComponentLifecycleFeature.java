@@ -1,22 +1,22 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.ILifecycleComponentFeature;
-import jadex.bridge.modelinfo.ConfigurationInfo;
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.commons.future.CounterResultListener;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.UnparsedExpression;
+import jadex.enginecore.IComponentStep;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.component.ILifecycleComponentFeature;
+import jadex.enginecore.modelinfo.ConfigurationInfo;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.future.CounterResultListener;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 import jadex.javaparser.SJavaParser;
 
 /**

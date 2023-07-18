@@ -1,26 +1,25 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.modelinfo.IModelInfo;
-import jadex.bridge.service.types.factory.IPlatformComponentAccess;
-import jadex.commons.Tuple;
-import jadex.commons.Tuple2;
-import jadex.commons.Tuple3;
-import jadex.commons.collection.IAutoLock;
-import jadex.commons.collection.IRwMap;
-import jadex.commons.collection.LRU;
-import jadex.commons.collection.RwMapWrapper;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.SubscriptionIntermediateFuture;
+import jadex.collection.IAutoLock;
+import jadex.collection.IRwMap;
+import jadex.collection.LRU;
+import jadex.collection.RwMapWrapper;
+import jadex.common.Tuple;
+import jadex.common.Tuple2;
+import jadex.common.Tuple3;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.modelinfo.IModelInfo;
+import jadex.enginecore.service.types.factory.IPlatformComponentAccess;
+import jadex.future.IFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 
 /**
  *  Class representing the state information for component management.

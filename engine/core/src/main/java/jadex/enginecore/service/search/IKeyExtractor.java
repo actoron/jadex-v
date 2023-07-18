@@ -1,4 +1,4 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 import java.util.Set;
 

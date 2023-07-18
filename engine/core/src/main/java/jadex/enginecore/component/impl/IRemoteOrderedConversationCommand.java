@@ -1,7 +1,7 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.types.security.ISecurityInfo;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.types.security.ISecurityInfo;
 
 /**
  *  Interface for intermediate (or final) commands in existing conversations. 

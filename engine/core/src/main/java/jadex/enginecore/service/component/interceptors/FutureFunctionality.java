@@ -1,31 +1,31 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.util.Collection;
 import java.util.logging.Logger;
 
-import jadex.commons.DebugException;
-import jadex.commons.ICommand;
-import jadex.commons.IResultCommand;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IPullIntermediateFuture;
-import jadex.commons.future.IPullSubscriptionIntermediateFuture;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.ITerminableFuture;
-import jadex.commons.future.ITerminableIntermediateFuture;
-import jadex.commons.future.ITuple2Future;
-import jadex.commons.future.IntermediateDelegationResultListener;
-import jadex.commons.future.IntermediateFuture;
-import jadex.commons.future.PullIntermediateDelegationFuture;
-import jadex.commons.future.PullSubscriptionIntermediateDelegationFuture;
-import jadex.commons.future.SubscriptionIntermediateDelegationFuture;
-import jadex.commons.future.TerminableDelegationFuture;
-import jadex.commons.future.TerminableIntermediateDelegationFuture;
-import jadex.commons.future.Tuple2Future;
-import jadex.commons.future.TupleResult;
+import jadex.common.DebugException;
+import jadex.common.ICommand;
+import jadex.common.IResultCommand;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IPullIntermediateFuture;
+import jadex.future.IPullSubscriptionIntermediateFuture;
+import jadex.future.IResultListener;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableFuture;
+import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.ITuple2Future;
+import jadex.future.IntermediateDelegationResultListener;
+import jadex.future.IntermediateFuture;
+import jadex.future.PullIntermediateDelegationFuture;
+import jadex.future.PullSubscriptionIntermediateDelegationFuture;
+import jadex.future.SubscriptionIntermediateDelegationFuture;
+import jadex.future.TerminableDelegationFuture;
+import jadex.future.TerminableIntermediateDelegationFuture;
+import jadex.future.Tuple2Future;
+import jadex.future.TupleResult;
 
 /**
  *  Default future functionality.

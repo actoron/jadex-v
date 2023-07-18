@@ -1,4 +1,4 @@
-package jadex.bridge.modelinfo;
+package jadex.enginecore.modelinfo;
 
 /**
  * 

@@ -1,11 +1,11 @@
-package jadex.bridge.service.types.registry;
+package jadex.enginecore.service.types.registry;
 
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.annotation.Service;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.ITerminableFuture;
-import jadex.commons.future.ITerminableIntermediateFuture;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.annotation.Service;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableFuture;
+import jadex.future.ITerminableIntermediateFuture;
 
 /**
  *  Local service for handling all remote searches and queries

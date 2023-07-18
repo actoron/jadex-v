@@ -1,13 +1,11 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.lang.reflect.Method;
 
-import jadex.bridge.sensor.service.IMethodInvocationListener;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.PublishInfo;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.enginecore.sensor.service.IMethodInvocationListener;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
 
 /**
  *  Component feature for provided services.

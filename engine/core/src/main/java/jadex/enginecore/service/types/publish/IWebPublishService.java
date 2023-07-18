@@ -1,7 +1,7 @@
-package jadex.bridge.service.types.publish;
+package jadex.enginecore.service.types.publish;
 
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /**
  *  Publish something to the internal or external http server.

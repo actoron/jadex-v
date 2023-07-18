@@ -1,10 +1,10 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.ProvidedServiceInfo;
-import jadex.bridge.service.PublishInfo;
-import jadex.bridge.service.ServiceScope;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.ProvidedServiceInfo;
+import jadex.enginecore.service.PublishInfo;
+import jadex.enginecore.service.ServiceScope;
+import jadex.future.IFuture;
 
 /**
  *  Component feature for provided services.

@@ -1,16 +1,15 @@
-package jadex.bridge.service.types.simulation;
+package jadex.enginecore.service.types.simulation;
 
-import jadex.base.Starter;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ServiceCall;
-import jadex.bridge.component.impl.ExecutionComponentFeature;
-import jadex.bridge.service.component.IInternalRequiredServicesFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.commons.SUtil;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.SUtil;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ServiceCall;
+import jadex.enginecore.Starter;
+import jadex.enginecore.component.impl.ExecutionComponentFeature;
+import jadex.enginecore.service.component.IInternalRequiredServicesFeature;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.enginecore.service.types.clock.IClockService;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Helper class for simulation control.

@@ -1,23 +1,23 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IRemoteCommand;
-import jadex.bridge.service.BasicService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.search.ServiceNotFoundException;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.bridge.service.types.registry.IRemoteRegistryService;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.MethodInfo;
-import jadex.commons.SUtil;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.common.SUtil;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.IRemoteCommand;
+import jadex.enginecore.service.BasicService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.annotation.Security;
+import jadex.enginecore.service.component.IProvidedServicesFeature;
+import jadex.enginecore.service.search.ServiceNotFoundException;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.enginecore.service.types.registry.IRemoteRegistryService;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Invoke a remote method.

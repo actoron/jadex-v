@@ -1,4 +1,4 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 /**
  *  Delegates a service call to another service provider.

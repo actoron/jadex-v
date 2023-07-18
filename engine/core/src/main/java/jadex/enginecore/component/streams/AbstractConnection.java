@@ -2,7 +2,6 @@ package jadex.enginecore.component.streams;
 
 import java.util.Map;
 
-import jadex.enginecore.IConnection;
 import jadex.enginecore.IComponentIdentifier;
 import jadex.future.IResultListener;
 

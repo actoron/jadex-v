@@ -1,12 +1,12 @@
-package jadex.bridge.service.types.chat;
+package jadex.enginecore.service.types.chat;
 
 import java.util.Collection;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 
 /**

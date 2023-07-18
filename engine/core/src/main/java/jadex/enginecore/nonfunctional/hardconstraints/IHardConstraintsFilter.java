@@ -1,11 +1,11 @@
-package jadex.bridge.nonfunctional.hardconstraints;
+package jadex.enginecore.nonfunctional.hardconstraints;
 
 import java.util.Collection;
 import java.util.Map;
 
-import jadex.bridge.service.IService;
-import jadex.commons.IFilter;
-import jadex.commons.Tuple2;
+import jadex.common.IFilter;
+import jadex.common.Tuple2;
+import jadex.enginecore.service.IService;
 
 public interface IHardConstraintsFilter extends IFilter<Tuple2<IService, Map<String, Object>>>
 {

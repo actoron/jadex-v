@@ -1,13 +1,12 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.service.ProvidedServiceInfo;
-import jadex.bridge.service.RequiredServiceBinding;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.service.ProvidedServiceInfo;
+import jadex.enginecore.service.RequiredServiceBinding;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
 
 /**
  *  A parameter object to capture

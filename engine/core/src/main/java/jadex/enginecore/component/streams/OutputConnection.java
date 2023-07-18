@@ -2,7 +2,6 @@ package jadex.enginecore.component.streams;
 
 import java.io.InputStream;
 
-import jadex.bridge.IOutputConnection;
 import jadex.enginecore.IComponentIdentifier;
 import jadex.enginecore.IComponentStep;
 import jadex.enginecore.IExternalAccess;
@@ -240,7 +239,7 @@ public class OutputConnection extends AbstractConnection implements IOutputConne
 					{
 						if(dtps==null)
 						{
-							component.searchService( new ServiceQuery<>(IDaemonThreadPoolService.class))
+							component.searchService(new ServiceQuery<>(IDaemonThreadPoolService.class))
 								.addResultListener(new ExceptionDelegationResultListener<IDaemonThreadPoolService, Integer>(read)
 							{
 								public void customResultAvailable(IDaemonThreadPoolService result)

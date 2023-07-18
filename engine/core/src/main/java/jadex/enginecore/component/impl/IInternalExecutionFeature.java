@@ -1,8 +1,8 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.types.cms.IComponentDescription;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.future.IFuture;
 
 
 /**

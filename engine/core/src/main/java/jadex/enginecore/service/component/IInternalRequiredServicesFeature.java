@@ -1,12 +1,12 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.util.Collection;
 
-import jadex.bridge.service.RequiredServiceInfo;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.ITerminableIntermediateFuture;
+import jadex.enginecore.service.RequiredServiceInfo;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableIntermediateFuture;
 
 /**
  *  Interface for internal service access methods.
@@ -24,13 +24,13 @@ public interface IInternalRequiredServicesFeature
 	 *  Get a service raw (i.e. w/o required proxy).
 	 */
 	// Hack???
-	public <T>	T	getRawService(Class<T> type);
+	public <T> T getRawService(Class<T> type);
 
 	/**
 	 *  Get a service raw (i.e. w/o required proxy).
 	 */
 	// Hack???
-	public <T>	Collection<T>	getRawServices(Class<T> type);
+	public <T> Collection<T> getRawServices(Class<T> type);
 
 	/**
 	 *  Search for matching services and provide first result.

@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.ecarules;
+package jadex.enginecore.service.types.ecarules;
 
 /**
  * 

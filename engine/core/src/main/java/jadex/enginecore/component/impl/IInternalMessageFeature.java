@@ -1,17 +1,17 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IConnection;
-import jadex.bridge.IInputConnection;
-import jadex.bridge.IOutputConnection;
-import jadex.bridge.component.IMsgHeader;
-import jadex.bridge.component.streams.InputConnection;
-import jadex.bridge.component.streams.OutputConnection;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.component.IMsgHeader;
+import jadex.enginecore.component.streams.IConnection;
+import jadex.enginecore.component.streams.IInputConnection;
+import jadex.enginecore.component.streams.IOutputConnection;
+import jadex.enginecore.component.streams.InputConnection;
+import jadex.enginecore.component.streams.OutputConnection;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  A component feature for message-based communication.

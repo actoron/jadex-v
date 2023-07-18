@@ -1,8 +1,8 @@
-package jadex.bridge.service.types.memstat;
+package jadex.enginecore.service.types.memstat;
 
 import java.util.Map;
 
-import jadex.commons.future.IFuture;
+import jadex.future.IFuture;
 
 /**
  *  Service for providing debugging infos for a component or service,

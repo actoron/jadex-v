@@ -1,27 +1,27 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.util.logging.Logger;
 
-import jadex.bridge.ComponentTerminatedException;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.impl.IInternalExecutionFeature;
-import jadex.bridge.service.ServiceIdentifier;
-import jadex.bridge.service.component.IInternalServiceMonitoringFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.component.ServiceCallEvent;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.bridge.service.types.cms.IComponentDescription;
-import jadex.commons.DebugException;
-import jadex.commons.ICommand;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateResultListener;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.ITerminableFuture;
+import jadex.common.DebugException;
+import jadex.common.ICommand;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IComponentStep;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentTerminatedException;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.component.impl.IInternalExecutionFeature;
+import jadex.enginecore.service.ServiceIdentifier;
+import jadex.enginecore.service.component.IInternalServiceMonitoringFeature;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.enginecore.service.component.ServiceCallEvent;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateResultListener;
+import jadex.future.IResultListener;
+import jadex.future.ITerminableFuture;
 
 /**
  *  The decoupling return interceptor ensures that the result

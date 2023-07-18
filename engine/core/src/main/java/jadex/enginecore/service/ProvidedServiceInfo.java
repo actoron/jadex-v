@@ -1,11 +1,11 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 import java.util.List;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.bridge.service.annotation.Security;
-import jadex.commons.SReflect;
+import jadex.common.ClassInfo;
+import jadex.common.SReflect;
+import jadex.common.UnparsedExpression;
+import jadex.enginecore.service.annotation.Security;
 
 
 /**

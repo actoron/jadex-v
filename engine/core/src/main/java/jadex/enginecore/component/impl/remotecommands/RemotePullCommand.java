@@ -1,12 +1,12 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
 import java.util.Collection;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.impl.IRemoteConversationCommand;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IPullIntermediateFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.impl.IRemoteConversationCommand;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.IFuture;
+import jadex.future.IPullIntermediateFuture;
 
 /**
  *  Command for pulling from pull intermediate futures.

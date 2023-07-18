@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
 import java.util.Map;
 
-import jadex.bridge.service.annotation.Reference;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.annotation.Reference;
+import jadex.future.IFuture;
 
 
 /**

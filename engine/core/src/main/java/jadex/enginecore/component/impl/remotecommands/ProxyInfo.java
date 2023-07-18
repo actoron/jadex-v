@@ -1,4 +1,4 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.base.Starter;
-import jadex.bridge.ClassInfo;
-import jadex.bridge.IComponentIdentifier;
 import jadex.bridge.ITargetResolver;
-import jadex.commons.MethodInfo;
+import jadex.common.ClassInfo;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.Starter;
 
 /**
  *  Info struct that holds all necessary model information to generate

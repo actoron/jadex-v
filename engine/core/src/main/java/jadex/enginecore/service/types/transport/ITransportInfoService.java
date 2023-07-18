@@ -1,8 +1,8 @@
-package jadex.bridge.service.types.transport;
+package jadex.enginecore.service.types.transport;
 
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IIntermediateFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Provide information about a transport.

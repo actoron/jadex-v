@@ -1,10 +1,10 @@
-package jadex.bridge.service.types.chat;
+package jadex.enginecore.service.types.chat;
 
 import java.io.Serializable;
 import java.util.UUID;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.commons.SUtil;
+import jadex.common.SUtil;
+import jadex.enginecore.IComponentIdentifier;
 
 /**
  *  Information about a requested, ongoing or completed file transfer.

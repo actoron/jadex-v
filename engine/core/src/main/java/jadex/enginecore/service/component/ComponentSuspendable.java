@@ -1,18 +1,18 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.util.Map;
 
-import jadex.base.Starter;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.IPriorityComponentStep;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.impl.IInternalExecutionFeature;
-import jadex.bridge.service.annotation.Timeout;
-import jadex.bridge.service.types.cms.IComponentDescription;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISuspendable;
-import jadex.commons.future.ThreadLocalTransferHelper;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.IPriorityComponentStep;
+import jadex.enginecore.Starter;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.component.impl.IInternalExecutionFeature;
+import jadex.enginecore.service.annotation.Timeout;
+import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.ISuspendable;
+import jadex.future.ThreadLocalTransferHelper;
 
 /**
  *  Allow waiting for futures by blocking a component.

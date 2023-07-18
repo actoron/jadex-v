@@ -1,8 +1,8 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
-import jadex.bridge.service.IService;
 import jadex.commons.IAsyncFilter;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.IService;
+import jadex.future.IFuture;
 
 /**
  *  Filter for service ids.

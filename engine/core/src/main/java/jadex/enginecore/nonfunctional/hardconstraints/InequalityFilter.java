@@ -1,8 +1,8 @@
-package jadex.bridge.nonfunctional.hardconstraints;
+package jadex.enginecore.nonfunctional.hardconstraints;
 
-import jadex.bridge.service.IService;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.IService;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 public class InequalityFilter extends StrictInequalityFilter
 {

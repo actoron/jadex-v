@@ -1,6 +1,6 @@
-package jadex.bridge.service.types.registry;
+package jadex.enginecore.service.types.registry;
 
-import jadex.commons.SUtil;
+import jadex.common.SUtil;
 import net.cinnom.nanocuckoo.ConcurrentSwapSafety;
 import net.cinnom.nanocuckoo.NanoCuckooFilter;
 

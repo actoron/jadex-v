@@ -1,9 +1,9 @@
-package jadex.bridge.service.component.multiinvoke;
+package jadex.enginecore.service.component.multiinvoke;
 
 import java.lang.reflect.Method;
 
-import jadex.commons.future.Future;
-import jadex.commons.future.IIntermediateResultListener;
+import jadex.future.Future;
+import jadex.future.IIntermediateResultListener;
 
 /**
  * 

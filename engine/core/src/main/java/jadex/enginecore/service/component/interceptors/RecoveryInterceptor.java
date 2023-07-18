@@ -1,4 +1,4 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 /**
  *  The recovery interceptor is used in required service proxies 

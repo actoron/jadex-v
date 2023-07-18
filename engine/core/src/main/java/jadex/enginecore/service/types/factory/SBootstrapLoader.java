@@ -1,18 +1,18 @@
-package jadex.bridge.service.types.factory;
+package jadex.enginecore.service.types.factory;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.modelinfo.ConfigurationInfo;
-import jadex.bridge.modelinfo.IArgument;
-import jadex.bridge.modelinfo.IModelInfo;
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.commons.SReflect;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
-import jadex.commons.transformation.traverser.SCloner;
+import jadex.common.SReflect;
+import jadex.common.UnparsedExpression;
+import jadex.common.transformation.traverser.SCloner;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.modelinfo.ConfigurationInfo;
+import jadex.enginecore.modelinfo.IArgument;
+import jadex.enginecore.modelinfo.IModelInfo;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  *  Helper methods for loading component models without a running platform.

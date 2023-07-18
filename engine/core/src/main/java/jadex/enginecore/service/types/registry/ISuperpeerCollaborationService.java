@@ -1,11 +1,11 @@
-package jadex.bridge.service.types.registry;
+package jadex.enginecore.service.types.registry;
 
 import java.util.Set;
 
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Interface for superpeer collaboration functionality.

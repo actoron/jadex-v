@@ -1,4 +1,4 @@
-package jadex.bridge.service.component.multiinvoke;
+package jadex.enginecore.service.component.multiinvoke;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -7,15 +7,15 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import jadex.commons.SReflect;
-import jadex.commons.future.CounterResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IIntermediateResultListener;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.IntermediateEmptyResultListener;
-import jadex.commons.future.IntermediateFuture;
+import jadex.common.SReflect;
+import jadex.future.CounterResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IIntermediateResultListener;
+import jadex.future.IResultListener;
+import jadex.future.IntermediateEmptyResultListener;
+import jadex.future.IntermediateFuture;
 
 /**
  * 

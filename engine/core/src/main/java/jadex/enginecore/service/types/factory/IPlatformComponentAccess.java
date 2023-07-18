@@ -1,15 +1,13 @@
-package jadex.bridge.service.types.factory;
+package jadex.enginecore.service.types.factory;
 
 import java.util.Collection;
-import java.util.logging.Logger;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.service.types.cms.IComponentDescription;
-import jadex.bridge.service.types.cms.PlatformComponent;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.enginecore.service.types.cms.PlatformComponent;
+import jadex.future.IFuture;
 
 /**
  *  Interface for operations on the component to be called from the platform.

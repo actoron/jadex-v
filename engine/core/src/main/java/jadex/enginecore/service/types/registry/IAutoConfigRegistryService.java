@@ -1,7 +1,7 @@
-package jadex.bridge.service.types.registry;
+package jadex.enginecore.service.types.registry;
 
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /**
  *  Interface allows for making a platform to

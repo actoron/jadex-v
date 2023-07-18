@@ -1,9 +1,9 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.util.PriorityQueue;
 
-import jadex.bridge.component.impl.remotecommands.AbstractResultCommand;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.component.impl.remotecommands.AbstractResultCommand;
+import jadex.future.IFuture;
 
 /**
  *  Interface for a remote conversation in progress that processes

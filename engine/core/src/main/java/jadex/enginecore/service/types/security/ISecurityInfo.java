@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.security;
+package jadex.enginecore.service.types.security;
 
 import java.util.Set;
 

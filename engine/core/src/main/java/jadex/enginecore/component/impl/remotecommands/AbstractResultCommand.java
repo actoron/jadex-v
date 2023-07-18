@@ -1,13 +1,13 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
 import java.util.Map;
 import java.util.PriorityQueue;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.impl.IOrderedConversation;
-import jadex.bridge.component.impl.IRemoteOrderedConversationCommand;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.impl.IOrderedConversation;
+import jadex.enginecore.component.impl.IRemoteOrderedConversationCommand;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.IFuture;
 
 /**
  *  Base class for Jadex built-in remote commands.

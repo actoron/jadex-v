@@ -1,8 +1,8 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
 
 
 /**

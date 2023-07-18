@@ -1,24 +1,24 @@
-package jadex.bridge.nonfunctional.hardconstraints;
+package jadex.enginecore.nonfunctional.hardconstraints;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.ComposedRemoteFilter;
-import jadex.commons.IAsyncFilter;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.CollectionResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.ITerminableIntermediateFuture;
-import jadex.commons.future.TerminableIntermediateFuture;
+import jadex.common.MethodInfo;
+import jadex.enginecore.ComposedRemoteFilter;
+import jadex.enginecore.IAsyncFilter;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.CollectionResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
+import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.TerminableIntermediateFuture;
 
 /**
  *  Class defining runtime hard constraints.

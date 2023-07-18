@@ -1,19 +1,19 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.naming.Context;
+
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
-import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapSetter;
@@ -24,15 +24,14 @@ import io.opentelemetry.sdk.trace.ReadableSpan;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
-import jadex.base.Starter;
-import jadex.bridge.ComponentIdentifier;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ServiceCall;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.ComponentIdentifier;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ServiceCall;
+import jadex.enginecore.Starter;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.DelegationResultListener;
+import jadex.future.IFuture;
 
 /**
  *  Interceptor that creates traces.

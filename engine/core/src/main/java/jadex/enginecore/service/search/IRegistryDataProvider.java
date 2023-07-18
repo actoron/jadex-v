@@ -1,11 +1,11 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 import java.util.Iterator;
 import java.util.Set;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.IService;
+import jadex.common.ClassInfo;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.IService;
 
 /**
  *  Interface for the search functionality to get the registry data.

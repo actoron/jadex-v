@@ -1,8 +1,8 @@
-package jadex.bridge.service.types.remote;
+package jadex.enginecore.service.types.remote;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /**
  *  Service for administration of proxy agents.

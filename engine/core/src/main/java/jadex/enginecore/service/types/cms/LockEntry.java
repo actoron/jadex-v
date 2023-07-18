@@ -1,11 +1,11 @@
-package jadex.bridge.service.types.cms;
+package jadex.enginecore.service.types.cms;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.commons.future.Future;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.future.Future;
 
 /**
  *  Entry that represents a lock for a component.

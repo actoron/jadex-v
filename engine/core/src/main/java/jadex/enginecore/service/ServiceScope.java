@@ -1,4 +1,4 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 import java.util.Collections;
 import java.util.HashSet;

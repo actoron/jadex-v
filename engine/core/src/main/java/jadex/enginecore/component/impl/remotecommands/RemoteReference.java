@@ -1,8 +1,8 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.SUtil;
+import jadex.common.SUtil;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.IServiceIdentifier;
 
 /**
  *  Remote reference for locating a specific target object in another platform.

@@ -1,29 +1,29 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.logging.Logger;
 
-import jadex.bridge.ComponentNotFoundException;
-import jadex.bridge.IExternalAccess;
 import jadex.bridge.ITargetResolver;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.component.ServiceInfo;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.SReflect;
-import jadex.commons.SUtil;
-import jadex.commons.TimeoutException;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IIntermediateResultListener;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
-import jadex.commons.future.IntermediateEmptyResultListener;
-import jadex.commons.future.IntermediateFuture;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.common.TimeoutException;
+import jadex.enginecore.ComponentNotFoundException;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.component.ServiceInfo;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.DelegationResultListener;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IIntermediateResultListener;
+import jadex.future.IResultListener;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.IntermediateEmptyResultListener;
+import jadex.future.IntermediateFuture;
 
 /**
  *  Interceptor for realizing intelligent proxies. These proxies

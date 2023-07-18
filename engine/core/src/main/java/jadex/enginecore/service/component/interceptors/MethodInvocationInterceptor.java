@@ -1,20 +1,20 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.reflect.InvocationTargetException;
 
-import jadex.bridge.ProxyFactory;
 import jadex.bridge.SFuture;
-import jadex.bridge.ServiceCall;
-import jadex.bridge.StepAborted;
-import jadex.bridge.service.component.ISwitchCall;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.ErrorException;
-import jadex.commons.SReflect;
-import jadex.commons.SUtil;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.common.ErrorException;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.ServiceCall;
+import jadex.enginecore.StepAborted;
+import jadex.enginecore.service.component.ISwitchCall;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Calls a methods on an object and returns the result.

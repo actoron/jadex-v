@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.cli;
+package jadex.enginecore.service.types.cli;
 
-import jadex.bridge.service.annotation.CheckNotNull;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.Tuple2;
-import jadex.commons.future.IFuture;
+import jadex.common.Tuple2;
+import jadex.enginecore.service.annotation.CheckNotNull;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /**
  *  Service to invoke the command line via a service call.

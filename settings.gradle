@@ -19,6 +19,12 @@ includeBuild('util/classreader') {
 includeBuild('util/javaparser') {
 }
 
+includeBuild('util/nativetools') {
+}
+
+includeBuild('util/bytecode') {
+}
+
 includeBuild('engine/microagent') {
 }
 

@@ -2,9 +2,9 @@ package jadex.enginecore.service;
 
 import java.util.Set;
 
-import jadex.bridge.IResourceIdentifier;
 import jadex.common.ClassInfo;
 import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IResourceIdentifier;
 
 
 /**

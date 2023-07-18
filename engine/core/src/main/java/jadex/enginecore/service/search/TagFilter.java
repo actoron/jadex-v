@@ -1,17 +1,16 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.nonfunctional.SNFPropertyProvider;
-import jadex.bridge.sensor.service.TagProperty;
-import jadex.bridge.service.IService;
 import jadex.commons.IAsyncFilter;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.sensor.service.TagProperty;
+import jadex.enginecore.service.IService;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Tag filter class. Allows for filtering according to a collection of tags.

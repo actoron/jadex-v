@@ -1,4 +1,4 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -14,32 +14,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.base.Starter;
-import jadex.bridge.ClassInfo;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.nonfunctional.INFMethodPropertyProvider;
-import jadex.bridge.nonfunctional.INFPropertyProvider;
-import jadex.bridge.service.IInternalService;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.annotation.OnEnd;
-import jadex.bridge.service.annotation.OnStart;
-import jadex.bridge.service.annotation.ServiceShutdown;
-import jadex.bridge.service.annotation.ServiceStart;
-import jadex.bridge.service.component.ServiceInfo;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.bridge.service.types.serialization.ISerializationServices;
-import jadex.commons.Base64;
-import jadex.commons.IParameterGuesser;
-import jadex.commons.SReflect;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple2;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
-import jadex.commons.transformation.IStringConverter;
+import jadex.common.Base64;
+import jadex.common.ClassInfo;
+import jadex.common.IParameterGuesser;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.common.transformation.IStringConverter;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.Starter;
+import jadex.enginecore.nonfunctional.INFMethodPropertyProvider;
+import jadex.enginecore.nonfunctional.INFPropertyProvider;
+import jadex.enginecore.service.IInternalService;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.annotation.OnEnd;
+import jadex.enginecore.service.annotation.OnStart;
+import jadex.enginecore.service.annotation.ServiceShutdown;
+import jadex.enginecore.service.annotation.ServiceStart;
+import jadex.enginecore.service.component.ServiceInfo;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.enginecore.service.types.serialization.ISerializationServices;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  *  The resolve interceptor is responsible for determining

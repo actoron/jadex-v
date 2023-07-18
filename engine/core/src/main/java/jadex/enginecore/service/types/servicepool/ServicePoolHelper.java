@@ -1,12 +1,12 @@
-package jadex.bridge.service.types.servicepool;
+package jadex.enginecore.service.types.servicepool;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Helper methods for advanced service pool management.

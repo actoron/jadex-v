@@ -1,4 +1,4 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 /**
  *  Exception to denote that a requested service was not found.

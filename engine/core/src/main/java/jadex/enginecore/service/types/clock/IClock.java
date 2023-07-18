@@ -1,7 +1,7 @@
-package jadex.bridge.service.types.clock;
+package jadex.enginecore.service.types.clock;
 
 
-import jadex.commons.IChangeListener;
+import jadex.common.IChangeListener;
 
 
 /**

@@ -1,6 +1,6 @@
-package jadex.bridge.service.types.ecarules;
+package jadex.enginecore.service.types.ecarules;
 
-import jadex.bridge.service.annotation.Service;
+import jadex.enginecore.service.annotation.Service;
 
 
 /**

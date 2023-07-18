@@ -1,11 +1,11 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.annotation.Annotation;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.annotation.Security;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.IFuture;
 
 /**
  *  Interceptor that can be used to realize authenticated end-to-end communication.

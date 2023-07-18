@@ -1,11 +1,11 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.commons.SUtil;
+import jadex.common.ClassInfo;
+import jadex.common.SUtil;
+import jadex.common.UnparsedExpression;
 
 /**
  *  Info struct for service publishing details.

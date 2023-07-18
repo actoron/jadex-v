@@ -1,4 +1,4 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -9,18 +9,18 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import jadex.base.Starter;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.ServiceCall;
-import jadex.bridge.service.BasicService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.annotation.Timeout;
-import jadex.bridge.service.component.interceptors.CallAccess;
-import jadex.commons.SReflect;
-import jadex.commons.SUtil;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.ServiceCall;
+import jadex.enginecore.Starter;
+import jadex.enginecore.service.BasicService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.annotation.Timeout;
+import jadex.enginecore.service.component.interceptors.CallAccess;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  *  Context for service invocations.

@@ -1,6 +1,6 @@
-package jadex.bridge.service.types.awareness;
+package jadex.enginecore.service.types.awareness;
 
-import jadex.bridge.service.annotation.Service;
+import jadex.enginecore.service.annotation.Service;
 
 /**
  *  Service interface for discovering other platforms.

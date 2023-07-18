@@ -1,7 +1,7 @@
-package jadex.bridge.nonfunctional.hardconstraints;
+package jadex.enginecore.nonfunctional.hardconstraints;
 
-import jadex.bridge.service.IService;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.IService;
+import jadex.future.IFuture;
 
 public class ConstantValueFilter extends AbstractConstraintFilter
 {

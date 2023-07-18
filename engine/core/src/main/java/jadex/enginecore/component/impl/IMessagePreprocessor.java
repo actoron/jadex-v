@@ -1,6 +1,6 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
-import jadex.bridge.component.IMsgHeader;
+import jadex.enginecore.component.IMsgHeader;
 
 /**
  *  Allows adding special treatment of certain user message types

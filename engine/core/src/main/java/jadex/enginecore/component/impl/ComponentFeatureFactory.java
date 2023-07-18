@@ -1,17 +1,17 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.lang.reflect.Constructor;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeature;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.ILifecycleComponentFeature;
-import jadex.commons.SReflect;
-import jadex.commons.SUtil;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeature;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.ILifecycleComponentFeature;
 
 /**
  *  Feature factory allowing the creation of component features.

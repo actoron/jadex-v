@@ -1,29 +1,27 @@
-package jadex.bridge.service.component.multiinvoke;
+package jadex.enginecore.service.component.multiinvoke;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Iterator;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.RequiredServiceInfo;
-import jadex.bridge.service.annotation.MultiplexCollector;
-import jadex.bridge.service.annotation.MultiplexDistributor;
-import jadex.bridge.service.annotation.TargetMethod;
-import jadex.bridge.service.annotation.Value;
-import jadex.bridge.service.component.IInternalRequiredServicesFeature;
-import jadex.bridge.service.component.IInternalServiceMonitoringFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.commons.IFilter;
-import jadex.commons.IValueFetcher;
-import jadex.commons.SReflect;
-import jadex.commons.Tuple2;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IIntermediateResultListener;
-import jadex.commons.future.IntermediateFuture;
+import jadex.common.IFilter;
+import jadex.common.IValueFetcher;
+import jadex.common.SReflect;
+import jadex.common.Tuple2;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.RequiredServiceInfo;
+import jadex.enginecore.service.annotation.MultiplexCollector;
+import jadex.enginecore.service.annotation.MultiplexDistributor;
+import jadex.enginecore.service.annotation.TargetMethod;
+import jadex.enginecore.service.component.IInternalRequiredServicesFeature;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IIntermediateResultListener;
+import jadex.future.IntermediateFuture;
 import jadex.javaparser.SJavaParser;
 
 /**

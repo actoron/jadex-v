@@ -1,11 +1,11 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.util.logging.Logger;
 
 import jadex.bridge.ComponentResultListener;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.component.interceptors.FutureFunctionality;
-import jadex.commons.ICommand;
+import jadex.common.ICommand;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.component.interceptors.FutureFunctionality;
 
 /**
  *  Schedule forward future executions (e.g. results) on component thread,
@@ -16,7 +16,7 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 	//-------- attributes --------
 	
 	/** The adapter. */
-	protected IInternalAccess	access;
+	protected IInternalAccess access;
 	
 	//-------- constructors --------
 	

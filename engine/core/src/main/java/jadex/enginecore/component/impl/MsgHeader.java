@@ -1,10 +1,10 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.component.IMsgHeader;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.component.IMsgHeader;
 
 /**
  *   Message header with message meta information.

@@ -1,4 +1,4 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
 
 import java.util.HashMap;

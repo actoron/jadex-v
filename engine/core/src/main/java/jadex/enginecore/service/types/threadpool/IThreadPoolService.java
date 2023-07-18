@@ -1,7 +1,7 @@
-package jadex.bridge.service.types.threadpool;
+package jadex.enginecore.service.types.threadpool;
 
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.concurrent.IThreadPool;
+import jadex.concurrent.IThreadPool;
+import jadex.enginecore.service.annotation.Service;
 
 /**
  *  Interface for threadpool service.

@@ -1,23 +1,23 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.ServiceCall;
-import jadex.bridge.nonfunctional.INFPropertyProvider;
-import jadex.bridge.service.IInternalService;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.ServiceInvalidException;
-import jadex.bridge.service.component.BasicServiceInvocationHandler;
-import jadex.bridge.service.component.ServiceInfo;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.ServiceCall;
+import jadex.enginecore.nonfunctional.INFPropertyProvider;
+import jadex.enginecore.service.IInternalService;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.ServiceInvalidException;
+import jadex.enginecore.service.component.BasicServiceInvocationHandler;
+import jadex.enginecore.service.component.ServiceInfo;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.DelegationResultListener;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  The validation interceptor tests whether a service call is valid.

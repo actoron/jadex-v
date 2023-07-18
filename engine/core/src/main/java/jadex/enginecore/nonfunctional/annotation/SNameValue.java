@@ -3,7 +3,7 @@ package jadex.enginecore.nonfunctional.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-import jadex.bridge.modelinfo.UnparsedExpression;
+import jadex.common.UnparsedExpression;
 
 /**
  *  NameValue converter helper.

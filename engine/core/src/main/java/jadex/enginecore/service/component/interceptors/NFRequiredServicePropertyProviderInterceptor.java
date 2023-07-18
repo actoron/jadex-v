@@ -1,15 +1,15 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
 import java.lang.reflect.Method;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.INFPropertyComponentFeature;
-import jadex.bridge.nonfunctional.INFMixedPropertyProvider;
-import jadex.bridge.nonfunctional.INFRPropertyProvider;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.INFPropertyComponentFeature;
+import jadex.enginecore.nonfunctional.INFMixedPropertyProvider;
+import jadex.enginecore.nonfunctional.INFRPropertyProvider;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Delegates 'getRequiredServicePropertyProvider()' calls

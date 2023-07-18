@@ -1,9 +1,9 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.lang.reflect.Method;
 
-import jadex.bridge.component.impl.remotecommands.RemoteReference;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.component.impl.remotecommands.RemoteReference;
+import jadex.future.IFuture;
 
 /**
  *  Feature for securely sending and handling remote execution commands.

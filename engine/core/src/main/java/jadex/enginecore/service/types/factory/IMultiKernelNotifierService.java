@@ -1,7 +1,7 @@
-package jadex.bridge.service.types.factory;
+package jadex.enginecore.service.types.factory;
 
-import jadex.bridge.IMultiKernelListener;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IMultiKernelListener;
+import jadex.future.IFuture;
 
 /** 
  *  Notifier service for dynamic kernels.

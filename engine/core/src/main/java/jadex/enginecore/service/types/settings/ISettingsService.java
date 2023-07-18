@@ -1,10 +1,10 @@
-package jadex.bridge.service.types.settings;
+package jadex.enginecore.service.types.settings;
 
-import jadex.bridge.service.annotation.Reference;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.IPropertiesProvider;
-import jadex.commons.Properties;
-import jadex.commons.future.IFuture;
+import jadex.common.Properties;
+import jadex.common.IPropertiesProvider;
+import jadex.enginecore.service.annotation.Reference;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /**
  *  This service allows storing and retrieving settings

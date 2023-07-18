@@ -1,4 +1,4 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 /**
  *  Query event for signaling when a query is added or removed.

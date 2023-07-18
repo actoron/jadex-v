@@ -1,7 +1,7 @@
-package jadex.bridge.service.types.chat;
+package jadex.enginecore.service.types.chat;
 
 
-import jadex.bridge.IComponentIdentifier;
+import jadex.enginecore.IComponentIdentifier;
 
 /**
  *  Information about some event that happened in the chat component.

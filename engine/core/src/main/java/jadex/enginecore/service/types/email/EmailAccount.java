@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.email;
+package jadex.enginecore.service.types.email;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,8 +7,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import jadex.commons.SUtil;
-import jadex.commons.transformation.annotations.Exclude;
+import jadex.common.SUtil;
+import jadex.common.transformation.annotations.Exclude;
 
 /**
  *  Email account data.

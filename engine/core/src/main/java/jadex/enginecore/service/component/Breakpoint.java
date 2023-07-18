@@ -1,4 +1,4 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

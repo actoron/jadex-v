@@ -1,11 +1,11 @@
-package jadex.bridge.service.types.cron;
+package jadex.enginecore.service.types.cron;
 
-import jadex.bridge.IInternalAccess;
-import jadex.commons.IFilter;
-import jadex.commons.IResultCommand;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple2;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.common.IFilter;
+import jadex.common.IResultCommand;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.enginecore.IInternalAccess;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  The cron job consists of:

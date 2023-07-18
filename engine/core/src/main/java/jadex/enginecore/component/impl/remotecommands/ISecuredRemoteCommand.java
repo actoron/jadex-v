@@ -1,7 +1,7 @@
-package jadex.bridge.component.impl.remotecommands;
+package jadex.enginecore.component.impl.remotecommands;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.annotation.Security;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.annotation.Security;
 
 /**
  *  Remote command that can provide custom security settings

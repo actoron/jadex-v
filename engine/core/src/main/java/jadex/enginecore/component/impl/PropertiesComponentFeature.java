@@ -1,15 +1,15 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.IPropertiesFeature;
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.UnparsedExpression;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.IPropertiesFeature;
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 
 /**

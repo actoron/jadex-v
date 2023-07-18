@@ -1,4 +1,4 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -7,10 +7,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.search.ServiceKeyExtractor.SetWrapper;
-import jadex.commons.Tuple2;
+import jadex.common.Tuple2;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.search.ServiceKeyExtractor.SetWrapper;
 
 /**
  *  Extractor for query infos.

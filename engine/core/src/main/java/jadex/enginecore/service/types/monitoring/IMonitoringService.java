@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.monitoring;
+package jadex.enginecore.service.types.monitoring;
 
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.IFilter;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.common.IFilter;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  The monitoring service allows for:

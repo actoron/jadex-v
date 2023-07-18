@@ -1,9 +1,9 @@
-package jadex.bridge.service.types.publish;
+package jadex.enginecore.service.types.publish;
 
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.PublishInfo;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.PublishInfo;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
 
 /**
  *  Service for publishing services in other technologies such as web services.

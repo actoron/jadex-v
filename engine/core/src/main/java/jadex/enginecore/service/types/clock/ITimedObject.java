@@ -1,4 +1,4 @@
-package jadex.bridge.service.types.clock;
+package jadex.enginecore.service.types.clock;
 
 /**
  *  Interface for objects that are interested in timepoints.

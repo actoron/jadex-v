@@ -1,14 +1,14 @@
-package jadex.bridge.service.types.address;
+package jadex.enginecore.service.types.address;
 
 import java.util.Collection;
 import java.util.List;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.Tuple2;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.common.Tuple2;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.annotation.Security;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Service for translating platform names

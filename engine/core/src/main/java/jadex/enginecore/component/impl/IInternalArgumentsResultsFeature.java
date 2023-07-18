@@ -1,4 +1,4 @@
-package jadex.bridge.component.impl;
+package jadex.enginecore.component.impl;
 
 /**
  *  Internal methods of argument/result feature.

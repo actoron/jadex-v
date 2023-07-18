@@ -1,10 +1,10 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.bridge.service.component.BasicServiceInvocationHandler;
+import jadex.common.UnparsedExpression;
+import jadex.enginecore.service.component.BasicServiceInvocationHandler;
 
 /**
  *  Required service binding information.

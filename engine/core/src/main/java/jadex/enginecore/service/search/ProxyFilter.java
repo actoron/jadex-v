@@ -1,8 +1,8 @@
-package jadex.bridge.service.search;
+package jadex.enginecore.service.search;
 
-import jadex.bridge.ProxyFactory;
 import jadex.commons.IAsyncFilter;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.ProxyFactory;
+import jadex.future.IFuture;
 
 /**
  *  Test if a class is a proxy.

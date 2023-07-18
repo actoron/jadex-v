@@ -1,8 +1,8 @@
-package jadex.bridge.service.types.ecarules;
+package jadex.enginecore.service.types.ecarules;
 
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.enginecore.service.annotation.Service;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.rules.eca.IRule;
 
 /**

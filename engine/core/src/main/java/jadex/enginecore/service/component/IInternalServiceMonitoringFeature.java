@@ -1,6 +1,6 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
-import jadex.commons.future.ISubscriptionIntermediateFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Interface for monitoring provided and required services

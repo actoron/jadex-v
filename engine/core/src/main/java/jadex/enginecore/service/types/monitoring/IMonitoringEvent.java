@@ -1,11 +1,10 @@
-package jadex.bridge.service.types.monitoring;
+package jadex.enginecore.service.types.monitoring;
 
 import java.util.Map;
 
-import jadex.bridge.Cause;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.commons.IFilter;
+import jadex.common.IFilter;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
 
 /**
  *  Interface for monitoring events.

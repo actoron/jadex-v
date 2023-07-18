@@ -1,18 +1,18 @@
-package jadex.bridge.service;
+package jadex.enginecore.service;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jadex.base.Starter;
-import jadex.bridge.ClassInfo;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.annotation.Service;
-import jadex.commons.SReflect;
+import jadex.common.ClassInfo;
+import jadex.common.SReflect;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.Starter;
+import jadex.enginecore.service.annotation.Security;
+import jadex.enginecore.service.annotation.Service;
 import jadex.javaparser.SJavaParser;
 
 

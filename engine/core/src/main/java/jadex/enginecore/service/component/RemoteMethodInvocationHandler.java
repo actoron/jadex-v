@@ -1,26 +1,26 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ITypedComponentStep;
 import jadex.bridge.ProxyFactory;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.IRemoteExecutionFeature;
-import jadex.bridge.component.impl.IInternalRemoteExecutionFeature;
-import jadex.bridge.component.impl.remotecommands.IMethodReplacement;
-import jadex.bridge.component.impl.remotecommands.ProxyInfo;
-import jadex.bridge.component.impl.remotecommands.ProxyReference;
-import jadex.bridge.component.impl.remotecommands.RemoteReference;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.SReflect;
-import jadex.commons.future.IFuture;
+import jadex.common.ClassInfo;
+import jadex.common.SReflect;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ITypedComponentStep;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.component.IRemoteExecutionFeature;
+import jadex.enginecore.component.impl.IInternalRemoteExecutionFeature;
+import jadex.enginecore.component.impl.remotecommands.IMethodReplacement;
+import jadex.enginecore.component.impl.remotecommands.ProxyInfo;
+import jadex.enginecore.component.impl.remotecommands.ProxyReference;
+import jadex.enginecore.component.impl.remotecommands.RemoteReference;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.future.IFuture;
 
 /**
  *  Class that implements the Java proxy InvocationHandler, which

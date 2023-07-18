@@ -1,8 +1,8 @@
-package jadex.bridge.service.component.interceptors;
+package jadex.enginecore.service.component.interceptors;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.service.component.ServiceInvocationContext;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.service.component.ServiceInvocationContext;
 
 /**
  *  Ensures that interceptor is only called when component thread is in the chain.
