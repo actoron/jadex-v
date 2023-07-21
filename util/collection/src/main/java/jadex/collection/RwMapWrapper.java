@@ -7,6 +7,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import jadex.common.IAutoLock;
+import jadex.common.RwAutoLock;
+
 /**
  *  Thread-safe wrapper for maps that uses a read/write lock.
  */

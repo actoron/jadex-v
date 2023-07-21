@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import jadex.common.IAutoLock;
+
 /**
  *  Interface for thread-safe maps using a read-write lock.
  *

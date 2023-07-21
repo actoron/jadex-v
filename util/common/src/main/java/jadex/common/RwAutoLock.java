@@ -1,4 +1,4 @@
-package jadex.collection;
+package jadex.common;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;

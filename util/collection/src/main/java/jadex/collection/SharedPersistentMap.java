@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 
 import jadex.common.BufferInputStream;
 import jadex.common.BufferOutputStream;
+import jadex.common.IAutoLock;
+import jadex.common.RwAutoLock;
 import jadex.common.SUtil;
 
 /**
@@ -50,7 +52,7 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 	protected static final double MAX_LOAD_FACTOR = 70.0;
 	
 	/** Magic word starting the file. */
-	protected static final short MAGIC_WORD = (short) 0xbd15;
+	protected static final int MAGIC_WORD = 0xbd15bd15;
 	
 	/** Type of map - normal shared map. */
 	protected static final byte MAP_TYPE = 0;
@@ -88,10 +90,9 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 	/**
 	 *  Size of the header:
 	 *  
-	 *  [2 bytes Magic Word]
-	 *  [1 byte Map Type = 00]
-	 *  [1 byte Index Exponent]
-	 *  [4 bytes reserved]
+	 *  [4 bytes Magic Word]
+	 *  [4 bytes Map Structure Version]
+	 *  [8 byte Index Size]
 	 *  [8 bytes Map Size/Elements]
 	 *  [8 bytes garbage size]
 	 *  [104 bytes reserved]
@@ -99,8 +100,17 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 	 */
 	protected static final int HEADER_SIZE = 128;
 	
+	/** Position of the magic word in the header. */
+	protected static final int HDR_POS_MGC_WRD = 0;
+	
+	/** Position of the map structure version in the header. */
+	protected static final int HDR_POS_STRUCT_V = HDR_POS_MGC_WRD + 4;
+	
 	/** Position of the map size in the header. */
-	protected static final int HDR_POS_MAP_SIZE = 8;
+	protected static final int HDR_POS_IDX_SIZE = HDR_POS_MGC_WRD + REF_SIZE;
+	
+	/** Position of the map size in the header. */
+	protected static final int HDR_POS_MAP_SIZE = HDR_POS_IDX_SIZE + REF_SIZE;
 	
 	/** Position of the garbage size in the header. */
 	protected static final int HDR_POS_GARBAGE_SIZE = HDR_POS_MAP_SIZE + REF_SIZE;
@@ -191,16 +201,18 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 	protected MappedByteBuffer headermap;
 	
 	/** Memory mapping of the index. */
-	protected MappedByteBuffer indexmap;
+	protected volatile MappedByteBuffer indexmap;
 	
 	/** Mappings for the rest of the file. */
-	protected List<MappedByteBuffer> mappings = new ArrayList<>();
+	protected volatile List<MappedByteBuffer> mappings = new ArrayList<>();
 	
 	/** Lock for the mappings list. */
 	protected RwAutoLock mappingslock = new RwAutoLock();
 	
 	/** Objects directly mapped with their own mapping */
 	protected Map<Long, MappedByteBuffer> directmappings = new RwMapWrapper<>(new HashMap<>());
+	
+	protected int mapstructversion;
 	
 	/**
 	 *  Creates a new map, configure with builder pattern.
@@ -298,6 +310,7 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 	 */
 	public SharedPersistentMap<K, V> open()
 	{
+		mapstructversion = -1;
 		try
 		{
 			this.rfile = new RandomAccessFile(file, mode);
@@ -822,6 +835,24 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 	
 	// ****************************** Internal methods ******************************
 	
+	protected void verifyMapState()
+	{
+		int mgcwrd = getHeaderInt(HDR_POS_MGC_WRD);
+		
+		if (mgcwrd != MAGIC_WORD)
+			throw new IllegalStateException("File is not a shared map.");
+		
+		if (getHeaderInt(HDR_POS_STRUCT_V) != mapstructversion)
+		{
+			indexmap = null;
+			try (IAutoLock l = mappingslock.writeLock())
+			{
+				mappings = new ArrayList<>();
+			}
+			directmappings.clear();
+		}
+	}
+	
 	/**
 	 *  Performs maintenance tasks if required.
 	 *  Note: Write lock must be held before method is called.
@@ -874,8 +905,9 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 	 */
 	protected long readIndexSize()
 	{
-		long ret = -1;
-		try
+		long ret = getHeaderLong(HDR_POS_IDX_SIZE);
+		return ret;
+		/*try
 		{
 			MappedByteBuffer hmap = headermap.duplicate();
 			int fword = hmap.getInt(0);
@@ -895,7 +927,7 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 		{
 			throw new RuntimeException(e);
 		}
-		return ret;
+		return ret;*/
 	}
 	
 	/**
