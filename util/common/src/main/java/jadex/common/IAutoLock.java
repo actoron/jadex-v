@@ -1,4 +1,4 @@
-package jadex.collection;
+package jadex.common;
 
 public interface IAutoLock extends AutoCloseable
 {

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import jadex.collection.IAutoLock;
+import jadex.common.IAutoLock;
 import jadex.collection.IRwMap;
 import jadex.collection.LRU;
 import jadex.collection.RwMapWrapper;

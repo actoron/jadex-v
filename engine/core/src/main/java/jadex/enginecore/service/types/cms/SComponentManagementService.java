@@ -16,7 +16,7 @@ import java.util.Set;
 import jadex.bridge.ComponentCreationException;
 import jadex.bridge.ISearchConstraints;
 import jadex.bridge.SFuture;
-import jadex.collection.IAutoLock;
+import jadex.common.IAutoLock;
 import jadex.common.MethodInfo;
 import jadex.common.ResourceInfo;
 import jadex.common.SReflect;
