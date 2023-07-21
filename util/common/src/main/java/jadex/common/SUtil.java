@@ -71,7 +71,10 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -3227,7 +3230,10 @@ public class SUtil
 	}
 	
 	/** The pool used for interning strings. */
-	//static final IRwMap<String, String> internpool = new RwMapWrapper<String, String>(new WeakKeyValueMap<>());
+	static final Map<String, String> internpool = new WeakHashMap<>();
+	
+	/** The lock for the pool used for interning strings. */
+	static final RwAutoLock internpoollock = new RwAutoLock();
 	
 	/**
 	 *  Optimized version of String.intern() that actually uses String.intern() but
@@ -3238,10 +3244,16 @@ public class SUtil
 	 */
 	public static final String intern(String string)
 	{
-		String ret = internpool.get(string);
+		String ret = null;
+		
+		try (IAutoLock l = internpoollock.readLock())
+		{
+			ret = internpool.get(string);
+		}
+		
 		if (ret == null)
 		{
-			try (IAutoLock l = internpool.writeLock())
+			try (IAutoLock l = internpoollock.writeLock())
 			{
 				ret = internpool.get(string);
 				if (ret == null)
