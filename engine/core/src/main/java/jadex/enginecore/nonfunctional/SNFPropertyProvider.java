@@ -1,20 +1,20 @@
-package jadex.bridge.nonfunctional;
+package jadex.enginecore.nonfunctional;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.IPriorityComponentStep;
-import jadex.bridge.component.INFPropertyComponentFeature;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.MethodInfo;
-import jadex.commons.SUtil;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.transformation.annotations.Classname;
+import jadex.common.MethodInfo;
+import jadex.common.SUtil;
+import jadex.common.transformation.annotations.Classname;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.IPriorityComponentStep;
+import jadex.enginecore.component.INFPropertyComponentFeature;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.future.DelegationResultListener;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Static helper class for accessing nf properties also remotely.

@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 //import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
 import jadex.common.Boolean3;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
 import jadex.microagent.MicroAgentFactory;
 
 
@@ -69,8 +70,7 @@ public @interface Agent
 	/**
 	 *  Specify if monitoring should be enabled on the component.
 	 */
-	// todo?!
-	//public PublishEventLevel monitoring() default PublishEventLevel.NULL;
+	public PublishEventLevel monitoring() default PublishEventLevel.NULL;
 	
 	/**
 	 *  Auto-provide provided services that are directly implemented by the agent.

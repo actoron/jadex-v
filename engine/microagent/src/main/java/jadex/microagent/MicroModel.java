@@ -1,23 +1,20 @@
-package jadex.micro;
+package jadex.microagent;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.ServiceCallInfo;
-import jadex.bridge.modelinfo.IModelInfo;
-import jadex.bridge.service.RequiredServiceInfo;
-import jadex.commons.FieldInfo;
-import jadex.commons.MethodInfo;
-import jadex.commons.SUtil;
-import jadex.commons.Tuple2;
-import jadex.commons.Tuple3;
-import jadex.commons.collection.MultiCollection;
-import jadex.kernelbase.CacheableKernelModel;
+import jadex.common.ClassInfo;
+import jadex.common.FieldInfo;
+import jadex.common.MethodInfo;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.common.Tuple3;
+import jadex.enginecore.CacheableKernelModel;
+import jadex.enginecore.ServiceCallInfo;
+import jadex.enginecore.modelinfo.IModelInfo;
+import jadex.enginecore.service.RequiredServiceInfo;
 
 /**
  *  The micro agent model. 

@@ -1,12 +1,9 @@
-/**
- * 
- */
-package jadex.bridge.nonfunctional;
+package jadex.enginecore.nonfunctional;
 
 import java.util.Map;
 
-import jadex.commons.MethodInfo;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.future.IFuture;
 
 /**
  *  Interface for method-based non-functional property providers such

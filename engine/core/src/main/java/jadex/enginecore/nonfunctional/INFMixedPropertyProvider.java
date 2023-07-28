@@ -1,4 +1,4 @@
-package jadex.bridge.nonfunctional;
+package jadex.enginecore.nonfunctional;
 
 /**
  *  Interface that combines property provider with method property provider.

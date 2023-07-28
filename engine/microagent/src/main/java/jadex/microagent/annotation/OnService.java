@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.commons.Boolean3;
+import jadex.common.Boolean3;
 
 /**
  *  Annotate fields and methods that will be called when the corresponding services are available.

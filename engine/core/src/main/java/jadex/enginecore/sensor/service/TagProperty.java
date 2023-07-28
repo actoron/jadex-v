@@ -1,4 +1,4 @@
-package jadex.bridge.sensor.service;
+package jadex.enginecore.sensor.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,18 +7,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.VersionInfo;
-import jadex.bridge.component.IArgumentsResultsFeature;
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.bridge.nonfunctional.AbstractNFProperty;
-import jadex.bridge.nonfunctional.NFPropertyMetaInfo;
-import jadex.bridge.service.IService;
-import jadex.commons.MethodInfo;
-import jadex.commons.SReflect;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.common.SReflect;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.VersionInfo;
+import jadex.enginecore.component.IArgumentsResultsFeature;
+import jadex.enginecore.nonfunctional.AbstractNFProperty;
+import jadex.enginecore.nonfunctional.NFPropertyMetaInfo;
+import jadex.enginecore.service.IService;
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 
 /**

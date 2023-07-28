@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.collection.SetWrapper;
 import jadex.common.ClassInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.Tuple3;
 import jadex.enginecore.service.IService;
 import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.search.ServiceKeyExtractor.SetWrapper;
 import jadex.enginecore.service.types.library.ILibraryService;
 
 /**

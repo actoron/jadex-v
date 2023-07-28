@@ -1,9 +1,10 @@
-package jadex.bridge.sensor.memory;
+package jadex.enginecore.sensor.memory;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.nonfunctional.NFPropertyMetaInfo;
-import jadex.bridge.nonfunctional.NFRootProperty;
-import jadex.bridge.sensor.unit.MemoryUnit;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.nonfunctional.INFProperty.Target;
+import jadex.enginecore.nonfunctional.NFPropertyMetaInfo;
+import jadex.enginecore.nonfunctional.NFRootProperty;
+import jadex.enginecore.sensor.unit.MemoryUnit;
 
 /**
  *  Abstract base memory property.

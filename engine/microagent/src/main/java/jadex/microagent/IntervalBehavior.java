@@ -1,14 +1,14 @@
-package jadex.micro;
+package jadex.microagent;
 
-import jadex.bridge.ComponentTerminatedException;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.commons.SUtil;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.transformation.annotations.Classname;
+import jadex.common.SUtil;
+import jadex.common.transformation.annotations.Classname;
+import jadex.enginecore.IComponentStep;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentTerminatedException;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Automatically reinvokes send method in intervals

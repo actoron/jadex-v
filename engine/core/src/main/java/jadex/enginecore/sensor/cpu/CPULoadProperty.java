@@ -1,10 +1,11 @@
-package jadex.bridge.sensor.cpu;
+package jadex.enginecore.sensor.cpu;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.nonfunctional.NFPropertyMetaInfo;
-import jadex.bridge.nonfunctional.NFRootProperty;
-import jadex.bridge.sensor.unit.PercentUnit;
-import jadex.commons.OperatingSystemMXBeanFacade;
+import jadex.common.OperatingSystemMXBeanFacade;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.nonfunctional.INFProperty.Target;
+import jadex.enginecore.nonfunctional.NFPropertyMetaInfo;
+import jadex.enginecore.nonfunctional.NFRootProperty;
+import jadex.enginecore.sensor.unit.PercentUnit;
 
 /**
  *  The cpu load property.

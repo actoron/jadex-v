@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.SFuture;
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.common.Tuple2;
 import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.SFuture;
 import jadex.enginecore.Starter;
 import jadex.enginecore.component.ComponentCreationInfo;
 import jadex.enginecore.component.INFPropertyComponentFeature;

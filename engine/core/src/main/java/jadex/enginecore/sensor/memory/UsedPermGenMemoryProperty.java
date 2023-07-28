@@ -1,9 +1,9 @@
-package jadex.bridge.sensor.memory;
+package jadex.enginecore.sensor.memory;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 
-import jadex.bridge.IInternalAccess;
+import jadex.enginecore.IInternalAccess;
 
 /**
  * 

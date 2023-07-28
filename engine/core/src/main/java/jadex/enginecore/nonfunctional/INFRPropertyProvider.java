@@ -1,6 +1,6 @@
-package jadex.bridge.nonfunctional;
+package jadex.enginecore.nonfunctional;
 
-import jadex.commons.future.IFuture;
+import jadex.future.IFuture;
 
 
 /**

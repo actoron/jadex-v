@@ -1,7 +1,7 @@
-package jadex.bridge.nonfunctional.search;
+package jadex.enginecore.nonfunctional.search;
 
-import jadex.bridge.service.IService;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.IService;
+import jadex.future.IFuture;
 
 public interface IServiceEvaluator
 {

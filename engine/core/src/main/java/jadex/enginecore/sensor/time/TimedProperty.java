@@ -1,11 +1,9 @@
-package jadex.bridge.sensor.time;
+package jadex.enginecore.sensor.time;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.nonfunctional.NFPropertyMetaInfo;
-import jadex.bridge.nonfunctional.SimpleValueNFProperty;
-import jadex.bridge.sensor.unit.TimeUnit;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.nonfunctional.NFPropertyMetaInfo;
+import jadex.enginecore.nonfunctional.SimpleValueNFProperty;
+import jadex.enginecore.sensor.unit.TimeUnit;
 
 /**
  *  Base property for time properties.

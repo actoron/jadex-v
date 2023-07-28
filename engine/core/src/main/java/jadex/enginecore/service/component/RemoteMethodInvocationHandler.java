@@ -5,12 +5,12 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-import jadex.bridge.ProxyFactory;
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.enginecore.IExternalAccess;
 import jadex.enginecore.IInternalAccess;
 import jadex.enginecore.ITypedComponentStep;
+import jadex.enginecore.ProxyFactory;
 import jadex.enginecore.component.IExecutionFeature;
 import jadex.enginecore.component.IRemoteExecutionFeature;
 import jadex.enginecore.component.impl.IInternalRemoteExecutionFeature;

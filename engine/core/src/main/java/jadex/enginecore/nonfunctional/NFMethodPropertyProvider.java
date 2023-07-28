@@ -1,23 +1,23 @@
-package jadex.bridge.nonfunctional;
+package jadex.enginecore.nonfunctional;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IMonitoringComponentFeature;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishTarget;
-import jadex.bridge.service.types.monitoring.MonitoringEvent;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.CounterResultListener;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.IMonitoringComponentFeature;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishTarget;
+import jadex.enginecore.service.types.monitoring.MonitoringEvent;
+import jadex.future.CounterResultListener;
+import jadex.future.DelegationResultListener;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Default implementation for a method property provider.

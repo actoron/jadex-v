@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-import jadex.commons.IAsyncFilter;
+import jadex.enginecore.IAsyncFilter;
 import jadex.enginecore.IExternalAccess;
 import jadex.enginecore.sensor.service.TagProperty;
 import jadex.enginecore.service.IService;

@@ -1,7 +1,7 @@
-package jadex.bridge.sensor.memory;
+package jadex.enginecore.sensor.memory;
 
-import jadex.bridge.IInternalAccess;
-import jadex.commons.OperatingSystemMXBeanFacade;
+import jadex.common.OperatingSystemMXBeanFacade;
+import jadex.enginecore.IInternalAccess;
 
 /**
  *  The maximum physical memory.

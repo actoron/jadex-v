@@ -4,12 +4,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.logging.Logger;
 
-import jadex.bridge.ITargetResolver;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.enginecore.ComponentNotFoundException;
 import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.ITargetResolver;
 import jadex.enginecore.service.IService;
 import jadex.enginecore.service.IServiceIdentifier;
 import jadex.enginecore.service.component.ServiceInfo;

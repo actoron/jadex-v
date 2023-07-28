@@ -1,4 +1,4 @@
-package jadex.micro;
+package jadex.microagent;
 
 /**
  *  Custom persistent data for micro agents.

@@ -1,9 +1,9 @@
-package jadex.bridge.nonfunctional.search;
+package jadex.enginecore.nonfunctional.search;
 
 import java.util.List;
 
-import jadex.commons.Tuple2;
-import jadex.commons.future.IFuture;
+import jadex.common.Tuple2;
+import jadex.future.IFuture;
 
 /**
  *  Interfaces for non-functional ranking mechanism for services.

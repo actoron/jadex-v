@@ -11,43 +11,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.base.Starter;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ServiceCallInfo;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IArgumentsResultsFeature;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.ILifecycleComponentFeature;
-import jadex.bridge.component.IPojoComponentFeature;
-import jadex.bridge.component.ISubcomponentsFeature;
-import jadex.bridge.component.impl.AbstractComponentFeature;
-import jadex.bridge.component.impl.ComponentFeatureFactory;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.annotation.OnEnd;
-import jadex.bridge.service.annotation.OnInit;
-import jadex.bridge.service.annotation.OnStart;
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.types.factory.IPlatformComponentAccess;
-import jadex.commons.SAccess;
-import jadex.commons.FieldInfo;
-import jadex.commons.IParameterGuesser;
-import jadex.commons.MethodInfo;
-import jadex.commons.SReflect;
-import jadex.commons.SUtil;
-import jadex.commons.SimpleParameterGuesser;
-import jadex.commons.Tuple3;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IIntermediateFuture;
-import jadex.commons.future.IResultListener;
-import jadex.commons.future.IntermediateDefaultResultListener;
+import jadex.common.FieldInfo;
+import jadex.common.IParameterGuesser;
+import jadex.common.MethodInfo;
+import jadex.common.SAccess;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.common.SimpleParameterGuesser;
+import jadex.common.Tuple3;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ServiceCallInfo;
+import jadex.enginecore.Starter;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IArgumentsResultsFeature;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.ILifecycleComponentFeature;
+import jadex.enginecore.component.IPojoComponentFeature;
+import jadex.enginecore.component.ISubcomponentsFeature;
+import jadex.enginecore.component.impl.AbstractComponentFeature;
+import jadex.enginecore.component.impl.ComponentFeatureFactory;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.annotation.OnEnd;
+import jadex.enginecore.service.annotation.OnInit;
+import jadex.enginecore.service.annotation.OnStart;
+import jadex.enginecore.service.component.IProvidedServicesFeature;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.enginecore.service.types.factory.IPlatformComponentAccess;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IResultListener;
+import jadex.future.IntermediateDefaultResultListener;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.micro.MicroModel;
-import jadex.micro.annotation.AgentBody;
-import jadex.micro.annotation.AgentCreated;
-import jadex.micro.annotation.AgentKilled;
+//import jadex.micro.annotation.AgentBody;
+//import jadex.micro.annotation.AgentCreated;
+//import jadex.micro.annotation.AgentKilled;
+import jadex.microagent.MicroModel;
 
 /**
  *  Feature that ensures the agent created(), body() and killed() are called on the pojo. 
@@ -115,7 +115,8 @@ public class MicroLifecycleComponentFeature extends	AbstractComponentFeature imp
 		}
 		else
 		{
-			return invokeMethod(getInternalAccess(), AgentCreated.class, null);
+			throw new RuntimeException("no oninit found");
+			//return invokeMethod(getInternalAccess(), AgentCreated.class, null);
 		}
 	}
 	
@@ -142,7 +143,8 @@ public class MicroLifecycleComponentFeature extends	AbstractComponentFeature imp
 		}
 		else
 		{
-			return invokeMethod(getInternalAccess(), AgentBody.class, null);
+			throw new RuntimeException("no onstart found");
+			//return invokeMethod(getInternalAccess(), AgentBody.class, null);
 		}
 	}
 
@@ -186,11 +188,12 @@ public class MicroLifecycleComponentFeature extends	AbstractComponentFeature imp
 		}
 		else
 		{
-			fut = invokeMethod(getInternalAccess(), AgentKilled.class, null);
+			throw new RuntimeException("no onend found");
+			/*fut = invokeMethod(getInternalAccess(), AgentKilled.class, null);
 			if(debug)
 			{
 				component.getLogger().severe("lifecycle feature shutdown agent killed invoked: "+getComponent()+" done="+fut.isDone());
-			}
+			}*/
 		}
 		
 		fut.addResultListener(new IResultListener<Void>()

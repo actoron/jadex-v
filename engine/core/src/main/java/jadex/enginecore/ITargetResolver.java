@@ -1,8 +1,8 @@
 package jadex.enginecore;
 
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.future.IFuture;
 
 /**
  *  The target resolver is used to determine dynamically a new service

@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import jadex.enginecore.annotation.NameValue;
-import jadex.bridge.service.ServiceScope;
+import jadex.enginecore.service.ServiceScope;
 
 /**
  *  The name (for referencing/overriding).

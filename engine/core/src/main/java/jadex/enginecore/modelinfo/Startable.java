@@ -1,5 +1,7 @@
 package jadex.enginecore.modelinfo;
 
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
+
 /**
  *  Base class for startable elements.
  */
@@ -26,7 +28,7 @@ public class Startable
 //	private Boolean autoshutdown;
 
 	/** The monitoring flag. */
-	//private PublishEventLevel monitoring;
+	private PublishEventLevel monitoring;
 	
 	/** The synchronous flag. */
 	private Boolean synchronous;
@@ -183,19 +185,19 @@ public class Startable
 	/**
 	 *  Get the monitoring.
 	 *  @return The monitoring.
-	 * /
+	 */
 	public PublishEventLevel getMonitoring()
 	{
 //		return monitoring==null? PublishEventLevel.OFF: monitoring;
 		return monitoring;
-	}*/
+	}
 
 	/**
 	 *  Set the monitoring.
 	 *  @param monitoring The monitoring to set.
-	 * /
+	 */
 	public void setMonitoring(PublishEventLevel monitoring)
 	{
 		this.monitoring = monitoring;
-	}*/
+	}
 }

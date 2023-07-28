@@ -1,14 +1,14 @@
-package jadex.bridge.nonfunctional;
+package jadex.enginecore.nonfunctional;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.ComponentTerminatedException;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.sensor.unit.IConvertableUnit;
-import jadex.bridge.sensor.unit.IPrettyPrintUnit;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.ClassInfo;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentTerminatedException;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.sensor.unit.IConvertableUnit;
+import jadex.enginecore.sensor.unit.IPrettyPrintUnit;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  * 

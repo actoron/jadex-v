@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.ITargetResolver;
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
 import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.ITargetResolver;
 import jadex.enginecore.Starter;
 
 /**

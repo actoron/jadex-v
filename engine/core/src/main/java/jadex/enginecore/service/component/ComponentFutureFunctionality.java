@@ -2,8 +2,8 @@ package jadex.enginecore.service.component;
 
 import java.util.logging.Logger;
 
-import jadex.bridge.ComponentResultListener;
 import jadex.common.ICommand;
+import jadex.enginecore.ComponentResultListener;
 import jadex.enginecore.IInternalAccess;
 import jadex.enginecore.service.component.interceptors.FutureFunctionality;
 

@@ -1,18 +1,18 @@
-package jadex.bridge.sensor.service;
+package jadex.enginecore.sensor.service;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.sensor.time.TimedProperty;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.sensor.time.TimedProperty;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.component.IProvidedServicesFeature;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.IFuture;
 
 /**
  *  Property for the overall latency a service call.

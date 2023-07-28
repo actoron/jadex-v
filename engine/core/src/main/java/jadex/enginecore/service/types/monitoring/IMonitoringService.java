@@ -25,36 +25,36 @@ public interface IMonitoringService
 		TOSUBSCRIBERS
 	}
 	
-//	/**
-//	 *  The publish level describes for a 
-//	 *  component which event it allows to emit.
-//	 */
-//	public static enum PublishEmitLevel
-//	{
-//		ALL(0),
-//		MOST(1),
-//		SOME(2),
-//		NONE(3);
-//		
-//		protected int level;
-//		
-//		/**
-//		 *  Create a new PublishLevel.
-//		 */
-//		private PublishEmitLevel(int level)
-//		{
-//			this.level = level;
-//		}
-//
-//		/**
-//		 *  Get the level.
-//		 *  return The level.
-//		 */
-//		public int getLevel()
-//		{
-//			return level;
-//		}
-//	}
+	/**
+	 *  The publish level describes for a 
+	 *  component which event it allows to emit.
+	 */
+	public static enum PublishEmitLevel
+	{
+		ALL(0),
+		MOST(1),
+		SOME(2),
+		NONE(3);
+		
+		protected int level;
+		
+		/**
+		 *  Create a new PublishLevel.
+		 */
+		private PublishEmitLevel(int level)
+		{
+			this.level = level;
+		}
+
+		/**
+		 *  Get the level.
+		 *  return The level.
+		 */
+		public int getLevel()
+		{
+			return level;
+		}
+	}
 	
 	/**
 	 *  The event importance.
