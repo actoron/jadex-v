@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
@@ -38,6 +37,7 @@ import jadex.enginecore.service.component.BasicServiceInvocationHandler;
 import jadex.enginecore.service.component.IProvidedServicesFeature;
 import jadex.enginecore.service.search.ServiceRegistry;
 import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 

@@ -4,9 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bridge.BulkMonitoringEvent;
 import jadex.common.IFilter;
 import jadex.common.Tuple2;
+import jadex.enginecore.BulkMonitoringEvent;
 import jadex.enginecore.IInternalAccess;
 import jadex.enginecore.SFuture;
 import jadex.enginecore.component.ComponentCreationInfo;
