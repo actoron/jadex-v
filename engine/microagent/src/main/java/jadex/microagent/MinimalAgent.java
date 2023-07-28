@@ -1,6 +1,6 @@
-package jadex.micro;
+package jadex.microagent;
 
-import jadex.micro.annotation.Agent;
+import jadex.microagent.annotation.Agent;
 
 /**
  *  A minimal micro agent.

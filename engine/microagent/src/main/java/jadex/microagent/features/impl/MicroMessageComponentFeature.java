@@ -1,22 +1,19 @@
-package jadex.microagent.features.impl;
+	package jadex.microagent.features.impl;
 
-import jadex.bridge.IConnection;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.IMessageFeature;
-import jadex.bridge.component.IMsgHeader;
-import jadex.bridge.component.impl.ComponentFeatureFactory;
-import jadex.bridge.component.impl.MessageComponentFeature;
-import jadex.bridge.component.streams.StreamPacket;
-import jadex.bridge.service.types.security.ISecurityInfo;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.IResultListener;
-import jadex.micro.MicroModel;
-import jadex.micro.annotation.AgentMessageArrived;
-import jadex.micro.annotation.AgentStreamArrived;
-import jadex.micro.annotation.OnMessage;
-import jadex.micro.annotation.OnStream;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.IMessageFeature;
+import jadex.enginecore.component.IMsgHeader;
+import jadex.enginecore.component.impl.ComponentFeatureFactory;
+import jadex.enginecore.component.impl.MessageComponentFeature;
+import jadex.enginecore.component.streams.IConnection;
+import jadex.enginecore.service.types.security.ISecurityInfo;
+import jadex.future.IResultListener;
+import jadex.microagent.MicroModel;
+import jadex.microagent.annotation.OnMessage;
+import jadex.microagent.annotation.OnStream;
 
 /**
  *  Extension to allow message injection in agent methods.
@@ -50,11 +47,11 @@ public class MicroMessageComponentFeature extends MessageComponentFeature
 //		if(body instanceof StreamPacket)
 //		{
 			MicroModel model = (MicroModel)component.getModel().getRawModel();
-			MethodInfo mi = model.getAgentMethod(AgentMessageArrived.class);
+			MethodInfo mi = model.getAgentMethod(OnMessage.class);
 		
 			if(mi!=null)
 			{
-				MicroLifecycleComponentFeature.invokeMethod(getInternalAccess(), AgentMessageArrived.class, new Object[]{secinf, header, body, body != null ? body.getClass() : null})
+				MicroLifecycleComponentFeature.invokeMethod(getInternalAccess(), OnMessage.class, new Object[]{secinf, header, body, body != null ? body.getClass() : null})
 					.addResultListener(new IResultListener<Void>()
 				{
 					@Override
@@ -98,11 +95,11 @@ public class MicroMessageComponentFeature extends MessageComponentFeature
 	public void streamArrived(IConnection con)
 	{
 		MicroModel model = (MicroModel)component.getModel().getRawModel();
-		MethodInfo mi = model.getAgentMethod(AgentStreamArrived.class);
+		MethodInfo mi = model.getAgentMethod(OnStream.class);
 	
 		if(mi!=null)
 		{
-			MicroLifecycleComponentFeature.invokeMethod(getInternalAccess(), AgentStreamArrived.class, new Object[]{con})
+			MicroLifecycleComponentFeature.invokeMethod(getInternalAccess(), OnStream.class, new Object[]{con})
 				.addResultListener(new IResultListener<Void>()
 			{
 				@Override

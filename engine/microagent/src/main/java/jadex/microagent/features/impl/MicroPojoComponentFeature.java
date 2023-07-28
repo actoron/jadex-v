@@ -2,18 +2,18 @@ package jadex.microagent.features.impl;
 
 import java.util.Collections;
 
-import jadex.base.IPlatformConfiguration;
-import jadex.base.Starter;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.IPojoComponentFeature;
-import jadex.bridge.component.impl.AbstractComponentFeature;
-import jadex.bridge.component.impl.ComponentFeatureFactory;
-import jadex.commons.IParameterGuesser;
-import jadex.commons.IValueFetcher;
-import jadex.commons.SimpleParameterGuesser;
-import jadex.micro.MicroModel;
+//import jadex.base.IPlatformConfiguration;
+import jadex.common.IParameterGuesser;
+import jadex.common.IValueFetcher;
+import jadex.common.SimpleParameterGuesser;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.Starter;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.IPojoComponentFeature;
+import jadex.enginecore.component.impl.AbstractComponentFeature;
+import jadex.enginecore.component.impl.ComponentFeatureFactory;
+import jadex.microagent.MicroModel;
 
 /**
  *  Feature that makes pojo accessible.
@@ -105,11 +105,11 @@ public class MicroPojoComponentFeature extends	AbstractComponentFeature implemen
 		{
 			return getPojoAgent();
 		}
-		else if(name!=null && name.startsWith(IPlatformConfiguration.PLATFORMARGS))
+		/*else if(name!=null && name.startsWith(IPlatformConfiguration.PLATFORMARGS))
 		{
 			String valname = name.length()>13? name.substring(14): null;
 			return valname==null? Starter.getPlatformValue(getComponent().getId(), IPlatformConfiguration.PLATFORMARGS): Starter.getPlatformValue(getComponent().getId(), valname);
-		}
+		}*/
 		else if(Starter.hasPlatformValue(getComponent().getId(), name))
 		{
 			return Starter.getPlatformValue(getComponent().getId(), name);

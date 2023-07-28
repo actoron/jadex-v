@@ -1,14 +1,14 @@
 package jadex.microagent.features.impl;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.impl.ComponentFeatureFactory;
-import jadex.bridge.component.impl.ExecutionComponentFeature;
-import jadex.bridge.service.types.cms.IComponentDescription;
-import jadex.commons.future.IFuture;
-import jadex.micro.annotation.AgentChildKilled;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.IExecutionFeature;
+import jadex.enginecore.component.impl.ComponentFeatureFactory;
+import jadex.enginecore.component.impl.ExecutionComponentFeature;
+import jadex.enginecore.service.types.cms.IComponentDescription;
+import jadex.future.IFuture;
+import jadex.microagent.annotation.AgentChildKilled;
 
 /**
  *  Overrides execution feature to implement childTerminated().

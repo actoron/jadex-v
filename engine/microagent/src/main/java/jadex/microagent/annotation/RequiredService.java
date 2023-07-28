@@ -5,11 +5,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.bridge.nonfunctional.annotation.NFRProperty;
-import jadex.bridge.service.RequiredServiceInfo;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.annotation.Value;
-import jadex.bridge.service.component.BasicServiceInvocationHandler;
+import jadex.enginecore.annotation.Value;
+import jadex.enginecore.nonfunctional.annotation.NFRProperty;
+import jadex.enginecore.service.RequiredServiceInfo;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.component.BasicServiceInvocationHandler;
 
 /**
  *  Required service data.

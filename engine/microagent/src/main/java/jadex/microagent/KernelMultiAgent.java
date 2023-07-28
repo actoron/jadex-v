@@ -13,16 +13,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jadex.classreader.SClassReader;
+import jadex.classreader.SClassReader.AnnotationInfo;
+import jadex.classreader.SClassReader.ClassInfo;
 import jadex.collection.MultiCollection;
 import jadex.common.Boolean3;
-import jadex.common.ClassInfo;
 import jadex.common.FileFilter;
 import jadex.common.IFilter;
 import jadex.common.SReflect;
+import jadex.common.SScan;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
-import jadex.commons.SClassReader;
-import jadex.commons.SClassReader.AnnotationInfo;
 import jadex.enginecore.IComponentIdentifier;
 import jadex.enginecore.IComponentStep;
 import jadex.enginecore.IExternalAccess;
@@ -420,7 +421,7 @@ public class KernelMultiAgent implements IComponentFactory, IMultiKernelNotifier
 				//System.out.println("scan: "+urls2.size());
 				
 		//		System.out.println("urls: "+urls);
-				Set<ClassInfo> cis = SReflect.scanForClassInfos(urls2.toArray(new URL[urls2.size()]), ffilter, cfilter);
+				Set<ClassInfo> cis = SClassReader.scanForClassInfos(urls2.toArray(new URL[urls2.size()]), ffilter, cfilter);
 				//System.out.println("scan end: "+cis);
 				
 				for(ClassInfo ci: cis)

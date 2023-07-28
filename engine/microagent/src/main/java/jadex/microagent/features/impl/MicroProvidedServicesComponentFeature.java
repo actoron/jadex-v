@@ -5,22 +5,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.component.ComponentCreationInfo;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.impl.ComponentFeatureFactory;
-import jadex.bridge.service.ProvidedServiceInfo;
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.component.ProvidedServicesComponentFeature;
-import jadex.commons.IValueFetcher;
-import jadex.commons.Tuple2;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.micro.InjectionInfoHolder;
-import jadex.micro.MicroClassReader;
-import jadex.micro.MicroModel.ServiceInjectionInfo;
-import jadex.micro.annotation.Agent;
+import jadex.common.IValueFetcher;
+import jadex.common.Tuple2;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.component.ComponentCreationInfo;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.impl.ComponentFeatureFactory;
+import jadex.enginecore.service.ProvidedServiceInfo;
+import jadex.enginecore.service.component.IProvidedServicesFeature;
+import jadex.enginecore.service.component.ProvidedServicesComponentFeature;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.microagent.InjectionInfoHolder;
+import jadex.microagent.MicroClassReader;
+import jadex.microagent.MicroModel.ServiceInjectionInfo;
+import jadex.microagent.annotation.Agent;
 
 /**
  *  Feature for provided services.

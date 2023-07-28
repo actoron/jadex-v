@@ -1,9 +1,9 @@
 package jadex.microagent;
 
+import jadex.classreader.SClassReader;
+import jadex.classreader.SClassReader.AnnotationInfo;
 import jadex.common.Boolean3;
 import jadex.common.IFilter;
-import jadex.common.SClassReader;
-import jadex.common.SClassReader.AnnotationInfo;
 import jadex.common.SReflect;
 import jadex.enginecore.annotation.NameValue;
 import jadex.enginecore.service.ServiceScope;

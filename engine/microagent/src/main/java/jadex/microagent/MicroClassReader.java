@@ -1,4 +1,4 @@
-package jadex.micro;
+package jadex.microagent;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -22,97 +22,90 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.LocalResourceIdentifier;
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.ResourceIdentifier;
-import jadex.bridge.ServiceCallInfo;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.bridge.component.impl.ComponentFeatureFactory;
-import jadex.bridge.modelinfo.ComponentInstanceInfo;
-import jadex.bridge.modelinfo.ConfigurationInfo;
-import jadex.bridge.modelinfo.IArgument;
-import jadex.bridge.modelinfo.ModelInfo;
-import jadex.bridge.modelinfo.NFPropertyInfo;
-import jadex.bridge.modelinfo.NFRPropertyInfo;
-import jadex.bridge.modelinfo.SubcomponentTypeInfo;
-import jadex.bridge.modelinfo.UnparsedExpression;
-import jadex.bridge.nonfunctional.annotation.NFProperties;
-import jadex.bridge.nonfunctional.annotation.NFProperty;
-import jadex.bridge.nonfunctional.annotation.NFRProperty;
-import jadex.bridge.nonfunctional.annotation.NameValue;
-import jadex.bridge.nonfunctional.annotation.SNameValue;
-import jadex.bridge.sensor.service.TagProperty;
-import jadex.bridge.service.ProvidedServiceImplementation;
-import jadex.bridge.service.ProvidedServiceInfo;
-import jadex.bridge.service.PublishInfo;
-import jadex.bridge.service.RequiredServiceBinding;
-import jadex.bridge.service.RequiredServiceInfo;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.annotation.GuiClass;
-import jadex.bridge.service.annotation.GuiClassName;
-import jadex.bridge.service.annotation.OnEnd;
-import jadex.bridge.service.annotation.OnInit;
-import jadex.bridge.service.annotation.OnStart;
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.annotation.Service;
-import jadex.bridge.service.annotation.Tag;
-import jadex.bridge.service.annotation.Tags;
-import jadex.bridge.service.annotation.Value;
-import jadex.bridge.service.types.factory.SComponentFactory;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.commons.SAccess;
-import jadex.commons.Boolean3;
-import jadex.commons.FieldInfo;
-import jadex.commons.IValueFetcher;
-import jadex.commons.MethodInfo;
-import jadex.commons.SReflect;
-import jadex.commons.SUtil;
-import jadex.commons.future.IFuture;
+import jadex.common.Boolean3;
+import jadex.common.ClassInfo;
+import jadex.common.FieldInfo;
+import jadex.common.IValueFetcher;
+import jadex.common.MethodInfo;
+import jadex.common.SAccess;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.common.UnparsedExpression;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.ServiceCallInfo;
+import jadex.enginecore.annotation.NameValue;
+import jadex.enginecore.annotation.Value;
+import jadex.enginecore.component.IComponentFeatureFactory;
+import jadex.enginecore.component.impl.ComponentFeatureFactory;
+import jadex.enginecore.modelinfo.ComponentInstanceInfo;
+import jadex.enginecore.modelinfo.ConfigurationInfo;
+import jadex.enginecore.modelinfo.IArgument;
+import jadex.enginecore.modelinfo.ModelInfo;
+import jadex.enginecore.modelinfo.NFPropertyInfo;
+import jadex.enginecore.modelinfo.NFRPropertyInfo;
+import jadex.enginecore.modelinfo.SubcomponentTypeInfo;
+import jadex.enginecore.nonfunctional.annotation.NFProperties;
+import jadex.enginecore.nonfunctional.annotation.NFProperty;
+import jadex.enginecore.nonfunctional.annotation.NFRProperty;
+import jadex.enginecore.nonfunctional.annotation.SNameValue;
+import jadex.enginecore.sensor.service.TagProperty;
+import jadex.enginecore.service.ProvidedServiceImplementation;
+import jadex.enginecore.service.ProvidedServiceInfo;
+import jadex.enginecore.service.PublishInfo;
+import jadex.enginecore.service.RequiredServiceBinding;
+import jadex.enginecore.service.RequiredServiceInfo;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.annotation.GuiClass;
+import jadex.enginecore.service.annotation.GuiClassName;
+import jadex.enginecore.service.annotation.OnEnd;
+import jadex.enginecore.service.annotation.OnInit;
+import jadex.enginecore.service.annotation.OnStart;
+import jadex.enginecore.service.annotation.Security;
+import jadex.enginecore.service.annotation.Service;
+import jadex.enginecore.service.annotation.Tag;
+import jadex.enginecore.service.annotation.Tags;
+import jadex.enginecore.service.types.factory.SComponentFactory;
+import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
+import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.micro.MicroModel.ServiceInjectionInfo;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.AgentArgument;
-import jadex.micro.annotation.AgentBody;
-import jadex.micro.annotation.AgentBreakpoint;
-import jadex.micro.annotation.AgentChildKilled;
-import jadex.micro.annotation.AgentCreated;
-import jadex.micro.annotation.AgentFeature;
-import jadex.micro.annotation.AgentKilled;
-import jadex.micro.annotation.AgentMessageArrived;
-import jadex.micro.annotation.AgentResult;
-import jadex.micro.annotation.AgentServiceQuery;
-import jadex.micro.annotation.AgentServiceSearch;
-import jadex.micro.annotation.AgentServiceValue;
-import jadex.micro.annotation.AgentStreamArrived;
-import jadex.micro.annotation.Argument;
-import jadex.micro.annotation.Arguments;
-import jadex.micro.annotation.Breakpoints;
-import jadex.micro.annotation.Component;
-import jadex.micro.annotation.ComponentType;
-import jadex.micro.annotation.ComponentTypes;
-import jadex.micro.annotation.Configuration;
-import jadex.micro.annotation.Configurations;
-import jadex.micro.annotation.CreationInfo;
-import jadex.micro.annotation.Description;
-import jadex.micro.annotation.Feature;
-import jadex.micro.annotation.Features;
-import jadex.micro.annotation.Implementation;
-import jadex.micro.annotation.Imports;
-import jadex.micro.annotation.OnMessage;
-import jadex.micro.annotation.OnService;
-import jadex.micro.annotation.OnStream;
-import jadex.micro.annotation.Parent;
-import jadex.micro.annotation.Properties;
-import jadex.micro.annotation.ProvidedService;
-import jadex.micro.annotation.ProvidedServices;
-import jadex.micro.annotation.Publish;
-import jadex.micro.annotation.RequiredService;
-import jadex.micro.annotation.RequiredServices;
-import jadex.micro.annotation.Result;
-import jadex.micro.annotation.Results;
+//import jadex.micro.annotation.AgentServiceQuery;
+//import jadex.micro.annotation.AgentServiceSearch;
+import jadex.microagent.MicroModel.ServiceInjectionInfo;
+import jadex.microagent.annotation.Agent;
+import jadex.microagent.annotation.AgentArgument;
+import jadex.microagent.annotation.AgentBreakpoint;
+import jadex.microagent.annotation.AgentChildKilled;
+import jadex.microagent.annotation.AgentFeature;
+import jadex.microagent.annotation.AgentResult;
+import jadex.microagent.annotation.AgentServiceValue;
+import jadex.microagent.annotation.Argument;
+import jadex.microagent.annotation.Arguments;
+import jadex.microagent.annotation.Breakpoints;
+import jadex.microagent.annotation.Component;
+import jadex.microagent.annotation.ComponentType;
+import jadex.microagent.annotation.ComponentTypes;
+import jadex.microagent.annotation.Configuration;
+import jadex.microagent.annotation.Configurations;
+import jadex.microagent.annotation.CreationInfo;
+import jadex.microagent.annotation.Description;
+import jadex.microagent.annotation.Feature;
+import jadex.microagent.annotation.Features;
+import jadex.microagent.annotation.Implementation;
+import jadex.microagent.annotation.Imports;
+import jadex.microagent.annotation.OnMessage;
+import jadex.microagent.annotation.OnService;
+import jadex.microagent.annotation.OnStream;
+import jadex.microagent.annotation.Parent;
+import jadex.microagent.annotation.Properties;
+import jadex.microagent.annotation.ProvidedService;
+import jadex.microagent.annotation.ProvidedServices;
+import jadex.microagent.annotation.Publish;
+import jadex.microagent.annotation.RequiredService;
+import jadex.microagent.annotation.RequiredServices;
+import jadex.microagent.annotation.Result;
+import jadex.microagent.annotation.Results;
 
 /**
  *  Reads micro agent classes and generates a model from metainfo and annotations.
@@ -194,7 +187,7 @@ public class MicroClassReader
 		if(features!=null)
 			modelinfo.setFeatures((IComponentFeatureFactory[])features.toArray(new IComponentFeatureFactory[features.size()]));
 		
-		if(rid==null)
+		/*if(rid==null)
 		{
 			URL url	= null;
 			try
@@ -211,7 +204,7 @@ public class MicroClassReader
 				e.printStackTrace();
 			}
 			rid = new ResourceIdentifier(new LocalResourceIdentifier(root, url), null);
-		}
+		}*/
 		modelinfo.setResourceIdentifier(rid);
 		modelinfo.setClassloader(classloader);
 		ret.setClassloader(classloader);
@@ -610,7 +603,7 @@ public class MicroClassReader
 	//					try
 	//					{
 		//				Object arg = SJavaParser.evaluateExpression(vals[i].defaultvalue(), imports, null, classloader);
-						IArgument tmparg = new jadex.bridge.modelinfo.Argument(vals[i].name(), 
+						IArgument tmparg = new jadex.enginecore.modelinfo.Argument(vals[i].name(), 
 							vals[i].description(), SReflect.getClassName(vals[i].clazz()),
 							"".equals(vals[i].defaultvalue()) ? null : vals[i].defaultvalue());
 						
@@ -638,7 +631,7 @@ public class MicroClassReader
 							
 							if(!args.containsKey(field.getName()))
 							{
-								IArgument tmparg = new jadex.bridge.modelinfo.Argument(field.getName(), 
+								IArgument tmparg = new jadex.enginecore.modelinfo.Argument(field.getName(), 
 									null, SReflect.getClassName(field.getType()), null);
 								args.put(field.getName(), tmparg);
 							}
@@ -662,7 +655,7 @@ public class MicroClassReader
 					for(int i=0; i<vals.length; i++)
 					{
 		//				Object res = evaluateExpression(vals[i].defaultvalue(), imports, null, classloader);
-						IArgument tmpresult = new jadex.bridge.modelinfo.Argument(vals[i].name(), 
+						IArgument tmpresult = new jadex.enginecore.modelinfo.Argument(vals[i].name(), 
 							vals[i].description(), SReflect.getClassName(vals[i].clazz()),
 							"".equals(vals[i].defaultvalue()) ? null : vals[i].defaultvalue());
 						
@@ -684,7 +677,7 @@ public class MicroClassReader
 							
 							if(!resul.containsKey(field.getName()))
 							{
-								IArgument tmparg = new jadex.bridge.modelinfo.Argument(field.getName(), 
+								IArgument tmparg = new jadex.enginecore.modelinfo.Argument(field.getName(), 
 									null, SReflect.getClassName(field.getType()), null);
 								resul.put(field.getName(), tmparg);
 							}
@@ -992,17 +985,17 @@ public class MicroClassReader
 					micromodel.addServiceCall(new ServiceCallInfo(reqname, null, new MethodInfo(methods[i])));
 				}*/
 				
-				if(isAnnotationPresent(methods[i], AgentCreated.class, cl))
+				/*if(isAnnotationPresent(methods[i], AgentCreated.class, cl))
 				{
 					checkMethodReturnType(AgentCreated.class, methods[i], cl);
 					micromodel.setAgentMethod(AgentCreated.class, new MethodInfo(methods[i]));
-				}
+				}*/
 				if(isAnnotationPresent(methods[i], OnInit.class, cl))
 				{
 					checkMethodReturnType(OnInit.class, methods[i], cl);
 					micromodel.setAgentMethod(OnInit.class, new MethodInfo(methods[i]));
 				}
-				if(isAnnotationPresent(methods[i], AgentBody.class, cl))
+				/*if(isAnnotationPresent(methods[i], AgentBody.class, cl))
 				{
 					checkMethodReturnType(AgentBody.class, methods[i], cl);
 					
@@ -1024,7 +1017,7 @@ public class MicroClassReader
 					}
 					
 					micromodel.setAgentMethod(AgentBody.class, new MethodInfo(methods[i]));
-				}
+				}*/
 				if(isAnnotationPresent(methods[i], OnStart.class, cl))
 				{
 					checkMethodReturnType(OnStart.class, methods[i], cl);
@@ -1048,11 +1041,11 @@ public class MicroClassReader
 					
 					micromodel.setAgentMethod(OnStart.class, new MethodInfo(methods[i]));
 				}
-				if(isAnnotationPresent(methods[i], AgentKilled.class, cl))
+				/*if(isAnnotationPresent(methods[i], AgentKilled.class, cl))
 				{
 					checkMethodReturnType(AgentKilled.class, methods[i], cl);
 					micromodel.setAgentMethod(AgentKilled.class, new MethodInfo(methods[i]));
-				}
+				}*/
 				if(isAnnotationPresent(methods[i], OnEnd.class, cl))
 				{
 					checkMethodReturnType(OnEnd.class, methods[i], cl);
@@ -1063,21 +1056,21 @@ public class MicroClassReader
 					// todo: check boolean return type.
 					micromodel.setAgentMethod(AgentBreakpoint.class, new MethodInfo(methods[i]));
 				}
-				if(isAnnotationPresent(methods[i], AgentStreamArrived.class, cl))
+				/*if(isAnnotationPresent(methods[i], AgentStreamArrived.class, cl))
 				{
 					checkMethodReturnType(AgentStreamArrived.class, methods[i], cl);
 					micromodel.setAgentMethod(AgentStreamArrived.class, new MethodInfo(methods[i]));
-				}
+				}*/
 				if(isAnnotationPresent(methods[i], OnStream.class, cl))
 				{
 					checkMethodReturnType(OnStream.class, methods[i], cl);
 					micromodel.setAgentMethod(OnStream.class, new MethodInfo(methods[i]));
 				}
-				if(isAnnotationPresent(methods[i], AgentMessageArrived.class, cl))
+				/*if(isAnnotationPresent(methods[i], AgentMessageArrived.class, cl))
 				{
 					checkMethodReturnType(AgentMessageArrived.class, methods[i], cl);
 					micromodel.setAgentMethod(AgentMessageArrived.class, new MethodInfo(methods[i]));
-				}
+				}*/
 				if(isAnnotationPresent(methods[i], OnMessage.class, cl))
 				{
 					checkMethodReturnType(OnMessage.class, methods[i], cl);
@@ -1093,8 +1086,8 @@ public class MicroClassReader
 				{
 					try
 					{
-						jadex.bridge.modelinfo.Argument[] as = (jadex.bridge.modelinfo.Argument[])methods[i].invoke(null, new Object[0]);
-						for(jadex.bridge.modelinfo.Argument arg: as)
+						jadex.enginecore.modelinfo.Argument[] as = (jadex.enginecore.modelinfo.Argument[])methods[i].invoke(null, new Object[0]);
+						for(jadex.enginecore.modelinfo.Argument arg: as)
 						{
 							Map<String, Object> args = getOrCreateMap("arguments", toset);
 							
@@ -2396,7 +2389,7 @@ public class MicroClassReader
 			{
 				ii.addParentInjection(new FieldInfo(fields[i]));
 			}
-			else if(isAnnotationPresent(fields[i], AgentServiceSearch.class, cl))
+			/*else if(isAnnotationPresent(fields[i], AgentServiceSearch.class, cl))
 			{
 				AgentServiceSearch ser = getAnnotation(fields[i], AgentServiceSearch.class, cl);
 				RequiredService rs = ser.requiredservice();
@@ -2436,7 +2429,7 @@ public class MicroClassReader
 				
 				ii.addServiceInjection(name, new ServiceInjectionInfo().setFieldInfo(new FieldInfo(fields[i])).setLazy(true).setQuery(true).setRequiredServiceInfo(rsis));
 
-			}
+			}*/
 			else if(isAnnotationPresent(fields[i], OnService.class, cl))
 			{
 				//if("secser".equals(fields[i].getName()))
@@ -2502,7 +2495,7 @@ public class MicroClassReader
 		Method[] methods = cma.getDeclaredMethods();
 		for(int i=0; i<methods.length; i++)
 		{
-			if(isAnnotationPresent(methods[i], AgentServiceSearch.class, cl))
+			/*if(isAnnotationPresent(methods[i], AgentServiceSearch.class, cl))
 			{
 				AgentServiceSearch ser = getAnnotation(methods[i], AgentServiceSearch.class, cl);
 				String name = ser.name().length()>0? ser.name(): guessName(methods[i].getName());
@@ -2538,7 +2531,7 @@ public class MicroClassReader
 				//mi.addRequiredService(rsi);
 				
 				ii.addServiceInjection(name, new ServiceInjectionInfo().setMethodInfo(new MethodInfo(methods[i])).setQuery(true).setRequiredServiceInfo(rsis));
-			}
+			}*/
 			
 			if(isAnnotationPresent(methods[i], OnService.class, cl))
 			{

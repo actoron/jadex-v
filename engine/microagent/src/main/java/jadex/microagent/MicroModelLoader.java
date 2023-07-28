@@ -1,13 +1,13 @@
-package jadex.micro;
+package jadex.microagent;
 
 import java.util.List;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IResourceIdentifier;
-import jadex.bridge.component.IComponentFeatureFactory;
-import jadex.commons.AbstractModelLoader;
-import jadex.commons.ICacheableModel;
-import jadex.commons.ResourceInfo;
+import jadex.common.ResourceInfo;
+import jadex.enginecore.AbstractModelLoader;
+import jadex.enginecore.ICacheableModel;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.IResourceIdentifier;
+import jadex.enginecore.component.IComponentFeatureFactory;
 
 /**
  *  Loader for micro models.
