@@ -1,19 +1,19 @@
-package jadex.micro;
+package jadex.microagent;
 
-import jadex.bridge.nonfunctional.annotation.NameValue;
-import jadex.bridge.service.ServiceScope;
-import jadex.bridge.service.types.factory.IComponentFactory;
-import jadex.commons.Boolean3;
-import jadex.commons.IFilter;
-import jadex.commons.SClassReader;
-import jadex.commons.SClassReader.AnnotationInfo;
-import jadex.commons.SReflect;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Implementation;
-import jadex.micro.annotation.Imports;
-import jadex.micro.annotation.Properties;
-import jadex.micro.annotation.ProvidedService;
-import jadex.micro.annotation.ProvidedServices;
+import jadex.common.Boolean3;
+import jadex.common.IFilter;
+import jadex.common.SClassReader;
+import jadex.common.SClassReader.AnnotationInfo;
+import jadex.common.SReflect;
+import jadex.enginecore.annotation.NameValue;
+import jadex.enginecore.service.ServiceScope;
+import jadex.enginecore.service.types.factory.IComponentFactory;
+import jadex.microagent.annotation.Agent;
+import jadex.microagent.annotation.Implementation;
+import jadex.microagent.annotation.Imports;
+import jadex.microagent.annotation.Properties;
+import jadex.microagent.annotation.ProvidedService;
+import jadex.microagent.annotation.ProvidedServices;
 
 /** 
  *  Micro kernel.

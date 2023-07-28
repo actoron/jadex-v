@@ -1,16 +1,16 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.component.interceptors.FutureFunctionality;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.commons.SReflect;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.SReflect;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.component.interceptors.FutureFunctionality;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  *  Lazy service proxy that resolves a service via a search command.

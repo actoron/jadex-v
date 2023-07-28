@@ -1,8 +1,8 @@
-package jadex.bridge.service.component;
+package jadex.enginecore.service.component;
 
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.MethodInfo;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IComponentIdentifier;
+import jadex.enginecore.service.IServiceIdentifier;
 
 /**
  *  Represents the events associated with service calls (call, response, etc.).

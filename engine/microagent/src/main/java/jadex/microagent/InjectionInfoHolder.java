@@ -7,14 +7,12 @@ import java.util.List;
 import java.util.Map;
 
 import jadex.bridge.ServiceCallInfo;
-import jadex.bridge.service.RequiredServiceInfo;
+import jadex.collection.MultiCollection;
 import jadex.common.FieldInfo;
-import jadex.common.MethodInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.Tuple3;
-import jadex.common.collection.MultiCollection;
-import jadex.micro.MicroModel.ServiceInjectionInfo;
+import jadex.microagent.MicroModel.ServiceInjectionInfo;
 
 /**
  * 

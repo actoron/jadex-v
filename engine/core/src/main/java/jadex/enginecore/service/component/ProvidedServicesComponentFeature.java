@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.base.IPlatformConfiguration;
-import jadex.bridge.ProxyFactory;
 import jadex.common.IValueFetcher;
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
@@ -24,6 +23,7 @@ import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
 import jadex.enginecore.IExternalAccess;
 import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ProxyFactory;
 import jadex.enginecore.Starter;
 import jadex.enginecore.component.ComponentCreationInfo;
 import jadex.enginecore.component.IExecutionFeature;
