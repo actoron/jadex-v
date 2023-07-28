@@ -1,8 +1,8 @@
-package jadex.bridge.sensor.service;
+package jadex.enginecore.sensor.service;
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.nonfunctional.search.BasicEvaluator;
-import jadex.commons.MethodInfo;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.nonfunctional.search.BasicEvaluator;
 
 /**
  *  Execution time evaluator.

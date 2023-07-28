@@ -1,15 +1,14 @@
-package jadex.bridge.nonfunctional.search;
+package jadex.enginecore.nonfunctional.search;
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.nonfunctional.SNFPropertyProvider;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.future.DelegationResultListener;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  *  Basic evaluator implementation for service and methods.

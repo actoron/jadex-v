@@ -1,8 +1,8 @@
-package jadex.bridge.sensor.service;
+package jadex.enginecore.sensor.service;
 
 import java.lang.reflect.Method;
 
-import jadex.bridge.service.component.ServiceInvocationContext;
+import jadex.enginecore.service.component.ServiceInvocationContext;
 
 
 /**

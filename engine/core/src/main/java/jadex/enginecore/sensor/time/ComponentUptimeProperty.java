@@ -1,9 +1,9 @@
-package jadex.bridge.sensor.time;
+package jadex.enginecore.sensor.time;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.nonfunctional.NFPropertyMetaInfo;
-import jadex.bridge.nonfunctional.NFRootProperty;
-import jadex.bridge.sensor.unit.TimeUnit;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.nonfunctional.NFPropertyMetaInfo;
+import jadex.enginecore.nonfunctional.NFRootProperty;
+import jadex.enginecore.sensor.unit.TimeUnit;
 
 /**
  *  Property for the startup of a component.

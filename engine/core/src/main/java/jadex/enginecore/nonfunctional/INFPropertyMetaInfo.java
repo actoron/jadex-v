@@ -1,7 +1,7 @@
-package jadex.bridge.nonfunctional;
+package jadex.enginecore.nonfunctional;
 
-import jadex.bridge.ClassInfo;
-import jadex.bridge.nonfunctional.INFProperty.Target;
+import jadex.common.ClassInfo;
+import jadex.enginecore.nonfunctional.INFProperty.Target;
 
 /**
  * Meta information about a non-functional property.

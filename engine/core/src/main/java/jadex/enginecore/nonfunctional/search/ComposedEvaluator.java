@@ -1,4 +1,4 @@
-package jadex.bridge.nonfunctional.search;
+package jadex.enginecore.nonfunctional.search;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,13 +8,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bridge.service.IService;
-import jadex.commons.Tuple2;
-import jadex.commons.future.CollectionResultListener;
-import jadex.commons.future.CounterResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.Tuple2;
+import jadex.enginecore.service.IService;
+import jadex.future.CollectionResultListener;
+import jadex.future.CounterResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  *  Evaluator composed of multiple weighted evaluators.

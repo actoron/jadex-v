@@ -1,21 +1,21 @@
-package jadex.bridge.sensor.service;
+package jadex.enginecore.sensor.service;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.sensor.time.TimedProperty;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.sensor.time.TimedProperty;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.component.IProvidedServicesFeature;
+import jadex.enginecore.service.component.IRequiredServicesFeature;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.enginecore.service.search.ServiceQuery;
+import jadex.enginecore.service.types.clock.IClockService;
+import jadex.future.IFuture;
 
 /**
  *  Property for the waiting time of a method or a service as a whole.

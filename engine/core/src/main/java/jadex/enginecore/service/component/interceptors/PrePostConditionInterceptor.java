@@ -12,6 +12,7 @@ import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.SFuture;
 import jadex.enginecore.service.annotation.CheckIndex;
 import jadex.enginecore.service.annotation.CheckNotNull;
 import jadex.enginecore.service.annotation.CheckState;

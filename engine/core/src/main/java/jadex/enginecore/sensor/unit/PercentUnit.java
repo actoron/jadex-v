@@ -1,4 +1,4 @@
-package jadex.bridge.sensor.unit;
+package jadex.enginecore.sensor.unit;
 
 /**
  *  Percent unit.

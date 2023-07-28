@@ -1,6 +1,6 @@
 package jadex.enginecore.service.search;
 
-import jadex.commons.IAsyncFilter;
+import jadex.enginecore.IAsyncFilter;
 import jadex.enginecore.ProxyFactory;
 import jadex.future.IFuture;
 

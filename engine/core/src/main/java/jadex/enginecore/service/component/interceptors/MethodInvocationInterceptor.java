@@ -2,11 +2,11 @@ package jadex.enginecore.service.component.interceptors;
 
 import java.lang.reflect.InvocationTargetException;
 
-import jadex.bridge.SFuture;
 import jadex.common.ErrorException;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.SFuture;
 import jadex.enginecore.ServiceCall;
 import jadex.enginecore.StepAborted;
 import jadex.enginecore.service.component.ISwitchCall;

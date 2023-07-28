@@ -1,12 +1,12 @@
-package jadex.bridge.nonfunctional;
+package jadex.enginecore.nonfunctional;
 
 
-import jadex.bridge.IExternalAccess;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
-import jadex.commons.future.IResultListener;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IExternalAccess;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IResultListener;
 
 /**
  *  Property reference. Delegates calls to the real

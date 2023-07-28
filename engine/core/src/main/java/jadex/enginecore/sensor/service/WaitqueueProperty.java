@@ -1,17 +1,17 @@
-package jadex.bridge.sensor.service;
+package jadex.enginecore.sensor.service;
 
 import java.lang.reflect.Method;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.ProxyFactory;
-import jadex.bridge.nonfunctional.NFPropertyMetaInfo;
-import jadex.bridge.nonfunctional.SimpleValueNFProperty;
-import jadex.bridge.service.IService;
-import jadex.bridge.service.IServiceIdentifier;
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.component.ServiceInvocationContext;
-import jadex.commons.MethodInfo;
-import jadex.commons.future.IFuture;
+import jadex.common.MethodInfo;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.nonfunctional.NFPropertyMetaInfo;
+import jadex.enginecore.nonfunctional.SimpleValueNFProperty;
+import jadex.enginecore.service.IService;
+import jadex.enginecore.service.IServiceIdentifier;
+import jadex.enginecore.service.component.IProvidedServicesFeature;
+import jadex.enginecore.service.component.ServiceInvocationContext;
+import jadex.future.IFuture;
 
 
 /**

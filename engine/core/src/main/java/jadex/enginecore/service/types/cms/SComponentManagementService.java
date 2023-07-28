@@ -15,7 +15,6 @@ import java.util.Set;
 
 import jadex.bridge.ComponentCreationException;
 import jadex.bridge.ISearchConstraints;
-import jadex.bridge.SFuture;
 import jadex.common.IAutoLock;
 import jadex.common.MethodInfo;
 import jadex.common.ResourceInfo;
@@ -35,6 +34,7 @@ import jadex.enginecore.IInternalAccess;
 import jadex.enginecore.IPriorityComponentStep;
 import jadex.enginecore.IResourceIdentifier;
 import jadex.enginecore.ProxyFactory;
+import jadex.enginecore.SFuture;
 import jadex.enginecore.ServiceCall;
 import jadex.enginecore.Starter;
 import jadex.enginecore.StepAbortedException;

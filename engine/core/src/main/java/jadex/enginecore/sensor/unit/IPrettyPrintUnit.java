@@ -1,4 +1,4 @@
-package jadex.bridge.sensor.unit;
+package jadex.enginecore.sensor.unit;
 
 /**
  *  Pretty print a value of unit of type T.

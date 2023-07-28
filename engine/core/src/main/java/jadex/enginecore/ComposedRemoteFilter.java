@@ -3,9 +3,11 @@ package jadex.enginecore;
 import java.io.Serializable;
 import java.util.Arrays;
 
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.SReflect;
+import jadex.common.SUtil;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  A filter checks if an object matches

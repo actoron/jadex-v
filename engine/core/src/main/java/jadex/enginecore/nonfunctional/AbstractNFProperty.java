@@ -7,16 +7,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.modelinfo.UnparsedExpression;
 import jadex.common.MethodInfo;
-import jadex.commons.future.IFuture;
+import jadex.common.UnparsedExpression;
+import jadex.enginecore.IInternalAccess;
 import jadex.enginecore.nonfunctional.annotation.NFProperties;
 import jadex.enginecore.nonfunctional.annotation.NFProperty;
 import jadex.enginecore.nonfunctional.annotation.SNameValue;
 import jadex.enginecore.service.IService;
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 
 /**

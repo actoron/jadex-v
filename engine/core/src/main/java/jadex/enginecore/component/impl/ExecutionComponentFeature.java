@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -24,6 +23,7 @@ import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
+import jadex.concurrent.Executor;
 import jadex.concurrent.IExecutable;
 import jadex.enginecore.ComponentResultListener;
 import jadex.enginecore.IComponentIdentifier;

@@ -1,10 +1,10 @@
-package jadex.bridge.sensor.service;
+package jadex.enginecore.sensor.service;
 
-import jadex.bridge.nonfunctional.search.IServiceEvaluator;
-import jadex.bridge.service.IService;
-import jadex.commons.future.DelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.enginecore.nonfunctional.search.IServiceEvaluator;
+import jadex.enginecore.service.IService;
+import jadex.future.DelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  * 

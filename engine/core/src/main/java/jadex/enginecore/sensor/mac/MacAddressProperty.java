@@ -1,9 +1,10 @@
-package jadex.bridge.sensor.mac;
+package jadex.enginecore.sensor.mac;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.nonfunctional.NFPropertyMetaInfo;
-import jadex.bridge.nonfunctional.NFRootProperty;
-import jadex.commons.SUtil;
+import jadex.common.SUtil;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.nonfunctional.INFProperty.Target;
+import jadex.enginecore.nonfunctional.NFPropertyMetaInfo;
+import jadex.enginecore.nonfunctional.NFRootProperty;
 
 /**
  *  The (first) mac address.

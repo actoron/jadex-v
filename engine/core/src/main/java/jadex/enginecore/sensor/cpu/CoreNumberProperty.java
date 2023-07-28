@@ -1,8 +1,9 @@
-package jadex.bridge.sensor.cpu;
+package jadex.enginecore.sensor.cpu;
 
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.nonfunctional.NFPropertyMetaInfo;
-import jadex.bridge.nonfunctional.NFRootProperty;
+import jadex.enginecore.IInternalAccess;
+import jadex.enginecore.nonfunctional.INFProperty.Target;
+import jadex.enginecore.nonfunctional.NFPropertyMetaInfo;
+import jadex.enginecore.nonfunctional.NFRootProperty;
 
 /**
  *  The number of cores.
