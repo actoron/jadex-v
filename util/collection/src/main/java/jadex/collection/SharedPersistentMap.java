@@ -536,23 +536,34 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 				long prevpos = keynode.getPrevious();
 				long nextpos = keynode.getNext();
 				
-				if (prevpos != 0)
+				
+				if (prevpos == 0)
 				{
-					KVNode prev = new KVNode(getMappedBuffer(prevpos, KVNode.NODE_SIZE, false));
-					prev.setNext(nextpos);
+					// Beginning of linked list, node in index
+					if (nextpos != 0)
+					{
+						// Not sole element in bucket
+						KVNode next = new KVNode(getMappedBuffer(nextpos, KVNode.NODE_SIZE, false));
+						long isize = readIndexSize();
+						long modhash = next.getRawHash() % isize;
+						MappedByteBuffer ibuf = getIndexMap().duplicate();
+						ibuf.position((int) (modhash << REF_SIZE_SHIFT));
+						ibuf.putLong(nextpos);
+						next.setPrevious(0);
+					}
 				}
 				else
 				{
-					MappedByteBuffer ibuf = getIndexMap().duplicate();
-					int hash = keynode.getKey().hashCode();
-					ibuf.position((int) (getIndexPosition(hash) << REF_SIZE_SHIFT));
-					ibuf.putLong(nextpos);
-				}
-				
-				if (nextpos != 0)
-				{
-					KVNode next = new KVNode(getMappedBuffer(nextpos, KVNode.NODE_SIZE, false));
-					next.setPrevious(prevpos);
+					// Node in bucket
+					KVNode prev = new KVNode(getMappedBuffer(prevpos, KVNode.NODE_SIZE, false));
+					prev.setNext(nextpos);
+					
+					if (nextpos != 0)
+					{
+						// Not end of linked list
+						KVNode next = new KVNode(getMappedBuffer(nextpos, KVNode.NODE_SIZE, false));
+						next.setPrevious(prevpos);
+					}
 				}
 				
 				addSize(-1);
@@ -932,8 +943,7 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 			size > indexsize * maxloadfactor ||
 			(indexsize != INDEX_SIZES[0] && size < indexsize * minloadfactor))
 		{
-			System.out.println("Restructuring map... " + size + " " + indexsize + " " + garbage);
-			System.out.println(garbage > getHeaderLong(HDR_POS_DATA_POINTER) * maxgarbagefactor);
+			//System.out.println("Restructuring map... " + size + " " + indexsize + " " + garbage);
 			
 			File tmpfile = File.createTempFile("sharedmap", "tmp");
 			
@@ -1100,31 +1110,23 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 		long ipos = getIndexPosition(key.hashCode());
 		long nodepos = getIndexReference(ipos);
 		
-		KVNode collisionnode = null;
-		if (nodepos != 0)
-		{
-			collisionnode = new KVNode(getMappedBuffer(nodepos, KVNode.NODE_SIZE, false));
-			while(collisionnode.getNext() != 0)
-				collisionnode = collisionnode.next();
-		}
-		
-		if (collisionnode == null)
-		{
-			MappedByteBuffer ibuf = getIndexMap().duplicate();
-			ibuf.position((int) (ipos << REF_SIZE_SHIFT));
-			ibuf.putLong(start);
-		}
-		else
-		{
-			collisionnode.setNext(start);
-		}
-		
 		MappedByteBuffer kvbuf = getMappedBuffer(start, KVNode.NODE_SIZE, true);
 		
 		KVNode ret = new KVNode(kvbuf);
 		kvbuf.reset();
 		kvbuf.put(new byte[KVNode.NODE_SIZE]);
 		kvbuf.reset();
+		
+		if (nodepos != 0)
+		{
+			KVNode collisionnode = new KVNode(getMappedBuffer(nodepos, KVNode.NODE_SIZE, false));
+			collisionnode.setPrevious(start);
+			ret.setNext(nodepos);
+		}
+		
+		MappedByteBuffer ibuf = getIndexMap().duplicate();
+		ibuf.position((int) (ipos << REF_SIZE_SHIFT));
+		ibuf.putLong(start);
 		
 		ret.setKey(key);
 		return ret;
@@ -1140,7 +1142,7 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 		if (isize < 0)
 			return -1;
 		
-		long modhash = Integer.toUnsignedLong(hash)  % isize;
+		long modhash = Integer.toUnsignedLong(hash) % isize;
 		return modhash;
 	}
 	
@@ -1398,7 +1400,7 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 		private static final int PREV_OFFSET = 0;
 		
 		/** Offset for previous location. */
-		private static final int NEXT_OFFSET = (int) (PREV_OFFSET + REF_SIZE);
+		private static final int NEXT_OFFSET = PREV_OFFSET + REF_SIZE;
 		
 		/** Offset for key object location. */
 		private static final int KEY_OFFSET = NEXT_OFFSET + REF_SIZE;
@@ -1407,7 +1409,7 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 		private static final int KEY_SIZE_OFFSET = KEY_OFFSET + REF_SIZE;
 		
 		/** Raw hash value of the key object (Integer.toUnsignedLong(key.hashCode()). */
-		private static final int KEY_RAWHASH_OFFSET = KEY_OFFSET + REF_SIZE;
+		private static final int KEY_RAWHASH_OFFSET = KEY_SIZE_OFFSET + REF_SIZE;
 		
 		/** Offset for value object location. */
 		private static final int VAL_OFFSET = KEY_RAWHASH_OFFSET + REF_SIZE;
@@ -1657,6 +1659,15 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 		}
 		
 		/**
+		 *  Returns the raw hashcode for the key.
+		 *  @return Raw hash code.
+		 */
+		public long getRawHash()
+		{
+			return getLong(KEY_RAWHASH_OFFSET);
+		}
+		
+		/**
 		 *  Returns the position of the next node reference.
 		 *  
 		 *  @return Next node reference.
@@ -1877,10 +1888,14 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 		
 		t = System.currentTimeMillis();
 		for (int i = 0; i < tsize; ++i)
+		{
 			smap.put(String.valueOf(i), vals[i]);
+			if (smap.get(String.valueOf(i)) == null)
+				System.out.println("put fail " + i);
+		}
 		t = System.currentTimeMillis() - t;
 		System.out.println("SharedMap filled with " + tsize + " K-V pairs: " + t + "ms.");
-		System.out.println("mapsize " + smap.size());
+		int aput = smap.size();
 		
 		t = System.currentTimeMillis();
 		for (int i = 0; i < tsize; ++i)
@@ -1894,16 +1909,17 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 		t = System.currentTimeMillis() - t;
 		System.out.println("SharedMap reads with " + tsize + " K-V pairs: " + t + "ms.");
 		
-		System.out.println("mapsize " + smap.size());
+		int brem = smap.size();
 		t = System.currentTimeMillis();
 		for (int i = 0; i < tsize / 2; ++i)
 		{
-			System.out.println("Removing " + i);
 			smap.remove(String.valueOf(i));
 		}
 		t = System.currentTimeMillis() - t;
-		System.out.println("SharedMap remove with " + tsize + " K-V pairs: " + t + "ms.");
-		System.out.println("mapsize " + smap.size());
+		System.out.println("SharedMap remove " + (tsize/2) + " of " + tsize + " K-V pairs: " + t + "ms.");
+		System.out.println("Map size after put " + aput);
+		System.out.println("Map Size before removal " + brem);
+		System.out.println("Map Size after removal " + smap.size());
 		
 		smap.clear();
 		
