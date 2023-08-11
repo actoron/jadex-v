@@ -40,3 +40,16 @@ includeBuild('serialization/binary') {
 includeBuild('serialization/json') {
 }
 
+includeBuild('engine/base/mj-core') {
+}
+
+includeBuild('engine/base/mj-execution') {
+}
+
+includeBuild('engine/base/mj-lifecycle') {
+}
+
+includeBuild('engine/mj-microagent') {
+}
+
+
