@@ -22,7 +22,7 @@ public class MjHelloWorldAgent
 //	
 //	/** The micro agent class. */
 //	@MjAgent
-//	protected IInternalAccess agent;
+	protected MjMicroAgent agent;
 //	
 //	/** The welcome text. */
 	@AgentArgument("welcome text")
@@ -37,7 +37,7 @@ public class MjHelloWorldAgent
 	@OnStart
 	public void executeBody()
 	{
-		//System.out.println(text+" "+agent.getId());
+		System.out.println(text+" "+agent);//.getId());
 		//agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
 		System.out.println("Good bye world.");
 		//agent.killComponent();
@@ -46,7 +46,7 @@ public class MjHelloWorldAgent
 	@OnEnd
 	public void end()
 	{
-		//System.out.println("end in pojo: "+agent.getId());
+		System.out.println("end in pojo: "+agent);//.getId());
 	}
 	
 	//-------- static part --------

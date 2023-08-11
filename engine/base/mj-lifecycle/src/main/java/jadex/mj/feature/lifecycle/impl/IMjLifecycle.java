@@ -1,10 +1,12 @@
 package jadex.mj.feature.lifecycle.impl;
 
+import jadex.future.IFuture;
+
 public interface IMjLifecycle
 {
-	public void onStart();
+	public IFuture<Void> onStart();
 	
-	public void onBody();
+	public IFuture<Void> onBody();
 	
-	public void onEnd();
+	public IFuture<Void> onEnd();
 }

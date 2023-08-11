@@ -15,19 +15,30 @@ public class MjMicroAgent	extends MjComponent
 		loadModel(pojo.getClass().toString(), pojo, null).then(model ->
 		{
 			System.out.println("loaded micro model: "+model);
+			MjLifecycleFeature.bootstrap(MjMicroAgent.class, () -> new MjMicroAgent(pojo, model));
 		}).catchEx(e -> 
 		{
 			e.printStackTrace();
 		});
-		
-		MjLifecycleFeature.bootstrap(MjMicroAgent.class, () -> new MjMicroAgent(pojo));
 	}
 	
 	protected Object	pojo;
+	protected IModelInfo model;
 	
-	protected MjMicroAgent(Object pojo)
+	protected MjMicroAgent(Object pojo, IModelInfo model)
 	{
 		this.pojo	= pojo;
+		this.model = model;
+	}
+	
+	public Object getPojo() 
+	{
+		return pojo;
+	}
+
+	public IModelInfo getModel() 
+	{
+		return model;
 	}
 
 	/**

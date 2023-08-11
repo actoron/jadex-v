@@ -42,16 +42,14 @@ public class MjLifecycleFeature	implements IMjLifecycleFeature
 	{
 		this.self	= self;		
 	}
-	
-	@Override
+		
 	public void terminate()
 	{
 		self.getFeatures().forEach(feature ->
 		{
-			if(feature instanceof IMjLifecycle)
+			if(feature instanceof IMjLifecycle) 
 			{
-				self.getFeature(IMjExecutionFeature.class)
-					.scheduleStep(()->
+				self.getFeature(IMjExecutionFeature.class).scheduleStep(()->
 				{
 					IMjLifecycle	lfeature	= (IMjLifecycle)feature;
 					lfeature.onEnd();
