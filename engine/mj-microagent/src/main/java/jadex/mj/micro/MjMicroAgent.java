@@ -12,14 +12,14 @@ public class MjMicroAgent	extends MjComponent
 	
 	public static void	create(Object pojo)
 	{
-		loadModel(pojo.getClass().toString(), pojo, null).then(model ->
-		{
-			System.out.println("loaded micro model: "+model);
-			MjLifecycleFeature.bootstrap(MjMicroAgent.class, () -> new MjMicroAgent(pojo, model));
-		}).catchEx(e -> 
-		{
-			e.printStackTrace();
-		});
+			MjLifecycleFeature.bootstrap(MjMicroAgent.class, () -> 
+			{
+				return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
+				{
+					System.out.println("loaded micro model: "+model);
+					return new MjMicroAgent(pojo, model);
+				}).get();
+			});
 	}
 	
 	protected Object	pojo;
