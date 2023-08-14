@@ -4,16 +4,22 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
 
 import jadex.common.FieldInfo;
+import jadex.common.IParameterGuesser;
+import jadex.common.IValueFetcher;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
+import jadex.common.SimpleParameterGuesser;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
+import jadex.mj.core.IParameterGuesserProvider;
 import jadex.mj.core.service.annotation.OnInit;
 import jadex.mj.core.service.annotation.OnStart;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
@@ -21,9 +27,11 @@ import jadex.mj.micro.InjectionInfoHolder;
 import jadex.mj.micro.MicroModel;
 import jadex.mj.micro.MjMicroAgent;
 
-public class MjMicroAgentFeature	implements IMjLifecycle
+public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvider, IValueFetcher
 {
 	protected MjMicroAgent	self;
+	
+	protected IParameterGuesser	guesser;
 	
 	protected MjMicroAgentFeature(MjMicroAgent self)
 	{
@@ -414,12 +422,12 @@ public class MjMicroAgentFeature	implements IMjLifecycle
 				method = mi.getMethod(pojo.getClass().getClassLoader());
 				
 				// Try to guess parameters from given args or component internals.
-				//IParameterGuesser	guesser	= args!=null ? new SimpleParameterGuesser(component.getParameterGuesser(), Arrays.asList(args)) : component.getParameterGuesser();
+				IParameterGuesser guesser	= args!=null ? new SimpleParameterGuesser(component.getParameterGuesser(), Arrays.asList(args)) : component.getParameterGuesser();
 				Object[]	iargs	= new Object[method.getParameterTypes().length];
-				/*for(int i=0; i<method.getParameterTypes().length; i++)
+				for(int i=0; i<method.getParameterTypes().length; i++)
 				{
 					iargs[i]	= guesser.guessParameter(method.getParameterTypes()[i], false);
-				}*/
+				}
 				
 				try
 				{
@@ -499,4 +507,41 @@ public class MjMicroAgentFeature	implements IMjLifecycle
 			return false;
 		}
 	}*/
+	
+	/**
+	 *  The feature can add objects for field or method injections
+	 *  by providing an optional parameter guesser. The selection order is the reverse
+	 *  init order, i.e., later features can override values from earlier features.
+	 */
+	public IParameterGuesser getParameterGuesser()
+	{
+		if(guesser==null)
+			guesser	= new SimpleParameterGuesser(new SimpleParameterGuesser(Collections.singleton(this)), Collections.singleton(self.getPojo()));
+			//guesser	= new SimpleParameterGuesser(super.getParameterGuesser(), Collections.singleton(pojoagent));
+		return guesser;
+	}
+	
+	/**
+	 *  Add $pojoagent to fetcher.
+	 */
+	public Object fetchValue(String name)
+	{
+		if("$pojoagent".equals(name))
+		{
+			return self.getPojo();
+		}
+		/*else if(name!=null && name.startsWith(IPlatformConfiguration.PLATFORMARGS))
+		{
+			String valname = name.length()>13? name.substring(14): null;
+			return valname==null? Starter.getPlatformValue(getComponent().getId(), IPlatformConfiguration.PLATFORMARGS): Starter.getPlatformValue(getComponent().getId(), valname);
+		}*/
+		/*else if(Starter.hasPlatformValue(getComponent().getId(), name))
+		{
+			return Starter.getPlatformValue(getComponent().getId(), name);
+		}*/
+		else
+		{
+			throw new RuntimeException("Value not found: "+name);
+		}
+	}
 }

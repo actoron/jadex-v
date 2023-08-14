@@ -5,7 +5,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
+import jadex.common.SReflect;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 
@@ -121,21 +123,23 @@ public class MjComponent
 					Object[] lfeatures = getFeatures().toArray();
 					for(int i=lfeatures.length-1; !found && i>=0; i--)
 					{
-						if(lfeatures[i] instanceof IValueFetcherProvider)
+						//if(lfeatures[i] instanceof IValueFetcherProvider)
+						if(lfeatures[i] instanceof IValueFetcher)
 						{
-							IValueFetcher	vf	= ((IValueFetcherProvider)lfeatures[i]).getValueFetcher();
-							if(vf!=null)
-							{
+							//IValueFetcher	vf	= ((IValueFetcherProvider)lfeatures[i]).getValueFetcher();
+							//if(vf!=null)
+							//{
 								try
 								{
 									// Todo: better (faster) way than throwing exceptions?
-									ret	= vf.fetchValue(name);
+									ret = ((IValueFetcher)lfeatures[i]).fetchValue(name);
+									//ret	= vf.fetchValue(name);
 									found	= true;
 								}
 								catch(Exception e)
 								{
 								}
-							}
+							//}
 						}
 					}
 					
@@ -161,5 +165,77 @@ public class MjComponent
 		}
 		
 		return fetcher;
+	}
+	
+	public IParameterGuesser getParameterGuesser()
+	{
+		// Return a fetcher that tries features first.
+		// Todo: better (faster) way than throwing exceptions?
+		return new IParameterGuesser()
+		{
+//			IParameterGuesser parent;
+//			
+//			public void setParent(IParameterGuesser parent)
+//			{
+//				this.parent = parent;
+//			}
+//			
+//			public IParameterGuesser getParent()
+//			{
+//				return parent;
+//			}
+			
+			public Object guessParameter(Class<?> type, boolean exact)
+			{
+				Object	ret	= null;
+				boolean	found = false;
+				
+				Object[] lfeatures = getFeatures().toArray();
+				for(int i=lfeatures.length-1; !found && i>=0; i--)
+				{
+					try
+					{
+						if(lfeatures[i] instanceof IParameterGuesserProvider)
+						{
+							IParameterGuesser pg = ((IParameterGuesserProvider)lfeatures[i]).getParameterGuesser();
+							if(pg!=null)
+							{
+								ret	= pg.guessParameter(type, exact);
+								found	= true;
+							}
+						}
+					}
+					catch(Exception e)
+					{
+					}
+				}
+				
+				if(!found && ((exact && MjComponent.class.equals(type))
+					|| (!exact && SReflect.isSupertype(type, MjComponent.class))))
+				{
+					ret	= this;
+					found	= true;
+				}
+				
+				/*if(!found && ((exact && IInternalAccess.class.equals(type))
+					|| (!exact && SReflect.isSupertype(type, IInternalAccess.class))))
+				{
+					ret	= getInternalAccess();
+					found	= true;
+				}
+				else if(!found && ((exact && IExternalAccess.class.equals(type))
+					|| (!exact && SReflect.isSupertype(type, IExternalAccess.class))))
+				{
+					ret	= getExternalAccess();
+					found	= true;
+				}*/
+				
+				if(!found)
+					throw new RuntimeException("Value not found: "+type);
+				
+				return ret;
+			}
+			
+		};
 	}
 }

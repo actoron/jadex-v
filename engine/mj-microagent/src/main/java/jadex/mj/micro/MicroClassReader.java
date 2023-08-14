@@ -446,8 +446,8 @@ public class MicroClassReader
 			}*/
 			
 			// Take all, upper replace lower
-			/*
-			if(!tagsdone && isAnnotationPresent(cma, Tags.class, cl))
+			
+			/*if(!tagsdone && isAnnotationPresent(cma, Tags.class, cl))
 			{
 				Tags tags = (Tags)getAnnotation(cma, Tags.class, cl);
 				

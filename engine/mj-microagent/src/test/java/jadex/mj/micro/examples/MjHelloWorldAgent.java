@@ -4,9 +4,6 @@ import jadex.mj.core.service.annotation.OnEnd;
 import jadex.mj.core.service.annotation.OnStart;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
-import jadex.mj.micro.annotation.AgentArgument;
-import jadex.mj.micro.annotation.Argument;
-import jadex.mj.micro.annotation.Arguments;
 import jadex.mj.micro.annotation.Description;
 
 /**
@@ -14,8 +11,8 @@ import jadex.mj.micro.annotation.Description;
  */
 @Agent(type="micro")
 @Description("This agent prints out a hello message.")
-@Arguments(@Argument(name="welcome text", description= "This parameter is the text printed by the agent.", 
-	clazz=String.class, defaultvalue="\"Hello world, this is a Jadex micro agent.\""))
+//@Arguments(@Argument(name="welcome text", description= "This parameter is the text printed by the agent.", 
+//	clazz=String.class, defaultvalue="\"Hello world, this is a Jadex micro agent.\""))
 public class MjHelloWorldAgent
 {
 //	//-------- attributes --------
@@ -25,7 +22,7 @@ public class MjHelloWorldAgent
 	protected MjMicroAgent agent;
 //	
 //	/** The welcome text. */
-	@AgentArgument("welcome text")
+	//@AgentArgument("welcome text")
 	protected String text;
 //	
 //	//-------- methods --------
