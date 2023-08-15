@@ -30,3 +30,9 @@ In this class you need to implement at least two methods. The method `getFeature
 This can be an interface or the implementation class of your feature, depending on your needs.
 
 The `createFeatureInstance(MjComponent)` then provides a (usually new) instance of your feature.
+
+### Dealing with Conflicting Implementations
+
+Sometimes you may want to provide a new implementation for an existing feature type.
+You can do so by implementing the `replacesFeatureProvider()` method,
+for making sure that your implementation is chosen instead of the old one.

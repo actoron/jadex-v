@@ -11,7 +11,7 @@ import java.util.ServiceLoader;
 import jadex.mj.core.MjComponent;
 
 /**
- *  Static helper methods for dealing whith features.
+ *  Static helper methods for dealing with features.
  */
 public class SMjFeatureProvider
 {
