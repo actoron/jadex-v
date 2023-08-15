@@ -107,7 +107,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				{
 					ret.setResult(null);
 					
-					synchronized(this.getClass())
+					synchronized(MjExecutionFeature.this.getClass())
 					{
 						timer_entries--;
 						if(timer_entries==0)
