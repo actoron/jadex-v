@@ -43,6 +43,9 @@ includeBuild('serialization/json') {
 includeBuild('engine/base/mj-core') {
 }
 
+includeBuild('engine/base/mj-featuretest') {
+}
+
 includeBuild('engine/base/mj-execution') {
 }
 

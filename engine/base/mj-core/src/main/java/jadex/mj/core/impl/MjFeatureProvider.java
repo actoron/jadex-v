@@ -32,6 +32,18 @@ public abstract class MjFeatureProvider<T>
 	}
 	
 	/**
+	 *  Allow a feature implementation to replace another implementation.
+	 *  This method is called for any feature provider, where two or more different
+	 *  providers are in the classpath, which apply to the same component type {@link #getRequiredComponentType()}
+	 *  and have the same {@link #getFeatureType()}.
+	 *  @return	True, if this implementation should be used and the other one ignored. 
+	 */
+	public boolean	replacesFeatureProvider(MjFeatureProvider<T> provider)
+	{
+		return false;
+	}
+	
+	/**
 	 *  Determines if the feature is created immediately
 	 *  on component startup (false) or later on first access (true).
 	 *  @return	Defaults to false.
