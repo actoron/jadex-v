@@ -14,31 +14,27 @@ public class MjMicroAgent	extends MjComponent
 	{
 			MjLifecycleFeature.bootstrap(MjMicroAgent.class, () -> 
 			{
+				// this is executed before the features are inited
 				return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
 				{
 					System.out.println("loaded micro model: "+model);
+					
 					return new MjMicroAgent(pojo, model);
 				}).get();
 			});
 	}
 	
 	protected Object	pojo;
-	protected IModelInfo model;
 	
 	protected MjMicroAgent(Object pojo, IModelInfo model)
 	{
+		super(model);
 		this.pojo	= pojo;
-		this.model = model;
 	}
 	
 	public Object getPojo() 
 	{
 		return pojo;
-	}
-
-	public IModelInfo getModel() 
-	{
-		return model;
 	}
 
 	/**

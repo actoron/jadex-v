@@ -14,7 +14,6 @@ import jadex.common.Tuple3;
 import jadex.mj.core.CacheableKernelModel;
 import jadex.mj.core.ServiceCallInfo;
 import jadex.mj.core.modelinfo.IModelInfo;
-import jadex.mj.core.service.RequiredServiceInfo;
 
 /**
  *  The micro agent model. 
@@ -327,7 +326,7 @@ public class MicroModel extends CacheableKernelModel
 		protected long active;
 		
 		/** The required service info. */
-		protected RequiredServiceInfo reqserinfo;
+		//protected RequiredServiceInfo reqserinfo;
 
 		/**
 		 *  Create a new injection info.
@@ -445,21 +444,21 @@ public class MicroModel extends CacheableKernelModel
 		/**
 		 *  Get the required service info.
 		 *  @return The requiredServiceInfo
-		 */
+		 * /
 		public RequiredServiceInfo getRequiredServiceInfo()
 		{
 			return reqserinfo;
-		}
+		}*/
 
 		/**
 		 *  Set the required service info.
 		 *  @param requiredServiceInfo the requiredServiceInfo to set
-		 */
+		 * /
 		public ServiceInjectionInfo setRequiredServiceInfo(RequiredServiceInfo requiredServiceInfo)
 		{
 			this.reqserinfo = requiredServiceInfo;
 			return this;
-		}
+		}*/
 
 		/**
 		 * @return the required

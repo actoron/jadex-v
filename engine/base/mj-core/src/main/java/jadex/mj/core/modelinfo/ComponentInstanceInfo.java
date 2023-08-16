@@ -5,7 +5,6 @@ import java.util.List;
 
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
-import jadex.mj.core.service.RequiredServiceBinding;
 
 /**
  *  Component instance information.
@@ -32,7 +31,7 @@ public class ComponentInstanceInfo extends Startable
 	protected List<UnparsedExpression> arguments;
 	
 	/** The list of required service binding infos. */
-	protected List<RequiredServiceBinding> bindings;
+//	protected List<RequiredServiceBinding> bindings;
 	
 	/** The arguments expression (Hack for 
 	    BPMN Editor that saves args as one string. */
@@ -182,37 +181,37 @@ public class ComponentInstanceInfo extends Startable
 	/**
 	 *  Get the bindings.
 	 *  @return the bindings.
-	 */
+	 * /
 	public RequiredServiceBinding[] getBindings()
 	{
 		return bindings!=null? bindings.toArray(new RequiredServiceBinding[bindings.size()]): new RequiredServiceBinding[0];
-	}
+	}*/
 	
 	/**
 	 *  Set the bindings.
 	 *  @param bindings The bindings to set.
-	 */
+	 * /
 	public void setBindings(RequiredServiceBinding[] bindings)
 	{
 		this.bindings = SUtil.arrayToList(bindings);
-	}
+	}*/
 	
 	/**
 	 *  Add a binding.
 	 *  @param binding The binding.
-	 */
+	 * /
 	public void addBinding(RequiredServiceBinding binding)
 	{
 		if(bindings==null)
 			bindings = new ArrayList<RequiredServiceBinding>();
 		bindings.add(binding);
-	}
+	}*/
 	
 	/**
 	 *  Get the model of the component instance.
 	 *  @param apptype The application type this component is used in.
 	 *  @return The name of the component type.
-	 */
+	 * /
 	public SubcomponentTypeInfo getType(IModelInfo model)
 	{
 		SubcomponentTypeInfo ret = null;
@@ -223,7 +222,7 @@ public class ComponentInstanceInfo extends Startable
 				ret = componenttypes[i];
 		}
 		return ret;
-	}
+	}*/
 
 	/**
 	 *  A string of this object.

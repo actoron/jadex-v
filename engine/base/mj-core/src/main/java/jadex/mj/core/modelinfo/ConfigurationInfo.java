@@ -6,8 +6,6 @@ import java.util.List;
 
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
-import jadex.mj.core.service.ProvidedServiceInfo;
-import jadex.mj.core.service.RequiredServiceInfo;
 
 /**
  *  Information contained in a component configuration.
@@ -29,10 +27,10 @@ public class ConfigurationInfo extends Startable
 	protected List<UnparsedExpression> results;
 	
 	/** The provided service overridings. */
-	protected List<ProvidedServiceInfo> providedservices;
+	//protected List<ProvidedServiceInfo> providedservices;
 	
 	/** The required service overridings. */
-	protected List<RequiredServiceInfo> requiredservices;
+	//protected List<RequiredServiceInfo> requiredservices;
 	
 	/** The initial steps. */
 	protected List<UnparsedExpression> initialsteps;
@@ -227,48 +225,48 @@ public class ConfigurationInfo extends Startable
 	/**
 	 *  Get the provided services.
 	 *  @return The provided services.
-	 */
+	 * /
 	public ProvidedServiceInfo[] getProvidedServices()
 	{
 		return providedservices==null? new ProvidedServiceInfo[0]: 
 			providedservices.toArray(new ProvidedServiceInfo[providedservices.size()]);
-	}
+	}*/
 
 	/**
 	 *  Set the provided services.
 	 *  @param provided services The provided services to set.
-	 */
+	 * /
 	public void setProvidedServices(ProvidedServiceInfo[] providedservices)
 	{
 		this.providedservices = SUtil.arrayToList(providedservices);
-	}
+	}*/
 	
 	/**
 	 *  Add a provided service.
 	 *  @param providedservice The provided service.
-	 */
+	 * /
 	public void addProvidedService(ProvidedServiceInfo providedservice)
 	{
 		if(providedservices==null)
 			providedservices = new ArrayList<ProvidedServiceInfo>();
 		providedservices.add(providedservice);
-	}
+	}*/
 	
 	/**
 	 *  Remove a provided service.
 	 *  @param providedservice The provided service.
-	 */
+	 * /
 	public void removeProvidedService(ProvidedServiceInfo providedservice)
 	{
 		if(providedservices!=null)
 		{
 			providedservices.remove(providedservice);
 		}
-	}
+	}*/
 	
 	/**
 	 *  Test if has a provided service.
-	 */
+	 * /
 	public boolean hasProvidedService(String name)
 	{
 		boolean ret = false;
@@ -282,54 +280,54 @@ public class ConfigurationInfo extends Startable
 			}
 		}
 		return ret;
-	}
+	}*/
 	
 	
 	/**
 	 *  Get the required services.
 	 *  @return The required services.
-	 */
+	 * /
 	public RequiredServiceInfo[] getServices()
 	{
 		return requiredservices==null? new RequiredServiceInfo[0]: 
 			requiredservices.toArray(new RequiredServiceInfo[requiredservices.size()]);
-	}
+	}*/
 
 	/**
 	 *  Set the required services.
 	 *  @param required services The required services to set.
-	 */
+	 * /
 	public void setRequiredServices(RequiredServiceInfo[] requiredservices)
 	{
 		this.requiredservices = SUtil.arrayToList(requiredservices);
-	}
+	}*/
 	
 	/**
 	 *  Add a required service.
 	 *  @param requiredservice The required service.
-	 */
+	 * /
 	public void addRequiredService(RequiredServiceInfo requiredservice)
 	{
 		if(requiredservices==null)
 			requiredservices = new ArrayList<RequiredServiceInfo>();
 		requiredservices.add(requiredservice);
-	}
+	}*/
 	
 	/**
 	 *  Remove a required service.
 	 *  @param requiredservice The required service.
-	 */
+	 * /
 	public void removeRequiredService(RequiredServiceInfo requiredservice)
 	{
 		if(requiredservices!=null)
 		{
 			requiredservices.remove(requiredservice);
 		}
-	}
+	}*/
 	
 	/**
 	 *  Test if has a required service.
-	 */
+	 * /
 	public boolean hasRequiredService(String name)
 	{
 		boolean ret = false;
@@ -343,7 +341,7 @@ public class ConfigurationInfo extends Startable
 			}
 		}
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Get the initial steps.

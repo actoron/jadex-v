@@ -1,21 +1,13 @@
 package jadex.mj.core.modelinfo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import jadex.common.SUtil;
-import jadex.common.UnparsedExpression;
 import jadex.common.transformation.annotations.Exclude;
-import jadex.javaparser.SJavaParser;
 import jadex.mj.core.IErrorReport;
-import jadex.mj.core.service.ProvidedServiceInfo;
-import jadex.mj.core.service.RequiredServiceInfo;
 
 
 /**
@@ -33,10 +25,10 @@ public class ModelInfo extends Startable implements IModelInfo
 	protected String packagename;
 	
 	/** The predecessors. */
-	protected String[] predecessors;
+	//protected String[] predecessors;
 	
 	/** The predecessors. */
-	protected String[] successors;
+	//protected String[] successors;
 	
 	/** The imports. */
 	protected List<String> imports;
@@ -48,13 +40,13 @@ public class ModelInfo extends Startable implements IModelInfo
 	protected IErrorReport report;
 	
 	/** The configurations. */
-	protected List<ConfigurationInfo> configurations;
+	//protected List<ConfigurationInfo> configurations;
 	
 	/** The arguments. */
-	protected List<IArgument> arguments;
+	//protected List<IArgument> arguments;
 	
 	/** The results. */
-	protected List<IArgument> results;
+	//protected List<IArgument> results;
 	
 	/** Flag if startable. */
 	protected boolean startable;
@@ -69,23 +61,23 @@ public class ModelInfo extends Startable implements IModelInfo
 	protected String fullname;
 	
 	/** The properties. */
-	protected Map<String, Object> properties;
+	//protected Map<String, Object> properties;
 	
 	/** The nf properties. */
-	protected List<NFPropertyInfo> nfproperties;
+	//protected List<NFPropertyInfo> nfproperties;
 	
 	/** The classloader. */
 	// only locally available
 	protected ClassLoader classloader;
 	
 	/** The required services. */
-	protected Map<String, RequiredServiceInfo> requiredservices;
+	//protected Map<String, RequiredServiceInfo> requiredservices;
 	
 	/** The provided services. */
-	protected List<ProvidedServiceInfo> providedservices;
+	//protected List<ProvidedServiceInfo> providedservices;
 	
 	/** The subcomponent types. */
-	protected List<SubcomponentTypeInfo> subcomponents;
+	//protected List<SubcomponentTypeInfo> subcomponents;
 	
 	/** The resource identifier. */
 	//protected IResourceIdentifier rid;
@@ -100,7 +92,10 @@ public class ModelInfo extends Startable implements IModelInfo
 	//protected IComponentFeatureFactory[] features;
 	
 	/** The name hint for instances of this model. */
-	protected String namehint;
+	//protected String namehint;
+	
+	/** The feature models. */
+	protected Map<Class<?>, Object> featuremodels;
 	
 	//-------- constructors --------
 	
@@ -109,19 +104,28 @@ public class ModelInfo extends Startable implements IModelInfo
 	 */
 	public ModelInfo()
 	{
-		this(null, null, null, null, null, null, 
-			false, null, null, null, null, null, null, null, null, null);
+		this(null, null, null, null,
+			false, null, null, null, null, null);
 	}
 	
 	/**
 	 *  Create a new model info.
 	 */
-	public ModelInfo(String name, String packagename,
-		String description, IErrorReport report,
-		IArgument[] arguments, IArgument[] results, boolean startable,
-		String filename, Map<String, Object> properties, ClassLoader classloader, 
-		RequiredServiceInfo[] requiredservices, ProvidedServiceInfo[] providedservices, 
-		ConfigurationInfo[] configurations, SubcomponentTypeInfo[] subcomponents, String[] imports,
+	public ModelInfo(String name, 
+		String packagename,
+		String description, 
+		IErrorReport report,
+		//IArgument[] arguments, 
+		//IArgument[] results, 
+		boolean startable,
+		String filename, 
+		Map<String, Object> properties, 
+		ClassLoader classloader, 
+		//RequiredServiceInfo[] requiredservices, 
+		//ProvidedServiceInfo[] providedservices, 
+		//ConfigurationInfo[] configurations, 
+		//SubcomponentTypeInfo[] subcomponents, 
+		String[] imports,
 		Object rawmodel) 
 		//IComponentFeatureFactory[] features)
 	{
@@ -129,25 +133,25 @@ public class ModelInfo extends Startable implements IModelInfo
 		this.packagename = packagename;
 		this.description = description;
 		this.report = report;//!=null? report: new ErrorReport();
-		if(arguments!=null)
-			this.arguments = SUtil.arrayToList(arguments);
-		if(results!=null)
-			this.results = SUtil.arrayToList(results);
+		//if(arguments!=null)
+		//	this.arguments = SUtil.arrayToList(arguments);
+		//if(results!=null)
+		//	this.results = SUtil.arrayToList(results);
 		this.startable = startable;
 		this.filename = filename;
-		this.properties = properties!=null? properties: new HashMap<String, Object>();
+		//this.properties = properties!=null? properties: new HashMap<String, Object>();
 		this.classloader = classloader;
-		if(providedservices!=null)
-			this.providedservices = SUtil.arrayToList(providedservices);
-		if(configurations!=null)
-			this.configurations = SUtil.arrayToList(configurations);
-		if(subcomponents!=null)
-			this.subcomponents = SUtil.arrayToList(subcomponents);
+		//if(providedservices!=null)
+		//	this.providedservices = SUtil.arrayToList(providedservices);
+		//if(configurations!=null)
+		//	this.configurations = SUtil.arrayToList(configurations);
+		//if(subcomponents!=null)
+		//	this.subcomponents = SUtil.arrayToList(subcomponents);
 		if(imports!=null)
 			this.imports = SUtil.arrayToList(imports);
 		//if(features!=null)
 		//	this.features = features;
-		setRequiredServices(requiredservices);
+		//setRequiredServices(requiredservices);
 		//this.rid = rid;
 		this.rawmodel	= rawmodel;
 	}
@@ -165,19 +169,19 @@ public class ModelInfo extends Startable implements IModelInfo
 	
 	/**
 	 *  Get required predecessors (dependencies).
-	 */
+	 * /
 	public String[] getPredecessors()
 	{
 		return predecessors;
-	}
+	}*/
 	
 	/**
 	 *  Get declared successors (dependencies).
-	 */
+	 * /
 	public String[] getSuccessors()
 	{
 		return successors;
-	}
+	}*/
 	
 	/**
 	 *  Get the package name.
@@ -257,7 +261,7 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Get the configurations.
 	 *  @return The configuration.
-	 */
+	 * /
 	public String[] getConfigurationNames()
 	{
 //		String[] ret = configurationnames!=null? configurationnames: SUtil.EMPTY_STRING_ARRAY;
@@ -274,20 +278,20 @@ public class ModelInfo extends Startable implements IModelInfo
 		}
 		
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Get the configurations.
 	 *  @return The configuration.
-	 */
+	 * /
 	public ConfigurationInfo[] getConfigurations()
 	{
 		return configurations!=null? configurations.toArray(new ConfigurationInfo[configurations.size()]): new ConfigurationInfo[0];
-	}
+	}*/
 	
 	/**
 	 *  Get a configuration.
-	 */
+	 * /
 	public ConfigurationInfo getConfiguration(String name)
 	{
 		ConfigurationInfo ret = null;
@@ -307,22 +311,22 @@ public class ModelInfo extends Startable implements IModelInfo
 			}
 		}
 		return ret;
-	}	
+	}*/	
 	
 	/**
 	 *  Get the arguments.
 	 *  @return The arguments.
-	 */
+	 * /
 	public IArgument[] getArguments()
 	{
 		return arguments!=null? arguments.toArray(new IArgument[arguments.size()]): new IArgument[0];
-	}
+	}*/
 	
 	/**
 	 *  Get an argument per name.
 	 *  @param name The name.
 	 *  @return The argument.
-	 */
+	 * /
 	public IArgument getArgument(String name)
 	{
 		Argument ret = null;
@@ -336,22 +340,22 @@ public class ModelInfo extends Startable implements IModelInfo
 			}
 		}
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Get the results.
 	 *  @return The results.
-	 */
+	 * /
 	public IArgument[] getResults()
 	{
 		return results!=null? (IArgument[])results.toArray(new IArgument[results.size()]): new IArgument[0];
-	}
+	}*/
 	
 	/**
 	 *  Get a result per name.
 	 *  @param name The name.
 	 *  @return The result.
-	 */
+	 * /
 	public IArgument getResult(String name)
 	{
 		Argument ret = null;
@@ -365,7 +369,7 @@ public class ModelInfo extends Startable implements IModelInfo
 			}
 		}
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Is the model startable.
@@ -399,11 +403,11 @@ public class ModelInfo extends Startable implements IModelInfo
 	 *  Arbitrary properties that can e.g. be used to
 	 *  define model-specific settings to configure tools. 
 	 *  @return The properties.
-	 */
+	 * /
 	public Map<String, Object>	getProperties()
 	{
 		return properties;
-	}
+	}*/
 	
 	/**
 	 *  Get a parsed property.
@@ -411,12 +415,12 @@ public class ModelInfo extends Startable implements IModelInfo
 	 *  this method always returns parsed property values.
 	 *  @param	name	The property name.  
 	 *  @return The property value or null if property not defined.
-	 */
+	 * /
 	public Object	getProperty(String name, ClassLoader cl)
 	{
 		// Todo: caching of parsed values?
 		return SJavaParser.getProperty(getProperties(), name, getAllImports(), null, cl);
-	}
+	}*/
 
 	/**
 	 *  Return the class loader corresponding to the model.
@@ -431,30 +435,30 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Get the nfproperties.
 	 *  @return The nfproperties.
-	 */
+	 * /
 	public List<NFPropertyInfo> getNFProperties()
 	{
 		return nfproperties;
-	}
+	}*/
 
 	/**
 	 *  Set the nfproperties.
 	 *  @param nfproperties The nfproperties to set.
-	 */
+	 * /
 	public void setNFProperties(List<NFPropertyInfo> nfproperties)
 	{
 		this.nfproperties = nfproperties;
-	}
+	}*/
 	
 	/**
 	 *  Add a non functional property.
-	 */
+	 * /
 	public void addNFProperty(NFPropertyInfo pi)
 	{
 		if(nfproperties==null)
 			nfproperties = new ArrayList<NFPropertyInfo>();
 		nfproperties.add(pi);
-	}
+	}*/
 
 	/**
 	 *  Return the resource identifier.
@@ -478,7 +482,7 @@ public class ModelInfo extends Startable implements IModelInfo
 	
 	/**
 	 *  Adds required predecessors (dependencies).
-	 */
+	 * /
 	public void addPredecessors(String[] predecessors)
 	{
 		if (this.predecessors != null && this.predecessors.length > 0)
@@ -489,19 +493,19 @@ public class ModelInfo extends Startable implements IModelInfo
 			predecessors = tmp.toArray(new String[tmp.size()]);
 		}
 		this.predecessors = predecessors;
-	}
+	}*/
 	
 	/**
 	 *  Set required predecessors (dependencies).
-	 */
+	 * /
 	public void setPredecessors(String[] predecessors)
 	{
 		this.predecessors = predecessors;
-	}
+	}*/
 	
 	/**
 	 *  Adds required predecessors (dependencies).
-	 */
+	 * /
 	public void addSuccessors(String[] successors)
 	{
 		if(this.successors != null && this.successors.length > 0)
@@ -512,15 +516,15 @@ public class ModelInfo extends Startable implements IModelInfo
 			successors = tmp.toArray(new String[tmp.size()]);
 		}
 		this.successors = successors;
-	}
+	}*/
 	
 	/**
 	 *  Set declared successors (dependencies).
-	 */
+	 * /
 	public void setSuccessors(String[] successors)
 	{
 		this.successors = successors;
-	}
+	}*/
 
 	/**
 	 *  Set the packagename.
@@ -564,68 +568,68 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Set the configurations.
 	 *  @param configurations The configurations to set.
-	 */
+	 * /
 	public void setConfigurations(ConfigurationInfo[] configurations)
 	{
 		this.configurations = SUtil.arrayToList(configurations);
-	}
+	}*/
 	
 	/**
 	 *  Add a configuration.
 	 *  @param configuration The configuration.
-	 */
+	 * /
 	public void addConfiguration(ConfigurationInfo configuration)
 	{
 		if(configurations==null)
 			configurations = new ArrayList<ConfigurationInfo>();
 		configurations.add(configuration);
-	}
+	}*/
 
 	/**
 	 *  Set the arguments.
 	 *  @param arguments The arguments to set.
-	 */
+	 * /
 	public void setArguments(IArgument[] arguments)
 	{
 		if(arguments!=null)
 			this.arguments	= SUtil.arrayToList(arguments);
 		else
 			this.arguments	= null;
-	}
+	}*/
 	
 	/**
 	 *  Add an argument.
 	 *  @param argument The argument.
-	 */
+	 * /
 	public void addArgument(IArgument argument)
 	{
 		if(arguments==null)
 			arguments = new ArrayList<IArgument>();
 		arguments.add(argument);
-	}
+	}*/
 
 	/**
 	 *  Set the results.
 	 *  @param results The results to set.
-	 */
+	 * /
 	public void setResults(IArgument[] results)
 	{
 		if(results!=null)
 			this.results	= SUtil.arrayToList(results);
 		else
 			this.results	= null;
-	}
+	}*/
 	
 	/**
 	 *  Add a result.
 	 *  @param result The result.
-	 */
+	 * /
 	public void addResult(IArgument result)
 	{
 		if(results==null)
 			results = new ArrayList<IArgument>();
 		results.add(result);
-	}
+	}*/
 
 	/**
 	 *  Set the startable.
@@ -657,31 +661,31 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Set the properties.
 	 *  @param properties The properties to set.
-	 */
+	 * /
 	public void setProperties(Map<String, Object> properties)
 	{
 		this.properties = properties;
-	}
+	}*/
 	
 	/**
 	 *  Add a property.
-	 */
+	 * /
 	public void	addProperty(String name, Object value)
 	{
 		if(properties==null)
 			properties = new HashMap<String, Object>();
 		properties.put(name, value);
-	}
+	}*/
 	
 	/**
 	 *  Add a property.
-	 */
+	 * /
 	public void	addProperty(UnparsedExpression unexp)
 	{
 		if(properties==null)
 			properties = new HashMap<String, Object>();
 		properties.put(unexp.getName(), unexp);
-	}
+	}*/
 	
 	/**
 	 *  Set the classloader.
@@ -696,12 +700,12 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Get the required services.
 	 *  @return The required services.
-	 */
+	 * /
 	public RequiredServiceInfo[] getServices()
 	{
 		return requiredservices==null? new RequiredServiceInfo[0]: 
 			requiredservices.values().toArray(new RequiredServiceInfo[requiredservices.size()]);
-	}
+	}*/
 
 	/**
 	 *  Set the resource identifier.
@@ -716,7 +720,7 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Set the required services.
 	 *  @param required services The required services to set.
-	 */
+	 * /
 	public void setRequiredServices(RequiredServiceInfo[] requiredservices)
 	{
 		if(requiredservices!=null && requiredservices.length>0)
@@ -727,81 +731,81 @@ public class ModelInfo extends Startable implements IModelInfo
 				this.requiredservices.put(requiredservices[i].getName(), requiredservices[i]);
 			}
 		}
-	}
+	}*/
 	
 	/**
 	 *  Get the required service.
 	 *  @return The required service.
-	 */
+	 * /
 	public RequiredServiceInfo getService(String name)
 	{
 		return requiredservices!=null? requiredservices.get(name): null;
-	}
+	}*/
 	
 	/**
 	 *  Add a required service.
 	 *  @param requiredservice The required service.
-	 */
+	 * /
 	public void addRequiredService(RequiredServiceInfo requiredservice)
 	{
 		if(requiredservices==null)
 			requiredservices = new LinkedHashMap<String, RequiredServiceInfo>();
 		requiredservices.put(requiredservice.getName(), requiredservice);
-	}
+	}*/
 	
 	/**
 	 *  Remove a required service.
 	 *  @param requiredservice The required service.
-	 */
+	 * /
 	public void removeRequiredService(RequiredServiceInfo requiredservice)
 	{
 		if(requiredservices!=null)
 		{
 			requiredservices.remove(requiredservice.getName());
 		}
-	}
+	}*/
 
 	/**
 	 *  Get the provided services.
 	 *  @return The provided services.
-	 */
+	 * /
 	public ProvidedServiceInfo[] getProvidedServices()
 	{
 		return providedservices==null? new ProvidedServiceInfo[0]: 
 			providedservices.toArray(new ProvidedServiceInfo[providedservices.size()]);
-	}
+	}*/
 
 	/**
 	 *  Set the provided services.
 	 *  @param provided services The provided services to set.
-	 */
+	 * /
 	public void setProvidedServices(ProvidedServiceInfo[] providedservices)
 	{
 		this.providedservices = SUtil.arrayToList(providedservices);
-	}
+	}*/
 	
 	/**
 	 *  Add a provided service.
 	 *  @param providedservice The provided service.
-	 */
+	 * /
 	public void addProvidedService(ProvidedServiceInfo providedservice)
 	{
 		if(providedservices==null)
 			providedservices = new ArrayList<ProvidedServiceInfo>();
 		providedservices.add(providedservice);
-	}
+	}*/
 	
 	/**
 	 *  Remove a provided service.
 	 *  @param providedservice The provided service.
-	 */
+	 * /
 	public void removeProvidedService(ProvidedServiceInfo providedservice)
 	{
 		if (providedservices!=null)
 		{
 			providedservices.remove(providedservice);
 		}
-	}
+	}*/
 	
 //	/**
 //	 *  Get the master flag.
@@ -860,7 +864,7 @@ public class ModelInfo extends Startable implements IModelInfo
 	 *  Get the synchronous flag.
 	 *  @param synchronous The synchronous.
 	 *  @return The synchronous flag value.
-	 */
+	 * /
 	public Boolean getSynchronous(String configname)
 	{
 		Boolean ret = null;
@@ -870,7 +874,7 @@ public class ModelInfo extends Startable implements IModelInfo
 		if(ret==null)
 			ret = super.getSynchronous();
 		return ret;
-	}
+	}*/
 	
 //	/**
 //	 *  Get the persistable flag.
@@ -892,7 +896,7 @@ public class ModelInfo extends Startable implements IModelInfo
 	 *  Get the suspend flag.
 	 *  @param configname The configname.
 	 *  @return The suspend flag value.
-	 */
+	 * /
 	public Boolean getSuspend(String configname)
 	{
 		Boolean ret = null;
@@ -904,13 +908,13 @@ public class ModelInfo extends Startable implements IModelInfo
 		return ret;
 		
 //		return suspend==null? null: (Boolean)suspend.getValue(configname);
-	}
+	}*/
 	
 	/**
 	 *  Get the keepalive flag.
 	 *  @param configname The configname.
 	 *  @return The keepalive flag value.
-	 */
+	 * /
 	public Boolean getKeepalive(String configname)
 	{
 		Boolean ret = null;
@@ -931,7 +935,7 @@ public class ModelInfo extends Startable implements IModelInfo
 		}
 		
 		return ret;
-	}
+	}*/
 
 //	/**
 //	 *  Get the monitoring flag.
@@ -967,30 +971,30 @@ public class ModelInfo extends Startable implements IModelInfo
 	
 	/**
 	 *  Get the subcomponent names. 
-	 */
+	 * /
 	public SubcomponentTypeInfo[] getSubcomponentTypes()
 	{
 		return subcomponents!=null? subcomponents.toArray(new SubcomponentTypeInfo[subcomponents.size()]): new SubcomponentTypeInfo[0];
-	}
+	}*/
 	
 	/**
 	 *  Set the subcomponent types.
-	 */
+	 * /
 	public void setSubcomponentTypes(SubcomponentTypeInfo[] subcomponents)
 	{
 		this.subcomponents = SUtil.arrayToList(subcomponents);
-	}
+	}*/
 	
 	/**
 	 *  Add a subcomponent type.
 	 *  @param subcomponent The subcomponent type.
-	 */
+	 * /
 	public void addSubcomponentType(SubcomponentTypeInfo subcomponent)
 	{
 		if(subcomponents==null)
 			subcomponents = new ArrayList<SubcomponentTypeInfo>();
 		subcomponents.add(subcomponent);
-	}
+	}*/
 	
 	/**
 	 *  Get the possible breakpoint places in that model.
@@ -1083,7 +1087,25 @@ public class ModelInfo extends Startable implements IModelInfo
 	{
 		this.rawmodel	= rawmodel;
 	}
-
+	
+	/**
+	 *  Put a new feature model in the map.
+	 */
+	public void putFeatureModel(Class<?> key, Object value)
+	{
+		if(featuremodels==null)
+			featuremodels = new HashMap<Class<?>, Object>();
+		featuremodels.put(key, value);
+	}
+	
+	/**
+	 *  Get a feature model per class.
+	 */
+	public Object getFeatureModel(Class<?> key)
+	{
+		return featuremodels==null? null: featuremodels.get(key);
+	}
+	
 	/**
 	 *  Get the features.
 	 *  @return The features
@@ -1105,18 +1127,18 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Get the namehint.
 	 *  @return the namehint
-	 */
+	 * /
 	public String getNameHint()
 	{
 		return namehint;
-	}
+	}*/
 
 	/**
 	 *  Set the namehint.
 	 *  @param namehint The namehint to set
-	 */
+	 * /
 	public void setNameHint(String namehint)
 	{
 		this.namehint = namehint;
-	}
+	}*/
 }

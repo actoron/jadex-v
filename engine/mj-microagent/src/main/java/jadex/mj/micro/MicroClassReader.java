@@ -11,7 +11,6 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -31,30 +30,18 @@ import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.mj.core.IComponentIdentifier;
 import jadex.mj.core.ProxyFactory;
 import jadex.mj.core.ServiceCallInfo;
 import jadex.mj.core.annotation.NameValue;
+import jadex.mj.core.annotation.OnEnd;
+import jadex.mj.core.annotation.OnInit;
+import jadex.mj.core.annotation.OnStart;
+import jadex.mj.core.annotation.Value;
 import jadex.mj.core.modelinfo.ComponentInstanceInfo;
 import jadex.mj.core.modelinfo.ConfigurationInfo;
 import jadex.mj.core.modelinfo.IArgument;
 import jadex.mj.core.modelinfo.ModelInfo;
-import jadex.mj.core.modelinfo.NFRPropertyInfo;
 import jadex.mj.core.modelinfo.SubcomponentTypeInfo;
-import jadex.mj.core.service.ProvidedServiceImplementation;
-import jadex.mj.core.service.ProvidedServiceInfo;
-import jadex.mj.core.service.RequiredServiceBinding;
-import jadex.mj.core.service.RequiredServiceInfo;
-import jadex.mj.core.service.ServiceScope;
-import jadex.mj.core.service.annotation.GuiClass;
-import jadex.mj.core.service.annotation.GuiClassName;
-import jadex.mj.core.service.annotation.OnEnd;
-import jadex.mj.core.service.annotation.OnInit;
-import jadex.mj.core.service.annotation.OnStart;
-import jadex.mj.core.service.annotation.Security;
-import jadex.mj.core.service.annotation.Service;
-import jadex.mj.core.service.annotation.Value;
-import jadex.mj.micro.MicroModel.ServiceInjectionInfo;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.micro.annotation.AgentArgument;
 import jadex.mj.micro.annotation.AgentBreakpoint;
@@ -72,17 +59,11 @@ import jadex.mj.micro.annotation.Configuration;
 import jadex.mj.micro.annotation.Configurations;
 import jadex.mj.micro.annotation.CreationInfo;
 import jadex.mj.micro.annotation.Description;
-import jadex.mj.micro.annotation.Implementation;
 import jadex.mj.micro.annotation.Imports;
 import jadex.mj.micro.annotation.OnMessage;
-import jadex.mj.micro.annotation.OnService;
 import jadex.mj.micro.annotation.OnStream;
 import jadex.mj.micro.annotation.Parent;
 import jadex.mj.micro.annotation.Properties;
-import jadex.mj.micro.annotation.ProvidedService;
-import jadex.mj.micro.annotation.ProvidedServices;
-import jadex.mj.micro.annotation.RequiredService;
-import jadex.mj.micro.annotation.RequiredServices;
 import jadex.mj.micro.annotation.Result;
 import jadex.mj.micro.annotation.Results;
 
@@ -309,9 +290,9 @@ public class MicroClassReader
 //				Boolean	persist	= val.persistable().toBoolean();
 				Boolean	keep	= val.keepalive().toBoolean();
 				
-				modelinfo.setNameHint(!"".equals(val.name()) ? val.name() : null);
-				modelinfo.addPredecessors(val.predecessors());
-				modelinfo.addSuccessors(val.successors());
+				//modelinfo.setNameHint(!"".equals(val.name()) ? val.name() : null);
+				//modelinfo.addPredecessors(val.predecessors());
+				//modelinfo.addSuccessors(val.successors());
 				
 				// Use most specific autoprovide setting.
 				autoprovide	= autoprovide != Boolean3.NULL ? autoprovide : val.autoprovide();
@@ -351,6 +332,7 @@ public class MicroClassReader
 					modelinfo.setMonitoring(moni);
 				}*/
 				
+				/*
 				// check interfaces and add those which have service annotation to provided service interfaces
 				Class<?>[] ifaces = cma.getInterfaces();
 				for(Class<?> iface: ifaces)
@@ -360,6 +342,7 @@ public class MicroClassReader
 						serifaces.add(iface);
 					}
 				}
+				*/
 			}
 			
 			// Description is set only once from upper most element.
@@ -482,7 +465,7 @@ public class MicroClassReader
 			// Take newest version
 			// todo: move to be able to use the constant
 			// jadex.base.gui.componentviewer.IAbstractViewerPanel.PROPERTY_VIEWERCLASS
-			if(isAnnotationPresent(cma, GuiClass.class, cl))
+			/*if(isAnnotationPresent(cma, GuiClass.class, cl))
 			{
 				GuiClass gui = (GuiClass)getAnnotation(cma, GuiClass.class, cl);
 				Class<?> gclazz = gui.value();
@@ -501,7 +484,7 @@ public class MicroClassReader
 				
 				if(!props.containsKey("componentviewer.viewerclass"))
 					props.put("componentviewer.viewerclass", clazzname);
-			}
+			}*/
 			
 			// Take all (if not replace)
 			if(!breaksdone && isAnnotationPresent(cma, Breakpoints.class, cl))
@@ -520,7 +503,7 @@ public class MicroClassReader
 			}
 			
 			// Take all but new overrides old
-			if(!reqsdone)
+			/*if(!reqsdone)
 			{
 				if(isAnnotationPresent(cma, RequiredServices.class, cl))
 				{
@@ -548,8 +531,9 @@ public class MicroClassReader
 //						}
 					}
 				}
-			}
+			}*/
 			
+			/*
 			// Take all but new overrides old
 			if(!prosdone && isAnnotationPresent(cma, ProvidedServices.class, cl))
 			{
@@ -567,7 +551,7 @@ public class MicroClassReader
 						psers.put(vals[i].name().length()==0? ("#"+cnt++): vals[i].name(), psi);
 					}
 				}
-			}
+			}*/
 			
 			// Take all but new overrides old
 			if(!argsdone)
@@ -739,7 +723,7 @@ public class MicroClassReader
 								configinfo.addResult(new UnparsedExpression(resvals[j].name(), resvals[j].clazz(), resvals[j].value(), null));
 						}
 						
-						ProvidedService[] provs = config.providedservices();
+						/*ProvidedService[] provs = config.providedservices();
 	//					ProvidedServiceInfo[] psis = new ProvidedServiceInfo[provs.length];
 						for(int j=0; j<provs.length; j++)
 						{
@@ -750,7 +734,8 @@ public class MicroClassReader
 							}
 						}
 						
-						RequiredService[] reqs = config.requiredservices();
+						RequiredService[] reqs = config.requiredservices();*/
+						
 	//					RequiredServiceInfo[] rsis = new RequiredServiceInfo[reqs.length];
 						/*
 						for(int j=0; j<reqs.length; j++)
@@ -1013,13 +998,13 @@ public class MicroClassReader
 						{
 							modelinfo.setKeepalive(Boolean.FALSE);
 						}
-						for(ConfigurationInfo ci: modelinfo.getConfigurations())
+						/*for(ConfigurationInfo ci: modelinfo.getConfigurations())
 						{
 							if(ci.getKeepalive()==null)
 							{
 								ci.setKeepalive(Boolean.FALSE);								
 							}
-						}
+						}*/
 					}
 					
 					micromodel.setAgentMethod(OnStart.class, new MethodInfo(methods[i]));
@@ -1103,38 +1088,38 @@ public class MicroClassReader
 //			props.put("debugger.breakpoints", bps);
 			modelinfo.setBreakpoints((String[])bps.toArray(new String[bps.size()]));
 		}
-		if(props!=null)
-			modelinfo.setProperties(props);
+		//if(props!=null)
+		//	modelinfo.setProperties(props);
 		
-		List nfprops = (List)toset.get("nfproperties");
-		if(nfprops!=null)
-			modelinfo.setNFProperties(nfprops);
+		//List nfprops = (List)toset.get("nfproperties");
+		//if(nfprops!=null)
+		//	modelinfo.setNFProperties(nfprops);
 		
-		Map rsers = (Map)toset.get("reqservices");
-		if(rsers!=null)
-			modelinfo.setRequiredServices((RequiredServiceInfo[])rsers.values().toArray(new RequiredServiceInfo[rsers.size()]));
+		//Map rsers = (Map)toset.get("reqservices");
+		//if(rsers!=null)
+		//	modelinfo.setRequiredServices((RequiredServiceInfo[])rsers.values().toArray(new RequiredServiceInfo[rsers.size()]));
 		
-		Map psers = (Map)toset.get("proservices");
-		if(psers!=null)
-			modelinfo.setProvidedServices((ProvidedServiceInfo[])psers.values().toArray(new ProvidedServiceInfo[psers.size()]));
+		//Map psers = (Map)toset.get("proservices");
+		//if(psers!=null)
+		//	modelinfo.setProvidedServices((ProvidedServiceInfo[])psers.values().toArray(new ProvidedServiceInfo[psers.size()]));
 //		System.out.println("provided services: "+psers);
 		
-		Map argus = (Map)toset.get("arguments");
-		if(argus!=null)
-			modelinfo.setArguments((IArgument[])argus.values().toArray(new IArgument[argus.size()]));
+		//Map argus = (Map)toset.get("arguments");
+		//if(argus!=null)
+		//	modelinfo.setArguments((IArgument[])argus.values().toArray(new IArgument[argus.size()]));
 //		System.out.println("arguments: "+argus);
 		
-		Map res = (Map)toset.get("results");
-		if(res!=null)
-			modelinfo.setResults((IArgument[])res.values().toArray(new IArgument[res.size()]));
+		//Map res = (Map)toset.get("results");
+		//if(res!=null)
+		//	modelinfo.setResults((IArgument[])res.values().toArray(new IArgument[res.size()]));
 		
-		Map cts = (Map)toset.get("componenttypes");
-		if(cts!=null)
-			modelinfo.setSubcomponentTypes((SubcomponentTypeInfo[])cts.values().toArray(new SubcomponentTypeInfo[cts.size()]));
+		//Map cts = (Map)toset.get("componenttypes");
+		//if(cts!=null)
+		//	modelinfo.setSubcomponentTypes((SubcomponentTypeInfo[])cts.values().toArray(new SubcomponentTypeInfo[cts.size()]));
 
-		Map cfs = (Map)toset.get("configurations");
-		if(cfs!=null)
-			modelinfo.setConfigurations((ConfigurationInfo[])cfs.values().toArray(new ConfigurationInfo[cfs.size()]));
+		//Map cfs = (Map)toset.get("configurations");
+		//if(cfs!=null)
+		//	modelinfo.setConfigurations((ConfigurationInfo[])cfs.values().toArray(new ConfigurationInfo[cfs.size()]));
 
 		/*
 		Map<Class<?>, IComponentFeatureFactory> feats = (Map<Class<?>, IComponentFeatureFactory>)toset.get("features");
@@ -1166,7 +1151,7 @@ public class MicroClassReader
 		
 		// Check if there are implemented service interfaces for which the agent
 		// does not have a provided service declaration (implementation=agent)
-		if(autoprovide.isTrue() && !serifaces.isEmpty())
+		/*if(autoprovide.isTrue() && !serifaces.isEmpty())
 		{
 			ProvidedServiceInfo[] psis = modelinfo.getProvidedServices();
 			for(ProvidedServiceInfo psi: psis)
@@ -1187,12 +1172,12 @@ public class MicroClassReader
 				ProvidedServiceInfo psi = new ProvidedServiceInfo(null, iface, impl);
 				modelinfo.addProvidedService(psi);
 			}
-		}
+		}*/
 	}
 
 	/**
 	 *  Create info from annotation.
-	 */
+	 * /
 	protected static ProvidedServiceInfo createProvidedServiceInfo(ProvidedService prov)
 	{
 		Implementation im = prov.implementation();
@@ -1215,7 +1200,7 @@ public class MicroClassReader
 		
 		PublishInfo pi = p.publishid().length()==0? null: new PublishInfo(p.publishid(), p.publishtype(), p.publishscope(), p.multi(),
 			Object.class.equals(p.mapping())? null: p.mapping(), SNameValue.createUnparsedExpressions(p.properties()));
-		*/
+		* /
 		
 		UnparsedExpression	scopeexpression	= prov.scopeexpression()!=null && prov.scopeexpression().length()>0
 				? new UnparsedExpression("scopeexpression", ServiceScope.class, prov.scopeexpression(), null) : null;
@@ -1230,7 +1215,7 @@ public class MicroClassReader
 			null, //pi, 
 			serprops);
 		return psi;
-	}
+	}*/
 	
 	/**
 	 *  Check, if the return type of the agent method is acceptable.
@@ -1258,7 +1243,7 @@ public class MicroClassReader
 	
 	/**
 	 *  Create a required service info from annotation.
-	 */
+	 * /
 	protected static RequiredServiceInfo createRequiredServiceInfo(RequiredService rs, ClassLoader cl)
 	{
 		RequiredServiceBinding binding = createBinding(rs);
@@ -1268,7 +1253,7 @@ public class MicroClassReader
 		{
 			nfprops.add(new NFRPropertyInfo(prop.name(), new ClassInfo(prop.value().getName()), 
 				new MethodInfo(prop.methodname(), prop.methodparametertypes())));
-		}*/
+		}* /
 		
 		RequiredServiceInfo rsis = new RequiredServiceInfo(rs.name(), rs.type(), 
 			rs.min(), rs.max(), binding, 
@@ -1276,7 +1261,7 @@ public class MicroClassReader
 			Arrays.asList(rs.tags())); // rs.multiple()
 		
 		return rsis;
-	}
+	}*/
 	
 	/**
 	 *  Get or create a map.
@@ -1804,7 +1789,7 @@ public class MicroClassReader
 	
 	/**
 	 *  Create a service implementation.
-	 */
+	 * /
 	public static ProvidedServiceImplementation createImplementation(Implementation impl, Class<?> cma)
 	{
 		Class<?> cl = impl.value();
@@ -1823,7 +1808,7 @@ public class MicroClassReader
 		}
 		return new ProvidedServiceImplementation(cl, exp, impl.proxytype(), null, //createBinding(impl.binding()), 
 			createUnparsedExpressions(impl.interceptors()));
-	}
+	}*/
 	
 //	/**
 //	 *  Create a service binding.
@@ -1838,7 +1823,7 @@ public class MicroClassReader
 	
 	/**
 	 *  Create a service binding.
-	 */
+	 * /
 	public static RequiredServiceBinding createBinding(RequiredService rq)
 	{
 		UnparsedExpression	scopeexpression	= rq.scopeexpression()!=null && rq.scopeexpression().length()>0
@@ -1849,7 +1834,7 @@ public class MicroClassReader
 			//rq.proxytype()
 			)
 			.setScopeExpression(scopeexpression);
-	}
+	}*/
 	
 	/**
 	 *  Create req service props.
@@ -2425,6 +2410,8 @@ public class MicroClassReader
 				ii.addServiceInjection(name, new ServiceInjectionInfo().setFieldInfo(new FieldInfo(fields[i])).setLazy(true).setQuery(true).setRequiredServiceInfo(rsis));
 
 			}*/
+			
+			/*
 			else if(isAnnotationPresent(fields[i], OnService.class, cl))
 			{
 				//if("secser".equals(fields[i].getName()))
@@ -2453,7 +2440,7 @@ public class MicroClassReader
 				sii.setActive(ser.active());
 				
 				ii.addServiceInjection(name, sii);
-			}
+			}*/
 			else if(isAnnotationPresent(fields[i], AgentFeature.class, cl))
 			{
 				ii.addFeatureInjection(fields[i].getName(), new FieldInfo(fields[i]));
@@ -2528,6 +2515,7 @@ public class MicroClassReader
 				ii.addServiceInjection(name, new ServiceInjectionInfo().setMethodInfo(new MethodInfo(methods[i])).setQuery(true).setRequiredServiceInfo(rsis));
 			}*/
 			
+			/*
 			if(isAnnotationPresent(methods[i], OnService.class, cl))
 			{
 				OnService ser = getAnnotation(methods[i], OnService.class, cl);
@@ -2569,7 +2557,7 @@ public class MicroClassReader
 				sii.setActive(ser.active());
 				
 				ii.addServiceInjection(name, sii);
-			}
+			}*/
 
 			// todo: method name, parameters, intervals...
 			if(isAnnotationPresent(methods[i], AgentServiceValue.class, cl))
@@ -2605,7 +2593,7 @@ public class MicroClassReader
 	
 	/**
 	 * 
-	 */
+	 * /
 	protected static Class<?> guessParameterType(Class<?>[] ptypes, ClassLoader cl)
 	{
 		Class<?> iftype = null;
@@ -2623,14 +2611,14 @@ public class MicroClassReader
 			throw new RuntimeException("No service interface found for service query");
 		
 		return iftype;
-	}
+	}*/
 	
 	/**
 	 * 
 	 * @param rsis
 	 * @param rsers
 	 * @param cl
-	 */
+	 * /
 	public static void checkAndAddRequiredServiceInfo(RequiredServiceInfo rsis, Map<String, Object> rsers, ClassLoader cl)
 	{
 		// Do not add definitions without name!
@@ -2648,7 +2636,7 @@ public class MicroClassReader
 		{
 			rsers.put(rsis.getName(), rsis);
 		}
-	}
+	}*/
 	
 	
 	

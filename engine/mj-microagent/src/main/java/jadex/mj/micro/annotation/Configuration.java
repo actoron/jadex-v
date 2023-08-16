@@ -40,12 +40,12 @@ public @interface Configuration
 	/**
 	 *  The provided service implementations.
 	 */
-	public ProvidedService[] providedservices() default {};
+	//public ProvidedService[] providedservices() default {};
 	
 	/**
 	 *  The provided service implementations.
 	 */
-	public RequiredService[] requiredservices() default {};
+	//public RequiredService[] requiredservices() default {};
 	
 //	/**
 //	 *  The master flag.

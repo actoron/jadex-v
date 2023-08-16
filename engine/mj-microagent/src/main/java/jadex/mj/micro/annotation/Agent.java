@@ -89,5 +89,5 @@ public @interface Agent
 	/**
 	 *  The agent type. 
 	 */
-	public String type(); // default MicroAgentFactory.TYPE;
+	public String type() default "micro";//MicroAgentFactory.TYPE;
 }

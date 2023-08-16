@@ -10,6 +10,7 @@ import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
+import jadex.mj.core.modelinfo.IModelInfo;
 
 /**
  *  Base class for Jadex components, which provides access to component features.
@@ -27,11 +28,15 @@ public class MjComponent
 	/** The fetcher. */
 	protected IValueFetcher fetcher;
 	
+	/** The model. */
+	protected IModelInfo modelinfo;
+	
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 */
-	protected MjComponent()
+	protected MjComponent(IModelInfo modelinfo)
 	{
+		this.modelinfo = modelinfo;
 		// Fetch relevant providers (potentially cached)
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());
 		// Instantiate all features (except lazy ones).
@@ -237,5 +242,14 @@ public class MjComponent
 			}
 			
 		};
+	}
+	
+	/**
+	 *  Get the model info.
+	 *  @return The model info.
+	 */
+	public IModelInfo getModel()
+	{
+		return modelinfo;
 	}
 }

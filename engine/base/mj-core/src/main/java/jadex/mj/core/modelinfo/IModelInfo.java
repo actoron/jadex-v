@@ -1,11 +1,7 @@
 package jadex.mj.core.modelinfo;
 
-import java.util.Map;
-
 import jadex.mj.core.IErrorReport;
-import jadex.mj.core.service.ProvidedServiceInfo;
-import jadex.mj.core.service.RequiredServiceInfo;
-import jadex.mj.core.service.annotation.Reference;
+//import jadex.mj.core.service.annotation.Reference;
 
 
 /**
@@ -17,7 +13,7 @@ import jadex.mj.core.service.annotation.Reference;
  *  can be accessed by fetching the raw model and casting
  *  it to the corresponding type (e.g. MBpmnModel).
  */
-@Reference(remote=false)	// Don't copy locally
+//@Reference(remote=false)	// Don't copy locally
 public interface IModelInfo
 {
 	/**
@@ -28,13 +24,15 @@ public interface IModelInfo
 	
 	/**
 	 *  Get required predecessors (dependencies).
-	 */
+	 * /
 	public String[] getPredecessors();
+	*/
 	
 	/**
 	 *  Get declared successors (dependencies).
-	 */
+	 * /
 	public String[] getSuccessors();
+	*/
 	
 	/**
 	 *  Get the package name.
@@ -75,45 +73,45 @@ public interface IModelInfo
 	/**
 	 *  Get the configurations.
 	 *  @return The configuration.
-	 */
-	public String[] getConfigurationNames();
+	 * /
+	public String[] getConfigurationNames();*/
 	
 	/**
 	 *  Get the configurations.
 	 *  @return The configuration.
-	 */
-	public ConfigurationInfo[] getConfigurations();
+	 * /
+	public ConfigurationInfo[] getConfigurations();*/
 	
 	/**
 	 *  Get the configurations.
 	 *  @return The configuration.
-	 */
-	public ConfigurationInfo getConfiguration(String name);
+	 * /
+	public ConfigurationInfo getConfiguration(String name);*/
 	
 	/**
 	 *  Get the arguments.
 	 *  @return The arguments.
-	 */
-	public IArgument[] getArguments();
+	 * /
+	public IArgument[] getArguments();*/
 	
 	/**
 	 *  Get the argument.
 	 *  @return The argument.
-	 */
-	public IArgument getArgument(String name);
+	 * /
+	public IArgument getArgument(String name);*/
 	
 	/**
 	 *  Get the results.
 	 *  @return The results.
-	 */
-	public IArgument[] getResults();
+	 * /
+	public IArgument[] getResults();*/
 	
 	/**
 	 *  Get the results.
 	 *  @param name The name.
 	 *  @return The results.
-	 */
-	public IArgument getResult(String name);
+	 * /
+	public IArgument getResult(String name);*/
 	
 	/**
 	 *  Is the model startable.
@@ -138,8 +136,8 @@ public interface IModelInfo
 	 *  Arbitrary properties that can e.g. be used to
 	 *  define model-specific settings to configure tools. 
 	 *  @return The properties.
-	 */
-	public Map<String, Object>	getProperties();
+	 * /
+	public Map<String, Object>	getProperties();*/
 
 	/**
 	 *  Get a parsed property.
@@ -147,8 +145,8 @@ public interface IModelInfo
 	 *  this method always returns parsed property values.
 	 *  @param	name	The property name.  
 	 *  @return The property value.
-	 */
-	public Object	getProperty(String name, ClassLoader cl);
+	 * /
+	public Object getProperty(String name, ClassLoader cl);*/
 	
 	/**
 	 *  Get the nf properties.
@@ -171,27 +169,27 @@ public interface IModelInfo
 	/**
 	 *  Get the required services.
 	 *  @return The required services.
-	 */
-	public RequiredServiceInfo[] getServices();
+	 * /
+	public RequiredServiceInfo[] getServices();*/
 
 	/**
 	 *  Get the required service.
 	 *  @return The required service.
-	 */
-	public RequiredServiceInfo getService(String name);
+	 * /
+	public RequiredServiceInfo getService(String name);*/
 	
 	/**
 	 *  Get the provided services.
 	 *  @return The provided services.
-	 */
-	public ProvidedServiceInfo[] getProvidedServices();
+	 * /
+	public ProvidedServiceInfo[] getProvidedServices();*/
 	
 	/**
 	 *  Get the suspend flag.
 	 *  @param configname The configname.
 	 *  @return The suspend flag value.
-	 */
-	public Boolean getSuspend(String configname);
+	 * /
+	public Boolean getSuspend(String configname);*/
 	
 //	/**
 //	 *  Get the master flag.
@@ -218,8 +216,9 @@ public interface IModelInfo
 	 *  Get the synchronous flag.
 	 *  @param configname The configname.
 	 *  @return The synchronous flag value.
-	 */
+	 * /
 	public Boolean getSynchronous(String configname);
+	*/
 	
 //	/**
 //	 *  Get the persistable flag.
@@ -232,8 +231,8 @@ public interface IModelInfo
 	 *  Get the keepalive flag.
 	 *  @param configname The configname.
 	 *  @return The keepalive flag value.
-	 */
-	public Boolean getKeepalive(String configname);
+	 * /
+	public Boolean getKeepalive(String configname);*/
 	
 	/**
 	 *  Get the monitoring flag.
@@ -244,8 +243,8 @@ public interface IModelInfo
 	
 	/**
 	 *  Get the subcomponent names. 
-	 */
-	public SubcomponentTypeInfo[] getSubcomponentTypes();
+	 * /
+	public SubcomponentTypeInfo[] getSubcomponentTypes();*/
 	
 	/**
 	 *  Get the possible breakpoint places in that model.
@@ -268,6 +267,6 @@ public interface IModelInfo
 	/**
 	 *  Get the name hint for instances.
 	 *  @return the name hint
-	 */
-	public String getNameHint();
+	 * /
+	public String getNameHint();**/
 }
