@@ -49,6 +49,12 @@ includeBuild('engine/base/mj-execution') {
 includeBuild('engine/base/mj-lifecycle') {
 }
 
+includeBuild('engine/base/mj-providedservice') {
+}
+
+includeBuild('engine/base/mj-nfproperties') {
+}
+
 includeBuild('engine/mj-microagent') {
 }
 
