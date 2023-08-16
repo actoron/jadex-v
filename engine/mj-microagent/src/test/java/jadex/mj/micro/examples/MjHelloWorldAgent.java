@@ -1,7 +1,7 @@
 package jadex.mj.micro.examples;
 
-import jadex.mj.core.service.annotation.OnEnd;
-import jadex.mj.core.service.annotation.OnStart;
+import jadex.mj.core.annotation.OnEnd;
+import jadex.mj.core.annotation.OnStart;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.micro.annotation.Description;
