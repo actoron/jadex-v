@@ -20,6 +20,7 @@ import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
 import jadex.mj.core.IParameterGuesserProvider;
+import jadex.mj.core.annotation.OnEnd;
 import jadex.mj.core.annotation.OnInit;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
@@ -96,7 +97,23 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 	public IFuture<Void> onEnd()
 	{
 		System.out.println("end: "+self);
-		return IFuture.DONE;
+		
+		MicroModel model = (MicroModel)self.getModel().getRawModel();
+		
+		Class<? extends Annotation> ann = OnEnd.class;
+		if(model.getAgentMethod(ann)!=null)
+		{
+			//return invokeMethod(getInternalAccess(), OnInit.class, null);
+			//if(wasAnnotationCalled(ann))
+			//	return IFuture.DONE;
+			//else
+			return invokeMethod(self, ann, null);
+		}
+		else
+		{
+			throw new RuntimeException("no onstart found");
+			//return invokeMethod(getInternalAccess(), AgentBody.class, null);
+		}
 	}
 	
 	/**

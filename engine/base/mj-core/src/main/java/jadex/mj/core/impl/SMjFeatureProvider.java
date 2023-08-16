@@ -11,7 +11,7 @@ import java.util.ServiceLoader;
 import jadex.mj.core.MjComponent;
 
 /**
- *  Static helper methods for dealing whith features.
+ *  Static helper methods for dealing with features.
  */
 public class SMjFeatureProvider
 {
@@ -23,14 +23,20 @@ public class SMjFeatureProvider
 		// Collect all feature providers
 		ServiceLoader.load(MjFeatureProvider.class).forEach(provider ->
 		{
-				@SuppressWarnings("unchecked")
-				MjFeatureProvider<Object>	oprovider	= provider;
-				all.add(oprovider);
+			@SuppressWarnings("unchecked")
+			MjFeatureProvider<Object>	oprovider	= provider;
+			all.add(oprovider);
 		});
+		
+		// Classpath order undefined (differs betweenn gradle/eclipse
+		// -> order feature providers alphabetically by fully qualified class name 
+		all.sort((o1, o2) -> o1.getClass().getName().compareTo(o2.getClass().getName()));
 		ALL_PROVIDERS	= all;
+		
+//		all.forEach(System.out::println);
 	}
 			
-	/** The providers by type are calculated on demand and cached for further use. */ 
+	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 
 	protected static final Map<Class<? extends MjComponent>, Map<Class<Object>, MjFeatureProvider<Object>>>	PROVIDERS_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
 	
 	/**
@@ -49,7 +55,37 @@ public class SMjFeatureProvider
 				// Ignores providers for incompatible agent types (e.g. no micro features in gpmn agent)
 				if(provider.getRequiredComponentType().isAssignableFrom(type))
 				{
-					ret.put(provider.getFeatureType(), provider);
+					// Check for conflict (two providers for same feature type)
+					if(ret.containsKey(provider.getFeatureType()))
+					{
+						if(provider.replacesFeatureProvider(ret.get(provider.getFeatureType())))
+						{
+							// Both want to replace each other -> fail
+							if(ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
+							{
+								throw new IllegalStateException("Cyclic replacement of providers for same feature type: "
+									+provider.getFeatureType().getName()+", "+ret.get(provider.getFeatureType())+", "+provider);
+							}
+							// new provider wants to replace existing -> replace
+							else
+							{
+								ret.put(provider.getFeatureType(), provider);
+							}
+						}
+						// existing provider wants to replace new -> nop
+						//else if(ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
+						
+						// no provider wants to replace the other -> fail
+						else if(!ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
+						{
+							throw new IllegalStateException("Two providers for same feature type: "
+									+provider.getFeatureType().getName()+", "+ret.get(provider.getFeatureType())+", "+provider);
+						}
+					}
+					else
+					{
+						ret.put(provider.getFeatureType(), provider);
+					}
 				}
 			}
 			PROVIDERS_BY_TYPE.put(type, ret);

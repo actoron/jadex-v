@@ -42,5 +42,8 @@ public interface ISuspendable
 	 *  Get the monitor for waiting.
 	 *  @return The monitor.
 	 */
-	public Object getMonitor();
+	public default Object getMonitor()
+	{
+		return this;
+	}
 }
