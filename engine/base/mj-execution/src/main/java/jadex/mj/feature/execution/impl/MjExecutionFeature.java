@@ -1,7 +1,6 @@
 package jadex.mj.feature.execution.impl;
 
 import java.util.ArrayDeque;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -13,27 +12,12 @@ import java.util.function.Supplier;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISuspendable;
-import jadex.mj.core.MjComponent;
-import jadex.mj.core.impl.MjFeatureProvider;
-import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjExecutionFeature	implements IMjExecutionFeature
 {
 	protected  static final ThreadPoolExecutor	THREADPOOL	= new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 
-	public static void	bootstrap(Class<? extends MjComponent> type, Supplier<? extends MjComponent> creator)
-	{
-		Map<Class<Object>, MjFeatureProvider<Object>>	providers	= SMjFeatureProvider.getProvidersForComponent(type);
-		MjFeatureProvider<Object>	exeprovider	= providers.get(IMjExecutionFeature.class);
-		IMjExecutionFeature	exe	= (IMjExecutionFeature)exeprovider.createFeatureInstance(null);
-		exe.scheduleStep(() ->
-		{
-			MjExecutionFeatureProvider.BOOTSTRAP_FEATURE.set(exe);
-			creator.get();
-		});
-	}
-	
 	protected Queue<Runnable>	steps	= new ArrayDeque<>();
 	protected boolean	running;
 	protected boolean	do_switch;
@@ -79,7 +63,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 			}
 			catch(Throwable t)
 			{
-				ret.setException(new RuntimeException("Erro in step", t));
+				ret.setException(new RuntimeException("Error in step", t));
 			}
 		});
 		return ret;

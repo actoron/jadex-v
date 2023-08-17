@@ -3,8 +3,8 @@ package jadex.mj.micro;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.SComponentFactory;
 import jadex.mj.core.modelinfo.IModelInfo;
-import jadex.mj.feature.lifecycle.impl.MjLifecycleFeature;
 
 public class MjMicroAgent	extends MjComponent
 {
@@ -12,16 +12,16 @@ public class MjMicroAgent	extends MjComponent
 	
 	public static void	create(Object pojo)
 	{
-			MjLifecycleFeature.bootstrap(MjMicroAgent.class, () -> 
+		SComponentFactory.createComponent(MjMicroAgent.class, () -> 
+		{
+			// this is executed before the features are inited
+			return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
 			{
-				// this is executed before the features are inited
-				return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
-				{
-					System.out.println("loaded micro model: "+model);
-					
-					return new MjMicroAgent(pojo, model);
-				}).get();
-			});
+				System.out.println("loaded micro model: "+model);
+				
+				return new MjMicroAgent(pojo, model);
+			}).get();
+		});
 	}
 	
 	protected Object	pojo;

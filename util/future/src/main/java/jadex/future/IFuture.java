@@ -2,6 +2,7 @@ package jadex.future;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 
 /**
@@ -9,7 +10,7 @@ import java.util.function.Function;
  * notification mechanism.
  */
 //@Reference
-public interface IFuture<E>
+public interface IFuture<E>	extends Supplier<E>
 {
 	// -------- constants --------
 
