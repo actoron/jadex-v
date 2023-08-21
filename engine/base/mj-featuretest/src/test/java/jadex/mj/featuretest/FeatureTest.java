@@ -85,7 +85,7 @@ public class FeatureTest
 	}
 	
 	@Test
-	public void	testFeatureReplacement()
+	public void	testComponentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
 		MjComponent	comp	= new MjComponent(null){};
@@ -94,6 +94,18 @@ public class FeatureTest
 		assertTrue(comp.getFeature(IMjTestFeature1.class) instanceof MjTestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(IMjLifecycleFeature.class));
 		// Lifecycle feature should not be replaced, because replacement applies only to micro agents.
 		assertFalse(comp.getFeature(IMjLifecycleFeature.class) instanceof MjTestLifecycleFeatureProvider, "Feature should not be replaced: "+comp.getFeature(IMjLifecycleFeature.class));
+	}
+	
+	@Test
+	public void	testAgentFeatureReplacement()
+	{
+		// Dummy component for feature loading.
+		MjComponent	comp	= new MjMicroAgent(null, null){};
+		
+		// Test feature should be replaced
+		assertTrue(comp.getFeature(IMjTestFeature1.class) instanceof MjTestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(IMjLifecycleFeature.class));
+		// Lifecycle feature should not be replaced, because replacement applies only to micro agents.
+		assertTrue(comp.getFeature(IMjLifecycleFeature.class) instanceof MjTestLifecycleFeatureProvider, "Feature should not be replaced: "+comp.getFeature(IMjLifecycleFeature.class));
 	}
 	
 	@Test

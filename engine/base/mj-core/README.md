@@ -6,6 +6,7 @@ The minimal base component provides access to its features.
 
 Features are loaded using `java.util.ServiceLoader`
 looking for implementations of `jadex.mj.core.impl.MjFeatureProvider`.
+Feature provider may implement bootstrapping code to be executed before or after component creation.
 
 ## How to use it
 
@@ -36,3 +37,10 @@ The `createFeatureInstance(MjComponent)` then provides a (usually new) instance 
 Sometimes you may want to provide a new implementation for an existing feature type.
 You can do so by implementing the `replacesFeatureProvider()` method,
 for making sure that your implementation is chosen instead of the old one.
+
+### Bootstrapping the component
+
+Some features might require code to be run before or after component creation.
+The feature provider may implement `jadex.mj.core.impl.IBootstrapping` with
+the method `MjComponent bootstrap(Class, Supplier<MjComponent>)`,
+which is executed before the component and its features are instantiated.
