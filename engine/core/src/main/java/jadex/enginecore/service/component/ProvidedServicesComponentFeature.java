@@ -15,13 +15,11 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.base.IPlatformConfiguration;
 import jadex.common.IValueFetcher;
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
-import jadex.enginecore.IExternalAccess;
 import jadex.enginecore.IInternalAccess;
 import jadex.enginecore.ProxyFactory;
 import jadex.enginecore.Starter;
@@ -142,7 +140,7 @@ public class ProvidedServicesComponentFeature extends AbstractComponentFeature i
 		}
 		
 		// Add external access service when not turned off
-		
+		/*
 		Map<String, Object> args = getComponent().getInternalAccess().getArguments();
 		Boolean extaarg = (Boolean)args.get("externalaccess");
 		Boolean extaplatarg = (Boolean)((Map<String, Object>)Starter.getPlatformValue(getComponent().getId(), IPlatformConfiguration.PLATFORMARGS)).get("externalaccess");
@@ -156,7 +154,7 @@ public class ProvidedServicesComponentFeature extends AbstractComponentFeature i
 			ProvidedServiceInfo psi= new ProvidedServiceInfo("externalaccessservice", IExternalAccess.class, impl, 
 				getComponent().getId().equals(getComponent().getId().getRoot())? ServiceScope.NETWORK: ServiceScope.PLATFORM, null, null, null, null);
 			sermap.put("externalaccessservice", psi);
-		}
+		}*/
 		
 		FutureBarrier<Void> bar = new FutureBarrier<>();
 		

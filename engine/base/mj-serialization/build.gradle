@@ -1,0 +1,25 @@
+plugins 
+{
+    id 'java-library'
+    id 'java-test-fixtures'
+}
+
+group = 'jadex'
+
+repositories
+{
+    mavenCentral()
+}
+
+dependencies
+{
+	implementation 'jadex:traverser:5.0.0'
+	implementation 'jadex:json:5.0.0'
+	implementation 'jadex:binary:5.0.0'
+	implementation 'jadex:common:5.0.0'
+	implementation 'jadex:mj-core:5.0.0'
+	implementation 'org.lz4:lz4-java:1.8.0'
+	implementation 'org.xerial.snappy:snappy-java:1.1.10.3'
+	implementation 'org.tukaani:xz:1.9'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}

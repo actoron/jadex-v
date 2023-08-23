@@ -25,6 +25,7 @@ import jadex.common.transformation.traverser.Traverser;
 import jadex.transformation.jsonserializer.processors.JsonArrayProcessor;
 import jadex.transformation.jsonserializer.processors.JsonBeanProcessor;
 import jadex.transformation.jsonserializer.processors.JsonBigIntegerProcessor;
+import jadex.transformation.jsonserializer.processors.JsonByteArrayProcessor;
 import jadex.transformation.jsonserializer.processors.JsonCalendarProcessor;
 import jadex.transformation.jsonserializer.processors.JsonCertificateProcessor;
 import jadex.transformation.jsonserializer.processors.JsonClassInfoProcessor;
@@ -117,6 +118,7 @@ public class JsonTraverser extends Traverser
 		
 		readprocs = new ArrayList<ITraverseProcessor>();
 		// JsonArrayProcessor needs to be first, because others don't check array marker:
+		readprocs.add(new JsonByteArrayProcessor());
 		readprocs.add(new JsonArrayProcessor());
 		//readprocs.add(new read.JsonReferenceProcessor());
 		readprocs.add(new JsonRectangleProcessor());

@@ -1365,7 +1365,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	 *  Sequential execution of async methods via implicit delegation.
 	 *  @param futuretype The type of the result future (cannot be automatically determined).
 	 *  @return Future of the result of the second async call.
-	 */
+	 * /
 	public <T> Future<T> getFuture(Class<?> futuretype)
     {
 		Future<T> ret;
@@ -1388,5 +1388,75 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 			}
 		}
 		return ret;
-    }
+    }*/
+	
+	/**
+	 *  Get the matching future object to a future (interface) type.
+	 */
+	public static <T> Future<T> getFuture(Class<?> clazz)
+	{
+		if(clazz==null)
+			return new Future();
+		
+		Future<T> ret = null;
+		Exception ex	= null;
+		
+		if(!clazz.isInterface())
+		{
+			try
+			{
+				ret = (Future<T>)clazz.getDeclaredConstructor().newInstance();
+			}
+			catch(Exception e)
+			{
+				ex	= e;
+			}
+		}
+		
+		if(ret==null)
+		{
+			if(ITuple2Future.class.isAssignableFrom(clazz))
+			{
+				ret = new Tuple2Future();
+			}
+			else if(IPullSubscriptionIntermediateFuture.class.isAssignableFrom(clazz))
+			{
+				ret = new PullSubscriptionIntermediateDelegationFuture();
+			}
+			else if(IPullIntermediateFuture.class.isAssignableFrom(clazz))
+			{
+				ret = new PullIntermediateDelegationFuture();
+			}
+			else if(ISubscriptionIntermediateFuture.class.isAssignableFrom(clazz))
+			{
+				ret = new SubscriptionIntermediateDelegationFuture();
+			}
+			else if(ITerminableIntermediateFuture.class.isAssignableFrom(clazz))
+			{
+				ret = new TerminableIntermediateDelegationFuture();
+			}
+			else if(ITerminableFuture.class.isAssignableFrom(clazz))
+			{
+				ret = new TerminableDelegationFuture();
+			}
+			else if(IIntermediateFuture.class.isAssignableFrom(clazz))
+			{
+				ret	= new IntermediateFuture();
+			}
+			else if(IFuture.class.isAssignableFrom(clazz))
+			{
+				ret	= new Future();
+			}
+			else if(ex!=null)
+			{
+				throw SUtil.throwUnchecked(ex);
+			}
+			else
+			{
+				throw new RuntimeException("No future type: "+clazz);
+			}
+		}
+		
+		return ret;
+	}
 }

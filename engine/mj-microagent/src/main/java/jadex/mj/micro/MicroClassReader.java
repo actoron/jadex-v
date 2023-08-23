@@ -2125,7 +2125,7 @@ public class MicroClassReader
 		
 		try
 		{
-			if(!clazz.getClassLoader().equals(cl))
+			if(cl!=null && !clazz.getClassLoader().equals(cl))
 			{
 				ret = cl.loadClass(clazz.getName());
 			}

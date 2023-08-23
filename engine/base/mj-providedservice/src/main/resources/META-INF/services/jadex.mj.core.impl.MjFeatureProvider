@@ -1,1 +1,2 @@
-jadex.mj.feature.provided.impl.MjProvidedServiceFeatureProvider
+jadex.mj.feature.providedservice.impl.service.impl.MjProvidedServiceFeatureProvider
+

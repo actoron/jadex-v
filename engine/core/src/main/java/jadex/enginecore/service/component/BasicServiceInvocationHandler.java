@@ -48,8 +48,6 @@ import jadex.enginecore.service.component.interceptors.MethodCallListenerInterce
 import jadex.enginecore.service.component.interceptors.MethodInvocationInterceptor;
 import jadex.enginecore.service.component.interceptors.PrePostConditionInterceptor;
 import jadex.enginecore.service.component.interceptors.ResolveInterceptor;
-import jadex.enginecore.service.component.interceptors.TracingInterceptor;
-import jadex.enginecore.service.component.interceptors.TracingInterceptor.TracingMode;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.FutureHelper;
@@ -785,11 +783,11 @@ public class BasicServiceInvocationHandler implements InvocationHandler, ISwitch
 		{
 			handler.addFirstServiceInterceptor(new MethodInvocationInterceptor());
 			
-			if(Starter.TRACING!=null && TracingMode.OFF!=Starter.TRACING)
+			/*if(Starter.TRACING!=null && TracingMode.OFF!=Starter.TRACING)
 			{
 				//System.out.println("Tracing addProv: "+BasicServiceInvocationHandler.class.getClassLoader());
 				handler.addFirstServiceInterceptor(new TracingInterceptor(ia));
-			}
+			}*/
 			
 //			if(monitoring)
 //				handler.addFirstServiceInterceptor(new MonitoringInterceptor(ia));

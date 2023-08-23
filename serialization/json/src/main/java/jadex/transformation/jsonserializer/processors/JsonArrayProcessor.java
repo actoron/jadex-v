@@ -8,7 +8,9 @@ import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
+import jadex.common.Base64;
 import jadex.common.SReflect;
+import jadex.common.SUtil;
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.Traverser;
@@ -164,4 +166,5 @@ public class JsonArrayProcessor extends AbstractJsonProcessor
 		int length = ((JsonArray)object).size();
 		return Array.newInstance(clazz, length);
 	}
+
 }

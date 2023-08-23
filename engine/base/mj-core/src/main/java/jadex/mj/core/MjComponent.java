@@ -1,9 +1,12 @@
 package jadex.mj.core;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
@@ -11,6 +14,7 @@ import jadex.common.SReflect;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.core.modelinfo.ModelInfo;
 
 /**
  *  Base class for Jadex components, which provides access to component features.
@@ -31,12 +35,24 @@ public class MjComponent
 	/** The model. */
 	protected IModelInfo modelinfo;
 	
+	/** The id. */
+	protected UUID id;
+	
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 */
 	protected MjComponent(IModelInfo modelinfo)
 	{
 		this.modelinfo = modelinfo;
+		// UUID does not support that a given string is part of it :-(
+		/*try
+		{
+			this.id = UUID.nameUUIDFromBytes(InetAddress.getLocalHost().getHostName().getBytes());
+		}
+		catch(UnknownHostException e)
+		{*/
+			this.id = UUID.randomUUID();
+		//}
 		// Fetch relevant providers (potentially cached)
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());
 		// Instantiate all features (except lazy ones).
@@ -50,6 +66,15 @@ public class MjComponent
 		});
 	}
 	
+	/**
+	 *  Get the id.
+	 *  @return The id.
+	 */
+	public UUID getId() 
+	{
+		return id;
+	}
+
 	/**
 	 *  Get a copy of the set of currently instantiated features.
 	 *  Does not include lazy, which have not yet been accessed.  
@@ -216,9 +241,9 @@ public class MjComponent
 				}
 				
 				if(!found && ((exact && MjComponent.class.equals(type))
-					|| (!exact && SReflect.isSupertype(type, MjComponent.class))))
+					|| (!exact && SReflect.isSupertype(MjComponent.class, type))))
 				{
-					ret	= this;
+					ret	= MjComponent.this;
 					found	= true;
 				}
 				
@@ -248,8 +273,13 @@ public class MjComponent
 	 *  Get the model info.
 	 *  @return The model info.
 	 */
-	public IModelInfo getModel()
+	public ModelInfo getModel()
 	{
-		return modelinfo;
+		return (ModelInfo)modelinfo;
+	}
+	
+	public ClassLoader getClassLoader()
+	{
+		return this.getClass().getClassLoader();
 	}
 }

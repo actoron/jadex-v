@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 //import jadex.enginecore.service.types.publish.IPublishService;
 import jadex.mj.core.annotation.NameValue;
+import jadex.mj.feature.providedservice.impl.service.IPublishService;
 import jadex.mj.feature.providedservice.impl.service.ServiceScope;
 
 /**
@@ -50,7 +51,7 @@ public @interface ProvidedService
 	/**
 	 *  Publish details.
 	 */
-	//public Publish publish() default @Publish(publishid="", publishtype=IPublishService.PUBLISH_WS, mapping=Object.class);
+	public Publish publish() default @Publish(publishid="", publishtype=IPublishService.PUBLISH_WS, mapping=Object.class);
 	
 	/**
 	 *  Properties for the provided service.

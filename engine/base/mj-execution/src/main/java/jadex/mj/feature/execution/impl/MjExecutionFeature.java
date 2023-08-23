@@ -203,4 +203,13 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 			});
 		}
 	}
+	
+	/**
+	 *  Test if the current thread is used for current component execution.
+	 *  @return True, if it is the currently executing component thread.
+	 */
+	public boolean isComponentThread()
+	{
+		return false;
+	}
 }
