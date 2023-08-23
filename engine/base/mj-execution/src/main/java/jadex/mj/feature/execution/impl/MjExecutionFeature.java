@@ -22,6 +22,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 	protected boolean	running;
 	protected boolean	do_switch;
 	protected ThreadRunner	runner	= null;
+	protected ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 	
 	@Override
 	public void scheduleStep(Runnable r)
@@ -69,6 +70,15 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		return ret;
 	}
 	
+	/**
+	 *  Test if the current thread is used for current component execution.
+	 *  @return True, if it is the currently executing component thread.
+	 */
+	public boolean isComponentThread()
+	{
+		return this==LOCAL.get();
+	}
+	
 	protected static volatile Timer	timer;
 	protected static volatile int	timer_entries;
 	
@@ -113,6 +123,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		public void run()
 		{
 			ISuspendable.SUSPENDABLE.set(new ComponentSuspendable());
+			LOCAL.set(MjExecutionFeature.this);
 			
 			boolean hasnext	= true;
 			while(hasnext)
@@ -148,6 +159,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				}
 			}
 			ISuspendable.SUSPENDABLE.remove();
+			LOCAL.remove();
 		}
 	}
 	
@@ -205,14 +217,5 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				}
 			});
 		}
-	}
-
-	/**
-	 *  Test if the current thread is used for current component execution.
-	 *  @return True, if it is the currently executing component thread.
-	 */
-	public boolean isComponentThread()
-	{
-		return false;
 	}
 }

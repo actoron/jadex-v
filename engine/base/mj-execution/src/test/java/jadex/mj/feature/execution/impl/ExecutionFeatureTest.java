@@ -1,5 +1,6 @@
-package jadex.mj.feature.execution;
+package jadex.mj.feature.execution.impl;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,6 +13,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.SComponentFactory;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class ExecutionFeatureTest
 {
@@ -23,7 +25,7 @@ public class ExecutionFeatureTest
 		Future<Boolean>	result	= new Future<>();
 		Runnable	step	= () -> result.setResult(true);
 		IMjExecutionFeature.of(comp).scheduleStep(step);
-		assertTrue(result.get(), "Wrong step result.");
+		assertTrue(result.get(1000), "Wrong step result.");
 	}
 	
 	@Test
@@ -32,7 +34,7 @@ public class ExecutionFeatureTest
 		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () -> new MjComponent(null){});
 		// Test executing a simple result step (Supplier implementation).
 		IFuture<Boolean>	result	= IMjExecutionFeature.of(comp).scheduleStep(() -> true);
-		assertTrue(result.get(), "Wrong step result.");
+		assertTrue(result.get(1000), "Wrong step result.");
 	}
 	
 	@Test
@@ -43,7 +45,7 @@ public class ExecutionFeatureTest
 		IFuture<Boolean>	result	= IMjExecutionFeature.of(comp).scheduleStep(() -> {
 			throw new IllegalCallerException("ex");
 		});
-		assertThrows(IllegalCallerException.class, () -> result.get(), "Wrong step exception.");
+		assertThrows(IllegalCallerException.class, () -> result.get(1000), "Wrong step exception.");
 	}
 	
 	@Test
@@ -54,7 +56,7 @@ public class ExecutionFeatureTest
 		IFuture<Boolean>	result	= IMjExecutionFeature.of(comp).scheduleStep(() -> {
 			throw new InternalError("err");
 		});
-		assertThrows(RuntimeException.class, () -> result.get(), "Wrong step error.");
+		assertThrows(RuntimeException.class, () -> result.get(1000), "Wrong step error.");
 	}
 	
 	@Test
@@ -80,6 +82,41 @@ public class ExecutionFeatureTest
 		IMjExecutionFeature.of(comp).scheduleStep(() -> blocker.setResult(true));
 		assertTrue(result1.get(3000), "Wrong step result.");
 		assertTrue(result2.get(3000), "Wrong step result.");
+	}
+	
+	@Test
+	public void	testIsComponentThread()
+	{
+		// Test that the component thread is already detected during bootstrapping
+		Future<Boolean>	bootstrap0	= new Future<>();
+		Future<Boolean>	bootstrap1	= new Future<>();
+		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () ->
+		{
+			// Test before component creation
+			bootstrap0.setResult(MjExecutionFeatureProvider.BOOTSTRAP_FEATURE.get().isComponentThread());
+			
+			return new MjComponent(null)
+			{
+				{
+					// Test during component creation
+					bootstrap1.setResult(IMjExecutionFeature.of(this).isComponentThread());
+				}
+			};
+		});
+		assertTrue(bootstrap0.get(1000));
+		assertTrue(bootstrap1.get(1000));
+		
+		// Test during normal component operation.
+		assertFalse(IMjExecutionFeature.of(comp).isComponentThread());
+		IFuture<Boolean>	instep	= IMjExecutionFeature.of(comp).scheduleStep(()
+			-> IMjExecutionFeature.of(comp).isComponentThread());
+		assertTrue(instep.get(1000));
+		
+		// Test across two components
+		MjComponent	comp2	= SComponentFactory.createComponent(MjComponent.class, () -> new MjComponent(null){});
+		IFuture<Boolean>	othercomp	= IMjExecutionFeature.of(comp2).scheduleStep(()
+				-> IMjExecutionFeature.of(comp).isComponentThread());
+		assertFalse(othercomp.get(1000));
 	}
 	
 	@Test
@@ -125,7 +162,7 @@ public class ExecutionFeatureTest
 		// Collect results from all steps.
 		for(int i=0; i<steps.length; i++)
 		{
-			assertTrue(steps[i].get(), "New Thread detected.");
+			assertTrue(steps[i].get(1000), "New Thread detected.");
 		}
 	}
 	
@@ -174,7 +211,7 @@ public class ExecutionFeatureTest
 		// Collect results from all steps.
 		for(int i=0; i<steps.length; i++)
 		{
-			assertTrue(steps[i].get(), "Double execution detected.");
+			assertTrue(steps[i].get(1000), "Double execution detected.");
 		}
 	}
 }
