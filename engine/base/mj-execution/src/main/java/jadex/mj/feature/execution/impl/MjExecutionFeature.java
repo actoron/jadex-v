@@ -107,12 +107,12 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		return  ret;
 	}
 	
-	protected class ThreadRunner implements Runnable, ISuspendable
+	protected class ThreadRunner implements Runnable
 	{
 		@Override
 		public void run()
 		{
-			ISuspendable.SUSPENDABLE.set(this);
+			ISuspendable.SUSPENDABLE.set(new ComponentSuspendable());
 			
 			boolean hasnext	= true;
 			while(hasnext)
@@ -149,7 +149,10 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 			}
 			ISuspendable.SUSPENDABLE.remove();
 		}
-		
+	}
+	
+	protected class ComponentSuspendable implements ISuspendable
+	{
 		@Override
 		public void suspend(Future<?> future, long timeout, boolean realtime)
 		{
@@ -166,7 +169,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 					running	= false;
 				}
 			}
-
+	
 			if(startnew)
 			{
 				if(runner==null)
@@ -175,7 +178,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				}
 				THREADPOOL.execute(runner);
 			}
-
+	
 			synchronized(this)
 			{
 				try
@@ -188,7 +191,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				}
 			}
 		}
-
+	
 		@Override
 		public void resume(Future<?> future)
 		{
@@ -203,7 +206,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 			});
 		}
 	}
-	
+
 	/**
 	 *  Test if the current thread is used for current component execution.
 	 *  @return True, if it is the currently executing component thread.
