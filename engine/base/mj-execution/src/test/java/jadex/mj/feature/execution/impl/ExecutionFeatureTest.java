@@ -214,4 +214,19 @@ public class ExecutionFeatureTest
 			assertTrue(steps[i].get(1000), "Double execution detected.");
 		}
 	}
+	
+	@Test
+	public void	testWaitForDelay()
+	{
+		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () -> new MjComponent(null){});
+		IFuture<Boolean>	test	= IMjExecutionFeature.of(comp).scheduleStep(() ->
+		{
+			long	wait	= 50;
+			long before	= IMjExecutionFeature.of(comp).getTime();
+			IMjExecutionFeature.of(comp).waitForDelay(wait).get(1000);
+			long after	= IMjExecutionFeature.of(comp).getTime();
+			return after >= before+wait;
+		});
+		assertTrue(test.get(1000), "Not enough time has passed.");
+	}
 }

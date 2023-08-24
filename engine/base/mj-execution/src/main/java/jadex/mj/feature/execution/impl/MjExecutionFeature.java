@@ -117,6 +117,12 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		return  ret;
 	}
 	
+	@Override
+	public long getTime()
+	{
+		return System.currentTimeMillis();
+	}
+	
 	protected class ThreadRunner implements Runnable
 	{
 		@Override

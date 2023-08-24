@@ -52,6 +52,12 @@ public interface IMjExecutionFeature
 	public <T> IFuture<T> scheduleStep(Supplier<T> step);
 	
 	/**
+	 *  Test if the current thread is used for current component execution.
+	 *  @return True, if it is the currently executing component thread.
+	 */
+	public boolean isComponentThread();
+
+	/**
 	 *  Wait a specific amount.
 	 *  @param millis	The time to wait (in milliseconds).
 	 *  @return	A future that is finished when the time has passed.
@@ -59,8 +65,8 @@ public interface IMjExecutionFeature
 	public IFuture<Void>	waitForDelay(long millis);
 	
 	/**
-	 *  Test if the current thread is used for current component execution.
-	 *  @return True, if it is the currently executing component thread.
+	 *  Get the current time.
+	 *  @return	The time in milliseconds.
 	 */
-	public boolean isComponentThread();
+	public long	getTime();
 }
