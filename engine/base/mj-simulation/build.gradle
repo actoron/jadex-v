@@ -1,7 +1,6 @@
 plugins 
 {
 	id 'java-library'
-    id 'java-test-fixtures'
 }
 
 group = 'jadex'
@@ -15,7 +14,8 @@ dependencies
 {
 	implementation 'jadex:mj-core:5.0.0'
 	implementation 'jadex:mj-execution:5.0.0'
-	testFixturesImplementation 'jadex:mj-execution:5.0.0'
+	// hack!!! should be testImplementation ...
+	implementation testFixtures('jadex:mj-execution:5.0.0')
 	implementation 'jadex:future:5.0.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'

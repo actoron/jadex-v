@@ -1,7 +1,6 @@
 plugins 
 {
     id 'java-library'
-    id 'java-test-fixtures'
 }
 
 group = 'jadex'
@@ -16,6 +15,12 @@ dependencies
 	implementation 'jadex:traverser:5.0.0'
 	implementation 'jadex:collection:5.0.0'
 	implementation 'jadex:common:5.0.0'
-	testFixturesImplementation 'jadex:traverser:5.0.0'
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	// hack!!! should be testImplementation ... but doesn't work in eclipse, grrr.
+	implementation testFixtures('jadex:traverser:5.0.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test {
+  useJUnitPlatform()
 }
