@@ -1,5 +1,6 @@
 package jadex.mj.feature.execution.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,6 +18,40 @@ import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class ExecutionFeatureTest
 {
+	@Test
+	public void	testFeatureAccess()
+	{
+		// Test calling from outside thread
+		assertThrows(IllegalCallerException.class, () -> IMjExecutionFeature.get());
+		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () -> new MjComponent(null){});
+		assertThrows(IllegalCallerException.class, () -> IMjExecutionFeature.get());
+		
+		// Test calling from inside thread
+		IFuture<IMjExecutionFeature>	fut	= IMjExecutionFeature.of(comp).scheduleStep(
+			() -> IMjExecutionFeature.get());
+		assertEquals(IMjExecutionFeature.of(comp), fut.get(1000));
+	}
+	
+	@Test
+	public void	testGetComponent()
+	{
+		// Test inside creation
+		Future<MjComponent>	fut	= new Future<>();
+		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class,
+			() -> new MjComponent(null)
+		{
+			{
+				fut.setResult(IMjExecutionFeature.get().getComponent());
+			}
+		});
+		assertEquals(comp, fut.get(1000));
+		
+		// Test after creation
+		IFuture<MjComponent> result	= IMjExecutionFeature.of(comp).scheduleStep(
+			() -> IMjExecutionFeature.get().getComponent());
+		assertEquals(comp, result.get(1000));
+	}
+	
 	@Test
 	public void	testFireAndForgetStep()
 	{
@@ -93,7 +128,7 @@ public class ExecutionFeatureTest
 		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () ->
 		{
 			// Test before component creation
-			bootstrap0.setResult(MjExecutionFeatureProvider.BOOTSTRAP_FEATURE.get().isComponentThread());
+			bootstrap0.setResult(MjExecutionFeature.LOCAL.get().isComponentThread());
 			
 			return new MjComponent(null)
 			{

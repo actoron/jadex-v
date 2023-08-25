@@ -12,17 +12,29 @@ import java.util.function.Supplier;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISuspendable;
+import jadex.mj.core.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjExecutionFeature	implements IMjExecutionFeature
 {
-	protected  static final ThreadPoolExecutor	THREADPOOL	= new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+	protected static final ThreadPoolExecutor	THREADPOOL	= new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 
 	protected Queue<Runnable>	steps	= new ArrayDeque<>();
 	protected boolean	running;
 	protected boolean	do_switch;
 	protected ThreadRunner	runner	= null;
-	protected ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
+	protected MjComponent	self	= null;
+	
+	@Override
+	public MjComponent getComponent()
+	{
+		if(self==null)
+		{
+			throw new IllegalStateException("Component can not be accessed in 'beforeCreation' bootstrapping.");
+		}
+		return self;
+	}
 	
 	@Override
 	public void scheduleStep(Runnable r)

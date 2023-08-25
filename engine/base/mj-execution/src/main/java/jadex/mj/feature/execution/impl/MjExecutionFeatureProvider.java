@@ -11,8 +11,6 @@ import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFeature>	implements IBootstrapping
 {
-	protected static final ThreadLocal<IMjExecutionFeature>	BOOTSTRAP_FEATURE	= new ThreadLocal<>();
-	
 	@Override
 	public Class<IMjExecutionFeature> getFeatureType()
 	{
@@ -22,15 +20,12 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 	@Override
 	public IMjExecutionFeature createFeatureInstance(MjComponent self)
 	{
-		IMjExecutionFeature	ret	= BOOTSTRAP_FEATURE.get();
-		if(ret!=null)
-		{
-			BOOTSTRAP_FEATURE.remove();
-		}
-		else
+		MjExecutionFeature	ret	= MjExecutionFeature.LOCAL.get();
+		if(ret==null)
 		{
 			ret	= new MjExecutionFeature();
 		}
+		ret.self	= self;
 		return ret;
 	}
 	
@@ -40,10 +35,6 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 		Map<Class<Object>, MjFeatureProvider<Object>>	providers	= SMjFeatureProvider.getProvidersForComponent(type);
 		MjFeatureProvider<Object>	exeprovider	= providers.get(IMjExecutionFeature.class);
 		IMjExecutionFeature	exe	= (IMjExecutionFeature)exeprovider.createFeatureInstance(null);
-		return exe.scheduleStep(() ->
-		{
-			MjExecutionFeatureProvider.BOOTSTRAP_FEATURE.set(exe);
-			return creator.get();
-		}).get();
+		return exe.scheduleStep(() -> creator.get()).get();
 	}
 }

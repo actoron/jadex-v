@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
+import jadex.mj.feature.execution.impl.MjExecutionFeature;
 
 /**
  *  The execution feature controls how and when components execute their steps,
@@ -20,9 +21,18 @@ public interface IMjExecutionFeature
 	/** Constant for first immediate step level. */
 	public static final int STEP_PRIORITY_IMMEDIATE = 100;
 	
-	/** The currently executing component (if any). */
-	// Provided for fast caller/callee context-switching ?
-	public static final ThreadLocal<MjComponent> LOCAL = new ThreadLocal<MjComponent>();
+	/**
+	 *  Get the feature instance of the currently running component.
+	 */
+	public static IMjExecutionFeature	get()
+	{
+		IMjExecutionFeature	ret	= MjExecutionFeature.LOCAL.get();
+		if(ret==null)
+		{
+			throw new IllegalCallerException("Not running inside any component.");
+		}
+		return ret;
+	}
 	
 	/**
 	 *  Get the feature instance of the given component.
@@ -31,6 +41,11 @@ public interface IMjExecutionFeature
 	{
 		return self.getFeature(IMjExecutionFeature.class);
 	}
+	
+	/**
+	 *  Get the component to which this feature belongs. 
+	 */
+	public MjComponent	getComponent();
 	
 	/**
 	 *  Schedule a step to be run on the component.

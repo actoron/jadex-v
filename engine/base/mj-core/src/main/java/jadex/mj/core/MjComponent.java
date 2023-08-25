@@ -1,7 +1,5 @@
 package jadex.mj.core;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -55,6 +53,7 @@ public class MjComponent
 		//}
 		// Fetch relevant providers (potentially cached)
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());
+		
 		// Instantiate all features (except lazy ones).
 		providers.values().forEach(provider ->
 		{

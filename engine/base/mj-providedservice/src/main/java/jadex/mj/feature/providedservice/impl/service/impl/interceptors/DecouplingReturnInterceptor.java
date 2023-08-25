@@ -24,7 +24,7 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 	{
 		Future<Void> fut	= new Future<Void>();
 		
-		final MjComponent caller = IMjExecutionFeature.LOCAL.get();
+		final MjComponent caller = IMjExecutionFeature.get().getComponent();
 		/*final IRequiredServicesFeature	feat	= caller!=null ? caller.getFeature0(IRequiredServicesFeature.class) : null;
 		if(feat instanceof IInternalServiceMonitoringFeature && ((IInternalServiceMonitoringFeature)feat).isMonitoring())
 		{
