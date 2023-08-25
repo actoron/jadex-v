@@ -37,13 +37,13 @@ public class MjHelloWorldAgent
 	public void executeBody()
 	{
 		System.out.println(text+" "+agent);//.getId());
-		IMjExecutionFeature.of(agent).waitForDelay(2000).get();
-		IMjExecutionFeature.of(agent).scheduleStep(() -> 
+		IMjExecutionFeature.get().waitForDelay(2000).get();
+		IMjExecutionFeature.get().scheduleStep(() -> 
 		{
 			System.out.println("Good bye world.");
 			return null;
 		}).get();
-		IMjLifecycleFeature.of(agent).terminate();
+		IMjLifecycleFeature.get().terminate();
 	}
 	
 	@OnEnd
