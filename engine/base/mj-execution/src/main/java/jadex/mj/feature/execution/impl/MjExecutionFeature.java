@@ -135,6 +135,19 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		return System.currentTimeMillis();
 	}
 	
+	/**
+	 *  Template method to perform operations
+	 *  whenever executions ends, i.e.,
+	 *  there are currently no more steps to execute.
+	 *  
+	 *  Note, in multi-threaded scenarios, execution
+	 *  may have resumed already, due to calls from outside.
+	 */
+	protected void	mayBeIdle()
+	{
+		// nop
+	}
+	
 	protected class ThreadRunner implements Runnable
 	{
 		@Override
@@ -170,11 +183,16 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 					}
 					else if(steps.isEmpty())
 					{
-						do_switch	= false;
 						hasnext	= false;
 						running	= false;
 					}
 				}
+				
+				if(!running)
+				{
+					mayBeIdle();
+				}
+
 			}
 			ISuspendable.SUSPENDABLE.remove();
 			LOCAL.remove();
@@ -208,7 +226,11 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				}
 				THREADPOOL.execute(runner);
 			}
-	
+			else if(!running)
+			{
+				mayBeIdle();
+			}
+			
 			synchronized(this)
 			{
 				try

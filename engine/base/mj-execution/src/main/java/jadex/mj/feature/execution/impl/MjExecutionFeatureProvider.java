@@ -23,10 +23,18 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 		MjExecutionFeature	ret	= MjExecutionFeature.LOCAL.get();
 		if(ret==null)
 		{
-			ret	= new MjExecutionFeature();
+			ret = doCreateFeatureInstance();
 		}
 		ret.self	= self;
 		return ret;
+	}
+
+	/**
+	 *  Template method allowing subclasses to provide a subclass of the feature implementation.
+	 */
+	protected MjExecutionFeature doCreateFeatureInstance()
+	{
+		return new MjExecutionFeature();
 	}
 	
 	@Override
