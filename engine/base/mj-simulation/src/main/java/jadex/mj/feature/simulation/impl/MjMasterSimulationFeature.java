@@ -54,6 +54,7 @@ public class MjMasterSimulationFeature	extends MjExecutionFeature
 	{
 		Future<Void>	ret	= new Future<>();
 		
+		boolean	maybeidle	= false;
 		synchronized(this)
 		{
 			timer_entries.offer(new TimerEntry(current_time+millis)
@@ -64,6 +65,16 @@ public class MjMasterSimulationFeature	extends MjExecutionFeature
 					ret.setResult(null);
 				}
 			});
+			
+			if(!running)
+			{
+				maybeidle	= true;
+			}
+		}
+		
+		if(maybeidle)
+		{
+			mayBeIdle();
 		}
 		
 		return  ret;
