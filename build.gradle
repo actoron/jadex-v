@@ -1,0 +1,14 @@
+['clean', 'compileJava', 'build', 'test'].each { mytask ->
+	if(tasks.names.contains(mytask)) {
+		//println "Configuring task '"+mytask+"'"
+		tasks.named(mytask) {
+			dependsOn gradle.includedBuilds*.task(':'+mytask)
+		}
+	}
+	else {
+		//println "Creating task '"+mytask+"'"
+		project.tasks.create([name: mytask]) {	
+			dependsOn gradle.includedBuilds*.task(':'+mytask)
+		}
+	}
+}
