@@ -21,7 +21,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 
 	protected Queue<Runnable>	steps	= new ArrayDeque<>();
-	protected boolean	running;
+	protected boolean	executing;
 	protected boolean	do_switch;
 	protected ThreadRunner	runner	= null;
 	protected MjComponent	self	= null;
@@ -43,10 +43,10 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		synchronized(this)
 		{
 			steps.offer(r);
-			if(!running)
+			if(!executing)
 			{
 				startnew	= true;
-				running	= true;
+				executing	= true;
 			}
 		}
 		
@@ -136,14 +136,17 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 	}
 	
 	/**
-	 *  Template method to perform operations
-	 *  whenever executions ends, i.e.,
+	 *  Template method to schedule operations
+	 *  whenever execution temporarily ends, i.e.,
 	 *  there are currently no more steps to execute.
 	 *  
-	 *  Note, in multi-threaded scenarios, execution
-	 *  may have resumed already, due to calls from outside.
+	 *  This method is called while holding the lock on the steps queue.
+	 *  Make sure not to call any external activities when overriding this method,
+	 *  otherwise deadlocks might occur.
+	 *  Preferably, you should use scheduleStep() to execute your activity
+	 *  after the method call ends. 
 	 */
-	protected void	mayBeIdle()
+	protected void	idle()
 	{
 		// nop
 	}
@@ -184,15 +187,10 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 					else if(steps.isEmpty())
 					{
 						hasnext	= false;
-						running	= false;
-					}
+						executing	= false;
+						idle();
+					}					
 				}
-				
-				if(!running)
-				{
-					mayBeIdle();
-				}
-
 			}
 			ISuspendable.SUSPENDABLE.remove();
 			LOCAL.remove();
@@ -214,7 +212,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				}
 				else
 				{
-					running	= false;
+					executing	= false;
+					idle();
 				}
 			}
 	
@@ -225,10 +224,6 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 					runner	= new ThreadRunner();
 				}
 				THREADPOOL.execute(runner);
-			}
-			else if(!running)
-			{
-				mayBeIdle();
 			}
 			
 			synchronized(this)
