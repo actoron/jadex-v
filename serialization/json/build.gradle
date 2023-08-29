@@ -14,8 +14,14 @@ repositories
 dependencies
 {
 	implementation 'jadex:traverser:5.0.0'
-	testFixturesImplementation 'jadex:traverser:5.0.0'
+	implementation 'jadex:collection:5.0.0'
 	implementation 'jadex:common:5.0.0'
 	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	testImplementation testFixtures('jadex:traverser:5.0.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test {
+  useJUnitPlatform()
 }

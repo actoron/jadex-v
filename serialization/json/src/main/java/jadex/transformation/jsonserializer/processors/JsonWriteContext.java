@@ -229,7 +229,7 @@ public class JsonWriteContext implements IRootObjectContext
 	{
 		if (rootobject == null)
 			rootobject = obj;
-		knownobjects.put(obj, new Integer(objectcnt++));
+		knownobjects.put(obj, Integer.valueOf(objectcnt++));
 //		traversed.put(obj, new Integer(objectcnt++));
 //		System.out.println("obs: "+traversed);
 	}
