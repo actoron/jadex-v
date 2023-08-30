@@ -155,7 +155,7 @@ public class MjMasterSimulationFeature	extends MjExecutionFeature	implements IMj
 		TimerEntry	next	= null;
 		synchronized(this)
 		{
-			if(simulating)
+			if(simulating && busy==0)
 			{
 				if(stopping!=null)
 				{
@@ -182,6 +182,28 @@ public class MjMasterSimulationFeature	extends MjExecutionFeature	implements IMj
 		else if(next!=null)
 		{
 			scheduleStep(next);
+		}
+	}
+
+	/** Count busy components when in parallel mode. */
+	protected volatile int	busy	= 0;
+	
+	protected void componentBusy()
+	{
+		synchronized(this)
+		{
+			busy++;
+		}
+	}
+
+	protected void componentIdle()
+	{
+		synchronized(this)
+		{
+			if(--busy==0)
+			{
+				idle();
+			}
 		}
 	}
 }

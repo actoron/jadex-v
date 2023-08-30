@@ -47,6 +47,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 			{
 				startnew	= true;
 				executing	= true;
+				busy();
 			}
 		}
 		
@@ -150,7 +151,23 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 	{
 		// nop
 	}
+
 	
+	/**
+	 *  Template method to schedule operations
+	 *  whenever execution starts/resumes.
+	 *  
+	 *  This method is called while holding the lock on the steps queue.
+	 *  Make sure not to call any external activities when overriding this method,
+	 *  otherwise deadlocks might occur.
+	 *  Preferably, you should use scheduleStep() to execute your activity
+	 *  after the method call ends. 
+	 */
+	protected void	busy()
+	{
+		// nop
+	}
+
 	protected class ThreadRunner implements Runnable
 	{
 		@Override

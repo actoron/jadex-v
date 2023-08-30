@@ -9,6 +9,9 @@ public class MjSlaveSimulationFeature extends MjExecutionFeature	implements IMjS
 	// Hack!!! public to allow reset for testing in eclipse
 	public static MjMasterSimulationFeature	master;
 	
+	// Hack!!! public to allow reset for testing in eclipse
+	public static boolean	parallel	= true;
+	
 	/**
 	 *  Get the appropriate master for this component.
 	 */
@@ -39,7 +42,14 @@ public class MjSlaveSimulationFeature extends MjExecutionFeature	implements IMjS
 	@Override
 	public void scheduleStep(Runnable r)
 	{
-		getMaster().scheduleStep(this, r);
+		if(parallel)
+		{
+			super.scheduleStep(r);
+		}
+		else
+		{
+			getMaster().scheduleStep(this, r);
+		}
 	}
 	
 	@Override
@@ -58,5 +68,19 @@ public class MjSlaveSimulationFeature extends MjExecutionFeature	implements IMjS
 	public IFuture<Void> stop()
 	{
 		return getMaster().stop();
+	}
+	
+	@Override
+	protected void busy()
+	{
+		assert parallel;
+		getMaster().componentBusy();
+	}
+	
+	@Override
+	protected void idle()
+	{
+		assert parallel;
+		getMaster().componentIdle();
 	}
 }

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jadex.common.TimeoutException;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.SComponentFactory;
@@ -19,13 +18,14 @@ import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.simulation.IMjSimulationFeature;
 import jadex.mj.feature.simulation.impl.MjSlaveSimulationFeature;
 
-public class SimulationFeatureTest extends AbstractExecutionFeatureTest
+public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 {
 	// hack for eclipse
 	@BeforeEach
 	public void	setup()
 	{
 		MjSlaveSimulationFeature.master	= null;
+		MjSlaveSimulationFeature.parallel	= true;
 	}
 	
 	@Test
@@ -89,21 +89,36 @@ public class SimulationFeatureTest extends AbstractExecutionFeatureTest
 		assertEquals(Arrays.asList("A", "B"), results);
 	}
 
-//	@Test
-//	public void	testMultipleComponents()
-//	{
-//		String[]	input	= new String[]{"A", "B", "C", "D", "E", "F"};
-//		List<String>	output	= new ArrayList<>();
-//		
-//		for(int i=0; i<input.length; i++)
-//		{
-//			MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () -> new MjComponent(null){});
-//			IMjSimulationFeature	sim	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
-//			sim.scheduleStep(() -> 
-//			{
-//				IMjExecutionFeature.get().waitForDelay(i);
-//				output.add(input[i]);
-//			});
-//		}
-//	}
+	@Test
+	public void	testMultipleComponents()
+	{
+		String[]	input	= new String[]{"A", "B", "C", "D", "E", "F"};
+		IMjSimulationFeature[]	sim	= new IMjSimulationFeature[input.length];
+		StringBuffer	output	= new StringBuffer();
+		
+		for(int i=0; i<input.length; i++)
+		{
+			int num	= i;
+			MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () -> new MjComponent(null){});
+			sim[i]	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
+			if(i==0)
+			{
+				sim[i].stop().get(1000);
+			}
+			
+			sim[i].scheduleStep(() -> 
+			{
+				IMjExecutionFeature.get().waitForDelay(num).get();
+				
+				for(int j=0; j<=num; j++)
+				{
+					sim[j].scheduleStep(() -> output.append(input[num]));
+				}
+			});
+		}
+		
+		sim[0].start();
+		sim[0].waitForDelay(1000).get(1000);
+		assertEquals("ABBCCCDDDDEEEEEFFFFFF", output.toString());
+	}
 }
