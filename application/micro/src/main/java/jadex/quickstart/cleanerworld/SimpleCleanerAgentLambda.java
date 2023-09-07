@@ -1,5 +1,6 @@
 package jadex.quickstart.cleanerworld;
 
+import jadex.mj.core.impl.SComponentFactory;
 import jadex.mj.feature.execution.SMjLambdaComponent;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
@@ -14,7 +15,8 @@ public class SimpleCleanerAgentLambda
 	 */
 	public static void main(String[] args)
 	{
-		SMjLambdaComponent.create(() ->
+		//SMjLambdaComponent.create(() ->
+		SComponentFactory.create(() ->
 		{
 			// Create the sensor/actuator interface object.
 			SensorActuator	actsense	= new SensorActuator();

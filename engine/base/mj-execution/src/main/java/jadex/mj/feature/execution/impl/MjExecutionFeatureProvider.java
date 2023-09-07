@@ -5,12 +5,40 @@ import java.util.function.Supplier;
 
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IBootstrapping;
+import jadex.mj.core.impl.IComponentCreator;
 import jadex.mj.core.impl.MjFeatureProvider;
+import jadex.mj.core.impl.SComponentFactory;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.SMjLambdaComponent;
 
 public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFeature>	implements IBootstrapping
 {
+	static
+	{
+		SComponentFactory.addComponentTypeFinder(new IComponentCreator() 
+		{
+			public boolean filter(Object obj) 
+			{
+				return Runnable.class.isAssignableFrom(obj.getClass())
+					|| Supplier.class.isAssignableFrom(obj.getClass());
+			}
+			
+			public Class<? extends MjComponent> getType() 
+			{
+				return MjComponent.class;
+			}
+			
+			public void create(Object pojo)
+			{
+				if(pojo instanceof Runnable)
+					SMjLambdaComponent.create((Runnable)pojo);
+				else
+					SMjLambdaComponent.create((Supplier<Object>)pojo);
+			}
+		});
+	}
+	
 	@Override
 	public Class<IMjExecutionFeature> getFeatureType()
 	{

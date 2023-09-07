@@ -17,8 +17,11 @@ public class SMjFeatureProvider
 {
 	/** The available providers are cached at startup and do not change during runtime. */
 	protected static final List<MjFeatureProvider<Object>>	ALL_PROVIDERS;
+	
 	static
 	{
+		System.out.println("init providers started");
+		
 		List<MjFeatureProvider<Object>>	all	= new ArrayList<>();
 		// Collect all feature providers
 		ServiceLoader.load(MjFeatureProvider.class).forEach(provider ->
@@ -33,7 +36,7 @@ public class SMjFeatureProvider
 		all.sort((o1, o2) -> o1.getClass().getName().compareTo(o2.getClass().getName()));
 		ALL_PROVIDERS	= all;
 		
-//		all.forEach(System.out::println);
+		all.forEach(System.out::println);
 	}
 			
 	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 

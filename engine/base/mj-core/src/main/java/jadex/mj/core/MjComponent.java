@@ -35,7 +35,7 @@ public class MjComponent
 	
 	/** The id. */
 	protected UUID id;
-	
+		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 */
