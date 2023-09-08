@@ -1,14 +1,15 @@
 package jadex.mj.feature.providedservice.impl.service.impl;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.UUID;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
@@ -19,9 +20,12 @@ import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.MjComponent;
+import jadex.mj.core.ProxyFactory;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
+import jadex.mj.feature.providedservice.IService;
+import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.impl.service.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.impl.service.ServiceScope;
 import jadex.mj.micro.MjMicroAgent;
@@ -38,7 +42,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	protected Map<Class<?>, Collection<IInternalService>> services;
 	
 	/** The map of provided service infos. (sid -> provided service info) */
-	protected Map<UUID, ProvidedServiceInfo> serviceinfos;
+	protected Map<IServiceIdentifier, ProvidedServiceInfo> serviceinfos;
 	
 	protected MjProvidedServiceFeature(MjComponent self)
 	{
@@ -307,7 +311,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	protected void addService(IInternalService service, ProvidedServiceInfo info)
 	{
 		if(serviceinfos==null)
-			serviceinfos = new HashMap<UUID, ProvidedServiceInfo>();
+			serviceinfos = new HashMap<IServiceIdentifier, ProvidedServiceInfo>();
 		serviceinfos.put(service.getServiceId(), info);
 		
 		// todo: !!!
@@ -584,11 +588,188 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	}
 	
 	/**
+	 *  Get provided (declared) service.
+	 *  @param clazz The interface.
+	 *  @return The service.
+	 */
+	public <T> T[] getProvidedServices(Class<T> clazz)
+	{
+		Collection<IInternalService> coll	= null;
+		if(services!=null)
+		{
+			if(clazz!=null)
+			{
+				coll = services.get(clazz);
+			}
+			else
+			{
+				coll = new HashSet<IInternalService>();
+				for(Class<?> cl: services.keySet())
+				{
+					Collection<IInternalService> sers = services.get(cl);
+					coll.addAll(sers);
+				}
+			}			
+		}
+		
+		T[] ret	= (T[])Array.newInstance(clazz==null? Object.class: clazz, coll!=null ? coll.size(): 0);
+		return coll==null ? ret : coll.toArray(ret);
+	}
+	
+	/**
+	 *  Get provided (declared) service.
+	 *  @return The service.
+	 */
+	public IService getProvidedService(String name)
+	{
+		IService ret = null;
+		if(services!=null)
+		{
+			for(Iterator<Class<?>> it=services.keySet().iterator(); it.hasNext() && ret==null; )
+			{
+				Collection<IInternalService> sers = services.get(it.next());
+				for(Iterator<IInternalService> it2=sers.iterator(); it2.hasNext() && ret==null; )
+				{
+					IService ser = it2.next();
+					if(ser.getServiceId().getServiceName().equals(name))
+					{
+						ret = ser;
+					}
+				}
+			}
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  Get the provided service implementation object by id.
+	 *  
+	 *  @param name The service identifier.
+	 *  @return The service.
+	 */
+	public Object getProvidedService(IServiceIdentifier sid)
+	{
+		Object ret = null;
+		
+		Object[] services = getProvidedServices(sid.getServiceType().getType(getComponent().getClassLoader()));
+		if(services!=null)
+		{
+			for(Object ser: services)
+			{
+				// Special case for fake proxies, i.e. creating a service proxy for a known component (without knowing cid)
+				if(sid.getServiceName().equals("NULL"))
+				{
+					((IService)ser).getServiceId().getServiceType().equals(sid.getServiceType());
+					ret = (IService)ser;
+					break;
+				}
+				else if(((IService)ser).getServiceId().equals(sid))
+				{
+					ret = (IService)ser;
+					break;
+				}
+			}
+		}
+		
+		return ret;	
+	}
+	
+	/**
+	 *  Get the provided service implementation object by name.
+	 *  
+	 *  @param name The service name.
+	 *  @return The service.
+	 */
+	public Object getProvidedServiceRawImpl(String name)
+	{
+		Object ret = null;
+		
+		Object service = getProvidedService(name);
+		if(service!=null)
+		{
+			ServiceInvocationHandler handler = (ServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
+			ret = handler.getDomainService();
+		}
+		
+		return ret;	
+	}
+	
+	/**
+	 *  Get the raw implementation of the provided service.
+	 *  @param clazz The class.
+	 *  @return The raw object.
+	 */
+	public <T> T getProvidedServiceRawImpl(Class<T> clazz)
+	{
+		T ret = null;
+		
+		T service = getProvidedService(clazz);
+		if(service!=null)
+		{
+			ServiceInvocationHandler handler = (ServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
+			ret = clazz.cast(handler.getDomainService());
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  Get provided (declared) service.
+	 *  @param clazz The interface.
+	 *  @return The service.
+	 */
+	public <T> T getProvidedService(Class<T> clazz)
+	{
+		T[] ret = getProvidedServices(clazz);
+		return ret.length>0? ret[0]: null;
+	}
+	
+	/**
+	 *  Get the provided service implementation object by id.
+	 *  
+	 *  @param name The service identifier.
+	 *  @return The service.
+	 */
+	public Object getProvidedServiceRawImpl(IServiceIdentifier sid)
+	{
+		Object ret = null;
+		
+		Object[] services = getProvidedServices(sid.getServiceType().getType(getComponent().getClassLoader()));
+		if(services!=null)
+		{
+			IService service = null;
+			for(Object ser: services)
+			{
+				if(((IService)ser).getServiceId().equals(sid))
+				{
+					service = (IService)ser;
+					break;
+				}
+			}
+			if(service!=null)
+			{
+				if(ProxyFactory.isProxyClass(service.getClass()))
+				{
+					ServiceInvocationHandler handler = (ServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
+					ret = handler.getDomainService();
+				}
+				else
+				{
+					ret = service;
+				}
+			}
+		}
+		
+		return ret;	
+	}
+	
+	/**
 	 *  Get the provided service info for a service.
 	 *  @param sid The service identifier.
 	 *  @return The provided service info.
 	 */
-	protected ProvidedServiceInfo getProvidedServiceInfo(UUID sid)
+	protected ProvidedServiceInfo getProvidedServiceInfo(IServiceIdentifier sid)
 	{
 		return serviceinfos.get(sid);
 	}

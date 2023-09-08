@@ -1,13 +1,9 @@
-package jadex.mj.feature.providedservice.impl.service.impl;
-
-import java.util.Map;
-import java.util.UUID;
+package jadex.mj.feature.providedservice;
 
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
 import jadex.future.IFuture;
 import jadex.mj.feature.providedservice.impl.service.annotation.FutureReturnType;
-import jadex.mj.feature.providedservice.impl.service.annotation.Raw;
 import jadex.mj.feature.providedservice.impl.service.annotation.Reference;
 
 
@@ -29,7 +25,7 @@ public interface IService //extends INFMixedPropertyProvider //extends IRemotabl
 	 *  Get the service identifier.
 	 *  @return The service identifier.
 	 */
-	public UUID getServiceId();
+	public IServiceIdentifier getServiceId();
 	
 	/**
 	 *  Test if the service is valid.

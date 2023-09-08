@@ -10,7 +10,7 @@ public class SComponentFactory
 {
 	protected static SMjFeatureProvider dummy = new SMjFeatureProvider();
 	
-	protected static List<IComponentCreator> finders;
+	protected static List<IComponentCreator> creators;
 	
 	public static <T extends MjComponent> T	createComponent(Class<T> type, Supplier<T> creator)
 	{
@@ -29,15 +29,15 @@ public class SComponentFactory
 
 	public static void addComponentTypeFinder(IComponentCreator finder)
 	{
-		if(finders==null)
-			finders = new ArrayList<IComponentCreator>();
-		finders.add(finder);
+		if(creators==null)
+			creators = new ArrayList<IComponentCreator>();
+		creators.add(finder);
 	}
 	
-	public static Class<? extends MjComponent> findComponentType(Object pojo)
+	/*public static Class<? extends MjComponent> findComponentType(Object pojo)
 	{
 		Class<? extends MjComponent> ret = null;
-		for(IComponentCreator finder: finders)
+		for(IComponentCreator finder: creators)
 		{
 			if(finder.filter(finder))
 			{
@@ -46,11 +46,11 @@ public class SComponentFactory
 			}
 		}
 		return ret;
-	}
+	}*/
 	
 	public static void create(Runnable pojo)
 	{
-		for(IComponentCreator finder: finders)
+		for(IComponentCreator finder: creators)
 		{
 			if(finder.filter(pojo))
 			{
@@ -62,7 +62,7 @@ public class SComponentFactory
 	
 	public static void create(Object pojo)
 	{
-		for(IComponentCreator finder: finders)
+		for(IComponentCreator finder: creators)
 		{
 			if(finder.filter(pojo))
 			{

@@ -1,5 +1,6 @@
 package jadex.mj.feature.providedservice.impl.service;
 
+import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.serialization.ISerializationServices;
 
 public interface IMjProvidedServiceFeature 
@@ -44,8 +45,8 @@ public interface IMjProvidedServiceFeature
 	 *  
 	 *  @param clazz The service clazz.
 	 *  @return The service.
-	 * /
-	public <T> T getProvidedServiceRawImpl(Class<T> clazz);*/
+	 */
+	public <T> T getProvidedServiceRawImpl(Class<T> clazz);
 	
 	/**
 	 *  Get the provided service implementation object by name.
@@ -60,8 +61,8 @@ public interface IMjProvidedServiceFeature
 	 *  
 	 *  @param name The service identifier.
 	 *  @return The service.
-	 * /
-	public Object getProvidedServiceRawImpl(IServiceIdentifier sid);*/
+	 */
+	public Object getProvidedServiceRawImpl(IServiceIdentifier sid);
 	
 	/**
 	 *  Add a method invocation handler.

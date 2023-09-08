@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
+import jadex.mj.feature.providedservice.IService;
+import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.impl.service.annotation.Reference;
 
 /**
@@ -32,7 +34,7 @@ public interface IInternalService extends IService
 	/**
 	 *  Set the service identifier.
 	 */
-	public void setServiceIdentifier(UUID sid);
+	public void setServiceIdentifier(IServiceIdentifier sid);
 	
 //	/**
 //	 *  Get the implementation type.

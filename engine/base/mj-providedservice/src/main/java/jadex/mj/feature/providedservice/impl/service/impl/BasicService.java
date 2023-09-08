@@ -1,7 +1,12 @@
 package jadex.mj.feature.providedservice.impl.service.impl;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import jadex.common.ClassInfo;
@@ -9,6 +14,11 @@ import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
+import jadex.mj.feature.providedservice.IService;
+import jadex.mj.feature.providedservice.IServiceIdentifier;
+import jadex.mj.feature.providedservice.impl.service.IMjProvidedServiceFeature;
+import jadex.mj.feature.providedservice.impl.service.ServiceScope;
+import jadex.mj.feature.providedservice.impl.service.annotation.Security;
 import jadex.mj.feature.providedservice.impl.service.annotation.Timeout;
 
 /**
@@ -37,7 +47,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	protected volatile boolean shutdowned;
 	
 	/** The service id. */
-	protected UUID sid;
+	protected IServiceIdentifier sid;
 	
 	/** The service properties. */
 	private Map<String, Object> properties;
@@ -80,7 +90,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 		
 		this.type = type;
 		this.impltype = impltype;
-		this.sid = UUID.randomUUID();
+		//this.sid = UUID.randomUUID();
 		
 		// todo: move to be able to use the constant
 		// jadex.base.gui.componentviewer.IAbstractViewerPanel.PROPERTY_VIEWERCLASS
@@ -238,17 +248,17 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	
 	/**
 	 *  Set the service identifier.
-	 * /
-	public void setServiceIdentifier(UUID sid)
+	 */
+	public void setServiceIdentifier(IServiceIdentifier sid)
 	{
 		this.sid = sid;
-	}*/
+	}
 	
 	/**
 	 *  Get the service id.
 	 *  @return The service id.
 	 */
-	public UUID getServiceId()
+	public IServiceIdentifier getServiceId()
 	{
 		if(sid==null)
 			throw new RuntimeException("No service identifier: "+this);
@@ -597,18 +607,23 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	
 	/**
 	 *  Create a new service identifier for the own component.
-	 * /
-	public static IServiceIdentifier createServiceIdentifier(IInternalAccess provider, String servicename, 
-		Class<?> servicetype, Class<?> serviceimpl, IResourceIdentifier rid, ProvidedServiceInfo info)
+	 */
+	public static IServiceIdentifier createServiceIdentifier(MjComponent provider, String servicename, 
+		Class<?> servicetype, Class<?> serviceimpl, ProvidedServiceInfo info)
 	{
 //		if(servicetype.getName().indexOf("IServicePool")!=-1)
 //			System.out.println("sdjhvkl");
-		Security	security	= getSecurityLevel(provider, info, serviceimpl, servicetype, null, null);
-		Set<String>	roles	= ServiceIdentifier.getRoles(security, provider);
-		ServiceScope	scope	= info!=null ? info.getScope() : null;
-		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), rid, scope,
-			roles!=null && roles.contains(Security.UNRESTRICTED));
-	}*/
+		Security security = getSecurityLevel(provider, info, serviceimpl, servicetype, null, null);
+		Set<String>	roles = ServiceIdentifier.getRoles(security, provider);
+		ServiceScope scope = info!=null ? info.getScope() : null;
+		
+		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope,
+				roles!=null && roles.contains(Security.UNRESTRICTED));
+
+		
+		//return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), rid, scope,
+		//	roles!=null && roles.contains(Security.UNRESTRICTED));
+	}
 	
 	/**
 	 *  Create a new service identifier for a potentially remote component.
@@ -754,8 +769,8 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 
 	/**
 	 *  Find the most specific security setting.
-	 * / 
-	public static Security getSecurityLevel(IInternalAccess access, ProvidedServiceInfo info, Class<?> implclass, Class<?> type, Method method, IServiceIdentifier sid)
+	 */ 
+	public static Security getSecurityLevel(MjComponent access, ProvidedServiceInfo info, Class<?> implclass, Class<?> type, Method method, IServiceIdentifier sid)
 	{
 		Security level = null;
 		
@@ -763,7 +778,8 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 		if(info==null && sid!=null)
 		{
 			ProvidedServiceInfo	found	= null;
-			for(ProvidedServiceInfo psi: access.getModel().getProvidedServices())
+			ProvidedServiceInfo[] pros = (ProvidedServiceInfo[])access.getModel().getFeatureModel(IMjProvidedServiceFeature.class);
+			for(ProvidedServiceInfo psi: pros)
 			{
 				if(psi.getType().equals(sid.getServiceType()))
 				{
@@ -799,7 +815,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 		// at runtime: fetch implclass from service
 		if(level==null && implclass==null && sid!=null)
 		{
-			Object impl = access.getFeature(IProvidedServicesFeature.class).getProvidedServiceRawImpl(sid);
+			Object impl = access.getFeature(IMjProvidedServiceFeature.class).getProvidedServiceRawImpl(sid);
 			implclass = impl!=null ? impl.getClass() : null;
 		}
 		
@@ -898,10 +914,10 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 //					}
 //				}
 				
-		if(level==null && access.getDescription().isSystemComponent())
+		/*if(level==null && access.getDescription().isSystemComponent())
 		{
 			level = DEFAULT_SYSTEM_SECURITY;
-		}
+		}*/
 		
 		// level==null -> disallow direct access to components (overridden by TRUSTED platform)
 		
@@ -919,7 +935,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 		{
 			return new String[] { Security.ADMIN };
 		}
-	};*/
+	};
 //	/**
 //	 * 
 //	 */

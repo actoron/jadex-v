@@ -10,6 +10,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.mj.core.ProxyFactory;
+import jadex.mj.feature.providedservice.IServiceIdentifier;
 
 /**
  *  Context for service invocations.
@@ -76,7 +77,7 @@ public class ServiceInvocationContext
 //	/** The creation (root) cause. */
 //	protected Cause cause;
 	
-	protected UUID sid;
+	protected IServiceIdentifier sid;
 
 //	public Exception ex;
 		
@@ -88,7 +89,7 @@ public class ServiceInvocationContext
 	public ServiceInvocationContext(Object proxy, Method method, 
 		IServiceInvocationInterceptor[] interceptors, 
 		//UUID platform, 
-		UUID sid)//, Cause crcause)
+		IServiceIdentifier sid)//, Cause crcause)
 	{
 //		this.ex = new RuntimeException();
 		this.sid = sid;
@@ -614,7 +615,7 @@ public class ServiceInvocationContext
 	/**
 	 *  Get the service id.
 	 */
-	public UUID getServiceIdentifier()
+	public IServiceIdentifier getServiceIdentifier()
 	{
 		return sid;
 	}
@@ -622,7 +623,7 @@ public class ServiceInvocationContext
 	/**
 	 *  Set the service id.
 	 */
-	public void setServiceIdentifier(UUID sid)
+	public void setServiceIdentifier(IServiceIdentifier sid)
 	{
 		this.sid = sid;
 	}

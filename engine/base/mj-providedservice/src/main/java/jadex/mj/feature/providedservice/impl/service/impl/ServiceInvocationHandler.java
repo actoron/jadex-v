@@ -24,6 +24,8 @@ import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
+import jadex.mj.feature.providedservice.IService;
+import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.impl.service.annotation.FutureReturnType;
 import jadex.mj.feature.providedservice.impl.service.annotation.Raw;
 import jadex.mj.feature.providedservice.impl.service.annotation.Service;
@@ -65,7 +67,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	// c) a service identifier that can be used to relay a call to another service
 	
 	/** The service identifier. */
-	protected UUID sid;
+	protected IServiceIdentifier sid;
 	
 	/** The service. */
 	protected Object service;
@@ -99,7 +101,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	/**
 	 *  Create a new invocation handler.
 	 */
-	public ServiceInvocationHandler(MjComponent comp, UUID sid, 
+	public ServiceInvocationHandler(MjComponent comp, IServiceIdentifier sid, 
 		//Logger logger, 
 		boolean required)
 	{
@@ -426,7 +428,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	 *  Get the sid.
 	 *  @return the sid.
 	 */
-	public UUID getServiceIdentifier()
+	public IServiceIdentifier getServiceIdentifier()
 	{
 		if(sid==null)
 		{
@@ -549,7 +551,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 		//boolean monitoring, 
 		ProvidedServiceInfo info)
 	{
-		UUID sid = null;
+		IServiceIdentifier sid = null;
 		
 		if(isProvidedServiceProxy(service))
 		{
@@ -564,8 +566,8 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 		
 		if(service instanceof IInternalService)
 		{
-			sid = UUID.randomUUID();
-			//sid = BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info);
+			//sid = UUID.randomUUID();
+			sid = BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info);
 			((IInternalService)service).setServiceIdentifier(sid);
 		}
 			
@@ -692,7 +694,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 			Class<?> serclass = service.getClass();
 
 			BasicService mgmntservice = new BasicService(ia.getId(), type, serclass, null);
-			//BasicService.createServiceIdentifier(ia, name, type, service.getClass(), ia.getModel().getResourceIdentifier(), info)
+			mgmntservice.setServiceIdentifier(BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info));
 			//mgmntservice.setServiceIdentifier(UUID.randomUUID());
 			//serprops.putAll(mgmntservice.getPropertyMap());
 			mgmntservice.setPropertyMap(serprops);
@@ -765,7 +767,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	protected static void addProvidedInterceptors(ServiceInvocationHandler handler, Object service, 
 		IServiceInvocationInterceptor[] ics, MjComponent ia, String proxytype, 
 		//boolean monitoring, 
-		UUID sid)
+		IServiceIdentifier sid)
 	{
 //		System.out.println("addI:"+service);
 
