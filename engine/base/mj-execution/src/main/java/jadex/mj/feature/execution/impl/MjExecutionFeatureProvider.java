@@ -24,10 +24,10 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 					|| Supplier.class.isAssignableFrom(obj.getClass());
 			}
 			
-			public Class<? extends MjComponent> getType() 
+			/*public Class<? extends MjComponent> getType() 
 			{
 				return MjComponent.class;
-			}
+			}*/
 			
 			public void create(Object pojo)
 			{

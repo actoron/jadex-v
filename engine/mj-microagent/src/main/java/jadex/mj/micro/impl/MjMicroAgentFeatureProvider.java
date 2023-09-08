@@ -24,10 +24,10 @@ public class MjMicroAgentFeatureProvider extends MjFeatureProvider<MjMicroAgentF
 				return ret;
 			}
 			
-			public Class<? extends MjComponent> getType() 
+			/*public Class<? extends MjComponent> getType() 
 			{
 				return MjMicroAgent.class;
-			}
+			}*/
 			
 			public void create(Object pojo)
 			{

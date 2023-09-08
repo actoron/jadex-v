@@ -3,6 +3,7 @@ package jadex.mj.feature.providedservice.impl.service.impl;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.feature.providedservice.impl.service.IMjProvidedServiceFeature;
+import jadex.mj.micro.MjMicroAgent;
 
 public class MjProvidedServiceFeatureProvider extends MjFeatureProvider<IMjProvidedServiceFeature> 
 {
@@ -17,5 +18,10 @@ public class MjProvidedServiceFeatureProvider extends MjFeatureProvider<IMjProvi
 	{
 		return new MjProvidedServiceFeature(self);
 	}
-
+	
+	@Override
+	public Class<? extends MjComponent> getRequiredComponentType() 
+	{
+		return MjMicroAgent.class;
+	}
 }
