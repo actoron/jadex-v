@@ -8,7 +8,6 @@ import java.lang.annotation.Target;
 //import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
 import jadex.common.Boolean3;
 import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.microagent.MicroAgentFactory;
 
 
 /**
@@ -90,5 +89,5 @@ public @interface Agent
 	/**
 	 *  The agent type. 
 	 */
-	public String type() default MicroAgentFactory.TYPE;
+	public String type() default "micro";
 }

@@ -24,10 +24,11 @@ import jadex.mj.core.ProxyFactory;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
+import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.feature.providedservice.impl.service.IMjProvidedServiceFeature;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
+import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.mj.feature.providedservice.impl.search.ServiceRegistry;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.serialization.ISerializationServices;
 import jadex.serialization.SerializationServices;
@@ -68,14 +69,21 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 		// Collect provided services from model (name or type -> provided service info)
 		ProvidedServiceInfo[] ps = (ProvidedServiceInfo[])model.getFeatureModel(IMjProvidedServiceFeature.class);
 		Map<Object, ProvidedServiceInfo> sermap = new LinkedHashMap<Object, ProvidedServiceInfo>();
-		for(int i=0; i<ps.length; i++)
+		if(ps!=null)
 		{
-			Object key = ps[i].getName()!=null? ps[i].getName(): ps[i].getType().getType(self.getClass().getClassLoader(), model.getAllImports());
-			if(sermap.put(key, ps[i])!=null)
+			for(int i=0; i<ps.length; i++)
 			{
-				ret.setException(new RuntimeException("Services with same type must have different name."));  // Is catched and set to ret below
-				return ret;
+				Object key = ps[i].getName()!=null? ps[i].getName(): ps[i].getType().getType(self.getClass().getClassLoader(), model.getAllImports());
+				if(sermap.put(key, ps[i])!=null)
+				{
+					ret.setException(new RuntimeException("Services with same type must have different name."));  // Is catched and set to ret below
+					return ret;
+				}
 			}
+		}
+		else
+		{
+			System.out.println("has no services: "+self);
 		}
 				
 		// Adapt services to configuration (if any).
@@ -354,8 +362,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 		}
 		
 		
-		// todo !!!
-		//ServiceRegistry.getRegistry(self.getId()).addLocalService(service);
+		ServiceRegistry.getRegistry().addLocalService(service);
 		
 		//System.out.println("added service: "+component.getId()+" "+service.getServiceId());
 //		return bar.waitFor();

@@ -3,8 +3,8 @@ package jadex.mj.feature.providedservice;
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
 import jadex.future.IFuture;
-import jadex.mj.feature.providedservice.impl.service.annotation.FutureReturnType;
-import jadex.mj.feature.providedservice.impl.service.annotation.Reference;
+import jadex.mj.feature.providedservice.annotation.FutureReturnType;
+import jadex.mj.feature.providedservice.annotation.Reference;
 
 
 /**

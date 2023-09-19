@@ -6,7 +6,7 @@ import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.feature.providedservice.impl.service.annotation.Reference;
+import jadex.mj.feature.providedservice.annotation.Reference;
 
 /**
  *  Internal service interface for managing services in service container.

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import jadex.future.ThreadLocalTransferHelper;
-import jadex.mj.feature.providedservice.impl.service.annotation.Timeout;
+import jadex.mj.feature.providedservice.annotation.Timeout;
 
 
 /**

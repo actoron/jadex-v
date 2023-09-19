@@ -4,7 +4,7 @@ import java.lang.annotation.Annotation;
 
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
-import jadex.mj.feature.providedservice.impl.service.annotation.Security;
+import jadex.mj.feature.providedservice.annotation.Security;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 
 /**

@@ -5,8 +5,8 @@ import java.util.List;
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
-import jadex.mj.feature.providedservice.impl.service.annotation.Security;
+import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.mj.feature.providedservice.annotation.Security;
 
 
 /**

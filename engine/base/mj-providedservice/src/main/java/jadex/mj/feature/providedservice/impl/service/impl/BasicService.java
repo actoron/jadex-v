@@ -14,12 +14,12 @@ import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
+import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.feature.providedservice.impl.service.IMjProvidedServiceFeature;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
-import jadex.mj.feature.providedservice.impl.service.annotation.Security;
-import jadex.mj.feature.providedservice.impl.service.annotation.Timeout;
+import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.mj.feature.providedservice.annotation.Security;
+import jadex.mj.feature.providedservice.annotation.Timeout;
 
 /**
  *  Basic service provide a simple default isValid() implementation

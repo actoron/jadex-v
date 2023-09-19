@@ -2,7 +2,7 @@ package jadex.mj.feature.providedservice.impl.service.impl;
 
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.MjFeatureProvider;
-import jadex.mj.feature.providedservice.impl.service.IMjProvidedServiceFeature;
+import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.micro.MjMicroAgent;
 
 public class MjProvidedServiceFeatureProvider extends MjFeatureProvider<IMjProvidedServiceFeature> 

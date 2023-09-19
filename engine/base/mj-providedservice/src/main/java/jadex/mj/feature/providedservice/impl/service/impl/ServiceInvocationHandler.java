@@ -26,11 +26,11 @@ import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.feature.providedservice.impl.service.annotation.FutureReturnType;
-import jadex.mj.feature.providedservice.impl.service.annotation.Raw;
-import jadex.mj.feature.providedservice.impl.service.annotation.Service;
-import jadex.mj.feature.providedservice.impl.service.annotation.ServiceComponent;
-import jadex.mj.feature.providedservice.impl.service.annotation.ServiceIdentifier;
+import jadex.mj.feature.providedservice.annotation.FutureReturnType;
+import jadex.mj.feature.providedservice.annotation.Raw;
+import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.mj.feature.providedservice.annotation.ServiceComponent;
+import jadex.mj.feature.providedservice.annotation.ServiceIdentifier;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.DecouplingInterceptor;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.DecouplingReturnInterceptor;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
@@ -850,78 +850,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 		return (IInternalService)ProxyFactory.newProxyInstance(classloader, new Class[]{IInternalService.class, info.getType().getType(classloader, ia.getModel().getAllImports())}, handler); //sid.getServiceType()
 	}*/
 
-	/**
-	 *  Static method for creating a standard service proxy for a required service.
-	 * /
-	public static IService createRequiredServiceProxy(MjComponent ia, IService service, 
-		IRequiredServiceFetcher fetcher, RequiredServiceInfo info, RequiredServiceBinding binding, boolean realtime)
-	{
-		if(isRequiredServiceProxy(service))
-		{
-			System.out.println("Already required service proxy: "+service);
-			return service;
-		}
-		
-//		if(service.getServiceIdentifier().getServiceType().getTypeName().indexOf("IServiceCallService")!=-1)
-//			System.out.println("hijijij");
-
-//		System.out.println("cRSP:"+service.getServiceIdentifier());
-		IService ret = service;
-		
-		if(binding==null || !PROXYTYPE_RAW.equals(binding.getProxytype()))
-		{
-	//		System.out.println("create: "+service.getServiceIdentifier().getServiceType());
-			ServiceInvocationHandler handler = new ServiceInvocationHandler(ia, service, ia.getLogger(), true); // ia.getDescription().getCause()
-			handler.addFirstServiceInterceptor(new MethodInvocationInterceptor());
-//			handler.addFirstServiceInterceptor(new AuthenticationInterceptor(ia, true));
-			// Dropped for v4???
-//			if(binding!=null && binding.isRecover())
-//				handler.addFirstServiceInterceptor(new RecoveryInterceptor(ia.getExternalAccess(), info, binding, fetcher));
-			if(binding==null || PROXYTYPE_DECOUPLED.equals(binding.getProxytype())) // done on provided side
-				handler.addFirstServiceInterceptor(new DecouplingReturnInterceptor());
-			handler.addFirstServiceInterceptor(new MethodCallListenerInterceptor(ia, service.getServiceId()));
-//			handler.addFirstServiceInterceptor(new NFRequiredServicePropertyProviderInterceptor(ia, service.getId()));
-			UnparsedExpression[] interceptors = binding!=null ? binding.getInterceptors() : null;
-			if(interceptors!=null && interceptors.length>0)
-			{
-				for(int i=0; i<interceptors.length; i++)
-				{
-					IServiceInvocationInterceptor interceptor = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(
-//						interceptors[i].getValue(), ea.getModel().getAllImports(), ia.getFetcher(), ea.getModel().getClassLoader());
-						interceptors[i].getValue(), ia.getModel().getAllImports(), ia.getFetcher(), ia.getClassLoader());
-					handler.addServiceInterceptor(interceptor);
-				}
-			}
-			// Decoupling interceptor on required chains ensures that wrong incoming calls e.g. from gui thread
-			// are automatically pushed to the req component thread
-			if(binding==null || PROXYTYPE_DECOUPLED.equals(binding.getProxytype())) // done on provided side
-				handler.addFirstServiceInterceptor(new DecouplingInterceptor(ia, false, true));
-			
-			// Collect service interfaces (if interfaces are not present they are omitted. 
-			ClassLoader cl = ia.getClassLoader();
-			UUID sid = service.getServiceId();
-			Set<Class<?>> ifaces = new HashSet<>();
-			Class<?> iface = sid.getServiceType().getType(cl);
-			if(iface!=null)
-				ifaces.add(iface);
-			for(ClassInfo ci: sid.getServiceSuperTypes())
-			{
-				iface = ci.getType(cl);
-				if(iface!=null)
-					ifaces.add(iface);
-			}
-			
-			ifaces.add(IService.class);
-			
-			ret = (IService)ProxyFactory.newProxyInstance(ia.getClassLoader(), ifaces.toArray(new Class<?>[ifaces.size()]), handler); 	
-			
-			// todo: think about orders of decouping interceptors
-			// if we want the decoupling return interceptor to schedule back on an external caller actual order must be reversed
-			// now it can only schedule back on the hosting component of the required proxy
-		}
-		
-		return ret;
-	}*/
+	
 	
 	/**
 	 *  Add a service proxy.
@@ -1094,26 +1023,6 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 //	{
 //		return (IServiceIdentifier)pojosids.get(pojo);
 //	}
-	
-	/**
-	 *  Test if a service is a required service proxy.
-	 *  @param service The service.
-	 *  @return True, if is required service proxy.
-	 */
-	public static boolean isRequiredServiceProxy(Object service)
-	{
-		boolean ret = false;
-		if(ProxyFactory.isProxyClass(service.getClass()))
-		{
-			Object tmp = ProxyFactory.getInvocationHandler(service);
-			if(tmp instanceof ServiceInvocationHandler)
-			{
-				ServiceInvocationHandler handler = (ServiceInvocationHandler)tmp;
-				ret = handler.isRequired();
-			}
-		}
-		return ret;
-	}
 	
 	/**
 	 *  Test if a service is a provided service proxy.

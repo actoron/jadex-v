@@ -9,8 +9,8 @@ import java.util.Set;
 
 import jadex.common.Tuple2;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
+import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.impl.search.ServiceKeyExtractor.SetWrapper;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
 
 /**
  *  Extractor for query infos.

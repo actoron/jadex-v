@@ -19,13 +19,13 @@ import jadex.future.IFuture;
 import jadex.mj.core.annotation.NameValue;
 import jadex.mj.core.annotation.Value;
 import jadex.mj.core.modelinfo.ModelInfo;
-import jadex.mj.feature.providedservice.impl.service.IMjProvidedServiceFeature;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
-import jadex.mj.feature.providedservice.impl.service.annotation.Implementation;
-import jadex.mj.feature.providedservice.impl.service.annotation.ProvidedService;
-import jadex.mj.feature.providedservice.impl.service.annotation.ProvidedServices;
-import jadex.mj.feature.providedservice.impl.service.annotation.Publish;
-import jadex.mj.feature.providedservice.impl.service.annotation.Security;
+import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
+import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.mj.feature.providedservice.annotation.Implementation;
+import jadex.mj.feature.providedservice.annotation.ProvidedService;
+import jadex.mj.feature.providedservice.annotation.ProvidedServices;
+import jadex.mj.feature.providedservice.annotation.Publish;
+import jadex.mj.feature.providedservice.annotation.Security;
 import jadex.mj.micro.MicroClassReader;
 
 public class ProvidedServiceLoader 
@@ -116,7 +116,7 @@ public class ProvidedServiceLoader
 		Publish p = prov.publish();
 		
 		PublishInfo pi = p.publishid().length()==0? null: new PublishInfo(p.publishid(), p.publishtype(), p.publishscope(), p.multi(),
-			Object.class.equals(p.mapping())? null: p.mapping(), createUnparsedExpressions(p.properties()));
+			Object.class.equals(p.mapping())? null: p.mapping(), MicroClassReader.createUnparsedExpressions(p.properties()));
 		
 		UnparsedExpression	scopeexpression	= prov.scopeexpression()!=null && prov.scopeexpression().length()>0
 				? new UnparsedExpression("scopeexpression", ServiceScope.class, prov.scopeexpression(), null) : null;
@@ -125,64 +125,12 @@ public class ProvidedServiceLoader
 		Security security = prov.security().roles().length>0 ? prov.security() : null;
 		
 		NameValue[] props = prov.properties();
-		List<UnparsedExpression> serprops = (props != null && props.length > 0) ? new ArrayList<UnparsedExpression>(Arrays.asList(createUnparsedExpressions(props))) : null;
+		List<UnparsedExpression> serprops = (props != null && props.length > 0) ? new ArrayList<UnparsedExpression>(Arrays.asList(MicroClassReader.createUnparsedExpressions(props))) : null;
 		
 		ProvidedServiceInfo psi = new ProvidedServiceInfo(prov.name().length()>0? prov.name(): null, prov.type(), impl,  prov.scope(), scopeexpression, security, 
 			null, //pi, 
 			serprops);
 		return psi;
-	}
-	
-	/**
-	 *  Create unparsed expressions.
-	 */
-	public static UnparsedExpression[] createUnparsedExpressions(NameValue[] values)
-	{
-		UnparsedExpression[] ret = null;
-		if(values.length>0)
-		{
-			ret = new UnparsedExpression[values.length];
-			for(int i=0; i<values.length; i++)
-			{
-				ret[i] = convertNameValue(values[i]);
-			}
-		}
-		return ret;
-	}
-	
-	/**
-	 *  Convert a name value annotation to an unparsed expression.
-	 *  @param nval The name value annotation.
-	 *  @return The expression.
-	 */
-	public static UnparsedExpression convertNameValue(NameValue nval)
-	{
-		UnparsedExpression ret = null;
-		
-		String val = nval.value();
-		String[] vals = nval.values();
-		String clname = nval.clazz().getName();
-		if(vals.length==0)
-		{
-			ret = new UnparsedExpression(nval.name(), clname, (val==null || val.length()==0) && clname!=null? clname+".class": val, null);
-		}
-		else
-		{
-			StringBuffer buf = new StringBuffer();
-			buf.append("java.util.Arrays.asList(");
-			boolean first = true;
-			for(String v: vals)
-			{
-				if(!first)
-					buf.append(",");
-				first = false;
-				buf.append(v);
-			}
-			buf.append(")");
-			ret = new UnparsedExpression(nval.name(), clname, buf.toString(), null);
-		}
-		
-		return ret;
 	}
 	
 	/**

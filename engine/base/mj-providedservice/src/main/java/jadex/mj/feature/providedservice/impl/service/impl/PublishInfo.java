@@ -6,7 +6,7 @@ import java.util.List;
 import jadex.common.ClassInfo;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
+import jadex.mj.feature.providedservice.ServiceScope;
 
 /**
  *  Info struct for service publishing details.

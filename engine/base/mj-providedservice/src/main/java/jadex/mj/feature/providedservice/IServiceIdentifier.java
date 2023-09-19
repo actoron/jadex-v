@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import jadex.common.ClassInfo;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
 
 
 /**

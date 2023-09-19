@@ -23,7 +23,7 @@ import jadex.future.TerminableIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
+import jadex.mj.feature.providedservice.ServiceScope;
 
 /**
  *  Local service registry. 

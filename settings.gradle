@@ -58,6 +58,9 @@ includeBuild('engine/base/mj-lifecycle') {
 includeBuild('engine/base/mj-providedservice') {
 }
 
+includeBuild('engine/base/mj-requiredservice') {
+}
+
 includeBuild('engine/base/mj-nfproperties') {
 }
 

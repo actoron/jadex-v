@@ -69,7 +69,15 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		{
 			try
 			{
-				ret.setResult(s.get());
+				T res = s.get();
+				if(res instanceof Future)
+				{
+					((Future<T>)res).delegateTo(ret);
+				}
+				else
+				{
+					ret.setResult(res);
+				}
 			}
 			catch(Exception e)
 			{
@@ -82,6 +90,12 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		});
 		return ret;
 	}
+	
+	
+	
+	// Use generic connection method to avoid issues with different future types.
+	
+
 	
 	/**
 	 *  Test if the current thread is used for current component execution.

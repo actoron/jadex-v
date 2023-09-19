@@ -60,5 +60,5 @@ public @interface OnService
 	 *  Define a required service inline. If given no name it will receive
 	 *  the field name as name. 
 	 */
-	public RequiredService requiredservice() default @RequiredService(name="", type=Object.class);
+	//public RequiredService requiredservice() default @RequiredService(name="", type=Object.class);
 }

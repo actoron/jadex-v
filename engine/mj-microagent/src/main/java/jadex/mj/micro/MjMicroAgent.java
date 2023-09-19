@@ -17,7 +17,7 @@ public class MjMicroAgent	extends MjComponent
 			// this is executed before the features are inited
 			return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
 			{
-				System.out.println("loaded micro model: "+model);
+				//System.out.println("loaded micro model: "+model);
 				
 				return new MjMicroAgent(pojo, model);
 			}).get();

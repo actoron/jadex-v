@@ -18,9 +18,9 @@ import jadex.javaparser.SJavaParser;
 import jadex.javaparser.javaccimpl.ExpressionNode;
 import jadex.javaparser.javaccimpl.ParameterNode;
 import jadex.mj.core.MjComponent;
-import jadex.mj.feature.providedservice.impl.service.annotation.CheckIndex;
-import jadex.mj.feature.providedservice.impl.service.annotation.CheckNotNull;
-import jadex.mj.feature.providedservice.impl.service.annotation.CheckState;
+import jadex.mj.feature.providedservice.annotation.CheckIndex;
+import jadex.mj.feature.providedservice.annotation.CheckNotNull;
+import jadex.mj.feature.providedservice.annotation.CheckState;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 
 /**

@@ -4,8 +4,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import jadex.mj.core.MjComponent;
-import jadex.mj.feature.providedservice.impl.service.annotation.Service;
-import jadex.mj.feature.providedservice.impl.service.annotation.ServiceComponent;
+import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.mj.feature.providedservice.annotation.ServiceComponent;
 import jadex.mj.micro.MjMicroAgent;
 
 /**

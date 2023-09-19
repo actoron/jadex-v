@@ -11,9 +11,9 @@ import jadex.common.SReflect;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.feature.providedservice.impl.service.ServiceScope;
-import jadex.mj.feature.providedservice.impl.service.annotation.Security;
-import jadex.mj.feature.providedservice.impl.service.annotation.Service;
+import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.mj.feature.providedservice.annotation.Security;
+import jadex.mj.feature.providedservice.annotation.Service;
 
 
 /**
