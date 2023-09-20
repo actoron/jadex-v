@@ -49,7 +49,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 		{
 			MicroModel model = (MicroModel)self.getModel().getRawModel();
 			
-			Class<? extends Annotation> ann = OnInit.class;
+			Class<? extends Annotation> ann = OnStart.class;
 			if(model.getAgentMethod(ann)!=null)
 			{
 				//return invokeMethod(getInternalAccess(), OnInit.class, null);
@@ -60,14 +60,15 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 			}
 			else
 			{
-				ret.setException(new RuntimeException("no oninit found"));
+				ret.setResult(null);
+				//ret.setException(new RuntimeException("no oninit found"));
 				//return invokeMethod(getInternalAccess(), AgentCreated.class, null);
 			}
 		}).catchEx(ret);
 		return ret;
 	}
 	
-	@Override
+	/*@Override
 	public IFuture<Void> onBody()
 	{
 		System.out.println("body: "+self);
@@ -91,7 +92,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 			throw new RuntimeException("no onstart found");
 			//return invokeMethod(getInternalAccess(), AgentBody.class, null);
 		}
-	}
+	}*/
 	
 	@Override
 	public IFuture<Void> onEnd()
@@ -111,8 +112,9 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 		}
 		else
 		{
-			throw new RuntimeException("no onstart found");
+			//throw new RuntimeException("no onend found");
 			//return invokeMethod(getInternalAccess(), AgentBody.class, null);
+			return Future.DONE;
 		}
 	}
 	

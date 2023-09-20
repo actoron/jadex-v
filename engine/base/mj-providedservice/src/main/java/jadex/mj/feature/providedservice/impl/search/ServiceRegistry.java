@@ -179,6 +179,8 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	// write
 	public void addService(IServiceIdentifier service)
 	{
+		System.out.println("add service: "+service);
+		
 		Lock lock = rwlock.writeLock();
 		lock.lock();
 		try

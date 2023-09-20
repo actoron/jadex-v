@@ -1,4 +1,4 @@
-package jadex.micro.tutorial;
+package jadex.micro.tutorial.a1;
 
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.annotation.OnStart;

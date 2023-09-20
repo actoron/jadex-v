@@ -32,14 +32,8 @@ public class MjLifecycleFeatureProvider extends MjFeatureProvider<IMjLifecycleFe
 				self.getFeature(IMjExecutionFeature.class)
 					.scheduleStep(() ->
 				{
-					IMjLifecycle	lfeature	= (IMjLifecycle)feature;
+					IMjLifecycle lfeature = (IMjLifecycle)feature;
 					lfeature.onStart();
-
-					self.getFeature(IMjExecutionFeature.class)
-						.scheduleStep(() ->
-					{
-						lfeature.onBody();
-					});
 				});
 			}
 		});

@@ -12,7 +12,6 @@ import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.Tuple3;
 import jadex.mj.core.ServiceCallInfo;
-import jadex.mj.micro.MicroModel.ServiceInjectionInfo;
 
 /**
  * 
@@ -31,8 +30,8 @@ public class InjectionInfoHolder
 	/** The result injection targets. */
 	protected Map<String, Tuple3<FieldInfo, String, String>> resultinjections;
 	
-	/** The service injection targets. */
-	protected MultiCollection<String, ServiceInjectionInfo> serviceinjections;
+	///** The service injection targets. */
+	//protected MultiCollection<String, ServiceInjectionInfo> serviceinjections;
 	
 	/** The feature injection targets. */
 	protected List<FieldInfo> featureinjections;
@@ -152,13 +151,13 @@ public class InjectionInfoHolder
 	 *  Add an injection field.
 	 *  @param name The name.
 	 *  @param field The field. 
-	 */
+	 * /
 	public void addServiceInjection(String name, ServiceInjectionInfo si)
 	{
 		if(serviceinjections==null)
 			serviceinjections = new MultiCollection<String, ServiceInjectionInfo>();
 		serviceinjections.add(name, si);
-	}
+	}*/
 	
 	/**
 	 *  Add an injection field.
@@ -199,22 +198,22 @@ public class InjectionInfoHolder
 	/**
 	 *  Get the service injection fields.
 	 *  @return The field or method infos.
-	 */
+	 * /
 	public ServiceInjectionInfo[] getServiceInjections(String name)
 	{
 		Collection<ServiceInjectionInfo> col = serviceinjections==null? null: serviceinjections.get(name);
 		return col==null? new ServiceInjectionInfo[0]: (ServiceInjectionInfo[])col.toArray(new ServiceInjectionInfo[col.size()]);
-	}
+	}*/
 	
 	/**
 	 *  Get the service injection names.
 	 *  @return The names.
-	 */
+	 * /
 	public String[] getServiceInjectionNames()
 	{
 		return serviceinjections==null? SUtil.EMPTY_STRING_ARRAY: 
 			(String[])serviceinjections.keySet().toArray(new String[serviceinjections.size()]);
-	}
+	}*/
 	
 	/**
 	 *  Add an injection field.

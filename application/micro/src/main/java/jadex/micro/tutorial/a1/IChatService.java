@@ -1,4 +1,4 @@
-package jadex.micro.tutorial;
+package jadex.micro.tutorial.a1;
 
 import jadex.mj.feature.providedservice.annotation.Service;
 

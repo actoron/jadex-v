@@ -1,4 +1,4 @@
-package jadex.micro.tutorial;
+package jadex.micro.tutorial.a1;
 
 import java.util.Collection;
 

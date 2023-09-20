@@ -295,7 +295,7 @@ public class MicroClassReader
 				//modelinfo.addSuccessors(val.successors());
 				
 				// Use most specific autoprovide setting.
-				autoprovide	= autoprovide != Boolean3.NULL ? autoprovide : val.autoprovide();
+				//autoprovide	= autoprovide != Boolean3.NULL ? autoprovide : val.autoprovide();
 
 				if(susp!=null && modelinfo.getSuspend()==null)
 				{
@@ -2572,7 +2572,7 @@ public class MicroClassReader
 	/**
 	 * 
 	 */
-	protected static String guessName(String methodname)
+	public static String guessName(String methodname)
 	{
 		String ret = methodname;
 	
@@ -2591,27 +2591,7 @@ public class MicroClassReader
 		return ret;
 	}
 	
-	/**
-	 * 
-	 * /
-	protected static Class<?> guessParameterType(Class<?>[] ptypes, ClassLoader cl)
-	{
-		Class<?> iftype = null;
-		
-		for(Class<?> ptype: ptypes)
-		{
-			if(isAnnotationPresent(ptype, Service.class, cl))
-			{
-				iftype = ptype;
-				break;
-			}
-		}
-		
-		if(iftype==null || Object.class.equals(iftype))
-			throw new RuntimeException("No service interface found for service query");
-		
-		return iftype;
-	}*/
+
 	
 	/**
 	 * 

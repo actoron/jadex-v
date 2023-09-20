@@ -1,5 +1,8 @@
 package jadex.mj.requiredservice.impl;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -7,20 +10,29 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jadex.common.ClassInfo;
 import jadex.common.IParameterGuesser;
+import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
+import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
+import jadex.future.CounterResultListener;
+import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateResultListener;
+import jadex.future.IResultListener;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.IntermediateEmptyResultListener;
 import jadex.future.IntermediateFuture;
 import jadex.future.SubscriptionIntermediateDelegationFuture;
 import jadex.future.SubscriptionIntermediateFuture;
@@ -30,11 +42,14 @@ import jadex.future.TerminationCommand;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
+import jadex.mj.core.modelinfo.IModelInfo;
 import jadex.mj.core.modelinfo.ModelInfo;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.feature.providedservice.impl.search.IServiceRegistry;
 import jadex.mj.feature.providedservice.impl.search.MultiplicityException;
 import jadex.mj.feature.providedservice.impl.search.ServiceNotFoundException;
@@ -48,6 +63,7 @@ import jadex.mj.feature.providedservice.impl.service.impl.interceptors.Decouplin
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.DecouplingReturnInterceptor;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.MethodInvocationInterceptor;
+import jadex.mj.micro.MicroClassReader;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.requiredservice.IMjRequiredServiceFeature;
 import jadex.mj.requiredservice.RequiredServiceBinding;
@@ -76,7 +92,6 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	//protected List<Tuple2<ServiceQuery<?>, SubscriptionIntermediateDelegationFuture<?>>> delayedremotequeries;
 
 	
-	
 	protected MjRequiredServiceFeature(MjComponent self)
 	{
 		this.self	= self;
@@ -85,19 +100,21 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	@Override
 	public IFuture<Void> onStart()
 	{
+		Future<Void> ret = new Future<Void>();
+		
 		ModelInfo model = self.getModel();
 		
-		Object mymodel = model.getFeatureModel(this.getClass());
+		RequiredServiceModel mymodel = (RequiredServiceModel)model.getFeatureModel(IMjRequiredServiceFeature.class);
 		if(mymodel==null)
 		{
-			Object fmodel = RequiredServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			model.putFeatureModel(IMjRequiredServiceFeature.class, fmodel);
+			mymodel = (RequiredServiceModel)RequiredServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
+			model.putFeatureModel(IMjRequiredServiceFeature.class, mymodel);
 			
 			// todo: save model to cache
 		}
 		
 		// Required services. (Todo: prefix for capabilities)
-		Map<String, RequiredServiceInfo> rservices = (Map<String, RequiredServiceInfo>)model.getFeatureModel(IMjRequiredServiceFeature.class);
+		Map<String, RequiredServiceInfo> rservices = mymodel.getRequiredServices();
 		
 		//String config = model.getConfiguration();
 		
@@ -175,13 +192,20 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 			System.out.println("directly found ISearchQueryManagerService");
 		}*/
 		
-		return IFuture.DONE;
-	}
-	
-	@Override
-	public IFuture<Void> onBody()
-	{
-		return IFuture.DONE;
+		
+		final RequiredServiceModel fmymodel = mymodel;
+		String[] sernames = mymodel.getServiceInjectionNames();
+		Stream<Tuple2<String, ServiceInjectionInfo[]>> s = Arrays.stream(sernames).map(sername -> new Tuple2<String, ServiceInjectionInfo[]>(sername, fmymodel.getServiceInjections(sername)));
+		Map<String, ServiceInjectionInfo[]> serinfos = s.collect(Collectors.toMap(t -> t.getFirstEntity(), t -> t.getSecondEntity())); 
+		
+		Object pojo = ((MjMicroAgent)self).getPojo(); // hack
+		injectServices(getComponent(), pojo, sernames, serinfos, mymodel)
+			.then(q ->
+		{
+			ret.setResult(null);
+		}).catchEx(ret);
+		
+		return ret;
 	}
 	
 	@Override
@@ -392,11 +416,12 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	 *  @param query The search query.
 	 *  @param timeout Maximum time period to search, -1 for no wait.
 	 *  @return Service matching the query, exception if service is not found.
-	 * /
+	 */
 	public <T> IFuture<T> searchService(ServiceQuery<T> query, long timeout)
 	{
 		Future<T> ret = new Future<T>();
-		timeout = timeout != 0 ? timeout : Starter.getDefaultTimeout(component.getId());
+		//todo: hack!!!
+		timeout = timeout != 0 ? timeout : 30000;// Starter.getDefaultTimeout(component.getId());
 		
 		ISubscriptionIntermediateFuture<T> queryfut = addQuery(query);
 		
@@ -419,7 +444,8 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		
 		if(to>0)
 		{
-			component.waitForDelay(timeout, Starter.isRealtimeTimeout(getComponent().getId(), true)).then(done -> 
+			// , Starter.isRealtimeTimeout(getComponent().getId(), true)
+			getComponent().getFeature(IMjExecutionFeature.class).waitForDelay(timeout).then(done -> 
 			{
 				Multiplicity m = query.getMultiplicity();
 				if(m.getFrom()>0)
@@ -434,7 +460,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		}
 		
 		return ret;
-	}*/
+	}
 	
 	//-------- query methods --------
 
@@ -1392,33 +1418,6 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	}
 	
 	/**
-	 * When searching for declared service -> map required service declaration to service query.
-	 */
-	public static <T> ServiceQuery<T> getServiceQuery(MjComponent ia, RequiredServiceInfo info)
-	{
-		// TODO??? : no, but hardconstraints should be added, NFR props are not for search
-//		info.getNFRProperties();
-
-		// todo:
-//		info.getDefaultBinding().getComponentName();
-//		info.getDefaultBinding().getComponentType();
-		
-		ServiceQuery<T> ret = new ServiceQuery<T>(info.getType(), info.getDefaultBinding().getScope(), ia.getId());
-		//ret.setMultiplicity(info.isMultiple() ? Multiplicity.ZERO_MANY : Multiplicity.ONE);
-		
-		Multiplicity m = new Multiplicity();
-		if(info.getMin()!=RequiredServiceInfo.UNDEFINED)
-			m.setFrom(info.getMin());
-		if(info.getMax()!=RequiredServiceInfo.UNDEFINED)
-			m.setTo(info.getMax());
-		
-		if(info.getTags()!=null)
-			ret.setServiceTags(info.getTags().toArray(new String[info.getTags().size()]));//, ia.getExternalAccess());
-		
-		return ret;
-	}
-	
-	/**
 	 *  When searching with query -> create required service info from service query.
 	 */
 	public static <T> RequiredServiceInfo createServiceInfo(ServiceQuery<T> query)
@@ -1532,5 +1531,563 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 			}
 		}
 		return ret;
+	}
+	
+	/**
+	 * 
+	 * @param component
+	 * @param target
+	 * @return
+	 */
+	public static IFuture<Void> injectServices(MjComponent component, Object target, String[] sernames, Map<String, ServiceInjectionInfo[]> serinfos, RequiredServiceModel rsm)
+	{
+		final Future<Void> ret = new Future<Void>();
+		
+		// Inject required services
+		// Fetch all injection names - field and method injections
+		//String[] sernames = model.getServiceInjectionNames();
+		
+		if(sernames.length>0)
+		{
+			CounterResultListener<Void> lis = new CounterResultListener<Void>(sernames.length, 
+				new DelegationResultListener<Void>(ret));
+	
+			for(int i=0; i<sernames.length; i++)
+			{
+				final ServiceInjectionInfo[] infos = serinfos.get(sernames[i]); //model.getServiceInjections(sernames[i]);
+				final CounterResultListener<Void> lis2 = new CounterResultListener<Void>(infos.length, lis);
+
+				String sername = (String)SJavaParser.evaluateExpressionPotentially(sernames[i], component.getModel().getAllImports(), component.getFetcher(), component.getClassLoader());
+						
+				//if(sername!=null && sername.indexOf("calc")!=-1)
+				//	System.out.println("calc");
+				
+				for(int j=0; j<infos.length; j++)
+				{
+					// Uses required service info to search service
+					
+					RequiredServiceInfo	info = infos[j].getRequiredServiceInfo()!=null? infos[j].getRequiredServiceInfo(): rsm.getService(sername);
+					
+					ServiceQuery<Object> query = createServiceQuery(component, info);
+											
+					// if query
+					if(infos[j].getQuery()!=null && infos[j].getQuery().booleanValue())
+					{							
+						//ServiceQuery<Object> query = new ServiceQuery<>((Class<Object>)info.getType().getType(component.getClassLoader()), info.getDefaultBinding().getScope());
+						//query = info.getTags()==null || info.getTags().size()==0? query: query.setServiceTags(info.getTags().toArray(new String[info.getTags().size()]), component.getExternalAccess()); 
+						
+						long to = infos[j].getActive();
+						ISubscriptionIntermediateFuture<Object> sfut = to>0?
+							component.getFeature(IMjRequiredServiceFeature.class).addQuery(query, to):
+							component.getFeature(IMjRequiredServiceFeature.class).addQuery(query);
+						
+						// Directly continue with init when service is not required
+						if(infos[j].getRequired()==null || !infos[j].getRequired().booleanValue())
+							lis2.resultAvailable(null);
+						final int fj = j;
+						
+						// Invokes methods for each intermediate result
+						sfut.addResultListener(new IntermediateEmptyResultListener<Object>()
+						{
+							boolean first = true;
+							public void intermediateResultAvailable(final Object result)
+							{
+								/*if(result==null)
+								{
+									System.out.println("received null as service: "+infos[fj]);
+									return;
+								}*/
+								// todo: multiple parameters and using parameter annotations?!
+								// todo: multiple parameters and wait until all are filled?!
+								
+								if(infos[fj].getMethodInfo()!=null)
+								{
+									Method m = SReflect.getAnyMethod(target.getClass(), infos[fj].getMethodInfo().getName(), infos[fj].getMethodInfo().getParameterTypes(component.getClassLoader()));
+									
+									invokeMethod(m, target, result, component);
+								}
+								else if(infos[fj].getFieldInfo()!=null)
+								{
+									final Field	f = infos[fj].getFieldInfo().getField(component.getClassLoader());
+
+									setDirectFieldValue(f, target, result);
+								}
+								
+								// Continue with agent init when first service is found 
+								if(first)
+								{
+									first = false;
+									if(infos[fj].getRequired()==null || infos[fj].getRequired().booleanValue())
+										lis2.resultAvailable(null);
+								}
+							}
+							
+							public void resultAvailable(Collection<Object> result)
+							{
+								finished();
+							}
+							
+							public void exceptionOccurred(Exception e)
+							{
+								// todo:
+								
+//									if(!(e instanceof ServiceNotFoundException)
+//										|| m.getAnnotation(AgentServiceSearch.class).required())
+//									{
+//										component.getLogger().warning("Method injection failed: "+e);
+//									}
+//									else
+								{
+									// Call self with empty list as result.
+									finished();
+								}
+							}
+						});
+					}
+					// if is search
+					else
+					{
+						if(infos[j].getFieldInfo()!=null)
+						{
+							final Field	f = infos[j].getFieldInfo().getField(component.getClassLoader());
+							Class<?> ft = f.getDeclaringClass();
+							boolean multiple = ft.isArray() || SReflect.isSupertype(Collection.class, ft) || info.getMax()>2;
+							
+							final IFuture<Object> sfut = callgetService(sername, info, component, multiple);
+
+							
+							// todo: what about multi case?
+							// why not add values to a collection as they come?!
+							// currently waits until the search has finished before injecting
+							
+							// Is annotation is at field and field is of type future directly set it
+							if(SReflect.isSupertype(IFuture.class, f.getType()))
+							{
+								try
+								{
+									SAccess.setAccessible(f, true);
+									f.set(target, sfut);
+									lis2.resultAvailable(null);
+								}
+								catch(Exception e)
+								{
+									System.out.println("Field injection failed: "+e);
+									lis2.exceptionOccurred(e);
+								}	
+							}
+							else
+							{
+								// if future is already done 
+								if(sfut.isDone() && sfut.getException() == null)
+								{
+									try
+									{
+										setDirectFieldValue(f, target, sfut.get());
+										lis2.resultAvailable(null);
+									}
+									catch(Exception e)
+									{
+										lis2.exceptionOccurred(e);
+									}
+								}
+								else if(infos[j].getLazy()!=null && infos[j].getLazy().booleanValue() && !multiple)
+								{
+									//RequiredServiceInfo rsi = ((IInternalRequiredServicesFeature)component.getFeature(IRequiredServicesFeature.class)).getServiceInfo(sername);
+									Class<?> clz = info.getType().getType(component.getClassLoader(), component.getModel().getAllImports());
+									//ServiceQuery<Object> query = RequiredServicesComponentFeature.getServiceQuery(component, info);
+									
+									UnresolvedServiceInvocationHandler h = new UnresolvedServiceInvocationHandler(component, query);
+									Object proxy = ProxyFactory.newProxyInstance(component.getClassLoader(), new Class[]{IService.class, clz}, h);
+								
+									try
+									{
+										SAccess.setAccessible(f, true);
+										f.set(target, proxy);
+										lis2.resultAvailable(null);
+									}
+									catch(Exception e)
+									{
+										System.out.println("Field injection failed: "+e);
+										lis2.exceptionOccurred(e);
+									}
+								}
+								else
+								{
+									// todo: remove!
+									// todo: disallow multiple field injections!
+									// This is problematic because search can defer the agent startup esp. when remote search
+
+									// Wait for result and block init until available
+									// Dangerous because agent blocks
+									final int fj = j;
+									sfut.addResultListener(new IResultListener<Object>()
+									{
+										public void resultAvailable(Object result)
+										{
+											try
+											{
+												setDirectFieldValue(f, target, result);
+												lis2.resultAvailable(null);
+											}
+											catch(Exception e)
+											{
+												lis2.exceptionOccurred(e);
+											}
+										}
+										
+										public void exceptionOccurred(Exception e)
+										{
+											if(!(e instanceof ServiceNotFoundException)
+												|| (infos[fj].getRequired()!=null && infos[fj].getRequired().booleanValue()))
+											{
+												System.out.println("Field injection failed: "+e);
+												lis2.exceptionOccurred(e);
+											}
+											else
+											{
+												// Set empty list, set on exception 
+												if(SReflect.isSupertype(f.getType(), List.class))
+												{
+													// Call self with empty list as result.
+													resultAvailable(new ArrayList<Object>());
+												}
+												else if(SReflect.isSupertype(f.getType(), Set.class))
+												{
+													// Call self with empty list as result.
+													resultAvailable(new HashSet<Object>());
+												}
+												else
+												{
+													// Don't set any value.
+													lis2.resultAvailable(null);
+												}
+											}
+										}
+									});
+								}
+							}
+						}
+						else if(infos[j].getMethodInfo()!=null)
+						{
+							// injection of future as parameter not considered meanigful case
+							
+							// injection of lazy proxy not considered as meaningful case
+
+							final Method m = SReflect.getAnyMethod(target.getClass(), infos[j].getMethodInfo().getName(), infos[j].getMethodInfo().getParameterTypes(component.getClassLoader()));
+
+							boolean multiple = info.getMax()>2;
+
+							final IFuture<Object> sfut = callgetService(sername, info, component, multiple);
+							
+							// if future is already done 
+							if(sfut.isDone() && sfut.getException() == null)
+							{
+								try
+								{
+									invokeMethod(m, target, sfut.get(), component);
+									lis2.resultAvailable(null);
+								}
+								catch(Exception e)
+								{
+									lis2.exceptionOccurred(e);
+								}
+							}
+							else 
+							{
+								sfut.addResultListener(new IResultListener<Object>() 
+								{
+									@Override
+									public void resultAvailable(Object result) 
+									{
+										try
+										{
+											invokeMethod(m, target, sfut.get(), component);
+											lis2.resultAvailable(null);
+										}
+										catch(Exception e)
+										{
+											lis2.exceptionOccurred(e);
+										}
+									}
+									
+									@Override
+									public void exceptionOccurred(Exception exception) 
+									{
+										lis2.exceptionOccurred(exception);
+									}
+								});
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 * 
+	 */
+	protected static void setDirectFieldValue(Field f, Object target, Object result)
+	{
+		Class<?> ft = f.getType();
+		//boolean multiple = ft.isArray() || SReflect.isSupertype(Collection.class, ft) || info.getMax()>2;
+
+		if(SReflect.isSupertype(ft, result.getClass()))
+		{
+			try
+			{
+				SAccess.setAccessible(f, true);
+				f.set(target, result);
+			}
+			catch(Throwable t)
+			{
+				throw SUtil.throwUnchecked(t);
+			}
+		}
+		else if(ft.isArray())
+		{
+			// find next null value and insert new value there
+			Class<?> ct = ft.getComponentType();
+			if(SReflect.isSupertype(ct, result.getClass()))
+			{
+				try
+				{
+					Object ar = f.get(target);
+				
+					for(int i=0; i<Array.getLength(ar); i++)
+					{
+						if(Array.get(ar, i)==null)
+						{
+							try
+							{
+								SAccess.setAccessible(f, true);
+								f.set(target, result);
+							}
+							catch(Exception e)
+							{
+								throw SUtil.throwUnchecked(e);
+							}
+						}
+					}
+				}
+				catch(Exception e)
+				{
+					throw SUtil.throwUnchecked(e);
+				}
+			}
+			else
+			{
+				throw new RuntimeException("cannot invoke method as result type does not fit field types: "+result+" "+f);
+			}
+		}
+		else if(SReflect.isSupertype(List.class, ft))
+		{
+			try
+			{
+				List<Object> coll = (List<Object>)f.get(target);
+				if(coll==null)
+				{
+					coll = new ArrayList<Object>();
+					try
+					{
+						SAccess.setAccessible(f, true);
+						f.set(target, coll);
+					}
+					catch(Exception e)
+					{
+						throw SUtil.throwUnchecked(e);
+					}
+				}
+				
+				coll.add(result);
+			}
+			catch(Exception e)
+			{
+				throw SUtil.throwUnchecked(e);
+			}
+		}
+		else if(SReflect.isSupertype(Set.class, ft))
+		{
+			try
+			{
+				Set<Object> coll = (Set<Object>)f.get(target);
+				if(coll==null)
+				{
+					coll = new HashSet<Object>();
+					try
+					{
+						SAccess.setAccessible(f, true);
+						f.set(target, coll);
+					}
+					catch(Exception e)
+					{
+						throw SUtil.throwUnchecked(e);
+					}
+				}
+				
+				coll.add(result);
+			}
+			catch(Exception e)
+			{
+				throw SUtil.throwUnchecked(e);
+			}
+		}
+		else
+		{
+			throw new RuntimeException("injection error: "+f+" "+target+" "+result);
+		}
+	}
+
+	/**
+	 * 
+	 * @param m
+	 * @param target
+	 * @param result
+	 */
+	protected static void invokeMethod(Method m, Object target, Object result, MjComponent component)
+	{
+		Object[] args = new Object[m.getParameterCount()];
+		
+		boolean invoke = false;
+		for(int i=0; i<m.getParameterCount(); i++)
+		{
+			if(SReflect.isSupertype(m.getParameterTypes()[i], result.getClass()))
+			{
+				args[i] = result;
+				invoke = true;
+			}
+		}
+		
+		if(invoke)
+		{
+			component.getFeature(IMjExecutionFeature.class).scheduleStep(() ->
+			{
+				try
+				{
+					SAccess.setAccessible(m, true);
+					m.invoke(target, args);
+				}
+				catch(Throwable t)
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+				return IFuture.DONE;
+			});
+		}
+		else
+		{
+			System.out.println("cannot invoke method as result type does not fit parameter types: "+result+" "+m);
+		}
+	}
+		
+		
+	/**
+	 *  Call
+	 *  @param sername
+	 *  @param info
+	 *  @return
+	 */
+	protected static IFuture<Object> callgetService(String sername, RequiredServiceInfo info, MjComponent component, boolean multiple)
+	{
+		final IFuture<Object> sfut;
+		
+		// if info is available use it. in case of services it is not available in the agent (model)
+		if(info!=null)
+		{
+			if(multiple)
+			{
+				IFuture	ifut = component.getFeature(IMjRequiredServiceFeature.class).searchServices(createServiceQuery(component, info));
+				sfut = ifut;
+			}
+			else
+			{
+				IFuture	ifut = component.getFeature(IMjRequiredServiceFeature.class).searchService(createServiceQuery(component, info));
+				sfut = ifut;
+			}
+		}
+		else
+		{
+			if(multiple)
+			{
+				IFuture	ifut = component.getFeature(IMjRequiredServiceFeature.class).getServices(sername);
+				sfut = ifut;
+			}
+			else
+			{
+				IFuture	ifut = component.getFeature(IMjRequiredServiceFeature.class).getService(sername);
+				sfut = ifut;
+			}
+		}
+		
+		return sfut;
+	}
+	
+	/**
+	 * When searching for declared service -> map required service declaration to service query.
+	 */
+	public static <T> ServiceQuery<T> createServiceQuery(MjComponent component, RequiredServiceInfo info)
+	{
+		// Evaluate and replace scope expression, if any.
+		ServiceScope scope = info.getDefaultBinding()!=null ? info.getDefaultBinding().getScope() : null;
+		if(ServiceScope.EXPRESSION.equals(scope))
+		{
+			scope = (ServiceScope)SJavaParser.getParsedValue(info.getDefaultBinding().getScopeExpression(), component.getModel().getAllImports(), component.getFetcher(), component.getClassLoader());
+			info	= new RequiredServiceInfo(info.getName(), info.getType(), info.getMin(), info.getMax(),
+				new RequiredServiceBinding(info.getDefaultBinding()).setScope(scope),
+				//info.getNFRProperties(), 
+				info.getTags());
+		}
+		return getServiceQuery(component, info);
+	}
+	
+	/**
+	 * When searching for declared service -> map required service declaration to service query.
+	 */
+	public static <T> ServiceQuery<T> getServiceQuery(MjComponent ia, RequiredServiceInfo info)
+	{
+		// TODO??? : no, but hardconstraints should be added, NFR props are not for search
+//		info.getNFRProperties();
+
+		// todo:
+//		info.getDefaultBinding().getComponentName();
+//		info.getDefaultBinding().getComponentType();
+		
+		ServiceQuery<T> ret = new ServiceQuery<T>(info.getType(), info.getDefaultBinding().getScope(), ia.getId());
+		//ret.setMultiplicity(info.isMultiple() ? Multiplicity.ZERO_MANY : Multiplicity.ONE);
+		
+		Multiplicity m = new Multiplicity();
+		if(info.getMin()!=RequiredServiceInfo.UNDEFINED)
+			m.setFrom(info.getMin());
+		if(info.getMax()!=RequiredServiceInfo.UNDEFINED)
+			m.setTo(info.getMax());
+		
+		if(info.getTags()!=null)
+			ret.setServiceTags(info.getTags().toArray(new String[info.getTags().size()]));//, ia.getExternalAccess());
+		
+		return ret;
+	}
+	
+	/**
+	 * 
+	 */
+	public static Class<?> guessParameterType(Class<?>[] ptypes, ClassLoader cl)
+	{
+		Class<?> iftype = null;
+		
+		for(Class<?> ptype: ptypes)
+		{
+			if(MicroClassReader.isAnnotationPresent(ptype, Service.class, cl))
+			{
+				iftype = ptype;
+				break;
+			}
+		}
+		
+		if(iftype==null || Object.class.equals(iftype))
+			throw new RuntimeException("No service interface found for service query");
+		
+		return iftype;
 	}
 }

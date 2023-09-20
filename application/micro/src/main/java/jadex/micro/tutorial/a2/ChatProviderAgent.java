@@ -1,25 +1,28 @@
-package jadex.micro.tutorial;
+package jadex.micro.tutorial.a2;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import jadex.mj.core.MjComponent;
-import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.feature.providedservice.annotation.ServiceComponent;
+import jadex.mj.core.annotation.OnStart;
 import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.annotation.Agent;
 
 /**
- *  Chat service implementation.
+ *  Chat micro agent provides a basic chat service. 
  */
-@Service
-public class ChatService implements IChatService
+@Agent
+public class ChatProviderAgent implements IChatService
 {
-	//-------- attributes --------
-	
-	/** The agent. */
-	@ServiceComponent
+	/** The underlying micro agent. */
+	@Agent
 	protected MjMicroAgent agent;
-
+	
+	@OnStart
+	protected void onStart()
+	{
+		System.out.println("agent started: "+agent.getId());
+	}
+	
 	/**
 	 *  Receives a chat message.
 	 *  @param sender The sender's name.

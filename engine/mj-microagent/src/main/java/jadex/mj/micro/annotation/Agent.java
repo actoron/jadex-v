@@ -74,7 +74,7 @@ public @interface Agent
 	/**
 	 *  Auto-provide provided services that are directly implemented by the agent.
 	 */
-	public Boolean3 autoprovide() default Boolean3.NULL;
+	//public Boolean3 autoprovide() default Boolean3.NULL;
 	
 	/**
 	 *  Auto-start this agent on platform startup.

@@ -26,7 +26,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	protected MjComponent component;
 	
 	/** The external access. */
-	//protected IExternalAccess access;
+	protected MjComponent access; // todo!!!
 	
 	/** The undone flag. */
 	protected boolean undone;
@@ -170,13 +170,13 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	 *  Execute a listener notification on the component using either an external access or the internal one
 	 *  and robustly use the rescue thread for the notification, when the component is terminated.
 	 */
-	public static void	scheduleForward(Object access, MjComponent component, Runnable notification)
+	public static void	scheduleForward(MjComponent access, MjComponent component, Runnable notification)
 	{
 		assert access!=null || component!=null;
 		
 		// Execute directly on component thread?
 		if(SUtil.equals(MjExecutionFeature.LOCAL.get(), 
-			//access!=null ? access.getId() : 
+			access!=null ? access.getId() : 
 			component.getId()))
 		{
 			notification.run();
@@ -198,21 +198,22 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 			};
 			
 			// Schedule using external access, let execution feature deal with exceptions in listener code
-			/*if(access!=null)
+			if(access!=null)
 			{
-				access.scheduleStep(ia -> invocation.get())
+				//access.scheduleStep(ia -> invocation.get())
+				access.getFeature(IMjExecutionFeature.class).scheduleStep(invocation)
 					.catchEx(ex0 ->
 					{
 						if(!invoked[0])
 						{
-							//System.out.println("schedule forward1: "+notification+"\n"+trace);
-							Starter.scheduleRescueStep(access.getId(), () -> invocation.get());
+							System.out.println("schedule forward1: "+notification+"\n"+trace);
+							//Starter.scheduleRescueStep(access.getId(), () -> invocation.get());
 						}
 					});
-			}*/
+			}
 			
 			// Schedule using internal access, let execution feature deal with exceptions in listener code
-			//else
+			else
 			{
 				component.getFeature(IMjExecutionFeature.class).scheduleStep(invocation)
 					.catchEx(ex0 ->

@@ -1,14 +1,19 @@
 package jadex.mj.requiredservice.impl;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
+import jadex.common.ClassInfo;
+import jadex.common.FieldInfo;
+import jadex.common.MethodInfo;
 import jadex.common.UnparsedExpression;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.micro.MicroClassReader;
 import jadex.mj.requiredservice.RequiredServiceBinding;
 import jadex.mj.requiredservice.RequiredServiceInfo;
+import jadex.mj.requiredservice.annotation.OnService;
 import jadex.mj.requiredservice.annotation.RequiredService;
 import jadex.mj.requiredservice.annotation.RequiredServices;
 
@@ -18,7 +23,8 @@ public class RequiredServiceLoader
 	{
 		Class<?> cma = clazz;
 		
-		Map<String, RequiredServiceInfo> rservices = new HashMap<>();
+		//Map<String, RequiredServiceInfo> rservices = new HashMap<>();
+		RequiredServiceModel rsm = new RequiredServiceModel();
 		boolean reqsdone = false;
 		
 		while(cma!=null && !cma.equals(Object.class))
@@ -36,7 +42,7 @@ public class RequiredServiceLoader
 					{
 						RequiredServiceInfo rsis = createRequiredServiceInfo(vals[i], cl);
 					
-						checkAndAddRequiredServiceInfo(rsis, rservices, cl);
+						checkAndAddRequiredServiceInfo(rsis, rsm.getRequiredServices(), cl);
 	
 	//					if(rsers.containsKey(vals[i].name()))
 	//					{
@@ -50,11 +56,95 @@ public class RequiredServiceLoader
 	//					}
 					}
 				}
+				
+				// Find injection targets by reflection (agent, arguments, services)
+				Field[] fields = cma.getDeclaredFields();
+				
+				for(int i=0; i<fields.length; i++)
+				{
+					if(MicroClassReader.isAnnotationPresent(fields[i], OnService.class, cl))
+					{
+						//if("secser".equals(fields[i].getName()))
+						//	System.out.println("secser");
+						
+						OnService ser = MicroClassReader.getAnnotation(fields[i], OnService.class, cl);
+						RequiredService rs = ser.requiredservice();
+	
+						RequiredServiceInfo rsis = createRequiredServiceInfo(rs, cl);
+						String name = rs.name().length()>0? rs.name(): fields[i].getName();
+						
+						if(Object.class.equals(rsis.getType().getType(cl)))
+							rsis.setType(new ClassInfo(fields[i].getType()));
+								
+						if(ser.name().length()>0)
+							checkAndAddRequiredServiceInfo(rsis, rsm.getRequiredServices(), cl);
+						
+						ServiceInjectionInfo sii = new ServiceInjectionInfo().setFieldInfo(new FieldInfo(fields[i])).setRequiredServiceInfo(rsis);
+						
+						if(ser.query().toBoolean()!=null)
+							sii.setQuery(ser.query().toBoolean());
+						else
+							sii.setQuery(false); // default on fields is false
+						sii.setRequired(ser.required().toBoolean());
+						sii.setLazy(ser.required().toBoolean());
+						sii.setActive(ser.active());
+						
+						rsm.addServiceInjection(name, sii);
+					}
+				}
+				
+				// Find method injection targets by reflection (services)
+				Method[] methods = cma.getDeclaredMethods();
+				for(int i=0; i<methods.length; i++)
+				{
+					if(MicroClassReader.isAnnotationPresent(methods[i], OnService.class, cl))
+					{
+						OnService ser = MicroClassReader.getAnnotation(methods[i], OnService.class, cl);
+						RequiredService rs = ser.requiredservice();
+							
+						//String name = ser.requiredservice().name().length()>0? ser.requiredservice().name(): guessName(methods[i].getName());
+						String name = ser.name();
+						
+						if(name.length()==0)
+							name = rs.name();
+						if(name.length()==0)
+							MicroClassReader.guessName(methods[i].getName());
+						
+						RequiredServiceInfo rsis = (RequiredServiceInfo)rsm.getRequiredServices().get(name);
+						if(rsis==null)
+						{
+							rsis = createRequiredServiceInfo(rs, cl);
+							
+							if(new ClassInfo(Object.class).equals(rsis.getType()))
+							{
+								Class<?> iftype = Object.class.equals(ser.requiredservice().type())? MjRequiredServiceFeature.guessParameterType(methods[i].getParameterTypes(), cl): ser.requiredservice().type();
+								rsis.setType(new ClassInfo(iftype));
+							}
+							
+							checkAndAddRequiredServiceInfo(rsis, rsm.getRequiredServices(), cl);
+						}
+										
+						ServiceInjectionInfo sii = new ServiceInjectionInfo().setMethodInfo(new MethodInfo(methods[i])).setRequiredServiceInfo(rsis);
+								
+						//if(ser.requiredservice().name().length()>0)
+						//	checkAndAddRequiredServiceInfo(rsis, rsers, cl);
+						
+						if(ser.query().toBoolean()!=null)
+							sii.setQuery(ser.query().toBoolean());
+						else
+							sii.setQuery(true); // default on methods is true
+						sii.setRequired(ser.required().toBoolean());
+						sii.setLazy(ser.required().toBoolean());
+						sii.setActive(ser.active());
+						
+						rsm.addServiceInjection(name, sii);
+					}
+				}
 			}
 			cma = cma.getSuperclass();
 		}
 		
-		return rservices;//.values().toArray(new Object[rservices.size()]);
+		return rsm;//.values().toArray(new Object[rservices.size()]);
 	}
 	
 	/**

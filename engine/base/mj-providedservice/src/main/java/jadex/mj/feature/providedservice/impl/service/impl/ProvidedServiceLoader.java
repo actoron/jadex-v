@@ -12,20 +12,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.common.Boolean3;
 import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
 import jadex.future.IFuture;
 import jadex.mj.core.annotation.NameValue;
 import jadex.mj.core.annotation.Value;
-import jadex.mj.core.modelinfo.ModelInfo;
-import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Implementation;
 import jadex.mj.feature.providedservice.annotation.ProvidedService;
 import jadex.mj.feature.providedservice.annotation.ProvidedServices;
 import jadex.mj.feature.providedservice.annotation.Publish;
 import jadex.mj.feature.providedservice.annotation.Security;
+import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.MicroClassReader;
 
 public class ProvidedServiceLoader 
@@ -38,7 +36,6 @@ public class ProvidedServiceLoader
 		Map<String, ProvidedServiceInfo> pservices = new HashMap<>();
 		boolean prosdone = false;
 		
-		Boolean3 autoprovide = Boolean3.NULL;
 		Set<Class<?>> serifaces = new HashSet<Class<?>>(); 
 		
 		while(cma!=null && !cma.equals(Object.class))
@@ -60,12 +57,22 @@ public class ProvidedServiceLoader
 				}
 			}
 			
+			// check interfaces and add those which have service annotation to provided service interfaces
+			Class<?>[] ifaces = cma.getInterfaces();
+			for(Class<?> iface: ifaces)
+			{
+				if(MicroClassReader.isAnnotationPresent(iface, Service.class, cl))
+				{
+					serifaces.add(iface);
+				}
+			}
+			
 			cma = cma.getSuperclass();
 		}
 		
 		// Check if there are implemented service interfaces for which the agent
 		// does not have a provided service declaration (implementation=agent)
-		if(autoprovide.isTrue() && !serifaces.isEmpty())
+		if(!serifaces.isEmpty())
 		{
 			ProvidedServiceInfo[] psis = (ProvidedServiceInfo[])pservices.values().toArray(new ProvidedServiceInfo[pservices.size()]);
 			for(ProvidedServiceInfo psi: psis)

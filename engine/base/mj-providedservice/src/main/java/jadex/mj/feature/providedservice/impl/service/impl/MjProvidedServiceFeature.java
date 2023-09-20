@@ -796,12 +796,6 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	}
 	
 	@Override
-	public IFuture<Void> onBody()
-	{
-		return IFuture.DONE;
-	}
-	
-	@Override
 	public IFuture<Void> onEnd()
 	{
 		return IFuture.DONE;
