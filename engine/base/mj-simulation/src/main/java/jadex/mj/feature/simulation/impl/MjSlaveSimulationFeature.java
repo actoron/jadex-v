@@ -7,7 +7,7 @@ import jadex.mj.feature.simulation.IMjSimulationFeature;
 public class MjSlaveSimulationFeature extends MjExecutionFeature	implements IMjSimulationFeature
 {
 	// Hack!!! public to allow reset for testing in eclipse
-	public static MjMasterSimulationFeature	master;
+	public static volatile MjMasterSimulationFeature	master;
 	
 	// Hack!!! public to allow reset for testing in eclipse
 	public static boolean	parallel	= true;
@@ -17,11 +17,14 @@ public class MjSlaveSimulationFeature extends MjExecutionFeature	implements IMjS
 	 */
 	protected MjMasterSimulationFeature	getMaster()
 	{
-		synchronized(this.getClass())
+		if(master==null)
 		{
-			if(master==null)
+			synchronized(this.getClass())
 			{
-				master = new MjMasterSimulationFeature();
+				if(master==null)
+				{
+					master = new MjMasterSimulationFeature();
+				}
 			}
 		}
 		return master;
