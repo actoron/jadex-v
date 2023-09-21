@@ -70,6 +70,9 @@ includeBuild('engine/base/mj-simulation') {
 includeBuild('engine/mj-microagent') {
 }
 
+includeBuild('rules/eca') {
+}
+
 includeBuild('application/micro'){
 }
 
