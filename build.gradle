@@ -1,4 +1,4 @@
-['clean', 'compileJava', 'build', 'test'].each { mytask ->
+['clean', 'compileJava', 'build', 'test', 'wrapper'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
 		//println "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {
