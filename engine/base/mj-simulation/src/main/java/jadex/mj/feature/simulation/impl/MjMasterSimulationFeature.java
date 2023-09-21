@@ -18,23 +18,12 @@ public class MjMasterSimulationFeature	extends MjExecutionFeature	implements IMj
 	/** Flag indicating that the simulation is active. */
 	protected boolean	simulating	= true;
 	
-	/** Infor stop() callers when simulation stops (if any). */
+	/** Inform stop() callers when simulation stops (if any). */
 	protected Future<Void>	stopping	= null;
 	
 	public void scheduleStep(MjExecutionFeature exe, Runnable r)
 	{
-		super.scheduleStep(() ->
-		{
-			try
-			{
-				LOCAL.set(exe);
-				r.run();
-			}
-			finally
-			{
-				LOCAL.remove();
-			}
-		});
+		super.scheduleStep(new StepInfo(exe, r));
 	}
 	
 	protected Queue<TimerEntry>	timer_entries	= new PriorityQueue<>();
@@ -204,6 +193,26 @@ public class MjMasterSimulationFeature	extends MjExecutionFeature	implements IMj
 			{
 				idle();
 			}
+		}
+	}
+	
+	// Only used in single-thread simulation
+	static class StepInfo	implements Runnable
+	{
+		Runnable	step;
+		MjExecutionFeature	exe;
+		
+		public StepInfo(MjExecutionFeature exe, Runnable step)
+		{
+			this.exe	= exe;
+			this.step	= step;
+		}
+
+		@Override
+		public void run()
+		{
+			LOCAL.set(exe);
+			exe.doRun(step);
 		}
 	}
 }

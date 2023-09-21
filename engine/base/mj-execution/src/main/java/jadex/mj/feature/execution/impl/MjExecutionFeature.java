@@ -1,6 +1,8 @@
 package jadex.mj.feature.execution.impl;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,7 +17,7 @@ import jadex.future.ISuspendable;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
-public class MjExecutionFeature	implements IMjExecutionFeature
+public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
 {
 	protected static final ThreadPoolExecutor	THREADPOOL	= new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
@@ -74,6 +76,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				{
 					@SuppressWarnings("unchecked")
 					Future<T>	resfut	= (Future<T>)res;
+					// Use generic connection method to avoid issues with different future types.
 					resfut.delegateTo(ret);
 				}
 				else
@@ -93,12 +96,6 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		return ret;
 	}
 	
-	
-	
-	// Use generic connection method to avoid issues with different future types.
-	
-
-	
 	/**
 	 *  Test if the current thread is used for current component execution.
 	 *  @return True, if it is the currently executing component thread.
@@ -108,6 +105,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 		return this==LOCAL.get();
 	}
 	
+	// Global on-demand timer shared by all components.
 	protected static volatile Timer	timer;
 	protected static volatile int	timer_entries;
 	
@@ -128,7 +126,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				@Override
 				public void run()
 				{
-					ret.setResult(null);
+					scheduleStep(() -> ret.setResult(null));
 					
 					synchronized(MjExecutionFeature.this.getClass())
 					{
@@ -201,14 +199,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 					step	= steps.poll();
 				}
 				
-				try
-				{
-					step.run();
-				}
-				catch(Throwable t)
-				{
-					new RuntimeException("Exception in step", t).printStackTrace();
-				}
+				doRun(step);
 				
 				synchronized(MjExecutionFeature.this)
 				{
@@ -232,6 +223,11 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 	
 	protected class ComponentSuspendable implements ISuspendable
 	{
+		public ComponentSuspendable()
+		{
+			// TODO Auto-generated constructor stub
+		}
+
 		@Override
 		public void suspend(Future<?> future, long timeout, boolean realtime)
 		{
@@ -259,6 +255,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				THREADPOOL.execute(runner);
 			}
 			
+			beforeBlock();
+			
 			synchronized(this)
 			{
 				try
@@ -270,6 +268,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				{
 				}
 			}
+			
+			afterBlock();
 		}
 	
 		@Override
@@ -285,5 +285,89 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				}
 			});
 		}
+	}
+	
+	protected List<IStepListener>	listeners	= null;
+
+	@Override
+	public void addStepListener(IStepListener lis)
+	{
+		if(listeners==null)
+		{
+			listeners	= new ArrayList<>();
+		}
+		listeners.add(lis);
+	}
+
+	@Override
+	public void removeStepListener(IStepListener lis)
+	{
+		assert listeners!=null;
+		boolean	removed	= listeners.remove(lis);
+		assert removed;
+	}
+	
+	protected void beforeStep()
+	{
+		if(listeners!=null)
+		{
+			for(IStepListener lis : listeners)
+			{
+				lis.beforeStep();
+			}
+		}
+	}
+	
+	protected void afterStep()
+	{
+		if(listeners!=null)
+		{
+			for(IStepListener lis : listeners)
+			{
+				lis.afterStep();
+			}
+		}
+	}
+	
+	protected void beforeBlock()
+	{
+		if(listeners!=null)
+		{
+			for(IStepListener lis : listeners)
+			{
+				lis.beforeBlock();
+			}
+		}
+	}
+	
+	protected void afterBlock()
+	{
+		if(listeners!=null)
+		{
+			for(IStepListener lis : listeners)
+			{
+				lis.afterBlock();
+			}
+		}
+	}
+
+	/**
+	 *  Template method to allow augmentation/alteration of step execution.
+	 *  Responsible for beforeStep/afterStep calls.
+	 */
+	public void doRun(Runnable step)
+	{		
+		beforeStep();
+		
+		try
+		{
+			step.run();
+		}
+		catch(Throwable t)
+		{
+			new RuntimeException("Exception in step", t).printStackTrace();
+		}
+		
+		afterStep();
 	}
 }
