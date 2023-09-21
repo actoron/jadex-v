@@ -1,0 +1,31 @@
+plugins 
+{
+	id 'java-library'
+}
+
+group = 'jadex'
+
+java
+{
+    sourceCompatibility = JavaVersion.VERSION_17
+}
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	implementation 'jadex:mj-core:5.0.0'
+	implementation 'jadex:mj-execution:5.0.0'
+	implementation 'jadex:mj-lifecycle:5.0.0'
+	implementation 'jadex:mj-microagent:5.0.0'
+	implementation 'jadex:common:5.0.0'
+	implementation 'jadex:future:5.0.0'
+	implementation 'jadex:javaparser:5.0.0'
+	implementation 'jadex:collection:5.0.0'
+	implementation 'jadex:classreader:5.0.0'
+	implementation 'jadex:eca:5.0.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}
