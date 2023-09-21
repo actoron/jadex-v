@@ -14,7 +14,8 @@ repositories
 dependencies
 {
 	implementation 'jadex:mj-core:5.0.0'
-	implementation 'jadex:future:5.0.0'
+	api 'jadex:future:5.0.0'
+	implementation 'jadex:common:5.0.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testFixturesImplementation 'jadex:mj-core:5.0.0'
 	testFixturesImplementation 'jadex:future:5.0.0'
