@@ -72,7 +72,9 @@ public class MjExecutionFeature	implements IMjExecutionFeature
 				T res = s.get();
 				if(res instanceof Future)
 				{
-					((Future<T>)res).delegateTo(ret);
+					@SuppressWarnings("unchecked")
+					Future<T>	resfut	= (Future<T>)res;
+					resfut.delegateTo(ret);
 				}
 				else
 				{

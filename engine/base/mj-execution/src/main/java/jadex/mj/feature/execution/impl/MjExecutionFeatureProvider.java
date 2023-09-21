@@ -34,7 +34,7 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 				if(pojo instanceof Runnable)
 					SMjLambdaComponent.create((Runnable)pojo);
 				else
-					SMjLambdaComponent.create((Supplier<Object>)pojo);
+					SMjLambdaComponent.create((Supplier<?>)pojo);
 			}
 		});
 	}
