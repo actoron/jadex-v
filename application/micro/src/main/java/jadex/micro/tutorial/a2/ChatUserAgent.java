@@ -1,7 +1,7 @@
 package jadex.micro.tutorial.a2;
 
 import jadex.common.SUtil;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.IComponent;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.requiredservice.annotation.OnService;
@@ -14,7 +14,7 @@ public class ChatUserAgent
 {
 	/** The underlying micro agent. */
 	@Agent
-	protected MjComponent agent;
+	protected IComponent agent;
 
 	@OnService
 	public void chatServiceFound(IChatService cs)

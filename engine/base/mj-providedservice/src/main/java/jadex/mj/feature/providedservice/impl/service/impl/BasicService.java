@@ -13,6 +13,7 @@ import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;

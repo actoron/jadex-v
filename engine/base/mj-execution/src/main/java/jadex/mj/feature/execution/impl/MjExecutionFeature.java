@@ -11,9 +11,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISuspendable;
+import jadex.mj.core.IComponent;
+import jadex.mj.core.IThrowingConsumer;
+import jadex.mj.core.IThrowingFunction;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
@@ -32,9 +36,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	public MjComponent getComponent()
 	{
 		if(self==null)
-		{
 			throw new IllegalStateException("Component can not be accessed in 'beforeCreation' bootstrapping.");
-		}
 		return self;
 	}
 	
@@ -72,6 +74,67 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			try
 			{
 				T res = s.get();
+				if(res instanceof Future)
+				{
+					@SuppressWarnings("unchecked")
+					Future<T>	resfut	= (Future<T>)res;
+					// Use generic connection method to avoid issues with different future types.
+					resfut.delegateTo(ret);
+				}
+				else
+				{
+					ret.setResult(res);
+				}
+			}
+			catch(Exception e)
+			{
+				ret.setException(e);
+			}
+			catch(Throwable t)
+			{
+				ret.setException(new RuntimeException("Error in step", t));
+			}
+		});
+		return ret;
+	}
+	
+	/**
+	 *  Schedule a step that provides a result.
+	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
+	 *  @return	A future that provides access to the step result, once it is available.
+	 */
+	public void scheduleStep(IThrowingConsumer<IComponent> step)
+	{
+		scheduleStep(() ->
+		{
+			try
+			{
+				step.accept(self);
+			}
+			catch(Exception e)
+			{
+				SUtil.rethrowAsUnchecked(e);
+			}
+			catch(Throwable t)
+			{
+				SUtil.rethrowAsUnchecked(t);
+			}
+		});
+	}
+	
+	/**
+	 *  Schedule a step that provides a result.
+	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
+	 *  @return	A future that provides access to the step result, once it is available.
+	 */
+	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
+	{
+		Future<T>	ret	= new Future<>();
+		scheduleStep(() ->
+		{
+			try
+			{
+				T res = step.apply(self);
 				if(res instanceof Future)
 				{
 					@SuppressWarnings("unchecked")

@@ -9,6 +9,7 @@ import java.util.UUID;
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.javaparser.SJavaParser;
+import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
@@ -66,7 +67,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/**
 	 *  Create a new service identifier.
 	 */
-	public ServiceIdentifier(MjComponent provider, Class<?> type, String servicename, ServiceScope scope, Boolean unrestricted)
+	public ServiceIdentifier(IComponent provider, Class<?> type, String servicename, ServiceScope scope, Boolean unrestricted)
 	{
 //		if(!type.isInterface())
 //		{

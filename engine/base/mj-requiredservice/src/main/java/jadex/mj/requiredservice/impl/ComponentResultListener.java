@@ -8,7 +8,8 @@ import jadex.future.IFuture;
 import jadex.future.IFutureCommandResultListener;
 import jadex.future.IResultListener;
 import jadex.future.IUndoneResultListener;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.IComponent;
+import jadex.mj.core.IExternalAccess;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.impl.MjExecutionFeature;
 
@@ -23,10 +24,10 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	protected IResultListener<E> listener;
 	
 	/** The component. */
-	protected MjComponent component;
+	protected IComponent component;
 	
 	/** The external access. */
-	protected MjComponent access; // todo!!!
+	protected IExternalAccess access; // todo!!!
 	
 	/** The undone flag. */
 	protected boolean undone;
@@ -40,7 +41,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	 *  @param listener The listener.
 	 *  @param adapter The adapter.
 	 */
-	public ComponentResultListener(IResultListener<E> listener, MjComponent component)
+	public ComponentResultListener(IResultListener<E> listener, IComponent component)
 	{
 		if(listener==null)
 			throw new NullPointerException("Listener must not be null.");
@@ -54,7 +55,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	 *  Create a new component result listener.
 	 *  @param listener The listener.
 	 *  @param adapter The adapter.
-	 * /
+	 */
 	public ComponentResultListener(IResultListener<E> listener, IExternalAccess access)
 	{
 		if(listener==null)
@@ -63,7 +64,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 		this.access = access;
 		//e = new RuntimeException();
 		//e.printStackTrace(new PrintStream(new ByteArrayOutputStream()));
-	}*/
+	}
 	
 	//-------- methods --------
 	
@@ -170,7 +171,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	 *  Execute a listener notification on the component using either an external access or the internal one
 	 *  and robustly use the rescue thread for the notification, when the component is terminated.
 	 */
-	public static void	scheduleForward(MjComponent access, MjComponent component, Runnable notification)
+	public static void	scheduleForward(IExternalAccess access, IComponent component, Runnable notification)
 	{
 		assert access!=null || component!=null;
 		
@@ -201,7 +202,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 			if(access!=null)
 			{
 				//access.scheduleStep(ia -> invocation.get())
-				access.getFeature(IMjExecutionFeature.class).scheduleStep(invocation)
+				access.scheduleStep(invocation)
 					.catchEx(ex0 ->
 					{
 						if(!invoked[0])

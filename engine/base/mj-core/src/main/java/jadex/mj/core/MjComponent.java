@@ -5,10 +5,13 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
+import jadex.future.IFuture;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.core.modelinfo.IModelInfo;
@@ -17,9 +20,8 @@ import jadex.mj.core.modelinfo.ModelInfo;
 /**
  *  Base class for Jadex components, which provides access to component features.
  */
-public class MjComponent
+public class MjComponent implements IComponent
 {
-
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
 	protected Map<Class<Object>, MjFeatureProvider<Object>>	providers;
@@ -35,6 +37,12 @@ public class MjComponent
 	
 	/** The id. */
 	protected UUID id;
+	
+	/** The external access. */
+	protected IExternalAccess access;
+	
+	/** The external access supplier. */
+	protected static Function<IComponent, IExternalAccess> accessfactory;
 		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
@@ -275,6 +283,62 @@ public class MjComponent
 	public ModelInfo getModel()
 	{
 		return (ModelInfo)modelinfo;
+	}
+	
+	/**
+	 *  Get the external access.
+	 *  @return The external access.
+	 */
+	public IExternalAccess getExternalAccess()
+	{
+		if(access==null)
+		{
+			if(accessfactory!=null)
+				access = accessfactory.apply(this);
+			else
+				access = new IExternalAccess() {
+					
+					@Override
+					public <T> IFuture<T> scheduleStep(Supplier<T> step) 
+					{
+						throw new UnsupportedOperationException("Missing execution feature");
+					}
+					
+					@Override
+					public void scheduleStep(Runnable step) 
+					{
+						throw new UnsupportedOperationException("Missing execution feature");
+					}
+					
+					@Override
+					public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
+					{
+						throw new UnsupportedOperationException("Missing execution feature");
+					}
+					
+					@Override
+					public void scheduleStep(IThrowingConsumer<IComponent> step)
+					{
+						throw new UnsupportedOperationException("Missing execution feature");
+					}
+					
+					@Override
+					public UUID getId() 
+					{
+						return MjComponent.this.getId();
+					}
+				};
+		}
+		return access;
+	}
+	
+	/**
+	 *  Set the external access factory.
+	 *  @param factory The factory.
+	 */
+	public static void setExternalAccessFactory(Function<IComponent, IExternalAccess> factory)
+	{
+		accessfactory = factory;
 	}
 	
 	public ClassLoader getClassLoader()

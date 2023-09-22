@@ -11,7 +11,7 @@ import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.IAsyncFilter;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.IComponent;
 
 /**
  *  Tag filter class. Allows for filtering according to a collection of tags.
@@ -38,7 +38,7 @@ public class TagFilter<T> implements IAsyncFilter<T>
 	public static final String JADEX_VERSION = "\""+JADEX_VERSION_INTERNAL+"\"";
 	
 	/** The component. */
-	protected MjComponent component;
+	protected IComponent component;
 	
 	/** The search tags. */
 	protected Collection<String> tags;
@@ -51,7 +51,7 @@ public class TagFilter<T> implements IAsyncFilter<T>
 	/**
 	 *  Create a new tag filter.
 	 */
-	public TagFilter(MjComponent component, String... tags)
+	public TagFilter(IComponent component, String... tags)
 	{
 		this(component, tags==null? Collections.EMPTY_LIST: Arrays.asList(tags));
 	}
@@ -59,7 +59,7 @@ public class TagFilter<T> implements IAsyncFilter<T>
 	/**
 	 *  Create a new tag filter.
 	 */
-	public TagFilter(MjComponent component, Collection<String> tags)
+	public TagFilter(IComponent component, Collection<String> tags)
 	{
 		this.component = component;
 		this.tags = createRuntimeTags(tags);//, component);
