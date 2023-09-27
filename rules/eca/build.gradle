@@ -15,6 +15,7 @@ dependencies
 {
 	implementation 'jadex:common:5.0.0'
 	implementation 'jadex:concurrent:5.0.0'
+	implementation 'jadex:future:5.0.0'
 	implementation 'jadex:javaparser:5.0.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }
