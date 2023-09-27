@@ -13,6 +13,10 @@ repositories
 dependencies
 {
 	implementation 'jadex:common:5.0.0'
+	implementation 'jadex:future:5.0.0'
+    implementation 'jadex:mj-core:5.0.0'
+    implementation 'jadex:mj-execution:5.0.0'
+    implementation 'jadex:mj-lifecycle:5.0.0'
     implementation 'jadex:mj-microagent:5.0.0'
     implementation 'jadex:mj-providedservice:5.0.0'
     implementation 'jadex:mj-requiredservice:5.0.0'

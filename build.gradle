@@ -1,14 +1,25 @@
+// Skip old/unfinished projects in gradle build. these are still included in eclipse
+def excludes	= ['core', 'microagent', 'mj-nfproperties', 'mj-bdi']
+
 ['clean', 'compileJava', 'build', 'test', 'wrapper'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
 		//println "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {
-			dependsOn gradle.includedBuilds*.task(':'+mytask)
+			gradle.includedBuilds.each { build ->
+				if(!excludes.contains(build.name)) {
+					dependsOn build.task(':'+mytask)
+				}
+			}
 		}
 	}
 	else {
 		//println "Creating task '"+mytask+"'"
 		project.tasks.create([name: mytask]) {	
-			dependsOn gradle.includedBuilds*.task(':'+mytask)
+			gradle.includedBuilds.each { build ->
+				if(!excludes.contains(build.name)) {
+					dependsOn build.task(':'+mytask)
+				}
+			}
 		}
 	}
 }
