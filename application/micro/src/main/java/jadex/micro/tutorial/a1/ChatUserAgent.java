@@ -3,7 +3,7 @@ package jadex.micro.tutorial.a1;
 import java.util.Collection;
 
 import jadex.common.SUtil;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.IComponent;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
@@ -18,7 +18,7 @@ public class ChatUserAgent
 {
 	/** The underlying micro agent. */
 	@Agent
-	protected MjComponent agent;
+	protected IComponent agent;
 
 	/**
 	 *  Execute the functional body of the agent.

@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.IComponent;
 import jadex.quickstart.cleanerworld.environment.ILocationObject;
 
 /**
@@ -85,7 +85,7 @@ public class Environment
 	 *  Get a cleaner object for an agent.
 	 *  Creates a new cleaner object if none exists.
 	 */
-	public Cleaner	createCleaner(MjComponent agent)
+	public Cleaner	createCleaner(IComponent agent)
 	{
 		String	cid	= agent.getId().toString();
 		Cleaner	ret;

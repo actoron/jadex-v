@@ -1,7 +1,7 @@
 package jadex.mj.requiredservice.impl;
 
 import jadex.common.ICommand;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.IComponent;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
 
 /**
@@ -13,16 +13,16 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 	//-------- attributes --------
 	
 	/** The adapter. */
-	protected MjComponent access;
+	protected IComponent comp;
 	
 	//-------- constructors --------
 	
 	/**
 	 *  Create a new future.
 	 */
-	public ComponentFutureFunctionality(MjComponent access)
+	public ComponentFutureFunctionality(IComponent comp)
 	{
-		this.access = access;
+		this.comp = comp;
 	}
 	
 	/**
@@ -31,7 +31,7 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 	@Override
 	public <T> void scheduleForward(final ICommand<T> command, final T args)
 	{
-		ComponentResultListener.scheduleForward(access, null, new Runnable()
+		ComponentResultListener.scheduleForward(null, comp, new Runnable()
 		{
 			@Override
 			public void run()
@@ -42,7 +42,7 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 			@Override
 			public String toString()
 			{
-				return "Command(" + access + ", " + command +", " + args + ")";
+				return "Command(" + comp + ", " + command +", " + args + ")";
 			}
 		});
 	}

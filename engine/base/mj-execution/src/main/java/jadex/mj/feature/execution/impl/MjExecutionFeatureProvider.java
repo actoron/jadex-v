@@ -1,8 +1,14 @@
 package jadex.mj.feature.execution.impl;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
+import jadex.future.IFuture;
+import jadex.mj.core.IComponent;
+import jadex.mj.core.IExternalAccess;
+import jadex.mj.core.IThrowingConsumer;
+import jadex.mj.core.IThrowingFunction;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IBootstrapping;
 import jadex.mj.core.impl.IComponentCreator;
@@ -36,6 +42,43 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 				else
 					LambdaAgent.create((Supplier<?>)pojo);
 			}
+		});
+		
+		// Init the component with schedule step functionality (hack?!)
+		MjComponent.setExternalAccessFactory(comp ->
+		{
+			return new IExternalAccess() 
+			{
+				@Override
+				public UUID getId()
+				{
+					return comp.getId();
+				}
+				
+				@Override
+				public <T> IFuture<T> scheduleStep(Supplier<T> step) 
+				{
+					return comp.getFeature(IMjExecutionFeature.class).scheduleStep(step);
+				}
+				
+				@Override
+				public void scheduleStep(Runnable step) 
+				{
+					comp.getFeature(IMjExecutionFeature.class).scheduleStep(step);
+				}
+				
+				@Override
+				public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
+				{
+					return comp.getFeature(IMjExecutionFeature.class).scheduleStep(step);
+				}
+				
+				@Override
+				public void scheduleStep(IThrowingConsumer<IComponent> step)
+				{
+					comp.getFeature(IMjExecutionFeature.class).scheduleStep(step);
+				}
+			};
 		});
 	}
 	

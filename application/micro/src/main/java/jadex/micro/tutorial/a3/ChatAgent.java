@@ -1,0 +1,63 @@
+package jadex.micro.tutorial.a3;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import jadex.common.SUtil;
+import jadex.mj.core.IComponent;
+import jadex.mj.core.annotation.OnEnd;
+import jadex.mj.core.annotation.OnStart;
+import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.annotation.Agent;
+
+/**
+ *  Chat micro agent provides a basic chat service. 
+ */
+@Agent
+@Service
+public class ChatAgent implements IChatService
+{
+	/** The underlying micro agent. */
+	@Agent
+	protected IComponent agent;
+	
+	protected ChatGui gui;
+	
+	@OnStart
+	protected void onStart()
+	{
+		System.out.println("agent started: "+agent.getId());
+		
+		this.gui = new ChatGui(agent.getExternalAccess());
+	}
+	
+	@OnEnd
+	protected void end()
+	{
+		this.gui.dispose();
+	}
+	
+	/**
+	 *  Receives a chat message.
+	 *  @param sender The sender's name.
+	 *  @param text The message text.
+	 */
+	public void message(final String sender, final String text)
+	{
+		String txt = agent.getId()+" received at "+new SimpleDateFormat("hh:mm:ss").format(new Date())+" from: "+sender+" message: "+text;
+		gui.addMessage(txt);
+	}
+	
+	/**
+	 *  Start the example.
+	 */
+	public static void main(String[] args) throws InterruptedException 
+	{
+		MjMicroAgent.create(new ChatAgent());
+		MjMicroAgent.create(new ChatAgent());
+		MjMicroAgent.create(new ChatAgent());
+		
+		SUtil.sleep(10000);
+	}
+}

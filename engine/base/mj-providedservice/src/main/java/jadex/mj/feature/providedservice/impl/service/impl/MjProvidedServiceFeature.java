@@ -53,9 +53,9 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	@Override
 	public IFuture<Void> onStart()
 	{
-		Future<Void> ret = new Future();
+		Future<Void> ret = new Future<Void>();
 		
-		ModelInfo model = self.getModel();
+		ModelInfo model = (ModelInfo)self.getModel();
 		
 		Object mymodel = model.getFeatureModel(this.getClass());
 		if(mymodel==null)
@@ -449,7 +449,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	protected IFuture<Void> initService(final IInternalService is)
 	{
 		final Future<Void> ret = new Future<Void>();
-		System.out.println("Starting service: "+is.getServiceId()+" "+self.getFeature(IMjExecutionFeature.class).isComponentThread());
+		//System.out.println("Starting service: "+is.getServiceId()+" "+self.getFeature(IMjExecutionFeature.class).isComponentThread());
 		is.setComponentAccess(self).addResultListener(new DelegationResultListener<Void>(ret)
 		{
 			public void customResultAvailable(Void result)

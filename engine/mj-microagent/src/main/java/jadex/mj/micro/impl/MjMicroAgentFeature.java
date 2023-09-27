@@ -246,7 +246,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 		
 		//Map<String, Object>	args = component.getFeature(IArgumentsResultsFeature.class).getArguments();
 		//Map<String, Object>	results	= component.getFeature(IArgumentsResultsFeature.class).getResults();
-		final MicroModel model = (MicroModel)component.getModel().getRawModel();
+		//final MicroModel model = (MicroModel)component.getModel().getRawModel();
 
 		try
 		{
@@ -258,6 +258,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 				SAccess.setAccessible(f, true);
 				f.set(target, component);
 			}
+			ret.setResult(null);
 	
 			// Inject argument values
 			/*if(args!=null)
