@@ -952,7 +952,7 @@ public class SharedPersistentMap<K, V> implements Map<K, V>
 			// Full restructuring is needed to release garbage,
 			// Index is also resized if required.
 			
-			System.out.println("Restructuring map... " + size + " " + indexsize + " " + garbage);
+			//System.out.println("Restructuring map... " + size + " " + indexsize + " " + garbage);
 			
 			File tmpfile = File.createTempFile("sharedmap", "tmp");
 			
