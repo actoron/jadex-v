@@ -12,7 +12,6 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import jadex.common.IResultCommand;
 import jadex.common.SAccess;
@@ -46,9 +45,6 @@ public class RuleSystem
 	/** The context for rule action execution. */
 	protected Object context;
 	
-	/** The logger for rule warnings. */
-	protected Logger logger;
-	
 	/** The PropertyChangeManager to add/remove handlers and manage events */
 	protected PropertyChangeManager pcman;
 	
@@ -65,16 +61,15 @@ public class RuleSystem
 	 */
 	public RuleSystem(Object context)
 	{
-		this(context, null, true);
+		this(context, true);
 	}
 	
 	/**
 	 *  Create a new rule system.
 	 */
-	public RuleSystem(Object context, Logger logger, boolean queueevents)
+	public RuleSystem(Object context, boolean queueevents)
 	{
 		this.context = context;
-		this.logger	= logger;
 		this.rulebase = new Rulebase();
 		this.rules = new IdentityHashMap<Object, Tuple2<Object, IRule<?>[]>>(); // objects may change
 		this.pcman = new PropertyChangeManager();
@@ -385,9 +380,9 @@ public class RuleSystem
 						// Simulate microplansteps by executing all effects immediately (hack: allow configuration sync/async)
 						FutureHelper.notifyStackedListeners();
 
-						if(logger!=null && !ret.isDone())
+						if(!ret.isDone())
 						{
-							logger.warning("Asyncronous rule execution.");
+							System.err.println("WARNING: Asyncronous rule execution.");
 						}
 					}
 				}
