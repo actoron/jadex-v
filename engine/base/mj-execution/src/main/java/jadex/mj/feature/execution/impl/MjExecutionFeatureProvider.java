@@ -10,7 +10,7 @@ import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SComponentFactory;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.execution.SMjLambdaComponent;
+import jadex.mj.feature.execution.LambdaAgent;
 
 public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFeature>	implements IBootstrapping
 {
@@ -32,9 +32,9 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 			public void create(Object pojo)
 			{
 				if(pojo instanceof Runnable)
-					SMjLambdaComponent.create((Runnable)pojo);
+					LambdaAgent.create((Runnable)pojo);
 				else
-					SMjLambdaComponent.create((Supplier<?>)pojo);
+					LambdaAgent.create((Supplier<?>)pojo);
 			}
 		});
 	}
