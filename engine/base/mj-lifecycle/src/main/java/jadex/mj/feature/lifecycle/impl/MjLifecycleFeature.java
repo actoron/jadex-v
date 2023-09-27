@@ -2,6 +2,7 @@ package jadex.mj.feature.lifecycle.impl;
 
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.impl.IMjInternalExecutionFeature;
 import jadex.mj.feature.lifecycle.IMjLifecycleFeature;
 
 public class MjLifecycleFeature	implements IMjLifecycleFeature
@@ -22,9 +23,12 @@ public class MjLifecycleFeature	implements IMjLifecycleFeature
 				self.getFeature(IMjExecutionFeature.class).scheduleStep(()->
 				{
 					IMjLifecycle	lfeature	= (IMjLifecycle)feature;
-					lfeature.onEnd();
+					lfeature.onEnd().get();
 				});
 			}
 		});
+		
+		// invoke terminate on execution feature
+		((IMjInternalExecutionFeature)self.getFeature(IMjExecutionFeature.class)).terminate();
 	}
 }

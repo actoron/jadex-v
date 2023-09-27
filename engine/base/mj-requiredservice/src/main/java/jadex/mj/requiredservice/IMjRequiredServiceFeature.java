@@ -165,9 +165,9 @@ public interface IMjRequiredServiceFeature
 	/**
 	 *  Create the user-facing object from the received search or query result.
 	 *  Result may be service object, service identifier (local or remote), or event.
-	 *  User object is either event or service (with or without required proxy).
+	 *  User object is service (with or without required proxy).
 	 */
-	//public IService getServiceProxy(IServiceIdentifier sid, RequiredServiceInfo info);
+	public IService getServiceProxy(IServiceIdentifier sid, RequiredServiceInfo info);
 	
 	/**
 	 *  Get a service query for a required service info (as defined in the agent under that name).

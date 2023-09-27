@@ -3,6 +3,8 @@ package jadex.mj.feature.providedservice.impl.service.impl;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -10,23 +12,25 @@ import java.util.Set;
 import java.util.UUID;
 
 import jadex.common.ClassInfo;
+import jadex.common.MethodInfo;
 import jadex.common.SReflect;
+import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Security;
+import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.feature.providedservice.annotation.Timeout;
 
 /**
  *  Basic service provide a simple default isValid() implementation
  *  that returns true after start service and false afterwards.
  */
-public class BasicService //implements IInternalService //extends NFMethodPropertyProvider implements IInternalService
+public class BasicService implements IInternalService //extends NFMethodPropertyProvider implements IInternalService
 {
 	//-------- constants --------
 
@@ -303,7 +307,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	/**
 	 *  Get reflective info about the service methods, args, return types.
 	 *  @return The method infos.
-	 * /
+	 */
 	public IFuture<MethodInfo[]> getMethodInfos()
 	{
 		Class<?> iface = sid.getServiceType().getType(internalaccess.getClassLoader());
@@ -336,7 +340,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 		}
 		
 		return new Future<MethodInfo[]>(ret);
-	}*/
+	}
 	
 	/**
 	 *  Get method that should be invoked on target object.
@@ -561,7 +565,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	/**
 	 *  Shutdown the service.
 	 *  @return A future that is done when the service has completed its shutdown.  
-	 * /
+	 */
 	public IFuture<Void>	shutdownService()
 	{
 //		if(getClass().getName().toLowerCase().indexOf("super")!=-1)
@@ -572,7 +576,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 			ServiceInvocationHandler.removePojoServiceProxy(sid);
 		
 		final Future<Void> ret = new Future<Void>();
-		isValid().addResultListener(new ExceptionDelegationResultListener<Boolean, Void>(ret)
+		/*isValid().addResultListener(new ExceptionDelegationResultListener<Boolean, Void>(ret)
 		{
 			public void customResultAvailable(Boolean result)
 			{
@@ -590,9 +594,12 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 //					System.out.println("shutdowned service: "+getId());
 				}
 			}
-		});
+		});*/
+		
+		shutdowned = true;
+		ret.setResult(null);
 		return ret;
-	}*/
+	}
 	
 	/**
 	 *  Generate a unique name.

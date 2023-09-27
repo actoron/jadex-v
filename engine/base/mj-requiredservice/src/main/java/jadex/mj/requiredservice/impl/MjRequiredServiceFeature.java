@@ -40,9 +40,9 @@ import jadex.future.TerminableFuture;
 import jadex.future.TerminableIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.javaparser.SJavaParser;
+import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
-import jadex.mj.core.modelinfo.IModelInfo;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
@@ -52,6 +52,7 @@ import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.feature.providedservice.impl.search.IServiceRegistry;
 import jadex.mj.feature.providedservice.impl.search.MultiplicityException;
+import jadex.mj.feature.providedservice.impl.search.ServiceEvent;
 import jadex.mj.feature.providedservice.impl.search.ServiceNotFoundException;
 import jadex.mj.feature.providedservice.impl.search.ServiceQuery;
 import jadex.mj.feature.providedservice.impl.search.ServiceQuery.Multiplicity;
@@ -195,7 +196,9 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		
 		final RequiredServiceModel fmymodel = mymodel;
 		String[] sernames = mymodel.getServiceInjectionNames();
+		
 		Stream<Tuple2<String, ServiceInjectionInfo[]>> s = Arrays.stream(sernames).map(sername -> new Tuple2<String, ServiceInjectionInfo[]>(sername, fmymodel.getServiceInjections(sername)));
+		
 		Map<String, ServiceInjectionInfo[]> serinfos = s.collect(Collectors.toMap(t -> t.getFirstEntity(), t -> t.getSecondEntity())); 
 		
 		Object pojo = ((MjMicroAgent)self).getPojo(); // hack
@@ -692,7 +695,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		/*else*/ if(result instanceof IServiceIdentifier)
 			return getServiceProxy((IServiceIdentifier)result, info);
 		else if(result instanceof IService)
-			return addRequiredServiceProxy((IService)result, info);
+			return addRequiredServiceProxy((IService)result, info, getComponent());
 		else
 			return result;
 	}
@@ -1241,15 +1244,25 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	 */
 	public IService getServiceProxy(IServiceIdentifier sid, RequiredServiceInfo info)
 	{
+		return getServiceProxy(sid, info, getComponent());
+	}
+	
+	/**
+	 *  Create the user-facing object from the received search or query result.
+	 *  Result may be service object, service identifier (local or remote), or event.
+	 *  User object is either event or service (with or without required proxy).
+	 */
+	public static IService getServiceProxy(IServiceIdentifier sid, RequiredServiceInfo info, MjComponent component)
+	{
 		IService ret = null;
 		
 		// If service identifier -> find/create service object or proxy
 			
 		// Local component -> fetch local service object.
 		//if(sid.getProviderId().getRoot().equals(getComponent().getId().getRoot()))
-		{
+		//{
 			ret = ServiceRegistry.getRegistry().getLocalService(sid); 			
-		}
+		//}
 		
 		// Remote component -> create remote proxy
 		/*else
@@ -1260,7 +1273,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		// else service event -> just return event, as desired by user (specified in query return type)
 		
 		if(ret!=null)
-			ret = addRequiredServiceProxy(ret, info);
+			ret = addRequiredServiceProxy(ret, info, component);
 		
 		return ret;
 	}
@@ -1270,17 +1283,20 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	 * @param service
 	 * @param info
 	 */
-	protected IService addRequiredServiceProxy(IService service, RequiredServiceInfo info)
+	protected static IService addRequiredServiceProxy(IService service, RequiredServiceInfo info, MjComponent component)
 	{
 		IService ret = service;
 		
 		// Add required service proxy if specified.
-		if(info!=null)
-		{
-			ret = createRequiredServiceProxy(getComponent(), 
-				(IService)ret, null, info, info.getDefaultBinding(), 
+		//if(info!=null)
+		//{
+			ret = createRequiredServiceProxy(component, 
+				(IService)ret, null, 
+				//info, 
+				info==null? null: info.getDefaultBinding() 
 				//Starter.isRealtimeTimeout(getComponent().getId(), true) 
-				true);
+				//true
+				);
 			
 			// Check if no property provider has been created before and then create and init properties
 			/*if(!getComponent().getFeature(INFPropertyComponentFeature.class).hasRequiredServicePropertyProvider(ret.getServiceId()))
@@ -1307,7 +1323,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 					}
 				}
 			}*/
-		}
+		//}
 		
 		return ret;
 	}
@@ -1444,7 +1460,11 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	 *  Static method for creating a standard service proxy for a required service.
 	 */
 	public static IService createRequiredServiceProxy(MjComponent ia, IService service, 
-		IRequiredServiceFetcher fetcher, RequiredServiceInfo info, RequiredServiceBinding binding, boolean realtime)
+		IRequiredServiceFetcher fetcher, 
+		//RequiredServiceInfo info, 
+		RequiredServiceBinding binding 
+		//boolean realtime
+		)
 	{
 		if(isRequiredServiceProxy(service))
 		{
@@ -1576,6 +1596,9 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 						//ServiceQuery<Object> query = new ServiceQuery<>((Class<Object>)info.getType().getType(component.getClassLoader()), info.getDefaultBinding().getScope());
 						//query = info.getTags()==null || info.getTags().size()==0? query: query.setServiceTags(info.getTags().toArray(new String[info.getTags().size()]), component.getExternalAccess()); 
 						
+						// Set event mode to get also removed events
+						query.setEventMode();
+						
 						long to = infos[j].getActive();
 						ISubscriptionIntermediateFuture<Object> sfut = to>0?
 							component.getFeature(IMjRequiredServiceFeature.class).addQuery(query, to):
@@ -1599,7 +1622,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 								}*/
 								// todo: multiple parameters and using parameter annotations?!
 								// todo: multiple parameters and wait until all are filled?!
-								
+																
 								if(infos[fj].getMethodInfo()!=null)
 								{
 									Method m = SReflect.getAnyMethod(target.getClass(), infos[fj].getMethodInfo().getName(), infos[fj].getMethodInfo().getParameterTypes(component.getClassLoader()));
@@ -1609,8 +1632,8 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 								else if(infos[fj].getFieldInfo()!=null)
 								{
 									final Field	f = infos[fj].getFieldInfo().getField(component.getClassLoader());
-
-									setDirectFieldValue(f, target, result);
+										
+									setDirectFieldValue(f, target, result, component);
 								}
 								
 								// Continue with agent init when first service is found 
@@ -1682,7 +1705,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 								{
 									try
 									{
-										setDirectFieldValue(f, target, sfut.get());
+										setDirectFieldValue(f, target, sfut.get(), component);
 										lis2.resultAvailable(null);
 									}
 									catch(Exception e)
@@ -1726,7 +1749,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 										{
 											try
 											{
-												setDirectFieldValue(f, target, result);
+												setDirectFieldValue(f, target, result, component);
 												lis2.resultAvailable(null);
 											}
 											catch(Exception e)
@@ -1829,17 +1852,45 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	/**
 	 * 
 	 */
-	protected static void setDirectFieldValue(Field f, Object target, Object result)
+	protected static void setDirectFieldValue(Field f, Object target, Object result, MjComponent component)
 	{
-		Class<?> ft = f.getType();
+		
 		//boolean multiple = ft.isArray() || SReflect.isSupertype(Collection.class, ft) || info.getMax()>2;
 
+		ServiceEvent event = result instanceof ServiceEvent? (ServiceEvent)result: null;
+		
+		if(event!=null)
+		{
+			IServiceIdentifier sid = event.getService();
+			IService result2 = getServiceProxy(sid, null, component);
+			
+			if(event.getType()==ServiceEvent.SERVICE_ADDED)
+			{
+				if(!addDirectFieldValue(f, target, result))
+					if(!addDirectFieldValue(f, target, result2))
+						throw new RuntimeException("Could not add/set service value: "+result);
+			}
+			else if(event.getType()==ServiceEvent.SERVICE_REMOVED)
+			{
+				if(!removeDirectFieldValue(f, target, result))
+					if(!removeDirectFieldValue(f, target, result2))
+						throw new RuntimeException("Could not remove service value: "+result);
+			}
+		}
+	}
+	
+	protected static boolean addDirectFieldValue(Field f, Object target, Object result)
+	{
+		boolean ret = false;
+		Class<?> ft = f.getType();
+		SAccess.setAccessible(f, true);
+		
 		if(SReflect.isSupertype(ft, result.getClass()))
 		{
 			try
 			{
-				SAccess.setAccessible(f, true);
 				f.set(target, result);
+				ret = true;
 			}
 			catch(Throwable t)
 			{
@@ -1862,8 +1913,9 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 						{
 							try
 							{
-								SAccess.setAccessible(f, true);
 								f.set(target, result);
+								ret = true;
+								break;
 							}
 							catch(Exception e)
 							{
@@ -1877,35 +1929,142 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 					throw SUtil.throwUnchecked(e);
 				}
 			}
-			else
+			/*else
 			{
 				throw new RuntimeException("cannot invoke method as result type does not fit field types: "+result+" "+f);
+			}*/
+		}
+		else if(SReflect.isSupertype(List.class, ft))
+		{
+			try
+			{
+				Class<?> type = SReflect.getIterableComponentType(f.getGenericType());
+				if(SReflect.isSupertype(type, result.getClass()))
+				{
+					List<Object> coll = (List<Object>)f.get(target);
+					if(coll==null)
+					{
+						coll = new ArrayList<Object>();
+						try
+						{
+							f.set(target, coll);
+							ret = true;
+						}
+						catch(Exception e)
+						{
+							throw SUtil.throwUnchecked(e);
+						}
+					}
+					coll.add(result);
+				}
 			}
+			catch(Exception e)
+			{
+				//throw SUtil.throwUnchecked(e);
+			}
+		}
+		else if(SReflect.isSupertype(Set.class, ft))
+		{
+			try
+			{
+				Class<?> type = SReflect.getIterableComponentType(f.getGenericType());
+				if(SReflect.isSupertype(type, result.getClass()))
+				{
+					Set<Object> coll = (Set<Object>)f.get(target);
+					if(coll==null)
+					{
+						coll = new HashSet<Object>();
+						try
+						{
+							f.set(target, coll);
+							ret = true;
+						}
+						catch(Exception e)
+						{
+							throw SUtil.throwUnchecked(e);
+						}
+					}
+					coll.add(result);
+				}
+			}
+			catch(Exception e)
+			{
+				throw SUtil.throwUnchecked(e);
+			}
+		}
+		
+		return ret;
+	}
+	
+	protected static boolean removeDirectFieldValue(Field f, Object target, Object result)
+	{
+		boolean ret = false;
+		Class<?> ft = f.getType();
+		SAccess.setAccessible(f, true);
+		
+		if(SReflect.isSupertype(ft, result.getClass()))
+		{
+			try
+			{
+				f.set(target, null);
+				ret = true;
+			}
+			catch(Throwable t)
+			{
+				throw SUtil.throwUnchecked(t);
+			}
+		}
+		else if(ft.isArray())
+		{
+			// find next null value and insert new value there
+			Class<?> ct = ft.getComponentType();
+			if(SReflect.isSupertype(ct, result.getClass()))
+			{
+				try
+				{
+					Object ar = f.get(target);
+				
+					for(int i=0; i<Array.getLength(ar); i++)
+					{
+						if(Array.get(ar, i)==result)
+						{
+							try
+							{
+								f.set(target, null);
+								ret = true;
+								break;
+							}
+							catch(Exception e)
+							{
+								throw SUtil.throwUnchecked(e);
+							}
+						}
+					}
+				}
+				catch(Exception e)
+				{
+					throw SUtil.throwUnchecked(e);
+				}
+			}
+			/*else
+			{
+				throw new RuntimeException("cannot invoke method as result type does not fit field types: "+result+" "+f);
+			}*/
 		}
 		else if(SReflect.isSupertype(List.class, ft))
 		{
 			try
 			{
 				List<Object> coll = (List<Object>)f.get(target);
-				if(coll==null)
+				if(coll!=null && coll.contains(result))
 				{
-					coll = new ArrayList<Object>();
-					try
-					{
-						SAccess.setAccessible(f, true);
-						f.set(target, coll);
-					}
-					catch(Exception e)
-					{
-						throw SUtil.throwUnchecked(e);
-					}
+					coll.remove(result);
+					ret = true;
 				}
-				
-				coll.add(result);
 			}
 			catch(Exception e)
 			{
-				throw SUtil.throwUnchecked(e);
+				//throw SUtil.throwUnchecked(e);
 			}
 		}
 		else if(SReflect.isSupertype(Set.class, ft))
@@ -1913,33 +2072,36 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 			try
 			{
 				Set<Object> coll = (Set<Object>)f.get(target);
-				if(coll==null)
+				if(coll!=null && coll.contains(result))
 				{
-					coll = new HashSet<Object>();
-					try
-					{
-						SAccess.setAccessible(f, true);
-						f.set(target, coll);
-					}
-					catch(Exception e)
-					{
-						throw SUtil.throwUnchecked(e);
-					}
+					coll.remove(result);
+					ret = true;
 				}
-				
-				coll.add(result);
 			}
 			catch(Exception e)
 			{
-				throw SUtil.throwUnchecked(e);
+				//throw SUtil.throwUnchecked(e);
 			}
 		}
-		else
-		{
-			throw new RuntimeException("injection error: "+f+" "+target+" "+result);
-		}
+		
+		return ret;
 	}
 
+	protected static boolean fillMethodParameter(Method m, Object[] args, Object result)
+	{
+		boolean ret = false;
+		for(int i=0; i<m.getParameterCount(); i++)
+		{
+			if(SReflect.isSupertype(m.getParameterTypes()[i], result.getClass()))
+			{
+				args[i] = result;
+				ret = true;
+				break;
+			}
+		}
+		return ret;
+	}
+	
 	/**
 	 * 
 	 * @param m
@@ -1950,13 +2112,20 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	{
 		Object[] args = new Object[m.getParameterCount()];
 		
-		boolean invoke = false;
-		for(int i=0; i<m.getParameterCount(); i++)
+		boolean invoke = fillMethodParameter(m, args, result);
+		
+		if(!invoke && result instanceof ServiceEvent)
 		{
-			if(SReflect.isSupertype(m.getParameterTypes()[i], result.getClass()))
+			ServiceEvent event = (ServiceEvent)result;
+			IServiceIdentifier sid = event.getService();
+			result = getServiceProxy(sid, null, component);  
+			if(event.getType()==ServiceEvent.SERVICE_ADDED)
 			{
-				args[i] = result;
-				invoke = true;
+				invoke = fillMethodParameter(m, args, result);
+			}
+			else if(event.getType()==ServiceEvent.SERVICE_REMOVED)
+			{
+				// do not invoke @OnService with removed service?! Do we want @OnServiceRemoved or @OnService(type=removed)
 			}
 		}
 		
