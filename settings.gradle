@@ -67,6 +67,9 @@ includeBuild('engine/base/mj-nfproperties') {
 includeBuild('engine/base/mj-simulation') {
 }
 
+includeBuild('engine/base/mj-communication') {
+}
+
 includeBuild('engine/mj-microagent') {
 }
 
