@@ -37,18 +37,12 @@ public class ChatAgent implements IChatService
 		System.out.println("agent started: "+agent.getId());
 		
 		this.gui = new ChatGui(agent.getExternalAccess());
-		
-		while(true)
-		{
-			agent.getFeature(IMjExecutionFeature.class).waitForDelay(5000).get();
-			System.out.println("agent has services: "+agent.getId()+" "+chatservices.size());
-		}
 	}
 	
 	@OnEnd
 	protected void end()
 	{
-		System.out.println("on end called: "+agent.getId());
+		//System.out.println("on end called: "+agent.getId());
 		this.gui.dispose();
 	}
 	

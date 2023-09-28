@@ -20,11 +20,8 @@ public class MjLifecycleFeature	implements IMjLifecycleFeature
 		{
 			if(feature instanceof IMjLifecycle) 
 			{
-				self.getFeature(IMjExecutionFeature.class).scheduleStep(()->
-				{
-					IMjLifecycle	lfeature	= (IMjLifecycle)feature;
-					lfeature.onEnd().get();
-				});
+				IMjLifecycle lfeature = (IMjLifecycle)feature;
+				lfeature.onEnd().get();
 			}
 		});
 		

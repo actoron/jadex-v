@@ -318,13 +318,16 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			LOCAL.set(MjExecutionFeature.this);
 			
 			boolean hasnext	= true;
-			while(hasnext)
+			while(hasnext && !terminated)
 			{
 				Runnable	step;
 				synchronized(MjExecutionFeature.this)
 				{
 					step	= steps.poll();
 				}
+				
+				if(step==null)
+					System.out.println("step is null");
 				
 				doRun(step);
 				
@@ -400,26 +403,15 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		@Override
 		public void resume(Future<?> future)
 		{
-			// is this ok?
-			if(isComponentThread())
+			scheduleStep(() ->
 			{
+				do_switch	= true;
+				
 				synchronized(this)
 				{
 					this.notify();
 				}
-			}
-			else
-			{
-				scheduleStep(() ->
-				{
-					do_switch	= true;
-					
-					synchronized(this)
-					{
-						this.notify();
-					}
-				});
-			}
+			});
 		}
 	}
 	
@@ -449,6 +441,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		terminated = true;
 		
+		//System.out.println("terminate start");
+			
 		ComponentTerminatedException ex = new ComponentTerminatedException(self.getId());
 		for(Object step: steps)
 		{
@@ -457,7 +451,11 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				((StepInfo)step).getFuture().setException(ex);
 			}
 		}
-		steps.clear();
+		
+		synchronized(MjExecutionFeature.this)
+		{
+			steps.clear();
+		}
 		
 		TimerTaskInfo[] ttis = entries.toArray(new TimerTaskInfo[entries.size()]);
 		for(TimerTaskInfo tti: ttis)
@@ -469,6 +467,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				entries.remove(tti);
 			}
 		}
+		
+		//System.out.println("terminate end");
 	}
 	
 	protected void beforeStep()

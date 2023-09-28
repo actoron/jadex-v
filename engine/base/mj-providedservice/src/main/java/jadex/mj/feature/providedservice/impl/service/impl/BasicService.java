@@ -308,9 +308,9 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Get reflective info about the service methods, args, return types.
 	 *  @return The method infos.
 	 */
-	public IFuture<MethodInfo[]> getMethodInfos()
+	public static IFuture<MethodInfo[]> getMethodInfos(IServiceIdentifier sid, ClassLoader cl)
 	{
-		Class<?> iface = sid.getServiceType().getType(internalaccess.getClassLoader());
+		Class<?> iface = sid.getServiceType().getType(cl);
 		
 		Set<Method> ms = new HashSet<>();
 		
@@ -340,6 +340,15 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 		}
 		
 		return new Future<MethodInfo[]>(ret);
+	}
+	
+	/**
+	 *  Get reflective info about the service methods, args, return types.
+	 *  @return The method infos.
+	 */
+	public IFuture<MethodInfo[]> getMethodInfos()
+	{
+		return getMethodInfos(sid, internalaccess.getClassLoader());
 	}
 	
 	/**

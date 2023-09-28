@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import jadex.common.ClassInfo;
 import jadex.common.IParameterGuesser;
+import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
@@ -44,6 +45,7 @@ import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
 import jadex.mj.core.modelinfo.ModelInfo;
+import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IService;
@@ -57,6 +59,8 @@ import jadex.mj.feature.providedservice.impl.search.ServiceNotFoundException;
 import jadex.mj.feature.providedservice.impl.search.ServiceQuery;
 import jadex.mj.feature.providedservice.impl.search.ServiceQuery.Multiplicity;
 import jadex.mj.feature.providedservice.impl.search.ServiceRegistry;
+import jadex.mj.feature.providedservice.impl.service.impl.BasicService;
+import jadex.mj.feature.providedservice.impl.service.impl.IInternalService;
 import jadex.mj.feature.providedservice.impl.service.impl.IServiceInvocationInterceptor;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceIdentifier;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationHandler;
@@ -475,13 +479,17 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	 */
 	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query, long timeout)
 	{
-		SubscriptionIntermediateDelegationFuture<T> ret = new SubscriptionIntermediateDelegationFuture<>();
+		return addQuery(query);
+		
+		//SubscriptionIntermediateDelegationFuture<T> ret = new SubscriptionIntermediateDelegationFuture<>();
 		
 		//timeout = timeout != 0 ? timeout : Starter.getDefaultTimeout(component.getId());
 		
-		ISubscriptionIntermediateFuture<T> queryfut = addQuery(query);
+		//ISubscriptionIntermediateFuture<T> queryfut = addQuery(query);
 		
-		final int[] resultcnt = new int[1];
+		//queryfut.delegateTo(ret);
+		
+		/*final int[] resultcnt = new int[1];
 		queryfut.addResultListener(new IIntermediateResultListener<T>()
 		{
 			public void resultAvailable(Collection<T> result)
@@ -511,7 +519,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 			{
 				ret.setMaxResultCount(max);
 			}
-		});
+		});*/
 		
 		//long to = timeout;
 		//isRemote(query)
@@ -536,7 +544,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 			});
 		}*/
 		
-		return ret;
+		//return ret;
 	}
 	
 	/**
@@ -1263,6 +1271,56 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		//{
 			ret = ServiceRegistry.getRegistry().getLocalService(sid); 			
 		//}
+			
+		// Must support the case that 
+		if(ret==null)
+		{
+			ComponentTerminatedException ex = new ComponentTerminatedException(sid.getProviderId());
+			
+			ret = new IInternalService() 
+			{
+				@Override
+				public IFuture<Object> invokeMethod(String methodname, ClassInfo[] argtypes, Object[] args, ClassInfo returntype) 
+				{
+					return new Future<Object>(ex);
+				}
+				
+				@Override
+				public IServiceIdentifier getServiceId() 
+				{
+					return sid;
+				}
+				
+				@Override
+				public IFuture<MethodInfo[]> getMethodInfos() 
+				{
+					return BasicService.getMethodInfos(sid, component.getClassLoader());
+				}
+				
+				@Override
+				public IFuture<Void> startService() 
+				{
+					return new Future<Void>(ex);
+				}
+				
+				@Override
+				public IFuture<Void> shutdownService() 
+				{
+					return new Future<Void>(ex);
+				}
+				
+				@Override
+				public void setServiceIdentifier(IServiceIdentifier sid) 
+				{
+				}
+				
+				@Override
+				public IFuture<Void> setComponentAccess(MjComponent access) 
+				{
+					return new Future<Void>(ex);
+				}
+			};
+		}
 		
 		// Remote component -> create remote proxy
 		/*else
@@ -1554,10 +1612,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	}
 	
 	/**
-	 * 
-	 * @param component
-	 * @param target
-	 * @return
+	 *  Inject the services and initialize queries.
 	 */
 	public static IFuture<Void> injectServices(MjComponent component, Object target, String[] sernames, Map<String, ServiceInjectionInfo[]> serinfos, RequiredServiceModel rsm)
 	{
@@ -1615,6 +1670,8 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 							boolean first = true;
 							public void intermediateResultAvailable(final Object result)
 							{
+								//System.out.println("agent received service event: "+result);
+								
 								/*if(result==null)
 								{
 									System.out.println("received null as service: "+infos[fj]);
@@ -1857,6 +1914,8 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		
 		//boolean multiple = ft.isArray() || SReflect.isSupertype(Collection.class, ft) || info.getMax()>2;
 
+		//System.out.println("setDirectFieldValue: "+result+" "+component.getId());
+		
 		ServiceEvent event = result instanceof ServiceEvent? (ServiceEvent)result: null;
 		
 		if(event!=null)
@@ -1867,15 +1926,30 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 			if(event.getType()==ServiceEvent.SERVICE_ADDED)
 			{
 				if(!addDirectFieldValue(f, target, result))
+				{
 					if(!addDirectFieldValue(f, target, result2))
-						throw new RuntimeException("Could not add/set service value: "+result);
+					{
+						System.out.println("could not add value: "+result);
+						//throw new RuntimeException("Could not add/set service value: "+result);
+					}
+				}
 			}
 			else if(event.getType()==ServiceEvent.SERVICE_REMOVED)
 			{
 				if(!removeDirectFieldValue(f, target, result))
+				{
 					if(!removeDirectFieldValue(f, target, result2))
-						throw new RuntimeException("Could not remove service value: "+result);
+					{
+						System.out.println("could not remove value: "+result);
+						//throw new RuntimeException("Could not remove service value: "+result);
+					}
+				}
 			}
+		}
+		else
+		{
+			// default is set value
+			addDirectFieldValue(f, target, result);
 		}
 	}
 	
@@ -1885,6 +1959,8 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		Class<?> ft = f.getType();
 		SAccess.setAccessible(f, true);
 		
+		try
+		{
 		if(SReflect.isSupertype(ft, result.getClass()))
 		{
 			try
@@ -1948,7 +2024,6 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 						try
 						{
 							f.set(target, coll);
-							ret = true;
 						}
 						catch(Exception e)
 						{
@@ -1956,6 +2031,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 						}
 					}
 					coll.add(result);
+					ret = true;
 				}
 			}
 			catch(Exception e)
@@ -1977,7 +2053,6 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 						try
 						{
 							f.set(target, coll);
-							ret = true;
 						}
 						catch(Exception e)
 						{
@@ -1985,12 +2060,18 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 						}
 					}
 					coll.add(result);
+					ret = true;
 				}
 			}
 			catch(Exception e)
 			{
 				throw SUtil.throwUnchecked(e);
 			}
+		}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
 		}
 		
 		return ret;
@@ -2001,6 +2082,9 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		boolean ret = false;
 		Class<?> ft = f.getType();
 		SAccess.setAccessible(f, true);
+		
+		try
+		{
 		
 		if(SReflect.isSupertype(ft, result.getClass()))
 		{
@@ -2076,12 +2160,18 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 				{
 					coll.remove(result);
 					ret = true;
+					//System.out.println("removed: "+coll.size());
 				}
 			}
 			catch(Exception e)
 			{
 				//throw SUtil.throwUnchecked(e);
 			}
+		}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
 		}
 		
 		return ret;

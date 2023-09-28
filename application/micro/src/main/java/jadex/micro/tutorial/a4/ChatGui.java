@@ -20,7 +20,7 @@ import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.feature.lifecycle.IMjLifecycleFeature;
-import jadex.mj.requiredservice.IMjRequiredServiceFeature;
+import jadex.mj.micro.MjMicroAgent;
 
 /**
  *  Basic chat user interface.
@@ -53,24 +53,21 @@ public class ChatGui extends JFrame
 		getContentPane().add(new JScrollPane(received), BorderLayout.CENTER);
 		getContentPane().add(panel, BorderLayout.SOUTH);
 		
+		message.addActionListener(new ActionListener() 
+		{
+            public void actionPerformed(ActionEvent e) 
+            {
+                sendMessage(access, message.getText());
+                message.setText("");
+            }
+        });
+
 		send.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				final String text = message.getText(); 
-				
-				// why is the cast needed???
-				access.scheduleStep((IThrowingConsumer<IComponent>)agent ->
-				{
-					Collection<IChatService> chatservices = agent.getFeature(IMjRequiredServiceFeature.class).getLocalServices(IChatService.class);
-					
-					System.out.println("found services: "+chatservices.size());
-					for(Iterator<IChatService> it=chatservices.iterator(); it.hasNext(); )
-					{
-						IChatService cs = it.next();
-						cs.message(agent.getId()+"", text);
-					}
-				});
+				sendMessage(access, message.getText());
+				message.setText("");
 			}
 		});
 		
@@ -101,8 +98,28 @@ public class ChatGui extends JFrame
 			{
 				received.append(text+"\n");
 			}
-		})
-	;}
+		});
+	}
+
+	public void sendMessage(IExternalAccess access, String text)
+	{
+		access.scheduleStep((IThrowingConsumer<IComponent>)agent ->
+		{
+			MjMicroAgent magent = (MjMicroAgent)agent;
+			ChatAgent pojo = (ChatAgent)magent.getPojo();
+			Collection<IChatService> chatservices = pojo.getChatServices();
+			
+			// This would search the services
+			//Collection<IChatService> chatservices = agent.getFeature(IMjRequiredServiceFeature.class).getLocalServices(IChatService.class);
+			
+			System.out.println("found services: "+chatservices.size());
+			for(Iterator<IChatService> it=chatservices.iterator(); it.hasNext(); )
+			{
+				IChatService cs = it.next();
+				cs.message(agent.getId()+"", text);
+			}
+		});
+	}
 	
 	// test cases for casts last one does not work
 	/*access.scheduleStep(agent ->
