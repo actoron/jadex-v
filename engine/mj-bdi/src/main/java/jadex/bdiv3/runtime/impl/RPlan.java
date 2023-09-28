@@ -2095,6 +2095,11 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 //		}
 //	}
 	
+	public void executePlan()
+	{
+		IMjExecutionFeature.get().scheduleStep(new ExecutePlanStepAction(this));
+	}
+
 	/**
 	 *  Future that overrides addResultListener to keep track
 	 *  of current rplan in RPLANS variable.

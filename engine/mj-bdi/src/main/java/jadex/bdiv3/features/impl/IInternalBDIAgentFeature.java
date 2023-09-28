@@ -3,24 +3,24 @@ package jadex.bdiv3.features.impl;
 import java.beans.PropertyChangeEvent;
 import java.util.Map;
 
+import jadex.bdiv3.features.IBDIAgentFeature;
 import jadex.bdiv3.model.IBDIModel;
 import jadex.bdiv3.runtime.IBeliefListener;
 import jadex.bdiv3.runtime.impl.RCapability;
 import jadex.common.IResultCommand;
 import jadex.future.IFuture;
 import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.micro.impl.MjMicroAgentFeature;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.RuleSystem;
 
 /**
  *  Methods internally called on the BDI agent feature. 
  */
-public interface IInternalBDIAgentFeature
+public interface IInternalBDIAgentFeature	extends IBDIAgentFeature
 {
 	public static IInternalBDIAgentFeature	get()
 	{
-		return (IInternalBDIAgentFeature)IMjExecutionFeature.get().getComponent().getFeature(MjMicroAgentFeature.class);
+		return (IInternalBDIAgentFeature)IMjExecutionFeature.get().getComponent().getFeature(IBDIAgentFeature.class);
 	}
 	
 //	/**

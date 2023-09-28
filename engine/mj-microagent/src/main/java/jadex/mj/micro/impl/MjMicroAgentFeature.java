@@ -21,8 +21,8 @@ import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
 import jadex.mj.core.IParameterGuesserProvider;
 import jadex.mj.core.annotation.OnEnd;
-import jadex.mj.core.annotation.OnInit;
 import jadex.mj.core.annotation.OnStart;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
 import jadex.mj.micro.InjectionInfoHolder;
 import jadex.mj.micro.MicroModel;
@@ -30,6 +30,11 @@ import jadex.mj.micro.MjMicroAgent;
 
 public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvider, IValueFetcher
 {
+	public static MjMicroAgentFeature get()
+	{
+		return IMjExecutionFeature.get().getComponent().getFeature(MjMicroAgentFeature.class);
+	}
+
 	protected MjMicroAgent	self;
 	
 	protected IParameterGuesser	guesser;
@@ -39,15 +44,20 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 		this.self	= self;
 	}
 	
+	public MjMicroAgent getSelf()
+	{
+		return self;
+	}
+
 	@Override
 	public IFuture<Void> onStart()
 	{
 		Future<Void> ret = new Future<Void>();
-		System.out.println("start: "+self);
-		injectStuff(self, self.getPojo(), ((MicroModel)self.getModel().getRawModel()).getInjectionInfoHolder())
+		System.out.println("start: "+getSelf());
+		injectStuff(getSelf(), getSelf().getPojo(), ((MicroModel)getSelf().getModel().getRawModel()).getInjectionInfoHolder())
 			.then(v ->
 		{
-			MicroModel model = (MicroModel)self.getModel().getRawModel();
+			MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
 			
 			Class<? extends Annotation> ann = OnStart.class;
 			if(model.getAgentMethod(ann)!=null)
@@ -56,7 +66,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 				//if(wasAnnotationCalled(ann))
 				//	return IFuture.DONE;
 				//else
-				invokeMethod(self, ann, null).delegateTo(ret);
+				invokeMethod(getSelf(), ann, null).delegateTo(ret);
 			}
 			else
 			{
@@ -97,9 +107,9 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 	@Override
 	public IFuture<Void> onEnd()
 	{
-		System.out.println("end: "+self);
+		System.out.println("end: "+getSelf());
 		
-		MicroModel model = (MicroModel)self.getModel().getRawModel();
+		MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
 		
 		Class<? extends Annotation> ann = OnEnd.class;
 		if(model.getAgentMethod(ann)!=null)
@@ -108,7 +118,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 			//if(wasAnnotationCalled(ann))
 			//	return IFuture.DONE;
 			//else
-			return invokeMethod(self, ann, null);
+			return invokeMethod(getSelf(), ann, null);
 		}
 		else
 		{
@@ -536,7 +546,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 	public IParameterGuesser getParameterGuesser()
 	{
 		if(guesser==null)
-			guesser	= new SimpleParameterGuesser(new SimpleParameterGuesser(Collections.singleton(this)), Collections.singleton(self.getPojo()));
+			guesser	= new SimpleParameterGuesser(new SimpleParameterGuesser(Collections.singleton(this)), Collections.singleton(getSelf().getPojo()));
 			//guesser	= new SimpleParameterGuesser(super.getParameterGuesser(), Collections.singleton(pojoagent));
 		return guesser;
 	}
@@ -548,7 +558,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 	{
 		if("$pojoagent".equals(name))
 		{
-			return self.getPojo();
+			return getSelf().getPojo();
 		}
 		/*else if(name!=null && name.startsWith(IPlatformConfiguration.PLATFORMARGS))
 		{

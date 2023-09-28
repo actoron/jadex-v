@@ -34,7 +34,6 @@ import jadex.bdiv3x.runtime.ICandidateInfo;
 import jadex.bdiv3x.runtime.IElement;
 import jadex.bdiv3x.runtime.RInternalEvent;
 import jadex.bdiv3x.runtime.RMessageEvent;
-import jadex.bridge.IInternalAccess;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -863,7 +862,7 @@ public class APL
 	 *  @param element The element to process (if any).
 	 *  @return The list of binding maps.
 	 */
-	public static List<Map<String, Object>> calculateBindingElements(IInternalAccess agent, MParameterElement melem, RProcessableElement element)
+	public static List<Map<String, Object>> calculateBindingElements(MParameterElement melem, RProcessableElement element)
 	{
 		List<Map<String, Object>> ret = null;
 		
@@ -1087,19 +1086,15 @@ public class APL
 		/** The element. */
 		protected RProcessableElement element;
 		
-		/** The agent. */
-		protected IInternalAccess agent;
-
 		/**
 		 * 
 		 * @param mplaninfo
 		 * @param element
 		 */
-		public CandidateInfoMPlan(MPlanInfo mplaninfo, RProcessableElement element, IInternalAccess agent)
+		public CandidateInfoMPlan(MPlanInfo mplaninfo, RProcessableElement element)
 		{
 			this.mplaninfo = mplaninfo;
 			this.element = element;
-			this.agent = agent;
 		}
 
 		/**

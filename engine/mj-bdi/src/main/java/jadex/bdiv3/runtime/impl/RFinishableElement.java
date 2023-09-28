@@ -7,7 +7,6 @@ import java.util.Map;
 import jadex.bdiv3.model.MConfigParameterElement;
 import jadex.bdiv3.model.MProcessableElement;
 import jadex.bdiv3x.runtime.IFinishableElement;
-import jadex.bridge.IInternalAccess;
 import jadex.future.IResultListener;
 
 /**
@@ -28,9 +27,9 @@ public abstract class RFinishableElement extends RProcessableElement implements 
 	/**
 	 *  Create a new element.
 	 */
-	public RFinishableElement(MProcessableElement modelelement, Object pojoelement, IInternalAccess agent, Map<String, Object> vals, MConfigParameterElement config)
+	public RFinishableElement(MProcessableElement modelelement, Object pojoelement, Map<String, Object> vals, MConfigParameterElement config)
 	{
-		super(modelelement, pojoelement, agent, vals, config);
+		super(modelelement, pojoelement, vals, config);
 	}
 	
 	//-------- methods --------
