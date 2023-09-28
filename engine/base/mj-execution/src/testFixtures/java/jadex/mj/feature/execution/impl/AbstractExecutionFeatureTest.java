@@ -126,6 +126,9 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testIsComponentThread()
 	{
+		// Test without component
+		assertThrows(IllegalCallerException.class, () -> IMjExecutionFeature.get());
+		
 		// Test that the component thread is already detected during bootstrapping
 		Future<Boolean>	bootstrap0	= new Future<>();
 		Future<Boolean>	bootstrap1	= new Future<>();
@@ -156,6 +159,37 @@ public abstract class AbstractExecutionFeatureTest
 		IFuture<Boolean>	othercomp	= IMjExecutionFeature.getExternal(comp2).scheduleStep(()
 				-> IMjExecutionFeature.getExternal(comp).isComponentThread());
 		assertFalse(othercomp.get(TIMEOUT));
+	}
+	
+	@Test
+	public void	testIsAnyComponentThread()
+	{
+		// Test without component
+		assertFalse(IMjExecutionFeature.isAnyComponentThread());
+		
+		// Test that the component thread is already detected during bootstrapping
+		Future<Boolean>	bootstrap0	= new Future<>();
+		Future<Boolean>	bootstrap1	= new Future<>();
+		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () ->
+		{
+			// Test before component creation
+			bootstrap0.setResult(IMjExecutionFeature.isAnyComponentThread());
+			
+			return new MjComponent(null)
+			{
+				{
+					// Test during component creation
+					bootstrap1.setResult(IMjExecutionFeature.isAnyComponentThread());
+				}
+			};
+		});
+		assertTrue(bootstrap0.get(TIMEOUT));
+		assertTrue(bootstrap1.get(TIMEOUT));
+		
+		// Test during normal component operation.
+		IFuture<Boolean>	instep	= IMjExecutionFeature.getExternal(comp).scheduleStep(()
+			-> IMjExecutionFeature.isAnyComponentThread());
+		assertTrue(instep.get(TIMEOUT));
 	}
 	
 	@Test
