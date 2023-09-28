@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import jadex.bdiv3.IBDIClassGenerator;
 import jadex.bdiv3.features.IBDIAgentFeature;
@@ -16,23 +17,16 @@ import jadex.bdiv3.features.impl.BDIAgentFeature.GoalsExistCondition;
 import jadex.bdiv3.features.impl.BDIAgentFeature.LifecycleStateCondition;
 import jadex.bdiv3.features.impl.BDIAgentFeature.NotInShutdownCondition;
 import jadex.bdiv3.features.impl.BDIAgentFeature.PlansExistCondition;
-import jadex.bdiv3.model.BDIModel;
 import jadex.bdiv3.model.IBDIModel;
 import jadex.bdiv3.model.MBelief;
-import jadex.bdiv3.model.MCapability;
 import jadex.bdiv3.model.MCondition;
-import jadex.bdiv3.model.MConfigBeliefElement;
 import jadex.bdiv3.model.MConfigParameterElement;
-import jadex.bdiv3.model.MConfiguration;
 import jadex.bdiv3.model.MElement;
 import jadex.bdiv3.model.MGoal;
-import jadex.bdiv3.model.MInternalEvent;
-import jadex.bdiv3.model.MMessageEvent;
 import jadex.bdiv3.model.MParameter;
 import jadex.bdiv3.model.MParameter.EvaluationMode;
 import jadex.bdiv3.model.MPlan;
 import jadex.bdiv3.model.MTrigger;
-import jadex.bdiv3.runtime.BDIFailureException;
 import jadex.bdiv3.runtime.ChangeEvent;
 import jadex.bdiv3.runtime.EasyDeliberationStrategy;
 import jadex.bdiv3.runtime.IDeliberationStrategy;
@@ -49,21 +43,6 @@ import jadex.bdiv3.runtime.impl.RProcessableElement;
 import jadex.bdiv3x.runtime.CapabilityWrapper;
 import jadex.bdiv3x.runtime.ICandidateInfo;
 import jadex.bdiv3x.runtime.IInternalEvent;
-import jadex.bdiv3x.runtime.IMessageEvent;
-import jadex.bdiv3x.runtime.RInternalEvent;
-import jadex.bdiv3x.runtime.RMessageEvent;
-import jadex.bridge.ComponentTerminatedException;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
-import jadex.bridge.component.ILifecycleComponentFeature;
-import jadex.bridge.component.IMessageFeature;
-import jadex.bridge.component.IPojoComponentFeature;
-import jadex.bridge.service.annotation.CheckNotNull;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.bridge.service.types.clock.ITimedObject;
 import jadex.common.ICommand;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
@@ -72,13 +51,13 @@ import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
 import jadex.future.CollectionResultListener;
-import jadex.future.CounterResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.javaparser.SJavaParser;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.impl.MjMicroAgentFeature;
 import jadex.rules.eca.ChangeInfo;
@@ -109,7 +88,6 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	protected BDILifecycleAgentFeature(MjMicroAgent self)
 	{
 		super(self);
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -117,11 +95,11 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	 *  Is only called once.
 	 */
 	@Override
-	public IFuture<Void> onBody()
+	public IFuture<Void> onStart()
 	{
 		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
 		createStartBehavior().startBehavior(bdif.getBDIModel(), bdif.getRuleSystem(), bdif.getCapability());
-		return super.onBody();
+		return super.onStart();
 	}
 	
 	/**
@@ -129,7 +107,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	 */
 	protected StartBehavior createStartBehavior()
 	{
-		return new StartBehavior(component);
+		return new StartBehavior();
 	}
 	
 	/**
@@ -137,7 +115,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	 */
 	protected EndBehavior createEndBehavior()
 	{
-		return new EndBehavior(component);
+		return new EndBehavior();
 	}
 	
 	/**
@@ -148,20 +126,22 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 		setShutdown(true);
 		
 		final Future<Void>	ret	= new Future<Void>();
-		final IInternalBDIAgentFeature bdif = component.getFeature(IInternalBDIAgentFeature.class);
+		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
 
 		createEndBehavior().startEndBehavior(bdif.getBDIModel(), bdif.getRuleSystem(), bdif.getCapability())
 			.addResultListener(new IResultListener<Void>()
 		{
 			public void resultAvailable(Void result)
 			{
-				BDILifecycleAgentFeature.super.shutdown().addResultListener(new DelegationResultListener<Void>(ret));
+				// TODO
+//				IMjLifecycleFeature.get().terminate();
+//				BDILifecycleAgentFeature.super.().addResultListener(new DelegationResultListener<Void>(ret));
 			}
 
 			public void exceptionOccurred(Exception exception)
 			{
 				exception.printStackTrace();
-				BDILifecycleAgentFeature.super.shutdown().addResultListener(new DelegationResultListener<Void>(ret));
+//				BDILifecycleAgentFeature.super.shutdown().addResultListener(new DelegationResultListener<Void>(ret));
 			}
 		});
 		return ret;
@@ -170,7 +150,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	/**
 	 *  Execute a goal method.
 	 */
-	protected static IFuture<Boolean> executeGoalMethod(Method m, RProcessableElement goal, IEvent event, IInternalAccess component)
+	protected static boolean executeGoalMethod(Method m, RProcessableElement goal, IEvent event)
 	{
 		return invokeBooleanMethod(goal.getPojoElement(), m, goal.getModelElement(), event, null);
 	}
@@ -193,7 +173,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 		}
 		catch(Exception e)
 		{
-			SUtil.throwUnchecked(e);
+			throw SUtil.throwUnchecked(e);
 		}
 	}
 	
@@ -274,12 +254,10 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	{
 		protected MCondition cond;
 		protected MElement owner;
-		protected IInternalAccess agent;
 		protected Map<String, Object> vals;
 		
-		public EvaluateExpressionCondition(IInternalAccess agent, MCondition cond, MElement owner, Map<String, Object> vals)
+		public EvaluateExpressionCondition(MCondition cond, MElement owner, Map<String, Object> vals)
 		{
-			this.agent = agent;
 			this.cond = cond;
 			this.owner = owner;
 			this.vals = vals;
@@ -288,7 +266,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 		public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
 		{
 //			vals.put("$event", event);
-			boolean res = evaluateCondition(agent, cond, owner, vals);
+			boolean res = evaluateCondition(cond, owner, vals);
 			return new Future<Tuple2<Boolean,Object>>(res? ICondition.TRUE: ICondition.FALSE);
 		}
 	}
@@ -298,23 +276,12 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	 */
 	public static class LifecycleBehavior
 	{
-		/** The agent. */
-		protected IInternalAccess component;
-		
-		/**
-		 *  Create a new start behavior.
-		 */
-		public LifecycleBehavior(IInternalAccess component)
-		{
-			this.component = component;
-		}
-		
 		/**
 		 *  Get the capability object (only for pojo).
 		 */
 		public Object getCapabilityObject(String name)
 		{
-			IBDIAgentFeature bdif = component.getFeature(IBDIAgentFeature.class);
+			IBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
 			return ((BDIAgentFeature)bdif).getCapabilityObject(name);
 		}
 		
@@ -323,18 +290,18 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 		 */
 		public IFuture<Object> dispatchTopLevelGoal(Object goal)
 		{
-			IBDIAgentFeature bdif = component.getFeature(IBDIAgentFeature.class);
+			IBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
 			return bdif.dispatchTopLevelGoal(goal);
 		}
 		
-		/**
-		 *  Dispatch a message event.
-		 */
-		public IFuture<Void> sendMessageEvent(IMessageEvent message)
-		{
-			IMessageFeature mf = component.getFeature(IMessageFeature.class);
-			return mf.sendMessage(message.getMessage());
-		}
+//		/**
+//		 *  Dispatch a message event.
+//		 */
+//		public IFuture<Void> sendMessageEvent(IMessageEvent message)
+//		{
+//			IMessageFeature mf = component.getFeature(IMessageFeature.class);
+//			return mf.sendMessage(message.getMessage());
+//		}
 		
 		/**
 		 *  Dispatch an internal event.
@@ -348,12 +315,11 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 		/**
 		 *  Dispatch the configuration plans.
 		 */
-		protected IFuture<Void> dispatchConfigPlans(final IInternalAccess component, List<MConfigParameterElement> cplans, IBDIModel bdimodel)
+		protected void	dispatchConfigPlans(List<MConfigParameterElement> cplans, IBDIModel bdimodel)
 		{
 			Future<Void> ret = new Future<Void>();
 			if(cplans!=null && cplans.size()>0)
 			{
-				FutureBarrier<Object> barrier = new FutureBarrier<Object>();
 				for(MConfigParameterElement cplan: cplans)
 				{
 					MPlan mplan = bdimodel.getCapability().getPlan(cplan.getRef());
@@ -362,51 +328,30 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					
 					// todo: bindings in config elems
 					
-					List<Map<String, Object>> bindings = APL.calculateBindingElements(component, mplan, null);
+					List<Map<String, Object>> bindings = APL.calculateBindingElements(mplan, null);
 					
 					if(bindings!=null)
 					{
 						for(Map<String, Object> binding: bindings)
 						{
 							RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, binding), null), null, null, cplan);
-							barrier.addFuture(RPlan.executePlan(rplan));
+							rplan.executePlan();
 						}
 					}
 					// No binding: generate one candidate.
 					else
 					{
 						RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null), null, null, cplan);
-						barrier.addFuture(RPlan.executePlan(rplan));
+						rplan.executePlan();
 					}
 				}
-				
-				barrier.waitForIgnoreFailures(new ICommand<Exception>()
-				{
-					@Override
-					public void execute(Exception e)
-					{
-						if(e instanceof BDIFailureException)
-						{
-							component.getLogger().info("Failure during config plan execution: "+SUtil.getExceptionStacktrace(e));
-						}
-						else
-						{
-							component.getLogger().severe("Failure during config plan execution: "+SUtil.getExceptionStacktrace(e));
-						}
-					}
-				}).addResultListener(new DelegationResultListener<Void>(ret));
 			}
-			else
-			{
-				ret.setResult(null);
-			}
-			return ret;
 		}
 		
 		/**
 		 *  Dispatch the configuration goals.
 		 */
-		protected IFuture<Void> dispatchConfigGoals(final IInternalAccess component, List<MConfigParameterElement> cgoals, IBDIModel bdimodel)
+		protected IFuture<Void> dispatchConfigGoals(List<MConfigParameterElement> cgoals, IBDIModel bdimodel)
 		{
 			Future<Void> ret = new Future<Void>();
 			if(cgoals!=null && cgoals.size()>0)
@@ -424,18 +369,18 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					if(mgoal==null && cgoal.getRef().indexOf(".")==-1)
 					{
 						// try with package
-						mgoal = bdimodel.getCapability().getGoal(component.getModel().getPackage()+"."+cgoal.getRef());
+						mgoal = bdimodel.getCapability().getGoal(IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getPackage()+"."+cgoal.getRef());
 					}
 					
 					if(mgoal!=null)
 					{
-						gcl = mgoal.getTargetClass(component.getClassLoader());
+						gcl = mgoal.getTargetClass(IInternalBDIAgentFeature.get().getClassLoader());
 					}
 					// if not found, try expression
 					else
 					{
-						Object o = SJavaParser.parseExpression(cgoal.getRef(), component.getModel().getAllImports(), component.getClassLoader())
-							.getValue(CapabilityWrapper.getFetcher(component, cgoal.getCapabilityName()));
+						Object o = SJavaParser.parseExpression(cgoal.getRef(), IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader())
+							.getValue(CapabilityWrapper.getFetcher(cgoal.getCapabilityName()));
 						if(o instanceof Class)
 						{
 							gcl = (Class<?>)o;
@@ -491,7 +436,8 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					{
 						try
 						{
-							Object agent = component.getFeature(IPojoComponentFeature.class).getPojoAgent();
+							MjMicroAgentFeature maf = MjMicroAgentFeature.get();
+							Object agent = maf.getSelf().getPojo();
 							Class<?> agcl = agent.getClass();
 							Constructor<?>[] cons = gcl.getDeclaredConstructors();
 							for(Constructor<?> c: cons)
@@ -526,7 +472,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 						throw new RuntimeException("Could not create goal: "+cgoal);
 					}
 					
-					List<Map<String, Object>> bindings = APL.calculateBindingElements(component, mgoal, null);
+					List<Map<String, Object>> bindings = APL.calculateBindingElements(mgoal, null);
 					
 					if(goal==null)
 					{
@@ -535,14 +481,14 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 						{
 							for(Map<String, Object> binding: bindings)
 							{
-								RGoal rgoal = new RGoal(component, mgoal, null, null, binding, cgoal, null);
+								RGoal rgoal = new RGoal(mgoal, null, null, binding, cgoal, null);
 								barrier.addFuture(dispatchTopLevelGoal(rgoal));//.addResultListener(goallis);
 							}
 						}
 						// No binding: generate one candidate.
 						else
 						{
-							RGoal rgoal = new RGoal(component, mgoal, goal, null, null, cgoal, null);
+							RGoal rgoal = new RGoal(mgoal, goal, null, null, cgoal, null);
 							barrier.addFuture(dispatchTopLevelGoal(rgoal));//.addResultListener(goallis);
 						}
 					}
@@ -561,11 +507,11 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					{
 						if(e instanceof GoalDroppedException)
 						{
-							component.getLogger().info("Config goal has been dropped: "+e);
+							System.err.println("Config goal has been dropped: "+e);
 						}
 						else
 						{
-							component.getLogger().severe("Failure during config goal processing: "+SUtil.getExceptionStacktrace(e));							
+							System.err.println("Failure during config goal processing: "+SUtil.getExceptionStacktrace(e));							
 						}
 					}
 				}).addResultListener(new DelegationResultListener<Void>(ret));
@@ -577,39 +523,6 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 			
 			return ret;
 		}
-		
-		/**
-		 *  Dispatch the configuration events.
-		 */
-		protected IFuture<Void> dispatchConfigEvents(IInternalAccess component, List<MConfigParameterElement> cevents, IBDIModel bdimodel)
-		{
-			Future<Void> ret = new Future<Void>();
-			FutureBarrier<Void> barrier = new FutureBarrier<Void>();
-			
-			IInternalBDIAgentFeature bdif = component.getFeature(IInternalBDIAgentFeature.class);
-			MCapability mcapa = (MCapability)bdif.getCapability().getModelElement();
-			
-			// Send initial messages
-			// Throw initial internal events
-			for(MConfigParameterElement cpe: SUtil.notNull(cevents))
-			{
-				MInternalEvent mievent = mcapa.getInternalEvent(cpe.getRef());
-				if(mievent!=null)
-				{
-					RInternalEvent rievent = new RInternalEvent(mievent, component, cpe);
-					dispatchInternalEvent(rievent);
-				}
-				else
-				{
-					MMessageEvent mmevent = mcapa.getResolvedMessageEvent(null, cpe.getRef());
-					RMessageEvent rmevent = new RMessageEvent(mmevent, component, cpe);
-					barrier.addFuture(sendMessageEvent(rmevent));
-				}
-			}
-			
-			barrier.waitFor().addResultListener(new DelegationResultListener<Void>(ret));
-			return ret;
-		}
 	}
 	
 	/**
@@ -617,14 +530,6 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	 */
 	public static class StartBehavior extends LifecycleBehavior
 	{
-		/**
-		 *  Create a new start behavior.
-		 */
-		public StartBehavior(IInternalAccess component)
-		{
-			super(component);
-		}
-		
 		/**
 		 *  Start the component behavior.
 		 */
@@ -642,64 +547,64 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 			{
 				public void resultAvailable(Object result)
 				{
-					component.getLogger().info("Goal succeeded: "+result);
+					System.err.println("Goal succeeded: "+result);
 				}
 				
 				public void exceptionOccurred(Exception exception)
 				{
-					component.getLogger().info("Goal failed: "+exception);
+					System.err.println("Goal failed: "+exception);
 				}
 			};
 			
-			// Init bdi configuration
-			String confname = component.getConfiguration();
-			if(confname!=null)
-			{
-				MConfiguration mconf = bdimodel.getCapability().getConfiguration(confname);
-				
-				if(mconf!=null)
-				{
-					// only for pojo agents / xml is inited in beliefbase init
-					if(bdimodel instanceof BDIModel)
-					{
-						// Set initial belief values
-						List<MConfigBeliefElement> ibels = mconf.getInitialBeliefs();
-						if(ibels!=null)
-						{
-							for(MConfigBeliefElement ibel: ibels)
-							{
-								try
-								{
-									UnparsedExpression	fact	= ibel.getFacts().get(0);	// pojo initial beliefs are @NameValue, thus exactly one fact.
-									MBelief mbel = bdimodel.getCapability().getBelief(ibel.getName());
-									Object val = SJavaParser.parseExpression(fact, component.getModel().getAllImports(), component.getClassLoader()).getValue(CapabilityWrapper.getFetcher(component, fact.getLanguage()));
-									mbel.setValue(component, val);
-								}
-								catch(RuntimeException e)
-								{
-									throw e;
-								}
-								catch(Exception e)
-								{
-									throw new RuntimeException(e);
-								}
-							}
-						}
-					}
-					
-					// Create initial plans (create plans before other elements as they might want to react to these)
-					List<MConfigParameterElement> iplans = mconf.getInitialPlans();
-					dispatchConfigPlans(component, iplans, bdimodel);
-					
-					// Create initial goals
-					List<MConfigParameterElement> igoals = mconf.getInitialGoals();
-					dispatchConfigGoals(component, igoals, bdimodel);
-					
-					// Create initial events
-					List<MConfigParameterElement> ievents = mconf.getInitialEvents();
-					dispatchConfigEvents(component, ievents, bdimodel);
-				}
-			}
+//			// Init bdi configuration
+//			String confname = component.getConfiguration();
+//			if(confname!=null)
+//			{
+//				MConfiguration mconf = bdimodel.getCapability().getConfiguration(confname);
+//				
+//				if(mconf!=null)
+//				{
+//					// only for pojo agents / xml is inited in beliefbase init
+//					if(bdimodel instanceof BDIModel)
+//					{
+//						// Set initial belief values
+//						List<MConfigBeliefElement> ibels = mconf.getInitialBeliefs();
+//						if(ibels!=null)
+//						{
+//							for(MConfigBeliefElement ibel: ibels)
+//							{
+//								try
+//								{
+//									UnparsedExpression	fact	= ibel.getFacts().get(0);	// pojo initial beliefs are @NameValue, thus exactly one fact.
+//									MBelief mbel = bdimodel.getCapability().getBelief(ibel.getName());
+//									Object val = SJavaParser.parseExpression(fact, component.getModel().getAllImports(), component.getClassLoader()).getValue(CapabilityWrapper.getFetcher(component, fact.getLanguage()));
+//									mbel.setValue(component, val);
+//								}
+//								catch(RuntimeException e)
+//								{
+//									throw e;
+//								}
+//								catch(Exception e)
+//								{
+//									throw new RuntimeException(e);
+//								}
+//							}
+//						}
+//					}
+//					
+//					// Create initial plans (create plans before other elements as they might want to react to these)
+//					List<MConfigParameterElement> iplans = mconf.getInitialPlans();
+//					dispatchConfigPlans(component, iplans, bdimodel);
+//					
+//					// Create initial goals
+//					List<MConfigParameterElement> igoals = mconf.getInitialGoals();
+//					dispatchConfigGoals(component, igoals, bdimodel);
+//					
+//					// Create initial events
+//					List<MConfigParameterElement> ievents = mconf.getInitialEvents();
+//					dispatchConfigEvents(component, ievents, bdimodel);
+//				}
+//			}
 			
 			// Observe dynamic beliefs
 			List<MBelief> beliefs = bdimodel.getCapability().getBeliefs();
@@ -724,7 +629,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 				
 				String name = null;
 				Object capa = null;
-				if(component.getFeature0(IPojoComponentFeature.class)!=null)
+//				if(component.getFeature0(IPojoComponentFeature.class)!=null)
 				{
 					int	i	= mbel.getName().indexOf(MElement.CAPABILITY_SEPARATOR);
 					if(i!=-1)
@@ -734,7 +639,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					}
 					else
 					{
-						Object agent = component.getFeature(IPojoComponentFeature.class).getPojoAgent();
+						Object agent = MjMicroAgentFeature.get().getSelf().getPojo();
 						capa	= agent;
 						name	= mbel.getName();
 					}
@@ -769,18 +674,18 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 							// Otherwise just call getValue and throw event
 							else if(fcapa!=null) // if is pojo 
 							{
-								Object value = mbel.getValue(component);
+								Object value = mbel.getValue();
 								// todo: save old value?!
-								BDIAgentFeature.createChangeEvent(value, oldval, null, component, mbel.getName());
+								BDIAgentFeature.createChangeEvent(value, oldval, null, mbel.getName());
 								oldval = value;
 							}
 							else // xml belief push mode
 							{
 								// reevaluate the belief on change events
 								Object value = SJavaParser.parseExpression(mbel.getDefaultFact(), 
-									component.getModel().getAllImports(), component.getClassLoader()).getValue(CapabilityWrapper.getFetcher(component, mbel.getDefaultFact().getLanguage()));
+									IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader()).getValue(CapabilityWrapper.getFetcher(mbel.getDefaultFact().getLanguage()));
 								// save the value
-								mbel.setValue(component, value);
+								mbel.setValue(value);
 //								oldval = value;	// not needed for xml
 							}
 							return IFuture.DONE;
@@ -790,79 +695,59 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					rulesystem.getRulebase().addRule(rule);
 				}
 				
-				if(mbel.getUpdaterateValue(component)>0)
+				if(mbel.getUpdaterateValue()>0)
 				{
-					IClockService	cs	= component.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IClockService.class));
-//					cs.createTimer(mbel.getUpdaterate(), new ITimedObject()
-					ITimedObject to = new ITimedObject()
+					Consumer<Void>	update	= new Consumer<>()
 					{
-						ITimedObject	self	= this;
+						Consumer<Void>	update	= this;
 						Object oldval = null;
 						
-						public void timeEventOccurred(long currenttime)
+						public void accept(Void v)
 						{
 //							System.out.println("belief update "+component+", "+mbel);
 							try
 							{
-								component.getFeature(IExecutionFeature.class).scheduleStep(new IComponentStep<Void>()
+								// Invoke dynamic update method if field belief
+								if(mbel.isFieldBelief())
 								{
-									public IFuture<Void> execute(IInternalAccess ia)
-									{
-										try
-										{
-											// Invoke dynamic update method if field belief
-											if(mbel.isFieldBelief())
-											{
-												Method um = fcapa.getClass().getMethod(IBDIClassGenerator.DYNAMIC_BELIEF_UPDATEMETHOD_PREFIX+SUtil.firstToUpperCase(fname), new Class[0]);
-												um.invoke(fcapa, new Object[0]);
-											}
-											// Otherwise just call getValue and throw event
-											else if(fcapa!=null)
-											{
-												Object value = mbel.getValue(fcapa, component.getClassLoader());
-												BDIAgentFeature.createChangeEvent(value, oldval, null, component, mbel.getName());
-												oldval = value;
-											}
-											else // xml belief updaterate
-											{
-												// reevaluate the belief on change events
-												Object value = SJavaParser.parseExpression(mbel.getDefaultFact(), 
-													component.getModel().getAllImports(), component.getClassLoader()).getValue(CapabilityWrapper.getFetcher(component, mbel.getDefaultFact().getLanguage()));
-												// save the value 
-												// change event is automatically thrown
-												mbel.setValue(component, value);
-												oldval = value;
-											}
-										}
-										catch(Exception e)
-										{
-											e.printStackTrace();
-										}
-										
-										cs.createTimer(mbel.getUpdaterateValue(component), self);
-										return IFuture.DONE;
-									}
-								});
+									Method um = fcapa.getClass().getMethod(IBDIClassGenerator.DYNAMIC_BELIEF_UPDATEMETHOD_PREFIX+SUtil.firstToUpperCase(fname), new Class[0]);
+									um.invoke(fcapa, new Object[0]);
+								}
+								// Otherwise just call getValue and throw event
+								else if(fcapa!=null)
+								{
+									Object value = mbel.getValue(fcapa, IInternalBDIAgentFeature.get().getClassLoader());
+									BDIAgentFeature.createChangeEvent(value, oldval, null, mbel.getName());
+									oldval = value;
+								}
+//								else // xml belief updaterate
+//								{
+//									// reevaluate the belief on change events
+//									Object value = SJavaParser.parseExpression(mbel.getDefaultFact(), 
+//										component.getModel().getAllImports(), component.getClassLoader()).getValue(CapabilityWrapper.getFetcher(component, mbel.getDefaultFact().getLanguage()));
+//									// save the value 
+//									// change event is automatically thrown
+//									mbel.setValue(component, value);
+//									oldval = value;
+//								}
 							}
-							catch(ComponentTerminatedException cte)
+							catch(Exception e)
 							{
-								
+								e.printStackTrace();
 							}
+							
+							IMjExecutionFeature.get().waitForDelay(mbel.getUpdaterateValue()).then(update);
 						}
 					
 						@Override
 						public String toString()
 						{
-							return "updateBelief("+mbel.getName()+"@"+component.getId()+")";
+							return "updateBelief("+mbel.getName()+")";//+"@"+component.getId()+")";
 						}
 						
-//						public void exceptionOccurred(Exception exception)
-//						{
-//							component.getLogger().severe("Cannot update belief "+mbel.getName()+": "+exception);
-//						}
 					};
 					// Evaluate at time 0, updaterate*1, updaterate*2, ...
-					to.timeEventOccurred(cs.getTime());
+					update.accept(null);
 				}
 			}
 			
@@ -895,10 +780,10 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 									{
 //										System.out.println("parameter update: "+event);
 										
-										RCapability capa = BDIAgentFeature.getCapability(component);
+										RCapability capa = IInternalBDIAgentFeature.get().getCapability();
 										for(RGoal goal: SUtil.notNull(capa.getGoals(mgoal)))
 										{
-											if(!mparam.isMulti(component.getClassLoader()))
+											if(!mparam.isMulti(IInternalBDIAgentFeature.get().getClassLoader()))
 											{
 												((RParameter)goal.getParameter(mparam.getName())).updateDynamicValue();
 											}
@@ -916,56 +801,41 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 								rulesystem.getRulebase().addRule(rule);
 							}
 							
-							if(mparam.getUpdaterateValue(component)>0)
+							if(mparam.getUpdaterateValue()>0)
 							{
-								IClockService	cs	= component.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IClockService.class));
-								ITimedObject to = new ITimedObject()
+								Consumer<Void>	update	= new Consumer<>()
 								{
-									ITimedObject self = this;
-			//						Object oldval = null;
+									Consumer<Void>	update	= this;
 									
-									public void timeEventOccurred(long currenttime)
+									public void accept(Void v)
 									{
 										try
 										{
-											component.getFeature(IExecutionFeature.class).scheduleStep(new IComponentStep<Void>()
+											System.out.println("parameter updaterate: "+mparam.getUpdaterateValue());
+											
+											RCapability capa = IInternalBDIAgentFeature.get().getCapability();
+											for(RGoal goal: SUtil.notNull(capa.getGoals(mgoal)))
 											{
-												public IFuture<Void> execute(IInternalAccess ia)
+												if(!mparam.isMulti(IInternalBDIAgentFeature.get().getClassLoader()))
 												{
-													try
-													{
-														System.out.println("parameter updaterate: "+mparam.getUpdaterateValue(component));
-														
-														RCapability capa = BDIAgentFeature.getCapability(component);
-														for(RGoal goal: SUtil.notNull(capa.getGoals(mgoal)))
-														{
-															if(!mparam.isMulti(component.getClassLoader()))
-															{
-																((RParameter)goal.getParameter(mparam.getName())).updateDynamicValue();
-															}
-															else
-															{
-																((RParameterSet)goal.getParameterSet(mparam.getName())).updateDynamicValues();
-															}
-														}
-													}
-													catch(Exception e)
-													{
-														e.printStackTrace();
-													}
-													
-													cs.createTimer(mparam.getUpdaterateValue(component), self);
-													return IFuture.DONE;
+													((RParameter)goal.getParameter(mparam.getName())).updateDynamicValue();
 												}
-											});
+												else
+												{
+													((RParameterSet)goal.getParameterSet(mparam.getName())).updateDynamicValues();
+												}
+											}
 										}
-										catch(ComponentTerminatedException cte)
+										catch(Exception e)
 										{
+											e.printStackTrace();
 										}
+										
+										IMjExecutionFeature.get().waitForDelay(mparam.getUpdaterateValue()).then(update);
 									}
 								};
 								// Evaluate at time 0, updaterate*1, updaterate*2, ...
-								to.timeEventOccurred(cs.getTime());
+								update.accept(null);
 							}
 						}
 					}
@@ -981,7 +851,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 			
 //				boolean fin = false;
 				
-				final Class<?> gcl = mgoal.getTargetClass(component.getClassLoader());
+				final Class<?> gcl = mgoal.getTargetClass(IInternalBDIAgentFeature.get().getClassLoader());
 //				boolean declarative = false;
 //				boolean maintain = false;
 				
@@ -992,10 +862,10 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					{
 						if(cond.getConstructorTarget()!=null)
 						{
-							final Constructor<?> c = cond.getConstructorTarget().getConstructor(component.getClassLoader());
+							final Constructor<?> c = cond.getConstructorTarget().getConstructor(IInternalBDIAgentFeature.get().getClassLoader());
 							
 							Rule<Void> rule = new Rule<Void>(mgoal.getName()+"_goal_create", 
-								new NotInShutdownCondition(component), new IAction<Void>()
+								new NotInShutdownCondition(), new IAction<Void>()
 							{
 								public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 								{
@@ -1013,7 +883,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 										
 										for(int i=0; i<ptypes.length; i++)
 										{
-											Object agent = component.getFeature(IPojoComponentFeature.class).getPojoAgent();
+											Object agent = MjMicroAgentFeature.get().getSelf().getPojo();
 											Object	o	= event.getContent();
 											if(o!=null && SReflect.isSupertype(ptypes[i], o.getClass()))
 											{
@@ -1029,17 +899,18 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 											}
 											
 											// ignore implicit parameters of inner class constructor
-											if(pvals[i]==null && i>=skip)
-											{
-												for(int j=0; anns!=null && j<anns[i-skip].length; j++)
-												{
-													if(anns[i-skip][j] instanceof CheckNotNull)
-													{
-														ok = false;
-														break;
-													}
-												}
-											}
+											//TODO ???
+//											if(pvals[i]==null && i>=skip)
+//											{
+//												for(int j=0; anns!=null && j<anns[i-skip].length; j++)
+//												{
+//													if(anns[i-skip][j] instanceof CheckNotNull)
+//													{
+//														ok = false;
+//														break;
+//													}
+//												}
+//											}
 										}
 										
 										if(ok)
@@ -1075,16 +946,16 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 						}
 						else if(cond.getMethodTarget()!=null)
 						{
-							final Method m = cond.getMethodTarget().getMethod(component.getClassLoader());
+							final Method m = cond.getMethodTarget().getMethod(IInternalBDIAgentFeature.get().getClassLoader());
 							
 							Rule<Void> rule = new Rule<Void>(mgoal.getName()+"_goal_create", 
-								new CombinedCondition(new ICondition[]{new NotInShutdownCondition(component), new MethodCondition(null, m)
+								new CombinedCondition(new ICondition[]{new NotInShutdownCondition(), new MethodCondition(null, m)
 							{
 								protected Object invokeMethod(IEvent event) throws Exception
 								{
 									SAccess.setAccessible(m, true);
 									Object[] pvals = BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(),
-										mgoal, new ChangeEvent(event), null, null, component);
+										mgoal, new ChangeEvent(event), null, null);
 									return pvals!=null? m.invoke(null, pvals): null;
 								}
 							}}), new IAction<Void>()
@@ -1118,7 +989,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 											try
 											{
 												Object[] vals = BDIAgentFeature.getInjectionValues(c.getParameterTypes(), c.getParameterAnnotations(),
-													mgoal, new ChangeEvent(event), null, null, component);
+													mgoal, new ChangeEvent(event), null, null);
 												if(vals!=null)
 												{
 													pojogoal = c.newInstance(vals);
@@ -1146,26 +1017,26 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 						else
 						{
 							Rule<Void> rule = new Rule<Void>(mgoal.getName()+"_goal_create", 
-								new CombinedCondition(new ICondition[]{new NotInShutdownCondition(component), new EvaluateExpressionCondition(component, cond, mgoal, null)}), new IAction<Void>()
+								new CombinedCondition(new ICondition[]{new NotInShutdownCondition(), new EvaluateExpressionCondition(cond, mgoal, null)}), new IAction<Void>()
 							{
 								public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 								{
 			//						System.out.println("create: "+create);
 									
-									List<Map<String, Object>> bindings = APL.calculateBindingElements(component, mgoal, null);
+									List<Map<String, Object>> bindings = APL.calculateBindingElements(mgoal, null);
 									
 									if(bindings!=null)
 									{
 										for(Map<String, Object> binding: bindings)
 										{
-											RGoal rgoal = new RGoal(component, mgoal, null, null, binding, null, null);
+											RGoal rgoal = new RGoal(mgoal, null, null, binding, null, null);
 											dispatchTopLevelGoal(rgoal).addResultListener(goallis);
 										}
 									}
 									// No binding: generate one candidate.
 									else
 									{
-										RGoal rgoal = new RGoal(component, mgoal, null, null, null, null, null);
+										RGoal rgoal = new RGoal(mgoal, null, null, null, null, null);
 										dispatchTopLevelGoal(rgoal).addResultListener(goallis);
 									}
 									
@@ -1184,7 +1055,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 				{
 					for(final MCondition cond: conds)
 					{
-						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(component.getClassLoader());
+						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(IInternalBDIAgentFeature.get().getClassLoader());
 						
 						Rule<?> rule = new Rule<Void>(mgoal.getName()+"_goal_drop", 
 							new GoalsExistCondition(mgoal, rcapa), new IAction<Void>()
@@ -1198,42 +1069,31 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 									{
 										if(m!=null)
 										{
-											executeGoalMethod(m, goal, event, component)
-												.addResultListener(new IResultListener<Boolean>()
+											if(executeGoalMethod(m, goal, event))
 											{
-												public void resultAvailable(Boolean result)
+//												System.out.println("Goal dropping triggered: "+goal);
+				//								rgoal.setLifecycleState(BDIAgent.this, rgoal.GOALLIFECYCLESTATE_DROPPING);
+												if(!goal.isFinished())
 												{
-													if(result.booleanValue())
-													{
-		//												System.out.println("Goal dropping triggered: "+goal);
-						//								rgoal.setLifecycleState(BDIAgent.this, rgoal.GOALLIFECYCLESTATE_DROPPING);
-														if(!goal.isFinished())
-														{
-															goal.setException(new GoalDroppedException("drop condition: "+m.getName()));
+													goal.setException(new GoalDroppedException("drop condition: "+m.getName()));
 //															{
 //																public void printStackTrace() 
 //																{
 //																	super.printStackTrace();
 //																}
 //															});
-															goal.setProcessingState(component, RGoal.GoalProcessingState.FAILED);
-														}
-													}
+													goal.setProcessingState(RGoal.GoalProcessingState.FAILED);
 												}
-												
-												public void exceptionOccurred(Exception exception)
-												{
-												}
-											});
+											}
 										}
 										else
 										{
-											if(evaluateCondition(component, cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
+											if(evaluateCondition(cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
 											{
 												if(!goal.isFinished())
 												{
 													goal.setException(new GoalDroppedException("drop condition: "+goal));
-													goal.setProcessingState(component, RGoal.GoalProcessingState.FAILED);
+													goal.setProcessingState(RGoal.GoalProcessingState.FAILED);
 												}
 											}
 										}
@@ -1257,7 +1117,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 				{
 					for(final MCondition cond: conds)
 					{
-						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(component.getClassLoader());
+						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(IInternalBDIAgentFeature.get().getClassLoader());
 						
 						Rule<?> rule = new Rule<Void>(mgoal.getName()+"_goal_suspend", 
 							new GoalsExistCondition(mgoal, rcapa), new IAction<Void>()
@@ -1272,30 +1132,19 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 									{	
 										if(m!=null)
 										{
-											executeGoalMethod(m, goal, event, component)
-												.addResultListener(new IResultListener<Boolean>()
+											if(!executeGoalMethod(m, goal, event))
 											{
-												public void resultAvailable(Boolean result)
-												{
-													if(!result.booleanValue())
-													{
-		//												if(goal.getMGoal().getName().indexOf("AchieveCleanup")!=-1)
-		//													System.out.println("Goal suspended: "+goal);
-														goal.setLifecycleState(component, RGoal.GoalLifecycleState.SUSPENDED);
-														goal.setState(RProcessableElement.State.INITIAL);
-													}
-												}
-												
-												public void exceptionOccurred(Exception exception)
-												{
-												}
-											});
+//												if(goal.getMGoal().getName().indexOf("AchieveCleanup")!=-1)
+//													System.out.println("Goal suspended: "+goal);
+												goal.setLifecycleState(RGoal.GoalLifecycleState.SUSPENDED);
+												goal.setState(RProcessableElement.State.INITIAL);
+											}
 										}
 										else
 										{
-											if(!evaluateCondition(component, cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
+											if(!evaluateCondition(cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
 											{
-												goal.setLifecycleState(component, RGoal.GoalLifecycleState.SUSPENDED);
+												goal.setLifecycleState(RGoal.GoalLifecycleState.SUSPENDED);
 												goal.setState(RProcessableElement.State.INITIAL);
 											}
 										}
@@ -1323,30 +1172,19 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 									{	
 										if(m!=null)
 										{
-											executeGoalMethod(m, goal, event, component)
-												.addResultListener(new IResultListener<Boolean>()
+											if(executeGoalMethod(m, goal, event))
 											{
-												public void resultAvailable(Boolean result)
-												{
-													if(result.booleanValue())
-													{
-		//												if(goal.getMGoal().getName().indexOf("AchieveCleanup")!=-1)
-		//												System.out.println("Goal made option: "+goal);
-														goal.setLifecycleState(component, RGoal.GoalLifecycleState.OPTION);
-		//												setState(ia, PROCESSABLEELEMENT_INITIAL);
-													}
-												}
-												
-												public void exceptionOccurred(Exception exception)
-												{
-												}
-											});
+//												if(goal.getMGoal().getName().indexOf("AchieveCleanup")!=-1)
+//												System.out.println("Goal made option: "+goal);
+												goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
+//												setState(ia, PROCESSABLEELEMENT_INITIAL);
+											}
 										}
 										else
 										{
-											if(evaluateCondition(component, cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
+											if(evaluateCondition(cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
 											{
-												goal.setLifecycleState(component, RGoal.GoalLifecycleState.OPTION);
+												goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
 											}
 										}
 									}
@@ -1368,7 +1206,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 				{
 					for(final MCondition cond: conds)
 					{
-						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(component.getClassLoader());
+						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(IInternalBDIAgentFeature.get().getClassLoader());
 											
 						Rule<?> rule = new Rule<Void>(mgoal.getName()+"_goal_target", 
 							new CombinedCondition(new ICondition[]{
@@ -1392,30 +1230,19 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 								{
 									if(m!=null)
 									{
-										executeGoalMethod(m, goal, event, component)
-											.addResultListener(new IResultListener<Boolean>()
+										if(executeGoalMethod(m, goal, event))
 										{
-											public void resultAvailable(Boolean result)
+											if(!goal.isFinished())
 											{
-												if(result.booleanValue())
-												{
-													if(!goal.isFinished())
-													{
-														goal.targetConditionTriggered(component, event, rule, context);
-													}
-												}
+												goal.targetConditionTriggered(event, rule, context);
 											}
-											
-											public void exceptionOccurred(Exception exception)
-											{
-											}
-										});
+										}
 									}
 									else
 									{
-										if(!goal.isFinished() && evaluateCondition(component, cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
+										if(!goal.isFinished() && evaluateCondition(cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
 										{
-											goal.targetConditionTriggered(component, event, rule, context);
+											goal.targetConditionTriggered(event, rule, context);
 										}
 									}
 								}
@@ -1435,7 +1262,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 				{
 					for(final MCondition cond: conds)
 					{
-						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(component.getClassLoader());
+						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(IInternalBDIAgentFeature.get().getClassLoader());
 											
 						Rule<?> rule = new Rule<Void>(mgoal.getName()+"_goal_recur",
 							new GoalsExistCondition(mgoal, rcapa), new IAction<Void>()
@@ -1454,31 +1281,20 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 									{	
 										if(m!=null)
 										{
-											executeGoalMethod(m, goal, event, component)
-												.addResultListener(new IResultListener<Boolean>()
-											{
-												public void resultAvailable(Boolean result)
-												{
-													if(result.booleanValue())
-													{
-														goal.setTriedPlans(null);
-														goal.setApplicablePlanList(null);
-														goal.setProcessingState(component, RGoal.GoalProcessingState.INPROCESS);
-													}
-												}
-												
-												public void exceptionOccurred(Exception exception)
-												{
-												}
-											});
-										}
-										else
-										{
-											if(evaluateCondition(component, cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
+											if(executeGoalMethod(m, goal, event))
 											{
 												goal.setTriedPlans(null);
 												goal.setApplicablePlanList(null);
-												goal.setProcessingState(component, RGoal.GoalProcessingState.INPROCESS);
+												goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
+											}
+										}
+										else
+										{
+											if(evaluateCondition(cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
+											{
+												goal.setTriedPlans(null);
+												goal.setApplicablePlanList(null);
+												goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
 											}
 										}
 									}
@@ -1496,7 +1312,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 				{
 					for(final MCondition cond: conds)
 					{
-						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(component.getClassLoader());
+						final Method m = cond.getMethodTarget()==null? null: cond.getMethodTarget().getMethod(IInternalBDIAgentFeature.get().getClassLoader());
 						
 						Rule<?> rule = new Rule<Void>(mgoal.getName()+"_goal_maintain", 
 							new GoalsExistCondition(mgoal, rcapa), new IAction<Void>()
@@ -1515,29 +1331,18 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 									{	
 										if(m!=null)
 										{
-											executeGoalMethod(m, goal, event, component)
-												.addResultListener(new IResultListener<Boolean>()
+											if(!executeGoalMethod(m, goal, event))
 											{
-												public void resultAvailable(Boolean result)
-												{
-													if(!result.booleanValue())
-													{
-		//												System.out.println("Goal maintain triggered: "+goal);
-		//												System.out.println("state was: "+goal.getProcessingState());
-														goal.setProcessingState(component, RGoal.GoalProcessingState.INPROCESS);
-													}
-												}
-												
-												public void exceptionOccurred(Exception exception)
-												{
-												}
-											});
+//												System.out.println("Goal maintain triggered: "+goal);
+//												System.out.println("state was: "+goal.getProcessingState());
+												goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
+											}
 										}
 										else // xml expression
 										{
-											if(!evaluateCondition(component, cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
+											if(!evaluateCondition(cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
 											{
-												goal.setProcessingState(component, RGoal.GoalProcessingState.INPROCESS);
+												goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
 											}
 										}
 									}
@@ -1564,27 +1369,16 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 									{
 										if(m!=null)
 										{
-											executeGoalMethod(m, goal, event, component)
-												.addResultListener(new IResultListener<Boolean>()
+											if(executeGoalMethod(m, goal, event))
 											{
-												public void resultAvailable(Boolean result)
-												{
-													if(result.booleanValue())
-													{
-														goal.targetConditionTriggered(component, event, rule, context);
-													}
-												}
-												
-												public void exceptionOccurred(Exception exception)
-												{
-												}
-											});
+												goal.targetConditionTriggered(event, rule, context);
+											}
 										}
 										else // xml expression
 										{
-											if(evaluateCondition(component, cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
+											if(evaluateCondition(cond, mgoal, SUtil.createHashMap(new String[]{goal.getFetcherName()}, new Object[]{goal})))
 											{
-												goal.targetConditionTriggered(component, event, rule, context);
+												goal.targetConditionTriggered(event, rule, context);
 											}
 										}
 									}
@@ -1610,7 +1404,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					public IFuture<Void> execute(final IEvent event, IRule<Void> rule, Object context, Object condresult)
 					{
 						// Create all binding plans
-						List<ICandidateInfo> cands = APL.createMPlanCandidates(component, mplan, null);
+						List<ICandidateInfo> cands = APL.createMPlanCandidates(mplan, null);
 
 						final CollectionResultListener<ICandidateInfo> lis = new CollectionResultListener<ICandidateInfo>(cands.size(), 
 							new IResultListener<Collection<ICandidateInfo>>()
@@ -1620,9 +1414,9 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 								for(ICandidateInfo ci: result)
 								{
 //									System.out.println("Create plan 1: "+mplan);
-									RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null, component), new ChangeEvent(event), component, ((MPlanInfo)ci.getRawCandidate()).getBinding(), null);
+									RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null), new ChangeEvent(event), ((MPlanInfo)ci.getRawCandidate()).getBinding(), null);
 //									System.out.println("Create plan 2: "+mplan);
-									RPlan.executePlan(rplan, component);
+									rplan.executePlan();
 								}
 							}
 							
@@ -1634,25 +1428,14 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 						for(final ICandidateInfo cand: cands)
 						{
 							// check precondition
-							APL.checkMPlan(component, cand, null).addResultListener(new IResultListener<Boolean>()
+							if(APL.checkMPlan(cand, null))
 							{
-								public void resultAvailable(Boolean result)
-								{
-									if(result.booleanValue())
-									{
-										lis.resultAvailable(cand);
-									}
-									else
-									{
-										lis.exceptionOccurred(null);
-									}
-								}
-								
-								public void exceptionOccurred(Exception exception)
-								{
-									lis.exceptionOccurred(exception);
-								}
-							});
+								lis.resultAvailable(cand);
+							}
+							else
+							{
+								lis.exceptionOccurred(null);
+							}
 						}
 						
 						return IFuture.DONE;
@@ -1712,12 +1495,13 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					final MCondition mcond = trigger.getCondition();
 					if(mcond!=null)
 					{
-						Rule<Void> rule = new Rule<Void>("create_plan_condition_"+mplan.getName(), new CombinedCondition(new ICondition[]{new NotInShutdownCondition(component), new ICondition()
+						Rule<Void> rule = new Rule<Void>("create_plan_condition_"+mplan.getName(), new CombinedCondition(new ICondition[]{new NotInShutdownCondition(), new ICondition()
 						{
 							public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
 							{
 								UnparsedExpression uexp = mcond.getExpression();
-								Boolean ret = (Boolean)SJavaParser.parseExpression(uexp, component.getModel().getAllImports(), component.getClassLoader()).getValue(CapabilityWrapper.getFetcher(component, uexp.getLanguage()));
+								Boolean ret = (Boolean)SJavaParser.parseExpression(uexp, IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader())
+										.getValue(CapabilityWrapper.getFetcher(uexp.getLanguage()));
 								return new Future<Tuple2<Boolean, Object>>(ret!=null && ret.booleanValue()? TRUE: FALSE);
 							}
 						}}), createplan);
@@ -1781,8 +1565,8 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					
 				if(mplan.getContextCondition()!=null)
 				{
-					final MethodInfo mi = mplan.getBody().getContextConditionMethod(component.getClassLoader());
-					final Method m = mi!=null? mi.getMethod(component.getClassLoader()): null;
+					final MethodInfo mi = mplan.getBody().getContextConditionMethod(IInternalBDIAgentFeature.get().getClassLoader());
+					final Method m = mi!=null? mi.getMethod(IInternalBDIAgentFeature.get().getClassLoader()): null;
 					final MCondition mcond = mplan.getContextCondition();
 					
 					IAction<Void> abortplans = new IAction<Void>()
@@ -1795,25 +1579,14 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 							{
 								if(m!=null)
 								{
-									invokeBooleanMethod(plan.getBody().getBody(), mi.getMethod(component.getClassLoader()), plan.getModelElement(), event, plan, component)
-										.addResultListener(new IResultListener<Boolean>()
+									if(!invokeBooleanMethod(plan.getBody().getBody(), mi.getMethod(IInternalBDIAgentFeature.get().getClassLoader()), plan.getModelElement(), event, plan))
 									{
-										public void resultAvailable(Boolean result)
-										{
-											if(!result.booleanValue())
-											{
-												plan.abort();
-											}
-										}
-										
-										public void exceptionOccurred(Exception exception)
-										{
-										}
-									});
+										plan.abort();
+									}
 								}
 								else
 								{
-									if(!evaluateCondition(component, mcond, plan.getModelElement(), Collections.singletonMap(plan.getFetcherName(), (Object)plan)))
+									if(!evaluateCondition(mcond, plan.getModelElement(), Collections.singletonMap(plan.getFetcherName(), (Object)plan)))
 									{
 										plan.abort();
 									}
@@ -1839,8 +1612,8 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 				}
 				
 				final IDeliberationStrategy delstr = new EasyDeliberationStrategy();
-				delstr.init(component);
-				RCapability capa = BDIAgentFeature.getCapability(component);
+				delstr.init();
+				RCapability capa = IInternalBDIAgentFeature.get().getCapability();
 				capa.setDeliberationStrategy(delstr);
 
 				if(usedelib)
@@ -1964,8 +1737,9 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 			
 			// Init must be set to true before init writes to ensure that new events
 			// are executed and not processed as init writes
-			IInternalBDILifecycleFeature bdil = (IInternalBDILifecycleFeature)component.getFeature(ILifecycleComponentFeature.class);
-			bdil.setInited(true);
+			// TODO
+//			IInternalBDILifecycleFeature bdil = (IInternalBDILifecycleFeature)component.getFeature(ILifecycleComponentFeature.class);
+//			bdil.setInited(true);
 			
 			// After init rule execution mode to direct
 			rulesystem.setQueueEvents(false);
@@ -1973,7 +1747,8 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 //			System.out.println("inited: "+component.getComponentIdentifier());
 			
 			// perform init write fields (after injection of bdiagent)
-			BDIAgentFeature.performInitWrites(component, component);
+			//TODO
+//			BDIAgentFeature.performInitWrites(component);
 			
 			// Start rule system
 //				if(getComponentIdentifier().getName().indexOf("Cleaner")!=-1)// && getComponentIdentifier().getName().indexOf("Burner")==-1)
@@ -1998,15 +1773,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	 *  Extracted start behavior. 
 	 */
 	public static class EndBehavior extends LifecycleBehavior
-	{
-		/**
-		 *  Create a new start behavior.
-		 */
-		public EndBehavior(IInternalAccess component)
-		{
-			super(component);
-		}
-		
+	{		
 		/**
 		 *  Start the end behavior.
 		 *  
@@ -2017,7 +1784,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 		public IFuture<Void> startEndBehavior(final IBDIModel bdimodel, final RuleSystem rulesystem, final RCapability rcapa)
 		{
 			final Future<Void>	ret	= new Future<Void>();
-			final IInternalBDIAgentFeature bdif = component.getFeature(IInternalBDIAgentFeature.class);
+			final IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
 			
 			// Barrier to wait for all body processing.
 			FutureBarrier<Void>	bodyend	= new FutureBarrier<Void>();
@@ -2073,33 +1840,33 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 				public void customResultAvailable(Void result)
 				{
 //					System.out.println(component.getComponentIdentifier()+" body end");
-					String confname = component.getConfiguration();
-					if(confname!=null)
-					{
-						MConfiguration mconf = bdimodel.getCapability().getConfiguration(confname);
-						
-						if(mconf!=null)
-						{
-							final CounterResultListener<Void> lis = new CounterResultListener<Void>(3, new DelegationResultListener<Void>(ret));
-								
-							// Create end plans
-							final List<MConfigParameterElement> iplans = mconf.getEndPlans();
-							dispatchConfigPlans(component, iplans, bdimodel).addResultListener(lis);
-							
-							// Create end goals
-							final List<MConfigParameterElement> igoals = mconf.getEndGoals();
-							dispatchConfigGoals(component, igoals, bdimodel).addResultListener(lis);
-							
-							// Create end events
-							final List<MConfigParameterElement> ievents = mconf.getEndEvents();
-							dispatchConfigEvents(component, ievents, bdimodel).addResultListener(lis);
-						}
-						else
-						{
-							ret.setResult(null);
-						}
-					}
-					else
+//					String confname = component.getConfiguration();
+//					if(confname!=null)
+//					{
+//						MConfiguration mconf = bdimodel.getCapability().getConfiguration(confname);
+//						
+//						if(mconf!=null)
+//						{
+//							final CounterResultListener<Void> lis = new CounterResultListener<Void>(3, new DelegationResultListener<Void>(ret));
+//								
+//							// Create end plans
+//							final List<MConfigParameterElement> iplans = mconf.getEndPlans();
+//							dispatchConfigPlans(component, iplans, bdimodel).addResultListener(lis);
+//							
+//							// Create end goals
+//							final List<MConfigParameterElement> igoals = mconf.getEndGoals();
+//							dispatchConfigGoals(component, igoals, bdimodel).addResultListener(lis);
+//							
+//							// Create end events
+//							final List<MConfigParameterElement> ievents = mconf.getEndEvents();
+//							dispatchConfigEvents(component, ievents, bdimodel).addResultListener(lis);
+//						}
+//						else
+//						{
+//							ret.setResult(null);
+//						}
+//					}
+//					else
 					{
 						ret.setResult(null);
 					}

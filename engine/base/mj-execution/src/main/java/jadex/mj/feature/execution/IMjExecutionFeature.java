@@ -26,9 +26,17 @@ public interface IMjExecutionFeature	extends IMjExternalExecutionFeature
 		IMjExecutionFeature	ret	= MjExecutionFeature.LOCAL.get();
 		if(ret==null)
 		{
-			throw new IllegalCallerException("Not running inside any component.");
+			throw new IllegalCallerException("Not running inside any component. Check with isAnyComponentThread() before calling get().");
 		}
 		return ret;
+	}
+	
+	/**
+	 *  Test if currently running inside a component.
+	 */
+	public static boolean	isAnyComponentThread()
+	{
+		return MjExecutionFeature.LOCAL.get()!=null;
 	}
 	
 	/**

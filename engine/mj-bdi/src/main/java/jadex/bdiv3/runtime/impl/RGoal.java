@@ -78,9 +78,9 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	/**
 	 *  Create a new rgoal. 
 	 */
-	public RGoal(IInternalAccess agent, MGoal mgoal, Object goal, RGoal parentgoal, Map<String, Object> vals, MConfigParameterElement config, ICandidateInfo candidate)
+	public RGoal(MGoal mgoal, Object goal, RGoal parentgoal, Map<String, Object> vals, MConfigParameterElement config, ICandidateInfo candidate)
 	{
-		super(mgoal, goal, agent, vals, config);
+		super(mgoal, goal, vals, config);
 		this.parentgoal = parentgoal;
 		this.lifecyclestate = GoalLifecycleState.NEW;
 		this.processingstate = GoalProcessingState.IDLE;
@@ -1123,7 +1123,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	/**
 	 *  Called when the target condition of a goal triggers.
 	 */
-	public void targetConditionTriggered(final IInternalAccess ia, IEvent event, IRule<Void> rule, Object context)
+	public void targetConditionTriggered(IEvent event, IRule<Void> rule, Object context)
 	{
 //		System.out.println("Goal target triggered: "+RGoal.this);
 		if(getMGoal().getConditions(MGoal.CONDITION_MAINTAIN)!=null)
@@ -1136,7 +1136,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 					@Override
 					public void resultAvailable(Void result)
 					{
-						setProcessingState(ia, GoalProcessingState.IDLE);
+						setProcessingState(GoalProcessingState.IDLE);
 						// Hack! Notify finished listeners to allow for waiting via waitForGoal
 						// Cannot use notifyListeners() because it checks isSucceeded
 						if(getListeners()!=null)
@@ -1161,7 +1161,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 		}
 		else
 		{
-			setProcessingState(ia, GoalProcessingState.SUCCEEDED);
+			setProcessingState(GoalProcessingState.SUCCEEDED);
 		}
 	}
 	
