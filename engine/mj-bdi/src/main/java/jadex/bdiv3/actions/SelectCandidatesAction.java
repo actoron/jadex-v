@@ -22,7 +22,6 @@ import jadex.bdiv3x.runtime.ICandidateInfo;
 import jadex.bdiv3x.runtime.IParameter;
 import jadex.bdiv3x.runtime.IParameterSet;
 import jadex.future.IResultListener;
-import jadex.mj.feature.execution.IMjExecutionFeature;
 
 /**
  *  Action for selecting a candidate from the APL.
@@ -95,7 +94,7 @@ public class SelectCandidatesAction implements Runnable
 					{
 						RPlan rplan = (RPlan)ca.getPlan();
 //						RPlan rplan = RPlan.createRPlan(mplaninfo.getMPlan(), cand, element, ia, mplaninfo.getBinding(), null);
-						executePlan(rplan);
+						rplan.executePlan();
 					}
 					catch(final Exception e)
 					{
@@ -247,7 +246,7 @@ public class SelectCandidatesAction implements Runnable
 								// APL is automatically kept uptodate
 								for(ICandidateInfo ci: (ICandidateInfo[])res)
 								{
-									executePlan((RPlan)ci.getPlan());
+									((RPlan)ci.getPlan()).executePlan();
 								}
 							}
 							else
@@ -274,7 +273,7 @@ public class SelectCandidatesAction implements Runnable
 					RPlan rplan = (RPlan)ca.getPlan();
 //					MPlan mplan = mcapa.getPlan(cand.getClass().getName());
 //					RPlan rplan = RPlan.createRPlan(mplan, cand, element, ia, null, null);
-					executePlan(rplan);
+					rplan.executePlan();
 				}
 				else if(cand instanceof RPlan)
 				{
@@ -285,7 +284,7 @@ public class SelectCandidatesAction implements Runnable
 					{
 						// case meta-level reasoning, plan has been created but is new
 //						System.out.println("rplan no resume command: "+rplan);
-						executePlan(rplan);
+						rplan.executePlan();
 					}
 					else
 					{
@@ -314,11 +313,6 @@ public class SelectCandidatesAction implements Runnable
 //			System.out.println("No applicable plan found for: "+element.getId());
 			element.planFinished(null);
 		}
-	}
-
-	protected void executePlan(RPlan rplan)
-	{
-		IMjExecutionFeature.get().scheduleStep(new ExecutePlanStepAction(rplan));
 	}
 	
 	public String toString()

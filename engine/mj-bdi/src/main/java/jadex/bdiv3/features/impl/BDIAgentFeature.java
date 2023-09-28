@@ -15,10 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
 
 import jadex.bdiv3.IBDIClassGenerator;
-import jadex.bdiv3.MjBdiAgent;
 import jadex.bdiv3.annotation.Capability;
 import jadex.bdiv3.annotation.RawEvent;
 import jadex.bdiv3.features.IBDIAgentFeature;
@@ -55,7 +53,6 @@ import jadex.bdiv3.runtime.wrappers.MapWrapper;
 import jadex.bdiv3.runtime.wrappers.SetWrapper;
 import jadex.bdiv3x.runtime.ICandidateInfo;
 import jadex.common.FieldInfo;
-import jadex.common.ICommand;
 import jadex.common.IResultCommand;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -71,7 +68,6 @@ import jadex.javaparser.javaccimpl.ExpressionNode;
 import jadex.javaparser.javaccimpl.Node;
 import jadex.javaparser.javaccimpl.ParameterNode;
 import jadex.javaparser.javaccimpl.ReflectNode;
-import jadex.mj.core.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.MicroModel;
 import jadex.mj.micro.MjMicroAgent;
@@ -93,7 +89,7 @@ import jadex.rules.eca.annotations.Event;
 public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeature
 {
 	/** The component. */
-	protected MjBdiAgent	self;
+	protected MjMicroAgent	self;
 	
 	/** The bdi model. */
 	protected BDIModel bdimodel;
@@ -113,19 +109,13 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	/**
 	 *  Factory method constructor for instance level.
 	 */
-	public BDIAgentFeature(MjBdiAgent self)
+	public BDIAgentFeature(MjMicroAgent self)
 	{
 		this.self	= self;
-		// todo: should not use Feature.get() in constructor :-( move to init?!
 		IBDIClassGenerator.checkEnhanced(self.getPojo().getClass());
 		this.bdimodel = (BDIModel)self.getModel().getRawModel();
 		this.capa = new RCapability(bdimodel.getCapability());
-		this.rulesystem = new RuleSystem(self.getPojo(), getLogger(), true);
-	}
-
-	protected Logger getLogger()
-	{
-		return Logger.getLogger(self.toString());
+		this.rulesystem = new RuleSystem(self.getPojo(), true);
 	}
 
 	/**
@@ -285,7 +275,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				rs.addEvent(new jadex.rules.eca.Event(ev1, new ChangeInfo<Object>(val, oldval, null)));
 				
 				// execute rulesystem immediately to ensure that variable values are not changed afterwards
-				if(rs.isQueueEvents() && ((IInternalBDILifecycleFeature)self.getFeature(ILifecycleComponentFeature.class)).isInited())
+				if(rs.isQueueEvents() && ((IInternalBDILifecycleFeature)MjMicroAgentFeature.get()).isInited())
 				{
 //					System.out.println("writeField.PAE start");
 					rs.processAllEvents();
@@ -296,7 +286,8 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			observeValue(rs, val, ev2, mbel);
 			
 			// initiate a step to reevaluate the conditions
-			((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).wakeup();
+			//TODO???
+//			((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).wakeup();
 //			self.getComponentFeature(IExecutionFeature.class).scheduleStep(new ImmediateComponentStep()
 //			{
 //				public IFuture execute(IInternalAccess ia)
@@ -418,45 +409,41 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  Method that is called automatically when a belief 
 	 *  is written as field access.
 	 */
-	public static void writeField(Object val, String fieldname, Object obj, IInternalAccess agent)
+	public static void writeField(Object val, String fieldname, Object obj)
 	{
 		if((""+obj).indexOf("Inner")!=-1)
-			System.out.println("write: "+val+" "+fieldname+" "+obj+" "+agent);
-		
-		// This is the case in inner classes
-		if(agent==null)
-			agent = findAgent(obj, true);
+			System.out.println("write: "+val+" "+fieldname+" "+obj);
 		
 		String belname	= getBeliefName(obj, fieldname);
 
 //		BDIAgentInterpreter ip = (BDIAgentInterpreter)agent.getInterpreter();
-		MBelief mbel = agent.getFeature(IInternalBDIAgentFeature.class).getBDIModel().getCapability().getBelief(belname);
+		MBelief mbel = IInternalBDIAgentFeature.get().getBDIModel().getCapability().getBelief(belname);
 		
 		// Wrap collections of multi beliefs (if not already a wrapper)
-		if(mbel.isMulti(agent.getClassLoader()))
+		if(mbel.isMulti(IInternalBDIAgentFeature.get().getClassLoader()))
 		{
 			EventType addev = new EventType(ChangeEvent.FACTADDED, belname);
 			EventType remev = new EventType(ChangeEvent.FACTREMOVED, belname);
 			EventType chev = new EventType(ChangeEvent.FACTCHANGED, belname);
-			if(val instanceof List && !(val instanceof jadex.commons.collection.wrappers.ListWrapper))
+			if(val instanceof List && !(val instanceof jadex.collection.ListWrapper))
 			{
-				val = new ListWrapper((List<?>)val, agent, addev, remev, chev, mbel);
+				val = new ListWrapper((List<?>)val, IMjExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
 			}
-			else if(val instanceof Set && !(val instanceof jadex.commons.collection.wrappers.SetWrapper))
+			else if(val instanceof Set && !(val instanceof jadex.collection.SetWrapper))
 			{
-				val = new SetWrapper((Set<?>)val, agent, addev, remev, chev, mbel);
+				val = new SetWrapper((Set<?>)val, IMjExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
 			}
-			else if(val instanceof Map && !(val instanceof jadex.commons.collection.wrappers.MapWrapper))
+			else if(val instanceof Map && !(val instanceof jadex.collection.MapWrapper))
 			{
-				val = new MapWrapper((Map<?,?>)val, agent, addev, remev, chev, mbel);
+				val = new MapWrapper((Map<?,?>)val, IMjExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
 			}
 		}
 		
 		// agent is not null any more due to deferred exe of init expressions but rules are
 		// available only after startBehavior
-		if(((IInternalBDILifecycleFeature)agent.getFeature(ILifecycleComponentFeature.class)).isInited())
+		if(((IInternalBDILifecycleFeature)MjMicroAgentFeature.get()).isInited())
 		{
-			((BDIAgentFeature)agent.getFeature(IBDIAgentFeature.class)).writeField(val, belname, fieldname, obj);
+			((BDIAgentFeature)IInternalBDIAgentFeature.get()).writeField(val, belname, fieldname, obj);
 		}
 		// Only store event for non-update-rate beliefs (update rate beliefs get set later)
 //		else if(mbel.getUpdaterate()<=0)
@@ -469,40 +456,13 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				Object oldval = setFieldValue(obj, fieldname, val);
 				// rule engine not turned on so no unobserve necessary
 //				unobserveObject(agent, obj, etype, rs);
-				addInitWrite(agent, new InitWriteBelief(belname, val, oldval));
+				addInitWrite(IMjExecutionFeature.get().getComponent(), new InitWriteBelief(belname, val, oldval));
 			}
 			catch(Exception e)
 			{
 				SUtil.throwUnchecked(e);
 			}
 		}
-	}
-
-	protected static IInternalAccess findAgent(Object obj, boolean nonnull)
-	{
-		IInternalAccess	agent	= null;
-		try
-		{
-			Tuple2<Field, Object> res = findFieldWithOuterClass(obj, IBDIClassGenerator.AGENT_FIELD_NAME, true);
-			if(res!=null)
-			{
-				SAccess.setAccessible(res.getFirstEntity(), true);
-				agent = (IInternalAccess)res.getFirstEntity().get(res.getSecondEntity());
-			}
-			else if(nonnull)
-			{
-				throw new NullPointerException();
-			}
-		}
-		catch(RuntimeException e)
-		{
-			throw e;
-		}
-		catch(Exception e)
-		{
-			throw new RuntimeException(e);
-		}
-		return agent;
 	}
 	
 	/** Saved init writes. */
@@ -596,7 +556,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	/**
 	 *  Init write for beliefs.
 	 */
-	public static class InitWriteBelief implements ICommand<IInternalAccess>
+	public static class InitWriteBelief implements Runnable
 	{
 		protected String name;
 		protected Object val;
@@ -609,21 +569,21 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			this.oldval = oldval;
 		}
 		
-		public void execute(IInternalAccess agent)
+		public void run()
 		{
-			RuleSystem rs = agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+			RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 			EventType etype = new EventType(ChangeEvent.BELIEFCHANGED, name);
-			unobserveObject(agent, oldval, etype, rs);	
+			unobserveObject(oldval, etype, rs);	
 			rs.addEvent(new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(val, null, null)));
-			MBelief	mbel = ((MCapability)agent.getFeature(IInternalBDIAgentFeature.class).getCapability().getModelElement()).getBelief(name);
-			observeValue(rs, val, agent, new EventType(ChangeEvent.FACTCHANGED, name), mbel);
+			MBelief	mbel = ((MCapability)IInternalBDIAgentFeature.get().getCapability().getModelElement()).getBelief(name);
+			observeValue(rs, val, new EventType(ChangeEvent.FACTCHANGED, name), mbel);
 		}
 	}
 
 	/**
 	 *  Init write for parameter.
 	 */
-	public static class InitWriteParameter implements ICommand<IInternalAccess>
+	public static class InitWriteParameter implements Runnable
 	{
 		protected String name;
 		protected String fieldname;
@@ -638,15 +598,15 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			this.oldval = oldval;
 		}
 		
-		public void execute(IInternalAccess agent)
+		public void run()
 		{
 			// todo: observe/unobserve not ok with only type. needs instance info
 			
-			RuleSystem rs = agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+			RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 			EventType etype = new EventType(ChangeEvent.PARAMETERCHANGED, name, fieldname);
-			unobserveObject(agent, oldval, etype, rs);	
+			unobserveObject(oldval, etype, rs);	
 			rs.addEvent(new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(val, null, null)));
-			observeValue(rs, val, agent, etype, null);
+			observeValue(rs, val,  etype, null);
 		}
 	}
 	
@@ -657,21 +617,6 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	// todo: allow init writes in constructor also for arrays
 	public static void writeArrayField(Object array, final int index, Object val, Object agentobj, String fieldname)
 	{
-		// This is the case in inner classes
-		IInternalAccess agent = null;
-		if(agentobj instanceof IInternalAccess)
-		{
-			agent = (IInternalAccess)agentobj;
-		}
-		else
-		{
-			agent = findAgent(agentobj, true);
-		}
-		
-//		final BDIAgentInterpreter ip = (BDIAgentInterpreter)agent.getInterpreter();
-		
-		assert agent.getFeature(IExecutionFeature.class).isComponentThread();
-
 		// Test if array store is really a belief store instruction by
 		// looking up the current belief value and comparing it with the
 		// array that is written
@@ -757,20 +702,20 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	/**
 	 *  Observe a value.
 	 */
-	public static void observeValue(final RuleSystem rs, final Object val, final IInternalAccess agent, final EventType etype, final MBelief mbel)
+	public static void observeValue(final RuleSystem rs, final Object val, final EventType etype, final MBelief mbel)
 	{
 		assert IMjExecutionFeature.get().isComponentThread();
 
 		if(val!=null)
-			rs.observeObject(val, true, false, getEventAdder(agent, etype, mbel, rs));
+			rs.observeObject(val, true, false, getEventAdder(etype, mbel, rs));
 	}
 
 	/**
 	 * 
 	 */
-	protected static synchronized IResultCommand<IFuture<Void>, PropertyChangeEvent> getEventAdder(final IInternalAccess agent, final EventType etype, final MBelief mbel, final RuleSystem rs)
+	protected static synchronized IResultCommand<IFuture<Void>, PropertyChangeEvent> getEventAdder(final EventType etype, final MBelief mbel, final RuleSystem rs)
 	{
-		Map<EventType, IResultCommand<IFuture<Void>, PropertyChangeEvent>> eventadders = agent.getFeature(IInternalBDIAgentFeature.class).getEventAdders();
+		Map<EventType, IResultCommand<IFuture<Void>, PropertyChangeEvent>> eventadders = IInternalBDIAgentFeature.get().getEventAdders();
 		IResultCommand<IFuture<Void>, PropertyChangeEvent> ret = eventadders.get(etype);
 		
 		if(ret==null)
@@ -2812,21 +2757,16 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 */
 	public static class NotInShutdownCondition implements ICondition
 	{
-		protected IInternalAccess component;
-		
-		public NotInShutdownCondition(IInternalAccess component)
-		{
-			this.component = component;
-		}
-		
 		/**
 		 *  Test if is in shutdown.
 		 */
 		public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
 		{
-			IInternalBDILifecycleFeature bdil = (IInternalBDILifecycleFeature)component.getFeature(ILifecycleComponentFeature.class);
-			boolean res = !bdil.isShutdown();
-			return new Future<Tuple2<Boolean,Object>>(res? ICondition.TRUE: ICondition.FALSE);
+			// TODO
+//			IInternalBDILifecycleFeature bdil = (IInternalBDILifecycleFeature)component.getFeature(ILifecycleComponentFeature.class);
+//			boolean res = !bdil.isShutdown();
+//			return new Future<Tuple2<Boolean,Object>>(res? ICondition.TRUE: ICondition.FALSE);
+			return new Future<Tuple2<Boolean,Object>>(ICondition.TRUE);
 		}
 	}
 		
