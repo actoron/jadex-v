@@ -1,6 +1,8 @@
 package jadex.mj.requiredservice.impl;
 
 import jadex.common.ICommand;
+import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
 import jadex.mj.core.IComponent;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
 
@@ -31,7 +33,7 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 	@Override
 	public <T> void scheduleForward(final ICommand<T> command, final T args)
 	{
-		ComponentResultListener.scheduleForward(null, comp, new Runnable()
+		IFuture<Void> ret = ComponentResultListener.scheduleForward(null, comp, new Runnable()
 		{
 			@Override
 			public void run()
@@ -43,6 +45,15 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 			public String toString()
 			{
 				return "Command(" + comp + ", " + command +", " + args + ")";
+			}
+		});
+		
+		ret.catchEx(ex ->
+		{
+			if(getFuture() instanceof ITerminableFuture)
+			{
+				if(!getFuture().isDone())
+					((ITerminableFuture<?>)getFuture()).terminate(ex);
 			}
 		});
 	}

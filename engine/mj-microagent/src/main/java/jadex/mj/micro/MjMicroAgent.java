@@ -24,7 +24,7 @@ public class MjMicroAgent	extends MjComponent
 		});
 	}
 	
-	protected Object	pojo;
+	protected Object pojo;
 	
 	protected MjMicroAgent(Object pojo, IModelInfo model)
 	{

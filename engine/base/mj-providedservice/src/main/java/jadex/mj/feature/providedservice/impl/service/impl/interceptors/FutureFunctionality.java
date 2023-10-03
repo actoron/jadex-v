@@ -44,6 +44,8 @@ public class FutureFunctionality
 	protected IResultCommand<Logger, Void> loggerfetcher;
 	protected boolean undone;
 	
+	protected Future<?> future;
+	
 	/**
 	 * 
 	 */
@@ -67,6 +69,18 @@ public class FutureFunctionality
 		this.loggerfetcher = loggerfetcher;
 	}
 	
+	
+	
+	public Future<?> getFuture() 
+	{
+		return future;
+	}
+
+	public void setFuture(Future<?> future) 
+	{
+		this.future = future;
+	}
+
 	/**
 	 *  Get the logger.
 	 */
@@ -322,6 +336,7 @@ class DelegatingPullSubscriptionIntermediateDelegationFuture<E> extends PullSubs
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 	}
 	
 	/**
@@ -332,6 +347,7 @@ class DelegatingPullSubscriptionIntermediateDelegationFuture<E> extends PullSubs
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 		src.delegateTo(this);
 	}
 	
@@ -476,6 +492,7 @@ class DelegatingPullIntermediateDelegationFuture<E> extends PullIntermediateDele
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 	}
 	
 	/**
@@ -486,6 +503,7 @@ class DelegatingPullIntermediateDelegationFuture<E> extends PullIntermediateDele
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 		src.delegateTo(this);
 	}
 
@@ -662,6 +680,7 @@ class DelegatingSubscriptionIntermediateDelegationFuture<E> extends Subscription
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 	}
 	
 	/**
@@ -674,6 +693,7 @@ class DelegatingSubscriptionIntermediateDelegationFuture<E> extends Subscription
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 		src.delegateTo(this);
 	}
 	
@@ -807,6 +827,7 @@ class DelegatingTerminableIntermediateDelegationFuture<E> extends TerminableInte
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 	}
 	
 	/**
@@ -817,6 +838,7 @@ class DelegatingTerminableIntermediateDelegationFuture<E> extends TerminableInte
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 		src.delegateTo(this);
 	}
 	
@@ -942,6 +964,7 @@ class DelegatingTerminableDelegationFuture<E> extends TerminableDelegationFuture
 	public DelegatingTerminableDelegationFuture(FutureFunctionality func)
 	{
 		this.func = func;
+		func.setFuture(this);
 	}
 	
 	/**
@@ -952,6 +975,7 @@ class DelegatingTerminableDelegationFuture<E> extends TerminableDelegationFuture
 		// Cannot use super because it triggers and func is still null
 //		super(src);
 		this.func = func;
+		func.setFuture(this);
 		src.delegateTo(this);
 	}
 	
@@ -1049,6 +1073,7 @@ class DelegatingIntermediateFuture extends IntermediateFuture<Object>
 	public DelegatingIntermediateFuture(FutureFunctionality func)
 	{
 		this.func = func;
+		func.setFuture(this);
 	}
 	
 	/**
@@ -1146,6 +1171,7 @@ class DelegatingFuture extends Future<Object>
 	public DelegatingFuture(FutureFunctionality func)
 	{
 		this.func = func;
+		func.setFuture(this);
 	}
 	
 	/**
@@ -1220,6 +1246,7 @@ class DelegatingTupleFuture extends Tuple2Future<Object, Object>
 		if(func==null)
 			throw new IllegalArgumentException("Func must not null.");
 		this.func = func;
+		func.setFuture(this);
 		if(Future.DEBUG)
 		{
 			this.creaex	= new DebugException();
@@ -1299,5 +1326,7 @@ class DelegatingTupleFuture extends Tuple2Future<Object, Object>
     {
 		func.scheduleForward(command, listener);
     }
+	
+	
 };
 

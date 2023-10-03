@@ -107,7 +107,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 	@Override
 	public IFuture<Void> onEnd()
 	{
-		System.out.println("end: "+getSelf());
+		//System.out.println("end: "+getSelf());
 		
 		MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
 		

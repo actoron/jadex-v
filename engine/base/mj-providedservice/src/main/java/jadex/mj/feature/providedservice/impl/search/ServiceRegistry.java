@@ -324,7 +324,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	// write
 	public void removeService(IServiceIdentifier service)
 	{
-		//System.out.println("removing service: "+service);
+		System.out.println("removing service: "+service);
 		
 		Lock lock = rwlock.writeLock();
 		lock.lock();
@@ -543,6 +543,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			{
 				public void terminated(Exception reason)
 				{
+					//System.out.println("termination command called, removing query: "+query);
 					removeQuery(query);
 				}
 			});

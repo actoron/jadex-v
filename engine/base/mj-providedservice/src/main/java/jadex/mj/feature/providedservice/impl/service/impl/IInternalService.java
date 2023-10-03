@@ -1,7 +1,5 @@
 package jadex.mj.feature.providedservice.impl.service.impl;
 
-import java.util.UUID;
-
 import jadex.future.IFuture;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IService;

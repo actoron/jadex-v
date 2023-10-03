@@ -873,7 +873,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	 *  Remove a pojo - proxy pair.
 	 *  @param sid The service identifier.
 	 */
-	public static void removePojoServiceProxy(UUID sid)
+	public static void removePojoServiceProxy(IServiceIdentifier sid)
 	{
 		synchronized(ServiceInvocationHandler.class)
 		{

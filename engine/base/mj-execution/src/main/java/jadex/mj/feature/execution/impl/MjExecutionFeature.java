@@ -2,10 +2,12 @@ package jadex.mj.feature.execution.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +21,7 @@ import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
 import jadex.mj.core.MjComponent;
+import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
@@ -29,6 +32,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected Queue<Runnable>	steps	= new ArrayDeque<>();
 	protected boolean	executing;
 	protected boolean	do_switch;
+	protected boolean terminated;
 	protected ThreadRunner	runner	= null;
 	protected MjComponent	self	= null;
 	
@@ -43,6 +47,9 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	@Override
 	public void scheduleStep(Runnable r)
 	{
+		if(terminated)
+			throw new ComponentTerminatedException(self.getId());
+		
 		boolean	startnew	= false;
 		synchronized(this)
 		{
@@ -58,9 +65,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		if(startnew)
 		{
 			if(runner==null)
-			{
 				runner	= new ThreadRunner();
-			}
 			THREADPOOL.execute(runner);
 		}
 	}
@@ -68,8 +73,15 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	@Override
 	public <T> IFuture<T> scheduleStep(Supplier<T> s)
 	{
-		Future<T>	ret	= new Future<>();
-		scheduleStep(() ->
+		Future<T> ret = new Future<>();
+		
+		if(terminated)
+		{
+			ret.setException(new ComponentTerminatedException(self.getId()));
+			return ret;
+		}
+		
+		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
@@ -94,7 +106,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			{
 				ret.setException(new RuntimeException("Error in step", t));
 			}
-		});
+		}, ret));
 		return ret;
 	}
 	
@@ -130,7 +142,14 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
 		Future<T>	ret	= new Future<>();
-		scheduleStep(() ->
+		
+		if(terminated)
+		{
+			ret.setException(new ComponentTerminatedException(self.getId()));
+			return ret;
+		}
+		
+		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
@@ -155,7 +174,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			{
 				ret.setException(new RuntimeException("Error in step", t));
 			}
-		});
+		}, ret));
 		return ret;
 	}
 	
@@ -170,21 +189,28 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	
 	// Global on-demand timer shared by all components.
 	protected static volatile Timer	timer;
-	protected static volatile int	timer_entries;
+	//protected static volatile int	timer_entries;
+	protected static volatile List<TimerTaskInfo> entries = new LinkedList<TimerTaskInfo>();
 	
 	@Override
 	public IFuture<Void> waitForDelay(long millis)
 	{
-		Future<Void>	ret	= new Future<>();
+		Future<Void> ret = new Future<>();
+		
+		if(terminated)
+		{
+			ret.setException(new ComponentTerminatedException(self.getId()));
+			return ret;
+		}
 		
 		synchronized(this.getClass())
 		{
 			if(timer==null)
-			{
-				timer	= new Timer();
-			}
-			timer_entries++;
-			timer.schedule(new TimerTask()
+				timer = new Timer();
+			//timer_entries++;
+			
+			TimerTaskInfo task = new TimerTaskInfo(self.getId(), ret);
+			task.setTask(new TimerTask()
 			{
 				@Override
 				public void run()
@@ -193,19 +219,58 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					
 					synchronized(MjExecutionFeature.this.getClass())
 					{
-						timer_entries--;
-						if(timer_entries==0)
+						//timer_entries--;
+						entries.remove(task);
+						if(entries.size()==0)
 						{
 							timer.cancel();
-							timer	= null;
+							timer = null;
 						}
 					}
 				}
-			}, millis);
+			});
+			
+			entries.add(task);
+			
+			timer.schedule(task.getTask(), millis);
 		}
 		
 		return  ret;
 	}
+	
+	class TimerTaskInfo
+	{
+		protected UUID cid;
+		protected TimerTask task;
+		protected Future<?> future;
+		
+		public TimerTaskInfo(UUID cid, Future<?> future)
+		{
+			this.cid = cid;
+			this.future = future;
+		}
+
+		public UUID getComponentId() 
+		{
+			return cid;
+		}
+
+		public TimerTask getTask() 
+		{
+			return task;
+		}
+		
+		public void setTask(TimerTask task) 
+		{
+			this.task = task;
+		}
+
+		public Future<?> getFuture() 
+		{
+			return future;
+		}
+	}
+	
 	
 	@Override
 	public long getTime()
@@ -228,7 +293,6 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	{
 		// nop
 	}
-
 	
 	/**
 	 *  Template method to schedule operations
@@ -254,13 +318,16 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			LOCAL.set(MjExecutionFeature.this);
 			
 			boolean hasnext	= true;
-			while(hasnext)
+			while(hasnext && !terminated)
 			{
 				Runnable	step;
 				synchronized(MjExecutionFeature.this)
 				{
 					step	= steps.poll();
 				}
+				
+				if(step==null)
+					System.out.println("step is null");
 				
 				doRun(step);
 				
@@ -298,7 +365,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			
 			synchronized(MjExecutionFeature.this)
 			{
-				if(!steps.isEmpty())
+				if(!steps.isEmpty() && !terminated)
 				{
 					startnew	= true;
 				}
@@ -312,9 +379,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			if(startnew)
 			{
 				if(runner==null)
-				{
 					runner	= new ThreadRunner();
-				}
 				THREADPOOL.execute(runner);
 			}
 			
@@ -356,9 +421,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	public void addStepListener(IStepListener lis)
 	{
 		if(listeners==null)
-		{
 			listeners	= new ArrayList<>();
-		}
 		listeners.add(lis);
 	}
 
@@ -368,6 +431,44 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		assert listeners!=null;
 		boolean	removed	= listeners.remove(lis);
 		assert removed;
+	}
+	
+	@Override
+	public void terminate()
+	{
+		if(terminated)
+			return;
+		
+		terminated = true;
+		
+		//System.out.println("terminate start");
+			
+		ComponentTerminatedException ex = new ComponentTerminatedException(self.getId());
+		for(Object step: steps)
+		{
+			if(step instanceof StepInfo)
+			{
+				((StepInfo)step).getFuture().setException(ex);
+			}
+		}
+		
+		synchronized(MjExecutionFeature.this)
+		{
+			steps.clear();
+		}
+		
+		TimerTaskInfo[] ttis = entries.toArray(new TimerTaskInfo[entries.size()]);
+		for(TimerTaskInfo tti: ttis)
+		{
+			if(self.getId().equals(tti.getComponentId()))
+			{
+				tti.getTask().cancel();
+				tti.getFuture().setException(ex);
+				entries.remove(tti);
+			}
+		}
+		
+		//System.out.println("terminate end");
 	}
 	
 	protected void beforeStep()
@@ -433,4 +534,33 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		afterStep();
 	}
+	
+	class StepInfo implements Runnable
+	{
+		Runnable step;
+		Future<?> future;
+		
+		public StepInfo(Runnable step, Future<?> future)
+		{
+			this.step	= step;
+			this.future = future;
+		}
+		
+		public Runnable getStep() 
+		{
+			return step;
+		}
+		
+		public Future<?> getFuture() 
+		{
+			return future;
+		}
+
+		@Override
+		public void run()
+		{
+			doRun(step);
+		}
+	}
+
 }

@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import jadex.common.SUtil;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IFutureCommandResultListener;
 import jadex.future.IResultListener;
@@ -171,9 +172,11 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	 *  Execute a listener notification on the component using either an external access or the internal one
 	 *  and robustly use the rescue thread for the notification, when the component is terminated.
 	 */
-	public static void	scheduleForward(IExternalAccess access, IComponent component, Runnable notification)
+	public static IFuture<Void>	scheduleForward(IExternalAccess access, IComponent component, Runnable notification)
 	{
 		assert access!=null || component!=null;
+	
+		Future<Void> ret = new Future<Void>();
 		
 		// Execute directly on component thread?
 		if(SUtil.equals(MjExecutionFeature.LOCAL.get(), 
@@ -186,7 +189,8 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 		else
 		{
 			// Debug caller thread
-			String	trace	= "Component("+MjExecutionFeature.LOCAL.get()+") "; // SUtil.getExceptionStacktrace(new RuntimeException("stack trace").fillInStackTrace());
+			String trace = "Component("+MjExecutionFeature.LOCAL.get()+") ";
+			//String trace = SUtil.getExceptionStacktrace(new RuntimeException("stack trace").fillInStackTrace());
 			
 			// Differentiate between exception in listener (true) and exception before invocation (false)
 			// to avoid double listener invocation, but invoke listener, when scheduling step fails.
@@ -203,6 +207,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 			{
 				//access.scheduleStep(ia -> invocation.get())
 				access.scheduleStep(invocation)
+					.then(x -> ret.setResult(null))
 					.catchEx(ex0 ->
 					{
 						if(!invoked[0])
@@ -210,6 +215,8 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 							System.out.println("schedule forward1: "+notification+"\n"+trace);
 							//Starter.scheduleRescueStep(access.getId(), () -> invocation.get());
 						}
+						
+						ret.setException(ex0);
 					});
 			}
 			
@@ -217,6 +224,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 			else
 			{
 				component.getFeature(IMjExecutionFeature.class).scheduleStep(invocation)
+					.then(x -> ret.setResult(null))
 					.catchEx(ex0 ->
 					{
 						if(!invoked[0])
@@ -225,8 +233,11 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 							System.out.println("schedule forward2: "+notification+"\n"+trace);
 							//Starter.scheduleRescueStep(component.getId(), () -> invocation.get());
 						}
+						
+						ret.setException(ex0);
 					});
 			}
 		}
+		return ret;
 	}
 }
