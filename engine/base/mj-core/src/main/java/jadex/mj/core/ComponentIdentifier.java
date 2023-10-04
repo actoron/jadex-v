@@ -15,8 +15,8 @@ import jadex.mj.core.impl.Words;
  */
 public class ComponentIdentifier
 {
-	/** The process-local ID. */
-	public String id;
+	/** The process-local name. */
+	public String localname;
 	
 	/** The process ID of the process on the host running the component. */
 	public long pid;
@@ -38,9 +38,9 @@ public class ComponentIdentifier
 	 *  
 	 *  @param localid Local identifier of the component.
 	 */
-	public ComponentIdentifier(String localid)
+	public ComponentIdentifier(String localname)
 	{
-		this(localid, PID, HOST);
+		this(localname, PID, HOST);
 	}
 	
 	/**
@@ -50,11 +50,20 @@ public class ComponentIdentifier
 	 *  @param pid Process ID of the process on the host running the component
 	 *  @param host Host running the process that is running the component
 	 */
-	public ComponentIdentifier(String localid, long pid, String host)
+	public ComponentIdentifier(String localname, long pid, String host)
 	{
-		id = idStringFromNumber(ID_COUNTER.getAndIncrement());
+		localname = idStringFromNumber(ID_COUNTER.getAndIncrement());
 		this.pid = pid;
 		this.host = host;
+	}
+	
+	/**
+	 *  Returns the local id as a 
+	 * @return
+	 */
+	public String getLocalName()
+	{
+		return localname;
 	}
 	
 	/**
@@ -62,7 +71,7 @@ public class ComponentIdentifier
 	 */
 	public int hashCode()
 	{
-		return 13 * (id.hashCode() + Long.hashCode(pid) + host.hashCode());
+		return 13 * (localname.hashCode() + Long.hashCode(pid) + host.hashCode());
 	}
 	
 	/**
@@ -71,7 +80,10 @@ public class ComponentIdentifier
 	public boolean equals(Object obj)
 	{
 		if (obj instanceof ComponentIdentifier)
-			return id.equals(((ComponentIdentifier) obj).id);
+		{
+			ComponentIdentifier other = (ComponentIdentifier) obj;
+			return localname.equals(other.localname) && pid == other.pid && host.equals(other.host);
+		}
 		return false;
 	}
 	
@@ -80,7 +92,7 @@ public class ComponentIdentifier
 	 */
 	public String toString()
 	{
-		return id + "@" + pid + "@" + host;
+		return localname + "@" + pid + "@" + host;
 	}
 	
 	/**
