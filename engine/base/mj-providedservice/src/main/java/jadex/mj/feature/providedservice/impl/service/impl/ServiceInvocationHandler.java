@@ -38,7 +38,7 @@ import jadex.mj.feature.providedservice.impl.service.impl.interceptors.MethodInv
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.ResolveInterceptor;
 
 /**
- *  Basic service invocation interceptor.
+ *  Service invocation interceptor.
  *  It has a multi collection of interceptors per method.
  *  Executes the list of interceptors one by one.
  *  In case no handler can be found a fallback handler is used.

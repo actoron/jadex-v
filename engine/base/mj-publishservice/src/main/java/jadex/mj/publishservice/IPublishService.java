@@ -1,15 +1,16 @@
-package jadex.mj.feature.providedservice;
+package jadex.mj.publishservice;
 
 import java.util.UUID;
 
 import jadex.future.IFuture;
+import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.feature.providedservice.impl.service.impl.PublishInfo;
+import jadex.mj.publishservice.impl.PublishInfo;
 
 /**
  *  Service for publishing services in other technologies such as web services.
  */
-@Service(system=true)
+//@Service(system=true)
 public interface IPublishService
 {
 	/** The publish type web service. */
@@ -40,11 +41,11 @@ public interface IPublishService
 	 *  @param service The original service.
 	 *  @param pid The publish id (e.g. url or name).
 	 */
-	public IFuture<Void> publishService(UUID serviceid, PublishInfo pi);
+	public IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo pi);
 	
 	/**
 	 *  Unpublish a service.
 	 *  @param sid The service identifier.
 	 */
-	public IFuture<Void> unpublishService(UUID sid);
+	public IFuture<Void> unpublishService(IServiceIdentifier sid);
 }

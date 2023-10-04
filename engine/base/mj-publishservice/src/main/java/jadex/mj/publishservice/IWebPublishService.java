@@ -1,4 +1,4 @@
-package jadex.mj.feature.providedservice;
+package jadex.mj.publishservice;
 
 import jadex.future.IFuture;
 import jadex.mj.feature.providedservice.annotation.Service;
@@ -6,7 +6,7 @@ import jadex.mj.feature.providedservice.annotation.Service;
 /**
  *  Publish something to the internal or external http server.
  */
-@Service(system=true)
+//@Service(system=true)
 public interface IWebPublishService extends IPublishService
 {
 	/**
@@ -23,15 +23,15 @@ public interface IWebPublishService extends IPublishService
 	 *  Turn on or off the login security.
 	 *  If true one has to log in with platform secret before using published services.
 	 *  @param sec On or off.
-	 */
-	public IFuture<Void> setLoginSecurity(boolean sec);
+	 * /
+	public IFuture<Void> setLoginSecurity(boolean sec);*/
 	
 	/**
 	 *  Test if a the web user is logged in.
 	 *  @param callid The callid of the request.
 	 *  @return True, if is logged in.
-	 */
-	public IFuture<Boolean> isLoggedIn(String callid);
+	 * /
+	public IFuture<Boolean> isLoggedIn(String callid);*/
 	
 	/**
 	 *  Log in to the platform.

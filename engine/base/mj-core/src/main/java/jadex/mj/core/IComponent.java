@@ -31,4 +31,11 @@ public interface IComponent
 	 *  @return The external access.
 	 */
 	public IExternalAccess getExternalAccess();
+	
+	/**
+	 *  Get the external access.
+	 *  @param The id of the component.
+	 *  @return The external access.
+	 */
+	public IExternalAccess getExternalAccess(UUID cid);
 }

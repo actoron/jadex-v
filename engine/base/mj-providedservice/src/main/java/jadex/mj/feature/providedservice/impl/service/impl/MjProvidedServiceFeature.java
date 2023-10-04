@@ -12,7 +12,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
-import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
@@ -39,8 +38,6 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 {
 	protected MjComponent self;
 	
-	protected IParameterGuesser	guesser;
-	
 	/** The map of platform services. */
 	protected Map<Class<?>, Collection<IInternalService>> services;
 	
@@ -59,17 +56,18 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 		
 		ModelInfo model = (ModelInfo)self.getModel();
 		
-		Object mymodel = model.getFeatureModel(this.getClass());
+		ProvidedServiceModel mymodel = (ProvidedServiceModel)model.getFeatureModel(IMjProvidedServiceFeature.class);
 		if(mymodel==null)
 		{
-			Object fmodel = ProvidedServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			model.putFeatureModel(IMjProvidedServiceFeature.class, fmodel);
+			mymodel = (ProvidedServiceModel)ProvidedServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
+			model.putFeatureModel(IMjProvidedServiceFeature.class, mymodel);
 			
 			// todo: save model to cache
 		}
 		
 		// Collect provided services from model (name or type -> provided service info)
-		ProvidedServiceInfo[] ps = (ProvidedServiceInfo[])model.getFeatureModel(IMjProvidedServiceFeature.class);
+		//ProvidedServiceInfo[] ps = (ProvidedServiceInfo[])model.getFeatureModel(IMjProvidedServiceFeature.class);
+		ProvidedServiceInfo[] ps = mymodel.getServices();
 		Map<Object, ProvidedServiceInfo> sermap = new LinkedHashMap<Object, ProvidedServiceInfo>();
 		if(ps!=null)
 		{
@@ -153,7 +151,9 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 			if(ServiceScope.EXPRESSION.equals(scope))
 			{
 				scope = (ServiceScope)SJavaParser.getParsedValue(info.getScopeExpression(), model.getAllImports(), self.getFetcher(), self.getClassLoader());
-				info = new ProvidedServiceInfo(info.getName(), info.getType(), info.getImplementation(), scope, info.getScopeExpression(), info.getSecurity(), info.getPublish(), info.getProperties(), info.isSystemService());
+				info = new ProvidedServiceInfo(info.getName(), info.getType(), info.getImplementation(), scope, info.getScopeExpression(), info.getSecurity(), 
+						//info.getPublish(), 
+						info.getProperties(), info.isSystemService());
 //						System.out.println("expression scope '"
 //							+ (info.getScopeExpression()!=null ? info.getScopeExpression().getValue() : "")
 //							+ "': "+scope);
@@ -337,7 +337,10 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 //			public void run()
 //			{
 				ProvidedServiceInfo info = getProvidedServiceInfo(service.getServiceId());
-				final PublishInfo pi = info==null? null: info.getPublish();
+				
+				// todo!!!
+				//final PublishInfo pi = info==null? null: info.getPublish();
+				
 //				System.out.println("shutdown ser: "+service.getId());
 				/*if(pi!=null)
 				{
@@ -660,13 +663,13 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	{
 		final Future<Void> ret = new Future<Void>();
 		ProvidedServiceInfo info = getProvidedServiceInfo(service.getServiceId());
-		PublishInfo pit = info==null? null: info.getPublish();
+		//PublishInfo pit = info==null? null: info.getPublish();
 		
-		if(pit!=null)
+		//if(pit!=null)
 		{
 			// Hack?! evaluate the publish id string 
 			// Must clone info to not change the model
-			final PublishInfo pi = new PublishInfo(pit);
+			/*final PublishInfo pi = new PublishInfo(pit);
 			try
 			{
 				String pid = (String)SJavaParser.evaluateExpression(pi.getPublishId(), getComponent().getModel().getAllImports(), getComponent().getFetcher(), getComponent().getClassLoader());
@@ -676,7 +679,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 			catch(Exception e)
 			{
 //				e.printStackTrace();
-			}
+			}*/
 			
 			/*if(pi.isMulti())
 			{
@@ -772,7 +775,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 				}));
 			}*/
 		}
-		else
+		//else
 		{
 			ret.setResult(null);
 		}
@@ -976,7 +979,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	public ISerializationServices getSerializationService()
 	{
 		if(serser==null)
-			serser = new SerializationServices(getComponent().getId());
+			serser = new SerializationServices();
 		return serser;
 	}
 	

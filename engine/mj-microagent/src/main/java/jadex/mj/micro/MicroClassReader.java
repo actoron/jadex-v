@@ -2039,6 +2039,22 @@ public class MicroClassReader
 	/**
 	 * 
 	 */
+	public static <T extends Annotation> T[] getAnnotations(Class<?> clazz, Class<T> anclazz, ClassLoader cl)
+	{
+		ClassLoader cl2 = cl instanceof DummyClassLoader? ((DummyClassLoader)cl).getOriginal(): cl;
+		T[] anns = clazz.getAnnotationsByType((Class<T>)getClass(anclazz, cl));
+        T[] ret = (T[]) Array.newInstance(anclazz, anns.length);
+        for(int i=0; i<ret.length; i++)
+        {
+        	ret[i] = getProxyAnnotation(anns[i], cl2);
+        }
+		
+		return ret;
+	}
+	
+	/**
+	 * 
+	 */
 	public static <T extends Annotation> T getAnnotation(Field f, Class<T> anclazz, ClassLoader cl)
 	{
 		ClassLoader cl2 = cl instanceof DummyClassLoader? ((DummyClassLoader)cl).getOriginal(): cl;

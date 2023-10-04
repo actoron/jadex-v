@@ -28,6 +28,9 @@ import jadex.mj.feature.providedservice.ServiceScope;
 /**
  *  Local service registry. 
  *  
+ *  - todo?: clean up queries of terminated components. Currently removes queries when
+ *           an event occurs and scheduling on component thread does not work any longer.
+ *  
  *  - Search fetches services by types and excludes some according to the scope. 
  *  - Allows for adding persistent queries.
  */

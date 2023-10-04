@@ -2,8 +2,11 @@ package jadex.mj.feature.execution.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -25,7 +28,7 @@ import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
-{
+{	
 	protected static final ThreadPoolExecutor	THREADPOOL	= new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 

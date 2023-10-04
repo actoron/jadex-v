@@ -1,5 +1,7 @@
 package jadex.mj.core;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -22,6 +24,8 @@ import jadex.mj.core.modelinfo.ModelInfo;
  */
 public class MjComponent implements IComponent
 {
+	protected static Map<UUID, IComponent> components = Collections.synchronizedMap(new HashMap<UUID, IComponent>());
+	
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
 	protected Map<Class<Object>, MjFeatureProvider<Object>>	providers;
@@ -42,7 +46,7 @@ public class MjComponent implements IComponent
 	protected IExternalAccess access;
 	
 	/** The external access supplier. */
-	protected static Function<IComponent, IExternalAccess> accessfactory;
+	protected static Function<Object, IExternalAccess> accessfactory;
 		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
@@ -50,15 +54,9 @@ public class MjComponent implements IComponent
 	protected MjComponent(IModelInfo modelinfo)
 	{
 		this.modelinfo = modelinfo;
-		// UUID does not support that a given string is part of it :-(
-		/*try
-		{
-			this.id = UUID.nameUUIDFromBytes(InetAddress.getLocalHost().getHostName().getBytes());
-		}
-		catch(UnknownHostException e)
-		{*/
-			this.id = UUID.randomUUID();
-		//}
+		this.id = UUID.randomUUID();
+		MjComponent.addComponent(this); // is this good here?! should we have terminate on MjComponent as well to place removeComponent there?
+		
 		// Fetch relevant providers (potentially cached)
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());
 		
@@ -71,6 +69,21 @@ public class MjComponent implements IComponent
 				features.put(provider.getFeatureType(), feature);
 			}
 		});
+	}
+	
+	public static void addComponent(IComponent comp)
+	{
+		components.put(comp.getId(), comp);
+	}
+	
+	public static void removeComponent(UUID cid)
+	{
+		components.remove(cid);
+	}
+	
+	public static IComponent getComponent(UUID cid)
+	{
+		return components.get(cid);
 	}
 	
 	/**
@@ -294,10 +307,13 @@ public class MjComponent implements IComponent
 		if(access==null)
 		{
 			if(accessfactory!=null)
+			{
 				access = accessfactory.apply(this);
+			}
 			else
-				access = new IExternalAccess() {
-					
+			{
+				access = new IExternalAccess() 
+				{
 					@Override
 					public <T> IFuture<T> scheduleStep(Supplier<T> step) 
 					{
@@ -328,7 +344,59 @@ public class MjComponent implements IComponent
 						return MjComponent.this.getId();
 					}
 				};
+			}
 		}
+		return access;
+	}
+	
+	/**
+	 *  Get the external access.
+	 *  @param cid The component id.
+	 *  @return The external access.
+	 */
+	public IExternalAccess getExternalAccess(UUID cid)
+	{
+		IExternalAccess access = null;
+		if(accessfactory!=null)
+		{
+			access = accessfactory.apply(cid);
+		}
+		else
+		{
+			access = new IExternalAccess() 
+			{
+				@Override
+				public <T> IFuture<T> scheduleStep(Supplier<T> step) 
+				{
+					throw new UnsupportedOperationException("Missing execution feature");
+				}
+				
+				@Override
+				public void scheduleStep(Runnable step) 
+				{
+					throw new UnsupportedOperationException("Missing execution feature");
+				}
+				
+				@Override
+				public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
+				{
+					throw new UnsupportedOperationException("Missing execution feature");
+				}
+				
+				@Override
+				public void scheduleStep(IThrowingConsumer<IComponent> step)
+				{
+					throw new UnsupportedOperationException("Missing execution feature");
+				}
+				
+				@Override
+				public UUID getId() 
+				{
+					return MjComponent.this.getId();
+				}
+			};
+		}
+		
 		return access;
 	}
 	
@@ -336,7 +404,7 @@ public class MjComponent implements IComponent
 	 *  Set the external access factory.
 	 *  @param factory The factory.
 	 */
-	public static void setExternalAccessFactory(Function<IComponent, IExternalAccess> factory)
+	public static void setExternalAccessFactory(Function<Object, IExternalAccess> factory)
 	{
 		accessfactory = factory;
 	}

@@ -45,8 +45,18 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 		});
 		
 		// Init the component with schedule step functionality (hack?!)
-		MjComponent.setExternalAccessFactory(comp ->
+		MjComponent.setExternalAccessFactory(obj ->
 		{
+			IComponent tmp = obj instanceof IComponent? (IComponent)obj: null;
+			
+			if(obj instanceof UUID)
+			{
+				UUID cid = (UUID)obj;
+				tmp = MjComponent.getComponent(cid);
+			}
+			
+			final IComponent comp = tmp;
+			
 			return new IExternalAccess() 
 			{
 				@Override

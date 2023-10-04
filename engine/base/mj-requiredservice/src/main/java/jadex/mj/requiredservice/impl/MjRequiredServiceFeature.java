@@ -82,8 +82,6 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	
 	protected MjComponent self;
 	
-	protected IParameterGuesser	guesser;
-	
 	/** The required service infos. */
 	protected Map<String, RequiredServiceInfo> requiredserviceinfos;
 	

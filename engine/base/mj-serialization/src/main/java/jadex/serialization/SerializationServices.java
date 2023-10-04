@@ -31,6 +31,8 @@ import jadex.serialization.serializers.JadexFramedBinarySerializer;
 import jadex.serialization.serializers.JadexJsonSerializer;
 
 /**
+ *  todo: make one service/helper for all components
+ * 
  *  Functionality for managing serialization.
  */
 public class SerializationServices implements ISerializationServices
@@ -72,7 +74,7 @@ public class SerializationServices implements ISerializationServices
 	protected IRwMap<UUID, Boolean> sameversioncache;
 
 	/** Creates the management. */
-	public SerializationServices(UUID comp)
+	public SerializationServices()
 	{
 		sameversioncache = new RwMapWrapper<>(new LRU<>(100));
 		//rrm	= new RemoteReferenceModule(comp);

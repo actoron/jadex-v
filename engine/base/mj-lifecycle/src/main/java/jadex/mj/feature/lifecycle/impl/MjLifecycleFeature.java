@@ -27,5 +27,7 @@ public class MjLifecycleFeature	implements IMjLifecycleFeature
 		
 		// invoke terminate on execution feature
 		((IMjInternalExecutionFeature)self.getFeature(IMjExecutionFeature.class)).terminate();
+		
+		MjComponent.removeComponent(self.getId());
 	}
 }

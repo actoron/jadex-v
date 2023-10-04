@@ -1,4 +1,4 @@
-package jadex.mj.feature.providedservice.impl.service.impl;
+package jadex.mj.publishservice.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,17 +27,20 @@ public class PublishInfo
 	/** The publish type. */
 	protected String publishtype;
 	
+	/** The publish target. */
+	protected String publishtarget;
+	
 	/** The publish scope. */
-	protected ServiceScope publishscope = ServiceScope.PLATFORM;
+	//protected ServiceScope publishscope = ServiceScope.PLATFORM;
 	
 	/** Flag for allowing publishing to multiple locations. */
-	protected boolean multi = false;
+	//protected boolean multi = false;
 	
 	/** The mapping information (e.g. annotated interface). */
 	protected ClassInfo mapping;
 	
 	/** The mapping properties. */
-	protected List<UnparsedExpression> properties;
+	//protected List<UnparsedExpression> properties;
 
 	//-------- constructors --------
 
@@ -52,29 +55,30 @@ public class PublishInfo
 	 *  Create a new publish info.
 	 *  @param pid The publish id, e.g. url.
 	 *  @param publishtype The publish type.
-	 */
+	 * /
 	public PublishInfo(String pid, String publishtype, Class<?> mapping)
 	{
 		this(pid, publishtype, ServiceScope.PLATFORM, false, mapping, (UnparsedExpression[])null);
-	}
+	}*/
 		
 	/**
 	 *  Create a new publish info.
 	 *  @param pid The publish id, e.g. url.
 	 *  @param publishtype The publish type.
 	 */
-	public PublishInfo(String pid, String publishtype, ServiceScope publishscope, boolean multi,
-		Class<?> mapping, UnparsedExpression[] properties)
+	public PublishInfo(String pid, String publishtype, String publishtaget,
+		//ServiceScope publishscope, boolean multi,
+		Class<?> mapping)
+		//, UnparsedExpression[] properties)
 	{
 		this.pid = pid;
 		this.publishtype = publishtype;
-		this.publishscope = publishscope;
-		this.multi = multi;
+		this.publishtarget = publishtaget;
+		//this.publishscope = publishscope;
+		//this.multi = multi;
 		this.mapping = mapping==null? null: new ClassInfo(mapping);
-		if(properties!=null)
-		{
-			this.properties = SUtil.arrayToList(properties);
-		}
+		//if(properties!=null)
+		//	this.properties = SUtil.arrayToList(properties);
 	}
 	
 	/**
@@ -82,7 +86,7 @@ public class PublishInfo
 	 *  Convenience constructor that creates unparsed expressions from a string array containing consecutive name/value pairs.
 	 *  @param pid The publish id, e.g. url.
 	 *  @param publishtype The publish type.
-	 */
+	 * /
 	public PublishInfo(String pid, String publishtype, ServiceScope publishscope, boolean multi,
 		Class<?> mapping, Object[] props)
 	{
@@ -100,7 +104,7 @@ public class PublishInfo
 					props[i+1] instanceof String ? "\""+props[i+1]+"\"" : ""+props[i+1]));
 			}
 		}
-	}
+	}*/
 	
 	/**
 	 *  Create a new publish info.
@@ -109,13 +113,12 @@ public class PublishInfo
 	{
 		this.pid = info.getPublishId();
 		this.publishtype = info.getPublishType();
-		this.publishscope = info.getPublishScope();
-		this.multi = info.multi;
+		this.publishtarget = info.getPublishTarget();
+		//this.publishscope = info.getPublishScope();
+		//this.multi = info.multi;
 		this.mapping = info.getMapping();
-		if(info.getProperties()!=null)
-		{
-			this.properties = new ArrayList<UnparsedExpression>(info.getProperties());
-		}
+		//if(info.getProperties()!=null)
+		//	this.properties = new ArrayList<UnparsedExpression>(info.getProperties());
 	}
 	
 	//-------- methods --------
@@ -156,22 +159,34 @@ public class PublishInfo
 		this.publishtype = type;
 	}
 	
+	
+	
 	/**
 	 *  Gets the publish scope.
 	 *  @return The publish scope.
-	 */
+	 * /
 	public ServiceScope getPublishScope()
 	{
 		return publishscope;
-	}
+	}*/
 
 	/**
 	 *  Set the publish scope.
 	 *  @param publishscope The publish scope.
-	 */
+	 * /
 	public void setPublishScope(ServiceScope publishscope)
 	{
 		this.publishscope = publishscope;
+	}*/
+
+	public String getPublishTarget() 
+	{
+		return publishtarget;
+	}
+
+	public void setPublishTarget(String publishtarget) 
+	{
+		this.publishtarget = publishtarget;
 	}
 
 	/**
@@ -187,21 +202,21 @@ public class PublishInfo
 	 *  Sets if the publishing should be done on multiple publishing services.
 	 *  
 	 *  @param multi Set true, if multi-publish.
-	 */
+	 * /
 	public void setMulti(boolean multi)
 	{
 		this.multi = multi;
-	}
+	}*/
 	
 	/**
 	 *  Gets if the publishing should be done on multiple publishing services.
 	 *  
 	 *  @return True, if multi-publish.
-	 */
+	 * /
 	public boolean isMulti()
 	{
 		return multi;
-	}
+	}*/
 
 	/**
 	 *  Set the mapping information (e.g. annotated interface). 
@@ -215,42 +230,42 @@ public class PublishInfo
 	/**
 	 *  Get the properties.
 	 *  @return the properties.
-	 */
+	 * /
 	public List<UnparsedExpression> getProperties()
 	{
 		return properties;
-	}
+	}*/
 
 	/**
 	 *  Set the properties.
 	 *  @param properties The properties to set.
-	 */
+	 * /
 	public void setProperties(List<UnparsedExpression> properties)
 	{
 		this.properties = properties;
-	}
+	}*/
 	
 	/**
 	 *  Add a property.
 	 *  @param property The property to add.
-	 */
+	 * /
 	public void addProperty(UnparsedExpression property)
 	{
 		if(properties==null)
 			this.properties = new ArrayList<UnparsedExpression>();
 		properties.add(property);
-	}
+	}*/
 	
 	/**
 	 *  Add a property.
 	 *  @param property The property to add.
-	 */
+	 * /
 	public void addProperty(String name, String val)
 	{
 		if(properties==null)
 			this.properties = new ArrayList<UnparsedExpression>();
 		properties.add(new UnparsedExpression(name, val));
-	}
+	}*/
 
 	/**
 	 *  Get the string representation.
