@@ -21,6 +21,7 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminableIntermediateFuture;
 import jadex.future.TerminationCommand;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
@@ -190,7 +191,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			indexer.addValue(service);
 			
 			// If services belongs to excluded component cache them
-			UUID cid = service.getProviderId();
+			ComponentIdentifier cid = service.getProviderId();
 			/*if(excludedservices!=null && excludedservices.containsKey(cid))
 			{
 				if(excludedservices==null)
@@ -835,7 +836,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 //		IComponentIdentifier searchstart	= query.getProvider()!=null ? query.getProvider()
 //			: query.getPlatform()!=null ? query.getPlatform() : query.getOwner();
 		//IComponentIdentifier searchstart = query.getSearchStart() != null ? query.getSearchStart() : query.getOwner();
-		UUID searchstart = query.getOwner();
+		ComponentIdentifier searchstart = query.getOwner();
 		
 		
 		if(ServiceScope.GLOBAL.equals(scope))

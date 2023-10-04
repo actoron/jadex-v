@@ -2,7 +2,8 @@ package jadex.serialization;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+
+import jadex.mj.core.ComponentIdentifier;
 
 /**
  *   Message header with message meta information.
@@ -26,9 +27,9 @@ public class MsgHeader implements IMsgHeader
 	 * 
 	 *  @return The sender.
 	 */
-	public UUID getSender()
+	public ComponentIdentifier getSender()
 	{
-		return (UUID)getProperty(IMsgHeader.SENDER);
+		return (ComponentIdentifier)getProperty(IMsgHeader.SENDER);
 	}
 	
 	/**
@@ -36,9 +37,9 @@ public class MsgHeader implements IMsgHeader
 	 * 
 	 *  @return The receiver.
 	 */
-	public UUID getReceiver()
+	public ComponentIdentifier getReceiver()
 	{
-		return (UUID)getProperty(IMsgHeader.RECEIVER);
+		return (ComponentIdentifier)getProperty(IMsgHeader.RECEIVER);
 	}
 	
 	/**

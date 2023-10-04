@@ -1,6 +1,6 @@
 package jadex.serialization;
 
-import java.util.UUID;
+import jadex.mj.core.ComponentIdentifier;
 
 /**
  *   Interface for message headers with meta information / link-level security.
@@ -26,14 +26,14 @@ public interface IMsgHeader
 	 * 
 	 *  @return The sender.
 	 */
-	public UUID getSender();
+	public ComponentIdentifier getSender();
 	
 	/**
 	 *  Gets the receiver of the message.
 	 * 
 	 *  @return The receiver.
 	 */
-	public UUID getReceiver();
+	public ComponentIdentifier getReceiver();
 	
 	/**
 	 *  Gets a property stored in the header.

@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.javaparser.SJavaParser;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
@@ -26,7 +26,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	//-------- attributes --------
 	
 	/** The provider identifier. */
-	protected UUID providerid;
+	protected ComponentIdentifier providerid;
 		
 	/** The service name. */
 	protected String servicename;
@@ -99,7 +99,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/**
 	 *  Create a new service identifier.
 	 */
-	public ServiceIdentifier(UUID providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted)
+	public ServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted)
 	{
 		this.providerid = providerid;
 		this.type	= type;
@@ -116,7 +116,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Get the service provider identifier.
 	 *  @return The provider id.
 	 */
-	public UUID getProviderId()
+	public ComponentIdentifier getProviderId()
 	{
 		return providerid;
 	}
@@ -125,7 +125,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Set the providerid.
 	 *  @param providerid The providerid to set.
 	 */
-	public void setProviderId(UUID providerid)
+	public void setProviderId(ComponentIdentifier providerid)
 	{
 		this.providerid = providerid;
 	}

@@ -1,6 +1,6 @@
 package jadex.mj.feature.execution;
 
-import java.util.UUID;
+import jadex.mj.core.ComponentIdentifier;
 
 /**
  *  Thrown when operations are invoked after an component has been terminated.
@@ -10,7 +10,7 @@ public class ComponentTerminatedException	extends RuntimeException
 	//-------- attributes --------
 	
 	/** The component identifier. */
-	protected UUID cid;
+	protected ComponentIdentifier cid;
 	
 	//-------- constructors --------
 	
@@ -25,7 +25,7 @@ public class ComponentTerminatedException	extends RuntimeException
 	/**
 	 *	Create an component termination exception.  
 	 */
-	public ComponentTerminatedException(UUID cid)
+	public ComponentTerminatedException(ComponentIdentifier cid)
 	{
 		super(""+cid);
 		this.cid = cid;
@@ -34,7 +34,7 @@ public class ComponentTerminatedException	extends RuntimeException
 	/**
 	 *	Create an component termination exception.  
 	 */
-	public ComponentTerminatedException(UUID cid, String message)
+	public ComponentTerminatedException(ComponentIdentifier cid, String message)
 	{
 		super(cid+": "+message);
 		this.cid = cid;
@@ -46,7 +46,7 @@ public class ComponentTerminatedException	extends RuntimeException
 	 *  Get the component identifier.
 	 *  @return The component identifier.
 	 */
-	public UUID getComponentIdentifier()
+	public ComponentIdentifier getComponentIdentifier()
 	{
 		return cid;
 	}
@@ -54,7 +54,7 @@ public class ComponentTerminatedException	extends RuntimeException
 	/**
 	 *  Get the component identifier.
 	 */
-	public void setComponentIdentifier(UUID cid)
+	public void setComponentIdentifier(ComponentIdentifier cid)
 	{
 		this.cid	= cid;
 	}

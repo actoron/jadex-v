@@ -4,7 +4,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -36,7 +35,7 @@ public class MjComponent implements IComponent
 	protected IModelInfo modelinfo;
 	
 	/** The id. */
-	protected UUID id;
+	protected ComponentIdentifier id;
 	
 	/** The external access. */
 	protected IExternalAccess access;
@@ -57,7 +56,7 @@ public class MjComponent implements IComponent
 		}
 		catch(UnknownHostException e)
 		{*/
-			this.id = UUID.randomUUID();
+			this.id = new ComponentIdentifier();
 		//}
 		// Fetch relevant providers (potentially cached)
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());
@@ -77,7 +76,7 @@ public class MjComponent implements IComponent
 	 *  Get the id.
 	 *  @return The id.
 	 */
-	public UUID getId() 
+	public ComponentIdentifier getId() 
 	{
 		return id;
 	}
@@ -323,7 +322,7 @@ public class MjComponent implements IComponent
 					}
 					
 					@Override
-					public UUID getId() 
+					public ComponentIdentifier getId() 
 					{
 						return MjComponent.this.getId();
 					}

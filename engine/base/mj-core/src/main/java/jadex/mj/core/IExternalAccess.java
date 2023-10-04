@@ -1,6 +1,5 @@
 package jadex.mj.core;
 
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import jadex.future.IFuture;
@@ -14,7 +13,7 @@ public interface IExternalAccess
 	 *  Get the id.
 	 *  @return The id.
 	 */
-	public UUID getId();
+	public ComponentIdentifier getId();
 	
 	/**
 	 *  Schedule a step to be run on the component.

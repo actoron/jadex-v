@@ -17,6 +17,7 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
@@ -58,7 +59,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	private Map<String, Object> properties;
 	
 	/** The provider id. */
-	protected UUID providerid;
+	protected ComponentIdentifier providerid;
 	
 	protected Class<?> type;
 	
@@ -70,7 +71,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Create a new service.
 	 */
 	// todo: remove type!!!
-	public BasicService(UUID providerid, Class<?> type, Map<String, Object> properties)
+	public BasicService(ComponentIdentifier providerid, Class<?> type, Map<String, Object> properties)
 	{
 		this(providerid, type, null, properties);
 	}
@@ -79,7 +80,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Create a new service.
 	 */
 	// todo: remove type!!!
-	public BasicService(UUID providerid, Class<?> type, Class<?> impltype, Map<String, Object> properties)
+	public BasicService(ComponentIdentifier providerid, Class<?> type, Class<?> impltype, Map<String, Object> properties)
 	{
 //		super(null);
 		
@@ -395,7 +396,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Get the providerid.
 	 *  @return the providerid.
 	 */
-	public UUID getProviderId()
+	public ComponentIdentifier getProviderId()
 	{
 		return providerid;
 	}

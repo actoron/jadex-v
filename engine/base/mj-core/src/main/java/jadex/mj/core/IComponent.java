@@ -1,7 +1,5 @@
 package jadex.mj.core;
 
-import java.util.UUID;
-
 /**
  *  Interface for a component.
  */
@@ -11,7 +9,7 @@ public interface IComponent
 	 *  Get the id.
 	 *  @return The id.
 	 */
-	public UUID getId();
+	public ComponentIdentifier getId();
 	
 	// todo: reduce this as metainfo
 	/**

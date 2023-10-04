@@ -1,10 +1,10 @@
 package jadex.mj.feature.execution.impl;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import jadex.future.IFuture;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.IThrowingConsumer;
@@ -50,7 +50,7 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 			return new IExternalAccess() 
 			{
 				@Override
-				public UUID getId()
+				public ComponentIdentifier getId()
 				{
 					return comp.getId();
 				}
