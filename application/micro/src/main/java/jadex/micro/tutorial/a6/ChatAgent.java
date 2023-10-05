@@ -52,13 +52,7 @@ public class ChatAgent implements IChatService, IChatGuiService
 		ps.publishResources("http://localhost:8081/${cid}", "jadex/micro/tutorial/a6");
 		
 		openInBrowser("http://localhost:8081/"+agent.getId());
-	}
-	
-	@OnEnd
-	protected void end()
-	{
-		System.out.println("on end called: "+agent.getId());
-		//this.gui.dispose();
+		//openInBrowser("http://localhost:8081/"+agent.getId()+"/index2.html");
 	}
 	
 	/**
@@ -83,7 +77,7 @@ public class ChatAgent implements IChatService, IChatGuiService
 	 */
 	public void sendMessageToAll(String text)
 	{
-		System.out.println("found services: "+chatservices.size());
+		//System.out.println("found services: "+chatservices.size());
 		for(Iterator<IChatService> it=chatservices.iterator(); it.hasNext(); )
 		{
 			IChatService cs = it.next();
@@ -135,28 +129,17 @@ public class ChatAgent implements IChatService, IChatGuiService
 		return chatservices;
 	}
 	
+	/**
+	 *  Open the url in the browser.
+	 *  @param url The url.
+	 */
 	protected void openInBrowser(String url)
 	{
 		try 
 		{
 			URI uri = new URI(url);
-			if(Desktop.isDesktopSupported()) 
-			{
-				Desktop desktop = Desktop.getDesktop();
-				if(desktop.isSupported(Desktop.Action.BROWSE)) 
-				{
-					desktop.browse(uri);
-				} 
-				else 
-				{
-					System.out.println("Browse action not supported");
-				}
-			} 
-			else 
-			{
-				System.out.println("Desktop environment not supported");
-			}
-		} 
+			Desktop.getDesktop().browse(uri);
+		}	
 		catch(Exception e) 
 		{
 			e.printStackTrace();

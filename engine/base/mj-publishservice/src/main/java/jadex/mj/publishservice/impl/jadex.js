@@ -21,12 +21,12 @@
 	
 		init: function()
 		{
-			console.log("jadex init running");
+			console.log("jadex init running: "+this.getPath());
 			
 			var self = this;
 			
 			// create/set cookie for unique id for 
-			var cookie = null;//self.getCookie("jadex");
+			var cookie = self.getCookie("jadex");
 			if(!cookie)
 			{
 				var id = self.generateUUID();
@@ -71,6 +71,12 @@
 					self.conversations = {};
 				}
 			}, false);
+		},
+		
+		getPath: function()
+		{
+			let path = document.currentScript.src;
+			return path.substring(0, path.lastIndexOf('/'));
 		},
 		
 		processEvent: function(event, cnt)
@@ -527,16 +533,14 @@
 	
 		deleteCookie: function(cname)
 		{
-			//let curpath = "/";
-			let curpath =  window.location.pathname;
-			document.cookie=cname+"=; path="+curpath+"; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None";
+			document.cookie=cname+"=; path="+this.getPath()+"; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None";
 		},
 	
 		setCookie: function(cname, value)
 		{
 			this.deleteCookie(cname);
 			// without any path browser suppresses cookie for calls of subdirs
-			let curpath = window.location.pathname;
+			let curpath = this.getPath();
 			let cookval = cname+"="+btoa(encodeURIComponent(value))+"; path="+curpath+"; SameSite=None";
 			document.cookie = cookval;
 			console.log("cookie set: "+cookval); 
