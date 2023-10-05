@@ -533,7 +533,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 //		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		
 		// hack!!!!
-		Class<?> servicetype = service.getClass();
+		Class<?> servicetype = service.getServiceId().getServiceType().getType(this.getClass().getClassLoader());//service.getClass();
 				
 		//for(Class<?> servicetype: types)
 		{

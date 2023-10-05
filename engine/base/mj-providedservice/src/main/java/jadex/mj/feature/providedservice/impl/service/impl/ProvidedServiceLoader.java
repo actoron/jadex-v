@@ -90,7 +90,7 @@ public class ProvidedServiceLoader
 			for(Class<?> iface: serifaces)
 			{
 				ProvidedServiceImplementation impl = new ProvidedServiceImplementation(null, "$pojoagent!=null? $pojoagent: $component", Implementation.PROXYTYPE_DECOUPLED, null);
-				ProvidedServiceInfo psi = new ProvidedServiceInfo(null, iface, impl);
+				ProvidedServiceInfo psi = new ProvidedServiceInfo(BasicService.generateServiceName(iface), iface, impl);
 				//String name = psi.getName()==null? ("#"+cnt++): psi.getName();
 				model.addService(psi);
 				//pservices.put(psi.getName()==null? ("#"+cnt++): psi.getName(), psi);

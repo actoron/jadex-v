@@ -3,6 +3,7 @@ package jadex.mj.publishservice.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import jadex.common.SReflect;
 import jadex.mj.feature.providedservice.impl.service.impl.ProvidedServiceInfo;
 import jadex.mj.micro.MicroClassReader;
 import jadex.mj.publishservice.publish.annotation.Publish;
@@ -29,7 +30,11 @@ public class PublishServiceLoader
 					// todo: do we need this?! fixed way per annotation type?!
 					//pubsdone = val.replace();
 					
-					PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), p.publishtaget(), Object.class.equals(p.mapping())? null: p.mapping());
+					String pt = p.publishtagetname().length()>0? p.publishtagetname(): null;
+					if(pt==null && !p.publishtaget().equals(Object.class))
+						pt = SReflect.getClassName(p.publishtaget());
+					
+					PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), pt, Object.class.equals(p.mapping())? null: p.mapping());
 					model.addPublishInfo(pi);
 				}
 			}

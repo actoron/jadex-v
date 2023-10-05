@@ -15,7 +15,7 @@
 {
 	var Jadex = 
 	{
-		baseurl: '/webapi',
+		baseurl: 'events',
 		source: null,
 		conversations: {},
 	
@@ -26,7 +26,7 @@
 			var self = this;
 			
 			// create/set cookie for unique id for 
-			var cookie = self.getCookie("jadex");
+			var cookie = null;//self.getCookie("jadex");
 			if(!cookie)
 			{
 				var id = self.generateUUID();
@@ -97,19 +97,39 @@
 					let retrycnt = 0;
 					let sendalive = x =>
 					{
-						axios.get(cinfo[3], {headers: {'x-jadex-callid': callid, 'x-jadex-alive': "true", 
-							'cache-control': 'no-cache, no-store'}}, this.transform)
-							.then(x =>
-							{
-								//console.log("alive success: "+callid);
-							}).catch(err =>
-							{
-								console.log("alive err: "+callid+" retrycmt: "+retrycnt+" "+err);
-								if(retrycnt++<3)
-									setTimeout(sendalive, 3000);
-								else
-									console.log("Giving up sending alive: "+callid);
-							});
+						let headers = 
+						{
+							'x-jadex-callid': callid, 
+							'x-jadex-alive': "true", 
+							'cache-control': 'no-cache, no-store'
+						};
+						/*axios.get(cinfo[3], {headers}, this.transform)
+						.then(x =>
+						{
+							//console.log("alive success: "+callid);
+						}).catch(err =>
+						{
+							console.log("alive err: "+callid+" retrycmt: "+retrycnt+" "+err);
+							if(retrycnt++<3)
+								setTimeout(sendalive, 3000);
+							else
+								console.log("Giving up sending alive: "+callid);
+						});*/
+						
+						fetch(cinfo[3], {method: 'GET', headers: headers})
+					    .then(response => 
+					    {
+					        if(!response.ok)
+					            throw new Error("HTTP Error: " + response.status);
+					    })
+					    .catch(err => 
+					    {
+					        console.log("alive err: " + callid + " retrycmt: " + retrycnt + " " + err);
+					        if(retrycnt++<3) 
+					            setTimeout(sendalive, 3000); 
+					        else 
+					            console.log("Giving up sending alive: " + callid);
+					    });
 					};
 					sendalive();
 				}
@@ -147,7 +167,7 @@
 			}
 		},
 								
-		transform: 
+		/*transform: 
 		{
 			// Currently this impl is the same as internal axios 
 			transformResponse: [function(data) 
@@ -159,7 +179,7 @@
 				    	return new Date(value);
 				    }
 				    return value;
-				}*/
+				}* /
 				//console.log("received data: "+data);
 				try
 				{
@@ -174,7 +194,7 @@
 				//console.log("data: "+data);
 				return data;
 			}]
-		},	
+		},*/
 
 		/* 
 		 * path: The path to call (should reach published Jadex service)
@@ -322,12 +342,17 @@
 			//console.log("initial request sent: "+path);
 			//call = axios.CancelToken.source();
 			
-			var headers = {'x-jadex-callid': callid, 'cache-control': 'no-cache, no-store', "x-jadex-sse": true};
-			axios.get(path, {headers: headers}, this.transform)
+			var headers = 
+			{
+				'x-jadex-callid': callid, 
+				'cache-control': 'no-cache, no-store', 
+				"x-jadex-sse": true
+			};
+			/*axios.get(path, {headers: headers}, this.transform)
 			//axios.get(path, {cancelToken: call.token, headers: headers}, this.transform)
 				.then(function(resp) 
 				{
-					var callid = func(resp); 
+					//var callid = func(resp); 
 					if(inithandler)
 						inithandler();
 				})
@@ -335,7 +360,24 @@
 				{
 					//reject(err); 
 					errfunc(err);
-				});
+				});*/
+				
+			fetch(path, {method: 'GET', headers})
+		    .then(function (response) 
+		    {
+		        if(!response.ok)
+		        	throw new Error("HTTP Error: " + response.status);
+		        return response.json(); 
+		    })
+		    .then(function (data) 
+		    {
+		        if(inithandler)
+		            inithandler();
+		    })
+		    .catch(function (error) 
+		    {
+		        errfunc(error);
+		    });
 			
 			return callid;
 		},
@@ -387,13 +429,31 @@
 					
 					console.log("terminating request: "+path);
 					
-					axios.get(path, {headers: {'x-jadex-callid': callid, 'x-jadex-terminate': r, 
-						'cache-control': 'no-cache, no-store', "x-jadex-sse": true}}, this.transform)
-						.then(resolve).catch(errhandler);
+					var headers = 
+					{
+						'x-jadex-callid': callid, 
+						'x-jadex-terminate': r, 
+						'cache-control': 'no-cache, no-store', 
+						"x-jadex-sse": true
+					};
+					
+					//axios.get(path, {headers}, this.transform)
+					//	.then(resolve).catch(errhandler);
+						
+					fetch(path, {method: 'GET', headers})
+				    .then(response => 
+				    {
+				        if(!response.ok)
+				            throw new Error("HTTP Error: " + response.status);
+				        return response.json();
+				    })
+				    .then(resolve)
+				    .catch(errhandler);
 				});
 			}
 		},
 		
+		// todo: support other http methods
 		createProxy: function(cid, servicetype)
 		{
 			var self = this;
@@ -404,11 +464,24 @@
 					let callstrprefix = self.baseurl+'/invokeServiceMethod?cid='+service.cid+'&servicetype='+service.type+'&methodname='+prop;
 					return function(...args)
 					{
-						let callstr = callstrprefix;
-						for (let i = 0; i < args.length; i++)
-							callstr += '&args_'+i+'='+args[i];
-						
-						return axios.get(callstr, service.transform);
+						return new Promise((resolve, reject) => 
+						{
+							let callstr = callstrprefix;
+							for (let i = 0; i < args.length; i++)
+								callstr += '&args_'+i+'='+args[i];
+							
+							//return axios.get(callstr, service.transform);
+							
+							fetch(callstr, {method: 'GET', headers})
+						    .then(response => 
+						    {
+						        if(!response.ok)
+						            throw new Error("HTTP Error: " + response.status);
+						        return response.json();
+						    })
+						    .then(resolve)
+						    .catch(reject);
+						});
 			        }
 				}
 		    });
@@ -454,14 +527,19 @@
 	
 		deleteCookie: function(cname)
 		{
-			document.cookie=cname+"=; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+			//let curpath = "/";
+			let curpath =  window.location.pathname;
+			document.cookie=cname+"=; path="+curpath+"; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None";
 		},
 	
 		setCookie: function(cname, value)
 		{
 			this.deleteCookie(cname);
-			document.cookie=cname+"="+btoa(encodeURIComponent(value))+";path=/";// otherwise browser suppresses cookie for calls of subdirs
-			console.log("cookie set: "+document.cookie); 
+			// without any path browser suppresses cookie for calls of subdirs
+			let curpath = window.location.pathname;
+			let cookval = cname+"="+btoa(encodeURIComponent(value))+"; path="+curpath+"; SameSite=None";
+			document.cookie = cookval;
+			console.log("cookie set: "+cookval); 
 		}
 	};
 	Jadex.init();

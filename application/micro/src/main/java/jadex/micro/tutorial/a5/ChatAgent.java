@@ -16,7 +16,10 @@ import jadex.mj.publishservice.publish.annotation.Publish;
 import jadex.mj.requiredservice.annotation.OnService;
 
 /**
- *  Chat micro agent provides a basic chat service. 
+ *  Chat micro agent provides a basic chat service and publishes it as rest web service.
+ *  
+ *  It can be invoked via the standard service info page at the publish url: http://localhost:8081/chat.
+ *  The agent receives the message and display at the console.
  */
 @Agent
 @Service

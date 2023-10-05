@@ -1,16 +1,14 @@
 package jadex.micro.tutorial.a1;
 
-import jadex.mj.core.MjComponent;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.providedservice.annotation.Implementation;
 import jadex.mj.feature.providedservice.annotation.ProvidedService;
 import jadex.mj.feature.providedservice.annotation.ProvidedServices;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
-import jadex.mj.micro.annotation.Description;
 
 /**
- *  Chat micro agent provides a basic chat service. 
+ *  Chat micro agent provides a basic chat service as separate class. 
  */
 @Agent
 @ProvidedServices(@ProvidedService(type=IChatService.class, 

@@ -23,9 +23,14 @@ public @interface Publish
 	public String publishtype() default "";
 	
 	/**
-	 *  Target interface of the service to be published or the name of the provided service.
+	 *  Target interface of the service to be published service.
 	 */
-	public String publishtaget() default "";
+	public Class<?> publishtaget() default Object.class;
+	
+	/**
+	 *  Target name of the provided service.
+	 */
+	public String publishtagetname() default "";
 	
 	/**
 	 *  The scope user to find the publish service.

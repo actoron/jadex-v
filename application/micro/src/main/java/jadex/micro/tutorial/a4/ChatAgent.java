@@ -9,7 +9,6 @@ import jadex.common.SUtil;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.annotation.OnEnd;
 import jadex.mj.core.annotation.OnStart;
-import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
@@ -17,6 +16,9 @@ import jadex.mj.requiredservice.annotation.OnService;
 
 /**
  *  Chat micro agent provides a basic chat service. 
+ *  
+ *  This example shows how a service query can be used on a collection variable.
+ *  The var 'chatservices' is kept up to date with available services.
  */
 @Agent
 @Service

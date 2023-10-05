@@ -1,9 +1,7 @@
 package jadex.mj.publishservice.impl;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.UUID;
 
 import jadex.common.SReflect;
 import jadex.future.Future;
@@ -19,19 +17,11 @@ import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.publishservice.IMjPublishServiceFeature;
 import jadex.mj.publishservice.IPublishService;
 import jadex.mj.publishservice.impl.RequestManager.MappingInfo;
-import jadex.mj.publishservice.impl.RequestManager.MappingInfo.HttpMethod;
 import jadex.mj.publishservice.publish.PathManager;
 import jadex.serialization.ISerializationServices;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HEAD;
-import jakarta.ws.rs.OPTIONS;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
 
 public abstract class MjPublishServiceFeature implements IMjLifecycle, IMjPublishServiceFeature//, IParameterGuesser
 {	
@@ -41,11 +31,13 @@ public abstract class MjPublishServiceFeature implements IMjLifecycle, IMjPublis
 	protected MjPublishServiceFeature(MjComponent self)
 	{
 		this.self	= self;
+		ISerializationServices ss = getComponent().getFeature(IMjProvidedServiceFeature.class).getSerializationService();
+		RequestManager.createInstance(ss);
 	}
 	
 	public IFuture<Void> onStart()
 	{
-		//Future<Void> ret = new Future<Void>();
+		Future<Void> ret = new Future<Void>();
 		
 		ModelInfo model = (ModelInfo)self.getModel();
 		
@@ -58,15 +50,24 @@ public abstract class MjPublishServiceFeature implements IMjLifecycle, IMjPublis
 			// todo: save model to cache
 		}
 		
-		// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
-		// how could this be done? with listeners on other feature?!
-		for(PublishInfo pi: mymodel.getPublishInfos())
+		try
 		{
-			IServiceIdentifier sid = findService(pi.getPublishTarget());
-			publishService(sid, pi).get();
+			// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
+			// how could this be done? with listeners on other feature?!
+			for(PublishInfo pi: mymodel.getPublishInfos())
+			{
+				IServiceIdentifier sid = findService(pi.getPublishTarget());
+				publishService(sid, pi);
+			}
+			
+			ret.setResult(null);
+		}
+		catch(Exception e)
+		{
+			ret.setException(e);
 		}
 		
-		return IFuture.DONE;
+		return ret;
 	}
 	
 	public IFuture<Void> onEnd()
@@ -149,106 +150,7 @@ public abstract class MjPublishServiceFeature implements IMjLifecycle, IMjPublis
 	public void handleRequest(IService service, PathManager<MappingInfo> pm, final HttpServletRequest request, final HttpServletResponse response, Object[] others)
 		throws IOException, ServletException
 	{
-		ISerializationServices ss = getComponent().getFeature(IMjProvidedServiceFeature.class).getSerializationService();
-		RequestManager.getInstance(ss).handleRequest(service, pm, request, response, others);
-	}
-	
-	/**
-	 * Get the cleaned publish id. Square brackets for the optional host and
-	 * context part are removed.
-	 */
-	public String getCleanPublishId(String id)
-	{
-		return id != null ? id.replace("[", "").replace("]", "") : null;
-	}
-	
-	/**
-	 * Evaluate the service interface and generate mappings. Return a
-	 * multicollection in which for each path name the possible methods are
-	 * contained (can be more than one due to different parameters).
-	 */
-	//public IFuture<MultiCollection<String, MappingInfo>> evaluateMapping(IServiceIdentifier sid, PublishInfo pi)
-	public IFuture<PathManager<MappingInfo>> evaluateMapping(IServiceIdentifier sid, PublishInfo pi, ClassLoader cl)
-	{
-		Future<PathManager<MappingInfo>> reta = new Future<>();
-
-		UUID cid = sid.getProviderId();
-
-		//IExternalAccess ea = getComponent().getExternalAccess(cid);
-
-		//ea.scheduleStep(new IComponentStep<MultiCollection<String, MappingInfo>>()
-		//ea.scheduleStep((IComponent ia) ->
-		//{
-			Class<?> mapcl = pi.getMapping() == null ? null : pi.getMapping().getType(cl);
-			if(mapcl == null)
-				mapcl = sid.getServiceType().getType(cl);
-	
-			PathManager<MappingInfo> ret = new PathManager<MappingInfo>();
-			PathManager<MappingInfo> natret = new PathManager<MappingInfo>();
-			
-			//MultiCollection<String, MappingInfo> ret = new MultiCollection<String, MappingInfo>();
-			//MultiCollection<String, MappingInfo> natret = new MultiCollection<String, MappingInfo>();
-	
-			for(Method m : SReflect.getAllMethods(mapcl))
-			{
-				MappingInfo mi = new MappingInfo();
-				if(m.isAnnotationPresent(GET.class))
-				{
-					mi.setHttpMethod(HttpMethod.GET);
-				}
-				else if(m.isAnnotationPresent(POST.class))
-				{
-					mi.setHttpMethod(HttpMethod.POST);
-				}
-				else if(m.isAnnotationPresent(PUT.class))
-				{
-					mi.setHttpMethod(HttpMethod.PUT);
-				}
-				else if(m.isAnnotationPresent(DELETE.class))
-				{
-					mi.setHttpMethod(HttpMethod.DELETE);
-				}
-				else if(m.isAnnotationPresent(OPTIONS.class))
-				{
-					mi.setHttpMethod(HttpMethod.OPTIONS);
-				}
-				else if(m.isAnnotationPresent(HEAD.class))
-				{
-					mi.setHttpMethod(HttpMethod.HEAD);
-				}
-	
-				if(m.isAnnotationPresent(Path.class))
-				{
-					Path path = m.getAnnotation(Path.class);
-					mi.setPath(path.value());
-				}
-				else if(!mi.isEmpty())
-				{
-					mi.setPath(m.getName());
-				}
-	
-				if(!mi.isEmpty())
-				{
-					//mi.addConsumedMediaTypes();
-					//mi.addProducedMediaTypes();
-					mi.setMethod(m);
-					ret.addPathElement(mi.getPath(), mi);
-					//ret.add(mi.getPath(), mi);
-				}
-	
-				// Natural mapping using simply all declared methods
-				MappingInfo mi2 = new MappingInfo(null, m, m.getName());
-				//mi2.addConsumedMediaTypes();
-				//mi2.addProducedMediaTypes();
-				natret.addPathElement(m.getName(), mi2); // httpmethod, method, path
-			}
-		//}
-			//return ret.size() > 0 ? ret : natret;
-		//}).addResultListener(new DelegationResultListener<PathManager<MappingInfo>>(reta));
-
-		reta.setResult(ret.size() > 0 ? ret : natret);
-			
-		return reta;
+		RequestManager.getInstance().handleRequest(service, pm, request, response, others);
 	}
 
 	/**
@@ -258,7 +160,7 @@ public abstract class MjPublishServiceFeature implements IMjLifecycle, IMjPublis
 	 * @param service The original service.
 	 * @param pid The publish id (e.g. url or name).
 	 */
-	public abstract IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo info);
+	public abstract void publishService(IServiceIdentifier serviceid, PublishInfo info);
 
 	/**
 	 * Get or start an api to the http server.

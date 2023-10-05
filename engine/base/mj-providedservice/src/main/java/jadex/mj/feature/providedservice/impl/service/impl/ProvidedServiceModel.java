@@ -20,6 +20,8 @@ public class ProvidedServiceModel
 	{
 		if(services==null)
 			services = new HashMap<String, ProvidedServiceInfo>();
+		if(service.getName()==null)
+			throw new RuntimeException("provided service should have name");
 		services.put(service.getName(), service);
 	}
 	

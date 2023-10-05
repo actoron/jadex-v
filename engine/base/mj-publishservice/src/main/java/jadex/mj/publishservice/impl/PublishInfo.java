@@ -30,6 +30,9 @@ public class PublishInfo
 	/** The publish target. */
 	protected String publishtarget;
 	
+	///** The publish target. */
+	//protected String publishtargetname;
+	
 	/** The publish scope. */
 	//protected ServiceScope publishscope = ServiceScope.PLATFORM;
 	

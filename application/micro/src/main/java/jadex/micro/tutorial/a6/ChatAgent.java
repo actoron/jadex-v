@@ -1,0 +1,177 @@
+package jadex.micro.tutorial.a6;
+
+import java.awt.Desktop;
+import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
+import jadex.common.SUtil;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminationCommand;
+import jadex.future.SubscriptionIntermediateFuture;
+import jadex.mj.core.IComponent;
+import jadex.mj.core.annotation.OnEnd;
+import jadex.mj.core.annotation.OnStart;
+import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.annotation.Agent;
+import jadex.mj.publishservice.IMjPublishServiceFeature;
+import jadex.mj.publishservice.publish.annotation.Publish;
+import jadex.mj.requiredservice.annotation.OnService;
+
+/**
+ *  Chat micro agent provides a basic chat service and publishes it as rest web service.
+ *  
+ *  
+ */
+@Agent
+@Service
+@Publish(publishid="http://localhost:8081/${cid}/chatapi", publishtaget = IChatGuiService.class)
+public class ChatAgent implements IChatService, IChatGuiService
+{
+	/** The underlying micro agent. */
+	@Agent
+	protected IComponent agent;
+	
+	@OnService
+	protected Set<IChatService> chatservices = new HashSet<IChatService>();
+	
+	protected Set<SubscriptionIntermediateFuture<String>> subscribers = new HashSet<SubscriptionIntermediateFuture<String>>();
+	
+	@OnStart
+	protected void onStart()
+	{
+		System.out.println("agent started: "+agent.getId());
+		
+		IMjPublishServiceFeature ps = agent.getFeature(IMjPublishServiceFeature.class);
+		ps.publishResources("http://localhost:8081/${cid}", "jadex/micro/tutorial/a6");
+		
+		openInBrowser("http://localhost:8081/"+agent.getId());
+	}
+	
+	@OnEnd
+	protected void end()
+	{
+		System.out.println("on end called: "+agent.getId());
+		//this.gui.dispose();
+	}
+	
+	/**
+	 *  Receives a chat message.
+	 *  @param sender The sender's name.
+	 *  @param text The message text.
+	 */
+	public void message(final String sender, final String text)
+	{
+		String txt = new SimpleDateFormat("hh:mm:ss").format(new Date())+" from: "+sender+" message: "+text;
+		System.out.println(txt);
+		
+		// Forward the chat message to the web ui
+		System.out.println("forward message to ui: "+subscribers.size());
+		for(SubscriptionIntermediateFuture<String> subscriber: subscribers)
+			subscriber.addIntermediateResultIfUndone(txt);
+	}
+	
+	/**
+	 *  Send a message to all chat services;
+	 *  @param text The text.
+	 */
+	public void sendMessageToAll(String text)
+	{
+		System.out.println("found services: "+chatservices.size());
+		for(Iterator<IChatService> it=chatservices.iterator(); it.hasNext(); )
+		{
+			IChatService cs = it.next();
+			cs.message(agent.getId()+"", text);
+		}
+	}
+	
+	/**
+	 *  Get the name of the chatter.
+	 *  @return The name.
+	 */
+	public IFuture<String> getName()
+	{
+		return new Future<String>(agent.getId().toString());
+	}
+	
+	/**
+	 *  Subscribe to chat.
+	 *  @return Chat events.
+	 */
+	public ISubscriptionIntermediateFuture<String> subscribeToChat()
+	{
+		SubscriptionIntermediateFuture<String> ret = new SubscriptionIntermediateFuture<String>();
+		ret.setTerminationCommand(new ITerminationCommand() 
+		{
+			@Override
+			public void terminated(Exception reason) 
+			{
+				subscribers.remove(ret);
+			}
+			
+			@Override
+			public boolean checkTermination(Exception reason) 
+			{
+				return !ret.isDone();
+			}
+		});
+		subscribers.add(ret);
+		
+		return ret;
+	}
+	
+	/**
+	 *  Get the chat services.
+	 *  @return The chat services.
+	 */
+	public Set<IChatService> getChatServices()
+	{
+		return chatservices;
+	}
+	
+	protected void openInBrowser(String url)
+	{
+		try 
+		{
+			URI uri = new URI(url);
+			if(Desktop.isDesktopSupported()) 
+			{
+				Desktop desktop = Desktop.getDesktop();
+				if(desktop.isSupported(Desktop.Action.BROWSE)) 
+				{
+					desktop.browse(uri);
+				} 
+				else 
+				{
+					System.out.println("Browse action not supported");
+				}
+			} 
+			else 
+			{
+				System.out.println("Desktop environment not supported");
+			}
+		} 
+		catch(Exception e) 
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 *  Start the example.
+	 */
+	public static void main(String[] args) throws InterruptedException 
+	{
+		MjMicroAgent.create(new ChatAgent());
+		MjMicroAgent.create(new ChatAgent());
+		MjMicroAgent.create(new ChatAgent());
+		
+		SUtil.sleep(10000);
+	}
+}

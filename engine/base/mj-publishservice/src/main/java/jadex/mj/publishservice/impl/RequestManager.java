@@ -39,21 +39,16 @@ import jadex.common.transformation.IObjectStringConverter;
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.STransformation;
 import jadex.common.transformation.traverser.ITraverseProcessor;
-import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
 import jadex.future.IIntermediateFutureCommandResultListener;
-import jadex.future.IIntermediateResultListener;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.MjComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.annotation.ParameterInfo;
@@ -71,8 +66,6 @@ import jadex.mj.publishservice.publish.mapper.DefaultParameterMapper;
 import jadex.mj.publishservice.publish.mapper.IParameterMapper;
 import jadex.mj.publishservice.publish.mapper.IParameterMapper2;
 import jadex.mj.publishservice.publish.mapper.IValueMapper;
-import jadex.mj.requiredservice.impl.ComponentResultListener;
-import jadex.mj.requiredservice.impl.IntermediateComponentResultListener;
 import jadex.serialization.ISerializationServices;
 import jadex.serialization.serializers.JadexBinarySerializer;
 import jadex.serialization.serializers.JadexJsonSerializer;
@@ -115,7 +108,6 @@ public class RequestManager
 	
 	/** The conversation timeout. */
 	public static long CONVERSATION_TIMEOUT = 30000;
-
 	
 	
 	/** Async context info. */
@@ -142,7 +134,7 @@ public class RequestManager
 	/** Http header to terminate the call (req). */
 	public static final String HEADER_JADEX_TERMINATE = "x-jadex-terminate";
 
-	/** Http header to login to the platform and gain admin access (req). */
+	/** Http header to login to and gain admin access (req). */
 	public static final String HEADER_JADEX_LOGIN = "x-jadex-login";
 	public static final String HEADER_JADEX_LOGOUT = "x-jadex-logout";
 	public static final String HEADER_JADEX_ISLOGGEDIN = "x-jadex-isloggedin";
@@ -163,6 +155,8 @@ public class RequestManager
 	public static final List<String> PARAMETER_MEDIATYPES = Arrays.asList(new String[]{MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML});
 
 	
+	/** The state is thread protected via synchronized */
+	
 	/** Info about an ongoing conversation, i.e. Jadex future, session etc. */
 	protected Map<String, ConversationInfo> conversationinfos;
 
@@ -175,10 +169,16 @@ public class RequestManager
 	    https://community.oracle.com/tech/developers/discussion/1455774/multiple-sessions-created. 
 	 */
 	protected Map<String, Map<String, Object>> sessions;
+		
+	/** State end */
 	
+	/** The time point when the sse source has gone offlne. */
+	//protected long sseoffline;
+	
+
 	/** The media type converters. */
 	protected MultiCollection<String, IObjectStringConverter> converters;
-
+	
 	/** Login security of or off. */
 	protected boolean loginsec;
 
@@ -190,6 +190,26 @@ public class RequestManager
 
 	/** The serialization services. */
 	protected ISerializationServices serser;
+	
+	protected static RequestManager instance;
+	
+	public static synchronized void createInstance(ISerializationServices serser)
+	{
+		if(instance==null)
+			instance = new RequestManager(serser);
+	}
+	
+	public static synchronized RequestManager getInstance()
+	{
+		if(instance==null)
+			throw new RuntimeException("request manager was not created");
+		return instance; 
+	}
+	
+	public ISerializationServices getSerializationServices()
+	{
+		return serser;
+	}
 	
 	public RequestManager(ISerializationServices serser)
 	{
@@ -347,44 +367,40 @@ public class RequestManager
 		});*/
 	}
 	
-	protected static RequestManager instance;
-	
-	public static synchronized RequestManager getInstance(ISerializationServices serser)
-	{
-		if(instance==null)
-			instance = new RequestManager(serser);
-		return instance; 
-	}
-	
-	public ISerializationServices getSerializationServices()
-	{
-		return serser;
-	}
-	
 	/**
 	 * Add a converter for one or multiple types.
-	 */
+	 * /
 	public void addConverter(String[] mediatypes, IObjectStringConverter converter)
 	{
 		for(String mediatype : mediatypes)
 		{
 			converters.add(mediatype, converter);
 		}
-	}
+	}*/
 
 	/**
 	 * Remove a converter.
 	 * 
 	 * @param converter The converter.
-	 */
+	 * /
 	public void removeConverter(String[] mediatypes, IObjectStringConverter converter)
 	{
 		for(String mediatype : mediatypes)
 		{
 			converters.removeObject(mediatype, converter);
 		}
+	}*/
+	
+	/**
+	 *  Get the converters.
+	 *  
+	 *  Needs not to be synchronized as long as only gets are performed.
+	 */
+	protected Collection<IObjectStringConverter> getConverters(String mediatype)
+	{
+		return converters.get(mediatype);
 	}
-
+	
 	/**
 	 *  Turn on or off the login security.
 	 *  If true one has to log in with platform secret before using published services.
@@ -414,7 +430,7 @@ public class RequestManager
 	 *  @param create Flag if shall be created.
 	 *  @return The session.
 	 */
-	public Map<String, Object> getSession(String sessionid, boolean create)
+	public synchronized Map<String, Object> getSession(String sessionid, boolean create)
 	{
 		if(sessionid==null && !create)
 			return null;
@@ -430,6 +446,11 @@ public class RequestManager
 		}
 	
 		return session;
+	}
+	
+	public synchronized void setInSession(String sessionid, String name, Object value)
+	{
+		getSession(sessionid, true).put(name, value);
 	}
 	
 	/**
@@ -462,40 +483,7 @@ public class RequestManager
 		
 		return id;
 	}
-	
-	/**
-	 * 
-	 * /
-	public void handleSSERequest(final HttpServletRequest request, final HttpServletResponse response)
-	{
-		response.setCharacterEncoding("utf-8");
-		PrintWriter out = response.getWriter();
-		setCORSHeader(response);
-		setNoCachingHeader(response);
-
-		// setup SSE if requested via header
-		String ah = request.getHeader("Accept");
-		if(ah!=null && ah.toLowerCase().indexOf(MediaType.SERVER_SENT_EVENTS)!=-1)
-		{
-			// Session can be null if no header is provided by client
-			String fsessionid = sessionid;
-			if(fsessionid==null)
-				fsessionid = SUtil.createUniqueId();
-			
-			// SSE flag in session 
-			getSession(fsessionid, true).put("sse", request.getAsyncContext()); 
-			response.addHeader(HEADER_JADEX_CALLID, ri.getCallid());
-			response.setContentType(MediaType.SERVER_SENT_EVENTS+"; charset=utf-8");
-		    response.setCharacterEncoding("UTF-8");
-		    response.setStatus(HttpServletResponse.SC_OK);
-			//out.write("data: {'a': 'a'}\n\n");
-			response.flushBuffer();
-		    System.out.println("sse connection saved: "+request.getAsyncContext()+" "+fsessionid+" "+getSessionId(request));
-		    
-		    sendDelayedSSEEvents(getSession(fsessionid, true));
-		}
-	}*/
-	
+		
 	/**
 	 * Handle a web request.
 	 * 
@@ -533,12 +521,13 @@ public class RequestManager
 		// solution: always create on container thread and remember
 		//final Map<String, Object> session = getSession(request, true);
 		final String sessionid = getSessionId(request);
-		if(sessionid==null)
+		if(sessionid==null && request.getRequestURI().indexOf("jadex.js")==-1)
 			System.out.println("Call has no jadex session id, Jadex cookie missing: "+request.getRequestURL());
 		// todo: if missing generate one?! as it is cookie it would be used by further requests
 		
-		//if(request.getRequestURI().indexOf("subscribeTo")!=-1)
-		//System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId());
+		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
+		//	System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId());
+		
 		getAsyncContextInfo(request); // ensure async request processing
 
 		// System.out.println("handler is: "+uri.getPath());
@@ -546,22 +535,22 @@ public class RequestManager
 		ri.setCallid(callid);
 		
 		// update on alive and all incoming requests with that callid
-		ConversationInfo coninfo = conversationinfos.get(callid);
-		if(coninfo!=null)
+		ConversationInfo cinfo = getConversation(callid);
+		if(cinfo!=null)
 		{
 			//System.out.println("timestamp updated: "+callid);
-			coninfo.updateTimestamp();
+			cinfo.updateTimestamp();
 		}
 		
 		String alive = request.getHeader(HEADER_JADEX_ALIVE);
 		
 		// check if it is a login request
-		String platformsecret = request.getHeader(HEADER_JADEX_LOGIN);
+		String secret = request.getHeader(HEADER_JADEX_LOGIN);
 		String logout = request.getHeader(HEADER_JADEX_LOGOUT);
 		String isloggedin = request.getHeader(HEADER_JADEX_ISLOGGEDIN);
-		if(platformsecret!=null)
+		if(secret!=null)
 		{
-			login(request, platformsecret).then((Boolean ok) ->
+			login(request, secret).then((Boolean ok) ->
 			{
 				if(ok)
 					//writeResponse(Boolean.TRUE, Response.Status.OK.getStatusCode(), callid, null, request, response, true, null);
@@ -597,19 +586,20 @@ public class RequestManager
 		else if(alive!=null)
 		{
 			// update on alive and all incoming requests with that callid
-			ConversationInfo cinfo = conversationinfos.get(callid);
+			//ConversationInfo cinfo = conversationinfos.get(callid);
 			if(cinfo!=null)
 			{
 				boolean aliveb = Boolean.parseBoolean(alive);
-				if(aliveb)
-				{
-					//System.out.println("timestamp updated: "+callid);
-					cinfo.updateTimestamp();
-				}
-				else
+				if(!aliveb)
 				{
 					terminateConversation(cinfo, new RuntimeException("Terminated from client"), true);
 				}
+				// Already done above
+				/*else
+				{
+					//System.out.println("timestamp updated: "+callid);
+					cinfo.updateTimestamp();
+				}*/
 				writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true));
 			}
 			else
@@ -626,12 +616,13 @@ public class RequestManager
 			//System.out.println("handleRequest: "+callid+" "+terminate);
 			
 			// request info manages an ongoing conversation
-			if(conversationinfos.containsKey(callid))
+			if(cinfo!=null)
+			//if(conversationinfos.containsKey(callid))
 			{
-				ConversationInfo rinfo = conversationinfos.get(callid);
+				//ConversationInfo rinfo = conversationinfos.get(callid);
 	
 				// Terminate the future if requested
-				if(terminate!=null && rinfo.getFuture() instanceof ITerminableFuture)
+				if(terminate!=null && cinfo.getFuture() instanceof ITerminableFuture)
 				{
 					//System.out.println("Terminating call on client request: "+callid);
 					// hmm, immediate response (should normally not be necessary)
@@ -645,7 +636,7 @@ public class RequestManager
 					
 					//System.out.println("request terminate conversation: "+callid);
 					
-					terminateConversation(rinfo, null, true);
+					terminateConversation(cinfo, null, true);
 					
 					/*if(!"true".equals(terminate))
 						((ITerminableFuture)rinfo.getFuture()).terminate(new RuntimeException(terminate)); 
@@ -659,9 +650,9 @@ public class RequestManager
 					
 					writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true));
 				}
-				else if(terminate!=null && rinfo.getFuture()==null)
+				else if(terminate!=null && cinfo.getFuture()==null)
 				{
-					rinfo.setTerminated(true);
+					cinfo.setTerminated(true);
 					writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true));
 				}
 				else if(terminate!=null)
@@ -750,8 +741,9 @@ public class RequestManager
 	
 					//final ConversationInfo cinfo = new ConversationInfo(getSession(request, true));
 					final String fcallid = callid==null? SUtil.createUniqueId(fmn): callid;
-					final ConversationInfo cinfo = new ConversationInfo(fcallid, sessionid);
-					conversationinfos.put(fcallid, cinfo);
+					final ConversationInfo mycinfo = new ConversationInfo(fcallid, sessionid);
+					addConversation(fcallid, mycinfo);
+					//conversationinfos.put(fcallid, mycinfo);
 	
 					// Check security
 					//if(request.toString().indexOf("suspend")!=-1)
@@ -797,10 +789,10 @@ public class RequestManager
 									ri.setMethod(method);
 	
 									if(ret instanceof IFuture)
-										cinfo.setFuture((IFuture<?>)ret);
+										mycinfo.setFuture((IFuture<?>)ret);
 	
 									// Call can already be terminated from client
-									if(cinfo.isTerminated())
+									if(mycinfo.isTerminated())
 									{
 										if(ret instanceof ITerminableFuture)
 											((ITerminableFuture)ret).terminate();
@@ -934,11 +926,11 @@ public class RequestManager
 												else
 												{
 													System.out.println("No sse connection, delay sending: "+result+" "+sessionid);
-													sseevents.add(createSSEEvent(ri));
+													addSSEEvent(createSSEEvent(ri));
 													return;
 												}
 												
-												if(cinfo!=null && cinfo.isTerminated())
+												if(mycinfo!=null && mycinfo.isTerminated())
 												{
 													// nop -> ignore late results (i.e. when terminated due to browser offline).
 													//System.out.println("ignoring late result: "+result);
@@ -1140,6 +1132,7 @@ public class RequestManager
 						
 						// SSE flag in session 
 						getSession(fsessionid, true).put("sse", request.getAsyncContext()); 
+						setInSession(fsessionid, "sse", request.getAsyncContext());
 						response.addHeader(HEADER_JADEX_CALLID, ri.getCallid());
 						response.setContentType(MediaType.SERVER_SENT_EVENTS+"; charset=utf-8");
 					    response.setCharacterEncoding("UTF-8");
@@ -1169,11 +1162,12 @@ public class RequestManager
 	/**
 	 *  Prune the timeouted conversations.
 	 */
-	protected void pruneObsoleteConversations()
+	protected synchronized void pruneObsoleteConversations()
 	{
 		for(Map.Entry<String, ConversationInfo> entry: conversationinfos.entrySet().toArray(new Map.Entry[conversationinfos.size()]))
 		{
 			// TODO: which timeout? (client vs server).
+			
 			if(System.currentTimeMillis() - entry.getValue().getTimestamp() > CONVERSATION_TIMEOUT)  //Starter.getDefaultTimeout(component.getId()))
 			{
 				//System.out.println("terminating due to timeout: "+exception);
@@ -1206,7 +1200,7 @@ public class RequestManager
 	 * @param cinfo
 	 * @param ex
 	 */
-	protected void terminateConversation(ConversationInfo cinfo, Exception ex, boolean clientterm)
+	protected synchronized void terminateConversation(ConversationInfo cinfo, Exception ex, boolean clientterm)
 	{
 		//System.out.println("terminate in rest: "+cinfo+" "+ex+" "+clientterm);
 		
@@ -1227,6 +1221,21 @@ public class RequestManager
 		}
 		
 		conversationinfos.remove(cinfo.getCallId());
+	}
+	
+	protected synchronized ConversationInfo getConversation(String callid)
+	{
+		return conversationinfos.get(callid);
+	}
+	
+	protected synchronized void addConversation(String callid, ConversationInfo cinfo)
+	{
+		conversationinfos.put(callid, cinfo);
+	}
+	
+	protected synchronized boolean hasConversation(String callid)
+	{
+		return conversationinfos.containsKey(callid);
 	}
 	
 
@@ -1258,7 +1267,7 @@ public class RequestManager
 	 * Send the delayed events which have been collected during connection loss.
 	 * Must check if callid belongs to still ongoing call (could be terminated).
 	 */
-	protected void sendDelayedSSEEvents(Map<String, Object> session)
+	protected synchronized void sendDelayedSSEEvents(Map<String, Object> session)
 	{
 		int cnt = sseevents.size();
 		AsyncContext ctx = (AsyncContext)session.get("sse");
@@ -1274,7 +1283,8 @@ public class RequestManager
 			{
 				for(SSEEvent event: sseevents)
 				{
-					if(conversationinfos.containsKey(event.getCallId()))
+					//if(conversationinfos.containsKey(event.getCallId()))
+					if(hasConversation(event.getCallId()))
 					{
 						String ret = createSSEJson(event);
 						response.getWriter().write(ret);	
@@ -1298,19 +1308,24 @@ public class RequestManager
 			System.out.println("sent delayed events: "+cnt+" "+sseevents.size());
 	}
 	
+	protected synchronized void addSSEEvent(SSEEvent event)
+	{
+		sseevents.add(event);
+	}
 	
 	/**
 	 *  Logout from the platform.
 	 *  @param secret The platform secret.
 	 *  @return True, if login was successful.
 	 */
-	public IFuture<Boolean> logout(HttpServletRequest request)
+	public synchronized IFuture<Boolean> logout(HttpServletRequest request)
 	{
 		boolean ret = true;
 		if(getSession(request, false)!=null)
 			getSession(request, false).remove("loggedin");
 		else
 			ret = false;
+		//return ret;
 		return new Future<Boolean>(ret);
 	}
 	
@@ -1319,7 +1334,7 @@ public class RequestManager
 	 *  @param request The web request.
 	 *  @return True, if is logged in.
 	 */
-	public boolean isLoggedIn(HttpServletRequest request)
+	public synchronized boolean isLoggedIn(HttpServletRequest request)
 	{
 		Map<String, Object> sess = getSession(request, false);
 		return sess!=null && sess.get("loggedin")==Boolean.TRUE;
@@ -1330,13 +1345,14 @@ public class RequestManager
 	 *  @param callid The callid of the request.
 	 *  @return True, if is logged in.
 	 */
-	public IFuture<Boolean> isLoggedIn(String callid)
+	public synchronized boolean isLoggedIn(String callid)
 	{
 		boolean ret = false;
 		ConversationInfo cinfo = conversationinfos.get(callid);
 		if(cinfo!=null)
 			ret = getSession(cinfo.getSessionId(), false).get("loggedin")==Boolean.TRUE;
-		return new Future<>(ret? Boolean.TRUE: Boolean.FALSE);
+		return ret;
+		//return new Future<>(ret? Boolean.TRUE: Boolean.FALSE);
 	}
 	
 	/**
@@ -2030,15 +2046,23 @@ public class RequestManager
 	/**
 	 *  Write the response (header and content).
 	 */
-	protected void writeResponse(ResponseInfo ri)
+	protected synchronized void writeResponse(ResponseInfo ri)
 //	protected void writeResponse(Object result, int status, String callid, MappingInfo mi, HttpServletRequest request, HttpServletResponse response, boolean fin, Integer max)
 	{		
 		//if(ri.getRequest().getQueryString()!=null && ri.getRequest().getQueryString().indexOf(ACCEPT)!=-1)
 		//	System.out.println("writeResponse: "+ri.getResult()+", "+ri.getRequest().getRequestURI()+", "+ri.getCallid()+" "+ ri.getRequest().getQueryString());
 		// Only write response on first exception
 		if(isComplete(ri.getRequest(), ri.getResponse()))
+		{
+			if(ri.isSSERequest())
+			{
+				// SSE source not available 
+				// should delete sse in session?!
+				System.out.println("SSE source is offline"+ri.callid);
+			}
 			return;
-
+		}
+		
 		List<String> sr = writeResponseHeader(ri);
 		
 		writeResponseContent(ri.setResultTypes(sr));
@@ -2177,7 +2201,7 @@ public class RequestManager
 				// Wrap content in SSE event class to add Jadex meta info 
 				SSEEvent event = createSSEEvent(ri);
 	
-				if(!conversationinfos.containsKey(event.getCallId()))
+				if(!hasConversation(event.getCallId()))
 				{
 					System.out.println("trashing obsolete event: "+event);
 					return;
@@ -2232,7 +2256,7 @@ public class RequestManager
 							for(String mediatype : ri.getResultTypes())
 							{
 								mediatype = mediatype.trim(); // e.g. sent with leading space from edge, grrr
-								Collection<IObjectStringConverter> convs = converters.get(mediatype);
+								Collection<IObjectStringConverter> convs = getConverters(mediatype);
 								if(convs != null && convs.size() > 0)
 								{
 									mt = mediatype;
@@ -2320,7 +2344,7 @@ public class RequestManager
 		SSEEvent event = new SSEEvent();
 		// Wrap content in SSE event class to add Jadex meta info 
 		event.setData(result).setFinished(finished).setCallId(callid).setMax(max).setExecptionType(exceptiontype);
-		Collection<IObjectStringConverter> convs = converters.get(MediaType.SERVER_SENT_EVENTS);
+		Collection<IObjectStringConverter> convs = getConverters(MediaType.SERVER_SENT_EVENTS);
 		String ret = convs.iterator().next().convertObject(event, null);
 		// Transform json to fit json SSE standard event 
 		ret = "id: "+callid+"\ndata: "+ret+"\n\n";
@@ -2333,7 +2357,7 @@ public class RequestManager
 	 */
 	protected String createSSEJson(SSEEvent event)
 	{
-		Collection<IObjectStringConverter> convs = converters.get(MediaType.SERVER_SENT_EVENTS);
+		Collection<IObjectStringConverter> convs = getConverters(MediaType.SERVER_SENT_EVENTS);
 		String ret = convs.iterator().next().convertObject(event, null);
 		
 		// Transform json to fit json SSE standard event 
@@ -2772,7 +2796,7 @@ public class RequestManager
 		protected Integer max;
 		protected List<String> resulttypes;
 		//protected boolean keepopen;
-		protected boolean sse;
+		//protected boolean sse;
 
 		/**
 		 *  Create a new response info.
@@ -2991,7 +3015,7 @@ public class RequestManager
 		/**
 		 *  Check if sse connection is available.
 		 *  @return True, if it is available.
-		 */
+		 * /
 		public boolean isSSEConnectionAvailable()
 		{
 			boolean ret = false;
@@ -2999,7 +3023,7 @@ public class RequestManager
 			if(session!=null)
 				ret = session.get("sse")!=null;
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -3189,7 +3213,7 @@ public class RequestManager
 			ret.append("\n");
 			ret.append(functionsjs);
 			ret.append("\n");
-			ret.append("<script src=\"webapi/jadex.js\" type=\"text/javascript\"/></script>");
+			ret.append("<script src=\"jadex.js\" type=\"text/javascript\"/></script>");
 			ret.append("</head>");
 			ret.append("\n");
 			ret.append("<body>");
@@ -4000,6 +4024,8 @@ public class RequestManager
 	{
 		Future<Boolean> ret = new Future<Boolean>();
 		
+		System.out.println("login not implemented yet");
+		
 		// todo!
 		/*ISecurityService ss = component.getLocalService(ISecurityService.class);
 		ss.checkPlatformPassword(secret).then((Boolean ok) ->
@@ -4070,4 +4096,95 @@ public class RequestManager
 	{
 		return new IntermediateComponentResultListener<T>(listener, getComponent());
 	}*/
+	
+	/**
+	 * Evaluate the service interface and generate mappings. Return a
+	 * multicollection in which for each path name the possible methods are
+	 * contained (can be more than one due to different parameters).
+	 */
+	//public IFuture<MultiCollection<String, MappingInfo>> evaluateMapping(IServiceIdentifier sid, PublishInfo pi)
+	//public IFuture<PathManager<MappingInfo>> evaluateMapping(IServiceIdentifier sid, PublishInfo pi, ClassLoader cl)
+	public PathManager<MappingInfo> evaluateMapping(IServiceIdentifier sid, PublishInfo pi, ClassLoader cl)
+	{
+		Future<PathManager<MappingInfo>> reta = new Future<>();
+
+		UUID cid = sid.getProviderId();
+
+		//IExternalAccess ea = getComponent().getExternalAccess(cid);
+
+		//ea.scheduleStep(new IComponentStep<MultiCollection<String, MappingInfo>>()
+		//ea.scheduleStep((IComponent ia) ->
+		//{
+			Class<?> mapcl = pi.getMapping() == null ? null : pi.getMapping().getType(cl);
+			if(mapcl == null)
+				mapcl = sid.getServiceType().getType(cl);
+	
+			PathManager<MappingInfo> ret = new PathManager<MappingInfo>();
+			PathManager<MappingInfo> natret = new PathManager<MappingInfo>();
+			
+			//MultiCollection<String, MappingInfo> ret = new MultiCollection<String, MappingInfo>();
+			//MultiCollection<String, MappingInfo> natret = new MultiCollection<String, MappingInfo>();
+	
+			for(Method m : SReflect.getAllMethods(mapcl))
+			{
+				MappingInfo mi = new MappingInfo();
+				if(m.isAnnotationPresent(GET.class))
+				{
+					mi.setHttpMethod(HttpMethod.GET);
+				}
+				else if(m.isAnnotationPresent(POST.class))
+				{
+					mi.setHttpMethod(HttpMethod.POST);
+				}
+				else if(m.isAnnotationPresent(PUT.class))
+				{
+					mi.setHttpMethod(HttpMethod.PUT);
+				}
+				else if(m.isAnnotationPresent(DELETE.class))
+				{
+					mi.setHttpMethod(HttpMethod.DELETE);
+				}
+				else if(m.isAnnotationPresent(OPTIONS.class))
+				{
+					mi.setHttpMethod(HttpMethod.OPTIONS);
+				}
+				else if(m.isAnnotationPresent(HEAD.class))
+				{
+					mi.setHttpMethod(HttpMethod.HEAD);
+				}
+	
+				if(m.isAnnotationPresent(Path.class))
+				{
+					Path path = m.getAnnotation(Path.class);
+					mi.setPath(path.value());
+				}
+				else if(!mi.isEmpty())
+				{
+					mi.setPath(m.getName());
+				}
+	
+				if(!mi.isEmpty())
+				{
+					//mi.addConsumedMediaTypes();
+					//mi.addProducedMediaTypes();
+					mi.setMethod(m);
+					ret.addPathElement(mi.getPath(), mi);
+					//ret.add(mi.getPath(), mi);
+				}
+	
+				// Natural mapping using simply all declared methods
+				MappingInfo mi2 = new MappingInfo(null, m, m.getName());
+				//mi2.addConsumedMediaTypes();
+				//mi2.addProducedMediaTypes();
+				natret.addPathElement(m.getName(), mi2); // httpmethod, method, path
+			}
+		//}
+			//return ret.size() > 0 ? ret : natret;
+		//}).addResultListener(new DelegationResultListener<PathManager<MappingInfo>>(reta));
+
+		reta.setResult(ret.size() > 0 ? ret : natret);
+			
+		//return reta;
+		return ret.size() > 0 ? ret : natret;
+	}
 }

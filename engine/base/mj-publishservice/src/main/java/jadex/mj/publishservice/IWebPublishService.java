@@ -12,12 +12,12 @@ public interface IWebPublishService extends IPublishService
 	/**
 	 *  Publish a static page (without ressources).
 	 */
-	public IFuture<Void> publishHMTLPage(String uri, String vhost, String html);
+	public void publishHMTLPage(String uri, String vhost, String html);
 	
 	/**
 	 *  Publish file resources from the classpath.
 	 */
-	public IFuture<Void> publishResources(String uri, String rootpath);
+	public void publishResources(String uri, String rootpath);
 	
 	/**
 	 *  Turn on or off the login security.
