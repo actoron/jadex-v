@@ -22,7 +22,6 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.eclipsesource.json.Json;
@@ -130,6 +129,7 @@ public class RequestManager
 	
 	/** Http header for the client side to indicate that conversation is still alive/ongoing. */
 	public static final String HEADER_JADEX_ALIVE = "x-jadex-alive";
+	public static final String HEADER_JADEX_SSEALIVE = "x-jadex-ssealive";
 	
 	/** Http header to terminate the call (req). */
 	public static final String HEADER_JADEX_TERMINATE = "x-jadex-terminate";
@@ -169,13 +169,13 @@ public class RequestManager
 	    https://community.oracle.com/tech/developers/discussion/1455774/multiple-sessions-created. 
 	 */
 	protected Map<String, Map<String, Object>> sessions;
+	
+	/** Infos about the sse sources. */
+	protected Map<String, SSEInfo> sseinfos;
 		
 	/** State end */
-	
-	/** The time point when the sse source has gone offlne. */
-	//protected long sseoffline;
-	
 
+	
 	/** The media type converters. */
 	protected MultiCollection<String, IObjectStringConverter> converters;
 	
@@ -217,6 +217,7 @@ public class RequestManager
 		
 		conversationinfos = new LinkedHashMap<String, ConversationInfo>();
 		sseevents = new ArrayList<SSEEvent>();
+		sseinfos = new HashMap<String, RequestManager.SSEInfo>();
 		sessions = new LeaseTimeMap<String, Map<String,Object>>(1000*60*10);// new HashMap<String, Map<String,Object>>();
 		
 		this.loginsec = false;
@@ -448,6 +449,20 @@ public class RequestManager
 		return session;
 	}
 	
+	public synchronized AsyncContext getSSEContextFromSession(String sessionid)
+	{
+		if(sessionid==null)
+			return null;
+		
+		Map<String, Object> session = sessions.get(sessionid);
+		return session!=null? (AsyncContext)session.get("sse"): null;
+	}
+	
+	public synchronized void putSSEContextInSession(String sessionid, AsyncContext context)
+	{
+		setInSession(sessionid, "sse", context);
+	}
+	
 	public synchronized void setInSession(String sessionid, String name, Object value)
 	{
 		getSession(sessionid, true).put(name, value);
@@ -543,6 +558,7 @@ public class RequestManager
 		}
 		
 		String alive = request.getHeader(HEADER_JADEX_ALIVE);
+		String ssealive = request.getHeader(HEADER_JADEX_SSEALIVE);
 		
 		// check if it is a login request
 		String secret = request.getHeader(HEADER_JADEX_LOGIN);
@@ -582,6 +598,21 @@ public class RequestManager
 			boolean ret = isLoggedIn(request);
 			//writeResponse(ret, Response.Status.OK.getStatusCode(), callid, null, request, response, true, null);
 			writeResponse(ri.setResult(ret).setStatus(Response.Status.OK.getStatusCode()).setFinished(true));
+		}
+		else if(ssealive!=null)
+		{
+			// update all timer values of session conversations and remove checking sseinfo if alive is received
+			if(cinfo!=null)
+			{
+				updateTimestamps(cinfo.getSessionId());
+				removeSSEInfo(cinfo.getSessionId());
+				writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true));
+			}
+			else
+			{
+				System.out.println("callid not found for alive: "+callid);
+				writeResponse(ri.setStatus(Response.Status.NOT_FOUND.getStatusCode()).setFinished(true));
+			}
 		}
 		else if(alive!=null)
 		{
@@ -916,8 +947,9 @@ public class RequestManager
 												if(max!=null)
 													ri.setMax(max);
 												
-												final Map<String, Object> session = getSession(sessionid, true);
-												AsyncContext ctx = (AsyncContext)session.get("sse");
+												//final Map<String, Object> session = getSession(sessionid, true);
+												//AsyncContext ctx = (AsyncContext)session.get("sse");
+												AsyncContext ctx = getSSEContextFromSession(sessionid);
 												if(ctx!=null)
 												{
 													ri.setRequest((HttpServletRequest)ctx.getRequest());
@@ -1131,8 +1163,9 @@ public class RequestManager
 							fsessionid = SUtil.createUniqueId();
 						
 						// SSE flag in session 
-						getSession(fsessionid, true).put("sse", request.getAsyncContext()); 
-						setInSession(fsessionid, "sse", request.getAsyncContext());
+						//getSession(fsessionid, true).put("sse", request.getAsyncContext());
+						putSSEContextInSession(fsessionid, request.getAsyncContext());
+						//setInSession(fsessionid, "sse", request.getAsyncContext());
 						response.addHeader(HEADER_JADEX_CALLID, ri.getCallid());
 						response.setContentType(MediaType.SERVER_SENT_EVENTS+"; charset=utf-8");
 					    response.setCharacterEncoding("UTF-8");
@@ -1164,35 +1197,76 @@ public class RequestManager
 	 */
 	protected synchronized void pruneObsoleteConversations()
 	{
-		for(Map.Entry<String, ConversationInfo> entry: conversationinfos.entrySet().toArray(new Map.Entry[conversationinfos.size()]))
+		long curtime = System.currentTimeMillis();
+		
+		// Check sse client pings and prune old sse source (conversations)
+		
+		new ArrayList<SSEInfo>(sseinfos.values()).forEach(sseinfo ->
 		{
-			// TODO: which timeout? (client vs server).
-			
-			if(System.currentTimeMillis() - entry.getValue().getTimestamp() > CONVERSATION_TIMEOUT)  //Starter.getDefaultTimeout(component.getId()))
+			String sessionid = sseinfo.getSessionId();
+			if(curtime - sseinfo.getLastCheck() > CONVERSATION_TIMEOUT)  
 			{
-				//System.out.println("terminating due to timeout: "+exception);
-				System.out.println("Conversation timed out: "+entry.getKey());
-				//System.out.println("cur time: "+System.currentTimeMillis());
-				//System.out.println("timestamp: "+entry.getValue().getTimestamp());
-				//System.out.println("timeout: "+Starter.getDefaultTimeout(component.getId()));
-				
-				terminateConversation(entry.getValue(), null, false);
-				
-				/*entry.getValue().setTerminated(true);
-				if(entry.getValue().getFuture() instanceof ITerminableFuture<?>)
+				System.out.println("sse source does not respond, removing: "+sessionid);
+				List<ConversationInfo> cinfos = conversationinfos.values().stream().filter(info -> info.getSessionId()==sessionid).collect(Collectors.toList());
+				cinfos.forEach(cinfo ->
 				{
-					System.out.println("Conversation timed out, terminated future: "+entry.getKey());
-					((ITerminableFuture<?>)entry.getValue().getFuture()).terminate(new TimeoutException());
-				}
-				else
-				{
-					// TODO: better handling of
-					// non-terminable futures?
-					//throw new TimeoutException();
-					System.out.println("WARNING: Conversation timed out and future cannot be terminated: "+entry.getKey());
-				}*/
+					System.out.println("Conversation timed out: "+cinfo.getCallId());
+					//System.out.println("cur time: "+System.currentTimeMillis());
+					//System.out.println("timestamp: "+entry.getValue().getTimestamp());
+					//System.out.println("timeout: "+Starter.getDefaultTimeout(component.getId()));
+					terminateConversation(cinfo, null, false);
+				});
+				
+				removeSSEInfo(sessionid);
 			}
-		}
+		});
+		
+		// Create sse pings for sse sources that have conversations that are all timed out
+		
+		Map<String, List<ConversationInfo>> ginfos = conversationinfos.values().stream().filter(cinfo -> !sseinfos.containsKey(cinfo.getSessionId()))
+			.collect(Collectors.groupingBy(ConversationInfo::getSessionId));
+		ginfos.forEach((sessionid, infos) -> 
+		{
+            // Find newest time value
+            ConversationInfo newest = conversationinfos.values().stream()
+            	.max(Comparator.comparingLong(ConversationInfo::getTimestamp)).get();
+            
+            if(System.currentTimeMillis() - newest.getTimestamp() > CONVERSATION_TIMEOUT) 
+			{
+            	 AsyncContext ctx = getSSEContextFromSession(sessionid);
+                 
+                 if(ctx!=null)
+                 {
+                	// todo: make sseping ping/alive send all active client callids to remove the obsolete ones individually?!
+                	 
+                 	String callid = SUtil.createUniqueId("sseping");
+                 	final ConversationInfo mycinfo = new ConversationInfo(callid, sessionid);
+					addConversation(callid, mycinfo);
+                 	
+                 	ResponseInfo ri = new ResponseInfo().setResult("sseping").setCallid(callid)
+                 		.setRequest((HttpServletRequest)ctx.getRequest())
+                 		.setResponse((HttpServletResponse)ctx.getResponse());
+                 	writeResponse(ri);
+                 	
+                 	addSSEInfo(new SSEInfo(ctx, sessionid));
+                 }
+                 else
+                 {
+                	 System.out.println("sse context not found: "+sessionid);
+                 }
+			}
+        });
+	}
+	
+	/**
+	 *  Update timestamps of all conversations that belong to a session / sse source.
+	 *  @param sessionid The session id.
+	 */
+	protected synchronized void updateTimestamps(String sessionid)
+	{
+		//System.out.println("Update timestamps: "+sessionid);
+		List<ConversationInfo> cinfos = conversationinfos.values().stream().filter(cinfo -> sessionid.equals(cinfo.getSessionId())).collect(Collectors.toList());
+		cinfos.forEach(cinfo -> cinfo.updateTimestamp());
 	}
 	
 	/**
@@ -1238,6 +1312,26 @@ public class RequestManager
 		return conversationinfos.containsKey(callid);
 	}
 	
+	protected synchronized SSEInfo getSSEInfo(String sessionid)
+	{
+		return sseinfos.get(sessionid);
+	}
+	
+	protected synchronized void addSSEInfo(SSEInfo info)
+	{
+		if(info.getSessionId()==null)
+			throw new RuntimeException("session id must not null");
+		sseinfos.put(info.getSessionId(), info);
+		//System.out.println("added sseinfo: "+info.getSessionId());
+	}
+	
+	protected synchronized void removeSSEInfo(String sessionid)
+	{
+		if(sessionid==null)
+			throw new RuntimeException("session id must not null");
+		sseinfos.remove(sessionid);
+		//System.out.println("removed sseinfo: "+sessionid);
+	}
 
 	/**
 	 *  Set the cors header in the response.
@@ -2002,7 +2096,7 @@ public class RequestManager
 	 */
 	protected Object mapResult(Method method, Object ret)
 	{
-		if(method.isAnnotationPresent(ResultMapper.class))
+		if(method!=null && method.isAnnotationPresent(ResultMapper.class))
 		{
 			try
 			{
@@ -2654,6 +2748,58 @@ public class RequestManager
 		{
 			return "ConversationInfo [terminated=" + terminated + ", lastcheck=" + lastcheck + ", future=" + future
 				+ ", sessionid=" + sessionid + ", callid=" + callid + "]";
+		}
+	}
+	
+	/**
+	 *  Struct for storing info about a request and the results.
+	 */
+	public static class SSEInfo
+	{
+		protected AsyncContext context;
+		
+		protected String sessionid;
+		
+		protected long lastcheck;
+		
+		public SSEInfo(AsyncContext context, String sessionid)
+		{
+			this.context = context;
+			this.sessionid = sessionid;
+			this.lastcheck = System.currentTimeMillis();
+		}
+
+		public AsyncContext getContext() 
+		{
+			return context;
+		}
+
+		public SSEInfo setContext(AsyncContext context) 
+		{
+			this.context = context;
+			return this;
+		}
+
+		public String getSessionId() 
+		{
+			return sessionid;
+		}
+
+		public SSEInfo setSessionId(String sessionid) 
+		{
+			this.sessionid = sessionid;
+			return this;
+		}
+
+		public long getLastCheck() 
+		{
+			return lastcheck;
+		}
+
+		public SSEInfo setLastCheck(long lastcheck) 
+		{
+			this.lastcheck = lastcheck;
+			return this;
 		}
 	}
 
@@ -4108,7 +4254,7 @@ public class RequestManager
 	{
 		Future<PathManager<MappingInfo>> reta = new Future<>();
 
-		UUID cid = sid.getProviderId();
+		//ComponentIdentifier cid = sid.getProviderId();
 
 		//IExternalAccess ea = getComponent().getExternalAccess(cid);
 

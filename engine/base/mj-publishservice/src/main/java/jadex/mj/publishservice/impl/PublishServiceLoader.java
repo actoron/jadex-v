@@ -31,8 +31,8 @@ public class PublishServiceLoader
 					//pubsdone = val.replace();
 					
 					String pt = p.publishtagetname().length()>0? p.publishtagetname(): null;
-					if(pt==null && !p.publishtaget().equals(Object.class))
-						pt = SReflect.getClassName(p.publishtaget());
+					if(pt==null && !p.publishtarget().equals(Object.class))
+						pt = SReflect.getClassName(p.publishtarget());
 					
 					PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), pt, Object.class.equals(p.mapping())? null: p.mapping());
 					model.addPublishInfo(pi);

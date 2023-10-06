@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import jadex.future.ThreadLocalTransferHelper;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.feature.execution.impl.MjExecutionFeature;
 import jadex.mj.feature.providedservice.annotation.Timeout;
 
@@ -54,7 +55,7 @@ public class ServiceCall
 	//-------- attributes --------
 	
 	/** The calling component. */
-	public UUID	caller;
+	public ComponentIdentifier caller;
 	
 	/** The service call properties. */
 	public Map<String, Object> properties;
@@ -66,7 +67,7 @@ public class ServiceCall
 	/**
 	 *  Create a service call info object.
 	 */
-	protected ServiceCall(UUID caller, Map<String, Object> props)
+	protected ServiceCall(ComponentIdentifier caller, Map<String, Object> props)
 	{
 //		if(caller==null)
 //		{
@@ -79,7 +80,7 @@ public class ServiceCall
 	/**
 	 *  Create a service call.
 	 */
-	protected static ServiceCall createServiceCall(UUID caller, Map<String, Object> props)
+	protected static ServiceCall createServiceCall(ComponentIdentifier caller, Map<String, Object> props)
 	{
 		return new ServiceCall(caller, props);
 	}
@@ -198,7 +199,7 @@ public class ServiceCall
 	 *  Get the caller component.
 	 *  @return The caller component.
 	 */
-	public UUID	getCaller()
+	public ComponentIdentifier getCaller()
 	{
 		return caller;
 	}

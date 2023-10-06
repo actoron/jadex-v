@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +19,7 @@ import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISuspendable;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
@@ -243,17 +243,17 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	
 	class TimerTaskInfo
 	{
-		protected UUID cid;
+		protected ComponentIdentifier cid;
 		protected TimerTask task;
 		protected Future<?> future;
 		
-		public TimerTaskInfo(UUID cid, Future<?> future)
+		public TimerTaskInfo(ComponentIdentifier cid, Future<?> future)
 		{
 			this.cid = cid;
 			this.future = future;
 		}
 
-		public UUID getComponentId() 
+		public ComponentIdentifier getComponentId() 
 		{
 			return cid;
 		}

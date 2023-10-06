@@ -5,9 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import jadex.bridge.service.annotation.Security;
-import jadex.bridge.service.types.security.ISecurityInfo;
-
 /**
  *  Security meta-information of a message;
  *

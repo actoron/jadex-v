@@ -18,10 +18,14 @@
 		baseurl: 'events',
 		source: null,
 		conversations: {},
+		path: null,
 	
 		init: function()
 		{
 			console.log("jadex init running: "+this.getPath());
+			
+			// need to set the path because document is null 
+			this.path = document.currentScript.src.substring(0, document.currentScript.src.lastIndexOf('/'));
 			
 			var self = this;
 			
@@ -75,8 +79,9 @@
 		
 		getPath: function()
 		{
-			let path = document.currentScript.src;
-			return path.substring(0, path.lastIndexOf('/'));
+			//let path = document.currentScript.src;
+			//return path.substring(0, path.lastIndexOf('/'));
+			return this.path;
 		},
 		
 		processEvent: function(event, cnt)
@@ -87,9 +92,35 @@
 			var sseevent = event.data!=null? JSON.parse(event.data): null;
 			var callid = sseevent.callId;
 			
+			// sseping
+			if("sseping"===sseevent?.data?.toLowerCase())
+			{
+				console.log("sseping received");
+				let sendalive = x =>
+				{
+					let headers = 
+					{
+						'x-jadex-callid': callid, 
+						'x-jadex-ssealive': "true", 
+						'cache-control': 'no-cache, no-store'
+					};
+					
+					fetch(self.getPath(), {method: 'GET', headers: headers})
+				    .then(response => 
+				    {
+				        if(!response.ok)
+				            throw new Error("HTTP Error: " + response.status);
+				    })
+				    .catch(err => 
+				    {
+				        console.log("error when sending sse alive");
+				    });
+				};
+				sendalive();
+			}
 			// check if updatetimer command was received
 			// send alive when callid is still used, otherwise ignore
-			if("updatetimer"===sseevent?.data?.value?.toLowerCase())
+			else if("updatetimer"===sseevent?.data?.value?.toLowerCase())
 			{
 				var cinfo = self.conversations[callid];
 				if(cinfo==null)

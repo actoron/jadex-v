@@ -11,6 +11,7 @@ import java.util.UUID;
 import jadex.common.ClassInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple3;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationHandler;
@@ -71,7 +72,7 @@ public class ServiceQuery<T>
 	protected ServiceScope scope;
 	
 	/** The query owner. (rename queryowner?) */
-	protected UUID owner;
+	protected ComponentIdentifier owner;
 	
 	//-------- influence the result --------
 	
@@ -217,7 +218,7 @@ public class ServiceQuery<T>
 	/**
 	 *  Create a new service query.
 	 */
-	public ServiceQuery(Class<T> servicetype, ServiceScope scope, UUID owner)
+	public ServiceQuery(Class<T> servicetype, ServiceScope scope, ComponentIdentifier owner)
 	{
 		this(servicetype == null ? (ClassInfo) null : new ClassInfo(servicetype), scope, owner);
 	}
@@ -233,7 +234,7 @@ public class ServiceQuery<T>
 	/**
 	 *  Create a new service query.
 	 */
-	public ServiceQuery(ClassInfo servicetype, ServiceScope scope, UUID owner)
+	public ServiceQuery(ClassInfo servicetype, ServiceScope scope, ComponentIdentifier owner)
 	{
 //		if(owner==null)
 //			throw new IllegalArgumentException("Owner must not null");
@@ -378,7 +379,7 @@ public class ServiceQuery<T>
 	 *  Set the provider.
 	 *  @param provider The provider to set
 	 */
-	public ServiceQuery<T> setProvider(UUID provider)
+	public ServiceQuery<T> setProvider(ComponentIdentifier provider)
 	{
 		//this.searchstart = provider;
 		this.scope = ServiceScope.COMPONENT_ONLY;
@@ -453,7 +454,7 @@ public class ServiceQuery<T>
 	 *  Get the owner.
 	 *  @return The owner
 	 */
-	public UUID getOwner()
+	public ComponentIdentifier getOwner()
 	{
 		return owner;
 	}
@@ -462,7 +463,7 @@ public class ServiceQuery<T>
 	 *  Set the owner.
 	 *  @param owner The owner to set
 	 */
-	public ServiceQuery<T> setOwner(UUID owner)
+	public ServiceQuery<T> setOwner(ComponentIdentifier owner)
 	{
 		this.owner = owner;
 		return this;

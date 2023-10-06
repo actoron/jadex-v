@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -24,7 +23,7 @@ import jadex.mj.core.modelinfo.ModelInfo;
  */
 public class MjComponent implements IComponent
 {
-	protected static Map<UUID, IComponent> components = Collections.synchronizedMap(new HashMap<UUID, IComponent>());
+	protected static Map<ComponentIdentifier, IComponent> components = Collections.synchronizedMap(new HashMap<ComponentIdentifier, IComponent>());
 	
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
@@ -40,7 +39,7 @@ public class MjComponent implements IComponent
 	protected IModelInfo modelinfo;
 	
 	/** The id. */
-	protected UUID id;
+	protected ComponentIdentifier id;
 	
 	/** The external access. */
 	protected IExternalAccess access;
@@ -54,10 +53,9 @@ public class MjComponent implements IComponent
 	protected MjComponent(IModelInfo modelinfo)
 	{
 		this.modelinfo = modelinfo;
-		this.id = UUID.randomUUID();
+		this.id = new ComponentIdentifier();
 		MjComponent.addComponent(this); // is this good here?! should we have terminate on MjComponent as well to place removeComponent there?
 		
-		// Fetch relevant providers (potentially cached)
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());
 		
 		// Instantiate all features (except lazy ones).
@@ -76,12 +74,12 @@ public class MjComponent implements IComponent
 		components.put(comp.getId(), comp);
 	}
 	
-	public static void removeComponent(UUID cid)
+	public static void removeComponent(ComponentIdentifier cid)
 	{
 		components.remove(cid);
 	}
 	
-	public static IComponent getComponent(UUID cid)
+	public static IComponent getComponent(ComponentIdentifier cid)
 	{
 		return components.get(cid);
 	}
@@ -90,7 +88,7 @@ public class MjComponent implements IComponent
 	 *  Get the id.
 	 *  @return The id.
 	 */
-	public UUID getId() 
+	public ComponentIdentifier getId() 
 	{
 		return id;
 	}
@@ -339,7 +337,7 @@ public class MjComponent implements IComponent
 					}
 					
 					@Override
-					public UUID getId() 
+					public ComponentIdentifier getId() 
 					{
 						return MjComponent.this.getId();
 					}
@@ -354,7 +352,7 @@ public class MjComponent implements IComponent
 	 *  @param cid The component id.
 	 *  @return The external access.
 	 */
-	public IExternalAccess getExternalAccess(UUID cid)
+	public IExternalAccess getExternalAccess(ComponentIdentifier cid)
 	{
 		IExternalAccess access = null;
 		if(accessfactory!=null)
@@ -390,7 +388,7 @@ public class MjComponent implements IComponent
 				}
 				
 				@Override
-				public UUID getId() 
+				public ComponentIdentifier getId() 
 				{
 					return MjComponent.this.getId();
 				}

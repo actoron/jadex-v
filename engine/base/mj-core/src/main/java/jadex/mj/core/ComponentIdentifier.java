@@ -52,7 +52,7 @@ public class ComponentIdentifier
 	 */
 	public ComponentIdentifier(String localname, long pid, String host)
 	{
-		localname = idStringFromNumber(ID_COUNTER.getAndIncrement());
+		this.localname = localname;
 		this.pid = pid;
 		this.host = host;
 	}
@@ -155,7 +155,7 @@ public class ComponentIdentifier
 		{
 			e.printStackTrace();
 		}
-		System.out.println("GOT THE HOST " + host);
+		//System.out.println("GOT THE HOST " + host);
 		HOST = host;
 	}
 	

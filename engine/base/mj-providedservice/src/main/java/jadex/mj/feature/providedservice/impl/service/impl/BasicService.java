@@ -9,7 +9,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
@@ -17,6 +16,7 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
@@ -59,7 +59,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	private Map<String, Object> properties;
 	
 	/** The provider id. */
-	protected UUID providerid;
+	protected ComponentIdentifier providerid;
 	
 	protected Class<?> type;
 	
@@ -71,7 +71,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Create a new service.
 	 */
 	// todo: remove type!!!
-	public BasicService(UUID providerid, Class<?> type, Map<String, Object> properties)
+	public BasicService(ComponentIdentifier providerid, Class<?> type, Map<String, Object> properties)
 	{
 		this(providerid, type, null, properties);
 	}
@@ -80,7 +80,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Create a new service.
 	 */
 	// todo: remove type!!!
-	public BasicService(UUID providerid, Class<?> type, Class<?> impltype, Map<String, Object> properties)
+	public BasicService(ComponentIdentifier providerid, Class<?> type, Class<?> impltype, Map<String, Object> properties)
 	{
 //		super(null);
 		
@@ -396,7 +396,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Get the providerid.
 	 *  @return the providerid.
 	 */
-	public UUID getProviderId()
+	public ComponentIdentifier getProviderId()
 	{
 		return providerid;
 	}
@@ -775,7 +775,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 */
 	public static IFuture<Boolean> isUnrestricted(IServiceIdentifier sid, IComponent component, Method method)
 	{
-		UUID cid = sid.getProviderId();
+		ComponentIdentifier cid = sid.getProviderId();
 		//System.out.println("isUnrestricted 1: "+cid);
 		
 		return component.getExternalAccess(cid).scheduleStep((IComponent agent) -> 

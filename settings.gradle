@@ -61,6 +61,12 @@ includeBuild('engine/base/mj-providedservice') {
 includeBuild('engine/base/mj-requiredservice') {
 }
 
+includeBuild('engine/base/mj-publishservice') {
+}
+
+includeBuild('engine/base/mj-publishservicejetty') {
+}
+
 includeBuild('engine/base/mj-nfproperties') {
 }
 

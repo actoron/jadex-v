@@ -25,7 +25,7 @@ public @interface Publish
 	/**
 	 *  Target interface of the service to be published service.
 	 */
-	public Class<?> publishtaget() default Object.class;
+	public Class<?> publishtarget() default Object.class;
 	
 	/**
 	 *  Target name of the provided service.

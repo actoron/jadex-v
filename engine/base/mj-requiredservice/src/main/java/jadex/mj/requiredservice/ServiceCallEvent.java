@@ -1,8 +1,7 @@
 package jadex.mj.requiredservice;
 
-import java.util.UUID;
-
 import jadex.common.MethodInfo;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 
 /**
@@ -27,7 +26,7 @@ public class ServiceCallEvent
 	protected MethodInfo	method;
 	
 	/** The caller. */
-	protected UUID caller;
+	protected ComponentIdentifier caller;
 	
 	/** The event body (arguments, result, ...). */
 	protected Object	body;
@@ -46,7 +45,7 @@ public class ServiceCallEvent
 	/**
 	 *  Instance constructor.
 	 */
-	public ServiceCallEvent(Type type, IServiceIdentifier service, MethodInfo method, UUID caller, Object body)
+	public ServiceCallEvent(Type type, IServiceIdentifier service, MethodInfo method, ComponentIdentifier caller, Object body)
 	{
 		this.type	= type;
 		this.service	= service;
@@ -124,7 +123,7 @@ public class ServiceCallEvent
 	/**
 	 *  Get the caller.
 	 */
-	public UUID getCaller()
+	public ComponentIdentifier getCaller()
 	{
 		return caller;
 	}
@@ -132,7 +131,7 @@ public class ServiceCallEvent
 	/**
 	 *  Set the caller.
 	 */
-	public void setCaller(UUID caller)
+	public void setCaller(ComponentIdentifier caller)
 	{
 		this.caller = caller;
 	}

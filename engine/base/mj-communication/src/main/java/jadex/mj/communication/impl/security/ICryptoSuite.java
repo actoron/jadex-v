@@ -1,5 +1,7 @@
 package jadex.mj.communication.impl.security;
 
+import jadex.mj.communication.security.ISecurityInfo;
+
 public interface ICryptoSuite
 {
 	/**

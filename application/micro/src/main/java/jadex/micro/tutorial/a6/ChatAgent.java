@@ -15,7 +15,6 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminationCommand;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.annotation.OnEnd;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.MjMicroAgent;
@@ -26,12 +25,18 @@ import jadex.mj.requiredservice.annotation.OnService;
 
 /**
  *  Chat micro agent provides a basic chat service and publishes it as rest web service.
+ *  Additionally, in this example the agent provides a minimal web user interface to 
+ *  send chat messages and show all received messages.
  *  
- *  
+ *  - The agent uses IChatService to send messages to other agents
+ *  - The agent uses IChatGuiService to talk to the UI
+ *    - The UI subscribes to the IChatGuiService to receive chat messages (and other notifications)
+ *    - The UI uses sendMessageToAll of IChatGuiService to tell its agent to send the chat message to the other agents
+ *	- The agent publishes the UI via its folder and the contained index.html page on the web server
  */
 @Agent
 @Service
-@Publish(publishid="http://localhost:8081/${cid}/chatapi", publishtaget = IChatGuiService.class)
+@Publish(publishid="http://localhost:8081/${cid}/chatapi", publishtarget = IChatGuiService.class)
 public class ChatAgent implements IChatService, IChatGuiService
 {
 	/** The underlying micro agent. */
@@ -63,10 +68,10 @@ public class ChatAgent implements IChatService, IChatGuiService
 	public void message(final String sender, final String text)
 	{
 		String txt = new SimpleDateFormat("hh:mm:ss").format(new Date())+" from: "+sender+" message: "+text;
-		System.out.println(txt);
+		//System.out.println(txt);
 		
 		// Forward the chat message to the web ui
-		System.out.println("forward message to ui: "+subscribers.size());
+		//System.out.println("forward message to ui: "+subscribers.size());
 		for(SubscriptionIntermediateFuture<String> subscriber: subscribers)
 			subscriber.addIntermediateResultIfUndone(txt);
 	}
@@ -100,6 +105,7 @@ public class ChatAgent implements IChatService, IChatGuiService
 	 */
 	public ISubscriptionIntermediateFuture<String> subscribeToChat()
 	{
+		// todo: make termination command functional interface
 		SubscriptionIntermediateFuture<String> ret = new SubscriptionIntermediateFuture<String>();
 		ret.setTerminationCommand(new ITerminationCommand() 
 		{
@@ -152,8 +158,8 @@ public class ChatAgent implements IChatService, IChatGuiService
 	public static void main(String[] args) throws InterruptedException 
 	{
 		MjMicroAgent.create(new ChatAgent());
-		MjMicroAgent.create(new ChatAgent());
-		MjMicroAgent.create(new ChatAgent());
+		//MjMicroAgent.create(new ChatAgent());
+		//MjMicroAgent.create(new ChatAgent());
 		
 		SUtil.sleep(10000);
 	}
