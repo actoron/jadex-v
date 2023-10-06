@@ -184,8 +184,8 @@ public class ComponentIdentifier
 		//Random r = new Random(seed);
 		Random r = new Random();
 		List<String> tmplist = new ArrayList<>(Arrays.asList(Arrays.copyOf(Words.ADJECTIVES, 1023)));
-		Collections.shuffle(tmplist, r);
 		tmplist.add(0, "Clever");
+		Collections.shuffle(tmplist, r);
 		adjectives1 = tmplist.toArray(new String[1024]);
 		
 		//seed = 265266541;
