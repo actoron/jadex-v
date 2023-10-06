@@ -12,7 +12,6 @@ import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.future.ITerminationCommand;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.annotation.OnStart;
@@ -105,24 +104,9 @@ public class ChatAgent implements IChatService, IChatGuiService
 	 */
 	public ISubscriptionIntermediateFuture<String> subscribeToChat()
 	{
-		// todo: make termination command functional interface
 		SubscriptionIntermediateFuture<String> ret = new SubscriptionIntermediateFuture<String>();
-		ret.setTerminationCommand(new ITerminationCommand() 
-		{
-			@Override
-			public void terminated(Exception reason) 
-			{
-				subscribers.remove(ret);
-			}
-			
-			@Override
-			public boolean checkTermination(Exception reason) 
-			{
-				return !ret.isDone();
-			}
-		});
+		ret.setTerminationCommand((ex) -> subscribers.remove(ret));
 		subscribers.add(ret);
-		
 		return ret;
 	}
 	
@@ -158,8 +142,8 @@ public class ChatAgent implements IChatService, IChatGuiService
 	public static void main(String[] args) throws InterruptedException 
 	{
 		MjMicroAgent.create(new ChatAgent());
-		//MjMicroAgent.create(new ChatAgent());
-		//MjMicroAgent.create(new ChatAgent());
+		MjMicroAgent.create(new ChatAgent());
+		MjMicroAgent.create(new ChatAgent());
 		
 		SUtil.sleep(10000);
 	}

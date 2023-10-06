@@ -3,6 +3,7 @@ package jadex.future;
 /**
  *  A command to customize termination of a terminable future.
  */
+@FunctionalInterface
 public interface ITerminationCommand
 {
 	/**
