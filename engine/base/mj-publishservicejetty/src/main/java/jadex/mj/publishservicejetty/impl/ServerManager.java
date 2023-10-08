@@ -425,8 +425,8 @@ public class ServerManager
 	public String getCleanPublishId(String id, IComponent component)
 	{
 		id = id != null ? id.replace("[", "").replace("]", "") : null;
-		id = id.replace("${componentid}", ""+component.getId());
-		id = id.replace("${cid}", ""+component.getId());
+		id = id.replace("${componentid}", ""+component.getId().getLocalName());
+		id = id.replace("${cid}", ""+component.getId().getLocalName());
 		return id;
 	}
 	

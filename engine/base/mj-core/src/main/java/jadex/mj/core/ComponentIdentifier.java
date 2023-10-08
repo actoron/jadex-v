@@ -1,14 +1,9 @@
 package jadex.mj.core;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-import jadex.mj.core.impl.Words;
+import jadex.idgenerator.IdGenerator;
 
 /**
  *  Identifier for components.
@@ -30,7 +25,7 @@ public class ComponentIdentifier
 	 */
 	public ComponentIdentifier()
 	{
-		this(idStringFromNumber(ID_COUNTER.getAndIncrement()), PID, HOST);
+		this(IdGenerator.idStringFromNumber(ID_COUNTER.getAndIncrement()), PID, HOST);
 	}
 	
 	/**
@@ -119,7 +114,7 @@ public class ComponentIdentifier
 	 *  
 	 *  @param num A number.
 	 *  @return A String ID.
-	 */
+	 * /
 	protected static final String idStringFromNumber(long num)
 	{
 		int numval = (int) (num >>> 20 & 0xFFFL);
@@ -162,22 +157,22 @@ public class ComponentIdentifier
 	/** Counter for auto-generated local IDs */
 	private static final AtomicLong ID_COUNTER = new AtomicLong();
 	
-	/** Adjectives for auto-generated local IDs */
+	/** Adjectives for auto-generated local IDs * /
 	private static final String[] adjectives1;
 	
-	/** Adjectives for auto-generated local IDs */
+	/** Adjectives for auto-generated local IDs * /
 	private static final String[] adjectives2;
 	
-	/** Adjectives for auto-generated local IDs */
+	/** Adjectives for auto-generated local IDs * /
 	private static final String[] adjectives3;
 	
-	/** Adjectives for auto-generated local IDs */
+	/** Adjectives for auto-generated local IDs * /
 	private static final String[] adjectives4;
 	
-	/** Nounss for auto-generated local IDs */
+	/** Nounss for auto-generated local IDs * /
 	private static final String[] nouns;
 	
-	/** Initialize words. */
+	/** Initialize words. * /
 	static
 	{
 		//long seed = 208612059;
@@ -214,7 +209,7 @@ public class ComponentIdentifier
 		tmplist = Arrays.asList(Arrays.copyOf(Words.NOUNS, 1024));
 		Collections.shuffle(tmplist, r);
 		nouns = tmplist.toArray(new String[1024]);
-	}
+	}*/
 	
 	/**
 	 *  Test main.

@@ -50,12 +50,12 @@ public class ChatAgent implements IChatService, IChatGuiService
 	@OnStart
 	protected void onStart()
 	{
-		System.out.println("agent started: "+agent.getId());
+		System.out.println("agent started: "+agent.getId().getLocalName());
 		
 		IMjPublishServiceFeature ps = agent.getFeature(IMjPublishServiceFeature.class);
 		ps.publishResources("http://localhost:8081/${cid}", "jadex/micro/tutorial/a6");
 		
-		openInBrowser("http://localhost:8081/"+agent.getId());
+		openInBrowser("http://localhost:8081/"+agent.getId().getLocalName());
 		//openInBrowser("http://localhost:8081/"+agent.getId()+"/index2.html");
 	}
 	
@@ -85,7 +85,7 @@ public class ChatAgent implements IChatService, IChatGuiService
 		for(Iterator<IChatService> it=chatservices.iterator(); it.hasNext(); )
 		{
 			IChatService cs = it.next();
-			cs.message(agent.getId()+"", text);
+			cs.message(agent.getId().getLocalName(), text);
 		}
 	}
 	
@@ -95,7 +95,7 @@ public class ChatAgent implements IChatService, IChatGuiService
 	 */
 	public IFuture<String> getName()
 	{
-		return new Future<String>(agent.getId().toString());
+		return new Future<String>(agent.getId().getLocalName());
 	}
 	
 	/**

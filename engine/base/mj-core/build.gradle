@@ -19,6 +19,7 @@ dependencies
 	implementation 'jadex:traverser:5.0.0'
 	implementation 'jadex:javaparser:5.0.0'
 	implementation 'jadex:bytecode:5.0.0'
+	implementation 'jadex:idgenerator:5.0.0'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
