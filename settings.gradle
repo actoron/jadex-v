@@ -88,3 +88,6 @@ includeBuild('rules/eca') {
 includeBuild('application/micro'){
 }
 
+includeBuild('util/idgenerator') {
+}
+
