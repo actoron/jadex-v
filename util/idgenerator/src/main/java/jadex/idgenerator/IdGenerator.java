@@ -6,6 +6,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+/**
+ *  This generator generates alliteration based composed names based on word lists.
+ *  Needs 4 lists of adjectives with min 256 words each.
+ *  Needs 4 nouns lists with min 1024 words each.
+ */
 public class IdGenerator 
 {	
 	/** Adjectives for auto-generated local IDs */
@@ -32,11 +37,17 @@ public class IdGenerator
 	/** Nouns for auto-generated local IDs */
 	private final String[] nouns_f;
 	
+	/**
+	 *  Create a new random generator.
+	 */
 	public IdGenerator()
 	{
 		this(false);
 	}
 	
+	/**
+	 *  Create a new generator.
+	 */
 	public IdGenerator(boolean deterministic)
 	{	
 		long seed = 208612059;

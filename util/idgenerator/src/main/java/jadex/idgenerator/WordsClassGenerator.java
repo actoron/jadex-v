@@ -14,6 +14,11 @@ import com.squareup.javapoet.TypeSpec;
 
 import jadex.common.SUtil;
 
+/**
+ *  This generator create the Words.java class from the word lists. This is done
+ *  to not need to load the word lists at runtime. After word lists have changed
+ *  the Word.java class needs to be recreated (by hand).
+ */
 public class WordsClassGenerator 
 {
 	public static void main(String[] args) throws Exception
