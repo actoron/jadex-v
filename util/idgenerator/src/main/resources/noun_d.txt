@@ -981,7 +981,7 @@ Duskwarden
 Duskwave
 Duskwood
 Dust
-DustBunny
+Dustbunny
 Dustcloud
 Dustfall
 Dustpan

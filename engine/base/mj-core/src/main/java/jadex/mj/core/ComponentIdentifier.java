@@ -10,6 +10,33 @@ import jadex.idgenerator.IdGenerator;
  */
 public class ComponentIdentifier
 {
+	protected static IdGenerator gen = new IdGenerator();
+
+	/** Cached process ID. */
+	private static final long PID = ProcessHandle.current().pid();
+	
+	/** Cached host name. */
+	private static final String HOST;
+	static
+	{
+		String host = "UNKNOWN";
+		try
+		{
+			// Probably needs something more clever like obtaining the main IP address.
+			InetAddress localhost = InetAddress.getLocalHost();
+			host = localhost.getHostName();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		//System.out.println("GOT THE HOST " + host);
+		HOST = host;
+	}
+	
+	/** Counter for auto-generated local IDs */
+	private static final AtomicLong ID_COUNTER = new AtomicLong();
+	
 	/** The process-local name. */
 	public String localname;
 	
@@ -25,7 +52,7 @@ public class ComponentIdentifier
 	 */
 	public ComponentIdentifier()
 	{
-		this(IdGenerator.idStringFromNumber(ID_COUNTER.getAndIncrement()), PID, HOST);
+		this(gen.idStringFromNumber(ID_COUNTER.getAndIncrement()), PID, HOST);
 	}
 	
 	/**
@@ -110,106 +137,13 @@ public class ComponentIdentifier
 	}
 	
 	/**
-	 *  Generate a String id from a number, used for auto-generating.
-	 *  
-	 *  @param num A number.
-	 *  @return A String ID.
-	 * /
-	protected static final String idStringFromNumber(long num)
+	 *  Make the id generation deterministic or random. Default is random.
+	 *  @param deterministic The deterministic flag.
+	 */
+	public static void setDeterministicNameGeneration(boolean deterministic)
 	{
-		int numval = (int) (num >>> 20 & 0xFFFL);
-		//numval = numval * 4253 & 0xFFF; // 4253 is prime
-		
-		long low20val = num & 0xFFFFFL;
-		low20val = low20val * 1049639L & 0xFFFFFL; // 1049639 is prime
-		
-		String ret = String.join("", adjectives4[(int) ((num >>> 52) & 0x3FFL)],
-									 adjectives3[(int) ((num >>> 42) & 0x3FFL)],
-									 adjectives2[(int) ((num >>> 32) & 0x3FFL)],
-									 adjectives1[(int) ((low20val >>> 10) & 0x3FFL)],
-									 nouns[(int) (low20val & 0x3FFL)],
-									 numval > 0? ("_" + Integer.toHexString(numval)) : "");
-		return ret;
+		gen = new IdGenerator(deterministic);
 	}
-	
-	/** Cached process ID. */
-	private static final long PID = ProcessHandle.current().pid();
-	
-	/** Cached host name. */
-	private static final String HOST;
-	static
-	{
-		String host = "UNKNOWN";
-		try
-		{
-			// Probably needs something more clever like obtaining the main IP address.
-			InetAddress localhost = InetAddress.getLocalHost();
-			host = localhost.getHostName();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-		//System.out.println("GOT THE HOST " + host);
-		HOST = host;
-	}
-	
-	/** Counter for auto-generated local IDs */
-	private static final AtomicLong ID_COUNTER = new AtomicLong();
-	
-	/** Adjectives for auto-generated local IDs * /
-	private static final String[] adjectives1;
-	
-	/** Adjectives for auto-generated local IDs * /
-	private static final String[] adjectives2;
-	
-	/** Adjectives for auto-generated local IDs * /
-	private static final String[] adjectives3;
-	
-	/** Adjectives for auto-generated local IDs * /
-	private static final String[] adjectives4;
-	
-	/** Nounss for auto-generated local IDs * /
-	private static final String[] nouns;
-	
-	/** Initialize words. * /
-	static
-	{
-		//long seed = 208612059;
-		//Random r = new Random(seed);
-		Random r = new Random();
-		List<String> tmplist = new ArrayList<>(Arrays.asList(Arrays.copyOf(Words.ADJECTIVES, 1023)));
-		tmplist.add(0, "Clever");
-		Collections.shuffle(tmplist, r);
-		adjectives1 = tmplist.toArray(new String[1024]);
-		
-		//seed = 265266541;
-		//r = new Random(seed);
-		tmplist = new ArrayList<>(Arrays.asList(Arrays.copyOf(Words.ADJECTIVES, 1023)));
-		Collections.shuffle(tmplist, r);
-		tmplist.add(0, "");
-		adjectives2 = tmplist.toArray(new String[1024]);
-		
-		//seed = 786761336;
-		//r = new Random(seed);
-		tmplist = new ArrayList<>(Arrays.asList(Arrays.copyOf(Words.ADJECTIVES, 1023)));
-		Collections.shuffle(tmplist, r);
-		tmplist.add(0, "");
-		adjectives3 = tmplist.toArray(new String[1024]);
-		
-		//seed = 384957210;
-		//r = new Random(seed);
-		tmplist = new ArrayList<>(Arrays.asList(Arrays.copyOf(Words.ADJECTIVES, 1023)));
-		Collections.shuffle(tmplist, r);
-		tmplist.add(0, "");
-		adjectives4 = tmplist.toArray(new String[1024]);
-		
-		//seed = 292305523;
-		//r = new Random(seed);
-		tmplist = Arrays.asList(Arrays.copyOf(Words.NOUNS, 1024));
-		Collections.shuffle(tmplist, r);
-		nouns = tmplist.toArray(new String[1024]);
-	}*/
 	
 	/**
 	 *  Test main.

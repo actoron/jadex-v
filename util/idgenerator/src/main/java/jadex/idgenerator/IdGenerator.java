@@ -9,36 +9,39 @@ import java.util.Random;
 public class IdGenerator 
 {	
 	/** Adjectives for auto-generated local IDs */
-	private static final String[] adjectives1;
+	private final String[] adjectives1;
 	
 	/** Adjectives for auto-generated local IDs */
-	private static final String[] adjectives2;
+	private final String[] adjectives2;
 	
 	/** Adjectives for auto-generated local IDs */
-	private static final String[] adjectives3;
+	private final String[] adjectives3;
 	
 	/** Adjectives for auto-generated local IDs */
-	private static final String[] adjectives4;
+	private final String[] adjectives4;
 	
 	/** Nouns for auto-generated local IDs */
-	private static final String[] nouns_a;
+	private final String[] nouns_a;
 	
 	/** Nouns for auto-generated local IDs */
-	private static final String[] nouns_b;
+	private final String[] nouns_b;
 	
 	/** Nouns for auto-generated local IDs */
-	private static final String[] nouns_d;
+	private final String[] nouns_d;
 	
 	/** Nouns for auto-generated local IDs */
-	private static final String[] nouns_f;
+	private final String[] nouns_f;
 	
-	static
+	public IdGenerator()
+	{
+		this(false);
+	}
+	
+	public IdGenerator(boolean deterministic)
 	{	
-		//long seed = 208612059;
-		//Random r = new Random(seed);
-		Random r = new Random();
-		List<String> tmplist = new ArrayList<>(Arrays.asList(Arrays.copyOf(Words.ADJECTIVES, 1023)));
-		tmplist.add(0, "Adorable");
+		long seed = 208612059;
+		Random r = deterministic? new Random(seed): new Random();
+		List<String> tmplist = new ArrayList<>(Arrays.asList(Arrays.copyOf(Words.ADJECTIVES, 1024)));
 		Collections.shuffle(tmplist, r); // cannot be shuffled when ranges are used for starting letter determination
 		adjectives1 = tmplist.toArray(new String[1024]);
 		
@@ -88,7 +91,7 @@ public class IdGenerator
 	 *  @param num A number.
 	 *  @return A String ID.
 	 */
-	public static final String idStringFromNumber(long num)
+	public final String idStringFromNumber(long num)
 	{
 		int numval = (int) (num >>> 20 & 0xFFFL);
 		//numval = numval * 4253 & 0xFFF; // 4253 is prime
@@ -99,8 +102,6 @@ public class IdGenerator
 		int selector = (int) ((low20val >>> 10) & 0x3FFL);
 		
 		String adj1 = adjectives1[selector];
-		if(adj1==null)
-			System.out.println("dreck");
 		
 		int nounnum = (int) (low20val & 0x3FFL);
 		String noun = null;
@@ -131,12 +132,14 @@ public class IdGenerator
 		return ret;
 	}
 	
-	
 	public static void main(String[] args) 
 	{
+		//IdGenerator gen = new IdGenerator(true);
+		IdGenerator gen = new IdGenerator();
+		
 		for(int i=0; i<10000; i++)
 		{
-			System.out.println(i+": "+idStringFromNumber(i));
+			System.out.println(i+": "+gen.idStringFromNumber(i));
 		}
 	}
 }
