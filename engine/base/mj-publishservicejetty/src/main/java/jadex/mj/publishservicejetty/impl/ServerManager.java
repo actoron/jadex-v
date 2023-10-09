@@ -415,7 +415,7 @@ public class ServerManager
 				}
     		}
     	}
-    	System.out.println("Jetty port servers terminated: "+ports);
+//    	System.out.println("Jetty port servers terminated: "+ports);
     }
     
 	/**

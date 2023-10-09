@@ -141,9 +141,9 @@ public class ChatAgent implements IChatService, IChatGuiService
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MjMicroAgent.create(new ChatAgent());
-		MjMicroAgent.create(new ChatAgent());
-		MjMicroAgent.create(new ChatAgent());
+		IComponent.create(new ChatAgent());
+		IComponent.create(new ChatAgent());
+		IComponent.create(new ChatAgent());
 		
 		SUtil.sleep(10000);
 	}

@@ -49,16 +49,16 @@ public interface IComponent
 	//-------- static part for generic component creation --------
 	
 	// Hack! When declared in interface the variable remains null, wtf
-	public static final class Holder
-	{
+	//public static final class Holder
+	//{
 		public static final List<IComponentCreator> creators = new ArrayList<IComponentCreator>();
-	}
+	//}
 	
 	public static final SMjFeatureProvider dummy = new SMjFeatureProvider();
 	
 	public static void addComponentCreator(IComponentCreator finder)
 	{
-		Holder.creators.add(finder);
+		creators.add(finder);
 	}
 	
 	public static <T extends MjComponent> T	createComponent(Class<T> type, Supplier<T> creator)
@@ -93,7 +93,7 @@ public interface IComponent
 	public static void create(Runnable pojo)
 	{
 		boolean created = false;
-		for(IComponentCreator creators: Holder.creators)
+		for(IComponentCreator creators: creators)
 		{
 			if(creators.filter(pojo))
 			{
@@ -109,7 +109,7 @@ public interface IComponent
 	public static void create(Object pojo)
 	{
 		boolean created = false;
-		for(IComponentCreator creators: Holder.creators)
+		for(IComponentCreator creators: creators)
 		{
 			if(creators.filter(pojo))
 			{
