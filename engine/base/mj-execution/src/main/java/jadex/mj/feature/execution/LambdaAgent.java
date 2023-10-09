@@ -3,8 +3,8 @@ package jadex.mj.feature.execution;
 import java.util.function.Supplier;
 
 import jadex.future.IFuture;
+import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
-import jadex.mj.core.impl.SComponentFactory;
 
 /**
  *  Create minimal components, just from a lambda function.
@@ -17,7 +17,7 @@ public class LambdaAgent
 	 */
 	public static void	create(Runnable body)
 	{
-		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () -> new MjComponent(null) {});
+		MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null) {});
 		IMjExecutionFeature.getExternal(comp).scheduleStep(body);
 	}
 	
@@ -27,7 +27,7 @@ public class LambdaAgent
 	 */
 	public static <T> IFuture<T>	create(Supplier<T> body)
 	{
-		MjComponent	comp	= SComponentFactory.createComponent(MjComponent.class, () -> new MjComponent(null) {});
+		MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null) {});
 		return IMjExecutionFeature.getExternal(comp).scheduleStep(body);
 	}
 }

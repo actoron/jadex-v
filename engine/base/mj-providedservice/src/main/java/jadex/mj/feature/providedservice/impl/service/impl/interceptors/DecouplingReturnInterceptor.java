@@ -58,7 +58,11 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 							}
 							else
 							{
-								System.out.println("todo: scheduleDecoupledStep");
+								//System.out.println("todo: scheduleDecoupledStep");
+								caller.getFeature(IMjExecutionFeature.class).scheduleStep(agent ->
+								{
+									com.execute(args);
+								});
 							}
 							/*else if (caller.getDescription().getState().equals(IComponentDescription.STATE_TERMINATED)
 									&& sic.getMethod().getName().equals("destroyComponent")

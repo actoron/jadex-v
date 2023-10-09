@@ -13,7 +13,6 @@ import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IBootstrapping;
 import jadex.mj.core.impl.IComponentCreator;
 import jadex.mj.core.impl.MjFeatureProvider;
-import jadex.mj.core.impl.SComponentFactory;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.LambdaAgent;
@@ -22,7 +21,7 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 {
 	static
 	{
-		SComponentFactory.addComponentTypeFinder(new IComponentCreator() 
+		IComponent.addComponentCreator(new IComponentCreator() 
 		{
 			public boolean filter(Object obj) 
 			{

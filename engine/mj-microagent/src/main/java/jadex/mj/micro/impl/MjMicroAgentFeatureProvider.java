@@ -1,9 +1,9 @@
 package jadex.mj.micro.impl;
 
+import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IComponentCreator;
 import jadex.mj.core.impl.MjFeatureProvider;
-import jadex.mj.core.impl.SComponentFactory;
 import jadex.mj.micro.MicroClassReader;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
@@ -12,7 +12,7 @@ public class MjMicroAgentFeatureProvider extends MjFeatureProvider<MjMicroAgentF
 {
 	static
 	{
-		SComponentFactory.addComponentTypeFinder(new IComponentCreator() 
+		IComponent.addComponentCreator(new IComponentCreator() 
 		{
 			// todo: use our classreader?!
 			public boolean filter(Object obj) 
@@ -20,7 +20,7 @@ public class MjMicroAgentFeatureProvider extends MjFeatureProvider<MjMicroAgentF
 				boolean ret = false;
 				Agent val = MicroClassReader.getAnnotation(obj.getClass(), Agent.class, getClass().getClassLoader());
 				if(val!=null)
-					ret = "micro"==val.type();
+					ret = "micro".equals(val.type());
 				return ret;
 			}
 			

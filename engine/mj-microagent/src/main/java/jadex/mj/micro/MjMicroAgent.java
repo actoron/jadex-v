@@ -2,8 +2,8 @@ package jadex.mj.micro;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
-import jadex.mj.core.impl.SComponentFactory;
 import jadex.mj.core.modelinfo.IModelInfo;
 
 public class MjMicroAgent	extends MjComponent
@@ -12,7 +12,7 @@ public class MjMicroAgent	extends MjComponent
 	
 	public static void	create(Object pojo)
 	{
-		SComponentFactory.createComponent(MjMicroAgent.class, () -> 
+		IComponent.createComponent(MjMicroAgent.class, () -> 
 		{
 			// this is executed before the features are inited
 			return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
