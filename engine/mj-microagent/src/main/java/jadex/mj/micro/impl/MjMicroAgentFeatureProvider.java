@@ -1,9 +1,12 @@
 package jadex.mj.micro.impl;
 
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IComponentCreator;
+import jadex.mj.core.impl.IComponentTerminator;
 import jadex.mj.core.impl.MjFeatureProvider;
+import jadex.mj.feature.lifecycle.IMjLifecycleFeature;
 import jadex.mj.micro.MicroClassReader;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
@@ -29,9 +32,23 @@ public class MjMicroAgentFeatureProvider extends MjFeatureProvider<MjMicroAgentF
 				return MjMicroAgent.class;
 			}*/
 			
-			public void create(Object pojo)
+			public void create(Object pojo, ComponentIdentifier cid)
 			{
-				MjMicroAgent.create(pojo);
+				MjMicroAgent.create(pojo, cid);
+			}
+		});
+		
+		IComponent.addComponentTerminator(new IComponentTerminator() 
+		{
+			public boolean filter(MjComponent component) 
+			{
+				return component.getClass().equals(MjMicroAgent.class);
+			}
+			
+			@Override
+			public void terminate(IComponent component) 
+			{
+				component.getFeature(IMjLifecycleFeature.class).terminate();
 			}
 		});
 	}

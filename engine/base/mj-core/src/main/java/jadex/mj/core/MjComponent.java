@@ -46,15 +46,23 @@ public class MjComponent implements IComponent
 	
 	/** The external access supplier. */
 	protected static Function<Object, IExternalAccess> accessfactory;
-		
+	
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 */
 	protected MjComponent(IModelInfo modelinfo)
 	{
+		this(modelinfo, null);
+	}
+	
+	/**
+	 *  Create a new component and instantiate all features (except lazy features).
+	 */
+	protected MjComponent(IModelInfo modelinfo, ComponentIdentifier id)
+	{
 		this.modelinfo = modelinfo;
-		this.id = new ComponentIdentifier();
-		MjComponent.addComponent(this); // is this good here?! should we have terminate on MjComponent as well to place removeComponent there?
+		this.id = id==null? new ComponentIdentifier(): id;
+		MjComponent.addComponent(this); // is this good here?! 
 		
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());
 		
@@ -64,13 +72,15 @@ public class MjComponent implements IComponent
 			if(!provider.isLazyFeature())
 			{
 				Object	feature	= provider.createFeatureInstance(this);
-				features.put(provider.getFeatureType(), feature);
+				putFeature(provider.getFeatureType(), feature);
+				//features.put(provider.getFeatureType(), feature);
 			}
 		});
 	}
 	
 	public static void addComponent(IComponent comp)
 	{
+		//System.out.println("added: "+comp.getId());
 		components.put(comp.getId(), comp);
 	}
 	
@@ -138,7 +148,8 @@ public class MjComponent implements IComponent
 				T	ret	= (T)provider.createFeatureInstance(this);
 				@SuppressWarnings("unchecked")
 				Class<Object> otype	= (Class<Object>)type;
-				features.put(otype, ret);
+				putFeature(otype, ret);
+				//features.put(otype, ret);
 				return ret;
 			}
 			catch(Throwable t)
@@ -150,6 +161,20 @@ public class MjComponent implements IComponent
 		{
 			throw new RuntimeException("No such feature: "+type);
 		}
+	}
+	
+	/**
+	 *  Terminate the component.
+	 */
+	public void terminate()
+	{
+		IComponent.terminate(id).get();
+	}
+	
+	protected void putFeature(Class<Object> type, Object feature)
+	{
+		System.out.println("putFeature: "+type+" "+feature);
+		features.put(type, feature);
 	}
 	
 	/**

@@ -2,15 +2,22 @@ package jadex.mj.micro;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjMicroAgent	extends MjComponent
 {
 	static protected MicroModelLoader loader = new MicroModelLoader();
 	
-	public static void	create(Object pojo)
+	public static void create(Object pojo)
+	{
+		create(pojo, null);
+	}
+	
+	public static void	create(Object pojo, ComponentIdentifier cid)
 	{
 		IComponent.createComponent(MjMicroAgent.class, () -> 
 		{
@@ -19,7 +26,7 @@ public class MjMicroAgent	extends MjComponent
 			{
 				//System.out.println("loaded micro model: "+model);
 				
-				return new MjMicroAgent(pojo, model);
+				return new MjMicroAgent(pojo, model, cid);
 			}).get();
 		});
 	}
@@ -28,8 +35,17 @@ public class MjMicroAgent	extends MjComponent
 	
 	protected MjMicroAgent(Object pojo, IModelInfo model)
 	{
-		super(model);
+		this(pojo, model, null);
+	}
+	
+	protected MjMicroAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
+	{
+		super(model, cid);
 		this.pojo	= pojo;
+		
+		//ComponentIdentifier execid = getFeature(IMjExecutionFeature.class).getComponent().getId();
+		//if(!execid.equals(cid))
+		//	System.out.println(execid+" "+cid);
 	}
 	
 	public Object getPojo() 

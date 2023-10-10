@@ -444,7 +444,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		terminated = true;
 		
-		//System.out.println("terminate start");
+		System.out.println("terminate start: "+self.getId()+" "+steps.size());
 			
 		ComponentTerminatedException ex = new ComponentTerminatedException(self.getId());
 		for(Object step: steps)

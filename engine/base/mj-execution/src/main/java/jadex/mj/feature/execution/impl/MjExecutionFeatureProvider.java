@@ -29,12 +29,7 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 					|| Supplier.class.isAssignableFrom(obj.getClass());
 			}
 			
-			/*public Class<? extends MjComponent> getType() 
-			{
-				return MjComponent.class;
-			}*/
-			
-			public void create(Object pojo)
+			public void create(Object pojo, ComponentIdentifier cid)
 			{
 				if(pojo instanceof Runnable)
 					LambdaAgent.create((Runnable)pojo);

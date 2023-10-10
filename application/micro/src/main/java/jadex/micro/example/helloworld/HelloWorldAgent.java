@@ -15,7 +15,7 @@ import jadex.mj.micro.annotation.Description;
 @Description("This agent prints out a hello message.")
 //@Arguments(@Argument(name="welcome text", description= "This parameter is the text printed by the agent.", 
 //	clazz=String.class, defaultvalue="\"Hello world, this is a Jadex micro agent.\""))
-public class MjHelloWorldAgent
+public class HelloWorldAgent
 {
 	//-------- attributes --------
 	
@@ -60,7 +60,7 @@ public class MjHelloWorldAgent
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MjMicroAgent.create(new MjHelloWorldAgent("007"));
+		MjMicroAgent.create(new HelloWorldAgent("007"));
 		
 //		for(int i=0; i<10000; i++)
 //		{
@@ -69,6 +69,6 @@ public class MjHelloWorldAgent
 //		}
 	}
 	
-	public MjHelloWorldAgent(String text) {this.text=text;}
+	public HelloWorldAgent(String text) {this.text=text;}
 	public String	toString() {return "Hello "+text;}
 }

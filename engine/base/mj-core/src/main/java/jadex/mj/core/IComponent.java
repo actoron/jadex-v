@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.mj.core.impl.IBootstrapping;
 import jadex.mj.core.impl.IComponentCreator;
+import jadex.mj.core.impl.IComponentTerminator;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 
@@ -46,19 +49,26 @@ public interface IComponent
 	 */
 	public IExternalAccess getExternalAccess(ComponentIdentifier cid);
 	
+	/**
+	 *  Terminate the component.
+	 */
+	public void terminate();
+	
 	//-------- static part for generic component creation --------
 	
-	// Hack! When declared in interface the variable remains null, wtf
-	//public static final class Holder
-	//{
-		public static final List<IComponentCreator> creators = new ArrayList<IComponentCreator>();
-	//}
+	public static final List<IComponentCreator> creators = new ArrayList<IComponentCreator>();
+	public static final List<IComponentTerminator> terminators = new ArrayList<IComponentTerminator>();
 	
 	public static final SMjFeatureProvider dummy = new SMjFeatureProvider();
 	
-	public static void addComponentCreator(IComponentCreator finder)
+	public static void addComponentCreator(IComponentCreator creator)
 	{
-		creators.add(finder);
+		creators.add(creator);
+	}
+	
+	public static void addComponentTerminator(IComponentTerminator terminator)
+	{
+		terminators.add(terminator);
 	}
 	
 	public static <T extends MjComponent> T	createComponent(Class<T> type, Supplier<T> creator)
@@ -92,12 +102,17 @@ public interface IComponent
 	
 	public static void create(Runnable pojo)
 	{
+		create(pojo, null);
+	}
+	
+	public static void create(Runnable pojo, ComponentIdentifier cid)
+	{
 		boolean created = false;
-		for(IComponentCreator creators: creators)
+		for(IComponentCreator creator: creators)
 		{
-			if(creators.filter(pojo))
+			if(creator.filter(pojo))
 			{
-				creators.create(pojo);
+				creator.create(pojo, null);
 				created = true;
 				break;
 			}
@@ -108,18 +123,55 @@ public interface IComponent
 	
 	public static void create(Object pojo)
 	{
+		create(pojo, null);
+	}
+	
+	public static void create(Object pojo, ComponentIdentifier cid)
+	{
 		boolean created = false;
-		for(IComponentCreator creators: creators)
+		for(IComponentCreator creator: creators)
 		{
-			if(creators.filter(pojo))
+			if(creator.filter(pojo))
 			{
-				creators.create(pojo);
+				creator.create(pojo, cid);
 				created = true;
 				break;
 			}
 		}
 		if(!created)
 			throw new RuntimeException("Could not create component: "+pojo);
+	}
+	
+	public static IFuture<Void> terminate(ComponentIdentifier cid)
+	{
+		Future<Void> ret = new Future<Void>();
+		
+		IComponent comp = MjComponent.getComponent(cid);
+		if(comp!=null)
+		{
+			comp.getExternalAccess().scheduleStep(agent ->
+			{
+				boolean terminated = false;
+				for(IComponentTerminator terminator: terminators)
+				{
+					if(terminator.filter((MjComponent)agent))
+					{
+						terminator.terminate(agent);
+						terminated = true;
+						ret.setResult(null);
+						break;
+					}
+				}
+				if(!terminated)
+					ret.setException(new RuntimeException("Could not terminate component: "+cid));
+			});
+		}
+		else
+		{
+			ret.setException(new RuntimeException("Component not found: "+cid));
+		}
+		
+		return ret;
 	}
 	
 }
