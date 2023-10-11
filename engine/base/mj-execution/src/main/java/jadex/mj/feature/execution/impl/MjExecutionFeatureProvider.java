@@ -95,26 +95,18 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 	@Override
 	public IMjExecutionFeature createFeatureInstance(MjComponent self)
 	{
-		MjExecutionFeature	ret;
-		// called from outside bootstrap to schedule initial step -> create new feature
-		if(self==null)
+		MjExecutionFeature	ret	= MjExecutionFeature.LOCAL.get();
+
+		// Component created without bootstrapping
+		// TODO: disallow plain component creation?
+		if(ret==null || ret.self!=null)
 		{
-			ret	= doCreateFeatureInstance();
+			ret = doCreateFeatureInstance();				
 		}
-		else
-		{
-			// called from component constructor 
-			ret	= MjExecutionFeature.LOCAL.get();
-			// Component created without bootstrapping
-			// TODO: disallow plain component creation?
-			if(ret==null)
-			{
-				ret = doCreateFeatureInstance();				
-			}
-			// else inside bootstrap -> reuse bootstrap feature
-			assert ret.self==null;
-			ret.self	= self;
-		}
+		// else inside bootstrap -> reuse bootstrap feature
+		
+		assert ret.self==null;
+		ret.self	= self;
 		return ret;
 	}
 
@@ -130,8 +122,8 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 	public <T extends MjComponent> T	bootstrap(Class<T> type, Supplier<T> creator)
 	{
 		Map<Class<Object>, MjFeatureProvider<Object>>	providers	= SMjFeatureProvider.getProvidersForComponent(type);
-		MjFeatureProvider<Object>	exeprovider	= providers.get(IMjExecutionFeature.class);
-		IMjExecutionFeature	exe	= (IMjExecutionFeature)exeprovider.createFeatureInstance(null);
+		Object	exeprovider	= providers.get(IMjExecutionFeature.class);	// Hack!!! cannot cast wtf???
+		IMjExecutionFeature	exe	= ((MjExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
 		return exe.scheduleStep(() -> creator.get()).get();
 	}
 }
