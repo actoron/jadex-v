@@ -2,11 +2,8 @@ package jadex.mj.feature.execution.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -356,11 +353,6 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	
 	protected class ComponentSuspendable implements ISuspendable
 	{
-		public ComponentSuspendable()
-		{
-			// TODO Auto-generated constructor stub
-		}
-
 		@Override
 		public void suspend(Future<?> future, long timeout, boolean realtime)
 		{

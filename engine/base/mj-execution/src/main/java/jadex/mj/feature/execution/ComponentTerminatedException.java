@@ -5,6 +5,7 @@ import jadex.mj.core.ComponentIdentifier;
 /**
  *  Thrown when operations are invoked after an component has been terminated.
  */
+@SuppressWarnings("serial")
 public class ComponentTerminatedException	extends RuntimeException
 {
 	//-------- attributes --------

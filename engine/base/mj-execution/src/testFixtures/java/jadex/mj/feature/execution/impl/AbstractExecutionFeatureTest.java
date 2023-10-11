@@ -54,6 +54,25 @@ public abstract class AbstractExecutionFeatureTest
 		IFuture<MjComponent> result	= IMjExecutionFeature.getExternal(comp).scheduleStep(
 			() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
+				
+		// Test after extra component creation
+		MjComponent	comp2	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null){});
+		result	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+				() -> IMjExecutionFeature.get().getComponent());
+		IFuture<MjComponent> result2	= IMjExecutionFeature.getExternal(comp2).scheduleStep(
+				() -> IMjExecutionFeature.get().getComponent());
+		assertEquals(comp, result.get(TIMEOUT));
+		assertEquals(comp2, result2.get(TIMEOUT));
+		
+		// Test after creation inside component
+		MjComponent	comp3	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+			() -> IComponent.createComponent(MjComponent.class, () -> new MjComponent(null){})).get();
+		result	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+				() -> IMjExecutionFeature.get().getComponent());
+		IFuture<MjComponent> result3	= IMjExecutionFeature.getExternal(comp3).scheduleStep(
+				() -> IMjExecutionFeature.get().getComponent());
+		assertEquals(comp, result.get(TIMEOUT));
+		assertEquals(comp3, result3.get(TIMEOUT));
 	}
 	
 	@Test

@@ -173,7 +173,7 @@ public class MjComponent implements IComponent
 	
 	protected void putFeature(Class<Object> type, Object feature)
 	{
-		System.out.println("putFeature: "+type+" "+feature);
+//		System.out.println("putFeature: "+type+" "+feature);
 		features.put(type, feature);
 	}
 	

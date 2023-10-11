@@ -95,12 +95,20 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 	@Override
 	public IMjExecutionFeature createFeatureInstance(MjComponent self)
 	{
-		MjExecutionFeature	ret	= MjExecutionFeature.LOCAL.get();
-		if(ret==null)
+		MjExecutionFeature	ret;
+		if(self!=null)
 		{
+			// called from component constructor inside bootstrap -> reuse bootstrap feature
+			ret	= MjExecutionFeature.LOCAL.get();
+			assert	ret!=null;
+			assert ret.self==null;
+			ret.self	= self;
+		}
+		else
+		{
+			// called from outside bootstrap to schedule initial step -> create new feature
 			ret = doCreateFeatureInstance();
 		}
-		ret.self	= self;
 		return ret;
 	}
 
