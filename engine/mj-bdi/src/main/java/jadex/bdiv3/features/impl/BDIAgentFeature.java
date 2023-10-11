@@ -201,6 +201,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			Field f	= clazz.getDeclaredField(IBDIClassGenerator.INITARGS_FIELD_NAME);
 //				System.out.println(f+", "+SUtil.arrayToString(args));
 			SAccess.setAccessible(f, true);
+			@SuppressWarnings("unchecked")
 			List<Tuple2<Class<?>[], Object[]>> initcalls	= (List<Tuple2<Class<?>[], Object[]>>)f.get(obj);
 			if(initcalls==null)
 			{
@@ -226,6 +227,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			Field f	= SReflect.getField(clazz, IBDIClassGenerator.INITARGS_FIELD_NAME);
 			//Field f	= clazz.getDeclaredField(IBDIClassGenerator.INITARGS_FIELD_NAME);
 			SAccess.setAccessible(f, true);
+			@SuppressWarnings("unchecked")
 			List<Tuple2<Class<?>[], Object[]>> initcalls = (List<Tuple2<Class<?>[], Object[]>>)f.get(obj);
 			f.set(obj, null);
 			return initcalls;
@@ -409,6 +411,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  Method that is called automatically when a belief 
 	 *  is written as field access.
 	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static void writeField(Object val, String fieldname, Object obj)
 	{
 		if((""+obj).indexOf("Inner")!=-1)
@@ -622,12 +625,12 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		// array that is written
 		
 		String belname	= getBeliefName(agentobj, fieldname);
-		MBelief	mbel = ((MCapability)agent.getFeature(IInternalBDIAgentFeature.class).getCapability().getModelElement()).getBelief(belname);
+		MBelief	mbel = ((MCapability)IInternalBDIAgentFeature.get().getCapability().getModelElement()).getBelief(belname);
 		
-		Object curval = mbel.getValue(agent);
+		Object curval = mbel.getValue();
 		boolean isbeliefwrite = curval==array;
 		
-		RuleSystem rs = agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+		RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 //			System.out.println("write array index: "+val+" "+index+" "+array+" "+agent+" "+fieldname);
 		
 		Object oldval = null;
@@ -635,7 +638,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		if(isbeliefwrite)
 		{
 			oldval = Array.get(array, index);
-			unobserveObject(agent, oldval, etype, rs);
+			unobserveObject(oldval, etype, rs);
 //			rs.unobserveObject(oldval);	
 		}
 		
@@ -653,11 +656,11 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		
 		if(isbeliefwrite)
 		{
-			observeValue(rs, val, agent, new EventType(new String[]{ChangeEvent.FACTCHANGED, belname}), mbel);
+			observeValue(rs, val, new EventType(new String[]{ChangeEvent.FACTCHANGED, belname}), mbel);
 			
 			if(!SUtil.equals(val, oldval))
 			{
-				publishToolBeliefEvent(agent, mbel);
+				publishToolBeliefEvent(mbel);
 
 				jadex.rules.eca.Event ev = new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(val, oldval, Integer.valueOf(index))); // todo: index
 				rs.addEvent(ev);
@@ -676,21 +679,21 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  @param agent The agent.
 	 *  @param belname The belief name.
 	 */
-	public static void unobserveValue(IInternalAccess agent, final String belname)
+	public static void unobserveValue(final String belname)
 	{
 //		System.out.println("unobserve: "+agent+" "+belname);
 		
 		try
 		{
-			Object pojo = agent.getFeature(IPojoComponentFeature.class).getPojoAgent();
+			Object pojo = MjMicroAgentFeature.get().getSelf().getPojo();
 		
 			Method getter = pojo.getClass().getMethod("get"+belname.substring(0,1).toUpperCase()+belname.substring(1), new Class[0]);
 			Object oldval = getter.invoke(pojo, new Object[0]);
 		
-			RuleSystem rs = agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+			RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 			
 			// todo: is this the only event thrown?
-			unobserveObject(agent, oldval, new EventType(new String[]{ChangeEvent.FACTCHANGED, belname}), rs);
+			unobserveObject(oldval, new EventType(new String[]{ChangeEvent.FACTCHANGED, belname}), rs);
 //			rs.unobserveObject(oldval);	
 		}
 		catch(Exception e)

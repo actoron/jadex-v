@@ -1,6 +1,5 @@
 package jadex.bdiv3.features.impl;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -164,6 +163,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 		{
 			SAccess.setAccessible(m, true);
 			
+			@SuppressWarnings("rawtypes")
 			Object[] vals = BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(),
 				modelelement, event!=null ? new ChangeEvent(event) : null, rplan, null);
 			if(vals==null)
@@ -317,7 +317,6 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 		 */
 		protected void	dispatchConfigPlans(List<MConfigParameterElement> cplans, IBDIModel bdimodel)
 		{
-			Future<Void> ret = new Future<Void>();
 			if(cplans!=null && cplans.size()>0)
 			{
 				for(MConfigParameterElement cplan: cplans)
@@ -446,7 +445,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 								if(params.length==0)
 								{
 									// perfect found empty con
-									goal = gcl.newInstance();
+									goal = gcl.getConstructor().newInstance();
 									break;
 								}
 								else if(params.length==1 && params[0].equals(agcl))
@@ -867,6 +866,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 							Rule<Void> rule = new Rule<Void>(mgoal.getName()+"_goal_create", 
 								new NotInShutdownCondition(), new IAction<Void>()
 							{
+								@SuppressWarnings({"rawtypes"})
 								public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 								{
 		//							System.out.println("create: "+context);
@@ -878,8 +878,8 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 										Class<?>[] ptypes = c.getParameterTypes();
 										Object[] pvals = new Object[ptypes.length];
 										
-										Annotation[][] anns = c.getParameterAnnotations();
-										int skip = ptypes.length - anns.length;
+//										Annotation[][] anns = c.getParameterAnnotations();
+//										int skip = ptypes.length - anns.length;
 										
 										for(int i=0; i<ptypes.length; i++)
 										{
@@ -930,7 +930,6 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 									
 									if(pojogoal!=null && !rcapa.containsGoal(pojogoal))
 									{
-										final Object fpojogoal = pojogoal;
 										dispatchTopLevelGoal(pojogoal).addResultListener(goallis);
 									}
 //									else
@@ -955,7 +954,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 								{
 									SAccess.setAccessible(m, true);
 									Object[] pvals = BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(),
-										mgoal, new ChangeEvent(event), null, null);
+										mgoal, new ChangeEvent<Object>(event), null, null);
 									return pvals!=null? m.invoke(null, pvals): null;
 								}
 							}}), new IAction<Void>()
@@ -989,7 +988,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 											try
 											{
 												Object[] vals = BDIAgentFeature.getInjectionValues(c.getParameterTypes(), c.getParameterAnnotations(),
-													mgoal, new ChangeEvent(event), null, null);
+													mgoal, new ChangeEvent<Object>(event), null, null);
 												if(vals!=null)
 												{
 													pojogoal = c.newInstance(vals);
@@ -1414,7 +1413,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 								for(ICandidateInfo ci: result)
 								{
 //									System.out.println("Create plan 1: "+mplan);
-									RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null), new ChangeEvent(event), ((MPlanInfo)ci.getRawCandidate()).getBinding(), null);
+									RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null), new ChangeEvent<Object>(event), ((MPlanInfo)ci.getRawCandidate()).getBinding(), null);
 //									System.out.println("Create plan 2: "+mplan);
 									rplan.executePlan();
 								}
