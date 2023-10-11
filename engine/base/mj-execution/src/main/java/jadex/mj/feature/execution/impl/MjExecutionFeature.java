@@ -309,12 +309,17 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		// nop
 	}
 
+	/** Keep track of threads in use to unblock on terminate. */
+	protected List<ComponentSuspendable>	threads	= new ArrayList<>();
+	
 	protected class ThreadRunner implements Runnable
 	{
 		@Override
 		public void run()
 		{
-			ISuspendable.SUSPENDABLE.set(new ComponentSuspendable());
+			ComponentSuspendable	sus	= new ComponentSuspendable();
+			threads.add(sus);
+			ISuspendable.SUSPENDABLE.set(sus);
 			LOCAL.set(MjExecutionFeature.this);
 			
 			boolean hasnext	= true;
@@ -326,10 +331,17 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					step	= steps.poll();
 				}
 				
-				if(step==null)
-					System.out.println("step is null");
+				assert step!=null;
 				
-				doRun(step);
+				try
+				{
+					doRun(step);
+				}
+				catch(ThreadDeath d)
+				{
+					assert terminated;
+					// ignore aborted steps.
+				}
 				
 				synchronized(MjExecutionFeature.this)
 				{
@@ -346,6 +358,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					}					
 				}
 			}
+			threads.remove(sus);
 			ISuspendable.SUSPENDABLE.remove();
 			LOCAL.remove();
 		}
@@ -353,14 +366,23 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	
 	protected class ComponentSuspendable implements ISuspendable
 	{
+		/** Check if currently blocked. */
+		protected boolean	blocked;
+		
+		/** Set by terminate() to indicate step abortion. */  
+		protected boolean	aborted;
+
 		@Override
 		public void suspend(Future<?> future, long timeout, boolean realtime)
 		{
+			assert !blocked;
+			assert !aborted;
+			
 			boolean startnew	= false;
 			
 			synchronized(MjExecutionFeature.this)
 			{
-				if(!steps.isEmpty() && !terminated)
+				if(!steps.isEmpty() && !aborted)
 				{
 					startnew	= true;
 				}
@@ -384,11 +406,20 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			{
 				try
 				{
+					blocked	= true;
 					// TODO timeout?
 					this.wait();
 				}
 				catch(InterruptedException e)
 				{
+				}
+				finally
+				{
+					blocked=false;
+					if(aborted)
+					{
+						throw new ThreadDeath();
+					}
 				}
 			}
 			
@@ -398,15 +429,38 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		@Override
 		public void resume(Future<?> future)
 		{
-			scheduleStep(() ->
+			if(!aborted)
 			{
-				do_switch	= true;
+				assert blocked;
 				
+				scheduleStep(() ->
+				{
+					synchronized(this)
+					{
+						do_switch	= true;
+						this.notify();
+					}
+				});
+			}
+		}
+		
+		/**
+		 *  Unblock and exit thread with ThreadDeath.
+		 *  Has no effect when not blocked.
+		 */
+		protected void	abort()
+		{
+			assert !aborted;
+			
+			// Only terminate blocked threads -> the running thread is doing the termination and needs to stay alive ;-)
+			if(blocked)
+			{
+				aborted	= true;
 				synchronized(this)
 				{
 					this.notify();
 				}
-			});
+			}
 		}
 	}
 	
@@ -437,7 +491,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		terminated = true;
 		
 		System.out.println("terminate start: "+self.getId()+" "+steps.size());
-			
+		
+		// Drop queued steps.
 		ComponentTerminatedException ex = new ComponentTerminatedException(self.getId());
 		for(Object step: steps)
 		{
@@ -452,6 +507,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			steps.clear();
 		}
 		
+		// Drop queued timer tasks.
 		TimerTaskInfo[] ttis = entries.toArray(new TimerTaskInfo[entries.size()]);
 		for(TimerTaskInfo tti: ttis)
 		{
@@ -462,6 +518,9 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				entries.remove(tti);
 			}
 		}
+		
+		// Terminate blocked threads
+		threads.forEach(thread -> thread.abort());
 		
 		//System.out.println("terminate end");
 	}
@@ -521,6 +580,11 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		try
 		{
 			step.run();
+		}
+		catch(ThreadDeath t)
+		{
+			// pass thread death to thread runner main loop
+			throw t;
 		}
 		catch(Throwable t)
 		{

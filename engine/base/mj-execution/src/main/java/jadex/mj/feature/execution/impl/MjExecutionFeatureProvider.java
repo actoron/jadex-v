@@ -96,18 +96,24 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 	public IMjExecutionFeature createFeatureInstance(MjComponent self)
 	{
 		MjExecutionFeature	ret;
-		if(self!=null)
+		// called from outside bootstrap to schedule initial step -> create new feature
+		if(self==null)
 		{
-			// called from component constructor inside bootstrap -> reuse bootstrap feature
-			ret	= MjExecutionFeature.LOCAL.get();
-			assert	ret!=null;
-			assert ret.self==null;
-			ret.self	= self;
+			ret	= doCreateFeatureInstance();
 		}
 		else
 		{
-			// called from outside bootstrap to schedule initial step -> create new feature
-			ret = doCreateFeatureInstance();
+			// called from component constructor 
+			ret	= MjExecutionFeature.LOCAL.get();
+			// Component created without bootstrapping
+			// TODO: disallow plain component creation?
+			if(ret==null)
+			{
+				ret = doCreateFeatureInstance();				
+			}
+			// else inside bootstrap -> reuse bootstrap feature
+			assert ret.self==null;
+			ret.self	= self;
 		}
 		return ret;
 	}

@@ -122,11 +122,13 @@ public abstract class AbstractExecutionFeatureTest
 	{
 		MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null){});
 		Future<Boolean>	blocker	= new Future<>();
-		IFuture<Boolean>	result	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> blocker.get());
+		IFuture<Boolean>	result	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> {
+			return blocker.get();
+		});
 		// Test that blocked step can be woken up by another step,
 		// i.e., that a new thread was used to wake up the blocked thread.
 		IMjExecutionFeature.getExternal(comp).scheduleStep(() -> blocker.setResult(true));
-		assertTrue(result.get(3000), "Wrong step result.");
+		assertTrue(result.get(TIMEOUT), "Wrong step result.");
 	}
 	
 	@Test
