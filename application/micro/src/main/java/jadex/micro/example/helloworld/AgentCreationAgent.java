@@ -98,7 +98,7 @@ public class AgentCreationAgent
 	{
 		while(cnt>0)
 		{
-			System.out.println("Destroying peer: "+cnt);
+			//System.out.println("Destroying peer: "+cnt);
 			ComponentIdentifier aid = new ComponentIdentifier(""+cnt);
 			
 			IComponent.terminate(aid).get();

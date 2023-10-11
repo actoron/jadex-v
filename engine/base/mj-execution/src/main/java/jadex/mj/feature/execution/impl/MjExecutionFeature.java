@@ -490,7 +490,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		terminated = true;
 		
-		System.out.println("terminate start: "+self.getId()+" "+steps.size());
+		//System.out.println("terminate start: "+self.getId()+" "+steps.size());
 		
 		// Drop queued steps.
 		ComponentTerminatedException ex = new ComponentTerminatedException(self.getId());
