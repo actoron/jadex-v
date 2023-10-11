@@ -9,6 +9,7 @@ import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.ProxyFactory;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 
@@ -66,7 +67,7 @@ public class ServiceInvocationContext
 	protected ServiceCall	currentcall;
 	
 	/** The caller component. */
-	protected UUID caller;
+	protected ComponentIdentifier caller;
 	
 	///** The platform identifier. */
 	//protected UUID platform;
@@ -572,7 +573,7 @@ public class ServiceInvocationContext
 	 *  Get the caller.
 	 *  @return The caller.
 	 */
-	public UUID getCaller()
+	public ComponentIdentifier getCaller()
 	{
 		return caller;
 	}

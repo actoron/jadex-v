@@ -2,12 +2,16 @@ package jadex.mj.requiredservice.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 
 import jadex.common.ClassInfo;
 import jadex.common.FieldInfo;
 import jadex.common.MethodInfo;
+import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.micro.MicroClassReader;
@@ -73,23 +77,49 @@ public class RequiredServiceLoader
 						RequiredServiceInfo rsis = createRequiredServiceInfo(rs, cl);
 						String name = rs.name().length()>0? rs.name(): fields[i].getName();
 						
-						if(Object.class.equals(rsis.getType().getType(cl)))
-							rsis.setType(new ClassInfo(fields[i].getType()));
-								
-						if(ser.name().length()>0)
-							checkAndAddRequiredServiceInfo(rsis, rsm.getRequiredServices(), cl);
-						
-						ServiceInjectionInfo sii = new ServiceInjectionInfo().setFieldInfo(new FieldInfo(fields[i])).setRequiredServiceInfo(rsis);
-						
-						if(ser.query().toBoolean()!=null)
-							sii.setQuery(ser.query().toBoolean());
-						else
-							sii.setQuery(false); // default on fields is false
-						sii.setRequired(ser.required().toBoolean());
-						sii.setLazy(ser.required().toBoolean());
-						sii.setActive(ser.active());
-						
-						rsm.addServiceInjection(name, sii);
+						// multi field
+						if(SReflect.isIterableClass(fields[i].getType()))
+						{
+							Class<?> type = SReflect.getIterableComponentType(fields[i].getGenericType());
+							
+							if(Object.class.equals(rsis.getType().getType(cl)))
+								rsis.setType(new ClassInfo(type));
+									
+							if(ser.name().length()>0)
+								checkAndAddRequiredServiceInfo(rsis, rsm.getRequiredServices(), cl);
+							
+							ServiceInjectionInfo sii = new ServiceInjectionInfo().setFieldInfo(new FieldInfo(fields[i])).setRequiredServiceInfo(rsis);
+							
+							if(ser.query().toBoolean()!=null)
+								sii.setQuery(ser.query().toBoolean());
+							else
+								sii.setQuery(true); // default on collection fields is true
+							sii.setRequired(ser.required().toBoolean()); // continue with init if service is not required
+							sii.setLazy(ser.required().toBoolean());
+							sii.setActive(ser.active()); // time the query should be active
+							
+							rsm.addServiceInjection(name, sii);
+						}
+						else // normal field
+						{
+							if(Object.class.equals(rsis.getType().getType(cl)))
+								rsis.setType(new ClassInfo(fields[i].getType()));
+									
+							if(ser.name().length()>0)
+								checkAndAddRequiredServiceInfo(rsis, rsm.getRequiredServices(), cl);
+							
+							ServiceInjectionInfo sii = new ServiceInjectionInfo().setFieldInfo(new FieldInfo(fields[i])).setRequiredServiceInfo(rsis);
+							
+							if(ser.query().toBoolean()!=null)
+								sii.setQuery(ser.query().toBoolean());
+							else
+								sii.setQuery(false); // default on fields is false
+							sii.setRequired(ser.required().toBoolean());
+							sii.setLazy(ser.required().toBoolean());
+							sii.setActive(ser.active());
+							
+							rsm.addServiceInjection(name, sii);
+						}
 					}
 				}
 				

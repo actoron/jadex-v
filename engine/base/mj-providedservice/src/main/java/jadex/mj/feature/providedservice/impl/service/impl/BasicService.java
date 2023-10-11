@@ -3,16 +3,20 @@ package jadex.mj.feature.providedservice.impl.service.impl;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import jadex.common.ClassInfo;
+import jadex.common.MethodInfo;
 import jadex.common.SReflect;
+import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
@@ -20,13 +24,14 @@ import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Security;
+import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.feature.providedservice.annotation.Timeout;
 
 /**
  *  Basic service provide a simple default isValid() implementation
  *  that returns true after start service and false afterwards.
  */
-public class BasicService //implements IInternalService //extends NFMethodPropertyProvider implements IInternalService
+public class BasicService implements IInternalService //extends NFMethodPropertyProvider implements IInternalService
 {
 	//-------- constants --------
 
@@ -54,7 +59,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	private Map<String, Object> properties;
 	
 	/** The provider id. */
-	protected UUID providerid;
+	protected ComponentIdentifier providerid;
 	
 	protected Class<?> type;
 	
@@ -66,7 +71,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	 *  Create a new service.
 	 */
 	// todo: remove type!!!
-	public BasicService(UUID providerid, Class<?> type, Map<String, Object> properties)
+	public BasicService(ComponentIdentifier providerid, Class<?> type, Map<String, Object> properties)
 	{
 		this(providerid, type, null, properties);
 	}
@@ -75,7 +80,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	 *  Create a new service.
 	 */
 	// todo: remove type!!!
-	public BasicService(UUID providerid, Class<?> type, Class<?> impltype, Map<String, Object> properties)
+	public BasicService(ComponentIdentifier providerid, Class<?> type, Class<?> impltype, Map<String, Object> properties)
 	{
 //		super(null);
 		
@@ -303,10 +308,10 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	/**
 	 *  Get reflective info about the service methods, args, return types.
 	 *  @return The method infos.
-	 * /
-	public IFuture<MethodInfo[]> getMethodInfos()
+	 */
+	public static IFuture<MethodInfo[]> getMethodInfos(IServiceIdentifier sid, ClassLoader cl)
 	{
-		Class<?> iface = sid.getServiceType().getType(internalaccess.getClassLoader());
+		Class<?> iface = sid.getServiceType().getType(cl);
 		
 		Set<Method> ms = new HashSet<>();
 		
@@ -336,7 +341,16 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 		}
 		
 		return new Future<MethodInfo[]>(ret);
-	}*/
+	}
+	
+	/**
+	 *  Get reflective info about the service methods, args, return types.
+	 *  @return The method infos.
+	 */
+	public IFuture<MethodInfo[]> getMethodInfos()
+	{
+		return getMethodInfos(sid, internalaccess.getClassLoader());
+	}
 	
 	/**
 	 *  Get method that should be invoked on target object.
@@ -382,7 +396,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	 *  Get the providerid.
 	 *  @return the providerid.
 	 */
-	public UUID getProviderId()
+	public ComponentIdentifier getProviderId()
 	{
 		return providerid;
 	}
@@ -561,7 +575,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	/**
 	 *  Shutdown the service.
 	 *  @return A future that is done when the service has completed its shutdown.  
-	 * /
+	 */
 	public IFuture<Void>	shutdownService()
 	{
 //		if(getClass().getName().toLowerCase().indexOf("super")!=-1)
@@ -572,7 +586,7 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 			ServiceInvocationHandler.removePojoServiceProxy(sid);
 		
 		final Future<Void> ret = new Future<Void>();
-		isValid().addResultListener(new ExceptionDelegationResultListener<Boolean, Void>(ret)
+		/*isValid().addResultListener(new ExceptionDelegationResultListener<Boolean, Void>(ret)
 		{
 			public void customResultAvailable(Boolean result)
 			{
@@ -590,9 +604,12 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 //					System.out.println("shutdowned service: "+getId());
 				}
 			}
-		});
+		});*/
+		
+		shutdowned = true;
+		ret.setResult(null);
 		return ret;
-	}*/
+	}
 	
 	/**
 	 *  Generate a unique name.
@@ -600,6 +617,9 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	 */
 	public static String generateServiceName(Class<?> service)
 	{
+		if(service==null)
+			throw new RuntimeException("Service type must not be null");
+		
 		synchronized(BasicService.class)
 		{
 			return SReflect.getInnerClassName(service)+"_#"+idcnt++;
@@ -752,21 +772,20 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 	 * @param component The internal access.
 	 * @param mi The method info.
 	 * @return True, if is unrestricted.
-	 * /
-	public static IFuture<Boolean> isUnrestricted(UUID sid, MjComponent component, Method method)
+	 */
+	public static IFuture<Boolean> isUnrestricted(IServiceIdentifier sid, IComponent component, Method method)
 	{
-		IComponentIdentifier cid = sid.getProviderId();
-		
+		ComponentIdentifier cid = sid.getProviderId();
 		//System.out.println("isUnrestricted 1: "+cid);
 		
-		return component.getExternalAccess(cid).scheduleStep((IInternalAccess access) -> 
+		return component.getExternalAccess(cid).scheduleStep((IComponent agent) -> 
 		{
 			//System.out.println("isUnrestricted 2: "+cid);
-			Security sec = getSecurityLevel(access, null, null, null, method, sid);
-			Set<String>	roles = ServiceIdentifier.getRoles(sec, access);
-			return new Future<Boolean>(roles!=null && roles.contains(Security.UNRESTRICTED));
+			Security sec = getSecurityLevel((MjComponent)agent, null, null, null, method, sid);
+			Set<String>	roles = ServiceIdentifier.getRoles(sec, (MjComponent)agent);
+			return roles!=null && roles.contains(Security.UNRESTRICTED);
 		});
-	}*/
+	}
 
 	/**
 	 *  Find the most specific security setting.
@@ -779,7 +798,8 @@ public class BasicService //implements IInternalService //extends NFMethodProper
 		if(info==null && sid!=null)
 		{
 			ProvidedServiceInfo	found	= null;
-			ProvidedServiceInfo[] pros = (ProvidedServiceInfo[])access.getModel().getFeatureModel(IMjProvidedServiceFeature.class);
+			ProvidedServiceModel model = (ProvidedServiceModel)access.getModel().getFeatureModel(IMjProvidedServiceFeature.class);
+			ProvidedServiceInfo[] pros = model.getServices();
 			for(ProvidedServiceInfo psi: pros)
 			{
 				if(psi.getType().equals(sid.getServiceType()))

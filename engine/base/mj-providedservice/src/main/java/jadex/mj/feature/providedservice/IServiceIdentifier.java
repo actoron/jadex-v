@@ -1,9 +1,9 @@
 package jadex.mj.feature.providedservice;
 
 import java.util.Set;
-import java.util.UUID;
 
 import jadex.common.ClassInfo;
+import jadex.mj.core.ComponentIdentifier;
 
 
 /**
@@ -15,7 +15,7 @@ public interface IServiceIdentifier
 	 *  Get the service provider identifier.
 	 *  @return The provider id.
 	 */
-	public UUID	getProviderId();
+	public ComponentIdentifier getProviderId();
 	
 	/**
 	 *  Get the service name.

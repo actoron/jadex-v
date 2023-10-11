@@ -28,8 +28,8 @@ public class ProvidedServiceInfo
 	/** The service implementation. */
 	protected ProvidedServiceImplementation implementation;
 	
-	/** Publish information. */
-	protected PublishInfo publish;
+	///** Publish information. */
+	//protected PublishInfo publish;
 	
 	/** The scope. */
 	protected ServiceScope scope;
@@ -61,7 +61,7 @@ public class ProvidedServiceInfo
 	 */
 	public ProvidedServiceInfo(String name, ClassInfo type, ProvidedServiceImplementation implementation)
 	{
-		this(name, type, implementation, null, null, null, null, null, false);
+		this(name, type, implementation, null, null, null, null, false);
 	}
 	
 	/**
@@ -69,26 +69,32 @@ public class ProvidedServiceInfo
 	 */
 	public ProvidedServiceInfo(String name, Class<?> type, ProvidedServiceImplementation implementation)
 	{
-		this(name, type, implementation, null, null, null, null, null);
+		this(name, type, implementation, null, null, null, null);
 	}
 	
 	/**
 	 *  Create a new service info.
 	 */
-	public ProvidedServiceInfo(String name, Class<?> type, ProvidedServiceImplementation implementation, ServiceScope scope, UnparsedExpression scopeexpression, Security security, PublishInfo publish, List<UnparsedExpression> properties)
+	public ProvidedServiceInfo(String name, Class<?> type, ProvidedServiceImplementation implementation, ServiceScope scope, UnparsedExpression scopeexpression, Security security, 
+		//PublishInfo publish, 
+		List<UnparsedExpression> properties)
 	{
-		this(name, type!=null? new ClassInfo(SReflect.getClassName(type)): null, implementation, scope, scopeexpression, security, publish, properties, 
+		this(name, type!=null? new ClassInfo(SReflect.getClassName(type)): null, implementation, scope, scopeexpression, security, 
+			//publish, 
+			properties, 
 			true);//ServiceIdentifier.isSystemService(type));
 	}
 	
 	/**
 	 *  Create a new service info.
 	 */
-	public ProvidedServiceInfo(String name, ClassInfo type, ProvidedServiceImplementation implementation, ServiceScope scope, UnparsedExpression scopeexpression, Security security, PublishInfo publish, List<UnparsedExpression> properties, boolean systemservice)
+	public ProvidedServiceInfo(String name, ClassInfo type, ProvidedServiceImplementation implementation, ServiceScope scope, UnparsedExpression scopeexpression, Security security, 
+		//PublishInfo publish, 
+		List<UnparsedExpression> properties, boolean systemservice)
 	{
 		this.name = name;
 		this.implementation = implementation;
-		this.publish = publish;
+		//this.publish = publish;
 		this.properties = properties;
 		this.scope = scope;
 		this.scopeexpression = scopeexpression;
@@ -164,20 +170,20 @@ public class ProvidedServiceInfo
 	/**
 	 *  Get the publish.
 	 *  @return The publish.
-	 */
+	 * /
 	public PublishInfo getPublish()
 	{
 		return publish;
-	}
+	}*/
 
 	/**
 	 *  Set the publish.
 	 *  @param publish The publish to set.
-	 */
+	 * /
 	public void setPublish(PublishInfo publish)
 	{
 		this.publish = publish;
-	}
+	}*/
 
 	/**
 	 * @return the properties

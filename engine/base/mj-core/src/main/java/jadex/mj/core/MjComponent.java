@@ -1,10 +1,11 @@
 package jadex.mj.core;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -22,6 +23,8 @@ import jadex.mj.core.modelinfo.ModelInfo;
  */
 public class MjComponent implements IComponent
 {
+	protected static Map<ComponentIdentifier, IComponent> components = Collections.synchronizedMap(new HashMap<ComponentIdentifier, IComponent>());
+	
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
 	protected Map<Class<Object>, MjFeatureProvider<Object>>	providers;
@@ -36,30 +39,31 @@ public class MjComponent implements IComponent
 	protected IModelInfo modelinfo;
 	
 	/** The id. */
-	protected UUID id;
+	protected ComponentIdentifier id;
 	
 	/** The external access. */
 	protected IExternalAccess access;
 	
 	/** The external access supplier. */
-	protected static Function<IComponent, IExternalAccess> accessfactory;
-		
+	protected static Function<Object, IExternalAccess> accessfactory;
+	
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 */
 	protected MjComponent(IModelInfo modelinfo)
 	{
+		this(modelinfo, null);
+	}
+	
+	/**
+	 *  Create a new component and instantiate all features (except lazy features).
+	 */
+	protected MjComponent(IModelInfo modelinfo, ComponentIdentifier id)
+	{
 		this.modelinfo = modelinfo;
-		// UUID does not support that a given string is part of it :-(
-		/*try
-		{
-			this.id = UUID.nameUUIDFromBytes(InetAddress.getLocalHost().getHostName().getBytes());
-		}
-		catch(UnknownHostException e)
-		{*/
-			this.id = UUID.randomUUID();
-		//}
-		// Fetch relevant providers (potentially cached)
+		this.id = id==null? new ComponentIdentifier(): id;
+		MjComponent.addComponent(this); // is this good here?! 
+		
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());
 		
 		// Instantiate all features (except lazy ones).
@@ -68,16 +72,33 @@ public class MjComponent implements IComponent
 			if(!provider.isLazyFeature())
 			{
 				Object	feature	= provider.createFeatureInstance(this);
-				features.put(provider.getFeatureType(), feature);
+				putFeature(provider.getFeatureType(), feature);
+				//features.put(provider.getFeatureType(), feature);
 			}
 		});
+	}
+	
+	public static void addComponent(IComponent comp)
+	{
+		//System.out.println("added: "+comp.getId());
+		components.put(comp.getId(), comp);
+	}
+	
+	public static void removeComponent(ComponentIdentifier cid)
+	{
+		components.remove(cid);
+	}
+	
+	public static IComponent getComponent(ComponentIdentifier cid)
+	{
+		return components.get(cid);
 	}
 	
 	/**
 	 *  Get the id.
 	 *  @return The id.
 	 */
-	public UUID getId() 
+	public ComponentIdentifier getId() 
 	{
 		return id;
 	}
@@ -127,7 +148,8 @@ public class MjComponent implements IComponent
 				T	ret	= (T)provider.createFeatureInstance(this);
 				@SuppressWarnings("unchecked")
 				Class<Object> otype	= (Class<Object>)type;
-				features.put(otype, ret);
+				putFeature(otype, ret);
+				//features.put(otype, ret);
 				return ret;
 			}
 			catch(Throwable t)
@@ -139,6 +161,20 @@ public class MjComponent implements IComponent
 		{
 			throw new RuntimeException("No such feature: "+type);
 		}
+	}
+	
+	/**
+	 *  Terminate the component.
+	 */
+	public void terminate()
+	{
+		IComponent.terminate(id).get();
+	}
+	
+	protected void putFeature(Class<Object> type, Object feature)
+	{
+		System.out.println("putFeature: "+type+" "+feature);
+		features.put(type, feature);
 	}
 	
 	/**
@@ -294,10 +330,13 @@ public class MjComponent implements IComponent
 		if(access==null)
 		{
 			if(accessfactory!=null)
+			{
 				access = accessfactory.apply(this);
+			}
 			else
-				access = new IExternalAccess() {
-					
+			{
+				access = new IExternalAccess() 
+				{
 					@Override
 					public <T> IFuture<T> scheduleStep(Supplier<T> step) 
 					{
@@ -323,12 +362,64 @@ public class MjComponent implements IComponent
 					}
 					
 					@Override
-					public UUID getId() 
+					public ComponentIdentifier getId() 
 					{
 						return MjComponent.this.getId();
 					}
 				};
+			}
 		}
+		return access;
+	}
+	
+	/**
+	 *  Get the external access.
+	 *  @param cid The component id.
+	 *  @return The external access.
+	 */
+	public IExternalAccess getExternalAccess(ComponentIdentifier cid)
+	{
+		IExternalAccess access = null;
+		if(accessfactory!=null)
+		{
+			access = accessfactory.apply(cid);
+		}
+		else
+		{
+			access = new IExternalAccess() 
+			{
+				@Override
+				public <T> IFuture<T> scheduleStep(Supplier<T> step) 
+				{
+					throw new UnsupportedOperationException("Missing execution feature");
+				}
+				
+				@Override
+				public void scheduleStep(Runnable step) 
+				{
+					throw new UnsupportedOperationException("Missing execution feature");
+				}
+				
+				@Override
+				public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
+				{
+					throw new UnsupportedOperationException("Missing execution feature");
+				}
+				
+				@Override
+				public void scheduleStep(IThrowingConsumer<IComponent> step)
+				{
+					throw new UnsupportedOperationException("Missing execution feature");
+				}
+				
+				@Override
+				public ComponentIdentifier getId() 
+				{
+					return MjComponent.this.getId();
+				}
+			};
+		}
+		
 		return access;
 	}
 	
@@ -336,7 +427,7 @@ public class MjComponent implements IComponent
 	 *  Set the external access factory.
 	 *  @param factory The factory.
 	 */
-	public static void setExternalAccessFactory(Function<IComponent, IExternalAccess> factory)
+	public static void setExternalAccessFactory(Function<Object, IExternalAccess> factory)
 	{
 		accessfactory = factory;
 	}

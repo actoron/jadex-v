@@ -61,10 +61,19 @@ includeBuild('engine/base/mj-providedservice') {
 includeBuild('engine/base/mj-requiredservice') {
 }
 
+includeBuild('engine/base/mj-publishservice') {
+}
+
+includeBuild('engine/base/mj-publishservicejetty') {
+}
+
 includeBuild('engine/base/mj-nfproperties') {
 }
 
 includeBuild('engine/base/mj-simulation') {
+}
+
+includeBuild('engine/base/mj-communication') {
 }
 
 includeBuild('engine/mj-microagent') {
@@ -77,5 +86,8 @@ includeBuild('rules/eca') {
 }
 
 includeBuild('application/micro'){
+}
+
+includeBuild('util/idgenerator') {
 }
 

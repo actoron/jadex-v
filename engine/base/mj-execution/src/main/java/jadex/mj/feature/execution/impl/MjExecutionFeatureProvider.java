@@ -1,10 +1,10 @@
 package jadex.mj.feature.execution.impl;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import jadex.future.IFuture;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.IThrowingConsumer;
@@ -13,7 +13,6 @@ import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IBootstrapping;
 import jadex.mj.core.impl.IComponentCreator;
 import jadex.mj.core.impl.MjFeatureProvider;
-import jadex.mj.core.impl.SComponentFactory;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.LambdaAgent;
@@ -22,7 +21,7 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 {
 	static
 	{
-		SComponentFactory.addComponentTypeFinder(new IComponentCreator() 
+		IComponent.addComponentCreator(new IComponentCreator() 
 		{
 			public boolean filter(Object obj) 
 			{
@@ -30,12 +29,7 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 					|| Supplier.class.isAssignableFrom(obj.getClass());
 			}
 			
-			/*public Class<? extends MjComponent> getType() 
-			{
-				return MjComponent.class;
-			}*/
-			
-			public void create(Object pojo)
+			public void create(Object pojo, ComponentIdentifier cid)
 			{
 				if(pojo instanceof Runnable)
 					LambdaAgent.create((Runnable)pojo);
@@ -45,12 +39,22 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 		});
 		
 		// Init the component with schedule step functionality (hack?!)
-		MjComponent.setExternalAccessFactory(comp ->
+		MjComponent.setExternalAccessFactory(obj ->
 		{
+			IComponent tmp = obj instanceof IComponent? (IComponent)obj: null;
+			
+			if(obj instanceof ComponentIdentifier)
+			{
+				ComponentIdentifier cid = (ComponentIdentifier)obj;
+				tmp = MjComponent.getComponent(cid);
+			}
+			
+			final IComponent comp = tmp;
+			
 			return new IExternalAccess() 
 			{
 				@Override
-				public UUID getId()
+				public ComponentIdentifier getId()
 				{
 					return comp.getId();
 				}

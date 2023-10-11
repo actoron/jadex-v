@@ -692,7 +692,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				@SuppressWarnings("unchecked")
 				IResultListener<T>	lis	= (IResultListener<T>) next.getSecondEntity();
 				@SuppressWarnings({ "unchecked", "rawtypes" })
-				ICommand<IResultListener<T>>	com	= (ICommand) next.getThirdEntity();
+				ICommand<IResultListener<T>> com = (ICommand)next.getThirdEntity();
 				
 				fut.executeNotification(lis, com);
 

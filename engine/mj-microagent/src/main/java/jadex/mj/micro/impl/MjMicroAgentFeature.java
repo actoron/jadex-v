@@ -53,7 +53,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 	public IFuture<Void> onStart()
 	{
 		Future<Void> ret = new Future<Void>();
-		System.out.println("start: "+getSelf());
+		//System.out.println("start: "+getSelf());
 		injectStuff(getSelf(), getSelf().getPojo(), ((MicroModel)getSelf().getModel().getRawModel()).getInjectionInfoHolder())
 			.then(v ->
 		{
@@ -107,7 +107,7 @@ public class MjMicroAgentFeature	implements IMjLifecycle, IParameterGuesserProvi
 	@Override
 	public IFuture<Void> onEnd()
 	{
-		System.out.println("end: "+getSelf());
+		//System.out.println("end: "+getSelf());
 		
 		MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
 		

@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import jadex.future.ThreadLocalTransferHelper;
+import jadex.mj.core.ComponentIdentifier;
+import jadex.mj.feature.execution.impl.MjExecutionFeature;
 import jadex.mj.feature.providedservice.annotation.Timeout;
 
 
@@ -24,9 +26,6 @@ public class ServiceCall
 	
 	/** The realtime constant. */
 	public static final String REALTIME = "realtime";
-	
-//	/** The cause constant. */
-//	public static final String CAUSE = "cause";
 	
 	/** The monitoring constant. */
 	public static final String MONITORING = "monitoring";
@@ -56,7 +55,7 @@ public class ServiceCall
 	//-------- attributes --------
 	
 	/** The calling component. */
-	public UUID	caller;
+	public ComponentIdentifier caller;
 	
 	/** The service call properties. */
 	public Map<String, Object> properties;
@@ -68,7 +67,7 @@ public class ServiceCall
 	/**
 	 *  Create a service call info object.
 	 */
-	protected ServiceCall(UUID caller, Map<String, Object> props)
+	protected ServiceCall(ComponentIdentifier caller, Map<String, Object> props)
 	{
 //		if(caller==null)
 //		{
@@ -81,7 +80,7 @@ public class ServiceCall
 	/**
 	 *  Create a service call.
 	 */
-	protected static ServiceCall createServiceCall(UUID caller, Map<String, Object> props)
+	protected static ServiceCall createServiceCall(ComponentIdentifier caller, Map<String, Object> props)
 	{
 		return new ServiceCall(caller, props);
 	}
@@ -132,11 +131,11 @@ public class ServiceCall
 	 *  Set the properties of the next invocation.
 	 *  @param timeout The timeout.
 	 *  @param realtime The realtime flag.
-	 * /
+	 */
 	public static ServiceCall getOrCreateNextInvocation()
 	{
 		return getOrCreateNextInvocation(null);
-	}*/
+	}
 	
 //	/**
 //	 *  Get the next invocation if any.
@@ -150,13 +149,13 @@ public class ServiceCall
 	 *  Get or create the next servicecall for the next invocation. 
 	 *  @param timeout The timeout.
 	 *  @param realtime The realtime flag.
-	 * /
+	 */
 	public static ServiceCall getOrCreateNextInvocation(Map<String, Object> props)
 	{
 		ServiceCall ret = NEXT.get();
 		if(ret==null)
 		{
-			ret = new ServiceCall(IComponentIdentifier.LOCAL.get(), props);
+			ret = new ServiceCall(MjExecutionFeature.LOCAL.get().getComponent().getId(), props);
 			
 //			if(ret.getCaller()==null)
 //			{
@@ -190,17 +189,17 @@ public class ServiceCall
 //				System.out.println("abgsdoyi: "+ret);
 ////				Thread.dumpStack();
 //			}
-			ret.lastmod	= IComponentIdentifier.LOCAL.get();
+			//ret.lastmod	= MjExecutionFeature.LOCAL.get();
 			ret.properties.putAll(props);
 		}
 		return ret;
-	}*/
+	}
 	
 	/**
 	 *  Get the caller component.
 	 *  @return The caller component.
 	 */
-	public UUID	getCaller()
+	public ComponentIdentifier getCaller()
 	{
 		return caller;
 	}
@@ -311,7 +310,7 @@ public class ServiceCall
 	 *  Set a property.
 	 *  @param name The property name.
 	 *  @param val The property value.
-	 * /
+	 */
 	public void setProperty(String name, Object val)
 	{
 //		if(TIMEOUT.equals(name))
@@ -321,9 +320,9 @@ public class ServiceCall
 //			else if(properties.get("method")==null)
 //				System.out.println("setting unknown tout: "+val);
 //		}
-		lastmod	= IComponentIdentifier.LOCAL.get();
+		//lastmod	= IComponentIdentifier.LOCAL.get();
 		this.properties.put(name, val);
-	}*/
+	}
 	
 	/**
 	 *  Remove a property.

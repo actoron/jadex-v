@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Chat Example A6</title>
+		<script src="chatapi/jadex.js" type="text/javascript"/></script>
+		<script>
+			jadex.getIntermediate("chatapi/subscribeToChat", res =>
+			{
+				addMessage(res.data);
+			}, ex =>
+			{
+				console.log("subscription error: "+ex);
+			}); 
+			
+			fetch("chatapi/getName", {method: 'GET', headers: {'Content-Type': 'application/json'}})
+			.then(response => 
+			{
+			    if(!response.ok) 
+			    	throw new Error(`Fehler: ${response.status} - ${response.statusText}`);
+			    return response.json(); 
+			})
+			.then(data => 
+			{
+				document.getElementById("header").textContent = "Chat of "+data;
+			})
+			.catch(error => 
+			{
+				console.error('error:', error);
+			});
+			
+			function addMessage(txt)
+			{
+				document.getElementById("chatarea").value += txt+"\n"; 
+			}
+			
+			function sendMessage()
+			{
+				let text = document.getElementById("text").value;
+				document.getElementById("text").value = "";
+				
+				fetch("chatapi/sendMessageToAll?text="+text, {method: 'GET', headers: {'Content-Type': 'application/json'}})
+				.then(response => 
+				{
+				    if(!response.ok) 
+				    	throw new Error(`Fehler: ${response.status} - ${response.statusText}`);
+				})
+				.catch(error => 
+				{
+					console.error('error:', error);
+				});
+			}
+		</script>
+	</head>
+	<body>
+		<h1 id="header">Chat</h1>
+		<textarea id="chatarea" rows="10"></textarea><br>
+		<input type="text" id="text" size="10"/>
+		<button onclick="sendMessage()">Send</button>
+	</body>
+</html>

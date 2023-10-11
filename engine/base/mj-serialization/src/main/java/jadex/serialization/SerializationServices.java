@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
@@ -20,6 +19,7 @@ import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.TransformProcessor;
 import jadex.common.transformation.traverser.Traverser;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.MjComponent;
 import jadex.serialization.codecs.GZIPCodec;
 import jadex.serialization.codecs.LZ4Codec;
@@ -31,6 +31,8 @@ import jadex.serialization.serializers.JadexFramedBinarySerializer;
 import jadex.serialization.serializers.JadexJsonSerializer;
 
 /**
+ *  todo: make one service/helper for all components
+ * 
  *  Functionality for managing serialization.
  */
 public class SerializationServices implements ISerializationServices
@@ -69,10 +71,10 @@ public class SerializationServices implements ISerializationServices
 	//protected ISecurityService secserv;
 	
 	/** Cache for identifying platforms with the same version. */
-	protected IRwMap<UUID, Boolean> sameversioncache;
+	protected IRwMap<ComponentIdentifier, Boolean> sameversioncache;
 
 	/** Creates the management. */
-	public SerializationServices(UUID comp)
+	public SerializationServices()
 	{
 		sameversioncache = new RwMapWrapper<>(new LRU<>(100));
 		//rrm	= new RemoteReferenceModule(comp);
@@ -118,7 +120,7 @@ public class SerializationServices implements ISerializationServices
 	 */
 	public byte[] encode(IMsgHeader header, MjComponent component, Object obj)
 	{
-		UUID receiver = (UUID)header.getProperty(IMsgHeader.RECEIVER);
+		ComponentIdentifier receiver = (ComponentIdentifier)header.getProperty(IMsgHeader.RECEIVER);
 		ISerializer serial = getSendSerializer(receiver);
 		Map<String, Object> ctx = new HashMap<String, Object>();
 		ctx.put("header", header);
@@ -215,7 +217,7 @@ public class SerializationServices implements ISerializationServices
 	 *  @param receiver Receiving platform.
 	 *  @return Serializer.
 	 */
-	public ISerializer getSendSerializer(UUID receiverplatform)
+	public ISerializer getSendSerializer(ComponentIdentifier receiverplatform)
 	{
 //		return (ISerializer) PlatformConfiguration.getPlatformValue(platform, PlatformConfiguration.DATA_SEND_SERIALIZER);
 		/*Boolean sameversion = sameversioncache.get(receiverplatform);
@@ -278,7 +280,7 @@ public class SerializationServices implements ISerializationServices
 	 *  @param receiver Receiving platform.
 	 *  @return Codecs.
 	 */
-	public ICodec[] getSendCodecs(UUID receiver)
+	public ICodec[] getSendCodecs(ComponentIdentifier receiver)
 	{
 		return sendcodecs;
 	}

@@ -12,32 +12,32 @@ public interface IMjProvidedServiceFeature
 	 *  
 	 *  @param name The service name.
 	 *  @return The service.
-	 * /
-	public IService getProvidedService(String name);*/
+	 */
+	public IService getProvidedService(String name);
 	
 	/**
 	 *  Get provided (declared) service.
 	 *  
 	 *  @param clazz The interface.
 	 *  @return The service.
-	 * /
-	public <T> T getProvidedService(Class<T> clazz);*/
+	 */
+	public <T> T getProvidedService(Class<T> clazz);
 
 	/**
 	 *  Get the provided service implementation object by id.
 	 *  
 	 *  @param name The service identifier.
 	 *  @return The service.
-	 * /
-	public <T> T getProvidedService(IServiceIdentifier sid);*/
+	 */
+	public <T> T getProvidedService(IServiceIdentifier sid);
 	
 	/**
 	 *  Get provided (declared) service.
 	 *  
 	 *  @param clazz The interface (null for all services).
 	 *  @return The service.
-	 * /
-	public <T> T[] getProvidedServices(Class<T> clazz);*/
+	 */
+	public <T> T[] getProvidedServices(Class<T> clazz);
 	
 	/**
 	 *  Get the provided service implementation object by class.
@@ -52,8 +52,8 @@ public interface IMjProvidedServiceFeature
 	 *  
 	 *  @param name The service name.
 	 *  @return The service.
-	 * /
-	public Object getProvidedServiceRawImpl(String name);*/
+	 */
+	public Object getProvidedServiceRawImpl(String name);
 	
 	/**
 	 *  Get the provided service implementation object by name.

@@ -6,10 +6,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import jadex.common.SReflect;
@@ -21,7 +19,6 @@ import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Implementation;
 import jadex.mj.feature.providedservice.annotation.ProvidedService;
 import jadex.mj.feature.providedservice.annotation.ProvidedServices;
-import jadex.mj.feature.providedservice.annotation.Publish;
 import jadex.mj.feature.providedservice.annotation.Security;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.MicroClassReader;
@@ -33,7 +30,7 @@ public class ProvidedServiceLoader
 		Class<?> cma = clazz;
 		
 		int cnt = 0;
-		Map<String, ProvidedServiceInfo> pservices = new HashMap<>();
+		ProvidedServiceModel model = new ProvidedServiceModel();
 		boolean prosdone = false;
 		
 		Set<Class<?>> serifaces = new HashSet<Class<?>>(); 
@@ -49,10 +46,12 @@ public class ProvidedServiceLoader
 				
 				for(int i=0; i<vals.length; i++)
 				{
-					if(vals[i].name().length()==0 || !pservices.containsKey(vals[i].name()))
+					if(!model.hasService(vals[i].name()))
 					{
 						ProvidedServiceInfo psi = createProvidedServiceInfo(vals[i]);
-						pservices.put(vals[i].name().length()==0? ("#"+cnt++): vals[i].name(), psi);
+						//String name = vals[i].name().length()==0? ("#"+cnt++): vals[i].name();
+						model.addService(psi);
+						//pservices.put(vals[i].name().length()==0? ("#"+cnt++): vals[i].name(), psi);
 					}
 				}
 			}
@@ -74,7 +73,8 @@ public class ProvidedServiceLoader
 		// does not have a provided service declaration (implementation=agent)
 		if(!serifaces.isEmpty())
 		{
-			ProvidedServiceInfo[] psis = (ProvidedServiceInfo[])pservices.values().toArray(new ProvidedServiceInfo[pservices.size()]);
+			//ProvidedServiceInfo[] psis = (ProvidedServiceInfo[])pservices.values().toArray(new ProvidedServiceInfo[pservices.size()]);
+			ProvidedServiceInfo[] psis = model.getServices();
 			for(ProvidedServiceInfo psi: psis)
 			{
 				String val = psi.getImplementation().getValue();
@@ -90,12 +90,14 @@ public class ProvidedServiceLoader
 			for(Class<?> iface: serifaces)
 			{
 				ProvidedServiceImplementation impl = new ProvidedServiceImplementation(null, "$pojoagent!=null? $pojoagent: $component", Implementation.PROXYTYPE_DECOUPLED, null);
-				ProvidedServiceInfo psi = new ProvidedServiceInfo(null, iface, impl);
-				pservices.put(psi.getName()==null? ("#"+cnt++): psi.getName(), psi);
+				ProvidedServiceInfo psi = new ProvidedServiceInfo(BasicService.generateServiceName(iface), iface, impl);
+				//String name = psi.getName()==null? ("#"+cnt++): psi.getName();
+				model.addService(psi);
+				//pservices.put(psi.getName()==null? ("#"+cnt++): psi.getName(), psi);
 			}
 		}
 				
-		return pservices.values().toArray(new ProvidedServiceInfo[pservices.size()]);
+		return model;
 	}
 	
 	/**
@@ -120,10 +122,10 @@ public class ProvidedServiceLoader
 			//bind, 
 			interceptors);
 		
-		Publish p = prov.publish();
+		//Publish p = prov.publish();
 		
-		PublishInfo pi = p.publishid().length()==0? null: new PublishInfo(p.publishid(), p.publishtype(), p.publishscope(), p.multi(),
-			Object.class.equals(p.mapping())? null: p.mapping(), MicroClassReader.createUnparsedExpressions(p.properties()));
+		//PublishInfo pi = p.publishid().length()==0? null: new PublishInfo(p.publishid(), p.publishtype(), p.publishscope(), p.multi(),
+		//	Object.class.equals(p.mapping())? null: p.mapping(), MicroClassReader.createUnparsedExpressions(p.properties()));
 		
 		UnparsedExpression	scopeexpression	= prov.scopeexpression()!=null && prov.scopeexpression().length()>0
 				? new UnparsedExpression("scopeexpression", ServiceScope.class, prov.scopeexpression(), null) : null;
@@ -134,8 +136,9 @@ public class ProvidedServiceLoader
 		NameValue[] props = prov.properties();
 		List<UnparsedExpression> serprops = (props != null && props.length > 0) ? new ArrayList<UnparsedExpression>(Arrays.asList(MicroClassReader.createUnparsedExpressions(props))) : null;
 		
-		ProvidedServiceInfo psi = new ProvidedServiceInfo(prov.name().length()>0? prov.name(): null, prov.type(), impl,  prov.scope(), scopeexpression, security, 
-			null, //pi, 
+		String name = prov.name().length()>0? prov.name(): BasicService.generateServiceName(prov.type()); // null
+		ProvidedServiceInfo psi = new ProvidedServiceInfo(name, prov.type(), impl,  prov.scope(), scopeexpression, security, 
+			//null, //pi, 
 			serprops);
 		return psi;
 	}
@@ -186,48 +189,5 @@ public class ProvidedServiceLoader
 		
 		return ret;
 	}
-	/*
-	public static boolean isAnnotationPresent(Class<?> clazz, Class<? extends Annotation> anclazz, ClassLoader cl)
-	{
-		return clazz.isAnnotationPresent((Class<? extends Annotation>)getClass(anclazz, cl));
-	}
 	
-	public static boolean isAnnotationPresent(Field f, Class<? extends Annotation> anclazz, ClassLoader cl)
-	{
-		return f.isAnnotationPresent((Class<? extends Annotation>)getClass(anclazz, cl));
-	}
-	
-	public static boolean isAnnotationPresent(Method m, Class<? extends Annotation> anclazz, ClassLoader cl)
-	{
-		return m.isAnnotationPresent((Class<? extends Annotation>)getClass(anclazz, cl));
-	}
-	
-	public static boolean isAnnotationPresent(Constructor<?> con, Class<? extends Annotation> anclazz, ClassLoader cl)
-	{
-		return con.isAnnotationPresent((Class<? extends Annotation>)getClass(anclazz, cl));
-	}
-	
-	public static <T extends Annotation> T getAnnotation(Class<?> clazz, Class<T> anclazz, ClassLoader cl)
-	{
-		ClassLoader cl2 = cl instanceof DummyClassLoader? ((DummyClassLoader)cl).getOriginal(): cl;
-		return getProxyAnnotation(clazz.getAnnotation((Class<T>)getClass(anclazz, cl)), cl2);
-	}
-	
-	public static <T extends Annotation> T getAnnotation(Field f, Class<T> anclazz, ClassLoader cl)
-	{
-		ClassLoader cl2 = cl instanceof DummyClassLoader? ((DummyClassLoader)cl).getOriginal(): cl;
-		return getProxyAnnotation(f.getAnnotation((Class<T>)getClass(anclazz, cl)), cl2);
-	}
-	
-	public static <T extends Annotation> T getAnnotation(Method m, Class<T> anclazz, ClassLoader cl)
-	{
-		ClassLoader cl2 = cl instanceof DummyClassLoader? ((DummyClassLoader)cl).getOriginal(): cl;
-		return getProxyAnnotation(m.getAnnotation((Class<T>)getClass(anclazz, cl)), cl2);
-	}
-	
-	public static <T extends Annotation> T getAnnotation(Constructor<?> c, Class<T> anclazz, ClassLoader cl)
-	{
-		ClassLoader cl2 = cl instanceof DummyClassLoader? ((DummyClassLoader)cl).getOriginal(): cl;
-		return getProxyAnnotation(c.getAnnotation((Class<T>)getClass(anclazz, cl)), cl2);
-	}*/
 }

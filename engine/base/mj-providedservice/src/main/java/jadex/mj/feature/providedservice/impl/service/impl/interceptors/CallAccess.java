@@ -1,8 +1,8 @@
 package jadex.mj.feature.providedservice.impl.service.impl.interceptors;
 
 import java.util.Map;
-import java.util.UUID;
 
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceCall;
 
 /**
@@ -28,7 +28,7 @@ public abstract class CallAccess	extends ServiceCall
 	 *  @param caller	The calling component. 
 	 *  @param props	The properties.
 	 */
-	public static ServiceCall createServiceCall(UUID caller, Map<String, Object> props)
+	public static ServiceCall createServiceCall(ComponentIdentifier caller, Map<String, Object> props)
 	{
 		return ServiceCall.createServiceCall(caller, props);
 	}

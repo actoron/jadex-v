@@ -3,6 +3,7 @@ package jadex.future;
 /**
  *  A command to customize termination of a terminable future.
  */
+@FunctionalInterface
 public interface ITerminationCommand
 {
 	/**
@@ -14,7 +15,10 @@ public interface ITerminationCommand
 	 *  @param reason The reason supplied for termination.
 	 *  @return True, if termination should proceed.
 	 */
-	public boolean checkTermination(Exception reason);
+	public default boolean checkTermination(Exception reason)
+	{
+		return true;
+	}
 	
 	/**
 	 *  Called after termination was performed.

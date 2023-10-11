@@ -9,6 +9,8 @@ import jadex.mj.micro.annotation.Agent;
 
 /**
  *  Chat micro agent provides a basic chat service. 
+ *  
+ *  The agent provides the service implementation by itself. 
  */
 @Agent
 public class ChatProviderAgent implements IChatService

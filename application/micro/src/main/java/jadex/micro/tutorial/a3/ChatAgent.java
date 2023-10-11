@@ -13,6 +13,9 @@ import jadex.mj.micro.annotation.Agent;
 
 /**
  *  Chat micro agent provides a basic chat service. 
+ *  
+ *  This example shows how a simple chat user interface can be provided via swing.
+ *  The ui interacts with the agent via the external access (as all external threads).
  */
 @Agent
 @Service

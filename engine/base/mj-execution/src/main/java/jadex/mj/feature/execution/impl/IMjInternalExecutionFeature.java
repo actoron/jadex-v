@@ -14,4 +14,9 @@ public interface IMjInternalExecutionFeature
 	 *  Remove a step listener.
 	 */
 	public void	removeStepListener(IStepListener lis);
+	
+	/**
+	 *  Terminate the feature.
+	 */
+	public void terminate();
 }

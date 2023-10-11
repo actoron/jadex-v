@@ -9,10 +9,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Map;
 
-import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
+import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -22,12 +23,12 @@ import jadex.javaparser.SJavaParser;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
 import jadex.mj.core.modelinfo.ModelInfo;
-import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.mj.feature.providedservice.impl.search.IServiceRegistry;
 import jadex.mj.feature.providedservice.impl.search.ServiceRegistry;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.serialization.ISerializationServices;
@@ -36,8 +37,6 @@ import jadex.serialization.SerializationServices;
 public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServiceFeature//, IParameterGuesser
 {
 	protected MjComponent self;
-	
-	protected IParameterGuesser	guesser;
 	
 	/** The map of platform services. */
 	protected Map<Class<?>, Collection<IInternalService>> services;
@@ -57,17 +56,18 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 		
 		ModelInfo model = (ModelInfo)self.getModel();
 		
-		Object mymodel = model.getFeatureModel(this.getClass());
+		ProvidedServiceModel mymodel = (ProvidedServiceModel)model.getFeatureModel(IMjProvidedServiceFeature.class);
 		if(mymodel==null)
 		{
-			Object fmodel = ProvidedServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			model.putFeatureModel(IMjProvidedServiceFeature.class, fmodel);
+			mymodel = (ProvidedServiceModel)ProvidedServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
+			model.putFeatureModel(IMjProvidedServiceFeature.class, mymodel);
 			
 			// todo: save model to cache
 		}
 		
 		// Collect provided services from model (name or type -> provided service info)
-		ProvidedServiceInfo[] ps = (ProvidedServiceInfo[])model.getFeatureModel(IMjProvidedServiceFeature.class);
+		//ProvidedServiceInfo[] ps = (ProvidedServiceInfo[])model.getFeatureModel(IMjProvidedServiceFeature.class);
+		ProvidedServiceInfo[] ps = mymodel.getServices();
 		Map<Object, ProvidedServiceInfo> sermap = new LinkedHashMap<Object, ProvidedServiceInfo>();
 		if(ps!=null)
 		{
@@ -151,7 +151,9 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 			if(ServiceScope.EXPRESSION.equals(scope))
 			{
 				scope = (ServiceScope)SJavaParser.getParsedValue(info.getScopeExpression(), model.getAllImports(), self.getFetcher(), self.getClassLoader());
-				info = new ProvidedServiceInfo(info.getName(), info.getType(), info.getImplementation(), scope, info.getScopeExpression(), info.getSecurity(), info.getPublish(), info.getProperties(), info.isSystemService());
+				info = new ProvidedServiceInfo(info.getName(), info.getType(), info.getImplementation(), scope, info.getScopeExpression(), info.getSecurity(), 
+						//info.getPublish(), 
+						info.getProperties(), info.isSystemService());
 //						System.out.println("expression scope '"
 //							+ (info.getScopeExpression()!=null ? info.getScopeExpression().getValue() : "")
 //							+ "': "+scope);
@@ -242,6 +244,192 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 		
 		return ret;
 	}
+	
+	/**
+	 *  Called when the feature is shutdowned.
+	 */
+	public IFuture<Void> onEnd()
+	{
+		Future<Void> ret = new Future<Void>();
+		
+		// Shutdown the services.
+		Collection<IInternalService> allservices = getAllServices();
+		if(!allservices.isEmpty())
+		{
+			LinkedList<IInternalService> list = new LinkedList<IInternalService>(allservices);
+			shutdownServices(list.descendingIterator()).addResultListener(new DelegationResultListener<Void>(ret));
+		}
+		else
+		{
+			ret.setResult(null);
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  Shutdown the services one by one.
+	 */
+	protected IFuture<Void> shutdownServices(final Iterator<IInternalService> services)
+	{
+		final Future<Void> ret = new Future<Void>();
+		if(services.hasNext())
+		{
+			final IInternalService	is	= services.next();
+			// Remove service from registry before shutdown.
+			removeService(is);
+			
+//			component.getLogger().info("Stopping service: "+is.getServiceId());
+//			if(is instanceof IExternalAccess)
+//				System.out.println("Stopping service: "+is.getServiceId());
+			is.shutdownService().addResultListener(new DelegationResultListener<Void>(ret)
+			{
+				public void customResultAvailable(Void result)
+				{
+//					component.getLogger().info("Stopped service: "+is.getServiceId());
+//					System.out.println("Stopped service: "+is.getServiceId());
+					serviceShutdowned(is).addResultListener(new DelegationResultListener<Void>(ret)
+					{
+						public void customResultAvailable(Void result)
+						{
+							shutdownServices(services).addResultListener(new DelegationResultListener<Void>(ret));
+						}
+					});
+				}
+				
+				@Override
+				public void exceptionOccurred(Exception exception)
+				{
+					// On error -> print and continue shutdown process.
+					System.out.println("Exception in service shutdown: "+is+"\n"+SUtil.getExceptionStacktrace(exception));
+					customResultAvailable(null); 
+				}
+			});
+		}
+		else
+		{
+			ret.setResult(null);
+		}
+		return ret;
+	}
+	
+	/**
+	 *  Remove a service.
+	 *  @param service	The service object.
+	 *  @param info	 The service info.
+	 */
+	protected void removeService(IInternalService service)
+	{
+		IServiceRegistry registry = ServiceRegistry.getRegistry();
+		registry.removeService(service.getServiceId());
+	}
+	
+	/**
+	 *  Called after a service has been shutdowned.
+	 *  
+	 *  todo!!!
+	 */
+	public IFuture<Void> serviceShutdowned(final IInternalService service)
+	{
+		final Future<Void> ret = new Future<Void>();
+//		adapter.invokeLater(new Runnable()
+//		{
+//			public void run()
+//			{
+				ProvidedServiceInfo info = getProvidedServiceInfo(service.getServiceId());
+				
+				// todo!!!
+				//final PublishInfo pi = info==null? null: info.getPublish();
+				
+//				System.out.println("shutdown ser: "+service.getId());
+				/*if(pi!=null)
+				{
+					final IServiceIdentifier sid = service.getServiceId();
+//					getPublishService(instance, pi.getPublishType(), null).addResultListener(instance.createResultListener(new IResultListener<IPublishService>()
+					getPublishService(getComponent(), pi.getPublishType(), pi.getPublishScope(), null).addResultListener(new IResultListener<IPublishService>()
+					{
+						public void resultAvailable(IPublishService ps)
+						{
+							ps.unpublishService(sid).addResultListener(new DelegationResultListener<Void>(ret));
+						}
+						
+						public void exceptionOccurred(Exception exception)
+						{
+			//				instance.getLogger().severe("Could not unpublish: "+sid+" "+exception.getMessage());
+							
+							// ignore, if no publish info
+							ret.setResult(null);
+							// todo: what if publish info but no publish service?
+						}
+					});
+				}
+				else
+				{
+					ret.setResult(null);
+				}*/				
+//			}
+//		});
+		//return ret;
+	
+		return IFuture.DONE;
+	}
+	
+	/**
+	 *  Get the publish service for a publish type (e.g. web service).
+	 *  @param type The type.
+	 *  @param services The iterator of publish services (can be null).
+	 *  @return The publish service.
+	 * /
+	public static IFuture<IPublishService> getPublishService(final MjComponent instance, final String type, final ServiceScope scope, final Iterator<IPublishService> services)
+	{
+		final Future<IPublishService> ret = new Future<IPublishService>();
+		
+		if(services==null)
+		{
+			IFuture<Collection<IPublishService>> fut = instance.getFeature(IRequiredServicesFeature.class).searchServices(new ServiceQuery<>(IPublishService.class, scope));
+			fut.addResultListener(instance.getFeature(IExecutionFeature.class).createResultListener(new ExceptionDelegationResultListener<Collection<IPublishService>, IPublishService>(ret)
+			{
+				@Override
+				public void exceptionOccurred(Exception exception) {
+					// TODO Auto-generated method stub
+					super.exceptionOccurred(exception);
+					exception.printStackTrace();
+				}
+				public void customResultAvailable(Collection<IPublishService> result)
+				{
+					getPublishService(instance, type, scope, result.iterator()).addResultListener(new DelegationResultListener<IPublishService>(ret));
+				}
+			}));
+		}
+		else
+		{
+			if(services.hasNext())
+			{
+				final IPublishService ps = (IPublishService)services.next();
+				ps.isSupported(type).addResultListener(instance.getFeature(IExecutionFeature.class).createResultListener(new ExceptionDelegationResultListener<Boolean, IPublishService>(ret)
+				{
+					public void customResultAvailable(Boolean supported)
+					{
+						if(supported.booleanValue())
+						{
+							ret.setResult(ps);
+						}
+						else
+						{
+							getPublishService(instance, type, scope, services).addResultListener(new DelegationResultListener<IPublishService>(ret));
+						}
+					}
+				}));
+			}
+			else
+			{
+//				ret.setResult(null);
+				ret.setException(new ServiceNotFoundException("IPublishService not found."));
+			}
+		}
+		
+		return ret;
+	}*/
 	
 	/**
 	 *  Create a service implementation from description.
@@ -345,7 +533,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 //		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		
 		// hack!!!!
-		Class<?> servicetype = service.getClass();
+		Class<?> servicetype = service.getServiceId().getServiceType().getType(this.getClass().getClassLoader());//service.getClass();
 				
 		//for(Class<?> servicetype: types)
 		{
@@ -475,13 +663,13 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	{
 		final Future<Void> ret = new Future<Void>();
 		ProvidedServiceInfo info = getProvidedServiceInfo(service.getServiceId());
-		PublishInfo pit = info==null? null: info.getPublish();
+		//PublishInfo pit = info==null? null: info.getPublish();
 		
-		if(pit!=null)
+		//if(pit!=null)
 		{
 			// Hack?! evaluate the publish id string 
 			// Must clone info to not change the model
-			final PublishInfo pi = new PublishInfo(pit);
+			/*final PublishInfo pi = new PublishInfo(pit);
 			try
 			{
 				String pid = (String)SJavaParser.evaluateExpression(pi.getPublishId(), getComponent().getModel().getAllImports(), getComponent().getFetcher(), getComponent().getClassLoader());
@@ -491,7 +679,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 			catch(Exception e)
 			{
 //				e.printStackTrace();
-			}
+			}*/
 			
 			/*if(pi.isMulti())
 			{
@@ -587,7 +775,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 				}));
 			}*/
 		}
-		else
+		//else
 		{
 			ret.setResult(null);
 		}
@@ -791,14 +979,8 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	public ISerializationServices getSerializationService()
 	{
 		if(serser==null)
-			serser = new SerializationServices(getComponent().getId());
+			serser = new SerializationServices();
 		return serser;
-	}
-	
-	@Override
-	public IFuture<Void> onEnd()
-	{
-		return IFuture.DONE;
 	}
 	
 	/**
