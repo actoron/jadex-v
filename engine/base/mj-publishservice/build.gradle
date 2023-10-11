@@ -21,7 +21,11 @@ dependencies
 	implementation 'jadex:mj-lifecycle:5.0.0'
 	implementation 'jadex:mj-microagent:5.0.0'
     implementation 'jadex:mj-requiredservice:5.0.0'
+    implementation 'jadex:mj-providedservice:5.0.0'
 	implementation 'jadex:serialization:5.0.0'
+	implementation 'jadex:binary:5.0.0'
+	implementation 'jadex:json:5.0.0'
+	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 	
 	api 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
 	api 'jakarta.servlet:jakarta.servlet-api:6.0.0'
