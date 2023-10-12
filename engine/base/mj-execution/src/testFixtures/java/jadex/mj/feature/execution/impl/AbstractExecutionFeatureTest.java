@@ -73,6 +73,16 @@ public abstract class AbstractExecutionFeatureTest
 				() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 		assertEquals(comp3, result3.get(TIMEOUT));
+		
+		// Test plain creation (w/o bootstrap) inside component
+		MjComponent	comp4	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		() -> new MjComponent(null){}).get();
+		result	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+				() -> IMjExecutionFeature.get().getComponent());
+		IFuture<MjComponent> result4	= IMjExecutionFeature.getExternal(comp4).scheduleStep(
+				() -> IMjExecutionFeature.get().getComponent());
+		assertEquals(comp, result.get(TIMEOUT));
+		assertEquals(comp4, result4.get(TIMEOUT));
 	}
 	
 	@Test
@@ -216,16 +226,31 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testBootstrapping()
 	{
+		// Test that component creation is scheduled on different thread.
 		Thread outer	= Thread.currentThread();
-		Thread[] inner	= new Thread[1];
-		IComponent.createComponent(MjComponent.class, () -> new MjComponent(null)
+		Thread[] inner	= new Thread[2];
+		MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null)
 		{
 			{
 				inner[0]	= Thread.currentThread();
 			}
 		});
-		// Test that component creation was scheduled on different thread.
 		assertNotEquals(outer, inner[0], "Failed to switch threads.");
+				
+		// Test that component creation inside component is scheduled on different thread.
+		comp.getExternalAccess().scheduleStep(() ->
+		{
+			inner[0]	= Thread.currentThread();
+			IComponent.createComponent(MjComponent.class, () -> new MjComponent(null)
+			{
+				{
+					inner[1]	= Thread.currentThread();
+				}
+			});
+			return (Void)null;
+		}).get();
+		// Test that component creation was scheduled on different thread.
+		assertNotEquals(inner[0], inner[1], "Failed to switch threads.");
 	}
 	
 	@Test
