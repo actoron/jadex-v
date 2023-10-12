@@ -283,8 +283,8 @@ public class MjComponent implements IComponent
 					}
 				}
 				
-				if(!found && ((exact && MjComponent.class.equals(type))
-					|| (!exact && SReflect.isSupertype(MjComponent.class, type))))
+				if(!found && ((exact && IComponent.class.equals(type))
+					|| (!exact && SReflect.isSupertype(IComponent.class, type))))
 				{
 					ret	= MjComponent.this;
 					found	= true;
