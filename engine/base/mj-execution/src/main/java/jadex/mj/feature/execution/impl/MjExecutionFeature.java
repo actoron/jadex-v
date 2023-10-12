@@ -527,6 +527,16 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		//System.out.println("terminate start: "+self.getId()+" "+steps.size());
 		
+		// Terminate blocked threads
+		// Do first to unblock futures before setting results later
+		// Use copy as threads remove themselves from list on exit. 
+		List<ComponentSuspendable>	mythreads;
+		synchronized(this)
+		{
+			mythreads	= new ArrayList<>(threads);
+		}
+		mythreads.forEach(thread -> thread.abort());
+		
 		// Drop queued steps.
 		ComponentTerminatedException ex = new ComponentTerminatedException(self.getId());
 		for(Object step: steps)
@@ -553,15 +563,6 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				entries.remove(tti);
 			}
 		}
-		
-		// Terminate blocked threads
-		// Use copy as threads remove themselves from list on exit. 
-		List<ComponentSuspendable>	mythreads;
-		synchronized(this)
-		{
-			mythreads	= new ArrayList<>(threads);
-		}
-		mythreads.forEach(thread -> thread.abort());
 		
 		//System.out.println("terminate end");
 	}
