@@ -11,6 +11,8 @@ import java.util.TimerTask;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jadex.common.SUtil;
@@ -36,7 +38,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected boolean terminated;
 	protected ThreadRunner	runner	= null;
 	protected MjComponent	self	= null;
-	protected IThrowingFunction<IComponent, Object> endstep = null;
+	protected Object endstep = null;
+	protected Future<Object> endfuture = null;
 	
 	@Override
 	public MjComponent getComponent()
@@ -88,16 +91,20 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			try
 			{
 				T res = s.get();
-				if(res instanceof Future)
+				
+				if(!saveEndStep(res, (Future)ret))
 				{
-					@SuppressWarnings("unchecked")
-					Future<T>	resfut	= (Future<T>)res;
-					// Use generic connection method to avoid issues with different future types.
-					resfut.delegateTo(ret);
-				}
-				else
-				{
-					ret.setResult(res);
+					if(res instanceof Future)
+					{
+						@SuppressWarnings("unchecked")
+						Future<T>	resfut	= (Future<T>)res;
+						// Use generic connection method to avoid issues with different future types.
+						resfut.delegateTo(ret);
+					}
+					else
+					{
+						ret.setResult(res);
+					}
 				}
 			}
 			catch(Exception e)
@@ -156,28 +163,20 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			try
 			{
 				T res = step.apply(self);
-				if(res instanceof Future)
+				
+				if(!saveEndStep(res, (Future)ret))
 				{
-					@SuppressWarnings("unchecked")
-					Future<T>	resfut	= (Future<T>)res;
-					// Use generic connection method to avoid issues with different future types.
-					resfut.delegateTo(ret);
-				}
-				else if(res instanceof IThrowingFunction)
-				{
-					if(endstep==null)
+					if(res instanceof Future)
 					{
-						endstep = (IThrowingFunction<IComponent, Object>)res;
-						//System.out.println("endstep: "+self.getId()+" "+this.hashCode());
+						@SuppressWarnings("unchecked")
+						Future<T>	resfut	= (Future<T>)res;
+						// Use generic connection method to avoid issues with different future types.
+						resfut.delegateTo(ret);
 					}
 					else
 					{
-						throw new RuntimeException("Only one endstep allowed: "+endstep+" "+res);
+						ret.setResult(res);
 					}
-				}
-				else
-				{
-					ret.setResult(res);
 				}
 			}
 			catch(Exception e)
@@ -510,18 +509,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		if(terminated)
 			return;
 		
-		if(endstep!=null)
-		{	
-			try 
-			{
-				// todo: save and return endstep result!
-				Object ret = endstep.apply(self);
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
+		executeEndStep();
 		
 		terminated = true;
 		
@@ -663,5 +651,102 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			doRun(step);
 		}
 	}
-
+	
+	protected boolean saveEndStep(Object res, Future<Object> fut)
+	{
+		boolean ret = false;
+		if(res instanceof Function || res instanceof IThrowingFunction || 
+			res instanceof Consumer || res instanceof IThrowingConsumer ||
+			res instanceof Runnable || res instanceof Supplier)
+		{
+			if(endstep==null)
+			{
+				endstep = res;
+				endfuture = fut;
+				ret = true;
+				//System.out.println("endstep: "+self.getId()+" "+this.hashCode());
+			}
+			else
+			{
+				throw new RuntimeException("Only one endstep allowed: "+endstep+" "+res);
+			}
+		}
+		return ret;
+	}
+	
+	protected void executeEndStep()
+	{
+		if(endstep!=null)
+		{
+			if(endstep instanceof IThrowingFunction)
+			{
+				try
+				{
+					Object ret = ((IThrowingFunction<IComponent, Object>)endstep).apply(getComponent());
+					endfuture.setResult(ret);
+				}
+				catch(Exception e)
+				{
+					endfuture.setException(e);
+				}
+			}
+			else if(endstep instanceof Function)
+			{
+				try
+				{
+					Object ret = ((Function<IComponent, Object>)endstep).apply(getComponent());
+					endfuture.setResult(ret);
+				}
+				catch(Exception e)
+				{
+					endfuture.setException(e);
+				}
+			}
+			else if(endstep instanceof IThrowingConsumer)
+			{
+				try
+				{
+					((IThrowingConsumer<IComponent>)endstep).accept(getComponent());
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+			else if(endstep instanceof Consumer)
+			{
+				try
+				{
+					((Consumer<IComponent>)endstep).accept(getComponent());
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();;
+				}
+			}
+			else if(endstep instanceof Runnable)
+			{
+				try
+				{
+					((Runnable)endstep).run();
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+			else if(endstep instanceof Supplier)
+			{
+				try
+				{
+					Object ret = ((Supplier)endstep).get();
+					endfuture.setResult(ret);
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 }
