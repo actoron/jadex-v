@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +29,7 @@ import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
 {	
-	protected static final ThreadPoolExecutor	THREADPOOL	= new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+	protected static final ThreadPoolExecutor	THREADPOOL	= null;//new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 
 	protected Queue<Runnable>	steps	= new ArrayDeque<>();
@@ -39,6 +40,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected MjComponent	self	= null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
+	protected Semaphore semaphore = new Semaphore(0);
 	
 	@Override
 	public MjComponent getComponent()
@@ -70,7 +72,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		{
 			if(runner==null)
 				runner	= new ThreadRunner();
-			THREADPOOL.execute(runner);
+			runTask(runner);
+			//THREADPOOL.execute(runner);
 		}
 	}
 	
@@ -417,18 +420,23 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			{
 				if(runner==null)
 					runner	= new ThreadRunner();
-				THREADPOOL.execute(runner);
+				//THREADPOOL.execute(runner);#
+				runTask(runner);
 			}
 			
 			beforeBlock();
 			
-			synchronized(this)
+			// Must not be synchronized because semaphore does not realease lock on acquire
+			//synchronized(this)
 			{
 				try
 				{
 					blocked	= true;
 					// TODO timeout?
-					this.wait();
+					//this.wait();
+					//System.out.println("before: "+semaphore);
+					semaphore.acquire();
+					//System.out.println("after: "+semaphore);
 				}
 				catch(InterruptedException e)
 				{
@@ -437,9 +445,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				{
 					blocked=false;
 					if(aborted)
-					{
 						throw new ThreadDeath();
-					}
 				}
 			}
 			
@@ -458,7 +464,9 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					synchronized(this)
 					{
 						do_switch	= true;
-						this.notify();
+						//this.notify();
+						//System.out.println("release: "+semaphore);
+						semaphore.release();
 					}
 				});
 			}
@@ -478,7 +486,9 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				aborted	= true;
 				synchronized(this)
 				{
-					this.notify();
+					//this.notify();
+					//System.out.println("release: "+semaphore);
+					semaphore.release();
 				}
 			}
 		}
@@ -648,6 +658,19 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		public void run()
 		{
 			doRun(step);
+		}
+	}
+	
+	public void runTask(Runnable task)
+	{
+		if(THREADPOOL!=null)
+		{
+			THREADPOOL.execute(runner);
+		}
+		else
+		{
+			String name = self!=null? self.getId().getLocalName(): "bootstrap";
+			Thread.ofVirtual().name(name).start(runner);
 		}
 	}
 	
