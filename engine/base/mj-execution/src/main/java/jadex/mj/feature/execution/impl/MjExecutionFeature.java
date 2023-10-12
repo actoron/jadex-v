@@ -2,6 +2,7 @@ package jadex.mj.feature.execution.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -330,7 +331,11 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		public void run()
 		{
 			ComponentSuspendable	sus	= new ComponentSuspendable();
-			threads.add(sus);
+			// synchronized because another thread could exit in parallel
+			synchronized(this)
+			{
+				threads.add(sus);
+			}
 			ISuspendable.SUSPENDABLE.set(sus);
 			LOCAL.set(MjExecutionFeature.this);
 			
@@ -370,7 +375,11 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					}					
 				}
 			}
-			threads.remove(sus);
+			// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
+			synchronized(this)
+			{
+				threads.remove(sus);
+			}
 			ISuspendable.SUSPENDABLE.remove();
 			LOCAL.remove();
 		}
@@ -534,7 +543,13 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		}
 		
 		// Terminate blocked threads
-		threads.forEach(thread -> thread.abort());
+		// Use copy as threads remove themselves from list on exit. 
+		List<ComponentSuspendable>	mythreads;
+		synchronized(this)
+		{
+			mythreads	= new ArrayList<>(threads);
+		}
+		mythreads.forEach(thread -> thread.abort());
 		
 		//System.out.println("terminate end");
 	}
