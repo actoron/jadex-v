@@ -33,12 +33,12 @@ public class MjMicroAgent	extends MjComponent
 	
 	protected Object pojo;
 	
-	protected MjMicroAgent(Object pojo, IModelInfo model)
+	public MjMicroAgent(Object pojo, IModelInfo model)
 	{
 		this(pojo, model, null);
 	}
 	
-	protected MjMicroAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
+	public MjMicroAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
 	{
 		super(model, cid);
 		this.pojo	= pojo;

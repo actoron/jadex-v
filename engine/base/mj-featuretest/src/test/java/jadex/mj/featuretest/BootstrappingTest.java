@@ -28,7 +28,7 @@ public class BootstrappingTest
 			MjTestFeature2Provider.class.getSimpleName()+"_afterCreate"
 		});
 		
-		IComponent.createComponent(MjComponent.class, () -> new MjComponent(null){});
+		IComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		
 		assertEquals(expected, bootstraps);
 	}

@@ -52,7 +52,7 @@ public interface IComponent
 	/**
 	 *  Terminate the component.
 	 */
-	public void terminate();
+	public IFuture<Void> terminate();
 	
 	//-------- static part for generic component creation --------
 	
@@ -112,7 +112,30 @@ public interface IComponent
 		{
 			if(creator.filter(pojo))
 			{
-				creator.create(pojo, null);
+				creator.create(pojo, cid);
+				created = true;
+				break;
+			}
+		}
+		if(!created)
+			throw new RuntimeException("Could not create component: "+pojo);
+	}
+	
+	// todo: support return IFuture<T> ?!
+	public static <T> void create(IThrowingFunction<IComponent, T> pojo)
+	{
+		create(pojo, null);
+	}
+	
+	// todo: support return IFuture<T> ?!
+	public static <T> void create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
+	{
+		boolean created = false;
+		for(IComponentCreator creator: creators)
+		{
+			if(creator.filter(pojo))
+			{
+				creator.create(pojo, cid);
 				created = true;
 				break;
 			}

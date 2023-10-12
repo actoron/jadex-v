@@ -26,15 +26,18 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 			public boolean filter(Object obj) 
 			{
 				return Runnable.class.isAssignableFrom(obj.getClass())
-					|| Supplier.class.isAssignableFrom(obj.getClass());
+					|| Supplier.class.isAssignableFrom(obj.getClass())
+					|| IThrowingFunction.class.isAssignableFrom(obj.getClass());
 			}
 			
 			public void create(Object pojo, ComponentIdentifier cid)
 			{
 				if(pojo instanceof Runnable)
-					LambdaAgent.create((Runnable)pojo);
-				else
-					LambdaAgent.create((Supplier<?>)pojo);
+					LambdaAgent.create((Runnable)pojo, cid);
+				else if(pojo instanceof Supplier)
+					LambdaAgent.create((Supplier<?>)pojo, cid);
+				else if(pojo instanceof IThrowingFunction)
+					LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid);
 			}
 		});
 		

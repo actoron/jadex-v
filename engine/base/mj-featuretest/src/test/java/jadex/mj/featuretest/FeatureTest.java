@@ -48,7 +48,7 @@ public class FeatureTest
 	public void	testComponentLoading()
 	{
 		// Dummy component for feature loading.
-		doTestLoading(new MjComponent(null){}, COMPONENT_FEATURE_TYPES);
+		doTestLoading(new MjComponent(null), COMPONENT_FEATURE_TYPES);
 	}
 	
 	@Test
@@ -72,7 +72,7 @@ public class FeatureTest
 	public void testLazyFeature()
 	{
 		// Dummy component for feature loading.
-		MjComponent	comp	= new MjComponent(null){};
+		MjComponent	comp	= new MjComponent(null);
 
 		// Lazy feature should not be found
 		for(Object feature: comp.getFeatures())
@@ -88,7 +88,7 @@ public class FeatureTest
 	public void	testComponentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
-		MjComponent	comp	= new MjComponent(null){};
+		MjComponent	comp	= new MjComponent(null);
 		
 		// Test feature should be replaced
 		assertTrue(comp.getFeature(IMjTestFeature1.class) instanceof MjTestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(IMjLifecycleFeature.class));
@@ -112,7 +112,7 @@ public class FeatureTest
 	public void testComponentOrdering()
 	{
 		// Dummy component for feature loading.
-		doTestOrdering(new MjComponent(null){}, COMPONENT_FEATURE_TYPES);
+		doTestOrdering(new MjComponent(null), COMPONENT_FEATURE_TYPES);
 	}
 		
 	@Test

@@ -35,6 +35,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected boolean terminated;
 	protected ThreadRunner	runner	= null;
 	protected MjComponent	self	= null;
+	protected IThrowingFunction<IComponent, Object> endstep = null;
 	
 	@Override
 	public MjComponent getComponent()
@@ -160,6 +161,18 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					Future<T>	resfut	= (Future<T>)res;
 					// Use generic connection method to avoid issues with different future types.
 					resfut.delegateTo(ret);
+				}
+				else if(res instanceof IThrowingFunction)
+				{
+					if(endstep==null)
+					{
+						endstep = (IThrowingFunction<IComponent, Object>)res;
+						//System.out.println("endstep: "+self.getId()+" "+this.hashCode());
+					}
+					else
+					{
+						throw new RuntimeException("Only one endstep allowed: "+endstep+" "+res);
+					}
 				}
 				else
 				{
@@ -487,6 +500,19 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	{
 		if(terminated)
 			return;
+		
+		if(endstep!=null)
+		{	
+			try 
+			{
+				// todo: save and return endstep result!
+				Object ret = endstep.apply(self);
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
 		
 		terminated = true;
 		

@@ -50,7 +50,7 @@ public class MjComponent implements IComponent
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 */
-	protected MjComponent(IModelInfo modelinfo)
+	public MjComponent(IModelInfo modelinfo)
 	{
 		this(modelinfo, null);
 	}
@@ -58,7 +58,7 @@ public class MjComponent implements IComponent
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 */
-	protected MjComponent(IModelInfo modelinfo, ComponentIdentifier id)
+	public MjComponent(IModelInfo modelinfo, ComponentIdentifier id)
 	{
 		this.modelinfo = modelinfo;
 		this.id = id==null? new ComponentIdentifier(): id;
@@ -166,9 +166,9 @@ public class MjComponent implements IComponent
 	/**
 	 *  Terminate the component.
 	 */
-	public void terminate()
+	public IFuture<Void> terminate()
 	{
-		IComponent.terminate(id).get();
+		return IComponent.terminate(id);
 	}
 	
 	protected void putFeature(Class<Object> type, Object feature)

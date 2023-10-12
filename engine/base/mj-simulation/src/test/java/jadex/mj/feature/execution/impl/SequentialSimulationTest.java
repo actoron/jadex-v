@@ -31,7 +31,7 @@ public class SequentialSimulationTest extends ParallelSimulationTest
 		for(int i=0; i<input.length; i++)
 		{
 			int num	= i;
-			MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null){});
+			MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 			sim[i]	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
 			if(i==0)
 			{

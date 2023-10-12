@@ -141,7 +141,7 @@ public class AgentCreationAgent
 		//agent.getFeature(IArgumentsResultsFeature.class).getResults().put("microcreationtime", new Tuple(""+pera, "s"));
 		//agent.getFeature(IArgumentsResultsFeature.class).getResults().put("microkillingtime", new Tuple(""+killpera, "s"));
 		//agent.getFeature(IArgumentsResultsFeature.class).getResults().put("micromem", new Tuple(""+upera, "kb"));
-		agent.terminate();
+		agent.terminate().get();
 	}
 	
 	/**
