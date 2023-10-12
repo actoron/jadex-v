@@ -17,7 +17,7 @@ public class LambdaCreationAgent
 	 */
 	public static void main(String[] args)
 	{
-		createAgent(1000000, 1, null, null);
+		createAgent(100000, 1, null, null);
 		
 		SUtil.sleep(30000);
 	}	
