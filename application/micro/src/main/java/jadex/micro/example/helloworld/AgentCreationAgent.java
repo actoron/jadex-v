@@ -33,7 +33,7 @@ public class AgentCreationAgent
 		
 	public AgentCreationAgent()
 	{
-		this(10000);
+		this(100000);
 	}
 	
 	public AgentCreationAgent(int max)

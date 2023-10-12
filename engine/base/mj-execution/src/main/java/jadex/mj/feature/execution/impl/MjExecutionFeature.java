@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -29,7 +31,7 @@ import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
 {	
-	protected static final ThreadPoolExecutor	THREADPOOL	= null;//new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+	public static ExecutorService EXECUTOR;
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 
 	protected Queue<Runnable>	steps	= new ArrayDeque<>();
@@ -41,6 +43,16 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
 	protected Semaphore semaphore = new Semaphore(0);
+	
+	protected static ExecutorService getExecutor()
+	{
+		if(EXECUTOR==null)
+		{
+			//EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+			EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
+		}
+		return EXECUTOR;
+	}
 	
 	@Override
 	public MjComponent getComponent()
@@ -663,15 +675,17 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	
 	public void runTask(Runnable task)
 	{
-		if(THREADPOOL!=null)
+		getExecutor().execute(task);
+		/*if(THREADPOOL!=null)
 		{
 			THREADPOOL.execute(runner);
 		}
 		else
 		{
 			String name = self!=null? self.getId().getLocalName(): "bootstrap";
-			Thread.ofVirtual().name(name).start(runner);
-		}
+			//Thread.ofVirtual().name(name).start(runner);
+			VIRTEXECUTOR.execute(runner);
+		}*/
 	}
 	
 	protected boolean saveEndStep(Object res, Future<Object> fut)
