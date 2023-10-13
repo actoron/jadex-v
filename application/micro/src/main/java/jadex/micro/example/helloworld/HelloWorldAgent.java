@@ -1,5 +1,6 @@
 package jadex.micro.example.helloworld;
 
+import jadex.common.SUtil;
 import jadex.mj.core.annotation.OnEnd;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
@@ -67,6 +68,8 @@ public class HelloWorldAgent
 //			System.out.println("Creating: "+i);
 //			MjMicroAgent.create(new MjHelloWorldAgent(Integer.toString(i)));
 //		}
+		
+		SUtil.sleep(10000);
 	}
 	
 	public HelloWorldAgent(String text) {this.text=text;}

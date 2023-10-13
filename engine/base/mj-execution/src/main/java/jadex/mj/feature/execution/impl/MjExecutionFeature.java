@@ -32,7 +32,8 @@ import jadex.mj.feature.execution.IMjExecutionFeature;
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
 {	
 	public static ExecutorService EXECUTOR;
-	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
+	//public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
+	public static final ScopedValue<MjExecutionFeature> LOCAL = ScopedValue.newInstance();
 
 	protected Queue<Runnable>	steps	= new ArrayDeque<>();
 	protected boolean	executing;
@@ -42,7 +43,6 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected MjComponent	self	= null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
-	protected Semaphore semaphore = new Semaphore(0);
 	
 	protected static ExecutorService getExecutor()
 	{
@@ -211,7 +211,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	 */
 	public boolean isComponentThread()
 	{
-		return this==LOCAL.get();
+		return LOCAL.isBound()? this==LOCAL.get(): null;
 	}
 	
 	// Global on-demand timer shared by all components.
@@ -350,52 +350,57 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			{
 				threads.add(sus);
 			}
-			ISuspendable.SUSPENDABLE.set(sus);
-			LOCAL.set(MjExecutionFeature.this);
-			
-			boolean hasnext	= true;
-			while(hasnext && !terminated)
+			//ISuspendable.SUSPENDABLE.set(sus);
+			//LOCAL.set(MjExecutionFeature.this);
+			ScopedValue.where(ISuspendable.SUSPENDABLE, sus).run(()->
 			{
-				Runnable	step;
-				synchronized(MjExecutionFeature.this)
+				ScopedValue.where(LOCAL, MjExecutionFeature.this).run(()->
 				{
-					step	= steps.poll();
-				}
-				
-				assert step!=null;
-				
-				try
-				{
-					doRun(step);
-				}
-				catch(ThreadDeath d)
-				{
-					assert terminated;
-					// ignore aborted steps.
-				}
-				
-				synchronized(MjExecutionFeature.this)
-				{
-					if(do_switch)
+					boolean hasnext	= true;
+					while(hasnext && !terminated)
 					{
-						do_switch	= false;
-						hasnext	= false;							
+						Runnable	step;
+						synchronized(MjExecutionFeature.this)
+						{
+							step	= steps.poll();
+						}
+						
+						assert step!=null;
+						
+						try
+						{
+							doRun(step);
+						}
+						catch(ThreadDeath d)
+						{
+							assert terminated;
+							// ignore aborted steps.
+						}
+						
+						synchronized(MjExecutionFeature.this)
+						{
+							if(do_switch)
+							{
+								do_switch	= false;
+								hasnext	= false;							
+							}
+							else if(steps.isEmpty())
+							{
+								hasnext	= false;
+								executing	= false;
+								idle();
+							}					
+						}
 					}
-					else if(steps.isEmpty())
+					// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
+					synchronized(this)
 					{
-						hasnext	= false;
-						executing	= false;
-						idle();
-					}					
-				}
-			}
-			// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
-			synchronized(this)
-			{
-				threads.remove(sus);
-			}
-			ISuspendable.SUSPENDABLE.remove();
-			LOCAL.remove();
+						threads.remove(sus);
+					}
+				});
+			});
+			//ISuspendable.SUSPENDABLE.remove();
+			//LOCAL.remove();
 		}
 	}
 	
@@ -406,6 +411,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		/** Set by terminate() to indicate step abortion. */  
 		protected boolean	aborted;
+		
+		protected Semaphore semaphore = new Semaphore(0);
 
 		@Override
 		public void suspend(Future<?> future, long timeout, boolean realtime)
@@ -448,6 +455,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					//this.wait();
 					//System.out.println("before: "+semaphore);
 					semaphore.acquire();
+					//if(!semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS))
+					//	System.out.println("not released!");
 					//System.out.println("after: "+semaphore);
 				}
 				catch(InterruptedException e)
@@ -691,6 +700,10 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected boolean saveEndStep(Object res, Future<Object> fut)
 	{
 		boolean ret = false;
+		
+		if(res instanceof IFuture) // Future is Supplier :(
+			return ret;
+		
 		if(res instanceof Function || res instanceof IThrowingFunction || 
 			res instanceof Consumer || res instanceof IThrowingConsumer ||
 			res instanceof Runnable || res instanceof Supplier)

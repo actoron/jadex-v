@@ -225,7 +225,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	public E get(long timeout, boolean realtime)
 	{
     	boolean suspend = false;
-		ISuspendable caller = ISuspendable.SUSPENDABLE.get();
+		ISuspendable caller = ISuspendable.SUSPENDABLE.isBound()? ISuspendable.SUSPENDABLE.get(): null;
 
 		if(caller==null) 
 			caller = new ThreadSuspendable();

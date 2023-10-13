@@ -3,6 +3,8 @@ package jadex.future;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
@@ -24,6 +26,8 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 	/** The resumed flag to differentiante from timeout.*/
 	protected boolean	resumed;
 	
+	protected Semaphore semaphore = new Semaphore(0);
+	
 	//-------- methods --------
 	
 	/**
@@ -36,7 +40,7 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 		if(timeout==Future.UNSET)
 			timeout = getDefaultTimeout();
 		
-		long	endtime	= timeout>0 ? System.currentTimeMillis()+timeout : -1;
+		long endtime = timeout>0 ? System.currentTimeMillis()+timeout : -1;
 		
 		synchronized(this)
 		{
@@ -44,29 +48,35 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 			this.resumed	= false;
 			assert !WAITING_THREADS.containsKey(Thread.currentThread());
 			WAITING_THREADS.put(Thread.currentThread(), future);
-			try
+		}
+		
+		try
+		{
+			long waittime	= endtime-System.currentTimeMillis();
+			if(!resumed && (endtime==-1 || waittime>0))
 			{
-				// Loop to catch "spurious wake-ups"
-				long waittime	= endtime-System.currentTimeMillis();
-				while(!resumed && (endtime==-1 || waittime>0))
+				if(endtime==-1)
 				{
-					if(endtime==-1)
-					{
-						this.wait();
-					}
-					else
-					{
-						this.wait(waittime);
-					}
-					waittime	= endtime-System.currentTimeMillis();
+					//if(!semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS))
+					//	System.out.println("not released!");
+					semaphore.acquire();
+					//this.wait();
+				}
+				else
+				{
+					semaphore.tryAcquire(waittime, TimeUnit.MILLISECONDS);
+					//this.wait(waittime);
 				}
 			}
-			catch(InterruptedException e)
-			{
-				e.printStackTrace();
-				throw new RuntimeException(e);
-			}
-			finally
+		}
+		catch(InterruptedException e)
+		{
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+		finally
+		{
+			synchronized(this)
 			{
 				assert WAITING_THREADS.get(Thread.currentThread())==future;
 				WAITING_THREADS.remove(Thread.currentThread());
@@ -74,17 +84,17 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 				afterSwitch();
 				this.future	= null;
 			}
+		}
 			
-			if(!resumed)
+		if(!resumed)
+		{
+			if(timeout>0)
 			{
-				if(timeout>0)
-				{
-					throw new TimeoutException("Timeout: "+timeout+", realtime="+realtime);
-				}
-				else
-				{
-					throw new IllegalStateException("Future.wait() returned unexpectedly. Timeout: "+timeout+", realtime="+realtime);
-				}
+				throw new TimeoutException("Timeout: "+timeout+", realtime="+realtime);
+			}
+			else
+			{
+				throw new IllegalStateException("Future.wait() returned unexpectedly. Timeout: "+timeout+", realtime="+realtime);
 			}
 		}
 	}
@@ -94,6 +104,7 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 	 */
 	public void resume(Future<?> future)
 	{
+		boolean doresume = false;
 		synchronized(this)
 		{
 			// Only wake up if still waiting for same future (invalid resume might be called from outdated future after timeout already occurred).
@@ -102,9 +113,12 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 				resumed	= true;
 				// Save the thread local values before switch
 				beforeSwitch();
-				this.notify();
+				//this.notify();
+				doresume = true;
 			}
 		}
+		if(doresume)
+			semaphore.release();
 	}
 	
 	/**

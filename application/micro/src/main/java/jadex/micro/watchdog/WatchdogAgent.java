@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jadex.common.SUtil;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
@@ -97,5 +98,7 @@ public class WatchdogAgent	implements IWatchdogService
 		
 		IComponent.create(new CreatorAgent());
 		IComponent.create(new TerminatorAgent());
+		
+		SUtil.sleep(10000);
 	}
 }
