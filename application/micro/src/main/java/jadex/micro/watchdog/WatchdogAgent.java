@@ -99,6 +99,6 @@ public class WatchdogAgent	implements IWatchdogService
 		IComponent.create(new CreatorAgent());
 		IComponent.create(new TerminatorAgent());
 		
-		SUtil.sleep(10000);
+		IComponent.waitForLastComponentTerminated();
 	}
 }

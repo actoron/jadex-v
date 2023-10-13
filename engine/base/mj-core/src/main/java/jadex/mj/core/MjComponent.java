@@ -2,10 +2,12 @@ package jadex.mj.core;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -82,16 +84,43 @@ public class MjComponent implements IComponent
 	{
 		//System.out.println("added: "+comp.getId());
 		components.put(comp.getId(), comp);
+		notifyEventListener(COMPONENT_ADDED, comp.getId());
 	}
 	
 	public static void removeComponent(ComponentIdentifier cid)
 	{
 		components.remove(cid);
+		notifyEventListener(COMPONENT_REMOVED, cid);
+		if(components.isEmpty())
+			notifyEventListener(COMPONENT_LASTREMOVED, cid);
+		System.out.println("size: "+components.size()+" "+cid);
 	}
 	
 	public static IComponent getComponent(ComponentIdentifier cid)
 	{
 		return components.get(cid);
+	}
+	
+	public static void notifyEventListener(String type, ComponentIdentifier cid)
+	{
+		Set<IComponentListener> mylisteners = null;
+		
+		synchronized(IComponent.class)
+		{
+			Set<IComponentListener> ls = listeners.get(type);
+			if(ls!=null)
+				mylisteners = new HashSet<IComponentListener>(ls);
+		}
+		
+		if(mylisteners!=null)
+		{
+			if(COMPONENT_ADDED.equals(type))
+				mylisteners.stream().forEach(lis -> lis.componentAdded(cid));
+			else if(COMPONENT_REMOVED.equals(type))
+				mylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
+			else if(COMPONENT_LASTREMOVED.equals(type))
+				mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
+		}
 	}
 	
 	/**

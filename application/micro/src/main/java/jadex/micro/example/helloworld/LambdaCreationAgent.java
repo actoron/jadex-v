@@ -1,6 +1,5 @@
 package jadex.micro.example.helloworld;
 
-import jadex.common.SUtil;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingFunction;
@@ -19,7 +18,7 @@ public class LambdaCreationAgent
 	{
 		createAgent(100000, 1, null, null);
 		
-		SUtil.sleep(30000);
+		IComponent.waitForLastComponentTerminated();
 	}	
 	
 	protected static void createAgent(int max, int num, Long smem, Long stime)
@@ -91,7 +90,7 @@ public class LambdaCreationAgent
 			
 			IComponent.terminate(aid).get();
 			
-			if(cnt-1==1)
+			if(cnt==1)
 			{
 				killLastPeer(max, killstarttime, dur, pera, omem, upera);
 				break;
