@@ -145,6 +145,6 @@ public class ChatAgent implements IChatService, IChatGuiService
 		IComponent.create(new ChatAgent());
 		IComponent.create(new ChatAgent());
 		
-		SUtil.sleep(10000);
+		IComponent.waitForLastComponentTerminated();
 	}
 }

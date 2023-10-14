@@ -13,6 +13,9 @@ public class ThreadLocalTransferHelper
 {
 	/** The registered thread locals. */
 	protected static final Set<ThreadLocal<Object>> THREADLOCALS = Collections.synchronizedSet(new HashSet<ThreadLocal<Object>>());
+
+	// todo: do we want scoped values here? could we set the scope during a service call?!
+	//protected static final Set<ScopedValue<Object>> SCOPEDVALUES = Collections.synchronizedSet(new HashSet<ScopedValue<Object>>());
 	
 	/**
 	 *  Method to be called on old thread before thread switch.

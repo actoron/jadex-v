@@ -1,7 +1,12 @@
 package jadex.mj.core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
 
 import jadex.future.Future;
@@ -61,6 +66,11 @@ public interface IComponent
 	public static final List<IComponentCreator> creators = new ArrayList<IComponentCreator>();
 	public static final List<IComponentTerminator> terminators = new ArrayList<IComponentTerminator>();
 	
+	public static final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
+	public static final String COMPONENT_ADDED = "component_added";
+	public static final String COMPONENT_REMOVED = "component_removed";
+	public static final String COMPONENT_LASTREMOVED = "component_lastremoved";
+	
 	public static final SMjFeatureProvider dummy = new SMjFeatureProvider();
 	
 	public static void addComponentCreator(IComponentCreator creator)
@@ -71,6 +81,40 @@ public interface IComponent
 	public static void addComponentTerminator(IComponentTerminator terminator)
 	{
 		terminators.add(terminator);
+	}
+	
+	public static void addComponentListener(IComponentListener listener, String... types)
+	{
+		synchronized(IComponent.class)
+		{	
+			for(String type: types)
+			{
+				Set<IComponentListener> ls = listeners.get(type);
+				if(ls==null)
+				{
+					ls = new HashSet<IComponentListener>();
+					listeners.put(type, ls);
+				}
+				ls.add(listener);
+			}
+		}
+	}
+	
+	public static void removeComponentListener(IComponentListener listener, String... types)
+	{
+		synchronized(IComponent.class)
+		{
+			for(String type: types)
+			{
+				Set<IComponentListener> ls = listeners.get(type);
+				if(ls!=null)
+				{
+					ls.remove(listener);
+					if(ls.isEmpty())
+						listeners.remove(type);
+				}
+			}
+		}
 	}
 	
 	public static <T extends MjComponent> T	createComponent(Class<T> type, Supplier<T> creator)
@@ -197,6 +241,28 @@ public interface IComponent
 		}
 		
 		return ret;
+	}
+	
+	public static void waitForLastComponentTerminated()
+	{
+		try
+		{
+			Semaphore sem = new Semaphore(0);
+			IComponent.addComponentListener(new IComponentListener() 
+			{
+				@Override
+				public void lastComponentRemoved(ComponentIdentifier cid) 
+				{
+					System.out.println("removed last: "+cid);
+					sem.release();
+				}
+			}, IComponent.COMPONENT_LASTREMOVED);
+			sem.acquire();
+		}
+		catch(InterruptedException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 }

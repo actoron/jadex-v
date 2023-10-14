@@ -226,6 +226,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	{
     	boolean suspend = false;
 		ISuspendable caller = ISuspendable.SUSPENDABLE.get();
+//		ISuspendable caller = ISuspendable.SUSPENDABLE.isBound()? ISuspendable.SUSPENDABLE.get(): null;
 
 		if(caller==null) 
 			caller = new ThreadSuspendable();
@@ -256,23 +257,28 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 			}*/
 
 	    	Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
+	    	boolean dosuspend = false;
 	    	synchronized(mon)
 	    	{
     			Object	state	= callers.get(caller);
     			if(CALLER_QUEUED.equals(state))
     			{
     	    	   	callers.put(caller, CALLER_SUSPENDED);
-    	    	   	try
-    	    	   	{
-    	    	   		caller.suspend(this, timeout, realtime);
-    	    	   	}
-    	    	   	finally
-    	    	   	{
-    	    	   		callers.remove(caller);
-    	    	   	}
+    	    	   	dosuspend = true;
     			}
     			// else already resumed.
     		}
+	    	if(dosuspend)
+	    	{
+		    	try
+	    	   	{
+	    	   		caller.suspend(this, timeout, realtime);
+	    	   	}
+	    	   	finally
+	    	   	{
+	    	   		callers.remove(caller);
+	    	   	}
+	    	}
     	}
     	
     	synchronized(this)
@@ -495,7 +501,6 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		    			{
 		    				// Only reactivate thread when previously suspended.
 		    				caller.resume(this);
-		    				
 		    			}
 		    			callers.put(caller, CALLER_RESUMED);
 					}

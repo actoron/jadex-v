@@ -77,6 +77,6 @@ public class ChatAgent implements IChatService
 		MjMicroAgent.create(new ChatAgent());
 		MjMicroAgent.create(new ChatAgent());
 		
-		SUtil.sleep(10000);
+		IComponent.waitForLastComponentTerminated();
 	}
 }

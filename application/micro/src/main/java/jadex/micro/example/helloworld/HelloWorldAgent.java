@@ -1,5 +1,11 @@
 package jadex.micro.example.helloworld;
 
+import java.util.concurrent.Semaphore;
+
+import jadex.common.SUtil;
+import jadex.mj.core.ComponentIdentifier;
+import jadex.mj.core.IComponent;
+import jadex.mj.core.IComponentListener;
 import jadex.mj.core.annotation.OnEnd;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
@@ -62,11 +68,7 @@ public class HelloWorldAgent
 	{
 		MjMicroAgent.create(new HelloWorldAgent("007"));
 		
-//		for(int i=0; i<10000; i++)
-//		{
-//			System.out.println("Creating: "+i);
-//			MjMicroAgent.create(new MjHelloWorldAgent(Integer.toString(i)));
-//		}
+		IComponent.waitForLastComponentTerminated();
 	}
 	
 	public HelloWorldAgent(String text) {this.text=text;}

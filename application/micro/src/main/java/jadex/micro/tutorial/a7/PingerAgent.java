@@ -38,6 +38,6 @@ public class PingerAgent
 		
 		IComponent.create(new PingerAgent());
 		
-		SUtil.sleep(10000);
+		IComponent.waitForLastComponentTerminated();
 	}
 }

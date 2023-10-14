@@ -2,9 +2,9 @@ package jadex.micro.tutorial.a1;
 
 import java.util.Collection;
 
-import jadex.common.SUtil;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.annotation.OnStart;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.requiredservice.IMjRequiredServiceFeature;
@@ -27,12 +27,17 @@ public class ChatUserAgent
 	@OnStart
 	public void executeBody()
 	{
-		IMjRequiredServiceFeature rsf = agent.getFeature(IMjRequiredServiceFeature.class);
-		Collection<IChatService> chatservices = rsf.getLocalServices(IChatService.class);
-		System.out.println("Chat user found chat services: "+chatservices.size());
-		for(IChatService cs: chatservices)
+		while(true)
 		{
-			cs.message(agent.getId().toString(), "Hello");
+			IMjRequiredServiceFeature rsf = agent.getFeature(IMjRequiredServiceFeature.class);
+			Collection<IChatService> chatservices = rsf.getLocalServices(IChatService.class);
+			System.out.println("Chat user found chat services: "+chatservices.size());
+			for(IChatService cs: chatservices)
+			{
+				cs.message(agent.getId().toString(), "Hello");
+			}
+			
+			agent.getFeature(IMjExecutionFeature.class).waitForDelay(1000).get();
 		}
 	}
 	
@@ -45,8 +50,8 @@ public class ChatUserAgent
 		MjMicroAgent.create(new ChatProviderAgent());
 		MjMicroAgent.create(new ChatProviderAgent());
 		
-		SUtil.sleep(1000);
-		
 		MjMicroAgent.create(new ChatUserAgent());
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }

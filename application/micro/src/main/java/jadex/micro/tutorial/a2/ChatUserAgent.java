@@ -33,6 +33,6 @@ public class ChatUserAgent
 		MjMicroAgent.create(new ChatProviderAgent());
 		MjMicroAgent.create(new ChatProviderAgent());
 		
-		SUtil.sleep(10000);
+		IComponent.waitForLastComponentTerminated();
 	}
 }

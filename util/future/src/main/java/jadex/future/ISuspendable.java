@@ -12,6 +12,7 @@ public interface ISuspendable
 	
 	/** The component suspendable for a component thread. */
 	public static final ThreadLocal<ISuspendable>	SUSPENDABLE	= new ThreadLocal<ISuspendable>();
+//	public static final ScopedValue<ISuspendable> SUSPENDABLE = ScopedValue.newInstance();
 //	{
 //		public void set(ISuspendable value) 
 //		{

@@ -33,7 +33,7 @@ public class AgentCreationAgent
 		
 	public AgentCreationAgent()
 	{
-		this(10000);
+		this(100000);
 	}
 	
 	public AgentCreationAgent(int max)
@@ -103,7 +103,7 @@ public class AgentCreationAgent
 			
 			IComponent.terminate(aid).get();
 			
-			if(cnt-1==1)
+			if(cnt==1)
 			{
 				killLastPeer(max, killstarttime, dur, pera, omem, upera);
 				break;
@@ -151,6 +151,6 @@ public class AgentCreationAgent
 	{
 		IComponent.create(new AgentCreationAgent(), new ComponentIdentifier("1"));
 		
-		SUtil.sleep(30000);
+		IComponent.waitForLastComponentTerminated();
 	}	
 }

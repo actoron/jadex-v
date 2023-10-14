@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -46,8 +48,9 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 //		});
 //	}
 	
-	protected static final ThreadPoolExecutor	THREADPOOL	= new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+	public static ExecutorService EXECUTOR;
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
+//	public static final ScopedValue<MjExecutionFeature> LOCAL = ScopedValue.newInstance();
 
 	protected Queue<Runnable>	steps	= new ArrayDeque<>();
 	protected boolean	executing;
@@ -57,6 +60,16 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected MjComponent	self	= null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
+	
+	protected static ExecutorService getExecutor()
+	{
+		if(EXECUTOR==null)
+		{
+			EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+//			EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
+		}
+		return EXECUTOR;
+	}
 	
 	@Override
 	public MjComponent getComponent()
@@ -88,7 +101,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		{
 			if(runner==null)
 				runner	= new ThreadRunner();
-			THREADPOOL.execute(runner);
+			runTask(runner);
+			//THREADPOOL.execute(runner);
 		}
 	}
 	
@@ -215,6 +229,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	public boolean isComponentThread()
 	{
 		return this==LOCAL.get();
+//		return LOCAL.isBound()? this==LOCAL.get(): null;
 	}
 	
 	// Global on-demand timer shared by all components.
@@ -355,50 +370,55 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			}
 			ISuspendable.SUSPENDABLE.set(sus);
 			LOCAL.set(MjExecutionFeature.this);
-			
-			boolean hasnext	= true;
-			while(hasnext && !terminated)
-			{
-				Runnable	step;
-				synchronized(MjExecutionFeature.this)
-				{
-					step	= steps.poll();
-				}
-				
-				assert step!=null;
-				
-				try
-				{
-					doRun(step);
-				}
-				catch(ThreadDeath d)
-				{
-					assert terminated;
-					// ignore aborted steps.
-				}
-				
-				synchronized(MjExecutionFeature.this)
-				{
-					if(do_switch)
+//			ScopedValue.where(ISuspendable.SUSPENDABLE, sus).run(()->
+//			{
+//				ScopedValue.where(LOCAL, MjExecutionFeature.this).run(()->
+//				{
+					boolean hasnext	= true;
+					while(hasnext && !terminated)
 					{
-						do_switch	= false;
-						hasnext	= false;							
+						Runnable	step;
+						synchronized(MjExecutionFeature.this)
+						{
+							step	= steps.poll();
+						}
+						
+						assert step!=null;
+						
+						try
+						{
+							doRun(step);
+						}
+						catch(ThreadDeath d)
+						{
+							assert terminated;
+							// ignore aborted steps.
+						}
+						
+						synchronized(MjExecutionFeature.this)
+						{
+							if(do_switch)
+							{
+								do_switch	= false;
+								hasnext	= false;							
+							}
+							else if(steps.isEmpty())
+							{
+								hasnext	= false;
+								executing	= false;
+								idle();
+							}					
+						}
 					}
-					else if(steps.isEmpty())
+					// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
+					synchronized(this)
 					{
-						hasnext	= false;
-						executing	= false;
-						idle();
-					}					
-				}
-			}
-			// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
-			synchronized(this)
-			{
-				threads.remove(sus);
-			}
-			ISuspendable.SUSPENDABLE.remove();
-			LOCAL.remove();
+						threads.remove(sus);
+					}
+//				});
+//			});
+			//ISuspendable.SUSPENDABLE.remove();
+			//LOCAL.remove();
 		}
 	}
 	
@@ -409,6 +429,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		/** Set by terminate() to indicate step abortion. */  
 		protected boolean	aborted;
+		
+		protected Semaphore semaphore = new Semaphore(0);
 
 		@Override
 		public void suspend(Future<?> future, long timeout, boolean realtime)
@@ -435,18 +457,25 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			{
 				if(runner==null)
 					runner	= new ThreadRunner();
-				THREADPOOL.execute(runner);
+				//THREADPOOL.execute(runner);#
+				runTask(runner);
 			}
 			
 			beforeBlock();
 			
-			synchronized(this)
+			// Must not be synchronized because semaphore does not realease lock on acquire
+			//synchronized(this)
 			{
 				try
 				{
 					blocked	= true;
 					// TODO timeout?
-					this.wait();
+					//this.wait();
+					//System.out.println("before: "+semaphore);
+					semaphore.acquire();
+					//if(!semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS))
+					//	System.out.println("not released!");
+					//System.out.println("after: "+semaphore);
 				}
 				catch(InterruptedException e)
 				{
@@ -455,9 +484,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				{
 					blocked=false;
 					if(aborted)
-					{
 						throw new ThreadDeath();
-					}
 				}
 			}
 			
@@ -474,7 +501,9 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					synchronized(this)
 					{
 						do_switch	= true;
-						this.notify();
+						//this.notify();
+						//System.out.println("release: "+semaphore);
+						semaphore.release();
 					}
 				});
 			}
@@ -494,7 +523,9 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				aborted	= true;
 				synchronized(this)
 				{
-					this.notify();
+					//this.notify();
+					//System.out.println("release: "+semaphore);
+					semaphore.release();
 				}
 			}
 		}
@@ -667,9 +698,28 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		}
 	}
 	
+	public void runTask(Runnable task)
+	{
+		getExecutor().execute(task);
+		/*if(THREADPOOL!=null)
+		{
+			THREADPOOL.execute(runner);
+		}
+		else
+		{
+			String name = self!=null? self.getId().getLocalName(): "bootstrap";
+			//Thread.ofVirtual().name(name).start(runner);
+			VIRTEXECUTOR.execute(runner);
+		}*/
+	}
+	
 	protected boolean saveEndStep(Object res, Future<Object> fut)
 	{
 		boolean ret = false;
+		
+		if(res instanceof IFuture) // Future is Supplier :(
+			return ret;
+		
 		if(res instanceof Function || res instanceof IThrowingFunction || 
 			res instanceof Consumer || res instanceof IThrowingConsumer ||
 			res instanceof Runnable || res instanceof Supplier)

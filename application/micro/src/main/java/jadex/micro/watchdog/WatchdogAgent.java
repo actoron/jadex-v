@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jadex.common.SUtil;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
@@ -54,6 +55,8 @@ public class WatchdogAgent	implements IWatchdogService
 	@OnStart
 	public void onStart()
 	{
+		System.out.println("Created watchdog: "+agent.getId());
+
 		Set<IWatchdogService> watchdogs = new HashSet<IWatchdogService>();
 
 		for(int i=0; ; i++)
@@ -93,6 +96,9 @@ public class WatchdogAgent	implements IWatchdogService
 		IComponent.create(new WatchdogAgent());
 		IComponent.create(new WatchdogAgent());
 		
+		IComponent.create(new CreatorAgent());
 		IComponent.create(new TerminatorAgent());
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }
