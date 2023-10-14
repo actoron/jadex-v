@@ -452,8 +452,6 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		{
 			if(!aborted)
 			{
-				assert blocked;
-				
 				scheduleStep(() ->
 				{
 					synchronized(this)
