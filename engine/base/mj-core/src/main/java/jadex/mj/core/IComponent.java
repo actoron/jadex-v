@@ -56,6 +56,8 @@ public interface IComponent
 	
 	//-------- static part for generic component creation --------
 	
+	// TODO: move internal stuff to .impl
+	
 	public static final List<IComponentCreator> creators = new ArrayList<IComponentCreator>();
 	public static final List<IComponentTerminator> terminators = new ArrayList<IComponentTerminator>();
 	
@@ -186,12 +188,12 @@ public interface IComponent
 					}
 				}
 				if(!terminated)
-					ret.setException(new RuntimeException("Could not terminate component: "+cid));
+					ret.setException(new UnsupportedOperationException("No termination code for component: "+cid));
 			});
 		}
 		else
 		{
-			ret.setException(new RuntimeException("Component not found: "+cid));
+			ret.setException(new IllegalArgumentException("Component not found: "+cid));
 		}
 		
 		return ret;

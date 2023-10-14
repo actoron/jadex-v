@@ -2,7 +2,6 @@ package jadex.mj.feature.execution.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -28,7 +27,25 @@ import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
-{	
+{
+	// TODO: how to prefer lifecycle termination to execution termination
+//	static
+//	{
+//		IComponent.addComponentTerminator(new IComponentTerminator() 
+//		{
+//			public boolean filter(MjComponent component) 
+//			{
+//				return component.getClass().equals(MjComponent.class);
+//			}
+//			
+//			@Override
+//			public void terminate(IComponent component) 
+//			{
+//				((IMjInternalExecutionFeature)component.getFeature(IMjExecutionFeature.class)).terminate();
+//			}
+//		});
+//	}
+	
 	protected static final ThreadPoolExecutor	THREADPOOL	= new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 
