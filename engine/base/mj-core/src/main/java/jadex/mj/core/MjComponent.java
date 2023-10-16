@@ -1,13 +1,12 @@
 package jadex.mj.core;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -32,7 +31,7 @@ public class MjComponent implements IComponent
 	protected Map<Class<Object>, MjFeatureProvider<Object>>	providers;
 	
 	/** The feature instances of this component, stored by the feature type. */
-	protected Map<Class<Object>, Object>	features	= new LinkedHashMap<>();
+	protected Map<Class<Object>, Object>	features;
 	
 	/** The fetcher. */
 	protected IValueFetcher fetcher;
@@ -133,27 +132,28 @@ public class MjComponent implements IComponent
 	}
 
 	/**
-	 *  Get a copy of the set of currently instantiated features.
+	 *  Get the internal set of currently instantiated features.
 	 *  Does not include lazy, which have not yet been accessed.  
 	 */
-	public Set<Object>	getFeatures()
+	public Collection<Object>	getFeatures()
 	{
-		return new LinkedHashSet<>(features.values());
+		return features!=null ? (Collection<Object>)features.values() : Collections.emptySet();
 	}
 	
-	/**
-	 *  Get the feature instance for the given type.
-	 *  Instantiates lazy features if needed.
-	 */
-	public <T> T getExistingFeature(Class<T> type)
-	{
-		//return getFeatures().stream().findFirst(feature -> feature instanceof IMjLifecycle);
-		return getFeatures().stream()
-	        .filter(feature -> type.isInstance(feature))
-	        .map(type::cast)  
-	        .findFirst()
-	        .orElse(null); 
-	}
+	// TODO: needed?
+//	/**
+//	 *  Get the feature instance for the given type.
+//	 *  Instantiates lazy features if needed.
+//	 */
+//	public <T> T getExistingFeature(Class<T> type)
+//	{
+//		//return getFeatures().stream().findFirst(feature -> feature instanceof IMjLifecycle);
+//		return getFeatures().stream()
+//	        .filter(feature -> type.isInstance(feature))
+//	        .map(type::cast)  
+//	        .findFirst()
+//	        .orElse(null); 
+//	}
 	
 	/**
 	 *  Get the feature instance for the given type.
@@ -161,7 +161,7 @@ public class MjComponent implements IComponent
 	 */
 	public <T> T getFeature(Class<T> type)
 	{
-		if(features.containsKey(type))
+		if(features!=null && features.containsKey(type))
 		{
 			@SuppressWarnings("unchecked")
 			T	ret	= (T)features.get(type);
@@ -203,6 +203,10 @@ public class MjComponent implements IComponent
 	protected void putFeature(Class<Object> type, Object feature)
 	{
 //		System.out.println("putFeature: "+type+" "+feature);
+		if(features==null)
+		{
+			features	= new LinkedHashMap<>(providers.size(), 1);
+		}
 		features.put(type, feature);
 	}
 	

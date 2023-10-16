@@ -2,9 +2,10 @@ package jadex.mj.feature.execution.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
@@ -54,7 +55,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 //	public static final ScopedValue<MjExecutionFeature> LOCAL = ScopedValue.newInstance();
 
-	protected Queue<Runnable>	steps	= new ArrayDeque<>();
+	protected Queue<Runnable>	steps	= new ArrayDeque<>(4);
 	protected boolean	executing;
 	protected boolean	do_switch;
 	protected boolean terminated;
@@ -256,7 +257,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	// Global on-demand timer shared by all components.
 	protected static volatile Timer	timer;
 	//protected static volatile int	timer_entries;
-	protected static volatile List<TimerTaskInfo> entries = new LinkedList<TimerTaskInfo>();
+	protected static volatile Set<TimerTaskInfo> entries;
 	
 	@Override
 	public IFuture<Void> waitForDelay(long millis)
@@ -289,12 +290,18 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 						entries.remove(task);
 						if(entries.size()==0)
 						{
+							entries	= null;
 							timer.cancel();
 							timer = null;
 						}
 					}
 				}
 			});
+			
+			if(entries==null)
+			{
+				entries	= new LinkedHashSet<>(2, 1);
+			}
 			
 			entries.add(task);
 			
@@ -376,7 +383,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	}
 
 	/** Keep track of threads in use to unblock on terminate. */
-	protected List<ComponentSuspendable>	threads	= new ArrayList<>();
+	protected Set<ComponentSuspendable>	threads;
 	
 	protected class ThreadRunner implements Runnable
 	{
@@ -387,6 +394,10 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			// synchronized because another thread could exit in parallel
 			synchronized(this)
 			{
+				if(threads==null)
+				{
+					threads	= new LinkedHashSet<>(2, 1);
+				}
 				threads.add(sus);
 			}
 			ISuspendable.SUSPENDABLE.set(sus);
@@ -595,15 +606,19 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		//System.out.println("terminate start: "+self.getId()+" "+steps.size());
 		
-		// Terminate blocked threads
-		// Do first to unblock futures before setting results later
-		// Use copy as threads remove themselves from list on exit. 
-		List<ComponentSuspendable>	mythreads;
-		synchronized(this)
+		if(threads!=null)
 		{
-			mythreads	= new ArrayList<>(threads);
+			// Terminate blocked threads
+			// Do first to unblock futures before setting results later
+			// Use copy as threads remove themselves from set on exit. 
+			ComponentSuspendable[]	mythreads;
+			synchronized(this)
+			{
+				mythreads	= threads.toArray(ComponentSuspendable[]::new);
+			}
+			for(ComponentSuspendable thread: mythreads)
+				thread.abort();
 		}
-		mythreads.forEach(thread -> thread.abort());
 		
 		// Drop queued steps.
 		ComponentTerminatedException ex = new ComponentTerminatedException(self.getId());
