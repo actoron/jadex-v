@@ -87,7 +87,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	protected volatile boolean resultavailable;
 	
 	/** The blocked callers (caller->state). */
-	protected Map<ISuspendable, String> callers;
+	protected Map<ISuspendable, String[]> callers;
 	
 	/** The listeners, mapped to current notification thread (if any). */
 	protected Map<IResultListener<E>, Thread> listeners;
@@ -240,9 +240,9 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    	{
 	    	   	if(callers==null)
 	    	   	{
-	    	   		callers	= Collections.synchronizedMap(new HashMap<ISuspendable, String>());
+	    	   		callers	= Collections.synchronizedMap(new HashMap<ISuspendable, String[]>());
 	    	   	}
-	    	   	callers.put(caller, CALLER_QUEUED);
+	    	   	callers.put(caller, new String[] {CALLER_QUEUED});
 	    	   	suspend = true;
 	    	}
     	}
@@ -259,10 +259,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    	try
 	    	{
 	    		caller.getLock().lock();
-    			Object	state	= callers.get(caller);
-    			if(CALLER_QUEUED.equals(state))
+    			String[]	state	= callers.get(caller);
+    			if(state!=null && CALLER_QUEUED.equals(state[0]))
     			{
-    	    	   	callers.put(caller, CALLER_SUSPENDED);
+    	    	   	state[0]	= CALLER_SUSPENDED;
 	    	   		caller.suspend(this, timeout, realtime);
     			}
     			// else already resumed.
@@ -489,13 +489,13 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		    		try
 					{
 		    			caller.getLock().lock();
-		    			String	state	= callers.get(caller);
-		    			if(CALLER_SUSPENDED.equals(state))
+		    			String[]	state	= callers.get(caller);
+		    			if(state!=null && CALLER_SUSPENDED.equals(state[0]))
 		    			{
 		    				// Only reactivate thread when previously suspended.
 		    				caller.resume(this);
 		    			}
-		    			callers.put(caller, CALLER_RESUMED);
+		    			state[0]	= CALLER_RESUMED;
 					}
 		    		finally
 		    		{
@@ -534,14 +534,14 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				{
 					caller.getLock().lock();
 //	    			System.out.println("abort get4");
-	    			String state = callers.get(caller);
-	    			if(CALLER_SUSPENDED.equals(state))
+	    			String[] state = callers.get(caller);
+	    			if(state!=null && CALLER_SUSPENDED.equals(state[0]))
 	    			{
 	    				// Only reactivate thread when previously suspended.
 //	    				System.out.println("abort get5");
 	    				caller.resume(this);
 	    			}
-	    			callers.put(caller, CALLER_RESUMED);
+	    			state[0]	= CALLER_RESUMED;
 				}
 				finally
 				{
