@@ -32,17 +32,17 @@ public class ExecutableComponentCreationBenchmark	extends AbstractComponentCreat
 
 	protected static Stream<Arguments> provideBenchmarkParams() {
 	    return Stream.of(
-	  	      Arguments.of(10000, true, false),
-		      Arguments.of(10000, false, true)
+	  	      Arguments.of(100000, false, false)
+		      , Arguments.of(100000, false, true)	
 	    );
 	}
 	
-	// TODO: Why hangs?
-//	@Override
-//	@ParameterizedTest
-//	@MethodSource("provideBenchmarkParams")
-//	public void runBenchmark(int num, boolean print, boolean parallel)
-//	{
-//		super.runBenchmark(num, print, parallel);
-//	}
+	@Override
+	@ParameterizedTest
+	@MethodSource("provideBenchmarkParams")
+	public void runBenchmark(int num, boolean print, boolean parallel)
+	{
+		TIMEOUT	= 300000;
+		super.runBenchmark(num, print, parallel);
+	}
 }
