@@ -30,6 +30,7 @@ import jadex.mj.core.IThrowingFunction;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.StepAborted;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
 {
@@ -421,7 +422,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 						{
 							doRun(step);
 						}
-						catch(ThreadDeath d)
+						catch(StepAborted d)
 						{
 							assert terminated;
 							// ignore aborted steps.
@@ -513,7 +514,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 				{
 					blocked=false;
 					if(aborted)
-						throw new ThreadDeath();
+						throw new StepAborted(getComponent().getId());
 				}
 			}
 			finally
@@ -706,13 +707,14 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		{
 			step.run();
 		}
-		catch(ThreadDeath t)
+		catch(StepAborted t)
 		{
-			// pass thread death to thread runner main loop
+			// Pass abort error to thread runner main loop
 			throw t;
 		}
 		catch(Throwable t)
 		{
+			// Print and otherwise ignore any other exceptions
 			new RuntimeException("Exception in step", t).printStackTrace();
 		}
 		
