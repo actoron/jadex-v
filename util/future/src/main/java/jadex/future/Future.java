@@ -256,7 +256,6 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				new Exception("Should not suspend Android UI main thread. Try executing your calls from a different thread! (see stacktrace)").printStackTrace();
 			}*/
 
-	    	boolean dosuspend = false;
 	    	try
 	    	{
 	    		caller.getLock().lock();
@@ -264,24 +263,14 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
     			if(CALLER_QUEUED.equals(state))
     			{
     	    	   	callers.put(caller, CALLER_SUSPENDED);
-    	    	   	dosuspend = true;
+	    	   		caller.suspend(this, timeout, realtime);
     			}
     			// else already resumed.
     		}
 	    	finally
 	    	{
+    	   		callers.remove(caller);
 	    		caller.getLock().unlock();
-	    	}
-	    	if(dosuspend)
-	    	{
-		    	try
-	    	   	{
-	    	   		caller.suspend(this, timeout, realtime);
-	    	   	}
-	    	   	finally
-	    	   	{
-	    	   		callers.remove(caller);
-	    	   	}
 	    	}
     	}
     	
