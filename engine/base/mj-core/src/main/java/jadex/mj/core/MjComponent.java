@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
@@ -371,7 +371,7 @@ public class MjComponent implements IComponent
 				access = new IExternalAccess() 
 				{
 					@Override
-					public <T> IFuture<T> scheduleStep(Supplier<T> step) 
+					public <T> IFuture<T> scheduleStep(Callable<T> step) 
 					{
 						throw new UnsupportedOperationException("Missing execution feature");
 					}
@@ -422,7 +422,7 @@ public class MjComponent implements IComponent
 			access = new IExternalAccess() 
 			{
 				@Override
-				public <T> IFuture<T> scheduleStep(Supplier<T> step) 
+				public <T> IFuture<T> scheduleStep(Callable<T> step) 
 				{
 					throw new UnsupportedOperationException("Missing execution feature");
 				}

@@ -1,6 +1,7 @@
 package jadex.mj.feature.execution.impl;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.future.IFuture;
@@ -34,8 +35,8 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 			{
 				if(pojo instanceof Runnable)
 					LambdaAgent.create((Runnable)pojo, cid);
-				else if(pojo instanceof Supplier)
-					LambdaAgent.create((Supplier<?>)pojo, cid);
+				else if(pojo instanceof Callable)
+					LambdaAgent.create((Callable<?>)pojo, cid);
 				else if(pojo instanceof IThrowingFunction)
 					LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid);
 			}
@@ -63,7 +64,7 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 				}
 				
 				@Override
-				public <T> IFuture<T> scheduleStep(Supplier<T> step) 
+				public <T> IFuture<T> scheduleStep(Callable<T> step) 
 				{
 					return comp.getFeature(IMjExecutionFeature.class).scheduleStep(step);
 				}

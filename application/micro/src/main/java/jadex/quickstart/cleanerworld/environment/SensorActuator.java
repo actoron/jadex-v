@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
 import jadex.common.ErrorException;
 import jadex.common.SUtil;
@@ -261,7 +261,7 @@ public class SensorActuator
 		// Schedule an update step periodically.
 		lasttime	= agent.getTime();
 		@SuppressWarnings("unchecked")
-		Supplier<Void>[]	step	= new Supplier[1];
+		Callable<Void>[]	step	= new Callable[1];
 		step[0]= () ->
 		{
 			if(!reached.isDone())	// no new timer when future is terminated from outside (e.g. agent killed)
@@ -357,7 +357,7 @@ public class SensorActuator
 		
 		lasttime	= agent.getTime();
 		@SuppressWarnings("unchecked")
-		Supplier<Void>[]	step	= new Supplier[1];
+		Callable<Void>[]	step	= new Callable[1];
 		step[0]	= () ->
 		{
 			if(!reached.isDone())	// no new timer when future is terminated from outside (e.g. agent killed)

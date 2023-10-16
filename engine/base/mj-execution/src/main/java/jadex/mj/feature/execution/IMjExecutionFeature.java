@@ -9,14 +9,14 @@ import jadex.mj.feature.execution.impl.MjExecutionFeature;
  */
 public interface IMjExecutionFeature	extends IMjExternalExecutionFeature
 {
-	/** Constant for unset step level. */
-	public static final int STEP_PRIORITY_UNSET = -1;
-	
-	/** Constant for first normal step level. */
-	public static final int STEP_PRIORITY_NORMAL = 0;
-
-	/** Constant for first immediate step level. */
-	public static final int STEP_PRIORITY_IMMEDIATE = 100;
+//	/** Constant for unset step level. */
+//	public static final int STEP_PRIORITY_UNSET = -1;
+//	
+//	/** Constant for first normal step level. */
+//	public static final int STEP_PRIORITY_NORMAL = 0;
+//
+//	/** Constant for first immediate step level. */
+//	public static final int STEP_PRIORITY_IMMEDIATE = 100;
 	
 	/**
 	 *  Get the feature instance of the currently running component.

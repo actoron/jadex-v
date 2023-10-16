@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
@@ -130,7 +131,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	}
 	
 	@Override
-	public <T> IFuture<T> scheduleStep(Supplier<T> s)
+	public <T> IFuture<T> scheduleStep(Callable<T> s)
 	{
 		Future<T> ret = new Future<>();
 		
@@ -144,7 +145,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		{
 			try
 			{
-				T res = s.get();
+				T res = s.call();
 				
 				if(!saveEndStep(res, (Future)ret))
 				{

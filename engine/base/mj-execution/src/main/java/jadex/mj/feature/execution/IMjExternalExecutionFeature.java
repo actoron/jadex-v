@@ -1,5 +1,6 @@
 package jadex.mj.feature.execution;
 
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.future.IFuture;
@@ -30,7 +31,7 @@ public interface IMjExternalExecutionFeature
 	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public <T> IFuture<T> scheduleStep(Supplier<T> step);
+	public <T> IFuture<T> scheduleStep(Callable<T> step);
 	
 	/**
 	 *  Schedule a step that provides a result.

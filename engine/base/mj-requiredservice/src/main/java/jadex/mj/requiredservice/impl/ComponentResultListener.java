@@ -1,6 +1,6 @@
 package jadex.mj.requiredservice.impl;
 
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 import jadex.common.SUtil;
@@ -195,7 +195,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 			// Differentiate between exception in listener (true) and exception before invocation (false)
 			// to avoid double listener invocation, but invoke listener, when scheduling step fails.
 			boolean	invoked[]	= new boolean[]{false};
-			Supplier<IFuture<Void>>	invocation	= () ->
+			Callable<IFuture<Void>>	invocation	= () ->
 			{
 				invoked[0]	= true;
 				notification.run();

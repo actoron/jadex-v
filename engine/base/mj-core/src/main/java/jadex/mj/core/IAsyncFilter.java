@@ -10,7 +10,7 @@ public interface IAsyncFilter<T>
 	//-------- constants --------
 	
 	/** A filter that always returns true. */
-	public static final IAsyncFilter<Object> ALWAYS = new AlwaysFilter();
+	public static final IAsyncFilter<Object> ALWAYS = new AlwaysFilter<Object>();
 
 	/** A filter that always returns true. */
 	public static class AlwaysFilter<E> implements IAsyncFilter<E>
@@ -22,7 +22,7 @@ public interface IAsyncFilter<T>
 	}
 	
 	/** A filter that always returns false. */
-	public static final IAsyncFilter<Object> NEVER = new NeverFilter();
+	public static final IAsyncFilter<Object> NEVER = new NeverFilter<Object>();
 	
 	/** A filter that always returns false. */
 	public static class NeverFilter<E> implements IAsyncFilter<E>

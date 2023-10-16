@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
 import jadex.collection.LRU;
 import jadex.common.ICommand;
@@ -25,17 +25,11 @@ import jadex.common.transformation.traverser.SCloner;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.IFutureCommandResultListener;
-import jadex.future.IIntermediateFuture;
-import jadex.future.IIntermediateFutureCommandResultListener;
-import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.future.ITerminableFuture;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.annotation.Reference;
-import jadex.mj.feature.providedservice.annotation.Timeout;
 import jadex.mj.feature.providedservice.impl.service.impl.IInternalService;
 import jadex.mj.feature.providedservice.impl.service.impl.IServiceInvocationInterceptor;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
@@ -696,7 +690,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	 *  Service invocation step.
 	 */
 	// Not anonymous class to avoid dependency to XML required for XMLClassname
-	public static class InvokeMethodStep implements Supplier //Supplier<Future<? extends Object>>
+	public static class InvokeMethodStep implements Callable //Callable<Future<? extends Object>>
 	{
 		// For debugging simulation blocker heisenbug -> TODO: remove when fixed
 		protected static final Map<ServiceInvocationContext, String>	_DEBUG	= Collections.synchronizedMap(new WeakHashMap<>());
@@ -722,7 +716,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 		/**
 		 *  Execute the step.
 		 */
-		public IFuture<Void> get()
+		public IFuture<Void> call()
 		{					
 			IFuture<Void> ret;
 			
