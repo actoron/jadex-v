@@ -3,6 +3,7 @@ package jadex.benchmark;
 import java.util.Collection;
 
 import jadex.common.SUtil;
+import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
@@ -13,6 +14,9 @@ import jadex.mj.core.MjComponent;
  */
 public abstract class AbstractComponentCreationBenchmark 
 {
+	/** Timeout to cap test execution time (non-static so subclasses can alter it independently). */
+	protected long	TIMEOUT	= 10000;
+	
 	/** Created components are stored for later killing. */
 	protected Collection<MjComponent>	components;
 	
@@ -56,51 +60,52 @@ public abstract class AbstractComponentCreationBenchmark
 	 */
 	protected void createComponents(int num, boolean print, boolean parallel)
 	{
-		FutureBarrier<MjComponent>	started	= new FutureBarrier<>();
-
-		if(parallel)
+		Future<Void>	benchmark	= new Future<>();
+		try
 		{
-			int	numproc	= Runtime.getRuntime().availableProcessors();
+			FutureBarrier<Void>	threadsfinished	= new FutureBarrier<>();
+			FutureBarrier<MjComponent>	compscreated	= new FutureBarrier<>();
+	
+			int	numproc	= parallel ? Runtime.getRuntime().availableProcessors() : 1;
 			Thread[]	thread	= new Thread[numproc];
 			for(int proc=0; proc<numproc; proc++)
 			{
 				int start	= proc+1;
+				Future<Void> threadfut	= new Future<>();
+				threadsfinished.addFuture(threadfut);
 				thread[proc]	= new Thread(() ->
 				{
-					for(int i=start; i<=num; i+=numproc)
+					for(int i=start; !benchmark.isDone() && i<=num; i+=numproc)
 					{
-						IFuture<MjComponent>	fut	= createComponent(Integer.toString(i));
+						IFuture<MjComponent>	compfut	= createComponent(Integer.toString(i));
 						if(print)
 						{
-							fut.then(comp -> System.out.println("Created: "+comp.getId()));
+							compfut.then(comp -> System.out.println("Created: "+comp.getId()));
 						}
 						// HACK!!! future barrier should be multi threaded!?
 						synchronized(AbstractComponentCreationBenchmark.this)
 						{
-							started.addFuture(fut);
+							compscreated.addFuture(compfut);
 						}
-					}					
+					}
+					
+					threadfut.setResult(null);
 				});
 			}
 			for(int i=0; i<numproc; i++)
 				thread[i].start();
-			for(int i=0; i<numproc; i++)
-				try{ thread[i].join(); }catch(InterruptedException e){}
+			
+				// All creation threads are finished, maybe components are still creating asynchronously
+				threadsfinished.waitForResults().get(TIMEOUT);
+				
+				// All components are created
+				components	= compscreated.waitForResults().get(TIMEOUT);
 		}
-		else
+		finally
 		{
-			for(int i=1; i<=num; i++)
-			{
-				IFuture<MjComponent>	fut	= createComponent(Integer.toString(i));
-				if(print)
-				{
-					fut.then(comp -> System.out.println("Created: "+comp.getId()));
-				}
-				started.addFuture(fut);
-			}
+			// Cleanup threads, if still running.
+			benchmark.setResult(null);
 		}
-		
-		components	= started.waitForResults().get();
 	}
 	
 	/**
@@ -124,7 +129,7 @@ public abstract class AbstractComponentCreationBenchmark
 		});
 		
 		components	= null;
-		killed.waitForResults().get();
+		killed.waitForResults().get(TIMEOUT);
 	}
 	
 	/**
