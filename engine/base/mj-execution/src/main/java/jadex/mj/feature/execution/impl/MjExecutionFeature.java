@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -66,8 +67,27 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	{
 		if(EXECUTOR==null)
 		{
-			EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
-//			EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
+			synchronized(MjExecutionFeature.class)
+			{
+				if(EXECUTOR==null)
+				{
+					try
+					{
+						//EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
+						EXECUTOR	= (ExecutorService)Executors.class.getMethod("newVirtualThreadPerTaskExecutor").invoke(null);
+						System.out.println("Using virtual threads :-)");
+					}
+					catch(NoSuchMethodException e)
+					{
+						System.out.println("Using OS threads :-(");
+						EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+					}
+					catch(Exception e)
+					{
+						throw SUtil.throwUnchecked(e);
+					}
+				}
+			}
 		}
 		return EXECUTOR;
 	}
@@ -418,8 +438,8 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					}
 //				});
 //			});
-			//ISuspendable.SUSPENDABLE.remove();
-			//LOCAL.remove();
+			ISuspendable.SUSPENDABLE.remove();
+			LOCAL.remove();
 		}
 	}
 	
@@ -536,6 +556,12 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					lock.unlock();
 				}
 			}
+		}
+		
+		@Override
+		public ReentrantLock getLock()
+		{
+			return lock;
 		}
 	}
 	

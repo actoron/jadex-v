@@ -1,5 +1,7 @@
 package jadex.future;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import jadex.common.TimeoutException;
 
 /**
@@ -40,11 +42,7 @@ public interface ISuspendable
 	public void resume(Future<?> future);//, boolean force);
 	
 	/**
-	 *  Get the monitor for waiting.
-	 *  @return The monitor.
+	 *  Return the lock for internal synchronization.
 	 */
-	public default Object getMonitor()
-	{
-		return this;
-	}
+	public ReentrantLock getLock();
 }

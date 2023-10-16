@@ -124,12 +124,11 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 	}
 	
 	/**
-	 *  Get the monitor for waiting.
-	 *  @return The monitor.
+	 *  Return the lock for internal synchronization.
 	 */
-	public Object getMonitor()
+	public ReentrantLock getLock()
 	{
-		return this;
+		return lock;
 	}
 	
 	/**

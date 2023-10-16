@@ -256,10 +256,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				new Exception("Should not suspend Android UI main thread. Try executing your calls from a different thread! (see stacktrace)").printStackTrace();
 			}*/
 
-	    	Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
 	    	boolean dosuspend = false;
-	    	synchronized(mon)
+	    	try
 	    	{
+	    		caller.getLock().lock();
     			Object	state	= callers.get(caller);
     			if(CALLER_QUEUED.equals(state))
     			{
@@ -268,6 +268,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
     			}
     			// else already resumed.
     		}
+	    	finally
+	    	{
+	    		caller.getLock().unlock();
+	    	}
 	    	if(dosuspend)
 	    	{
 		    	try
@@ -493,9 +497,9 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				for(Iterator<ISuspendable> it=callers.keySet().iterator(); it.hasNext(); )
 		    	{
 		    		ISuspendable caller = it.next();
-		    		Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
-		    		synchronized(mon)
+		    		try
 					{
+		    			caller.getLock().lock();
 		    			String	state	= callers.get(caller);
 		    			if(CALLER_SUSPENDED.equals(state))
 		    			{
@@ -504,6 +508,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		    			}
 		    			callers.put(caller, CALLER_RESUMED);
 					}
+		    		finally
+		    		{
+		    			caller.getLock().unlock();
+		    		}
 		    	}
 				notified	= true;
 			}
@@ -533,9 +541,9 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 			if(callers!=null && callers.containsKey(caller))
     	   	{
 //				System.out.println("abort get3");
-				Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
-	    		synchronized(mon)
+				try
 				{
+					caller.getLock().lock();
 //	    			System.out.println("abort get4");
 	    			String state = callers.get(caller);
 	    			if(CALLER_SUSPENDED.equals(state))
@@ -545,6 +553,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    				caller.resume(this);
 	    			}
 	    			callers.put(caller, CALLER_RESUMED);
+				}
+				finally
+				{
+					caller.getLock().unlock();
 				}
 			}
 		}

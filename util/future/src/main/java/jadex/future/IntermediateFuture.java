@@ -573,9 +573,9 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
     	
     	if(suspend)
     	{
-	    	Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
-	    	synchronized(mon)
-	    	{
+    		try
+    		{
+    			caller.getLock().lock();
     			Object	state	= icallers.get(caller);
     			if(CALLER_QUEUED.equals(state))
     			{
@@ -584,6 +584,10 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
     	    	   	icallers.remove(caller);
     			}
     			// else already resumed.
+    		}
+    		finally
+    		{
+    			caller.getLock().unlock();
     		}
 	    	ret	= hasNextIntermediateResult(timeout, realtime);
     	}
@@ -782,9 +786,9 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
     	
     	if(suspend)
     	{
-	    	Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
-	    	synchronized(mon)
-	    	{
+    		try
+    		{
+    			caller.getLock().lock();
     			Object	state	= icallers.get(caller);
     			if(CALLER_QUEUED.equals(state))
     			{
@@ -793,6 +797,10 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
     	    	   	icallers.remove(caller);
     			}
     			// else already resumed.
+    		}
+    		finally
+    		{
+    			caller.getLock().unlock();
     		}
 	    	ret	= doGetNextIntermediateResult(index, timeout, realtime);
     	}
@@ -906,9 +914,9 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 		   	{
 				for(ISuspendable caller: callers)
 		    	{
-		    		Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
-		    		synchronized(mon)
-					{
+		    		try
+		    		{
+		    			caller.getLock().lock();
 		    			String	state = icallers.get(caller);
 		    			if(CALLER_SUSPENDED.equals(state))
 		    			{
@@ -917,6 +925,10 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 		    			}
 		    			icallers.put(caller, CALLER_RESUMED);
 					}
+		    		finally
+		    		{
+		    			caller.getLock().unlock();
+		    		}
 		    	}
 			}
 		}

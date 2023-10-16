@@ -271,9 +271,9 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
     	
     	if(suspend)
     	{
-	    	Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
-	    	synchronized(mon)
-	    	{
+    		try
+    		{
+    			caller.getLock().lock();
     			Object	state	= icallers.get(caller);
     			if(CALLER_QUEUED.equals(state))
     			{
@@ -282,6 +282,10 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
     	    	   	icallers.remove(caller);
     			}
     			// else already resumed.
+    		}
+    		finally
+    		{
+    			caller.getLock().unlock();
     		}
 	    	ret	= hasNextIntermediateResult(timeout, realtime);
     	}
@@ -352,9 +356,9 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
     	
     	if(suspend)
     	{
-	    	Object mon = caller.getMonitor()!=null? caller.getMonitor(): caller;
-	    	synchronized(mon)
-	    	{
+    		try
+    		{
+    			caller.getLock().lock();
     			Object	state	= icallers.get(caller);
     			if(CALLER_QUEUED.equals(state))
     			{
@@ -364,7 +368,11 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
     			}
     			// else already resumed.
 	    	}
-	    	
+    		finally
+    		{
+    			caller.getLock().unlock();
+    		}
+    		
 	    	// Re-call outside synchronized!
     		ret	= doGetNextIntermediateResult(index, timeout, realtime);
     	}
