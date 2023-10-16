@@ -8,10 +8,11 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -430,8 +431,10 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		/** Set by terminate() to indicate step abortion. */  
 		protected boolean	aborted;
 		
-		protected Semaphore semaphore = new Semaphore(0);
-
+		/** Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads. */
+		protected ReentrantLock lock	= new ReentrantLock();
+		protected Condition	wait	= lock.newCondition();
+		
 		@Override
 		public void suspend(Future<?> future, long timeout, boolean realtime)
 		{
@@ -463,19 +466,14 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			
 			beforeBlock();
 			
-			// Must not be synchronized because semaphore does not realease lock on acquire
-			//synchronized(this)
+			try
 			{
+				lock.lock();
 				try
 				{
 					blocked	= true;
 					// TODO timeout?
-					//this.wait();
-					//System.out.println("before: "+semaphore);
-					semaphore.acquire();
-					//if(!semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS))
-					//	System.out.println("not released!");
-					//System.out.println("after: "+semaphore);
+					wait.await();
 				}
 				catch(InterruptedException e)
 				{
@@ -486,6 +484,10 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 					if(aborted)
 						throw new ThreadDeath();
 				}
+			}
+			finally
+			{
+				lock.unlock();
 			}
 			
 			afterBlock();
@@ -498,12 +500,15 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			{
 				scheduleStep(() ->
 				{
-					synchronized(this)
+					try
 					{
+						lock.lock();
 						do_switch	= true;
-						//this.notify();
-						//System.out.println("release: "+semaphore);
-						semaphore.release();
+						wait.signal();
+					}
+					finally
+					{
+						lock.unlock();
 					}
 				});
 			}
@@ -521,11 +526,14 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 			if(blocked)
 			{
 				aborted	= true;
-				synchronized(this)
+				try
 				{
-					//this.notify();
-					//System.out.println("release: "+semaphore);
-					semaphore.release();
+					lock.lock();
+					wait.signal();
+				}
+				finally
+				{
+					lock.unlock();
 				}
 			}
 		}

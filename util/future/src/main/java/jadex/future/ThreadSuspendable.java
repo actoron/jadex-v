@@ -3,8 +3,9 @@ package jadex.future;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
@@ -23,10 +24,12 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 	/** The future. */
 	protected IFuture<?> future;
 	
-	/** The resumed flag to differentiante from timeout.*/
+	/** The resumed flag to differentiate from timeout.*/
 	protected boolean	resumed;
 	
-	protected Semaphore semaphore = new Semaphore(0);
+	/** Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads. */
+	protected ReentrantLock lock	= new ReentrantLock();
+	protected Condition	wait	= lock.newCondition();
 	
 	//-------- methods --------
 	
@@ -42,41 +45,35 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 		
 		long endtime = timeout>0 ? System.currentTimeMillis()+timeout : -1;
 		
-		synchronized(this)
+		try
 		{
+			lock.lock();
 			this.future	= future;
 			this.resumed	= false;
 			assert !WAITING_THREADS.containsKey(Thread.currentThread());
 			WAITING_THREADS.put(Thread.currentThread(), future);
-		}
-		
-		try
-		{
-			long waittime	= endtime-System.currentTimeMillis();
-			if(!resumed && (endtime==-1 || waittime>0))
+			
+			try
 			{
-				if(endtime==-1)
+				long waittime	= endtime-System.currentTimeMillis();
+				if(!resumed && (endtime==-1 || waittime>0))
 				{
-					//if(!semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS))
-					//	System.out.println("not released!");
-					semaphore.acquire();
-					//this.wait();
-				}
-				else
-				{
-					semaphore.tryAcquire(waittime, TimeUnit.MILLISECONDS);
-					//this.wait(waittime);
+					if(endtime==-1)
+					{
+						wait.await();
+					}
+					else
+					{
+						wait.await(waittime, TimeUnit.MILLISECONDS);
+					}
 				}
 			}
-		}
-		catch(InterruptedException e)
-		{
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
-		finally
-		{
-			synchronized(this)
+			catch(InterruptedException e)
+			{
+				e.printStackTrace();
+				throw new RuntimeException(e);
+			}
+			finally
 			{
 				assert WAITING_THREADS.get(Thread.currentThread())==future;
 				WAITING_THREADS.remove(Thread.currentThread());
@@ -84,18 +81,22 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 				afterSwitch();
 				this.future	= null;
 			}
+				
+			if(!resumed)
+			{
+				if(timeout>0)
+				{
+					throw new TimeoutException("Timeout: "+timeout+", realtime="+realtime);
+				}
+				else
+				{
+					throw new IllegalStateException("Future.wait() returned unexpectedly. Timeout: "+timeout+", realtime="+realtime);
+				}
+			}
 		}
-			
-		if(!resumed)
+		finally
 		{
-			if(timeout>0)
-			{
-				throw new TimeoutException("Timeout: "+timeout+", realtime="+realtime);
-			}
-			else
-			{
-				throw new IllegalStateException("Future.wait() returned unexpectedly. Timeout: "+timeout+", realtime="+realtime);
-			}
+			lock.unlock();
 		}
 	}
 	
@@ -104,21 +105,22 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 	 */
 	public void resume(Future<?> future)
 	{
-		boolean doresume = false;
-		synchronized(this)
+		try
 		{
+			lock.lock();
 			// Only wake up if still waiting for same future (invalid resume might be called from outdated future after timeout already occurred).
 			if(future==this.future)
 			{
 				resumed	= true;
 				// Save the thread local values before switch
 				beforeSwitch();
-				//this.notify();
-				doresume = true;
+				wait.signal();
 			}
 		}
-		if(doresume)
-			semaphore.release();
+		finally
+		{
+			lock.unlock();
+		}
 	}
 	
 	/**
