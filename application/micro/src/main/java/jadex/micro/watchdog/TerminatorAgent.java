@@ -9,7 +9,6 @@ import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.lifecycle.IMjLifecycleFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.requiredservice.IMjRequiredServiceFeature;
@@ -49,7 +48,7 @@ public class TerminatorAgent
 				access.scheduleStep(agent ->
 				{
 					System.out.println("killing: "+victim);
-					agent.getFeature(IMjLifecycleFeature.class).terminate();
+					agent.getFeature(IMjExecutionFeature.class).terminate();
 				});
 			}
 		}

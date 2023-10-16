@@ -6,7 +6,7 @@ import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IComponentCreator;
 import jadex.mj.core.impl.IComponentTerminator;
 import jadex.mj.core.impl.MjFeatureProvider;
-import jadex.mj.feature.lifecycle.IMjLifecycleFeature;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.MicroClassReader;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
@@ -48,7 +48,7 @@ public class MjMicroAgentFeatureProvider extends MjFeatureProvider<MjMicroAgentF
 			@Override
 			public void terminate(IComponent component) 
 			{
-				component.getFeature(IMjLifecycleFeature.class).terminate();
+				component.getFeature(IMjExecutionFeature.class).terminate();
 			}
 		});
 	}

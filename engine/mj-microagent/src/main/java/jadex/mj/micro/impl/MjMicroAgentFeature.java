@@ -23,7 +23,7 @@ import jadex.mj.core.IParameterGuesserProvider;
 import jadex.mj.core.annotation.OnEnd;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
+import jadex.mj.feature.execution.impl.IMjLifecycle;
 import jadex.mj.micro.InjectionInfoHolder;
 import jadex.mj.micro.MicroModel;
 import jadex.mj.micro.MjMicroAgent;

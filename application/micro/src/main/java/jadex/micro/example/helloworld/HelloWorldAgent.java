@@ -1,15 +1,9 @@
 package jadex.micro.example.helloworld;
 
-import java.util.concurrent.Semaphore;
-
-import jadex.common.SUtil;
-import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.IComponentListener;
 import jadex.mj.core.annotation.OnEnd;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.lifecycle.IMjLifecycleFeature;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.micro.annotation.Description;
@@ -49,7 +43,7 @@ public class HelloWorldAgent
 			System.out.println("Good bye world.");
 			return null;
 		}).get();
-		IMjLifecycleFeature.get().terminate();
+		IMjExecutionFeature.get().terminate();
 	}
 	
 	@OnEnd

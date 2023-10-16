@@ -29,29 +29,29 @@ import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
 import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.IComponentTerminator;
 import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.StepAborted;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
 {
-	// TODO: how to prefer lifecycle termination to execution termination
-//	static
-//	{
-//		IComponent.addComponentTerminator(new IComponentTerminator() 
-//		{
-//			public boolean filter(MjComponent component) 
-//			{
-//				return component.getClass().equals(MjComponent.class);
-//			}
-//			
-//			@Override
-//			public void terminate(IComponent component) 
-//			{
-//				((IMjInternalExecutionFeature)component.getFeature(IMjExecutionFeature.class)).terminate();
-//			}
-//		});
-//	}
+	static
+	{
+		IComponent.addComponentTerminator(new IComponentTerminator() 
+		{
+			public boolean filter(MjComponent component) 
+			{
+				return component.getClass().equals(MjComponent.class);
+			}
+			
+			@Override
+			public void terminate(IComponent component) 
+			{
+				((IMjInternalExecutionFeature)component.getFeature(IMjExecutionFeature.class)).terminate();
+			}
+		});
+	}
 	
 	public static ExecutorService EXECUTOR;
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
@@ -604,6 +604,15 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		executeEndStep();
 		
+		self.getFeatures().forEach(feature ->
+		{
+			if(feature instanceof IMjLifecycle) 
+			{
+				IMjLifecycle lfeature = (IMjLifecycle)feature;
+				lfeature.onEnd().get();
+			}
+		});
+		
 		terminated = true;
 		
 		//System.out.println("terminate start: "+self.getId()+" "+steps.size());
@@ -638,14 +647,17 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		}
 		
 		// Drop queued timer tasks.
-		TimerTaskInfo[] ttis = entries.toArray(new TimerTaskInfo[entries.size()]);
-		for(TimerTaskInfo tti: ttis)
+		if(entries!=null)
 		{
-			if(self.getId().equals(tti.getComponentId()))
+			TimerTaskInfo[] ttis = entries.toArray(TimerTaskInfo[]::new);
+			for(TimerTaskInfo tti: ttis)
 			{
-				tti.getTask().cancel();
-				tti.getFuture().setException(ex);
-				entries.remove(tti);
+				if(self.getId().equals(tti.getComponentId()))
+				{
+					tti.getTask().cancel();
+					tti.getFuture().setException(ex);
+					entries.remove(tti);
+				}
 			}
 		}
 		

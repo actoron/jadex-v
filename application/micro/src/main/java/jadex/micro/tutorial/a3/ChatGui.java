@@ -19,7 +19,7 @@ import javax.swing.SwingUtilities;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.IThrowingConsumer;
-import jadex.mj.feature.lifecycle.IMjLifecycleFeature;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.requiredservice.IMjRequiredServiceFeature;
 
 /**
@@ -79,7 +79,7 @@ public class ChatGui extends JFrame
 			{
 				access.scheduleStep(agent ->
 				{
-					agent.getFeature(IMjLifecycleFeature.class).terminate();
+					agent.getFeature(IMjExecutionFeature.class).terminate();
 				});
 			}
 		});

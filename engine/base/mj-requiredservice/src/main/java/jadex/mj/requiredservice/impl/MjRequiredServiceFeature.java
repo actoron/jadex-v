@@ -47,7 +47,7 @@ import jadex.mj.core.ProxyFactory;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
+import jadex.mj.feature.execution.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;

@@ -55,4 +55,9 @@ public interface IMjExecutionFeature	extends IMjExternalExecutionFeature
 	 *  @return	The time in milliseconds.
 	 */
 	public long	getTime();
+	
+	/**
+	 *  Terminate the component and abort all blocked steps.
+	 */
+	public void terminate();
 }

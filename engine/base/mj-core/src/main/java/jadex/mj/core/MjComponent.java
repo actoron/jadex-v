@@ -92,7 +92,7 @@ public class MjComponent implements IComponent
 		notifyEventListener(COMPONENT_REMOVED, cid);
 		if(components.isEmpty())
 			notifyEventListener(COMPONENT_LASTREMOVED, cid);
-		System.out.println("size: "+components.size()+" "+cid);
+//		System.out.println("size: "+components.size()+" "+cid);
 	}
 	
 	public static IComponent getComponent(ComponentIdentifier cid)

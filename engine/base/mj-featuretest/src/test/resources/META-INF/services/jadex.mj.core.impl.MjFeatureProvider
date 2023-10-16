@@ -1,5 +1,5 @@
 jadex.mj.featuretest.impl.MjTestFeature1Provider
 jadex.mj.featuretest.impl.MjTestFeature1NewProvider
 jadex.mj.featuretest.impl.MjTestFeature2Provider
+jadex.mj.featuretest.impl.MjTestFeature2NewProvider
 jadex.mj.featuretest.impl.MjTestLazyFeatureProvider
-jadex.mj.featuretest.impl.MjTestLifecycleFeatureProvider

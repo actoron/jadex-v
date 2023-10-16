@@ -128,6 +128,21 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 		Map<Class<Object>, MjFeatureProvider<Object>>	providers	= SMjFeatureProvider.getProvidersForComponent(type);
 		Object	exeprovider	= providers.get(IMjExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IMjExecutionFeature	exe	= ((MjExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
-		return exe.scheduleStep(() -> creator.get()).get();
+		return exe.scheduleStep(() -> 
+		{
+			T	self	= creator.get();
+			self.getFeatures().forEach(feature ->
+			{
+				if(feature instanceof IMjLifecycle)
+				{
+					exe.scheduleStep(() ->
+					{
+						IMjLifecycle lfeature = (IMjLifecycle)feature;
+						lfeature.onStart();
+					});
+				}
+			});
+			return self;
+		}).get();
 	}
 }

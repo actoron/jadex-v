@@ -218,6 +218,7 @@ public interface IComponent
 		IComponent comp = MjComponent.getComponent(cid);
 		if(comp!=null)
 		{
+			MjComponent.removeComponent(cid);
 			comp.getExternalAccess().scheduleStep(agent ->
 			{
 				boolean terminated = false;

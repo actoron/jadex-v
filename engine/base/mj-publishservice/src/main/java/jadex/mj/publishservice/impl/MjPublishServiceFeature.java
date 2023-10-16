@@ -9,7 +9,7 @@ import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.modelinfo.ModelInfo;
-import jadex.mj.feature.lifecycle.impl.IMjLifecycle;
+import jadex.mj.feature.execution.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
