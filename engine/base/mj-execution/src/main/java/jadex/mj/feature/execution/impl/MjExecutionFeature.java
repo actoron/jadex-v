@@ -38,7 +38,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 {
 	static
 	{
-		IComponent.addComponentTerminator(new IComponentTerminator() 
+		MjComponent.addComponentTerminator(new IComponentTerminator() 
 		{
 			public boolean filter(MjComponent component) 
 			{

@@ -15,7 +15,7 @@ public class MjMicroAgentFeatureProvider extends MjFeatureProvider<MjMicroAgentF
 {
 	static
 	{
-		IComponent.addComponentCreator(new IComponentCreator() 
+		MjComponent.addComponentCreator(new IComponentCreator() 
 		{
 			// todo: use our classreader?!
 			public boolean filter(Object obj) 
@@ -38,7 +38,7 @@ public class MjMicroAgentFeatureProvider extends MjFeatureProvider<MjMicroAgentF
 			}
 		});
 		
-		IComponent.addComponentTerminator(new IComponentTerminator() 
+		MjComponent.addComponentTerminator(new IComponentTerminator() 
 		{
 			public boolean filter(MjComponent component) 
 			{

@@ -61,28 +61,13 @@ public interface IComponent
 	
 	//-------- static part for generic component creation --------
 	
-	// TODO: move internal stuff to .impl
-	
-	public static final List<IComponentCreator> creators = new ArrayList<IComponentCreator>();
-	public static final List<IComponentTerminator> terminators = new ArrayList<IComponentTerminator>();
+	public static final SMjFeatureProvider dummy = new SMjFeatureProvider();
 	
 	public static final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
 	public static final String COMPONENT_ADDED = "component_added";
 	public static final String COMPONENT_REMOVED = "component_removed";
 	public static final String COMPONENT_LASTREMOVED = "component_lastremoved";
-	
-	public static final SMjFeatureProvider dummy = new SMjFeatureProvider();
-	
-	public static void addComponentCreator(IComponentCreator creator)
-	{
-		creators.add(creator);
-	}
-	
-	public static void addComponentTerminator(IComponentTerminator terminator)
-	{
-		terminators.add(terminator);
-	}
-	
+
 	public static void addComponentListener(IComponentListener listener, String... types)
 	{
 		synchronized(IComponent.class)
@@ -154,7 +139,7 @@ public interface IComponent
 	public static void create(Runnable pojo, ComponentIdentifier cid)
 	{
 		boolean created = false;
-		for(IComponentCreator creator: creators)
+		for(IComponentCreator creator: MjComponent.getCreators())
 		{
 			if(creator.filter(pojo))
 			{
@@ -177,7 +162,7 @@ public interface IComponent
 	public static <T> void create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
 	{
 		boolean created = false;
-		for(IComponentCreator creator: creators)
+		for(IComponentCreator creator: MjComponent.getCreators())
 		{
 			if(creator.filter(pojo))
 			{
@@ -198,7 +183,7 @@ public interface IComponent
 	public static void create(Object pojo, ComponentIdentifier cid)
 	{
 		boolean created = false;
-		for(IComponentCreator creator: creators)
+		for(IComponentCreator creator: MjComponent.getCreators())
 		{
 			if(creator.filter(pojo))
 			{
@@ -222,7 +207,7 @@ public interface IComponent
 			comp.getExternalAccess().scheduleStep(agent ->
 			{
 				boolean terminated = false;
-				for(IComponentTerminator terminator: terminators)
+				for(IComponentTerminator terminator: MjComponent.getTerminators())
 				{
 					if(terminator.filter((MjComponent)agent))
 					{

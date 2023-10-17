@@ -22,7 +22,7 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 {
 	static
 	{
-		IComponent.addComponentCreator(new IComponentCreator() 
+		MjComponent.addComponentCreator(new IComponentCreator() 
 		{
 			public boolean filter(Object obj) 
 			{
