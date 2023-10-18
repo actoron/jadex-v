@@ -82,6 +82,8 @@ public class MjComponent implements IComponent
 	public static void addComponent(IComponent comp)
 	{
 		//System.out.println("added: "+comp.getId());
+		if(components.containsKey(comp.getId()))
+			throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId());
 		components.put(comp.getId(), comp);
 		notifyEventListener(COMPONENT_ADDED, comp.getId());
 	}
