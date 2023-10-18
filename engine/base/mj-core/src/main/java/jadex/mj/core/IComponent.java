@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
@@ -12,8 +13,7 @@ import java.util.function.Supplier;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.impl.IBootstrapping;
-import jadex.mj.core.impl.IComponentCreator;
-import jadex.mj.core.impl.IComponentTerminator;
+import jadex.mj.core.impl.IComponentLifecycleManager;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 
@@ -139,9 +139,12 @@ public interface IComponent
 	public static void create(Runnable pojo, ComponentIdentifier cid)
 	{
 		boolean created = false;
-		for(IComponentCreator creator: MjComponent.getCreators())
+		
+		
+		
+		for(IComponentLifecycleManager creator: SMjFeatureProvider.getLifecycleProviders())
 		{
-			if(creator.filter(pojo))
+			if(creator.isCreator(pojo))
 			{
 				creator.create(pojo, cid);
 				created = true;
@@ -162,9 +165,10 @@ public interface IComponent
 	public static <T> void create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
 	{
 		boolean created = false;
-		for(IComponentCreator creator: MjComponent.getCreators())
+		
+		for(IComponentLifecycleManager creator: SMjFeatureProvider.getLifecycleProviders())
 		{
-			if(creator.filter(pojo))
+			if(creator.isCreator(pojo))
 			{
 				creator.create(pojo, cid);
 				created = true;
@@ -183,9 +187,9 @@ public interface IComponent
 	public static void create(Object pojo, ComponentIdentifier cid)
 	{
 		boolean created = false;
-		for(IComponentCreator creator: MjComponent.getCreators())
+		for(IComponentLifecycleManager creator: SMjFeatureProvider.getLifecycleProviders())
 		{
-			if(creator.filter(pojo))
+			if(creator.isCreator(pojo))
 			{
 				creator.create(pojo, cid);
 				created = true;
@@ -207,16 +211,17 @@ public interface IComponent
 			comp.getExternalAccess().scheduleStep(agent ->
 			{
 				boolean terminated = false;
-				for(IComponentTerminator terminator: MjComponent.getTerminators())
+				
+				Map<Class<Object>, MjFeatureProvider<Object>> provs = SMjFeatureProvider.getProvidersForComponent((Class<? extends MjComponent>)agent.getClass());
+				Optional<IComponentLifecycleManager> opt = provs.values().stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
+				if(opt.isPresent())
 				{
-					if(terminator.filter((MjComponent)agent))
-					{
-						terminator.terminate(agent);
-						terminated = true;
-						ret.setResult(null);
-						break;
-					}
+					IComponentLifecycleManager lm =  opt.get();
+					lm.terminate(agent);
+					terminated = true;
+					ret.setResult(null);
 				}
+				
 				if(!terminated)
 					ret.setException(new UnsupportedOperationException("No termination code for component: "+cid));
 			});

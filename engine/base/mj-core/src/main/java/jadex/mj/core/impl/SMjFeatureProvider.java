@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
 import jadex.mj.core.MjComponent;
 
@@ -34,7 +35,7 @@ public class SMjFeatureProvider
 		// Classpath order undefined (differs betweenn gradle/eclipse
 		// -> order feature providers alphabetically by fully qualified class name 
 		all.sort((o1, o2) -> o1.getClass().getName().compareTo(o2.getClass().getName()));
-		ALL_PROVIDERS	= all;
+		ALL_PROVIDERS = all;
 		
 		//all.forEach(System.out::println);
 	}
@@ -94,6 +95,21 @@ public class SMjFeatureProvider
 			PROVIDERS_BY_TYPE.put(type, ret);
 		}
 		return ret;
+	}
+	
+	/** The available providers are cached at startup and do not change during runtime. */
+	protected static List<IComponentLifecycleManager> LIFECYCLE_PROVIDERS;
+	
+	public static synchronized List<IComponentLifecycleManager> getLifecycleProviders()
+	{
+		if(LIFECYCLE_PROVIDERS==null)
+		{
+			LIFECYCLE_PROVIDERS = ALL_PROVIDERS.stream()
+				.filter(provider -> provider instanceof IComponentLifecycleManager)
+				.map(provider -> (IComponentLifecycleManager)provider)
+				.collect(Collectors.toList());
+		}
+		return LIFECYCLE_PROVIDERS;
 	}
 
 	/** 

@@ -12,25 +12,27 @@ import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IBootstrapping;
-import jadex.mj.core.impl.IComponentCreator;
+import jadex.mj.core.impl.IComponentLifecycleManager;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.LambdaAgent;
 
-public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFeature>	implements IBootstrapping
+public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
 	static
 	{
-		MjComponent.addComponentCreator(new IComponentCreator() 
+		/*MjComponent.addComponentCreator(new IComponentLifecycleManager() 
 		{
-			public boolean filter(Object obj) 
+			@Override
+			public boolean isCreator(Object obj) 
 			{
 				return Runnable.class.isAssignableFrom(obj.getClass())
 					|| Supplier.class.isAssignableFrom(obj.getClass())
 					|| IThrowingFunction.class.isAssignableFrom(obj.getClass());
 			}
 			
+			@Override
 			public void create(Object pojo, ComponentIdentifier cid)
 			{
 				if(pojo instanceof Runnable)
@@ -40,7 +42,19 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 				else if(pojo instanceof IThrowingFunction)
 					LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid);
 			}
-		});
+			
+			@Override
+			public boolean isTerminator(IComponent component) 
+			{
+				return component.getClass().equals(MjComponent.class);
+			}
+				
+			@Override
+			public void terminate(IComponent component) 
+			{
+				((IMjInternalExecutionFeature)component.getFeature(IMjExecutionFeature.class)).terminate();
+			}
+		});*/
 		
 		// Init the component with schedule step functionality (hack?!)
 		MjComponent.setExternalAccessFactory(obj ->
@@ -144,5 +158,37 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 			});
 			return self;
 		}).get();
+	}
+	
+	
+	@Override
+	public boolean isCreator(Object obj) 
+	{
+		return Runnable.class.isAssignableFrom(obj.getClass())
+			|| Supplier.class.isAssignableFrom(obj.getClass())
+			|| IThrowingFunction.class.isAssignableFrom(obj.getClass());
+	}
+	
+	@Override
+	public void create(Object pojo, ComponentIdentifier cid)
+	{
+		if(pojo instanceof Runnable)
+			LambdaAgent.create((Runnable)pojo, cid);
+		else if(pojo instanceof Callable)
+			LambdaAgent.create((Callable<?>)pojo, cid);
+		else if(pojo instanceof IThrowingFunction)
+			LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid);
+	}
+	
+	/*@Override
+	public boolean isTerminator(IComponent component) 
+	{
+		return component.getClass().equals(MjComponent.class);
+	}*/
+		
+	@Override
+	public void terminate(IComponent component) 
+	{
+		((IMjInternalExecutionFeature)component.getFeature(IMjExecutionFeature.class)).terminate();
 	}
 }

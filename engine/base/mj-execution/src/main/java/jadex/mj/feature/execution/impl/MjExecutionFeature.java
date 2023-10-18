@@ -29,30 +29,12 @@ import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
 import jadex.mj.core.MjComponent;
-import jadex.mj.core.impl.IComponentTerminator;
 import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.StepAborted;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
 {
-	static
-	{
-		MjComponent.addComponentTerminator(new IComponentTerminator() 
-		{
-			public boolean filter(MjComponent component) 
-			{
-				return component.getClass().equals(MjComponent.class);
-			}
-			
-			@Override
-			public void terminate(IComponent component) 
-			{
-				((IMjInternalExecutionFeature)component.getFeature(IMjExecutionFeature.class)).terminate();
-			}
-		});
-	}
-	
 	public static ExecutorService EXECUTOR;
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
 //	public static final ScopedValue<MjExecutionFeature> LOCAL = ScopedValue.newInstance();

@@ -1,12 +1,10 @@
 package jadex.mj.core;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -16,8 +14,6 @@ import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
 import jadex.future.IFuture;
-import jadex.mj.core.impl.IComponentCreator;
-import jadex.mj.core.impl.IComponentTerminator;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.core.modelinfo.IModelInfo;
@@ -29,29 +25,6 @@ import jadex.mj.core.modelinfo.ModelInfo;
 public class MjComponent implements IComponent
 {
 	protected static Map<ComponentIdentifier, IComponent> components = Collections.synchronizedMap(new HashMap<ComponentIdentifier, IComponent>());
-	
-	protected static final List<IComponentCreator> creators = new ArrayList<IComponentCreator>();
-	protected static final List<IComponentTerminator> terminators = new ArrayList<IComponentTerminator>();
-		
-	public static void addComponentCreator(IComponentCreator creator)
-	{
-		creators.add(creator);
-	}
-	
-	public static void addComponentTerminator(IComponentTerminator terminator)
-	{
-		terminators.add(terminator);
-	}
-	
-	public static List<IComponentCreator> getCreators()
-	{
-		return creators;
-	}
-	
-	public static List<IComponentTerminator> getTerminators()
-	{
-		return terminators;
-	}
 	
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
