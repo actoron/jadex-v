@@ -63,6 +63,7 @@ public class MjComponent implements IComponent
 	{
 		this.modelinfo = modelinfo;
 		this.id = id==null? new ComponentIdentifier(): id;
+		//System.out.println(this.id.getLocalName());
 		MjComponent.addComponent(this); // is this good here?! 
 		
 		providers	= SMjFeatureProvider.getProvidersForComponent(getClass());

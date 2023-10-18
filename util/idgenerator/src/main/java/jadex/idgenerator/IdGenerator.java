@@ -140,6 +140,9 @@ public class IdGenerator
 									 adj1,
 									 noun,
 									 numval > 0? ("_" + Integer.toHexString(numval)) : "");
+		if(ret=="null")
+			System.out.println("here");
+		
 		return ret;
 	}
 	
