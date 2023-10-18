@@ -23,8 +23,8 @@ public class MicroModel extends CacheableKernelModel
 	/** The micro agent class. */
 	protected ClassInfo pojoclass;
 	
-	/** The class loader. */
-	protected ClassLoader classloader;
+	///** The class loader. */
+	//protected ClassLoader classloader;
 	
 	/** The agent methods for given annotations (if any). */
 	protected Map<Class<? extends Annotation>, MethodInfo>	agentmethods;
@@ -257,20 +257,20 @@ public class MicroModel extends CacheableKernelModel
 	/**
 	 *  Get the classloader.
 	 *  @return the classloader.
-	 */
+	 * /
 	public ClassLoader getClassloader()
 	{
 		return classloader;
-	}
+	}*/
 
 	/**
 	 *  Set the classloader.
 	 *  @param classloader The classloader to set.
-	 */
+	 * /
 	public void setClassloader(ClassLoader classloader)
 	{
 		this.classloader = classloader;
-	}
+	}*/
 
 	/**
 	 *  Set an agent method.

@@ -20,6 +20,7 @@ import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
+import jadex.mj.core.AbstractModelLoader;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
 import jadex.mj.core.modelinfo.ModelInfo;
@@ -60,9 +61,12 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 		if(mymodel==null)
 		{
 			mymodel = (ProvidedServiceModel)ProvidedServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			model.putFeatureModel(IMjProvidedServiceFeature.class, mymodel);
-			
-			// todo: save model to cache
+			final ProvidedServiceModel fmymodel = mymodel;
+			AbstractModelLoader loader = AbstractModelLoader.getLoader(self.getClass());
+			loader.updateCachedModel(() ->
+			{
+				model.putFeatureModel(IMjProvidedServiceFeature.class, fmymodel);
+			});
 		}
 		
 		// Collect provided services from model (name or type -> provided service info)

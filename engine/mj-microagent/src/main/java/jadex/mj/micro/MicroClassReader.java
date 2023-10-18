@@ -140,7 +140,7 @@ public class MicroClassReader
 		modelinfo.setFilename(SUtil.getClassFileLocation(cma));
 //		System.out.println("mircor: "+src+File.separatorChar+model);
 		modelinfo.setType("micro");//MicroAgentFactory.FILETYPE_MICROAGENT);
-		modelinfo.setStartable(true);
+		//modelinfo.setStartable(true);
 		
 		// todo: Hack! Sets features to have them available during read :-(
 		// Are deleted again when no custom features are set 
@@ -166,8 +166,8 @@ public class MicroClassReader
 			rid = new ResourceIdentifier(new LocalResourceIdentifier(root, url), null);
 		}*/
 		//modelinfo.setResourceIdentifier(rid);
-		modelinfo.setClassloader(classloader);
-		ret.setClassloader(classloader);
+		//modelinfo.setClassloader(classloader);
+		//ret.setClassloader(classloader);
 		
 		// not supported any longer
 //		try

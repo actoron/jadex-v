@@ -6,11 +6,10 @@ import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.modelinfo.IModelInfo;
-import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public class MjMicroAgent	extends MjComponent
 {
-	static protected MicroModelLoader loader = new MicroModelLoader();
+	protected static MicroModelLoader loader = new MicroModelLoader();
 	
 	public static void create(Object pojo)
 	{

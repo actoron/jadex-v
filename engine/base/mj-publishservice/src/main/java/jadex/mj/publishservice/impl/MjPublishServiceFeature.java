@@ -6,6 +6,7 @@ import java.net.URI;
 import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.core.AbstractModelLoader;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.modelinfo.ModelInfo;
@@ -13,6 +14,7 @@ import jadex.mj.feature.execution.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
+import jadex.mj.micro.MicroModelLoader;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.publishservice.IMjPublishServiceFeature;
 import jadex.mj.publishservice.IPublishService;
@@ -45,9 +47,13 @@ public abstract class MjPublishServiceFeature implements IMjLifecycle, IMjPublis
 		if(mymodel==null)
 		{
 			mymodel = (PublishServiceModel)PublishServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			model.putFeatureModel(IMjPublishServiceFeature.class, mymodel);
+			PublishServiceModel fmymodel = mymodel;
 			
-			// todo: save model to cache
+			AbstractModelLoader loader = AbstractModelLoader.getLoader(self.getClass());
+			loader.updateCachedModel(() ->
+			{
+				model.putFeatureModel(IMjPublishServiceFeature.class, fmymodel);
+			});
 		}
 		
 		try

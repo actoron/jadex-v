@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import jadex.common.SUtil;
-import jadex.common.transformation.annotations.Exclude;
 import jadex.mj.core.IErrorReport;
 
 
@@ -48,8 +47,8 @@ public class ModelInfo extends Startable implements IModelInfo
 	/** The results. */
 	//protected List<IArgument> results;
 	
-	/** Flag if startable. */
-	protected boolean startable;
+	///** Flag if startable. */
+	//protected boolean startable;
 	
 	/** The filename. */
 	protected String filename;
@@ -68,7 +67,7 @@ public class ModelInfo extends Startable implements IModelInfo
 	
 	/** The classloader. */
 	// only locally available
-	protected ClassLoader classloader;
+	//protected ClassLoader classloader;
 	
 	/** The required services. */
 	//protected Map<String, RequiredServiceInfo> requiredservices;
@@ -137,10 +136,10 @@ public class ModelInfo extends Startable implements IModelInfo
 		//	this.arguments = SUtil.arrayToList(arguments);
 		//if(results!=null)
 		//	this.results = SUtil.arrayToList(results);
-		this.startable = startable;
+		//this.startable = startable;
 		this.filename = filename;
 		//this.properties = properties!=null? properties: new HashMap<String, Object>();
-		this.classloader = classloader;
+		//this.classloader = classloader;
 		//if(providedservices!=null)
 		//	this.providedservices = SUtil.arrayToList(providedservices);
 		//if(configurations!=null)
@@ -374,11 +373,11 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Is the model startable.
 	 *  @return True, if startable.
-	 */
+	 * /
 	public boolean isStartable()
 	{
 		return startable;
-	}
+	}*/
 	
 	/**
 	 *  Get the model type.
@@ -426,11 +425,11 @@ public class ModelInfo extends Startable implements IModelInfo
 	 *  Return the class loader corresponding to the model.
 	 *  @return The class loader corresponding to the model.
 	 */
-	@Exclude
+	/*@Exclude
 	public ClassLoader getClassLoader()
 	{
 		return classloader;
-	}
+	}*/
 	
 	/**
 	 *  Get the nfproperties.
@@ -634,11 +633,11 @@ public class ModelInfo extends Startable implements IModelInfo
 	/**
 	 *  Set the startable.
 	 *  @param startable The startable to set.
-	 */
+	 * /
 	public void setStartable(boolean startable)
 	{
 		this.startable = startable;
-	}
+	}*/
 
 	/**
 	 *  Set the filename.
@@ -691,11 +690,11 @@ public class ModelInfo extends Startable implements IModelInfo
 	 *  Set the classloader.
 	 *  @param classloader The classloader to set.
 	 */
-	@Exclude
+	/*@Exclude
 	public void setClassloader(ClassLoader classloader)
 	{
 		this.classloader = classloader;
-	}
+	}*/
 	
 	/**
 	 *  Get the required services.

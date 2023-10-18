@@ -41,6 +41,7 @@ import jadex.future.TerminableFuture;
 import jadex.future.TerminableIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.javaparser.SJavaParser;
+import jadex.mj.core.AbstractModelLoader;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.core.ProxyFactory;
@@ -48,6 +49,7 @@ import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.impl.IMjLifecycle;
+import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
@@ -62,6 +64,7 @@ import jadex.mj.feature.providedservice.impl.search.ServiceRegistry;
 import jadex.mj.feature.providedservice.impl.service.impl.BasicService;
 import jadex.mj.feature.providedservice.impl.service.impl.IInternalService;
 import jadex.mj.feature.providedservice.impl.service.impl.IServiceInvocationInterceptor;
+import jadex.mj.feature.providedservice.impl.service.impl.ProvidedServiceModel;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceIdentifier;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationHandler;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.DecouplingInterceptor;
@@ -111,9 +114,12 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		if(mymodel==null)
 		{
 			mymodel = (RequiredServiceModel)RequiredServiceLoader.readFeatureModel(((MjMicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			model.putFeatureModel(IMjRequiredServiceFeature.class, mymodel);
-			
-			// todo: save model to cache
+			final RequiredServiceModel fmymodel = mymodel;
+			AbstractModelLoader loader = AbstractModelLoader.getLoader(self.getClass());
+			loader.updateCachedModel(() ->
+			{
+				model.putFeatureModel(IMjRequiredServiceFeature.class, fmymodel);
+			});
 		}
 		
 		// Required services. (Todo: prefix for capabilities)

@@ -1,6 +1,7 @@
 package jadex.mj.core;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -272,9 +273,9 @@ public abstract class AbstractModelLoader
 			keys[2] = clkey;
 			if(imports!=null)
 				System.arraycopy(imports, 0, keys, 3, imports.length);
-			Tuple	keytuple	= new Tuple(keys);
+			Tuple keytuple = new Tuple(keys);
 			
-			ResourceInfo	info	= null;
+			ResourceInfo info = null;
 			try
 			{
 				cached	= modelcache.get(keytuple);
@@ -346,6 +347,11 @@ public abstract class AbstractModelLoader
 		}
 		
 		return cached;
+	}
+	
+	public synchronized void updateCachedModel(Runnable update)
+	{
+		update.run();
 	}
 	
 	/**
@@ -489,5 +495,19 @@ public abstract class AbstractModelLoader
 		{
 			return exception;
 		}
+	}
+	
+	public static final Map<Class<? extends MjComponent>, AbstractModelLoader> loaders = new HashMap<>(); 
+	
+	public static AbstractModelLoader getLoader(Class<? extends MjComponent> type)
+	{
+		return loaders.get(type);
+	}
+	
+	public static void addLoader(Class<? extends MjComponent> type, AbstractModelLoader loader)
+	{
+		if(loaders.containsKey(type))
+			System.out.println("Loader added more than once for: "+type);
+		loaders.put(type, loader);
 	}
 }

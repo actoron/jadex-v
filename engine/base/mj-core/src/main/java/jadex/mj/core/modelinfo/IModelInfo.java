@@ -116,8 +116,8 @@ public interface IModelInfo
 	/**
 	 *  Is the model startable.
 	 *  @return True, if startable.
-	 */
-	public boolean isStartable();
+	 * /
+	public boolean isStartable();*/
 	
 	/**
 	 *  Get the component type (i.e. kernel).
@@ -256,7 +256,7 @@ public interface IModelInfo
 	 *  Get the kernel-specific model.
 	 *  @return The kernel-specific model when loaded locally, null for remote models.
 	 */
-	public Object	getRawModel();
+	public Object getRawModel();
 	
 	/**
 	 *  Get the features.
