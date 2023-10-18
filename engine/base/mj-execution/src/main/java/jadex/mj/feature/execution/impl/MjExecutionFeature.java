@@ -394,7 +394,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		{
 			ComponentSuspendable	sus	= new ComponentSuspendable();
 			// synchronized because another thread could exit in parallel
-			synchronized(this)
+			synchronized(MjExecutionFeature.this)
 			{
 				if(threads==null)
 				{
@@ -445,7 +445,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 						}
 					}
 					// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
-					synchronized(this)
+					synchronized(MjExecutionFeature.this)
 					{
 						threads.remove(sus);
 					}
@@ -617,16 +617,19 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		//System.out.println("terminate start: "+self.getId()+" "+steps.size());
 		
-		if(threads!=null)
+		// Terminate blocked threads
+		// Do first to unblock futures before setting results later
+		// Use copy as threads remove themselves from set on exit. 
+		ComponentSuspendable[]	mythreads	= null;
+		synchronized(this)
 		{
-			// Terminate blocked threads
-			// Do first to unblock futures before setting results later
-			// Use copy as threads remove themselves from set on exit. 
-			ComponentSuspendable[]	mythreads;
-			synchronized(this)
+			if(threads!=null)
 			{
-				mythreads	= threads.toArray(ComponentSuspendable[]::new);
+					mythreads	= threads.toArray(ComponentSuspendable[]::new);
 			}
+		}
+		if(mythreads!=null)
+		{
 			for(ComponentSuspendable thread: mythreads)
 				thread.abort();
 		}
