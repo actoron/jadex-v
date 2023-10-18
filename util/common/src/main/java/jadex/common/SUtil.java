@@ -3039,12 +3039,12 @@ public class SUtil
 	public static String bytesToString(long bytes)
 	{
 		String ret;
-		if(bytes>0)
+		if(bytes!=0)
 		{
-		    int	unit	= (int)(Math.log10(bytes)/Math.log10(1024));	// 1=bytes, 2=kBytes, ...
+		    int	unit	= (int)(Math.log10(Math.abs(bytes))/Math.log10(1024));	// 1=bytes, 2=kBytes, ...
 		    double	value	= bytes/Math.pow(1024, unit);	// value between 1.0 .. 1023.999...
-		    ret	= value>=100 ? BYTEFORMATTER3.format(value)
-		    	: value>=10 ? BYTEFORMATTER2.format(value)
+		    ret	= Math.abs(value)>=100 ? BYTEFORMATTER3.format(value)
+		    	: Math.abs(value)>=10 ? BYTEFORMATTER2.format(value)
 		    	: BYTEFORMATTER1.format(value);
 		    ret	+= " "+BYTE_UNITS[unit];
 		}

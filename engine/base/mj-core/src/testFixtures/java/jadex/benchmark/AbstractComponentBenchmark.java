@@ -6,53 +6,88 @@ import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
+import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.MjComponent;
 
 /**
  *  Base class for testing component creation.
  */
-public abstract class AbstractComponentCreationBenchmark 
+public abstract class AbstractComponentBenchmark 
 {
 	/** Timeout to cap test execution time (non-static so subclasses can alter it independently). */
 	protected long	TIMEOUT	= 10000;
 	
 	/** Created components are stored for later killing. */
-	protected Collection<MjComponent>	components;
+	protected Collection<ComponentIdentifier>	components;
 	
 	/** Struct to hold measurement data. */
 	protected record Measurement(String name, long time, long mem) {}
 	
 	/**
-	 *  Run the benchmark and print the results.
+	 *  Create a number of agents and afterwards kill all agents.
+	 *  Results are printed to System.out.
 	 *  @param num	How many components to create.
 	 *  @param print	False: Only print overall results.
 	 *  				True: Print additional creation/kill message for each component. 
 	 * 	@param parallel Use multiple threads to issue create and kill commands.
 	 */
-	public void	runBenchmark(int num, boolean print, boolean parallel)
+	public void	runCreationBenchmark(int num, boolean print, boolean parallel)
 	{
+		// Warmup
+		createComponents(num/10, false, parallel);
+		try
+		{
+			killComponents(false, parallel);
+		}
+		catch(UnsupportedOperationException e) {}
+		finally
+		{
+			components	= null;
+		}
+		gc();
+		
+		// Measure creation
 		Measurement	creation	= measure(parallel ? "multi-thread creation" : "creation", () -> createComponents(num, print, parallel));
 
-		printResults(num, creation);
-		
+		// Measure killing
 		try
 		{
 			Measurement	killing	= measure(parallel ? "multi-thread killing" : "killing", () -> killComponents(print, parallel));
 			
-			System.out.println("\nCumulated results:");
+			System.out.println("\nCumulated "+creation.name+" results:");
 			printResults(num, creation);
 			printResults(num, killing);
-			System.out.println();
 		}
 		catch(UnsupportedOperationException e)
 		{
 			System.err.println("TODO: Support kill without execution feature.");
+			System.out.println("\nCumulated "+creation.name+" results:");
+			printResults(num, creation);
 		}
+	}
+
+	/**
+	 *  Create and immediately kill one agent at a time for a given number of agents.
+	 *  Results are printed to System.out.
+	 *  @param num	How many components to create.
+	 *  @param print	False: Only print overall results.
+	 *  				True: Print additional creation/kill message for each component. 
+	 * 	@param parallel Use multiple threads to issue create and kill commands.
+	 */
+	public void	runThroughputBenchmark(int num, boolean print, boolean parallel)
+	{
+		// Warmup
+		createAndKillComponents(num/10, false, parallel);
+		
+		// Measure throughput
+		Measurement	throughput	= measure(parallel ? "multi-thread throughput" : "throughput", () -> createAndKillComponents(num, print, parallel));
+
+		System.out.println("\nCumulated "+throughput.name+" results:");
+		printResults(num, throughput);
 	}
 	
 	/**
-	 *  Called from runBenchmark() to create a number of components.
+	 *  Called from runCreationBenchmark() to create a number of components.
 	 *  Created components should be stored in components field for later killing.
 	 *  @param num	How many components to create.
 	 *  @param print	Print creation message for each component.
@@ -64,7 +99,7 @@ public abstract class AbstractComponentCreationBenchmark
 		try
 		{
 			FutureBarrier<Void>	threadsfinished	= new FutureBarrier<>();
-			FutureBarrier<MjComponent>	compscreated	= new FutureBarrier<>();
+			FutureBarrier<ComponentIdentifier>	compscreated	= new FutureBarrier<>();
 	
 			int	numproc	= parallel ? Runtime.getRuntime().availableProcessors() : 1;
 			Thread[]	thread	= new Thread[numproc];
@@ -77,13 +112,13 @@ public abstract class AbstractComponentCreationBenchmark
 				{
 					for(int i=start; !benchmark.isDone() && i<=num; i+=numproc)
 					{
-						IFuture<MjComponent>	compfut	= createComponent(Integer.toString(i));
+						IFuture<ComponentIdentifier>	compfut	= createComponent(Integer.toString(i));
 						if(print)
 						{
-							compfut.then(comp -> System.out.println("Created: "+comp.getId()));
+							compfut.then(comp -> System.out.println("Created: "+comp));
 						}
 						// HACK!!! future barrier should be multi threaded!?
-						synchronized(AbstractComponentCreationBenchmark.this)
+						synchronized(AbstractComponentBenchmark.this)
 						{
 							compscreated.addFuture(compfut);
 						}
@@ -109,7 +144,7 @@ public abstract class AbstractComponentCreationBenchmark
 	}
 	
 	/**
-	 *  Called from runBenchmark() to kill all created components.
+	 *  Called from runCreationBenchmark() to kill all created components.
 	 *  @param print	Print kill message for each component.
 	 * 	@param parallel Use multiple threads to call IComponent.terminate() for different components
 	 */
@@ -119,12 +154,12 @@ public abstract class AbstractComponentCreationBenchmark
 
 		components.forEach(comp ->
 		{
-			IFuture<Void>	fut	= IComponent.terminate(comp.getId());
+			IFuture<Void>	fut	= IComponent.terminate(comp);
 			killed.addFuture(fut);
 			
 			if(print)
 			{
-				fut.then(v -> System.out.println("Killed: "+comp.getId()));
+				fut.then(v -> System.out.println("Terminated: "+comp));
 			}
 		});
 		
@@ -133,9 +168,66 @@ public abstract class AbstractComponentCreationBenchmark
 	}
 	
 	/**
+	 *  Called from runThroughputBenchmark() to create and immediately kill a number of components one at a time.
+	 *  @param num	How many components to create.
+	 *  @param print	Print creation/kill message for each component.
+	 * 	@param parallel Use one thread for each logical CPU to measure multi-thread throughput.
+	 */
+	protected void createAndKillComponents(int num, boolean print, boolean parallel)
+	{
+		Future<Void>	benchmark	= new Future<>();
+		try
+		{
+			FutureBarrier<Void>	threadsfinished	= new FutureBarrier<>();
+			
+			int	numproc	= parallel ? Runtime.getRuntime().availableProcessors() : 1;
+			Thread[]	thread	= new Thread[numproc];
+			for(int proc=0; proc<numproc; proc++)
+			{
+				int start	= proc+1;
+				Future<Void> threadfut	= new Future<>();
+				threadsfinished.addFuture(threadfut);
+				thread[proc]	= new Thread(() ->
+				{
+					for(int i=start; !benchmark.isDone() && i<=num; i+=numproc)
+					{
+						ComponentIdentifier	comp	= createComponent(Integer.toString(i)).get();
+						if(print)
+						{
+							System.out.println("Created: "+comp);
+						}
+						try
+						{
+							IComponent.terminate(comp).get();
+							if(print)
+							{
+								System.out.println("Terminated: "+comp);
+							}
+						}
+						catch(UnsupportedOperationException e) {}
+					}
+					
+					threadfut.setResult(null);
+				});
+			}
+			for(int i=0; i<numproc; i++)
+				thread[i].start();
+			
+				// All throughput threads are finished
+				threadsfinished.waitForResults().get(TIMEOUT);
+		}
+		finally
+		{
+			// Cleanup threads, if still running.
+			benchmark.setResult(null);
+		}
+	}
+
+	
+	/**
 	 *  Create a component with a given name.
 	 */
-	protected abstract IFuture<MjComponent>	createComponent(String name);
+	protected abstract IFuture<ComponentIdentifier>	createComponent(String name);
 	
 	/**
 	 *  Used in printing result. Override to produce more specific output. 
@@ -150,12 +242,7 @@ public abstract class AbstractComponentCreationBenchmark
 	 */
 	protected Measurement	measure(String name, Runnable benchmark)
 	{
-		System.gc();
-		try
-		{
-			Thread.sleep(500);
-		}
-		catch(InterruptedException e){}
+		gc();
 		
 		long starttime	= System.currentTimeMillis();
 		long startmem	= Runtime.getRuntime().freeMemory();
@@ -164,14 +251,22 @@ public abstract class AbstractComponentCreationBenchmark
 		
 		long endtime	= System.currentTimeMillis();
 		
-		System.gc();
-		try
-		{
-			Thread.sleep(500);
-		}
-		catch(InterruptedException e){}
+		gc();
 		
 		return new Measurement(name, endtime - starttime, Runtime.getRuntime().freeMemory() - startmem);
+	}
+	
+	/**
+	 *  Garbage collect as much as possible.
+	 */
+	protected void gc()
+	{
+		int	num	= 2;
+		for(int i=0; i<num; i++)
+		{
+			try{ Thread.sleep(10); }catch(InterruptedException e){}
+			System.gc();
+		}
 	}
 	
 	/**
