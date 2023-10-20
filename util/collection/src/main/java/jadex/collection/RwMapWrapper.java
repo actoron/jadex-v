@@ -13,7 +13,7 @@ import jadex.common.RwAutoLock;
 /**
  *  Thread-safe wrapper for maps that uses a read/write lock.
  */
-public class RwMapWrapper<K, V> implements IRwMap<K, V>
+public class RwMapWrapper<K, V> implements IRwDataStructure, Map<K, V>
 {
 	protected RwAutoLock rwautolock;
 	
@@ -179,43 +179,11 @@ public class RwMapWrapper<K, V> implements IRwMap<K, V>
 	}
 	
 	/**
-	 *  Locks the read lock for resource-based locking.
-	 */
-	public IAutoLock readLock()
-	{
-		return rwautolock.readLock();
-	}
-	
-	/**
-	 *  Locks the write lock for resource-based locking.
-	 */
-	public IAutoLock writeLock()
-	{
-		return rwautolock.writeLock();
-	}
-	
-	/**
-	 *  Gets the read lock for manual locking.
-	 */
-	public Lock getReadLock()
-	{
-		return rwautolock.getReadLock();
-	}
-	
-	/**
-	 *  Gets the write lock for manual locking.
-	 */
-	public Lock getWriteLock()
-	{
-		return rwautolock.getWriteLock();
-	}
-	
-	/**
-	 *  Gets the internal lock.
+	 *  Gets the internal auto lock.
 	 *  @return The lock.
 	 */
-	public ReadWriteLock getLock()
+	public RwAutoLock getAutoLock()
 	{
-		return rwautolock.getLock();
+		return rwautolock;
 	}
 }
