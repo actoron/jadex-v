@@ -15,7 +15,7 @@ import jadex.common.RwAutoLock;
  */
 public class RwMapWrapper<K, V> implements IRwDataStructure, Map<K, V>
 {
-	protected RwAutoLock rwautolock;
+	private RwAutoLock rwautolock;
 	
 	/** The wrapped map. */
 	protected Map<K, V> map;
