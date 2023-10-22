@@ -1,19 +1,14 @@
 package jadex.mj.core;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
-import java.util.function.Supplier;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.impl.IBootstrapping;
 import jadex.mj.core.impl.IComponentLifecycleManager;
-import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 
 /**
@@ -101,20 +96,7 @@ public interface IComponent
 		}
 	}
 	
-	public static <T extends MjComponent> T	createComponent(Class<T> type, Supplier<T> creator)
-	{
-		List<MjFeatureProvider<Object>>	providers	= new ArrayList<>(SMjFeatureProvider.getProvidersForComponent(type).values());
-		for(int i=providers.size()-1; i>=0; i--)
-		{
-			MjFeatureProvider<Object>	provider	= providers.get(i);
-			if(provider instanceof IBootstrapping)
-			{
-				Supplier<T>	nextcreator	= creator;
-				creator	= () -> ((IBootstrapping)provider).bootstrap(type, nextcreator);
-			}
-		}
-		return creator.get();
-	}
+	
 	
 	/*public static Class<? extends MjComponent> findComponentType(Object pojo)
 	{

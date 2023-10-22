@@ -1,17 +1,21 @@
 package jadex.mj.core;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
+import jadex.mj.core.impl.IBootstrapping;
 import jadex.mj.core.impl.IComponentLifecycleManager;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
@@ -428,5 +432,20 @@ public class MjComponent implements IComponent
 	public ClassLoader getClassLoader()
 	{
 		return this.getClass().getClassLoader();
+	}
+
+	public static <T extends MjComponent> T	createComponent(Class<T> type, Supplier<T> creator)
+	{
+		List<MjFeatureProvider<Object>>	providers	= new ArrayList<>(SMjFeatureProvider.getProvidersForComponent(type).values());
+		for(int i=providers.size()-1; i>=0; i--)
+		{
+			MjFeatureProvider<Object>	provider	= providers.get(i);
+			if(provider instanceof IBootstrapping)
+			{
+				Supplier<T>	nextcreator	= creator;
+				creator	= () -> ((IBootstrapping)provider).bootstrap(type, nextcreator);
+			}
+		}
+		return creator.get();
 	}
 }

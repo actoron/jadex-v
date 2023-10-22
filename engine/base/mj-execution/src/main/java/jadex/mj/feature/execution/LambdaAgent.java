@@ -46,7 +46,7 @@ public class LambdaAgent
 	 */
 	public static void	create(Runnable body, ComponentIdentifier cid)
 	{
-		MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null, cid));
+		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null, cid));
 		IMjExecutionFeature.getExternal(comp).scheduleStep(body);
 	}
 	
@@ -56,7 +56,7 @@ public class LambdaAgent
 	 */
 	public static <T> IFuture<T>	create(Callable<T> body, ComponentIdentifier cid)
 	{
-		MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null, cid));
+		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null, cid));
 		return IMjExecutionFeature.getExternal(comp).scheduleStep(body);
 	}
 	
@@ -66,7 +66,7 @@ public class LambdaAgent
 	 */
 	public static <T> IFuture<T>	create(IThrowingFunction<IComponent, T> body, ComponentIdentifier cid)
 	{
-		MjComponent	comp = IComponent.createComponent(MjComponent.class, () -> new MjComponent(null, cid));
+		MjComponent	comp = MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null, cid));
 		return IMjExecutionFeature.getExternal(comp).scheduleStep(body);
 	}
 }

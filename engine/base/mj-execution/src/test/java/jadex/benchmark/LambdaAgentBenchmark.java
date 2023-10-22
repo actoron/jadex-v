@@ -27,8 +27,7 @@ public class LambdaAgentBenchmark	extends AbstractComponentBenchmark
 		return LambdaAgent.create(comp ->
 		{
 			return comp.getId();
-		});
-//		}, new ComponentIdentifier(name));
+		}, new ComponentIdentifier(name));
 	}
 
 	protected static Stream<Arguments> provideBenchmarkParams() {

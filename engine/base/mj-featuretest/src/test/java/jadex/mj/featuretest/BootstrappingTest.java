@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.featuretest.impl.MjTestFeature2Provider;
 import jadex.mj.featuretest.impl.MjTestLazyFeatureProvider;
@@ -28,7 +27,7 @@ public class BootstrappingTest
 			MjTestFeature2Provider.class.getSimpleName()+"_afterCreate"
 		});
 		
-		IComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
+		MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		
 		assertEquals(expected, bootstraps);
 	}

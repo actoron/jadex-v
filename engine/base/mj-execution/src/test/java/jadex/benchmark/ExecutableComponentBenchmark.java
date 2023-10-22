@@ -9,7 +9,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 
 /**
@@ -26,7 +25,7 @@ public class ExecutableComponentBenchmark	extends AbstractComponentBenchmark
 	@Override
 	protected IFuture<ComponentIdentifier>	createComponent(String name)
 	{
-		return new Future<>(IComponent.createComponent(MjComponent.class,
+		return new Future<>(MjComponent.createComponent(MjComponent.class,
 			() -> new MjComponent(null, new ComponentIdentifier(name))).getId());
 	}
 

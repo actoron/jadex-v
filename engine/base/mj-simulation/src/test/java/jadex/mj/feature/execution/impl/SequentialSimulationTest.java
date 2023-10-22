@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import jadex.mj.core.IComponent;
 import jadex.mj.core.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.simulation.IMjSimulationFeature;
@@ -31,7 +30,7 @@ public class SequentialSimulationTest extends ParallelSimulationTest
 		for(int i=0; i<input.length; i++)
 		{
 			int num	= i;
-			MjComponent	comp	= IComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
+			MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 			sim[i]	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
 			if(i==0)
 			{
