@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.simulation.IMjSimulationFeature;
 import jadex.mj.feature.simulation.impl.MjSlaveSimulationFeature;

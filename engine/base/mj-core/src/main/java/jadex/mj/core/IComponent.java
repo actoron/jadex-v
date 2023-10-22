@@ -7,6 +7,7 @@ import java.util.concurrent.Semaphore;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.impl.IComponentLifecycleManager;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.impl.SMjFeatureProvider;
 
 /**

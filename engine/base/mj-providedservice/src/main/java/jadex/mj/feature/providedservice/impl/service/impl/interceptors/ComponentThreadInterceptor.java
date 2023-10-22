@@ -1,6 +1,6 @@
 package jadex.mj.feature.providedservice.impl.service.impl.interceptors;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 

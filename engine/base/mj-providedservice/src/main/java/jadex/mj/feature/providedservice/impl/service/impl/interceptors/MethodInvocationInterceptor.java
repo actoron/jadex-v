@@ -2,12 +2,12 @@ package jadex.mj.feature.providedservice.impl.service.impl.interceptors;
 
 import java.lang.reflect.InvocationTargetException;
 
+import jadex.bytecode.ProxyFactory;
 import jadex.common.ErrorException;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.ProxyFactory;
 import jadex.mj.feature.execution.StepAborted;
 import jadex.mj.feature.providedservice.impl.service.impl.ISwitchCall;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceCall;

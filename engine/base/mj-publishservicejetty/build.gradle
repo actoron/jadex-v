@@ -22,7 +22,7 @@ dependencies
     implementation 'jadex:mj-requiredservice:5.0.0'
     implementation 'jadex:mj-publishservice:5.0.0'
     implementation 'jadex:mj-providedservice:5.0.0'
-	implementation 'jadex:serialization:5.0.0'
+	implementation 'jadex:mj-serialization:5.0.0'
 	
 	api 'org.eclipse.jetty:jetty-server:11.0.6'
 	api 'org.eclipse.jetty.websocket:websocket-jetty-server:11.0.6'

@@ -1,6 +1,6 @@
 package jadex.mj.feature.execution;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.impl.MjExecutionFeature;
 
 /**

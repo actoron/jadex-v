@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import jadex.bytecode.ProxyFactory;
 import jadex.common.ClassInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -22,8 +23,7 @@ import jadex.future.Future;
 import jadex.future.FutureHelper;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.mj.core.MjComponent;
-import jadex.mj.core.ProxyFactory;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.annotation.FutureReturnType;

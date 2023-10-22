@@ -8,7 +8,7 @@ import java.util.Iterator;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.annotation.Testable;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.featuretest.impl.MjTestFeature1NewProvider;
 import jadex.mj.featuretest.impl.MjTestFeature2NewProvider;

@@ -2,8 +2,8 @@ package jadex.mj.micro.impl;
 
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IComponentLifecycleManager;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.MicroClassReader;

@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
-import jadex.mj.core.MjComponent;
-
 /**
  *  Static helper methods for dealing with features.
  */

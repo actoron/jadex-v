@@ -3,7 +3,7 @@ package jadex.mj.micro;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.modelinfo.IModelInfo;
 
 public class MjMicroAgent	extends MjComponent

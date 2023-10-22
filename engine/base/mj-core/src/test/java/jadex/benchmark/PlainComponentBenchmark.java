@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 
 /**
  *  Benchmark MjComponent creation without any features.

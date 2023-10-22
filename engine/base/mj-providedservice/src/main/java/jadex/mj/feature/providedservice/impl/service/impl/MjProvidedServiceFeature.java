@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
+import jadex.bytecode.ProxyFactory;
 import jadex.common.IValueFetcher;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
@@ -21,8 +22,7 @@ import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.AbstractModelLoader;
-import jadex.mj.core.MjComponent;
-import jadex.mj.core.ProxyFactory;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;

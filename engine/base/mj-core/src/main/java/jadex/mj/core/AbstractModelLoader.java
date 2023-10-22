@@ -9,6 +9,7 @@ import jadex.collection.LRU;
 import jadex.common.ResourceInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple;
+import jadex.mj.core.impl.MjComponent;
 
 /**
  *  Loader for managing models, loaded from disc and kept in cache.

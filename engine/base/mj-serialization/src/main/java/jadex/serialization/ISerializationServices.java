@@ -5,7 +5,7 @@ import java.util.Map;
 
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 
 /**
  *  Functionality for managing serialization.

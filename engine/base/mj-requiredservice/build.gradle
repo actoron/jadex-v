@@ -13,13 +13,14 @@ repositories
 dependencies
 {
 	implementation 'jadex:common:5.0.0'
+	implementation 'jadex:bytecode:5.0.0'
 	implementation 'jadex:collection:5.0.0'
 	implementation 'jadex:javaparser:5.0.0'
 	implementation 'jadex:mj-core:5.0.0'
 	implementation 'jadex:mj-execution:5.0.0'
 	implementation 'jadex:mj-microagent:5.0.0'
     implementation 'jadex:mj-providedservice:5.0.0'
-	implementation 'jadex:serialization:5.0.0'
+	implementation 'jadex:mj-serialization:5.0.0'
 	implementation 'net.cinnom:nano-cuckoo:3.0.2'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

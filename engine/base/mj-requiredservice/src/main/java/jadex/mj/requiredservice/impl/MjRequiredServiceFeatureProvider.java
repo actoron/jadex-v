@@ -1,6 +1,6 @@
 package jadex.mj.requiredservice.impl;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.micro.MjMicroAgent;

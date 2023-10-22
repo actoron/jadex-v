@@ -10,7 +10,7 @@ import jadex.common.SReflect;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Security;

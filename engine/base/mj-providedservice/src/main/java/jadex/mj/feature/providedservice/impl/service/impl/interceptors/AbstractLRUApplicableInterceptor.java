@@ -3,7 +3,7 @@ package jadex.mj.feature.providedservice.impl.service.impl.interceptors;
 import java.lang.reflect.Method;
 
 import jadex.collection.LRU;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 
 /**

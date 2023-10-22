@@ -8,7 +8,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.AbstractModelLoader;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;

@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.featuretest.impl.MjTestFeature2Provider;
 import jadex.mj.featuretest.impl.MjTestLazyFeatureProvider;
 

@@ -1,4 +1,4 @@
-package jadex.mj.core;
+package jadex.mj.core.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,10 +16,11 @@ import java.util.function.Supplier;
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
-import jadex.mj.core.impl.IBootstrapping;
-import jadex.mj.core.impl.IComponentLifecycleManager;
-import jadex.mj.core.impl.MjFeatureProvider;
-import jadex.mj.core.impl.SMjFeatureProvider;
+import jadex.mj.core.ComponentIdentifier;
+import jadex.mj.core.IComponent;
+import jadex.mj.core.IComponentListener;
+import jadex.mj.core.IExternalAccess;
+import jadex.mj.core.IParameterGuesserProvider;
 import jadex.mj.core.modelinfo.IModelInfo;
 import jadex.mj.core.modelinfo.ModelInfo;
 

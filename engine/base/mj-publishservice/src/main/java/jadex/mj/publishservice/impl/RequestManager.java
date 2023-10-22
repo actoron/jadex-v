@@ -47,7 +47,7 @@ import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.annotation.ParameterInfo;

@@ -2,8 +2,8 @@ package jadex.mj.featuretest.impl;
 
 import java.util.function.Supplier;
 
-import jadex.mj.core.MjComponent;
 import jadex.mj.core.impl.IBootstrapping;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.featuretest.BootstrappingTest;
 import jadex.mj.featuretest.IMjTestFeature2;

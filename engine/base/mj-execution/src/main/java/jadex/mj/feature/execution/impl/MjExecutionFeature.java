@@ -28,7 +28,7 @@ import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.StepAborted;

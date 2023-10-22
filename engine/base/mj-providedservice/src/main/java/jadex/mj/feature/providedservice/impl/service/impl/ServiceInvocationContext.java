@@ -3,14 +3,13 @@ package jadex.mj.feature.providedservice.impl.service.impl;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
+import jadex.bytecode.ProxyFactory;
 import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.ProxyFactory;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 
 /**

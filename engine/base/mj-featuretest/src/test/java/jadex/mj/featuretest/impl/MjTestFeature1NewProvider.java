@@ -1,6 +1,6 @@
 package jadex.mj.featuretest.impl;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.featuretest.IMjTestFeature1;
 

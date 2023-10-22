@@ -1,6 +1,6 @@
 package jadex.serialization;
 
-import jadex.mj.core.ProxyFactory;
+import jadex.bytecode.ProxyFactory;
 
 
 /**

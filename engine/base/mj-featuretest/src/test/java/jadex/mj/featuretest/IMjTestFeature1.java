@@ -1,6 +1,6 @@
 package jadex.mj.featuretest;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 
 public interface IMjTestFeature1
 {

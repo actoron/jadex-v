@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jadex.future.IFuture;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.publishservice.IPublishService;
 import jadex.mj.publishservice.impl.MjPublishServiceFeature;

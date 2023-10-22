@@ -1,6 +1,6 @@
 package jadex.mj.publishservicejetty.impl;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.publishservice.IMjPublishServiceFeature;

@@ -20,7 +20,7 @@ import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.TransformProcessor;
 import jadex.common.transformation.traverser.Traverser;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.serialization.codecs.GZIPCodec;
 import jadex.serialization.codecs.LZ4Codec;
 import jadex.serialization.codecs.SnappyCodec;

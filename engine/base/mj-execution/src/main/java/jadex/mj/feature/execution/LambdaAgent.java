@@ -6,7 +6,7 @@ import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingFunction;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 
 /**
  *  Create minimal components, just from a lambda function.

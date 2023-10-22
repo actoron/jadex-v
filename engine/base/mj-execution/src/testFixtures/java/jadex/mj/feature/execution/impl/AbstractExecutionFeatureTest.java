@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
 public abstract class AbstractExecutionFeatureTest

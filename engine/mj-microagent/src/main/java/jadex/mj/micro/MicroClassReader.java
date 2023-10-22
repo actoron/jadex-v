@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jadex.bytecode.ProxyFactory;
 import jadex.common.Boolean3;
 import jadex.common.ClassInfo;
 import jadex.common.FieldInfo;
@@ -30,7 +31,6 @@ import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.mj.core.ProxyFactory;
 import jadex.mj.core.ServiceCallInfo;
 import jadex.mj.core.annotation.NameValue;
 import jadex.mj.core.annotation.OnEnd;

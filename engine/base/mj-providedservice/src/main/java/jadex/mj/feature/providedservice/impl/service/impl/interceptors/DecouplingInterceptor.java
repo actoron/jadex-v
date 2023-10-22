@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 
+import jadex.bytecode.ProxyFactory;
 import jadex.collection.LRU;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
@@ -25,8 +26,7 @@ import jadex.common.transformation.traverser.SCloner;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.MjComponent;
-import jadex.mj.core.ProxyFactory;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.annotation.Reference;

@@ -1,7 +1,5 @@
 package jadex.mj.core.impl;
 
-import jadex.mj.core.MjComponent;
-
 /**
  *  A feature providers is loaded from the classpath and adds a specific feature to components.
  */

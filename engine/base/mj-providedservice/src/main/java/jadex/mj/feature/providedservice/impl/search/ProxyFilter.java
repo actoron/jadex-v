@@ -1,8 +1,8 @@
 package jadex.mj.feature.providedservice.impl.search;
 
+import jadex.bytecode.ProxyFactory;
 import jadex.future.IFuture;
 import jadex.mj.core.IAsyncFilter;
-import jadex.mj.core.ProxyFactory;
 
 /**
  *  Test if a class is a remote proxy.

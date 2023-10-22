@@ -7,7 +7,7 @@ import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.impl.search.ServiceQuery;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
