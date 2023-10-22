@@ -1,6 +1,5 @@
 package jadex.micro.example.helloworld;
 
-import jadex.common.SUtil;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.annotation.OnEnd;
@@ -141,7 +140,7 @@ public class AgentCreationAgent
 		//agent.getFeature(IArgumentsResultsFeature.class).getResults().put("microcreationtime", new Tuple(""+pera, "s"));
 		//agent.getFeature(IArgumentsResultsFeature.class).getResults().put("microkillingtime", new Tuple(""+killpera, "s"));
 		//agent.getFeature(IArgumentsResultsFeature.class).getResults().put("micromem", new Tuple(""+upera, "kb"));
-		agent.terminate().get();
+		agent.terminate();
 	}
 	
 	/**

@@ -2,18 +2,17 @@ package jadex.mj.core;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
-import jadex.future.IFuture;
+import jadex.mj.core.impl.IComponentLifecycleManager;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.core.impl.SMjFeatureProvider;
 import jadex.mj.core.modelinfo.IModelInfo;
@@ -24,7 +23,7 @@ import jadex.mj.core.modelinfo.ModelInfo;
  */
 public class MjComponent implements IComponent
 {
-	protected static Map<ComponentIdentifier, IComponent> components = Collections.synchronizedMap(new HashMap<ComponentIdentifier, IComponent>());
+	protected static Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
 	
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
@@ -46,7 +45,7 @@ public class MjComponent implements IComponent
 	protected IExternalAccess access;
 	
 	/** The external access supplier. */
-	protected static Function<Object, IExternalAccess> accessfactory;
+	protected static Function<MjComponent, IExternalAccess> accessfactory;
 	
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
@@ -83,24 +82,39 @@ public class MjComponent implements IComponent
 	public static void addComponent(IComponent comp)
 	{
 		//System.out.println("added: "+comp.getId());
-		if(components.containsKey(comp.getId()))
-			throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId());
-		components.put(comp.getId(), comp);
+		synchronized(components)
+		{
+			if(components.containsKey(comp.getId()))
+				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId());
+			components.put(comp.getId(), comp);
+		}
 		notifyEventListener(COMPONENT_ADDED, comp.getId());
 	}
 	
 	public static void removeComponent(ComponentIdentifier cid)
 	{
-		components.remove(cid);
+		boolean last;
+		synchronized(components)
+		{
+			components.remove(cid);
+			last	= components.isEmpty();
+		}
 		notifyEventListener(COMPONENT_REMOVED, cid);
-		if(components.isEmpty())
+		if(last)
 			notifyEventListener(COMPONENT_LASTREMOVED, cid);
 //		System.out.println("size: "+components.size()+" "+cid);
 	}
 	
+	/**
+	 *  Get a running component.
+	 *  @throws IllegalArgumentException when the component does not exist.
+	 */
 	public static IComponent getComponent(ComponentIdentifier cid)
 	{
-		return components.get(cid);
+		synchronized(components)
+		{
+			return components.get(cid);
+		}
 	}
 	
 	public static void notifyEventListener(String type, ComponentIdentifier cid)
@@ -198,9 +212,17 @@ public class MjComponent implements IComponent
 	/**
 	 *  Terminate the component.
 	 */
-	public IFuture<Void> terminate()
+	public void	terminate()
 	{
-		return IComponent.terminate(id);
+		Map<Class<Object>, MjFeatureProvider<Object>> provs = SMjFeatureProvider.getProvidersForComponent((Class<? extends MjComponent>)getClass());
+		Optional<IComponentLifecycleManager> opt = provs.values().stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
+		if(opt.isPresent())
+		{
+			IComponentLifecycleManager lm =  opt.get();
+			lm.terminate(this);
+//			return;
+		}
+//		throw new UnsupportedOperationException("No termination code for component: "+getId());
 	}
 	
 	protected void putFeature(Class<Object> type, Object feature)
@@ -374,30 +396,6 @@ public class MjComponent implements IComponent
 				access = new IExternalAccess() 
 				{
 					@Override
-					public <T> IFuture<T> scheduleStep(Callable<T> step) 
-					{
-						throw new UnsupportedOperationException("Missing execution feature");
-					}
-					
-					@Override
-					public void scheduleStep(Runnable step) 
-					{
-						throw new UnsupportedOperationException("Missing execution feature");
-					}
-					
-					@Override
-					public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
-					{
-						throw new UnsupportedOperationException("Missing execution feature");
-					}
-					
-					@Override
-					public void scheduleStep(IThrowingConsumer<IComponent> step)
-					{
-						throw new UnsupportedOperationException("Missing execution feature");
-					}
-					
-					@Override
 					public ComponentIdentifier getId() 
 					{
 						return MjComponent.this.getId();
@@ -415,55 +413,14 @@ public class MjComponent implements IComponent
 	 */
 	public IExternalAccess getExternalAccess(ComponentIdentifier cid)
 	{
-		IExternalAccess access = null;
-		if(accessfactory!=null)
-		{
-			access = accessfactory.apply(cid);
-		}
-		else
-		{
-			access = new IExternalAccess() 
-			{
-				@Override
-				public <T> IFuture<T> scheduleStep(Callable<T> step) 
-				{
-					throw new UnsupportedOperationException("Missing execution feature");
-				}
-				
-				@Override
-				public void scheduleStep(Runnable step) 
-				{
-					throw new UnsupportedOperationException("Missing execution feature");
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
-				{
-					throw new UnsupportedOperationException("Missing execution feature");
-				}
-				
-				@Override
-				public void scheduleStep(IThrowingConsumer<IComponent> step)
-				{
-					throw new UnsupportedOperationException("Missing execution feature");
-				}
-				
-				@Override
-				public ComponentIdentifier getId() 
-				{
-					return MjComponent.this.getId();
-				}
-			};
-		}
-		
-		return access;
+		return MjComponent.getComponent(cid).getExternalAccess();
 	}
 	
 	/**
 	 *  Set the external access factory.
 	 *  @param factory The factory.
 	 */
-	public static void setExternalAccessFactory(Function<Object, IExternalAccess> factory)
+	public static void setExternalAccessFactory(Function<MjComponent, IExternalAccess> factory)
 	{
 		accessfactory = factory;
 	}

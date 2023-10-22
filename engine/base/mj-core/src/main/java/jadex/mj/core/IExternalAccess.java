@@ -17,29 +17,50 @@ public interface IExternalAccess
 	public ComponentIdentifier getId();
 	
 	/**
+	 *  Check if this component allows the execution of steps.
+	 *  Otherwise scheduleStep(...) methods with throw UnsupportedOperationException
+	 */
+	public default boolean	isExecutable()
+	{
+		return false;
+	}
+	
+	/**
 	 *  Schedule a step to be run on the component.
 	 *  @param step	A step that is executed via the {@link Runnable#run()} method.
 	 */
-	public void scheduleStep(Runnable step);
+	public default void scheduleStep(Runnable step)
+	{
+		throw new UnsupportedOperationException("Missing execution feature");
+	}
 	
 	/**
 	 *  Schedule a step that provides a result.
 	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public <T> IFuture<T> scheduleStep(Callable<T> step);
+	public default <T> IFuture<T> scheduleStep(Callable<T> step)
+	{
+		throw new UnsupportedOperationException("Missing execution feature");
+	}
 	
 	/**
 	 *  Schedule a step that provides a result.
 	 *  @param step	A step that is executed via the {@link IThrowingConsumer#accept()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public void scheduleStep(IThrowingConsumer<IComponent> step);
+	public default void scheduleStep(IThrowingConsumer<IComponent> step)
+	{
+		throw new UnsupportedOperationException("Missing execution feature");
+	}
 	
 	/**
 	 *  Schedule a step that provides a result.
 	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step);
+	public default <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
+	{
+		throw new UnsupportedOperationException("Missing execution feature");
+	}
 }

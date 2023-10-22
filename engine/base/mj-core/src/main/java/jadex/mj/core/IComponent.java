@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
@@ -57,7 +56,7 @@ public interface IComponent
 	/**
 	 *  Terminate the component.
 	 */
-	public IFuture<Void> terminate();
+	public void terminate();
 	
 	//-------- static part for generic component creation --------
 	
@@ -202,33 +201,31 @@ public interface IComponent
 	
 	public static IFuture<Void> terminate(ComponentIdentifier cid)
 	{
-		Future<Void> ret = new Future<Void>();
+		IFuture<Void> ret;
 		
-		IComponent comp = MjComponent.getComponent(cid);
-		if(comp!=null)
+		try
 		{
+			IComponent comp = MjComponent.getComponent(cid);
+			IExternalAccess	exta	= comp.getExternalAccess();
 			MjComponent.removeComponent(cid);
-			comp.getExternalAccess().scheduleStep(agent ->
+			if(exta.isExecutable())
 			{
-				boolean terminated = false;
-				
-				Map<Class<Object>, MjFeatureProvider<Object>> provs = SMjFeatureProvider.getProvidersForComponent((Class<? extends MjComponent>)agent.getClass());
-				Optional<IComponentLifecycleManager> opt = provs.values().stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
-				if(opt.isPresent())
+				ret	= exta.scheduleStep(icomp ->
 				{
-					IComponentLifecycleManager lm =  opt.get();
-					lm.terminate(agent);
-					terminated = true;
-					ret.setResult(null);
-				}
-				
-				if(!terminated)
-					ret.setException(new UnsupportedOperationException("No termination code for component: "+cid));
-			});
+					icomp.terminate();
+					return (Void)null;
+				});
+			}
+			else
+			{
+				// Hack!!! Concurrency issue?
+				comp.terminate();
+				ret	= IFuture.DONE;
+			}
 		}
-		else
+		catch(Exception e)
 		{
-			ret.setException(new IllegalArgumentException("Component not found: "+cid));
+			ret	= new Future<>(e);
 		}
 		
 		return ret;

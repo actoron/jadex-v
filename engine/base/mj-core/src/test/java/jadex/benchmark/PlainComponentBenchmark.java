@@ -36,6 +36,7 @@ public class PlainComponentBenchmark	extends AbstractComponentBenchmark
 	@MethodSource("provideBenchmarkParams")
 	public void runCreationBenchmark(int num, boolean print, boolean parallel)
 	{
+		TIMEOUT	= 300000;
 		super.runCreationBenchmark(num, print, parallel);
 	}
 

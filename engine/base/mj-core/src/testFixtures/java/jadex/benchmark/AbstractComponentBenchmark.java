@@ -35,35 +35,18 @@ public abstract class AbstractComponentBenchmark
 	{
 		// Warmup
 		createComponents(num/10, false, parallel);
-		try
-		{
-			killComponents(false, parallel);
-		}
-		catch(UnsupportedOperationException e) {}
-		finally
-		{
-			components	= null;
-		}
+		killComponents(false, parallel);
 		gc();
 		
 		// Measure creation
 		Measurement	creation	= measure(parallel ? "multi-thread creation" : "creation", () -> createComponents(num, print, parallel));
 
 		// Measure killing
-		try
-		{
-			Measurement	killing	= measure(parallel ? "multi-thread killing" : "killing", () -> killComponents(print, parallel));
-			
-			System.out.println("\nCumulated "+creation.name+" results:");
-			printResults(num, creation);
-			printResults(num, killing);
-		}
-		catch(UnsupportedOperationException e)
-		{
-			System.err.println("TODO: Support kill without execution feature.");
-			System.out.println("\nCumulated "+creation.name+" results:");
-			printResults(num, creation);
-		}
+		Measurement	killing	= measure(parallel ? "multi-thread killing" : "killing", () -> killComponents(print, parallel));
+		
+		System.out.println("\nCumulated "+creation.name+" results:");
+		printResults(num, creation);
+		printResults(num, killing);
 	}
 
 	/**
@@ -110,21 +93,28 @@ public abstract class AbstractComponentBenchmark
 				threadsfinished.addFuture(threadfut);
 				thread[proc]	= new Thread(() ->
 				{
-					for(int i=start; !benchmark.isDone() && i<=num; i+=numproc)
+					try
 					{
-						IFuture<ComponentIdentifier>	compfut	= createComponent(Integer.toString(i));
-						if(print)
+						for(int i=start; !benchmark.isDone() && i<=num; i+=numproc)
 						{
-							compfut.then(comp -> System.out.println("Created: "+comp));
+							IFuture<ComponentIdentifier>	compfut	= createComponent(Integer.toString(i));
+							if(print)
+							{
+								compfut.then(comp -> System.out.println("Created: "+comp));
+							}
+							// HACK!!! future barrier should be multi threaded!?
+							synchronized(AbstractComponentBenchmark.this)
+							{
+								compscreated.addFuture(compfut);
+							}
 						}
-						// HACK!!! future barrier should be multi threaded!?
-						synchronized(AbstractComponentBenchmark.this)
-						{
-							compscreated.addFuture(compfut);
-						}
+						
+						threadfut.setResult(null);
 					}
-					
-					threadfut.setResult(null);
+					catch(Exception e)
+					{
+						threadfut.setException(e);
+					}
 				});
 			}
 			for(int i=0; i<numproc; i++)
@@ -154,12 +144,19 @@ public abstract class AbstractComponentBenchmark
 
 		components.forEach(comp ->
 		{
-			IFuture<Void>	fut	= IComponent.terminate(comp);
-			killed.addFuture(fut);
-			
-			if(print)
+			try
 			{
-				fut.then(v -> System.out.println("Terminated: "+comp));
+				IFuture<Void>	fut	= IComponent.terminate(comp);
+				killed.addFuture(fut);
+				
+				if(print)
+				{
+					fut.then(v -> System.out.println("Terminated: "+comp));
+				}
+			}
+			catch(UnsupportedOperationException e)
+			{
+				// TODO: terminate for non-executable componets?
 			}
 		});
 		
@@ -204,7 +201,10 @@ public abstract class AbstractComponentBenchmark
 								System.out.println("Terminated: "+comp);
 							}
 						}
-						catch(UnsupportedOperationException e) {}
+						catch(UnsupportedOperationException e)
+						{
+							// TODO: terminate for non-executable componets?
+						}
 					}
 					
 					threadfut.setResult(null);
