@@ -66,7 +66,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		sim.waitForDelay(2000).then((v) -> results.add("A"));
 		sim.waitForDelay(1000).then((v) -> results.add("B"));
 		sim.start();
-		sim.waitForDelay(3000).get(1000);
+		sim.waitForDelay(4000).get(1000);
 		assertEquals(Arrays.asList("B", "A"), results);
 	}
 
