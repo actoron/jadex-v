@@ -68,6 +68,12 @@ public class MjExecutionFeatureProvider extends MjFeatureProvider<IMjExecutionFe
 				}
 				
 				@Override
+				public boolean isExecutable()
+				{
+					return true;
+				}
+				
+				@Override
 				public <T> IFuture<T> scheduleStep(Callable<T> step) 
 				{
 					return comp.getFeature(IMjExecutionFeature.class).scheduleStep(step);
