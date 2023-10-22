@@ -1,8 +1,6 @@
 package jadex.mj.core;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -55,24 +53,23 @@ public interface IComponent
 	
 	//-------- static part for generic component creation --------
 	
-	public static final SMjFeatureProvider dummy = new SMjFeatureProvider();
+//	public static final SMjFeatureProvider dummy = new SMjFeatureProvider();
 	
-	public static final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
 	public static final String COMPONENT_ADDED = "component_added";
 	public static final String COMPONENT_REMOVED = "component_removed";
 	public static final String COMPONENT_LASTREMOVED = "component_lastremoved";
 
 	public static void addComponentListener(IComponentListener listener, String... types)
 	{
-		synchronized(IComponent.class)
+		synchronized(MjComponent.listeners)
 		{	
 			for(String type: types)
 			{
-				Set<IComponentListener> ls = listeners.get(type);
+				Set<IComponentListener> ls = MjComponent.listeners.get(type);
 				if(ls==null)
 				{
 					ls = new HashSet<IComponentListener>();
-					listeners.put(type, ls);
+					MjComponent.listeners.put(type, ls);
 				}
 				ls.add(listener);
 			}
@@ -81,16 +78,16 @@ public interface IComponent
 	
 	public static void removeComponentListener(IComponentListener listener, String... types)
 	{
-		synchronized(IComponent.class)
+		synchronized(MjComponent.listeners)
 		{
 			for(String type: types)
 			{
-				Set<IComponentListener> ls = listeners.get(type);
+				Set<IComponentListener> ls = MjComponent.listeners.get(type);
 				if(ls!=null)
 				{
 					ls.remove(listener);
 					if(ls.isEmpty())
-						listeners.remove(type);
+						MjComponent.listeners.remove(type);
 				}
 			}
 		}

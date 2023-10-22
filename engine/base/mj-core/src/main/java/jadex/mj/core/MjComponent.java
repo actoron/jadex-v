@@ -3,6 +3,7 @@ package jadex.mj.core;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,6 +48,8 @@ public class MjComponent implements IComponent
 	
 	/** The external access. */
 	protected IExternalAccess access;
+
+	public static final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
 	
 	/** The external access supplier. */
 	protected static Function<MjComponent, IExternalAccess> accessfactory;
@@ -125,9 +128,9 @@ public class MjComponent implements IComponent
 	{
 		Set<IComponentListener> mylisteners = null;
 		
-		synchronized(IComponent.class)
+		synchronized(listeners)
 		{
-			Set<IComponentListener> ls = listeners.get(type);
+			Set<IComponentListener> ls = MjComponent.listeners.get(type);
 			if(ls!=null)
 				mylisteners = new HashSet<IComponentListener>(ls);
 		}
