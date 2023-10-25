@@ -5,11 +5,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collections;
 
 import jadex.common.FieldInfo;
 import jadex.common.IParameterGuesser;
-import jadex.common.IValueFetcher;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -25,7 +23,6 @@ import jadex.mj.micro.InjectionInfoHolder;
 import jadex.mj.micro.MicroModel;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.model.IMjModelFeature;
-import jadex.mj.model.IParameterGuesserProvider;
 import jadex.mj.model.annotation.OnEnd;
 import jadex.mj.model.annotation.OnStart;
 
