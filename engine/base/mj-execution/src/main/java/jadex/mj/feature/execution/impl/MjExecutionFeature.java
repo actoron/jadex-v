@@ -35,9 +35,40 @@ import jadex.mj.feature.execution.StepAborted;
 
 public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecutionFeature
 {
-	public static ExecutorService EXECUTOR;
+	/** Shared executor service for all components. */
+	protected static final ExecutorService EXECUTOR;
+	
+	/** Flag to indicate that virtual threads are used. */
+	public static final boolean	VIRTUAL_THREADS;
+	
+	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<MjExecutionFeature>	LOCAL	= new ThreadLocal<>();
-//	public static final ScopedValue<MjExecutionFeature> LOCAL = ScopedValue.newInstance();
+
+	static
+	{
+		ExecutorService	exe;
+		boolean	virtual;
+		try
+		{
+			//EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
+			exe	= (ExecutorService)Executors.class.getMethod("newVirtualThreadPerTaskExecutor").invoke(null);
+			virtual	= true;
+		}
+		catch(NoSuchMethodException e)
+		{
+			exe = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+			virtual	= false;
+		}
+		catch(Exception e)
+		{
+			throw SUtil.throwUnchecked(e);
+		}
+
+		System.out.println(virtual ? "Using virtual threads :-)" : "Using OS threads :-(");
+
+		EXECUTOR	= exe;
+		VIRTUAL_THREADS	= virtual;
+	}
 
 	protected Queue<Runnable>	steps	= new ArrayDeque<>(4);
 	protected boolean	executing;
@@ -47,35 +78,6 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected MjComponent	self	= null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
-	
-	protected static ExecutorService getExecutor()
-	{
-		if(EXECUTOR==null)
-		{
-			synchronized(MjExecutionFeature.class)
-			{
-				if(EXECUTOR==null)
-				{
-					try
-					{
-						//EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
-						EXECUTOR	= (ExecutorService)Executors.class.getMethod("newVirtualThreadPerTaskExecutor").invoke(null);
-						System.out.println("Using virtual threads :-)");
-					}
-					catch(NoSuchMethodException e)
-					{
-						System.out.println("Using OS threads :-(");
-						EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
-					}
-					catch(Exception e)
-					{
-						throw SUtil.throwUnchecked(e);
-					}
-				}
-			}
-		}
-		return EXECUTOR;
-	}
 	
 	@Override
 	public MjComponent getComponent()
@@ -105,10 +107,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		
 		if(startnew)
 		{
-			if(runner==null)
-				runner	= new ThreadRunner();
-			runTask(runner);
-			//THREADPOOL.execute(runner);
+			restart();
 		}
 	}
 	
@@ -473,10 +472,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	
 			if(startnew)
 			{
-				if(runner==null)
-					runner	= new ThreadRunner();
-				//THREADPOOL.execute(runner);#
-				runTask(runner);
+				restart();
 			}
 			
 			beforeBlock();
@@ -747,19 +743,14 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 		}
 	}
 	
-	public void runTask(Runnable task)
+	/**
+	 *  (Re-)Start the execution thread.
+	 */
+	protected void restart()
 	{
-		getExecutor().execute(task);
-		/*if(THREADPOOL!=null)
-		{
-			THREADPOOL.execute(runner);
-		}
-		else
-		{
-			String name = self!=null? self.getId().getLocalName(): "bootstrap";
-			//Thread.ofVirtual().name(name).start(runner);
-			VIRTEXECUTOR.execute(runner);
-		}*/
+		if(runner==null)
+			runner	= new ThreadRunner();
+		EXECUTOR.execute(runner);
 	}
 	
 	protected boolean saveEndStep(Object res, Future<Object> fut)

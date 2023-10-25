@@ -285,7 +285,7 @@ public abstract class AbstractComponentBenchmark
 		
 		System.out.println(name + " " + measurement.name + " needed "+dur+" secs. "
 				+ "Per "+lname+": "+dpera+" millisec. "
-				+ "Corresponds to "+(1000/dpera)+" "+lname+"s per sec.");
+				+ "Corresponds to "+(int)(1000/dpera)+" "+lname+"s per sec.");
 		System.out.println(name + " " + measurement.name + " used "+SUtil.bytesToString(mem)+". "
 				+ "Per "+lname+": "+SUtil.bytesToString(mpera)+".");
 	}
