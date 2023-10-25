@@ -20,7 +20,7 @@ public class PlainComponentBenchmark	extends AbstractComponentBenchmark
 	protected IFuture<ComponentIdentifier>	createComponent(String name)
 	{
 		return new Future<>(MjComponent.createComponent(MjComponent.class,
-			() -> new MjComponent(null, new ComponentIdentifier(name))).getId());
+			() -> new MjComponent(new ComponentIdentifier(name))).getId());
 	}
 
 	protected static Stream<Arguments> provideBenchmarkParams() {

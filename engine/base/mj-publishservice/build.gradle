@@ -19,6 +19,7 @@ dependencies
 	implementation 'jadex:traverser:5.0.0'
 	implementation 'jadex:javaparser:5.0.0'
 	implementation 'jadex:mj-core:5.0.0'
+	implementation 'jadex:mj-model:5.0.0'
 	implementation 'jadex:mj-execution:5.0.0'
 	implementation 'jadex:mj-microagent:5.0.0'
     implementation 'jadex:mj-requiredservice:5.0.0'

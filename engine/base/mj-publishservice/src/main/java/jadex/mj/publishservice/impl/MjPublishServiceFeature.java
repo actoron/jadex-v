@@ -8,13 +8,13 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.AbstractModelLoader;
 import jadex.mj.core.IComponent;
+import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.impl.IMjLifecycle;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.micro.MicroModelLoader;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.publishservice.IMjPublishServiceFeature;
 import jadex.mj.publishservice.IPublishService;
@@ -41,7 +41,7 @@ public abstract class MjPublishServiceFeature implements IMjLifecycle, IMjPublis
 	{
 		Future<Void> ret = new Future<Void>();
 		
-		ModelInfo model = (ModelInfo)self.getModel();
+		ModelInfo model = (ModelInfo)self.getFeature(IMjModelFeature.class).getModel();
 		
 		PublishServiceModel mymodel = (PublishServiceModel)model.getFeatureModel(IMjPublishServiceFeature.class);
 		if(mymodel==null)

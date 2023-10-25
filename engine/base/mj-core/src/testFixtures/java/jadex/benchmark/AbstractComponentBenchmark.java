@@ -34,7 +34,7 @@ public abstract class AbstractComponentBenchmark
 	public void	runCreationBenchmark(int num, boolean print, boolean parallel)
 	{
 		// Warmup
-		createComponents(num/10, false, parallel);
+		createComponents(Math.max(1, num/10), false, parallel);
 		killComponents(false, parallel);
 		gc();
 		
@@ -60,7 +60,7 @@ public abstract class AbstractComponentBenchmark
 	public void	runThroughputBenchmark(int num, boolean print, boolean parallel)
 	{
 		// Warmup
-		createAndKillComponents(num/10, false, parallel);
+		createAndKillComponents(Math.max(1, num/10), false, parallel);
 		
 		// Measure throughput
 		Measurement	throughput	= measure(parallel ? "multi-thread throughput" : "throughput", () -> createAndKillComponents(num, print, parallel));

@@ -10,6 +10,7 @@ import jadex.common.SReflect;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
+import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
@@ -318,7 +319,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 */
 	public static boolean isUnrestricted(MjComponent access, ClassInfo ctype)
 	{
-		Set<String>	roles	= getRoles(getSecurityLevel(ctype.getType(access.getClassLoader(), access.getModel().getAllImports())), access);
+		Set<String>	roles	= getRoles(getSecurityLevel(ctype.getType(access.getClassLoader(), access.getFeature(IMjModelFeature.class).getModel().getAllImports())), access);
 		return roles!=null && roles.contains(Security.UNRESTRICTED);
 	}
 	
@@ -350,7 +351,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 			ret	= new HashSet<String>();
 			for(String role: roles)
 			{
-				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getModel().getAllImports(), provider.getFetcher(), provider.getClassLoader()));
+				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IMjModelFeature.class).getModel().getAllImports(), provider.getFeature(IMjModelFeature.class).getFetcher(), provider.getClassLoader()));
 			}
 		}
 		return ret;

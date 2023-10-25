@@ -8,6 +8,7 @@ import java.util.Iterator;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.annotation.Testable;
 
+import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.featuretest.impl.MjTestFeature1NewProvider;
@@ -22,7 +23,7 @@ public class FeatureTest
 	@SuppressWarnings("unchecked")
 	static Class<Object>[]	COMPONENT_FEATURE_TYPES	= new Class[]
 	{
-		// Ordered alphabetically by fully qualified name
+		// Ordered alphabetically by fully qualified name of provider (wtf?)
 		IMjExecutionFeature.class,
 		IMjTestFeature1.class,
 		IMjTestFeature2.class,
@@ -33,11 +34,12 @@ public class FeatureTest
 	@SuppressWarnings("unchecked")
 	static Class<Object>[]	AGENT_FEATURE_TYPES	= new Class[]
 	{
-		// Ordered alphabetically by fully qualified name
+		// Ordered alphabetically by fully qualified name of provider (wtf?)
 		IMjExecutionFeature.class,
 		IMjTestFeature1.class,
 		IMjTestFeature2.class,
 		MjMicroAgentFeature.class,
+		IMjModelFeature.class,
 		IMjTestLazyFeature.class,
 	};
 

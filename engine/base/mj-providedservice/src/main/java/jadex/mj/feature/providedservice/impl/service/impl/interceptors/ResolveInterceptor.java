@@ -25,6 +25,7 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.annotation.OnEnd;
 import jadex.mj.core.annotation.OnStart;
 import jadex.mj.core.impl.MjComponent;
@@ -338,7 +339,7 @@ public class ResolveInterceptor extends AbstractApplicableInterceptor
 					domainsic.setMethod(found);
 					domainsic.setObject(obj);
 					// Guess parameters for allowing injected value in pojo methods
-					IParameterGuesser guesser = ia.getParameterGuesser();
+					IParameterGuesser guesser = ia.getFeature(IMjModelFeature.class).getParameterGuesser();
 					List<Object> args = new ArrayList<Object>();
 					for(int i=0; i<found.getParameterTypes().length; i++)
 					{

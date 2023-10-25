@@ -30,6 +30,7 @@ public class MjMicroAgent	extends MjComponent
 	}
 	
 	protected Object pojo;
+	protected IModelInfo	model;
 	
 	public MjMicroAgent(Object pojo, IModelInfo model)
 	{
@@ -38,8 +39,9 @@ public class MjMicroAgent	extends MjComponent
 	
 	public MjMicroAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
 	{
-		super(model, cid);
+		super(cid);
 		this.pojo	= pojo;
+		this.model	= model;
 		
 		//ComponentIdentifier execid = getFeature(IMjExecutionFeature.class).getComponent().getId();
 		//if(!execid.equals(cid))
@@ -49,6 +51,11 @@ public class MjMicroAgent	extends MjComponent
 	public Object getPojo() 
 	{
 		return pojo;
+	}
+
+	public IModelInfo getModel() 
+	{
+		return model;
 	}
 
 	/**

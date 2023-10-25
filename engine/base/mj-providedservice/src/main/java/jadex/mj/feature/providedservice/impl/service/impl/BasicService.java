@@ -18,7 +18,9 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
+import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
@@ -798,7 +800,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 		if(info==null && sid!=null)
 		{
 			ProvidedServiceInfo	found	= null;
-			ProvidedServiceModel model = (ProvidedServiceModel)access.getModel().getFeatureModel(IMjProvidedServiceFeature.class);
+			ProvidedServiceModel model = (ProvidedServiceModel)((ModelInfo)access.getFeature(IMjModelFeature.class).getModel()).getFeatureModel(IMjProvidedServiceFeature.class);
 			ProvidedServiceInfo[] pros = model.getServices();
 			for(ProvidedServiceInfo psi: pros)
 			{

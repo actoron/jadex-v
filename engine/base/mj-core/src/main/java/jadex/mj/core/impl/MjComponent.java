@@ -13,16 +13,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
-import jadex.common.SReflect;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IComponentListener;
 import jadex.mj.core.IExternalAccess;
-import jadex.mj.core.IParameterGuesserProvider;
-import jadex.mj.core.modelinfo.IModelInfo;
-import jadex.mj.core.modelinfo.ModelInfo;
 
 /**
  *  Base class for Jadex components, which provides access to component features.
@@ -41,9 +36,6 @@ public class MjComponent implements IComponent
 	/** The fetcher. */
 	protected IValueFetcher fetcher;
 	
-	/** The model. */
-	protected IModelInfo modelinfo;
-	
 	/** The id. */
 	protected ComponentIdentifier id;
 	
@@ -57,18 +49,20 @@ public class MjComponent implements IComponent
 	
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
+	 *  Uses an auto-generated componment identifier.
 	 */
-	public MjComponent(IModelInfo modelinfo)
+	public MjComponent()
 	{
-		this(modelinfo, null);
+		this(null);
 	}
 	
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
+	 *  @param id	The id to use or null for an auto-generated id.
+	 *  @throws IllegalArgumentException when the id already exists. 
 	 */
-	public MjComponent(IModelInfo modelinfo, ComponentIdentifier id)
+	public MjComponent(ComponentIdentifier id)
 	{
-		this.modelinfo = modelinfo;
 		this.id = id==null? new ComponentIdentifier(): id;
 		//System.out.println(this.id.getLocalName());
 		MjComponent.addComponent(this); // is this good here?! 
@@ -243,10 +237,10 @@ public class MjComponent implements IComponent
 		features.put(type, feature);
 	}
 	
-	/**
+	/* *
 	 *  Get the fetcher.
 	 *  @return The fetcher.
-	 */
+	 * /
 	public IValueFetcher getFetcher()
 	{
 		if(fetcher==null)
@@ -291,7 +285,7 @@ public class MjComponent implements IComponent
 					{
 						ret	= getConfiguration();
 						found	= true;
-					}*/
+					}* /
 					
 					if(!found)
 						throw new RuntimeException("Value not found: "+name);
@@ -304,8 +298,8 @@ public class MjComponent implements IComponent
 		}
 		
 		return fetcher;
-	}
-	
+	}*/
+	/*
 	public IParameterGuesser getParameterGuesser()
 	{
 		// Return a fetcher that tries features first.
@@ -367,7 +361,7 @@ public class MjComponent implements IComponent
 				{
 					ret	= getExternalAccess();
 					found	= true;
-				}*/
+				}* /
 				
 				if(!found)
 					throw new RuntimeException("Value not found: "+type);
@@ -376,16 +370,7 @@ public class MjComponent implements IComponent
 			}
 			
 		};
-	}
-	
-	/**
-	 *  Get the model info.
-	 *  @return The model info.
-	 */
-	public ModelInfo getModel()
-	{
-		return (ModelInfo)modelinfo;
-	}
+	}*/
 	
 	/**
 	 *  Get the external access.

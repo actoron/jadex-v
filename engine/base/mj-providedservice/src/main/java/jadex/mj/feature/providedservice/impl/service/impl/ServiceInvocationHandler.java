@@ -23,6 +23,7 @@ import jadex.future.Future;
 import jadex.future.FutureHelper;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
+import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
@@ -641,7 +642,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 		{
 			for(UnparsedExpression exp : info.getProperties())
 			{
-				Object val = SJavaParser.parseExpression(exp, ia.getModel().getAllImports(), ia.getClassLoader()).getValue(ia.getFetcher());
+				Object val = SJavaParser.parseExpression(exp, ia.getFeature(IMjModelFeature.class).getModel().getAllImports(), ia.getClassLoader()).getValue(ia.getFeature(IMjModelFeature.class).getFetcher());
 				serprops.put(exp.getName(), val);
 			}
 		}
@@ -737,7 +738,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 						{
 							try
 							{								
-								Object val	= ia.getParameterGuesser().guessParameter(fields[i].getType(), false);
+								Object val	= ia.getFeature(IMjModelFeature.class).getParameterGuesser().guessParameter(fields[i].getType(), false);
 								SAccess.setAccessible(fields[i], true);
 								fields[i].set(service, val);
 							}

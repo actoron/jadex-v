@@ -22,6 +22,7 @@ import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.AbstractModelLoader;
+import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.impl.IMjLifecycle;
@@ -55,7 +56,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 	{
 		Future<Void> ret = new Future<Void>();
 		
-		ModelInfo model = (ModelInfo)self.getModel();
+		ModelInfo model = (ModelInfo)self.getFeature(IMjModelFeature.class).getModel();
 		
 		ProvidedServiceModel mymodel = (ProvidedServiceModel)model.getFeatureModel(IMjProvidedServiceFeature.class);
 		if(mymodel==null)
@@ -154,7 +155,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 			ServiceScope scope = info.getScope();
 			if(ServiceScope.EXPRESSION.equals(scope))
 			{
-				scope = (ServiceScope)SJavaParser.getParsedValue(info.getScopeExpression(), model.getAllImports(), self.getFetcher(), self.getClassLoader());
+				scope = (ServiceScope)SJavaParser.getParsedValue(info.getScopeExpression(), model.getAllImports(), self.getFeature(IMjModelFeature.class).getFetcher(), self.getClassLoader());
 				info = new ProvidedServiceInfo(info.getName(), info.getType(), info.getImplementation(), scope, info.getScopeExpression(), info.getSecurity(), 
 						//info.getPublish(), 
 						info.getProperties(), info.isSystemService());
@@ -184,7 +185,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 			else
 			{*/
 				final ProvidedServiceInfo finfo = info;
-				createServiceImplementation(info, self.getFetcher())
+				createServiceImplementation(info, self.getFeature(IMjModelFeature.class).getFetcher())
 					.then(ser ->
 				{
 					// Implementation may null to disable service in some configurations.
@@ -199,13 +200,13 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 							{
 								if(ins[i].getValue()!=null && ins[i].getValue().length()>0)
 								{
-									ics[i] = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(ins[i].getValue(), self.getModel().getAllImports(), self.getFetcher(), self.getClassLoader());
+									ics[i] = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(ins[i].getValue(), self.getFeature(IMjModelFeature.class).getModel().getAllImports(), self.getFeature(IMjModelFeature.class).getFetcher(), self.getClassLoader());
 								}
 								else
 								{
 									try
 									{
-										ics[i] = (IServiceInvocationInterceptor)ins[i].getClazz().getType(self.getClassLoader(), self.getModel().getAllImports()).newInstance();
+										ics[i] = (IServiceInvocationInterceptor)ins[i].getClazz().getType(self.getClassLoader(), self.getFeature(IMjModelFeature.class).getModel().getAllImports()).newInstance();
 									}
 									catch(Exception e)
 									{
@@ -215,7 +216,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 							}
 						}
 						
-						final Class<?> type = finfo.getType().getType(self.getClassLoader(), self.getModel().getAllImports());
+						final Class<?> type = finfo.getType().getType(self.getClassLoader(), self.getFeature(IMjModelFeature.class).getModel().getAllImports());
 						//PublishEventLevel elm = component.getDescription().getMonitoring()!=null? component.getDescription().getMonitoring(): null;
 //								 todo: remove this? currently the level cannot be turned on due to missing interceptor
 						//boolean moni = elm!=null? !PublishEventLevel.OFF.equals(elm.getLevel()): false; 
@@ -453,7 +454,7 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 //				fetcher.setValue("$servicename", info.getName());
 //				fetcher.setValue("$servicetype", info.getType().getType(component.getClassLoader(), component.getModel().getAllImports()));
 //				System.out.println("sertype: "+fetcher.fetchValue("$servicetype")+" "+info.getName());
-				ser = SJavaParser.getParsedValue(impl, self.getModel().getAllImports(), fetcher, self.getClassLoader());
+				ser = SJavaParser.getParsedValue(impl, self.getFeature(IMjModelFeature.class).getModel().getAllImports(), fetcher, self.getClassLoader());
 //				System.out.println("added: "+ser+" "+model.getName());
 				ret.setResult(ser);
 			}
@@ -465,11 +466,11 @@ public class MjProvidedServiceFeature	implements IMjLifecycle, IMjProvidedServic
 		}
 		else if(impl!=null && impl.getClazz()!=null)
 		{
-			if(impl.getClazz().getType(self.getClassLoader(), self.getModel().getAllImports())!=null)
+			if(impl.getClazz().getType(self.getClassLoader(), self.getFeature(IMjModelFeature.class).getModel().getAllImports())!=null)
 			{
 				try
 				{
-					ser = impl.getClazz().getType(self.getClassLoader(), self.getModel().getAllImports()).newInstance();
+					ser = impl.getClazz().getType(self.getClassLoader(), self.getFeature(IMjModelFeature.class).getModel().getAllImports()).newInstance();
 					ret.setResult(ser);
 				}
 				catch(Exception e)

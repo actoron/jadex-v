@@ -40,6 +40,7 @@ import jadex.future.TerminableIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.AbstractModelLoader;
+import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.feature.execution.ComponentTerminatedException;
@@ -102,7 +103,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 	{
 		Future<Void> ret = new Future<Void>();
 		
-		ModelInfo model = self.getModel();
+		ModelInfo model = (ModelInfo)self.getFeature(IMjModelFeature.class).getModel();
 		
 		RequiredServiceModel mymodel = (RequiredServiceModel)model.getFeatureModel(IMjRequiredServiceFeature.class);
 		if(mymodel==null)
@@ -1182,7 +1183,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		if(ServiceScope.EXPRESSION.equals(scope))
 		{
 			scope = (ServiceScope)SJavaParser.getParsedValue(info.getDefaultBinding().getScopeExpression(), 
-				getComponent().getModel().getAllImports(), getComponent().getFetcher(), getComponent().getClassLoader());
+				getComponent().getFeature(IMjModelFeature.class).getModel().getAllImports(), getComponent().getFeature(IMjModelFeature.class).getFetcher(), getComponent().getClassLoader());
 			info = new RequiredServiceInfo(info.getName(), info.getType(), info.getMin(), info.getMax(),
 				new RequiredServiceBinding(info.getDefaultBinding()).setScope(scope),
 				//info.getNFRProperties(), 
@@ -1554,7 +1555,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 				{
 					IServiceInvocationInterceptor interceptor = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(
 //						interceptors[i].getValue(), ea.getModel().getAllImports(), ia.getFetcher(), ea.getModel().getClassLoader());
-						interceptors[i].getValue(), ia.getModel().getAllImports(), ia.getFetcher(), ia.getClassLoader());
+						interceptors[i].getValue(), ia.getFeature(IMjModelFeature.class).getModel().getAllImports(), ia.getFeature(IMjModelFeature.class).getFetcher(), ia.getClassLoader());
 					handler.addServiceInterceptor(interceptor);
 				}
 			}
@@ -1630,7 +1631,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 				final ServiceInjectionInfo[] infos = serinfos.get(sernames[i]); //model.getServiceInjections(sernames[i]);
 				final CounterResultListener<Void> lis2 = new CounterResultListener<Void>(infos.length, lis);
 
-				String sername = (String)SJavaParser.evaluateExpressionPotentially(sernames[i], component.getModel().getAllImports(), component.getFetcher(), component.getClassLoader());
+				String sername = (String)SJavaParser.evaluateExpressionPotentially(sernames[i], component.getFeature(IMjModelFeature.class).getModel().getAllImports(), component.getFeature(IMjModelFeature.class).getFetcher(), component.getClassLoader());
 						
 				//if(sername!=null && sername.indexOf("calc")!=-1)
 				//	System.out.println("calc");
@@ -1771,7 +1772,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 								else if(infos[j].getLazy()!=null && infos[j].getLazy().booleanValue() && !multiple)
 								{
 									//RequiredServiceInfo rsi = ((IInternalRequiredServicesFeature)component.getFeature(IRequiredServicesFeature.class)).getServiceInfo(sername);
-									Class<?> clz = info.getType().getType(component.getClassLoader(), component.getModel().getAllImports());
+									Class<?> clz = info.getType().getType(component.getClassLoader(), component.getFeature(IMjModelFeature.class).getModel().getAllImports());
 									//ServiceQuery<Object> query = RequiredServicesComponentFeature.getServiceQuery(component, info);
 									
 									UnresolvedServiceInvocationHandler h = new UnresolvedServiceInvocationHandler(component, query);
@@ -2290,7 +2291,7 @@ public class MjRequiredServiceFeature	implements IMjLifecycle, IMjRequiredServic
 		ServiceScope scope = info.getDefaultBinding()!=null ? info.getDefaultBinding().getScope() : null;
 		if(ServiceScope.EXPRESSION.equals(scope))
 		{
-			scope = (ServiceScope)SJavaParser.getParsedValue(info.getDefaultBinding().getScopeExpression(), component.getModel().getAllImports(), component.getFetcher(), component.getClassLoader());
+			scope = (ServiceScope)SJavaParser.getParsedValue(info.getDefaultBinding().getScopeExpression(), component.getFeature(IMjModelFeature.class).getModel().getAllImports(), component.getFeature(IMjModelFeature.class).getFetcher(), component.getClassLoader());
 			info	= new RequiredServiceInfo(info.getName(), info.getType(), info.getMin(), info.getMax(),
 				new RequiredServiceBinding(info.getDefaultBinding()).setScope(scope),
 				//info.getNFRProperties(), 

@@ -52,6 +52,9 @@ includeBuild('engine/base/mj-featuretest') {
 includeBuild('engine/base/mj-execution') {
 }
 
+includeBuild('engine/base/mj-model') {
+}
+
 includeBuild('engine/base/mj-providedservice') {
 }
 
