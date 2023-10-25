@@ -5,6 +5,8 @@ plugins
 
 group = 'jadex'
 
+sourceCompatibility = '1.17'
+
 repositories
 {
 	mavenCentral()
