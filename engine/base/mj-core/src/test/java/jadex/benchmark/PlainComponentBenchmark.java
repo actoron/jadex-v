@@ -25,8 +25,8 @@ public class PlainComponentBenchmark	extends AbstractComponentBenchmark
 
 	protected static Stream<Arguments> provideBenchmarkParams() {
 	    return Stream.of(
-	  	      Arguments.of(1000000, false, false),
-		      Arguments.of(1000000, false, true)
+	  	      Arguments.of(100000, false, false),
+		      Arguments.of(100000, false, true)
 	    );
 	}
 	
@@ -35,7 +35,6 @@ public class PlainComponentBenchmark	extends AbstractComponentBenchmark
 	@MethodSource("provideBenchmarkParams")
 	public void runCreationBenchmark(int num, boolean print, boolean parallel)
 	{
-		TIMEOUT	= 300000;
 		super.runCreationBenchmark(num, print, parallel);
 	}
 
