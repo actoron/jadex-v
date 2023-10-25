@@ -1,8 +1,8 @@
-package jadex.mj.core;
+package jadex.mj.model;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
-import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 public interface IMjModelFeature
 {

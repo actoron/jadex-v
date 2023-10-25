@@ -10,12 +10,12 @@ import jadex.common.SReflect;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Security;
 import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.mj.model.IMjModelFeature;
 
 
 /**

@@ -1,4 +1,4 @@
-package jadex.mj.core.annotation;
+package jadex.mj.model.annotation;
 
 
 import java.lang.annotation.ElementType;

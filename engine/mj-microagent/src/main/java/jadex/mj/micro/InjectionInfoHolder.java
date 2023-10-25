@@ -11,7 +11,7 @@ import jadex.common.FieldInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.Tuple3;
-import jadex.mj.core.ServiceCallInfo;
+import jadex.mj.model.ServiceCallInfo;
 
 /**
  * 

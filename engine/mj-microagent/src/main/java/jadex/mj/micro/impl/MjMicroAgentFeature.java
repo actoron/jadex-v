@@ -19,15 +19,15 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.mj.core.IMjModelFeature;
-import jadex.mj.core.IParameterGuesserProvider;
-import jadex.mj.core.annotation.OnEnd;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.execution.impl.IMjLifecycle;
 import jadex.mj.micro.InjectionInfoHolder;
 import jadex.mj.micro.MicroModel;
 import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.model.IMjModelFeature;
+import jadex.mj.model.IParameterGuesserProvider;
+import jadex.mj.model.annotation.OnEnd;
+import jadex.mj.model.annotation.OnStart;
 
 public class MjMicroAgentFeature	implements IMjLifecycle
 {

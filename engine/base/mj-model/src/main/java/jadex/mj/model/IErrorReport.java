@@ -1,4 +1,4 @@
-package jadex.mj.core;
+package jadex.mj.model;
 
 import java.io.Serializable;
 import java.util.Map;

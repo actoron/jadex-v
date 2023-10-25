@@ -1,9 +1,9 @@
 package jadex.micro.watchdog;
 
 import jadex.mj.core.IComponent;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.annotation.Agent;
+import jadex.mj.model.annotation.OnStart;
 
 @Agent
 public class CreatorAgent 

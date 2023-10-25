@@ -2,9 +2,9 @@ package jadex.micro.example.helloworld;
 
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.annotation.OnEnd;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.micro.annotation.Agent;
+import jadex.mj.model.annotation.OnEnd;
+import jadex.mj.model.annotation.OnStart;
 
 /**
  *  Agent creation benchmark. 

@@ -1,4 +1,4 @@
-package jadex.mj.core;
+package jadex.mj.model;
 
 public class CacheableModel
 {

@@ -5,9 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-//import jadex.enginecore.service.types.publish.IPublishService;
-import jadex.mj.core.annotation.NameValue;
 import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.mj.model.annotation.NameValue;
 
 /**
  *  Provided service annotation.

@@ -1,4 +1,4 @@
-package jadex.mj.core.modelinfo;
+package jadex.mj.model.modelinfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import jadex.common.SUtil;
-import jadex.mj.core.IErrorReport;
+import jadex.mj.model.IErrorReport;
 
 
 /**

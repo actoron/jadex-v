@@ -1,9 +1,9 @@
 package jadex.mj.micro.impl;
 
-import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.core.impl.MjFeatureProvider;
 import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.model.IMjModelFeature;
 
 public class MjMicroModelFeatureProvider extends MjFeatureProvider<IMjModelFeature>
 {

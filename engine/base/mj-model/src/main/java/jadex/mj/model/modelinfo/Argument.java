@@ -1,4 +1,4 @@
-package jadex.mj.core.modelinfo;
+package jadex.mj.model.modelinfo;
 
 import java.util.Collection;
 import java.util.HashMap;

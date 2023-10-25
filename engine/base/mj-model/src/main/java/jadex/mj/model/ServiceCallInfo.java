@@ -1,4 +1,4 @@
-package jadex.mj.core;
+package jadex.mj.model;
 
 import jadex.common.FieldInfo;
 import jadex.common.MethodInfo;

@@ -1,8 +1,8 @@
 package jadex.mj.feature.providedservice.impl.search;
 
 import jadex.future.IFuture;
-import jadex.mj.core.IAsyncFilter;
 import jadex.mj.feature.providedservice.IService;
+import jadex.mj.model.IAsyncFilter;
 
 /**
  *  Filter for service ids.

@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import jadex.common.Boolean3;
-import jadex.mj.core.annotation.NameValue;
+import jadex.mj.model.annotation.NameValue;
 
 
 /**

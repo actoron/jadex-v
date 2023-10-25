@@ -1,4 +1,4 @@
-package jadex.mj.core.modelinfo;
+package jadex.mj.model.modelinfo;
 
 import jadex.common.ClassInfo;
 import jadex.common.UnparsedExpression;

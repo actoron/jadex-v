@@ -1,4 +1,4 @@
-package jadex.mj.core;
+package jadex.mj.model;
 
 /**
  *  Required interface for models to be managed by abstract model loader.

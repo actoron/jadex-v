@@ -3,9 +3,9 @@ package jadex.micro.tutorial.a2;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
+import jadex.mj.model.annotation.OnStart;
 
 /**
  *  Chat micro agent provides a basic chat service. 

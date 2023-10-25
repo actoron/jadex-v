@@ -6,11 +6,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jadex.mj.core.IComponent;
-import jadex.mj.core.annotation.OnEnd;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
+import jadex.mj.model.annotation.OnEnd;
+import jadex.mj.model.annotation.OnStart;
 import jadex.mj.publishservice.publish.annotation.Publish;
 import jadex.mj.requiredservice.annotation.OnService;
 

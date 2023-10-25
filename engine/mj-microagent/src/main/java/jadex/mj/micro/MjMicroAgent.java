@@ -4,7 +4,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.impl.MjComponent;
-import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 public class MjMicroAgent	extends MjComponent
 {

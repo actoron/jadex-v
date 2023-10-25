@@ -11,8 +11,8 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.model.annotation.OnStart;
 
 /**
  *  Benchmark creation and killing of micro agents.

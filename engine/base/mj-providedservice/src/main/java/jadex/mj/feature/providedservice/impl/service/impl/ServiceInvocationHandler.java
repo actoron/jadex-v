@@ -23,7 +23,6 @@ import jadex.future.Future;
 import jadex.future.FutureHelper;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.mj.core.IMjModelFeature;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
@@ -37,6 +36,7 @@ import jadex.mj.feature.providedservice.impl.service.impl.interceptors.Decouplin
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.MethodInvocationInterceptor;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.ResolveInterceptor;
+import jadex.mj.model.IMjModelFeature;
 
 /**
  *  Service invocation interceptor.

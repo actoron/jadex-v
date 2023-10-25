@@ -13,8 +13,6 @@ import java.util.Set;
 import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
 import jadex.future.IFuture;
-import jadex.mj.core.annotation.NameValue;
-import jadex.mj.core.annotation.Value;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Implementation;
 import jadex.mj.feature.providedservice.annotation.ProvidedService;
@@ -22,6 +20,8 @@ import jadex.mj.feature.providedservice.annotation.ProvidedServices;
 import jadex.mj.feature.providedservice.annotation.Security;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.MicroClassReader;
+import jadex.mj.model.annotation.NameValue;
+import jadex.mj.model.annotation.Value;
 
 public class ProvidedServiceLoader 
 {

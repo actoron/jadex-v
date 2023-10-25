@@ -3,7 +3,7 @@ package jadex.bdiv3.runtime.wrappers;
 import java.util.List;
 
 import jadex.bdiv3.model.MElement;
-import jadex.mj.core.MjComponent;
+import jadex.mj.model.MjComponent;
 import jadex.rules.eca.EventType;
 
 /**

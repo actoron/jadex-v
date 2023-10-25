@@ -25,9 +25,6 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.mj.core.IMjModelFeature;
-import jadex.mj.core.annotation.OnEnd;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
@@ -36,6 +33,9 @@ import jadex.mj.feature.providedservice.annotation.ServiceStart;
 import jadex.mj.feature.providedservice.impl.service.impl.IInternalService;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInfo;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
+import jadex.mj.model.IMjModelFeature;
+import jadex.mj.model.annotation.OnEnd;
+import jadex.mj.model.annotation.OnStart;
 import jadex.serialization.ISerializationServices;
 
 /**

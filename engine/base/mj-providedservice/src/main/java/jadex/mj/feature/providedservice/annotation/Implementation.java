@@ -1,6 +1,6 @@
 package jadex.mj.feature.providedservice.annotation;
 
-import jadex.mj.core.annotation.Value;
+import jadex.mj.model.annotation.Value;
 
 /**
  *  Service implementation details.

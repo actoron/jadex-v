@@ -1,7 +1,6 @@
-package jadex.mj.core.modelinfo;
+package jadex.mj.model.modelinfo;
 
-import jadex.mj.core.IErrorReport;
-//import jadex.mj.core.service.annotation.Reference;
+import jadex.mj.model.IErrorReport;
 
 
 /**

@@ -1,6 +1,6 @@
-package jadex.mj.core;
+package jadex.mj.model;
 
-import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 /**
  *  Base class for cacheable kernel model.

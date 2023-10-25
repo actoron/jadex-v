@@ -5,10 +5,10 @@ import java.util.Collections;
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SimpleParameterGuesser;
-import jadex.mj.core.IMjModelFeature;
-import jadex.mj.core.IParameterGuesserProvider;
-import jadex.mj.core.modelinfo.IModelInfo;
 import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.model.IMjModelFeature;
+import jadex.mj.model.IParameterGuesserProvider;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 public class MjMicroModelFeature implements IMjModelFeature, IParameterGuesserProvider, IValueFetcher
 {

@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.mj.core.annotation.Value;
+import jadex.mj.model.annotation.Value;
 
 /**
  *  Result mapper annotation.

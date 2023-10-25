@@ -10,11 +10,11 @@ import jadex.bdiv3.runtime.impl.PlanFailureException;
 import jadex.bridge.IInternalAccess;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.annotation.NameValue;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.micro.annotation.Imports;
 import jadex.mj.micro.annotation.Properties;
+import jadex.mj.model.annotation.NameValue;
+import jadex.mj.model.annotation.OnStart;
 import jadex.rules.eca.annotations.Event;
 
 /**

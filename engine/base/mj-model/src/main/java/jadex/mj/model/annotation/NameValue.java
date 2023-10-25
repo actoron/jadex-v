@@ -1,5 +1,5 @@
-//package jadex.bridge.service.annotation;
-package jadex.mj.core.annotation;
+//package jadex.bridge.nonfunctional.annotation
+package jadex.mj.model.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,20 +7,30 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  Value as class or unparsed expression string.
+ *  Name, value pair.
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Value
+public @interface NameValue
 {
+	/**
+	 *  The name.
+	 */
+	public String name();
+	
 	/**
 	 *  The value as string, will be parsed.
 	 */
 	public String value() default "";
 	
 	/**
+	 *  The values as strings, will be individually parsed.
+	 */
+	public String[] values() default {};
+	
+	/**
 	 *  The value as a class.
 	 */
 	public Class<?> clazz() default Object.class;
-
+	
 }

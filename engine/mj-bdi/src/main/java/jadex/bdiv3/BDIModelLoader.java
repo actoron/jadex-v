@@ -2,8 +2,8 @@ package jadex.bdiv3;
 
 import jadex.bdiv3.model.BDIModel;
 import jadex.common.ResourceInfo;
-import jadex.mj.core.AbstractModelLoader;
-import jadex.mj.core.ICacheableModel;
+import jadex.mj.model.AbstractModelLoader;
+import jadex.mj.model.ICacheableModel;
 
 /**
  * 

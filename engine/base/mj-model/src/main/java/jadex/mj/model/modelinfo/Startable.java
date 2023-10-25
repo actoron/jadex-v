@@ -1,4 +1,4 @@
-package jadex.mj.core.modelinfo;
+package jadex.mj.model.modelinfo;
 
 //import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
 

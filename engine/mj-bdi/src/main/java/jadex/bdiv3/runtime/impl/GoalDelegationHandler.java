@@ -23,7 +23,7 @@ import jadex.bridge.service.component.interceptors.FutureFunctionality;
 import jadex.common.SReflect;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.IResultListener;
-import jadex.mj.core.ProxyFactory;
+import jadex.mj.model.ProxyFactory;
 
 /**
  *  Handler used for service-goal delegation.

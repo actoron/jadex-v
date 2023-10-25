@@ -10,8 +10,8 @@ import java.util.List;
 import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.IAsyncFilter;
 import jadex.mj.core.IComponent;
+import jadex.mj.model.IAsyncFilter;
 
 /**
  *  Tag filter class. Allows for filtering according to a collection of tags.

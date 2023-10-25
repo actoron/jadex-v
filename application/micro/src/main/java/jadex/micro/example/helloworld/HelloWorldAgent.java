@@ -1,12 +1,12 @@
 package jadex.micro.example.helloworld;
 
 import jadex.mj.core.IComponent;
-import jadex.mj.core.annotation.OnEnd;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.MjMicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.micro.annotation.Description;
+import jadex.mj.model.annotation.OnEnd;
+import jadex.mj.model.annotation.OnStart;
 
 /**
  *  The micro version of the hello world agent.
