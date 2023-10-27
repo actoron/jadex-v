@@ -31,7 +31,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	public void	testStopWhenIdle()
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IMjSimulationFeature	sim	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
+		IMjSimulationFeature	sim	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
 		sim.stop().get(1000);
 		assertThrows(IllegalStateException.class, () -> sim.stop().get(1000));
 	}
@@ -40,7 +40,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	public void	testStopWhenExecuting()
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IMjSimulationFeature	sim	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
+		IMjSimulationFeature	sim	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
 		boolean[]	run	= new boolean[]{true};
 		sim.scheduleStep(() ->
 		{
@@ -59,7 +59,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	public void	testInverseOrder()
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IMjSimulationFeature	sim	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
+		IMjSimulationFeature	sim	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
 		sim.stop().get(1000);
 		List<String>	results	= new ArrayList<>();
 		sim.waitForDelay(2000).then((v) -> results.add("A"));
@@ -73,7 +73,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	public void	testStart()
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IMjSimulationFeature	sim	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
+		IMjSimulationFeature	sim	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
 		assertThrows(IllegalStateException.class, () -> sim.start());
 		sim.stop().get(1000);
 		List<String>	results	= new ArrayList<>();
@@ -99,7 +99,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		{
 			int num	= i;
 			MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-			sim[i]	= ((IMjSimulationFeature)IMjExecutionFeature.getExternal(comp));
+			sim[i]	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
 			if(i==0)
 			{
 				sim[i].stop().get(1000);
