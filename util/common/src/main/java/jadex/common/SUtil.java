@@ -18,6 +18,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -73,8 +75,6 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -192,6 +192,26 @@ public class SUtil
 			"yyyy-MM-dd'T'HH:mm:ssZ",
 			"yyyy-MM-dd'T'HH:mm:ssX"
 		};
+	}
+	
+	/** Method for launching virtual threads on Java 21+. */
+	private static final MethodHandle STARTVIRTUALTHREAD;
+	static
+	{
+		MethodHandle mh = null;
+		try
+		{
+			Method m = Thread.class.getMethod("startVirtualThread", Runnable.class);
+			mh = MethodHandles.lookup().unreflect(m);
+		}
+		catch(NoSuchMethodException e)
+		{
+			
+		}
+		catch (IllegalAccessException e)
+		{
+		}
+		STARTVIRTUALTHREAD = mh;
 	}
 	
 	/** Application directory, current working dir under normal Java, special with Android. */
@@ -6101,6 +6121,33 @@ public class SUtil
 			sb.append("\n");
 		}
 		return sb.toString();
+	}
+	
+	/**
+	 *  Launches a new (daemon) thread using the Runnable.
+	 *  If available, the thread will be a virtual thread,
+	 *  otherwise, a regular thread is used.
+	 *  
+	 *  @param r The Runnable for the Thread to execute.
+	 *  @return The thread.
+	 */
+	public static final Thread startThread(Runnable r)
+	{
+		if (STARTVIRTUALTHREAD != null)
+		{
+			try
+			{
+				return (Thread) STARTVIRTUALTHREAD.invoke(r);
+			}
+			catch (Throwable t)
+			{
+				throwUnchecked(t);
+			}
+		}
+		Thread t = new Thread(r);
+		t.setDaemon(true);
+		t.start();
+		return t;
 	}
 	
 	/**
