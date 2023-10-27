@@ -80,7 +80,7 @@ public class MjExecutionFeature	implements IMjExecutionFeature, IMjInternalExecu
 	protected Future<Object> endfuture = null;
 	
 	@Override
-	public MjComponent getComponent()
+	public IComponent getComponent()
 	{
 		if(self==null)
 			throw new IllegalStateException("Component can not be accessed in 'beforeCreation' bootstrapping.");

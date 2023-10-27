@@ -7,7 +7,6 @@ import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
-import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.impl.MjExecutionFeature;
 
 /**
@@ -93,7 +92,7 @@ public interface IMjExecutionFeature
 	/**
 	 *  Get the component to which this feature belongs. 
 	 */
-	public MjComponent	getComponent();
+	public IComponent	getComponent();
 	
 	/**
 	 *  Get the current time.

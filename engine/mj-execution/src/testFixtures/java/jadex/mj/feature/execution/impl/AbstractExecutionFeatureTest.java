@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.core.IComponent;
 import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 
@@ -39,8 +40,8 @@ public abstract class AbstractExecutionFeatureTest
 	public void	testGetComponent()
 	{
 		// Test inside creation
-		Future<MjComponent>	fut	= new Future<>();
-		MjComponent	comp	= MjComponent.createComponent(MjComponent.class,
+		Future<IComponent>	fut	= new Future<>();
+		IComponent	comp	= MjComponent.createComponent(MjComponent.class,
 			() -> new MjComponent(null)
 		{
 			{
@@ -50,7 +51,7 @@ public abstract class AbstractExecutionFeatureTest
 		assertEquals(comp, fut.get(TIMEOUT));
 		
 		// Test after creation
-		IFuture<MjComponent> result	= comp.getExternalAccess().scheduleStep(
+		IFuture<IComponent> result	= comp.getExternalAccess().scheduleStep(
 			() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 				
@@ -58,7 +59,7 @@ public abstract class AbstractExecutionFeatureTest
 		MjComponent	comp2	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		result	= comp.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
-		IFuture<MjComponent> result2	= comp2.getExternalAccess().scheduleStep(
+		IFuture<IComponent> result2	= comp2.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 		assertEquals(comp2, result2.get(TIMEOUT));
@@ -68,7 +69,7 @@ public abstract class AbstractExecutionFeatureTest
 			() -> MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null))).get();
 		result	= comp.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
-		IFuture<MjComponent> result3	= comp3.getExternalAccess().scheduleStep(
+		IFuture<IComponent> result3	= comp3.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 		assertEquals(comp3, result3.get(TIMEOUT));
@@ -78,7 +79,7 @@ public abstract class AbstractExecutionFeatureTest
 		() -> new MjComponent(null){}).get();
 		result	= comp.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
-		IFuture<MjComponent> result4	= comp4.getExternalAccess().scheduleStep(
+		IFuture<IComponent> result4	= comp4.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 		assertEquals(comp4, result4.get(TIMEOUT));

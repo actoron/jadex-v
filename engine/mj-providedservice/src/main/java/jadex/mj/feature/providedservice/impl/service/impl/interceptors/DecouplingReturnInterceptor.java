@@ -4,7 +4,7 @@ import jadex.common.ICommand;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.IComponent;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 
@@ -24,7 +24,7 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 	{
 		Future<Void> fut	= new Future<Void>();
 		
-		final MjComponent caller = IMjExecutionFeature.get().getComponent();
+		final IComponent caller = IMjExecutionFeature.get().getComponent();
 		/*final IRequiredServicesFeature	feat	= caller!=null ? caller.getFeature0(IRequiredServicesFeature.class) : null;
 		if(feat instanceof IInternalServiceMonitoringFeature && ((IInternalServiceMonitoringFeature)feat).isMonitoring())
 		{
