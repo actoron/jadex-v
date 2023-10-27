@@ -30,7 +30,7 @@ public abstract class AbstractExecutionFeatureTest
 		assertThrows(IllegalCallerException.class, () -> IMjExecutionFeature.get());
 		
 		// Test calling from inside thread
-		IFuture<IMjExecutionFeature>	fut	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		IFuture<IMjExecutionFeature>	fut	= comp.getExternalAccess().scheduleStep(
 			() -> IMjExecutionFeature.get());
 		assertEquals(comp.getFeature(IMjExecutionFeature.class), fut.get(TIMEOUT));
 	}
@@ -50,35 +50,35 @@ public abstract class AbstractExecutionFeatureTest
 		assertEquals(comp, fut.get(TIMEOUT));
 		
 		// Test after creation
-		IFuture<MjComponent> result	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		IFuture<MjComponent> result	= comp.getExternalAccess().scheduleStep(
 			() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 				
 		// Test after extra component creation
 		MjComponent	comp2	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		result	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		result	= comp.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
-		IFuture<MjComponent> result2	= IMjExecutionFeature.getExternal(comp2).scheduleStep(
+		IFuture<MjComponent> result2	= comp2.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 		assertEquals(comp2, result2.get(TIMEOUT));
 		
 		// Test after creation inside component
-		MjComponent	comp3	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		MjComponent	comp3	= comp.getExternalAccess().scheduleStep(
 			() -> MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null))).get();
-		result	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		result	= comp.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
-		IFuture<MjComponent> result3	= IMjExecutionFeature.getExternal(comp3).scheduleStep(
+		IFuture<MjComponent> result3	= comp3.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 		assertEquals(comp3, result3.get(TIMEOUT));
 		
 		// Test plain creation (w/o bootstrap) inside component
-		MjComponent	comp4	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		MjComponent	comp4	= comp.getExternalAccess().scheduleStep(
 		() -> new MjComponent(null){}).get();
-		result	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		result	= comp.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
-		IFuture<MjComponent> result4	= IMjExecutionFeature.getExternal(comp4).scheduleStep(
+		IFuture<MjComponent> result4	= comp4.getExternalAccess().scheduleStep(
 				() -> IMjExecutionFeature.get().getComponent());
 		assertEquals(comp, result.get(TIMEOUT));
 		assertEquals(comp4, result4.get(TIMEOUT));
@@ -91,7 +91,7 @@ public abstract class AbstractExecutionFeatureTest
 		// Test executing a simple fire-and-forget step (Runnable implementation).
 		Future<Boolean>	result	= new Future<>();
 		Runnable	step	= () -> result.setResult(true);
-		IMjExecutionFeature.getExternal(comp).scheduleStep(step);
+		comp.getExternalAccess().scheduleStep(step);
 		assertTrue(result.get(TIMEOUT), "Wrong step result.");
 	}
 	
@@ -100,7 +100,7 @@ public abstract class AbstractExecutionFeatureTest
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		// Test executing a simple result step (Supplier implementation).
-		IFuture<Boolean>	result	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> true);
+		IFuture<Boolean>	result	= comp.getExternalAccess().scheduleStep(() -> true);
 		assertTrue(result.get(TIMEOUT), "Wrong step result.");
 	}
 	
@@ -109,7 +109,7 @@ public abstract class AbstractExecutionFeatureTest
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		// Test executing a simple result step (Supplier implementation).
-		IFuture<Boolean>	result	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> {
+		IFuture<Boolean>	result	= comp.getExternalAccess().scheduleStep(() -> {
 			throw new IllegalCallerException("ex");
 		});
 		assertThrows(IllegalCallerException.class, () -> result.get(TIMEOUT), "Wrong step exception.");
@@ -120,7 +120,7 @@ public abstract class AbstractExecutionFeatureTest
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		// Test executing a simple result step (Supplier implementation).
-		IFuture<Boolean>	result	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> {
+		IFuture<Boolean>	result	= comp.getExternalAccess().scheduleStep(() -> {
 			throw new InternalError("err");
 		});
 		assertThrows(RuntimeException.class, () -> result.get(TIMEOUT), "Wrong step error.");
@@ -131,12 +131,12 @@ public abstract class AbstractExecutionFeatureTest
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		Future<Boolean>	blocker	= new Future<>();
-		IFuture<Boolean>	result	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> {
+		IFuture<Boolean>	result	= comp.getExternalAccess().scheduleStep(() -> {
 			return blocker.get();
 		});
 		// Test that blocked step can be woken up by another step,
 		// i.e., that a new thread was used to wake up the blocked thread.
-		IMjExecutionFeature.getExternal(comp).scheduleStep(() -> blocker.setResult(true));
+		comp.getExternalAccess().scheduleStep(() -> blocker.setResult(true));
 		assertTrue(result.get(TIMEOUT), "Wrong step result.");
 	}
 	
@@ -146,9 +146,9 @@ public abstract class AbstractExecutionFeatureTest
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		// Test that two steps can wait for same result.
 		Future<Boolean>	blocker	= new Future<>();
-		IFuture<Boolean>	result1	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> blocker.get());
-		IFuture<Boolean>	result2	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> blocker.get());
-		IMjExecutionFeature.getExternal(comp).scheduleStep(() -> blocker.setResult(true));
+		IFuture<Boolean>	result1	= comp.getExternalAccess().scheduleStep(() -> blocker.get());
+		IFuture<Boolean>	result2	= comp.getExternalAccess().scheduleStep(() -> blocker.get());
+		comp.getExternalAccess().scheduleStep(() -> blocker.setResult(true));
 		assertTrue(result1.get(3000), "Wrong step result.");
 		assertTrue(result2.get(3000), "Wrong step result.");
 	}
@@ -179,15 +179,15 @@ public abstract class AbstractExecutionFeatureTest
 		assertTrue(bootstrap1.get(TIMEOUT));
 		
 		// Test during normal component operation.
-		assertFalse(IMjExecutionFeature.getExternal(comp).isComponentThread());
-		IFuture<Boolean>	instep	= IMjExecutionFeature.getExternal(comp).scheduleStep(()
+		assertFalse(comp.getFeature(IMjExecutionFeature.class).isComponentThread());
+		IFuture<Boolean>	instep	= comp.getExternalAccess().scheduleStep(()
 			-> IMjExecutionFeature.get().isComponentThread());
 		assertTrue(instep.get(TIMEOUT));
 		
 		// Test across two components
 		MjComponent	comp2	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IFuture<Boolean>	othercomp	= IMjExecutionFeature.getExternal(comp2).scheduleStep(()
-				-> IMjExecutionFeature.getExternal(comp).isComponentThread());
+		IFuture<Boolean>	othercomp	= comp2.getExternalAccess().scheduleStep(()
+				-> comp.getFeature(IMjExecutionFeature.class).isComponentThread());
 		assertFalse(othercomp.get(TIMEOUT));
 	}
 	
@@ -217,7 +217,7 @@ public abstract class AbstractExecutionFeatureTest
 		assertTrue(bootstrap1.get(TIMEOUT));
 		
 		// Test during normal component operation.
-		IFuture<Boolean>	instep	= IMjExecutionFeature.getExternal(comp).scheduleStep(()
+		IFuture<Boolean>	instep	= comp.getExternalAccess().scheduleStep(()
 			-> IMjExecutionFeature.isAnyComponentThread());
 		assertTrue(instep.get(TIMEOUT));
 	}
@@ -261,7 +261,7 @@ public abstract class AbstractExecutionFeatureTest
 		IFuture<Boolean>[]	steps	= new IFuture[Runtime.getRuntime().availableProcessors()];
 		for(int i=0; i<steps.length; i++)
 		{
-			steps[i]	= IMjExecutionFeature.getExternal(comp).scheduleStep(() ->
+			steps[i]	= comp.getExternalAccess().scheduleStep(() ->
 			{
 				// Check if step reuses thread of previous step (if any).
 				boolean ret	= current[0]==null || current[0]==Thread.currentThread();
@@ -293,7 +293,7 @@ public abstract class AbstractExecutionFeatureTest
 		for(int i=0; i<steps.length; i++)
 		{
 			int	mynum	= i;
-			steps[i]	= IMjExecutionFeature.getExternal(comp).scheduleStep(() -> num.getAndIncrement()==mynum);
+			steps[i]	= comp.getExternalAccess().scheduleStep(() -> num.getAndIncrement()==mynum);
 		}
 		// Collect results from all steps.
 		for(int i=0; i<steps.length; i++)
@@ -312,7 +312,7 @@ public abstract class AbstractExecutionFeatureTest
 		IFuture<Boolean>[]	steps	= new IFuture[Runtime.getRuntime().availableProcessors()];
 		for(int i=0; i<steps.length; i++)
 		{
-			steps[i]	= IMjExecutionFeature.getExternal(comp).scheduleStep(() ->
+			steps[i]	= comp.getExternalAccess().scheduleStep(() ->
 			{
 				if(numthreads.incrementAndGet()>1)
 				{
@@ -355,7 +355,7 @@ public abstract class AbstractExecutionFeatureTest
 	public void	testWaitForDelay()
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IFuture<Boolean>	test	= IMjExecutionFeature.getExternal(comp).scheduleStep(() ->
+		IFuture<Boolean>	test	= comp.getExternalAccess().scheduleStep(() ->
 		{
 			long	wait	= 50;
 			long before	= IMjExecutionFeature.get().getTime();
@@ -371,10 +371,10 @@ public abstract class AbstractExecutionFeatureTest
 	{
 		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
 		long	wait	= 50;
-		long before	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		long before	= comp.getExternalAccess().scheduleStep(
 			() -> IMjExecutionFeature.get().getTime()).get(TIMEOUT);
-		IMjExecutionFeature.getExternal(comp).waitForDelay(wait).get(TIMEOUT);
-		long after	= IMjExecutionFeature.getExternal(comp).scheduleStep(
+		comp.getFeature(IMjExecutionFeature.class).waitForDelay(wait).get(TIMEOUT);
+		long after	= comp.getExternalAccess().scheduleStep(
 			() -> IMjExecutionFeature.get().getTime()).get(TIMEOUT);
 		assertTrue(after >= before+wait, "Not enough time has passed.");
 	}
