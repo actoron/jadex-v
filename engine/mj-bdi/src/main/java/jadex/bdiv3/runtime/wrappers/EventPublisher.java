@@ -157,7 +157,7 @@ public class EventPublisher implements IEventPublisher
 	public void publishToolBeliefEvent()//String evtype)
 	{
 		if(melement instanceof MBelief)
-			BDIAgentFeature.publishToolBeliefEvent(agent, (MBelief)melement);//, evtype);
+			BDIAgentFeature.publishToolBeliefEvent((MBelief)melement);//, evtype);
 	}
 
 	/**

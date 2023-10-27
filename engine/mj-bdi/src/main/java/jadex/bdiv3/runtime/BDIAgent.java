@@ -2,19 +2,18 @@ package jadex.bdiv3.runtime;
 
 import java.util.List;
 
-import jadex.bdiv3.BDIAgentFactory;
 import jadex.bdiv3.features.impl.BDIAgentFeature;
-import jadex.bridge.IInternalAccess;
+import jadex.mj.core.IComponent;
 import jadex.mj.micro.annotation.Agent;
 
 /**
  *  Base class for non-bytecode-enhanced BDI agents.
  */
-@Agent(type=BDIAgentFactory.TYPE)
+@Agent(type="bdi")
 public class BDIAgent // extends IInternalAccess (Proxy)
 {
 	/** The bdi agent. */
-	public IInternalAccess __agent; // IBDIClassGenerator.AGENT_FIELD_NAME
+	public IComponent __agent; // IBDIClassGenerator.AGENT_FIELD_NAME
 	
 	/** The init arguments. */
 	public List<Object> __initargs; // IBDIClassGenerator.INITARGS_FIELD_NAME
@@ -40,6 +39,6 @@ public class BDIAgent // extends IInternalAccess (Proxy)
 	 */
 	public void setBeliefValue(String beliefname, Object value)
 	{
-		BDIAgentFeature.writeField(value, beliefname, this, __agent);
+		BDIAgentFeature.writeField(value, beliefname, this);
 	}
 }
