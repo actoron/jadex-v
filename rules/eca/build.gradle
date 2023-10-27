@@ -6,6 +6,8 @@ plugins
 description 'Small Java annotation-based event-condition-action rule engine.'
 group = 'jadex'
 
+sourceCompatibility	= 1.17
+
 repositories
 {
 	mavenCentral()
