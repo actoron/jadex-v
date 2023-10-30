@@ -5,6 +5,7 @@ import java.util.List;
 
 import jadex.bdiv3.model.MPlan;
 import jadex.bdiv3x.runtime.IParameter;
+import jadex.mj.micro.MjMicroAgent;
 
 
 /**
@@ -149,7 +150,7 @@ public class PlanInfo	extends AbstractBDIInfo
 		{
 			for(IParameter p: ps)
 			{
-				pi.addParameterInfo(ParameterInfo.createParameterInfo(p, plan.getAgent().getClassLoader()));
+				pi.addParameterInfo(ParameterInfo.createParameterInfo(p, ((MjMicroAgent)plan.getAgent()).getClassLoader()));
 			}
 		}
 		

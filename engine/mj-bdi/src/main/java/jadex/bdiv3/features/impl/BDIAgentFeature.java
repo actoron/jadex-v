@@ -65,7 +65,6 @@ import jadex.javaparser.javaccimpl.ExpressionNode;
 import jadex.javaparser.javaccimpl.Node;
 import jadex.javaparser.javaccimpl.ParameterNode;
 import jadex.javaparser.javaccimpl.ReflectNode;
-import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.MicroModel;
@@ -999,7 +998,8 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 //		BDIAgentInterpreter ip = (BDIAgentInterpreter)agent.getInterpreter();
 		
 		MGoal mgoal = IInternalBDIAgentFeature.get().getBDIModel().getCapability().getGoal(elemname);
-		MjComponent	agent	= IMjExecutionFeature.get().getComponent();
+		// TODO IMicroAgent as user subtype of IComponent!? 
+		MjMicroAgent	agent	= (MjMicroAgent)IMjExecutionFeature.get().getComponent();
 		
 //		String paramname = elemname+"."+fieldname; // ?
 

@@ -418,6 +418,7 @@ public class MjComponent implements IComponent
 		accessfactory = factory;
 	}
 	
+	// TODO move to model feature?
 	public ClassLoader getClassLoader()
 	{
 		return this.getClass().getClassLoader();

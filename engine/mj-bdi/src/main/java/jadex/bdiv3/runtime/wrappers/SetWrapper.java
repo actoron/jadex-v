@@ -3,7 +3,7 @@ package jadex.bdiv3.runtime.wrappers;
 import java.util.Set;
 
 import jadex.bdiv3.model.MElement;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.IComponent;
 import jadex.rules.eca.EventType;
 
 /**
@@ -17,7 +17,7 @@ public class SetWrapper<T> extends jadex.collection.SetWrapper<T>
 	/**
 	 *  Create a new set wrapper.
 	 */
-	public SetWrapper(Set<T> delegate, MjComponent agent, 
+	public SetWrapper(Set<T> delegate, IComponent agent, 
 		EventType addevent, EventType remevent, EventType changeevent, MElement mbel)
 	{
 		super(delegate);
@@ -37,7 +37,7 @@ public class SetWrapper<T> extends jadex.collection.SetWrapper<T>
 	/**
 	 * 
 	 */
-	public void setAgent(MjComponent agent)
+	public void setAgent(IComponent agent)
 	{
 		if(publisher instanceof InitEventPublisher)
 		{

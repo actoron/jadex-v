@@ -53,6 +53,7 @@ public class MjMicroAgent	extends MjComponent
 		return pojo;
 	}
 
+	// TODO use model feature
 	public IModelInfo getModel() 
 	{
 		return model;

@@ -19,7 +19,6 @@ import jadex.bdiv3x.runtime.CapabilityWrapper;
 import jadex.bdiv3x.runtime.IParameter;
 import jadex.bdiv3x.runtime.IParameterElement;
 import jadex.bdiv3x.runtime.IParameterSet;
-import jadex.bridge.IInternalAccess;
 import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
@@ -27,6 +26,8 @@ import jadex.common.UnparsedExpression;
 import jadex.javaparser.IMapAccess;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
+import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.model.IMjModelFeature;
 import jadex.rules.eca.EventType;
 
 /**
@@ -63,26 +64,26 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		{
 			for(MParameter mparam: mparams)
 			{
-				if(!mparam.isMulti(agent.getClassLoader()))
+				if(!mparam.isMulti(((MjMicroAgent)getAgent()).getClassLoader()))
 				{
 					if(vals!=null && (vals.containsKey(mparam.getName()) || vals.containsKey(SUtil.snakeToCamelCase(mparam.getName()))) && MParameter.EvaluationMode.STATIC.equals(mparam.getEvaluationMode()))
 					{
-						addParameter(createParameter(mparam, mparam.getName(), getAgent(), vals.containsKey(mparam.getName()) ? vals.get(mparam.getName()) : vals.get(SUtil.snakeToCamelCase(mparam.getName()))));
+						addParameter(createParameter(mparam, mparam.getName(), vals.containsKey(mparam.getName()) ? vals.get(mparam.getName()) : vals.get(SUtil.snakeToCamelCase(mparam.getName()))));
 					}
 					else
 					{
-						addParameter(createParameter(mparam, mparam.getName(), getAgent(), config!=null ? config.getParameter(mparam.getName()) : null));
+						addParameter(createParameter(mparam, mparam.getName(), config!=null ? config.getParameter(mparam.getName()) : null));
 					}
 				}
 				else
 				{
 					if(vals!=null && (vals.containsKey(mparam.getName()) || vals.containsKey(SUtil.snakeToCamelCase(mparam.getName()))) && MParameter.EvaluationMode.STATIC.equals(mparam.getEvaluationMode()))
 					{
-						addParameterSet(createParameterSet(mparam, mparam.getName(), getAgent(), vals.containsKey(mparam.getName()) ? vals.get(mparam.getName()) : vals.get(SUtil.snakeToCamelCase(mparam.getName()))));
+						addParameterSet(createParameterSet(mparam, mparam.getName(), vals.containsKey(mparam.getName()) ? vals.get(mparam.getName()) : vals.get(SUtil.snakeToCamelCase(mparam.getName()))));
 					}
 					else
 					{
-						addParameterSet(createParameterSet(mparam, mparam.getName(), getAgent(), config!=null ? config.getParameters(mparam.getName()) : null));
+						addParameterSet(createParameterSet(mparam, mparam.getName(), config!=null ? config.getParameters(mparam.getName()) : null));
 					}
 				}
 			}
@@ -117,33 +118,33 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 	/**
 	 * 
 	 */
-	public IParameter createParameter(MParameter modelelement, String name, IInternalAccess agent, UnparsedExpression inival)
+	public IParameter createParameter(MParameter modelelement, String name, UnparsedExpression inival)
 	{
-		return new RParameter(modelelement, name, agent, inival, getModelElement().getName());
+		return new RParameter(modelelement, name, inival, getModelElement().getName());
 	}
 	
 	/**
 	 * 
 	 */
-	public IParameter createParameter(MParameter modelelement, String name, IInternalAccess agent, Object value)
+	public IParameter createParameter(MParameter modelelement, String name, Object value)
 	{
-		return new RParameter(modelelement, name, agent, value, getModelElement().getName());
+		return new RParameter(modelelement, name, value, getModelElement().getName());
 	}
 	
 	/**
 	 * 
 	 */
-	public IParameterSet createParameterSet(MParameter modelelement, String name, IInternalAccess agent, List<UnparsedExpression> inivals)
+	public IParameterSet createParameterSet(MParameter modelelement, String name, List<UnparsedExpression> inivals)
 	{
-		return new RParameterSet(modelelement, name, agent, inivals, getModelElement().getName());
+		return new RParameterSet(modelelement, name, inivals, getModelElement().getName());
 	}
 	
 	/**
 	 * 
 	 */
-	public IParameterSet createParameterSet(MParameter modelelement, String name, IInternalAccess agent, Object values)
+	public IParameterSet createParameterSet(MParameter modelelement, String name, Object values)
 	{
-		return new RParameterSet(modelelement, name, agent, values, getModelElement().getName());
+		return new RParameterSet(modelelement, name, values, getModelElement().getName());
 	}
 	
 	/**
@@ -283,11 +284,11 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		 *  @param modelelement The model element.
 		 *  @param name The name.
 		 */
-		public RParameter(MParameter modelelement, String name, IInternalAccess agent, String pename)
+		public RParameter(MParameter modelelement, String name, String pename)
 		{
-			super(modelelement, agent);
+			super(modelelement);
 			this.name = name!=null? name: modelelement.getName();
-			this.publisher = new EventPublisher(agent, new EventType(ChangeEvent.VALUECHANGED, pename, getName()), (MParameter)getModelElement());
+			this.publisher = new EventPublisher(getAgent(), new EventType(ChangeEvent.VALUECHANGED, pename, getName()), (MParameter)getModelElement());
 		}
 		
 		/**
@@ -295,11 +296,11 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		 *  @param modelelement The model element.
 		 *  @param name The name.
 		 */
-		public RParameter(MParameter modelelement, String name, IInternalAccess agent, UnparsedExpression inival, String pename)
+		public RParameter(MParameter modelelement, String name, UnparsedExpression inival, String pename)
 		{
-			super(modelelement, agent);
+			super(modelelement);
 			this.name = name!=null? name: modelelement.getName();
-			this.publisher = new EventPublisher(agent, new EventType(ChangeEvent.VALUECHANGED, pename, getName()), (MParameter)getModelElement());
+			this.publisher = new EventPublisher(getAgent(), new EventType(ChangeEvent.VALUECHANGED, pename, getName()), (MParameter)getModelElement());
 			
 			if(modelelement!=null && modelelement.getEvaluationMode()==EvaluationMode.PULL)
 			{
@@ -314,12 +315,12 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		 *  @param modelelement The model element.
 		 *  @param name The name.
 		 */
-		public RParameter(MParameter modelelement, String name, IInternalAccess agent, Object value, String pename)
+		public RParameter(MParameter modelelement, String name, Object value, String pename)
 		{
-			super(modelelement, agent);
+			super(modelelement);
 			this.name = name!=null? name: modelelement.getName();
 			// RParameterElement.this.getName()
-			this.publisher = new EventPublisher(agent, new EventType(ChangeEvent.VALUECHANGED, pename, getName()), (MParameter)getModelElement());
+			this.publisher = new EventPublisher(getAgent(), new EventType(ChangeEvent.VALUECHANGED, pename, getName()), (MParameter)getModelElement());
 			
 			setValue(value);
 		}
@@ -350,7 +351,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		{
 			if(value!=null && getModelElement()!=null)
 			{
-				Class<?>	clazz	= ((MParameter)getModelElement()).getClazz().getType(getAgent().getClassLoader(), getAgent().getModel().getAllImports());
+				Class<?>	clazz	= ((MParameter)getModelElement()).getClazz().getType(((MjMicroAgent)getAgent()).getClassLoader(), getAgent().getFeature(IMjModelFeature.class).getModel().getAllImports());
 				if(!SReflect.isSupertype(clazz, value.getClass()))
 				{
 					throw new IllegalArgumentException("Incompatible value for parameter "+getName()+": "+value);
@@ -386,8 +387,9 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		protected Object evaluateValue(UnparsedExpression inival)
 		{
 			UnparsedExpression uexp = inival!=null ? inival : getModelElement()!=null ? ((MParameter)getModelElement()).getDefaultValue() : null;
-			return uexp!=null ? SJavaParser.parseExpression(uexp, getAgent().getModel().getAllImports(), getAgent().getClassLoader()).getValue(
-				wrapFetcher(CapabilityWrapper.getFetcher(getAgent(), uexp.getLanguage()))) : null;
+			return uexp!=null ? SJavaParser.parseExpression(uexp, getAgent().getFeature(IMjModelFeature.class).getModel().getAllImports(), ((MjMicroAgent)getAgent()).getClassLoader()).getValue(
+				// TODO language == scope!?!?!
+				wrapFetcher(CapabilityWrapper.getFetcher(uexp.getLanguage()))) : null;
 		}
 		
 		/**
@@ -418,9 +420,9 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		 *  @param modelelement The model element.
 		 *  @param name The name.
 		 */
-		public RParameterSet(MParameter modelelement, String name, IInternalAccess agent, String pename)
+		public RParameterSet(MParameter modelelement, String name, String pename)
 		{
-			super(modelelement, agent);
+			super(modelelement);
 			this.name = name!=null?name: modelelement.getName();
 		}
 		
@@ -429,9 +431,9 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		 *  @param modelelement The model element.
 		 *  @param name The name.
 		 */
-		public RParameterSet(MParameter modelelement, String name, IInternalAccess agent, Object vals, String pename)
+		public RParameterSet(MParameter modelelement, String name, Object vals, String pename)
 		{
-			super(modelelement, agent);
+			super(modelelement);
 			
 			this.name = name!=null?name: modelelement.getName();
 			
@@ -456,9 +458,9 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		 *  @param modelelement The model element.
 		 *  @param name The name.
 		 */
-		public RParameterSet(MParameter modelelement, String name, IInternalAccess agent, List<UnparsedExpression> inivals, String pename)
+		public RParameterSet(MParameter modelelement, String name,List<UnparsedExpression> inivals, String pename)
 		{
-			super(modelelement, agent);
+			super(modelelement);
 			this.name = name!=null?name: modelelement.getName();
 			if(modelelement!=null && modelelement.getEvaluationMode()==EvaluationMode.PULL)
 			{
@@ -494,8 +496,8 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 			{
 				if(inivals.size()==1)
 				{
-					Object	tmpvalue	= SJavaParser.parseExpression(inivals.get(0), agent.getModel().getAllImports(), agent.getClassLoader()).getValue(
-						wrapFetcher(CapabilityWrapper.getFetcher(getAgent(), inivals.get(0).getLanguage())));
+					Object	tmpvalue	= SJavaParser.parseExpression(inivals.get(0), getAgent().getFeature(IMjModelFeature.class).getModel().getAllImports(), ((MjMicroAgent)getAgent()).getClassLoader()).getValue(
+						wrapFetcher(CapabilityWrapper.getFetcher(inivals.get(0).getLanguage())));
 					if(tmpvalue!=null && getClazz()!=null && SReflect.isSupertype(getClazz(), tmpvalue.getClass()))
 					{
 						tmpvalues.add(tmpvalue);
@@ -512,8 +514,8 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 				{
 					for(UnparsedExpression uexp: inivals)
 					{
-						tmpvalues.add(SJavaParser.parseExpression(uexp, agent.getModel().getAllImports(), agent.getClassLoader()).getValue(
-							wrapFetcher(CapabilityWrapper.getFetcher(getAgent(), uexp.getLanguage()))));
+						tmpvalues.add(SJavaParser.parseExpression(uexp, ((MjMicroAgent)getAgent()).getModel().getAllImports(), ((MjMicroAgent)getAgent()).getClassLoader()).getValue(
+							wrapFetcher(CapabilityWrapper.getFetcher(uexp.getLanguage()))));
 					}
 				}
 			}
@@ -527,7 +529,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		protected Class<?> getClazz()
 		{
 			MParameter mparam = (MParameter)getModelElement();
-			return mparam.getClazz().getType(agent.getClassLoader(), agent.getModel().getAllImports());
+			return mparam.getClazz().getType(((MjMicroAgent)getAgent()).getClassLoader(), ((MjMicroAgent)getAgent()).getModel().getAllImports());
 		}
 		
 		/**
@@ -549,7 +551,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 			
 			if(value!=null && getModelElement()!=null)
 			{
-				Class<?>	clazz	= ((MParameter)getModelElement()).getClazz().getType(getAgent().getClassLoader(), getAgent().getModel().getAllImports());
+				Class<?>	clazz	= ((MParameter)getModelElement()).getClazz().getType(((MjMicroAgent)getAgent()).getClassLoader(), getAgent().getFeature(IMjModelFeature.class).getModel().getAllImports());
 				if(!SReflect.isSupertype(clazz, value.getClass()))
 				{
 					throw new IllegalArgumentException("Incompatible value for parameter set "+getName()+": "+value);
@@ -641,7 +643,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		 */
 		public Object[]	getValues()
 		{
-			return getValues(((MParameter)getModelElement()).getType(getAgent().getClassLoader()));
+			return getValues(((MParameter)getModelElement()).getType(((MjMicroAgent)getAgent()).getClassLoader()));
 		}
 		
 		/**

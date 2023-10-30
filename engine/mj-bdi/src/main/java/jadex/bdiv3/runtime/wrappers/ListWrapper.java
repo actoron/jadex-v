@@ -3,7 +3,7 @@ package jadex.bdiv3.runtime.wrappers;
 import java.util.List;
 
 import jadex.bdiv3.model.MElement;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.IComponent;
 import jadex.rules.eca.EventType;
 
 /**
@@ -17,7 +17,7 @@ public class ListWrapper<T> extends jadex.collection.ListWrapper<T>
 	/**
 	 *  Create a new list wrapper.
 	 */
-	public ListWrapper(List<T> delegate, MjComponent agent, 
+	public ListWrapper(List<T> delegate, IComponent agent, 
 		EventType addevent, EventType remevent, EventType changeevent, MElement melem)
 	{
 		super(delegate);
@@ -36,7 +36,7 @@ public class ListWrapper<T> extends jadex.collection.ListWrapper<T>
 	/**
 	 * 
 	 */
-	public void setAgent(MjComponent agent)
+	public void setAgent(IComponent agent)
 	{
 		if(publisher instanceof InitEventPublisher)
 		{
