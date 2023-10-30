@@ -29,7 +29,7 @@ public class MicroModelLoader extends AbstractModelLoader
 		super(new String[]{FILE_EXTENSION_MICRO});
 		this.reader = new MicroClassReader();
 		
-		AbstractModelLoader.addLoader(MjMicroAgent.class, this);
+		AbstractModelLoader.addLoader(MicroAgent.class, this);
 	}
 
 	//-------- methods --------

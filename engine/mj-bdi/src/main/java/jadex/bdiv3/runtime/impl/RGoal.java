@@ -44,7 +44,7 @@ import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IEvent;
@@ -103,7 +103,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	 */
 	public static void adoptGoal(RGoal rgoal)
 	{
-		assert IMjExecutionFeature.get().isComponentThread();
+		assert IExecutionFeature.get().isComponentThread();
 		
 		AdoptGoalAction.adoptGoal(rgoal);
 		

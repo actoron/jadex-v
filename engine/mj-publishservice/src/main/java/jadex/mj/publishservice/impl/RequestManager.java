@@ -47,7 +47,7 @@ import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.annotation.ParameterInfo;
@@ -781,7 +781,7 @@ public class RequestManager
 					//	System.out.println("call 2: "+request);
 
 					// Get provider of service and check access
-					IComponent comp = MjComponent.getComponent(service.getServiceId().getProviderId());
+					IComponent comp = Component.getComponent(service.getServiceId().getProviderId());
 					
 					comp.getExternalAccess().scheduleStep(agent ->
 					{
@@ -3792,7 +3792,7 @@ public class RequestManager
 	 */
 	public String getPath()
 	{
-		String ret = SReflect.getPackageName(MjPublishServiceFeature.class);
+		String ret = SReflect.getPackageName(PublishServiceFeature.class);
 		ret = ret.replace('.', '/');
 		if(!ret.endsWith("/"))
 			ret = ret+"/";

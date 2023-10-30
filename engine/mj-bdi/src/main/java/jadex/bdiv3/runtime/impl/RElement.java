@@ -5,7 +5,7 @@ import jadex.bdiv3.model.MCapability;
 import jadex.bdiv3.model.MElement;
 import jadex.common.SReflect;
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.rules.eca.RuleSystem;
 
 /**
@@ -102,7 +102,7 @@ public abstract class RElement
 	 */
 	public IComponent getAgent()
 	{
-		return IMjExecutionFeature.get().getComponent();
+		return IExecutionFeature.get().getComponent();
 	}
 	
 	/**

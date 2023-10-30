@@ -9,7 +9,7 @@ import jadex.bdiv3.model.MConfigParameterElement;
 import jadex.bdiv3.model.MParameter;
 import jadex.bdiv3.model.MParameter.Direction;
 import jadex.bdiv3.model.MProcessableElement;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 
 /**
  *  Runtime element for all elements that can be processed via means-end reasoning.
@@ -141,7 +141,7 @@ public abstract class RProcessableElement extends RParameterElement
 		// start MR when state gets to unprocessed
 		if(State.UNPROCESSED.equals(state))
 		{
-			IMjExecutionFeature.get().scheduleStep(new FindApplicableCandidatesAction(this));
+			IExecutionFeature.get().scheduleStep(new FindApplicableCandidatesAction(this));
 		}
 //		else if(PROCESSABLEELEMENT_APLAVAILABLE.equals(state))
 //		{

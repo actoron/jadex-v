@@ -1,7 +1,7 @@
 package jadex.mj.feature.providedservice.impl.service.impl.interceptors;
 
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.core.impl.Component;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 
 /**
@@ -10,12 +10,12 @@ import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationConte
 public abstract class ComponentThreadInterceptor extends AbstractApplicableInterceptor
 {
 	/** The internal access. */
-	protected MjComponent ia;	
+	protected Component ia;	
 	
 	/**
 	 *  Create a new ComponentThreadInterceptor. 
 	 */
-	public ComponentThreadInterceptor(MjComponent ia)
+	public ComponentThreadInterceptor(Component ia)
 	{
 		this.ia = ia;
 	}
@@ -30,13 +30,13 @@ public abstract class ComponentThreadInterceptor extends AbstractApplicableInter
 //			System.out.println("not on comp: "+context.getMethod().toString());
 //			throw new RuntimeException("Must be called on component thread: "+Thread.currentThread());
 
-		return getComponent().getFeature(IMjExecutionFeature.class).isComponentThread();
+		return getComponent().getFeature(IExecutionFeature.class).isComponentThread();
 	}
 	
 	/**
 	 *  Get the component.
 	 */
-	public MjComponent getComponent()
+	public Component getComponent()
 	{
 		return ia;
 	}

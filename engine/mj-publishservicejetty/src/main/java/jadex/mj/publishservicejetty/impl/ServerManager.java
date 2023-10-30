@@ -30,7 +30,7 @@ import jadex.mj.publishservice.impl.PublishInfo;
 import jadex.mj.publishservice.impl.RequestManager;
 import jadex.mj.publishservice.impl.RequestManager.MappingInfo;
 import jadex.mj.publishservice.publish.PathManager;
-import jadex.mj.requiredservice.IMjRequiredServiceFeature;
+import jadex.mj.requiredservice.IRequiredServiceFeature;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -92,7 +92,7 @@ public class ServerManager
 	            	{
 	            		service = component.getExternalAccess().scheduleStep((IComponent agent) ->
 	            		{
-	            			return agent.getFeature(IMjRequiredServiceFeature.class).searchService(new ServiceQuery<>((Class<IService>)null).setServiceIdentifier(serviceid)).get();
+	            			return agent.getFeature(IRequiredServiceFeature.class).searchService(new ServiceQuery<>((Class<IService>)null).setServiceIdentifier(serviceid)).get();
 	            		}).get();
 	            	}
 	            	//service = getComponent().getExternalAccess().searchService(new ServiceQuery<>((Class<IService>)null).setServiceIdentifier(serviceid)).get();

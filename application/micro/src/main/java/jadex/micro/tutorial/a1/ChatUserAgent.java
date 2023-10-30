@@ -3,11 +3,11 @@ package jadex.micro.tutorial.a1;
 import java.util.Collection;
 
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.model.annotation.OnStart;
-import jadex.mj.requiredservice.IMjRequiredServiceFeature;
+import jadex.mj.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Chat micro agent gets chat services and sends a message.
@@ -29,7 +29,7 @@ public class ChatUserAgent
 	{
 		while(true)
 		{
-			IMjRequiredServiceFeature rsf = agent.getFeature(IMjRequiredServiceFeature.class);
+			IRequiredServiceFeature rsf = agent.getFeature(IRequiredServiceFeature.class);
 			Collection<IChatService> chatservices = rsf.getLocalServices(IChatService.class);
 			System.out.println("Chat user found chat services: "+chatservices.size());
 			for(IChatService cs: chatservices)
@@ -37,7 +37,7 @@ public class ChatUserAgent
 				cs.message(agent.getId().toString(), "Hello");
 			}
 			
-			agent.getFeature(IMjExecutionFeature.class).waitForDelay(1000).get();
+			agent.getFeature(IExecutionFeature.class).waitForDelay(1000).get();
 		}
 	}
 	
@@ -46,11 +46,11 @@ public class ChatUserAgent
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MjMicroAgent.create(new ChatProviderAgent());
-		MjMicroAgent.create(new ChatProviderAgent());
-		MjMicroAgent.create(new ChatProviderAgent());
+		MicroAgent.create(new ChatProviderAgent());
+		MicroAgent.create(new ChatProviderAgent());
+		MicroAgent.create(new ChatProviderAgent());
 		
-		MjMicroAgent.create(new ChatUserAgent());
+		MicroAgent.create(new ChatUserAgent());
 		
 		IComponent.waitForLastComponentTerminated();
 	}

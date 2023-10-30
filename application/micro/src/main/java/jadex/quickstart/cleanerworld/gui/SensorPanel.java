@@ -7,7 +7,7 @@ import java.awt.Rectangle;
 
 import javax.swing.JPanel;
 
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.ILocation;
@@ -30,7 +30,7 @@ class SensorPanel extends JPanel
 	private SensorActuator	sensor;
 	
 	/** The agent. */
-	private IMjExecutionFeature agent;
+	private IExecutionFeature agent;
 	
 	//-------- constructors --------
 

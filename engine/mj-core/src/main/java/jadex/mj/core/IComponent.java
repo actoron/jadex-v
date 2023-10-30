@@ -7,8 +7,8 @@ import java.util.concurrent.Semaphore;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.impl.IComponentLifecycleManager;
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.core.impl.SMjFeatureProvider;
+import jadex.mj.core.impl.Component;
+import jadex.mj.core.impl.SFeatureProvider;
 
 /**
  *  Interface for a component.
@@ -62,15 +62,15 @@ public interface IComponent
 
 	public static void addComponentListener(IComponentListener listener, String... types)
 	{
-		synchronized(MjComponent.listeners)
+		synchronized(Component.listeners)
 		{	
 			for(String type: types)
 			{
-				Set<IComponentListener> ls = MjComponent.listeners.get(type);
+				Set<IComponentListener> ls = Component.listeners.get(type);
 				if(ls==null)
 				{
 					ls = new HashSet<IComponentListener>();
-					MjComponent.listeners.put(type, ls);
+					Component.listeners.put(type, ls);
 				}
 				ls.add(listener);
 			}
@@ -79,16 +79,16 @@ public interface IComponent
 	
 	public static void removeComponentListener(IComponentListener listener, String... types)
 	{
-		synchronized(MjComponent.listeners)
+		synchronized(Component.listeners)
 		{
 			for(String type: types)
 			{
-				Set<IComponentListener> ls = MjComponent.listeners.get(type);
+				Set<IComponentListener> ls = Component.listeners.get(type);
 				if(ls!=null)
 				{
 					ls.remove(listener);
 					if(ls.isEmpty())
-						MjComponent.listeners.remove(type);
+						Component.listeners.remove(type);
 				}
 			}
 		}
@@ -121,7 +121,7 @@ public interface IComponent
 		
 		
 		
-		for(IComponentLifecycleManager creator: SMjFeatureProvider.getLifecycleProviders())
+		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
 		{
 			if(creator.isCreator(pojo))
 			{
@@ -145,7 +145,7 @@ public interface IComponent
 	{
 		boolean created = false;
 		
-		for(IComponentLifecycleManager creator: SMjFeatureProvider.getLifecycleProviders())
+		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
 		{
 			if(creator.isCreator(pojo))
 			{
@@ -166,7 +166,7 @@ public interface IComponent
 	public static void create(Object pojo, ComponentIdentifier cid)
 	{
 		boolean created = false;
-		for(IComponentLifecycleManager creator: SMjFeatureProvider.getLifecycleProviders())
+		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
 		{
 			if(creator.isCreator(pojo))
 			{
@@ -185,9 +185,9 @@ public interface IComponent
 		
 		try
 		{
-			IComponent comp = MjComponent.getComponent(cid);
+			IComponent comp = Component.getComponent(cid);
 			IExternalAccess	exta	= comp.getExternalAccess();
-			MjComponent.removeComponent(cid);
+			Component.removeComponent(cid);
 			if(exta.isExecutable())
 			{
 				ret	= exta.scheduleStep(icomp ->

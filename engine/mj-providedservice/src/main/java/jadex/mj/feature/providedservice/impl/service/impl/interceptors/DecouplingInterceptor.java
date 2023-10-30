@@ -26,9 +26,9 @@ import jadex.common.transformation.traverser.SCloner;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
+import jadex.mj.core.impl.Component;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.feature.providedservice.IProvidedServiceFeature;
 import jadex.mj.feature.providedservice.annotation.Reference;
 import jadex.mj.feature.providedservice.impl.service.impl.IInternalService;
 import jadex.mj.feature.providedservice.impl.service.impl.IServiceInvocationInterceptor;
@@ -77,7 +77,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	//protected IExternalAccess ea;	
 		
 	/** The internal access. */
-	protected MjComponent ia;	
+	protected Component ia;	
 		
 	/** Is the interceptor for a required service proxy? */
 	protected boolean required;
@@ -93,7 +93,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	/**
 	 *  Create a new invocation handler.
 	 */
-	public DecouplingInterceptor(MjComponent ia, boolean copy, boolean required)
+	public DecouplingInterceptor(Component ia, boolean copy, boolean required)
 	{
 		this.ia = ia;
 		//this.ea	= ia.getExternalAccess();
@@ -222,7 +222,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 //		if(sic.getMethod().getName().indexOf("getChildren")!=-1)
 //			System.out.println("huhuhu");
 		
-		if(ia.getFeature(IMjExecutionFeature.class).isComponentThread() || !scheduleable || NO_DECOUPLING.contains(sic.getMethod()))
+		if(ia.getFeature(IExecutionFeature.class).isComponentThread() || !scheduleable || NO_DECOUPLING.contains(sic.getMethod()))
 		{
 			// Not possible to use if it complains this way
 			// E.g. you have prov service and need to reschedule on the component then first getProviderId(), getExtAccess(), scheduleStep
@@ -257,7 +257,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 			//ia.getFeature(IMjExecutionFeature.class).scheduleStep(IMjExecutionFeature.STEP_PRIORITY_UNSET, false, new InvokeMethodStep(sic))
 			//	.addResultListener(new CopyReturnValueResultListener(ret, sic));
 			
-			ia.getFeature(IMjExecutionFeature.class).scheduleStep(new InvokeMethodStep(sic))
+			ia.getFeature(IExecutionFeature.class).scheduleStep(new InvokeMethodStep(sic))
 				.addResultListener(new CopyReturnValueResultListener(ret, sic));
 
 		}
@@ -485,7 +485,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 					@Override
 					public void scheduleBackward(final ICommand<Void> code)
 					{
-						if(ia.getFeature(IMjExecutionFeature.class).isComponentThread())
+						if(ia.getFeature(IExecutionFeature.class).isComponentThread())
 						{
 							code.execute(null);
 						}
@@ -500,7 +500,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 								}
 							});*/
 							
-							ia.getFeature(IMjExecutionFeature.class).scheduleStep(() -> code.execute(null));
+							ia.getFeature(IExecutionFeature.class).scheduleStep(() -> code.execute(null));
 						}	
 					}
 				};
@@ -764,7 +764,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	 */
 	public final ISerializationServices getSerializationServices()
 	{
-		return ia.getFeature(IMjProvidedServiceFeature.class).getSerializationService();
+		return ia.getFeature(IProvidedServiceFeature.class).getSerializationService();
 		//return (ISerializationServices)Starter.getPlatformValue(ia.getId(), Starter.DATA_SERIALIZATIONSERVICES);
 	}
 	

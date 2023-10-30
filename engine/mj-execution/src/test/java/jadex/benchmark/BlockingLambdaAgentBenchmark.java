@@ -10,7 +10,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.feature.execution.LambdaAgent;
-import jadex.mj.feature.execution.impl.MjExecutionFeature;
+import jadex.mj.feature.execution.impl.ExecutionFeature;
 
 /**
  *  Benchmark plain MjComponent with included execution feature.
@@ -37,8 +37,8 @@ public class BlockingLambdaAgentBenchmark	extends AbstractComponentBenchmark
 
 	protected static Stream<Arguments> provideBenchmarkParams() {
 	    return Stream.of(
-	  	      Arguments.of(MjExecutionFeature.VIRTUAL_THREADS ? 10000 : 1000, false, false),
-		      Arguments.of(MjExecutionFeature.VIRTUAL_THREADS ? 100000 : 10000, false, true)	
+	  	      Arguments.of(ExecutionFeature.VIRTUAL_THREADS ? 10000 : 1000, false, false),
+		      Arguments.of(ExecutionFeature.VIRTUAL_THREADS ? 100000 : 10000, false, true)	
 	    );
 	}
 	

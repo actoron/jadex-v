@@ -9,7 +9,7 @@ import jadex.collection.LRU;
 import jadex.common.ResourceInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 
 /**
  *  Loader for managing models, loaded from disc and kept in cache.
@@ -498,14 +498,14 @@ public abstract class AbstractModelLoader
 		}
 	}
 	
-	public static final Map<Class<? extends MjComponent>, AbstractModelLoader> loaders = new HashMap<>(); 
+	public static final Map<Class<? extends Component>, AbstractModelLoader> loaders = new HashMap<>(); 
 	
-	public static AbstractModelLoader getLoader(Class<? extends MjComponent> type)
+	public static AbstractModelLoader getLoader(Class<? extends Component> type)
 	{
 		return loaders.get(type);
 	}
 	
-	public static void addLoader(Class<? extends MjComponent> type, AbstractModelLoader loader)
+	public static void addLoader(Class<? extends Component> type, AbstractModelLoader loader)
 	{
 		if(loaders.containsKey(type))
 			System.out.println("Loader added more than once for: "+type);

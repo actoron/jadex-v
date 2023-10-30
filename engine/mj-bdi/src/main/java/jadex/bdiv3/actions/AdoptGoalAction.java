@@ -27,7 +27,7 @@ import jadex.bdiv3x.runtime.IParameterSet;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 
 /**
  *  Action for adopting a goal.
@@ -94,7 +94,7 @@ public class AdoptGoalAction implements Runnable
 				try
 				{
 					Field f = gcl.getDeclaredField(IBDIClassGenerator.AGENT_FIELD_NAME);
-					f.set(goal.getPojoElement(), IMjExecutionFeature.get().getComponent());
+					f.set(goal.getPojoElement(), IExecutionFeature.get().getComponent());
 
 					// Init goal parameter list/map/set wrappers with the agent
 					List<MParameter> mps = mgoal.getParameters();
@@ -105,15 +105,15 @@ public class AdoptGoalAction implements Runnable
 							Object val = mp.getValue(goal.getPojoElement(), goal.getPojoElement().getClass().getClassLoader());
 							if(val instanceof ListWrapper && ((ListWrapper<?>)val).isInitWrite())
 							{
-								((ListWrapper<?>)val).setAgent(IMjExecutionFeature.get().getComponent());
+								((ListWrapper<?>)val).setAgent(IExecutionFeature.get().getComponent());
 							}
 							else if(val instanceof MapWrapper && ((MapWrapper<?,?>)val).isInitWrite())
 							{
-								((MapWrapper<?,?>)val).setAgent(IMjExecutionFeature.get().getComponent());
+								((MapWrapper<?,?>)val).setAgent(IExecutionFeature.get().getComponent());
 							}
 							else if(val instanceof SetWrapper && ((SetWrapper<?>)val).isInitWrite())
 							{
-								((SetWrapper<?>)val).setAgent(IMjExecutionFeature.get().getComponent());
+								((SetWrapper<?>)val).setAgent(IExecutionFeature.get().getComponent());
 							}
 						}
 					}

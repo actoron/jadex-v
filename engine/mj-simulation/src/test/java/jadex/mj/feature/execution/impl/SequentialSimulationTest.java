@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.simulation.IMjSimulationFeature;
-import jadex.mj.feature.simulation.impl.MjSlaveSimulationFeature;
+import jadex.mj.core.impl.Component;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.feature.simulation.ISimulationFeature;
+import jadex.mj.feature.simulation.impl.SlaveSimulationFeature;
 
 public class SequentialSimulationTest extends ParallelSimulationTest
 {
@@ -17,21 +17,21 @@ public class SequentialSimulationTest extends ParallelSimulationTest
 	public void	setup()
 	{
 		super.setup();
-		MjSlaveSimulationFeature.parallel	= false;
+		SlaveSimulationFeature.parallel	= false;
 	}
 	
 	@Test
 	public void	testReproducibility()
 	{
 		String[]	input	= new String[]{"A", "B", "C", "D", "E", "F"};
-		IMjSimulationFeature[]	sim	= new IMjSimulationFeature[input.length];
+		ISimulationFeature[]	sim	= new ISimulationFeature[input.length];
 		StringBuffer	output	= new StringBuffer();
 		
 		for(int i=0; i<input.length; i++)
 		{
 			int num	= i;
-			MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-			sim[i]	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
+			Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+			sim[i]	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 			if(i==0)
 			{
 				sim[i].stop().get(1000);
@@ -39,7 +39,7 @@ public class SequentialSimulationTest extends ParallelSimulationTest
 			
 			sim[i].scheduleStep(() -> 
 			{
-				IMjExecutionFeature.get().waitForDelay(num).get();
+				IExecutionFeature.get().waitForDelay(num).get();
 				
 				for(int j=0; j<=num; j++)
 				{

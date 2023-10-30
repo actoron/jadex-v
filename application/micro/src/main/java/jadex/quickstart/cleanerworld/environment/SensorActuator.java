@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 import jadex.common.ErrorException;
 import jadex.common.SUtil;
 import jadex.future.Future;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.quickstart.cleanerworld.environment.impl.Cleaner;
 import jadex.quickstart.cleanerworld.environment.impl.Environment;
 import jadex.quickstart.cleanerworld.environment.impl.Location;
@@ -28,7 +28,7 @@ public class SensorActuator
 	//-------- attributes --------
 	
 	/** The agent. Must be public due to Java Reflection Restrictions */
-	public IMjExecutionFeature agent;
+	public IExecutionFeature agent;
 	
 	/** The cleaner. */
 	private Cleaner	self;
@@ -61,7 +61,7 @@ public class SensorActuator
 	 */
 	public SensorActuator()
 	{
-		this.agent	= IMjExecutionFeature.get();
+		this.agent	= IExecutionFeature.get();
 
 		self	= Environment.getInstance().createCleaner(agent.getComponent());
 		this.cleaners	= new LinkedHashSet<>();

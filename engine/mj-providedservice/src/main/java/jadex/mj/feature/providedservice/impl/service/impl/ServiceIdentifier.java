@@ -10,12 +10,12 @@ import jadex.common.SReflect;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Security;
 import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.model.IMjModelFeature;
+import jadex.mj.model.IModelFeature;
 
 
 /**
@@ -317,9 +317,9 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  @param ctype The service interface.
 	 *  @return True, if is unrestricted.
 	 */
-	public static boolean isUnrestricted(MjComponent access, ClassInfo ctype)
+	public static boolean isUnrestricted(Component access, ClassInfo ctype)
 	{
-		Set<String>	roles	= getRoles(getSecurityLevel(ctype.getType(access.getClassLoader(), access.getFeature(IMjModelFeature.class).getModel().getAllImports())), access);
+		Set<String>	roles	= getRoles(getSecurityLevel(ctype.getType(access.getClassLoader(), access.getFeature(IModelFeature.class).getModel().getAllImports())), access);
 		return roles!=null && roles.contains(Security.UNRESTRICTED);
 	}
 	
@@ -329,7 +329,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  @param ctype The service interface.
 	 *  @return True, if is unrestricted.
 	 */
-	public static boolean isUnrestricted(MjComponent access, Class<?> ctype)
+	public static boolean isUnrestricted(Component access, Class<?> ctype)
 	{
 		Set<String>	roles	= getRoles(getSecurityLevel(ctype), access);
 		return roles!=null && roles.contains(Security.UNRESTRICTED);
@@ -341,7 +341,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  @param provider	The component that owns the service.
 	 *  @return The roles, if any or null, if none given or sec==null.
 	 */
-	public static Set<String>	getRoles(Security sec, MjComponent provider)
+	public static Set<String>	getRoles(Security sec, Component provider)
 	{
 		Set<String>	ret	= null;
 		String[]	roles	= sec!=null ? sec.roles() : null;
@@ -351,7 +351,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 			ret	= new HashSet<String>();
 			for(String role: roles)
 			{
-				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IMjModelFeature.class).getModel().getAllImports(), provider.getFeature(IMjModelFeature.class).getFetcher(), provider.getClassLoader()));
+				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IModelFeature.class).getModel().getAllImports(), provider.getFeature(IModelFeature.class).getFetcher(), provider.getClassLoader()));
 			}
 		}
 		return ret;

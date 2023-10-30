@@ -22,5 +22,5 @@ public interface IBootstrapping
 	 *  				and can be called before, after, or in between your bootstrapping code. 
 	 *  @return	The created component instance.
 	 */
-	public <T extends MjComponent> T	bootstrap(Class<T> type, Supplier<T> creator);
+	public <T extends Component> T	bootstrap(Class<T> type, Supplier<T> creator);
 }

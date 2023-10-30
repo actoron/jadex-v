@@ -5,7 +5,7 @@ import java.util.Collection;
 import jadex.future.IIntermediateResultListener;
 import jadex.future.IUndoneIntermediateResultListener;
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 
 /**
  *  Intermediate listener that invokes listeners on component thread.
@@ -33,11 +33,11 @@ public class IntermediateComponentResultListener<E> extends ComponentResultListe
 	 */
 	public void intermediateResultAvailable(final E result)
 	{
-		if(!component.getFeature(IMjExecutionFeature.class).isComponentThread())
+		if(!component.getFeature(IExecutionFeature.class).isComponentThread())
 		{
 			try
 			{
-				component.getFeature(IMjExecutionFeature.class).scheduleStep((IComponent ia) ->
+				component.getFeature(IExecutionFeature.class).scheduleStep((IComponent ia) ->
 				{
 					if(undone && listener instanceof IUndoneIntermediateResultListener)
 					{

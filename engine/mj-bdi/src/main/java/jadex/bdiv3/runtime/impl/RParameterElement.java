@@ -26,8 +26,8 @@ import jadex.common.UnparsedExpression;
 import jadex.javaparser.IMapAccess;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.mj.micro.MjMicroAgent;
-import jadex.mj.model.IMjModelFeature;
+import jadex.mj.micro.MicroAgent;
+import jadex.mj.model.IModelFeature;
 import jadex.rules.eca.EventType;
 
 /**
@@ -64,7 +64,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		{
 			for(MParameter mparam: mparams)
 			{
-				if(!mparam.isMulti(((MjMicroAgent)getAgent()).getClassLoader()))
+				if(!mparam.isMulti(((MicroAgent)getAgent()).getClassLoader()))
 				{
 					if(vals!=null && (vals.containsKey(mparam.getName()) || vals.containsKey(SUtil.snakeToCamelCase(mparam.getName()))) && MParameter.EvaluationMode.STATIC.equals(mparam.getEvaluationMode()))
 					{
@@ -351,7 +351,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		{
 			if(value!=null && getModelElement()!=null)
 			{
-				Class<?>	clazz	= ((MParameter)getModelElement()).getClazz().getType(((MjMicroAgent)getAgent()).getClassLoader(), getAgent().getFeature(IMjModelFeature.class).getModel().getAllImports());
+				Class<?>	clazz	= ((MParameter)getModelElement()).getClazz().getType(((MicroAgent)getAgent()).getClassLoader(), getAgent().getFeature(IModelFeature.class).getModel().getAllImports());
 				if(!SReflect.isSupertype(clazz, value.getClass()))
 				{
 					throw new IllegalArgumentException("Incompatible value for parameter "+getName()+": "+value);
@@ -387,7 +387,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		protected Object evaluateValue(UnparsedExpression inival)
 		{
 			UnparsedExpression uexp = inival!=null ? inival : getModelElement()!=null ? ((MParameter)getModelElement()).getDefaultValue() : null;
-			return uexp!=null ? SJavaParser.parseExpression(uexp, getAgent().getFeature(IMjModelFeature.class).getModel().getAllImports(), ((MjMicroAgent)getAgent()).getClassLoader()).getValue(
+			return uexp!=null ? SJavaParser.parseExpression(uexp, getAgent().getFeature(IModelFeature.class).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
 				// TODO language == scope!?!?!
 				wrapFetcher(CapabilityWrapper.getFetcher(uexp.getLanguage()))) : null;
 		}
@@ -496,7 +496,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 			{
 				if(inivals.size()==1)
 				{
-					Object	tmpvalue	= SJavaParser.parseExpression(inivals.get(0), getAgent().getFeature(IMjModelFeature.class).getModel().getAllImports(), ((MjMicroAgent)getAgent()).getClassLoader()).getValue(
+					Object	tmpvalue	= SJavaParser.parseExpression(inivals.get(0), getAgent().getFeature(IModelFeature.class).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
 						wrapFetcher(CapabilityWrapper.getFetcher(inivals.get(0).getLanguage())));
 					if(tmpvalue!=null && getClazz()!=null && SReflect.isSupertype(getClazz(), tmpvalue.getClass()))
 					{
@@ -514,7 +514,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 				{
 					for(UnparsedExpression uexp: inivals)
 					{
-						tmpvalues.add(SJavaParser.parseExpression(uexp, ((MjMicroAgent)getAgent()).getModel().getAllImports(), ((MjMicroAgent)getAgent()).getClassLoader()).getValue(
+						tmpvalues.add(SJavaParser.parseExpression(uexp, ((MicroAgent)getAgent()).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
 							wrapFetcher(CapabilityWrapper.getFetcher(uexp.getLanguage()))));
 					}
 				}
@@ -529,7 +529,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		protected Class<?> getClazz()
 		{
 			MParameter mparam = (MParameter)getModelElement();
-			return mparam.getClazz().getType(((MjMicroAgent)getAgent()).getClassLoader(), ((MjMicroAgent)getAgent()).getModel().getAllImports());
+			return mparam.getClazz().getType(((MicroAgent)getAgent()).getClassLoader(), ((MicroAgent)getAgent()).getModel().getAllImports());
 		}
 		
 		/**
@@ -551,7 +551,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 			
 			if(value!=null && getModelElement()!=null)
 			{
-				Class<?>	clazz	= ((MParameter)getModelElement()).getClazz().getType(((MjMicroAgent)getAgent()).getClassLoader(), getAgent().getFeature(IMjModelFeature.class).getModel().getAllImports());
+				Class<?>	clazz	= ((MParameter)getModelElement()).getClazz().getType(((MicroAgent)getAgent()).getClassLoader(), getAgent().getFeature(IModelFeature.class).getModel().getAllImports());
 				if(!SReflect.isSupertype(clazz, value.getClass()))
 				{
 					throw new IllegalArgumentException("Incompatible value for parameter set "+getName()+": "+value);
@@ -643,7 +643,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		 */
 		public Object[]	getValues()
 		{
-			return getValues(((MParameter)getModelElement()).getType(((MjMicroAgent)getAgent()).getClassLoader()));
+			return getValues(((MParameter)getModelElement()).getType(((MicroAgent)getAgent()).getClassLoader()));
 		}
 		
 		/**

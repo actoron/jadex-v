@@ -11,7 +11,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.MicroAgent;
 import jadex.mj.model.annotation.OnStart;
 
 /**
@@ -29,7 +29,7 @@ public class MicroAgentBenchmark	extends AbstractComponentBenchmark
 	protected IFuture<ComponentIdentifier>	createComponent(String name)
 	{
 		Future<ComponentIdentifier>	ret	= new Future<>();
-		MjMicroAgent.create(new Object()
+		MicroAgent.create(new Object()
 		{
 			@OnStart
 			public void	start(IComponent self)

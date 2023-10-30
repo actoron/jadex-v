@@ -18,15 +18,15 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
+import jadex.mj.core.impl.Component;
+import jadex.mj.feature.providedservice.IProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.ServiceScope;
 import jadex.mj.feature.providedservice.annotation.Security;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.feature.providedservice.annotation.Timeout;
-import jadex.mj.model.IMjModelFeature;
+import jadex.mj.model.IModelFeature;
 import jadex.mj.model.modelinfo.ModelInfo;
 
 /**
@@ -46,7 +46,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	protected static long idcnt;
 	
 	/** Internal access to its component. */
-	protected MjComponent internalaccess;
+	protected Component internalaccess;
 	
 	/** The started state. */
 	protected volatile boolean started;
@@ -407,7 +407,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Sets the access for the component.
 	 *  @param access Component access.
 	 */
-	public IFuture<Void> setComponentAccess(MjComponent access)
+	public IFuture<Void> setComponentAccess(Component access)
 	{
 		internalaccess = access;
 //		setParent(internalaccess.getExternalAccess());
@@ -631,7 +631,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	/**
 	 *  Create a new service identifier for the own component.
 	 */
-	public static IServiceIdentifier createServiceIdentifier(MjComponent provider, String servicename, 
+	public static IServiceIdentifier createServiceIdentifier(Component provider, String servicename, 
 		Class<?> servicetype, Class<?> serviceimpl, ProvidedServiceInfo info)
 	{
 //		if(servicetype.getName().indexOf("IServicePool")!=-1)
@@ -660,7 +660,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	/**
 	 *  Get the internal access.
 	 */
-	public MjComponent getInternalAccess() 
+	public Component getInternalAccess() 
 	{
 		return internalaccess;
 	}
@@ -783,8 +783,8 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 		return component.getExternalAccess(cid).scheduleStep((IComponent agent) -> 
 		{
 			//System.out.println("isUnrestricted 2: "+cid);
-			Security sec = getSecurityLevel((MjComponent)agent, null, null, null, method, sid);
-			Set<String>	roles = ServiceIdentifier.getRoles(sec, (MjComponent)agent);
+			Security sec = getSecurityLevel((Component)agent, null, null, null, method, sid);
+			Set<String>	roles = ServiceIdentifier.getRoles(sec, (Component)agent);
 			return roles!=null && roles.contains(Security.UNRESTRICTED);
 		});
 	}
@@ -792,7 +792,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	/**
 	 *  Find the most specific security setting.
 	 */ 
-	public static Security getSecurityLevel(MjComponent access, ProvidedServiceInfo info, Class<?> implclass, Class<?> type, Method method, IServiceIdentifier sid)
+	public static Security getSecurityLevel(Component access, ProvidedServiceInfo info, Class<?> implclass, Class<?> type, Method method, IServiceIdentifier sid)
 	{
 		Security level = null;
 		
@@ -800,7 +800,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 		if(info==null && sid!=null)
 		{
 			ProvidedServiceInfo	found	= null;
-			ProvidedServiceModel model = (ProvidedServiceModel)((ModelInfo)access.getFeature(IMjModelFeature.class).getModel()).getFeatureModel(IMjProvidedServiceFeature.class);
+			ProvidedServiceModel model = (ProvidedServiceModel)((ModelInfo)access.getFeature(IModelFeature.class).getModel()).getFeatureModel(IProvidedServiceFeature.class);
 			ProvidedServiceInfo[] pros = model.getServices();
 			for(ProvidedServiceInfo psi: pros)
 			{
@@ -838,7 +838,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 		// at runtime: fetch implclass from service
 		if(level==null && implclass==null && sid!=null)
 		{
-			Object impl = access.getFeature(IMjProvidedServiceFeature.class).getProvidedServiceRawImpl(sid);
+			Object impl = access.getFeature(IProvidedServiceFeature.class).getProvidedServiceRawImpl(sid);
 			implclass = impl!=null ? impl.getClass() : null;
 		}
 		

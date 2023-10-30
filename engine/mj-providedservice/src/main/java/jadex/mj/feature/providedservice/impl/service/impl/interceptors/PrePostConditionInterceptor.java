@@ -17,7 +17,7 @@ import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.javaccimpl.ExpressionNode;
 import jadex.javaparser.javaccimpl.ParameterNode;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 import jadex.mj.feature.providedservice.annotation.CheckIndex;
 import jadex.mj.feature.providedservice.annotation.CheckNotNull;
 import jadex.mj.feature.providedservice.annotation.CheckState;
@@ -31,7 +31,7 @@ public class PrePostConditionInterceptor extends AbstractLRUApplicableIntercepto
 	/**
 	 *  Create a new AbstractLRUApplicableInterceptor. 
 	 */
-	public PrePostConditionInterceptor(MjComponent ia)
+	public PrePostConditionInterceptor(Component ia)
 	{
 		super(ia);
 	}

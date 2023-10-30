@@ -11,8 +11,8 @@ import jadex.future.IResultListener;
 import jadex.future.IUndoneResultListener;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.execution.impl.MjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.feature.execution.impl.ExecutionFeature;
 
 /**
  *  The result listener for executing listener invocations as a component step.
@@ -179,7 +179,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 		Future<Void> ret = new Future<Void>();
 		
 		// Execute directly on component thread?
-		if(SUtil.equals(MjExecutionFeature.LOCAL.get(), 
+		if(SUtil.equals(ExecutionFeature.LOCAL.get(), 
 			access!=null ? access.getId() : 
 			component.getId()))
 		{
@@ -189,7 +189,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 		else
 		{
 			// Debug caller thread
-			String trace = "Component("+MjExecutionFeature.LOCAL.get()+") ";
+			String trace = "Component("+ExecutionFeature.LOCAL.get()+") ";
 			//String trace = SUtil.getExceptionStacktrace(new RuntimeException("stack trace").fillInStackTrace());
 			
 			// Differentiate between exception in listener (true) and exception before invocation (false)
@@ -223,7 +223,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 			// Schedule using internal access, let execution feature deal with exceptions in listener code
 			else
 			{
-				component.getFeature(IMjExecutionFeature.class).scheduleStep(invocation)
+				component.getFeature(IExecutionFeature.class).scheduleStep(invocation)
 					.then(x -> ret.setResult(null))
 					.catchEx(ex0 ->
 					{

@@ -3,7 +3,7 @@ package jadex.micro.tutorial.a2;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.model.annotation.OnStart;
 
@@ -17,7 +17,7 @@ public class ChatProviderAgent implements IChatService
 {
 	/** The underlying micro agent. */
 	@Agent
-	protected MjMicroAgent agent;
+	protected MicroAgent agent;
 	
 	@OnStart
 	protected void onStart()

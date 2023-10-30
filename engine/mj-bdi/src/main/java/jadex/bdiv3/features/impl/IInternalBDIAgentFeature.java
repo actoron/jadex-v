@@ -9,7 +9,7 @@ import jadex.bdiv3.runtime.IBeliefListener;
 import jadex.bdiv3.runtime.impl.RCapability;
 import jadex.common.IResultCommand;
 import jadex.future.IFuture;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.RuleSystem;
 
@@ -20,7 +20,7 @@ public interface IInternalBDIAgentFeature	extends IBDIAgentFeature
 {
 	public static IInternalBDIAgentFeature	get()
 	{
-		return (IInternalBDIAgentFeature)IMjExecutionFeature.get().getComponent().getFeature(IBDIAgentFeature.class);
+		return (IInternalBDIAgentFeature)IExecutionFeature.get().getComponent().getFeature(IBDIAgentFeature.class);
 	}
 	
 //	/**

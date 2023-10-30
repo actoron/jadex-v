@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 
 /**
  *  Benchmark MjComponent creation without any features.
@@ -19,7 +19,7 @@ public class PlainComponentBenchmark	extends AbstractComponentBenchmark
 	@Override
 	protected IFuture<ComponentIdentifier>	createComponent(String name)
 	{
-		return new Future<>( new MjComponent(new ComponentIdentifier(name)).getId());
+		return new Future<>( new Component(new ComponentIdentifier(name)).getId());
 	}
 
 	protected static Stream<Arguments> provideBenchmarkParams() {

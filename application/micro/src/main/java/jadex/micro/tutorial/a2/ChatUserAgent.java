@@ -2,7 +2,7 @@ package jadex.micro.tutorial.a2;
 
 import jadex.common.SUtil;
 import jadex.mj.core.IComponent;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.requiredservice.annotation.OnService;
 
@@ -27,11 +27,11 @@ public class ChatUserAgent
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MjMicroAgent.create(new ChatUserAgent());
+		MicroAgent.create(new ChatUserAgent());
 		
-		MjMicroAgent.create(new ChatProviderAgent());
-		MjMicroAgent.create(new ChatProviderAgent());
-		MjMicroAgent.create(new ChatProviderAgent());
+		MicroAgent.create(new ChatProviderAgent());
+		MicroAgent.create(new ChatProviderAgent());
+		MicroAgent.create(new ChatProviderAgent());
 		
 		IComponent.waitForLastComponentTerminated();
 	}

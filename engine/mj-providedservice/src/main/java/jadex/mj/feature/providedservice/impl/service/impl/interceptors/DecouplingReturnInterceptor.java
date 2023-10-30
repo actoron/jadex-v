@@ -5,7 +5,7 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 
 /**
@@ -24,7 +24,7 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 	{
 		Future<Void> fut	= new Future<Void>();
 		
-		final IComponent caller = IMjExecutionFeature.get().getComponent();
+		final IComponent caller = IExecutionFeature.get().getComponent();
 		/*final IRequiredServicesFeature	feat	= caller!=null ? caller.getFeature0(IRequiredServicesFeature.class) : null;
 		if(feat instanceof IInternalServiceMonitoringFeature && ((IInternalServiceMonitoringFeature)feat).isMonitoring())
 		{
@@ -52,14 +52,14 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 						public <T> void scheduleForward(final ICommand<T> com, final T args)
 						{
 							// Don't reschedule if already on correct thread.
-							if(caller==null || caller.getFeature(IMjExecutionFeature.class).isComponentThread())
+							if(caller==null || caller.getFeature(IExecutionFeature.class).isComponentThread())
 							{
 								com.execute(args);
 							}
 							else
 							{
 								//System.out.println("todo: scheduleDecoupledStep");
-								caller.getFeature(IMjExecutionFeature.class).scheduleStep(agent ->
+								caller.getFeature(IExecutionFeature.class).scheduleStep(agent ->
 								{
 									com.execute(args);
 								});

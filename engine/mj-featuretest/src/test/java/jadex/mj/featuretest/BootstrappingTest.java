@@ -8,9 +8,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.featuretest.impl.MjTestFeature2Provider;
-import jadex.mj.featuretest.impl.MjTestLazyFeatureProvider;
+import jadex.mj.core.impl.Component;
+import jadex.mj.featuretest.impl.TestFeature2Provider;
+import jadex.mj.featuretest.impl.TestLazyFeatureProvider;
 
 public class BootstrappingTest
 {
@@ -21,13 +21,13 @@ public class BootstrappingTest
 	{
 		List<String>	expected	= Arrays.asList(new String[]
 		{
-			MjTestFeature2Provider.class.getSimpleName()+"_beforeCreate",
-			MjTestLazyFeatureProvider.class.getSimpleName()+"_beforeCreate",
-			MjTestLazyFeatureProvider.class.getSimpleName()+"_afterCreate",
-			MjTestFeature2Provider.class.getSimpleName()+"_afterCreate"
+			TestFeature2Provider.class.getSimpleName()+"_beforeCreate",
+			TestLazyFeatureProvider.class.getSimpleName()+"_beforeCreate",
+			TestLazyFeatureProvider.class.getSimpleName()+"_afterCreate",
+			TestFeature2Provider.class.getSimpleName()+"_afterCreate"
 		});
 		
-		MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
+		Component.createComponent(Component.class, () -> new Component(null));
 		
 		assertEquals(expected, bootstraps);
 	}

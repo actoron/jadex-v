@@ -147,7 +147,7 @@ public class RequiredServiceLoader
 							
 							if(new ClassInfo(Object.class).equals(rsis.getType()))
 							{
-								Class<?> iftype = Object.class.equals(ser.requiredservice().type())? MjRequiredServiceFeature.guessParameterType(methods[i].getParameterTypes(), cl): ser.requiredservice().type();
+								Class<?> iftype = Object.class.equals(ser.requiredservice().type())? RequiredServiceFeature.guessParameterType(methods[i].getParameterTypes(), cl): ser.requiredservice().type();
 								rsis.setType(new ClassInfo(iftype));
 							}
 							

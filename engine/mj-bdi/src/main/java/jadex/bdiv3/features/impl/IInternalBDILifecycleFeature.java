@@ -1,7 +1,7 @@
 package jadex.bdiv3.features.impl;
 
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.micro.impl.MjMicroAgentFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.micro.impl.MicroAgentFeature;
 
 /**
  *  Internal interface of the bdi lifecycle feature.
@@ -10,7 +10,7 @@ public interface IInternalBDILifecycleFeature
 {
 	public static IInternalBDILifecycleFeature	get()
 	{
-		return (IInternalBDILifecycleFeature)IMjExecutionFeature.get().getComponent().getFeature(MjMicroAgentFeature.class);
+		return (IInternalBDILifecycleFeature)IExecutionFeature.get().getComponent().getFeature(MicroAgentFeature.class);
 	}
 	
 	/**

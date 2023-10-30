@@ -8,13 +8,13 @@ import java.util.Iterator;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.annotation.Testable;
 
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.featuretest.impl.MjTestFeature1NewProvider;
-import jadex.mj.featuretest.impl.MjTestFeature2NewProvider;
-import jadex.mj.micro.MjMicroAgent;
-import jadex.mj.micro.impl.MjMicroAgentFeature;
-import jadex.mj.model.IMjModelFeature;
+import jadex.mj.core.impl.Component;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.featuretest.impl.TestFeature1NewProvider;
+import jadex.mj.featuretest.impl.TestFeature2NewProvider;
+import jadex.mj.micro.MicroAgent;
+import jadex.mj.micro.impl.MicroAgentFeature;
+import jadex.mj.model.IModelFeature;
 
 @Testable
 public class FeatureTest
@@ -24,10 +24,10 @@ public class FeatureTest
 	static Class<Object>[]	COMPONENT_FEATURE_TYPES	= new Class[]
 	{
 		// Ordered alphabetically by fully qualified name of provider (wtf?)
-		IMjExecutionFeature.class,
-		IMjTestFeature1.class,
-		IMjTestFeature2.class,
-		IMjTestLazyFeature.class,
+		IExecutionFeature.class,
+		ITestFeature1.class,
+		ITestFeature2.class,
+		ITestLazyFeature.class,
 	};
 
 	// Test features for micro agent components.
@@ -35,29 +35,29 @@ public class FeatureTest
 	static Class<Object>[]	AGENT_FEATURE_TYPES	= new Class[]
 	{
 		// Ordered alphabetically by fully qualified name of provider (wtf?)
-		IMjExecutionFeature.class,
-		IMjTestFeature1.class,
-		IMjTestFeature2.class,
-		MjMicroAgentFeature.class,
-		IMjModelFeature.class,
-		IMjTestLazyFeature.class,
+		IExecutionFeature.class,
+		ITestFeature1.class,
+		ITestFeature2.class,
+		MicroAgentFeature.class,
+		IModelFeature.class,
+		ITestLazyFeature.class,
 	};
 
 	@Test
 	public void	testComponentLoading()
 	{
 		// Dummy component for feature loading.
-		doTestLoading(new MjComponent(null), COMPONENT_FEATURE_TYPES);
+		doTestLoading(new Component(null), COMPONENT_FEATURE_TYPES);
 	}
 	
 	@Test
 	public void	testAgentLoading()
 	{
 		// Dummy agent component for feature loading.
-		doTestLoading(new MjMicroAgent(null, null){}, AGENT_FEATURE_TYPES);
+		doTestLoading(new MicroAgent(null, null){}, AGENT_FEATURE_TYPES);
 	}
 	
-	protected void	doTestLoading(MjComponent comp, Class<Object>[] feature_types)
+	protected void	doTestLoading(Component comp, Class<Object>[] feature_types)
 	{
 		for(Class<Object> type: feature_types)
 		{
@@ -71,57 +71,57 @@ public class FeatureTest
 	public void testLazyFeature()
 	{
 		// Dummy component for feature loading.
-		MjComponent	comp	= new MjComponent(null);
+		Component	comp	= new Component(null);
 
 		// Lazy feature should not be found
 		for(Object feature: comp.getFeatures())
 		{
-			assertFalse(feature instanceof IMjTestLazyFeature, "Lazy feature found: "+feature);
+			assertFalse(feature instanceof ITestLazyFeature, "Lazy feature found: "+feature);
 		}
 		
 		// Test that lazy feature is created on demand.
-		assertTrue(comp.getFeature(IMjTestLazyFeature.class)!=null, "Lazy feature could bnot be created");
+		assertTrue(comp.getFeature(ITestLazyFeature.class)!=null, "Lazy feature could bnot be created");
 	}
 	
 	@Test
 	public void	testComponentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
-		MjComponent	comp	= new MjComponent(null);
+		Component	comp	= new Component(null);
 		
 		// IMjTestFeature1 feature should be replaced
-		assertTrue(comp.getFeature(IMjTestFeature1.class) instanceof MjTestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(IMjTestFeature1.class));
+		assertTrue(comp.getFeature(ITestFeature1.class) instanceof TestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(ITestFeature1.class));
 		// IMjTestFeature2 feature should not be replaced, because replacement applies only to micro agents.
-		assertFalse(comp.getFeature(IMjTestFeature2.class) instanceof MjTestFeature2NewProvider, "Feature should not be replaced: "+comp.getFeature(IMjTestFeature2.class));
+		assertFalse(comp.getFeature(ITestFeature2.class) instanceof TestFeature2NewProvider, "Feature should not be replaced: "+comp.getFeature(ITestFeature2.class));
 	}
 	
 	@Test
 	public void	testAgentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
-		MjComponent	comp	= new MjMicroAgent(null, null){};
+		Component	comp	= new MicroAgent(null, null){};
 		
 		// IMjTestFeature1 feature should be replaced
-		assertTrue(comp.getFeature(IMjTestFeature1.class) instanceof MjTestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(IMjTestFeature1.class));
+		assertTrue(comp.getFeature(ITestFeature1.class) instanceof TestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(ITestFeature1.class));
 		// IMjTestFeature2 feature should be replaced.
-		assertTrue(comp.getFeature(IMjTestFeature2.class) instanceof MjTestFeature2NewProvider, "Feature should not be replaced: "+comp.getFeature(IMjTestFeature2.class));
+		assertTrue(comp.getFeature(ITestFeature2.class) instanceof TestFeature2NewProvider, "Feature should not be replaced: "+comp.getFeature(ITestFeature2.class));
 	}
 	
 	@Test
 	public void testComponentOrdering()
 	{
 		// Dummy component for feature loading.
-		doTestOrdering(new MjComponent(null), COMPONENT_FEATURE_TYPES);
+		doTestOrdering(new Component(null), COMPONENT_FEATURE_TYPES);
 	}
 		
 	@Test
 	public void testAgentOrdering()
 	{
 		// Dummy agent component for feature loading.
-		doTestOrdering(new MjMicroAgent(null, null){}, AGENT_FEATURE_TYPES);
+		doTestOrdering(new MicroAgent(null, null){}, AGENT_FEATURE_TYPES);
 	}
 		
-	protected void doTestOrdering(MjComponent comp, Class<Object>[] feature_types)
+	protected void doTestOrdering(Component comp, Class<Object>[] feature_types)
 	{
 		// Force instantiation of lazy features, if any
 		for(Class<Object> type: feature_types)

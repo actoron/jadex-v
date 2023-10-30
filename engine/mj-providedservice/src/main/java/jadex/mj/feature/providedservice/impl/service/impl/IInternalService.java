@@ -1,7 +1,7 @@
 package jadex.mj.feature.providedservice.impl.service.impl;
 
 import jadex.future.IFuture;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.annotation.Reference;
@@ -27,7 +27,7 @@ public interface IInternalService extends IService
 	 *  Sets the access for the component.
 	 *  @param access Component access.
 	 */
-	public IFuture<Void> setComponentAccess(@Reference MjComponent access);
+	public IFuture<Void> setComponentAccess(@Reference Component access);
 	
 	/**
 	 *  Set the service identifier.

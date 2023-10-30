@@ -3,7 +3,7 @@ package jadex.mj.feature.providedservice.impl.service.impl.interceptors;
 import java.lang.annotation.Annotation;
 
 import jadex.future.IFuture;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 import jadex.mj.feature.providedservice.annotation.Security;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 
@@ -23,7 +23,7 @@ public class AuthenticationInterceptor extends AbstractLRUApplicableInterceptor
 	/**
 	 *  Create a new AuthenticationInterceptor.
 	 */
-	public AuthenticationInterceptor(MjComponent ia, boolean send)
+	public AuthenticationInterceptor(Component ia, boolean send)
 	{
 		super(ia);
 		this.send = send;

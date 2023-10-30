@@ -10,11 +10,11 @@ import jadex.common.SUtil;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.model.annotation.OnStart;
-import jadex.mj.requiredservice.IMjRequiredServiceFeature;
+import jadex.mj.requiredservice.IRequiredServiceFeature;
 
 /**
  *  The watchdog agent pings other watchdogs and issues an action,
@@ -61,13 +61,13 @@ public class WatchdogAgent	implements IWatchdogService
 
 		for(int i=0; ; i++)
 		{			
-			Collection<IWatchdogService> services = agent.getFeature(IMjRequiredServiceFeature.class).getServices(IWatchdogService.class).get();
+			Collection<IWatchdogService> services = agent.getFeature(IRequiredServiceFeature.class).getServices(IWatchdogService.class).get();
 			watchdogs.addAll(services);
 			
 			System.out.println("ping round: "+i);
 			System.out.println("watchdogs: "+watchdogs);
 			
-			agent.getFeature(IMjExecutionFeature.class).waitForDelay(delay).get();
+			agent.getFeature(IExecutionFeature.class).waitForDelay(delay).get();
 			
 			FutureBarrier<Void> barrier = new FutureBarrier<Void>();
 			services.stream().forEach(service ->

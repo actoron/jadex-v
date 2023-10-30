@@ -7,7 +7,7 @@ import java.util.Set;
 
 import jadex.mj.core.IComponent;
 import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.model.annotation.OnEnd;
 import jadex.mj.model.annotation.OnStart;
@@ -73,7 +73,7 @@ public class ChatAgent implements IChatService
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MjMicroAgent.create(new ChatAgent());
+		MicroAgent.create(new ChatAgent());
 		//MjMicroAgent.create(new ChatAgent());
 		//MjMicroAgent.create(new ChatAgent());
 		

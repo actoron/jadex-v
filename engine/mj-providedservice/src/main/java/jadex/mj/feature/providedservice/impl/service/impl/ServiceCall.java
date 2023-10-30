@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import jadex.future.ThreadLocalTransferHelper;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.feature.execution.impl.MjExecutionFeature;
+import jadex.mj.feature.execution.impl.ExecutionFeature;
 import jadex.mj.feature.providedservice.annotation.Timeout;
 
 
@@ -155,7 +155,7 @@ public class ServiceCall
 		ServiceCall ret = NEXT.get();
 		if(ret==null)
 		{
-			ret = new ServiceCall(MjExecutionFeature.LOCAL.get().getComponent().getId(), props);
+			ret = new ServiceCall(ExecutionFeature.LOCAL.get().getComponent().getId(), props);
 			
 //			if(ret.getCaller()==null)
 //			{

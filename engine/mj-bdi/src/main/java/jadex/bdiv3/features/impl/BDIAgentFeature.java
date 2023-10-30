@@ -66,11 +66,11 @@ import jadex.javaparser.javaccimpl.Node;
 import jadex.javaparser.javaccimpl.ParameterNode;
 import jadex.javaparser.javaccimpl.ReflectNode;
 import jadex.mj.feature.execution.ComponentTerminatedException;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.mj.micro.MicroModel;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;
-import jadex.mj.micro.impl.MjMicroAgentFeature;
+import jadex.mj.micro.impl.MicroAgentFeature;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
@@ -87,7 +87,7 @@ import jadex.rules.eca.annotations.Event;
 public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeature
 {
 	/** The component. */
-	protected MjMicroAgent	self;
+	protected MicroAgent	self;
 	
 	/** The bdi model. */
 	protected BDIModel bdimodel;
@@ -107,7 +107,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	/**
 	 *  Factory method constructor for instance level.
 	 */
-	public BDIAgentFeature(MjMicroAgent self)
+	public BDIAgentFeature(MicroAgent self)
 	{
 		this.self	= self;
 		IBDIClassGenerator.checkEnhanced(self.getPojo().getClass());
@@ -275,7 +275,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				rs.addEvent(new jadex.rules.eca.Event(ev1, new ChangeInfo<Object>(val, oldval, null)));
 				
 				// execute rulesystem immediately to ensure that variable values are not changed afterwards
-				if(rs.isQueueEvents() && ((IInternalBDILifecycleFeature)MjMicroAgentFeature.get()).isInited())
+				if(rs.isQueueEvents() && ((IInternalBDILifecycleFeature)MicroAgentFeature.get()).isInited())
 				{
 //					System.out.println("writeField.PAE start");
 					rs.processAllEvents();
@@ -428,21 +428,21 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			EventType chev = new EventType(ChangeEvent.FACTCHANGED, belname);
 			if(val instanceof List && !(val instanceof jadex.collection.ListWrapper))
 			{
-				val = new ListWrapper((List<?>)val, IMjExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
+				val = new ListWrapper((List<?>)val, IExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
 			}
 			else if(val instanceof Set && !(val instanceof jadex.collection.SetWrapper))
 			{
-				val = new SetWrapper((Set<?>)val, IMjExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
+				val = new SetWrapper((Set<?>)val, IExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
 			}
 			else if(val instanceof Map && !(val instanceof jadex.collection.MapWrapper))
 			{
-				val = new MapWrapper((Map<?,?>)val, IMjExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
+				val = new MapWrapper((Map<?,?>)val, IExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
 			}
 		}
 		
 		// agent is not null any more due to deferred exe of init expressions but rules are
 		// available only after startBehavior
-		if(((IInternalBDILifecycleFeature)MjMicroAgentFeature.get()).isInited())
+		if(((IInternalBDILifecycleFeature)MicroAgentFeature.get()).isInited())
 		{
 			((BDIAgentFeature)IInternalBDIAgentFeature.get()).writeField(val, belname, fieldname, obj);
 		}
@@ -457,7 +457,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				Object oldval = setFieldValue(obj, fieldname, val);
 				// rule engine not turned on so no unobserve necessary
 //				unobserveObject(agent, obj, etype, rs);
-				addInitWrite(IMjExecutionFeature.get().getComponent(), new InitWriteBelief(belname, val, oldval));
+				addInitWrite(IExecutionFeature.get().getComponent(), new InitWriteBelief(belname, val, oldval));
 			}
 			catch(Exception e)
 			{
@@ -683,7 +683,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		
 		try
 		{
-			Object pojo = MjMicroAgentFeature.get().getSelf().getPojo();
+			Object pojo = MicroAgentFeature.get().getSelf().getPojo();
 		
 			Method getter = pojo.getClass().getMethod("get"+belname.substring(0,1).toUpperCase()+belname.substring(1), new Class[0]);
 			Object oldval = getter.invoke(pojo, new Object[0]);
@@ -705,7 +705,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 */
 	public static void observeValue(final RuleSystem rs, final Object val, final EventType etype, final MBelief mbel)
 	{
-		assert IMjExecutionFeature.get().isComponentThread();
+		assert IExecutionFeature.get().isComponentThread();
 
 		if(val!=null)
 			rs.observeObject(val, true, false, getEventAdder(etype, mbel, rs));
@@ -999,7 +999,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		
 		MGoal mgoal = IInternalBDIAgentFeature.get().getBDIModel().getCapability().getGoal(elemname);
 		// TODO IMicroAgent as user subtype of IComponent!? 
-		MjMicroAgent	agent	= (MjMicroAgent)IMjExecutionFeature.get().getComponent();
+		MicroAgent	agent	= (MicroAgent)IExecutionFeature.get().getComponent();
 		
 //		String paramname = elemname+"."+fieldname; // ?
 
@@ -1135,7 +1135,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 */
 	protected boolean isComponentThread()
 	{
-		return self.getFeature(IMjExecutionFeature.class).isComponentThread();
+		return self.getFeature(IExecutionFeature.class).isComponentThread();
 	}
 	
 //	/**
@@ -1931,7 +1931,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			}
 		}
 		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
-		MjMicroAgent	component	= (MjMicroAgent)IMjExecutionFeature.get().getComponent();
+		MicroAgent	component	= (MicroAgent)IExecutionFeature.get().getComponent();
 		Object capa = capaname!=null && bdif instanceof BDIAgentFeature ? ((BDIAgentFeature)bdif).getCapabilityObject(capaname): component.getPojo();
 //			: getAgent() instanceof PojoBDIAgent? ((PojoBDIAgent)getAgent()).getPojoAgent(): getAgent();
 		
@@ -2316,7 +2316,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 */
 	public static void addBeliefEvents(List<EventType> events, String belname)
 	{
-		MjMicroAgent	component	= (MjMicroAgent)IMjExecutionFeature.get().getComponent();
+		MicroAgent	component	= (MicroAgent)IExecutionFeature.get().getComponent();
 
 		addBeliefEvents((MCapability)IInternalBDIAgentFeature.get()
 			.getCapability().getModelElement(), events, belname, component.getClassLoader());

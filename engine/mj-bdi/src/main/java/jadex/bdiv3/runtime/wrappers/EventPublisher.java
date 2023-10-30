@@ -12,7 +12,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
 import jadex.mj.feature.execution.ComponentTerminatedException;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
@@ -69,9 +69,9 @@ public class EventPublisher implements IEventPublisher
 				final Future<Void> ret = new Future<Void>();
 				try
 				{
-					if(!agent.getFeature(IMjExecutionFeature.class).isComponentThread())
+					if(!agent.getFeature(IExecutionFeature.class).isComponentThread())
 					{
-						IFuture<Void> fut = agent.getFeature(IMjExecutionFeature.class).scheduleStep(() ->
+						IFuture<Void> fut = agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
 						{
 							publishToolBeliefEvent();
 							Event ev = new Event(changeevent, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));

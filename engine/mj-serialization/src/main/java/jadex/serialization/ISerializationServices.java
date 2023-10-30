@@ -5,7 +5,7 @@ import java.util.Map;
 
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 
 /**
  *  Functionality for managing serialization.
@@ -21,7 +21,7 @@ public interface ISerializationServices
 	 *  @param obj Object to be encoded.
 	 *  @return Encoded object.
 	 */
-	public byte[] encode(IMsgHeader header, MjComponent component, Object obj);
+	public byte[] encode(IMsgHeader header, Component component, Object obj);
 	
 	/**
 	 *  Decodes/deserializes an object.
@@ -31,7 +31,7 @@ public interface ISerializationServices
 	 *  @return Object to be encoded.
 	 *  
 	 */
-	public Object decode(IMsgHeader header, MjComponent component, byte[] enc);
+	public Object decode(IMsgHeader header, Component component, byte[] enc);
 	
 	/**
 	 *  Test if an object is a remote object.

@@ -25,15 +25,15 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.feature.providedservice.IMjProvidedServiceFeature;
+import jadex.mj.core.impl.Component;
+import jadex.mj.feature.providedservice.IProvidedServiceFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.annotation.ServiceShutdown;
 import jadex.mj.feature.providedservice.annotation.ServiceStart;
 import jadex.mj.feature.providedservice.impl.service.impl.IInternalService;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInfo;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
-import jadex.mj.model.IMjModelFeature;
+import jadex.mj.model.IModelFeature;
 import jadex.mj.model.annotation.OnEnd;
 import jadex.mj.model.annotation.OnStart;
 import jadex.serialization.ISerializationServices;
@@ -99,12 +99,12 @@ public class ResolveInterceptor extends AbstractApplicableInterceptor
 	}
 	
 	/** The component. */
-	protected MjComponent ia;
+	protected Component ia;
 	
 	/**
 	 *  Create a new ResolveInterceptor.
 	 */
-	public ResolveInterceptor(MjComponent ia)
+	public ResolveInterceptor(Component ia)
 	{
 		this.ia = ia;
 	}
@@ -339,7 +339,7 @@ public class ResolveInterceptor extends AbstractApplicableInterceptor
 					domainsic.setMethod(found);
 					domainsic.setObject(obj);
 					// Guess parameters for allowing injected value in pojo methods
-					IParameterGuesser guesser = ia.getFeature(IMjModelFeature.class).getParameterGuesser();
+					IParameterGuesser guesser = ia.getFeature(IModelFeature.class).getParameterGuesser();
 					List<Object> args = new ArrayList<Object>();
 					for(int i=0; i<found.getParameterTypes().length; i++)
 					{
@@ -761,7 +761,7 @@ public class ResolveInterceptor extends AbstractApplicableInterceptor
 	
 	public final ISerializationServices getSerializationServices()
 	{
-		return ia.getFeature(IMjProvidedServiceFeature.class).getSerializationService();
+		return ia.getFeature(IProvidedServiceFeature.class).getSerializationService();
 	}
 	
 	/**

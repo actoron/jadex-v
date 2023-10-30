@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jadex.common.Tuple2;
-import jadex.mj.publishservice.impl.MjPublishServiceFeature;
+import jadex.mj.publishservice.impl.PublishServiceFeature;
 import jadex.mj.publishservice.impl.RequestManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

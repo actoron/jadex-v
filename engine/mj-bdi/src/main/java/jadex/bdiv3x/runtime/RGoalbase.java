@@ -12,7 +12,7 @@ import jadex.common.SUtil;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.MicroAgent;
 
 /**
  *  The goal base runtime element.
@@ -101,7 +101,7 @@ public class RGoalbase extends RElement implements IGoalbase
 		{
 			public void customResultAvailable(Void result)
 			{
-				Object res = RGoal.getGoalResult((RGoal)goal, ((MjMicroAgent)getAgent()).getClassLoader());
+				Object res = RGoal.getGoalResult((RGoal)goal, ((MicroAgent)getAgent()).getClassLoader());
 				ret.setResult((T)res);
 			}
 		});

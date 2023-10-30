@@ -7,11 +7,11 @@ import java.util.List;
 import jadex.mj.core.ComponentIdentifier;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.model.annotation.OnStart;
-import jadex.mj.requiredservice.IMjRequiredServiceFeature;
+import jadex.mj.requiredservice.IRequiredServiceFeature;
 
 @Agent
 public class TerminatorAgent 
@@ -34,8 +34,8 @@ public class TerminatorAgent
 		{
 			long delay = (long)(Math.random()*2000);
 			System.out.println("terminator waiting for: "+delay);
-			agent.getFeature(IMjExecutionFeature.class).waitForDelay(delay).get();
-			Collection<IWatchdogService> services = agent.getFeature(IMjRequiredServiceFeature.class).getServices(IWatchdogService.class).get();
+			agent.getFeature(IExecutionFeature.class).waitForDelay(delay).get();
+			Collection<IWatchdogService> services = agent.getFeature(IRequiredServiceFeature.class).getServices(IWatchdogService.class).get();
 
 			if(services.size()>0)
 			{
@@ -48,7 +48,7 @@ public class TerminatorAgent
 				access.scheduleStep(agent ->
 				{
 					System.out.println("killing: "+victim);
-					agent.getFeature(IMjExecutionFeature.class).terminate();
+					agent.getFeature(IExecutionFeature.class).terminate();
 				});
 			}
 		}

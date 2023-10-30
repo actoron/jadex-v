@@ -4,7 +4,7 @@ import jadex.bdiv3.actions.FindApplicableCandidatesAction;
 import jadex.bdiv3.model.MInternalEvent;
 import jadex.bdiv3.runtime.impl.RElement;
 import jadex.bdiv3.runtime.impl.RProcessableElement;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 
 /**
  *  The event base runtime element.
@@ -46,7 +46,7 @@ public class REventbase extends RElement implements IEventbase
 	public void dispatchInternalEvent(IInternalEvent event)
 	{
 		FindApplicableCandidatesAction fac = new FindApplicableCandidatesAction((RProcessableElement)event);
-		IMjExecutionFeature.get().scheduleStep(fac);
+		IExecutionFeature.get().scheduleStep(fac);
 	}
 
 //	/**

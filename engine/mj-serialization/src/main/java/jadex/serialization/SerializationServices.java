@@ -20,7 +20,7 @@ import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.TransformProcessor;
 import jadex.common.transformation.traverser.Traverser;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 import jadex.serialization.codecs.GZIPCodec;
 import jadex.serialization.codecs.LZ4Codec;
 import jadex.serialization.codecs.SnappyCodec;
@@ -118,7 +118,7 @@ public class SerializationServices implements ISerializationServices
 	 *  @param obj Object to be encoded.
 	 *  @return Encoded object.
 	 */
-	public byte[] encode(IMsgHeader header, MjComponent component, Object obj)
+	public byte[] encode(IMsgHeader header, Component component, Object obj)
 	{
 		ComponentIdentifier receiver = (ComponentIdentifier)header.getProperty(IMsgHeader.RECEIVER);
 		ISerializer serial = getSendSerializer(receiver);
@@ -163,7 +163,7 @@ public class SerializationServices implements ISerializationServices
 	 *  @return Object to be encoded.
 	 *  
 	 */
-	public Object decode(IMsgHeader header, MjComponent component, byte[] enc)
+	public Object decode(IMsgHeader header, Component component, byte[] enc)
 	{
 		Object ret = null;
 		

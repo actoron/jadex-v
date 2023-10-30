@@ -7,11 +7,11 @@ import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.impl.search.ServiceQuery;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
-import jadex.mj.requiredservice.IMjRequiredServiceFeature;
+import jadex.mj.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Lazy service proxy that resolves a service via a search command.
@@ -19,7 +19,7 @@ import jadex.mj.requiredservice.IMjRequiredServiceFeature;
 public class UnresolvedServiceInvocationHandler implements InvocationHandler
 {
 	/** The component. */
-	protected MjComponent ia;
+	protected Component ia;
 	
 	/** The service. */
 	protected IService delegate;
@@ -33,7 +33,7 @@ public class UnresolvedServiceInvocationHandler implements InvocationHandler
 	/**
 	 *  Create a new invocation handler.
 	 */
-	public UnresolvedServiceInvocationHandler(MjComponent ia, ServiceQuery<?> query)
+	public UnresolvedServiceInvocationHandler(Component ia, ServiceQuery<?> query)
 	{
 		this.ia = ia;
 		this.query = query;
@@ -49,7 +49,7 @@ public class UnresolvedServiceInvocationHandler implements InvocationHandler
 			if (delegatefut == null)
 			{
 				@SuppressWarnings("unchecked")
-				IFuture<IService> fut = (IFuture<IService>) ia.getFeature(IMjRequiredServiceFeature.class).searchService(query, 0);
+				IFuture<IService> fut = (IFuture<IService>) ia.getFeature(IRequiredServiceFeature.class).searchService(query, 0);
 				fut.then(serv ->
 				{
 					delegate = serv;

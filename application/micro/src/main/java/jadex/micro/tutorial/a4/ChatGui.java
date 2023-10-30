@@ -19,8 +19,8 @@ import javax.swing.SwingUtilities;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.IThrowingConsumer;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.micro.MicroAgent;
 
 /**
  *  Basic chat user interface.
@@ -77,7 +77,7 @@ public class ChatGui extends JFrame
 			{
 				access.scheduleStep(agent ->
 				{
-					agent.getFeature(IMjExecutionFeature.class).terminate();
+					agent.getFeature(IExecutionFeature.class).terminate();
 				});
 			}
 		});
@@ -105,7 +105,7 @@ public class ChatGui extends JFrame
 	{
 		access.scheduleStep((IThrowingConsumer<IComponent>)agent ->
 		{
-			MjMicroAgent magent = (MjMicroAgent)agent;
+			MicroAgent magent = (MicroAgent)agent;
 			ChatAgent pojo = (ChatAgent)magent.getPojo();
 			Collection<IChatService> chatservices = pojo.getChatServices();
 			

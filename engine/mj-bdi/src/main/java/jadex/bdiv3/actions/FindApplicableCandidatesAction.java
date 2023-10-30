@@ -3,7 +3,7 @@ package jadex.bdiv3.actions;
 import jadex.bdiv3.runtime.impl.APL;
 import jadex.bdiv3.runtime.impl.RGoal;
 import jadex.bdiv3.runtime.impl.RProcessableElement;
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 
 /**
  *  Find applicable candidates action - searches plans for a goal/event.
@@ -75,7 +75,7 @@ public class FindApplicableCandidatesAction implements Runnable
 //					if(element.toString().indexOf("go_home")!=-1)
 //						System.out.println("find applicable candidates 2b: "+element.getId()+" "+apl);
 			element.setState(RProcessableElement.State.APLAVAILABLE);
-			IMjExecutionFeature.get().scheduleStep(new SelectCandidatesAction(element));
+			IExecutionFeature.get().scheduleStep(new SelectCandidatesAction(element));
 		}
 	}
 }

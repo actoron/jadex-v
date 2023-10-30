@@ -19,8 +19,8 @@ import javax.swing.SwingUtilities;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.IThrowingConsumer;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.requiredservice.IMjRequiredServiceFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Basic chat user interface.
@@ -62,7 +62,7 @@ public class ChatGui extends JFrame
 				// why is the cast needed???
 				access.scheduleStep((IThrowingConsumer<IComponent>)agent ->
 				{
-					Collection<IChatService> chatservices = agent.getFeature(IMjRequiredServiceFeature.class).getLocalServices(IChatService.class);
+					Collection<IChatService> chatservices = agent.getFeature(IRequiredServiceFeature.class).getLocalServices(IChatService.class);
 					System.out.println("found services: "+chatservices.size());
 					for(Iterator<IChatService> it=chatservices.iterator(); it.hasNext(); )
 					{
@@ -79,7 +79,7 @@ public class ChatGui extends JFrame
 			{
 				access.scheduleStep(agent ->
 				{
-					agent.getFeature(IMjExecutionFeature.class).terminate();
+					agent.getFeature(IExecutionFeature.class).terminate();
 				});
 			}
 		});

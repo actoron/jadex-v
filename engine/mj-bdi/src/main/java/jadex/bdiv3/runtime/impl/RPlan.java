@@ -57,8 +57,8 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.execution.impl.MjExecutionFeature.ComponentSuspendable;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.feature.execution.impl.ExecutionFeature.ComponentSuspendable;
 import jadex.mj.micro.annotation.Agent;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
@@ -2097,7 +2097,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	
 	public void executePlan()
 	{
-		IMjExecutionFeature.get().scheduleStep(new ExecutePlanStepAction(this));
+		IExecutionFeature.get().scheduleStep(new ExecutePlanStepAction(this));
 	}
 
 	/**

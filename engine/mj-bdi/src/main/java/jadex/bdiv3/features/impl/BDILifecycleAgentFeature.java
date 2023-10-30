@@ -56,9 +56,9 @@ import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.javaparser.SJavaParser;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.micro.MjMicroAgent;
-import jadex.mj.micro.impl.MjMicroAgentFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.micro.MicroAgent;
+import jadex.mj.micro.impl.MicroAgentFeature;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
@@ -73,7 +73,7 @@ import jadex.rules.eca.annotations.CombinedCondition;
 /**
  *  Feature that ensures the agent created(), body() and killed() are called on the pojo. 
  */
-public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IInternalBDILifecycleFeature
+public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInternalBDILifecycleFeature
 {
 	/** Is the agent inited and allowed to execute rules? */
 	protected boolean inited;
@@ -84,7 +84,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 	/**
 	 *  Instantiate the feature.
 	 */
-	protected BDILifecycleAgentFeature(MjMicroAgent self)
+	protected BDILifecycleAgentFeature(MicroAgent self)
 	{
 		super(self);
 	}
@@ -435,7 +435,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					{
 						try
 						{
-							MjMicroAgentFeature maf = MjMicroAgentFeature.get();
+							MicroAgentFeature maf = MicroAgentFeature.get();
 							Object agent = maf.getSelf().getPojo();
 							Class<?> agcl = agent.getClass();
 							Constructor<?>[] cons = gcl.getDeclaredConstructors();
@@ -638,7 +638,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 					}
 					else
 					{
-						Object agent = MjMicroAgentFeature.get().getSelf().getPojo();
+						Object agent = MicroAgentFeature.get().getSelf().getPojo();
 						capa	= agent;
 						name	= mbel.getName();
 					}
@@ -735,7 +735,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 								e.printStackTrace();
 							}
 							
-							IMjExecutionFeature.get().waitForDelay(mbel.getUpdaterateValue()).then(update);
+							IExecutionFeature.get().waitForDelay(mbel.getUpdaterateValue()).then(update);
 						}
 					
 						@Override
@@ -830,7 +830,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 											e.printStackTrace();
 										}
 										
-										IMjExecutionFeature.get().waitForDelay(mparam.getUpdaterateValue()).then(update);
+										IExecutionFeature.get().waitForDelay(mparam.getUpdaterateValue()).then(update);
 									}
 								};
 								// Evaluate at time 0, updaterate*1, updaterate*2, ...
@@ -883,7 +883,7 @@ public class BDILifecycleAgentFeature extends MjMicroAgentFeature implements IIn
 										
 										for(int i=0; i<ptypes.length; i++)
 										{
-											Object agent = MjMicroAgentFeature.get().getSelf().getPojo();
+											Object agent = MicroAgentFeature.get().getSelf().getPojo();
 											Object	o	= event.getContent();
 											if(o!=null && SReflect.isSupertype(ptypes[i], o.getClass()))
 											{

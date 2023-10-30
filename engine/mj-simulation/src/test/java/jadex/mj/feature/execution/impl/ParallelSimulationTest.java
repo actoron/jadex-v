@@ -12,10 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import jadex.common.TimeoutException;
 import jadex.future.IFuture;
-import jadex.mj.core.impl.MjComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.feature.simulation.IMjSimulationFeature;
-import jadex.mj.feature.simulation.impl.MjSlaveSimulationFeature;
+import jadex.mj.core.impl.Component;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.feature.simulation.ISimulationFeature;
+import jadex.mj.feature.simulation.impl.SlaveSimulationFeature;
 
 public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 {
@@ -23,15 +23,15 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@BeforeEach
 	public void	setup()
 	{
-		MjSlaveSimulationFeature.master	= null;
-		MjSlaveSimulationFeature.parallel	= true;
+		SlaveSimulationFeature.master	= null;
+		SlaveSimulationFeature.parallel	= true;
 	}
 	
 	@Test
 	public void	testStopWhenIdle()
 	{
-		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IMjSimulationFeature	sim	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 		sim.stop().get(1000);
 		assertThrows(IllegalStateException.class, () -> sim.stop().get(1000));
 	}
@@ -39,8 +39,8 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testStopWhenExecuting()
 	{
-		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IMjSimulationFeature	sim	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 		boolean[]	run	= new boolean[]{true};
 		sim.scheduleStep(() ->
 		{
@@ -58,8 +58,8 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testInverseOrder()
 	{
-		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IMjSimulationFeature	sim	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 		sim.stop().get(1000);
 		List<String>	results	= new ArrayList<>();
 		sim.waitForDelay(2000).then((v) -> results.add("A"));
@@ -72,8 +72,8 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testStart()
 	{
-		MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-		IMjSimulationFeature	sim	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 		assertThrows(IllegalStateException.class, () -> sim.start());
 		sim.stop().get(1000);
 		List<String>	results	= new ArrayList<>();
@@ -92,14 +92,14 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	public void	testMultipleComponents()
 	{
 		String[]	input	= new String[]{"A", "B", "C", "D", "E", "F"};
-		IMjSimulationFeature[]	sim	= new IMjSimulationFeature[input.length];
+		ISimulationFeature[]	sim	= new ISimulationFeature[input.length];
 		StringBuffer	output	= new StringBuffer();
 		
 		for(int i=0; i<input.length; i++)
 		{
 			int num	= i;
-			MjComponent	comp	= MjComponent.createComponent(MjComponent.class, () -> new MjComponent(null));
-			sim[i]	= ((IMjSimulationFeature)comp.getFeature(IMjExecutionFeature.class));
+			Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+			sim[i]	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 			if(i==0)
 			{
 				sim[i].stop().get(1000);
@@ -107,7 +107,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 			
 			sim[i].scheduleStep(() -> 
 			{
-				IMjExecutionFeature.get().waitForDelay(num).get();
+				IExecutionFeature.get().waitForDelay(num).get();
 				
 				for(int j=0; j<=num; j++)
 				{

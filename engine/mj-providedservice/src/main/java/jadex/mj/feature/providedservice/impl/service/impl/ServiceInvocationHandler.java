@@ -23,7 +23,7 @@ import jadex.future.Future;
 import jadex.future.FutureHelper;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 import jadex.mj.feature.providedservice.IService;
 import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.feature.providedservice.annotation.FutureReturnType;
@@ -36,7 +36,7 @@ import jadex.mj.feature.providedservice.impl.service.impl.interceptors.Decouplin
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.MethodInvocationInterceptor;
 import jadex.mj.feature.providedservice.impl.service.impl.interceptors.ResolveInterceptor;
-import jadex.mj.model.IMjModelFeature;
+import jadex.mj.model.IModelFeature;
 
 /**
  *  Service invocation interceptor.
@@ -60,7 +60,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	//-------- attributes --------
 
 	/** The internal access. */
-	protected MjComponent comp;
+	protected Component comp;
 	
 	// The proxy can be equipped with 
 	// a) the IService Object
@@ -102,7 +102,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	/**
 	 *  Create a new invocation handler.
 	 */
-	public ServiceInvocationHandler(MjComponent comp, IServiceIdentifier sid, 
+	public ServiceInvocationHandler(Component comp, IServiceIdentifier sid, 
 		//Logger logger, 
 		boolean required)
 	{
@@ -119,7 +119,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	/**
 	 *  Create a new invocation handler.
 	 */
-	public ServiceInvocationHandler(MjComponent comp, IService service, boolean required)
+	public ServiceInvocationHandler(Component comp, IService service, boolean required)
 	{
 //		assert cause!=null;
 		this.comp = comp;
@@ -136,7 +136,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	/**
 	 *  Create a new invocation handler.
 	 */
-	public ServiceInvocationHandler(MjComponent comp, ServiceInfo service)
+	public ServiceInvocationHandler(Component comp, ServiceInfo service)
 	{
 //		assert cause!=null;
 		this.comp = comp;
@@ -547,7 +547,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	/**
 	 *  Static method for creating a standard service proxy for a provided service.
 	 */
-	public static IInternalService createProvidedServiceProxy(MjComponent ia, Object service, 
+	public static IInternalService createProvidedServiceProxy(Component ia, Object service, 
 		String name, Class<?> type, IServiceInvocationInterceptor[] ics, 
 		//boolean monitoring, 
 		ProvidedServiceInfo info)
@@ -632,7 +632,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	/**
 	 *  Create a basic invocation handler for a provided service.
 	 */
-	protected static ServiceInvocationHandler createProvidedHandler(String name, MjComponent ia, Class<?> type, Object service, ProvidedServiceInfo info)
+	protected static ServiceInvocationHandler createProvidedHandler(String name, Component ia, Class<?> type, Object service, ProvidedServiceInfo info)
 	{
 //		if(type.getName().indexOf("ITestService")!=-1 && ia.getComponentIdentifier().getName().startsWith("Global"))
 //			System.out.println("gaga");
@@ -642,7 +642,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 		{
 			for(UnparsedExpression exp : info.getProperties())
 			{
-				Object val = SJavaParser.parseExpression(exp, ia.getFeature(IMjModelFeature.class).getModel().getAllImports(), ia.getClassLoader()).getValue(ia.getFeature(IMjModelFeature.class).getFetcher());
+				Object val = SJavaParser.parseExpression(exp, ia.getFeature(IModelFeature.class).getModel().getAllImports(), ia.getClassLoader()).getValue(ia.getFeature(IModelFeature.class).getFetcher());
 				serprops.put(exp.getName(), val);
 			}
 		}
@@ -738,7 +738,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 						{
 							try
 							{								
-								Object val	= ia.getFeature(IMjModelFeature.class).getParameterGuesser().guessParameter(fields[i].getType(), false);
+								Object val	= ia.getFeature(IModelFeature.class).getParameterGuesser().guessParameter(fields[i].getType(), false);
 								SAccess.setAccessible(fields[i], true);
 								fields[i].set(service, val);
 							}
@@ -766,7 +766,7 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 	 *  Add the standard and custom interceptors.
 	 */
 	protected static void addProvidedInterceptors(ServiceInvocationHandler handler, Object service, 
-		IServiceInvocationInterceptor[] ics, MjComponent ia, String proxytype, 
+		IServiceInvocationInterceptor[] ics, Component ia, String proxytype, 
 		//boolean monitoring, 
 		IServiceIdentifier sid)
 	{

@@ -1,8 +1,8 @@
 package jadex.micro.example.helloworld;
 
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IMjExecutionFeature;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.micro.annotation.Description;
 import jadex.mj.model.annotation.OnEnd;
@@ -21,7 +21,7 @@ public class HelloWorldAgent
 	
 	/** The micro agent class. */
 	@Agent
-	protected MjMicroAgent agent;
+	protected MicroAgent agent;
 	
 	/** The welcome text. */
 //	@AgentArgument("welcome text")
@@ -37,13 +37,13 @@ public class HelloWorldAgent
 	public void executeBody()
 	{
 		System.out.println(text+" "+agent);//.getId());
-		IMjExecutionFeature.get().waitForDelay(2000).get();
-		IMjExecutionFeature.get().scheduleStep(() -> 
+		IExecutionFeature.get().waitForDelay(2000).get();
+		IExecutionFeature.get().scheduleStep(() -> 
 		{
 			System.out.println("Good bye world.");
 			return null;
 		}).get();
-		IMjExecutionFeature.get().terminate();
+		IExecutionFeature.get().terminate();
 	}
 	
 	@OnEnd
@@ -60,7 +60,7 @@ public class HelloWorldAgent
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MjMicroAgent.create(new HelloWorldAgent("007"));
+		MicroAgent.create(new HelloWorldAgent("007"));
 		
 		IComponent.waitForLastComponentTerminated();
 	}

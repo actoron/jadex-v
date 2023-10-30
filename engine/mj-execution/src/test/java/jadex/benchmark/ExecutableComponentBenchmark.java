@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.impl.MjComponent;
+import jadex.mj.core.impl.Component;
 
 /**
  *  Benchmark plain MjComponent with included execution feature.
@@ -25,8 +25,8 @@ public class ExecutableComponentBenchmark	extends AbstractComponentBenchmark
 	@Override
 	protected IFuture<ComponentIdentifier>	createComponent(String name)
 	{
-		return new Future<>(MjComponent.createComponent(MjComponent.class,
-			() -> new MjComponent(new ComponentIdentifier(name))).getId());
+		return new Future<>(Component.createComponent(Component.class,
+			() -> new Component(new ComponentIdentifier(name))).getId());
 	}
 
 	protected static Stream<Arguments> provideBenchmarkParams() {

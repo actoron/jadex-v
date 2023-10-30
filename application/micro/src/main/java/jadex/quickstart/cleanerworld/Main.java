@@ -2,7 +2,7 @@ package jadex.quickstart.cleanerworld;
 
 import javax.swing.SwingUtilities;
 
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.MicroAgent;
 import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 
 /**
@@ -19,7 +19,7 @@ public class Main
 	 */
 	public static void main(String[] args)
 	{
-		MjMicroAgent.create(new SimpleCleanerAgentZero());
+		MicroAgent.create(new SimpleCleanerAgentZero());
 		
 		// Open world view window on Swing Thread
 		SwingUtilities.invokeLater(new Runnable()

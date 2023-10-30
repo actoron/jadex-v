@@ -15,10 +15,10 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.mj.core.IComponent;
 import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.micro.MjMicroAgent;
+import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.model.annotation.OnStart;
-import jadex.mj.publishservice.IMjPublishServiceFeature;
+import jadex.mj.publishservice.IPublishServiceFeature;
 import jadex.mj.publishservice.publish.annotation.Publish;
 import jadex.mj.requiredservice.annotation.OnService;
 
@@ -52,7 +52,7 @@ public class ChatAgent implements IChatService, IChatGuiService
 	{
 		System.out.println("agent started: "+agent.getId().getLocalName());
 		
-		IMjPublishServiceFeature ps = agent.getFeature(IMjPublishServiceFeature.class);
+		IPublishServiceFeature ps = agent.getFeature(IPublishServiceFeature.class);
 		ps.publishResources("http://localhost:8081/${cid}", "jadex/micro/tutorial/a6");
 		
 		openInBrowser("http://localhost:8081/"+agent.getId().getLocalName());

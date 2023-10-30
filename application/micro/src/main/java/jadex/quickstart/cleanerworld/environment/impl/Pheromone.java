@@ -1,6 +1,6 @@
 package jadex.quickstart.cleanerworld.environment.impl;
 
-import jadex.mj.feature.execution.IMjExecutionFeature;
+import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.quickstart.cleanerworld.environment.IPheromone;
 
 /**
@@ -30,7 +30,7 @@ public class Pheromone	extends LocationObject	implements IPheromone
 	private long creation;
 	
 	/** The clock service, used to determine age of phermone for calculating its strength. */
-	private IMjExecutionFeature	clock;
+	private IExecutionFeature	clock;
 	
 	//-------- constructors --------
 
@@ -50,7 +50,7 @@ public class Pheromone	extends LocationObject	implements IPheromone
 	{
 		super("Pheromone_#"+getNumber(), location);
 		this.type	= type;
-		IMjExecutionFeature.get();
+		IExecutionFeature.get();
 		this.creation	= clock.getTime();
 	}
 
