@@ -11,7 +11,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import jadex.collection.IRwMap;
 import jadex.collection.LRU;
 import jadex.collection.RwMapWrapper;
 import jadex.common.SUtil;
@@ -71,7 +70,7 @@ public class SerializationServices implements ISerializationServices
 	//protected ISecurityService secserv;
 	
 	/** Cache for identifying platforms with the same version. */
-	protected IRwMap<ComponentIdentifier, Boolean> sameversioncache;
+	protected RwMapWrapper<ComponentIdentifier, Boolean> sameversioncache;
 
 	/** Creates the management. */
 	public SerializationServices()
