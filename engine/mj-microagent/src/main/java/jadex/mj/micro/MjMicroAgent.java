@@ -3,9 +3,8 @@ package jadex.mj.micro;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
-import jadex.mj.core.MjComponent;
-import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.core.impl.MjComponent;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 public class MjMicroAgent	extends MjComponent
 {
@@ -18,7 +17,7 @@ public class MjMicroAgent	extends MjComponent
 	
 	public static void	create(Object pojo, ComponentIdentifier cid)
 	{
-		IComponent.createComponent(MjMicroAgent.class, () -> 
+		MjComponent.createComponent(MjMicroAgent.class, () -> 
 		{
 			// this is executed before the features are inited
 			return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
@@ -31,6 +30,7 @@ public class MjMicroAgent	extends MjComponent
 	}
 	
 	protected Object pojo;
+	protected IModelInfo	model;
 	
 	public MjMicroAgent(Object pojo, IModelInfo model)
 	{
@@ -39,8 +39,9 @@ public class MjMicroAgent	extends MjComponent
 	
 	public MjMicroAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
 	{
-		super(model, cid);
+		super(cid);
 		this.pojo	= pojo;
+		this.model	= model;
 		
 		//ComponentIdentifier execid = getFeature(IMjExecutionFeature.class).getComponent().getId();
 		//if(!execid.equals(cid))
@@ -50,6 +51,12 @@ public class MjMicroAgent	extends MjComponent
 	public Object getPojo() 
 	{
 		return pojo;
+	}
+
+	// TODO use model feature
+	public IModelInfo getModel() 
+	{
+		return model;
 	}
 
 	/**

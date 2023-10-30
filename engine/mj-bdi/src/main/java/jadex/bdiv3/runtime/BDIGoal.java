@@ -1,7 +1,7 @@
 package jadex.bdiv3.runtime;
 
 import jadex.bdiv3.features.impl.BDIAgentFeature;
-import jadex.bridge.IInternalAccess;
+import jadex.mj.core.IComponent;
 
 /**
  *  Base class for non-bytecode-enhanced BDI agents.
@@ -9,7 +9,7 @@ import jadex.bridge.IInternalAccess;
 public class BDIGoal
 {
 	/** The bdi agent. */
-	public IInternalAccess __agent; // IBDIClassGenerator.AGENT_FIELD_NAME
+	public IComponent __agent; // IBDIClassGenerator.AGENT_FIELD_NAME
 	
 	/** The global name. */
 	public String __globalname; // GLOBALNAME_FIELD_NAME
@@ -21,6 +21,6 @@ public class BDIGoal
 	 */
 	public void setParameterValue(String paramname, Object value)
 	{
-		BDIAgentFeature.writeParameterField(value, paramname, this, __agent);
+		BDIAgentFeature.writeParameterField(value, paramname, this);
 	}
 }

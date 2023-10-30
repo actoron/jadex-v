@@ -8,11 +8,11 @@ import jadex.bdiv3.model.MGoal;
 import jadex.bdiv3.runtime.IGoal;
 import jadex.bdiv3.runtime.impl.RElement;
 import jadex.bdiv3.runtime.impl.RGoal;
-import jadex.bridge.IInternalAccess;
-import jadex.commons.SUtil;
-import jadex.commons.future.ExceptionDelegationResultListener;
-import jadex.commons.future.Future;
-import jadex.commons.future.IFuture;
+import jadex.common.SUtil;
+import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.mj.micro.MjMicroAgent;
 
 /**
  *  The goal base runtime element.
@@ -29,9 +29,9 @@ public class RGoalbase extends RElement implements IGoalbase
 	/**
 	 *  Create a new goalbase.
 	 */
-	public RGoalbase(IInternalAccess agent, String scope)
+	public RGoalbase(String scope)
 	{
-		super(null, agent);
+		super(null);
 		this.scope	= scope;
 	}
 	
@@ -86,7 +86,7 @@ public class RGoalbase extends RElement implements IGoalbase
 	public IGoal createGoal(String type)
 	{
 		MGoal mgoal = getCapability().getMCapability().getResolvedGoal(scope, type);
-		return new RGoal(getAgent(), mgoal, null, null, null, null, null);
+		return new RGoal(mgoal, null, null, null, null, null);
 	}
 
 	/**
@@ -101,13 +101,13 @@ public class RGoalbase extends RElement implements IGoalbase
 		{
 			public void customResultAvailable(Void result)
 			{
-				Object res = RGoal.getGoalResult((RGoal)goal, agent.getClassLoader());
+				Object res = RGoal.getGoalResult((RGoal)goal, ((MjMicroAgent)getAgent()).getClassLoader());
 				ret.setResult((T)res);
 			}
 		});
 
 //		System.out.println("adopt goal");
-		RGoal.adoptGoal((RGoal)goal, getAgent());
+		RGoal.adoptGoal((RGoal)goal);
 	
 		return ret;
 	}

@@ -6,6 +6,8 @@ plugins
 
 group = 'jadex'
 
+sourceCompatibility = '1.17'
+
 repositories
 {
 	mavenCentral()
@@ -14,8 +16,10 @@ repositories
 dependencies
 {
 	implementation 'jadex:mj-core:5.0.0'
+	implementation 'jadex:mj-model:5.0.0'
 	implementation 'jadex:mj-execution:5.0.0'
 	implementation 'jadex:common:5.0.0'
+	implementation 'jadex:bytecode:5.0.0'
 	implementation 'jadex:future:5.0.0'
 	implementation 'jadex:javaparser:5.0.0'
 	implementation 'jadex:collection:5.0.0'

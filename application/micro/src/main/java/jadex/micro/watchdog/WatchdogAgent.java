@@ -10,10 +10,10 @@ import jadex.common.SUtil;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
-import jadex.mj.core.annotation.OnStart;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.annotation.Agent;
+import jadex.mj.model.annotation.OnStart;
 import jadex.mj.requiredservice.IMjRequiredServiceFeature;
 
 /**

@@ -5,12 +5,10 @@ import java.beans.PropertyChangeEvent;
 import jadex.bdiv3.features.impl.BDIAgentFeature;
 import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MElement;
-import jadex.bridge.ComponentTerminatedException;
-import jadex.bridge.IInternalAccess;
-import jadex.common.ICommand;
 import jadex.common.IResultCommand;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
@@ -56,25 +54,22 @@ public class InitEventPublisher implements IEventPublisher
 			{
 				final Future<Void> ret = new Future<Void>();
 				
-				BDIAgentFeature.addInitWrite(InitEventPublisher.this.obj, new ICommand<IInternalAccess>()
+				BDIAgentFeature.addInitWrite(InitEventPublisher.this.obj, () ->
 				{
-					public void execute(IInternalAccess agent)
-					{
 						try
 						{
 //								publishToolBeliefEvent();
 							Event ev = new Event(changeevent, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
-							getRuleSystem(agent).addEvent(ev);
+							getRuleSystem().addEvent(ev);
 						}
 						catch(Exception e)
 						{
 							if(!(e instanceof ComponentTerminatedException))
 								System.out.println("Ex in observe: "+e.getMessage());
 							Object val = event.getSource();
-							getRuleSystem(agent).unobserveObject(val, self);
+							getRuleSystem().unobserveObject(val, self);
 							ret.setResult(null);
 						}
-					}
 				});
 				
 				return ret;
@@ -87,14 +82,11 @@ public class InitEventPublisher implements IEventPublisher
 	 */
 	public void entryAdded(final Object value, final int index)
 	{
-		BDIAgentFeature.addInitWrite(obj, new ICommand<IInternalAccess>()
+		BDIAgentFeature.addInitWrite(obj, () ->
 		{
-			public void execute(IInternalAccess agent)
-			{
-				observeValue(value, agent);
-				getRuleSystem(agent).addEvent(new Event(getAddEvent(), new ChangeInfo<Object>(value, null, index>-1? Integer.valueOf(index): null)));
+				observeValue(value);
+				getRuleSystem().addEvent(new Event(getAddEvent(), new ChangeInfo<Object>(value, null, index>-1? Integer.valueOf(index): null)));
 //				publishToolBeliefEvent();
-			}
 		});
 	}
 	
@@ -103,15 +95,12 @@ public class InitEventPublisher implements IEventPublisher
 	 */
 	public void entryRemoved(final Object value, final int index)
 	{
-		BDIAgentFeature.addInitWrite(obj, new ICommand<IInternalAccess>()
+		BDIAgentFeature.addInitWrite(obj, () ->
 		{
-			public void execute(IInternalAccess agent)
-			{
-				unobserveValue(value, agent);
+				unobserveValue(value);
 //				observeValue(value);
-				getRuleSystem(agent).addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(value, null, index>-1? Integer.valueOf(index): null)));
+				getRuleSystem().addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(value, null, index>-1? Integer.valueOf(index): null)));
 //				publishToolBeliefEvent();
-			}
 		});
 	}
 	
@@ -120,18 +109,15 @@ public class InitEventPublisher implements IEventPublisher
 	 */
 	public void entryChanged(final Object oldvalue, final Object newvalue, final int index)
 	{
-		BDIAgentFeature.addInitWrite(obj, new ICommand<IInternalAccess>()
+		BDIAgentFeature.addInitWrite(obj, () ->
 		{
-			public void execute(IInternalAccess agent)
-			{
 				if(oldvalue!=newvalue)
 				{
-					unobserveValue(oldvalue, agent);
-					observeValue(newvalue, agent);
+					unobserveValue(oldvalue);
+					observeValue(newvalue);
 				}
-				getRuleSystem(agent).addEvent(new Event(getChangeEvent(), new ChangeInfo<Object>(newvalue, oldvalue,  index>-1? Integer.valueOf(index): null)));
+				getRuleSystem().addEvent(new Event(getChangeEvent(), new ChangeInfo<Object>(newvalue, oldvalue,  index>-1? Integer.valueOf(index): null)));
 //				publishToolBeliefEvent();
-			}
 		});
 	}
 	
@@ -140,14 +126,11 @@ public class InitEventPublisher implements IEventPublisher
 	 */
 	public void	entryAdded(final Object key, final Object value)
 	{
-		BDIAgentFeature.addInitWrite(obj, new ICommand<IInternalAccess>()
+		BDIAgentFeature.addInitWrite(obj, () ->
 		{
-			public void execute(IInternalAccess agent)
-			{
-				observeValue(value, agent);
-				getRuleSystem(agent).addEvent(new Event(getAddEvent(), new ChangeInfo<Object>(value, null, key)));
+				observeValue(value);
+				getRuleSystem().addEvent(new Event(getAddEvent(), new ChangeInfo<Object>(value, null, key)));
 //				publishToolBeliefEvent();
-			}
 		});
 	}
 	
@@ -156,14 +139,11 @@ public class InitEventPublisher implements IEventPublisher
 	 */
 	public void	entryRemoved(final Object key, final Object value)
 	{
-		BDIAgentFeature.addInitWrite(obj, new ICommand<IInternalAccess>()
+		BDIAgentFeature.addInitWrite(obj, () ->
 		{
-			public void execute(IInternalAccess agent)
-			{
-				unobserveValue(value, agent);
-				getRuleSystem(agent).addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(null, value, key)));
+				unobserveValue(value);
+				getRuleSystem().addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(null, value, key)));
 //				publishToolBeliefEvent();
-			}
 		});
 	}
 	
@@ -172,42 +152,39 @@ public class InitEventPublisher implements IEventPublisher
 	 */
 	public void	entryChanged(final Object key, final Object oldvalue, final Object newvalue)
 	{
-		BDIAgentFeature.addInitWrite(obj, new ICommand<IInternalAccess>()
+		BDIAgentFeature.addInitWrite(obj, () ->
 		{
-			public void execute(IInternalAccess agent)
-			{
-				unobserveValue(oldvalue, agent);
-				observeValue(newvalue, agent);
-				getRuleSystem(agent).addEvent(new Event(getChangeEvent(), new ChangeInfo<Object>(newvalue, oldvalue, key)));
+				unobserveValue(oldvalue);
+				observeValue(newvalue);
+				getRuleSystem().addEvent(new Event(getChangeEvent(), new ChangeInfo<Object>(newvalue, oldvalue, key)));
 //				publishToolBeliefEvent();
-			}
 		});
 	}
 	
 	/**
 	 * 
 	 */
-	public void observeValue(final Object val, IInternalAccess agent)
+	public void observeValue(final Object val)
 	{
 		if(val!=null)
-			getRuleSystem(agent).observeObject(val, true, false, eventadder);
+			getRuleSystem().observeObject(val, true, false, eventadder);
 	}
 	
 	/**
 	 * 
 	 */
-	public void unobserveValue(Object val, IInternalAccess agent)
+	public void unobserveValue(Object val)
 	{
-		getRuleSystem(agent).unobserveObject(val, eventadder);
+		getRuleSystem().unobserveObject(val, eventadder);
 	}
 	
 	/**
 	 *  Get the rule system.
 	 *  @return The rule system.
 	 */
-	public RuleSystem getRuleSystem(IInternalAccess agent)
+	public RuleSystem getRuleSystem()
 	{
-		return agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+		return IInternalBDIAgentFeature.get().getRuleSystem();
 	}
 	
 	/**

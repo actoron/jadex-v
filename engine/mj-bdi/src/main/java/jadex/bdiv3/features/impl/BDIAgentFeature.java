@@ -37,12 +37,9 @@ import jadex.bdiv3.runtime.IGoal.GoalLifecycleState;
 import jadex.bdiv3.runtime.impl.APL.CandidateInfoMPlan;
 import jadex.bdiv3.runtime.impl.APL.CandidateInfoPojoPlan;
 import jadex.bdiv3.runtime.impl.APL.MPlanInfo;
-import jadex.bdiv3.runtime.impl.BeliefInfo;
 import jadex.bdiv3.runtime.impl.BodyAborted;
 import jadex.bdiv3.runtime.impl.CapabilityPojoWrapper;
-import jadex.bdiv3.runtime.impl.GoalInfo;
 import jadex.bdiv3.runtime.impl.InvocationInfo;
-import jadex.bdiv3.runtime.impl.PlanInfo;
 import jadex.bdiv3.runtime.impl.RCapability;
 import jadex.bdiv3.runtime.impl.RGoal;
 import jadex.bdiv3.runtime.impl.RPlan;
@@ -68,6 +65,7 @@ import jadex.javaparser.javaccimpl.ExpressionNode;
 import jadex.javaparser.javaccimpl.Node;
 import jadex.javaparser.javaccimpl.ParameterNode;
 import jadex.javaparser.javaccimpl.ReflectNode;
+import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.mj.micro.MicroModel;
 import jadex.mj.micro.MjMicroAgent;
@@ -731,44 +729,9 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 					final Future<Void> ret = new Future<Void>();
 					try
 					{
-						if(!agent.getFeature(IExecutionFeature.class).isComponentThread())
-						{
-							IFuture<Void> fut = agent.getFeature(IExecutionFeature.class).scheduleStep(new IComponentStep<Void>()
-							{
-								public IFuture<Void> execute(IInternalAccess ia)
-								{
-									publishToolBeliefEvent(agent, mbel);
-									
-									jadex.rules.eca.Event ev = new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
-									rs.addEvent(ev);
-									return IFuture.DONE;
-		//								return new Future<IEvent>(ev);
-								}
-							});
-							fut.addResultListener(new DelegationResultListener<Void>(ret)
-							{
-								public void exceptionOccurred(Exception exception)
-								{
-									if(exception instanceof ComponentTerminatedException)
-									{
-		//								System.out.println("Ex in observe: "+exception.getMessage());
-										Object val = event.getSource();
-										rs.unobserveObject(val, self);
-										ret.setResult(null);
-									}
-									else
-									{
-										super.exceptionOccurred(exception);
-									}
-								}
-							});
-						}
-						else
-						{
-							publishToolBeliefEvent(agent, mbel);
-							jadex.rules.eca.Event ev = new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
-							rs.addEvent(ev);
-						}
+						publishToolBeliefEvent(mbel);
+						jadex.rules.eca.Event ev = new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
+						rs.addEvent(ev);
 					}
 					catch(Exception e)
 					{
@@ -790,17 +753,17 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	/**
 	 *  Get the value of an abstract belief.
 	 */
-	public static Object getAbstractBeliefValue(IInternalAccess component, String capa, String name, Class<?> type)
+	public static Object getAbstractBeliefValue(String capa, String name, Class<?> type)
 	{
 //			System.out.println("getAbstractBeliefValue(): "+capa+BDIAgentInterpreter.CAPABILITY_SEPARATOR+name+", "+type);
-		BDIModel bdimodel = (BDIModel)component.getFeature(IInternalBDIAgentFeature.class).getBDIModel();
+		BDIModel bdimodel = (BDIModel)IInternalBDIAgentFeature.get().getBDIModel();
 		String	belname	= bdimodel.getCapability().getBeliefReferences().get(capa+MElement.CAPABILITY_SEPARATOR+name);
 		if(belname==null)
 		{
 			throw new RuntimeException("No mapping for abstract belief: "+capa+MElement.CAPABILITY_SEPARATOR+name);
 		}
 		MBelief	bel	= bdimodel.getCapability().getBelief(belname);
-		Object	ret	= bel.getValue(component);
+		Object	ret	= bel.getValue();
 		
 		if(ret==null)
 		{
@@ -824,10 +787,10 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	/**
 	 *  Set the value of an abstract belief.
 	 */
-	public static void	setAbstractBeliefValue(IInternalAccess component, String capa, String name, Object value)
+	public static void	setAbstractBeliefValue(String capa, String name, Object value)
 	{
 //			System.out.println("setAbstractBeliefValue(): "+capa+BDIAgentInterpreter.CAPABILITY_SEPARATOR+name);
-		BDIModel bdimodel = (BDIModel)component.getFeature(IInternalBDIAgentFeature.class).getBDIModel();
+		BDIModel bdimodel = (BDIModel)IInternalBDIAgentFeature.get().getBDIModel();
 		String	belname	= bdimodel.getCapability().getBeliefReferences().get(capa+MElement.CAPABILITY_SEPARATOR+name);
 		if(belname==null)
 		{
@@ -836,18 +799,18 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		MBelief	mbel = bdimodel.getCapability().getBelief(belname);
 
 		// Maybe unobserve old value
-		Object	old	= mbel.getValue(component);
+		Object	old	= mbel.getValue();
 
-		boolean	field = mbel.setValue(component, value);
+		boolean	field = mbel.setValue( value);
 		
 		if(field)
 		{
 //			BDIAgentInterpreter ip = (BDIAgentInterpreter)getInterpreter();
 			EventType etype = new EventType(ChangeEvent.FACTCHANGED, mbel.getName());
-			RuleSystem rs = component.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
-			unobserveObject(component, old, etype, rs);	
-			createChangeEvent(value, old, null, component, mbel.getName());
-			observeValue(rs, value, component, etype, mbel);
+			RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
+			unobserveObject(old, etype, rs);	
+			createChangeEvent(value, old, null, mbel.getName());
+			observeValue(rs, value, etype, mbel);
 		}
 	}
 	
@@ -882,18 +845,18 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		
 //		try
 //		{
-			if(((IInternalBDILifecycleFeature)agent.getFeature(ILifecycleComponentFeature.class)).isInited())
+			if(IInternalBDILifecycleFeature.get().isInited())
 			{
-				MBelief mbel = agent.getFeature(IInternalBDIAgentFeature.class).getBDIModel().getCapability().getBelief(belname);
+				MBelief mbel = IInternalBDIAgentFeature.get().getBDIModel().getCapability().getBelief(belname);
 				
-				RuleSystem rs = agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+				RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 				rs.addEvent(new jadex.rules.eca.Event(new EventType(ChangeEvent.BELIEFCHANGED, belname), new ChangeInfo<Object>(val, oldval, info)));
 				
-				publishToolBeliefEvent(agent, mbel);
+				publishToolBeliefEvent(mbel);
 			}
 			else
 			{
-				addInitWrite(agent, new InitWriteBelief(belname, val, oldval));
+				addInitWrite(null, new InitWriteBelief(belname, val, oldval));
 			}
 //		}
 //		catch(Exception e)
@@ -902,23 +865,23 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 //		}
 	}
 	
-	/**
-	 *  Set the semantic effect on the step.
-	 */
-	public static void setSemanticEffect(boolean effect, MonitoringEvent mev)
-	{
-		StepInfo si = IComponentStep.getCurrentStep();
-		if(si!=null)
-		{
-			//System.out.println("set sem effect: "+mev);
-			si.setSemanticEffect(true);
-		}
-		else
-		{
-			Thread.dumpStack();
-			System.out.println("step context unavailable");
-		}
-	}
+//	/**
+//	 *  Set the semantic effect on the step.
+//	 */
+//	public static void setSemanticEffect(boolean effect, MonitoringEvent mev)
+//	{
+//		StepInfo si = IComponentStep.getCurrentStep();
+//		if(si!=null)
+//		{
+//			//System.out.println("set sem effect: "+mev);
+//			si.setSemanticEffect(true);
+//		}
+//		else
+//		{
+//			Thread.dumpStack();
+//			System.out.println("step context unavailable");
+//		}
+//	}
 	
 	/**
 	 * 
@@ -979,62 +942,64 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  @param obj The pojo object of the goal.
 	 *  @param agent The agent.
 	 */
-	public static void writeParameterField(Object val, String fieldname, Object obj, IInternalAccess agent)
+	public static void writeParameterField(Object val, String fieldname, Object obj)
 	{
 //		System.out.println("write: "+val+" "+fieldname+" "+obj+" "+agent);
 		
 		String elemname = obj.getClass().getName();
 		
-		// This is the case in inner classes
-		if(agent==null)
-		{
-			try
-			{
-				agent = findAgent(obj, false);
-				if(agent==null) 
-				{
-					// this should only happen if class is static or external
-					// In this case the value will be set but the event will be saved till agent is available
-//					System.out.println("added init write for: "+obj);
-					
-					try
-					{
-						EventType addev = new EventType(new String[]{ChangeEvent.VALUEADDED, elemname, fieldname});
-						EventType remev = new EventType(new String[]{ChangeEvent.VALUEREMOVED, elemname, fieldname});
-						EventType chev = new EventType(new String[]{ChangeEvent.VALUECHANGED, elemname, fieldname});
-						if(val instanceof List && !(val instanceof ListWrapper))
-						{
-							val = new ListWrapper((List<?>)val, null, addev, remev, chev, null);
-						}
-						else if(val instanceof Set && !(val instanceof SetWrapper))
-						{
-							val = new SetWrapper((Set<?>)val, null, addev, remev, chev, null);
-						}
-						else if(val instanceof Map && !(val instanceof MapWrapper))
-						{
-							val = new MapWrapper((Map<?,?>)val, null, addev, remev, chev, null);
-						}
-						Object oldval = setFieldValue(obj, fieldname, val);
-						addInitWrite(obj, new InitWriteParameter(elemname, fieldname, val, oldval));
-					}
-					catch(Exception e)
-					{
-						e.printStackTrace();
-						SUtil.throwUnchecked(e);
-					}					
-					
-					return;
-				}
-			}
-			catch(Exception e)
-			{
-				SUtil.throwUnchecked(e);
-			}
-		}
+//		// This is the case in inner classes
+//		if(agent==null)
+//		{
+//			try
+//			{
+//				agent = findAgent(obj, false);
+//				if(agent==null) 
+//				{
+//					// this should only happen if class is static or external
+//					// In this case the value will be set but the event will be saved till agent is available
+////					System.out.println("added init write for: "+obj);
+//					
+//					try
+//					{
+//						EventType addev = new EventType(new String[]{ChangeEvent.VALUEADDED, elemname, fieldname});
+//						EventType remev = new EventType(new String[]{ChangeEvent.VALUEREMOVED, elemname, fieldname});
+//						EventType chev = new EventType(new String[]{ChangeEvent.VALUECHANGED, elemname, fieldname});
+//						if(val instanceof List && !(val instanceof ListWrapper))
+//						{
+//							val = new ListWrapper((List<?>)val, null, addev, remev, chev, null);
+//						}
+//						else if(val instanceof Set && !(val instanceof SetWrapper))
+//						{
+//							val = new SetWrapper((Set<?>)val, null, addev, remev, chev, null);
+//						}
+//						else if(val instanceof Map && !(val instanceof MapWrapper))
+//						{
+//							val = new MapWrapper((Map<?,?>)val, null, addev, remev, chev, null);
+//						}
+//						Object oldval = setFieldValue(obj, fieldname, val);
+//						addInitWrite(obj, new InitWriteParameter(elemname, fieldname, val, oldval));
+//					}
+//					catch(Exception e)
+//					{
+//						e.printStackTrace();
+//						SUtil.throwUnchecked(e);
+//					}					
+//					
+//					return;
+//				}
+//			}
+//			catch(Exception e)
+//			{
+//				SUtil.throwUnchecked(e);
+//			}
+//		}
 
 //		BDIAgentInterpreter ip = (BDIAgentInterpreter)agent.getInterpreter();
 		
-		MGoal mgoal = agent.getFeature(IInternalBDIAgentFeature.class).getBDIModel().getCapability().getGoal(elemname);
+		MGoal mgoal = IInternalBDIAgentFeature.get().getBDIModel().getCapability().getGoal(elemname);
+		// TODO IMicroAgent as user subtype of IComponent!? 
+		MjMicroAgent	agent	= (MjMicroAgent)IMjExecutionFeature.get().getComponent();
 		
 //		String paramname = elemname+"."+fieldname; // ?
 
@@ -1067,7 +1032,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		
 		// agent is not null any more due to deferred exe of init expressions but rules are
 		// available only after startBehavior
-		if(((IInternalBDILifecycleFeature)agent.getFeature(ILifecycleComponentFeature.class)).isInited())
+		if(IInternalBDILifecycleFeature.get().isInited())
 		{
 			EventType chev1 = new EventType(new String[]{ChangeEvent.PARAMETERCHANGED, elemname, fieldname});
 			EventType chev2 = new EventType(new String[]{ChangeEvent.VALUECHANGED, elemname, fieldname});
@@ -1106,21 +1071,8 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	// todo: allow init writes in constructor also for arrays
 	public static void writeArrayParameterField(Object array, final int index, Object val, Object agentobj, String fieldname)
 	{
-		// This is the case in inner classes
-		IInternalAccess agent = null;
-		if(agentobj instanceof IInternalAccess)
-		{
-			agent = (IInternalAccess)agentobj;
-		}
-		else
-		{
-			agent = findAgent(agentobj, true);
-		}
-		
 //		final BDIAgentInterpreter ip = (BDIAgentInterpreter)agent.getInterpreter();
 		
-		assert agent.getFeature(IExecutionFeature.class).isComponentThread();
-
 		// Test if array store is really a parameter store instruction by
 		// looking up the current parameter value and comparing it with the
 		// array that is written
@@ -1128,7 +1080,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		boolean isparamwrite = true;//false;
 		
 		// todo: support other types of parameter elements.
-		MGoal mgoal = ((MCapability)agent.getFeature(IInternalBDIAgentFeature.class).getCapability().getModelElement()).getGoal(agentobj.getClass().getName());
+		MGoal mgoal = ((MCapability)IInternalBDIAgentFeature.get().getCapability().getModelElement()).getGoal(agentobj.getClass().getName());
 		// This code does not work for parameters because the parameterelement object is unknown :-(
 //		if(mgoal!=null)
 //		{
@@ -1139,7 +1091,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 //				isparamwrite = curval==array;
 //			}
 //		}
-		RuleSystem rs = agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+		RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 //			System.out.println("write array index: "+val+" "+index+" "+array+" "+agent+" "+fieldname);
 		
 		Object oldval = null;
@@ -1147,7 +1099,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		if(isparamwrite)
 		{
 			oldval = Array.get(array, index);
-			unobserveObject(agent, oldval, etype, rs);
+			unobserveObject(oldval, etype, rs);
 //			rs.unobserveObject(oldval);	
 		}
 		
@@ -1183,7 +1135,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 */
 	protected boolean isComponentThread()
 	{
-		return self.getFeature(IExecutionFeature.class).isComponentThread();
+		return self.getFeature(IMjExecutionFeature.class).isComponentThread();
 	}
 	
 //	/**
@@ -1251,7 +1203,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			}
 			catch(Exception e)
 			{
-				pa.getLogger().warning("Agent injection failed: "+e);
+				System.err.println("Agent injection failed: "+e);
 			}
 		}
 	
@@ -1264,7 +1216,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			{
 				Field field = agcl.getDeclaredField(IBDIClassGenerator.AGENT_FIELD_NAME);
 				SAccess.setAccessible(field, true);
-				field.set(agent, pa);
+				field.set(agent, self);
 				
 				field = agcl.getDeclaredField(IBDIClassGenerator.GLOBALNAME_FIELD_NAME);
 				SAccess.setAccessible(field, true);
@@ -1274,7 +1226,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			}
 			catch(Exception e)
 			{
-				pa.getLogger().warning("Hidden agent injection failed: "+e);
+				System.err.println("Hidden agent injection failed: "+e);
 				agcl = agcl.getSuperclass();
 				//break; // with pure BDI agents it can be the superclass BDIAgent
 			}
@@ -1306,7 +1258,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	public Object	getCapabilityObject(String name)
 	{
 //		Object	ret	= ((PojoBDIAgent)microagent).getPojoAgent();
-		Object ret = self.getFeature(IPojoComponentFeature.class).getPojoAgent();
+		Object ret = self.getPojo();
 		if(name!=null)
 		{
 			StringTokenizer	stok	= new StringTokenizer(name, MElement.CAPABILITY_SEPARATOR);
@@ -1568,7 +1520,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				}
 				final Object fcapa = capa;
 								
-				injectAgent(getInternalAccess(), fcapa, caps[i].getSecondEntity(), globalname);
+				injectAgent(fcapa, caps[i].getSecondEntity(), globalname);
 				
 				// Todo: capability features?
 //				MicroInjectionComponentFeature.injectServices(capa, caps[i].getSecondEntity(), self)
@@ -1673,7 +1625,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		{
 			try
 			{
-				Object val = mbel.getValue(getInternalAccess());
+				Object val = mbel.getValue();
 				if(val==null)
 				{
 					String impl = mbel.getImplClassName();
@@ -1702,17 +1654,17 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				if(val instanceof List)
 				{
 					String bname = mbel.getName();
-					mbel.setValue(getInternalAccess(), new ListWrapper((List<?>)val, getInternalAccess(), new EventType(ChangeEvent.FACTADDED, bname), new EventType(ChangeEvent.FACTREMOVED, bname), new EventType(ChangeEvent.FACTCHANGED, bname), mbel));
+					mbel.setValue(new ListWrapper((List<?>)val, self, new EventType(ChangeEvent.FACTADDED, bname), new EventType(ChangeEvent.FACTREMOVED, bname), new EventType(ChangeEvent.FACTCHANGED, bname), mbel));
 				}
 				else if(val instanceof Set)
 				{
 					String bname = mbel.getName();
-					mbel.setValue(getInternalAccess(), new SetWrapper((Set<?>)val, getInternalAccess(), new EventType(ChangeEvent.FACTADDED, bname), new EventType(ChangeEvent.FACTREMOVED, bname), new EventType(ChangeEvent.FACTCHANGED, bname), mbel));
+					mbel.setValue(new SetWrapper((Set<?>)val, self, new EventType(ChangeEvent.FACTADDED, bname), new EventType(ChangeEvent.FACTREMOVED, bname), new EventType(ChangeEvent.FACTCHANGED, bname), mbel));
 				}
 				else if(val instanceof Map)
 				{
 					String bname = mbel.getName();
-					mbel.setValue(getInternalAccess(), new MapWrapper((Map<?,?>)val, getInternalAccess(), new EventType(ChangeEvent.FACTADDED, bname), new EventType(ChangeEvent.FACTREMOVED, bname), new EventType(ChangeEvent.FACTCHANGED, bname), mbel));
+					mbel.setValue(new MapWrapper((Map<?,?>)val, self, new EventType(ChangeEvent.FACTADDED, bname), new EventType(ChangeEvent.FACTREMOVED, bname), new EventType(ChangeEvent.FACTCHANGED, bname), mbel));
 				}
 			}
 			catch(RuntimeException e)
@@ -1773,18 +1725,18 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		final MGoal mgoal = ((MCapability)capa.getModelElement()).getGoal(goal.getClass().getName());
 		if(mgoal==null)
 			throw new RuntimeException("Unknown goal type: "+goal);
-		final RGoal rgoal = new RGoal(getInternalAccess(), mgoal, goal, null, null, null, null);
+		final RGoal rgoal = new RGoal(mgoal, goal, null, null, null, null);
 		rgoal.addListener(new ExceptionDelegationResultListener<Void, E>(ret)
 		{
 			public void customResultAvailable(Void result)
 			{
-				Object res = RGoal.getGoalResult(rgoal, bdimodel.getClassloader());
+				Object res = RGoal.getGoalResult(rgoal, self.getPojo().getClass().getClassLoader());
 				ret.setResult((E)res);
 			}
 		});
 
 //		System.out.println("adopt goal");
-		RGoal.adoptGoal(rgoal, getInternalAccess());
+		RGoal.adoptGoal(rgoal);
 		
 		return ret;
 	}
@@ -1828,12 +1780,12 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		if(mplan==null)
 			throw new RuntimeException("Plan model not found for: "+plan);
 		
-		ICandidateInfo ci = plan instanceof String? new CandidateInfoMPlan(new MPlanInfo(mplan, null), null, component):
-			new CandidateInfoPojoPlan(plan, null, component);
+		ICandidateInfo ci = plan instanceof String? new CandidateInfoMPlan(new MPlanInfo(mplan, null), null):
+			new CandidateInfoPojoPlan(plan, null);
 		
-		final RPlan rplan = RPlan.createRPlan(mplan, ci, new ChangeEvent(null, null, args, null), getInternalAccess(), null, null);
+		final RPlan rplan = RPlan.createRPlan(mplan, ci, new ChangeEvent(null, null, args, null), null, null);
 		rplan.addListener(new DelegationResultListener(ret));
-		RPlan.executePlan(rplan, getInternalAccess());
+		rplan.executePlan();
 		return ret;
 	}
 	
@@ -1847,10 +1799,10 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		String fname = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
 		
 		List<EventType> events = new ArrayList<EventType>();
-		addBeliefEvents(getInternalAccess(), events, fname);
+		addBeliefEvents(events, fname);
 
 		final boolean multi = ((MCapability)getCapability().getModelElement())
-			.getBelief(fname).isMulti(bdimodel.getClassloader());
+			.getBelief(fname).isMulti(self.getPojo().getClass().getClassLoader());
 		
 		String rulename = fname+"_belief_listener_"+System.identityHashCode(listener);
 		Rule<Void> rule = new Rule<Void>(rulename, 
@@ -1962,7 +1914,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  Get parameter values for injection into method and constructor calls.
 	 *  @return A valid assignment or null if no assignment could be found.
 	 */
-	public static Object[]	getInjectionValues(Class<?>[] ptypes, Annotation[][] anns, MElement melement, ChangeEvent event, RPlan rplan, RProcessableElement rpe, Collection<Object> vs, IInternalAccess component)
+	public static Object[]	getInjectionValues(Class<?>[] ptypes, Annotation[][] anns, MElement melement, ChangeEvent event, RPlan rplan, RProcessableElement rpe, Collection<Object> vs)
 	{
 		Collection<Object> vals = new LinkedHashSet<Object>();
 		if(vs!=null)
@@ -1978,13 +1930,13 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				capaname = melement.getName().substring(0, idx);
 			}
 		}
-		IInternalBDIAgentFeature bdif = component.getFeature(IInternalBDIAgentFeature.class);
-		Object capa = capaname!=null && bdif instanceof BDIAgentFeature ? ((BDIAgentFeature)bdif).getCapabilityObject(capaname): component.getFeature0(IPojoComponentFeature.class)!=null? 
-			component.getFeature(IPojoComponentFeature.class).getPojoAgent(): null;
+		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
+		MjMicroAgent	component	= (MjMicroAgent)IMjExecutionFeature.get().getComponent();
+		Object capa = capaname!=null && bdif instanceof BDIAgentFeature ? ((BDIAgentFeature)bdif).getCapabilityObject(capaname): component.getPojo();
 //			: getAgent() instanceof PojoBDIAgent? ((PojoBDIAgent)getAgent()).getPojoAgent(): getAgent();
 		
 		vals.add(capa);
-		vals.add(new CapabilityPojoWrapper(component, capa, capaname));
+		vals.add(new CapabilityPojoWrapper(capa, capaname));
 		vals.add(component);
 		vals.add(component.getExternalAccess());
 
@@ -2129,13 +2081,14 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 					else
 					{
 						MBelief	mbel	= bdif.getBDIModel().getCapability().getBelief(source);
-						ret[i]	= mbel.getValue(component);
+						ret[i]	= mbel.getValue();
 					}
 				}
-				else if(anns[i][j] instanceof CheckNotNull)
-				{
-					notnulls[i] = true;
-				}
+				//TODO anno from provided service feature
+//				else if(anns[i][j] instanceof CheckNotNull)
+//				{
+//					notnulls[i] = true;
+//				}
 			}
 			
 			if(!done && rpe!=null && rpe.getPojoElement() instanceof InvocationInfo)
@@ -2361,10 +2314,12 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  factadded.belname and factremoved 
 	 *  are created.
 	 */
-	public static void addBeliefEvents(IInternalAccess ia, List<EventType> events, String belname)
+	public static void addBeliefEvents(List<EventType> events, String belname)
 	{
-		addBeliefEvents((MCapability)ia.getFeature(IInternalBDIAgentFeature.class)
-			.getCapability().getModelElement(), events, belname, ia.getClassLoader());
+		MjMicroAgent	component	= (MjMicroAgent)IMjExecutionFeature.get().getComponent();
+
+		addBeliefEvents((MCapability)IInternalBDIAgentFeature.get()
+			.getCapability().getModelElement(), events, belname, component.getClassLoader());
 	}
 	
 	/**
@@ -2559,7 +2514,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	/**
 	 *  Read the annotation events from method annotations.
 	 */
-	public static List<EventType> readAnnotationEvents(IInternalAccess ia, Annotation[][] annos)
+	public static List<EventType> readAnnotationEvents(Annotation[][] annos)
 	{
 		List<EventType> events = new ArrayList<EventType>();
 		for(Annotation[] ana: annos)
@@ -2573,7 +2528,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 					String type = ev.type();
 					if(type.length()==0)
 					{
-						addBeliefEvents(ia, events, name);
+						addBeliefEvents(events, name);
 					}
 					else
 					{
@@ -2773,58 +2728,58 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		}
 	}
 		
-	/**
-	 *  Get the current state as events.
-	 */
-	public List<IMonitoringEvent> getCurrentStateEvents()
-	{
-		List<IMonitoringEvent> ret = new ArrayList<IMonitoringEvent>();
-		
-		// Already gets merged beliefs (including subcapas).
-		List<MBelief> mbels = getBDIModel().getCapability().getBeliefs();
-		
-		if(mbels!=null)
-		{
-			for(MBelief mbel: mbels)
-			{
-				BeliefInfo info = BeliefInfo.createBeliefInfo(getInternalAccess(), mbel, getClassLoader());
-				MonitoringEvent ev = new MonitoringEvent(self.getId(), self.getDescription().getCreationTime(), IMonitoringEvent.EVENT_TYPE_CREATION+"."+IMonitoringEvent.SOURCE_CATEGORY_FACT, System.currentTimeMillis(), PublishEventLevel.FINE);
-				ev.setSourceDescription(mbel.toString());
-				ev.setProperty("details", info);
-				ret.add(ev);
-			}
-		}
-		
-		// Goals of this capability.
-		Collection<RGoal> goals = getCapability().getGoals();
-		if(goals!=null)
-		{
-			for(RGoal goal: goals)
-			{
-				GoalInfo info = GoalInfo.createGoalInfo(goal);
-				MonitoringEvent ev = new MonitoringEvent(self.getId(), self.getDescription().getCreationTime(), IMonitoringEvent.EVENT_TYPE_CREATION+"."+IMonitoringEvent.SOURCE_CATEGORY_GOAL, System.currentTimeMillis(), PublishEventLevel.FINE);
-				ev.setSourceDescription(goal.toString());
-				ev.setProperty("details", info);
-				ret.add(ev);
-			}
-		}
-		
-		// Plans of this capability.
-		Collection<RPlan> plans	= getCapability().getPlans();
-		if(plans!=null)
-		{
-			for(RPlan plan: plans)
-			{
-				PlanInfo info = PlanInfo.createPlanInfo(plan);
-				MonitoringEvent ev = new MonitoringEvent(self.getId(), self.getDescription().getCreationTime(), IMonitoringEvent.EVENT_TYPE_CREATION+"."+IMonitoringEvent.SOURCE_CATEGORY_PLAN, System.currentTimeMillis(), PublishEventLevel.FINE);
-				ev.setSourceDescription(plan.toString());
-				ev.setProperty("details", info);
-				ret.add(ev);
-			}
-		}
-		
-		return ret;
-	}
+//	/**
+//	 *  Get the current state as events.
+//	 */
+//	public List<IMonitoringEvent> getCurrentStateEvents()
+//	{
+//		List<IMonitoringEvent> ret = new ArrayList<IMonitoringEvent>();
+//		
+//		// Already gets merged beliefs (including subcapas).
+//		List<MBelief> mbels = getBDIModel().getCapability().getBeliefs();
+//		
+//		if(mbels!=null)
+//		{
+//			for(MBelief mbel: mbels)
+//			{
+//				BeliefInfo info = BeliefInfo.createBeliefInfo(getInternalAccess(), mbel, getClassLoader());
+//				MonitoringEvent ev = new MonitoringEvent(self.getId(), self.getDescription().getCreationTime(), IMonitoringEvent.EVENT_TYPE_CREATION+"."+IMonitoringEvent.SOURCE_CATEGORY_FACT, System.currentTimeMillis(), PublishEventLevel.FINE);
+//				ev.setSourceDescription(mbel.toString());
+//				ev.setProperty("details", info);
+//				ret.add(ev);
+//			}
+//		}
+//		
+//		// Goals of this capability.
+//		Collection<RGoal> goals = getCapability().getGoals();
+//		if(goals!=null)
+//		{
+//			for(RGoal goal: goals)
+//			{
+//				GoalInfo info = GoalInfo.createGoalInfo(goal);
+//				MonitoringEvent ev = new MonitoringEvent(self.getId(), self.getDescription().getCreationTime(), IMonitoringEvent.EVENT_TYPE_CREATION+"."+IMonitoringEvent.SOURCE_CATEGORY_GOAL, System.currentTimeMillis(), PublishEventLevel.FINE);
+//				ev.setSourceDescription(goal.toString());
+//				ev.setProperty("details", info);
+//				ret.add(ev);
+//			}
+//		}
+//		
+//		// Plans of this capability.
+//		Collection<RPlan> plans	= getCapability().getPlans();
+//		if(plans!=null)
+//		{
+//			for(RPlan plan: plans)
+//			{
+//				PlanInfo info = PlanInfo.createPlanInfo(plan);
+//				MonitoringEvent ev = new MonitoringEvent(self.getId(), self.getDescription().getCreationTime(), IMonitoringEvent.EVENT_TYPE_CREATION+"."+IMonitoringEvent.SOURCE_CATEGORY_PLAN, System.currentTimeMillis(), PublishEventLevel.FINE);
+//				ev.setSourceDescription(plan.toString());
+//				ev.setProperty("details", info);
+//				ret.add(ev);
+//			}
+//		}
+//		
+//		return ret;
+//	}
 	
 	/**
 	 *  Create an event type.
@@ -2833,34 +2788,9 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	{
 		String[] p = new String[2];
 		p[0] = rawev.value();
-		p[1] = Object.class.equals(rawev.secondc())? rawev.second(): rawev.secondc().getName();
+		p[1] = /*Object.class.equals(rawev.secondc())? rawev.second():*/ rawev.secondc().getName();
 //		System.out.println("eveve: "+p[0]+" "+p[1]);
 		return new EventType(p);
-	}
-	
-	
-	/**
-	 *  Get the feature from the agent.
-	 */
-	public static IBDIAgentFeature	getBDIAgentFeature(IInternalAccess agent)
-	{
-		return agent.getFeature(IBDIAgentFeature.class);
-	}
-	
-	/**
-	 *  Get the mcapa.
-	 */
-	public static MCapability getMCapability(IInternalAccess agent)
-	{
-		return ((MCapability)agent.getFeature(IInternalBDIAgentFeature.class).getCapability().getModelElement());
-	}
-	
-	/**
-	 *  Get the rcapa.
-	 */
-	public static RCapability getCapability(IInternalAccess agent)
-	{
-		return agent.getFeature(IInternalBDIAgentFeature.class).getCapability();
 	}
 	
 //	/**

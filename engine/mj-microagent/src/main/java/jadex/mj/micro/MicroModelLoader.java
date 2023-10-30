@@ -1,8 +1,8 @@
 package jadex.mj.micro;
 
 import jadex.common.ResourceInfo;
-import jadex.mj.core.AbstractModelLoader;
-import jadex.mj.core.ICacheableModel;
+import jadex.mj.model.AbstractModelLoader;
+import jadex.mj.model.ICacheableModel;
 
 /**
  *  Loader for micro models.

@@ -11,7 +11,7 @@ import java.util.Set;
 import jadex.common.ClassInfo;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
-import jadex.mj.core.modelinfo.ConfigurationInfo;
+import jadex.mj.model.modelinfo.ConfigurationInfo;
 import jadex.rules.eca.EventType;
 
 /**

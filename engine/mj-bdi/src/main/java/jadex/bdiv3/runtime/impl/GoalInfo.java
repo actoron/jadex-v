@@ -5,6 +5,7 @@ import java.util.List;
 
 import jadex.bdiv3.model.MGoal;
 import jadex.bdiv3x.runtime.IParameter;
+import jadex.mj.micro.MjMicroAgent;
 
 
 /**
@@ -197,7 +198,7 @@ public class GoalInfo	extends AbstractBDIInfo
 		{
 			for(IParameter p: ps)
 			{
-				gi.addParameterInfo(ParameterInfo.createParameterInfo(p, goal.getAgent().getClassLoader()));
+				gi.addParameterInfo(ParameterInfo.createParameterInfo(p, ((MjMicroAgent)goal.getAgent()).getClassLoader()));
 			}
 		}
 		

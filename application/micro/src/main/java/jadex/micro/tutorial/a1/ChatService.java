@@ -3,7 +3,7 @@ package jadex.micro.tutorial.a1;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.impl.MjComponent;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.feature.providedservice.annotation.ServiceComponent;
 import jadex.mj.micro.MjMicroAgent;

@@ -1,0 +1,38 @@
+plugins 
+{
+	id 'java-library'
+	id 'eclipse'
+}
+
+group = 'jadex'
+
+sourceCompatibility = '1.17'
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	implementation 'jadex:mj-core:5.0.0'
+	implementation 'jadex:mj-execution:5.0.0'
+	implementation 'jadex:future:5.0.0'
+	testImplementation 'jadex:common:5.0.0'
+	testImplementation testFixtures('jadex:mj-execution:5.0.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test {
+  useJUnitPlatform()
+}
+
+// Hack for broken test fixtures in eclipse
+// cf. https://github.com/eclipse/buildship/issues/1206#issuecomment-1367742986
+eclipse.classpath {
+    file.whenMerged { classpath ->
+        classpath.entries.findAll { entry -> entry instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency && entry.entryAttributes.test }
+        	.each { it.entryAttributes['test'] = 'false' }
+	}
+}

@@ -1,0 +1,20 @@
+plugins 
+{
+	id 'java-library'
+}
+
+group = 'jadex'
+
+sourceCompatibility = '1.17'
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	implementation 'jadex:mj-core:5.0.0'
+	implementation 'jadex:mj-execution:5.0.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}

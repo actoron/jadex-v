@@ -74,12 +74,12 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
-import jadex.mj.core.annotation.NameValue;
-import jadex.mj.core.modelinfo.ConfigurationInfo;
-import jadex.mj.core.modelinfo.ModelInfo;
 import jadex.mj.micro.MicroClassReader;
 import jadex.mj.micro.MicroModel;
 import jadex.mj.micro.annotation.Agent;
+import jadex.mj.model.annotation.NameValue;
+import jadex.mj.model.modelinfo.ConfigurationInfo;
+import jadex.mj.model.modelinfo.ModelInfo;
 import jadex.rules.eca.EventType;
 
 /**
@@ -159,8 +159,8 @@ public class BDIClassReader extends MicroClassReader
 //		modelinfo.setStartable(!Modifier.isAbstract(cma.getModifiers()));
 //		modelinfo.setStartable(cma.getName().endsWith(BDIModelLoader.FILE_EXTENSION_BDIV3_FIRST));
 		modelinfo.setType("bdi");
-		modelinfo.setClassloader(classloader);
-		ret.setClassloader(classloader); // use parent
+//		modelinfo.setClassloader(classloader);
+//		ret.setClassloader(classloader); // use parent
 		
 //		System.out.println("filename: "+modelinfo.getFilename());
 		
@@ -170,11 +170,11 @@ public class BDIClassReader extends MicroClassReader
 		fillBDIModelFromAnnotations(ret, model, cma, cl);
 		
 		// why do we need to check on generated class the modifiers?
-		Class<?> genclass = SReflect.findClass0(cma.getName(), null, classloader);
-		if(genclass!=null)
-			modelinfo.setStartable(!Modifier.isAbstract(genclass.getModifiers()));
-		else // can happen when no class is generated (eg. pojo case)
-			modelinfo.setStartable(!Modifier.isAbstract(cma.getModifiers()));
+//		Class<?> genclass = SReflect.findClass0(cma.getName(), null, classloader);
+//		if(genclass!=null)
+//			modelinfo.setStartable(!Modifier.isAbstract(genclass.getModifiers()));
+//		else // can happen when no class is generated (eg. pojo case)
+//			modelinfo.setStartable(!Modifier.isAbstract(cma.getModifiers()));
 		
 		initBDIModelAfterClassLoading(ret, classloader);
 		

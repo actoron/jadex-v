@@ -5,8 +5,8 @@ import java.util.List;
 
 import jadex.common.FieldInfo;
 import jadex.common.Tuple2;
-import jadex.mj.core.modelinfo.IModelInfo;
 import jadex.mj.micro.MicroModel;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 /**
  * 

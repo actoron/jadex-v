@@ -11,9 +11,9 @@ import jadex.common.MethodInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.Tuple3;
-import jadex.mj.core.CacheableKernelModel;
-import jadex.mj.core.ServiceCallInfo;
-import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.model.CacheableKernelModel;
+import jadex.mj.model.ServiceCallInfo;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 /**
  *  The micro agent model. 

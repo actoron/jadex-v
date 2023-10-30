@@ -3,8 +3,9 @@ package jadex.bdiv3.runtime.impl;
 import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MCapability;
 import jadex.bdiv3.model.MElement;
-import jadex.bridge.IInternalAccess;
 import jadex.common.SReflect;
+import jadex.mj.core.IComponent;
+import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.rules.eca.RuleSystem;
 
 /**
@@ -99,9 +100,9 @@ public abstract class RElement
 	 *  Get the agent.
 	 *  @return The agent
 	 */
-	public IInternalAccess getAgent()
+	public IComponent getAgent()
 	{
-		return agent;
+		return IMjExecutionFeature.get().getComponent();
 	}
 	
 	/**
@@ -110,7 +111,7 @@ public abstract class RElement
 	 */
 	public RCapability getCapability()
 	{
-		return agent.getFeature(IInternalBDIAgentFeature.class).getCapability();
+		return IInternalBDIAgentFeature.get().getCapability();
 	}
 	
 	/**
@@ -128,7 +129,7 @@ public abstract class RElement
 	 */
 	public RuleSystem getRuleSystem()
 	{
-		return agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+		return IInternalBDIAgentFeature.get().getRuleSystem();
 	}
 	
 	/**

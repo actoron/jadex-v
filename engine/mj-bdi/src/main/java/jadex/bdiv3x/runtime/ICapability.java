@@ -11,7 +11,7 @@ import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLeve
 import jadex.common.IFilter;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 /**
  * 

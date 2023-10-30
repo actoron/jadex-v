@@ -1,0 +1,38 @@
+plugins 
+{
+	id 'java-library'
+}
+
+group = 'jadex'
+
+sourceCompatibility = '1.17'
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	implementation 'jadex:common:5.0.0'
+	implementation 'jadex:collection:5.0.0'
+	implementation 'jadex:traverser:5.0.0'
+	implementation 'jadex:javaparser:5.0.0'
+	implementation 'jadex:mj-core:5.0.0'
+	implementation 'jadex:mj-model:5.0.0'
+	implementation 'jadex:mj-execution:5.0.0'
+	implementation 'jadex:mj-microagent:5.0.0'
+    implementation 'jadex:mj-requiredservice:5.0.0'
+    implementation 'jadex:mj-providedservice:5.0.0'
+	implementation 'jadex:mj-serialization:5.0.0'
+	implementation 'jadex:binary:5.0.0'
+	implementation 'jadex:json:5.0.0'
+	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+	
+	api 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
+	api 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+	
+	//api 'org.javassist:javassist:3.28.0-GA'
+	
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}

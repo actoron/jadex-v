@@ -20,7 +20,7 @@ import jadex.common.IValueFetcher;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 /**
  *  XML version of the capability. 

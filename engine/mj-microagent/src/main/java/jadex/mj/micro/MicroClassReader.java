@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jadex.bytecode.ProxyFactory;
 import jadex.common.Boolean3;
 import jadex.common.ClassInfo;
 import jadex.common.FieldInfo;
@@ -30,18 +31,6 @@ import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.mj.core.ProxyFactory;
-import jadex.mj.core.ServiceCallInfo;
-import jadex.mj.core.annotation.NameValue;
-import jadex.mj.core.annotation.OnEnd;
-import jadex.mj.core.annotation.OnInit;
-import jadex.mj.core.annotation.OnStart;
-import jadex.mj.core.annotation.Value;
-import jadex.mj.core.modelinfo.ComponentInstanceInfo;
-import jadex.mj.core.modelinfo.ConfigurationInfo;
-import jadex.mj.core.modelinfo.IArgument;
-import jadex.mj.core.modelinfo.ModelInfo;
-import jadex.mj.core.modelinfo.SubcomponentTypeInfo;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.micro.annotation.AgentArgument;
 import jadex.mj.micro.annotation.AgentBreakpoint;
@@ -66,6 +55,17 @@ import jadex.mj.micro.annotation.Parent;
 import jadex.mj.micro.annotation.Properties;
 import jadex.mj.micro.annotation.Result;
 import jadex.mj.micro.annotation.Results;
+import jadex.mj.model.ServiceCallInfo;
+import jadex.mj.model.annotation.NameValue;
+import jadex.mj.model.annotation.OnEnd;
+import jadex.mj.model.annotation.OnInit;
+import jadex.mj.model.annotation.OnStart;
+import jadex.mj.model.annotation.Value;
+import jadex.mj.model.modelinfo.ComponentInstanceInfo;
+import jadex.mj.model.modelinfo.ConfigurationInfo;
+import jadex.mj.model.modelinfo.IArgument;
+import jadex.mj.model.modelinfo.ModelInfo;
+import jadex.mj.model.modelinfo.SubcomponentTypeInfo;
 
 /**
  *  Reads micro agent classes and generates a model from metainfo and annotations.
@@ -569,7 +569,7 @@ public class MicroClassReader
 	//					try
 	//					{
 		//				Object arg = SJavaParser.evaluateExpression(vals[i].defaultvalue(), imports, null, classloader);
-						IArgument tmparg = new jadex.mj.core.modelinfo.Argument(vals[i].name(), 
+						IArgument tmparg = new jadex.mj.model.modelinfo.Argument(vals[i].name(), 
 							vals[i].description(), SReflect.getClassName(vals[i].clazz()),
 							"".equals(vals[i].defaultvalue()) ? null : vals[i].defaultvalue());
 						
@@ -597,7 +597,7 @@ public class MicroClassReader
 							
 							if(!args.containsKey(field.getName()))
 							{
-								IArgument tmparg = new jadex.mj.core.modelinfo.Argument(field.getName(), 
+								IArgument tmparg = new jadex.mj.model.modelinfo.Argument(field.getName(), 
 									null, SReflect.getClassName(field.getType()), null);
 								args.put(field.getName(), tmparg);
 							}
@@ -621,7 +621,7 @@ public class MicroClassReader
 					for(int i=0; i<vals.length; i++)
 					{
 		//				Object res = evaluateExpression(vals[i].defaultvalue(), imports, null, classloader);
-						IArgument tmpresult = new jadex.mj.core.modelinfo.Argument(vals[i].name(), 
+						IArgument tmpresult = new jadex.mj.model.modelinfo.Argument(vals[i].name(), 
 							vals[i].description(), SReflect.getClassName(vals[i].clazz()),
 							"".equals(vals[i].defaultvalue()) ? null : vals[i].defaultvalue());
 						
@@ -643,7 +643,7 @@ public class MicroClassReader
 							
 							if(!resul.containsKey(field.getName()))
 							{
-								IArgument tmparg = new jadex.mj.core.modelinfo.Argument(field.getName(), 
+								IArgument tmparg = new jadex.mj.model.modelinfo.Argument(field.getName(), 
 									null, SReflect.getClassName(field.getType()), null);
 								resul.put(field.getName(), tmparg);
 							}
@@ -1054,8 +1054,8 @@ public class MicroClassReader
 				{
 					try
 					{
-						jadex.mj.core.modelinfo.Argument[] as = (jadex.mj.core.modelinfo.Argument[])methods[i].invoke(null, new Object[0]);
-						for(jadex.mj.core.modelinfo.Argument arg: as)
+						jadex.mj.model.modelinfo.Argument[] as = (jadex.mj.model.modelinfo.Argument[])methods[i].invoke(null, new Object[0]);
+						for(jadex.mj.model.modelinfo.Argument arg: as)
 						{
 							Map<String, Object> args = getOrCreateMap("arguments", toset);
 							

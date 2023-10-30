@@ -6,15 +6,12 @@ import jadex.bdiv3.features.impl.BDIAgentFeature;
 import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MBelief;
 import jadex.bdiv3.model.MElement;
-import jadex.bridge.ComponentTerminatedException;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
 import jadex.common.IResultCommand;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.IComponent;
+import jadex.mj.feature.execution.ComponentTerminatedException;
 import jadex.mj.feature.execution.IMjExecutionFeature;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
@@ -27,7 +24,7 @@ import jadex.rules.eca.RuleSystem;
 public class EventPublisher implements IEventPublisher
 {
 	/** The agent interpreter. */
-	protected MjComponent agent;
+	protected IComponent agent;
 	
 	/** The add event name. */
 	protected EventType addevent;
@@ -47,7 +44,7 @@ public class EventPublisher implements IEventPublisher
 	/**
 	 *  Create a new publisher.
 	 */
-	public EventPublisher(MjComponent agent, EventType changeevent, MElement melement)
+	public EventPublisher(IComponent agent, EventType changeevent, MElement melement)
 	{
 		this(agent, null, null, changeevent, melement);
 	}
@@ -55,7 +52,7 @@ public class EventPublisher implements IEventPublisher
 	/**
 	 *  Create a new publisher.
 	 */
-	public EventPublisher(MjComponent agent, 
+	public EventPublisher(IComponent agent, 
 		EventType addevent, EventType remevent, EventType changeevent, MElement melement)
 	{
 		this.agent = agent;
@@ -160,7 +157,7 @@ public class EventPublisher implements IEventPublisher
 	public void publishToolBeliefEvent()//String evtype)
 	{
 		if(melement instanceof MBelief)
-			BDIAgentFeature.publishToolBeliefEvent(agent, (MBelief)melement);//, evtype);
+			BDIAgentFeature.publishToolBeliefEvent((MBelief)melement);//, evtype);
 	}
 
 	/**

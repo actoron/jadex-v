@@ -1,6 +1,6 @@
 package jadex.bdiv3.model;
 
-import jadex.mj.core.modelinfo.IModelInfo;
+import jadex.mj.model.modelinfo.IModelInfo;
 
 /**
  *  Common interface for micro- and xml-based BDI agent models.

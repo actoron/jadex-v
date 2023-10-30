@@ -5,10 +5,7 @@ plugins
 
 group = 'jadex'
 
-java
-{
-    sourceCompatibility = JavaVersion.VERSION_17
-}
+sourceCompatibility	= 1.17
 
 repositories
 {

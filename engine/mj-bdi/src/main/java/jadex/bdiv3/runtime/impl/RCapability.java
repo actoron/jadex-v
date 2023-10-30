@@ -19,7 +19,6 @@ import jadex.bdiv3x.runtime.REventbase;
 import jadex.bdiv3x.runtime.RExpressionbase;
 import jadex.bdiv3x.runtime.RGoalbase;
 import jadex.bdiv3x.runtime.RPlanbase;
-import jadex.bridge.IInternalAccess;
 
 /**
  *  Runtime element for storing goal and plan instances.
@@ -417,7 +416,7 @@ public class RCapability extends RElement
 	{
 		if(eventbase==null)
 		{
-			eventbase	= new REventbase(getAgent(), null);
+			eventbase	= new REventbase(null);
 		}
 		return eventbase;
 	}
@@ -439,7 +438,7 @@ public class RCapability extends RElement
 	{
 		if(goalbase==null)
 		{
-			goalbase	= new RGoalbase(getAgent(), null);
+			goalbase	= new RGoalbase(null);
 		}
 		return goalbase;
 	}
@@ -483,7 +482,7 @@ public class RCapability extends RElement
 	/**
 	 * 
 	 */
-	protected void dumpGoalsPeriodically(IInternalAccess ia)
+	protected void dumpGoalsPeriodically()
 	{
 		Timer t = new Timer();
 		t.scheduleAtFixedRate(new TimerTask()
@@ -509,7 +508,7 @@ public class RCapability extends RElement
 	/**
 	 * 
 	 */
-	protected void dumpPlansPeriodically(IInternalAccess ia)
+	protected void dumpPlansPeriodically()
 	{
 		Timer t = new Timer();
 		t.scheduleAtFixedRate(new TimerTask()

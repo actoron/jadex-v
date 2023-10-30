@@ -3,7 +3,7 @@ package jadex.bdiv3.runtime.wrappers;
 import java.util.Map;
 
 import jadex.bdiv3.model.MElement;
-import jadex.mj.core.MjComponent;
+import jadex.mj.core.IComponent;
 import jadex.rules.eca.EventType;
 
 /**
@@ -17,7 +17,7 @@ public class MapWrapper<T, E> extends jadex.collection.MapWrapper<T, E>
 	/**
 	 *  Create a new set wrapper.
 	 */
-	public MapWrapper(Map<T, E> delegate, MjComponent agent, 
+	public MapWrapper(Map<T, E> delegate, IComponent agent, 
 		EventType addevent, EventType remevent, EventType changeevent, MElement mbel)
 	{
 		super(delegate);
@@ -36,7 +36,7 @@ public class MapWrapper<T, E> extends jadex.collection.MapWrapper<T, E>
 	/**
 	 * 
 	 */
-	public void setAgent(MjComponent agent)
+	public void setAgent(IComponent agent)
 	{
 		if(publisher instanceof InitEventPublisher)
 		{

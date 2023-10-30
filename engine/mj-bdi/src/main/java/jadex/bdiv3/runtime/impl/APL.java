@@ -1173,20 +1173,16 @@ public class APL
 		/** The element. */
 		protected RProcessableElement element;
 		
-		/** The agent. */
-		protected IInternalAccess agent;
-
 		/**
 		 * @param mplaninfo
 		 * @param element
 		 */
-		public CandidateInfoPojoPlan(Object pojo, RProcessableElement element, IInternalAccess agent)
+		public CandidateInfoPojoPlan(Object pojo, RProcessableElement element)
 		{
 			this.pojo = pojo;
 			this.element = element;
-			this.agent = agent;
 			
-			MCapability	mcapa = (MCapability)agent.getFeature(IInternalBDIAgentFeature.class).getCapability().getModelElement();
+			MCapability	mcapa = (MCapability)IInternalBDIAgentFeature.get().getCapability().getModelElement();
 			this.mplan = mcapa.getPlan(pojo.getClass().getName());
 		}
 
