@@ -3,7 +3,7 @@ package jadex.simulation.impl;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-import jadex.feature.execution.impl.ExecutionFeature;
+import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.simulation.ISimulationFeature;

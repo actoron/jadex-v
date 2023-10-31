@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.impl.Component;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.simulation.ISimulationFeature;
 import jadex.simulation.impl.SlaveSimulationFeature;
 

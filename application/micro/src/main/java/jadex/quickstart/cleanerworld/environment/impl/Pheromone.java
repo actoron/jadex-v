@@ -1,6 +1,6 @@
 package jadex.quickstart.cleanerworld.environment.impl;
 
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.quickstart.cleanerworld.environment.IPheromone;
 
 /**

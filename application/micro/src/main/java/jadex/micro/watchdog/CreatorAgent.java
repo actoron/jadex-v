@@ -1,7 +1,7 @@
 package jadex.micro.watchdog;
 
 import jadex.core.IComponent;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 

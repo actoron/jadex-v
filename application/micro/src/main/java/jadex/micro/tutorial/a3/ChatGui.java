@@ -19,7 +19,7 @@ import javax.swing.SwingUtilities;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingConsumer;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**

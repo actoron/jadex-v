@@ -7,7 +7,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import jadex.core.ComponentIdentifier;
-import jadex.feature.execution.LambdaAgent;
+import jadex.execution.LambdaAgent;
 import jadex.future.IFuture;
 
 /**

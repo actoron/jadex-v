@@ -10,7 +10,7 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.search.ServiceQuery;
-import jadex.providedservice.impl.service.impl.interceptors.FutureFunctionality;
+import jadex.providedservice.impl.service.interceptors.FutureFunctionality;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**

@@ -6,7 +6,7 @@ import java.net.URI;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
-import jadex.feature.execution.impl.ILifecycle;
+import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.MicroAgent;

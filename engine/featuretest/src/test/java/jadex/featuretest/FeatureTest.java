@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.annotation.Testable;
 
 import jadex.core.impl.Component;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.featuretest.impl.TestFeature1NewProvider;
 import jadex.featuretest.impl.TestFeature2NewProvider;
 import jadex.micro.MicroAgent;

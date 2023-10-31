@@ -3,7 +3,7 @@ package jadex.requiredservice.impl;
 import java.util.Collection;
 
 import jadex.core.IComponent;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.future.IIntermediateResultListener;
 import jadex.future.IUndoneIntermediateResultListener;
 

@@ -13,7 +13,7 @@ import jadex.common.Tuple3;
 import jadex.core.ComponentIdentifier;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.impl.service.impl.ServiceInvocationHandler;
+import jadex.providedservice.impl.service.ServiceInvocationHandler;
 
 /**
  *  Service query definition. T is the return type for search methods.

@@ -7,7 +7,7 @@ import java.util.List;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.IService;

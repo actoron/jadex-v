@@ -1,6 +1,6 @@
 package jadex.simulation;
 
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 
 /**

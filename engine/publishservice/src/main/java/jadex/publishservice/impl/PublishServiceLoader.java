@@ -5,7 +5,7 @@ import java.util.Map;
 
 import jadex.common.SReflect;
 import jadex.micro.MicroClassReader;
-import jadex.providedservice.impl.service.impl.ProvidedServiceInfo;
+import jadex.providedservice.impl.service.ProvidedServiceInfo;
 import jadex.publishservice.publish.annotation.Publish;
 
 public class PublishServiceLoader 
