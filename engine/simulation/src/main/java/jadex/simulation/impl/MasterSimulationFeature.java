@@ -1,12 +1,12 @@
-package jadex.mj.feature.simulation.impl;
+package jadex.simulation.impl;
 
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+import jadex.feature.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.feature.execution.impl.ExecutionFeature;
-import jadex.mj.feature.simulation.ISimulationFeature;
+import jadex.simulation.ISimulationFeature;
 
 /**
  *  The master simulation feature does the actual work

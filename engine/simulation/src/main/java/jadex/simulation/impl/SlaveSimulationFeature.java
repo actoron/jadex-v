@@ -1,8 +1,8 @@
-package jadex.mj.feature.simulation.impl;
+package jadex.simulation.impl;
 
-import jadex.future.IFuture;
 import jadex.feature.execution.impl.ExecutionFeature;
-import jadex.mj.feature.simulation.ISimulationFeature;
+import jadex.future.IFuture;
+import jadex.simulation.ISimulationFeature;
 
 public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulationFeature
 {

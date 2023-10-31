@@ -14,8 +14,8 @@ import jadex.common.TimeoutException;
 import jadex.core.impl.Component;
 import jadex.feature.execution.IExecutionFeature;
 import jadex.future.IFuture;
-import jadex.mj.feature.simulation.ISimulationFeature;
-import jadex.mj.feature.simulation.impl.SlaveSimulationFeature;
+import jadex.simulation.ISimulationFeature;
+import jadex.simulation.impl.SlaveSimulationFeature;
 
 public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 {

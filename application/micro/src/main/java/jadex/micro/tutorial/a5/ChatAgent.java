@@ -8,10 +8,10 @@ import java.util.Set;
 import jadex.core.IComponent;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
-import jadex.mj.publishservice.publish.annotation.Publish;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
+import jadex.publishservice.publish.annotation.Publish;
 import jadex.requiredservice.annotation.OnService;
 
 /**
