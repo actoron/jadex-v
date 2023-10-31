@@ -2,10 +2,7 @@ package jadex.mj.requiredservice.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 
 import jadex.common.ClassInfo;
@@ -13,8 +10,8 @@ import jadex.common.FieldInfo;
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
-import jadex.mj.feature.providedservice.ServiceScope;
-import jadex.mj.micro.MicroClassReader;
+import jadex.micro.MicroClassReader;
+import jadex.providedservice.ServiceScope;
 import jadex.mj.requiredservice.RequiredServiceBinding;
 import jadex.mj.requiredservice.RequiredServiceInfo;
 import jadex.mj.requiredservice.annotation.OnService;

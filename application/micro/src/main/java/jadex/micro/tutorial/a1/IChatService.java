@@ -1,6 +1,6 @@
 package jadex.micro.tutorial.a1;
 
-import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.providedservice.annotation.Service;
 
 /**
  *  The chat service interface.

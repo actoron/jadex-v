@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
-import jadex.mj.core.IExternalAccess;
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
 import jadex.feature.execution.IExecutionFeature;
-import jadex.mj.feature.providedservice.IService;
-import jadex.mj.micro.annotation.Agent;
-import jadex.mj.model.annotation.OnStart;
+import jadex.micro.annotation.Agent;
 import jadex.mj.requiredservice.IRequiredServiceFeature;
+import jadex.model.annotation.OnStart;
+import jadex.providedservice.IService;
 
 @Agent
 public class TerminatorAgent 

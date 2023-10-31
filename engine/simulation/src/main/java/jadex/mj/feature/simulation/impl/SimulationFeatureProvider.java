@@ -1,6 +1,6 @@
 package jadex.mj.feature.simulation.impl;
 
-import jadex.mj.core.impl.FeatureProvider;
+import jadex.core.impl.FeatureProvider;
 import jadex.feature.execution.IExecutionFeature;
 import jadex.feature.execution.impl.ExecutionFeature;
 import jadex.feature.execution.impl.ExecutionFeatureProvider;

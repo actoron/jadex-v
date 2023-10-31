@@ -1,6 +1,6 @@
 package jadex.serialization;
 
-import jadex.mj.core.ComponentIdentifier;
+import jadex.core.ComponentIdentifier;
 
 /**
  *   Interface for message headers with meta information / link-level security.

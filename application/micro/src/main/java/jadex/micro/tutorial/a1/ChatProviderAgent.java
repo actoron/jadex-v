@@ -1,11 +1,11 @@
 package jadex.micro.tutorial.a1;
 
-import jadex.mj.feature.providedservice.annotation.Implementation;
-import jadex.mj.feature.providedservice.annotation.ProvidedService;
-import jadex.mj.feature.providedservice.annotation.ProvidedServices;
-import jadex.mj.micro.MicroAgent;
-import jadex.mj.micro.annotation.Agent;
-import jadex.mj.model.annotation.OnStart;
+import jadex.micro.MicroAgent;
+import jadex.micro.annotation.Agent;
+import jadex.model.annotation.OnStart;
+import jadex.providedservice.annotation.Implementation;
+import jadex.providedservice.annotation.ProvidedService;
+import jadex.providedservice.annotation.ProvidedServices;
 
 /**
  *  Chat micro agent provides a basic chat service as separate class. 

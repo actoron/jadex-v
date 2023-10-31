@@ -1,9 +1,8 @@
 package jadex.micro.tutorial.a2;
 
-import jadex.common.SUtil;
-import jadex.mj.core.IComponent;
-import jadex.mj.micro.MicroAgent;
-import jadex.mj.micro.annotation.Agent;
+import jadex.core.IComponent;
+import jadex.micro.MicroAgent;
+import jadex.micro.annotation.Agent;
 import jadex.mj.requiredservice.annotation.OnService;
 
 /**

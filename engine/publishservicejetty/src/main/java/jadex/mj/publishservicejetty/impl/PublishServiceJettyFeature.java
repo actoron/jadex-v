@@ -4,12 +4,12 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
+import jadex.core.impl.Component;
 import jadex.future.IFuture;
-import jadex.mj.core.impl.Component;
-import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.publishservice.IPublishService;
-import jadex.mj.publishservice.impl.PublishServiceFeature;
 import jadex.mj.publishservice.impl.PublishInfo;
+import jadex.mj.publishservice.impl.PublishServiceFeature;
+import jadex.providedservice.IServiceIdentifier;
 
 public class PublishServiceJettyFeature extends PublishServiceFeature
 {

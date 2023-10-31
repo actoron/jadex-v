@@ -1,6 +1,6 @@
 package jadex.feature.execution;
 
-import jadex.mj.core.ComponentIdentifier;
+import jadex.core.ComponentIdentifier;
 
 /**
  *  Thrown when operations are invoked after an component has been terminated.

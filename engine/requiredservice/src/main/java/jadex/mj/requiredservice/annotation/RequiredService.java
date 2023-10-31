@@ -5,9 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.mj.feature.providedservice.ServiceScope;
-import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationHandler;
-import jadex.mj.model.annotation.Value;
+import jadex.providedservice.ServiceScope;
+import jadex.providedservice.impl.service.impl.ServiceInvocationHandler;
+import jadex.model.annotation.Value;
 import jadex.mj.requiredservice.RequiredServiceInfo;
 
 /**

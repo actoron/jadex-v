@@ -4,8 +4,8 @@ import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MCapability;
 import jadex.bdiv3.model.MElement;
 import jadex.common.SReflect;
-import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.core.IComponent;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.rules.eca.RuleSystem;
 
 /**

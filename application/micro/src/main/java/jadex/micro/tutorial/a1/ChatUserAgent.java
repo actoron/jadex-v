@@ -2,12 +2,12 @@ package jadex.micro.tutorial.a1;
 
 import java.util.Collection;
 
-import jadex.mj.core.IComponent;
+import jadex.core.IComponent;
 import jadex.feature.execution.IExecutionFeature;
-import jadex.mj.micro.MicroAgent;
-import jadex.mj.micro.annotation.Agent;
-import jadex.mj.model.annotation.OnStart;
+import jadex.micro.MicroAgent;
+import jadex.micro.annotation.Agent;
 import jadex.mj.requiredservice.IRequiredServiceFeature;
+import jadex.model.annotation.OnStart;
 
 /**
  *  Chat micro agent gets chat services and sends a message.

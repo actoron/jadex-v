@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jadex.common.SReflect;
-import jadex.mj.feature.providedservice.impl.service.impl.ProvidedServiceInfo;
-import jadex.mj.micro.MicroClassReader;
+import jadex.micro.MicroClassReader;
+import jadex.providedservice.impl.service.impl.ProvidedServiceInfo;
 import jadex.mj.publishservice.publish.annotation.Publish;
 
 public class PublishServiceLoader 

@@ -1,8 +1,8 @@
 package jadex.micro.tutorial.a7;
 
 import jadex.future.IFuture;
-import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.micro.annotation.Agent;
+import jadex.micro.annotation.Agent;
+import jadex.providedservice.annotation.Service;
 
 @Agent
 @Service

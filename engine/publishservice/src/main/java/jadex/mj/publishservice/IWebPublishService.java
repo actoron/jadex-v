@@ -1,8 +1,5 @@
 package jadex.mj.publishservice;
 
-import jadex.future.IFuture;
-import jadex.mj.feature.providedservice.annotation.Service;
-
 /**
  *  Publish something to the internal or external http server.
  */

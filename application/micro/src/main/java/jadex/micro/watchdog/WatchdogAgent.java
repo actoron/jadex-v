@@ -6,14 +6,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jadex.core.IComponent;
 import jadex.feature.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
-import jadex.mj.core.IComponent;
-import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.micro.annotation.Agent;
-import jadex.mj.model.annotation.OnStart;
+import jadex.micro.annotation.Agent;
 import jadex.mj.requiredservice.IRequiredServiceFeature;
+import jadex.model.annotation.OnStart;
+import jadex.providedservice.annotation.Service;
 
 /**
  *  The watchdog agent pings other watchdogs and issues an action,

@@ -3,7 +3,7 @@ package jadex.bdiv3.runtime;
 import java.util.List;
 
 import jadex.bdiv3.features.impl.BDIAgentFeature;
-import jadex.mj.core.IComponent;
+import jadex.core.IComponent;
 import jadex.mj.micro.annotation.Agent;
 
 /**

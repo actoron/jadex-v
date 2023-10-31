@@ -2,10 +2,10 @@ package jadex.mj.requiredservice.impl;
 
 import java.util.Collection;
 
+import jadex.core.IComponent;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.future.IIntermediateResultListener;
 import jadex.future.IUndoneIntermediateResultListener;
-import jadex.mj.core.IComponent;
-import jadex.feature.execution.IExecutionFeature;
 
 /**
  *  Intermediate listener that invokes listeners on component thread.

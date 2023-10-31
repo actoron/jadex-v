@@ -27,7 +27,7 @@ import jadex.bdiv3x.runtime.IParameterSet;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 
 /**
  *  Action for adopting a goal.

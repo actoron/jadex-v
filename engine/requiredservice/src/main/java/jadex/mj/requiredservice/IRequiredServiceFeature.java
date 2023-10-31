@@ -5,9 +5,9 @@ import java.util.Collection;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.mj.feature.providedservice.IService;
-import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.feature.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.IService;
+import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.impl.search.ServiceQuery;
 
 public interface IRequiredServiceFeature 
 {

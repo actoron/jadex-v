@@ -1,8 +1,8 @@
 package jadex.mj.publishservice.publish;
 
 import jadex.future.IFuture;
-import jadex.mj.feature.providedservice.annotation.Reference;
-import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.providedservice.annotation.Reference;
+import jadex.providedservice.annotation.Service;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 

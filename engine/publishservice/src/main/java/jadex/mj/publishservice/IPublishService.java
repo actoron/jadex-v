@@ -1,8 +1,8 @@
 package jadex.mj.publishservice;
 
 import jadex.future.IFuture;
-import jadex.mj.feature.providedservice.IServiceIdentifier;
 import jadex.mj.publishservice.impl.PublishInfo;
+import jadex.providedservice.IServiceIdentifier;
 
 /**
  *  Service for publishing services in other technologies such as web services.

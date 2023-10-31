@@ -1,8 +1,8 @@
 package jadex.mj.requiredservice;
 
 import jadex.common.MethodInfo;
-import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.feature.providedservice.IServiceIdentifier;
+import jadex.core.ComponentIdentifier;
+import jadex.providedservice.IServiceIdentifier;
 
 /**
  *  Represents the events associated with service calls (call, response, etc.).

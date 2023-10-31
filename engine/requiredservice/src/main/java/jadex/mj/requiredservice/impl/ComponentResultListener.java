@@ -4,15 +4,15 @@ import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 import jadex.common.SUtil;
+import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
+import jadex.feature.execution.IExecutionFeature;
+import jadex.feature.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IFutureCommandResultListener;
 import jadex.future.IResultListener;
 import jadex.future.IUndoneResultListener;
-import jadex.mj.core.IComponent;
-import jadex.mj.core.IExternalAccess;
-import jadex.feature.execution.IExecutionFeature;
-import jadex.feature.execution.impl.ExecutionFeature;
 
 /**
  *  The result listener for executing listener invocations as a component step.

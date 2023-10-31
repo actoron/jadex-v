@@ -2,7 +2,7 @@ package jadex.quickstart.cleanerworld;
 
 import javax.swing.SwingUtilities;
 
-import jadex.mj.micro.MicroAgent;
+import jadex.micro.MicroAgent;
 import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 
 /**

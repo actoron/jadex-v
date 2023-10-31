@@ -4,9 +4,10 @@ import jadex.bdiv3.features.impl.BDIAgentFeature;
 import jadex.bdiv3.runtime.impl.RPlan.PlanProcessingState;
 import jadex.bridge.IComponentStep;
 import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IExecutionFeature;
 import jadex.common.ErrorException;
 import jadex.common.SUtil;
+import jadex.feature.execution.IExecutionFeature;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 

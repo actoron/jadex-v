@@ -1,9 +1,8 @@
 package jadex.mj.requiredservice.impl;
 
-import jadex.mj.core.impl.Component;
-import jadex.mj.core.impl.FeatureProvider;
-import jadex.mj.feature.providedservice.IProvidedServiceFeature;
-import jadex.mj.micro.MicroAgent;
+import jadex.core.impl.Component;
+import jadex.core.impl.FeatureProvider;
+import jadex.micro.MicroAgent;
 import jadex.mj.requiredservice.IRequiredServiceFeature;
 
 public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredServiceFeature> 

@@ -8,8 +8,8 @@ import jadex.bdiv3.model.IBDIModel;
 import jadex.bdiv3.runtime.IBeliefListener;
 import jadex.bdiv3.runtime.impl.RCapability;
 import jadex.common.IResultCommand;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.future.IFuture;
-import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.RuleSystem;
 

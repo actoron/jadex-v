@@ -1,10 +1,9 @@
 package jadex.micro.tutorial.a7;
 
-import jadex.common.SUtil;
-import jadex.mj.core.IComponent;
-import jadex.mj.feature.providedservice.IService;
-import jadex.mj.micro.annotation.Agent;
+import jadex.core.IComponent;
+import jadex.micro.annotation.Agent;
 import jadex.mj.requiredservice.annotation.OnService;
+import jadex.providedservice.IService;
 
 @Agent
 public class PingerAgent 

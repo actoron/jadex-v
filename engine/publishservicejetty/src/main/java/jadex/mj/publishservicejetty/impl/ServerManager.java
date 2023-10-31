@@ -20,12 +20,12 @@ import org.eclipse.jetty.util.component.LifeCycle;
 
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
+import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.IComponent;
-import jadex.mj.feature.providedservice.IService;
-import jadex.mj.feature.providedservice.IServiceIdentifier;
-import jadex.mj.feature.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.IService;
+import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.mj.publishservice.impl.PublishInfo;
 import jadex.mj.publishservice.impl.RequestManager;
 import jadex.mj.publishservice.impl.RequestManager.MappingInfo;

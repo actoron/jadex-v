@@ -3,7 +3,7 @@ package jadex.serialization;
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.mj.core.ComponentIdentifier;
+import jadex.core.ComponentIdentifier;
 
 /**
  *   Message header with message meta information.

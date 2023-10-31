@@ -2,12 +2,12 @@ package jadex.feature.execution;
 
 import java.util.concurrent.Callable;
 
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
+import jadex.core.IThrowingConsumer;
+import jadex.core.IThrowingFunction;
+import jadex.core.impl.Component;
 import jadex.future.IFuture;
-import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
-import jadex.mj.core.IThrowingConsumer;
-import jadex.mj.core.IThrowingFunction;
-import jadex.mj.core.impl.Component;
 
 /**
  *  Create minimal components, just from a lambda function.

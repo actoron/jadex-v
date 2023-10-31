@@ -11,7 +11,7 @@ import jadex.bdiv3x.features.IBDIXAgentFeature;
 import jadex.bridge.IInternalAccess;
 import jadex.bridge.service.component.IRequiredServicesFeature;
 import jadex.bridge.service.component.RequiredServicesFeatureAdapter;
-import jadex.mj.model.ProxyFactory;
+import jadex.bytecode.ProxyFactory;
 
 /**
  *  Wrapper providing BDI methods to the user.

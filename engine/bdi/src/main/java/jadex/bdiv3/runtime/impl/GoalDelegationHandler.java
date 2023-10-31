@@ -20,10 +20,11 @@ import jadex.bridge.SFuture;
 import jadex.bridge.component.IPojoComponentFeature;
 import jadex.bridge.service.annotation.Service;
 import jadex.bridge.service.component.interceptors.FutureFunctionality;
+import jadex.bytecode.ProxyFactory;
 import jadex.common.SReflect;
 import jadex.future.ExceptionDelegationResultListener;
+import jadex.future.Future;
 import jadex.future.IResultListener;
-import jadex.mj.model.ProxyFactory;
 
 /**
  *  Handler used for service-goal delegation.

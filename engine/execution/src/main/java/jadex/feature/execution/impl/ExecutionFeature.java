@@ -21,17 +21,17 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jadex.common.SUtil;
-import jadex.future.Future;
-import jadex.future.IFuture;
-import jadex.future.ISuspendable;
-import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
-import jadex.mj.core.IThrowingConsumer;
-import jadex.mj.core.IThrowingFunction;
-import jadex.mj.core.impl.Component;
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
+import jadex.core.IThrowingConsumer;
+import jadex.core.IThrowingFunction;
+import jadex.core.impl.Component;
 import jadex.feature.execution.ComponentTerminatedException;
 import jadex.feature.execution.IExecutionFeature;
 import jadex.feature.execution.StepAborted;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.ISuspendable;
 
 public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFeature
 {

@@ -1,6 +1,6 @@
 package jadex.bdiv3.features.impl;
 
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.mj.micro.impl.MicroAgentFeature;
 
 /**

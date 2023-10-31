@@ -1,9 +1,9 @@
 package jadex.micro.example.helloworld;
 
-import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
-import jadex.mj.core.IThrowingFunction;
-import jadex.mj.micro.annotation.Agent;
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
+import jadex.core.IThrowingFunction;
+import jadex.micro.annotation.Agent;
 
 /**
  *  Agent creation benchmark. 

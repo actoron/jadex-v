@@ -7,7 +7,7 @@ import java.util.List;
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
-import jadex.mj.feature.providedservice.ServiceScope;
+import jadex.providedservice.ServiceScope;
 
 /**
  *  Struct for information about a required service.

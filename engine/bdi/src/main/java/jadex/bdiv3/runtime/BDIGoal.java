@@ -1,7 +1,7 @@
 package jadex.bdiv3.runtime;
 
 import jadex.bdiv3.features.impl.BDIAgentFeature;
-import jadex.mj.core.IComponent;
+import jadex.core.IComponent;
 
 /**
  *  Base class for non-bytecode-enhanced BDI agents.

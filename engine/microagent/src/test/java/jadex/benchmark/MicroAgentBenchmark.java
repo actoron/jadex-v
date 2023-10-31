@@ -7,12 +7,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
-import jadex.mj.micro.MicroAgent;
-import jadex.mj.model.annotation.OnStart;
+import jadex.micro.MicroAgent;
+import jadex.model.annotation.OnStart;
 
 /**
  *  Benchmark creation and killing of micro agents.
@@ -40,8 +40,10 @@ public class MicroAgentBenchmark	extends AbstractComponentBenchmark
 		return ret;
 	}
 
-	protected static Stream<Arguments> provideBenchmarkParams() {
-	    return Stream.of(
+	protected static Stream<Arguments> provideBenchmarkParams() 
+	{
+	    return Stream.of
+	    (
 	  	      Arguments.of(10000, false, false),
 		      Arguments.of(100000, false, true)
 	    );

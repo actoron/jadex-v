@@ -1,6 +1,6 @@
 package jadex.quickstart.cleanerworld;
 
-import jadex.mj.model.annotation.OnStart;
+import jadex.model.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 

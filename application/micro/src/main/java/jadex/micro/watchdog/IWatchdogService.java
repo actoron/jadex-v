@@ -1,7 +1,7 @@
 package jadex.micro.watchdog;
 
 import jadex.future.IFuture;
-import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.providedservice.annotation.Service;
 
 /**
  *  Watchdogs observe each other and take actions

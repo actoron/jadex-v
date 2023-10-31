@@ -13,7 +13,7 @@ import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.Traverser;
 import jadex.common.transformation.traverser.Traverser.MODE;
-import jadex.mj.feature.providedservice.IServiceIdentifier;
+import jadex.providedservice.IServiceIdentifier;
 import jadex.transformation.jsonserializer.JsonTraverser;
 import jadex.transformation.jsonserializer.processors.AbstractJsonProcessor;
 import jadex.transformation.jsonserializer.processors.JsonReadContext;

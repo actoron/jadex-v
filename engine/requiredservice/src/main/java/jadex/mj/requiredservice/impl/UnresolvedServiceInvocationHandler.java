@@ -4,13 +4,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 import jadex.common.SReflect;
+import jadex.core.impl.Component;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.mj.core.impl.Component;
-import jadex.mj.feature.providedservice.IService;
-import jadex.mj.feature.providedservice.impl.search.ServiceQuery;
-import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
+import jadex.providedservice.IService;
+import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.impl.service.impl.interceptors.FutureFunctionality;
 import jadex.mj.requiredservice.IRequiredServiceFeature;
 
 /**

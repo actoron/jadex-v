@@ -1,10 +1,10 @@
 package jadex.mj.requiredservice.impl;
 
 import jadex.common.ICommand;
+import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
-import jadex.mj.core.IComponent;
-import jadex.mj.feature.providedservice.impl.service.impl.interceptors.FutureFunctionality;
+import jadex.providedservice.impl.service.impl.interceptors.FutureFunctionality;
 
 /**
  *  Schedule forward future executions (e.g. results) on component thread,

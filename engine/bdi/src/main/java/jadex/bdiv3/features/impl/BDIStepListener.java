@@ -1,8 +1,8 @@
 package jadex.bdiv3.features.impl;
 
 import jadex.bdiv3.runtime.impl.RPlan;
+import jadex.feature.execution.impl.IStepListener;
 import jadex.future.IFuture;
-import jadex.mj.feature.execution.impl.IStepListener;
 
 /**
  *  BDI step listener adds rule engine behavior to the component execution.

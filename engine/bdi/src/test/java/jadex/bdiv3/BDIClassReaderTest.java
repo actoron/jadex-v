@@ -1,6 +1,6 @@
 package jadex.bdiv3;
 
-import jadex.bridge.ComponentIdentifier;
+import jadex.core.ComponentIdentifier;
 
 public class BDIClassReaderTest
 {

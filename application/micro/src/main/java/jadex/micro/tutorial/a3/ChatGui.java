@@ -16,9 +16,9 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import jadex.mj.core.IComponent;
-import jadex.mj.core.IExternalAccess;
-import jadex.mj.core.IThrowingConsumer;
+import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
+import jadex.core.IThrowingConsumer;
 import jadex.feature.execution.IExecutionFeature;
 import jadex.mj.requiredservice.IRequiredServiceFeature;
 

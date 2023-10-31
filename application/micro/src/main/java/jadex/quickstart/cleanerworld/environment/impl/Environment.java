@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.mj.core.IComponent;
+import jadex.core.IComponent;
 import jadex.quickstart.cleanerworld.environment.ILocationObject;
 
 /**

@@ -9,7 +9,7 @@ import jadex.bdiv3.model.MConfigParameterElement;
 import jadex.bdiv3.model.MParameter;
 import jadex.bdiv3.model.MParameter.Direction;
 import jadex.bdiv3.model.MProcessableElement;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 
 /**
  *  Runtime element for all elements that can be processed via means-end reasoning.

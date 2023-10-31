@@ -3,7 +3,7 @@ package jadex.bdiv3.actions;
 import jadex.bdiv3.runtime.impl.APL;
 import jadex.bdiv3.runtime.impl.RGoal;
 import jadex.bdiv3.runtime.impl.RProcessableElement;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 
 /**
  *  Find applicable candidates action - searches plans for a goal/event.

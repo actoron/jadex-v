@@ -1,6 +1,6 @@
 package jadex.feature.execution;
 
-import jadex.mj.core.ComponentIdentifier;
+import jadex.core.ComponentIdentifier;
 
 /**
  *  An error thrown to indicate the abortion of a blocked component step.

@@ -3,10 +3,9 @@ package jadex.micro.tutorial.a1;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import jadex.mj.core.impl.Component;
-import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.feature.providedservice.annotation.ServiceComponent;
-import jadex.mj.micro.MicroAgent;
+import jadex.micro.MicroAgent;
+import jadex.providedservice.annotation.Service;
+import jadex.providedservice.annotation.ServiceComponent;
 
 /**
  *  Chat service implementation.

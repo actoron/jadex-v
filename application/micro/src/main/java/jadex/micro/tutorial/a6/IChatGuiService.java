@@ -2,7 +2,7 @@ package jadex.micro.tutorial.a6;
 
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.mj.feature.providedservice.annotation.Service;
+import jadex.providedservice.annotation.Service;
 
 @Service
 public interface IChatGuiService 

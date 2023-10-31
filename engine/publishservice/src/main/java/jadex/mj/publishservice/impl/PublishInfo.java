@@ -1,12 +1,6 @@
 package jadex.mj.publishservice.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import jadex.common.ClassInfo;
-import jadex.common.SUtil;
-import jadex.common.UnparsedExpression;
-import jadex.mj.feature.providedservice.ServiceScope;
 
 /**
  *  Info struct for service publishing details.

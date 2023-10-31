@@ -3,9 +3,10 @@ package jadex.bdiv3.runtime.impl;
 import java.util.Map;
 
 import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.IExternalAccess;
 import jadex.bridge.IInternalAccess;
 import jadex.bridge.service.types.cms.CreationInfo;
+import jadex.core.IExternalAccess;
+import jadex.future.Future;
 import jadex.future.IResultListener;
 
 /**

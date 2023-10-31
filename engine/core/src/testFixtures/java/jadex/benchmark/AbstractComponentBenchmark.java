@@ -3,11 +3,11 @@ package jadex.benchmark;
 import java.util.Collection;
 
 import jadex.common.SUtil;
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
-import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
 
 /**
  *  Base class for testing component creation.

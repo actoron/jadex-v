@@ -8,19 +8,17 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import jadex.common.SUtil;
+import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
-import jadex.mj.core.IComponent;
-import jadex.mj.feature.providedservice.annotation.Service;
-import jadex.mj.micro.MicroAgent;
-import jadex.mj.micro.annotation.Agent;
-import jadex.mj.model.annotation.OnStart;
+import jadex.micro.annotation.Agent;
 import jadex.mj.publishservice.IPublishServiceFeature;
 import jadex.mj.publishservice.publish.annotation.Publish;
 import jadex.mj.requiredservice.annotation.OnService;
+import jadex.model.annotation.OnStart;
+import jadex.providedservice.annotation.Service;
 
 /**
  *  Chat micro agent provides a basic chat service and publishes it as rest web service.

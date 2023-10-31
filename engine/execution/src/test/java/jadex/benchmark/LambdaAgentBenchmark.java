@@ -6,9 +6,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import jadex.future.IFuture;
-import jadex.mj.core.ComponentIdentifier;
+import jadex.core.ComponentIdentifier;
 import jadex.feature.execution.LambdaAgent;
+import jadex.future.IFuture;
 
 /**
  *  Benchmark plain MjComponent with included execution feature.

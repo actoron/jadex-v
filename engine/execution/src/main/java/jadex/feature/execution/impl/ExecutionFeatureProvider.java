@@ -4,19 +4,19 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import jadex.future.IFuture;
-import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.core.IComponent;
-import jadex.mj.core.IExternalAccess;
-import jadex.mj.core.IThrowingConsumer;
-import jadex.mj.core.IThrowingFunction;
-import jadex.mj.core.impl.IBootstrapping;
-import jadex.mj.core.impl.IComponentLifecycleManager;
-import jadex.mj.core.impl.Component;
-import jadex.mj.core.impl.FeatureProvider;
-import jadex.mj.core.impl.SFeatureProvider;
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
+import jadex.core.IThrowingConsumer;
+import jadex.core.IThrowingFunction;
+import jadex.core.impl.Component;
+import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.IBootstrapping;
+import jadex.core.impl.IComponentLifecycleManager;
+import jadex.core.impl.SFeatureProvider;
 import jadex.feature.execution.IExecutionFeature;
 import jadex.feature.execution.LambdaAgent;
+import jadex.future.IFuture;
 
 public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {

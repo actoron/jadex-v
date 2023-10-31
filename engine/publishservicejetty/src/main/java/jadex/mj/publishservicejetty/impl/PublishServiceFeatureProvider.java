@@ -1,8 +1,8 @@
 package jadex.mj.publishservicejetty.impl;
 
-import jadex.mj.core.impl.Component;
-import jadex.mj.core.impl.FeatureProvider;
-import jadex.mj.micro.MicroAgent;
+import jadex.core.impl.Component;
+import jadex.core.impl.FeatureProvider;
+import jadex.micro.MicroAgent;
 import jadex.mj.publishservice.IPublishServiceFeature;
 
 public class PublishServiceFeatureProvider extends FeatureProvider<IPublishServiceFeature> 
