@@ -19,7 +19,7 @@ import javax.swing.SwingUtilities;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
 import jadex.mj.core.IThrowingConsumer;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.mj.micro.MicroAgent;
 
 /**

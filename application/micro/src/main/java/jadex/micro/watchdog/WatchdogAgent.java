@@ -6,11 +6,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jadex.common.SUtil;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IExecutionFeature;
 import jadex.mj.feature.providedservice.annotation.Service;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.model.annotation.OnStart;

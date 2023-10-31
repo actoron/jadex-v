@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 import jadex.common.ErrorException;
 import jadex.common.SUtil;
 import jadex.future.Future;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.quickstart.cleanerworld.environment.impl.Cleaner;
 import jadex.quickstart.cleanerworld.environment.impl.Environment;
 import jadex.quickstart.cleanerworld.environment.impl.Location;

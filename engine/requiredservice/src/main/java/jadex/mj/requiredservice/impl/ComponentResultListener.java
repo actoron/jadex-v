@@ -11,8 +11,8 @@ import jadex.future.IResultListener;
 import jadex.future.IUndoneResultListener;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IExternalAccess;
-import jadex.mj.feature.execution.IExecutionFeature;
-import jadex.mj.feature.execution.impl.ExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
+import jadex.feature.execution.impl.ExecutionFeature;
 
 /**
  *  The result listener for executing listener invocations as a component step.

@@ -8,7 +8,7 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.feature.execution.StepAborted;
+import jadex.feature.execution.StepAborted;
 import jadex.mj.feature.providedservice.impl.service.impl.ISwitchCall;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceCall;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;

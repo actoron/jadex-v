@@ -1,7 +1,7 @@
 package jadex.mj.feature.simulation;
 
 import jadex.future.IFuture;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 
 /**
  *  The simulation feature is an extended execution feature

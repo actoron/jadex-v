@@ -10,11 +10,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.feature.execution.IExecutionFeature;
+import jadex.feature.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.impl.Component;
-import jadex.mj.feature.execution.IExecutionFeature;
 
 public abstract class AbstractExecutionFeatureTest
 {

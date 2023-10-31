@@ -1,4 +1,4 @@
-package jadex.mj.feature.execution;
+package jadex.feature.execution;
 
 import java.util.concurrent.Callable;
 

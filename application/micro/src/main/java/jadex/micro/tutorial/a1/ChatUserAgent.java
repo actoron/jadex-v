@@ -3,7 +3,7 @@ package jadex.micro.tutorial.a1;
 import java.util.Collection;
 
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;
 import jadex.mj.model.annotation.OnStart;

@@ -1,4 +1,4 @@
-package jadex.mj.feature.execution;
+package jadex.feature.execution;
 
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -7,7 +7,7 @@ import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
-import jadex.mj.feature.execution.impl.ExecutionFeature;
+import jadex.feature.execution.impl.ExecutionFeature;
 
 /**
  *  The execution feature controls how and when components execute their steps,

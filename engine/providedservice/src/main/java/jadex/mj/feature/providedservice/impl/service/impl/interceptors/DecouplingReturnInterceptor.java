@@ -5,7 +5,7 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.mj.feature.providedservice.impl.service.impl.ServiceInvocationContext;
 
 /**

@@ -2,11 +2,10 @@ package jadex.mj.feature.providedservice.impl.service.impl;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
+import jadex.feature.execution.impl.ExecutionFeature;
 import jadex.future.ThreadLocalTransferHelper;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.feature.execution.impl.ExecutionFeature;
 import jadex.mj.feature.providedservice.annotation.Timeout;
 
 

@@ -5,7 +5,7 @@ import java.util.Collection;
 import jadex.future.IIntermediateResultListener;
 import jadex.future.IUndoneIntermediateResultListener;
 import jadex.mj.core.IComponent;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 
 /**
  *  Intermediate listener that invokes listeners on component thread.

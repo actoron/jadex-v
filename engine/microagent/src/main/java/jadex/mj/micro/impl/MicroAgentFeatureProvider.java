@@ -5,7 +5,7 @@ import jadex.mj.core.IComponent;
 import jadex.mj.core.impl.IComponentLifecycleManager;
 import jadex.mj.core.impl.Component;
 import jadex.mj.core.impl.FeatureProvider;
-import jadex.mj.feature.execution.IExecutionFeature;
+import jadex.feature.execution.IExecutionFeature;
 import jadex.mj.micro.MicroClassReader;
 import jadex.mj.micro.MicroAgent;
 import jadex.mj.micro.annotation.Agent;

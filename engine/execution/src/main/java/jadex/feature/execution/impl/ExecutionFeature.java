@@ -1,4 +1,4 @@
-package jadex.mj.feature.execution.impl;
+package jadex.feature.execution.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -29,9 +29,9 @@ import jadex.mj.core.IComponent;
 import jadex.mj.core.IThrowingConsumer;
 import jadex.mj.core.IThrowingFunction;
 import jadex.mj.core.impl.Component;
-import jadex.mj.feature.execution.ComponentTerminatedException;
-import jadex.mj.feature.execution.IExecutionFeature;
-import jadex.mj.feature.execution.StepAborted;
+import jadex.feature.execution.ComponentTerminatedException;
+import jadex.feature.execution.IExecutionFeature;
+import jadex.feature.execution.StepAborted;
 
 public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFeature
 {

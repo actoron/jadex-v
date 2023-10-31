@@ -1,4 +1,4 @@
-package jadex.mj.feature.execution.impl;
+package jadex.feature.execution.impl;
 
 /**
  *  Allow augmentation of the execution behavior.

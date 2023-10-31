@@ -1,4 +1,4 @@
-package jadex.mj.feature.execution.impl;
+package jadex.feature.execution.impl;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -15,8 +15,8 @@ import jadex.mj.core.impl.IComponentLifecycleManager;
 import jadex.mj.core.impl.Component;
 import jadex.mj.core.impl.FeatureProvider;
 import jadex.mj.core.impl.SFeatureProvider;
-import jadex.mj.feature.execution.IExecutionFeature;
-import jadex.mj.feature.execution.LambdaAgent;
+import jadex.feature.execution.IExecutionFeature;
+import jadex.feature.execution.LambdaAgent;
 
 public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {

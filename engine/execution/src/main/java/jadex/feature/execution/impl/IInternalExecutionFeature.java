@@ -1,4 +1,4 @@
-package jadex.mj.feature.execution.impl;
+package jadex.feature.execution.impl;
 
 /**
  *  Additional methods of execution feature implementations only to be used by non-user code.

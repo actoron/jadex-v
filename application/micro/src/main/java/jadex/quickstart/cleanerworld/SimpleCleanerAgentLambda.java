@@ -1,6 +1,6 @@
 package jadex.quickstart.cleanerworld;
 
-import jadex.mj.feature.execution.LambdaAgent;
+import jadex.feature.execution.LambdaAgent;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 

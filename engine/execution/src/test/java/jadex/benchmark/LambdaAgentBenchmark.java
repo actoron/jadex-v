@@ -8,7 +8,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import jadex.future.IFuture;
 import jadex.mj.core.ComponentIdentifier;
-import jadex.mj.feature.execution.LambdaAgent;
+import jadex.feature.execution.LambdaAgent;
 
 /**
  *  Benchmark plain MjComponent with included execution feature.

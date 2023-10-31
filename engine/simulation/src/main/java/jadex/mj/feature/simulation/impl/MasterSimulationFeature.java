@@ -5,7 +5,7 @@ import java.util.Queue;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.feature.execution.impl.ExecutionFeature;
+import jadex.feature.execution.impl.ExecutionFeature;
 import jadex.mj.feature.simulation.ISimulationFeature;
 
 /**
