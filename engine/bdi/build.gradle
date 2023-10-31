@@ -14,9 +14,9 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:mj-core:5.0.0'
-	implementation 'jadex:mj-execution:5.0.0'
-	implementation 'jadex:mj-microagent:5.0.0'
+	implementation 'jadex:core:5.0.0'
+	implementation 'jadex:execution:5.0.0'
+	implementation 'jadex:microagent:5.0.0'
 	implementation 'jadex:common:5.0.0'
 	implementation 'jadex:future:5.0.0'
 	implementation 'jadex:javaparser:5.0.0'

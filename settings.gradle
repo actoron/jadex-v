@@ -7,23 +7,28 @@ includeBuild('util/classreader') {}
 includeBuild('util/javaparser') {}
 includeBuild('util/nativetools') {}
 includeBuild('util/bytecode') {}
+includeBuild('util/idgenerator') {}
+
 includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
 includeBuild('serialization/json') {}
-includeBuild('engine/mj-serialization') {}
-includeBuild('engine/mj-core') {}
-includeBuild('engine/mj-featuretest') {}
-includeBuild('engine/mj-execution') {}
-includeBuild('engine/mj-model') {}
-includeBuild('engine/mj-providedservice') {}
-includeBuild('engine/mj-requiredservice') {}
-includeBuild('engine/mj-publishservice') {}
-includeBuild('engine/mj-publishservicejetty') {}
-includeBuild('engine/mj-nfproperties') {}
-includeBuild('engine/mj-simulation') {}
-includeBuild('engine/mj-communication') {}
-includeBuild('engine/mj-microagent') {}
-includeBuild('engine/mj-bdi') {}
+
+includeBuild('engine/serialization') {}
+includeBuild('engine/core') {}
+includeBuild('engine/featuretest') {}
+includeBuild('engine/execution') {}
+includeBuild('engine/model') {}
+includeBuild('engine/providedservice') {}
+includeBuild('engine/requiredservice') {}
+includeBuild('engine/publishservice') {}
+includeBuild('engine/publishservicejetty') {}
+includeBuild('engine/nfproperties') {}
+includeBuild('engine/simulation') {}
+includeBuild('engine/communication') {}
+includeBuild('engine/microagent') {}
+includeBuild('engine/bdi') {}
+
 includeBuild('rules/eca') {}
+
 includeBuild('application/micro'){}
-includeBuild('util/idgenerator') {}
+

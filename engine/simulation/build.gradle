@@ -15,11 +15,11 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:mj-core:5.0.0'
-	implementation 'jadex:mj-execution:5.0.0'
+	implementation 'jadex:core:5.0.0'
+	implementation 'jadex:execution:5.0.0'
 	implementation 'jadex:future:5.0.0'
 	testImplementation 'jadex:common:5.0.0'
-	testImplementation testFixtures('jadex:mj-execution:5.0.0')
+	testImplementation testFixtures('jadex:execution:5.0.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }

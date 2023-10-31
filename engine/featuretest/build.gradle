@@ -14,10 +14,10 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:mj-core:5.0.0'
-	implementation 'jadex:mj-model:5.0.0'
-	implementation 'jadex:mj-execution:5.0.0'
-	implementation 'jadex:mj-microagent:5.0.0'
+	implementation 'jadex:core:5.0.0'
+	implementation 'jadex:model:5.0.0'
+	implementation 'jadex:execution:5.0.0'
+	implementation 'jadex:microagent:5.0.0'
 	implementation 'jadex:common:5.0.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
