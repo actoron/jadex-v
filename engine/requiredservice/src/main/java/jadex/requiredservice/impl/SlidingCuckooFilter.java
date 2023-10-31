@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import net.cinnom.nanocuckoo.NanoCuckooFilter;
 

@@ -1,8 +1,8 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import jadex.common.FieldInfo;
 import jadex.common.MethodInfo;
-import jadex.mj.requiredservice.RequiredServiceInfo;
+import jadex.requiredservice.RequiredServiceInfo;
 
 /**
  *  Struct for injection info.

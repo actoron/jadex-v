@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -11,7 +11,7 @@ import jadex.future.IResultListener;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.service.impl.interceptors.FutureFunctionality;
-import jadex.mj.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Lazy service proxy that resolves a service via a search command.

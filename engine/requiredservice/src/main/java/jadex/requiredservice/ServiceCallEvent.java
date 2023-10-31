@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice;
+package jadex.requiredservice;
 
 import jadex.common.MethodInfo;
 import jadex.core.ComponentIdentifier;

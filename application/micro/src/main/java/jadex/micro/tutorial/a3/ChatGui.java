@@ -20,7 +20,7 @@ import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingConsumer;
 import jadex.feature.execution.IExecutionFeature;
-import jadex.mj.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Basic chat user interface.

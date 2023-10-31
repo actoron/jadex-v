@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;

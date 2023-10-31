@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -45,6 +45,9 @@ import jadex.future.TerminationCommand;
 import jadex.javaparser.SJavaParser;
 import jadex.micro.MicroAgent;
 import jadex.micro.MicroClassReader;
+import jadex.model.AbstractModelLoader;
+import jadex.model.IModelFeature;
+import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
@@ -65,13 +68,10 @@ import jadex.providedservice.impl.service.impl.interceptors.DecouplingIntercepto
 import jadex.providedservice.impl.service.impl.interceptors.DecouplingReturnInterceptor;
 import jadex.providedservice.impl.service.impl.interceptors.FutureFunctionality;
 import jadex.providedservice.impl.service.impl.interceptors.MethodInvocationInterceptor;
-import jadex.model.AbstractModelLoader;
-import jadex.model.IModelFeature;
-import jadex.model.modelinfo.ModelInfo;
-import jadex.mj.requiredservice.IRequiredServiceFeature;
-import jadex.mj.requiredservice.RequiredServiceBinding;
-import jadex.mj.requiredservice.RequiredServiceInfo;
-import jadex.mj.requiredservice.ServiceCallEvent;
+import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.RequiredServiceBinding;
+import jadex.requiredservice.RequiredServiceInfo;
+import jadex.requiredservice.ServiceCallEvent;
 
 public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeature//, IParameterGuesser
 {

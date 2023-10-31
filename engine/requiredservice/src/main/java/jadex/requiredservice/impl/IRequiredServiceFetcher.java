@@ -1,10 +1,10 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import java.util.Collection;
 
 import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.mj.requiredservice.RequiredServiceInfo;
+import jadex.requiredservice.RequiredServiceInfo;
 
 /**
  *  Interface for fetching required services.

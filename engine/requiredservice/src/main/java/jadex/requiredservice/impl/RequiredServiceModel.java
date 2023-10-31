@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -6,7 +6,7 @@ import java.util.Map;
 
 import jadex.collection.MultiCollection;
 import jadex.common.SUtil;
-import jadex.mj.requiredservice.RequiredServiceInfo;
+import jadex.requiredservice.RequiredServiceInfo;
 
 public class RequiredServiceModel
 {

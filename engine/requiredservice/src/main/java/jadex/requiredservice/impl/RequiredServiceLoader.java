@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -12,11 +12,11 @@ import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
 import jadex.micro.MicroClassReader;
 import jadex.providedservice.ServiceScope;
-import jadex.mj.requiredservice.RequiredServiceBinding;
-import jadex.mj.requiredservice.RequiredServiceInfo;
-import jadex.mj.requiredservice.annotation.OnService;
-import jadex.mj.requiredservice.annotation.RequiredService;
-import jadex.mj.requiredservice.annotation.RequiredServices;
+import jadex.requiredservice.RequiredServiceBinding;
+import jadex.requiredservice.RequiredServiceInfo;
+import jadex.requiredservice.annotation.OnService;
+import jadex.requiredservice.annotation.RequiredService;
+import jadex.requiredservice.annotation.RequiredServices;
 
 public class RequiredServiceLoader 
 {

@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice;
+package jadex.requiredservice;
 
 import java.util.Collection;
 

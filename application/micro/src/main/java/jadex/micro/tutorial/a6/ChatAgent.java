@@ -16,9 +16,9 @@ import jadex.future.SubscriptionIntermediateFuture;
 import jadex.micro.annotation.Agent;
 import jadex.mj.publishservice.IPublishServiceFeature;
 import jadex.mj.publishservice.publish.annotation.Publish;
-import jadex.mj.requiredservice.annotation.OnService;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
+import jadex.requiredservice.annotation.OnService;
 
 /**
  *  Chat micro agent provides a basic chat service and publishes it as rest web service.

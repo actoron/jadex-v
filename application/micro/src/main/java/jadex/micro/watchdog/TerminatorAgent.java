@@ -9,9 +9,9 @@ import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.feature.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
-import jadex.mj.requiredservice.IRequiredServiceFeature;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.IService;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 @Agent
 public class TerminatorAgent 

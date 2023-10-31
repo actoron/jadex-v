@@ -30,7 +30,7 @@ import jadex.mj.publishservice.impl.PublishInfo;
 import jadex.mj.publishservice.impl.RequestManager;
 import jadex.mj.publishservice.impl.RequestManager.MappingInfo;
 import jadex.mj.publishservice.publish.PathManager;
-import jadex.mj.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.IRequiredServiceFeature;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

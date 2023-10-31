@@ -1,4 +1,4 @@
-package jadex.mj.requiredservice.impl;
+package jadex.requiredservice.impl;
 
 import jadex.common.ICommand;
 import jadex.core.IComponent;

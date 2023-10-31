@@ -11,9 +11,9 @@ import jadex.feature.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
-import jadex.mj.requiredservice.IRequiredServiceFeature;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  *  The watchdog agent pings other watchdogs and issues an action,

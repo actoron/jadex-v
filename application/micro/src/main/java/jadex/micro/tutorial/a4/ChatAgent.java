@@ -8,10 +8,10 @@ import java.util.Set;
 import jadex.core.IComponent;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
-import jadex.mj.requiredservice.annotation.OnService;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
+import jadex.requiredservice.annotation.OnService;
 
 /**
  *  Chat micro agent provides a basic chat service. 

@@ -3,7 +3,7 @@ package jadex.micro.tutorial.a2;
 import jadex.core.IComponent;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
-import jadex.mj.requiredservice.annotation.OnService;
+import jadex.requiredservice.annotation.OnService;
 
 /**
  *  Chat micro agent gets chat services and sends a message.

@@ -6,8 +6,8 @@ import jadex.core.IComponent;
 import jadex.feature.execution.IExecutionFeature;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
-import jadex.mj.requiredservice.IRequiredServiceFeature;
 import jadex.model.annotation.OnStart;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Chat micro agent gets chat services and sends a message.

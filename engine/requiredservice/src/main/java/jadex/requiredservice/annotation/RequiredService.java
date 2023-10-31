@@ -1,14 +1,14 @@
-package jadex.mj.requiredservice.annotation;
+package jadex.requiredservice.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import jadex.model.annotation.Value;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.service.impl.ServiceInvocationHandler;
-import jadex.model.annotation.Value;
-import jadex.mj.requiredservice.RequiredServiceInfo;
+import jadex.requiredservice.RequiredServiceInfo;
 
 /**
  *  Required service data.
