@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
-import jadex.feature.execution.IExecutionFeature;
-import jadex.feature.execution.impl.ExecutionFeature;
+import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 

@@ -6,9 +6,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.impl.Component;
-import jadex.feature.execution.IExecutionFeature;
-import jadex.mj.feature.simulation.ISimulationFeature;
-import jadex.mj.feature.simulation.impl.SlaveSimulationFeature;
+import jadex.execution.IExecutionFeature;
+import jadex.simulation.ISimulationFeature;
+import jadex.simulation.impl.SlaveSimulationFeature;
 
 public class SequentialSimulationTest extends ParallelSimulationTest
 {

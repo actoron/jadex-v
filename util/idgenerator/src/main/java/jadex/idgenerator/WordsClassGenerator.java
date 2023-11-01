@@ -23,7 +23,6 @@ public class WordsClassGenerator
 {
 	public static void main(String[] args) throws Exception
 	{   
-		//String pck = args.length>0? args[0]: "jadex.mj.core.impl"; // do we want that? would need dir created also here
 		String pck = args.length>0? args[0]: "jadex.idgenerator";
 		
 	    String[] adj_a = readValuesFromFile("adj_a.txt", 256);

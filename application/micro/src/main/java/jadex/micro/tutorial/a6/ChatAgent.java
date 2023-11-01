@@ -14,10 +14,10 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.micro.annotation.Agent;
-import jadex.mj.publishservice.IPublishServiceFeature;
-import jadex.mj.publishservice.publish.annotation.Publish;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
+import jadex.publishservice.IPublishServiceFeature;
+import jadex.publishservice.publish.annotation.Publish;
 import jadex.requiredservice.annotation.OnService;
 
 /**

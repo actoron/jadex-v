@@ -5,7 +5,7 @@ import java.util.List;
 
 import jadex.common.UnparsedExpression;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.impl.service.impl.ServiceInvocationHandler;
+import jadex.providedservice.impl.service.ServiceInvocationHandler;
 
 /**
  *  Required service binding information.

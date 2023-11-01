@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 import jadex.model.annotation.Value;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.impl.service.impl.ServiceInvocationHandler;
+import jadex.providedservice.impl.service.ServiceInvocationHandler;
 import jadex.requiredservice.RequiredServiceInfo;
 
 /**

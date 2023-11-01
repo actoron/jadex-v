@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import jadex.core.IComponent;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
