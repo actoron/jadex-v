@@ -17,6 +17,7 @@ dependencies
 	implementation 'jadex:common:5.0.0'
 	implementation 'jadex:future:5.0.0'
 	implementation 'jadex:collection:5.0.0'
+	implementation 'jadex:core:5.0.0'
 	//implementation 'jadex:concurrent:5.0.0'
 	//implementation 'jadex:traverser:5.0.0'
 	//implementation 'jadex:javaparser:5.0.0'
