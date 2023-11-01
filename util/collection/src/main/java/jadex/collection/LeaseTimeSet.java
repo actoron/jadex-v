@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import jadex.common.ICommand;
 import jadex.common.Tuple2;
@@ -80,7 +82,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	protected Checker checker;
 	
 	/** The cleaner. */
-	protected ICommand<Tuple2<E, Long>> removecmd;
+	protected Consumer<Tuple2<E, Long>> removecmd;
 
 	//-------- constructors --------
 	
@@ -104,7 +106,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a new lease time handling object.
 	 */
-	protected LeaseTimeSet(ICommand<Tuple2<E, Long>> removecmd)
+	protected LeaseTimeSet(Consumer<Tuple2<E, Long>> removecmd)
 	{
 		// per default no general leasetime
 		this(UNSET, removecmd);
@@ -113,7 +115,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a new lease time handling object.
 	 */
-	protected LeaseTimeSet(long leasetime, ICommand<Tuple2<E, Long>> removecmd)
+	protected LeaseTimeSet(long leasetime, Consumer<Tuple2<E, Long>> removecmd)
 	{
 		this(leasetime, removecmd, null);
 	}
@@ -121,7 +123,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a new lease time handling object.
 	 */
-	public LeaseTimeSet(long leasetime, ICommand<Tuple2<E, Long>> removecmd, IDelayRunner timer)
+	public LeaseTimeSet(long leasetime, Consumer<Tuple2<E, Long>> removecmd, IDelayRunner timer)
 	{
 		this.leasetime = leasetime;
 		this.removecmd = removecmd;
@@ -139,7 +141,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a lease time collection.
 	 */
-	public static <E> ILeaseTimeSet<E> createLeaseTimeCollection(long leasetime, ICommand<Tuple2<E, Long>> removecmd)
+	public static <E> ILeaseTimeSet<E> createLeaseTimeCollection(long leasetime, Consumer<Tuple2<E, Long>> removecmd)
 	{
 		return new SynchronizedLeaseTimeCollection<E>(new LeaseTimeSet<>(leasetime, removecmd));
 	}
@@ -147,7 +149,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a lease time collection.
 	 */
-	public static <E> ILeaseTimeSet<E> createLeaseTimeCollection(long leasetime, boolean passive, ICommand<Tuple2<E, Long>> removecmd)
+	public static <E> ILeaseTimeSet<E> createLeaseTimeCollection(long leasetime, boolean passive, Consumer<Tuple2<E, Long>> removecmd)
 	{
 		return  passive? new PassiveLeaseTimeSet<>(leasetime, removecmd): new SynchronizedLeaseTimeCollection<E>(new LeaseTimeSet<>(leasetime, removecmd));
 	}
@@ -155,7 +157,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a lease time collection.
 	 */
-	public static <E> ILeaseTimeSet<E> createLeaseTimeCollection(long leasetime, ICommand<Tuple2<E, Long>> removecmd, Object mutex)
+	public static <E> ILeaseTimeSet<E> createLeaseTimeCollection(long leasetime, Consumer<Tuple2<E, Long>> removecmd, Object mutex)
 	{
 		return new SynchronizedLeaseTimeCollection<E>(new LeaseTimeSet<>(leasetime, removecmd), mutex);
 	}
@@ -163,7 +165,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a lease time collection.
 	 */
-	public static <E> ILeaseTimeSet<E> createLeaseTimeCollection(long leasetime, ICommand<Tuple2<E, Long>> removecmd, boolean passive, IDelayRunner timer, boolean sync, Object mutex)
+	public static <E> ILeaseTimeSet<E> createLeaseTimeCollection(long leasetime, Consumer<Tuple2<E, Long>> removecmd, boolean passive, IDelayRunner timer, boolean sync, Object mutex)
 	{
 		return sync
 			? new SynchronizedLeaseTimeCollection<E>(createLeaseTimeCollection(leasetime, removecmd, passive, timer, false, mutex), mutex)
@@ -175,7 +177,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Set the remove cmd.
 	 */
-	public void setRemoveCommand(ICommand<Tuple2<E, Long>> cmd)
+	public void setRemoveCommand(Consumer<Tuple2<E, Long>> cmd)
 	{
 		this.removecmd = cmd;
 	}
@@ -534,7 +536,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
 										int sa = entries.size();
 										//System.out.println("sa/sb: "+sa+" "+sb);
 										if(rem && removecmd!=null)
-											removecmd.execute(new Tuple2<E, Long>(first, lease));
+											removecmd.accept(new Tuple2<E, Long>(first, lease));
 		//								entryDeleted(first);
 									}
 									else
@@ -605,7 +607,7 @@ public class LeaseTimeSet<E> implements ILeaseTimeSet<E>
         /**
     	 *  Set the remove cmd.
     	 */
-    	public void setRemoveCommand(ICommand<Tuple2<E, Long>> cmd)
+    	public void setRemoveCommand(Consumer<Tuple2<E, Long>> cmd)
     	{
     		synchronized (mutex) {c.setRemoveCommand(cmd);}
     	}

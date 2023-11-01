@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import jadex.common.ICommand;
 import jadex.common.Tuple2;
@@ -103,7 +104,7 @@ public class PassiveLeaseTimeSet<E> implements ILeaseTimeSet<E>
 	protected long leasetime;
 	
 	/** The cleaner. */
-	protected ICommand<Tuple2<E, Long>> removecmd;
+	protected Consumer<Tuple2<E, Long>> removecmd;
 
 	//-------- constructors --------
 	
@@ -127,7 +128,7 @@ public class PassiveLeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a new lease time handling object.
 	 */
-	public PassiveLeaseTimeSet(ICommand<Tuple2<E, Long>> removecmd)
+	public PassiveLeaseTimeSet(Consumer<Tuple2<E, Long>> removecmd)
 	{
 		// per default no general leasetime
 		this(UNSET, removecmd);
@@ -136,7 +137,7 @@ public class PassiveLeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Create a new lease time handling object.
 	 */
-	public PassiveLeaseTimeSet(long leasetime, ICommand<Tuple2<E, Long>> removecmd)
+	public PassiveLeaseTimeSet(long leasetime, Consumer<Tuple2<E, Long>> removecmd)
 	{
 		this.leasetime = leasetime;
 		this.removecmd = removecmd;
@@ -147,7 +148,7 @@ public class PassiveLeaseTimeSet<E> implements ILeaseTimeSet<E>
 	/**
 	 *  Set the remove cmd.
 	 */
-	public void setRemoveCommand(ICommand<Tuple2<E, Long>> cmd)
+	public void setRemoveCommand(Consumer<Tuple2<E, Long>> cmd)
 	{
 		this.removecmd = cmd;
 	}
@@ -384,8 +385,9 @@ public class PassiveLeaseTimeSet<E> implements ILeaseTimeSet<E>
 					if(delta<=0)
 					{
 						remove(first);
+						
 						if(removecmd!=null)
-							removecmd.execute(new Tuple2<E, Long>(first, lease));
+							removecmd.accept(new Tuple2<E, Long>(first, lease));
 					}
 				}
 			}

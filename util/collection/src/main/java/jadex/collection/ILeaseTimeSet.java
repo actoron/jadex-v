@@ -1,8 +1,8 @@
 package jadex.collection;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
-import jadex.common.ICommand;
 import jadex.common.Tuple2;
 
 /**
@@ -47,5 +47,5 @@ public interface ILeaseTimeSet<E> extends Collection<E>
 	/**
 	 *  Set the remove cmd.
 	 */
-	public void setRemoveCommand(ICommand<Tuple2<E, Long>> cmd);
+	public void setRemoveCommand(Consumer<Tuple2<E, Long>> cmd);
 }

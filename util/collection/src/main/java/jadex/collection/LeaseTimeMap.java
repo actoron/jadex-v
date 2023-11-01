@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import jadex.common.ICommand;
 import jadex.common.Tuple2;
@@ -42,7 +43,7 @@ public class LeaseTimeMap<K, V> implements Map<K, V>
 	/**
 	 *  Create a new lease time map.
 	 */
-	public LeaseTimeMap(long leasetime, boolean passive, final ICommand<Tuple2<Entry<K, V>, Long>> removecmd)
+	public LeaseTimeMap(long leasetime, boolean passive, final Consumer<Tuple2<Entry<K, V>, Long>> removecmd)
 	{
 		this(leasetime, removecmd, true, true, passive);
 	}
@@ -51,7 +52,7 @@ public class LeaseTimeMap<K, V> implements Map<K, V>
 	/**
 	 *  Create a new lease time map.
 	 */
-	public LeaseTimeMap(long leasetime, final ICommand<Tuple2<Entry<K, V>, Long>> removecmd, boolean touchonread, boolean touchonwrite, boolean passive)
+	public LeaseTimeMap(long leasetime, final Consumer<Tuple2<Entry<K, V>, Long>> removecmd, boolean touchonread, boolean touchonwrite, boolean passive)
 	{
 		this(leasetime, removecmd, touchonread, touchonwrite, passive, null, !passive); // Default sync=true when active due to separate timer.
 	}
@@ -59,21 +60,18 @@ public class LeaseTimeMap<K, V> implements Map<K, V>
 	/**
 	 *  Create a new lease time map.
 	 */
-	public LeaseTimeMap(long leasetime, final ICommand<Tuple2<Entry<K,V>, Long>> removecmd, boolean touchonread, boolean touchonwrite, boolean passive, IDelayRunner timer, boolean sync)
+	public LeaseTimeMap(long leasetime, final Consumer<Tuple2<Entry<K,V>, Long>> removecmd, boolean touchonread, boolean touchonwrite, boolean passive, IDelayRunner timer, boolean sync)
 	{
 		this.touchonread = touchonread;
 		this.touchonwrite = touchonwrite;
 		this.map = new HashMap<K, V>();
 		
-		ICommand<Tuple2<K, Long>> rcmd = new ICommand<Tuple2<K, Long>>()
+		Consumer<Tuple2<K, Long>> rcmd = (args) ->
 		{
-			public void execute(Tuple2<K, Long> args)
-			{
-//				System.out.println("removed: "+args);
-				V val = LeaseTimeMap.this.map.remove(args.getFirstEntity());
-				if(removecmd!=null)
-					removecmd.execute(new Tuple2<Entry<K,V>, Long>(new MapEntry<K,V>(args.getFirstEntity(), val), args.getSecondEntity()));
-			}
+//			System.out.println("removed: "+args);
+			V val = LeaseTimeMap.this.map.remove(args.getFirstEntity());
+			if(removecmd!=null)
+				removecmd.accept(new Tuple2<Entry<K,V>, Long>(new MapEntry<K,V>(args.getFirstEntity(), val), args.getSecondEntity()));
 		};
 		
 		this.times = LeaseTimeSet.createLeaseTimeCollection(leasetime, rcmd, passive, timer, sync, this);
