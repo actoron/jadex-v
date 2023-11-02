@@ -1,0 +1,5 @@
+jadex.featuretest.impl.TestFeature1Provider
+jadex.featuretest.impl.TestFeature1NewProvider
+jadex.featuretest.impl.TestFeature2Provider
+jadex.featuretest.impl.TestFeature2NewProvider
+jadex.featuretest.impl.TestLazyFeatureProvider

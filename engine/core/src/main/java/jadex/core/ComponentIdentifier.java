@@ -3,6 +3,7 @@ package jadex.core;
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicLong;
 
+import jadex.core.impl.ComponentManager;
 import jadex.idgenerator.IdGenerator;
 
 /**
@@ -11,28 +12,6 @@ import jadex.idgenerator.IdGenerator;
 public class ComponentIdentifier
 {
 	protected static IdGenerator gen = new IdGenerator();
-
-	/** Cached process ID. */
-	private static final long PID = ProcessHandle.current().pid();
-	
-	/** Cached host name. */
-	private static final String HOST;
-	static
-	{
-		String host = "UNKNOWN";
-		try
-		{
-			// Probably needs something more clever like obtaining the main IP address.
-			InetAddress localhost = InetAddress.getLocalHost();
-			host = localhost.getHostName();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-		//System.out.println("GOT THE HOST " + host);
-		HOST = host;
-	}
 	
 	/** Counter for auto-generated local IDs */
 	private static final AtomicLong ID_COUNTER = new AtomicLong();
@@ -52,7 +31,10 @@ public class ComponentIdentifier
 	 */
 	public ComponentIdentifier()
 	{
-		this(gen.idStringFromNumber(ID_COUNTER.getAndIncrement()), PID, HOST);
+		ComponentManager cm = ComponentManager.get();
+		this.localname = gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
+		this.pid = cm.pid();
+		this.host = cm.host();
 	}
 	
 	/**
@@ -62,7 +44,10 @@ public class ComponentIdentifier
 	 */
 	public ComponentIdentifier(String localname)
 	{
-		this(localname, PID, HOST);
+		ComponentManager cm = ComponentManager.get();
+		this.localname = localname;
+		this.pid = cm.pid();
+		this.host = cm.host();
 	}
 	
 	/**
