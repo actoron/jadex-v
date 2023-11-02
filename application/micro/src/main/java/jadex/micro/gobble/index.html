@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Gobblet</title>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+		<style>
+			#main {
+				display: grid;
+				grid-template-columns: auto 1fr;
+				align-items: flex-start;
+  				align-content: flex-start;
+  				gap: 1px;
+			    
+			    /*height: 100vh; /* old browsers */ 
+  				height: 100dvh; /* new browsers */
+  				background-image: url('title.png');
+  				z-index: -2;
+  				position: absolute;
+  				padding-left: 50px;
+  				padding-right: 50px;
+  				padding-bottom: 50px;
+  				padding-top: 20px;
+			}
+			
+			#main::before {
+			    content: "";
+			    background-color: rgba(255, 255, 255, 0.7); 
+			    position: absolute;
+			    top: 0;
+			    left: 0;
+			    width: 100%;
+			    height: 100%;
+			    z-index: -1; 
+			}
+			
+			#header {
+				font-size: 36px; 
+				font-weight: bold; 
+				color: #9966cc;
+				/*text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);*/
+				grid-row: 1; 
+  				grid-column: 1;
+  				justify-self: center;
+			}
+			
+			#game {
+				margin-top: 10px;
+				display: flex;
+			    gap: 20px;
+			    grid-row: 2; 
+  				grid-column: 1;
+			}
+			
+			#messages {
+			  grid-row: 3;
+			  grid-column: 1;
+			  align-content: center;
+			  text-align: center;
+			  margin-top: 10px;
+			  border: 1px solid #9966cc; 
+			  border-radius: 3px; 
+			  /*box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2); */
+			  padding: 10px;
+			  /*background: linear-gradient(to bottom, #aeeeff, #78c9ff);*/
+			  font-size: 1.2em;
+			  font-family: 'Arial', sans-serif;
+			  color: #333;
+			  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+			  position: relative;
+			  background-color: white;
+			  opacity: 0.9;
+			}
+			
+			#messages i {
+			  margin-right: 5px; 
+			  color: #9966cc;
+			  font-size: 1em; 
+			  position: absolute;
+			  top: 2px;
+			  left: 2px;
+			}
+
+			.item {
+     			flex: 1;
+     			overflow: auto;
+			}
+			
+			#board {
+				/*width: 500px;*/
+			    /*height: 330px;*/
+			    display: grid;
+			    grid-template-columns: repeat(3, 1fr); 
+			    grid-template-rows: repeat(3, 1fr); 
+			    gap: 2px;
+			    margin: 2px;
+			    resize: both;
+			    aspect-ratio: 1;
+			    overflow: auto;
+			}
+			
+			#move {
+				align-items: center;
+  				display: flex;
+  				align-self: center;
+  				margin: 10px;
+			}
+			
+			#inv {
+				display: flex;
+			    flex-wrap: nowrap;
+			    justify-content: flex-start;
+			    flex-direction: column;
+			    justify-content: space-between;
+			    align-items: flex-start; 
+			}
+			
+			.invcontainer {
+				border: 1px solid #9966cc; 
+			  	border-radius: 3px;
+			  	padding: 10px;
+			  	background-color: white;
+			  	opacity: 0.9;
+			}
+			
+			.inv {
+				display: grid;
+			    grid-template-columns: repeat(3, 1fr); 
+			    grid-template-rows: repeat(3, 1fr); 
+			    gap: 1px;
+			    align-items: center;
+  				justify-items: center;
+			}
+			
+			.cell {
+				position: relative;
+				display: flex;
+			    flex-direction: column; 
+			    justify-content: center;
+			    align-items: center;
+			    /*width: 100px;
+			    height: 100px;*/
+			    /*border: 1px solid #000;*/
+			    background-size: cover;
+			    background-repeat: no-repeat;
+			    background-position: center;
+			    outline: 2px solid #9966cc;
+			    background-image: url('floor.png');
+			}
+			
+			.cell i {
+			    /*font-size: 100px;*/
+			    position: absolute;
+			    top: 0;
+			    /*line-height: 100px; */
+			    display: flex;
+			    align-items: center; 
+			    justify-content: center; 
+			    z-index: 1;
+			    top: 50%; 
+			    left: 50%; 
+			    transform: translate(-50%, -50%); 
+			    /*mask-image: url('ghost.svg');*/
+			}
+			
+			.finish:disabled {
+  				opacity: 0.5;
+			}
+			
+			.combi {
+			   outline: solid 2pt goldenrod; 
+			   z-index: 2;
+			}
+			
+			.level1 {
+				opacity: 0.7;
+				z-index: -2;
+			}
+			
+			.level2 {
+				opacity: 0.8;
+				z-index: -1;
+			}
+			
+			.level3 {
+				opacity: 0.9;
+			}
+			
+			.ghost{
+			}
+			
+			.ghost1 {
+			}
+			
+			.ghost2 {
+			}
+			
+			.ghost3 {
+			}
+			
+			.font15em {
+				font-size: 1.5em;
+			}
+			
+			.player0 {
+    			color: #800080; 
+			}
+			
+			.player1 {
+    			color: #FFFF00; 
+			}
+			
+			.player0bg {
+    			background-color: #800080;
+    			color: white;
+			}
+			
+			.player1bg {
+    			background-color: #FFFF00;
+    			color: black;
+			}
+			
+			.restart {
+				background-color: #008000;
+    			color: white;
+			}
+			
+		</style>
+		<script src="gobbleapi/jadex.js" type="text/javascript"/></script>
+		<script>
+			document.addEventListener("DOMContentLoaded", function() 
+			{
+				restart();
+			});
+			
+			function restart()
+			{
+				board = new Board(3, 3, 3);
+				
+				gui = new GUI(board);
+				
+				board.addChangeListener(message =>
+				{
+					if(message!=undefined)
+						gui.message = message;
+					gui.update();
+				});
+				
+				gui.update();
+			}
+			
+			class GUI
+			{
+				constructor(board)
+				{
+					this.board = board;
+					this.message = null;
+					this.initBoardGUI();
+				}
+				
+				initBoardGUI()
+				{
+					const boardelem = document.getElementById("board");
+					boardelem.innerHTML = "";
+					for(let row = 0; row < this.board.rows; row++) 
+					{
+				        for(let col = 0; col < this.board.cols; col++) 
+				        {
+							//boardelem.innerHTML += `<div class='cell' row='${row}' col='${col}' onclick='this.board.placeGhost(${row}, ${col}, getPlayer())'></div>\n`
+							
+							// Need to create programmatically to preserve this.board :-(
+							const cell = document.createElement("div");
+			                cell.className = 'cell';
+			                cell.setAttribute("row", row);
+			                cell.setAttribute("col", col);
+			                cell.onclick = () => this.board.placeGhost(row, col);//, getPlayer());
+			                boardelem.appendChild(cell);
+						}
+					}
+					
+					const finishbut = document.getElementById("finish");
+					finishbut.onclick = () => this.board.finishMove();
+					
+					const board = document.getElementById("board");
+					const rezob = new ResizeObserver(() => {
+						console.log("resize");
+					    const width = board.offsetWidth;
+					    const height = board.offsetHeight;
+					    const newsize = Math.max(width, height);
+        				board.style.width = newsize + "px";
+        				board.style.height = newsize + "px";
+        				this.update();
+					} );
+					rezob.observe(board);
+					
+    				const windowwidth = window.innerWidth;
+    				const newwidth = windowwidth * 0.3; 
+    				board.style.width = newwidth + 'px';
+				}	
+				
+				update() 
+				{
+					const elem = document.getElementById("finish");
+					if(this.board.winner!=null)
+					{
+						elem.classList.remove("player0bg");
+						elem.classList.remove("player1bg");
+						elem.classList.add("restart");
+						elem.children[0].classList.remove("fa-check-circle");
+						elem.children[0].classList.remove("far");
+						elem.children[0].classList.add("fa-redo");
+						elem.children[0].classList.add("fas");
+					}
+					else if(this.board.getPlayer()===0)
+					{
+						elem.classList.remove("restart");
+						elem.classList.remove("player1bg");
+						elem.classList.add("player0bg");
+						elem.children[0].classList.remove("fas");
+						elem.children[0].classList.remove("fa-redo");
+						elem.children[0].classList.add("fa-check-circle");
+						elem.children[0].classList.add("far");
+					}
+					else
+					{
+						elem.classList.remove("restart");
+						elem.classList.remove("player0bg");
+						elem.classList.add("player1bg");
+						elem.children[0].classList.remove("fas");
+						elem.children[0].classList.remove("fa-redo");
+						elem.children[0].classList.add("fa-check-circle");
+						elem.children[0].classList.add("far");
+					}
+					
+					for(let row = 0; row < this.board.rows; row++) 
+					{
+				        for(let col = 0; col < this.board.cols; col++) 
+				        {
+				            const cell = document.querySelector(`.cell[row="${row}"][col="${col}"]`);
+				            const ghosts = this.board.getContent(row,col);
+				
+							cell.classList.remove("combi");
+				
+				            if(ghosts.length==0) 
+				            {
+				                cell.innerHTML = `<i class="empty"></i>`;
+				            } 
+				            else 
+				            {
+								cell.innerHTML = "";
+								for(let i=0; i<ghosts.length; i++)
+								{
+									// ghosts[i].size+3, 
+									let icon = this.getGhostElement(ghosts[i].player, ghosts[i].size, i+1);
+									cell.appendChild(icon);
+									//text += `<i class="fas fa-ghost ghost${ghosts[i].size} player${ghosts[i].player} level${i+1}"></i>\n`;
+								}
+				                //cell.innerHTML = text;
+				            }
+				        }
+				    }
+				    
+				    const board = document.getElementById("board");
+				    for(let i=1; i<=3; i++)
+    				{
+        				const ghosts = board.querySelectorAll(".ghost"+i);
+					    ghosts.forEach(ghost => 
+					    {
+							const width = ghost.parentElement.offsetWidth;
+							ghost.style.fontSize= width/4*(i+1)+"px";
+							console.log("fontsize: "+width/4*(i+1));
+					    });
+					}
+				    
+					this.showInventory(3);
+					
+					if(this.board.wincombi!=null)
+					{
+						this.board.wincombi.forEach(coord =>
+						{
+							const cell = document.querySelector(`.cell[row="${coord[0]}"][col="${coord[1]}"]`);
+							cell.classList.add("combi");
+						});
+					}
+					
+					const messages = document.getElementById("messagetext");
+					if(this.message!=null)
+					{
+						messages.textContent = this.message;
+					}
+					else
+					{
+						messages.textContent = "...";
+					}
+				}
+			
+				showInventory(invmax)
+				{
+					for(let p=0; p<2; p++)
+					{
+						let invpelem = document.getElementById("invp"+p+"h");
+						invpelem.innerHTML="Inventory: "+this.board.inv[p].getInventoryCount();
+						
+						let invelem = document.getElementById("invp"+p);
+						invelem.innerHTML = "";
+						for(let row = 0; row < this.board.inv[p].size; row++) 
+						{
+							//invelem.innerHTML += "<div class='invrow'>";
+					        for(let i = 0; i < this.board.inv[p].getContent(row); i++) 
+					        {
+								//invelem.innerHTML += this.getGhostElement(p, i);
+								invelem.appendChild(this.getGhostElement(p, row+1));
+							}
+							//invelem.innerHTML += "</div>";
+							for(let i=0; i<invmax-this.board.inv[p].getContent(row); i++)
+							{
+								invelem.appendChild(document.createElement('i'));
+								//invelem.innerHTML += `<i class="empty"></i>`;
+							}
+						}
+					}
+					
+					const inv = document.getElementById("inv");
+				    for(let i=1; i<=3; i++)
+    				{
+        				const ghosts = inv.querySelectorAll(".ghost"+i);
+					    ghosts.forEach(ghost => 
+					    {
+							const width = ghost.offsetWidth;
+							ghost.style.fontSize= width/2*(i+1)+"px";
+							//console.log("fontsize: "+width/3*(i+1));
+					    });
+					}
+				}
+			
+				/*getGhostElement(player, size, level)
+				{
+					//return `<i class="fas fa-ghost font${size}em player${player} ${level? 'level'+level: ''}"></i>`; ${fsize? 'font'+fsize+'em': ''}
+					return `<i class="ghost fas fa-ghost player${player} ${level? 'level'+level: ''} ${size? 'ghost'+size: ''}"></i>`;
+				}*/
+				
+				getGhostElement(player, size, level) 
+				{
+				    const ret = document.createElement('i');
+				    ret.className = `ghost fas fa-ghost player${player} ${level ? 'level' + level : ''} ${size ? 'ghost' + size : ''}`;
+				    return ret;
+				}
+			}
+			
+			class Inventory
+			{
+			    constructor(size) 
+			    {
+					this.size = size;
+					this.inv = Array.from({length: 3}, () => size);
+				}
+				
+				getContent(i)
+				{
+					return this.inv[i];
+				}
+				
+				getInventoryCount()
+				{
+					let sum = 0;
+					this.inv.forEach(val => sum+=val);
+					return sum;
+				}
+				
+				hasGhost(size)
+				{
+					return this.inv[size-1]>0;
+				}
+				
+				removeGhost(size)
+				{
+					if(this.hasGhost(size))
+						this.inv[size-1]--;
+					else
+						console.log("No ghost of that size in inventory");
+				}
+			
+				addGhost(size)
+				{
+					this.inv[size-1]++;
+				}
+				
+				getMinGhostSize(start)
+				{
+					let ret = -1;
+					start = start? start-1: 0;
+					for(let i=start; i<this.inv.length; i++)
+					{
+						if(this.inv[i]>0)
+						{
+							ret = i+1;
+							break;
+						}
+					}
+					return ret;
+				}
+			}
+			
+			class Board 
+			{
+			    constructor(rows, cols, invsize) 
+			    {
+					this.rows = rows;
+			        this.cols = cols;
+					this.invsize = invsize;			        
+					this.listeners = [];
+					this.inv = [new Inventory(invsize), new Inventory(invsize)];
+			        this.board = Array.from({ length: rows }, () => Array.from({ length: cols }, () => []));
+			        this.wincombi = null;
+			        this.winner = null;
+			        this.turn = 0;
+			        this.lastghost = null;
+			        this.invcount = this.inv[0].getInventoryCount()+this.inv[1].getInventoryCount();
+			    }
+			    
+			    getContent(row, col)
+			    {
+					return this.board[row][col];
+				}
+			    
+			    addChangeListener(listener) 
+			    {
+			        this.listeners.push(listener);
+			    }
+			
+			    notifyChange(message) 
+			    {
+			    	for(const listener of this.listeners) 
+			       		listener(message);
+			    }
+			    
+			    getPlayer()
+				{
+					return this.turn;
+				}
+				
+				placeGhost(row, col) 
+				{
+					if(this.winner!=null)
+						return;
+					const player = this.getPlayer();
+					
+					const cell = this.board[row][col];
+					let size = this.inv[player].getMinGhostSize(player);
+					let replace = false;
+					let minsize = size;
+					let place = true;
+					
+					// add lastghost back to inventory
+					if(this.lastghost) 
+					{
+						this.inv[player].addGhost(this.lastghost.size);
+						if(this.lastghost.row!=row || this.lastghost.col!=col)
+						{
+	        				const lastcell = this.board[this.lastghost.row][this.lastghost.col];
+	        				lastcell.pop();
+	        				// lastghost = null; // needed below :-(
+	        			}
+	    			}
+	    			
+					if(cell.length>0)
+					{
+				    	let last = cell[cell.length-1];
+				    	
+				    	if(last.player==player)
+				    	{
+							// new move on same color, forbidden
+							if(this.lastghost==null || this.lastghost.row!=row || this.lastghost.col!=col)
+							{
+								place = false;
+							}
+							else
+							{
+								// klicked again to change size of ghost
+				    			replace = true;
+				    			if(cell.length>1)
+				    				minsize = cell[cell.length-2].size+1;
+				    		}
+				    	}
+				    	size = this.inv[player].getMinGhostSize(last.size+1);
+				    	
+				    	if(replace && last.size+1==4)
+				    	{
+				    		size = this.inv[player].getMinGhostSize(minsize);
+				    	}
+				    	else if(size==4)
+				    	{
+							// klicked on field with max size other ghost
+					    	place = false;
+					    }
+				    }
+				    if(size==-1)
+				    	place = false;
+				    
+				    if(replace)
+						cell.pop();
+						
+					if(place)
+					{	
+						cell.push({size, player});
+					
+						this.lastghost = {row, col, size};
+						this.inv[player].removeGhost(size);
+					}
+					else
+					{
+						this.lastghost = null;
+					}
+					
+					//console.log("place ghost: "+row+" "+col+" "+size);
+		
+					this.checkGhostCount();
+		
+				    this.notifyChange();
+				}
+				
+				getCellsForCoordinates(coords)
+				{
+					let ret = [];
+					
+					coords.forEach(coord =>
+					{
+						ret.push(this.board[coord[0]][coord[1]]);
+					})
+					
+					return ret;
+				}
+				
+				getWinCombinations(player)
+				{
+					let ret = [];
+					let check;
+					
+					// check rows
+					for(let row = 0; row<this.board.length; row++)
+					{
+						if(this.hasPotentiallyWon(this.board[row], player))
+						{
+							let wincombi = [];
+							for(let i=0; i<this.board.length; i++)
+								wincombi.push([row, i]);
+							ret.push(wincombi);
+						}
+					}
+					
+					// check cols
+					for(let col = 0; col<this.board.length; col++)
+					{
+						check = [];
+						for(let row = 0; row<this.board.length; row++)
+						{
+							check.push(this.board[row][col]);
+						}
+						if(this.hasPotentiallyWon(check, player))
+						{
+							let wincombi = [];
+							for(let row = 0; row<this.board.length; row++)
+								wincombi.push([row, col]);
+							ret.push(wincombi);
+						}
+					}
+					
+					// check diagonals
+					check = [];
+					for(let i = 0; i<this.board.length; i++)
+					{
+						check.push(this.board[i][i]);
+					}
+					if(this.hasPotentiallyWon(check, player))
+					{
+						let wincombi = [];
+						for(let i = 0; i<this.board.length; i++)
+							wincombi.push([i, i]);
+						ret.push(wincombi);
+					}
+					
+					check = [];
+					for(let i = 0; i<this.board.length; i++)
+					{
+						check.push(this.board[i][this.board.length-i-1]);
+					}
+					if(this.hasPotentiallyWon(check, player))
+					{
+						let wincombi = [];
+						for(let i = 0; i<this.board.length; i++)
+							wincombi.push([i, this.board.length-i-1]);
+						ret.push(wincombi);
+					}
+				
+					return ret;
+				}
+				
+				getCells(coords)
+				{
+					let ret = [];
+					for(let i=0; i<coords.length; i++)
+						ret.push(this.board[coords[i][0]][coords[i][1]]);
+					return ret;
+				}
+				
+				hasPotentiallyWon(cells, player)
+				{
+					let min = 0;
+					
+					for(let i=0; i<cells.length; i++)
+					{
+						if(cells[i].length!==0)
+						{
+							let g = cells[i][cells[i].length-1];
+							if(g.player!==player)
+							{
+								min = 0;
+								break;
+							}
+							else
+							{
+								if(min===0 || g.size<min)
+									min = g.size;
+							}
+						}
+						else
+						{
+							min = 0;
+							break;
+						}
+					}
+					
+					return min;
+				}
+				
+				hasWon(cells, player)
+				{
+					let ret = false;
+					
+					let min = this.hasPotentiallyWon(cells, player);
+					
+					if(min===this.invsize)
+					{
+						ret = true;
+					}
+					else
+					{
+						let has = 0;
+						let op = player===0? 1: 0;
+						for(let i=0; i<this.invsize; i++)
+						{
+							if(this.inv[op].getContent(i)>0)
+								has = i+1;
+						}
+						
+						// has no bigger ghost to eat smaller one
+						if(has<=min)
+							ret = true;
+					}
+					
+					return ret;
+				}
+				
+				checkGhostCount()
+				{
+					let sum = 0;
+					this.inv.forEach(i => sum += i.getInventoryCount());
+					this.board.forEach(row => row.forEach(cell => sum+=cell.length));
+					if(sum!==this.invcount)
+						console.log("wrong ghost count: "+sum);
+				}
+				
+				finishMove()
+				{
+					if(this.winner!=null)
+						restart();
+					
+					if(this.lastghost==null)
+						return;
+					
+					let message = null;
+					
+					// check if other player has any win combi 
+					// in that case this player has not 
+					let otherplayer = this.getPlayer()==0? 1: 0;
+					let combis = this.getWinCombinations(otherplayer);
+					if(combis.length>0)
+					{
+						//setGameFinished(combis[0], otherplayer);
+						this.wincombi = combis[0];
+						this.winner = otherplayer;
+						message = "Player "+this.winner+" won!";
+					}
+					else
+					{
+						// check own win combinations and if there is a 'mate'
+						combis = this.getWinCombinations(this.getPlayer());
+						if(this.winner==null && combis.length>0)
+							message = "Watch out, player has a combination";
+						combis.forEach(combi =>
+						{
+							if(this.hasWon(this.getCellsForCoordinates(combi), this.getPlayer()))
+							{
+								this.wincombi = combi;
+								this.winner = this.getPlayer();
+								message = "Player "+this.winner+" won!";
+							}
+						});
+							
+						this.lastghost = null;
+						this.turn = this.turn==0? 1: 0;
+					}
+					
+					this.notifyChange(message);
+				}
+				
+				/*setGameFinished(combi, player)
+				{
+					//console.log("Player won: "+player+" "+wincombi);
+					
+					wincombi = combi;
+					winner = player;
+					message = "Player "+player+" won!";
+				}*/
+			}
+			
+		</script>
+	</head>
+	<body>
+		<div id="main">
+			<div id="header">
+				<!--<i class="fas fa-ghost font1em}"></i>-->
+				Gobblet
+				<i class="fas fa-ghost font1em}"></i>
+			</div>
+			<div id="game">
+				<div id="board"></div>
+		    	<div id="inv">
+					<div class="invcontainer">
+						<div id="invp0h" class="font12em">Inventory</div>
+		    			<div id="invp0" class="inv"></div>
+		    		</div>
+		    		<div id="move">
+		    			<button id="finish" class="font15em player0bg"><i class="font3em far fa-check-circle"></i></button>
+		    		</div>
+		    		<div class="invcontainer">
+		    			<div id="invp1h">Inventory</div>
+		    			<div id="invp1" class="inv"></div>
+		    		</div>
+		    	</div>
+	    	</div>
+	    	<div id="messages">
+				<i class="fas fa-info-circle"></i>
+				<span id="messagetext">...</span>
+			</div>
+	    </div>
+	</body>
+</html>
