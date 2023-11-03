@@ -1,15 +1,13 @@
 package jadex.bdiv3.runtime.impl;
 
 import jadex.bdiv3.features.impl.BDIAgentFeature;
-import jadex.bdiv3.runtime.impl.RPlan.PlanProcessingState;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
-import jadex.common.ErrorException;
 import jadex.common.SUtil;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
+import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.IResultListener;
+import jadex.micro.MicroAgent;
 
 /**
  *  Abstract base class for plan body implementations.
@@ -17,9 +15,6 @@ import jadex.future.IResultListener;
 public abstract class AbstractPlanBody implements IPlanBody
 {
 	//-------- attributes --------
-	
-	/** The bdi interpreter. */
-	protected IInternalAccess ia;
 	
 	/** The rplan. */
 	protected RPlan rplan;
@@ -32,9 +27,8 @@ public abstract class AbstractPlanBody implements IPlanBody
 	/**
 	 *  Create a new plan body.
 	 */
-	public AbstractPlanBody(IInternalAccess ia, RPlan rplan)
+	public AbstractPlanBody(RPlan rplan)
 	{
-		this.ia = ia;
 		this.rplan = rplan;
 	}
 
@@ -56,155 +50,91 @@ public abstract class AbstractPlanBody implements IPlanBody
 	{
 		final Future<Void> ret = new Future<Void>();
 		
-		internalInvokePart(0).addResultListener(new IResultListener<Object>()
+		int next; // next step 1: passed(), 2: failed(), 3: aborted()
+		try
 		{
-			public void resultAvailable(Object result)
+			Object result	= internalInvokePart(0);
+			if(rplan.getException()!=null)
 			{
-//				if(RPlan.PLANLIFECYCLESTATE_ABORTED.equals(rplan.getLifecycleState()))
-				if(rplan.getException()!=null)
-				{
-					exceptionOccurred(rplan.getException());
-				}
-				else
-				{
-					// Automatically set goal result if goal has @GoalResult
-					if(result!=null)
-					{
-						rplan.setResult(result);
-						if(rplan.getReason() instanceof RServiceCall)
-						{
-							RServiceCall sc = (RServiceCall)rplan.getReason();
-							InvocationInfo ii = sc.getInvocationInfo();
-							ii.setResult(result);
-						}
-						else if(rplan.getReason() instanceof RGoal)
-						{
-							RGoal rgoal = (RGoal)rplan.getReason();
-//							MGoal mgoal = (MGoal)rgoal.getModelElement();
-							rgoal.setGoalResult(result, ia.getClassLoader(), null, rplan, null);
-//							Object wa = mgoal.getPojoResultWriteAccess(ia.getClassLoader());
-//							if(wa instanceof Field)
-//							{
-//								try
-//								{
-//									Field f = (Field)wa;
-//									f.setAccessible(true);
-//									f.set(rgoal.getPojoElement(), result);
-//								}
-//								catch(Exception e)
-//								{
-//									throw new RuntimeException(e);
-//								}
-//							}
-//							else if(wa instanceof Method)
-//							{
-//								try
-//								{
-//									Method m = (Method)wa;
-//									BDIAgentInterpreter	bai	= agent.getComponentFeature(IBDIAgentFeature.class);
-//									Object[] params = bai.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(), rplan.getModelElement(), null, rplan, null);
-//									m.invoke(rgoal.getPojoElement(), params);
-//								}
-//								catch(Exception e)
-//								{
-//									throw new RuntimeException(e);
-//								}
-//							}
-						}
-					}
-					
-					rplan.setFinishing();
-					
-					// Schedule passed/failed/aborted on separate component step, as it might be triggered inside other plan execution
-					ia.getFeature(IExecutionFeature.class).scheduleStep(new IComponentStep<Object>()
-					{
-						@Override
-						public IFuture<Object> execute(IInternalAccess ia)
-						{
-							return internalInvokePart(1);
-						}
-					}).addResultListener(new IResultListener<Object>()
-					{
-						public void resultAvailable(Object result)
-						{
-							rplan.setLifecycleState(RPlan.PlanLifecycleState.PASSED);
-//							if(reason instanceof RProcessableElement)
-//								((RProcessableElement)reason).planFinished(ia, rplan);
-							ret.setResult(null);
-						}
-						
-						public void exceptionOccurred(Exception exception)
-						{
-							rplan.setException(exception);
-							rplan.setLifecycleState(RPlan.PlanLifecycleState.FAILED);
-//							if(reason instanceof RProcessableElement)
-//								((RProcessableElement)reason).planFinished(ia, rplan);
-							ret.setException(exception);
-						}
-					});
-				}
+				// WTF!?
+				System.err.println("Unthrown plan exception!?");
+				System.err.println(SUtil.getExceptionStacktrace(rplan.getException()));
+				throw rplan.getException();
 			}
 			
-			public void exceptionOccurred(final Exception exception)
+			// Automatically set goal result if goal has @GoalResult
+			if(result!=null)
 			{
-//				int next = RPlan.PLANLIFECYCLESTATE_ABORTED.equals(rplan.getLifecycleState())? 3: 2; 
-//				int next = rplan.getException() instanceof PlanAbortedException? 3: 2;
-				final int next = exception instanceof PlanAbortedException? 3: 2;
-				
-//				if(next==3)
-//					System.out.println("exe of: "+rplan.getId()+", "+next);
-				
-				if(rplan.getReason() instanceof RServiceCall)
+				rplan.setResult(result);
+				/*if(rplan.getReason() instanceof RServiceCall)
 				{
 					RServiceCall sc = (RServiceCall)rplan.getReason();
 					InvocationInfo ii = sc.getInvocationInfo();
-					ii.setResult(exception);
+					ii.setResult(result);
 				}
-				
-//				System.out.println("setting ex on: "+rplan);
-				rplan.setException(exception);
-				
-				assert getAgent().getFeature(IExecutionFeature.class).isComponentThread();
-				assert rplan.isFinishing() != (next==2): SUtil.getExceptionStacktrace(exception);	// either finishing (due to abort) or failed.
-				if(next==2)
-					rplan.setFinishing();
-				
-				// Schedule passed/failed/aborted on separate component step, as it might be triggered inside other plan execution
-				ia.getFeature(IExecutionFeature.class).scheduleStep(new IComponentStep<Object>()
+				else*/ if(rplan.getReason() instanceof RGoal)
 				{
-					@Override
-					public IFuture<Object> execute(IInternalAccess ia)
-					{
-						return internalInvokePart(next);
-					}
-				}).addResultListener(new IResultListener<Object>()
-				{
-					public void resultAvailable(Object result)
-					{
-						if(!rplan.isFinished())
-						{
-							rplan.setLifecycleState(exception instanceof PlanAbortedException
-								? RPlan.PlanLifecycleState.ABORTED : RPlan.PlanLifecycleState.FAILED);
-						}
-//						if(reason instanceof RProcessableElement)
-//							((RProcessableElement)reason).planFinished(ia, rplan);
-						ret.setException(exception);
-					}
-					
-					public void exceptionOccurred(Exception ex)
-					{
-						if(!rplan.isFinished())
-						{
-							rplan.setLifecycleState(exception instanceof PlanAbortedException
-								? RPlan.PlanLifecycleState.ABORTED : RPlan.PlanLifecycleState.FAILED);
-						}
-//						if(reason instanceof RProcessableElement)
-//							((RProcessableElement)reason).planFinished(ia, rplan);
-						ret.setException(exception);
-					}
-				});
+					RGoal rgoal = (RGoal)rplan.getReason();
+					rgoal.setGoalResult(result, ((MicroAgent)getAgent()).getClassLoader(), null, rplan, null);
+				}
 			}
-		});
+			// Next step: passed()
+			next	= 1;
+		}
+		catch(Exception e)
+		{
+			if(rplan.getException()!=null && rplan.getException()!=e)
+			{
+				// WTF!?
+				System.err.println("Duplicate plan exception!?");
+				System.err.println(SUtil.getExceptionStacktrace(rplan.getException()));
+				System.err.println(SUtil.getExceptionStacktrace(e));
+			}
+			rplan.setException(e);
+			
+			/*if(rplan.getReason() instanceof RServiceCall)
+			{
+				RServiceCall sc = (RServiceCall)rplan.getReason();
+				InvocationInfo ii = sc.getInvocationInfo();
+				ii.setResult(exception);
+			}*/
+			// Next step: failed() or aborted()
+			next = e instanceof PlanAbortedException? 3: 2;
+		}
+
+		
+		rplan.setFinishing();
+		
+		try
+		{
+			internalInvokePart(next);
+		}
+		catch(Exception e)
+		{
+			if(rplan.getException()==null)
+			{
+				rplan.setException(e);
+				rplan.setLifecycleState(RPlan.PlanLifecycleState.FAILED);
+			}
+			// -> already failed/aborted
+			else
+			{
+				// Print exception, otherwise it would be silently ignored.
+				System.err.println("Warning: Exception in aborted() or failed() method: "+SUtil.getExceptionStacktrace(e));
+			}
+		}
+		
+		if(rplan.getException()==null)
+		{
+			rplan.setLifecycleState(RPlan.PlanLifecycleState.PASSED);
+			ret.setResult(null);
+		}
+		else
+		{
+			rplan.setLifecycleState(rplan.getException() instanceof PlanAbortedException
+				? RPlan.PlanLifecycleState.ABORTED : RPlan.PlanLifecycleState.FAILED);
+			ret.setException(rplan.getException());
+		}
 		
 		return ret;
 	}
@@ -215,23 +145,20 @@ public abstract class AbstractPlanBody implements IPlanBody
 	public void abort()
 	{
 //		System.out.println("body.abort "+rplan);
-		if(partfuture!=null)
-		{
-			Future<Object>	fut	= partfuture;
-			partfuture	= null;	// Needs to be set before to allow assert if null
-			fut.setExceptionIfUndone(new PlanAbortedException());
-		}
+		// TODO: plan suspendable to remember blocked futures of a specific plan
+//		if(partfuture!=null)
+//		{
+//			Future<Object>	fut	= partfuture;
+//			partfuture	= null;	// Needs to be set before to allow assert if null
+//			fut.setExceptionIfUndone(new PlanAbortedException());
+//		}
 	}
 	
 	/**
 	 *  Invoke a plan part.
 	 */
-	protected IFuture<Object> internalInvokePart(int part)
-	{
-		assert partfuture==null;
-		final Future<Object> ret = new Future<Object>();
-		partfuture	= ret;
-		
+	protected Object	internalInvokePart(int part)
+	{		
 		try
 		{
 			assert RPlan.RPLANS.get()==null : RPlan.RPLANS.get()+", "+rplan;
@@ -247,90 +174,58 @@ public abstract class AbstractPlanBody implements IPlanBody
 			else if(part==1)
 			{
 //				System.out.println("passed of: "+rplan);
-				rplan.setLifecycleState(RPlan.PlanLifecycleState.PASSING);
+//				rplan.setLifecycleState(RPlan.PlanLifecycleState.PASSING);
 				res = invokePassed(guessParameters(getPassedParameterTypes()));
 			}
 			else if(part==2)
 			{
 //				System.out.println("failed of: "+rplan);
-				rplan.setLifecycleState(RPlan.PlanLifecycleState.FAILING);
+//				rplan.setLifecycleState(RPlan.PlanLifecycleState.FAILING);
 				res = invokeFailed(guessParameters(getFailedParameterTypes()));
 			}
 			else if(part==3)
 			{
 //				System.out.println("aborted of: "+rplan);
-				rplan.setLifecycleState(RPlan.PlanLifecycleState.ABORTING);
+//				rplan.setLifecycleState(RPlan.PlanLifecycleState.ABORTING);
 				res = invokeAborted(guessParameters(getAbortedParameterTypes()));
 			}
 			
 			if(res instanceof IFuture)
 			{
+				@SuppressWarnings("unchecked")
 				IFuture<Object> fut = (IFuture<Object>)res;
-				if(!fut.isDone())
-				{
-					// When future is not done set state to (non-blocking) waiting.
-					rplan.setProcessingState(PlanProcessingState.WAITING);
-				}
-				fut.addResultListener(new IResultListener<Object>()
-				{
-					public void resultAvailable(Object result)
-					{
-						if(partfuture==ret)
-						{
-							partfuture	= null;
-						}
-						ret.setResultIfUndone(result);
-					}
-					
-					public void exceptionOccurred(Exception exception)
-					{
-						if(partfuture==ret)
-						{
-							partfuture	= null;
-						}
-						ret.setExceptionIfUndone(exception);
-					}
-				});
-			}
-			else
-			{
-				if(partfuture==ret)
-				{
-					partfuture	= null;
-				}
-				ret.setResultIfUndone(res);
-			}
-		}
-		catch(PlanFailureException e)
-		{
-			if(partfuture==ret)
-			{
-				partfuture	= null;
-			}
-			ret.setExceptionIfUndone(e);
-		}
-		catch(BodyAborted ba)
-		{
-			assert ret.isDone() && ret.getException() instanceof PlanAbortedException;
-		}
-		catch(Throwable e)
-		{
-			if(partfuture==ret)
-			{
-				partfuture	= null;
+//				// When future is not done set state to (non-blocking) waiting.
+//				rplan.setProcessingState(PlanProcessingState.WAITING);
+				res	= fut.get();
 			}
 			
-			if(e instanceof ThreadDeath)
+			return res;
+		}
+//		catch(PlanFailureException e)
+//		{
+//			if(partfuture==ret)
+//			{
+//				partfuture	= null;
+//			}
+//			ret.setExceptionIfUndone(e);
+//		}
+//		catch(BodyAborted ba)
+//		{
+//			assert ret.isDone() && ret.getException() instanceof PlanAbortedException;
+//		}
+		catch(Throwable e)
+		{
+			if(e instanceof StepAborted)
 			{
-				// Thread death is used to exit user code -> ignore.
-				ret.setResult(null);
+				// used to exit user code -> ignore.
+				throw e;
 			}
 			else
 			{
 				// getBody() is not a good idea because it can be the reason for the exception
 //				ia.getLogger().warning("Plan '"+getBody()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
-				ia.getLogger().warning("Plan '"+getRPlan().getModelElement().getName()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
-				ret.setExceptionIfUndone(e instanceof Exception ? (Exception)e : new ErrorException((Error)e));
+				System.err.println("Plan '"+getRPlan().getModelElement().getName()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
+				throw SUtil.throwUnchecked(e);
 			}
 		}
 		finally
@@ -338,8 +233,6 @@ public abstract class AbstractPlanBody implements IPlanBody
 			assert RPlan.RPLANS.get()==rplan : RPlan.RPLANS.get()+", "+rplan;
 			RPlan.RPLANS.set(null);
 		}
-		
-		return ret;
 	}
 	
 	/**
@@ -391,7 +284,7 @@ public abstract class AbstractPlanBody implements IPlanBody
 		if(ptypes==null)
 			return null;
 		
-		return BDIAgentFeature.getInjectionValues(ptypes, null, rplan.getModelElement(), null, rplan, null, ia);
+		return BDIAgentFeature.getInjectionValues(ptypes, null, rplan.getModelElement(), null, rplan, null);
 	}
 
 	/**
@@ -407,8 +300,8 @@ public abstract class AbstractPlanBody implements IPlanBody
 	 *  Get the agent.
 	 *  @return The agent
 	 */
-	public IInternalAccess getAgent()
+	public IComponent getAgent()
 	{
-		return ia;
+		return IExecutionFeature.get().getComponent();
 	}
 }

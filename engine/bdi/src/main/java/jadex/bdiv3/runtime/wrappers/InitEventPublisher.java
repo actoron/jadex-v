@@ -6,7 +6,7 @@ import jadex.bdiv3.features.impl.BDIAgentFeature;
 import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MElement;
 import jadex.common.IResultCommand;
-import jadex.feature.execution.ComponentTerminatedException;
+import jadex.execution.ComponentTerminatedException;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.rules.eca.ChangeInfo;

@@ -74,12 +74,13 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
-import jadex.mj.micro.MicroClassReader;
-import jadex.mj.micro.MicroModel;
-import jadex.mj.micro.annotation.Agent;
-import jadex.mj.model.annotation.NameValue;
-import jadex.mj.model.modelinfo.ConfigurationInfo;
-import jadex.mj.model.modelinfo.ModelInfo;
+import jadex.micro.MicroClassReader;
+import jadex.micro.MicroClassReader.DummyClassLoader;
+import jadex.micro.MicroModel;
+import jadex.micro.annotation.Agent;
+import jadex.model.annotation.NameValue;
+import jadex.model.modelinfo.ConfigurationInfo;
+import jadex.model.modelinfo.ModelInfo;
 import jadex.rules.eca.EventType;
 
 /**

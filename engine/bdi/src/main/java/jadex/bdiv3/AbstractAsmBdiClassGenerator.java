@@ -36,7 +36,7 @@ import jadex.collection.MultiCollection;
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.mj.model.modelinfo.ModelInfo;
+import jadex.model.modelinfo.ModelInfo;
 import jadex.rules.eca.EventType;
 
 

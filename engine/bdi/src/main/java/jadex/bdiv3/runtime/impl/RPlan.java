@@ -48,8 +48,8 @@ import jadex.common.IValueFetcher;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.common.Tuple2;
-import jadex.feature.execution.IExecutionFeature;
-import jadex.feature.execution.impl.ExecutionFeature.ComponentSuspendable;
+import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.ExecutionFeature.ComponentSuspendable;
 import jadex.future.DefaultResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -57,7 +57,7 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.mj.micro.annotation.Agent;
+import jadex.micro.annotation.Agent;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
@@ -102,9 +102,9 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		NEW, 
 		BODY,
 		
-		PASSING,
-		FAILING,
-		ABORTING,
+//		PASSING,
+//		FAILING,
+//		ABORTING,
 		
 		PASSED,
 		FAILED,

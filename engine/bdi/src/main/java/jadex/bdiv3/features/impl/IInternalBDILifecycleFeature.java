@@ -1,7 +1,7 @@
 package jadex.bdiv3.features.impl;
 
-import jadex.feature.execution.IExecutionFeature;
-import jadex.mj.micro.impl.MicroAgentFeature;
+import jadex.execution.IExecutionFeature;
+import jadex.micro.impl.MicroAgentFeature;
 
 /**
  *  Internal interface of the bdi lifecycle feature.

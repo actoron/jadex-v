@@ -5,7 +5,7 @@ import jadex.bdiv3.model.MCapability;
 import jadex.bdiv3.model.MElement;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.rules.eca.RuleSystem;
 
 /**

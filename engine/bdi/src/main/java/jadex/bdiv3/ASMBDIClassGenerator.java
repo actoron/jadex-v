@@ -41,7 +41,7 @@ import jadex.bytecode.SASM;
 import jadex.bytecode.vmhacks.VmHacks;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.mj.micro.MicroClassReader.DummyClassLoader;
+import jadex.micro.MicroClassReader.DummyClassLoader;
 
 
 /**

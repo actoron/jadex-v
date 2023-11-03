@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.mj.model.annotation.NameValue;
+import jadex.model.annotation.NameValue;
 
 
 /**

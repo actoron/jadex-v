@@ -1,4 +1,4 @@
-package jadex.mj.feature.execution.impl;
+package jadex.execution.impl;
 
 public class ExecutionFeatureTest	extends AbstractExecutionFeatureTest
 {
