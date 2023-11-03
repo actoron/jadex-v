@@ -13,16 +13,16 @@ import jadex.bdiv3.model.MParameter;
 import jadex.bdiv3.model.MParameter.EvaluationMode;
 import jadex.bdiv3.model.MParameterElement;
 import jadex.bdiv3.runtime.ChangeEvent;
+import jadex.bdiv3.runtime.IParameter;
+import jadex.bdiv3.runtime.IParameterElement;
+import jadex.bdiv3.runtime.IParameterSet;
 import jadex.bdiv3.runtime.wrappers.EventPublisher;
 import jadex.bdiv3.runtime.wrappers.ListWrapper;
-import jadex.bdiv3x.runtime.CapabilityWrapper;
-import jadex.bdiv3x.runtime.IParameter;
-import jadex.bdiv3x.runtime.IParameterElement;
-import jadex.bdiv3x.runtime.IParameterSet;
 import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
+import jadex.execution.IExecutionFeature;
 import jadex.javaparser.IMapAccess;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
@@ -388,8 +388,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		{
 			UnparsedExpression uexp = inival!=null ? inival : getModelElement()!=null ? ((MParameter)getModelElement()).getDefaultValue() : null;
 			return uexp!=null ? SJavaParser.parseExpression(uexp, getAgent().getFeature(IModelFeature.class).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
-				// TODO language == scope!?!?!
-				wrapFetcher(CapabilityWrapper.getFetcher(uexp.getLanguage()))) : null;
+				wrapFetcher(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher())) : null;
 		}
 		
 		/**
@@ -497,7 +496,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 				if(inivals.size()==1)
 				{
 					Object	tmpvalue	= SJavaParser.parseExpression(inivals.get(0), getAgent().getFeature(IModelFeature.class).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
-						wrapFetcher(CapabilityWrapper.getFetcher(inivals.get(0).getLanguage())));
+						wrapFetcher(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher()));
 					if(tmpvalue!=null && getClazz()!=null && SReflect.isSupertype(getClazz(), tmpvalue.getClass()))
 					{
 						tmpvalues.add(tmpvalue);
@@ -515,7 +514,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 					for(UnparsedExpression uexp: inivals)
 					{
 						tmpvalues.add(SJavaParser.parseExpression(uexp, ((MicroAgent)getAgent()).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
-							wrapFetcher(CapabilityWrapper.getFetcher(uexp.getLanguage()))));
+							wrapFetcher(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher())));
 					}
 				}
 			}

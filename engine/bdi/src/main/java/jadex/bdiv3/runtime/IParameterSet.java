@@ -1,6 +1,4 @@
-package jadex.bdiv3x.runtime;
-
-
+package jadex.bdiv3.runtime;
 
 /**
  *  Interface for all parameter sets.

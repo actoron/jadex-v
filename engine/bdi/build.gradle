@@ -16,12 +16,19 @@ dependencies
 {
 	implementation 'jadex:core:5.0.0'
 	implementation 'jadex:execution:5.0.0'
+	implementation 'jadex:model:5.0.0'
 	implementation 'jadex:microagent:5.0.0'
 	implementation 'jadex:common:5.0.0'
 	implementation 'jadex:future:5.0.0'
 	implementation 'jadex:javaparser:5.0.0'
 	implementation 'jadex:collection:5.0.0'
 	implementation 'jadex:classreader:5.0.0'
+	implementation 'jadex:bytecode:5.0.0'
 	implementation 'jadex:eca:5.0.0'
+	
+	implementation 'org.ow2.asm:asm:9.1'
+	implementation 'org.ow2.asm:asm-tree:9.1'
+	implementation 'org.ow2.asm:asm-util:9.1'
+	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

@@ -4,6 +4,7 @@ package jadex.bdiv3.runtime.impl;
 /**
  *  Plan has aborted.
  */
+@SuppressWarnings("serial")
 public class PlanAbortedException extends RuntimeException
 {
 	//-------- constructors --------

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jadex.bdiv3.model.MPlan;
-import jadex.bdiv3x.runtime.IParameter;
+import jadex.bdiv3.runtime.IParameter;
 import jadex.micro.MicroAgent;
 
 

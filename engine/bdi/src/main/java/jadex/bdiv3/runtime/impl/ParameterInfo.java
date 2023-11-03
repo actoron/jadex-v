@@ -6,7 +6,7 @@ import java.util.Map;
 
 import jadex.bdiv3.model.MParameter;
 import jadex.bdiv3.model.MParameter.EvaluationMode;
-import jadex.bdiv3x.runtime.IParameter;
+import jadex.bdiv3.runtime.IParameter;
 import jadex.common.ClassInfo;
 import jadex.common.UnparsedExpression;
 

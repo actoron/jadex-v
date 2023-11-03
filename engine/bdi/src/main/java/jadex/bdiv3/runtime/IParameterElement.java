@@ -1,4 +1,4 @@
-package jadex.bdiv3x.runtime;
+package jadex.bdiv3.runtime;
 
 /**
  *  The internal interface for all elements with parameters.

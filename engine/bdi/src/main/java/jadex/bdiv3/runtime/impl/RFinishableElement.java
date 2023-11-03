@@ -6,7 +6,7 @@ import java.util.Map;
 
 import jadex.bdiv3.model.MConfigParameterElement;
 import jadex.bdiv3.model.MProcessableElement;
-import jadex.bdiv3x.runtime.IFinishableElement;
+import jadex.bdiv3.runtime.IFinishableElement;
 import jadex.future.IResultListener;
 
 /**

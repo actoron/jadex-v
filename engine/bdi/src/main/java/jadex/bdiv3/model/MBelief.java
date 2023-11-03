@@ -17,7 +17,6 @@ import jadex.bdiv3.features.impl.BDIAgentFeature;
 import jadex.bdiv3.features.impl.BDILifecycleAgentFeature;
 import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MParameter.EvaluationMode;
-import jadex.bdiv3x.runtime.CapabilityWrapper;
 import jadex.common.ClassInfo;
 import jadex.common.FieldInfo;
 import jadex.common.MethodInfo;
@@ -25,7 +24,9 @@ import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
+import jadex.execution.IExecutionFeature;
 import jadex.javaparser.SJavaParser;
+import jadex.model.IModelFeature;
 import jadex.rules.eca.EventType;
 
 
@@ -378,7 +379,7 @@ public class MBelief extends MElement
 		long ret = -1;
 		if(updaterate!=null)
 			ret = ((Number)SJavaParser.parseExpression(updaterate, agent.getBDIModel().getModelInfo().getAllImports(), 
-				agent.getClassLoader()).getValue(CapabilityWrapper.getFetcher(updaterate.getLanguage()))).longValue();
+				agent.getClassLoader()).getValue(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher())).longValue();
 		return ret;
 	}
 	

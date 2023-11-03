@@ -9,7 +9,10 @@ import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MCapability;
 import jadex.bdiv3.model.MElement;
 import jadex.bdiv3.model.MGoal;
+import jadex.bdiv3.runtime.IParameter;
+import jadex.bdiv3.runtime.IParameterSet;
 import jadex.bdiv3.runtime.impl.APL;
+import jadex.bdiv3.runtime.impl.ICandidateInfo;
 import jadex.bdiv3.runtime.impl.APL.MGoalInfo;
 import jadex.bdiv3.runtime.impl.APL.MPlanInfo;
 import jadex.bdiv3.runtime.impl.IInternalPlan;
@@ -18,9 +21,6 @@ import jadex.bdiv3.runtime.impl.RPlan;
 import jadex.bdiv3.runtime.impl.RPlan.ResumeCommandArgs;
 import jadex.bdiv3.runtime.impl.RPlan.Waitqueue;
 import jadex.bdiv3.runtime.impl.RProcessableElement;
-import jadex.bdiv3x.runtime.ICandidateInfo;
-import jadex.bdiv3x.runtime.IParameter;
-import jadex.bdiv3x.runtime.IParameterSet;
 import jadex.future.IResultListener;
 
 /**

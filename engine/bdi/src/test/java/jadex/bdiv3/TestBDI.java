@@ -7,14 +7,14 @@ import jadex.bdiv3.annotation.GoalCreationCondition;
 import jadex.bdiv3.annotation.Plan;
 import jadex.bdiv3.annotation.Trigger;
 import jadex.bdiv3.runtime.impl.PlanFailureException;
-import jadex.bridge.IInternalAccess;
+import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.mj.micro.annotation.Agent;
-import jadex.mj.micro.annotation.Imports;
-import jadex.mj.micro.annotation.Properties;
-import jadex.mj.model.annotation.NameValue;
-import jadex.mj.model.annotation.OnStart;
+import jadex.micro.annotation.Agent;
+import jadex.micro.annotation.Imports;
+import jadex.micro.annotation.Properties;
+import jadex.model.annotation.NameValue;
+import jadex.model.annotation.OnStart;
 import jadex.rules.eca.annotations.Event;
 
 /**
@@ -32,7 +32,7 @@ public class TestBDI
 {
 	/** The bdi agent. */
 	@Agent
-	protected IInternalAccess agent;
+	protected IComponent agent;
 	
 	/** The text that is printed. */
 	@Belief

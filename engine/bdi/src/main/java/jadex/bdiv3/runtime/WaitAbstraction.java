@@ -7,7 +7,7 @@ import java.util.Set;
 import jadex.bdiv3.model.MElement;
 import jadex.bdiv3.model.MMessageEvent;
 import jadex.bdiv3.runtime.impl.RElement;
-import jadex.bdiv3x.runtime.RMessageEvent;
+import jadex.bdiv3.runtime.impl.RMessageEvent;
 import jadex.rules.eca.EventType;
 
 /**
@@ -334,17 +334,17 @@ public class WaitAbstraction
 				ret = changeeventtypes.contains(new EventType(type, src));
 			}
 		}
-		if(!ret && replyelements!=null && procelem instanceof RMessageEvent)
-		{
-			ret	= replyelements.contains(((RMessageEvent<?>)procelem).getOriginal());
-//				for(Tuple2<RMessageEvent, Set<MMessageEvent>> msg: replyelements)
-//				{
-//					ret = (msg.getSecondEntity()==null || msg.getSecondEntity().contains(((RMessageEvent)procelem).getMMessageEvent()))
-//						&& BDIXMessageComponentFeature.isReply(msg.getFirstEntity(), (RMessageEvent)procelem);
-//					if(ret)
-//						break;
-//				}
-		}
+//		if(!ret && replyelements!=null && procelem instanceof RMessageEvent)
+//		{
+//			ret	= replyelements.contains(((RMessageEvent<?>)procelem).getOriginal());
+////				for(Tuple2<RMessageEvent, Set<MMessageEvent>> msg: replyelements)
+////				{
+////					ret = (msg.getSecondEntity()==null || msg.getSecondEntity().contains(((RMessageEvent)procelem).getMMessageEvent()))
+////						&& BDIXMessageComponentFeature.isReply(msg.getFirstEntity(), (RMessageEvent)procelem);
+////					if(ret)
+////						break;
+////				}
+//		}
 		
 		return ret;
 	}

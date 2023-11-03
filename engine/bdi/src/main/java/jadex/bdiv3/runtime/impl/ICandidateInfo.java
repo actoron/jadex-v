@@ -1,7 +1,7 @@
-package jadex.bdiv3x.runtime;
+package jadex.bdiv3.runtime.impl;
 
 import jadex.bdiv3.model.MElement;
-import jadex.bdiv3.runtime.impl.IInternalPlan;
+import jadex.bdiv3.runtime.IElement;
 
 /**
  *  The info objects for plan candidates.

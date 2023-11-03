@@ -1,7 +1,6 @@
 package jadex.bdiv3.runtime.impl;
 
-import jadex.bdiv3x.runtime.ICandidateInfo;
-import jadex.bdiv3x.runtime.IParameterElement;
+import jadex.bdiv3.runtime.IParameterElement;
 
 
 /**

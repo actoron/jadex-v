@@ -75,7 +75,6 @@ import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
 import jadex.micro.MicroClassReader;
-import jadex.micro.MicroClassReader.DummyClassLoader;
 import jadex.micro.MicroModel;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.NameValue;

@@ -19,7 +19,6 @@ import jadex.bdiv3.features.impl.BDIAgentFeature.PlansExistCondition;
 import jadex.bdiv3.model.IBDIModel;
 import jadex.bdiv3.model.MBelief;
 import jadex.bdiv3.model.MCondition;
-import jadex.bdiv3.model.MConfigParameterElement;
 import jadex.bdiv3.model.MElement;
 import jadex.bdiv3.model.MGoal;
 import jadex.bdiv3.model.MParameter;
@@ -33,16 +32,13 @@ import jadex.bdiv3.runtime.impl.APL;
 import jadex.bdiv3.runtime.impl.APL.CandidateInfoMPlan;
 import jadex.bdiv3.runtime.impl.APL.MPlanInfo;
 import jadex.bdiv3.runtime.impl.GoalDroppedException;
+import jadex.bdiv3.runtime.impl.ICandidateInfo;
 import jadex.bdiv3.runtime.impl.RCapability;
 import jadex.bdiv3.runtime.impl.RGoal;
 import jadex.bdiv3.runtime.impl.RParameterElement.RParameter;
 import jadex.bdiv3.runtime.impl.RParameterElement.RParameterSet;
 import jadex.bdiv3.runtime.impl.RPlan;
 import jadex.bdiv3.runtime.impl.RProcessableElement;
-import jadex.bdiv3x.runtime.CapabilityWrapper;
-import jadex.bdiv3x.runtime.ICandidateInfo;
-import jadex.bdiv3x.runtime.IInternalEvent;
-import jadex.common.ICommand;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -59,6 +55,7 @@ import jadex.future.IResultListener;
 import jadex.javaparser.SJavaParser;
 import jadex.micro.MicroAgent;
 import jadex.micro.impl.MicroAgentFeature;
+import jadex.model.IModelFeature;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
@@ -303,99 +300,83 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 //			return mf.sendMessage(message.getMessage());
 //		}
 		
-		/**
-		 *  Dispatch an internal event.
-		 */
-		public IFuture<Void> dispatchInternalEvent(IInternalEvent event)
-		{
-			// Pojo bdi does not support internal events
-			throw new UnsupportedOperationException();
-		}
-		
-		/**
-		 *  Dispatch the configuration plans.
-		 */
-		protected void	dispatchConfigPlans(List<MConfigParameterElement> cplans, IBDIModel bdimodel)
-		{
-			if(cplans!=null && cplans.size()>0)
-			{
-				for(MConfigParameterElement cplan: cplans)
-				{
-					MPlan mplan = bdimodel.getCapability().getPlan(cplan.getRef());
-					// todo: allow Java plan constructor calls
-	//				Object val = SJavaParser.parseExpression(uexp, model.getModelInfo().getAllImports(), getClassLoader());
-					
-					// todo: bindings in config elems
-					
-					List<Map<String, Object>> bindings = APL.calculateBindingElements(mplan, null);
-					
-					if(bindings!=null)
-					{
-						for(Map<String, Object> binding: bindings)
-						{
-							RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, binding), null), null, null, cplan);
-							rplan.executePlan();
-						}
-					}
-					// No binding: generate one candidate.
-					else
-					{
-						RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null), null, null, cplan);
-						rplan.executePlan();
-					}
-				}
-			}
-		}
-		
-		/**
-		 *  Dispatch the configuration goals.
-		 */
-		protected IFuture<Void> dispatchConfigGoals(List<MConfigParameterElement> cgoals, IBDIModel bdimodel)
-		{
-			Future<Void> ret = new Future<Void>();
-			if(cgoals!=null && cgoals.size()>0)
-			{
-				FutureBarrier<Object> barrier = new FutureBarrier<Object>();
-				
-				for(MConfigParameterElement cgoal: cgoals)
-				{
-					MGoal mgoal = null;
-					Class<?> gcl = null;
-					Object goal = null;
-					
-					// try to fetch via name
-					mgoal = bdimodel.getCapability().getGoal(cgoal.getRef());
-					if(mgoal==null && cgoal.getRef().indexOf(".")==-1)
-					{
-						// try with package
-						mgoal = bdimodel.getCapability().getGoal(IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getPackage()+"."+cgoal.getRef());
-					}
-					
-					if(mgoal!=null)
-					{
-						gcl = mgoal.getTargetClass(IInternalBDIAgentFeature.get().getClassLoader());
-					}
-					// if not found, try expression
-					else
-					{
-						Object o = SJavaParser.parseExpression(cgoal.getRef(), IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader())
-							.getValue(CapabilityWrapper.getFetcher(cgoal.getCapabilityName()));
-						if(o instanceof Class)
-						{
-							gcl = (Class<?>)o;
-						}
-						else
-						{
-							goal = o;
-							gcl = o.getClass();
-						}
-						mgoal = bdimodel.getCapability().getGoal(gcl.getName());
-					}
-		
-//					// Create goal if expression available
-//					if(uexp.getName()!=null && uexp.getValue().length()>0)
+//		/**
+//		 *  Dispatch an internal event.
+//		 */
+//		public IFuture<Void> dispatchInternalEvent(IInternalEvent event)
+//		{
+//			// Pojo bdi does not support internal events
+//			throw new UnsupportedOperationException();
+//		}
+//		
+//		/**
+//		 *  Dispatch the configuration plans.
+//		 */
+//		protected void	dispatchConfigPlans(List<MConfigParameterElement> cplans, IBDIModel bdimodel)
+//		{
+//			if(cplans!=null && cplans.size()>0)
+//			{
+//				for(MConfigParameterElement cplan: cplans)
+//				{
+//					MPlan mplan = bdimodel.getCapability().getPlan(cplan.getRef());
+//					// todo: allow Java plan constructor calls
+//	//				Object val = SJavaParser.parseExpression(uexp, model.getModelInfo().getAllImports(), getClassLoader());
+//					
+//					// todo: bindings in config elems
+//					
+//					List<Map<String, Object>> bindings = APL.calculateBindingElements(mplan, null);
+//					
+//					if(bindings!=null)
 //					{
-//						Object o = SJavaParser.parseExpression(uexp, component.getModel().getAllImports(), component.getClassLoader()).getValue(component.getFetcher());
+//						for(Map<String, Object> binding: bindings)
+//						{
+//							RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, binding), null), null, null, cplan);
+//							rplan.executePlan();
+//						}
+//					}
+//					// No binding: generate one candidate.
+//					else
+//					{
+//						RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null), null, null, cplan);
+//						rplan.executePlan();
+//					}
+//				}
+//			}
+//		}
+		
+//		/**
+//		 *  Dispatch the configuration goals.
+//		 */
+//		protected IFuture<Void> dispatchConfigGoals(List<MConfigParameterElement> cgoals, IBDIModel bdimodel)
+//		{
+//			Future<Void> ret = new Future<Void>();
+//			if(cgoals!=null && cgoals.size()>0)
+//			{
+//				FutureBarrier<Object> barrier = new FutureBarrier<Object>();
+//				
+//				for(MConfigParameterElement cgoal: cgoals)
+//				{
+//					MGoal mgoal = null;
+//					Class<?> gcl = null;
+//					Object goal = null;
+//					
+//					// try to fetch via name
+//					mgoal = bdimodel.getCapability().getGoal(cgoal.getRef());
+//					if(mgoal==null && cgoal.getRef().indexOf(".")==-1)
+//					{
+//						// try with package
+//						mgoal = bdimodel.getCapability().getGoal(IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getPackage()+"."+cgoal.getRef());
+//					}
+//					
+//					if(mgoal!=null)
+//					{
+//						gcl = mgoal.getTargetClass(IInternalBDIAgentFeature.get().getClassLoader());
+//					}
+//					// if not found, try expression
+//					else
+//					{
+//						Object o = SJavaParser.parseExpression(cgoal.getRef(), IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader())
+//							.getValue(CapabilityWrapper.getFetcher(cgoal.getCapabilityName()));
 //						if(o instanceof Class)
 //						{
 //							gcl = (Class<?>)o;
@@ -405,123 +386,139 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 //							goal = o;
 //							gcl = o.getClass();
 //						}
-//					}
-//					
-//					if(gcl==null && uexp.getClazz()!=null)
-//					{
-//						gcl = uexp.getClazz().getType(component.getClassLoader(), component.getModel().getAllImports());
-//					}
-//					if(gcl==null)
-//					{
-//						// try to fetch via name
-//						mgoal = bdimodel.getCapability().getGoal(uexp.getName());
-//						if(mgoal==null && uexp.getName().indexOf(".")==-1)
-//						{
-//							// try with package
-//							mgoal = bdimodel.getCapability().getGoal(component.getModel().getPackage()+"."+uexp.getName());
-//						}
-//						if(mgoal!=null)
-//						{
-//							gcl = mgoal.getTargetClass(component.getClassLoader());
-//						}
-//					}						
-//					if(mgoal==null)
-//					{
 //						mgoal = bdimodel.getCapability().getGoal(gcl.getName());
 //					}
-					
-					// Create goal instance
-					if(goal==null && gcl!=null)
-					{
-						try
-						{
-							MicroAgentFeature maf = MicroAgentFeature.get();
-							Object agent = maf.getSelf().getPojo();
-							Class<?> agcl = agent.getClass();
-							Constructor<?>[] cons = gcl.getDeclaredConstructors();
-							for(Constructor<?> c: cons)
-							{
-								Class<?>[] params = c.getParameterTypes();
-								if(params.length==0)
-								{
-									// perfect found empty con
-									goal = gcl.getConstructor().newInstance();
-									break;
-								}
-								else if(params.length==1 && params[0].equals(agcl))
-								{
-									// found (first level) inner class constructor
-									goal = c.newInstance(new Object[]{agent});
-									break;
-								}
-							}
-						}
-						catch(RuntimeException e)
-						{
-							throw e;
-						}
-						catch(Exception e)
-						{
-							throw new RuntimeException(e);
-						}
-					}
-					
-					if(mgoal==null || (goal==null && gcl!=null))
-					{
-						throw new RuntimeException("Could not create goal: "+cgoal);
-					}
-					
-					List<Map<String, Object>> bindings = APL.calculateBindingElements(mgoal, null);
-					
-					if(goal==null)
-					{
-						// XML only
-						if(bindings!=null)
-						{
-							for(Map<String, Object> binding: bindings)
-							{
-								RGoal rgoal = new RGoal(mgoal, null, null, binding, cgoal, null);
-								barrier.addFuture(dispatchTopLevelGoal(rgoal));//.addResultListener(goallis);
-							}
-						}
-						// No binding: generate one candidate.
-						else
-						{
-							RGoal rgoal = new RGoal(mgoal, goal, null, null, cgoal, null);
-							barrier.addFuture(dispatchTopLevelGoal(rgoal));//.addResultListener(goallis);
-						}
-					}
-					else
-					{
-						// Pojo only
-						barrier.addFuture(dispatchTopLevelGoal(goal));//.addResultListener(goallis);								
-					}
-				}
-				
-				// wait for all goals being finished
-				barrier.waitForIgnoreFailures(new ICommand<Exception>()
-				{
-					@Override
-					public void execute(Exception e)
-					{
-						if(e instanceof GoalDroppedException)
-						{
-							System.err.println("Config goal has been dropped: "+e);
-						}
-						else
-						{
-							System.err.println("Failure during config goal processing: "+SUtil.getExceptionStacktrace(e));							
-						}
-					}
-				}).addResultListener(new DelegationResultListener<Void>(ret));
-			}
-			else
-			{
-				ret.setResult(null);
-			}
-			
-			return ret;
-		}
+//		
+////					// Create goal if expression available
+////					if(uexp.getName()!=null && uexp.getValue().length()>0)
+////					{
+////						Object o = SJavaParser.parseExpression(uexp, component.getModel().getAllImports(), component.getClassLoader()).getValue(component.getFetcher());
+////						if(o instanceof Class)
+////						{
+////							gcl = (Class<?>)o;
+////						}
+////						else
+////						{
+////							goal = o;
+////							gcl = o.getClass();
+////						}
+////					}
+////					
+////					if(gcl==null && uexp.getClazz()!=null)
+////					{
+////						gcl = uexp.getClazz().getType(component.getClassLoader(), component.getModel().getAllImports());
+////					}
+////					if(gcl==null)
+////					{
+////						// try to fetch via name
+////						mgoal = bdimodel.getCapability().getGoal(uexp.getName());
+////						if(mgoal==null && uexp.getName().indexOf(".")==-1)
+////						{
+////							// try with package
+////							mgoal = bdimodel.getCapability().getGoal(component.getModel().getPackage()+"."+uexp.getName());
+////						}
+////						if(mgoal!=null)
+////						{
+////							gcl = mgoal.getTargetClass(component.getClassLoader());
+////						}
+////					}						
+////					if(mgoal==null)
+////					{
+////						mgoal = bdimodel.getCapability().getGoal(gcl.getName());
+////					}
+//					
+//					// Create goal instance
+//					if(goal==null && gcl!=null)
+//					{
+//						try
+//						{
+//							MicroAgentFeature maf = MicroAgentFeature.get();
+//							Object agent = maf.getSelf().getPojo();
+//							Class<?> agcl = agent.getClass();
+//							Constructor<?>[] cons = gcl.getDeclaredConstructors();
+//							for(Constructor<?> c: cons)
+//							{
+//								Class<?>[] params = c.getParameterTypes();
+//								if(params.length==0)
+//								{
+//									// perfect found empty con
+//									goal = gcl.getConstructor().newInstance();
+//									break;
+//								}
+//								else if(params.length==1 && params[0].equals(agcl))
+//								{
+//									// found (first level) inner class constructor
+//									goal = c.newInstance(new Object[]{agent});
+//									break;
+//								}
+//							}
+//						}
+//						catch(RuntimeException e)
+//						{
+//							throw e;
+//						}
+//						catch(Exception e)
+//						{
+//							throw new RuntimeException(e);
+//						}
+//					}
+//					
+//					if(mgoal==null || (goal==null && gcl!=null))
+//					{
+//						throw new RuntimeException("Could not create goal: "+cgoal);
+//					}
+//					
+//					List<Map<String, Object>> bindings = APL.calculateBindingElements(mgoal, null);
+//					
+//					if(goal==null)
+//					{
+//						// XML only
+//						if(bindings!=null)
+//						{
+//							for(Map<String, Object> binding: bindings)
+//							{
+//								RGoal rgoal = new RGoal(mgoal, null, null, binding, cgoal, null);
+//								barrier.addFuture(dispatchTopLevelGoal(rgoal));//.addResultListener(goallis);
+//							}
+//						}
+//						// No binding: generate one candidate.
+//						else
+//						{
+//							RGoal rgoal = new RGoal(mgoal, goal, null, null, cgoal, null);
+//							barrier.addFuture(dispatchTopLevelGoal(rgoal));//.addResultListener(goallis);
+//						}
+//					}
+//					else
+//					{
+//						// Pojo only
+//						barrier.addFuture(dispatchTopLevelGoal(goal));//.addResultListener(goallis);								
+//					}
+//				}
+//				
+//				// wait for all goals being finished
+//				barrier.waitForIgnoreFailures(new ICommand<Exception>()
+//				{
+//					@Override
+//					public void execute(Exception e)
+//					{
+//						if(e instanceof GoalDroppedException)
+//						{
+//							System.err.println("Config goal has been dropped: "+e);
+//						}
+//						else
+//						{
+//							System.err.println("Failure during config goal processing: "+SUtil.getExceptionStacktrace(e));							
+//						}
+//					}
+//				}).addResultListener(new DelegationResultListener<Void>(ret));
+//			}
+//			else
+//			{
+//				ret.setResult(null);
+//			}
+//			
+//			return ret;
+//		}
 	}
 	
 	/**
@@ -678,15 +675,15 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 								BDIAgentFeature.createChangeEvent(value, oldval, null, mbel.getName());
 								oldval = value;
 							}
-							else // xml belief push mode
-							{
-								// reevaluate the belief on change events
-								Object value = SJavaParser.parseExpression(mbel.getDefaultFact(), 
-									IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader()).getValue(CapabilityWrapper.getFetcher(mbel.getDefaultFact().getLanguage()));
-								// save the value
-								mbel.setValue(value);
-//								oldval = value;	// not needed for xml
-							}
+//							else // xml belief push mode
+//							{
+//								// reevaluate the belief on change events
+//								Object value = SJavaParser.parseExpression(mbel.getDefaultFact(), 
+//									IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader()).getValue(CapabilityWrapper.getFetcher(mbel.getDefaultFact().getLanguage()));
+//								// save the value
+//								mbel.setValue(value);
+////								oldval = value;	// not needed for xml
+//							}
 							return IFuture.DONE;
 						}
 					});
@@ -1500,7 +1497,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 							{
 								UnparsedExpression uexp = mcond.getExpression();
 								Boolean ret = (Boolean)SJavaParser.parseExpression(uexp, IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader())
-										.getValue(CapabilityWrapper.getFetcher(uexp.getLanguage()));
+										.getValue(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher());
 								return new Future<Tuple2<Boolean, Object>>(ret!=null && ret.booleanValue()? TRUE: FALSE);
 							}
 						}}), createplan);

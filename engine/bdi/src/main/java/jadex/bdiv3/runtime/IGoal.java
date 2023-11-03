@@ -1,7 +1,5 @@
 package jadex.bdiv3.runtime;
 
-import jadex.bdiv3x.runtime.IFinishableElement;
-import jadex.bdiv3x.runtime.IParameterElement;
 import jadex.future.IFuture;
 
 /**

@@ -14,11 +14,6 @@ import jadex.bdiv3.model.MElement;
 import jadex.bdiv3.model.MGoal;
 import jadex.bdiv3.model.MPlan;
 import jadex.bdiv3.runtime.IDeliberationStrategy;
-import jadex.bdiv3x.runtime.RBeliefbase;
-import jadex.bdiv3x.runtime.REventbase;
-import jadex.bdiv3x.runtime.RExpressionbase;
-import jadex.bdiv3x.runtime.RGoalbase;
-import jadex.bdiv3x.runtime.RPlanbase;
 
 /**
  *  Runtime element for storing goal and plan instances.
@@ -53,22 +48,22 @@ public class RCapability extends RElement
 	/** The deliberation strategy. */
 	protected IDeliberationStrategy delstr;
 	
-	//-------- additional xml elements --------
-	
-	/** The beliefbase. */
-	protected RBeliefbase beliefbase;
-	
-	/** The goalbase. */
-	protected RGoalbase goalbase;
-	
-	/** The expressionbase. */
-	protected RExpressionbase expressionbase;
-	
-	/** The eventbase. */
-	protected REventbase eventbase;
-	
-	/** The planbase. */
-	protected RPlanbase planbase;
+//	//-------- additional xml elements --------
+//	
+//	/** The beliefbase. */
+//	protected RBeliefbase beliefbase;
+//	
+//	/** The goalbase. */
+//	protected RGoalbase goalbase;
+//	
+//	/** The expressionbase. */
+//	protected RExpressionbase expressionbase;
+//	
+//	/** The eventbase. */
+//	protected REventbase eventbase;
+//	
+//	/** The planbase. */
+//	protected RPlanbase planbase;
 	
 	//-------- constructors --------
 	
@@ -372,103 +367,103 @@ public class RCapability extends RElement
 		}
 	}
 	
-	/**
-	 *  Get the beliefbase.
-	 *  @return The beliefbase
-	 */
-	public RBeliefbase getBeliefbase()
-	{
-		return beliefbase;
-	}
-	
-	/**
-	 *  The beliefbase to set.
-	 *  @param beliefbase The beliefbase to set
-	 */
-	public void setBeliefbase(RBeliefbase beliefbase)
-	{
-		this.beliefbase = beliefbase;
-	}
-	
-	/**
-	 *  Get the expressionbase.
-	 *  @return The expressionbase
-	 */
-	public RExpressionbase getExpressionbase()
-	{
-		return expressionbase;
-	}
-
-	/**
-	 *  The expressionbase to set.
-	 *  @param expressionbase The expressionbase to set
-	 */
-	public void setExpressionbase(RExpressionbase expressionbase)
-	{
-		this.expressionbase = expressionbase;
-	}
-
-	/**
-	 *  Get the eventbase.
-	 *  @return The eventbase
-	 */
-	public REventbase getEventbase()
-	{
-		if(eventbase==null)
-		{
-			eventbase	= new REventbase(null);
-		}
-		return eventbase;
-	}
-
 //	/**
-//	 *  The eventbase to set.
-//	 *  @param eventbase The eventbase to set
+//	 *  Get the beliefbase.
+//	 *  @return The beliefbase
 //	 */
-//	public void setEventbase(REventbase eventbase)
+//	public RBeliefbase getBeliefbase()
 //	{
-//		this.eventbase = eventbase;
+//		return beliefbase;
 //	}
-
-	/**
-	 *  Get the goalbase.
-	 *  @return The goalbase
-	 */
-	public RGoalbase getGoalbase()
-	{
-		if(goalbase==null)
-		{
-			goalbase	= new RGoalbase(null);
-		}
-		return goalbase;
-	}
-
-	/**
-	 *  Get the planbase. 
-	 *  @return The planbase
-	 */
-	public RPlanbase getPlanbase()
-	{
-		return planbase;
-	}
-
-	/**
-	 *  Set the planbase.
-	 *  @param planbase The planbase to set
-	 */
-	public void setPlanbase(RPlanbase planbase)
-	{
-		this.planbase = planbase;
-	}
-
-	/**
-	 *  Get the deliberationStrategy.
-	 *  @return The deliberationStrategy
-	 */
-	public IDeliberationStrategy getDeliberationStrategy()
-	{
-		return delstr;
-	}
+//	
+//	/**
+//	 *  The beliefbase to set.
+//	 *  @param beliefbase The beliefbase to set
+//	 */
+//	public void setBeliefbase(RBeliefbase beliefbase)
+//	{
+//		this.beliefbase = beliefbase;
+//	}
+//	
+//	/**
+//	 *  Get the expressionbase.
+//	 *  @return The expressionbase
+//	 */
+//	public RExpressionbase getExpressionbase()
+//	{
+//		return expressionbase;
+//	}
+//
+//	/**
+//	 *  The expressionbase to set.
+//	 *  @param expressionbase The expressionbase to set
+//	 */
+//	public void setExpressionbase(RExpressionbase expressionbase)
+//	{
+//		this.expressionbase = expressionbase;
+//	}
+//
+//	/**
+//	 *  Get the eventbase.
+//	 *  @return The eventbase
+//	 */
+//	public REventbase getEventbase()
+//	{
+//		if(eventbase==null)
+//		{
+//			eventbase	= new REventbase(null);
+//		}
+//		return eventbase;
+//	}
+//
+////	/**
+////	 *  The eventbase to set.
+////	 *  @param eventbase The eventbase to set
+////	 */
+////	public void setEventbase(REventbase eventbase)
+////	{
+////		this.eventbase = eventbase;
+////	}
+//
+//	/**
+//	 *  Get the goalbase.
+//	 *  @return The goalbase
+//	 */
+//	public RGoalbase getGoalbase()
+//	{
+//		if(goalbase==null)
+//		{
+//			goalbase	= new RGoalbase(null);
+//		}
+//		return goalbase;
+//	}
+//
+//	/**
+//	 *  Get the planbase. 
+//	 *  @return The planbase
+//	 */
+//	public RPlanbase getPlanbase()
+//	{
+//		return planbase;
+//	}
+//
+//	/**
+//	 *  Set the planbase.
+//	 *  @param planbase The planbase to set
+//	 */
+//	public void setPlanbase(RPlanbase planbase)
+//	{
+//		this.planbase = planbase;
+//	}
+//
+//	/**
+//	 *  Get the deliberationStrategy.
+//	 *  @return The deliberationStrategy
+//	 */
+//	public IDeliberationStrategy getDeliberationStrategy()
+//	{
+//		return delstr;
+//	}
 
 	/**
 	 *  The deliberationStrategy to set.

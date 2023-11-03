@@ -27,9 +27,6 @@ import jadex.bdiv3.runtime.IGoal;
 import jadex.bdiv3.runtime.IGoal.GoalProcessingState;
 import jadex.bdiv3.runtime.IPlan;
 import jadex.bdiv3.runtime.WaitAbstraction;
-import jadex.bdiv3x.runtime.ICandidateInfo;
-import jadex.bdiv3x.runtime.RInternalEvent;
-import jadex.bdiv3x.runtime.RMessageEvent;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
 import jadex.common.IValueFetcher;
@@ -197,7 +194,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 							{
 								sourceelm	= capa.getGoalReferences().get(sourceelm);
 							}
-							else if((rpe instanceof RMessageEvent || rpe instanceof RInternalEvent) && capa.getEventReferences().containsKey(sourceelm))
+							else if((rpe instanceof RMessageEvent /*|| rpe instanceof RInternalEvent*/) && capa.getEventReferences().containsKey(sourceelm))
 							{
 								sourceelm	= capa.getEventReferences().get(sourceelm);
 							}

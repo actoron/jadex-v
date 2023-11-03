@@ -19,20 +19,16 @@ import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MCapability;
 import jadex.bdiv3.model.MElement;
 import jadex.bdiv3.model.MGoal;
-import jadex.bdiv3.model.MInternalEvent;
 import jadex.bdiv3.model.MMessageEvent;
 import jadex.bdiv3.model.MParameter;
 import jadex.bdiv3.model.MParameterElement;
 import jadex.bdiv3.model.MPlan;
 import jadex.bdiv3.model.MProcessableElement;
 import jadex.bdiv3.model.MTrigger;
+import jadex.bdiv3.runtime.IElement;
 import jadex.bdiv3.runtime.IGoal;
 import jadex.bdiv3.runtime.impl.RPlan.Waitqueue;
-import jadex.bdiv3x.runtime.CapabilityWrapper;
-import jadex.bdiv3x.runtime.ICandidateInfo;
-import jadex.bdiv3x.runtime.IElement;
-import jadex.bdiv3x.runtime.RInternalEvent;
-import jadex.bdiv3x.runtime.RMessageEvent;
+import jadex.common.IValueFetcher;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -41,7 +37,9 @@ import jadex.common.UnparsedExpression;
 import jadex.execution.IExecutionFeature;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
+import jadex.javaparser.SimpleValueFetcher;
 import jadex.micro.MicroAgent;
+import jadex.model.IModelFeature;
 
 /**
  *  The APL is the applicable plan list. It stores the
@@ -343,15 +341,15 @@ public class APL
 							precandidates.addAll(cands);
 						}
 					}
-					else if(element instanceof RInternalEvent && mtrigger!=null)
-					{
-						List<MInternalEvent> ievs = mtrigger.getInternalEvents();
-						if(ievs!=null && ievs.contains(element.getModelElement()))
-						{
-							List<ICandidateInfo> cands = createMPlanCandidates(mplan, element);
-							precandidates.addAll(cands);
-						}
-					}
+//					else if(element instanceof RInternalEvent && mtrigger!=null)
+//					{
+//						List<MInternalEvent> ievs = mtrigger.getInternalEvents();
+//						if(ievs!=null && ievs.contains(element.getModelElement()))
+//						{
+//							List<ICandidateInfo> cands = createMPlanCandidates(mplan, element);
+//							precandidates.addAll(cands);
+//						}
+//					}
 				}
 			}
 		}
@@ -405,15 +403,15 @@ public class APL
 							goalprecandidates.addAll(cands);
 						}
 					}
-					else if(element instanceof RInternalEvent && mtrigger!=null)
-					{
-						List<MInternalEvent> ievs = mtrigger.getInternalEvents();
-						if(ievs!=null && ievs.contains(element.getModelElement()))
-						{
-							List<ICandidateInfo> cands = createMGoalCandidates(mgoal, element);
-							goalprecandidates.addAll(cands);
-						}
-					}
+//					else if(element instanceof RInternalEvent && mtrigger!=null)
+//					{
+//						List<MInternalEvent> ievs = mtrigger.getInternalEvents();
+//						if(ievs!=null && ievs.contains(element.getModelElement()))
+//						{
+//							List<ICandidateInfo> cands = createMGoalCandidates(mgoal, element);
+//							goalprecandidates.addAll(cands);
+//						}
+//					}
 				}
 			}
 		}
@@ -864,8 +862,14 @@ public class APL
 						if(bindingparams==null)
 							bindingparams = new HashMap<String, Object>();
 						IParsedExpression exp = SJavaParser.parseExpression(bo, IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader());
-						Object val = exp.getValue(CapabilityWrapper.getFetcher(bo.getLanguage(),
-							element!=null ? Collections.singletonMap(element.getFetcherName(), (Object)element) : null));
+						IValueFetcher	fet	= IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher();
+						if(element!=null)
+						{
+							SimpleValueFetcher	fetcher	= new SimpleValueFetcher(fet);
+							fetcher.setValues(Collections.singletonMap(element.getFetcherName(), (Object)element));
+							fet	= fetcher;
+						}
+						Object val = exp.getValue(fet);
 						bindingparams.put(param.getName(), val);
 					}
 				}

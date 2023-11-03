@@ -8,6 +8,7 @@ import jadex.bdiv3.runtime.BDIFailureException;
  *  Note: This exception will not be logged by the logger
  *  as it occurs in plans (normal plain failure).
  */
+@SuppressWarnings("serial")
 public class GoalFailureException	extends BDIFailureException
 {
 	//-------- constructors --------
