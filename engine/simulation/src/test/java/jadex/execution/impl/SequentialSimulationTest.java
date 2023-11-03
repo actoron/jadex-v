@@ -1,4 +1,4 @@
-package jadex.mj.feature.execution.impl;
+package jadex.execution.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
