@@ -10,7 +10,6 @@ import java.lang.reflect.Method;
 import jadex.bdiv3.annotation.PlanAPI;
 import jadex.bdiv3.annotation.PlanCapability;
 import jadex.bdiv3.annotation.PlanReason;
-import jadex.bdiv3.features.IBDIAgentFeature;
 import jadex.bdiv3.features.impl.BDIAgentFeature;
 import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MBody;
@@ -18,11 +17,11 @@ import jadex.bdiv3.model.MElement;
 import jadex.bdiv3.model.MPlan;
 import jadex.bdiv3.runtime.ChangeEvent;
 import jadex.bdiv3.runtime.ICapability;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IPojoComponentFeature;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SUtil;
+import jadex.core.IComponent;
+import jadex.micro.MicroAgent;
 import jadex.rules.eca.ChangeInfo;
 
 /**
@@ -56,39 +55,40 @@ public class ClassPlanBody extends AbstractPlanBody
 	/**
 	 *  Create a new plan body.
 	 */
-	public ClassPlanBody(IInternalAccess ia, RPlan rplan, Class<?> body)
+	public ClassPlanBody(RPlan rplan, Class<?> body)
 	{
-		this(ia, rplan, body, null);
+		this(rplan, body, null);
 	}
 	
 	/**
 	 *  Create a new plan body.
 	 */
-	public ClassPlanBody(IInternalAccess ia, RPlan rplan, Object plan)
+	public ClassPlanBody(RPlan rplan, Object plan)
 	{
-		this(ia, rplan, plan.getClass(), plan);
+		this(rplan, plan.getClass(), plan);
 	}
 	
 	/**
 	 *  Create a new plan body.
 	 */
-	public ClassPlanBody(IInternalAccess ia, RPlan rplan, Class<?> body, Object plan)
+	public ClassPlanBody(RPlan rplan, Class<?> body, Object plan)
 	{
-		super(ia, rplan);
+		super(rplan);
 		this.body = body;
 		this.plan = plan;
+		ClassLoader	cl	= IInternalBDIAgentFeature.get().getClassLoader();
 //		Class<?> mbd = body!=null? body: plan.getClass();
 		MBody mbody = ((MPlan)rplan.getModelElement()).getBody();
-		bodymethod = mbody.getBodyMethod(ia.getClassLoader()).getMethod(ia.getClassLoader());
-		MethodInfo mi = mbody.getPassedMethod(ia.getClassLoader());
+		bodymethod = mbody.getBodyMethod(cl).getMethod(cl);
+		MethodInfo mi = mbody.getPassedMethod(cl);
 		if(mi!=null)
-			passedmethod = mi.getMethod(ia.getClassLoader());
-		mi = mbody.getFailedMethod(ia.getClassLoader());
+			passedmethod = mi.getMethod(cl);
+		mi = mbody.getFailedMethod(cl);
 		if(mi!=null)
-			failedmethod = mi.getMethod(ia.getClassLoader());
-		mi = mbody.getAbortedMethod(ia.getClassLoader());
+			failedmethod = mi.getMethod(cl);
+		mi = mbody.getAbortedMethod(cl);
 		if(mi!=null)
-			abortedmethod = mi.getMethod(ia.getClassLoader());
+			abortedmethod = mi.getMethod(cl);
 		
 		if(plan!=null)
 			injectElements();//ia.getComponentFeature(IPojoComponentFeature.class).getPojoAgent());
@@ -112,7 +112,7 @@ public class ClassPlanBody extends AbstractPlanBody
 					for(Constructor<?> c: cons)
 					{
 						Object[] params = BDIAgentFeature
-							.getInjectionValues(c.getParameterTypes(), c.getParameterAnnotations(), rplan.getModelElement(), null, rplan, null, ia);
+							.getInjectionValues(c.getParameterTypes(), c.getParameterAnnotations(), rplan.getModelElement(), null, rplan, null);
 						if(params!=null)
 						{
 							try
@@ -137,14 +137,14 @@ public class ClassPlanBody extends AbstractPlanBody
 			{
 				StringWriter	sw	= new StringWriter();
 				e.printStackTrace(new PrintWriter(sw));
-				ia.getLogger().warning("Plan '"+this+"' threw exception: "+sw);
+				System.err.println("Plan '"+this+"' threw exception: "+sw);
 				throw e;
 			}
 			catch(Exception e)
 			{
 				StringWriter	sw	= new StringWriter();
 				e.printStackTrace(new PrintWriter(sw));
-				ia.getLogger().warning("Plan '"+this+"' threw exception: "+sw);
+				System.err.println("Plan '"+this+"' threw exception: "+sw);
 				throw new RuntimeException(e);
 			}
 		}
@@ -191,19 +191,19 @@ public class ClassPlanBody extends AbstractPlanBody
 
 						// Pojo specific code.
 						Object pojocapa	= capaname!=null
-							? (ia.getFeature0(IInternalBDIAgentFeature.class) instanceof BDIAgentFeature ? ((BDIAgentFeature)ia.getFeature(IBDIAgentFeature.class)).getCapabilityObject(capaname) : null)
-							: (ia.getFeature0(IPojoComponentFeature.class)!=null ? ia.getFeature(IPojoComponentFeature.class).getPojoAgent() : null);
+							? IInternalBDIAgentFeature.get().getCapabilityObject(capaname)
+							: ((MicroAgent)getAgent()).getPojo();
 
 						
-						if(f.getType().isAssignableFrom(IInternalAccess.class))
+						if(f.getType().isAssignableFrom(IComponent.class))
 						{
 							SAccess.setAccessible(f, true);
-							f.set(plan, new CapabilityPojoWrapper(ia, pojocapa, capaname).getAgent());
+							f.set(plan, new CapabilityPojoWrapper(pojocapa, capaname).getAgent());
 						}
 						else if(f.getType().isAssignableFrom(ICapability.class))
 						{
 							SAccess.setAccessible(f, true);
-							f.set(plan, new CapabilityPojoWrapper(ia, pojocapa, capaname));
+							f.set(plan, new CapabilityPojoWrapper(pojocapa, capaname));
 						}
 						else if(pojocapa!=null && f.getType().isAssignableFrom(pojocapa.getClass()))
 						{

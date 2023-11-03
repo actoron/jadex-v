@@ -8,7 +8,7 @@ import jadex.bdiv3.model.IBDIModel;
 import jadex.bdiv3.runtime.IBeliefListener;
 import jadex.bdiv3.runtime.impl.RCapability;
 import jadex.common.IResultCommand;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.RuleSystem;
@@ -65,11 +65,11 @@ public interface IInternalBDIAgentFeature	extends IBDIAgentFeature
 //	 */
 //	public Object[]	getInjectionValues(Class<?>[] ptypes, Annotation[][] anns, MElement melement, ChangeEvent event, RPlan rplan, RProcessableElement rpe, Collection<Object> vs);
 
-//	/**
-//	 *  Get a capability pojo object.
-//	 *  @return The capability pojo.
-//	 */
-//	public Object	getCapabilityObject(String name);
+	/**
+	 *  Get a capability pojo object.
+	 *  @return The capability pojo.
+	 */
+	public Object	getCapabilityObject(String name);
 	
 	/**
 	 *  Add a belief listener.

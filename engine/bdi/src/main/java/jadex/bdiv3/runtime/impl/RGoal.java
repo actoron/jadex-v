@@ -38,7 +38,7 @@ import jadex.bridge.service.types.monitoring.IMonitoringService.PublishTarget;
 import jadex.bridge.service.types.monitoring.MonitoringEvent;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
-import jadex.feature.execution.IExecutionFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;

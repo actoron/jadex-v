@@ -1,17 +1,12 @@
 package jadex.bdiv3.runtime.impl;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-
 import jadex.bdiv3.features.IBDIAgentFeature;
+import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MElement;
 import jadex.bdiv3.runtime.IBeliefListener;
 import jadex.bdiv3.runtime.ICapability;
-import jadex.bdiv3x.features.IBDIXAgentFeature;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.component.RequiredServicesFeatureAdapter;
-import jadex.bytecode.ProxyFactory;
+import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 
 /**
  *  Wrapper providing BDI methods to the user.
@@ -47,23 +42,8 @@ public class CapabilityPojoWrapper implements ICapability
 	public <T> void addBeliefListener(String name, final IBeliefListener<T> listener)
 	{
 		name = capa!=null ? capa+MElement.CAPABILITY_SEPARATOR+name: name;
-		IBDIAgentFeature bdif = agent.getFeature0(IBDIAgentFeature.class);
-		if(bdif!=null)
-		{
-			bdif.addBeliefListener(name, listener);
-		}
-		else
-		{
-			IBDIXAgentFeature bdixf = agent.getFeature0(IBDIXAgentFeature.class);
-			if(bdixf.getBeliefbase().containsBelief(name))
-			{
-				bdixf.getBeliefbase().getBelief(name).addBeliefListener(listener);
-			}
-			else
-			{
-				bdixf.getBeliefbase().getBeliefSet(name).addBeliefSetListener(listener);
-			}
-		}
+		IBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
+		bdif.addBeliefListener(name, listener);
 	}
 	
 	/**
@@ -74,23 +54,8 @@ public class CapabilityPojoWrapper implements ICapability
 	public <T> void removeBeliefListener(String name, IBeliefListener<T> listener)
 	{
 		name = capa!=null ? capa+MElement.CAPABILITY_SEPARATOR+name: name;
-		IBDIAgentFeature bdif = agent.getFeature0(IBDIAgentFeature.class);
-		if(bdif!=null)
-		{
-			bdif.removeBeliefListener(capa!=null ? capa+MElement.CAPABILITY_SEPARATOR+name : name, listener);
-		}
-		else
-		{
-			IBDIXAgentFeature bdixf = agent.getFeature0(IBDIXAgentFeature.class);
-			if(bdixf.getBeliefbase().containsBelief(name))
-			{
-				bdixf.getBeliefbase().getBelief(name).removeBeliefListener(listener);
-			}
-			else
-			{
-				bdixf.getBeliefbase().getBeliefSet(name).removeBeliefSetListener(listener);
-			}
-		}
+		IBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
+		bdif.removeBeliefListener(capa!=null ? capa+MElement.CAPABILITY_SEPARATOR+name : name, listener);
 	}
 
 	/**
@@ -98,61 +63,40 @@ public class CapabilityPojoWrapper implements ICapability
 	 *  
 	 *  Overridden to save the capability context within the used internal access.
 	 */
-	public IInternalAccess	getAgent()
+	public IComponent	getAgent()
 	{
-//		return new InternalAccessAdapter(agent)
+		return IExecutionFeature.get().getComponent();
+//		return (IComponent)ProxyFactory.newProxyInstance(agent.getClassLoader(), new Class[]{IComponent.class}, new InvocationHandler()
 //		{
-//			public <T> T getFeature(Class<? extends T> type)
+//			@Override
+//			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
 //			{
-//				if(type.equals(IRequiredServicesFeature.class))
+////				System.out.println(method.getName()+" "+method.getReturnType()+" "+Arrays.toString(args));
+//				
+//				if("getFeature".equals(method.getName()))
 //				{
-//					return (T)new RequiredServicesFeatureAdapter((IRequiredServicesFeature)super.getFeature(type))
+//					Class<?> type = (Class<?>)args[0];
+//					if(type.equals(IRequiredServicesFeature.class))
 //					{
-//						public String rename(String name)
+//						return new RequiredServicesFeatureAdapter((IRequiredServicesFeature)agent.getFeature(type))
 //						{
-//							return capa!=null? capa+MElement.CAPABILITY_SEPARATOR+name: name;
-//						}
-//					};
+//							public String rename(String name)
+//							{
+//								return capa!=null? capa+MElement.CAPABILITY_SEPARATOR+name: name;
+//							}
+//						};
+//					}
+//					else
+//					{
+//						return agent.getFeature(type);
+//					}
 //				}
 //				else
 //				{
-//					return super.getFeature(type);
+//					return method.invoke(agent, args);
 //				}
 //			}
-//		};
-		
-		return (IInternalAccess)ProxyFactory.newProxyInstance(agent.getClassLoader(), new Class[]{IInternalAccess.class}, new InvocationHandler()
-		{
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
-			{
-//				System.out.println(method.getName()+" "+method.getReturnType()+" "+Arrays.toString(args));
-				
-				if("getFeature".equals(method.getName()))
-				{
-					Class<?> type = (Class<?>)args[0];
-					if(type.equals(IRequiredServicesFeature.class))
-					{
-						return new RequiredServicesFeatureAdapter((IRequiredServicesFeature)agent.getFeature(type))
-						{
-							public String rename(String name)
-							{
-								return capa!=null? capa+MElement.CAPABILITY_SEPARATOR+name: name;
-							}
-						};
-					}
-					else
-					{
-						return agent.getFeature(type);
-					}
-				}
-				else
-				{
-					return method.invoke(agent, args);
-				}
-			}
-		});
-//		return agent;
+//		});
 	}
 	
 //	/**

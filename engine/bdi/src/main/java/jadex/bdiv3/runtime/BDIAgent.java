@@ -4,7 +4,7 @@ import java.util.List;
 
 import jadex.bdiv3.features.impl.BDIAgentFeature;
 import jadex.core.IComponent;
-import jadex.mj.micro.annotation.Agent;
+import jadex.micro.annotation.Agent;
 
 /**
  *  Base class for non-bytecode-enhanced BDI agents.

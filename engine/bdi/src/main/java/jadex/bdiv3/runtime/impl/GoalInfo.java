@@ -5,7 +5,7 @@ import java.util.List;
 
 import jadex.bdiv3.model.MGoal;
 import jadex.bdiv3x.runtime.IParameter;
-import jadex.mj.micro.MicroAgent;
+import jadex.micro.MicroAgent;
 
 
 /**

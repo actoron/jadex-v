@@ -3,10 +3,8 @@ package jadex.bdiv3.runtime.impl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import jadex.bdiv3.features.IBDIAgentFeature;
-import jadex.bdiv3.features.impl.BDIAgentFeature;
+import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.MElement;
-import jadex.bridge.IInternalAccess;
 import jadex.common.SAccess;
 
 /**
@@ -27,14 +25,14 @@ public class MethodPlanBody extends AbstractPlanBody
 	/**
 	 *  Create a new plan body.
 	 */
-	public MethodPlanBody(IInternalAccess ia, RPlan rplan, Method body)
+	public MethodPlanBody(RPlan rplan, Method body)
 	{
-		super(ia, rplan);
+		super(rplan);
 		this.body = body;
 		String	pname	= rplan.getModelElement().getName();
 		String	capaname	= pname.indexOf(MElement.CAPABILITY_SEPARATOR)==-1
 			? null : pname.substring(0, pname.lastIndexOf(MElement.CAPABILITY_SEPARATOR));
-		this.agent	= ((BDIAgentFeature)ia.getFeature(IBDIAgentFeature.class)).getCapabilityObject(capaname);
+		this.agent	= IInternalBDIAgentFeature.get().getCapabilityObject(capaname);
 	}
 	
 	//-------- methods --------

@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import jadex.bdiv3.model.MBelief;
-import jadex.bridge.IInternalAccess;
 import jadex.common.SReflect;
 
 
@@ -119,7 +118,7 @@ public class BeliefInfo	extends AbstractBDIInfo
 	/**
 	 *  Create an info object for a belief.
 	 */
-	public static BeliefInfo	createBeliefInfo(IInternalAccess agent, MBelief mbel, ClassLoader cl)
+	public static BeliefInfo	createBeliefInfo(MBelief mbel, ClassLoader cl)
 	{
 		String id = mbel.getName();
 //		String	id	= belief.toString();
@@ -140,7 +139,7 @@ public class BeliefInfo	extends AbstractBDIInfo
 		String kind	= "belief"; 
 		String type	= RCapability.getBeautifiedName(mbel.getName());
 		String valuetype	= SReflect.getInnerClassName(mbel.getType(cl));
-		Object value = mbel.getValue(agent);
+		Object value = mbel.getValue();
 		
 		if(SReflect.isIterable(value))
 		{

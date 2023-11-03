@@ -19,7 +19,7 @@ import jadex.classreader.SClassReader.ClassFileInfo;
 import jadex.common.FileFilter;
 import jadex.common.IFilter;
 import jadex.common.SUtil;
-import jadex.mj.micro.annotation.Agent;
+import jadex.micro.annotation.Agent;
 
 /**
  *  Helper class to enhance BDI classes at buildtime.

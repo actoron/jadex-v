@@ -26,8 +26,8 @@ import jadex.common.UnparsedExpression;
 import jadex.javaparser.IMapAccess;
 import jadex.javaparser.SJavaParser;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.mj.micro.MicroAgent;
-import jadex.mj.model.IModelFeature;
+import jadex.micro.MicroAgent;
+import jadex.model.IModelFeature;
 import jadex.rules.eca.EventType;
 
 /**
