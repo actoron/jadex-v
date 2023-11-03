@@ -1,6 +1,6 @@
 package jadex.communication;
 
-import jadex.mj.core.ComponentIdentifier;
+import jadex.core.ComponentIdentifier;
 
 /**
  *  Interface for sending messages to components outside the current JVM.

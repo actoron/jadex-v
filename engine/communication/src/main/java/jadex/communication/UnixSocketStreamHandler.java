@@ -3,8 +3,9 @@ package jadex.communication;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 
+import jadex.collection.LeaseTimeMap;
 import jadex.collection.RwMapWrapper;
-import jadex.mj.core.ComponentIdentifier;
+import jadex.core.ComponentIdentifier;
 
 public class UnixSocketStreamHandler implements IMessageSender
 {
@@ -38,7 +39,7 @@ public class UnixSocketStreamHandler implements IMessageSender
 	 */
 	private UnixSocketStreamHandler()
 	{
-		 connectioncache = new RwMapWrapper<>(new HashMap<>());
+		 connectioncache = new RwMapWrapper<>(new LeaseTimeMap<>(900000, null, false, false, false));
 	}
 	
 	/**
@@ -51,4 +52,5 @@ public class UnixSocketStreamHandler implements IMessageSender
 	{
 		
 	}
+	
 }
