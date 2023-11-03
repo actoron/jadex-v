@@ -10,7 +10,6 @@ import java.util.Map;
 import jadex.bdiv3.actions.AdoptGoalAction;
 import jadex.bdiv3.actions.ExecutePlanStepAction;
 import jadex.bdiv3.annotation.Plan;
-import jadex.bdiv3.features.impl.BDIAgentFeature;
 import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.IBDIModel;
 import jadex.bdiv3.model.MBody;
@@ -31,17 +30,6 @@ import jadex.bdiv3.runtime.WaitAbstraction;
 import jadex.bdiv3x.runtime.ICandidateInfo;
 import jadex.bdiv3x.runtime.RInternalEvent;
 import jadex.bdiv3x.runtime.RMessageEvent;
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.component.IMonitoringComponentFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.search.ServiceQuery;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.bridge.service.types.clock.ITimedObject;
-import jadex.bridge.service.types.clock.ITimer;
-import jadex.bridge.service.types.monitoring.IMonitoringEvent;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.bridge.service.types.monitoring.IMonitoringService.PublishTarget;
-import jadex.bridge.service.types.monitoring.MonitoringEvent;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
 import jadex.common.IValueFetcher;
@@ -49,15 +37,14 @@ import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.common.Tuple2;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.ExecutionFeature.ComponentSuspendable;
-import jadex.future.DefaultResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.future.ISuspendable;
 import jadex.future.ITerminableFuture;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.micro.annotation.Agent;
+import jadex.micro.MicroAgent;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
@@ -202,7 +189,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 					{
 						for(String mapping: mappings)
 						{
-							MCapability	capa	= ((IBDIModel)ia.getModel()).getCapability();
+							MCapability	capa	= IInternalBDIAgentFeature.get().getBDIModel().getCapability();
 							String sourceelm = mapping.substring(0, mapping.indexOf("."));
 							String sourcepara = mapping.substring(mapping.indexOf(".")+1);
 							
@@ -235,17 +222,18 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			}
 		}
 		
-		final RPlan rplan = new RPlan(mplan, candidate, reason, ia, mappingvals, config); //mappingvals==null? new RPlan(mplan, candidate, ia): 
+		final RPlan rplan = new RPlan(mplan, candidate, reason, mappingvals, config); //mappingvals==null? new RPlan(mplan, candidate, ia): 
 //		rplan.setInternalAccess(ia);
 		rplan.setDispatchedElement(reason);
 		
 		MBody mbody = mplan.getBody();
 		
 		IPlanBody body = null;
+		MicroAgent	ia	= ((MicroAgent)IExecutionFeature.get().getComponent());
 
 		if(candidate.getRawCandidate().getClass().isAnnotationPresent(Plan.class))
 		{
-			body = new ClassPlanBody(ia, rplan, candidate.getRawCandidate());
+			body = new ClassPlanBody(rplan, candidate.getRawCandidate());
 		}
 		else if(mbody.getClazz()!=null && mbody.getServiceName()==null)
 		{
@@ -255,12 +243,12 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			{
 				if(clazz.isAnnotationPresent(Plan.class))
 				{
-					body = new ClassPlanBody(ia, rplan, clazz0);
+					body = new ClassPlanBody(rplan, clazz0);
 				}
-				else if(clazz.isAnnotationPresent(Agent.class))
-				{
-					body = new ComponentPlanBody(clazz0.getName()+".class", ia, rplan);
-				}
+//				else if(clazz.isAnnotationPresent(Agent.class))
+//				{
+//					body = new ComponentPlanBody(clazz0.getName()+".class", rplan);
+//				}
 				else
 				{
 					clazz	= clazz.getSuperclass();
@@ -275,34 +263,34 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		else if(mbody.getMethod()!=null)
 		{
 			Method met = mbody.getMethod().getMethod(ia.getClassLoader());
-			body = new MethodPlanBody(ia, rplan, met);
+			body = new MethodPlanBody(rplan, met);
 		}
-		else if(mbody.getServiceName()!=null)
-		{
-			try
-			{
-				IServiceParameterMapper<Object> mapper;
-				if(mbody.getMapperClass()!=null)
-				{
-					mapper = (IServiceParameterMapper<Object>)mbody.getMapperClass().getType(ia.getClassLoader()).newInstance();
-				}
-				else
-				{
-//					final BDIAgentInterpreter ip = (BDIAgentInterpreter)((BDIAgent)ia).getInterpreter();
-					mapper = new DefaultAnnotationMapper(mbody.getServiceName(), ia);
-				}
-				Object plan = new ServiceCallPlan(ia, mbody.getServiceName(), mbody.getServiceMethodName(), mapper, rplan);
-				body = new ClassPlanBody(ia, rplan, plan);
-			}
-			catch(Exception e)
-			{
-				throw new RuntimeException(e);
-			}
-		}
-		else if(mbody.getComponent()!=null)
-		{
-			body	= new ComponentPlanBody(mbody.getComponent(), ia, rplan);
-		}
+//		else if(mbody.getServiceName()!=null)
+//		{
+//			try
+//			{
+//				IServiceParameterMapper<Object> mapper;
+//				if(mbody.getMapperClass()!=null)
+//				{
+//					mapper = (IServiceParameterMapper<Object>)mbody.getMapperClass().getType(ia.getClassLoader()).newInstance();
+//				}
+//				else
+//				{
+////					final BDIAgentInterpreter ip = (BDIAgentInterpreter)((BDIAgent)ia).getInterpreter();
+//					mapper = new DefaultAnnotationMapper(mbody.getServiceName(), ia);
+//				}
+//				Object plan = new ServiceCallPlan(ia, mbody.getServiceName(), mbody.getServiceMethodName(), mapper, rplan);
+//				body = new ClassPlanBody(ia, rplan, plan);
+//			}
+//			catch(Exception e)
+//			{
+//				throw new RuntimeException(e);
+//			}
+//		}
+//		else if(mbody.getComponent()!=null)
+//		{
+//			body	= new ComponentPlanBody(mbody.getComponent(), ia, rplan);
+//		}
 		
 		if(body==null)
 			throw new RuntimeException("Plan body not created: "+rplan);
@@ -419,9 +407,9 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	/**
 	 *  Create a new plan.
 	 */
-	public RPlan(MPlan mplan, ICandidateInfo candidate, Object reason, IInternalAccess agent, Map<String, Object> mappingvals, MConfigParameterElement config)
+	public RPlan(MPlan mplan, ICandidateInfo candidate, Object reason, Map<String, Object> mappingvals, MConfigParameterElement config)
 	{
-		super(mplan, agent, mappingvals, config);
+		super(mplan, mappingvals, config);
 		this.candidate = candidate;
 		this.reason = reason;
 		setLifecycleState(PlanLifecycleState.NEW);
@@ -477,8 +465,8 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 //		}
 		this.processingstate = processingstate;
 		
-		if(!PlanLifecycleState.NEW.equals(lifecyclestate))
-			publishToolPlanEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION);
+//		if(!PlanLifecycleState.NEW.equals(lifecyclestate))
+//			publishToolPlanEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION);
 	}
 
 	/**
@@ -514,20 +502,20 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		if(PlanLifecycleState.BODY.equals(lifecyclestate))
 		{
 			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.PLANADOPTED, getModelElement().getName()}), this));
-			publishToolPlanEvent(IMonitoringEvent.EVENT_TYPE_CREATION);
+//			publishToolPlanEvent(IMonitoringEvent.EVENT_TYPE_CREATION);
 		}
 		else if(PlanLifecycleState.PASSED.equals(lifecyclestate) 
 			|| PlanLifecycleState.FAILED.equals(lifecyclestate) 
 			|| PlanLifecycleState.ABORTED.equals(lifecyclestate))
 		{
 			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.PLANFINISHED, getModelElement().getName()}), this));
-			publishToolPlanEvent(IMonitoringEvent.EVENT_TYPE_DISPOSAL);
+//			publishToolPlanEvent(IMonitoringEvent.EVENT_TYPE_DISPOSAL);
 		}
-		else
-		{
-			if(!PlanLifecycleState.NEW.equals(lifecyclestate))
-				publishToolPlanEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION);
-		}
+//		else
+//		{
+//			if(!PlanLifecycleState.NEW.equals(lifecyclestate))
+//				publishToolPlanEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION);
+//		}
 		
 		if(PlanLifecycleState.PASSED.equals(lifecyclestate)
 			|| PlanLifecycleState.FAILED.equals(lifecyclestate)
@@ -1090,17 +1078,14 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	{
 		//System.out.println("before wait: "+delay+" "+agent.getId());
 		
-		final Future<Void> ret = new BDIFuture<Void>();
+//		final Future<Void> ret = new BDIFuture<Void>();
+		final Future<Void> ret = new Future<Void>();
 		
 		final ResumeCommand<Void> rescom = new ResumeCommand<Void>(ret, true);
 //		setResumeCommand(rescom);
 		addResumeCommand(rescom);
 
-		getAgent().getFeature(IExecutionFeature.class).waitForDelay(delay, ia ->
-		{
-			rescom.execute(null);
-			return IFuture.DONE;
-		}, false);
+		getAgent().getFeature(IExecutionFeature.class).waitForDelay(delay).then(v -> rescom.execute(null));
 		
 		/*getAgent().getFeature(IExecutionFeature.class).waitForDelay(delay, new IComponentStep<Void>()
 		{
@@ -1144,77 +1129,56 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	{
 //		final BDIAgentInterpreter ip = (BDIAgentInterpreter)((BDIAgent)ia).getInterpreter();
 
-		final Future<E> ret = new BDIFuture<E>();
+//		final Future<E> ret = new BDIFuture<E>();
+		final Future<E> ret = new Future<E>();
 		
 		IBDIModel bdim = getAgent().getFeature(IInternalBDIAgentFeature.class).getBDIModel();
 		final MGoal mgoal = bdim.getCapability().getGoal(goal.getClass().getName());
 		if(mgoal==null)
 			throw new RuntimeException("Unknown goal type: "+goal);
-		final RGoal rgoal = new RGoal(getAgent(), mgoal, goal, null, null, null, null);
+		final RGoal rgoal = new RGoal(mgoal, goal, null, null, null, null);
 		rgoal.setParent(this);
 		
 		final ResumeCommand<E> rescom = new ResumeCommand<E>(ret, false);
 //		setResumeCommand(rescom);
 		addResumeCommand(rescom);
-		
-		final	PlanLifecycleState lcs	= getLifecycleState();
-		
-		IFuture<ITimer> cont = createTimer(timeout, getAgent(), rescom);
-		cont.addResultListener(new DefaultResultListener<ITimer>()
+		addTimer(timeout, rescom);
+
+		rgoal.addListener(new IResultListener<Void>()
 		{
-			public void resultAvailable(final ITimer timer)
+			public void resultAvailable(Void result)
 			{
-				if(lcs.equals(getLifecycleState()))
+				if(getException()==null)
 				{
-					if(timer!=null)
-						rescom.setTimer(timer);
+					Object o = RGoal.getGoalResult(rgoal, ((MicroAgent)getAgent()).getClassLoader());
+					if(o==null)
+						o = goal;
+					setDispatchedElement(o);
 					
-	//				rgoal.addGoalListener(new TimeoutResultListener<Void>(
-	//					timeout, getAgent().getExternalAccess(), new IResultListener<Void>()
-					rgoal.addListener(new IResultListener<Void>()
+					// Non-maintain goal -> remove subgoal.
+					if(rgoal.isFinished())
 					{
-						public void resultAvailable(Void result)
-						{
-							if(getException()==null)
-							{
-								Object o = RGoal.getGoalResult(rgoal, getAgent().getClassLoader());
-								if(o==null)
-									o = goal;
-								setDispatchedElement(o);
-								
-								// Non-maintain goal -> remove subgoal.
-								if(rgoal.isFinished())
-								{
-									removeSubgoal(rgoal);
-								}
-								
-								// else keep maintain goal until plan is finished
-								// todo: allow explicit removal / redispatch
-							}
-							
-							rescom.execute(null);
-						}
-						
-						public void exceptionOccurred(Exception exception)
-						{
-//							if(rescom.equals(getResumeCommand()))
-							{
-//								setException(exception);
-//								RPlan.executePlan(RPlan.this, getAgent(), rescom);
-								rescom.execute(new ResumeCommandArgs(null, null, exception));
-								removeSubgoal(rgoal);
-							}
-						}
-					});
-	
-					addSubgoal(rgoal);
+						removeSubgoal(rgoal);
+					}
 					
-					//AdoptGoalAction.adoptGoal(getAgent(), rgoal);
-					getAgent().scheduleStep(new AdoptGoalAction(rgoal))
-					.catchEx(ex -> ex.printStackTrace());
+					// else keep maintain goal until plan is finished
+					// todo: allow explicit removal / redispatch
 				}
+				
+				rescom.execute(null);
+			}
+			
+			public void exceptionOccurred(Exception exception)
+			{
+				rescom.execute(new ResumeCommandArgs(null, null, exception));
+				removeSubgoal(rgoal);
 			}
 		});
+	
+		addSubgoal(rgoal);
+		
+		//AdoptGoalAction.adoptGoal(getAgent(), rgoal);
+		IExecutionFeature.get().scheduleStep(new AdoptGoalAction(rgoal));
 		
 		return ret;
 	}
@@ -1317,43 +1281,30 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 //			final ResumeCommand<Object> rescom = new ResumeCommand<Object>(ret, rulename, false);
 //			setResumeCommand(rescom);
 			addResumeCommand(rescom);
-			
-			IFuture<ITimer> cont = createTimer(timeout, getAgent(), rescom);
-			cont.addResultListener(new DefaultResultListener<ITimer>()
+			addTimer(timeout, rescom);
+					
+			Rule<Void> rule = new Rule<Void>(rulename, filter==null? ICondition.TRUE_CONDITION: new ICondition()
 			{
-				public void resultAvailable(final ITimer timer)
+				public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
 				{
-					if(timer!=null)
-						rescom.setTimer(timer);
-					
-					Rule<Void> rule = new Rule<Void>(rulename, filter==null? ICondition.TRUE_CONDITION: new ICondition()
-					{
-						public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
-						{
-							return new Future<Tuple2<Boolean, Object>>(filter.filter((ChangeInfo<?>)event.getContent())? ICondition.TRUE: ICondition.FALSE);
-						}
-					}, new IAction<Void>()
-					{
-						public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-						{
-//							if(rescom.equals(getResumeCommand()))
-//							{
-								setDispatchedElement(new ChangeEvent(event));
-								rescom.execute(null);
-//								RPlan.executePlan(RPlan.this, getAgent(), rescom);
-//							}
-							return IFuture.DONE;
-						}
-					});
-					
-//					rule.addEvent(et);
-					rule.setEvents(ets);
-					getRuleSystem().getRulebase().addRule(rule);
+					return new Future<Tuple2<Boolean, Object>>(filter.filter((ChangeInfo<?>)event.getContent())? ICondition.TRUE: ICondition.FALSE);
+				}
+			}, new IAction<Void>()
+			{
+				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+				{
+					setDispatchedElement(new ChangeEvent(event));
+					rescom.execute(null);
+					return IFuture.DONE;
 				}
 			});
+					
+			rule.setEvents(ets);
+			getRuleSystem().getRulebase().addRule(rule);
 		}
 		
-		Future<ChangeInfo<?>> fut = new BDIFuture<ChangeInfo<?>>();
+//		Future<ChangeInfo<?>> fut = new BDIFuture<ChangeInfo<?>>();
+		Future<ChangeInfo<?>> fut = new Future<ChangeInfo<?>>();
 		ret.addResultListener(new DelegationResultListener<ChangeInfo<?>>(fut)
 		{
 			public void customResultAvailable(ChangeInfo<?> result)
@@ -1481,7 +1432,8 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	 */
 	public IFuture<Void> waitForCondition(final ICondition cond, final String[] events, long timeout)
 	{
-		Future<Void> ret = new BDIFuture<Void>();
+//		final Future<E> ret = new BDIFuture<E>();
+		final Future<Void> ret = new Future<Void>();
 
 //		final BDIAgentInterpreter ip = (BDIAgentInterpreter)((BDIAgent)getAgent()).getInterpreter();
 		
@@ -1490,103 +1442,63 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		final ResumeCommand<Void> rescom = new ResumeCommand<Void>(ret, rulename, false);
 //			setResumeCommand(rescom);
 		addResumeCommand(rescom);
+		addTimer(timeout, rescom);
 		
-		IFuture<ITimer> cont = createTimer(timeout, getAgent(), rescom);
-		cont.addResultListener(new DefaultResultListener<ITimer>()
+		Rule<Void> rule = new Rule<Void>(rulename, cond!=null? cond: ICondition.TRUE_CONDITION, new IAction<Void>()
 		{
-			public void resultAvailable(final ITimer timer)
+			public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 			{
-				if(timer!=null)
-					rescom.setTimer(timer);
-				
-				Rule<Void> rule = new Rule<Void>(rulename, cond!=null? cond: ICondition.TRUE_CONDITION, new IAction<Void>()
-				{
-					public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-					{
-//						if(rescom.equals(getResumeCommand()))
-//						{
-							setDispatchedElement(new ChangeEvent(event));
-							rescom.execute(null);
-//							RPlan.executePlan(RPlan.this, getAgent(), rescom);
-//						}
-						return IFuture.DONE;
-					}
-				});
-				for(String ev: events)
-				{
-					rule.addEvent(new EventType(ev));
-				}
-				getRuleSystem().getRulebase().addRule(rule);
+	//						if(rescom.equals(getResumeCommand()))
+	//						{
+					setDispatchedElement(new ChangeEvent(event));
+					rescom.execute(null);
+	//							RPlan.executePlan(RPlan.this, getAgent(), rescom);
+	//						}
+				return IFuture.DONE;
 			}
 		});
+		for(String ev: events)
+		{
+			rule.addEvent(new EventType(ev));
+		}
+		getRuleSystem().getRulebase().addRule(rule);
 		return ret;
 	}
 	
 	
+	public static class RescomTimer<T>	implements Runnable
+	{
+		ResumeCommand<T>	rescom;
+		boolean cancelled;
+		
+		public RescomTimer(ResumeCommand<T> rescom)
+		{
+			this.rescom	= rescom;
+		}
+		
+		public void	run()
+		{
+			if(!cancelled)
+			{
+				rescom.execute(new ResumeCommandArgs(null, null, new TimeoutException()));
+			}
+		}
+		
+		public void	cancel()
+		{
+			// TODO support removal of timer entries in exe feature?
+			cancelled	= true;
+		}
+	}
 	
 	/**
-	 * 
+	 *  Add a timer to the resume command if timeout is set.
 	 */
-	public IFuture<ITimer> createTimer(long timeout, final IInternalAccess ia, final ICommand<ResumeCommandArgs> rescom)
+	public <T> void	addTimer(long timeout, ResumeCommand<T> rescom)
 	{
-		final Future<ITimer> ret = new Future<ITimer>();
-		if(timeout>-1)
-		{
-			IClockService	cs	= ia.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IClockService.class));
-			ITimedObject to	= new ITimedObject()
-			{
-				public void timeEventOccurred(long currenttime)
-				{
-//					if(rescom.equals(getResumeCommand()))
-//					{
-//						setException(new TimeoutException());
-						rescom.execute(new ResumeCommandArgs(null, null, new TimeoutException()));
-//						RPlan.executePlan(RPlan.this, ia, rescom);
-//					}
-				}
-			};
-			
-			ITimer timer = cs.createTimer(timeout, to);
-			ret.setResult(timer);
-			
-//			IFuture<ITimer> tfut = ia.getComponentFeature(IExecutionFeature.class).waitForDelay(timeout, new IComponentStep<Void>()
-//			{
-//				public IFuture<Void> execute(IInternalAccess ia)
-//				{
-////					if(rescom.equals(getResumeCommand()))
-//					{
-//						setException(new TimeoutException());
-//						RPlan.executePlan(RPlan.this, ia, rescom);
-//					}
-//					return IFuture.DONE;
-//				}
-//			});
-			
-//			IFuture<ITimer> tfut = ((BDIAgent)ia).waitFor(timeout, new IComponentStep<Void>()
-//			{
-//				public IFuture<Void> execute(IInternalAccess ia)
-//				{
-////					if(rescom.equals(getResumeCommand()))
-//					{
-//						setException(new TimeoutException());
-//						RPlan.executePlan(RPlan.this, ia, rescom);
-//					}
-//					return IFuture.DONE;
-//				}
-//			});
-//			tfut.addResultListener(new DefaultResultListener<ITimer>()
-//			{
-//				public void resultAvailable(ITimer result)
-//				{
-//					ret.setResult(result);
-//				}
-//			});
-		}
-		else
-		{
-			ret.setResult(null);
-		}
-		return ret;
+		RescomTimer<T>	ret =  new RescomTimer<>(rescom);
+		rescom.setTimer(ret);
+		IExecutionFeature.get().waitForDelay(timeout).then(v -> ret.run());
 	}
 	
 //	/**
@@ -1668,7 +1580,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	public void	beforeBlock()
 	{
 		testBodyAborted();
-		ComponentSuspendable sus = ComponentSuspendable.COMSUPS.get();
+		ISuspendable sus = ISuspendable.SUSPENDABLE.get();
 		if(sus!=null && !RPlan.PlanProcessingState.WAITING.equals(getProcessingState()))
 		{
 			final ResumeCommand<Void> rescom = new ResumeCommand<Void>(sus, false);
@@ -1727,58 +1639,17 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		}
 	}
 
-	public static class ResumeCommandArgs
-	{
-		protected Boolean notify;
-		
-		protected Boolean abort;
-		
-		protected Exception exception;
-		
-		public ResumeCommandArgs(Boolean notify, Boolean abort, Exception exception)
-		{
-			this.notify = notify;
-			this.abort = abort;
-			this.exception = exception;
-		}
-
-		/**
-		 *  Get the notify.
-		 *  @return the notify
-		 */
-		public Boolean getNotify()
-		{
-			return notify;
-		}
-
-		/**
-		 *  Get the abort.
-		 *  @return the abort
-		 */
-		public Boolean getAbort()
-		{
-			return abort;
-		}
-
-		/**
-		 *  Get the exception.
-		 *  @return the exception
-		 */
-		public Exception getException()
-		{
-			return exception;
-		}
-	}
+	public record ResumeCommandArgs(Boolean donotify, Boolean abort, Exception exception) {}
 	
 	/**
 	 * 
 	 */
 	public class ResumeCommand<T> implements ICommand<ResumeCommandArgs>
 	{
-		protected ComponentSuspendable sus;
+		protected ISuspendable sus;
 		protected Future<T> waitfuture;
 		protected String rulename;
-		protected ITimer timer;
+		protected RescomTimer timer;
 		protected boolean isvoid;
 		
 		public ResumeCommand(Future<T> waitfuture, boolean isvoid)
@@ -1794,14 +1665,14 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			this.isvoid = isvoid;
 		}
 		
-		public ResumeCommand(ComponentSuspendable sus, boolean isvoid)
+		public ResumeCommand(ISuspendable sus, boolean isvoid)
 		{
 			this.sus = sus;
 			this.waitfuture = (Future<T>)sus.getFuture();
 			this.isvoid = isvoid;
 		}
 		
-		public void setTimer(ITimer timer)
+		public void setTimer(RescomTimer timer)
 		{
 			this.timer = timer;
 		}
@@ -1816,7 +1687,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 
 //			System.out.println("exe: "+this+" "+RPlan.this.getId()+" "+this);
 
-			Exception ex = args!=null? args.getException(): null;
+			Exception ex = args!=null? args.exception(): null;
 			
 			if(rulename!=null)
 			{
@@ -1830,8 +1701,8 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			}
 			waitabstraction = null;
 			
-			boolean notify = args!=null && args.getNotify()!=null? args.getNotify().booleanValue(): true;
-			boolean abort = args!=null && args.getAbort()!=null? args.getAbort().booleanValue(): sus!=null;
+			boolean notify = args!=null && args.donotify()!=null? args.donotify().booleanValue(): true;
+			boolean abort = args!=null && args.abort()!=null? args.abort().booleanValue(): sus!=null;
 			
 			if(notify && RPlan.PlanProcessingState.WAITING.equals(getProcessingState()))
 			{
@@ -1981,31 +1852,31 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		this.atomic = atomic;
 	}
 
-	/**
-	 *  Publish a tool event.
-	 */
-	public void publishToolPlanEvent(String evtype)
-	{
-		if(getAgent().getFeature0(IMonitoringComponentFeature.class)!=null 
-			&& getAgent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOSUBSCRIBERS, PublishEventLevel.FINE))
-		{
-			long time = System.currentTimeMillis();//getClockService().getTime();
-			MonitoringEvent mev = new MonitoringEvent();
-			mev.setSourceIdentifier(getAgent().getId());
-			mev.setTime(time);
-			
-			PlanInfo info = PlanInfo.createPlanInfo(this);
-			mev.setType(evtype+"."+IMonitoringEvent.SOURCE_CATEGORY_PLAN);
-//			mev.setProperty("sourcename", element.toString());
-			mev.setProperty("sourcetype", info.getType());
-			mev.setProperty("details", info);
-			mev.setLevel(PublishEventLevel.FINE);
-			
-			BDIAgentFeature.setSemanticEffect(true, mev);
-			
-			getAgent().getFeature(IMonitoringComponentFeature.class).publishEvent(mev, PublishTarget.TOSUBSCRIBERS);
-		}
-	}
+//	/**
+//	 *  Publish a tool event.
+//	 */
+//	public void publishToolPlanEvent(String evtype)
+//	{
+//		if(getAgent().getFeature0(IMonitoringComponentFeature.class)!=null 
+//			&& getAgent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOSUBSCRIBERS, PublishEventLevel.FINE))
+//		{
+//			long time = System.currentTimeMillis();//getClockService().getTime();
+//			MonitoringEvent mev = new MonitoringEvent();
+//			mev.setSourceIdentifier(getAgent().getId());
+//			mev.setTime(time);
+//			
+//			PlanInfo info = PlanInfo.createPlanInfo(this);
+//			mev.setType(evtype+"."+IMonitoringEvent.SOURCE_CATEGORY_PLAN);
+////			mev.setProperty("sourcename", element.toString());
+//			mev.setProperty("sourcetype", info.getType());
+//			mev.setProperty("details", info);
+//			mev.setLevel(PublishEventLevel.FINE);
+//			
+//			BDIAgentFeature.setSemanticEffect(true, mev);
+//			
+//			getAgent().getFeature(IMonitoringComponentFeature.class).publishEvent(mev, PublishTarget.TOSUBSCRIBERS);
+//		}
+//	}
 	
 	/**
 	 *  Set up a rule for the waitqueue to signal to what kinds of events this plan
@@ -2098,21 +1969,21 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		IExecutionFeature.get().scheduleStep(new ExecutePlanStepAction(this));
 	}
 
-	/**
-	 *  Future that overrides addResultListener to keep track
-	 *  of current rplan in RPLANS variable.
-	 */
-	public class BDIFuture<E> extends Future<E>
-	{
-		/**
-		 *  Add a listener
-		 *  @param listener The listener. 
-		 */
-		public void addResultListener(IResultListener<E> listener) 
-		{
-			super.addResultListener(new BDIComponentResultListener<E>(listener, getAgent()));
-		}
-	}
+//	/**
+//	 *  Future that overrides addResultListener to keep track
+//	 *  of current rplan in RPLANS variable.
+//	 */
+//	public class BDIFuture<E> extends Future<E>
+//	{
+//		/**
+//		 *  Add a listener
+//		 *  @param listener The listener. 
+//		 */
+//		public void addResultListener(IResultListener<E> listener) 
+//		{
+//			super.addResultListener(new BDIComponentResultListener<E>(listener, getAgent()));
+//		}
+//	}
 	
 	/**
 	 *  Waitque holds events for later processing.

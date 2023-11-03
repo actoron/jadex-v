@@ -42,6 +42,11 @@ public interface ISuspendable
 	public void resume(Future<?> future);//, boolean force);
 	
 	/**
+	 *  Get the future if currently suspended, null otherwise.
+	 */
+	public IFuture<?>	getFuture();
+	
+	/**
 	 *  Return the lock for internal synchronization.
 	 */
 	public ReentrantLock getLock();

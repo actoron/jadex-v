@@ -445,6 +445,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		/** Set by terminate() to indicate step abortion. */  
 		protected boolean	aborted;
 		
+		/** Provide access to future when suspended. */
+		protected Future<?> future;
+		
 		/** Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads. */
 		protected ReentrantLock lock	= new ReentrantLock();
 		protected Condition	wait	= lock.newCondition();
@@ -482,6 +485,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				lock.lock();
 				try
 				{
+					this.future	= future;
 					blocked	= true;
 					// TODO timeout?
 					wait.await();
@@ -492,6 +496,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				finally
 				{
 					blocked=false;
+					this.future	= null;
 					if(aborted)
 						throw new StepAborted(getComponent().getId());
 				}
@@ -547,6 +552,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					lock.unlock();
 				}
 			}
+		}
+		
+		@Override
+		public IFuture<?> getFuture()
+		{
+			return future;
 		}
 		
 		@Override

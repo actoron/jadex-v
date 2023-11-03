@@ -4,7 +4,7 @@ package jadex.bdiv3.runtime.impl;
  *  An error thrown to abort the execution of the plan body.
  */
 @SuppressWarnings("serial")
-public class BodyAborted	extends	ThreadDeath 
+public class BodyAborted	extends	Error 
 {
 //	public BodyAborted()
 //	{
