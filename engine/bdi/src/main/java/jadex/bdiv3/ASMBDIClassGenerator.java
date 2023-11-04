@@ -33,7 +33,6 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import jadex.bdiv3.exceptions.JadexBDIGenerationException;
-import jadex.bdiv3.features.impl.IInternalBDIAgentFeature;
 import jadex.bdiv3.model.BDIModel;
 import jadex.bdiv3.model.MBelief;
 import jadex.bdiv3.model.MGoal;
@@ -41,6 +40,7 @@ import jadex.bytecode.SASM;
 import jadex.bytecode.vmhacks.VmHacks;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
+import jadex.core.IComponent;
 import jadex.micro.MicroClassReader.DummyClassLoader;
 
 
@@ -253,7 +253,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 									{
 										visitInsn(Opcodes.POP);
 										visitVarInsn(Opcodes.ALOAD, 0);
-										super.visitFieldInsn(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, Type.getDescriptor(IInternalBDIAgentFeature.class));
+										super.visitFieldInsn(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, Type.getDescriptor(IComponent.class));
 									}
 									else
 									{
@@ -268,7 +268,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 									visitVarInsn(Opcodes.ALOAD, 0);
 									visitInsn(Opcodes.SWAP);
 									
-									visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "writeField", "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;Ljadex/bridge/IInternalAccess;)V", false);
+									visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "writeField", "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;Ljadex/core/IComponent;)V", false);
 									enh = true;
 								}
 								else if(isgoal)
@@ -293,7 +293,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 										visitVarInsn(Opcodes.ALOAD, 0);
 										visitInsn(Opcodes.SWAP);
 										
-										visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "writeParameterField", "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;Ljadex/bridge/IInternalAccess;)V", false);
+										visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "writeParameterField", "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;Ljadex/core/IComponent;)V", false);
 										enh = true;
 									}
 								}
@@ -316,7 +316,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 //								super.visitFieldInsn(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, Type.getDescriptor(BDIAgent.class));
 //
 //								// invoke method
-//								visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "writeArrayField", "(Ljava/lang/Object;ILjava/lang/Object;Ljadex/bridge/IInternalAccess;)V");
+//								visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "writeArrayField", "(Ljava/lang/Object;ILjava/lang/Object;Ljadex/core/IComponent;)V");
 //							}
 //							else
 //							{
@@ -352,7 +352,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 				public void visitEnd()
 				{
 					if(isagentorcapa || (isgoal))// && (isstatic || iamstaticc)))
-						visitField(Opcodes.ACC_PUBLIC, AGENT_FIELD_NAME, Type.getDescriptor(IInternalBDIAgentFeature.class), null, null);
+						visitField(Opcodes.ACC_PUBLIC, AGENT_FIELD_NAME, Type.getDescriptor(IComponent.class), null, null);
 					visitField(Opcodes.ACC_PUBLIC, GLOBALNAME_FIELD_NAME, Type.getDescriptor(String.class), null, null);
 					super.visitEnd();
 				}
@@ -478,7 +478,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		mn.access = mn.access - Opcodes.ACC_NATIVE;
 		InsnList nl = new InsnList();
 		nl.add(new VarInsnNode(Opcodes.ALOAD, 0));
-		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, "Ljadex/bridge/IInternalAccess;"));
+		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, "Ljadex/core/IComponent;"));
 		nl.add(new VarInsnNode(Opcodes.ALOAD, 0));
 		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, GLOBALNAME_FIELD_NAME, "Ljava/lang/String;"));
 		nl.add(new LdcInsnNode(belname));
@@ -486,7 +486,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		if(ret.getClassName().equals("byte"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Byte", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I"));
 			nl.add(new InsnNode(Opcodes.I2B));
@@ -495,7 +495,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("short"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Short", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I"));
 			nl.add(new InsnNode(Opcodes.I2S));
@@ -504,7 +504,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("int"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Integer", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I"));
 			nl.add(new InsnNode(Opcodes.IRETURN));
@@ -512,7 +512,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("char"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Character", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Character"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C"));
 			nl.add(new InsnNode(Opcodes.IRETURN));
@@ -520,7 +520,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("boolean"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Boolean", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Boolean"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z"));
 			nl.add(new InsnNode(Opcodes.IRETURN));
@@ -528,7 +528,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("long"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Long", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J"));
 			nl.add(new InsnNode(Opcodes.LRETURN));							
@@ -536,7 +536,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("float"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Float", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F"));
 			nl.add(new InsnNode(Opcodes.FRETURN));							
@@ -544,7 +544,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("double"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Double", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D"));
 			nl.add(new InsnNode(Opcodes.DRETURN));
@@ -552,7 +552,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else // Object
 		{
 			nl.add(new LdcInsnNode(ret));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, ret.getInternalName()));
 			nl.add(new InsnNode(Opcodes.ARETURN));
 		}
@@ -570,14 +570,14 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		mn.access = mn.access - Opcodes.ACC_NATIVE;
 		InsnList nl = new InsnList();
 		nl.add(new VarInsnNode(Opcodes.ALOAD, 0));
-		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, "Ljadex/bridge/IInternalAccess;"));
+		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, "Ljadex/core/IComponent;"));
 		nl.add(new VarInsnNode(Opcodes.ALOAD, 0));
 		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, GLOBALNAME_FIELD_NAME, "Ljava/lang/String;"));
 		nl.add(new LdcInsnNode(belname));
 		
 		SASM.makeObject(nl, arg);
 		
-		nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "setAbstractBeliefValue", "(Ljadex/bridge/IInternalAccess;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"));
+		nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "setAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"));
 		nl.add(new InsnNode(Opcodes.RETURN));
 		
 		mn.instructions = nl;
@@ -598,11 +598,11 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 				
 		InsnList nl = new InsnList();
 		nl.add(new VarInsnNode(Opcodes.ALOAD, 0)); // loads the object
-		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, Type.getDescriptor(IInternalBDIAgentFeature.class)));
+		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, Type.getDescriptor(IComponent.class)));
 		nl.add(new LdcInsnNode(belname));
 		nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "unobserveValue", 
 //			"(Ljava/lang/String;)V"));
-			"(Ljadex/bridge/IInternalAccess;Ljava/lang/String;)V"));
+			"(Ljadex/core/IComponent;Ljava/lang/String;)V"));
 		l.insertBefore(l.getFirst(), nl);
 		
 		nl = new InsnList();
@@ -620,15 +620,15 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		nl.add(new InsnNode(Opcodes.ACONST_NULL)); // no index/key
 		
 		nl.add(new VarInsnNode(Opcodes.ALOAD, 0)); // loads the agent object
-		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, Type.getDescriptor(IInternalBDIAgentFeature.class)));
+		nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, Type.getDescriptor(IComponent.class)));
 		
 		nl.add(new LdcInsnNode(belname));
 		
 //		nl.add(new LdcInsnNode(mbel));
 		nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "createChangeEvent", 
-//			"(Ljava/lang/Object;Ljadex/bridge/IInternalAccess;Ljava/lang/String;)V"));
-			"(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljadex/bridge/IInternalAccess;Ljava/lang/String;)V"));
-//			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bridge/IInternalAccess", "createEvent", 
+//			"(Ljava/lang/Object;Ljadex/core/IComponent;Ljava/lang/String;)V"));
+			"(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljadex/core/IComponent;Ljava/lang/String;)V"));
+//			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/core/IComponent", "createEvent", 
 //				"()V"));
 
 		// Find return and insert call before that
@@ -875,7 +875,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 	//					newins.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, AGENT_FIELD_NAME, Type.getDescriptor(BDIAgent.class)));
 						newins.add(new LdcInsnNode(belname));
 	//					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "writeArrayField", 
-	//						"(Ljava/lang/Object;ILjava/lang/Object;Ljadex/bridge/IInternalAccess;Ljava/lang/String;)V"));
+	//						"(Ljava/lang/Object;ILjava/lang/Object;Ljadex/core/IComponent;Ljava/lang/String;)V"));
 						newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "writeArrayField", 
 							"(Ljava/lang/Object;ILjava/lang/Object;Ljava/lang/Object;Ljava/lang/String;)V"));
 						

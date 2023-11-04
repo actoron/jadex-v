@@ -207,10 +207,10 @@ public abstract class AbstractAsmBdiClassGenerator implements IBDIClassGenerator
 						
 						// Fetch agent object to invoke method on.
 						nl.add(new VarInsnNode(Opcodes.ALOAD, 0));
-						nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, IBDIClassGenerator.AGENT_FIELD_NAME, "Ljadex/bridge/IInternalAccess;"));
+						nl.add(new FieldInsnNode(Opcodes.GETFIELD, iclname, IBDIClassGenerator.AGENT_FIELD_NAME, "Ljadex/core/IComponent;"));
 						if(m.getDeclaringClass().equals(IBDIAgentFeature.class))
 						{
-							nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getBDIAgentFeature", "(Ljadex/bridge/IInternalAccess;)Ljadex/bdiv3/features/IBDIAgentFeature;", false));
+							nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdiv3/features/impl/BDIAgentFeature", "getBDIAgentFeature", "(Ljadex/core/IComponent;)Ljadex/bdiv3/features/IBDIAgentFeature;", false));
 						}
 						
 						// Push parameters to stack
@@ -252,7 +252,7 @@ public abstract class AbstractAsmBdiClassGenerator implements IBDIClassGenerator
 //						}
 						else
 						{
-							nl.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "jadex/bridge/IInternalAccess", mnode.name, mnode.desc, true));
+							nl.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "jadex/core/IComponent", mnode.name, mnode.desc, true));
 						}
 						
 						// Return result.

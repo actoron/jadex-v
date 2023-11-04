@@ -57,8 +57,10 @@ import jadex.common.SUtil;
 import jadex.common.SimpleParameterGuesser;
 import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
+import jadex.core.IComponent;
 import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.ILifecycle;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
@@ -84,7 +86,7 @@ import jadex.rules.eca.annotations.Event;
 /**
  *  The bdi agent feature implementation for pojo agents.
  */
-public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeature
+public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeature, ILifecycle
 {
 	/** The component. */
 	protected MicroAgent	self;
@@ -110,18 +112,16 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	public BDIAgentFeature(MicroAgent self)
 	{
 		this.self	= self;
+	}
+
+	@Override
+	public IFuture<Void> onStart()
+	{
 		IBDIClassGenerator.checkEnhanced(self.getPojo().getClass());
 		this.bdimodel = (BDIModel)self.getModel().getRawModel();
 		this.capa = new RCapability(bdimodel.getCapability());
 		this.rulesystem = new RuleSystem(self.getPojo(), true);
-	}
-
-	/**
-	 *  Initialize the feature.
-	 *  Empty implementation that can be overridden.
-	 */
-	public IFuture<Void> init()
-	{
+		
 		// cannot do this in constructor because it needs access to this feature in expressions
 		try
 		{
@@ -137,6 +137,13 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			// E.g. invocation target exception in init calls
 			return new Future<>(e);
 		}
+	}
+	
+	@Override
+	public IFuture<Void> onEnd()
+	{
+		// TODO Auto-generated method stub
+		return IFuture.DONE;
 	}
 	
 	/**
@@ -410,7 +417,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  is written as field access.
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static void writeField(Object val, String fieldname, Object obj)
+	public static void writeField(Object val, String fieldname, Object obj, IComponent comp)
 	{
 		if((""+obj).indexOf("Inner")!=-1)
 			System.out.println("write: "+val+" "+fieldname+" "+obj);
@@ -1226,7 +1233,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			}
 			catch(Exception e)
 			{
-				System.err.println("Hidden agent injection failed: "+e);
+				System.err.println("Hidden agent injection failed: "+SUtil.getExceptionStacktrace(e));
 				agcl = agcl.getSuperclass();
 				//break; // with pure BDI agents it can be the superclass BDIAgent
 			}

@@ -11,9 +11,6 @@ import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Imports;
-import jadex.micro.annotation.Properties;
-import jadex.model.annotation.NameValue;
 import jadex.model.annotation.OnStart;
 import jadex.rules.eca.annotations.Event;
 
@@ -26,8 +23,6 @@ import jadex.rules.eca.annotations.Event;
  *  class is rewritten to announce belief changes (field accesses and annotated methods)
  */
 @Agent
-@Imports({"java.util.logging.*"})
-@Properties({@NameValue(name="logging.level", value="Level.INFO")})
 public class TestBDI
 {
 	/** The bdi agent. */
@@ -76,7 +71,6 @@ public class TestBDI
 	 *  right hand side creates goal and executes it
 	 *  Plan is selected and executed (hello is printed out)
 	 */
-	//@AgentBody
 	@OnStart
 	public void body()
 	{		

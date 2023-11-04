@@ -2,6 +2,7 @@ package jadex.bdiv3;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Field;
 import java.util.List;
 
 import jadex.bdiv3.exceptions.JadexBDIGenerationException;
@@ -44,15 +45,15 @@ public interface IBDIClassGenerator
 	public static boolean isEnhanced(Class<?> clazz)
 	{
 		boolean isEnhanced = false;
-//		try 
-//		{
-//			Field field = clazz.getField(AGENT_FIELD_NAME);
+		try 
+		{
+			Field field = clazz.getField(AGENT_FIELD_NAME);
 //			Field field = clazz.getField(GLOBALNAME_FIELD_NAME);
 			isEnhanced = true;
-//		} 
-//		catch (NoSuchFieldException ex) 
-//		{
-//		}
+		} 
+		catch (NoSuchFieldException ex) 
+		{
+		}
 		return isEnhanced;
 	}
 	

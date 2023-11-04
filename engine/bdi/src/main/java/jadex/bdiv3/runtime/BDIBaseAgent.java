@@ -10,7 +10,7 @@ import jadex.micro.annotation.Agent;
  *  Base class for non-bytecode-enhanced BDI agents.
  */
 @Agent(type="bdi")
-public class BDIAgent // extends IInternalAccess (Proxy)
+public class BDIBaseAgent
 {
 	/** The bdi agent. */
 	public IComponent __agent; // IBDIClassGenerator.AGENT_FIELD_NAME
@@ -39,6 +39,6 @@ public class BDIAgent // extends IInternalAccess (Proxy)
 	 */
 	public void setBeliefValue(String beliefname, Object value)
 	{
-		BDIAgentFeature.writeField(value, beliefname, this);
+		BDIAgentFeature.writeField(value, beliefname, this, __agent);
 	}
 }
