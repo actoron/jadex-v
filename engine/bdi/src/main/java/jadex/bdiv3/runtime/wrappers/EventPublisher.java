@@ -131,7 +131,7 @@ public class EventPublisher implements IEventPublisher
 	 */
 	public RuleSystem getRuleSystem()
 	{
-		return agent.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+		return IInternalBDIAgentFeature.get().getRuleSystem();
 	}
 
 	/**

@@ -188,12 +188,12 @@ public class ExecutePlanStepAction implements Runnable
 	{
 		// Check context condition initially, allows for fast abort before first step
 		MPlan mplan = (MPlan)rplan.getModelElement();
-		final MethodInfo mi = mplan.getBody().getContextConditionMethod(rplan.getBody().getBody().getClass().getClassLoader());
+		final MethodInfo mi = mplan.getBody().getContextConditionMethod(rplan.getBody().getClass().getClassLoader());
 		boolean context = true;
 		if(mi!=null)
 		{
 			context	= BDILifecycleAgentFeature.invokeBooleanMethod(rplan.getBody().getBody(),
-				mi.getMethod(rplan.getBody().getBody().getClass().getClassLoader()), mplan, null, rplan);
+				mi.getMethod(rplan.getBody().getClass().getClassLoader()), mplan, null, rplan);
 		}
 		else if(mplan.getContextCondition()!=null)
 		{

@@ -1129,7 +1129,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 //		final Future<E> ret = new BDIFuture<E>();
 		final Future<E> ret = new Future<E>();
 		
-		IBDIModel bdim = getAgent().getFeature(IInternalBDIAgentFeature.class).getBDIModel();
+		IBDIModel bdim = IInternalBDIAgentFeature.get().getBDIModel();
 		final MGoal mgoal = bdim.getCapability().getGoal(goal.getClass().getName());
 		if(mgoal==null)
 			throw new RuntimeException("Unknown goal type: "+goal);
@@ -1893,7 +1893,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			}
 		});
 		rule.setEvents(events instanceof List ? (List<EventType>)events : new ArrayList<>(events));
-		getAgent().getFeature(IInternalBDIAgentFeature.class).getRuleSystem().getRulebase().updateRule(rule);
+		IInternalBDIAgentFeature.get().getRuleSystem().getRulebase().updateRule(rule);
 	}
 	
 //	/**

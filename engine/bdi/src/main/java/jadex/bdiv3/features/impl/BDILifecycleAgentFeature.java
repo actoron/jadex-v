@@ -1733,9 +1733,8 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 			
 			// Init must be set to true before init writes to ensure that new events
 			// are executed and not processed as init writes
-			// TODO
-//			IInternalBDILifecycleFeature bdil = (IInternalBDILifecycleFeature)component.getFeature(ILifecycleComponentFeature.class);
-//			bdil.setInited(true);
+			IInternalBDILifecycleFeature bdil = (IInternalBDILifecycleFeature)IExecutionFeature.get().getComponent().getFeature(MicroAgentFeature.class);
+			bdil.setInited(true);
 			
 			// After init rule execution mode to direct
 			rulesystem.setQueueEvents(false);

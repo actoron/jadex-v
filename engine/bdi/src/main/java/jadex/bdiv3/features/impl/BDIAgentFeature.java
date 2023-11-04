@@ -266,7 +266,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		{
 //			System.out.println("write: "+val+" "+fieldname+" "+obj);
 //			BDIAgentInterpreter ip = (BDIAgentInterpreter)getInterpreter();
-			RuleSystem rs = self.getFeature(IInternalBDIAgentFeature.class).getRuleSystem();
+			RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 
 			Object oldval = setFieldValue(obj, fieldname, val);
 			
@@ -274,7 +274,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			unobserveObject(oldval, ev2, rs);
 //			rs.unobserveObject(oldval);
 
-			MBelief	mbel = ((MCapability)self.getFeature(IInternalBDIAgentFeature.class).getCapability().getModelElement()).getBelief(belname);
+			MBelief	mbel = ((MCapability)IInternalBDIAgentFeature.get().getCapability().getModelElement()).getBelief(belname);
 		
 			if(!SUtil.equals(val, oldval))
 			{
@@ -305,8 +305,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
-			throw new RuntimeException(e);
+			throw SUtil.throwUnchecked(e);
 		}
 	}
 	

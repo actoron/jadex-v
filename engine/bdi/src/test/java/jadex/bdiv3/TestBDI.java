@@ -95,6 +95,7 @@ public class TestBDI
 	protected IFuture<Void> printHello2(HelloGoal goal)
 	{
 		System.out.println("2: "+goal.getText());
+		agent.getExternalAccess().scheduleStep(() -> agent.terminate());
 		return IFuture.DONE;
 	}
 }
