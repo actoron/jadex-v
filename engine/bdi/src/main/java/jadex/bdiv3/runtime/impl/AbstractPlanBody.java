@@ -215,18 +215,14 @@ public abstract class AbstractPlanBody implements IPlanBody
 //		}
 		catch(Throwable e)
 		{
-			if(e instanceof StepAborted)
+			// Print exception, when relevant for user. 
+			if(!(e instanceof StepAborted)
+				&& !(e instanceof PlanAbortedException)
+				&& !(e instanceof PlanFailureException))
 			{
-				// used to exit user code -> ignore.
-				throw e;
-			}
-			else
-			{
-				// getBody() is not a good idea because it can be the reason for the exception
-//				ia.getLogger().warning("Plan '"+getBody()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
 				System.err.println("Plan '"+getRPlan().getModelElement().getName()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
-				throw SUtil.throwUnchecked(e);
 			}
+			throw SUtil.throwUnchecked(e);
 		}
 		finally
 		{

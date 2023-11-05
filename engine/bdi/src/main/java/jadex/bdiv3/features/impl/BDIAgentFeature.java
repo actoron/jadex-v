@@ -89,7 +89,7 @@ import jadex.rules.eca.annotations.Event;
 public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeature, ILifecycle
 {
 	/** The component. */
-	protected MicroAgent	self;
+	protected BDIAgent	self;
 	
 	/** The bdi model. */
 	protected BDIModel bdimodel;
@@ -109,7 +109,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	/**
 	 *  Factory method constructor for instance level.
 	 */
-	public BDIAgentFeature(MicroAgent self)
+	public BDIAgentFeature(BDIAgent self)
 	{
 		this.self	= self;
 	}
@@ -2834,5 +2834,11 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	public ClassLoader getClassLoader()
 	{
 		return self.getClassLoader();
+	}
+
+	@Override
+	public Object getArgument(String name)
+	{
+		return self.info==null ? null : self.info.getArgument(name); 
 	}
 }

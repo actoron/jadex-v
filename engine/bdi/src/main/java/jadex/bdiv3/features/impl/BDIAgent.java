@@ -1,5 +1,7 @@
-package jadex.bdiv3;
+package jadex.bdiv3.features.impl;
 
+import jadex.bdiv3.BDICreationInfo;
+import jadex.bdiv3.BDIModelLoader;
 import jadex.bdiv3.model.BDIModel;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
@@ -26,21 +28,33 @@ public class BDIAgent extends MicroAgent
 				classname	= classname.substring(4);
 			String	fclassname	= classname ;
 			Component.createComponent(BDIAgent.class,
-					() -> new BDIAgent(null, loadModel(fclassname), cid));
+					() -> new BDIAgent((Object)null, loadModel(fclassname), cid));
+		}
+		else if(pojo instanceof BDICreationInfo)
+		{
+			classname	= ((BDICreationInfo)pojo).getClassname();
+			if(classname.startsWith("bdi:"))
+				classname	= classname.substring(4);
+			String	fclassname	= classname ;
+			Component.createComponent(BDIAgent.class,
+					() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname), cid));
 		}
 		else
 		{
-			throw new UnsupportedOperationException("TODO");
+			throw new UnsupportedOperationException("TODO: support unenhanced BDI creation from POJO instance");
 		}
 	}
 	
+	/** Optional creation info, i.e. arguments. */
+	protected BDICreationInfo	info;
 	
-	public BDIAgent(Object pojo, IModelInfo model)
+	protected BDIAgent(BDICreationInfo info, IModelInfo model, ComponentIdentifier cid)
 	{
-		this(pojo, model, null);
+		this((Object)null, model, cid);
+		this.info	= info;
 	}
 	
-	public BDIAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
+	protected BDIAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
 	{
 		super(pojo!=null ? pojo : createPojo(model), model, cid);
 	}

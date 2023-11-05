@@ -1,6 +1,6 @@
 package jadex.bdiv3.features.impl;
 
-import jadex.bdiv3.BDIAgent;
+import jadex.bdiv3.BDICreationInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
@@ -45,7 +45,11 @@ public class BDILifecycleAgentFeatureProvider	extends FeatureProvider<MicroAgent
 		boolean ret = false;
 		if(obj instanceof String)
 		{
-			return ((String)obj).startsWith("bdi:");
+			ret	= ((String)obj).startsWith("bdi:");
+		}
+		else if(obj instanceof BDICreationInfo)
+		{
+			ret	= true;
 		}
 		else
 		{

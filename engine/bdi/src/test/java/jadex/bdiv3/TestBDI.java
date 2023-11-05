@@ -8,8 +8,6 @@ import jadex.bdiv3.annotation.Plan;
 import jadex.bdiv3.annotation.Trigger;
 import jadex.bdiv3.runtime.impl.PlanFailureException;
 import jadex.core.IComponent;
-import jadex.future.Future;
-import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 import jadex.rules.eca.annotations.Event;
@@ -82,20 +80,28 @@ public class TestBDI
 	 *  First plan. Fails with exception.
 	 */
 	@Plan(trigger=@Trigger(goals=HelloGoal.class))
-	protected IFuture<Void> printHello1(HelloGoal goal)
+	protected void	printHello1(HelloGoal goal)
 	{
 		System.out.println("1: "+goal.getText());
-		return new Future<Void>(new PlanFailureException());
+		throw new PlanFailureException();
 	}
 	
 	/**
 	 *  Second plan. Prints out goal text and passes.
 	 */
 	@Plan(trigger=@Trigger(goals=HelloGoal.class))
-	protected IFuture<Void> printHello2(HelloGoal goal)
+	protected void	printHello2(HelloGoal goal)
 	{
 		System.out.println("2: "+goal.getText());
-		agent.getExternalAccess().scheduleStep(() -> agent.terminate());
-		return IFuture.DONE;
+		agent.terminate();
+	}
+	
+	// Main method in inner class so example can be started without loading agent class
+	public static class Main
+	{
+		public static void main(String[] args) throws InterruptedException
+		{
+			IComponent.create("bdi:jadex.bdiv3.TestBDI");
+		}
 	}
 }

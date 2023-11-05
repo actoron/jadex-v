@@ -6,32 +6,36 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import jadex.bdiv3.BDICreationInfo;
 import jadex.core.ComponentIdentifier;
-import jadex.core.impl.Component;
+import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-/**
- *  Benchmark MjComponent creation without any features.
- */
-public class PlainComponentBenchmark	extends AbstractComponentBenchmark 
+public class SimpleBDIBenchmark	extends AbstractComponentBenchmark
 {
+	// Corresponding BDI agent is in testFixtures so class is not loaded by JUnit to check for tests.
 	@Override
-	protected String getComponentTypeName()
+	protected IFuture<ComponentIdentifier> createComponent(String name)
 	{
-		return "Plain component";
+		Future<ComponentIdentifier>	cid	= new Future<>();
+		IComponent.create(new BDICreationInfo()
+				.setClassname("jadex.benchmark.SimpleBDI")
+				.addArgument("cid", cid),
+			new ComponentIdentifier(name));
+		return cid;
 	}
 	
 	@Override
-	protected IFuture<ComponentIdentifier>	createComponent(String name)
+	protected String getComponentTypeName()
 	{
-		return new Future<>( new Component(new ComponentIdentifier(name)).getId());
+		return "Simple BDI";
 	}
-
+	
 	protected static Stream<Arguments> provideBenchmarkParams() {
 	    return Stream.of(
-	  	      Arguments.of(100000, false, false),
-		      Arguments.of(100000, false, true)
+	  	      Arguments.of(100, false, false),
+		      Arguments.of(100, false, true)
 	    );
 	}
 	

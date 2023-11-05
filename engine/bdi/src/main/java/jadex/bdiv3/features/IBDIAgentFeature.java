@@ -72,4 +72,8 @@ public interface IBDIAgentFeature extends IExternalBDIAgentFeature
 	 */
 	public void removeBeliefListener(String name, IBeliefListener<?> listener);
 	
+	/**
+	 *  Get an argument if supplied at agent creation.
+	 */
+	public Object	getArgument(String name);
 }
