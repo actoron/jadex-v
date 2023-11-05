@@ -242,7 +242,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 								{
 									// possibly transform basic value
 									if(SReflect.isBasicType(SReflect.findClass0(Type.getType(desc).getClassName(), null, cl)))
-										visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/commons/SReflect", "wrapValue", "("+desc+")Ljava/lang/Object;", false);
+										visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/common/SReflect", "wrapValue", "("+desc+")Ljava/lang/Object;", false);
 									
 									visitInsn(Opcodes.SWAP);
 									
@@ -278,7 +278,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 									{
 										// possibly transform basic value
 										if(SReflect.isBasicType(SReflect.findClass0(Type.getType(desc).getClassName(), null, cl)))
-											visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/commons/SReflect", "wrapValue", "("+desc+")Ljava/lang/Object;", false);
+											visitMethodInsn(Opcodes.INVOKESTATIC, "jadex/common/SReflect", "wrapValue", "("+desc+")Ljava/lang/Object;", false);
 										
 										visitInsn(Opcodes.SWAP);
 										
@@ -830,32 +830,32 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 				if(Opcodes.IASTORE==n.getOpcode() || Opcodes.BASTORE==n.getOpcode()) // for int, byte and boolean :-((	
 				{
 					newins = new InsnList();
-					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/commons/SReflect", "wrapValue", "(I)Ljava/lang/Object;"));
+					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/common/SReflect", "wrapValue", "(I)Ljava/lang/Object;"));
 				}
 				else if(Opcodes.LASTORE==n.getOpcode())
 				{
 					newins = new InsnList();
-					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/commons/SReflect", "wrapValue", "(J)Ljava/lang/Object;"));
+					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/common/SReflect", "wrapValue", "(J)Ljava/lang/Object;"));
 				}
 				else if(Opcodes.FASTORE==n.getOpcode())
 				{
 					newins = new InsnList();
-					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/commons/SReflect", "wrapValue", "(F)Ljava/lang/Object;"));
+					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/common/SReflect", "wrapValue", "(F)Ljava/lang/Object;"));
 				}
 				else if(Opcodes.DASTORE==n.getOpcode())
 				{
 					newins = new InsnList();
-					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/commons/SReflect", "wrapValue", "(D)Ljava/lang/Object;"));
+					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/common/SReflect", "wrapValue", "(D)Ljava/lang/Object;"));
 				}
 				else if(Opcodes.CASTORE==n.getOpcode())
 				{
 					newins = new InsnList();
-					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/commons/SReflect", "wrapValue", "(C)Ljava/lang/Object;"));
+					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/common/SReflect", "wrapValue", "(C)Ljava/lang/Object;"));
 				}
 				else if(Opcodes.SASTORE==n.getOpcode())
 				{
 					newins = new InsnList();
-					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/commons/SReflect", "wrapValue", "(S)Ljava/lang/Object;"));
+					newins.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/common/SReflect", "wrapValue", "(S)Ljava/lang/Object;"));
 				}
 				else if(Opcodes.AASTORE==n.getOpcode())
 				{

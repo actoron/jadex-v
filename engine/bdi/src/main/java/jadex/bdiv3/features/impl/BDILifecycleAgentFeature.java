@@ -543,7 +543,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 			{
 				public void resultAvailable(Object result)
 				{
-					System.err.println("Goal succeeded: "+result);
+//					System.err.println("Goal succeeded: "+result);
 				}
 				
 				public void exceptionOccurred(Exception exception)

@@ -33,6 +33,7 @@ dependencies
 	implementation 'org.ow2.asm:asm-util:9.1'
 
 	testFixturesImplementation 'jadex:future:5.0.0'
+	testFixturesImplementation 'jadex:eca:5.0.0'
 	testFixturesImplementation 'jadex:core:5.0.0'
 	testFixturesImplementation 'jadex:model:5.0.0'
 	testFixturesImplementation 'jadex:microagent:5.0.0'

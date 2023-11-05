@@ -317,7 +317,7 @@ public abstract class AbstractAsmBdiClassGenerator implements IBDIClassGenerator
 				}
 			}
 
-			FieldNode initArgsField = nodehelper.createField(OpcodeHelper.ACC_PROTECTED, IBDIClassGenerator.INITARGS_FIELD_NAME, "Ljava/util/List;", new String[]{"Ljava/util/List<Ljadex/commons/Tuple3<Ljava/lang/Class<*>;[Ljava/lang/Class<*>;[Ljava/lang/Object;>;>;"}, null);
+			FieldNode initArgsField = nodehelper.createField(OpcodeHelper.ACC_PROTECTED, IBDIClassGenerator.INITARGS_FIELD_NAME, "Ljava/util/List;", new String[]{"Ljava/util/List<Ljadex/common/Tuple3<Ljava/lang/Class<*>;[Ljava/lang/Class<*>;[Ljava/lang/Object;>;>;"}, null);
 			cn.fields.add(initArgsField);		
 			
 			for(MethodNode mn : mths)
