@@ -41,7 +41,8 @@ public class BDIAgent extends MicroAgent
 		}
 		else
 		{
-			throw new UnsupportedOperationException("TODO: support unenhanced BDI creation from POJO instance");
+			Component.createComponent(BDIAgent.class,
+					() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName()), cid));
 		}
 	}
 	

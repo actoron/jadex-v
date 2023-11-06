@@ -51,9 +51,16 @@ public class BDILifecycleAgentFeatureProvider	extends FeatureProvider<MicroAgent
 		{
 			ret	= true;
 		}
-		else
+		else if(obj!=null)
 		{
-			Agent val = MicroClassReader.getAnnotation(obj.getClass(), Agent.class, getClass().getClassLoader());
+			Class<?>	clazz	= obj.getClass();
+			Agent val;
+			do
+			{
+				val	= MicroClassReader.getAnnotation(clazz, Agent.class, obj.getClass().getClassLoader());
+				clazz	= clazz.getSuperclass();
+			} while(val==null && !clazz.equals(Object.class));
+			
 			if(val!=null)
 				ret = "bdi".equals(val.type());
 		}

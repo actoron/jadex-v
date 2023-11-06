@@ -60,7 +60,6 @@ import jadex.common.UnparsedExpression;
 import jadex.core.IComponent;
 import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.ILifecycle;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
@@ -86,7 +85,7 @@ import jadex.rules.eca.annotations.Event;
 /**
  *  The bdi agent feature implementation for pojo agents.
  */
-public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeature, ILifecycle
+public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeature
 {
 	/** The component. */
 	protected BDIAgent	self;
@@ -115,7 +114,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	}
 
 	@Override
-	public IFuture<Void> onStart()
+	public void	init()
 	{
 		IBDIClassGenerator.checkEnhanced(self.getPojo().getClass());
 		this.bdimodel = (BDIModel)self.getModel().getRawModel();
@@ -128,22 +127,21 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			Object pojo = self.getPojo();
 			injectAgent(pojo, bdimodel, null);
 			invokeInitCalls(pojo);
-			return initCapabilities(pojo, bdimodel.getSubcapabilities() , 0);
+			initCapabilities(pojo, bdimodel.getSubcapabilities() , 0).get();
 //	//		startBehavior();
 //			return IFuture.DONE;
 		}
 		catch(Exception e)
 		{
 			// E.g. invocation target exception in init calls
-			return new Future<>(e);
+			SUtil.throwUnchecked(e);
 		}
 	}
 	
 	@Override
-	public IFuture<Void> onEnd()
+	public void terminate()
 	{
 		// TODO Auto-generated method stub
-		return IFuture.DONE;
 	}
 	
 	/**
@@ -1215,27 +1213,29 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	
 		// Additionally inject hidden agent fields
 		Class<?> agcl = agent.getClass();
-		while(agcl.isAnnotationPresent(Agent.class)
-			|| agcl.isAnnotationPresent(Capability.class))
+		while(!agcl.equals(Object.class))
 		{
-			try
+			if(agcl.isAnnotationPresent(Agent.class)
+					|| agcl.isAnnotationPresent(Capability.class))
 			{
-				Field field = agcl.getDeclaredField(IBDIClassGenerator.AGENT_FIELD_NAME);
-				SAccess.setAccessible(field, true);
-				field.set(agent, self);
-				
-				field = agcl.getDeclaredField(IBDIClassGenerator.GLOBALNAME_FIELD_NAME);
-				SAccess.setAccessible(field, true);
-				field.set(agent, globalname);
-				agcl = agcl.getSuperclass();
-
+				try
+				{
+					Field field = agcl.getDeclaredField(IBDIClassGenerator.AGENT_FIELD_NAME);
+					SAccess.setAccessible(field, true);
+					field.set(agent, self);
+					
+					field = agcl.getDeclaredField(IBDIClassGenerator.GLOBALNAME_FIELD_NAME);
+					SAccess.setAccessible(field, true);
+					field.set(agent, globalname);
+					break;
+				}
+				catch(Exception e)
+				{
+					System.err.println("Hidden agent injection failed: "+SUtil.getExceptionStacktrace(e));
+					//break; // with pure BDI agents it can be the superclass BDIAgent
+				}
 			}
-			catch(Exception e)
-			{
-				System.err.println("Hidden agent injection failed: "+SUtil.getExceptionStacktrace(e));
-				agcl = agcl.getSuperclass();
-				//break; // with pure BDI agents it can be the superclass BDIAgent
-			}
+			agcl = agcl.getSuperclass();
 		}
 		// Add hidden agent field also to contained inner classes (goals, plans)
 		// Does not work as would have to be inserted in each object of that type :-(

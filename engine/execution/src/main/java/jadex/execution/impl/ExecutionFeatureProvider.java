@@ -141,7 +141,7 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 		return exe.scheduleStep(() -> 
 		{
 			T	self	= creator.get();
-			self.getFeatures().forEach(feature ->
+			for(Object feature:	self.getFeatures())
 			{
 				if(feature instanceof ILifecycle)
 				{
@@ -151,7 +151,7 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 						lfeature.onStart().get();
 					});
 				}
-			});
+			};
 			return self;
 		}).get();
 	}

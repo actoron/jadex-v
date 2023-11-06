@@ -23,6 +23,9 @@ public interface IInternalBDIAgentFeature	extends IBDIAgentFeature
 		return (IInternalBDIAgentFeature)IExecutionFeature.get().getComponent().getFeature(IBDIAgentFeature.class);
 	}
 	
+	public void	init();
+	public void	terminate();
+	
 //	/**
 //	 *  Get the inited.
 //	 *  @return The inited.

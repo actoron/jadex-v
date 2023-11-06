@@ -94,6 +94,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 	public IFuture<Void> onStart()
 	{
 		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
+		bdif.init();
 		createStartBehavior().startBehavior(bdif.getBDIModel(), bdif.getRuleSystem(), bdif.getCapability());
 		return super.onStart();
 	}
@@ -114,33 +115,15 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 		return new EndBehavior();
 	}
 	
-	/**
-	 *  Cleanup the agent.
-	 */
-	public IFuture<Void> shutdown()
+	@Override
+	public IFuture<Void>	onEnd()
 	{
 		setShutdown(true);
-		
-		final Future<Void>	ret	= new Future<Void>();
 		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
-
-		createEndBehavior().startEndBehavior(bdif.getBDIModel(), bdif.getRuleSystem(), bdif.getCapability())
-			.addResultListener(new IResultListener<Void>()
-		{
-			public void resultAvailable(Void result)
-			{
-				// TODO
-//				IMjLifecycleFeature.get().terminate();
-//				BDILifecycleAgentFeature.super.().addResultListener(new DelegationResultListener<Void>(ret));
-			}
-
-			public void exceptionOccurred(Exception exception)
-			{
-				exception.printStackTrace();
-//				BDILifecycleAgentFeature.super.shutdown().addResultListener(new DelegationResultListener<Void>(ret));
-			}
-		});
-		return ret;
+		createEndBehavior().startEndBehavior(bdif.getBDIModel(), bdif.getRuleSystem(), bdif.getCapability()).get();
+		super.onEnd().get();
+		bdif.terminate();
+		return IFuture.DONE;
 	}
 	
 	/**
