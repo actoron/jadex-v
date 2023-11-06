@@ -30,8 +30,8 @@ public abstract class AbstractBDIBenchmark	extends AbstractComponentBenchmark
 
 	protected static Stream<Arguments> provideBenchmarkParams() {
 	    return Stream.of(
-	  	      Arguments.of(100, false, false),
-		      Arguments.of(100, false, true)
+	  	      Arguments.of(10000, false, false),
+		      Arguments.of(10000, false, true)
 	    );
 	}
 	

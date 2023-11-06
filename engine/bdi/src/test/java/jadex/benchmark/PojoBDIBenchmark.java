@@ -38,8 +38,8 @@ public class PojoBDIBenchmark	extends AbstractComponentBenchmark
 	
 	protected static Stream<Arguments> provideBenchmarkParams() {
 	    return Stream.of(
-	  	      Arguments.of(100, false, false),
-		      Arguments.of(100, false, true)
+	  	      Arguments.of(10000, false, false),
+		      Arguments.of(10000, false, true)
 	    );
 	}
 	
@@ -48,6 +48,7 @@ public class PojoBDIBenchmark	extends AbstractComponentBenchmark
 	@MethodSource("provideBenchmarkParams")
 	public void runCreationBenchmark(int num, boolean print, boolean parallel)
 	{
+		TIMEOUT	= 300000;
 		super.runCreationBenchmark(num, print, parallel);
 	}
 

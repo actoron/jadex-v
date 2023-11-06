@@ -52,7 +52,7 @@ public class BDIModelLoader extends AbstractModelLoader
 	 */
 	public BDIModel loadComponentModel(String name, Object pojo, String[] imports, Object clkey, ClassLoader classloader, Object context) throws Exception
 	{
-		return (BDIModel)loadModel(name, pojo, imports, clkey, classloader, context);
+		return (BDIModel)loadModel(name, pojo, FILE_EXTENSION_BDIV3, imports, clkey, classloader);
 	}
 	
 	//-------- AbstractModelLoader methods --------
