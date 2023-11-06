@@ -87,7 +87,7 @@ public class Environment
 	 */
 	public Cleaner	createCleaner(IComponent agent)
 	{
-		String	cid	= agent.getId().toString();
+		String	cid	= agent.getId().getLocalName();
 		Cleaner	ret;
 		boolean	create;
 		synchronized(this)

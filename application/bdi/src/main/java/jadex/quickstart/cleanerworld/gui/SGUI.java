@@ -157,6 +157,7 @@ public class SGUI
 	 *  @param listener	The action listener.
 	 *  @return The action.
 	 */
+	@SuppressWarnings("serial")
 	public static Action	createAction(String name, Icon icon,
 		final ActionListener listener)
 	{
@@ -228,7 +229,7 @@ public class SGUI
 	 */
 	// Hack!!! Required, because LookAndFeel.makeIcon returns an IconUIResource,
 	// but only ImageIcons can be greyed out. grrr...
-	public static Object	makeIcon(final Class baseclass, final String imgloc)
+	public static Object	makeIcon(final Class<?> baseclass, final String imgloc)
 	{
 		return new UIDefaults.LazyValue()
 		{
@@ -374,6 +375,7 @@ public class SGUI
 		if(exception!=null)
 		{
 			final JPanel	panel	= new JPanel(new BorderLayout());
+			@SuppressWarnings("serial")
 			final JButton	details	= new JButton("Show Details")
 			{
 				public Insets getInsets()
@@ -573,8 +575,8 @@ public class SGUI
 	 */
 	public static void	adjustComponentSizes(Container parent)
 	{
-		java.util.List	components	= new LinkedList();
-		java.util.List	adjustables	= new ArrayList();
+		java.util.List<Component>	components	= new LinkedList<Component>();
+		java.util.List<JComponent>	adjustables	= new ArrayList<JComponent>();
 		components.add(parent);
 		while(components.size()>0)
 		{
@@ -601,7 +603,7 @@ public class SGUI
 
 		if(adjustables.size()>1)
 		{
-			JComponent[]	jcomps	= (JComponent[])adjustables.toArray(new JComponent[adjustables.size()]);
+			JComponent[]	jcomps	= adjustables.toArray(new JComponent[adjustables.size()]);
 			adjustComponentSizes(jcomps);
 		}
 	}

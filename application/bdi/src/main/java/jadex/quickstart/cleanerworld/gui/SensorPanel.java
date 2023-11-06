@@ -71,7 +71,7 @@ class SensorPanel extends JPanel
 				g.fillOval(p.x-w, p.y-h, w*2, h*2);
 				g.setColor(new Color(50, 50, 50, 180));
 				g.fillOval(p.x-3, p.y-3, 7, 7);
-				g.drawString(cleaner.getId().toString(),
+				g.drawString(cleaner.getId(),
 					p.x+5, p.y-5);
 				g.drawString("battery: " + (int)(cleaner.getChargestate()*100.0) + "%",
 					p.x+5, p.y+5);

@@ -30,5 +30,6 @@ includeBuild('engine/bdi') {}
 
 includeBuild('rules/eca') {}
 
-includeBuild('application/micro'){}
+includeBuild('application/micro'){name='application-micro'}
+includeBuild('application/bdi'){name='application-bdi'}
 
