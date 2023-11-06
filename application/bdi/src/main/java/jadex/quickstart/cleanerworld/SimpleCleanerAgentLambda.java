@@ -15,7 +15,7 @@ public class SimpleCleanerAgentLambda
 	public static void main(String[] args)
 	{
 		LambdaAgent.create(() ->
-		//SComponentFactory.create(() ->
+//		IComponent.create(() ->
 		{
 			// Create the sensor/actuator interface object.
 			SensorActuator	actsense	= new SensorActuator();

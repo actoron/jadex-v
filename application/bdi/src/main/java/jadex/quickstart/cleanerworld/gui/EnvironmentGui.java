@@ -28,6 +28,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIDefaults;
 import javax.swing.border.EtchedBorder;
@@ -462,6 +463,19 @@ public class EnvironmentGui	extends JFrame
 		g.translate(bounds.x, bounds.y);
 		comp.paint(g);
 		g.translate(-bounds.x, -bounds.y);
+	}
+
+	/** Open world view window on Swing Thread. */
+	public static void create()
+	{
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				new EnvironmentGui().setVisible(true);
+			}
+		});
 	}
 }
 

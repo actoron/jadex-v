@@ -1,7 +1,5 @@
 package jadex.quickstart.cleanerworld;
 
-import javax.swing.SwingUtilities;
-
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 
@@ -19,16 +17,10 @@ public class Main
 	 */
 	public static void main(String[] args)
 	{
+		// Start an agent
 		IBDIAgent.create("jadex.quickstart.cleanerworld.single.CleanerBDIAgentB1");
 		
-		// Open world view window on Swing Thread
-		SwingUtilities.invokeLater(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				new EnvironmentGui().setVisible(true);
-			}
-		});
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }
