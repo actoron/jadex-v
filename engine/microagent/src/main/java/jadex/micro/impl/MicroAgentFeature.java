@@ -4,7 +4,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import jadex.common.FieldInfo;
 import jadex.common.IParameterGuesser;
@@ -34,8 +36,6 @@ public class MicroAgentFeature	implements ILifecycle
 	}
 
 	protected MicroAgent	self;
-	
-	protected IParameterGuesser	guesser;
 	
 	protected MicroAgentFeature(MicroAgent self)
 	{
@@ -431,7 +431,6 @@ public class MicroAgentFeature	implements ILifecycle
 	}
 	
 	
-	// todo: parameter guesser
 	/**
 	 *  Invoke an agent method by injecting required arguments.
 	 */
@@ -449,8 +448,11 @@ public class MicroAgentFeature	implements ILifecycle
 				Object pojo = component.getPojo();
 				method = mi.getMethod(pojo.getClass().getClassLoader());
 				
+				List<Object>	largs	= args!=null ? new ArrayList<>(Arrays.asList(args)) : new ArrayList<>();
+				largs.addAll(component.getFeatures());
+				
 				// Try to guess parameters from given args or component internals.
-				IParameterGuesser guesser	= args!=null ? new SimpleParameterGuesser(component.getFeature(IModelFeature.class).getParameterGuesser(), Arrays.asList(args)) : component.getFeature(IModelFeature.class).getParameterGuesser();
+				IParameterGuesser guesser	= new SimpleParameterGuesser(component.getFeature(IModelFeature.class).getParameterGuesser(), largs);
 				Object[]	iargs	= new Object[method.getParameterTypes().length];
 				for(int i=0; i<method.getParameterTypes().length; i++)
 				{
