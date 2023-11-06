@@ -21,7 +21,7 @@ dependencies
 	implementation 'jadex:core:5.0.0'
 	implementation 'jadex:model:5.0.0'
 	implementation 'jadex:execution:5.0.0'
-	implementation 'jadex:microagent:5.0.0'
+	implementation 'jadex:micro:5.0.0'
     implementation 'jadex:providedservice:5.0.0'
 	implementation 'jadex:serialization:5.0.0'
 	implementation 'net.cinnom:nano-cuckoo:3.0.2'

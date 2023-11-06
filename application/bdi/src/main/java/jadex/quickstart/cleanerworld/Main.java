@@ -18,7 +18,7 @@ public class Main
 	public static void main(String[] args)
 	{
 		// Start an agent
-		IBDIAgent.create("jadex.quickstart.cleanerworld.single.CleanerBDIAgentB1");
+		IBDIAgent.create("jadex.quickstart.cleanerworld.single.CleanerBDIAgentB2");
 		
 		// Open the world view
 		EnvironmentGui.create();

@@ -19,7 +19,7 @@ dependencies
     implementation 'jadex:core:5.0.0'
     implementation 'jadex:model:5.0.0'
     implementation 'jadex:execution:5.0.0'
-    implementation 'jadex:microagent:5.0.0'
+    implementation 'jadex:micro:5.0.0'
     implementation 'jadex:bdi:5.0.0'
     //implementation 'jadex:simulation:5.0.0'
 }

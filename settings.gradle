@@ -25,7 +25,7 @@ includeBuild('engine/publishservicejetty') {}
 includeBuild('engine/nfproperties') {}
 includeBuild('engine/simulation') {}
 includeBuild('engine/communication') {}
-includeBuild('engine/microagent') {}
+includeBuild('engine/micro'){}
 includeBuild('engine/bdi') {}
 
 includeBuild('rules/eca') {}
