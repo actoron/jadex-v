@@ -255,6 +255,12 @@ public class SensorActuator
 		
 		this.target	= new Location(x, y);
 		
+		if(self.getLocation().isNear(target))
+		{
+			this.target	= null;
+			return;
+		}
+		
 		// Signal variable to check when location is reached.
 		final Future<Void>	reached	= new Future<>();
 		
