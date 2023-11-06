@@ -505,33 +505,6 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 //		System.out.println("iniw end");
 	}
 	
-//	/**
-//	 *  Perform the writes of the init.
-//	 */
-//	public static void performInitWrites(IInternalAccess agent)
-//	{
-//		synchronized(newinitwrites)
-//		{
-//			List<Object[]> writes = newinitwrites.remove(agent);
-//			if(writes!=null)
-//			{
-//				for(Object[] write: writes)
-//				{
-////					System.out.println("initwrite: "+write[0]+" "+write[1]+" "+write[2]);
-////					agent.writeField(write[0], (String)write[1], write[2]);
-////					BDIAgentInterpreter ip = (BDIAgentInterpreter)agent.getInterpreter();
-//					RuleSystem rs = agent.getComponentFeature(IInternalBDIAgentFeature.class).getRuleSystem();
-//					final String belname = (String)write[1];
-//					Object val = write[0];
-////					rs.addEvent(new Event(new EventType(ChangeEvent.BELIEFCHANGED, belname), val));
-//					rs.addEvent(new jadex.rules.eca.Event(new EventType(ChangeEvent.BELIEFCHANGED, belname), new ChangeInfo<Object>(val, null, null)));
-//					MBelief	mbel = ((MCapability)agent.getComponentFeature(IInternalBDIAgentFeature.class).getCapability().getModelElement()).getBelief(belname);
-//					observeValue(rs, val, agent, new EventType(ChangeEvent.FACTCHANGED, belname), mbel);
-//				}
-//			}
-//		}
-//	}
-	
 	/**
 	 *  Perform the writes of the init.
 	 */

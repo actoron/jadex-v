@@ -1717,25 +1717,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 //			System.out.println("inited: "+component.getComponentIdentifier());
 			
 			// perform init write fields (after injection of bdiagent)
-			//TODO
-//			BDIAgentFeature.performInitWrites(component);
-			
-			// Start rule system
-//				if(getComponentIdentifier().getName().indexOf("Cleaner")!=-1)// && getComponentIdentifier().getName().indexOf("Burner")==-1)
-//					getCapability().dumpPlansPeriodically(getInternalAccess());
-//				if(getComponentIdentifier().getName().indexOf("Ambulance")!=-1)
-//				{
-//					getCapability().dumpGoalsPeriodically(getInternalAccess());
-//					getCapability().dumpPlansPeriodically(getInternalAccess());
-//				}
-			
-//				}
-//				catch(Exception e)
-//				{
-//					e.printStackTrace();
-//				}
-			
-//				throw new RuntimeException();
+			BDIAgentFeature.performInitWrites(IExecutionFeature.get().getComponent());
 		}
 	}
 	
