@@ -1,6 +1,6 @@
 package jadex.benchmark;
 
-import jadex.bdiv3.features.IBDIAgentFeature;
+import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.Future;

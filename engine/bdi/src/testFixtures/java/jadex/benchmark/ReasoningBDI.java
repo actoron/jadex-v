@@ -1,12 +1,12 @@
 package jadex.benchmark;
 
 
-import jadex.bdiv3.annotation.Belief;
-import jadex.bdiv3.annotation.Goal;
-import jadex.bdiv3.annotation.GoalCreationCondition;
-import jadex.bdiv3.annotation.Plan;
-import jadex.bdiv3.annotation.Trigger;
-import jadex.bdiv3.features.IBDIAgentFeature;
+import jadex.bdi.annotation.Belief;
+import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.Plan;
+import jadex.bdi.annotation.Trigger;
+import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.Future;

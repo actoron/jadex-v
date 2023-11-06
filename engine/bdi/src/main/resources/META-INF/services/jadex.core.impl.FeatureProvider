@@ -1,2 +1,2 @@
-jadex.bdiv3.features.impl.BDIAgentFeatureProvider
-jadex.bdiv3.features.impl.BDILifecycleAgentFeatureProvider
+jadex.bdi.runtime.impl.BDIAgentFeatureProvider
+jadex.bdi.runtime.impl.BDILifecycleAgentFeatureProvider
