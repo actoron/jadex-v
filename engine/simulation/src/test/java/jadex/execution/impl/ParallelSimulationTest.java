@@ -33,8 +33,8 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	{
 		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
 		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
-		sim.stop().get(1000);
-		assertThrows(IllegalStateException.class, () -> sim.stop().get(1000));
+		sim.stop().get(TIMEOUT);
+		assertThrows(IllegalStateException.class, () -> sim.stop().get(TIMEOUT));
 	}
 	
 	@Test
@@ -53,7 +53,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		});
 		IFuture<Void>	stop	= sim.stop();
 		run[0]	= false;
-		stop.get(1000);
+		stop.get(TIMEOUT);
 	}
 
 	@Test
@@ -61,12 +61,12 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	{
 		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
 		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
-		sim.stop().get(1000);
+		sim.stop().get(TIMEOUT);
 		List<String>	results	= new ArrayList<>();
 		sim.waitForDelay(2000).then((v) -> results.add("A"));
 		sim.waitForDelay(1000).then((v) -> results.add("B"));
 		sim.start();
-		sim.waitForDelay(4000).get(4000);
+		sim.waitForDelay(4000).get(TIMEOUT);
 		assertEquals(Arrays.asList("B", "A"), results);
 	}
 
@@ -76,16 +76,16 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
 		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 		assertThrows(IllegalStateException.class, () -> sim.start());
-		sim.stop().get(1000);
+		sim.stop().get(TIMEOUT);
 		List<String>	results	= new ArrayList<>();
 		sim.waitForDelay(1000).then((v) -> results.add("A"));
 		sim.waitForDelay(2000).then((v) -> sim.stop().get());
 		sim.waitForDelay(3000).then((v) -> results.add("B"));
 		sim.start();
-		assertThrows(TimeoutException.class, () -> sim.waitForDelay(3000).get(10));
+		assertThrows(TimeoutException.class, () -> sim.waitForDelay(3000).get(TIMEOUT));
 		assertEquals(Arrays.asList("A"), results);
 		sim.start();
-		sim.waitForDelay(2000).get(1000);
+		sim.waitForDelay(2000).get(TIMEOUT);
 		assertEquals(Arrays.asList("A", "B"), results);
 	}
 
@@ -103,7 +103,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 			sim[i]	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 			if(i==0)
 			{
-				sim[i].stop().get(1000);
+				sim[i].stop().get(TIMEOUT);
 			}
 			
 			sim[i].scheduleStep(() -> 
@@ -118,7 +118,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		}
 		
 		sim[0].start();
-		sim[0].waitForDelay(1000).get(1000);
+		sim[0].waitForDelay(1000).get(TIMEOUT);
 		assertEquals("ABBCCCDDDDEEEEEFFFFFF", output.toString());
 	}
 }

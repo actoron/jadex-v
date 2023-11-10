@@ -66,7 +66,7 @@ public abstract class AbstractExecutionFeatureTest
 		
 		// Test after creation inside component
 		Component	comp3	= comp.getExternalAccess().scheduleStep(
-			() -> Component.createComponent(Component.class, () -> new Component(null))).get();
+			() -> Component.createComponent(Component.class, () -> new Component(null))).get(TIMEOUT);
 		result	= comp.getExternalAccess().scheduleStep(
 				() -> IExecutionFeature.get().getComponent());
 		IFuture<IComponent> result3	= comp3.getExternalAccess().scheduleStep(
@@ -76,7 +76,7 @@ public abstract class AbstractExecutionFeatureTest
 		
 		// Test plain creation (w/o bootstrap) inside component
 		Component	comp4	= comp.getExternalAccess().scheduleStep(
-		() -> new Component(null){}).get();
+		() -> new Component(null){}).get(TIMEOUT);
 		result	= comp.getExternalAccess().scheduleStep(
 				() -> IExecutionFeature.get().getComponent());
 		IFuture<IComponent> result4	= comp4.getExternalAccess().scheduleStep(
@@ -150,8 +150,8 @@ public abstract class AbstractExecutionFeatureTest
 		IFuture<Boolean>	result1	= comp.getExternalAccess().scheduleStep(() -> blocker.get());
 		IFuture<Boolean>	result2	= comp.getExternalAccess().scheduleStep(() -> blocker.get());
 		comp.getExternalAccess().scheduleStep(() -> blocker.setResult(true));
-		assertTrue(result1.get(3000), "Wrong step result.");
-		assertTrue(result2.get(3000), "Wrong step result.");
+		assertTrue(result1.get(TIMEOUT), "Wrong step result.");
+		assertTrue(result2.get(TIMEOUT), "Wrong step result.");
 	}
 	
 	@Test
@@ -248,7 +248,7 @@ public abstract class AbstractExecutionFeatureTest
 				}
 			});
 			return (Void)null;
-		}).get();
+		}).get(TIMEOUT);
 		// Test that component creation was scheduled on different thread.
 		assertNotEquals(inner[0], inner[1], "Failed to switch threads.");
 	}
