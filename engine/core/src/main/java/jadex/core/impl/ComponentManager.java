@@ -57,4 +57,9 @@ public class ComponentManager
 	{
 		return host;
 	}
+	
+	public void setDebug(boolean debug)
+	{
+		SUtil.DEBUG = debug;
+	}
 }
