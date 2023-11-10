@@ -27,10 +27,10 @@ public class ComponentManager
 	}
 	
 	/** Cached process ID. */
-	public long pid;
+	private long pid;
 	
 	/** Cached host name. */
-	public String host;
+	private String host;
 	
 	private ComponentManager()
 	{
