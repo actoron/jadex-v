@@ -887,12 +887,12 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			if(!isFinished())
 			{
 	//			setLifecycleState(PLANLIFECYCLESTATE_ABORTED);
-				Exception ex = new PlanAbortedException();
-				setException(ex); // remove? // todo: BodyAborted
+//				Exception ex = new PlanAbortedException();
+//				setException(ex); // remove? // todo: BodyAborted
 				
 				// Stop plan execution if any.
 //				System.out.println("aborting2: "+this);
-				body.abort();
+//				body.abort();
 //				System.out.println("aborting3: "+this);
 				
 				// If plan is waiting interrupt waiting
@@ -911,7 +911,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 							if(resc!=null)
 							{
 								//System.out.println("aborting5: "+this+", "+resc);
-								resc.execute(new ResumeCommandArgs(null, null, ex));
+								resc.execute(new ResumeCommandArgs(null, null, new PlanAbortedException()));
 							}
 							List<ICommand<ResumeCommandArgs>> rescoms = getResumeCommands();
 							if(rescoms!=null)
@@ -920,7 +920,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 								//System.out.println("aborting6: "+this+", "+SUtil.arrayToString(tmp));
 								for(ICommand<ResumeCommandArgs> rescom: tmp)
 								{
-									rescom.execute(new ResumeCommandArgs(null, null, ex));
+									rescom.execute(new ResumeCommandArgs(null, null, new PlanAbortedException()));
 								}
 							}
 	//					}
@@ -929,7 +929,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 				else
 				{
 					// happens with state=RUNNING ?!
-					//System.out.println("plan abort: not performing abort due to plan state: "+getProcessingState());
+//					System.out.println("plan abort: not performing abort due to plan state: "+getProcessingState());
 				}
 	//			// Can be currently executing and being abort due to e.g. goal condition triggering
 	//			else if(PlanProcessingState.RUNNING.equals(getProcessingState()))
