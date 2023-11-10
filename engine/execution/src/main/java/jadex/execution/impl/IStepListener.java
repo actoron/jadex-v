@@ -1,5 +1,7 @@
 package jadex.execution.impl;
 
+import jadex.future.Future;
+
 /**
  *  Allow augmentation of the execution behavior.
  */
@@ -22,7 +24,7 @@ public interface IStepListener
 	/**
 	 *  Called before blocking the component thread.
 	 */
-	public default void beforeBlock()
+	public default <T> void beforeBlock(Future<T> fut)
 	{
 	}
 

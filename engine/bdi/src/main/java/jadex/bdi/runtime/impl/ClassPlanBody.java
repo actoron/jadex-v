@@ -279,7 +279,7 @@ public class ClassPlanBody extends AbstractPlanBody
 	/**
 	 *  Invoke the body.
 	 */
-	public Object invokeBody(Object[] params) throws BodyAborted
+	public Object invokeBody(Object[] params)
 	{
 		try
 		{

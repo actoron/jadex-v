@@ -1,6 +1,7 @@
 package jadex.bdi.runtime.impl;
 
 import jadex.execution.impl.IStepListener;
+import jadex.future.Future;
 import jadex.future.IFuture;
 
 /**
@@ -25,12 +26,12 @@ public class BDIStepListener implements IStepListener
 	}
 
 	@Override
-	public void beforeBlock()
+	public <T> void beforeBlock(Future<T> fut)
 	{
 		RPlan rplan = RPlan.RPLANS.get();
 		if(rplan!=null)
 		{
-			rplan.beforeBlock();
+			rplan.beforeBlock(fut);
 		}
 	}
 	

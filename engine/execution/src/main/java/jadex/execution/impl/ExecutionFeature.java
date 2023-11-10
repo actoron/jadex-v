@@ -478,7 +478,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				restart();
 			}
 			
-			beforeBlock();
+			beforeBlock(future);
 			
 			try
 			{
@@ -678,13 +678,13 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 	}
 	
-	protected void beforeBlock()
+	protected <T> void beforeBlock(Future<T> fut)
 	{
 		if(listeners!=null)
 		{
 			for(IStepListener lis : listeners)
 			{
-				lis.beforeBlock();
+				lis.beforeBlock(fut);
 			}
 		}
 	}

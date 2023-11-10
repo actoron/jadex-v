@@ -146,12 +146,12 @@ public abstract class AbstractPlanBody implements IPlanBody
 	{
 //		System.out.println("body.abort "+rplan);
 		// TODO: plan suspendable to remember blocked futures of a specific plan
-//		if(partfuture!=null)
-//		{
-//			Future<Object>	fut	= partfuture;
-//			partfuture	= null;	// Needs to be set before to allow assert if null
-//			fut.setExceptionIfUndone(new PlanAbortedException());
-//		}
+		if(partfuture!=null)
+		{
+			Future<Object>	fut	= partfuture;
+			partfuture	= null;	// Needs to be set before to allow assert if null
+			fut.setExceptionIfUndone(new PlanAbortedException());
+		}
 	}
 	
 	/**
@@ -234,7 +234,7 @@ public abstract class AbstractPlanBody implements IPlanBody
 	/**
 	 *  Invoke the plan body.
 	 */
-	public abstract Object invokeBody(Object[] params) throws BodyAborted;
+	public abstract Object invokeBody(Object[] params);
 
 	/**
 	 *  Invoke the plan passed method.

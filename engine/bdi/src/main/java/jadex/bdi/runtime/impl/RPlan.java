@@ -21,9 +21,9 @@ import jadex.bdi.model.MPlanParameter;
 import jadex.bdi.model.MTrigger;
 import jadex.bdi.runtime.ChangeEvent;
 import jadex.bdi.runtime.IGoal;
+import jadex.bdi.runtime.IGoal.GoalProcessingState;
 import jadex.bdi.runtime.IPlan;
 import jadex.bdi.runtime.WaitAbstraction;
-import jadex.bdi.runtime.IGoal.GoalProcessingState;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
 import jadex.common.IValueFetcher;
@@ -31,6 +31,7 @@ import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.common.Tuple2;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.StepAborted;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -1571,13 +1572,13 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	/**
 	 *  Called before blocking the component thread.
 	 */
-	public void	beforeBlock()
+	public <T> void	beforeBlock(Future<T> fut)
 	{
 		testBodyAborted();
 		ISuspendable sus = ISuspendable.SUSPENDABLE.get();
 		if(sus!=null && !RPlan.PlanProcessingState.WAITING.equals(getProcessingState()))
 		{
-			final ResumeCommand<Void> rescom = new ResumeCommand<Void>(sus, false);
+			final ResumeCommand<T> rescom = new ResumeCommand<T>(fut, sus, false);
 			setProcessingState(PlanProcessingState.WAITING);
 //			System.out.println("setting rescom: "+getId()+" "+rescom);
 			resumecommand = rescom;
@@ -1614,14 +1615,13 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		// Throw error to exit body method of aborted plan.
 		if(isFinishing() && PlanLifecycleState.BODY.equals(getLifecycleState()))
 		{
-			BodyAborted	ba	= new BodyAborted();
 //			try
 //			{
 //				if(agent.toString().indexOf("Leaker")!=-1)
 //				{
 //					System.out.println("before throw BodyAborted: "+Runtime.getRuntime().freeMemory());
 //				}
-				throw ba;
+				throw new StepAborted();
 //			}
 //			finally
 //			{
@@ -1643,30 +1643,29 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		protected ISuspendable sus;
 		protected Future<T> waitfuture;
 		protected String rulename;
-		protected RescomTimer timer;
+		protected RescomTimer<T> timer;
 		protected boolean isvoid;
 		
 		public ResumeCommand(Future<T> waitfuture, boolean isvoid)
 		{
-			this(waitfuture, null, isvoid);
+			this.waitfuture = waitfuture;
+			this.isvoid = isvoid;			
 		}
 		
 		public ResumeCommand(Future<T> waitfuture, String rulename, boolean isvoid)
 		{
+			this(waitfuture, isvoid);
 //			System.out.println("created: "+this+" "+RPlan.this.getId());
-			this.waitfuture = waitfuture;
 			this.rulename = rulename;
-			this.isvoid = isvoid;
 		}
 		
-		public ResumeCommand(ISuspendable sus, boolean isvoid)
+		public ResumeCommand(Future<T> waitfuture, ISuspendable sus, boolean isvoid)
 		{
+			this(waitfuture, isvoid);
 			this.sus = sus;
-			this.waitfuture = (Future<T>)sus.getFuture();
-			this.isvoid = isvoid;
 		}
 		
-		public void setTimer(RescomTimer timer)
+		public void setTimer(RescomTimer<T> timer)
 		{
 			this.timer = timer;
 		}

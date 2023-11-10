@@ -37,7 +37,6 @@ import jadex.bdi.runtime.IGoal.GoalLifecycleState;
 import jadex.bdi.runtime.impl.APL.CandidateInfoMPlan;
 import jadex.bdi.runtime.impl.APL.CandidateInfoPojoPlan;
 import jadex.bdi.runtime.impl.APL.MPlanInfo;
-import jadex.bdi.runtime.impl.RPlan.PlanLifecycleState;
 import jadex.bdi.runtime.wrappers.ListWrapper;
 import jadex.bdi.runtime.wrappers.MapWrapper;
 import jadex.bdi.runtime.wrappers.SetWrapper;
@@ -52,6 +51,7 @@ import jadex.common.UnparsedExpression;
 import jadex.core.IComponent;
 import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
@@ -108,6 +108,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	@Override
 	public void	init()
 	{
+		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener());
 		IBDIClassGenerator.checkEnhanced(self.getPojo().getClass());
 		this.bdimodel = (BDIModel)self.getModel().getRawModel();
 		this.capa = new RCapability(bdimodel.getCapability());
@@ -705,7 +706,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 					catch(Exception e)
 					{
 						if(!(e instanceof ComponentTerminatedException))
-							System.out.println("Ex in observe: "+e.getMessage());
+							System.err.println("Ex in observe: "+SUtil.getExceptionStacktrace(e));
 						Object val = event.getSource();
 						rs.unobserveObject(val, self);
 						ret.setResult(null);
@@ -1822,56 +1823,8 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		name = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
 		String rulename = name+"_belief_listener_"+System.identityHashCode(listener);
 		getRuleSystem().getRulebase().removeRule(rulename);
-	}
+	}		
 		
-//	/**
-//	 *  Called before blocking the component thread.
-//	 */
-//	public void	beforeBlock()
-//	{
-//		RPlan	rplan	= ExecutePlanStepAction.RPLANS.get();
-//		testBodyAborted(rplan);
-//		ComponentSuspendable sus = ComponentSuspendable.COMSUPS.get();
-//		if(rplan!=null && sus!=null && !RPlan.PlanProcessingState.WAITING.equals(rplan.getProcessingState()))
-//		{
-//			final ResumeCommand<Void> rescom = rplan.new ResumeCommand<Void>(sus, false);
-//			rplan.setProcessingState(PlanProcessingState.WAITING);
-//			rplan.resumecommand = rescom;
-//		}
-//	}
-//		
-//	/**
-//	 *  Called after unblocking the component thread.
-//	 */
-//	public void	afterBlock()
-//	{
-//		RPlan rplan = ExecutePlanStepAction.RPLANS.get();
-//		testBodyAborted(rplan);
-//		if(rplan!=null)
-//		{
-//			rplan.setProcessingState(PlanProcessingState.RUNNING);
-//			if(rplan.resumecommand!=null)
-//			{
-//				// performs only cleanup without setting future
-//				rplan.resumecommand.execute(Boolean.FALSE);
-//				rplan.resumecommand = null;
-//			}
-//		}
-//	}
-		
-	/**
-	 *  Check if plan is already aborted.
-	 */
-	protected void testBodyAborted(RPlan rplan)
-	{
-		// Throw error to exit body method of aborted plan.
-		if(rplan!=null && rplan.isFinishing() && rplan.getLifecycleState()==PlanLifecycleState.BODY)
-		{
-//			System.out.println("aborting after block: "+rplan);
-			throw new BodyAborted();
-		}
-	}
-	
 	/**
 	 *  Get parameter values for injection into method and constructor calls.
 	 */
