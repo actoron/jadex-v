@@ -132,6 +132,14 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 	}
 	
 	/**
+	 *  Get the future if currently suspended, null otherwise.
+	 */
+	public IFuture<?>	getFuture()
+	{
+		return future;
+	}
+	
+	/**
 	 *  Get the default timeout.
 	 *  @return The default timeout (-1 for none).
 	 */

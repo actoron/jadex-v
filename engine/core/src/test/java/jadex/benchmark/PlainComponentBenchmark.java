@@ -17,6 +17,12 @@ import jadex.future.IFuture;
 public class PlainComponentBenchmark	extends AbstractComponentBenchmark 
 {
 	@Override
+	protected String getComponentTypeName()
+	{
+		return "Plain component";
+	}
+	
+	@Override
 	protected IFuture<ComponentIdentifier>	createComponent(String name)
 	{
 		return new Future<>( new Component(new ComponentIdentifier(name)).getId());

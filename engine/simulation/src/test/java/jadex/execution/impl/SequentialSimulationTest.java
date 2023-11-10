@@ -34,7 +34,7 @@ public class SequentialSimulationTest extends ParallelSimulationTest
 			sim[i]	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 			if(i==0)
 			{
-				sim[i].stop().get(1000);
+				sim[i].stop().get(TIMEOUT);
 			}
 			
 			sim[i].scheduleStep(() -> 
@@ -50,7 +50,7 @@ public class SequentialSimulationTest extends ParallelSimulationTest
 		}
 		
 		sim[0].start();
-		sim[0].waitForDelay(1000).get(1000);
+		sim[0].waitForDelay(1000).get(TIMEOUT);
 		assertEquals("AABABCABCDABCDEABCDEF", output.toString());
 	}
 }

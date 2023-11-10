@@ -10,6 +10,12 @@ public class StepAborted extends Error
 {
 	ComponentIdentifier	cid;
 	
+	public StepAborted()
+	{
+		this(IExecutionFeature.isAnyComponentThread() ?
+			IExecutionFeature.get().getComponent().getId(): null);
+	}
+	
 	public StepAborted(ComponentIdentifier cid)
 	{
 		this.cid	= cid;

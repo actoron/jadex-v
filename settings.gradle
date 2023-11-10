@@ -25,10 +25,11 @@ includeBuild('engine/publishservicejetty') {}
 includeBuild('engine/nfproperties') {}
 includeBuild('engine/simulation') {}
 includeBuild('engine/communication') {}
-includeBuild('engine/microagent') {}
+includeBuild('engine/micro'){}
 includeBuild('engine/bdi') {}
 
 includeBuild('rules/eca') {}
 
-includeBuild('application/micro'){}
+includeBuild('application/micro'){name='application-micro'}
+includeBuild('application/bdi'){name='application-bdi'}
 
