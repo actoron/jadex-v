@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import jadex.common.TimeoutException;
 import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.AbstractExecutionFeatureTest;
 import jadex.future.IFuture;
 import jadex.simulation.ISimulationFeature;
 import jadex.simulation.impl.SlaveSimulationFeature;

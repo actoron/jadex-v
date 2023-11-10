@@ -17,6 +17,7 @@ public interface IPlan extends IParameterElement, IFinishableElement<Object>  //
 	
 	/**
 	 *  Abort the plan.
+	 * @return 
 	 */
 	public IFuture<Void> abort();
 	

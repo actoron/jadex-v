@@ -99,7 +99,11 @@ public abstract class AbstractPlanBody implements IPlanBody
 				ii.setResult(exception);
 			}*/
 			// Next step: failed() or aborted()
-			next = e instanceof PlanAbortedException? 3: 2;
+			next = e instanceof PlanAbortedException? 3: 2;	// TODO unify planabortede
+		}
+		catch(StepAborted e)
+		{
+			next	= 3;
 		}
 
 		

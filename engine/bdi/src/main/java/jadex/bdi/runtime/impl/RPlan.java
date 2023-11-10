@@ -1491,9 +1491,12 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	 */
 	public <T> void	addTimer(long timeout, ResumeCommand<T> rescom)
 	{
-		RescomTimer<T>	ret =  new RescomTimer<>(rescom);
-		rescom.setTimer(ret);
-		IExecutionFeature.get().waitForDelay(timeout).then(v -> ret.run());
+		if(timeout>0)
+		{
+			RescomTimer<T>	ret =  new RescomTimer<>(rescom);
+			rescom.setTimer(ret);
+			IExecutionFeature.get().waitForDelay(timeout).then(v -> ret.run());
+		}
 	}
 	
 //	/**
