@@ -3,6 +3,7 @@ package jadex.communication.impl.security;
 import java.util.HashSet;
 import java.util.Set;
 
+import jadex.communication.impl.security.handshake.BasicSecurityMessage;
 import jadex.future.Future;
 
 
