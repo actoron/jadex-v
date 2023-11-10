@@ -1,5 +1,6 @@
 package jadex.bdi.runtime.impl;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -192,5 +193,47 @@ public abstract class RProcessableElement extends RParameterElement
 				throw new IllegalStateException("Cannot write parameter "+getModelElement().getName()+"."+mparam.getName()+" in state "+getState()+".");
 			}
 		}
+	}
+	
+	/** 
+	 * 
+	 */
+	public String toString()
+	{
+		String	ret	= null;
+		
+		// Use pojo.toString() if not Object.toString()
+		if(getPojoElement()!=null)
+		{
+			try
+			{
+				Method	m	= getPojoElement().getClass().getMethod("toString");
+				if(!m.getDeclaringClass().equals(Object.class))
+				{
+					ret	= getPojoElement().toString();
+				}
+			}
+			catch (Exception e)
+			{
+			}
+		}
+		
+		if(ret==null)
+		{
+			if(id.lastIndexOf('$')!=-1)
+			{
+				ret	= id.substring(id.lastIndexOf('$')+1);
+			}
+			else if(id.lastIndexOf('.')!=-1)
+			{
+				ret	= id.substring(id.lastIndexOf('.')+1);
+			}
+			else
+			{
+				ret	= id;
+			}
+		}
+		
+		return ret;
 	}
 }

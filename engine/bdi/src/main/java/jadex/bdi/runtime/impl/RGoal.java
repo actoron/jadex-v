@@ -661,16 +661,6 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 //		ret = getMGoal().isUnique()? getPojoElement().equals(((RProcessableElement)obj).getPojoElement()): super.equals(obj);
 	}
 
-	/** 
-	 * 
-	 */
-	public String toString()
-	{
-//		return "RGoal(lifecyclestate=" + lifecyclestate + ", processingstate="
-//			+ processingstate + ", state=" + state + ", id=" + id + ")";
-		return id+(getPojoElement()!=null ? " "+getPojoElement() : "");
-	}
-	
 	/**
 	 *  Called when a plan is finished.
 	 */
