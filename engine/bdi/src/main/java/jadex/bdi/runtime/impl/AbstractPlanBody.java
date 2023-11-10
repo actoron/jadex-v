@@ -143,21 +143,21 @@ public abstract class AbstractPlanBody implements IPlanBody
 		return ret;
 	}
 	
-	/**
-	 *  Issue abortion of the plan body, if currently running.
-	 */
-	public void abort()
-	{
-//		System.out.println("body.abort "+rplan);
-		// TODO: plan suspendable to remember blocked futures of a specific plan
-		if(partfuture!=null)
-		{
-			Future<Object>	fut	= partfuture;
-			partfuture	= null;	// Needs to be set before to allow assert if null
-			fut.setExceptionIfUndone(new PlanAbortedException());
-		}
-	}
-	
+//	/**
+//	 *  Issue abortion of the plan body, if currently running.
+//	 */
+//	public void abort()
+//	{
+////		System.out.println("body.abort "+rplan);
+//		// TODO: plan suspendable to remember blocked futures of a specific plan
+//		if(partfuture!=null)
+//		{
+//			Future<Object>	fut	= partfuture;
+//			partfuture	= null;	// Needs to be set before to allow assert if null
+//			fut.setExceptionIfUndone(new PlanAbortedException());
+//		}
+//	}
+//	
 	/**
 	 *  Invoke a plan part.
 	 */

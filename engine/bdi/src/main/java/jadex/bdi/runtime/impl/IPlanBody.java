@@ -17,8 +17,8 @@ public interface IPlanBody
 	 */
 	public IFuture<Void> executePlan();
 	
-	/**
-	 *  Issue abortion of the plan body, if currently running.
-	 */
-	public void abort();
+//	/**
+//	 *  Issue abortion of the plan body, if currently running.
+//	 */
+//	public void abort();
 }
