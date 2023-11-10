@@ -476,7 +476,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 			{
 				if(!isFinished())
 				{
-					doSetProcessingState(processingstate);
+					doSetProcessingState(GoalProcessingState.FAILED);
 					setException(new GoalDroppedException(this.toString()));
 				}
 				super.notifyListeners();
@@ -1119,7 +1119,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 					@Override
 					public void resultAvailable(Void result)
 					{
-						doSetProcessingState(processingstate);
+						setProcessingState(IGoal.GoalProcessingState.IDLE);
 						// Hack! Notify finished listeners to allow for waiting via waitForGoal
 						// Cannot use notifyListeners() because it checks isSucceeded
 						if(getListeners()!=null)
@@ -1144,7 +1144,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 		}
 		else
 		{
-			doSetProcessingState(processingstate);
+			setProcessingState(IGoal.GoalProcessingState.SUCCEEDED);
 		}
 	}
 	
