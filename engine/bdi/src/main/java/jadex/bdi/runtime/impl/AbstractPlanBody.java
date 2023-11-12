@@ -1,5 +1,6 @@
 package jadex.bdi.runtime.impl;
 
+import jadex.bdi.runtime.GoalFailureException;
 import jadex.bdi.runtime.PlanFailureException;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
@@ -221,6 +222,7 @@ public abstract class AbstractPlanBody implements IPlanBody
 		{
 			// Print exception, when relevant for user. 
 			if(!(e instanceof StepAborted)
+				&& !(e instanceof GoalFailureException)
 				&& !(e instanceof PlanAbortedException)
 				&& !(e instanceof PlanFailureException))
 			{
