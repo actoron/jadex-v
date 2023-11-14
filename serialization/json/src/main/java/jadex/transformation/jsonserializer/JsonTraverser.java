@@ -49,6 +49,7 @@ import jadex.transformation.jsonserializer.processors.JsonOptionalProcessor;
 import jadex.transformation.jsonserializer.processors.JsonPrimitiveObjectProcessor;
 import jadex.transformation.jsonserializer.processors.JsonPrimitiveProcessor;
 import jadex.transformation.jsonserializer.processors.JsonReadContext;
+import jadex.transformation.jsonserializer.processors.JsonRecordProcessor;
 import jadex.transformation.jsonserializer.processors.JsonRectangleProcessor;
 import jadex.transformation.jsonserializer.processors.JsonSimpleDateFormatProcessor;
 import jadex.transformation.jsonserializer.processors.JsonStackTraceElementProcessor;
@@ -114,6 +115,7 @@ public class JsonTraverser extends Traverser
 		writeprocs.add(new JsonBigIntegerProcessor());
 		writeprocs.add(new JsonJsonStringProcessor());
 		writeprocs.add(new JsonOptionalProcessor());
+		writeprocs.add(new JsonRecordProcessor());
 		writeprocs.add(new JsonBeanProcessor());
 		
 		readprocs = new ArrayList<ITraverseProcessor>();
@@ -155,6 +157,7 @@ public class JsonTraverser extends Traverser
 		readprocs.add(new JsonJsonStringProcessor());
 
 		int pos = readprocs.size();
+		readprocs.add(new JsonRecordProcessor());
 		readprocs.add(new JsonBeanProcessor());
 		readprocs.add(new JsonPrimitiveProcessor());
 		

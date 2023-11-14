@@ -226,7 +226,6 @@
 			}
 			
 		</style>
-		<script src="gobbleapi/jadex.js" type="text/javascript"></script>
 		<script>
 			document.addEventListener("DOMContentLoaded", function() 
 			{
@@ -247,69 +246,6 @@
 				});
 				
 				gui.update();
-				
-				informNewGame(3, 3, 3);
-			}
-			
-			function informNewGame(rows, cols, invsize)
-			{
-				return new Promise((resolve,reject) => 
-				{
-					fetch("gobbleapi/informNewGame", {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify([rows, cols, invsize])})
-					.then(response => 
-					{
-					    if(!response.ok) 
-					    	reject(new Error(`Fehler: ${response.status} - ${response.statusText}`));
-					    resolve();
-					})
-					.catch(error => 
-					{
-						console.error('error:', error);
-						reject(error);
-					});
-    			});
-			}
-			
-			function informMove(move)
-			{
-				return new Promise((resolve,reject) => 
-				{
-					fetch("gobbleapi/informMove", {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(move)})
-					.then(response => 
-					{
-					    if(!response.ok) 
-					    	reject(new Error(`Fehler: ${response.status} - ${response.statusText}`));
-					    resolve();
-					})
-					.catch(error => 
-					{
-						console.error('error:', error);
-						reject(error);
-					});
-    			});
-			}
-			
-			function makeMove()
-			{
-				return new Promise((resolve,reject) => 
-				{
-					fetch("gobbleapi/makeMove", {method: 'GET', headers: {'Content-Type': 'application/json'}})
-					.then(response => 
-					{
-					    if(!response.ok) 
-					    	reject(new Error(`Fehler: ${response.status} - ${response.statusText}`));
-					    return response.json();
-					})
-					.then(move =>
-					{
-						resolve(move);
-					})
-					.catch(error => 
-					{
-						console.error('error:', error);
-						reject(error);
-					});
-    			});
 			}
 			
 			class GUI
@@ -342,25 +278,7 @@
 					}
 					
 					const finishbut = document.getElementById("finish");
-					finishbut.onclick = () => 
-					{
-						let move = this.board.finishMove();
-						
-						informMove(move).then(v =>
-						{
-							makeMove().then(move =>
-							{
-								console.log("move: "+move);
-								board.makeMove(move);
-							}).catch(ex =>
-							{
-								console.log("err in makeMove: "+ex);
-							});
-						}).catch(ex =>
-						{
-							console.log("err in informMove: "+ex);
-						});
-					}
+					finishbut.onclick = () => this.board.finishMove();
 					
 					const board = document.getElementById("board");
 					const rezob = new ResizeObserver(() => {
@@ -620,22 +538,11 @@
 					return this.turn;
 				}
 				
-				makeMove(move)
-			    {
-			    	if(move.player!=this.getPlayer())
-			    		throw new Error("Move of wrong player: "+move);
-			    	this.placeGhost(move.row, move.col, move.size);
-			    	return this.finishMove();
-			    }
-				
-				placeGhost(row, col, gsize) 
+				placeGhost(row, col) 
 				{
 					if(this.winner!=null)
 						return;
 					const player = this.getPlayer();
-					
-					 if(gsize!=undefined && !this.inv[player].hasGhost(gsize))
-        				throw new Error("Impossible move: "+gsize);
 					
 					const cell = this.board[row][col];
 					let size = this.inv[player].getMinGhostSize(player);
@@ -686,18 +593,18 @@
 					    	place = false;
 					    }
 				    }
-				    if(size == -1 || gsize<size) 
-            			place = false;
+				    if(size==-1)
+				    	place = false;
 				    
 				    if(replace)
 						cell.pop();
 						
 					if(place)
 					{	
-						let psize = gsize!=undefined? gsize: size;
-						this.lastghost = {row, col, size: psize, player};
-						cell.push(this.lastghost);
-						this.inv[player].removeGhost(psize);
+						cell.push({size, player});
+					
+						this.lastghost = {row, col, size};
+						this.inv[player].removeGhost(size);
 					}
 					else
 					{
@@ -870,7 +777,6 @@
 					if(this.lastghost==null)
 						return;
 					
-					let lastmove = this.lastghost;
 					let message = null;
 					
 					// check if other player has any win combi 
@@ -905,8 +811,6 @@
 					}
 					
 					this.notifyChange(message);
-					
-					return lastmove;
 				}
 				
 				/*setGameFinished(combi, player)
