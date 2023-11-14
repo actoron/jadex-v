@@ -341,30 +341,37 @@
 						}
 					}
 					
+					const self = this;
 					const finishbut = document.getElementById("finish");
 					finishbut.onclick = () => 
 					{
-						let move = this.board.finishMove();
-						
-						informMove(move).then(v =>
+						if(self.board.getWinner()!=null)
 						{
-							makeMove().then(move =>
+							restart();
+						}
+						else
+						{
+							let move = this.board.finishMove();
+							
+							informMove(move).then(v =>
 							{
-								console.log("move: "+move);
-								board.makeMove(move);
+								makeMove().then(move =>
+								{
+									self.board.makeMove(move);
+								}).catch(ex =>
+								{
+									console.log("err in makeMove: "+ex);
+								});
 							}).catch(ex =>
 							{
-								console.log("err in makeMove: "+ex);
+								console.log("err in informMove: "+ex);
 							});
-						}).catch(ex =>
-						{
-							console.log("err in informMove: "+ex);
-						});
+						}
 					}
 					
 					const board = document.getElementById("board");
 					const rezob = new ResizeObserver(() => {
-						console.log("resize");
+						//console.log("resize");
 					    const width = board.offsetWidth;
 					    const height = board.offsetHeight;
 					    const newsize = Math.max(width, height);
@@ -449,7 +456,7 @@
 					    {
 							const width = ghost.parentElement.offsetWidth;
 							ghost.style.fontSize= width/4*(i+1)+"px";
-							console.log("fontsize: "+width/4*(i+1));
+							//console.log("fontsize: "+width/4*(i+1));
 					    });
 					}
 				    
@@ -603,6 +610,16 @@
 			    {
 					return this.board[row][col];
 				}
+				
+				getWinner()
+    			{
+    				return this.winner;
+    			}
+    
+    			getWinCombination()
+    			{
+    				return this.wincombi;
+    			}
 			    
 			    addChangeListener(listener) 
 			    {
@@ -863,10 +880,7 @@
 				}
 				
 				finishMove()
-				{
-					if(this.winner!=null)
-						restart();
-					
+				{					
 					if(this.lastghost==null)
 						return;
 					

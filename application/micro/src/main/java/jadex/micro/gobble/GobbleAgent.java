@@ -39,7 +39,6 @@ public class GobbleAgent implements IGobbleGuiService
 		ps.publishResources("http://localhost:8081/${cid}", "jadex/micro/gobble");
 		
 		openInBrowser("http://localhost:8081/"+agent.getId().getLocalName());
-		//openInBrowser("http://localhost:8081/"+agent.getId()+"/index2.html");
 	}
 	
 	/**
@@ -70,7 +69,11 @@ public class GobbleAgent implements IGobbleGuiService
 	{
 		List<Move> moves = board.getPossibleMoves();
 		List<Move> rmoves = rankMoves(moves);
-		return new Future<Move>(rmoves.get(0));
+		Move move = rmoves.get(0);
+		
+		board.makeMove(move);
+		
+		return new Future<Move>(move);
 	}
 	
 	/**
@@ -78,20 +81,17 @@ public class GobbleAgent implements IGobbleGuiService
 	 */
 	public List<Move> rankMoves(List<Move> moves)
 	{
+		int player = moves.get(0).player();
+		
+		List<List<int[]>> combis = board.getWinCombinations(player);
+		if(combis.size()>0)
+		{
+			List<int[]> combi = combis.get(0);
+			//int mysize = board.
+		}
+		
 		return moves;
 	}
-	
-	/**
-	 *  Subscribe to game event.
-	 *  @return Game events.
-	 * /
-	public ISubscriptionIntermediateFuture<GameEvent> subscribeToGame()
-	{
-		SubscriptionIntermediateFuture<GameEvent> ret = new SubscriptionIntermediateFuture<GameEvent>();
-		ret.setTerminationCommand((ex) -> subscribers.remove(ret));
-		subscribers.add(ret);
-		return ret;
-	}*/
 	
 	/**
 	 *  Open the url in the browser.

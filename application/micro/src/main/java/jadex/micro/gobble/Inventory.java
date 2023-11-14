@@ -70,4 +70,18 @@ public class Inventory
         }
         return ret;
     }
+    
+    public int getMaxGhostSize()
+    {
+    	 int ret = -1;
+         for(int i = inv.size()-1; i>0; i--) 
+         {
+             if(inv.get(i) > 0) 
+             {
+                 ret = i + 1;
+                 break;
+             }
+         }
+         return ret;
+    }
 }

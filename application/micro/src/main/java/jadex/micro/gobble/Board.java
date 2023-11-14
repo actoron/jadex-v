@@ -74,7 +74,17 @@ public class Board
 
     public int getPlayer() 
     {
-        return turn;
+        return this.turn;
+    }
+    
+    public int getWinner()
+    {
+    	return this.winner;
+    }
+    
+    public List<int[]> getWinCombination()
+    {
+    	return this.wincombi;
     }
 
     public void makeMove(Move move)
@@ -372,6 +382,8 @@ public class Board
             turn = (turn == 0) ? 1 : 0;
         }
 
+        System.out.println("board turn: "+turn);
+        
         notifyChange(message);
     }
     

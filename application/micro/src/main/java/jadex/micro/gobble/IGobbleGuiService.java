@@ -3,7 +3,7 @@ package jadex.micro.gobble;
 import jadex.future.IFuture;
 import jadex.micro.gobble.Board.Move;
 import jadex.providedservice.annotation.Service;
-import jadex.publishservice.impl.RequestManager.MappingInfo.HttpMethod;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 
 @Service
@@ -29,6 +29,7 @@ public interface IGobbleGuiService
 	 *  Make a move.
 	 *  @return The move.
 	 */
+	@GET
 	public IFuture<Move> makeMove();
 	
 	/**
