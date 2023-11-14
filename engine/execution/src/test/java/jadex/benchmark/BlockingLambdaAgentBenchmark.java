@@ -6,9 +6,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.execution.LambdaAgent;
-import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -37,8 +37,8 @@ public class BlockingLambdaAgentBenchmark	extends AbstractComponentBenchmark
 
 	protected static Stream<Arguments> provideBenchmarkParams() {
 	    return Stream.of(
-	  	      Arguments.of(ExecutionFeature.VIRTUAL_THREADS ? 10000 : 1000, false, false),
-		      Arguments.of(ExecutionFeature.VIRTUAL_THREADS ? 100000 : 10000, false, true)	
+	  	      Arguments.of(SUtil.isVirtualExecutor()  ? 10000 : 1000, false, false),
+		      Arguments.of(SUtil.isVirtualExecutor()  ? 100000 : 10000, false, true)	
 	    );
 	}
 	

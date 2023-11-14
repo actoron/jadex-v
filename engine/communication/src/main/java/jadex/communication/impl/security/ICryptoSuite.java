@@ -1,5 +1,6 @@
 package jadex.communication.impl.security;
 
+import jadex.communication.impl.security.handshake.BasicSecurityMessage;
 import jadex.communication.security.ISecurityInfo;
 
 public interface ICryptoSuite
@@ -73,12 +74,6 @@ public interface ICryptoSuite
 	 *  @param id Handshake ID.
 	 */
 	public void setHandshakeId(String id);
-	
-	/**
-	 *  Sets the version of the remote Jadex platform.
-	 *  @param jadexversion The Jadex version.
-	 */
-	public void setRemoteVersion(JadexVersion jadexversion);
 	
 	/**
 	 *  Sets if the suite represents the protocol initializer.

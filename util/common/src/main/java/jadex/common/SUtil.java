@@ -74,6 +74,11 @@ import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -93,6 +98,9 @@ import javax.swing.filechooser.FileSystemView;
  */
 public class SUtil
 {
+	/** Global Debug Flag for additional debug information on the console */
+	public static boolean DEBUG = false;
+	
 	/** Directory were jadex stores files generated during runtime, to be used for later runs. */
 	public static final String	JADEXDIR	= "./.jadex/";
 	
@@ -194,25 +202,8 @@ public class SUtil
 		};
 	}
 	
-	/** Method for launching virtual threads on Java 21+. */
-	private static final MethodHandle STARTVIRTUALTHREAD;
-	static
-	{
-		MethodHandle mh = null;
-		try
-		{
-			Method m = Thread.class.getMethod("startVirtualThread", Runnable.class);
-			mh = MethodHandles.lookup().unreflect(m);
-		}
-		catch(NoSuchMethodException e)
-		{
-			
-		}
-		catch (IllegalAccessException e)
-		{
-		}
-		STARTVIRTUALTHREAD = mh;
-	}
+	/** Shared executor service for all components. */
+	protected static volatile ExecutorService executor = null;
 	
 	/** Application directory, current working dir under normal Java, special with Android. */
 	protected static volatile File appdir = null;
@@ -462,6 +453,50 @@ public class SUtil
 		if(ret==null)
 			ret = DEFTIMEOUT_DEFAULT;
 		DEFTIMEOUT	= ret;
+	}
+	
+	public static final boolean isVirtualExecutor()
+	{
+		return !(getExecutor() instanceof ThreadPoolExecutor);
+	}
+	
+	/**
+	 *  Returns the shared executor for starting new threads.
+	 *  Supports virtual threads if available.
+	 *  
+	 *  @return A shared executor.
+	 */
+	public static final ExecutorService getExecutor()
+	{
+		if (executor == null)
+		{
+			synchronized (SUtil.class)
+			{
+				if (executor == null)
+				{
+					boolean	virtual;
+					try
+					{
+						//EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
+						executor	= (ExecutorService)Executors.class.getMethod("newVirtualThreadPerTaskExecutor").invoke(null);
+						virtual	= true;
+					}
+					catch(NoSuchMethodException e)
+					{
+						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+						virtual	= false;
+					}
+					catch(Exception e)
+					{
+						throw SUtil.throwUnchecked(e);
+					}
+					
+					if (DEBUG)
+						System.out.println(virtual ? "Using virtual threads :-)" : "Using OS threads :-(");
+				}
+			}
+		}
+		return executor;
 	}
 
 	
@@ -6121,33 +6156,6 @@ public class SUtil
 			sb.append("\n");
 		}
 		return sb.toString();
-	}
-	
-	/**
-	 *  Launches a new (daemon) thread using the Runnable.
-	 *  If available, the thread will be a virtual thread,
-	 *  otherwise, a regular thread is used.
-	 *  
-	 *  @param r The Runnable for the Thread to execute.
-	 *  @return The thread.
-	 */
-	public static final Thread startThread(Runnable r)
-	{
-		if (STARTVIRTUALTHREAD != null)
-		{
-			try
-			{
-				return (Thread) STARTVIRTUALTHREAD.invoke(r);
-			}
-			catch (Throwable t)
-			{
-				throwUnchecked(t);
-			}
-		}
-		Thread t = new Thread(r);
-		t.setDaemon(true);
-		t.start();
-		return t;
 	}
 	
 	/**

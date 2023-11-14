@@ -35,41 +35,9 @@ import jadex.future.ISuspendable;
 
 public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFeature
 {
-	/** Shared executor service for all components. */
-	protected static final ExecutorService EXECUTOR;
-	
-	/** Flag to indicate that virtual threads are used. */
-	public static final boolean	VIRTUAL_THREADS;
-	
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
-
-	static
-	{
-		ExecutorService	exe;
-		boolean	virtual;
-		try
-		{
-			//EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
-			exe	= (ExecutorService)Executors.class.getMethod("newVirtualThreadPerTaskExecutor").invoke(null);
-			virtual	= true;
-		}
-		catch(NoSuchMethodException e)
-		{
-			exe = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
-			virtual	= false;
-		}
-		catch(Exception e)
-		{
-			throw SUtil.throwUnchecked(e);
-		}
-
-		System.out.println(virtual ? "Using virtual threads :-)" : "Using OS threads :-(");
-
-		EXECUTOR	= exe;
-		VIRTUAL_THREADS	= virtual;
-	}
-
+	
 	protected Queue<Runnable>	steps	= new ArrayDeque<>(4);
 	protected boolean	executing;
 	protected boolean	do_switch;
@@ -761,7 +729,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		if(runner==null)
 			runner	= new ThreadRunner();
-		EXECUTOR.execute(runner);
+		SUtil.getExecutor().execute(runner);
 	}
 	
 	protected boolean saveEndStep(Object res, Future<Object> fut)
