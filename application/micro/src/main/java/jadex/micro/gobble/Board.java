@@ -2,6 +2,7 @@ package jadex.micro.gobble;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiPredicate;
 
 public class Board 
 {
@@ -86,6 +87,11 @@ public class Board
     {
     	return this.wincombi;
     }
+    
+    public Inventory getInventory(int player)
+    {
+    	return this.inv.get(player);
+    }
 
     public void makeMove(Move move)
     {
@@ -144,7 +150,7 @@ public class Board
             {
                 size = inv.get(player).getMinGhostSize(minsize);
             } 
-            else if (size == 4) 
+            else if(size == 4) 
             {
                 place = false;
             }
@@ -184,7 +190,7 @@ public class Board
         return ret.toArray(new List[ret.size()]);
     }
 
-    public List<List<int[]>> getWinCombinations(int player) 
+    public List<List<int[]>> getWinCombinations(int player, BiPredicate<List<Move>[], Integer> filter) 
     {
         List<List<int[]>> ret = new ArrayList<>();
         List<Move>[] check;
@@ -193,7 +199,8 @@ public class Board
         for(int row = 0; row < board.length; row++) 
         {
             check = board[row];
-            if(hasPotentiallyWon(check, player).hasPotentiallyWon()) 
+            //if(hasPotentiallyWon(check, player).hasPotentiallyWon()) 
+            if(filter.test(check, player))
             {
                 List<int[]> wincombi = new ArrayList<>();
                 for(int i = 0; i < board[row].length; i++) 
@@ -212,7 +219,8 @@ public class Board
             {
                 check[row] = board[row][col];
             }
-            if(hasPotentiallyWon(check, player).hasPotentiallyWon()) 
+            //if(hasPotentiallyWon(check, player).hasPotentiallyWon()) 
+            if(filter.test(check, player))
             {
                 List<int[]> wincombi = new ArrayList<>();
                 for (int row = 0; row < board.length; row++) {
@@ -228,7 +236,8 @@ public class Board
         {
             check[i] = board[i][i];
         }
-        if(hasPotentiallyWon(check, player).hasPotentiallyWon()) 
+        //if(hasPotentiallyWon(check, player).hasPotentiallyWon()) 
+        if(filter.test(check, player))
         {
             List<int[]> wincombi = new ArrayList<>();
             for (int i = 0; i < board.length; i++) 
@@ -244,7 +253,8 @@ public class Board
             check[i] = board[i][board[0].length - i - 1];
         }
 
-        if(hasPotentiallyWon(check, player).hasPotentiallyWon()) 
+        //if(hasPotentiallyWon(check, player).hasPotentiallyWon()) 
+        if(filter.test(check, player))
         {
             List<int[]> wincombi = new ArrayList<>();
             for(int i = 0; i < board.length; i++) 
@@ -267,7 +277,67 @@ public class Board
         return ret;
     }
      
-    public WinStatus hasPotentiallyWon(List<Move>[] cells, int player) 
+    public boolean hasPotentiallyWon(List<Move>[] cells, int player) 
+    {
+        boolean ret = true;
+        
+        for(int i = 0; i < cells.length; i++) 
+        {
+            if(!cells[i].isEmpty()) 
+            {
+                Move g = cells[i].get(cells[i].size() - 1);
+                if(g.player() != player) 
+                {
+                    ret = false;
+                    break;
+                } 
+            } 
+            else 
+            {
+            	ret = false;
+                break;
+            }
+        }
+        
+        return ret;
+    }
+    
+    public boolean hasCompletionMove(List<Move>[] cells, int player) 
+    {
+        boolean ret = false;
+        
+        int myfieldscnt = 0;
+        int mysize = getInventory(player).getMaxGhostSize();
+        
+        for(int i = 0; i < cells.length; i++) 
+        {
+            if(!cells[i].isEmpty()) 
+            {
+                Move g = cells[i].get(cells[i].size() - 1);
+                
+                if(g.player() == player)
+                {
+                	myfieldscnt++;
+                }
+                else
+                {
+                	// cannot eat other ghost fail
+                	if(g.size()>=mysize)
+                	{
+                		myfieldscnt = 0;
+                		break;
+                	}
+                }
+            } 
+        }
+        
+        if(myfieldscnt>=2)
+        	ret = true;
+        
+        return ret;
+    }
+    
+    public WinStatus getPotentiallyWon(List<Move>[] cells, int player) 
     {
         int minSize = 0;
         for(int i = 0; i < cells.length; i++) 
@@ -298,7 +368,7 @@ public class Board
     public boolean hasWon(List<Move>[] cells, int player) 
     {
         boolean ret = false;
-        WinStatus status = hasPotentiallyWon(cells, player);
+        WinStatus status = getPotentiallyWon(cells, player);
 
         if(status.minSize() == invsize) 
         {
@@ -352,9 +422,11 @@ public class Board
             return;
         
         String message = null;
+        
+        BiPredicate<List<Move>[], Integer> filter = this::hasPotentiallyWon;
 
         int otherplayer = (getPlayer() == 0) ? 1 : 0;
-        List<List<int[]>> combis = getWinCombinations(otherplayer);
+        List<List<int[]>> combis = getWinCombinations(otherplayer, filter);
         if(!combis.isEmpty()) 
         {
             wincombi = combis.get(0);
@@ -363,7 +435,7 @@ public class Board
         } 
         else 
         {
-            combis = getWinCombinations(getPlayer());
+            combis = getWinCombinations(getPlayer(), filter);
             if(winner == null && !combis.isEmpty()) 
             {
                 message = "Watch out, player has a combination";
@@ -382,7 +454,7 @@ public class Board
             turn = (turn == 0) ? 1 : 0;
         }
 
-        System.out.println("board turn: "+turn);
+        //System.out.println("board turn: "+turn);
         
         notifyChange(message);
     }

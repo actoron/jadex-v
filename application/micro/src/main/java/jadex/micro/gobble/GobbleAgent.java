@@ -9,7 +9,6 @@ import java.util.Set;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.micro.annotation.Agent;
 import jadex.micro.gobble.Board.Move;
@@ -58,6 +57,8 @@ public class GobbleAgent implements IGobbleGuiService
 	 */
 	public void informMove(Move move)
 	{
+		if(board==null)
+			throw new RuntimeException("No game running");
 		board.makeMove(move);
 	}
 	
@@ -82,13 +83,79 @@ public class GobbleAgent implements IGobbleGuiService
 	public List<Move> rankMoves(List<Move> moves)
 	{
 		int player = moves.get(0).player();
+		int oplayer = player==1? 0: 1;
 		
-		List<List<int[]>> combis = board.getWinCombinations(player);
+		// avoid winning of opponent
+		List<List<int[]>> combis = board.getWinCombinations(oplayer, board::hasPotentiallyWon);
 		if(combis.size()>0)
 		{
+			int mysize = board.getInventory(player).getMaxGhostSize();
 			List<int[]> combi = combis.get(0);
-			//int mysize = board.
+			List<List<Move>> cells = board.getCells(combi);
+
+			int found = -1;
+			for(int i=0; i<cells.size(); i++)
+			{
+				List<Move> cell = cells.get(i);
+				Move m = cell.get(cell.size()-1);
+				if(mysize>m.size())
+				{
+					found = i;
+					break;
+				}
+			}
+			
+			if(found!=-1)
+			{
+				int[] coord = combi.get(found);
+				Move move = new Move(coord[0], coord[1], mysize, player);
+				System.out.println("found prohibit move: "+move);
+				
+				moves.remove(move);
+				moves.add(0, move);
+			}
 		}
+		else // try connect three
+		{
+			combis = board.getWinCombinations(player, board::hasCompletionMove);
+			if(combis.size()>0)
+			{
+				Move move = null;
+				int mysize = board.getInventory(player).getMaxGhostSize();
+				List<int[]> combi = combis.get(0);
+				List<List<Move>> cells = board.getCells(combi);
+				
+				for(int i=0; i<cells.size(); i++)
+				{
+					List<Move> cell = cells.get(i);
+					if(cell.size()==0)
+					{
+						int[] coord = combi.get(i);
+						move = new Move(coord[0], coord[1], mysize, player);
+						break;
+					}
+					else
+					{
+						Move m = cell.get(cell.size()-1);
+						if(m.player()!=player && mysize>m.size())
+						{
+							int[] coord = combi.get(i);
+							move = new Move(coord[0], coord[1], mysize, player);
+							break;
+						}
+					}
+				}
+				
+				if(move!=null)
+				{
+					System.out.println("found connect move: "+move);
+					moves.remove(move);
+					moves.add(0, move);
+				}
+			}
+		}
+		
+		
 		
 		return moves;
 	}

@@ -352,20 +352,24 @@
 						else
 						{
 							let move = this.board.finishMove();
+							// can also determine winner after move
 							
-							informMove(move).then(v =>
+							if(self.board.getWinner()==null)
 							{
-								makeMove().then(move =>
+								informMove(move).then(v =>
 								{
-									self.board.makeMove(move);
+									makeMove().then(move =>
+									{
+										self.board.makeMove(move);
+									}).catch(ex =>
+									{
+										console.log("err in makeMove: "+ex);
+									});
 								}).catch(ex =>
 								{
-									console.log("err in makeMove: "+ex);
+									console.log("err in informMove: "+ex);
 								});
-							}).catch(ex =>
-							{
-								console.log("err in informMove: "+ex);
-							});
+							}
 						}
 					}
 					
