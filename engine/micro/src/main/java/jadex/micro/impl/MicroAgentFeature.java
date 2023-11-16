@@ -64,6 +64,7 @@ public class MicroAgentFeature	implements ILifecycle
 				//if(wasAnnotationCalled(ann))
 				//	return IFuture.DONE;
 				//else
+				
 				invokeMethod(getSelf(), ann, null).delegateTo(ret);
 			}
 			else

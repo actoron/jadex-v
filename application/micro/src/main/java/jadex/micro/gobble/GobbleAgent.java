@@ -37,6 +37,7 @@ public class GobbleAgent implements IGobbleGuiService
 		IPublishServiceFeature ps = agent.getFeature(IPublishServiceFeature.class);
 		ps.publishResources("http://localhost:8081/${cid}", "jadex/micro/gobble");
 		
+		System.out.println("open in browser");
 		openInBrowser("http://localhost:8081/"+agent.getId().getLocalName());
 	}
 	

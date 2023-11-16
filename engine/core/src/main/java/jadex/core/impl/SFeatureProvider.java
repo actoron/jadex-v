@@ -2,11 +2,15 @@ package jadex.core.impl;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +54,7 @@ public class SFeatureProvider
 		if(ret==null)
 		{
 			ret	= new LinkedHashMap<>();
+			
 			// Collect feature providers for this component type
 			// Replaces early providers with later providers for the same feature (e.g. execfeature <- simexecfeature)
 			for(FeatureProvider<Object> provider: ALL_PROVIDERS)
@@ -81,7 +86,7 @@ public class SFeatureProvider
 						else if(!ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
 						{
 							throw new IllegalStateException("Two providers for same feature type: "
-									+provider.getFeatureType().getName()+", "+ret.get(provider.getFeatureType())+", "+provider);
+								+provider.getFeatureType().getName()+", "+ret.get(provider.getFeatureType())+", "+provider);
 						}
 					}
 					else
@@ -90,6 +95,15 @@ public class SFeatureProvider
 					}
 				}
 			}
+			
+			ret = orderComponentFeatures(ret.values()).stream().collect(
+			Collectors.toMap(
+				FeatureProvider::getFeatureType, 
+				element -> element, 
+				(existing, replacement) -> existing, 
+				LinkedHashMap::new)
+			);
+			
 			PROVIDERS_BY_TYPE.put(type, ret);
 		}
 		return ret;
@@ -131,5 +145,101 @@ public class SFeatureProvider
 		{
 			throw new RuntimeException(t);
 		}
+	}
+	
+	/**
+	 *  Build an ordered list of component features.
+	 *  @param provs A list of component feature lists.
+	 *  @return An ordered list of component features.
+	 */
+	public static Collection<FeatureProvider<Object>> orderComponentFeatures(Collection<FeatureProvider<Object>> provs)
+	{
+		DependencyResolver<FeatureProvider<Object>> dr = new DependencyResolver<FeatureProvider<Object>>();
+
+		// visualize feature dependencies for debugging
+//		Class<?> cl = SReflect.classForName0("jadex.tools.featuredeps.DepViewerPanel", null);
+//		if(cl!=null)
+//		{
+//			try
+//			{
+//				Method m = cl.getMethod("createFrame", new Class[]{String.class, DependencyResolver.class});
+//				m.invoke(null, new Object[]{name, dr});
+//			}
+//			catch(Exception e)
+//			{
+//				e.printStackTrace();
+//			}
+//		}
+		
+		Map<Class<?>, FeatureProvider<Object>> provsmap = new HashMap<>();
+		for(FeatureProvider<Object> prov: provs)
+		{
+			provsmap.put(prov.getFeatureType(), prov);
+		}
+
+		Map<Class<?>, FeatureProvider<Object>> odeps = new HashMap<>();
+		
+		for(FeatureProvider<Object> prov: provs)
+		{
+//			IComponentFeatureFactory last = null;
+			// Only use the last feature of a given type (allows overriding features)
+			if(provsmap.get(prov.getFeatureType())==prov)
+			{
+				dr.addNode(prov);
+				
+				// If overridden old position is used as dependency!
+				if(odeps.containsKey(prov.getFeatureType()))
+				{
+					FeatureProvider<Object> odep = odeps.get(prov.getFeatureType());
+					if(odep!=null)
+					{
+						dr.addDependency(prov, odep);
+					}
+				}
+				
+				// else order in current list
+//				else 
+//				{
+//					if(last!=null)
+//						dr.addDependency(fac, last);
+//					last = fac;
+//				}
+				
+				/*Set<Class<?>> sucs = fac.getSuccessors();
+				for(Class<?> suc: sucs)
+				{
+					if(facsmap.get(fac.getType())!=null && facsmap.get(suc)!=null)
+					{
+						dr.addDependency(facsmap.get(suc), facsmap.get(fac.getType()));
+					}
+//					else
+//					{
+//						System.out.println("Declared dependency not found, ignoring: "+suc+" "+prov.getFeatureType());
+//					}
+				}*/
+				
+				Set<Class<?>> pres = prov.getPredecessors(new HashSet<Class<?>>(provsmap.keySet()));
+				for(Class<?> pre: pres)
+				{
+					if(provsmap.get(pre)!=null && provsmap.get(prov.getFeatureType())!=null)
+					{
+						dr.addDependency(provsmap.get(prov.getFeatureType()), provsmap.get(pre));
+					}
+					else
+					{
+						System.out.println("Declared dependency not found, ignoring: "+pre+" "+prov.getFeatureType());
+					}
+				}
+			}
+			// Save original dependency of the feature
+//			else if(!odeps.containsKey(fac.getType()))
+//			{
+//				odeps.put(fac.getType(), last);
+//			}
+		}
+
+		Collection<FeatureProvider<Object>> ret = dr.resolveDependencies(true);
+		//System.out.println("ordered features: "+ret);
+		return ret;
 	}
 }
