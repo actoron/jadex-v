@@ -6,13 +6,9 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.common.MethodInfo;
-import jadex.enginecore.IComponentIdentifier;
-import jadex.enginecore.IExternalAccess;
-import jadex.enginecore.IInternalAccess;
-import jadex.enginecore.component.IMonitoringComponentFeature;
-import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishEventLevel;
-import jadex.enginecore.service.types.monitoring.IMonitoringService.PublishTarget;
-import jadex.enginecore.service.types.monitoring.MonitoringEvent;
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
 import jadex.future.CounterResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
@@ -38,7 +34,7 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 	/**
 	 *  Create a new provider.
 	 */
-	public NFMethodPropertyProvider(IComponentIdentifier parent, IInternalAccess component)
+	public NFMethodPropertyProvider(ComponentIdentifier parent, IComponent component)
 	{
 		super(parent, component);
 	}
@@ -114,7 +110,7 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 		if(getParentId()!=null)
 		{
 //			IComponentManagementService cms = getInternalAccess().getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IComponentManagementService.class));
-			getInternalAccess().getExternalAccessAsync(getParentId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
+			getComponent().getExternalAccessAsync(getParentId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
 			{
 				public void customResultAvailable(IExternalAccess component) 
 				{
@@ -299,12 +295,12 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 		}
 		nfmap.put(nfprop.getName(), nfprop);
 		
-		if(getInternalAccess().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
+		if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
 		{
-			MonitoringEvent me = new MonitoringEvent(getInternalAccess().getId(), getInternalAccess().getDescription().getCreationTime(), 
+			MonitoringEvent me = new MonitoringEvent(getComponent().getId(), getComponent().getDescription().getCreationTime(), 
 				MonitoringEvent.TYPE_PROPERTY_REMOVED, System.currentTimeMillis(), PublishEventLevel.COARSE);
 			me.setProperty("propname", nfprop.getName());
-			getInternalAccess().getFeature(IMonitoringComponentFeature.class).publishEvent(me, PublishTarget.TOALL).addResultListener(new DelegationResultListener<Void>(ret));
+			getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(me, PublishTarget.TOALL).addResultListener(new DelegationResultListener<Void>(ret));
 		}
 		else
 		{
@@ -332,12 +328,12 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 				{
 					public void customResultAvailable(Void result)
 					{
-						if(getInternalAccess().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
+						if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
 						{
-							MonitoringEvent me = new MonitoringEvent(getInternalAccess().getId(), getInternalAccess().getDescription().getCreationTime(), 
+							MonitoringEvent me = new MonitoringEvent(getComponent().getId(), getComponent().getDescription().getCreationTime(), 
 								MonitoringEvent.TYPE_PROPERTY_REMOVED, System.currentTimeMillis(), PublishEventLevel.COARSE);
 							me.setProperty("propname", name);
-							getInternalAccess().getFeature(IMonitoringComponentFeature.class).publishEvent(me, PublishTarget.TOALL).addResultListener(new DelegationResultListener<Void>(ret));
+							getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(me, PublishTarget.TOALL).addResultListener(new DelegationResultListener<Void>(ret));
 						}
 						else
 						{

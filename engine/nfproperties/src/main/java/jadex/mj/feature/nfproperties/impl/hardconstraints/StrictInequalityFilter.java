@@ -1,8 +1,8 @@
 package jadex.mj.feature.nfproperties.impl.hardconstraints;
 
-import jadex.enginecore.service.IService;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.providedservice.IService;
 
 /**
  *  Hard constraint filter for strict inequalities (> and <).

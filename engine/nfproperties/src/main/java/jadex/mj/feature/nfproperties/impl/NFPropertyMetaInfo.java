@@ -1,7 +1,7 @@
 package jadex.mj.feature.nfproperties.impl;
 
 import jadex.common.ClassInfo;
-import jadex.enginecore.nonfunctional.INFProperty.Target;
+import jadex.mj.feature.nfproperties.impl.INFProperty.Target;
 
 
 /**

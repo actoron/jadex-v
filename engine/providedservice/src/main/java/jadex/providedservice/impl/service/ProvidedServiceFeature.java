@@ -652,7 +652,7 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 				{
 					public void customResultAvailable(Void result)
 					{
-						System.out.println("Started service: "+is.getServiceId());
+						//System.out.println("Started service: "+is.getServiceId());
 						serviceStarted(is).addResultListener(new DelegationResultListener<Void>(ret));
 					}
 				});

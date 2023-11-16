@@ -453,7 +453,7 @@ public class MicroAgentFeature	implements ILifecycle
 				largs.addAll(component.getFeatures());
 				
 				// Try to guess parameters from given args or component internals.
-				IParameterGuesser guesser	= new SimpleParameterGuesser(component.getFeature(IModelFeature.class).getParameterGuesser(), largs);
+				IParameterGuesser guesser = new SimpleParameterGuesser(component.getFeature(IModelFeature.class).getParameterGuesser(), largs);
 				Object[]	iargs	= new Object[method.getParameterTypes().length];
 				for(int i=0; i<method.getParameterTypes().length; i++)
 				{

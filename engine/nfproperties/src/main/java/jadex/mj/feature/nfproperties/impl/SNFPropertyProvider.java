@@ -6,15 +6,12 @@ import java.util.Map;
 import jadex.common.MethodInfo;
 import jadex.common.SUtil;
 import jadex.common.transformation.annotations.Classname;
-import jadex.enginecore.IExternalAccess;
-import jadex.enginecore.IInternalAccess;
-import jadex.enginecore.IPriorityComponentStep;
-import jadex.enginecore.component.INFPropertyComponentFeature;
-import jadex.enginecore.service.IServiceIdentifier;
+import jadex.core.IExternalAccess;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.providedservice.IServiceIdentifier;
 
 /**
  *  Static helper class for accessing nf properties also remotely.
@@ -27,6 +24,19 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getNFPropertyNames(IExternalAccess component)
 	{
+		return component.scheduleStep(ia ->
+		{
+			INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
+			return nfp.getComponentPropertyProvider().getNFPropertyNames();
+		});
+	}
+	
+	/**
+	 *  Returns the declared names of all non-functional properties of this service.
+	 *  @return The names of the non-functional properties of this service.
+	 * /
+	public static IFuture<String[]> getNFPropertyNames(IExternalAccess component)
+	{
 		return component.scheduleStep(new IPriorityComponentStep<String[]>()
 		{
 			@Classname("getNFPropertyNames0")
@@ -36,7 +46,7 @@ public class SNFPropertyProvider
 				return nfp.getComponentPropertyProvider().getNFPropertyNames();
 			}
 		});
-	}
+	}*/
 	
 	/**
 	 *  Returns the names of all non-functional properties of this service.

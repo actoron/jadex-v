@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Map;
 
 import jadex.common.Tuple2;
-import jadex.enginecore.service.IService;
 import jadex.future.CollectionResultListener;
 import jadex.future.CounterResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.providedservice.IService;
 
 /**
  *  Evaluator composed of multiple weighted evaluators.

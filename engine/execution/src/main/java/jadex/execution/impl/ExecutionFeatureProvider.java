@@ -148,14 +148,14 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 					exe.scheduleStep(() ->
 					{
 						ILifecycle lfeature = (ILifecycle)feature;
-						System.out.println("starting: "+lfeature);
+						//System.out.println("starting: "+lfeature);
 						lfeature.onStart().get();
 					});
 				}
-				else
+				/*else
 				{
 					System.out.println("feature without lifecycle: "+feature);
-				}
+				}*/
 			};
 			return self;
 		}).get();
