@@ -58,6 +58,8 @@ public class GobbleAgent implements IGobbleGuiService
 	 */
 	public void informMove(Move move)
 	{
+		if(move==null)
+			throw new RuntimeException("Move is null");
 		if(board==null)
 			throw new RuntimeException("No game running");
 		board.makeMove(move);

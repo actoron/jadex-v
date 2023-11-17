@@ -323,24 +323,6 @@
 				
 				initBoardGUI()
 				{
-					const boardelem = document.getElementById("board");
-					boardelem.innerHTML = "";
-					for(let row = 0; row < this.board.rows; row++) 
-					{
-				        for(let col = 0; col < this.board.cols; col++) 
-				        {
-							//boardelem.innerHTML += `<div class='cell' row='${row}' col='${col}' onclick='this.board.placeGhost(${row}, ${col}, getPlayer())'></div>\n`
-							
-							// Need to create programmatically to preserve this.board :-(
-							const cell = document.createElement("div");
-			                cell.className = 'cell';
-			                cell.setAttribute("row", row);
-			                cell.setAttribute("col", col);
-			                cell.onclick = () => this.board.placeGhost(row, col);//, getPlayer());
-			                boardelem.appendChild(cell);
-						}
-					}
-					
 					const self = this;
 					const finishbut = document.getElementById("finish");
 					finishbut.onclick = () => 
@@ -354,17 +336,20 @@
 							let move = this.board.finishMove();
 							// can also determine winner after move
 							
-							if(self.board.getWinner()==null)
+							if(move!=null)
 							{
 								informMove(move).then(v =>
 								{
-									makeMove().then(move =>
+									if(self.board.getWinner()==null)
 									{
-										self.board.makeMove(move);
-									}).catch(ex =>
-									{
-										console.log("err in makeMove: "+ex);
-									});
+										makeMove().then(move =>
+										{
+											self.board.makeMove(move);
+										}).catch(ex =>
+										{
+											console.log("err in makeMove: "+ex);
+										});
+									}
 								}).catch(ex =>
 								{
 									console.log("err in informMove: "+ex);
@@ -422,6 +407,24 @@
 						elem.children[0].classList.remove("fa-redo");
 						elem.children[0].classList.add("fa-check-circle");
 						elem.children[0].classList.add("far");
+					}
+					
+					const boardelem = document.getElementById("board");
+					boardelem.innerHTML = "";
+					for(let row = 0; row < this.board.rows; row++) 
+					{
+				        for(let col = 0; col < this.board.cols; col++) 
+				        {
+							//boardelem.innerHTML += `<div class='cell' row='${row}' col='${col}' onclick='this.board.placeGhost(${row}, ${col}, getPlayer())'></div>\n`
+							
+							// Need to create programmatically to preserve this.board :-(
+							const cell = document.createElement("div");
+			                cell.className = 'cell';
+			                cell.setAttribute("row", row);
+			                cell.setAttribute("col", col);
+			                cell.onclick = () => this.board.placeGhost(row, col);
+			                boardelem.appendChild(cell);
+						}
 					}
 					
 					for(let row = 0; row < this.board.rows; row++) 
