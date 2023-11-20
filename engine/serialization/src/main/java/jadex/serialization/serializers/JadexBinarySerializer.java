@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -141,7 +142,7 @@ public class JadexBinarySerializer implements ISerializer
 	public byte[] encode(Object val, ClassLoader classloader, ITraverseProcessor[] preprocs, Object usercontext)
 	{
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		SBinarySerializer.writeObjectToStream(baos, val, preprocs!=null?Arrays.asList(preprocs):null, writeprocs, usercontext, classloader, CONFIG);
+		SBinarySerializer.writeObjectToStream(baos, val, preprocs!=null?Arrays.asList(preprocs):null, writeprocs, usercontext, classloader, new SerializationConfig(null));
 		
 		byte[] ret = baos.toByteArray();
 		
@@ -149,11 +150,22 @@ public class JadexBinarySerializer implements ISerializer
 			System.out.println("encode message: "+(new String(ret, SUtil.UTF8)));
 		return ret;
 	}
+	
+	/**
+	 *  Encode data with the serializer.
+	 *  @param os The output stream for writing.
+	 *  @param val The value.
+	 *  @param classloader The classloader.
+	 *  @param preproc The encoding preprocessors.
+	 */
+	public void encode(OutputStream os, Object val, ClassLoader classloader, ITraverseProcessor[] preprocs, Object usercontext)
+	{
+		SBinarySerializer.writeObjectToStream(os, val, preprocs!=null?Arrays.asList(preprocs):null, writeprocs, usercontext, classloader, new SerializationConfig(null));
+	}
 
 	/**
 	 *  Decode an object.
 	 *  @return The decoded object.
-	 *  @throws IOException
 	 */
 	public Object decode(byte[] bytes, ClassLoader classloader, ITraverseProcessor[] postprocs, IErrorReporter rep, Object usercontext)
 	{
@@ -168,7 +180,6 @@ public class JadexBinarySerializer implements ISerializer
 	/**
 	 *  Decode an object.
 	 *  @return The decoded object.
-	 *  @throws IOException
 	 */
 	public Object decode(InputStream is, ClassLoader classloader, ITraverseProcessor[] postprocs, IErrorReporter rep)
 	{

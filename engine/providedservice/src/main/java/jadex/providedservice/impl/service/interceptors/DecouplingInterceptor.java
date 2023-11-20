@@ -764,7 +764,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	 */
 	public final ISerializationServices getSerializationServices()
 	{
-		return ia.getFeature(IProvidedServiceFeature.class).getSerializationService();
+		return ISerializationServices.get();
 		//return (ISerializationServices)Starter.getPlatformValue(ia.getId(), Starter.DATA_SERIALIZATIONSERVICES);
 	}
 	

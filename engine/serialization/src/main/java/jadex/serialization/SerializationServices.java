@@ -1,9 +1,11 @@
 package jadex.serialization;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -11,22 +13,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import jadex.collection.LRU;
-import jadex.collection.RwMapWrapper;
 import jadex.common.SUtil;
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.TransformProcessor;
 import jadex.common.transformation.traverser.Traverser;
-import jadex.core.ComponentIdentifier;
-import jadex.core.impl.Component;
-import jadex.serialization.codecs.GZIPCodec;
-import jadex.serialization.codecs.LZ4Codec;
-import jadex.serialization.codecs.SnappyCodec;
-import jadex.serialization.codecs.XZCodec;
-import jadex.serialization.serializers.JadexBasicTypeSerializer;
 import jadex.serialization.serializers.JadexBinarySerializer;
-import jadex.serialization.serializers.JadexFramedBinarySerializer;
 import jadex.serialization.serializers.JadexJsonSerializer;
 
 /**
@@ -41,21 +33,11 @@ public class SerializationServices implements ISerializationServices
 	/** The remote reference module */
 	//protected RemoteReferenceModule rrm;
 	
-	/** Default serializer used for sending. */
-	protected ISerializer defaultsendserializer;
-	
-	/** Optimized serializer used for sending to platforms with the same version. */
-	protected ISerializer optimizedsendserializer;
+	/** Default serializer. */
+	protected int defaultserializer;
 	
 	/** All available serializers */
 	protected ISerializer[] serializers;
-//	protected Map<Integer, ISerializer> serializers;
-	
-	/** Codecs used for sending. */
-	protected ICodec[] sendcodecs;
-	
-	/** All available codecs. */
-	protected ICodec[] codecs;
 	
 	/** Preprocessors for encoding. */
 	protected ITraverseProcessor[] preprocessors;
@@ -63,46 +45,40 @@ public class SerializationServices implements ISerializationServices
 	/** Postprocessors for decoding. */
 	protected ITraverseProcessor[] postprocessors;
 	
-	/** The reference class cache (clazz->boolean (is reference)). */
-	protected Map<Class<?>, boolean[]> references;
+	/** Singleton instance. */
+	protected static volatile SerializationServices instance;
 	
-	///** The security service which injects itself once available. */
-	//protected ISecurityService secserv;
-	
-	/** Cache for identifying platforms with the same version. */
-	protected RwMapWrapper<ComponentIdentifier, Boolean> sameversioncache;
+	/**
+	 *  Gets a singleton instance.
+	 *  @return Instance.
+	 */
+	public static final SerializationServices get()
+	{
+		if (instance == null)
+		{
+			synchronized (SerializationServices.class)
+			{
+				if (instance == null)
+				{
+					instance = new SerializationServices();
+				}
+			}
+		}
+		return instance;
+	}
 
 	/** Creates the management. */
-	public SerializationServices()
+	private SerializationServices()
 	{
-		sameversioncache = new RwMapWrapper<>(new LRU<>(100));
-		//rrm	= new RemoteReferenceModule(comp);
-//		serializers = new HashMap<Integer, ISerializer>();
-		serializers = new ISerializer[4];
+		serializers = new ISerializer[3];
+		
 		ISerializer serial = new JadexBinarySerializer();
-//		serializers.put(serial.getSerializerId(), serial);
 		serializers[serial.getSerializerId()] = serial;
+		defaultserializer = serial.getSerializerId();
+		
 		serial = new JadexJsonSerializer();
-//		serializers.put(serial.getSerializerId(), serial);
 		serializers[serial.getSerializerId()] = serial;
-		serial = new JadexFramedBinarySerializer();
-//		serializers.put(serial.getSerializerId(), serial);
-		serializers[serial.getSerializerId()] = serial;
-		serial = new JadexBasicTypeSerializer();
-//		serializers.put(serial.getSerializerId(), serial);
-		serializers[serial.getSerializerId()] = serial;
-		defaultsendserializer = serializers[2];
-		optimizedsendserializer = serializers[0];
-		codecs = new ICodec[4];
-		ICodec codec = new SnappyCodec();
-		codecs[codec.getCodecId()] = codec;
-		codec = new GZIPCodec();
-		codecs[codec.getCodecId()] = codec;
-		codec = new LZ4Codec();
-		codecs[codec.getCodecId()] = codec;
-		codec = new XZCodec();
-		codecs[codec.getCodecId()] = codec;
-		sendcodecs = new ICodec[]{codecs[3]};
+		
 		List<ITraverseProcessor> procs = createPreprocessors();
 		preprocessors = procs.toArray(new ITraverseProcessor[procs.size()]);
 		procs = createPostprocessors();
@@ -112,144 +88,39 @@ public class SerializationServices implements ISerializationServices
 	/**
 	 *  Encodes/serializes an object for a particular receiver.
 	 *  
-	 *  @param receiver The receiver.
+	 *  @param os OutputStream to write the object.
 	 *  @param cl The classloader used for encoding.
 	 *  @param obj Object to be encoded.
-	 *  @return Encoded object.
 	 */
-	public byte[] encode(IMsgHeader header, Component component, Object obj)
+	public void encode(OutputStream os, ClassLoader cl, Object obj)
 	{
-		ComponentIdentifier receiver = (ComponentIdentifier)header.getProperty(IMsgHeader.RECEIVER);
-		ISerializer serial = getSendSerializer(receiver);
-		Map<String, Object> ctx = new HashMap<String, Object>();
-		ctx.put("header", header);
-		ctx.put("component", component);
-		byte[] enc = serial.encode(obj, component.getClassLoader(), getPreprocessors(), ctx);
-		
-		ICodec[] codecs = getSendCodecs(receiver);
-		if (header == obj)
-			codecs = null;
-		
-		int codecsize = 0;
-		if (codecs != null)
+		try
 		{
-			codecsize = codecs.length;
-			for (int i = 0; i < codecsize; ++i)
-				enc = codecs[i].encode(enc);
+			os.write(SUtil.intToBytes(defaultserializer));
 		}
-		int prefixsize = getPrefixSize(codecsize);
-		byte[] ret = new byte[prefixsize+enc.length];
-		System.arraycopy(enc, 0, ret, prefixsize, enc.length);
-		enc = null;
-		SUtil.shortIntoBytes((short) prefixsize, ret, 0);
-		SUtil.intIntoBytes(serial.getSerializerId(), ret, 2);
-		SUtil.shortIntoBytes((short) codecsize, ret, 6);
-		if (codecsize > 0)
+		catch (IOException e)
 		{
-			for (int i = 0; i < codecsize; ++i)
-				SUtil.intIntoBytes(codecs[i].getCodecId(), ret, (i<<2) + 8);
+			SUtil.throwUnchecked(e);
 		}
-		
-		return ret;
+		serializers[defaultserializer].encode(os, cl, null, preprocessors, obj);
 	}
 	
 	/**
 	 *  Decodes/deserializes an object.
 	 *  
+	 *  @param is InputStream to read.
 	 *  @param cl The classloader used for decoding.
-	 *  @param enc Encoded object.
 	 *  @param header The header object if available, null otherwise.
 	 *  @return Object to be encoded.
 	 *  
 	 */
-	public Object decode(IMsgHeader header, Component component, byte[] enc)
+	public Object decode(InputStream is, ClassLoader cl)
 	{
-		Object ret = null;
+		byte[] intbuf = new byte[4];
+		SUtil.readStream(intbuf, is);
+		ISerializer ser = serializers[SUtil.bytesToInt(intbuf)];
 		
-		// Check if this makes any sense at all.
-		if (enc != null && enc.length > 7)
-		{
-			int prefixsize = SUtil.bytesToShort(enc, 0) & 0xFFFF;
-			try
-			{
-				int codecsize = (SUtil.bytesToShort(enc, 6) & 0xFFFF);
-				
-				if (prefixsize >= getPrefixSize(codecsize))
-				{
-					byte[] raw = null;
-					
-					if (codecsize > 0)
-					{
-						int offset = prefixsize;
-						raw = enc;
-						for(int i = codecsize - 1; i >= 0; --i)
-						{
-							raw = getCodecs()[SUtil.bytesToInt(enc, (i << 4) + 8)].decode(raw, offset, raw.length - offset);
-							offset = 0;
-						}
-					}
-					else
-					{
-						raw = new byte[enc.length - prefixsize];
-						System.arraycopy(enc, prefixsize, raw, 0, raw.length);
-					}
-					
-					int serialid = SUtil.bytesToInt(enc, 2);
-					ISerializer serial = getSerializers()[serialid];
-					Map<String, Object> context = new HashMap<String, Object>();
-					context.put("header", header);
-					context.put("component", component);
-					ret = serial.decode(raw, component.getClassLoader(), getPostprocessors(), null, context);
-				}
-			}
-			catch (ArrayIndexOutOfBoundsException e)
-			{
-				ret = null;
-			}
-		}
-		return ret;
-	}
-	
-	/**
-	 *  Returns the serializer for sending.
-	 *  
-	 *  @param receiver Receiving platform.
-	 *  @return Serializer.
-	 */
-	public ISerializer getSendSerializer(ComponentIdentifier receiverplatform)
-	{
-//		return (ISerializer) PlatformConfiguration.getPlatformValue(platform, PlatformConfiguration.DATA_SEND_SERIALIZER);
-		/*Boolean sameversion = sameversioncache.get(receiverplatform);
-		if (Boolean.TRUE.equals(sameversion))
-			return optimizedsendserializer;
-		
-		if (sameversion == null && secserv != null)
-		{
-			JadexVersion remoteversion = secserv.getJadexVersion(receiverplatform.getRoot());
-			if (remoteversion != null)
-			{
-				if (remoteversion.isUnknown())
-				{
-					sameversioncache.put(receiverplatform, Boolean.FALSE);
-				}
-				else
-				{
-					JadexVersion localversion = VersionInfo.getInstance().getJadexVersion();
-					if (localversion.getMinorVersion() == remoteversion.getMinorVersion() &&
-						localversion.getMajorVersion() == remoteversion.getMajorVersion())
-					{
-						sameversioncache.put(receiverplatform, Boolean.TRUE);
-//						System.out.println("Switched to optimized serializer for " + receiverplatform);
-						return optimizedsendserializer;
-					}
-					else
-					{
-						sameversioncache.put(receiverplatform, Boolean.FALSE);
-					}
-				}
-			}
-		}*/
-		return defaultsendserializer;
+		return ser.decode(is, cl, postprocessors, null, ser);
 	}
 	
 	/**
@@ -274,27 +145,6 @@ public class SerializationServices implements ISerializationServices
 	}
 	
 	/**
-	 *  Returns the codecs for sending.
-	 *  
-	 *  @param receiver Receiving platform.
-	 *  @return Codecs.
-	 */
-	public ICodec[] getSendCodecs(ComponentIdentifier receiver)
-	{
-		return sendcodecs;
-	}
-	
-	/**
-	 *  Returns all codecs.
-	 *  
-	 *  @return Codecs.
-	 */
-	public ICodec[] getCodecs()
-	{
-		return codecs;
-	}
-	
-	/**
 	 *  Gets the post-processors for decoding a received message.
 	 */
 	public ITraverseProcessor[] getPostprocessors()
@@ -310,6 +160,9 @@ public class SerializationServices implements ISerializationServices
 		return preprocessors;
 	}
 	
+	
+	
+	
 	/**
 	 *  Create the preprocessors.
 	 */
@@ -317,118 +170,6 @@ public class SerializationServices implements ISerializationServices
 	{
 		// Equivalent pre- and postprocessors for binary mode.
 		List<ITraverseProcessor> procs = new ArrayList<ITraverseProcessor>();
-				
-		// Proxy reference -> proxy object
-		/*
-		ITraverseProcessor rmipostproc = new ITraverseProcessor()
-		{
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-				return ProxyReference.class.equals(type);
-			}
-			
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-					Object ret= ((RemoteReferenceModule)rrm).getProxy((ProxyReference)object, targetcl);
-					return ret;
-				}
-				catch(Exception e)
-				{
-//					e.printStackTrace();
-					throw SUtil.throwUnchecked(e);
-				}
-			}
-		};
-		procs.add(rmipostproc);*/
-		
-		/*
-		procs.add(new ITraverseProcessor()
-		{
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-				return ServiceInputConnectionProxy.class.equals(type);
-			}
-			
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-					ServiceInputConnectionProxy icp = (ServiceInputConnectionProxy)object;
-					Map<String, Object> ctx = (Map<String, Object>)((IUserContextContainer)context).getUserContext();
-					IInputConnection icon = ((IInternalMessageFeature)((IInternalAccess)ctx.get("component")).getFeature(IMessageFeature.class)).getParticipantInputConnection(icp.getConnectionId(), 
-						icp.getInitiator(), icp.getParticipant(), icp.getNonFunctionalProperties());
-					return icon;
-				}
-				catch(RuntimeException e)
-				{
-					e.printStackTrace();
-					throw e;
-				}
-			}
-		});*/
-		
-		/*
-		procs.add(new ITraverseProcessor()
-		{
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-				return ServiceOutputConnectionProxy.class.equals(type);
-			}
-			
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-					ServiceOutputConnectionProxy ocp = (ServiceOutputConnectionProxy)object;
-					Map<String, Object> ctx = (Map<String, Object>)((IUserContextContainer)context).getUserContext();
-					IOutputConnection ocon = ((IInternalMessageFeature)((IInternalAccess)ctx.get("component")).getFeature(IMessageFeature.class)).getParticipantOutputConnection(ocp.getConnectionId(), 
-						ocp.getInitiator(), ocp.getParticipant(), ocp.getNonFunctionalProperties());
-					return ocon;
-				}
-				catch(RuntimeException e)
-				{
-					e.printStackTrace();
-					throw e;
-				}
-			}
-		});*/
-		
-		// Processor for handling spans in tracing
-		/*
-		procs.add(new ITraverseProcessor()
-		{
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-				return SpanContextInfo.class.equals(type);
-			}
-			
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-					SpanContextInfo sci = (SpanContextInfo)object;
-					Map<String, String> vals = sci.getValues();
-					Context ctx = Context.root();
-					OpenTelemetry ot = GlobalOpenTelemetry.get();
-					ContextPropagators propas = ot.getPropagators();
-					TextMapPropagator tmp = propas.getTextMapPropagator();
-					tmp.extract(ctx, vals, TracingInterceptor.TextMapExtractAdapter.GETTER);
-					
-					System.out.println("span decoded: "+vals);
-					
-					//Map<String, Object> ctx = (Map<String, Object>)((IUserContextContainer)context).getUserContext();
-					//SpanContext sc = GlobalTracer.get().extract(Builtin.TEXT_MAP_EXTRACT, new TextMapExtractAdapter(sci.getValues()));
-					return ctx;
-				}
-				catch(RuntimeException e)
-				{
-					e.printStackTrace();
-					throw e;
-				}
-			}
-		});*/
 		
 		return procs;
 	}
@@ -443,200 +184,8 @@ public class SerializationServices implements ISerializationServices
 		// Preprocessor to copy the networknames cache object (used by security service and all service ids)
 		procs.add(new TransformProcessor());
 		
-		// Update component identifiers with addresses
-//		ITraverseProcessor bpreproc = new ITraverseProcessor()
-//		{
-//			public boolean isApplicable(Object object, Type type, boolean clone, ClassLoader targetcl)
-//			{
-//				Class<?> clazz = SReflect.getClass(type);
-//				return ComponentIdentifier.class.equals(clazz);
-//			}
-//			
-//			public Object process(Object object, Type type, List<ITraverseProcessor> processors, Traverser traverser,
-//				Map<Object, Object> traversed, boolean clone, ClassLoader targetcl, Object context)
-//			{
-//				try
-//				{
-//					IComponentIdentifier src = (IComponentIdentifier)object;
-//					BasicComponentIdentifier ret = null;
-//					if(src.getPlatformName().equals(component.getComponentIdentifier().getRoot().getLocalName()))
-//					{
-//						String[] addresses = ((MessageService)msgservice).internalGetAddresses();
-//						ret = new ComponentIdentifier(src.getName(), addresses);
-//					}
-//					
-//					return ret==null? src: ret;
-//				}
-//				catch(RuntimeException e)
-//				{
-//					e.printStackTrace();
-//					throw e;
-//				}
-//			}
-//		};
-//		procs.add(bpreproc);
-		
-		// Handle pojo services
-		/*
-		ITraverseProcessor bpreproc = new ITraverseProcessor()
-		{
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-				return object!=null && !(object instanceof BasicService) && object.getClass().isAnnotationPresent(Service.class);
-			}
-			
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-					return ServiceInvocationHandler.getPojoServiceProxy(object);
-				}
-				catch(RuntimeException e)
-				{
-					e.printStackTrace();
-					throw e;
-				}
-			}
-		};
-		procs.add(bpreproc);*/
-
-		// Handle remote references
-		/*
-		bpreproc = new ITraverseProcessor()
-		{
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-//				if(marshal.isRemoteReference(object))
-//					System.out.println("rr: "+object);
-//				if(object!=null && object.toString().indexOf("Security")!=-1 && !(object instanceof String))
-//					System.out.println("hererer");
-				
-				return rrm.isRemoteReference(object);
-			}
-			
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-//					System.out.println("remoteob: "+object);
-					Map<String, Object> ctx = (Map<String, Object>)((IUserContextContainer)context).getUserContext();
-					MsgHeader header = (MsgHeader)ctx.get("header");
-					UUID receiver = (UUID)header.getProperty(IMsgHeader.RECEIVER);
-					Object ret = rrm.getProxyReference(object, receiver, targetcl);
-					return ret;
-//					return rrm.getProxyReference(object, receiver, ((IEncodingContext)context).getClassLoader());
-				}
-				catch(Exception e)
-				{
-					throw SUtil.throwUnchecked(e);
-				}
-			}
-		};
-		procs.add(bpreproc);*/
-		
-		// output connection as result of call
-		/*
-		procs.add(new ITraverseProcessor()
-		{
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-					Map<String, Object> ctx = (Map<String, Object>)((IUserContextContainer)context).getUserContext();
-					MsgHeader header = (MsgHeader)ctx.get("header");
-//					AbstractRemoteCommand com = getRCFromContext(context);
-					ServiceInputConnectionProxy con = (ServiceInputConnectionProxy)object;
-					OutputConnection ocon = ((IInternalMessageFeature)((IInternalAccess)ctx.get("component")).getFeature(IMessageFeature.class)).internalCreateOutputConnection(
-						(IComponentIdentifier)header.getProperty(IMsgHeader.SENDER), (IComponentIdentifier)header.getProperty(IMsgHeader.RECEIVER), null); // todo: nonfunc
-					con.setOutputConnection(ocon);
-					con.setConnectionId(ocon.getConnectionId());
-					return con;
-				}
-				catch(RuntimeException e)
-				{
-					e.printStackTrace();
-					throw e;
-				}
-			}
-			
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-				return object instanceof ServiceInputConnectionProxy;
-			}
-		});*/
-		
-		// input connection proxy as result of call
-		/*
-		procs.add(new ITraverseProcessor()
-		{
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-//					AbstractRemoteCommand com = (AbstractRemoteCommand)((IRootObjectContext)context).getRootObject();
-					Map<String, Object> ctx = (Map<String, Object>)((IUserContextContainer)context).getUserContext();
-					MsgHeader header = (MsgHeader)ctx.get("header");
-					ServiceOutputConnectionProxy con = (ServiceOutputConnectionProxy)object;
-					InputConnection icon = ((IInternalMessageFeature)((IInternalAccess)ctx.get("component")).getFeature(IMessageFeature.class)).internalCreateInputConnection(
-						(IComponentIdentifier)header.getProperty(IMsgHeader.SENDER), (IComponentIdentifier)header.getProperty(IMsgHeader.RECEIVER), null);//com.getNonFunctionalProperties());
-					con.setConnectionId(icon.getConnectionId());
-					con.setInputConnection(icon);
-					return con;
-				}
-				catch(RuntimeException e)
-				{
-					e.printStackTrace();
-					throw e;
-				}
-			}
-			
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-				return object instanceof ServiceOutputConnectionProxy;
-			}
-		});*/
-		
-		/*
-		// Handle tracing spans
-		procs.add(new ITraverseProcessor()
-		{
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
-			{
-				return object instanceof Span;
-			}
-			
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context)
-			{
-				try
-				{
-					// Converts the span(context) to a simple map -> SpanContextInfo
-					
-					Span span = (Span)object;
-					Map<String, String> vals = new HashMap<>();
-					OpenTelemetry ot = GlobalOpenTelemetry.get();
-					ContextPropagators propas = ot.getPropagators();
-					Context ctx = Context.current().with(span);
-					TextMapPropagator tmp = propas.getTextMapPropagator();
-					tmp.inject(ctx, vals, TracingInterceptor.TextMapInjectAdapter.SETTER);
-					
-					System.out.println("span encoded: "+vals);
-					
-					return new SpanContextInfo(vals);
-				}
-				catch(Exception e)
-				{
-					throw SUtil.throwUnchecked(e);
-				}
-			}
-		});*/
 		
 		return procs;
-	}
-	
-	protected static final int getPrefixSize(int codeccount)
-	{
-		// prefixsize[2] | serializerid[4] | codeccount[2] | codecid[4]...
-		return 8 + (codeccount << 4);
 	}
 	
 	/**
@@ -712,6 +261,7 @@ public class SerializationServices implements ISerializationServices
 	 *  Get the string converters (can convert to and from string, possibly only for some types).
 	 *  @return The converters.
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Map<String, IStringConverter> getStringConverters()
 	{
 		return (Map<String, IStringConverter>)Arrays.stream(serializers).filter(new Predicate<ISerializer>() 

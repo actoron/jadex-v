@@ -979,15 +979,6 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 		return self;
 	}
 	
-	protected ISerializationServices serser;
-	
-	public ISerializationServices getSerializationService()
-	{
-		if(serser==null)
-			serser = new SerializationServices();
-		return serser;
-	}
-	
 	/**
 	 *  Guess a parameter.
 	 *  @param type The type.

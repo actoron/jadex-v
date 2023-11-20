@@ -2,6 +2,7 @@ package jadex.serialization.serializers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,6 +69,27 @@ public class JadexJsonSerializer implements ISerializer, IStringConverter
 	public int getSerializerId()
 	{
 		return SERIALIZER_ID;
+	}
+	
+	/**
+	 *  Encode data with the serializer.
+	 *  @param os The output stream for writing.
+	 *  @param val The value.
+	 *  @param classloader The classloader.
+	 *  @param preproc The encoding preprocessors.
+	 */
+	public void encode(OutputStream os, Object val, ClassLoader classloader, ITraverseProcessor[] preprocs, Object usercontext) 
+	{
+		// This is not perfect...
+		byte[] enc = encode(val, classloader, preprocs, usercontext);
+		try
+		{
+			os.write(enc);
+		}
+		catch (IOException e)
+		{
+			SUtil.throwUnchecked(e);
+		}
 	}
 	
 	/**

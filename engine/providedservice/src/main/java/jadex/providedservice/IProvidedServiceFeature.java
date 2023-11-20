@@ -1,12 +1,7 @@
 package jadex.providedservice;
 
-import jadex.serialization.ISerializationServices;
-
 public interface IProvidedServiceFeature 
 {
-	public ISerializationServices getSerializationService();
-	
-	
 	/**
 	 *  Get provided (declared) service.
 	 *  

@@ -33,7 +33,7 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 	protected PublishServiceFeature(Component self)
 	{
 		this.self	= self;
-		ISerializationServices ss = getComponent().getFeature(IProvidedServiceFeature.class).getSerializationService();
+		ISerializationServices ss = ISerializationServices.get();
 		RequestManager.createInstance(ss);
 	}
 	

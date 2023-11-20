@@ -762,7 +762,7 @@ public class ResolveInterceptor extends AbstractApplicableInterceptor
 	
 	public final ISerializationServices getSerializationServices()
 	{
-		return ia.getFeature(IProvidedServiceFeature.class).getSerializationService();
+		return ISerializationServices.get();
 	}
 	
 	/**
