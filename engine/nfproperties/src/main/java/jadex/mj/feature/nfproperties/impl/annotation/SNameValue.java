@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jadex.common.UnparsedExpression;
-import jadex.mj.core.annotation.NameValue;
+import jadex.model.annotation.NameValue;
 
 /**
  *  NameValue converter helper.

@@ -1,7 +1,7 @@
 package jadex.mj.feature.nfproperties.impl;
 
-import jadex.enginecore.IExternalAccess;
-import jadex.enginecore.IInternalAccess;
+import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
 import jadex.future.DefaultResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -22,7 +22,7 @@ public abstract class NFRootProperty<T, U> extends SimpleValueNFProperty<T, U>
 	/**
 	 *  Create a new property.
 	 */
-	public NFRootProperty(final IInternalAccess comp, final NFPropertyMetaInfo mi)
+	public NFRootProperty(final IComponent comp, final NFPropertyMetaInfo mi)
 	{
 		this(comp, mi, true);
 	}
@@ -30,7 +30,7 @@ public abstract class NFRootProperty<T, U> extends SimpleValueNFProperty<T, U>
 	/**
 	 *  Create a new property.
 	 */
-	public NFRootProperty(final IInternalAccess comp, final NFPropertyMetaInfo mi, boolean inject)
+	public NFRootProperty(final IComponent comp, final NFPropertyMetaInfo mi, boolean inject)
 	{
 		super(comp, mi);
 		if(inject)

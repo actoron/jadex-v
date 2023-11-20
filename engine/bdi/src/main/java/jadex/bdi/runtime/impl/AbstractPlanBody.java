@@ -1,5 +1,6 @@
 package jadex.bdi.runtime.impl;
 
+import jadex.bdi.runtime.GoalFailureException;
 import jadex.bdi.runtime.PlanFailureException;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
@@ -178,19 +179,19 @@ public abstract class AbstractPlanBody implements IPlanBody
 			else if(part==1)
 			{
 //				System.out.println("passed of: "+rplan);
-//				rplan.setLifecycleState(RPlan.PlanLifecycleState.PASSING);
+				rplan.setLifecycleState(RPlan.PlanLifecycleState.PASSING);
 				res = invokePassed(guessParameters(getPassedParameterTypes()));
 			}
 			else if(part==2)
 			{
 //				System.out.println("failed of: "+rplan);
-//				rplan.setLifecycleState(RPlan.PlanLifecycleState.FAILING);
+				rplan.setLifecycleState(RPlan.PlanLifecycleState.FAILING);
 				res = invokeFailed(guessParameters(getFailedParameterTypes()));
 			}
 			else if(part==3)
 			{
 //				System.out.println("aborted of: "+rplan);
-//				rplan.setLifecycleState(RPlan.PlanLifecycleState.ABORTING);
+				rplan.setLifecycleState(RPlan.PlanLifecycleState.ABORTING);
 				res = invokeAborted(guessParameters(getAbortedParameterTypes()));
 			}
 			
@@ -221,6 +222,7 @@ public abstract class AbstractPlanBody implements IPlanBody
 		{
 			// Print exception, when relevant for user. 
 			if(!(e instanceof StepAborted)
+				&& !(e instanceof GoalFailureException)
 				&& !(e instanceof PlanAbortedException)
 				&& !(e instanceof PlanFailureException))
 			{

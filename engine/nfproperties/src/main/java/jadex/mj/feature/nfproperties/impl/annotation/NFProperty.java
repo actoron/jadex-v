@@ -5,8 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.mj.core.annotation.NameValue;
 import jadex.mj.feature.nfproperties.impl.INFProperty;
+import jadex.model.annotation.NameValue;
 
 /**
  *  Non-functional property annotation.

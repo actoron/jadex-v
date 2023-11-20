@@ -2,6 +2,7 @@ package jadex.mj.feature.nfproperties.impl.hardconstraints;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.providedservice.IService;
 
 public class InequalityFilter extends StrictInequalityFilter
 {

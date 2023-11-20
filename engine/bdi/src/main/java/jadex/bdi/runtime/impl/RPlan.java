@@ -84,9 +84,9 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		NEW, 
 		BODY,
 		
-//		PASSING,
-//		FAILING,
-//		ABORTING,
+		PASSING,
+		FAILING,
+		ABORTING,
 		
 		PASSED,
 		FAILED,
@@ -252,7 +252,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			
 			if(body==null)
 			{
-				throw new RuntimeException("Neither @Plan nor @Agent annotation on plan body class: "+clazz);
+				throw new RuntimeException("Neither @Plan nor @Agent annotation on plan body class: "+mbody.getClazz());
 			}
 		}
 		else if(mbody.getMethod()!=null)

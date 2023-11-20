@@ -2277,8 +2277,13 @@ public class RequestManager
 		//}
 				
 		if(ri.getException()!=null)
-			System.out.println("ex: "+ri.getException());
-			
+		{
+			if(SUtil.DEBUG)
+				ri.getException().printStackTrace();
+			else
+				System.out.println("ex: "+ri.getException());
+		}
+		
 		try
 		{
 			// If SSE is explicitly requested or the request is already finished MUST use SSE

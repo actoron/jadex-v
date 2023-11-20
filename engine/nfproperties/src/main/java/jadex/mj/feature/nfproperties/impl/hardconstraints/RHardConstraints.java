@@ -5,20 +5,17 @@ import java.util.Collection;
 import java.util.List;
 
 import jadex.common.MethodInfo;
-import jadex.enginecore.ComposedRemoteFilter;
-import jadex.enginecore.IAsyncFilter;
-import jadex.enginecore.IExternalAccess;
-import jadex.enginecore.IInternalAccess;
-import jadex.enginecore.service.IService;
-import jadex.enginecore.service.component.IRequiredServicesFeature;
-import jadex.enginecore.service.search.ServiceQuery;
+import jadex.core.IExternalAccess;
 import jadex.future.CollectionResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.TerminableIntermediateFuture;
-import jadex.mj.core.service.ServiceScope;
+import jadex.model.IAsyncFilter;
+import jadex.providedservice.IService;
+import jadex.providedservice.ServiceScope;
+import jadex.providedservice.impl.search.ServiceQuery;
 
 /**
  *  Class defining runtime hard constraints.

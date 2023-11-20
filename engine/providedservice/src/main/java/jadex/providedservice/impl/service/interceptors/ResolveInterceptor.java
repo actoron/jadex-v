@@ -22,6 +22,7 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.IStringConverter;
+import jadex.core.IComponent;
 import jadex.core.impl.Component;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -76,7 +77,7 @@ public class ResolveInterceptor extends AbstractApplicableInterceptor
 
 			// internal methods???
 			//SERVICEMETHODS.add(IInternalService.class.getMethod("setServiceIdentifier", new Class[]{IServiceIdentifier.class}));
-			//SERVICEMETHODS.add(IInternalService.class.getMethod("setComponentAccess", new Class[]{IInternalAccess.class}));
+			SERVICEMETHODS.add(IInternalService.class.getMethod("setComponentAccess", new Class[]{Component.class}));
 //			SERVICEMETHODS.add(IService.class.getMethod("getExternalComponentFeature", new Class[]{Class.class}));
 			
 			/*Method[] ms = INFPropertyProvider.class.getDeclaredMethods();

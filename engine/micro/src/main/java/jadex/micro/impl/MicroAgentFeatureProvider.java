@@ -1,5 +1,7 @@
 package jadex.micro.impl;
 
+import java.util.Set;
+
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
@@ -92,5 +94,15 @@ public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature
 	public void terminate(IComponent component) 
 	{
 		component.getFeature(IExecutionFeature.class).terminate();
+	}
+	
+	/**
+	 *  Get the predecessors, i.e. features that should be inited first.
+	 *  @return The predecessors.
+	 */
+	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
+	{
+		all.remove(getFeatureType());
+		return all;
 	}
 }

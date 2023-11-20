@@ -33,9 +33,6 @@ public class Component implements IComponent
 	/** The feature instances of this component, stored by the feature type. */
 	protected Map<Class<Object>, Object>	features;
 	
-	/** The fetcher. */
-	protected IValueFetcher fetcher;
-	
 	/** The id. */
 	protected ComponentIdentifier id;
 	
@@ -299,6 +296,7 @@ public class Component implements IComponent
 		
 		return fetcher;
 	}*/
+	
 	/*
 	public IParameterGuesser getParameterGuesser()
 	{
