@@ -1,6 +1,5 @@
 package jadex.core;
 
-import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicLong;
 
 import jadex.core.impl.ComponentManager;
@@ -11,19 +10,32 @@ import jadex.idgenerator.IdGenerator;
  */
 public class ComponentIdentifier
 {
+	/**
+	 * Represents a globally identifiable process on a host (JVM instance).
+	 */
+	public record GlobalProcessIdentifier(long pid, String host)
+	{
+		public GlobalProcessIdentifier()
+		{
+			this(ComponentManager.get().pid(), ComponentManager.get().host());
+		}
+		
+		public String toString()
+		{
+			return pid + "@" + host;
+		}
+	}
+	
 	protected static IdGenerator gen = new IdGenerator();
 	
 	/** Counter for auto-generated local IDs */
 	private static final AtomicLong ID_COUNTER = new AtomicLong();
 	
 	/** The process-local name. */
-	public String localname;
+	private String localname;
 	
-	/** The process ID of the process on the host running the component. */
-	public long pid;
-	
-	/** The host running the process that is running the component. */
-	public String host;
+	/** Represents the globally identifiable process */
+	private GlobalProcessIdentifier gpid;
 	
 	/**
 	 *  Auto-generates a ComponentIdentifier.
@@ -31,10 +43,8 @@ public class ComponentIdentifier
 	 */
 	public ComponentIdentifier()
 	{
-		ComponentManager cm = ComponentManager.get();
-		this.localname = gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
-		this.pid = cm.pid();
-		this.host = cm.host();
+		localname = gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
+		gpid = new GlobalProcessIdentifier();
 	}
 	
 	/**
@@ -44,10 +54,20 @@ public class ComponentIdentifier
 	 */
 	public ComponentIdentifier(String localname)
 	{
-		ComponentManager cm = ComponentManager.get();
 		this.localname = localname;
-		this.pid = cm.pid();
-		this.host = cm.host();
+		gpid = new GlobalProcessIdentifier();
+	}
+	
+	/**
+	 *  Generates a ComponentIdentifier from its elements.
+	 *  
+	 *  @param localid Local identifier of the component.
+	 *  @param gpid The global process id.
+	 */
+	public ComponentIdentifier(String localname, GlobalProcessIdentifier gpid)
+	{
+		this.localname = localname;
+		this.gpid = gpid;
 	}
 	
 	/**
@@ -60,13 +80,12 @@ public class ComponentIdentifier
 	public ComponentIdentifier(String localname, long pid, String host)
 	{
 		this.localname = localname;
-		this.pid = pid;
-		this.host = host;
+		gpid = new GlobalProcessIdentifier(pid, host);
 	}
 	
 	/**
-	 *  Returns the local id as a 
-	 * @return
+	 *  Returns the local component id.
+	 *  @return The local component id.
 	 */
 	public String getLocalName()
 	{
@@ -74,11 +93,20 @@ public class ComponentIdentifier
 	}
 	
 	/**
+	 *  Returns the global process identifier.
+	 *  @return The global process identifier.
+	 */
+	public GlobalProcessIdentifier getGlobalProcessIdentifier()
+	{
+		return gpid;
+	}
+	
+	/**
 	 *  Generates a hashcode.
 	 */
 	public int hashCode()
 	{
-		return 13 * (localname.hashCode() + Long.hashCode(pid) + host.hashCode());
+		return 13 * (localname.hashCode() + gpid.hashCode());
 	}
 	
 	/**
@@ -89,7 +117,7 @@ public class ComponentIdentifier
 		if (obj instanceof ComponentIdentifier)
 		{
 			ComponentIdentifier other = (ComponentIdentifier) obj;
-			return localname.equals(other.localname) && pid == other.pid && host.equals(other.host);
+			return localname.equals(other.localname) && gpid.equals(other.gpid);
 		}
 		return false;
 	}
@@ -99,7 +127,7 @@ public class ComponentIdentifier
 	 */
 	public String toString()
 	{
-		return localname + "@" + pid + "@" + host;
+		return localname + "@" + gpid.toString();
 	}
 	
 	/**
