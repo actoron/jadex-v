@@ -27,6 +27,7 @@ includeBuild('engine/simulation') {}
 includeBuild('engine/communication') {}
 includeBuild('engine/micro'){}
 includeBuild('engine/bdi') {}
+includeBuild('engine/bpmn') {}
 
 includeBuild('rules/eca') {}
 

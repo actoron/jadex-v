@@ -228,9 +228,7 @@ public class Component implements IComponent
 	{
 //		System.out.println("putFeature: "+type+" "+feature);
 		if(features==null)
-		{
-			features	= new LinkedHashMap<>(providers.size(), 1);
-		}
+			features = new LinkedHashMap<>(providers.size(), 1);
 		features.put(type, feature);
 	}
 	

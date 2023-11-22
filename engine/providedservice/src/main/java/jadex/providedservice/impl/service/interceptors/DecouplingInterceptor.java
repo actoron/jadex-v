@@ -25,6 +25,7 @@ import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.SCloner;
 import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.future.FutureFunctionality;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;

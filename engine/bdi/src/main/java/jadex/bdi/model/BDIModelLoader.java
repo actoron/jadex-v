@@ -1,8 +1,8 @@
 package jadex.bdi.model;
 
 import jadex.common.ResourceInfo;
-import jadex.model.AbstractModelLoader;
 import jadex.model.ICacheableModel;
+import jadex.model.impl.AbstractModelLoader;
 
 /**
  * 
@@ -61,7 +61,7 @@ public class BDIModelLoader extends AbstractModelLoader
 	 *  @param name	The original name (i.e. not filename).
 	 *  @param info	The resource info.
 	 */
-	protected ICacheableModel doLoadModel(String name, Object pojo, String[] imports, ClassLoader classloader) throws Exception
+	protected ICacheableModel doLoadModel(String name, Object pojo, String[] imports, ClassLoader classloader, ResourceInfo info) throws Exception
 	{
 //		System.out.println("cache miss: "+name);
 		return (ICacheableModel)reader.read(name, pojo, imports, classloader);

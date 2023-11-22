@@ -4,6 +4,8 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.impl.Component;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.model.IModelFeature;
+import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
 public class MicroAgent	extends Component
@@ -30,7 +32,6 @@ public class MicroAgent	extends Component
 	}
 	
 	protected Object pojo;
-	protected IModelInfo	model;
 	
 	public MicroAgent(Object pojo, IModelInfo model)
 	{
@@ -41,7 +42,8 @@ public class MicroAgent	extends Component
 	{
 		super(cid);
 		this.pojo	= pojo;
-		this.model	= model;
+		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
+		//this.model = model;
 		
 		//ComponentIdentifier execid = getFeature(IMjExecutionFeature.class).getComponent().getId();
 		//if(!execid.equals(cid))
@@ -53,10 +55,9 @@ public class MicroAgent	extends Component
 		return pojo;
 	}
 
-	// TODO use model feature
 	public IModelInfo getModel() 
 	{
-		return model;
+		return this.getFeature(IModelFeature.class).getModel();
 	}
 
 	/**

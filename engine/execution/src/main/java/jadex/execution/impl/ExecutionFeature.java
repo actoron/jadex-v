@@ -9,11 +9,6 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -32,6 +27,8 @@ import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISuspendable;
+import jadex.future.ITerminableFuture;
+import jadex.future.TerminableFuture;
 
 public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFeature
 {
@@ -211,9 +208,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	protected static volatile Set<TimerTaskInfo> entries;
 	
 	@Override
-	public IFuture<Void> waitForDelay(long millis)
+	public ITerminableFuture<Void> waitForDelay(long millis)
 	{
-		Future<Void> ret = new Future<>();
+		TerminableFuture<Void> ret = new TerminableFuture<>();
 		
 		if(terminated)
 		{
@@ -250,13 +247,20 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			});
 			
 			if(entries==null)
-			{
 				entries	= new LinkedHashSet<>(2, 1);
-			}
 			
 			entries.add(task);
 			
 			timer.schedule(task.getTask(), millis);
+			
+			ret.setTerminationCommand(ex -> 
+			{
+				synchronized(this.getClass())
+				{
+					task.getTask().cancel();
+					entries.remove(task);
+				}
+			});
 		}
 		
 		return  ret;

@@ -3,6 +3,7 @@ package jadex.providedservice.impl.service.interceptors;
 import jadex.common.ICommand;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.future.FutureFunctionality;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;

@@ -6,6 +6,8 @@ import java.util.Queue;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
+import jadex.future.TerminableFuture;
 import jadex.simulation.ISimulationFeature;
 
 /**
@@ -46,20 +48,22 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	}
 	
 	@Override
-	public IFuture<Void> waitForDelay(long millis)
+	public ITerminableFuture<Void> waitForDelay(long millis)
 	{
-		Future<Void>	ret	= new Future<>();
+		TerminableFuture<Void>	ret	= new TerminableFuture<>();
 		
 		synchronized(this)
 		{
-			timer_entries.offer(new TimerEntry(current_time+millis)
+			TimerEntry te = new TimerEntry(current_time+millis)
 			{
 				@Override
 				public void run()
 				{
 					ret.setResult(null);
 				}
-			});
+			};
+			
+			timer_entries.offer(te);
 			
 			// When executor is not running (i.e. no active components)
 			// it needs to be restarted by scheduling the next timepoint. 
@@ -67,6 +71,15 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 			{
 				idle();
 			}
+			
+			// Is that ok?
+			ret.setTerminationCommand(ex ->
+			{
+				synchronized(ret) 
+				{
+					timer_entries.remove(te);
+				}
+			});
 		}
 		
 		return  ret;

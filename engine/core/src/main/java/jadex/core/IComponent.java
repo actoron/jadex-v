@@ -51,6 +51,7 @@ public interface IComponent
 	 *  Terminate the component.
 	 */
 	public void terminate();
+	// todo: terminate(Exception e) ?!
 	
 	//-------- static part for generic component creation --------
 	

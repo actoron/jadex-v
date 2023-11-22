@@ -2,6 +2,7 @@ package jadex.simulation.impl;
 
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
 import jadex.simulation.ISimulationFeature;
 
 public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulationFeature
@@ -56,7 +57,7 @@ public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulat
 	}
 	
 	@Override
-	public IFuture<Void> waitForDelay(long millis)
+	public ITerminableFuture<Void> waitForDelay(long millis)
 	{
 		return getMaster().waitForDelay(millis);
 	}
