@@ -38,10 +38,12 @@ public class ExternalTaskWrapper implements ITask
 	 */
 	public IFuture<Void> execute(final ITaskContext context, final IComponent process)
 	{
+		throw new UnsupportedOperationException();
+		
 		// todo: scope
-		ITaskExecutionService tes	= process.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(ITaskExecutionService.class));
+		/*ITaskExecutionService tes	= process.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(ITaskExecutionService.class));
 		// todo: results
-		return tes.execute(task, new ExternalTaskContext((ProcessThread)context));
+		return tes.execute(task, new ExternalTaskContext((ProcessThread)context));*/
 	}
 	
 	/**

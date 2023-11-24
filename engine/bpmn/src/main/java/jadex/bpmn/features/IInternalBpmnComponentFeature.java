@@ -6,6 +6,7 @@ import jadex.bpmn.model.MActivity;
 import jadex.bpmn.runtime.IActivityHandler;
 import jadex.bpmn.runtime.ProcessThread;
 import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 
 /**
  * 
@@ -17,6 +18,15 @@ public interface IInternalBpmnComponentFeature
 	
 	/** The change event prefix denoting a thread event. */
 	public static final String	TYPE_THREAD	= "thread";
+
+	public static IInternalBpmnComponentFeature	get()
+	{
+		return (IInternalBpmnComponentFeature)IExecutionFeature.get().getComponent().getFeature(IBpmnComponentFeature.class);
+	}
+	
+	public void	init();
+	
+	public void	terminate();
 	
 	/**
 	 *  Test if the given context variable is declared.

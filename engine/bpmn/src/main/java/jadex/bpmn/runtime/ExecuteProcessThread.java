@@ -3,7 +3,6 @@ package jadex.bpmn.runtime;
 import java.util.List;
 
 import jadex.bpmn.features.IBpmnComponentFeature;
-import jadex.bpmn.features.impl.BpmnComponentFeature;
 import jadex.bpmn.model.MActivity;
 import jadex.common.IFilter;
 import jadex.core.IComponent;
@@ -56,7 +55,7 @@ public class ExecuteProcessThread implements IThrowingConsumer<IComponent> //ICo
 		if(!isValid())
 			return;
 		
-		BpmnComponentFeature bcf = (BpmnComponentFeature)thread.getInstance().getFeature(IBpmnComponentFeature.class);
+		IBpmnComponentFeature bcf = (IBpmnComponentFeature)thread.getInstance().getFeature(IBpmnComponentFeature.class);
 
 		// Update parameters based on edge inscriptions and initial values.
 		thread.updateParametersBeforeStep(thread.getInstance());

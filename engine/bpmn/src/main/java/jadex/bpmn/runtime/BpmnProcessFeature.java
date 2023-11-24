@@ -1,11 +1,10 @@
-package jadex.bpmn.features.impl;
+package jadex.bpmn.runtime;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,14 +13,9 @@ import jadex.bpmn.features.IBpmnComponentFeature;
 import jadex.bpmn.features.IInternalBpmnComponentFeature;
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
-import jadex.bpmn.model.MContextVariable;
 import jadex.bpmn.model.MSequenceEdge;
 import jadex.bpmn.model.MSubProcess;
 import jadex.bpmn.model.MTask;
-import jadex.bpmn.runtime.IActivityHandler;
-import jadex.bpmn.runtime.IInternalProcessEngineService;
-import jadex.bpmn.runtime.IStepHandler;
-import jadex.bpmn.runtime.ProcessThread;
 import jadex.bpmn.runtime.handler.DefaultActivityHandler;
 import jadex.bpmn.runtime.handler.DefaultStepHandler;
 import jadex.bpmn.runtime.handler.EventEndErrorActivityHandler;
@@ -41,31 +35,18 @@ import jadex.bpmn.runtime.handler.GatewayParallelActivityHandler;
 import jadex.bpmn.runtime.handler.GatewayXORActivityHandler;
 import jadex.bpmn.runtime.handler.SubProcessActivityHandler;
 import jadex.bpmn.runtime.handler.TaskActivityHandler;
-import jadex.common.IResultCommand;
-import jadex.common.IValueFetcher;
 import jadex.common.SUtil;
-import jadex.common.Tuple2;
-import jadex.common.UnparsedExpression;
-import jadex.core.IExternalAccess;
+import jadex.common.Tuple3;
+import jadex.core.IComponent;
 import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
-import jadex.future.CounterResultListener;
-import jadex.future.DelegationResultListener;
-import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.javaparser.IParsedExpression;
-import jadex.javaparser.SJavaParser;
+import jadex.model.IModelFeature;
 import jadex.rules.eca.RuleSystem;
 
-/**
- *  Base bpmn feature holding the important data structures.
- */
-public class BpmnComponentFeature extends AbstractComponentFeature implements IBpmnComponentFeature, IInternalBpmnComponentFeature
+public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnComponentFeature
 {
-	/** The factory. * /
-	public static final IComponentFeatureFactory FACTORY = new ComponentFeatureFactory(IBpmnComponentFeature.class, BpmnComponentFeature.class,
-		new Class<?>[]{IRequiredServicesFeature.class, IProvidedServicesFeature.class, ISubcomponentsFeature.class}, null);
-	*/
+	
 //	/** Constant for step event. */
 //	public static final String TYPE_ACTIVITY = "activity";
 //	
@@ -77,33 +58,7 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 	
 	/** The step execution handlers (activity type -> handler). */
 	public static final Map<String, IStepHandler> DEFAULT_STEP_HANDLERS;
-	
-	//-------- attributes --------
-	
-	/** The rule system. */
-	protected RuleSystem rulesystem;
-	
-	/** The activity handlers. */
-	protected Map<String, IActivityHandler> activityhandlers;
-	
-	/** The step handlers. */
-	protected Map<String, IStepHandler> stephandlers;
 
-	/** The top level process thread. */
-	protected ProcessThread topthread;
-	
-	/** The messages waitqueue. */
-	protected List<Object> messages;
-
-	/** The streams waitqueue. */
-	protected List<IConnection> streams;
-
-//	/** The inited future. */
-//	protected Future<Void> inited;
-		
-	/** The thread id counter. */
-	protected int idcnt;
-	
 	//-------- static initializers --------
 	
 	static
@@ -167,118 +122,52 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 		DEFAULT_ACTIVITY_HANDLERS = Collections.unmodifiableMap(activityhandlers);
 	}
 	
-	//-------- constructors --------
+	//-------- attributes --------
+	
+	/** The rule system. */
+	protected RuleSystem rulesystem;
+	
+	/** The activity handlers. */
+	protected Map<String, IActivityHandler> activityhandlers;
+	
+	/** The step handlers. */
+	protected Map<String, IStepHandler> stephandlers;
+
+	/** The top level process thread. */
+	protected ProcessThread topthread;
+	
+	/** The messages waitqueue. */
+	protected List<Object> messages;
+
+	///** The streams waitqueue. */
+	//protected List<IConnection> streams;
+
+//	/** The inited future. */
+//	protected Future<Void> inited;
+		
+	/** The thread id counter. */
+	protected int idcnt;
+	
+	protected BpmnProcess self;
 	
 	/**
 	 *  Factory method constructor for instance level.
 	 */
-	public BpmnComponentFeature(IInternalAccess component, ComponentCreationInfo cinfo)
+	public BpmnProcessFeature(BpmnProcess self)
 	{
-		super(component, cinfo);
-		construct(activityhandlers, stephandlers);
-		initContextVariables();
+		this.self	= self;
+	}
+	
+	public BpmnProcess getComponent()
+	{
+		return (BpmnProcess)self;
+	}
 
-//		this.bpmnmodel = (MBpmnModel)getComponent().getModel().getRawModel();
-	}
-	
-	/**
-	 *  Special init that is used to announce event start events to process engine (if any).
-	 */
-//	public IFuture<Void> init(IModelInfo model, String config, Map<String, Object> arguments)
-//	{
-	
-	/**
-	 *  Initialize the feature.
-	 *  Empty implementation that can be overridden.
-	 */
-	public IFuture<Void> init()
+	public MBpmnModel getModel()
 	{
-//		System.out.println("init: "+model+" "+arguments);
-		
-		final Future<Void> ret = new Future<Void>();
-		
-		final Map<MSubProcess, List<MActivity>> evtsubstarts = getModel().getEventSubProcessStartEventMapping();
-		
-		if(!evtsubstarts.isEmpty())
-		{
-			final CounterResultListener<String> crl = new CounterResultListener<String>(evtsubstarts.size(), new DelegationResultListener<Void>(ret)
-			{
-				public void customResultAvailable(Void result)
-				{
-//							System.out.println("init done");
-					super.customResultAvailable(result);
-				}
-			});
-			
-			for(Map.Entry<MSubProcess, List<MActivity>> evtsubentry : evtsubstarts.entrySet())
-			{
-				for(MActivity mact: evtsubentry.getValue())
-				{
-					if(mact.getPropertyValue(MBpmnModel.PROPERTY_EVENT_RULE_EVENTTYPES)!=null)
-					{
-						String[] eventtypes = (String[])mact.getParsedPropertyValue(MBpmnModel.PROPERTY_EVENT_RULE_EVENTTYPES);
-						UnparsedExpression	upex	= mact.getPropertyValue(MBpmnModel.PROPERTY_EVENT_RULE_CONDITION);
-						Map<String, Object>	params	= null; 
-						if(upex!=null)
-						{
-							IParsedExpression	exp	= SJavaParser.parseExpression(upex, getComponent().getModel().getAllImports(), getComponent().getClassLoader());
-							for(String param: exp.getParameters())
-							{
-								if(hasContextVariable(param))
-								{
-									Object	val	= getContextVariable(param);
-									if(val!=null)	// omit null values (also excludes '$event')
-									{
-										if(params==null)
-										{
-											params	= new LinkedHashMap<String, Object>();
-										}
-										params.put(param, val);
-									}
-								}
-							}
-						}
-						
-						final Tuple2<MSubProcess, MActivity> fevtsubentry = new Tuple2<MSubProcess, MActivity>(evtsubentry.getKey(), mact);
-						final IExternalAccess exta = getComponent().getExternalAccess();
-						IInternalProcessEngineService	ipes	= getComponent().getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IInternalProcessEngineService.class));
-						IFuture<String>	fut	= ipes.addEventMatcher(eventtypes, upex, getComponent().getModel().getAllImports(), params, false, new IResultCommand<IFuture<Void>, Object>()
-						{
-							public IFuture<Void> execute(final Object event)
-							{
-								return exta.scheduleStep(new IComponentStep<Void>()
-								{
-									public jadex.commons.future.IFuture<Void> execute(IInternalAccess ia) 
-									{
-	//											BpmnInterpreter ip = (BpmnInterpreter)ia;
-										IInternalBpmnComponentFeature feat = (IInternalBpmnComponentFeature)ia.getFeature(IBpmnComponentFeature.class);
-										ProcessThread thread = new ProcessThread(fevtsubentry.getFirstEntity(), feat.getTopLevelThread(), ia, true);
-										feat.getTopLevelThread().addThread(thread);
-										ProcessThread subthread = new ProcessThread(fevtsubentry.getSecondEntity(), thread, ia);
-										thread.addThread(subthread);
-										subthread.setOrCreateParameterValue("$event", event);
-										return IFuture.DONE;
-									}
-								});
-							}
-						});
-						fut.addResultListener(crl);
-					}
-					else
-					{
-						crl.resultAvailable("");
-					}
-				}
-			}
-		}
-		else
-		{
-			ret.setResult(null);
-		}
-	
-		return ret;
+		return (MBpmnModel)getComponent().getFeature(IModelFeature.class).getModel().getRawModel();
 	}
-		
+	
 	/**
 	 *  Init method holds constructor code for both implementations.
 	 */
@@ -315,61 +204,135 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 		this.activityhandlers = activityhandlers!=null? activityhandlers: DEFAULT_ACTIVITY_HANDLERS;
 		this.stephandlers = stephandlers!=null? stephandlers: DEFAULT_STEP_HANDLERS;
 		
-		this.topthread = new ProcessThread(null, null, getInternalAccess());
+		this.topthread = new ProcessThread(null, null, getComponent());
 		this.messages = new ArrayList<Object>();
-		this.streams = new ArrayList<IConnection>();
+		//this.streams = new ArrayList<IConnection>();
 		
-		if(getComponent().getFeature(IArgumentsResultsFeature.class).getArguments()!=null)
+		if(getComponent().getProcessPojo().getArguments()!=null)
 		{
-			for(Map.Entry<String, Object> entry: getComponent().getFeature(IArgumentsResultsFeature.class).getArguments().entrySet())
+			for(Map.Entry<String, Object> entry: getComponent().getProcessPojo().getArguments().entrySet())
 			{
 				topthread.setParameterValue(entry.getKey(), entry.getValue());
 			}
 		}
 	}
 	
-	/**
-	 *  Init context variables.
-	 */
-	protected void initContextVariables()
+	@Override
+	public void init()
 	{
-		List<MContextVariable>	vars	= getModel().getContextVariables();
-		for(Iterator<MContextVariable> it=vars.iterator(); it.hasNext(); )
-		{
-			MContextVariable	cv	= it.next();
-//			if(!variables.containsKey(cv.getName()))	// Don't overwrite arguments.
-			if(!topthread.hasParameterValue(cv.getName()))	// Don't overwrite arguments.
-			{
-				Object	value	= null;
-				UnparsedExpression exp	= cv.getValue(getComponent().getConfiguration());
-				if(exp!=null)
-				{
-					try
-					{
-						IParsedExpression parsed = (IParsedExpression)exp.getParsed();
-						value = parsed != null? parsed.getValue(getComponent().getFetcher()) : null;
-					}
-					catch(RuntimeException e)
-					{
-						e.printStackTrace();
-						throw new RuntimeException("Error parsing context variable: "+this+", "+cv.getName()+", "+exp, e);
-					}
-				}
-				topthread.setParameterValue(cv.getName(), value);
-//				variables.put(cv.getName(), value);
-			}
-		}
+		construct(activityhandlers, stephandlers);
+		
+		//IInternalBpmnComponentFeature bcf = (IInternalBpmnComponentFeature)getComponent().getFeature(IBpmnComponentFeature.class);
+		
+		// Check if triggered by external event
+		// eventtype, mactid, event
+        //Tuple3<String, String, Object> trigger = (Tuple3<String, String, Object>)getComponent()
+        //	.getFeature(IArgumentsResultsFeature.class).getArguments().get(MBpmnModel.TRIGGER);
+        Tuple3<String, String, Object> trigger = (Tuple3<String, String, Object>)getComponent().getProcessPojo().getArgument(MBpmnModel.TRIGGER);
+        
+        MSubProcess triggersubproc = null;
+        MActivity triggeractivity = null;
+        
+        // Search and add trigger activity for event processes (that have trigger event in a subprocess)
+        List<MActivity> startacts = new ArrayList<MActivity>();
+        boolean found = false;
+        /*if(getComponent().getConfiguration()!=null)
+        {
+        	List<MNamedIdElement> elems = getModel().getStartElements(getComponent().getConfiguration());
+        	if(elems!=null && !elems.isEmpty())
+        	{
+        		found = true;
+        		for(MNamedIdElement elem: elems)
+	        	{
+	        		if(elem instanceof MActivity)
+	        		{
+	        			startacts.add((MActivity)elem);
+	        		}
+	        		else if(elem instanceof MPool)
+	        		{
+	        			startacts.addAll(getModel().getStartActivities(elem.getName(), null));
+	        		}
+	        		else if(elem instanceof MLane)
+	        		{
+	        			MLane lane = (MLane)elem;
+	        			
+	        			MIdElement tmp = lane;
+	        			for(; tmp!=null && !(tmp instanceof MPool); tmp = getModel().getParent(tmp))
+	        			{
+	        			}
+	        			String poolname = tmp==null? null: ((MPool)tmp).getName();
+	        			
+	          			startacts.addAll(getModel().getStartActivities(poolname, elem.getName()));
+	        		}
+	        	}
+        	}
+        }*/
+        
+        if(!found)
+        	startacts = getModel().getStartActivities();
+        
+        Set<MActivity> startevents = startacts!=null ? new HashSet<MActivity>(startacts) : new HashSet<MActivity>();
+        if(trigger != null)
+        {
+        	Map<String, MActivity> allacts = getModel().getAllActivities();
+        	triggeractivity = allacts.get(trigger.getSecondEntity());
+        	for(Map.Entry<String, MActivity> act : allacts.entrySet())
+        	{
+        		if(act instanceof MSubProcess)
+        		{
+        			MSubProcess subproc = (MSubProcess)act;
+        			if(subproc.getActivities() != null && subproc.getActivities().contains(triggeractivity));
+        			{
+        				triggersubproc = subproc;
+        				break;
+        			}
+        		}
+        	}
+        	
+        	startevents.add(triggeractivity);
+        }
+        
+        for(MActivity mact: startevents)
+        {
+            if(trigger!=null && trigger.getSecondEntity().equals(mact.getId()))
+            {
+            	if(triggersubproc != null)
+            	{
+            		ProcessThread thread = new ProcessThread(triggersubproc, getTopLevelThread(), getComponent(), true);
+            		getTopLevelThread().addThread(thread);
+					ProcessThread subthread = new ProcessThread(triggeractivity, thread, getComponent());
+					thread.addThread(subthread);
+					subthread.setOrCreateParameterValue("$event", trigger.getThirdEntity());
+            	}
+            	else
+            	{
+                    ProcessThread thread = new ProcessThread(mact, getTopLevelThread(), getComponent());
+                    thread.setOrCreateParameterValue("$event", trigger.getThirdEntity());
+                    getTopLevelThread().addThread(thread);
+            	}
+            }
+            else if(!MBpmnModel.EVENT_START_MESSAGE.equals(mact.getActivityType())
+            	&& !MBpmnModel.EVENT_START_MULTIPLE.equals(mact.getActivityType())
+            	&& !MBpmnModel.EVENT_START_RULE.equals(mact.getActivityType())
+            	&& !MBpmnModel.EVENT_START_SIGNAL.equals(mact.getActivityType())
+            	&& !MBpmnModel.EVENT_START_TIMER.equals(mact.getActivityType()))
+            {
+                ProcessThread thread = new ProcessThread(mact, getTopLevelThread(), getComponent());
+                getTopLevelThread().addThread(thread);
+            }
+        } 
+        
+        //started = true;
+        
+        //return IFuture.DONE;
 	}
 	
-	/**
-	 *  Check if the feature potentially executed user code in body.
-	 *  Allows blocking operations in user bodies by using separate steps for each feature.
-	 *  Non-user-body-features are directly executed for speed.
-	 *  If unsure just return true. ;-)
-	 */
-	public boolean	hasUserBody()
+	@Override
+	public void terminate()
 	{
-		return false;
+		System.out.println("todo: end: "+getComponent());
+		
+		//return Future.DONE;
 	}
 	
 	/**
@@ -379,7 +342,7 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 	 */
 	public boolean hasContextVariable(String name)
 	{
-		return (topthread.hasParameterValue(name)) || getComponent().getModel().getArgument(name)!=null  || getComponent().getModel().getResult(name)!=null;
+		return (topthread.hasParameterValue(name)) || getComponent().getProcessPojo().getArgument(name)!=null  || getComponent().getProcessPojo().getResult(name)!=null;
 //		return (variables!=null && variables.containsKey(name)) || getModel().getArgument(name)!=null  || getModel().getResult(name)!=null;
 	}
 	
@@ -395,13 +358,13 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 		{
 			ret = topthread.getParameterValue(name);			
 		}
-		else if(getComponent().getModel().getArgument(name)!=null)
+		else if(getComponent().getProcessPojo().getArgument(name)!=null)
 		{
-			ret = getComponent().getFeature(IArgumentsResultsFeature.class).getArguments().get(name);
+			ret = getComponent().getProcessPojo().getArgument(name);
 		}
-		else if(getComponent().getModel().getResult(name)!=null)
+		else if(getComponent().getProcessPojo().getResult(name)!=null)
 		{
-			ret	= getComponent().getFeature(IArgumentsResultsFeature.class).getResults().get(name);
+			ret	= getComponent().getProcessPojo().getResult(name);
 		}
 		else
 		{
@@ -430,10 +393,10 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 //		boolean isvar = variables!=null && variables.containsKey(name);
 		boolean isvar = topthread.hasParameterValue(name);
 		
-		boolean isres = getComponent().getModel().getResult(name)!=null;
+		boolean isres = getComponent().getProcessPojo().getResult(name)!=null;
 		if(!isres && !isvar)
 		{
-			if(getComponent().getModel().getArgument(name)!=null)
+			if(getComponent().getProcessPojo().getArgument(name)!=null)
 			{
 				throw new RuntimeException("Cannot set argument: "+name+", "+this);
 			}
@@ -447,7 +410,7 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 		{
 			if(isres)
 			{
-				getComponent().getFeature(IArgumentsResultsFeature.class).getResults().put(name, value);
+				getComponent().getProcessPojo().addResult(name, value);
 			}
 			else
 			{
@@ -460,7 +423,7 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 			Object coll;
 			if(isres)
 			{
-				coll = getComponent().getFeature(IArgumentsResultsFeature.class).getResults().get(name);
+				coll = getComponent().getProcessPojo().getResult(name);
 			}
 			else
 			{
@@ -492,7 +455,8 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 			if(isres)
 			{
 				// Trigger event notification
-				getComponent().getFeature(IArgumentsResultsFeature.class).getResults().put(name, coll);
+				//getComponent().getFeature(IArgumentsResultsFeature.class).getResults().put(name, coll);
+				getComponent().getProcessPojo().addResult(name, coll);
 			}
 //				else
 //				{
@@ -503,7 +467,7 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 	
 	/**
 	 *  Create a thread event (creation, modification, termination).
-	 */
+	 * /
 	public IMonitoringEvent createThreadEvent(String type, ProcessThread thread)
 	{
 		MonitoringEvent event = new MonitoringEvent(getComponent().getId(), getComponent().getDescription().getCreationTime(), type+"."+TYPE_THREAD, System.currentTimeMillis(), PublishEventLevel.FINE);
@@ -511,11 +475,11 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 //		if(!type.startsWith(IMonitoringEvent.EVENT_TYPE_DISPOSAL))
 		event.setProperty("details", createProcessThreadInfo(thread));
 		return event;
-	}
+	}*/
 	
 	/**
 	 *  Create an activity event (start, end).
-	 */
+	 * /
 	public IMonitoringEvent createActivityEvent(String type, ProcessThread thread, MActivity activity)
 	{
 		MonitoringEvent event = new MonitoringEvent(getComponent().getId(), getComponent().getDescription().getCreationTime(), type+"."+TYPE_ACTIVITY, System.currentTimeMillis(), PublishEventLevel.FINE);
@@ -523,7 +487,7 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 		event.setProperty("activity", activity.getName());
 		event.setProperty("details", createProcessThreadInfo(thread));
 		return event;
-	}
+	}*/
 
 	/**
 	 *  Create a new process thread info for logging / debug tools.
@@ -568,15 +532,15 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 	 *  @param instance	The process instance.
 	 *  @param thread	The process thread.
 	 */
-	public void step(MActivity activity, IInternalAccess instance, ProcessThread thread, Object event)
+	public void step(MActivity activity, IComponent instance, ProcessThread thread, Object event)
 	{
 //		System.out.println("step: "+activity.getName());
 //		notifyListeners(createActivityEvent(IComponentChangeEvent.EVENT_TYPE_DISPOSAL, thread, activity));
-		if(getComponent().getFeature0(IMonitoringComponentFeature.class)!=null 
+		/*if(getComponent().getFeature0(IMonitoringComponentFeature.class)!=null 
 			&& getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.FINE))
 		{
 			getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(createActivityEvent(IMonitoringEvent.EVENT_TYPE_DISPOSAL, thread, activity), PublishTarget.TOALL);
-		}
+		}*/
 		
 		IStepHandler ret = (IStepHandler)stephandlers.get(activity.getActivityType());
 		if(ret==null) 
@@ -598,7 +562,7 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 		{
 			try
 			{
-				getComponent().getFeature(IExecutionFeature.class).scheduleStep(new IPriorityComponentStep<Void>()
+				/*getComponent().getFeature(IExecutionFeature.class).scheduleStep(new IPriorityComponentStep<Void>()
 				{
 					public IFuture<Void> execute(IInternalAccess ia)
 					{
@@ -607,18 +571,16 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 //							System.out.println("Notify1: "+getComponentIdentifier()+", "+activity+" "+thread+" "+event);
 							
 							//TODO: Hack!? Cancel here or somewhere else?
-							if (!activity.equals(thread.getActivity()) && thread.getTask() != null && thread.isWaiting())
-							{
+							if(!activity.equals(thread.getActivity()) && thread.getTask() != null && thread.isWaiting())
 								thread.getTask().cancel(component).get();
-							}
 							
-							step(activity, getInternalAccess(), thread, event);
+							step(activity, getComponent(), thread, event);
 							thread.setNonWaiting();
-							if(getComponent().getFeature0(IMonitoringComponentFeature.class)!=null 
+							/*if(getComponent().getFeature0(IMonitoringComponentFeature.class)!=null 
 								&& getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.FINE))
 							{
 								getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(createThreadEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION, thread), PublishTarget.TOALL);
-							}
+							}* /
 						}
 						else
 						{
@@ -626,6 +588,31 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 						}
 						return IFuture.DONE;
 					}
+				});*/
+				// todo: priority ?!
+				getComponent().getFeature(IExecutionFeature.class).scheduleStep(comp ->
+				{
+					if(isCurrentActivity(activity, thread))
+					{
+//						System.out.println("Notify1: "+getComponentIdentifier()+", "+activity+" "+thread+" "+event);
+						
+						//TODO: Hack!? Cancel here or somewhere else?
+						if(!activity.equals(thread.getActivity()) && thread.getTask() != null && thread.isWaiting())
+							thread.getTask().cancel(thread.getInstance()).get();
+						
+						step(activity, getComponent(), thread, event);
+						thread.setNonWaiting();
+						/*if(getComponent().getFeature0(IMonitoringComponentFeature.class)!=null 
+							&& getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.FINE))
+						{
+							getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(createThreadEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION, thread), PublishTarget.TOALL);
+						}*/
+					}
+					else
+					{
+						System.out.println("Nop, due to outdated notify: "+thread+" "+activity);
+					}
+					return IFuture.DONE;
 				});
 			}
 			catch(ComponentTerminatedException cte)
@@ -638,7 +625,7 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 			if(isCurrentActivity(activity, thread))
 			{
 //				System.out.println("Notify1: "+getComponentIdentifier()+", "+activity+" "+thread+" "+event);
-				step(activity, getInternalAccess(), thread, event);
+				step(activity, getComponent(), thread, event);
 				thread.setNonWaiting();
 //				if(getComponent().getComponentFeature0(IMonitoringComponentFeature.class)!=null
 //					&& getComponent().getComponentFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.FINE))
@@ -747,26 +734,17 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 	/**
 	 *  Get the streams.
 	 *  @return The streams
-	 */
+	 * /
 	public List<IConnection> getStreams()
 	{
 		return streams;
-	}
-	
-	/**
-	 * 
-	 */
-	protected MBpmnModel getModel()
-	{
-		return (MBpmnModel)getComponent().getModel().getRawModel();
-	}
-	
+	}*/
 	
 	/**
 	 *  The feature can inject parameters for expression evaluation
 	 *  by providing an optional value fetcher. The fetch order is the reverse
 	 *  init order, i.e., later features can override values from earlier features.
-	 */
+	 * /
 	public IValueFetcher	getValueFetcher()
 	{
 		return new IValueFetcher()
@@ -785,5 +763,5 @@ public class BpmnComponentFeature extends AbstractComponentFeature implements IB
 				return ret;
 			}
 		};
-	}
+	}*/
 }

@@ -14,6 +14,8 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.IResultListener;
 
+//todo / delete!
+
 /**
  *  Handler for message events.
  */
@@ -78,6 +80,9 @@ public class EventIntermediateMessageActivityHandler extends DefaultActivityHand
 	 */
 	protected Object assembleMessage(final MActivity activity, final IComponent instance, final ProcessThread thread)
 	{
+		throw new UnsupportedOperationException();
+		/*
+		
 		// read complete message
 		Object message	= thread.getPropertyValue(PROPERTY_MESSAGE);
 		
@@ -99,7 +104,7 @@ public class EventIntermediateMessageActivityHandler extends DefaultActivityHand
 				((Map<String, Object>)message).put(SFipa.SENDER, instance.getId());
 		}
 		
-		return message;
+		return message;*/
 	}
 	
 	/**
@@ -110,7 +115,9 @@ public class EventIntermediateMessageActivityHandler extends DefaultActivityHand
 	 */
 	protected void sendMessage(final MActivity activity, final IComponent instance, final ProcessThread thread)
 	{
-		Object message	= assembleMessage(activity, instance, thread);
+		throw new UnsupportedOperationException();
+		
+		/*Object message	= assembleMessage(activity, instance, thread);
 		ComponentIdentifier[] receivers = null;
 		Object rec	= thread.getPropertyValue(PROPERTY_RECEIVER);
 
@@ -162,7 +169,7 @@ public class EventIntermediateMessageActivityHandler extends DefaultActivityHand
 				thread.setException(exception);
 				getBpmnFeature(instance).notify(activity, thread, null);
 			}
-		});
+		});*/
 	}
 	
 	/**

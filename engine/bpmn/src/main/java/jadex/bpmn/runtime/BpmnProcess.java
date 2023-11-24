@@ -19,39 +19,34 @@ public class BpmnProcess extends MicroAgent
 	
 	public static void	create(Object pojo, ComponentIdentifier cid)
 	{
-		String	classname;
+		String	filename;
 		if(pojo instanceof String)
 		{
-			classname	= (String)pojo;
-			if(classname.startsWith("bdi:"))
-				classname	= classname.substring(4);
-			String	fclassname	= classname ;
-			Component.createComponent(BDIAgent.class,
-					() -> new BDIAgent((Object)null, loadModel(fclassname), cid));
+			filename	= (String)pojo;
+			if(filename.startsWith("bpmn:"))
+				filename	= filename.substring(5);
+			String	ffilename	= filename ;
+			Component.createComponent(BpmnProcess.class,
+					() -> new BpmnProcess((Object)null, loadModel(ffilename), cid));
 		}
-		else if(pojo instanceof BDICreationInfo)
+		else if(pojo instanceof RBpmnProcess)
 		{
-			classname	= ((BDICreationInfo)pojo).getClassname();
-			if(classname.startsWith("bdi:"))
-				classname	= classname.substring(4);
-			String	fclassname	= classname ;
-			Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname), cid));
-		}
-		else
-		{
-			Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName()), cid));
+			filename = ((RBpmnProcess)pojo).getFilename();
+			if(filename.startsWith("bpmn:"))
+				filename = filename.substring(5);
+			String	ffilename	= filename ;
+			Component.createComponent(BpmnProcess.class,
+				() -> new BpmnProcess((RBpmnProcess)pojo, loadModel(ffilename), cid));
 		}
 	}
 	
 	/** Optional creation info, i.e. arguments. */
-	protected BDICreationInfo	info;
+	protected RBpmnProcess info;
 	
-	protected BpmnProcess(BDICreationInfo info, IModelInfo model, ComponentIdentifier cid)
+	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid)
 	{
 		this((Object)null, model, cid);
-		this.info	= info;
+		this.info = info;
 	}
 	
 	protected BpmnProcess(Object pojo, IModelInfo model, ComponentIdentifier cid)
@@ -59,11 +54,16 @@ public class BpmnProcess extends MicroAgent
 		super(pojo!=null ? pojo : createPojo(model), model, cid);
 	}
 	
+	public RBpmnProcess getProcessPojo() 
+	{
+		return (RBpmnProcess)getPojo();
+	}
+	
 	protected static Object	createPojo(IModelInfo model)
 	{
 		try
 		{
-			return ((MBpmnModel)model.getRawModel()).getPojoClass().getType(BDIAgent.class.getClassLoader()).getConstructor().newInstance();
+			return new RBpmnProcess().setFilename(model.getFilename());
 		}
 		catch(Exception e)
 		{
@@ -89,7 +89,8 @@ public class BpmnProcess extends MicroAgent
 			else
 			{
 				ClassLoader cl = BpmnProcess.class.getClassLoader();
-				IModelInfo mi = loader.loadComponentModel(model, null, null, null, cl, null).getModelInfo();
+				//public MBpmnModel loadBpmnModel(String name, String[] imports, ClassLoader classloader, Object context) throws Exception
+				IModelInfo mi = loader.loadBpmnModel(model, null, cl, null).getModelInfo();
 				return mi;
 			}
 		}

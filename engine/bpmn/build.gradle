@@ -24,6 +24,9 @@ dependencies
 	implementation 'jadex:future:5.0.0'
 	implementation 'jadex:javaparser:5.0.0'
 	implementation 'jadex:collection:5.0.0'
+	implementation 'jadex:eca:5.0.0'
+	
+	//implementation 'jadex:xml:5.0.0'
 	
 	testImplementation testFixtures('jadex:core:5.0.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'

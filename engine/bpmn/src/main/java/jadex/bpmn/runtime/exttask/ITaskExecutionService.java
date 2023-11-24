@@ -7,7 +7,7 @@ import jadex.future.IFuture;
 /**
  * 
  */
-@Service
+//@Service
 public interface ITaskExecutionService
 {
 //	/**

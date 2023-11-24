@@ -3,7 +3,6 @@ package jadex.bpmn.features;
 /**
  * 
  */
-public interface IBpmnComponentFeature
+public interface IBpmnComponentFeature extends IInternalBpmnComponentFeature
 {
-	
 }

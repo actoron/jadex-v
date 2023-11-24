@@ -3,8 +3,6 @@ package jadex.bpmn.model.io;
 import java.util.LinkedList;
 import java.util.Map;
 
-import javax.xml.namespace.QName;
-
 public interface IXMLReader
 {
 	/**

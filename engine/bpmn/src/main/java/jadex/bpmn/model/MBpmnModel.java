@@ -1443,11 +1443,11 @@ public class MBpmnModel extends MAnnotationElement implements ICacheableModel//,
 	/**
 	 *  Add an argument.
 	 *  @param argument The argument.
-	 */
+	 * /
 	public void addArgument(IArgument argument)
 	{
 		modelinfo.addArgument(argument);
-	}
+	}*/
 	
 	/**
 	 *  Get the properties.
@@ -1473,20 +1473,20 @@ public class MBpmnModel extends MAnnotationElement implements ICacheableModel//,
 
 	/**
 	 *  Add a property.
-	 */
+	 * /
 	public void	addProperty(String name, Object value)
 	{
 		modelinfo.addProperty(name, value);
-	}
+	}*/
 
 	/**
 	 *  Add a result.
 	 *  @param result The result.
-	 */
+	 * /
 	public void addResult(IArgument result)
 	{
 		modelinfo.addResult(result);
-	}
+	}*/
 	
 //	/**
 //	 *  Set the classloader.

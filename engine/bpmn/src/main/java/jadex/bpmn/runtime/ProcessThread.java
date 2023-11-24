@@ -1049,7 +1049,9 @@ public class ProcessThread	implements ITaskContext
 				else if(de.getSource() == null)
 				{
 					// Argument data edge
-					passedparams.put(de.getTargetParameter(), instance.getFeature(IArgumentsResultsFeature.class).getArguments().get(de.getSourceParameter()));
+					//passedparams.put(de.getTargetParameter(), instance.getFeature(IArgumentsResultsFeature.class).getArguments().get(de.getSourceParameter()));
+					RBpmnProcess pojo = (RBpmnProcess)((BpmnProcess)instance).getPojo();
+					passedparams.put(de.getTargetParameter(), pojo.getArgument(de.getSourceParameter()));
 					missedparams.remove(de.getTargetParameter());
 				}
 				else
@@ -1156,7 +1158,9 @@ public class ProcessThread	implements ITaskContext
 					if(de.getTarget() == null)
 					{
 						// Result data edge
-						instance.getFeature(IArgumentsResultsFeature.class).getResults().put(de.getTargetParameter(), value);
+						//instance.getFeature(IArgumentsResultsFeature.class).getResults().put(de.getTargetParameter(), value);
+						RBpmnProcess pojo = (RBpmnProcess)((BpmnProcess)instance).getPojo();
+						pojo.addResult(de.getTargetParameter(), value);
 					}
 					else
 					{

@@ -10,6 +10,7 @@ import jadex.bpmn.runtime.IInternalProcessEngineService;
 import jadex.bpmn.runtime.ProcessThread;
 import jadex.common.IResultCommand;
 import jadex.common.UnparsedExpression;
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.future.ExceptionDelegationResultListener;
@@ -18,6 +19,9 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
+import jadex.model.IModelFeature;
+
+// todo
 
 /**
  *  Wait for an external notification (could be a signal or a fired rule).
@@ -35,14 +39,16 @@ public class EventIntermediateRuleHandler extends DefaultActivityHandler
 	 */
 	public void execute(final MActivity activity, final IComponent instance, final ProcessThread thread)
 	{
-		thread.setWaiting(true);
+		throw new UnsupportedOperationException();
+		
+		/*thread.setWaiting(true);
 
 		final String[]	eventtypes	= (String[]) thread.getActivity().getParsedPropertyValue(MBpmnModel.PROPERTY_EVENT_RULE_EVENTTYPES);
 		UnparsedExpression	upex	= thread.getActivity().getPropertyValue(MBpmnModel.PROPERTY_EVENT_RULE_CONDITION);
 		Map<String, Object>	params	= null; 
 		if(upex!=null)
 		{
-			IParsedExpression	exp	= SJavaParser.parseExpression(upex, instance.getModel().getAllImports(), instance.getClassLoader());
+			IParsedExpression	exp	= SJavaParser.parseExpression(upex, instance.getFeature(IModelFeature.class).getModel().getAllImports(), instance.getClass().getClassLoader());
 			for(String param: exp.getParameters())
 			{
 				Object	val	= thread.getParameterValue(param);
@@ -67,8 +73,8 @@ public class EventIntermediateRuleHandler extends DefaultActivityHandler
 		
 //		System.out.println("Adding event matcher: "+instance.getComponentIdentifier());
 		
-		final IComponentIdentifier	cid	= instance.getId();
-		final IFuture<String>	fut	= ipes.addEventMatcher(eventtypes, fupex, instance.getModel().getAllImports(), fparams, true, new IResultCommand<IFuture<Void>, Object>()
+		final ComponentIdentifier cid = instance.getId();
+		final IFuture<String>	fut	= ipes.addEventMatcher(eventtypes, fupex, instance.getFeature(IModelFeature.class).getModel().getAllImports(), fparams, true, new IResultCommand<IFuture<Void>, Object>()
 		{
 			public IFuture<Void> execute(final Object event)
 			{
@@ -156,6 +162,7 @@ public class EventIntermediateRuleHandler extends DefaultActivityHandler
 		};
 		
 		thread.setWaitInfo(ca);
+		*/
 	}
 	
 //	/**

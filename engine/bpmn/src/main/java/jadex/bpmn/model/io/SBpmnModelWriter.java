@@ -207,36 +207,37 @@ public class SBpmnModelWriter
 			out.println("</jadex:package>");
 		}
 		
-		boolean suspend = Boolean.TRUE.equals(mmodel.getModelInfo().getSuspend(null));
+		//boolean suspend = Boolean.TRUE.equals(mmodel.getModelInfo().getSuspend(null));
 //		boolean master = Boolean.TRUE.equals(mmodel.getModelInfo().getMaster(null));
 //		boolean daemon = Boolean.TRUE.equals(mmodel.getModelInfo().getDaemon(null));
 //		boolean autoshutdown = Boolean.TRUE.equals(mmodel.getModelInfo().getAutoShutdown(null));
 		//boolean synchronous = Boolean.TRUE.equals(mmodel.getModelInfo().getSynchronous(null));
 //		boolean persistable = Boolean.TRUE.equals(mmodel.getModelInfo().getPersistable(null));
-		String monitoring = mmodel.getModelInfo().getMonitoring(null)!=null ? mmodel.getModelInfo().getMonitoring(null).toString() : null;
+		//String monitoring = mmodel.getModelInfo().getMonitoring(null)!=null ? mmodel.getModelInfo().getMonitoring(null).toString() : null;
 		boolean keepalive = Boolean.TRUE.equals(mmodel.isKeepAlive());
 		
-		if (suspend || monitoring!=null || synchronous || keepalive)
+		if(keepalive)
+		//if (suspend || monitoring!=null || synchronous || keepalive)
 //		if (suspend || master || daemon || autoshutdown || monitoring!=null || synchronous || keepalive)
 		{
 			out.print(getIndent(ind));
-			out.print("<jadex:componentflags suspend=\"");
-			out.print(escapeString(String.valueOf(suspend)));
+			//out.print("<jadex:componentflags suspend=\"");
+			//out.print(escapeString(String.valueOf(suspend)));
 			out.print("\" master=\"");
 //			out.print(escapeString(String.valueOf(master)));
 //			out.print("\" daemon=\"");
 //			out.print(escapeString(String.valueOf(daemon)));
 //			out.print("\" autoshutdown=\"");
 //			out.print(escapeString(String.valueOf(autoshutdown)));
-			out.print("\" synchronous=\"");
-			out.print(escapeString(String.valueOf(synchronous)));
+			//out.print("\" synchronous=\"");
+			//out.print(escapeString(String.valueOf(synchronous)));
 //			out.print("\" persistable=\"");
 //			out.print(escapeString(String.valueOf(persistable)));
-			if(monitoring!=null)
+			/*if(monitoring!=null)
 			{
 				out.print("\" monitoring=\"");
 				out.print(escapeString(String.valueOf(monitoring)));
-			}
+			}*/
 			out.print("\" keepalive=\"");
 			out.print(escapeString(String.valueOf(keepalive)));
 			out.println("\"/>");
@@ -246,15 +247,15 @@ public class SBpmnModelWriter
 		
 		//writeSubcomponents(out, ind, mmodel.getModelInfo().getSubcomponentTypes());
 		
-		writeArguments(out, ind, false, mmodel.getModelInfo().getArguments());
+		//writeArguments(out, ind, false, mmodel.getModelInfo().getArguments());
 		
-		writeArguments(out, ind, true, mmodel.getModelInfo().getResults());
+		//writeArguments(out, ind, true, mmodel.getModelInfo().getResults());
 		
 		writeContextVariables(out, ind, mmodel);
 		
-		writeProvidedServices(out, ind, mmodel);
+		//writeProvidedServices(out, ind, mmodel);
 		
-		writeRequiredServices(out, ind, mmodel);
+		//writeRequiredServices(out, ind, mmodel);
 		
 		//writeConfigurations(out, ind, mmodel, mmodel.getModelInfo().getConfigurations());
 		
@@ -463,7 +464,7 @@ public class SBpmnModelWriter
 	 *  
 	 *  @param out The output.
 	 *  @param mmodel The BPMN model.
-	 */
+	 * /
 	protected static final void writeProvidedServices(PrintStream out, int ind, MBpmnModel mmodel)
 	{
 		ProvidedServiceInfo[] pss = mmodel.getModelInfo().getProvidedServices();
@@ -517,14 +518,14 @@ public class SBpmnModelWriter
 			out.print(getIndent(ind));
 			out.println("</jadex:providedservices>");
 		}
-	}
+	}*/
 	
 	/**
 	 *  Writes the required services.
 	 *  
 	 *  @param out The output.
 	 *  @param mmodel The BPMN model.
-	 */
+	 * /
 	protected static final void writeRequiredServices(PrintStream out, int ind, MBpmnModel mmodel)
 	{
 		RequiredServiceInfo[] rss = mmodel.getModelInfo().getServices();
@@ -581,7 +582,7 @@ public class SBpmnModelWriter
 			out.print(getIndent(ind));
 			out.println("</jadex:requiredservices>");
 		}
-	}
+	}*/
 	
 	/**
 	 *  Writes the configurations.
@@ -780,7 +781,7 @@ public class SBpmnModelWriter
 					}
 				}
 				
-				ProvidedServiceInfo[] pss = conf.getProvidedServices();
+				/*ProvidedServiceInfo[] pss = conf.getProvidedServices();
 				if (pss != null && pss.length > 0)
 				{
 					out.print(getIndent(ind));
@@ -850,7 +851,7 @@ public class SBpmnModelWriter
 					--ind;
 					out.print(getIndent(ind));
 					out.println("</jadex:requiredserviceconfigurations>");
-				}
+				}*/
 				
 				--ind;
 				out.print(getIndent(ind));

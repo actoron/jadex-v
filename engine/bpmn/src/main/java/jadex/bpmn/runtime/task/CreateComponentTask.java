@@ -1,32 +1,25 @@
 package jadex.bpmn.runtime.task;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bpmn.model.MParameter;
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
 import jadex.bpmn.model.task.annotation.Task;
 import jadex.bpmn.model.task.annotation.TaskParameter;
 import jadex.bpmn.task.info.ParameterMetaInfo;
 import jadex.bpmn.task.info.TaskMetaInfo;
-import jadex.collection.IndexMap;
-import jadex.common.Tuple2;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.IIntermediateResultListener;
 import jadex.future.IResultListener;
-import jadex.future.IntermediateEmptyResultListener;
-import jadex.model.modelinfo.Argument;
+
+
+// todo!
 
 /**
  *  Task for creating a component.
@@ -82,8 +75,11 @@ public class CreateComponentTask implements ITask
 	/**
 	 *  Execute the task.
 	 */
-	public IFuture<Void> execute(final ITaskContext context, final IInternalAccess instance)
+	public IFuture<Void> execute(final ITaskContext context, final IComponent instance)
 	{
+		throw new UnsupportedOperationException();
+		
+		/*
 		final Future<Void> ret = new Future<Void>();
 		
 //		IComponentManagementService cms	= instance.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IComponentManagementService.class));
@@ -252,18 +248,21 @@ public class CreateComponentTask implements ITask
 //				}
 		
 		return ret;
+		*/
 	}
 	
 	/**
 	 *  Compensate in case the task is canceled.
 	 *  @return	To be notified, when the compensation has completed.
 	 */
-	public IFuture<Void> cancel(final IInternalAccess instance)
+	public IFuture<Void> cancel(final IComponent instance)
 	{
-		final Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void> ret = new Future<Void>();
 		creationfuture.addResultListener(instance.getFeature(IExecutionFeature.class).createResultListener(new IResultListener<IComponentIdentifier>()
 		{
-			public void resultAvailable(final IComponentIdentifier cid)
+			public void resultAvailable(final ComponentIdentifier cid)
 			{
 				IFuture<Map<String, Object>> fut = instance.getExternalAccess(cid).killComponent();
 				fut.addResultListener(new ExceptionDelegationResultListener<Map<String,Object>, Void>(ret)
@@ -280,7 +279,7 @@ public class CreateComponentTask implements ITask
 				ret.setResult(null);
 			}
 		}));
-		return ret;
+		return ret;*/
 	}
 	
 	/**

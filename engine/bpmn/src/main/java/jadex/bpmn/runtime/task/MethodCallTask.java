@@ -42,6 +42,8 @@ import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
+// todo
+
 /**
  *  Call a method.
  *  Class and method name may be specified as parameters.
@@ -78,7 +80,9 @@ public class MethodCallTask implements ITask
 	 */
 	public IFuture<Void> execute(final ITaskContext context, final IComponent process)
 	{
-		final Future<Void>	ret	= new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void>	ret	= new Future<Void>();
 		String	service	= (String)context.getPropertyValue(PROPERTY_SERVICE);
 		String	method	= (String)context.getPropertyValue(PROPERTY_METHOD);
 		String	resultparam	= null;
@@ -204,6 +208,7 @@ public class MethodCallTask implements ITask
 		});
 		
 		return ret;
+		*/
 	}
 	
 //	/**
@@ -344,7 +349,7 @@ public class MethodCallTask implements ITask
 	
 	/**
 	 *  Get the extra parameters that depend on the property settings of the task.
-	 */
+	 * /
 	public static List<ParameterMetaInfo> getExtraParameters(Map<String, MProperty> params, IModelContainer modelcontainer, ClassLoader cl)
 	{
 		List<ParameterMetaInfo> ret = new ArrayList<ParameterMetaInfo>();
@@ -401,12 +406,12 @@ public class MethodCallTask implements ITask
 		}
 	
 		return ret;
-	}
+	}*/
 	
 	/**
 	 * 
 	 */
-	public static class ServiceCallTaskGui implements ITaskPropertyGui
+	public static class ServiceCallTaskGui //implements ITaskPropertyGui
 	{
 		/** The panel. */
 		protected JPanel panel;
@@ -428,7 +433,7 @@ public class MethodCallTask implements ITask
 		
 		/**
 		 *  Once called to init the component.
-		 */
+		 * /
 		public void init(final IModelContainer container, final MActivity task, final ClassLoader cl)
 		{
 			this.model = container.getBpmnModel().getModelInfo();
@@ -506,11 +511,12 @@ public class MethodCallTask implements ITask
 			refresh();
 			
 			panel = pp;
-		}
+			
+		}*/
 		
 		/**
 		 * 
-		 */
+		 * /
 		protected void refresh()
 		{
 			DefaultComboBoxModel mo = ((DefaultComboBoxModel)cbsername.getModel());
@@ -564,7 +570,7 @@ public class MethodCallTask implements ITask
 					}
 				}
 			}
-		}
+		}*/
 		
 		/**
 		 *  Informs the panel that it should stop all its computation.
@@ -576,10 +582,10 @@ public class MethodCallTask implements ITask
 		/**
 		 *  The component to be shown in the gui.
 		 *  @return	The component to be displayed.
-		 */
+		 * /
 		public JComponent getComponent()
 		{
 			return panel;
-		}
+		}*/
 	}
 }

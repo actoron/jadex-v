@@ -21,11 +21,13 @@ import jadex.future.Future;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
 
+// todo
+
 /**
  *  Invocation handler for mapping service requests to
  *  start events of BPMN processes.
  */
-@Service	// Hack!!! Let BasicServiceInvocationHandler know that this is a service implementation.
+//@Service	// Hack!!! Let BasicServiceInvocationHandler know that this is a service implementation.
 public class ProcessServiceInvocationHandler implements InvocationHandler
 {
 	//-------- constants --------

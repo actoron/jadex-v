@@ -22,12 +22,14 @@ public class ExecuteStepTask extends AbstractTask
 	 */
 	public void doExecute(ITaskContext context, IComponent instance)
 	{
-		Object[] step = (Object[])context.getParameterValue("step");
+		throw new UnsupportedOperationException();
+		
+		/*Object[] step = (Object[])context.getParameterValue("step");
 		
 		instance.getFeature(IExecutionFeature.class).scheduleStep(step[0]);
 				
 		((IComponentStep)step[0]).execute(instance)
-			.addResultListener(new DelegationResultListener(((Future)step[1])));
+			.addResultListener(new DelegationResultListener(((Future)step[1])));*/
 	}
 	
 	//-------- static methods --------

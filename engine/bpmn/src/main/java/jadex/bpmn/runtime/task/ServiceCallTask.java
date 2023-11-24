@@ -3,19 +3,15 @@ package jadex.bpmn.runtime.task;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.management.ServiceNotFoundException;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -25,7 +21,6 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import jadex.bpmn.model.IModelContainer;
 import jadex.bpmn.model.MActivity;
-import jadex.bpmn.model.MParameter;
 import jadex.bpmn.model.MProperty;
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
@@ -36,15 +31,10 @@ import jadex.bpmn.model.task.annotation.TaskPropertyGui;
 import jadex.bpmn.runtime.ProcessThread;
 import jadex.bpmn.runtime.task.ServiceCallTask.ServiceCallTaskGui;
 import jadex.bpmn.task.info.ParameterMetaInfo;
-import jadex.collection.IndexMap;
 import jadex.common.ClassInfo;
-import jadex.common.MethodInfo;
 import jadex.common.SReflect;
-import jadex.common.Tuple2;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
 import jadex.execution.StepAborted;
-import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -52,6 +42,8 @@ import jadex.future.IIntermediateFuture;
 import jadex.future.IntermediateDefaultResultListener;
 import jadex.javaparser.SJavaParser;
 import jadex.model.modelinfo.IModelInfo;
+
+// todo!
 
 /**
  *  Call a service.
@@ -93,7 +85,9 @@ public class ServiceCallTask implements ITask
 	 */
 	public IFuture<Void> execute(final ITaskContext context, final IComponent process)
 	{
-		final Future<Void>	ret	= new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void>	ret	= new Future<Void>();
 		String	service	= (String)context.getPropertyValue(PROPERTY_SERVICE);
 		String	method	= (String)context.getPropertyValue(PROPERTY_METHOD);
 		String	rank	= (String)context.getPropertyValue(PROPERTY_RANKING);
@@ -249,13 +243,13 @@ public class ServiceCallTask implements ITask
 			});
 		}
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
 	 *  Invoke the service.
 	 */
-	protected IFuture<Void> invokeService(final IInternalAccess process, String fmethod, String fservice, final String fresultparam, 
+	protected IFuture<Void> invokeService(final IComponent process, String fmethod, String fservice, final String fresultparam, 
 		List<Object> args, final ITaskContext context, Object service, Method m)
 	{
 		final Future<Void> ret = new Future<Void>();
@@ -550,7 +544,7 @@ public class ServiceCallTask implements ITask
 	 *  Cancel the task.
 	 *  @return	To be notified, when the compensation has completed.
 	 */
-	public IFuture<Void> cancel(IInternalAccess instance)
+	public IFuture<Void> cancel(IComponent instance)
 	{
 		// Todo: how to interrupt service call!?
 		// should call terminate if service call is terminable
@@ -559,7 +553,7 @@ public class ServiceCallTask implements ITask
 	
 	/**
 	 *  Get the extra parameters that depend on the property settings of the task.
-	 */
+	 * /
 	public static List<ParameterMetaInfo> getExtraParameters(Map<String, MProperty> params, IModelContainer modelcontainer, ClassLoader cl)
 	{
 		List<ParameterMetaInfo> ret = new ArrayList<ParameterMetaInfo>();
@@ -634,12 +628,12 @@ public class ServiceCallTask implements ITask
 		}
 	
 		return ret;
-	}
+	}*/
 	
 	/**
 	 * 
 	 */
-	public static class ServiceCallTaskGui implements ITaskPropertyGui
+	public static class ServiceCallTaskGui //implements ITaskPropertyGui
 	{
 		/** The panel. */
 		protected JPanel panel;
@@ -660,14 +654,14 @@ public class ServiceCallTask implements ITask
 		protected JComboBox cbmethodname;
 		
 		/** The combo box for the ranking. */
-		protected AutoCompleteCombo cbranking;
+		//protected AutoCompleteCombo cbranking;
 		
 		/** The container. */
 		protected IModelContainer container;
 		
 		/**
 		 *  Once called to init the component.
-		 */
+		 * /
 		public void init(final IModelContainer container, final MActivity task, final ClassLoader cl)
 		{
 			this.container = container;
@@ -752,11 +746,11 @@ public class ServiceCallTask implements ITask
 			refresh();
 			
 			panel = pp;
-		}
+		}*/
 		
 		/**
 		 * 
-		 */
+		 * /
 		protected void refresh()
 		{
 			DefaultComboBoxModel mo = ((DefaultComboBoxModel)cbsername.getModel());
@@ -825,7 +819,7 @@ public class ServiceCallTask implements ITask
 					}
 				}
 			}
-		}
+		}*/
 		
 		/**
 		 *  Informs the panel that it should stop all its computation.

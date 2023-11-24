@@ -1,11 +1,8 @@
 package jadex.bpmn;
 
-import java.net.URL;
-
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.io.SBpmnModelReader;
 import jadex.common.ResourceInfo;
-import jadex.common.SUtil;
 import jadex.model.ICacheableModel;
 import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
@@ -41,7 +38,7 @@ public class BpmnModelLoader extends AbstractModelLoader
 	 *  @param name	The filename or logical name (resolved via imports and extensions).
 	 *  @param imports	The imports, if any.
 	 */
-	public MBpmnModel	loadBpmnModel(String name, String[] imports, ClassLoader classloader, Object context) throws Exception
+	public MBpmnModel loadBpmnModel(String name, String[] imports, ClassLoader classloader, Object context) throws Exception
 	{
 		String ext = FILE_EXTENSION_BPMN;
 		if(name.endsWith(".bpmn2"))

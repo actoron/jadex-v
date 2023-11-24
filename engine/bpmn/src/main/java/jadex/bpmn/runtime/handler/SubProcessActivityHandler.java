@@ -15,10 +15,6 @@ import jadex.bpmn.model.MSubProcess;
 import jadex.bpmn.runtime.IActivityHandler;
 import jadex.bpmn.runtime.ProcessThread;
 import jadex.bpmn.runtime.ProcessThreadValueFetcher;
-import jadex.bridge.IComponentIdentifier;
-import jadex.bridge.service.types.cms.CMSStatusEvent;
-import jadex.bridge.service.types.cms.CMSStatusEvent.CMSIntermediateResultEvent;
-import jadex.bridge.service.types.cms.CreationInfo;
 import jadex.common.ClassInfo;
 import jadex.common.IResultCommand;
 import jadex.common.IValueFetcher;
@@ -31,6 +27,8 @@ import jadex.future.IntermediateEmptyResultListener;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
+
+// todo
 
 /**
  *  Handler for (embedded) sub processes.
@@ -46,8 +44,11 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 	public void execute(final MActivity activity, final IComponent instance, final ProcessThread thread)
 	{
 		System.out.println(instance.getId().getLocalName()+": sub "+activity);
+		
+		throw new UnsupportedOperationException();
 
-		MSubProcess	proc = (MSubProcess)activity;
+		/*MSubProcess	proc = (MSubProcess)activity;
+		
 		final List<MActivity> start = proc.getStartActivities();
 		String tmpfile = (String)thread.getPropertyValue("file");
 		if(tmpfile == null)
@@ -175,6 +176,8 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 		// External subprocess
 		else if((start==null || start.isEmpty()) && file!=null && file.length()>0)
 		{
+			/*
+			
 			// Extract arguments from in/inout parameters.
 			final Map<String, Object>	args	= new HashMap<String, Object>();
 			List<MParameter> params	= activity.getParameters(new String[]{MParameter.DIRECTION_IN, MParameter.DIRECTION_INOUT});
@@ -282,6 +285,7 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 					return "lis: "+instance.getId()+" "+file;
 				}
 			}));
+			
 		}
 		
 		// Empty subprocess.
@@ -296,6 +300,8 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 		{
 			throw new RuntimeException("External subprocess may not have inner activities: "+activity+", "+instance);
 		}
+		
+		*/
 	}
 
 	
@@ -347,8 +353,8 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 							if(value!=null && act.hasProperty(MActivity.RESULTTYPE))
 							{
 								trig = (String)act.getPropertyValueString(MActivity.RESULTTYPE);
-								String typename = (String)SJavaParser.parseExpression(act.getPropertyValue(MActivity.RESULTTYPE), thread.getInstance().getModel().getAllImports(), null).getValue(thread.getInstance().getFetcher());
-								Class<?> type = new ClassInfo(typename).getType(thread.getInstance().getClassLoader());
+								String typename = (String)SJavaParser.parseExpression(act.getPropertyValue(MActivity.RESULTTYPE), thread.getInstance().getFeature(IModelFeature.class).getModel().getAllImports(), null).getValue(thread.getInstance().getFeature(IModelFeature.class).getFetcher());
+								Class<?> type = new ClassInfo(typename).getType(thread.getInstance().getClass().getClassLoader());
 								if(SReflect.isSupertype(type, value.getClass()))
 								{
 									handler = act;

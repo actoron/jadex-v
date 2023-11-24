@@ -1,2 +1,3 @@
-jadex.micro.impl.MicroAgentFeatureProvider
-jadex.micro.impl.MicroModelFeatureProvider
+jadex.bpmn.runtime.BpmnProcessLifecycleFeatureProvider
+jadex.bpmn.runtime.BpmnProcessFeatureProvider
+

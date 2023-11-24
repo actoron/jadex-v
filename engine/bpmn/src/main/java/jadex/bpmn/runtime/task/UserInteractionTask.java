@@ -44,6 +44,7 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.IntermediateDefaultResultListener;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.javaccimpl.JavaCCExpressionParser;
+import jadex.model.IModelFeature;
 
 /**
  *  Opens a dialog for the task and lets the user enter
@@ -71,7 +72,7 @@ public class UserInteractionTask implements ITask
 	{
 		final Future<Void> ret = new Future<Void>();
 		
-		final ISubscriptionIntermediateFuture<IMonitoringEvent> sub = instance.getFeature0(IMonitoringComponentFeature.class).subscribeToEvents(IMonitoringEvent.TERMINATION_FILTER, false, PublishEventLevel.FINE);
+		/*final ISubscriptionIntermediateFuture<IMonitoringEvent> sub = instance.getFeature0(IMonitoringComponentFeature.class).subscribeToEvents(IMonitoringEvent.TERMINATION_FILTER, false, PublishEventLevel.FINE);
 		sub.addResultListener(new SwingIntermediateResultListener<IMonitoringEvent>(new IntermediateDefaultResultListener<IMonitoringEvent>()
 		{
 			public void intermediateResultAvailable(IMonitoringEvent result)
@@ -86,7 +87,7 @@ public class UserInteractionTask implements ITask
 			{
 				// ignore timer updates
 			}
-		}));
+		}));*/
 		
 		final IExternalAccess	exta	= instance.getExternalAccess();
 		MActivity	task	= context.getModelElement();
@@ -198,7 +199,14 @@ public class UserInteractionTask implements ITask
 		            {
 		                pane.setValue(null);
 		                
-		                exta.scheduleStep(new IComponentStep<Void>()
+		                exta.scheduleStep(comp ->
+		                {
+		                	//sub.terminate();
+//							ia.removeComponentListener(lis);
+							return IFuture.DONE;
+		                });
+		                
+		                /*exta.scheduleStep(new IComponentStep<Void>()
 						{
 		                	@Classname("rem")
 							public IFuture<Void> execute(IInternalAccess ia)
@@ -207,7 +215,7 @@ public class UserInteractionTask implements ITask
 //								ia.removeComponentListener(lis);
 								return IFuture.DONE;
 							}
-						});
+						});*/
 		            }
 		        });
 
@@ -287,7 +295,7 @@ public class UserInteractionTask implements ITask
 	 *  Compensate in case the task is canceled.
 	 *  @return	To be notified, when the compensation has completed.
 	 */
-	public IFuture<Void> cancel(final IInternalAccess instance)
+	public IFuture<Void> cancel(final IComponent instance)
 	{
 		final Future<Void> ret = new Future<Void>();
 		SwingUtilities.invokeLater(new Runnable()
@@ -307,14 +315,14 @@ public class UserInteractionTask implements ITask
 	/**
 	 * 
 	 */
-	protected List<Object[]> extractParams(ITaskContext context, IInternalAccess instance, IndexMap<String, MParameter> parameters)
+	protected List<Object[]> extractParams(ITaskContext context, IComponent instance, IndexMap<String, MParameter> parameters)
 	{
 		final List<Object[]> lparameters = new ArrayList<Object[]>();
 		
 		for(MParameter param: parameters.values())
 		{
 			Object	value	= context.getParameterValue(param.getName());
-			Class<?>	clazz	= param.getClazz().getType(instance.getClassLoader(), instance.getModel().getAllImports());
+			Class<?>	clazz	= param.getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IModelFeature.class).getModel().getAllImports());
 			lparameters.add(new Object[]
 			{
 				param.getName(),

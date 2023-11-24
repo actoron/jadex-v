@@ -34,10 +34,7 @@ import jadex.common.SReflect;
 import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
 import jadex.javaparser.SJavaParser;
-import jadex.model.modelinfo.Argument;
-import jadex.model.modelinfo.ConfigurationInfo;
 import jadex.model.modelinfo.ModelInfo;
-import jadex.model.modelinfo.SubcomponentTypeInfo;
 
 public class SBpmnModelReader
 {
@@ -118,7 +115,7 @@ public class SBpmnModelReader
 		IXMLReader reader = null;
 		//if (!SReflect.isAndroid())
 		//{
-			Class<?> clazz = SReflect.classForName("jadex.xml.stax.StaxReaderWrapper", SBpmnModelReader.class.getClassLoader());
+			Class<?> clazz = SReflect.classForName("jadex.bpmn.model.io.StaxReaderWrapper", SBpmnModelReader.class.getClassLoader());
 			Constructor<?> con = clazz.getConstructor(new Class<?>[] { InputStream.class });
 			reader = (IXMLReader) con.newInstance(new Object[] { in });
 		/*}
@@ -952,7 +949,7 @@ public class SBpmnModelReader
 			{
 				model.addImport(content);
 			}
-			else if ("subcomponent".equals(tag.getLocalPart()))
+			/*else if ("subcomponent".equals(tag.getLocalPart()))
 			{
 				SubcomponentTypeInfo scti = new SubcomponentTypeInfo(attrs.get("name"), content);
 				((ModelInfo)model.getModelInfo()).addSubcomponentType(scti);
@@ -992,7 +989,7 @@ public class SBpmnModelReader
 				}
 				
 				((ModelInfo) model.getModelInfo()).addResult(arg);
-			}
+			}*/
 			else if ("contextvariable".equals(tag.getLocalPart()))
 			{
 				String name = attrs.get("name");
@@ -1003,7 +1000,7 @@ public class SBpmnModelReader
 				//model.addContextVariable(name, clazz, exp, null);
 				model.addContextVariable(var);
 			}
-			else if ("providedservice".equals(tag.getLocalPart()))
+			/*else if ("providedservice".equals(tag.getLocalPart()))
 			{
 				String name = attrs.get("name");
 				ClassInfo itrface = attrs.get("interface") != null? new ClassInfo(attrs.get("interface")) : null;
@@ -1187,7 +1184,7 @@ public class SBpmnModelReader
 				}
 				
 				((ModelInfo) model.getModelInfo()).addConfiguration(conf);
-			}
+			}*/
 		}
 		else if("dataFlow".equals(tag.getLocalPart()))
 		{
