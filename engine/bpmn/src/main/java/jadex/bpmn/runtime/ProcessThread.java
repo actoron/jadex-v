@@ -462,9 +462,7 @@ public class ProcessThread	implements ITaskContext
 	public void	setDataEdgeValue(String name, Object value)
 	{
 		if(dataedges == null)
-		{
 			dataedges = new HashMap<String, Object>();
-		}
 		dataedges.put(name, value);
 	}
 

@@ -1,8 +1,15 @@
 package jadex.bpmn.runtime;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import jadex.common.NameValue;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 
 
 public class RBpmnProcess 
@@ -10,6 +17,7 @@ public class RBpmnProcess
 	protected String filename;
 	protected Map<String, Object> args;
 	protected Map<String, Object> results;
+	protected List<SubscriptionIntermediateFuture<NameValue>> resultsubscribers;
 	
 	/**
 	 *  Builder pattern constructor.
@@ -71,7 +79,7 @@ public class RBpmnProcess
 	 */
 	public Map<String, Object> getArguments()
 	{
-		return args==null? null: new HashMap<>(args); 
+		return args==null? Collections.EMPTY_MAP: new HashMap<>(args); 
 	}
 	
 	/**
@@ -82,6 +90,7 @@ public class RBpmnProcess
 		if(results==null)
 			results = new LinkedHashMap<>(2);
 		results.put(name, value);
+		notifyResult(name, value);
 		return this;
 	}
 	
@@ -100,6 +109,32 @@ public class RBpmnProcess
 	 */
 	public Map<String, Object> getResults()
 	{
-		return results==null? null: new HashMap<>(results); 
+		return results==null? Collections.EMPTY_MAP: new HashMap<>(results); 
+	}
+	
+	protected void notifyResult(String name, Object value)
+	{
+		if(resultsubscribers!=null)
+		{
+			NameValue val = new NameValue(name, value);
+			resultsubscribers.forEach(sub -> sub.addIntermediateResult(val));
+		}
+	}
+	
+	public synchronized ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+	{
+		SubscriptionIntermediateFuture<NameValue> ret = new SubscriptionIntermediateFuture<>();
+		
+		if(resultsubscribers==null)
+			resultsubscribers = new ArrayList<>();
+		
+		resultsubscribers.add(ret);
+		
+		ret.setTerminationCommand(ex ->
+		{
+			resultsubscribers.remove(ret);
+		});
+		
+		return ret;
 	}
 }

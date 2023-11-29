@@ -1,0 +1,94 @@
+<?xml version="1.0" ?><bpmn:definitions targetNamespace="http://www.activecomponents.org/bpmn/" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:jadex="http://www.activecomponents.org/bpmnextensions" xmlns:jadexvisual="http://www.activecomponents.org/bpmnvisualextensions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <bpmn:extension>
+    <jadex:modelname>E2_CustomTask</jadex:modelname>
+    <jadex:description>&lt;h1&gt;A checklist process&lt;/h1&gt; The process shows some information requesters and terminates afterwards.</jadex:description>
+    <jadex:package>jadex.bpmn.tutorial</jadex:package>
+  </bpmn:extension>
+  <bpmn:process id="_rEfkwU4FEd-h4K8oRzpwEg" name="Pool">
+    <bpmn:task id="_G106sU4nEd-h4K8oRzpwEg" name="Music">
+      <bpmn:incoming>yf0/SXmU/sdShct+</bpmn:incoming>
+      <bpmn:outgoing>l5OSiwEM8yfyzYjI</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <jadex:class>OKTask</jadex:class>
+        <jadex:parameter direction="inout" name="message" type="String">&quot;Remember to have some good music at your party.&quot;</jadex:parameter>
+        <jadex:parameter direction="inout" name="title" type="String">&quot;Party Planner&quot;</jadex:parameter>
+      </bpmn:extensionElements>
+    </bpmn:task>
+    <bpmn:task id="_rEfkw04FEd-h4K8oRzpwEg" name="Drinks">
+      <bpmn:incoming>AO4cOjdqdlRVzOK+</bpmn:incoming>
+      <bpmn:outgoing>EWaiyVyWqERLywx2</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <jadex:class>OKTask</jadex:class>
+        <jadex:parameter direction="inout" name="message" type="String">&quot;Remember to get drinks for your party.&quot;</jadex:parameter>
+        <jadex:parameter direction="inout" name="title" type="String">&quot;Party Planner&quot;</jadex:parameter>
+      </bpmn:extensionElements>
+    </bpmn:task>
+    <bpmn:task id="_Xr9KUU4nEd-h4K8oRzpwEg" name="People">
+      <bpmn:incoming>nU8ieXfvNOrDvyIY</bpmn:incoming>
+      <bpmn:outgoing>p+e8+KpCs4/cm2M8</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <jadex:class>OKTask</jadex:class>
+        <jadex:parameter direction="inout" name="message" type="String">&quot;Remember to invite nice people to your party.&quot;</jadex:parameter>
+        <jadex:parameter direction="inout" name="title" type="String">&quot;Party Planner&quot;</jadex:parameter>
+      </bpmn:extensionElements>
+    </bpmn:task>
+    <bpmn:startEvent id="62OMf0WEhJU/0RdG">
+      <bpmn:outgoing>yf0/SXmU/sdShct+</bpmn:outgoing>
+      <bpmn:outgoing>AO4cOjdqdlRVzOK+</bpmn:outgoing>
+      <bpmn:outgoing>nU8ieXfvNOrDvyIY</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EIXie3iPvRbF1RdG">
+      <bpmn:incoming>EWaiyVyWqERLywx2</bpmn:incoming>
+      <bpmn:incoming>l5OSiwEM8yfyzYjI</bpmn:incoming>
+      <bpmn:incoming>p+e8+KpCs4/cm2M8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="l5OSiwEM8yfyzYjI" sourceRef="_G106sU4nEd-h4K8oRzpwEg" targetRef="EIXie3iPvRbF1RdG">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="EWaiyVyWqERLywx2" sourceRef="_rEfkw04FEd-h4K8oRzpwEg" targetRef="EIXie3iPvRbF1RdG">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="p+e8+KpCs4/cm2M8" sourceRef="_Xr9KUU4nEd-h4K8oRzpwEg" targetRef="EIXie3iPvRbF1RdG">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="yf0/SXmU/sdShct+" sourceRef="62OMf0WEhJU/0RdG" targetRef="_G106sU4nEd-h4K8oRzpwEg">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="AO4cOjdqdlRVzOK+" sourceRef="62OMf0WEhJU/0RdG" targetRef="_rEfkw04FEd-h4K8oRzpwEg">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="nU8ieXfvNOrDvyIY" sourceRef="62OMf0WEhJU/0RdG" targetRef="_Xr9KUU4nEd-h4K8oRzpwEg">
+    </bpmn:sequenceFlow>
+    <bpmn:extensionElements>
+    </bpmn:extensionElements>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane>
+      <bpmndi:BPMNShape bpmnElement="_rEfkwU4FEd-h4K8oRzpwEg">
+        <dc:Bounds height="600.0" width="3000.0" x="0.0" y="0.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_G106sU4nEd-h4K8oRzpwEg">
+        <dc:Bounds height="100.0" width="160.0" x="430.0" y="30.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_rEfkw04FEd-h4K8oRzpwEg">
+        <dc:Bounds height="100.0" width="160.0" x="430.0" y="160.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_Xr9KUU4nEd-h4K8oRzpwEg">
+        <dc:Bounds height="100.0" width="160.0" x="430.0" y="290.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="62OMf0WEhJU/0RdG">
+        <dc:Bounds height="40.0" width="40.0" x="220.0" y="190.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="EIXie3iPvRbF1RdG">
+        <dc:Bounds height="40.0" width="40.0" x="830.0" y="190.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="yf0/SXmU/sdShct+">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="AO4cOjdqdlRVzOK+">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="nU8ieXfvNOrDvyIY">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="EWaiyVyWqERLywx2">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="l5OSiwEM8yfyzYjI">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="p+e8+KpCs4/cm2M8">
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

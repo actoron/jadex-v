@@ -1,0 +1,40 @@
+<?xml version="1.0" ?><bpmn:definitions targetNamespace="http://www.activecomponents.org/bpmn/" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:jadex="http://www.activecomponents.org/bpmnextensions" xmlns:jadexvisual="http://www.activecomponents.org/bpmnvisualextensions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <bpmn:extension>
+    <jadex:modelname>D5_MessageSending</jadex:modelname>
+    <jadex:description>&lt;h1&gt;Message Sending Process&lt;/h1&gt; This process sends a message as expected by process D3.</jadex:description>
+    <jadex:package>jadex.bpmn.tutorial</jadex:package>
+  </bpmn:extension>
+  <bpmn:process id="_-KYIYUYhEd-3iKqz0F2Flw" name="Pool">
+    <bpmn:intermediateCatchEvent id="_q6FG8UYiEd-3iKqz0F2Flw" name="Send Order">
+      <bpmn:incoming>_q6FG-kYiEd-3iKqz0F2Flw</bpmn:incoming>
+      <bpmn:messageEventDefinition/>
+      <bpmn:extensionElements>
+        <jadex:property name="isThrowing">true</jadex:property>
+        <jadex:property name="message">new jadex.bridge.fipa.FipaMessage(jadex.bridge.fipa.FipaMessage.Performative.REQUEST, &quot;Order sent by D5&quot;, null)</jadex:property>
+        <jadex:property name="receiver">&quot;D3_MessageReceival&quot;</jadex:property>
+      </bpmn:extensionElements>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:startEvent id="_p4OoYUYiEd-3iKqz0F2Flw">
+      <bpmn:outgoing>_q6FG-kYiEd-3iKqz0F2Flw</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="_q6FG-kYiEd-3iKqz0F2Flw" sourceRef="_p4OoYUYiEd-3iKqz0F2Flw" targetRef="_q6FG8UYiEd-3iKqz0F2Flw">
+    </bpmn:sequenceFlow>
+    <bpmn:extensionElements>
+    </bpmn:extensionElements>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane>
+      <bpmndi:BPMNShape bpmnElement="_-KYIYUYhEd-3iKqz0F2Flw">
+        <dc:Bounds height="600.0" width="3000.0" x="0.0" y="0.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_q6FG8UYiEd-3iKqz0F2Flw">
+        <dc:Bounds height="40.0" width="40.0" x="670.0" y="170.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_p4OoYUYiEd-3iKqz0F2Flw">
+        <dc:Bounds height="40.0" width="40.0" x="130.0" y="170.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="_q6FG-kYiEd-3iKqz0F2Flw">
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

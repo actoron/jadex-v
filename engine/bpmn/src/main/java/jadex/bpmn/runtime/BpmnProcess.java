@@ -40,13 +40,9 @@ public class BpmnProcess extends MicroAgent
 		}
 	}
 	
-	/** Optional creation info, i.e. arguments. */
-	protected RBpmnProcess info;
-	
 	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid)
 	{
-		this((Object)null, model, cid);
-		this.info = info;
+		this((Object)info, model, cid);
 	}
 	
 	protected BpmnProcess(Object pojo, IModelInfo model, ComponentIdentifier cid)

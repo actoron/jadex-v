@@ -1,29 +1,31 @@
 package jadex.bpmn.runtime.handler;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.MDataEdge;
 import jadex.bpmn.model.MParameter;
 import jadex.bpmn.model.MSubProcess;
+import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.IActivityHandler;
 import jadex.bpmn.runtime.ProcessThread;
 import jadex.bpmn.runtime.ProcessThreadValueFetcher;
+import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.common.ClassInfo;
 import jadex.common.IResultCommand;
 import jadex.common.IValueFetcher;
+import jadex.common.NameValue;
 import jadex.common.SReflect;
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.execution.ComponentTerminatedException;
-import jadex.execution.IExecutionFeature;
-import jadex.future.IntermediateEmptyResultListener;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
@@ -45,9 +47,7 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 	{
 		System.out.println(instance.getId().getLocalName()+": sub "+activity);
 		
-		throw new UnsupportedOperationException();
-
-		/*MSubProcess	proc = (MSubProcess)activity;
+		MSubProcess	proc = (MSubProcess)activity;
 		
 		final List<MActivity> start = proc.getStartActivities();
 		String tmpfile = (String)thread.getPropertyValue("file");
@@ -176,8 +176,6 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 		// External subprocess
 		else if((start==null || start.isEmpty()) && file!=null && file.length()>0)
 		{
-			/*
-			
 			// Extract arguments from in/inout parameters.
 			final Map<String, Object>	args	= new HashMap<String, Object>();
 			List<MParameter> params	= activity.getParameters(new String[]{MParameter.DIRECTION_IN, MParameter.DIRECTION_INOUT});
@@ -198,29 +196,88 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 //			IComponentManagementService cms = instance.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IComponentManagementService.class));
 			// Todo: If remote remember subprocess and kill on cancel.
 
-			final CreationInfo	info = thread.hasPropertyValue("creation info")? 
-				(CreationInfo)thread.getPropertyValue("creation info"): new CreationInfo();
+			//final CreationInfo	info = thread.hasPropertyValue("creation info")? 
+			//	(CreationInfo)thread.getPropertyValue("creation info"): new CreationInfo();
 			
 			// todo: other properties of creation info like
 			// instance name and flags like suspend
 
-			if(info.getArguments()==null && args.size()>0)
-				info.setArguments(args);
+			//if(info.getArguments()==null && args.size()>0)
+			//	info.setArguments(args);
 			
-			IComponentIdentifier	parent	= thread.hasPropertyValue("parent")
-				? (IComponentIdentifier)thread.getPropertyValue("parent")
+			ComponentIdentifier	parent	= thread.hasPropertyValue("parent")
+				? (ComponentIdentifier)thread.getPropertyValue("parent")
 				: instance.getId();
 //			if(info.getParent()==null && parent!=null)
 //				info.setParent(parent);
-			IExternalAccess creator = parent == null ? instance.getExternalAccess() : instance.getExternalAccess(parent);
+			//IExternalAccess creator = parent == null ? instance.getExternalAccess() : instance.getExternalAccess(parent);
 			
-			String[] imps = instance.getModel().getAllImports();
+			/*String[] imps = instance.getFeature(IModelFeature.class).getModel().getAllImports();
 			if(info.getImports()==null && imps!=null)
 				info.setImports(imps);
-			info.setFilename(file);	
-//					System.out.println("parent is: "+parent.getAddresses());	
+			info.setFilename(file);	*/
+			
+//			System.out.println("parent is: "+parent.getAddresses());	
 
-			creator.createComponentWithEvents(info)
+			SubprocessResultHandler handler = new SubprocessResultHandler(thread, activity);	
+			
+			Consumer<NameValue> handleresult = new Consumer<>()
+			{
+				public void accept(NameValue result)
+				{
+					if(activity.getParameters()!=null && activity.getParameters().get(result.name())!=null)
+					{
+						String	dir	= activity.getParameters().get(result.name()).getDirection();
+						if(MParameter.DIRECTION_INOUT.equals(dir) || MParameter.DIRECTION_OUT.equals(dir))
+						{
+							thread.setParameterValue(result.name(), result.value());
+						}
+					}
+					
+					// todo: need to distinguish between collection and normal parameters
+					handler.handleProcessResult(result.name(), null, result.value());
+				}
+			};
+			
+			Consumer<Void> finishedhandler = new Consumer<>()
+			{
+				public void accept(Void result)
+				{
+					//System.out.println("end0: "+instance.getId()+" "+file+" "+thread.getParameterValue("$results"));
+					handler.updateParameters(thread, activity);
+					
+					thread.setNonWaiting();
+					getBpmnFeature(instance).step(activity, instance, thread, null);
+				}
+			};
+			
+			
+			RBpmnProcess sub = new RBpmnProcess(file);
+			sub.subscribeToResults().next(result -> handleresult.accept(result)
+			).finished(res -> finishedhandler.accept(res)
+			).catchEx(exception ->
+			{
+				//System.out.println("ex: "+exception);
+				// Hack!!! Ignore exception, when component already terminated.
+				if(!(exception instanceof ComponentTerminatedException)
+					|| !instance.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
+				{
+//					System.out.println("end2: "+instance.getComponentIdentifier()+" "+file+" "+exception);
+//					exception.printStackTrace();
+					thread.setNonWaiting();
+					thread.setException(exception);
+					getBpmnFeature(instance).step(activity, instance, thread, null);
+				}
+			}).then(results ->
+			{
+				for(NameValue result: results)
+					handleresult.accept(result);
+				finishedhandler.accept(null);
+			});
+			
+			BpmnProcess.create(sub);
+			
+			/*creator.createComponentWithEvents(info)
 				.addResultListener(instance.getFeature(IExecutionFeature.class).createResultListener(new IntermediateEmptyResultListener<CMSStatusEvent>()
 			{
 				protected SubprocessResultHandler handler = new SubprocessResultHandler(thread, activity);	
@@ -284,8 +341,7 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 				{
 					return "lis: "+instance.getId()+" "+file;
 				}
-			}));
-			
+			}));*/
 		}
 		
 		// Empty subprocess.
@@ -300,8 +356,6 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 		{
 			throw new RuntimeException("External subprocess may not have inner activities: "+activity+", "+instance);
 		}
-		
-		*/
 	}
 
 	
