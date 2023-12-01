@@ -63,7 +63,13 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 		{
 			mymodel = (ProvidedServiceModel)ProvidedServiceLoader.readFeatureModel(((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
 			final ProvidedServiceModel fmymodel = mymodel;
-			AbstractModelLoader loader = AbstractModelLoader.getLoader(self.getClass());
+			AbstractModelLoader loader = null;
+			Class<?>	clazz	= self.getClass();
+			while(loader==null && !clazz.equals(Object.class))
+			{
+				loader	= AbstractModelLoader.getLoader((Class< ? extends Component>)clazz);
+				clazz	= clazz.getSuperclass();
+			}
 			loader.updateCachedModel(() ->
 			{
 				model.putFeatureModel(IProvidedServiceFeature.class, fmymodel);

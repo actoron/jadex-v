@@ -14,21 +14,16 @@ import jadex.bdi.runtime.ICapability;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Properties;
-import jadex.model.annotation.NameValue;
-import jadex.providedservice.ServiceScope;
-import jadex.requiredservice.annotation.RequiredService;
-import jadex.requiredservice.annotation.RequiredServices;
 
 /**
  *  Customer capability.
  */
 @Capability
-@Properties(@NameValue(name="componentviewer.viewerclass", value="\"jadex.bdi.examples.shop.CustomerViewerPanel\""))
-@RequiredServices({
-	@RequiredService(name="localshopservices", type=IShopService.class, scope=ServiceScope.PLATFORM), //multiple=true,
-	@RequiredService(name="remoteshopservices", type=IShopService.class, scope=ServiceScope.GLOBAL), // multiple=true,
-})
+//TODO
+//@RequiredServices({
+//	@RequiredService(name="localshopservices", type=IShopService.class, scope=ServiceScope.PLATFORM), //multiple=true,
+//	@RequiredService(name="remoteshopservices", type=IShopService.class, scope=ServiceScope.GLOBAL), // multiple=true,
+//})
 public class CustomerCapability
 {
 	//-------- attributes --------

@@ -36,7 +36,11 @@ public class MicroModelFeature implements IModelFeature, IInternalModelFeature, 
 	 */
 	public Object fetchValue(String name)
 	{
-		if("$pojoagent".equals(name))
+		if("$agent".equals(name))
+		{
+			return self;
+		}
+		else if("$pojoagent".equals(name))
 		{
 			return self.getPojo();
 		}

@@ -9,11 +9,16 @@ import jadex.bdi.annotation.Mapping;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
+import jadex.providedservice.annotation.Implementation;
+import jadex.providedservice.annotation.ProvidedService;
+import jadex.providedservice.annotation.ProvidedServices;
 
 /**
  *  Shop bdi agent.
  */
 @Agent(type="bdi")
+@ProvidedServices(@ProvidedService(type=IShopService.class, //	implementation=@Implementation(value=ShopService.class)))
+implementation=@Implementation(expression="new ShopService($agent.getFeature(jadex.bdi.runtime.IBDIAgentFeature.class).getArgument(\"shopname\"))")))
 public class ShopAgent
 {
 	//-------- attributes --------

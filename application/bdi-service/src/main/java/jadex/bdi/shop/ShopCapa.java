@@ -8,16 +8,14 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalResult;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
 
 /**
  * 
  */
 @Capability
-@ProvidedServices(@ProvidedService(type=IShopService.class, //	implementation=@Implementation(value=ShopService.class)))
-	implementation=@Implementation(expression="new ShopService($pojocapa.getShopname())")))
+// TODO
+//@ProvidedServices(@ProvidedService(type=IShopService.class, //	implementation=@Implementation(value=ShopService.class)))
+//	implementation=@Implementation(expression="new ShopService($pojocapa.getShopname())")))
 public class ShopCapa
 {
 	@Belief
