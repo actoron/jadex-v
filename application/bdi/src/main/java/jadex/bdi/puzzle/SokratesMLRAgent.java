@@ -1,7 +1,6 @@
 package jadex.bdi.puzzle;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
@@ -36,15 +35,15 @@ import jadex.model.annotation.OnStart;
  */
 @Agent(type = "bdi")
 @Plans({
-	@Plan(trigger=@Trigger(goals = SokratesAgent.ChooseMoveGoal.class), body = @Body(ChooseMovePlan.class)),
+	@Plan(trigger=@Trigger(goals = SokratesMLRAgent.ChooseMoveGoal.class), body = @Body(ChooseMovePlan.class)),
 	// TODO: binding options for pojo plans?
 	@Plan(body = @Body(MovePlan.class))})
-public class SokratesAgent
+public class SokratesMLRAgent
 {
 	@Belief
 	IBoard	board	= new Board(5);
 	int triescnt;
-	long	delay	= 100;
+	long	delay	= 500;
 	Strategy	ml	= Strategy.SAME_LONG;
 	
 	@Agent
@@ -83,7 +82,7 @@ public class SokratesAgent
 		}
 		
 		@GoalSelectCandidate
-		ICandidateInfo	chooseMove(IBDIAgentFeature bdi, Collection<ICandidateInfo> cands)
+		ICandidateInfo	chooseMove(IBDIAgentFeature bdi, List<ICandidateInfo> cands)
 		{
 			return (ICandidateInfo)bdi.dispatchTopLevelGoal(new ChooseMoveGoal(cands)).get();
 		}
@@ -92,12 +91,12 @@ public class SokratesAgent
 	@Goal
 	class ChooseMoveGoal
 	{
-		Collection<ICandidateInfo>	cands;
+		List<ICandidateInfo>	cands;
 		
 		@GoalResult
 		ICandidateInfo	cand;
 		
-		public ChooseMoveGoal(Collection<ICandidateInfo> cands)
+		public ChooseMoveGoal(List<ICandidateInfo> cands)
 		{
 			this.cands	= cands;
 		}
