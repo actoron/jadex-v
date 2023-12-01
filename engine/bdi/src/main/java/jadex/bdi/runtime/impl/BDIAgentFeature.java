@@ -1197,7 +1197,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				}
 				catch(Exception e)
 				{
-					System.err.println("Hidden agent injection failed: "+SUtil.getExceptionStacktrace(e));
+//					System.err.println("Hidden agent injection failed: "+SUtil.getExceptionStacktrace(e));
 					//break; // with pure BDI agents it can be the superclass BDIAgent
 				}
 			}
