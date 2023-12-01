@@ -38,8 +38,8 @@ public class FeatureTest
 		IExecutionFeature.class,
 		ITestFeature1.class,
 		ITestFeature2.class,
-		MicroAgentFeature.class,
 		IModelFeature.class,
+		MicroAgentFeature.class,
 		ITestLazyFeature.class,
 	};
 
