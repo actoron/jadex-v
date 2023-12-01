@@ -38,13 +38,13 @@ import javax.swing.event.ChangeListener;
 
 import jadex.bdi.blocksworld.BlocksworldAgent.ConfigureGoal;
 import jadex.bdi.runtime.IBDIAgentFeature;
+import jadex.common.SGUI;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingConsumer;
 import jadex.future.IFuture;
 import jadex.micro.impl.MicroAgentFeature;
-import jadex.quickstart.cleanerworld.gui.SGUI;
 
 
 /**

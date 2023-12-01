@@ -1,4 +1,4 @@
-package jadex.quickstart.cleanerworld.gui;
+package jadex.common;
 
 
 import java.awt.BorderLayout;
@@ -68,8 +68,6 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-
-import jadex.common.SUtil;
 
 
 /**
