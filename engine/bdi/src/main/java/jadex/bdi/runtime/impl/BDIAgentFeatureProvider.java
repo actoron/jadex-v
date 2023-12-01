@@ -4,7 +4,7 @@ import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 
-public class BDIAgentFeatureProvider	extends FeatureProvider<IBDIAgentFeature>
+public class BDIAgentFeatureProvider extends FeatureProvider<IBDIAgentFeature>
 {
 	@Override
 	public IBDIAgentFeature createFeatureInstance(Component self)

@@ -2,11 +2,11 @@ package jadex.mj.feature.nfproperties.impl;
 
 
 import jadex.common.MethodInfo;
-import jadex.enginecore.IExternalAccess;
-import jadex.enginecore.service.IServiceIdentifier;
+import jadex.core.IExternalAccess;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.providedservice.IServiceIdentifier;
 
 /**
  *  Property reference. Delegates calls to the real

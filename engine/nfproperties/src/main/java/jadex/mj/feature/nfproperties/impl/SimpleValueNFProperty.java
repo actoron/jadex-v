@@ -1,14 +1,14 @@
 package jadex.mj.feature.nfproperties.impl;
 
 import jadex.common.ClassInfo;
-import jadex.enginecore.IInternalAccess;
-import jadex.enginecore.component.ComponentTerminatedException;
-import jadex.enginecore.component.IExecutionFeature;
-import jadex.enginecore.sensor.unit.IConvertableUnit;
-import jadex.enginecore.sensor.unit.IPrettyPrintUnit;
+import jadex.core.IComponent;
+import jadex.execution.ComponentTerminatedException;
+import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.mj.feature.nfproperties.sensor.unit.IConvertableUnit;
+import jadex.mj.feature.nfproperties.sensor.unit.IPrettyPrintUnit;
 
 /**
  * 
@@ -19,12 +19,12 @@ public abstract class SimpleValueNFProperty<T, U> extends AbstractNFProperty<T, 
 	protected T value;
 	
 	/** The component. */
-	protected IInternalAccess comp;
+	protected IComponent comp;
 	
 	/**
 	 *  Create a new property.
 	 */
-	public SimpleValueNFProperty(final IInternalAccess comp, final NFPropertyMetaInfo mi)
+	public SimpleValueNFProperty(final IComponent comp, final NFPropertyMetaInfo mi)
 	{
 		super(mi);
 		this.comp = comp;
@@ -45,17 +45,18 @@ public abstract class SimpleValueNFProperty<T, U> extends AbstractNFProperty<T, 
 						|| !comp.getId().equals(((ComponentTerminatedException) exception).getComponentIdentifier()))
 					{
 						//System.out.println("Exception in nfproperty: "+mi.getName()+" "+exception);
-						comp.getLogger().warning("Exception in nfproperty: "+mi.getName()+" "+exception);
+						//comp.getLogger().warning("Exception in nfproperty: "+mi.getName()+" "+exception);
+						System.out.println("Exception in nfproperty: "+mi.getName()+" "+exception);
 					}
 				}
 				
 				protected void cont()
 				{
 					setValue(measureValue());
-					comp.getFeature(IExecutionFeature.class).waitForDelay(mi.getUpdateRate(), mi.isRealtime()).addResultListener(this);
+					comp.getFeature(IExecutionFeature.class).waitForDelay(mi.getUpdateRate()).addResultListener(this);
 				}
 			};
-			comp.getFeature(IExecutionFeature.class).waitForDelay(mi.getUpdateRate(), mi.isRealtime()).addResultListener(res);
+			comp.getFeature(IExecutionFeature.class).waitForDelay(mi.getUpdateRate()).addResultListener(res);
 		}
 		else
 		{
@@ -90,7 +91,7 @@ public abstract class SimpleValueNFProperty<T, U> extends AbstractNFProperty<T, 
 			ClassInfo ci = mi.getUnit();
 			if(ci!=null)
 			{
-				Class<?> cl = ci.getType(comp.getClassLoader());
+				Class<?> cl = ci.getType(comp.getClass().getClassLoader());
 				if(cl.isEnum())
 				{
 					Object[] enums = cl.getEnumConstants();
@@ -131,7 +132,7 @@ public abstract class SimpleValueNFProperty<T, U> extends AbstractNFProperty<T, 
 	 *  Get the component.
 	 *  @return The component.
 	 */
-	public IInternalAccess getComponent()
+	public IComponent getComponent()
 	{
 		return comp;
 	}

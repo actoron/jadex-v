@@ -1,7 +1,7 @@
 package jadex.mj.feature.nfproperties.impl.search;
 
-import jadex.enginecore.service.IService;
 import jadex.future.IFuture;
+import jadex.providedservice.IService;
 
 public interface IServiceEvaluator
 {

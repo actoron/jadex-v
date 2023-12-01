@@ -1,5 +1,7 @@
 package jadex.bdi.runtime.impl;
 
+import java.util.Set;
+
 import jadex.bdi.runtime.BDICreationInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -13,7 +15,7 @@ import jadex.micro.annotation.Agent;
 import jadex.micro.impl.MicroAgentFeature;
 import jadex.micro.impl.MicroAgentFeatureProvider;
 
-public class BDILifecycleAgentFeatureProvider	extends FeatureProvider<MicroAgentFeature>  implements IComponentLifecycleManager
+public class BDILifecycleAgentFeatureProvider extends FeatureProvider<MicroAgentFeature>  implements IComponentLifecycleManager
 {
 	@Override
 	public Class<MicroAgentFeature> getFeatureType()
@@ -77,5 +79,15 @@ public class BDILifecycleAgentFeatureProvider	extends FeatureProvider<MicroAgent
 	public void terminate(IComponent component)
 	{
 		component.getFeature(IExecutionFeature.class).terminate();
+	}
+	
+	/**
+	 *  Get the predecessors, i.e. features that should be inited first.
+	 *  @return The predecessors.
+	 */
+	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
+	{
+		all.remove(getFeatureType());
+		return all;
 	}
 }

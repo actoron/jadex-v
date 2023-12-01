@@ -5,12 +5,12 @@ import java.lang.reflect.Method;
 
 import jadex.common.SReflect;
 import jadex.core.impl.Component;
+import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.search.ServiceQuery;
-import jadex.providedservice.impl.service.interceptors.FutureFunctionality;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**

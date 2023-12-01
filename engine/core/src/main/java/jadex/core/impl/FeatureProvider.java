@@ -1,5 +1,8 @@
 package jadex.core.impl;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  *  A feature providers is loaded from the classpath and adds a specific feature to components.
  */
@@ -49,5 +52,14 @@ public abstract class FeatureProvider<T>
 	public boolean	isLazyFeature()
 	{
 		return false;
+	}
+	
+	/**
+	 *  Get the predecessors, i.e. features that should be inited first.
+	 *  @return The predecessors.
+	 */
+	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
+	{
+		return Collections.EMPTY_SET;
 	}
 }

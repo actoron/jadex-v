@@ -1,0 +1,64 @@
+<?xml version="1.0" ?><bpmn:definitions targetNamespace="http://www.activecomponents.org/bpmn/" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:jadex="http://www.activecomponents.org/bpmnextensions" xmlns:jadexvisual="http://www.activecomponents.org/bpmnvisualextensions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <bpmn:extension>
+    <jadex:modelname>B5_Subprocess</jadex:modelname>
+    <jadex:package>jadex.bpmn.tutorial</jadex:package>
+    <jadex:componentflags keepalive="false" monitoring="OFF" persistable="false" suspend="false" synchronous="false"/>
+  </bpmn:extension>
+  <bpmn:process id="yT7Z17sIj8orYBB4" name="Pool">
+    <bpmn:startEvent id="Bayb7QE3Dv2flSRh">
+      <bpmn:outgoing>lmuFPs+QotE5fSye</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="i+Qc1NVz98+2Ek3v">
+      <bpmn:incoming>dhLt6TdDi7DsruJu</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:subProcess id="hCAhYniK5ZBpAcjw" name="Ext. Sub-Process">
+      <bpmn:incoming>lmuFPs+QotE5fSye</bpmn:incoming>
+      <bpmn:outgoing>iT1wEz//018T4WWv</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <jadex:property name="filename" type="java.lang.String">&quot;jadex/bpmn/tutorial/B2_Sequence.bpmn&quot;</jadex:property>
+        <jadex:subprocessref>B2_Sequence.bpmn</jadex:subprocessref>
+      </bpmn:extensionElements>
+    </bpmn:subProcess>
+    <bpmn:task id="u37TeMH5zZXinNGQ" name="Print Finished">
+      <bpmn:incoming>iT1wEz//018T4WWv</bpmn:incoming>
+      <bpmn:outgoing>dhLt6TdDi7DsruJu</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <jadex:class>jadex.bpmn.runtime.task.PrintTask</jadex:class>
+        <jadex:parameter direction="in" name="text" type="java.lang.String">&quot;Subprocess finished&quot;</jadex:parameter>
+      </bpmn:extensionElements>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="lmuFPs+QotE5fSye" sourceRef="Bayb7QE3Dv2flSRh" targetRef="hCAhYniK5ZBpAcjw">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="iT1wEz//018T4WWv" sourceRef="hCAhYniK5ZBpAcjw" targetRef="u37TeMH5zZXinNGQ">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="dhLt6TdDi7DsruJu" sourceRef="u37TeMH5zZXinNGQ" targetRef="i+Qc1NVz98+2Ek3v">
+    </bpmn:sequenceFlow>
+    <bpmn:extensionElements>
+    </bpmn:extensionElements>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane>
+      <bpmndi:BPMNShape bpmnElement="yT7Z17sIj8orYBB4">
+        <dc:Bounds height="360.0" width="680.0" x="50.0" y="210.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Bayb7QE3Dv2flSRh">
+        <dc:Bounds height="40.0" width="40.0" x="70.0" y="170.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="i+Qc1NVz98+2Ek3v">
+        <dc:Bounds height="40.0" width="40.0" x="610.0" y="170.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="hCAhYniK5ZBpAcjw">
+        <dc:Bounds height="100.0" width="160.0" x="170.0" y="140.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="u37TeMH5zZXinNGQ">
+        <dc:Bounds height="100.0" width="160.0" x="390.0" y="140.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="lmuFPs+QotE5fSye">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="iT1wEz//018T4WWv">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="dhLt6TdDi7DsruJu">
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

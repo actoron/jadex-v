@@ -1,14 +1,14 @@
 package jadex.mj.feature.nfproperties.impl.search;
 
 import jadex.common.MethodInfo;
-import jadex.enginecore.IExternalAccess;
-import jadex.enginecore.service.IService;
-import jadex.enginecore.service.IServiceIdentifier;
+import jadex.core.IExternalAccess;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.providedservice.IService;
+import jadex.providedservice.IServiceIdentifier;
 
 /**
  *  Basic evaluator implementation for service and methods.

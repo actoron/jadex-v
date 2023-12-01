@@ -1,7 +1,7 @@
 package jadex.mj.feature.nfproperties.impl.hardconstraints;
 
-import jadex.enginecore.service.IService;
 import jadex.future.IFuture;
+import jadex.providedservice.IService;
 
 public class ConstantValueFilter extends AbstractConstraintFilter
 {

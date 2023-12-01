@@ -25,6 +25,7 @@ import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.SCloner;
 import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.future.FutureFunctionality;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -764,7 +765,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	 */
 	public final ISerializationServices getSerializationServices()
 	{
-		return ia.getFeature(IProvidedServiceFeature.class).getSerializationService();
+		return ISerializationServices.get();
 		//return (ISerializationServices)Starter.getPlatformValue(ia.getId(), Starter.DATA_SERIALIZATIONSERVICES);
 	}
 	

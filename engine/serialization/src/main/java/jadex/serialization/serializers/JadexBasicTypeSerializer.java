@@ -2,6 +2,7 @@ package jadex.serialization.serializers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import jadex.common.ClassInfo;
 import jadex.common.SUtil;
@@ -20,7 +21,7 @@ public class JadexBasicTypeSerializer implements ISerializer, IStringConverter
 	//-------- constants --------
 	
 	/** The serializer id. */
-	public static final int SERIALIZER_ID = 3;
+	//public static final int SERIALIZER_ID = 3;
 
 	public static final String TYPE = IStringConverter.TYPE_BASIC;
 	
@@ -37,7 +38,8 @@ public class JadexBasicTypeSerializer implements ISerializer, IStringConverter
 	 */
 	public int getSerializerId()
 	{
-		return SERIALIZER_ID;
+		throw new UnsupportedOperationException();
+		//return SERIALIZER_ID;
 	}
 	
 	 /** The basic type converter. */
@@ -64,12 +66,12 @@ public class JadexBasicTypeSerializer implements ISerializer, IStringConverter
 	
 	/**
 	 *  Encode data with the serializer.
+	 *  @param os The output stream for writing.
 	 *  @param val The value.
 	 *  @param classloader The classloader.
 	 *  @param preproc The encoding preprocessors.
-	 *  @return The encoded object.
 	 */
-	public byte[] encode(Object val, ClassLoader classloader, ITraverseProcessor[] preprocs, Object usercontext)
+	public void encode(OutputStream os, Object val, ClassLoader classloader, ITraverseProcessor[] preprocs, Object usercontext)
 	{
 		throw new UnsupportedOperationException();
 	}
@@ -128,8 +130,7 @@ public class JadexBasicTypeSerializer implements ISerializer, IStringConverter
 		}
 		catch(Exception e)
 		{
-			SUtil.throwUnchecked(e);
-			return null;
+			throw SUtil.throwUnchecked(e);
 		}
 	}
 	

@@ -24,25 +24,18 @@ import jadex.core.IExternalAccess;
  */
 public class Component implements IComponent
 {
-	protected static Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
-	
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
-	protected Map<Class<Object>, FeatureProvider<Object>>	providers;
+	protected Map<Class<Object>, FeatureProvider<Object>> providers;
 	
 	/** The feature instances of this component, stored by the feature type. */
-	protected Map<Class<Object>, Object>	features;
-	
-	/** The fetcher. */
-	protected IValueFetcher fetcher;
+	protected Map<Class<Object>, Object> features;
 	
 	/** The id. */
 	protected ComponentIdentifier id;
 	
 	/** The external access. */
 	protected IExternalAccess access;
-
-	public static final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
 	
 	/** The external access supplier. */
 	protected static Function<Component, IExternalAccess> accessfactory;
@@ -65,7 +58,8 @@ public class Component implements IComponent
 	{
 		this.id = id==null? new ComponentIdentifier(): id;
 		//System.out.println(this.id.getLocalName());
-		Component.addComponent(this); // is this good here?! 
+		ComponentManager.get().addComponent(this);
+		//Component.addComponent(this); // is this good here?! 
 		
 		providers	= SFeatureProvider.getProvidersForComponent(getClass());
 		
@@ -81,65 +75,7 @@ public class Component implements IComponent
 		});
 	}
 	
-	public static void addComponent(IComponent comp)
-	{
-		//System.out.println("added: "+comp.getId());
-		synchronized(components)
-		{
-			if(components.containsKey(comp.getId()))
-				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId());
-			components.put(comp.getId(), comp);
-		}
-		notifyEventListener(COMPONENT_ADDED, comp.getId());
-	}
 	
-	public static void removeComponent(ComponentIdentifier cid)
-	{
-		boolean last;
-		synchronized(components)
-		{
-			components.remove(cid);
-			last	= components.isEmpty();
-		}
-		notifyEventListener(COMPONENT_REMOVED, cid);
-		if(last)
-			notifyEventListener(COMPONENT_LASTREMOVED, cid);
-//		System.out.println("size: "+components.size()+" "+cid);
-	}
-	
-	/**
-	 *  Get a running component.
-	 *  @throws IllegalArgumentException when the component does not exist.
-	 */
-	public static IComponent getComponent(ComponentIdentifier cid)
-	{
-		synchronized(components)
-		{
-			return components.get(cid);
-		}
-	}
-	
-	public static void notifyEventListener(String type, ComponentIdentifier cid)
-	{
-		Set<IComponentListener> mylisteners = null;
-		
-		synchronized(listeners)
-		{
-			Set<IComponentListener> ls = Component.listeners.get(type);
-			if(ls!=null)
-				mylisteners = new HashSet<IComponentListener>(ls);
-		}
-		
-		if(mylisteners!=null)
-		{
-			if(COMPONENT_ADDED.equals(type))
-				mylisteners.stream().forEach(lis -> lis.componentAdded(cid));
-			else if(COMPONENT_REMOVED.equals(type))
-				mylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
-			else if(COMPONENT_LASTREMOVED.equals(type))
-				mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
-		}
-	}
 	
 	/**
 	 *  Get the id.
@@ -193,7 +129,7 @@ public class Component implements IComponent
 				FeatureProvider<?>	provider	= providers.get(type);
 				assert provider.isLazyFeature();
 				@SuppressWarnings("unchecked")
-				T	ret	= (T)provider.createFeatureInstance(this);
+				T ret = (T)provider.createFeatureInstance(this);
 				@SuppressWarnings("unchecked")
 				Class<Object> otype	= (Class<Object>)type;
 				putFeature(otype, ret);
@@ -231,9 +167,7 @@ public class Component implements IComponent
 	{
 //		System.out.println("putFeature: "+type+" "+feature);
 		if(features==null)
-		{
-			features	= new LinkedHashMap<>(providers.size(), 1);
-		}
+			features = new LinkedHashMap<>(providers.size(), 1);
 		features.put(type, feature);
 	}
 	
@@ -299,6 +233,7 @@ public class Component implements IComponent
 		
 		return fetcher;
 	}*/
+	
 	/*
 	public IParameterGuesser getParameterGuesser()
 	{
@@ -406,7 +341,7 @@ public class Component implements IComponent
 	 */
 	public IExternalAccess getExternalAccess(ComponentIdentifier cid)
 	{
-		return Component.getComponent(cid).getExternalAccess();
+		return ComponentManager.get().getComponent(cid).getExternalAccess();
 	}
 	
 	/**
@@ -424,7 +359,7 @@ public class Component implements IComponent
 		return this.getClass().getClassLoader();
 	}
 
-	public static <T extends Component> T	createComponent(Class<T> type, Supplier<T> creator)
+	public static <T extends Component> T createComponent(Class<T> type, Supplier<T> creator)
 	{
 		List<FeatureProvider<Object>>	providers	= new ArrayList<>(SFeatureProvider.getProvidersForComponent(type).values());
 		for(int i=providers.size()-1; i>=0; i--)

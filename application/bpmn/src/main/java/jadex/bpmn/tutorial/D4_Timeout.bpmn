@@ -1,0 +1,112 @@
+<?xml version="1.0" ?><bpmn:definitions targetNamespace="http://www.activecomponents.org/bpmn/" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:jadex="http://www.activecomponents.org/bpmnextensions" xmlns:jadexvisual="http://www.activecomponents.org/bpmnvisualextensions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <bpmn:extension>
+    <jadex:modelname>D4_Timeout</jadex:modelname>
+    <jadex:description>&lt;h1&gt;Timeout Process&lt;/h1&gt;This process waits for a request message. &lt;br/&gt;If no message is received after five seconds, a timeout occurs.</jadex:description>
+    <jadex:package>jadex.bpmn.tutorial</jadex:package>
+  </bpmn:extension>
+  <bpmn:process id="_bXbjUUOvEd-QxpvkIvmXIg" name="Pool">
+    <bpmn:task id="_qZ1ykUOvEd-QxpvkIvmXIg" name="Order Received">
+      <bpmn:incoming>_qZ1ymkOvEd-QxpvkIvmXIg</bpmn:incoming>
+      <bpmn:extensionElements>
+        <jadex:class>jadex.bpmn.runtime.task.PrintTask</jadex:class>
+        <jadex:parameter direction="in" name="text" type="java.lang.String">&quot;Received order: &quot;+$event.content</jadex:parameter>
+      </bpmn:extensionElements>
+    </bpmn:task>
+    <bpmn:intermediateCatchEvent id="_n9lykUOvEd-QxpvkIvmXIg">
+      <bpmn:incoming>_n9lymkOvEd-QxpvkIvmXIg</bpmn:incoming>
+      <bpmn:outgoing>_rgBXikOvEd-QxpvkIvmXIg</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration>5000</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+      <bpmn:extensionElements>
+        <jadex:property name="duration">5000</jadex:property>
+      </bpmn:extensionElements>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="_mjOtYUOvEd-QxpvkIvmXIg">
+      <bpmn:incoming>_mjOtakOvEd-QxpvkIvmXIg</bpmn:incoming>
+      <bpmn:outgoing>_qZ1ymkOvEd-QxpvkIvmXIg</bpmn:outgoing>
+      <bpmn:messageEventDefinition/>
+      <bpmn:extensionElements>
+        <jadex:property name="performative">&quot;request&quot;</jadex:property>
+      </bpmn:extensionElements>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:task id="_rgBXgUOvEd-QxpvkIvmXIg" name="Timeout Occurred">
+      <bpmn:incoming>_rgBXikOvEd-QxpvkIvmXIg</bpmn:incoming>
+      <bpmn:extensionElements>
+        <jadex:class>jadex.bpmn.runtime.task.PrintTask</jadex:class>
+        <jadex:parameter direction="in" name="text" type="java.lang.String">&quot;Received no order within timeframe&quot;</jadex:parameter>
+      </bpmn:extensionElements>
+    </bpmn:task>
+    <bpmn:task id="_bXbjU0OvEd-QxpvkIvmXIg" name="Preparation">
+      <bpmn:incoming>vXSQWxkeL7GCJUMX</bpmn:incoming>
+      <bpmn:outgoing>_lWXRoUOvEd-QxpvkIvmXIg</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <jadex:class>jadex.bpmn.runtime.task.PrintTask</jadex:class>
+        <jadex:parameter direction="in" name="text" type="java.lang.String">&quot;Waiting 5 seconds for a message.&quot;</jadex:parameter>
+      </bpmn:extensionElements>
+    </bpmn:task>
+    <bpmn:intermediateCatchEvent id="_lWNgoUOvEd-QxpvkIvmXIg">
+      <bpmn:incoming>_lWXRoUOvEd-QxpvkIvmXIg</bpmn:incoming>
+      <bpmn:outgoing>_mjOtakOvEd-QxpvkIvmXIg</bpmn:outgoing>
+      <bpmn:outgoing>_n9lymkOvEd-QxpvkIvmXIg</bpmn:outgoing>
+      <bpmn:multipleEventDefinition/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:startEvent id="bAdNCxzIoFIUL8E9">
+      <bpmn:outgoing>vXSQWxkeL7GCJUMX</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="_rgBXikOvEd-QxpvkIvmXIg" sourceRef="_n9lykUOvEd-QxpvkIvmXIg" targetRef="_rgBXgUOvEd-QxpvkIvmXIg">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="_qZ1ymkOvEd-QxpvkIvmXIg" sourceRef="_mjOtYUOvEd-QxpvkIvmXIg" targetRef="_qZ1ykUOvEd-QxpvkIvmXIg">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="_lWXRoUOvEd-QxpvkIvmXIg" sourceRef="_bXbjU0OvEd-QxpvkIvmXIg" targetRef="_lWNgoUOvEd-QxpvkIvmXIg">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="_mjOtakOvEd-QxpvkIvmXIg" sourceRef="_lWNgoUOvEd-QxpvkIvmXIg" targetRef="_mjOtYUOvEd-QxpvkIvmXIg">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="_n9lymkOvEd-QxpvkIvmXIg" sourceRef="_lWNgoUOvEd-QxpvkIvmXIg" targetRef="_n9lykUOvEd-QxpvkIvmXIg">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="vXSQWxkeL7GCJUMX" sourceRef="bAdNCxzIoFIUL8E9" targetRef="_bXbjU0OvEd-QxpvkIvmXIg">
+    </bpmn:sequenceFlow>
+    <bpmn:extensionElements>
+    </bpmn:extensionElements>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane>
+      <bpmndi:BPMNShape bpmnElement="_bXbjUUOvEd-QxpvkIvmXIg">
+        <dc:Bounds height="600.0" width="3000.0" x="0.0" y="0.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_qZ1ykUOvEd-QxpvkIvmXIg">
+        <dc:Bounds height="100.0" width="160.0" x="780.0" y="30.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_n9lykUOvEd-QxpvkIvmXIg">
+        <dc:Bounds height="40.0" width="40.0" x="660.0" y="260.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_mjOtYUOvEd-QxpvkIvmXIg">
+        <dc:Bounds height="40.0" width="40.0" x="660.0" y="60.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_rgBXgUOvEd-QxpvkIvmXIg">
+        <dc:Bounds height="100.0" width="160.0" x="780.0" y="230.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_bXbjU0OvEd-QxpvkIvmXIg">
+        <dc:Bounds height="100.0" width="160.0" x="140.0" y="130.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_lWNgoUOvEd-QxpvkIvmXIg">
+        <dc:Bounds height="40.0" width="40.0" x="390.0" y="160.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="bAdNCxzIoFIUL8E9">
+        <dc:Bounds height="40.0" width="40.0" x="50.0" y="160.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="_lWXRoUOvEd-QxpvkIvmXIg">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_mjOtakOvEd-QxpvkIvmXIg">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_n9lymkOvEd-QxpvkIvmXIg">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_qZ1ymkOvEd-QxpvkIvmXIg">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_rgBXikOvEd-QxpvkIvmXIg">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="vXSQWxkeL7GCJUMX">
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

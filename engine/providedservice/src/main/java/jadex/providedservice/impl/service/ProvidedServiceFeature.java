@@ -24,8 +24,8 @@ import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.micro.MicroAgent;
-import jadex.model.AbstractModelLoader;
 import jadex.model.IModelFeature;
+import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
@@ -652,7 +652,7 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 				{
 					public void customResultAvailable(Void result)
 					{
-						System.out.println("Started service: "+is.getServiceId());
+						//System.out.println("Started service: "+is.getServiceId());
 						serviceStarted(is).addResultListener(new DelegationResultListener<Void>(ret));
 					}
 				});
@@ -977,15 +977,6 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 	public Component getComponent()
 	{
 		return self;
-	}
-	
-	protected ISerializationServices serser;
-	
-	public ISerializationServices getSerializationService()
-	{
-		if(serser==null)
-			serser = new SerializationServices();
-		return serser;
 	}
 	
 	/**

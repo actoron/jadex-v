@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SFeatureProvider;
 import jadex.future.Future;
@@ -20,13 +21,6 @@ public interface IComponent
 	 *  @return The id.
 	 */
 	public ComponentIdentifier getId();
-	
-	// todo: reduce this as metainfo
-	/**
-	 *  Get the model info.
-	 *  @return The model info.
-	 * /
-	public IModelInfo getModel();*/
 	
 	/**
 	 *  Get the feature instance for the given type.
@@ -51,6 +45,7 @@ public interface IComponent
 	 *  Terminate the component.
 	 */
 	public void terminate();
+	// todo: terminate(Exception e) ?!
 	
 	//-------- static part for generic component creation --------
 	
@@ -62,15 +57,15 @@ public interface IComponent
 
 	public static void addComponentListener(IComponentListener listener, String... types)
 	{
-		synchronized(Component.listeners)
+		synchronized(ComponentManager.get().listeners)
 		{	
 			for(String type: types)
 			{
-				Set<IComponentListener> ls = Component.listeners.get(type);
+				Set<IComponentListener> ls = ComponentManager.get().listeners.get(type);
 				if(ls==null)
 				{
 					ls = new HashSet<IComponentListener>();
-					Component.listeners.put(type, ls);
+					ComponentManager.get().listeners.put(type, ls);
 				}
 				ls.add(listener);
 			}
@@ -79,22 +74,20 @@ public interface IComponent
 	
 	public static void removeComponentListener(IComponentListener listener, String... types)
 	{
-		synchronized(Component.listeners)
+		synchronized(ComponentManager.get().listeners)
 		{
 			for(String type: types)
 			{
-				Set<IComponentListener> ls = Component.listeners.get(type);
+				Set<IComponentListener> ls = ComponentManager.get().listeners.get(type);
 				if(ls!=null)
 				{
 					ls.remove(listener);
 					if(ls.isEmpty())
-						Component.listeners.remove(type);
+						ComponentManager.get().listeners.remove(type);
 				}
 			}
 		}
 	}
-	
-	
 	
 	/*public static Class<? extends MjComponent> findComponentType(Object pojo)
 	{
@@ -185,9 +178,9 @@ public interface IComponent
 		
 		try
 		{
-			IComponent comp = Component.getComponent(cid);
+			IComponent comp = ComponentManager.get().getComponent(cid);
 			IExternalAccess	exta	= comp.getExternalAccess();
-			Component.removeComponent(cid);
+			ComponentManager.get().removeComponent(cid);
 			if(exta.isExecutable())
 			{
 				ret	= exta.scheduleStep(icomp ->

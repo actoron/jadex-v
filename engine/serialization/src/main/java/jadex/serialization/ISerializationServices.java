@@ -1,5 +1,7 @@
 package jadex.serialization;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -14,24 +16,32 @@ import jadex.core.impl.Component;
 public interface ISerializationServices
 {
 	/**
+	 *  Gets an instance of the serialization services.
+	 *  @return Instance of serialization services, thread safe.
+	 */
+	public static ISerializationServices get()
+	{
+		return SerializationServices.get();
+	};
+	
+	/**
 	 *  Encodes/serializes an object for a particular receiver.
 	 *  
-	 *  @param receiver The receiver.
+	 *  @param os OutputStream to write the object.
 	 *  @param cl The classloader used for encoding.
 	 *  @param obj Object to be encoded.
-	 *  @return Encoded object.
 	 */
-	public byte[] encode(IMsgHeader header, Component component, Object obj);
+	public void encode(OutputStream os, ClassLoader cl, Object obj);
 	
 	/**
 	 *  Decodes/deserializes an object.
 	 *  
-	 *  @param cl The component used for decoding.
-	 *  @param enc Encoded object.
+	 *  @param is InputStream to read.
+	 *  @param cl The classloader used for decoding.
 	 *  @return Object to be encoded.
 	 *  
 	 */
-	public Object decode(IMsgHeader header, Component component, byte[] enc);
+	public Object decode(InputStream is, ClassLoader cl);
 	
 	/**
 	 *  Test if an object is a remote object.

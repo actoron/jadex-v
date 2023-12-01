@@ -1,9 +1,12 @@
 package jadex.mj.feature.nfproperties.impl.hardconstraints;
 
+import jadex.core.IExternalAccess;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.model.IAsyncFilter;
+import jadex.providedservice.IService;
 
 /**
  * 

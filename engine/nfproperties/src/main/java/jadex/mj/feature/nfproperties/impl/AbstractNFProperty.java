@@ -10,14 +10,16 @@ import java.util.Map;
 
 import jadex.common.MethodInfo;
 import jadex.common.UnparsedExpression;
-import jadex.enginecore.IInternalAccess;
-import jadex.enginecore.service.IService;
+import jadex.core.IComponent;
+import jadex.core.impl.Component;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.mj.feature.nfproperties.impl.annotation.NFProperties;
 import jadex.mj.feature.nfproperties.impl.annotation.NFProperty;
 import jadex.mj.feature.nfproperties.impl.annotation.SNameValue;
+import jadex.model.IModelFeature;
+import jadex.providedservice.IService;
 
 /**
  *  A non-functional property.
@@ -84,7 +86,7 @@ public abstract class AbstractNFProperty<T, U> implements INFProperty<T, U>
 	/**
 	 *  Create nf properties form a class with nf annotations.
 	 */
-	public static List<INFProperty<?, ?>> readNFProperties(Class<?> type, IInternalAccess comp, IService ser, MethodInfo mi)
+	public static List<INFProperty<?, ?>> readNFProperties(Class<?> type, Component comp, IService ser, MethodInfo mi)
 	{
 		List<INFProperty<?, ?>> ret = null;
 		
@@ -112,7 +114,7 @@ public abstract class AbstractNFProperty<T, U> implements INFProperty<T, U>
 	/**
 	 *  Create a property instance from its type.
 	 */
-	public static INFProperty<?, ?> createProperty(Class<?> clazz, IInternalAccess comp, IService service, MethodInfo mi, List<UnparsedExpression> params)
+	public static INFProperty<?, ?> createProperty(Class<?> clazz, Component comp, IService service, MethodInfo mi, List<UnparsedExpression> params)
 	{
 		INFProperty<?, ?> prop = null;
 		try
@@ -124,21 +126,21 @@ public abstract class AbstractNFProperty<T, U> implements INFProperty<T, U>
 		{
 			try
 			{
-				Constructor<?> con = clazz.getConstructor(new Class[]{IInternalAccess.class});
+				Constructor<?> con = clazz.getConstructor(new Class[]{IComponent.class});
 				prop = (INFProperty<?, ?>)con.newInstance(comp);
 			}
 			catch(NoSuchMethodException ex)
 			{
 				try
 				{
-					Constructor<?> con = clazz.getConstructor(new Class[]{IInternalAccess.class, IService.class, MethodInfo.class});
+					Constructor<?> con = clazz.getConstructor(new Class[]{IComponent.class, IService.class, MethodInfo.class});
 					prop = (INFProperty<?, ?>)con.newInstance(comp, service, mi);
 				}
 				catch(NoSuchMethodException ex2)
 				{
 					try
 					{
-						Constructor<?> con = clazz.getConstructor(new Class[]{IInternalAccess.class, IService.class, MethodInfo.class, Map.class});
+						Constructor<?> con = clazz.getConstructor(new Class[]{IComponent.class, IService.class, MethodInfo.class, Map.class});
 						
 						Map<String, Object> ps = null;
 						if(params!=null && params.size()>0)
@@ -148,7 +150,9 @@ public abstract class AbstractNFProperty<T, U> implements INFProperty<T, U>
 							{
 								try
 								{
-									Object val = SJavaParser.evaluateExpression(entry.getValue(), comp.getModel().getAllImports(), comp.getFetcher(), comp.getClassLoader());
+									//Object val = SJavaParser.evaluateExpression(entry.getValue(), comp.getModel().getAllImports(), comp.getFetcher(), comp.getClassLoader());
+									IModelFeature mf = comp.getFeature(IModelFeature.class);
+									Object val = SJavaParser.evaluateExpression(entry.getValue(), mf!=null? mf.getModel().getAllImports(): null, mf!=null? mf.getFetcher(): null, comp.getClassLoader());
 									ps.put(entry.getName(), val);
 								}
 								catch(Exception ex3)

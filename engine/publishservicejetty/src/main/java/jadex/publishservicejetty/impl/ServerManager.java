@@ -67,8 +67,9 @@ public class ServerManager
      */
     public synchronized void publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
     {
-        PathManager<MappingInfo> pm = RequestManager.getInstance().
-        	evaluateMapping(serviceid, info, this.getClass().getClassLoader());
+    	Future<Void> ret = new Future<>();
+    	
+        PathManager<MappingInfo> pm = RequestManager.getInstance().evaluateMapping(serviceid, info, this.getClass().getClassLoader());
                
 		try
 	    {
@@ -115,12 +116,14 @@ public class ServerManager
 	        addUnpublishInfo(serviceid, server, ch);
 	        //unpublishinfos.put(serviceid, new Tuple2<Server,ContextHandler>(server, ch));
 	        ch.start(); // must be started explicitly :-(((
+	        System.out.println("added handler: "+uri.getPath());
 	
 	        addSidServer(serviceid, server);
 	    }
 	    catch(Exception e)
 	    {
-	    	SUtil.rethrowAsUnchecked(e);
+	    	//SUtil.rethrowAsUnchecked(e);
+	    	ret.setException(e);
 	    }
     }
 

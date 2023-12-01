@@ -11,8 +11,8 @@ import jadex.common.MethodInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.Tuple3;
-import jadex.model.CacheableKernelModel;
 import jadex.model.ServiceCallInfo;
+import jadex.model.impl.CacheableKernelModel;
 import jadex.model.modelinfo.IModelInfo;
 
 /**

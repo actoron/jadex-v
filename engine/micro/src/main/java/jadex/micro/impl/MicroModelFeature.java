@@ -8,12 +8,14 @@ import jadex.common.SimpleParameterGuesser;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
 import jadex.model.IParameterGuesserProvider;
+import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
-public class MicroModelFeature implements IModelFeature, IParameterGuesserProvider, IValueFetcher
+public class MicroModelFeature implements IModelFeature, IInternalModelFeature, IParameterGuesserProvider, IValueFetcher
 {
-	protected MicroAgent	self;
-	protected IParameterGuesser	guesser;
+	protected MicroAgent self;
+	protected IModelInfo model;
+	protected IParameterGuesser guesser;
 	
 	public MicroModelFeature(MicroAgent self)
 	{
@@ -56,7 +58,13 @@ public class MicroModelFeature implements IModelFeature, IParameterGuesserProvid
 	@Override
 	public IModelInfo getModel()
 	{
-		return self.getModel();
+		return model;
+	}
+	
+	@Override
+	public void setModel(IModelInfo model)
+	{
+		this.model = model;
 	}
 
 	@Override

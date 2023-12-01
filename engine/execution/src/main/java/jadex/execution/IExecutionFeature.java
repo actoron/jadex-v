@@ -3,11 +3,13 @@ package jadex.execution;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
 
 /**
  *  The execution feature controls how and when components execute their steps,
@@ -87,7 +89,7 @@ public interface IExecutionFeature
 	 *  @param millis	The time to wait (in milliseconds).
 	 *  @return	A future that is finished when the time has passed.
 	 */
-	public IFuture<Void>	waitForDelay(long millis);
+	public ITerminableFuture<Void> waitForDelay(long millis);
 	
 	/**
 	 *  Get the component to which this feature belongs. 

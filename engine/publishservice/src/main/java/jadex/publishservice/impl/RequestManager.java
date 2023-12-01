@@ -39,7 +39,7 @@ import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.STransformation;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.core.IComponent;
-import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
@@ -781,7 +781,7 @@ public class RequestManager
 					//	System.out.println("call 2: "+request);
 
 					// Get provider of service and check access
-					IComponent comp = Component.getComponent(service.getServiceId().getProviderId());
+					IComponent comp = ComponentManager.get().getComponent(service.getServiceId().getProviderId());
 					
 					comp.getExternalAccess().scheduleStep(agent ->
 					{
@@ -2277,8 +2277,13 @@ public class RequestManager
 		//}
 				
 		if(ri.getException()!=null)
-			System.out.println("ex: "+ri.getException());
-			
+		{
+			if(SUtil.DEBUG)
+				ri.getException().printStackTrace();
+			else
+				System.out.println("ex: "+ri.getException());
+		}
+		
 		try
 		{
 			// If SSE is explicitly requested or the request is already finished MUST use SSE

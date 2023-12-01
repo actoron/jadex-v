@@ -12,6 +12,7 @@ import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.impl.Component;
+import jadex.execution.future.FutureFunctionality;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
