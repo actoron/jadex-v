@@ -16,6 +16,7 @@ import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
+import jadex.execution.LambdaAgent.Result;
 import jadex.future.IFuture;
 
 public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
@@ -171,14 +172,20 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 	}
 	
 	@Override
-	public void create(Object pojo, ComponentIdentifier cid)
+	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
+		IExternalAccess ret;
+		
 		if(pojo instanceof Runnable)
-			LambdaAgent.create((Runnable)pojo, cid);
+			ret = LambdaAgent.create((Runnable)pojo, cid);
 		else if(pojo instanceof Callable)
-			LambdaAgent.create((Callable<?>)pojo, cid);
+			ret = LambdaAgent.create((Callable<?>)pojo, cid).component();
 		else if(pojo instanceof IThrowingFunction)
-			LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid);
+			ret = LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid).component();
+		else
+			throw new RuntimeException("Cannot create lambda agent from: "+cid);
+	
+		return ret;
 	}
 	
 	/*@Override

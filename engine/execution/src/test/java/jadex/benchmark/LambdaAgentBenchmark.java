@@ -8,6 +8,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import jadex.core.ComponentIdentifier;
 import jadex.execution.LambdaAgent;
+import jadex.execution.LambdaAgent.Result;
+import jadex.future.Future;
 import jadex.future.IFuture;
 
 /**
@@ -24,10 +26,12 @@ public class LambdaAgentBenchmark	extends AbstractComponentBenchmark
 	@Override
 	protected IFuture<ComponentIdentifier>	createComponent(String name)
 	{
-		return LambdaAgent.create(comp ->
+		Result<ComponentIdentifier> res = LambdaAgent.create(comp ->
 		{
 			return comp.getId();
 		}, new ComponentIdentifier(name));
+		
+		return res.result();
 	}
 
 	protected static Stream<Arguments> provideBenchmarkParams() {

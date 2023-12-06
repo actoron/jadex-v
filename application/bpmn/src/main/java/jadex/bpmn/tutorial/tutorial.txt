@@ -1,0 +1,8 @@
+B3 debugger
+D3 receiving messages
+D4 multiple events
+
+todo: 
+- rule handler support for ECA
+- messages with different plugable profiles, e.g. email, messenger, etc.
+- general property-based extension mechanism for bpmn

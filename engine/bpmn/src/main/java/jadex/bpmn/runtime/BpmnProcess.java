@@ -4,21 +4,24 @@ import jadex.bpmn.BpmnModelLoader;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
+import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
-import jadex.micro.MicroAgent;
+import jadex.model.IModelFeature;
+import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
-public class BpmnProcess extends MicroAgent
+public class BpmnProcess extends Component
 {
 	protected static BpmnModelLoader loader = new BpmnModelLoader();
-	
-	public static void create(Object pojo)
+
+	public static IExternalAccess create(Object pojo)
 	{
-		create(pojo, null);
+		return create(pojo, null);
 	}
 	
-	public static void	create(Object pojo, ComponentIdentifier cid)
+	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
+		Component comp = null;
 		String	filename;
 		if(pojo instanceof String)
 		{
@@ -26,8 +29,8 @@ public class BpmnProcess extends MicroAgent
 			if(filename.startsWith("bpmn:"))
 				filename	= filename.substring(5);
 			String	ffilename	= filename ;
-			Component.createComponent(BpmnProcess.class,
-					() -> new BpmnProcess((Object)null, loadModel(ffilename), cid));
+			comp = Component.createComponent(BpmnProcess.class,
+				() -> new BpmnProcess((Object)null, loadModel(ffilename), cid));
 		}
 		else if(pojo instanceof RBpmnProcess)
 		{
@@ -35,10 +38,14 @@ public class BpmnProcess extends MicroAgent
 			if(filename.startsWith("bpmn:"))
 				filename = filename.substring(5);
 			String	ffilename	= filename ;
-			Component.createComponent(BpmnProcess.class,
+			comp = Component.createComponent(BpmnProcess.class,
 				() -> new BpmnProcess((RBpmnProcess)pojo, loadModel(ffilename), cid));
 		}
+		
+		return comp.getExternalAccess();
 	}
+	
+	protected RBpmnProcess pojo;
 	
 	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid)
 	{
@@ -47,12 +54,14 @@ public class BpmnProcess extends MicroAgent
 	
 	protected BpmnProcess(Object pojo, IModelInfo model, ComponentIdentifier cid)
 	{
-		super(pojo!=null ? pojo : createPojo(model), model, cid);
+		super(cid);
+		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
+		this.pojo = (RBpmnProcess)(pojo!=null ? pojo : createPojo(model));
 	}
 	
-	public RBpmnProcess getProcessPojo() 
+	public RBpmnProcess getPojo() 
 	{
-		return (RBpmnProcess)getPojo();
+		return pojo;
 	}
 	
 	protected static Object	createPojo(IModelInfo model)

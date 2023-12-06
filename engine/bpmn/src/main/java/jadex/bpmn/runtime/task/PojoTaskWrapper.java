@@ -125,9 +125,7 @@ public class PojoTaskWrapper implements ITask
 		
 		MethodInfo cancelmi = context.getActivity().getCancelMethod(process.getClass().getClassLoader());
 		if(cancelmi!=null)
-		{
 			cancelmethod = cancelmi.getMethod(process.getClass().getClassLoader());
-		}
 		
 		MethodInfo bodymi = context.getActivity().getBodyMethod(process.getClass().getClassLoader());
 		Method bodymethod = bodymi.getMethod(process.getClass().getClassLoader());

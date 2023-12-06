@@ -9,11 +9,16 @@ import jadex.bpmn.runtime.RBpmnProcess;
 public class C1Main
 {
 	/**
-	 *  Start a platform and the example.
+	 *  Start the example.
 	 */
 	public static void main(String[] args) 
 	{
 		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/C1_GlobalParameters.bpmn")
+			.addArgument("customer", "Carl Customer")
+			.addArgument("logins", 0)
+		);
+		
+		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/C1_GlobalParametersUpdate.bpmn")
 			.addArgument("customer", "Carl Customer")
 			.addArgument("logins", 0)
 		);

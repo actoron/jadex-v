@@ -5,6 +5,7 @@ import java.util.Set;
 import jadex.bdi.runtime.BDICreationInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -70,9 +71,9 @@ public class BDILifecycleAgentFeatureProvider extends FeatureProvider<MicroAgent
 	}
 	
 	@Override
-	public void create(Object pojo, ComponentIdentifier cid)
+	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
-		BDIAgent.create(pojo, cid);
+		return BDIAgent.create(pojo, cid);
 	}
 
 	@Override

@@ -587,9 +587,7 @@ public class ProcessThread	implements ITaskContext
 	{
 		assert activity!=null;
 		if(data!=null)
-		{
 			data.remove(name);
-		}
 	}
 	
 	/**
@@ -786,7 +784,7 @@ public class ProcessThread	implements ITaskContext
 	 */
 	public  void updateParametersBeforeStep(IComponent instance)
 	{
-//		System.out.println("before: "+getActivity());
+		//System.out.println("before: "+getActivity());
 
 		if(getActivity().getActivityType()!=null && getActivity().getActivityType().indexOf("Event")!=-1)
 		{
@@ -905,52 +903,56 @@ public class ProcessThread	implements ITaskContext
 						}
 					}
 				}
-				else 
+				else //if(dataedges!=null)
 				{
 					// Try to find data edges
 					passedparams = getDataEdgeValues();
 					
-//					List<MDataEdge> ds = getActivity().getIncomingDataEdges();
-//					if(ds!=null)
-//					{
-//						passedparams = new HashMap<String, Object>();
-//						
-//						for(MDataEdge de: ds)
-//						{
-//							if(dataedges!=null)
-//							{
-//								if(dataedges.containsKey(de.getId()))
-//								{
-//									String pname = de.getTargetParameter();
-//									// Value is consumed -> remove?!
-//									Object val = dataedges.remove(de.getId());
-//								
-//									// if already contains value must be identical
-//									if(passedparams.containsKey(pname) && !SUtil.equals(passedparams.get(pname), val))
-//										throw new RuntimeException("Different edges have different values");
-//								
-//									passedparams.put(pname, val);
-//								}
-//								else if (de.getSource() == null)
-//								{
-//									// Argument data edge
-//									passedparams.put(de.getTargetParameter(), instance.getArguments().get(de.getSourceParameter()));
-//								}
-//								else
-//								{
-//									String pname = de.getTargetParameter();
-//									if (getActivity().getParameters() == null ||
-//										getActivity().getParameters().get(pname) == null ||
-//										getActivity().getParameters().get(pname).getInitialValueString() == null ||
-//										getActivity().getParameters().get(pname).getInitialValueString().length()==0)
-//									{
-//										throw new RuntimeException("Could not find data edge value for: "+de.getId());
-//									}
-//								}
-//							}
-//						}
-//					}
+					/*List<MDataEdge> ds = getActivity().getIncomingDataEdges();
+					if(ds!=null)
+					{
+						passedparams = new HashMap<String, Object>();
+						
+						for(MDataEdge de: ds)
+						{
+							if(dataedges!=null)
+							{
+								if(dataedges.containsKey(de.getId()))
+								{
+									String pname = de.getTargetParameter();
+									// Value is consumed -> remove?!
+									Object val = dataedges.remove(de.getId());
+								
+									// if already contains value must be identical
+									if(passedparams.containsKey(pname) && !SUtil.equals(passedparams.get(pname), val))
+										throw new RuntimeException("Different edges have different values");
+								
+									passedparams.put(pname, val);
+								}
+								else if(de.getSource() == null)
+								{
+									// Argument data edge
+									passedparams.put(de.getTargetParameter(), instance.getArguments().get(de.getSourceParameter()));
+								}
+								else
+								{
+									String pname = de.getTargetParameter();
+									if (getActivity().getParameters() == null ||
+										getActivity().getParameters().get(pname) == null ||
+										getActivity().getParameters().get(pname).getInitialValueString() == null ||
+										getActivity().getParameters().get(pname).getInitialValueString().length()==0)
+									{
+										throw new RuntimeException("Could not find data edge value for: "+de.getId());
+									}
+								}
+							}
+						}
+					}*/
 				}
+				/*else
+				{
+					System.out.println("no parametermapping and no dataedges");
+				}*/
 			}
 			
 			// todo: parameter direction / class
@@ -1009,7 +1011,7 @@ public class ProcessThread	implements ITaskContext
 			for(Iterator<String> it=before.iterator(); it.hasNext(); )
 			{
 				String name = it.next();
-//				System.out.println("removing data: "+name);
+				//System.out.println("removing data: "+name);
 				data.remove(name);
 			}
 		}
@@ -1175,7 +1177,7 @@ public class ProcessThread	implements ITaskContext
 				{
 					MParameter inp = (MParameter)params.get(i);
 					removeParameterValue(inp.getName());
-	//				System.out.println("Removed thread param value: "+inp.getName());
+					//System.out.println("Removed thread param value: "+inp.getName());
 				}
 			}
 		}

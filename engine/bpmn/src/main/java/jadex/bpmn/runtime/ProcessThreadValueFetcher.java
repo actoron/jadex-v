@@ -83,12 +83,16 @@ public class ProcessThreadValueFetcher implements IValueFetcher
 				value	= thread.getParameterValue(name);
 				found	= true;
 			}
+			
 			// todo: remove this sucking stuff below
-			String paramname = name.startsWith("$")? name.substring(1) : name;
-			if(thread.hasParameterValue(paramname))
+			if(!found)
 			{
-				value	= thread.getParameterValue(paramname);
-				found	= true;
+				String paramname = name.startsWith("$")? name.substring(1) : name;
+				if(thread.hasParameterValue(paramname))
+				{
+					value	= thread.getParameterValue(paramname);
+					found	= true;
+				}
 			}
 //		}
 				

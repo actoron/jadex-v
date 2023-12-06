@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SFeatureProvider;
@@ -89,97 +88,66 @@ public interface IComponent
 		}
 	}
 	
-	/*public static Class<? extends MjComponent> findComponentType(Object pojo)
+	// todo: remove
+	public static IFuture<IExternalAccess> create(Runnable pojo)
 	{
-		Class<? extends MjComponent> ret = null;
-		for(IComponentCreator finder: creators)
+		return create(pojo, null);
+	}
+	
+	// todo: remove
+	public static IFuture<IExternalAccess> create(Runnable pojo, ComponentIdentifier cid)
+	{
+		return create((Object)pojo, cid);
+	}
+	
+	// todo: remove
+	public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo)
+	{
+		return create(pojo, null);
+	}
+	
+	// todo: remove
+	public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
+	{
+		return create((Object)pojo, cid);
+	}
+	
+	public static IFuture<IExternalAccess> create(Object pojo)
+	{
+		return create(pojo, null);
+	}
+	
+	public static IFuture<IExternalAccess> create(Object pojo, ComponentIdentifier cid)
+	{
+		Future<IExternalAccess> ret = new Future<>();
+		
+		boolean created = false;
+		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
 		{
-			if(finder.filter(finder))
+			if(creator.isCreator(pojo))
 			{
-				ret = finder.getType();
+				ret.setResult(creator.create(pojo, cid));
+				created = true;
 				break;
 			}
 		}
+		if(!created)
+			ret.setException(new RuntimeException("Could not create component: "+pojo));
+		
 		return ret;
-	}*/
-	
-	public static void create(Runnable pojo)
-	{
-		create(pojo, null);
 	}
 	
-	public static void create(Runnable pojo, ComponentIdentifier cid)
-	{
-		boolean created = false;
-		
-		
-		
-		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
-		{
-			if(creator.isCreator(pojo))
-			{
-				creator.create(pojo, cid);
-				created = true;
-				break;
-			}
-		}
-		if(!created)
-			throw new RuntimeException("Could not create component: "+pojo);
-	}
-	
-	// todo: support return IFuture<T> ?!
-	public static <T> void create(IThrowingFunction<IComponent, T> pojo)
-	{
-		create(pojo, null);
-	}
-	
-	// todo: support return IFuture<T> ?!
-	public static <T> void create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
-	{
-		boolean created = false;
-		
-		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
-		{
-			if(creator.isCreator(pojo))
-			{
-				creator.create(pojo, cid);
-				created = true;
-				break;
-			}
-		}
-		if(!created)
-			throw new RuntimeException("Could not create component: "+pojo);
-	}
-	
-	public static void create(Object pojo)
-	{
-		create(pojo, null);
-	}
-	
-	public static void create(Object pojo, ComponentIdentifier cid)
-	{
-		boolean created = false;
-		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
-		{
-			if(creator.isCreator(pojo))
-			{
-				creator.create(pojo, cid);
-				created = true;
-				break;
-			}
-		}
-		if(!created)
-			throw new RuntimeException("Could not create component: "+pojo);
-	}
-	
+	// todo: return pojo as result (has results)
 	public static IFuture<Void> terminate(ComponentIdentifier cid)
 	{
 		IFuture<Void> ret;
 		
+		//System.out.println("terminate: "+cid);
+		
 		try
 		{
 			IComponent comp = ComponentManager.get().getComponent(cid);
-			IExternalAccess	exta	= comp.getExternalAccess();
+			IExternalAccess	exta = comp.getExternalAccess();
 			ComponentManager.get().removeComponent(cid);
 			if(exta.isExecutable())
 			{
@@ -226,4 +194,13 @@ public interface IComponent
 		}
 	}
 	
+	/**
+	 *  Get the external access.
+	 *  @param cid The component id.
+	 *  @return The external access.
+	 * /
+	public static IExternalAccess getExternalComponentAccess(ComponentIdentifier cid)
+	{
+		return ComponentManager.get().getComponent(cid).getExternalAccess();
+	}*/
 }

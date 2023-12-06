@@ -1,6 +1,7 @@
 package jadex.micro;
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -12,14 +13,14 @@ public class MicroAgent	extends Component
 {
 	protected static MicroModelLoader loader = new MicroModelLoader();
 	
-	public static void create(Object pojo)
+	public static IExternalAccess create(Object pojo)
 	{
-		create(pojo, null);
+		return create(pojo, null);
 	}
 	
-	public static void	create(Object pojo, ComponentIdentifier cid)
+	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
-		Component.createComponent(MicroAgent.class, () -> 
+		Component comp = Component.createComponent(MicroAgent.class, () -> 
 		{
 			// this is executed before the features are inited
 			return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
@@ -29,6 +30,8 @@ public class MicroAgent	extends Component
 				return new MicroAgent(pojo, model, cid);
 			}).get();
 		});
+		
+		return comp.getExternalAccess();
 	}
 	
 	protected Object pojo;

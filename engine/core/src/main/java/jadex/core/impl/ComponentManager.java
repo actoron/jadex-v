@@ -21,7 +21,7 @@ public class ComponentManager
 		
 	public static final ComponentManager get()
 	{
-		if (instance == null)
+		if(instance == null)
 		{
 			synchronized(ComponentManager.class)
 			{
@@ -39,6 +39,9 @@ public class ComponentManager
 	
 	/** Cached host name. */
 	private String host;
+	
+	/** The component id number mode. */
+	private boolean cidnumbermode;
 	
 	public final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
 
@@ -70,6 +73,16 @@ public class ComponentManager
 		return host;
 	}
 	
+	public boolean isComponentIdNumberMode() 
+	{
+		return cidnumbermode;
+	}
+
+	public void setComponentIdNumberMode(boolean cidnumbermode) 
+	{
+		this.cidnumbermode = cidnumbermode;
+	}
+
 	public void setDebug(boolean debug)
 	{
 		SUtil.DEBUG = debug;
@@ -81,7 +94,10 @@ public class ComponentManager
 		synchronized(components)
 		{
 			if(components.containsKey(comp.getId()))
-				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId());
+			{
+				ComponentManager.get().printComponents();
+				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
+			}
 			components.put(comp.getId(), comp);
 		}
 		notifyEventListener(IComponent.COMPONENT_ADDED, comp.getId());
@@ -92,8 +108,9 @@ public class ComponentManager
 		boolean last;
 		synchronized(components)
 		{
-			components.remove(cid);
-			last	= components.isEmpty();
+			if(components.remove(cid)==null)
+				throw new RuntimeException("Unknown component id: "+cid);
+			last = components.isEmpty();
 		}
 		notifyEventListener(IComponent.COMPONENT_REMOVED, cid);
 		if(last)
@@ -111,6 +128,30 @@ public class ComponentManager
 		{
 			return components.get(cid);
 		}
+	}
+	
+	/**
+	 *  Get the number of current components.
+	 */
+	public int getNumberOfComponents()
+	{
+		return components.size();
+	}
+	
+	/**
+	 *  Print number of current components.
+	 */
+	public void printNumberOfComponents()
+	{
+		System.out.println("Running components: "+components.size());
+	}
+	
+	/**
+	 *  Print components.
+	 */
+	public void printComponents()
+	{
+		System.out.println("Running components: "+components);
 	}
 	
 	public void notifyEventListener(String type, ComponentIdentifier cid)

@@ -43,8 +43,10 @@ public class ComponentIdentifier
 	 */
 	public ComponentIdentifier()
 	{
-		localname = gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
+
+		this.localname = ComponentManager.get().isComponentIdNumberMode()? ""+ID_COUNTER.getAndIncrement(): gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
 		gpid = new GlobalProcessIdentifier();
+
 	}
 	
 	/**

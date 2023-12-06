@@ -341,6 +341,7 @@ public class Component implements IComponent
 	 */
 	public IExternalAccess getExternalAccess(ComponentIdentifier cid)
 	{
+		//return IComponent.getExternalComponentAccess(cid);
 		return ComponentManager.get().getComponent(cid).getExternalAccess();
 	}
 	

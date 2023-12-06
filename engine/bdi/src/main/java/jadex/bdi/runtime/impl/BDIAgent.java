@@ -5,7 +5,9 @@ import jadex.bdi.model.BDIModelLoader;
 import jadex.bdi.runtime.BDICreationInfo;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
+import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
+import jadex.future.Future;
 import jadex.micro.MicroAgent;
 import jadex.model.modelinfo.IModelInfo;
 
@@ -13,22 +15,25 @@ public class BDIAgent extends MicroAgent
 {
 	protected static BDIModelLoader loader = new BDIModelLoader();
 	
-	public static void create(Object pojo)
+	public static IExternalAccess create(Object pojo)
 	{
-		create(pojo, null);
+		return create(pojo, null);
 	}
 	
-	public static void	create(Object pojo, ComponentIdentifier cid)
+	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
+		Future<IExternalAccess> ret = new Future<>();
+		
 		String	classname;
+		BDIAgent agent = null;
 		if(pojo instanceof String)
 		{
 			classname	= (String)pojo;
 			if(classname.startsWith("bdi:"))
 				classname	= classname.substring(4);
 			String	fclassname	= classname ;
-			Component.createComponent(BDIAgent.class,
-					() -> new BDIAgent((Object)null, loadModel(fclassname), cid));
+			agent = Component.createComponent(BDIAgent.class,
+				() -> new BDIAgent((Object)null, loadModel(fclassname), cid));
 		}
 		else if(pojo instanceof BDICreationInfo)
 		{
@@ -36,14 +41,16 @@ public class BDIAgent extends MicroAgent
 			if(classname.startsWith("bdi:"))
 				classname	= classname.substring(4);
 			String	fclassname	= classname ;
-			Component.createComponent(BDIAgent.class,
-					() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname), cid));
+			agent = Component.createComponent(BDIAgent.class,
+				() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname), cid));
 		}
 		else
 		{
-			Component.createComponent(BDIAgent.class,
-					() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName()), cid));
+			agent = Component.createComponent(BDIAgent.class,
+				() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName()), cid));
 		}
+		
+		return agent.getExternalAccess();
 	}
 	
 	/** Optional creation info, i.e. arguments. */

@@ -17,4 +17,10 @@ public class BpmnProcessFeatureProvider extends FeatureProvider<IBpmnComponentFe
 	{
 		return IBpmnComponentFeature.class;
 	}
+	
+	@Override
+	public Class<? extends Component> getRequiredComponentType()
+	{
+		return BpmnProcess.class;
+	}
 }
