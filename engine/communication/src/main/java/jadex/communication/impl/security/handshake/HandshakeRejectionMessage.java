@@ -1,6 +1,6 @@
 package jadex.communication.impl.security.handshake;
 
-import jadex.bridge.IComponentIdentifier;
+import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
 
 /**
  *  Message signaling the rejection of the handshake.
@@ -18,7 +18,7 @@ public class HandshakeRejectionMessage extends BasicSecurityMessage
 	/**
 	 *  Creates the message.
 	 */
-	public HandshakeRejectionMessage(IComponentIdentifier sender, String conversationid)
+	public HandshakeRejectionMessage(GlobalProcessIdentifier sender, String conversationid)
 	{
 		super(sender, conversationid);
 	}

@@ -1,4 +1,4 @@
-package jadex.communication.security;
+package jadex.communication;
 
 /**
  *  Entropy source for seeding PRNGs.

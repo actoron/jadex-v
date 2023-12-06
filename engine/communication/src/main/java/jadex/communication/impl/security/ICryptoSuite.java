@@ -1,7 +1,7 @@
 package jadex.communication.impl.security;
 
+import jadex.communication.ISecurityInfo;
 import jadex.communication.impl.security.handshake.BasicSecurityMessage;
-import jadex.communication.security.ISecurityInfo;
 
 public interface ICryptoSuite
 {
@@ -59,7 +59,7 @@ public interface ICryptoSuite
 	 *  @return True, if handshake continues, false when finished.
 	 *  @throws SecurityException if handshake failed.
 	 */
-	public boolean handleHandshake(Security security, BasicSecurityMessage incomingmessage);
+	//public boolean handleHandshake(Security security, BasicSecurityMessage incomingmessage);
 	
 	/**
 	 *  Gets the ID used to identify the handshake of the suite.

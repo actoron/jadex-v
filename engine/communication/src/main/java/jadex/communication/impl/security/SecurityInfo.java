@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import jadex.communication.ISecurityInfo;
+import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
+
 /**
  *  Security meta-information of a message;
  *
@@ -20,14 +23,14 @@ public class SecurityInfo implements ISecurityInfo
 	/** Flag if default authorization is allowed. */
 //	protected boolean allowdefaultauthorization;
 	
-	/** Platform name if authenticated. */
-	protected String platformname;
+	/** Global process identifier, if authenticated. */
+	protected GlobalProcessIdentifier authgpid;
 	
-	/** Networks shared with the sender. */
-	protected Set<String> sharednetworks;
+	/** Groups shared with the sender. */
+	protected Set<String> sharedgroups;
 	
-	/** Networks containing the sender. */
-	protected Set<String> networks;
+	/** Groups containing the sender. */
+	protected Set<String> groups;
 	
 	/** Fixed roles of the sender. */
 	protected volatile Set<String> fixedroles;
@@ -77,23 +80,23 @@ public class SecurityInfo implements ISecurityInfo
 //	}
 	
 	/**
-	 *  Returns the authenticated platform name.
+	 *  Returns the authenticated global process ID as String.
 	 *
-	 *  @return The authenticated platform name, null if not authenticated.
+	 *  @return The authenticated global process ID, null if not authenticated.
 	 */
-	public String getAuthenticatedPlatformName()
+	public GlobalProcessIdentifier getAuthenticatedGlobalProcessId()
 	{
-		return platformname;
+		return authgpid;
 	}
 	
 	/**
-	 *  Sets the authenticated platform name.
+	 *  Sets the authenticated global process ID.
 	 *
-	 *  @param platformname The authenticated platform name, null if not authenticated.
+	 *  @param authgpid The authenticated global process ID, null if not authenticated.
 	 */
-	public void setAuthenticatedPlatformName(String platformname)
+	public void setAuthenticatedPlatformName(GlobalProcessIdentifier authgpid)
 	{
-		this.platformname = platformname;
+		this.authgpid = authgpid;
 	}
 
 	/**
@@ -157,13 +160,13 @@ public class SecurityInfo implements ISecurityInfo
 //	}
 
 	/**
-	 *  Gets the authenticated networks of the sender.
+	 *  Gets the authenticated groups of the sender.
 	 *
-	 *  @return The authenticated networks of the sender (sorted).
+	 *  @return The authenticated groups of the sender (sorted).
 	 */
-	public Set<String> getNetworks()
+	public Set<String> getGroups()
 	{
-		return networks;
+		return groups;
 	}
 
 	/**
@@ -171,29 +174,29 @@ public class SecurityInfo implements ISecurityInfo
 	 *
 	 *  @param networks The networks.
 	 */
-	public void setNetworks(Set<String> networks)
+	public void setGroups(Set<String> groups)
 	{
-		this.networks = Collections.unmodifiableSet(networks);
+		this.groups = Collections.unmodifiableSet(groups);
 	}
 	
 	/**
-	 *  Gets the authenticated networks of the sender.
+	 *  Gets the authenticated groups of the sender.
 	 *
-	 *  @return The authenticated networks of the sender (sorted).
+	 *  @return The authenticated groups of the sender (sorted).
 	 */
-	public Set<String> getSharedNetworks()
+	public Set<String> getSharedGroups()
 	{
-		return sharednetworks;
+		return sharedgroups;
 	}
 
 	/**
-	 *  Sets the networks.
+	 *  Sets the shared groups.
 	 *
-	 *  @param networks The networks.
+	 *  @param sharedgroups The groups.
 	 */
-	public void setSharedNetworks(Set<String> sharednetworks)
+	public void setSharedNetworks(Set<String> sharedgroups)
 	{
-		this.sharednetworks = Collections.unmodifiableSet(sharednetworks);
+		this.sharedgroups = Collections.unmodifiableSet(sharedgroups);
 	}
 	
 	/**
@@ -259,6 +262,7 @@ public class SecurityInfo implements ISecurityInfo
 	 */
 	public String toString()
 	{
-		return "Trusted: " + getRoles().contains(Security.TRUSTED) + ", Admin: " + getRoles().contains(Security.ADMIN) + ", Networks: " + Arrays.toString(networks.toArray()); 
+		//return "Trusted: " + getRoles().contains(Security.TRUSTED) + ", Admin: " + getRoles().contains(Security.ADMIN) + ", Networks: " + Arrays.toString(networks.toArray()); 
+		return "Security Groups: " + Arrays.toString(groups.toArray());
 	}
 }

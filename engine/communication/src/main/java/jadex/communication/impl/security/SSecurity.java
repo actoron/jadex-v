@@ -99,8 +99,8 @@ import org.bouncycastle.util.io.pem.PemReader;
 
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
+import jadex.communication.IEntropySource;
 import jadex.communication.impl.security.random.SecureThreadedRandom;
-import jadex.communication.security.IEntropySource;
 
 /**
  *  Class with static helper methods for security functions.

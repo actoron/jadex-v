@@ -1,6 +1,6 @@
 package jadex.communication.impl.security.handshake;
 
-import jadex.bridge.IComponentIdentifier;
+import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
 
 /**
  *  Initial handshake message.
@@ -20,7 +20,7 @@ public class InitialHandshakeMessage extends BasicSecurityMessage
 	/**
 	 *  Creates the message.
 	 */
-	public InitialHandshakeMessage(IComponentIdentifier sender, String conversationid, String[] cryptosuites)
+	public InitialHandshakeMessage(GlobalProcessIdentifier sender, String conversationid, String[] cryptosuites)
 	{
 		super(sender, conversationid);
 		this.cryptosuites = cryptosuites;

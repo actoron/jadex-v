@@ -5,8 +5,8 @@ import java.security.SecureRandom;
 import org.bouncycastle.crypto.engines.ChaChaEngine;
 import org.bouncycastle.util.Pack;
 
+import jadex.communication.IEntropySource;
 import jadex.communication.impl.security.SSecurity;
-import jadex.communication.security.IEntropySource;
 
 public class ChaCha20Random extends SecureRandom
 {

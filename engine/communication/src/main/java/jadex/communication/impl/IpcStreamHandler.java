@@ -27,11 +27,15 @@ import jadex.core.impl.ComponentManager;
 
 public class IpcStreamHandler implements IIpcService
 {
+	/** Name of the IPC/Socket directory. */
+	private static final String IPC_DIRECTORY_NAME = "jadexipc";
+	
 	/** Directory used for IPC. */
 	private static Path socketdir;
 	static
 	{
-		socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve("jadexsockets");
+		socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve(IPC_DIRECTORY_NAME);
+		System.out.println(System.getProperty("java.io.tmpdir"));
 	}
 	
 	/**
@@ -50,7 +54,7 @@ public class IpcStreamHandler implements IIpcService
 	}
 	
 	/** If a connection was requested, timeout for awaiting that connection. */
-	private static final int CONNECTION_WAIT_TIMEOUT = 2000;
+	private static final int CONNECTION_WAIT_TIMEOUT = 3000;
 	
 	/** Currently established connections. */
 	private RwMapWrapper<Long, SocketChannel> connectioncache;

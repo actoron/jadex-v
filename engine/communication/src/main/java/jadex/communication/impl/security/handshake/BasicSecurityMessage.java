@@ -1,5 +1,6 @@
 package jadex.communication.impl.security.handshake;
 
+import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
 
 /**
  *  Base class for security messages.
@@ -8,7 +9,7 @@ package jadex.communication.impl.security.handshake;
 public class BasicSecurityMessage
 {
 	/** The message sender. */
-	protected IComponentIdentifier sender;
+	protected GlobalProcessIdentifier sender;
 	
 	/** The conversation ID. */
 	protected String conversationid;
@@ -26,7 +27,7 @@ public class BasicSecurityMessage
 	/**
 	 *  Create message.
 	 */
-	public BasicSecurityMessage(IComponentIdentifier sender, String conversationid)
+	public BasicSecurityMessage(GlobalProcessIdentifier sender, String conversationid)
 	{
 		this.sender = sender;
 		this.conversationid = conversationid;
@@ -37,7 +38,7 @@ public class BasicSecurityMessage
 	 * 
 	 *  @return The sender
 	 */
-	public IComponentIdentifier getSender()
+	public GlobalProcessIdentifier getSender()
 	{
 		return sender;
 	}
@@ -47,7 +48,7 @@ public class BasicSecurityMessage
 	 * 
 	 *  @param sender The sender to set.
 	 */
-	public void setSender(IComponentIdentifier sender)
+	public void setSender(GlobalProcessIdentifier sender)
 	{
 		this.sender = sender;
 	}

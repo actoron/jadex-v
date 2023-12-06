@@ -1,5 +1,7 @@
 package jadex.communication.impl.security.handshake;
 
+import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
+
 public class InitialHandshakeReplyMessage extends BasicSecurityMessage
 {
 	/** The chosen crypto suite. */
@@ -16,11 +18,10 @@ public class InitialHandshakeReplyMessage extends BasicSecurityMessage
 	/**
 	 *  Creates the message.
 	 */
-	public InitialHandshakeReplyMessage(IComponentIdentifier sender, String conversationid, String chosencryptosuite, JadexVersion jadexversion)
+	public InitialHandshakeReplyMessage(GlobalProcessIdentifier sender, String conversationid, String chosencryptosuite)
 	{
 		super(sender, conversationid);
 		this.chosencryptosuite = chosencryptosuite;
-		this.jadexversion = jadexversion;
 	}
 	
 	/**
