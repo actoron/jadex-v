@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import jadex.common.ICommand;
@@ -42,6 +43,17 @@ public class LeaseTimeMap<K, V> implements Map<K, V>
 	
 	/**
 	 *  Create a new lease time map.
+	 *  
+	 *  @param leasetime The lease time.
+	 *  @param passive Passive handling of removal.
+	 */
+	public LeaseTimeMap(long leasetime, boolean passive)
+	{
+		this(leasetime, null, true, true, passive);
+	}
+	
+	/**
+	 *  Create a new lease time map.
 	 */
 	public LeaseTimeMap(long leasetime, boolean passive, final Consumer<Tuple2<Entry<K, V>, Long>> removecmd)
 	{
@@ -62,19 +74,77 @@ public class LeaseTimeMap<K, V> implements Map<K, V>
 	 */
 	public LeaseTimeMap(long leasetime, final Consumer<Tuple2<Entry<K,V>, Long>> removecmd, boolean touchonread, boolean touchonwrite, boolean passive, IDelayRunner timer, boolean sync)
 	{
-		this.touchonread = touchonread;
-		this.touchonwrite = touchonwrite;
+		setTouchOnRead(touchonread);
+		setTouchOnWrite(touchonwrite);
 		this.map = new HashMap<K, V>();
 		
-		Consumer<Tuple2<K, Long>> rcmd = (args) ->
+		this.times = LeaseTimeSet.createLeaseTimeCollection(leasetime, null, passive, timer, sync, this);
+		
+		setRemoveCommand(removecmd);
+	}
+	
+	/**
+	 *  Sets if the lease time updates when a value is read.
+	 *  
+	 *  @param touchonread If true, update the lease time when a value is read.
+	 *  @return The map itself.
+	 */
+	public LeaseTimeMap<K, V> setTouchOnRead(boolean touchonread)
+	{
+		this.touchonread = touchonread;
+		return this;
+	}
+	
+	/**
+	 *  Sets if the lease time updates when a value is written.
+	 *  
+	 *  @param touchonread If true, update the lease time when a value is written.
+	 *  @return The map itself.
+	 */
+	public LeaseTimeMap<K, V> setTouchOnWrite(boolean touchonwrite)
+	{
+		this.touchonwrite = touchonwrite;
+		return this;
+	}
+	
+	/**
+	 *  Sets the command to be executed when a value is removed (due to timeout).
+	 *  
+	 *  @param removecommand The command to be executed.
+	 *  @return The map itself.
+	 */
+	public LeaseTimeMap<K, V> setRemoveCommand(Consumer<Tuple2<Entry<K,V>, Long>> removecommand)
+	{
+		Consumer<Tuple2<K, Long>> rcmd = (entry) ->
 		{
-//			System.out.println("removed: "+args);
-			V val = LeaseTimeMap.this.map.remove(args.getFirstEntity());
-			if(removecmd!=null)
-				removecmd.accept(new Tuple2<Entry<K,V>, Long>(new MapEntry<K,V>(args.getFirstEntity(), val), args.getSecondEntity()));
+//			System.out.println("removed: "+entry);
+			V val = LeaseTimeMap.this.map.remove(entry.getFirstEntity());
+			if(removecommand!=null)
+				removecommand.accept(new Tuple2<Entry<K,V>, Long>(new MapEntry<K,V>(entry.getFirstEntity(), val), entry.getSecondEntity()));
 		};
 		
-		this.times = LeaseTimeSet.createLeaseTimeCollection(leasetime, rcmd, passive, timer, sync, this);
+		times.setRemoveCommand(rcmd);
+		
+		return this;
+	}
+	
+	/**
+	 *  Sets the raw command to be executed when a value is supposed to be removed (due to timeout).
+	 *  The command is responsible to remove the value from the internal map.
+	 *  
+	 *  @param rawremovecommand The command to be executed.
+	 *  @return The map itself.
+	 */
+	public LeaseTimeMap<K, V> setRawRemoveCommand(BiConsumer<Map<K,V>, Tuple2<K, Long>> rawremovecommand)
+	{
+		Consumer<Tuple2<K, Long>> rcmd = (entry) ->
+		{
+			rawremovecommand.accept(LeaseTimeMap.this.map, entry);
+		};
+		
+		times.setRemoveCommand(rcmd);
+		
+		return this;
 	}
 	
 //	/**
