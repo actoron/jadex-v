@@ -5,6 +5,7 @@ import java.util.Collection;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -14,6 +15,7 @@ import jadex.future.IFuture;
  */
 public abstract class AbstractComponentBenchmark 
 {
+	// todo: does not work when timeout occurs because it does not kill created components
 	/** Timeout to cap test execution time (non-static so subclasses can alter it independently). */
 	protected long	TIMEOUT	= 10000;
 	
@@ -39,7 +41,7 @@ public abstract class AbstractComponentBenchmark
 		gc();
 		
 		// Measure creation
-		Measurement	creation	= measure(parallel ? "multi-thread creation" : "creation", () -> createComponents(num, print, parallel));
+		Measurement	creation = measure(parallel ? "multi-thread creation" : "creation", () -> createComponents(num, print, parallel));
 
 		// Measure killing
 		Measurement	killing	= measure(parallel ? "multi-thread killing" : "killing", () -> killComponents(print, parallel));
@@ -120,11 +122,11 @@ public abstract class AbstractComponentBenchmark
 			for(int i=0; i<numproc; i++)
 				thread[i].start();
 			
-				// All creation threads are finished, maybe components are still creating asynchronously
-				threadsfinished.waitForResults().get(TIMEOUT);
+			// All creation threads are finished, maybe components are still creating asynchronously
+			threadsfinished.waitForResults().get(TIMEOUT);
 				
-				// All components are created
-				components	= compscreated.waitForResults().get(TIMEOUT);
+			// All components are created
+			components	= compscreated.waitForResults().get(TIMEOUT);
 		}
 		finally
 		{
@@ -160,6 +162,9 @@ public abstract class AbstractComponentBenchmark
 			}
 		});
 		
+		//System.out.println("after kill: "+ComponentManager.get().getNumberOfComponents());
+		//ComponentManager.get().printComponents();
+		
 		components	= null;
 		killed.waitForResults().get(TIMEOUT);
 	}
@@ -172,6 +177,9 @@ public abstract class AbstractComponentBenchmark
 	 */
 	protected void createAndKillComponents(int num, boolean print, boolean parallel)
 	{
+		//ComponentManager.get().printNumberOfComponents();
+		//ComponentManager.get().printComponents();
+		
 		Future<Void>	benchmark	= new Future<>();
 		try
 		{
@@ -197,9 +205,7 @@ public abstract class AbstractComponentBenchmark
 						{
 							IComponent.terminate(comp).get();
 							if(print)
-							{
 								System.out.println("Terminated: "+comp);
-							}
 						}
 						catch(UnsupportedOperationException e)
 						{
@@ -213,12 +219,13 @@ public abstract class AbstractComponentBenchmark
 			for(int i=0; i<numproc; i++)
 				thread[i].start();
 			
-				// All throughput threads are finished
-				threadsfinished.waitForResults().get(TIMEOUT);
+			// All throughput threads are finished
+			threadsfinished.waitForResults().get(TIMEOUT);
 		}
 		finally
 		{
 			// Cleanup threads, if still running.
+			//System.out.println("finally");
 			benchmark.setResult(null);
 		}
 	}

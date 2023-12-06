@@ -1,6 +1,5 @@
 package jadex.core;
 
-import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicLong;
 
 import jadex.core.impl.ComponentManager;
@@ -32,7 +31,7 @@ public class ComponentIdentifier
 	public ComponentIdentifier()
 	{
 		ComponentManager cm = ComponentManager.get();
-		this.localname = gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
+		this.localname = ComponentManager.get().isComponentIdNumberMode()? ""+ID_COUNTER.getAndIncrement(): gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
 		this.pid = cm.pid();
 		this.host = cm.host();
 	}

@@ -9,7 +9,7 @@ import jadex.bpmn.runtime.RBpmnProcess;
 public class B2Main
 {
 	/**
-	 *  Start a platform and the example.
+	 *  Start the example.
 	 */
 	public static void main(String[] args) 
 	{

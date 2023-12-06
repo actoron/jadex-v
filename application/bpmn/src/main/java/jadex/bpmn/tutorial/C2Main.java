@@ -6,13 +6,15 @@ import jadex.bpmn.runtime.RBpmnProcess;
 /**
  *  Main for starting the example programmatically.
  */
-public class B4Main
+public class C2Main
 {
 	/**
 	 *  Start the example.
 	 */
 	public static void main(String[] args) 
 	{
-		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/B4_Choice.bpmn"));
+		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/C2_LocalParameters.bpmn"));
+
+		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/C2_LocalParametersBoth.bpmn"));
 	}
 }

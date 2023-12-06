@@ -5,20 +5,31 @@ import java.util.Collections;
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SimpleParameterGuesser;
-import jadex.micro.MicroAgent;
-import jadex.micro.impl.MicroModelFeature;
 import jadex.model.IModelFeature;
 import jadex.model.IParameterGuesserProvider;
 import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
-public class BpmnProcessModelFeature extends MicroModelFeature
+public class BpmnProcessModelFeature implements IModelFeature, IInternalModelFeature, IParameterGuesserProvider, IValueFetcher
 {
+	protected BpmnProcess self;
+	protected IModelInfo model;
+	protected IParameterGuesser guesser;
+	
 	public BpmnProcessModelFeature(BpmnProcess self)
 	{
-		super(self);
+		this.self	= self;
 	}
 
+	@Override
+	public IParameterGuesser getParameterGuesser()
+	{
+		if(guesser==null)
+			guesser	= new SimpleParameterGuesser(new SimpleParameterGuesser(Collections.singleton(self)), Collections.singleton(self.getPojo()));
+			//guesser	= new SimpleParameterGuesser(super.getParameterGuesser(), Collections.singleton(pojoagent));
+		return guesser;
+	}
+	
 	/**
 	 *  Add $pojoagent to fetcher.
 	 */
@@ -29,6 +40,10 @@ public class BpmnProcessModelFeature extends MicroModelFeature
 		if("$pojoagent".equals(name))
 		{
 			return self.getPojo();
+		}
+		else if("$component".equals(name))
+		{
+			return self;
 		}
 		else if(proc.getArguments().containsKey(name))
 		{
@@ -70,5 +85,6 @@ public class BpmnProcessModelFeature extends MicroModelFeature
 	{
 		return this;
 	}
-
 }
+
+

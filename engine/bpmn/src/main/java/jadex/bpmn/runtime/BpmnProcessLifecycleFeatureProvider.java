@@ -4,19 +4,18 @@ import java.util.Set;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.impl.MicroAgentFeature;
-import jadex.micro.impl.MicroAgentFeatureProvider;
 
-public class BpmnProcessLifecycleFeatureProvider extends FeatureProvider<MicroAgentFeature>  implements IComponentLifecycleManager
+public class BpmnProcessLifecycleFeatureProvider extends FeatureProvider<BpmnProcessLifecycleFeature>  implements IComponentLifecycleManager
 {
 	@Override
-	public Class<MicroAgentFeature> getFeatureType()
+	public Class<BpmnProcessLifecycleFeature> getFeatureType()
 	{
-		return MicroAgentFeature.class;
+		return BpmnProcessLifecycleFeature.class;
 	}
 	
 	@Override
@@ -29,12 +28,6 @@ public class BpmnProcessLifecycleFeatureProvider extends FeatureProvider<MicroAg
 	public Class<? extends Component> getRequiredComponentType()
 	{
 		return BpmnProcess.class;
-	}
-	
-	@Override
-	public boolean replacesFeatureProvider(FeatureProvider<MicroAgentFeature> provider)
-	{
-		return provider instanceof MicroAgentFeatureProvider;
 	}
 	
 	@Override
@@ -53,9 +46,9 @@ public class BpmnProcessLifecycleFeatureProvider extends FeatureProvider<MicroAg
 	}
 	
 	@Override
-	public void create(Object pojo, ComponentIdentifier cid)
+	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
-		BpmnProcess.create(pojo, cid);
+		return BpmnProcess.create(pojo, cid);
 	}
 
 	@Override

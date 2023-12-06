@@ -4,6 +4,7 @@ import java.util.Set;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -79,9 +80,9 @@ public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature
 	}
 	
 	@Override
-	public void create(Object pojo, ComponentIdentifier cid)
+	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
-		MicroAgent.create(pojo, cid);
+		return MicroAgent.create(pojo, cid);
 	}
 	
 	/*@Override

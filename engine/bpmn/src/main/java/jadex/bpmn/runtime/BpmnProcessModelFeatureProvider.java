@@ -2,8 +2,6 @@ package jadex.bpmn.runtime;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
-import jadex.micro.MicroAgent;
-import jadex.micro.impl.MicroModelFeatureProvider;
 import jadex.model.IModelFeature;
 
 public class BpmnProcessModelFeatureProvider extends FeatureProvider<IModelFeature>
@@ -25,9 +23,4 @@ public class BpmnProcessModelFeatureProvider extends FeatureProvider<IModelFeatu
 	{
 		return new BpmnProcessModelFeature((BpmnProcess)self);
 	}	
-	
-	public boolean replacesFeatureProvider(FeatureProvider<IModelFeature> provider)
-	{
-		return provider instanceof MicroModelFeatureProvider;
-	}
 }

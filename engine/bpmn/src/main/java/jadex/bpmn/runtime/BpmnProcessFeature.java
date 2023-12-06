@@ -208,9 +208,9 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 		this.messages = new ArrayList<Object>();
 		//this.streams = new ArrayList<IConnection>();
 		
-		if(getComponent().getProcessPojo().getArguments()!=null)
+		if(getComponent().getPojo().getArguments()!=null)
 		{
-			for(Map.Entry<String, Object> entry: getComponent().getProcessPojo().getArguments().entrySet())
+			for(Map.Entry<String, Object> entry: getComponent().getPojo().getArguments().entrySet())
 			{
 				topthread.setParameterValue(entry.getKey(), entry.getValue());
 			}
@@ -228,7 +228,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 		// eventtype, mactid, event
         //Tuple3<String, String, Object> trigger = (Tuple3<String, String, Object>)getComponent()
         //	.getFeature(IArgumentsResultsFeature.class).getArguments().get(MBpmnModel.TRIGGER);
-        Tuple3<String, String, Object> trigger = (Tuple3<String, String, Object>)getComponent().getProcessPojo().getArgument(MBpmnModel.TRIGGER);
+        Tuple3<String, String, Object> trigger = (Tuple3<String, String, Object>)getComponent().getPojo().getArgument(MBpmnModel.TRIGGER);
         
         MSubProcess triggersubproc = null;
         MActivity triggeractivity = null;
@@ -330,7 +330,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 	@Override
 	public void terminate()
 	{
-		System.out.println("todo: end: "+getComponent());
+		//System.out.println("todo: end: "+getComponent());
 		
 		//return Future.DONE;
 	}
@@ -342,7 +342,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 	 */
 	public boolean hasContextVariable(String name)
 	{
-		return (topthread.hasParameterValue(name)) || getComponent().getProcessPojo().getArgument(name)!=null  || getComponent().getProcessPojo().getResult(name)!=null;
+		return (topthread.hasParameterValue(name)) || getComponent().getPojo().getArgument(name)!=null  || getComponent().getPojo().getResult(name)!=null;
 //		return (variables!=null && variables.containsKey(name)) || getModel().getArgument(name)!=null  || getModel().getResult(name)!=null;
 	}
 	
@@ -358,13 +358,13 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 		{
 			ret = topthread.getParameterValue(name);			
 		}
-		else if(getComponent().getProcessPojo().getArgument(name)!=null)
+		else if(getComponent().getPojo().getArgument(name)!=null)
 		{
-			ret = getComponent().getProcessPojo().getArgument(name);
+			ret = getComponent().getPojo().getArgument(name);
 		}
-		else if(getComponent().getProcessPojo().getResult(name)!=null)
+		else if(getComponent().getPojo().getResult(name)!=null)
 		{
-			ret	= getComponent().getProcessPojo().getResult(name);
+			ret	= getComponent().getPojo().getResult(name);
 		}
 		else
 		{
@@ -393,10 +393,10 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 //		boolean isvar = variables!=null && variables.containsKey(name);
 		boolean isvar = topthread.hasParameterValue(name);
 		
-		boolean isres = getComponent().getProcessPojo().getResult(name)!=null;
+		boolean isres = getComponent().getPojo().hasDeclaredResult(name);
 		if(!isres && !isvar)
 		{
-			if(getComponent().getProcessPojo().getArgument(name)!=null)
+			if(getComponent().getPojo().hasArgument(name))
 			{
 				throw new RuntimeException("Cannot set argument: "+name+", "+this);
 			}
@@ -410,7 +410,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 		{
 			if(isres)
 			{
-				getComponent().getProcessPojo().addResult(name, value);
+				getComponent().getPojo().addResult(name, value);
 			}
 			else
 			{
@@ -423,7 +423,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 			Object coll;
 			if(isres)
 			{
-				coll = getComponent().getProcessPojo().getResult(name);
+				coll = getComponent().getPojo().getResult(name);
 			}
 			else
 			{
@@ -456,7 +456,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 			{
 				// Trigger event notification
 				//getComponent().getFeature(IArgumentsResultsFeature.class).getResults().put(name, coll);
-				getComponent().getProcessPojo().addResult(name, coll);
+				getComponent().getPojo().addResult(name, coll);
 			}
 //				else
 //				{

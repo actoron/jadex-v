@@ -15,8 +15,11 @@ import jadex.future.SubscriptionIntermediateFuture;
 public class RBpmnProcess 
 {
 	protected String filename;
+	
 	protected Map<String, Object> args;
+	
 	protected Map<String, Object> results;
+	
 	protected List<SubscriptionIntermediateFuture<NameValue>> resultsubscribers;
 	
 	/**
@@ -59,7 +62,7 @@ public class RBpmnProcess
 	public RBpmnProcess	addArgument(String name, Object value)
 	{
 		if(args==null)
-			args	= new LinkedHashMap<>(2);
+			args = new LinkedHashMap<>();
 		args.put(name, value);
 		return this;
 	}
@@ -71,6 +74,11 @@ public class RBpmnProcess
 	public Object getArgument(String name)
 	{
 		return args==null? null: args.get(name); 
+	}
+	
+	public boolean hasArgument(String name)
+	{
+		return args==null? false: args.containsKey(name);
 	}
 	
 	/**
@@ -88,7 +96,7 @@ public class RBpmnProcess
 	public RBpmnProcess	addResult(String name, Object value)
 	{
 		if(results==null)
-			results = new LinkedHashMap<>(2);
+			results = new LinkedHashMap<>();
 		results.put(name, value);
 		notifyResult(name, value);
 		return this;
@@ -101,6 +109,25 @@ public class RBpmnProcess
 	public Object getResult(String name)
 	{
 		return results==null? null: results.get(name); 
+	}
+	
+	/**
+	 *  Declare a result value.
+	 */
+	public RBpmnProcess	declareResult(String name)
+	{
+		if(results==null)
+			results = new LinkedHashMap<>();
+		results.put(name, null);
+		return this;
+	}
+	
+	/**
+	 *  Declare a result value.
+	 */
+	public boolean	hasDeclaredResult(String name)
+	{
+		return results==null? false: results.containsKey(name);
 	}
 	
 	/**

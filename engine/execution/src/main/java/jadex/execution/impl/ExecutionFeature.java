@@ -203,7 +203,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	}
 	
 	// Global on-demand timer shared by all components.
-	protected static volatile Timer	timer;
+	private static volatile Timer timer = new Timer();
 	//protected static volatile int	timer_entries;
 	protected static volatile Set<TimerTaskInfo> entries;
 	
@@ -218,10 +218,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			return ret;
 		}
 		
-		synchronized(this.getClass())
+		synchronized(ExecutionFeature.class)
 		{
-			if(timer==null)
-				timer = new Timer();
+			//if(timer==null)
+			//	timer = new Timer();
 			//timer_entries++;
 			
 			TimerTaskInfo task = new TimerTaskInfo(self.getId(), ret);
@@ -230,17 +230,20 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				@Override
 				public void run()
 				{
+					if(!this.cancel())
+						return;
+					
 					scheduleStep(() -> ret.setResult(null));
 					
-					synchronized(ExecutionFeature.this.getClass())
+					synchronized(ExecutionFeature.class)
 					{
 						//timer_entries--;
 						entries.remove(task);
 						if(entries.size()==0)
 						{
 							entries	= null;
-							timer.cancel();
-							timer = null;
+							//timer.cancel();
+							//timer = null;
 						}
 					}
 				}
@@ -255,10 +258,18 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			
 			ret.setTerminationCommand(ex -> 
 			{
-				synchronized(this.getClass())
+				synchronized(ExecutionFeature.class)
 				{
-					task.getTask().cancel();
+					if(!task.getTask().cancel())
+						return;
+					
 					entries.remove(task);
+					if(entries.size()==0)
+					{
+						entries	= null;
+						//timer.cancel();
+						//timer = null;
+					}
 				}
 			});
 		}
@@ -585,9 +596,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		synchronized(this)
 		{
 			if(threads!=null)
-			{
-					mythreads	= threads.toArray(ComponentSuspendable[]::new);
-			}
+				mythreads = threads.toArray(ComponentSuspendable[]::new);
 		}
 		if(mythreads!=null)
 		{
@@ -605,24 +614,27 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 		}
 		
-		synchronized(ExecutionFeature.this)
+		// Drop queued timer tasks.
+		List<TimerTaskInfo> todo = new ArrayList<>();
+		TimerTaskInfo[] ttis;
+		synchronized(ExecutionFeature.class)
 		{
 			steps.clear();
-		}
-		
-		// Drop queued timer tasks.
-		if(entries!=null)
-		{
-			TimerTaskInfo[] ttis = entries.toArray(TimerTaskInfo[]::new);
+			ttis = entries==null? new TimerTaskInfo[0]: entries.toArray(TimerTaskInfo[]::new);
+			
 			for(TimerTaskInfo tti: ttis)
 			{
 				if(self.getId().equals(tti.getComponentId()))
 				{
+					todo.add(tti);
 					tti.getTask().cancel();
-					tti.getFuture().setException(ex);
 					entries.remove(tti);
 				}
 			}
+		}
+		for(TimerTaskInfo tti: todo)
+		{
+			tti.getFuture().setException(ex);
 		}
 		
 		//System.out.println("terminate end");

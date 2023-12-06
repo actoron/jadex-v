@@ -2,19 +2,21 @@ package jadex.bpmn.runtime;
 
 import jadex.bpmn.features.IInternalBpmnComponentFeature;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.ILifecycle;
 import jadex.future.IFuture;
-import jadex.micro.impl.MicroAgentFeature;
 
-public class BpmnProcessLifecycleFeature extends MicroAgentFeature 
+public class BpmnProcessLifecycleFeature implements ILifecycle
 {
 	public static BpmnProcessLifecycleFeature get()
 	{
 		return IExecutionFeature.get().getComponent().getFeature(BpmnProcessLifecycleFeature.class);
 	}
 
+	protected BpmnProcess self;
+	
 	protected BpmnProcessLifecycleFeature(BpmnProcess self)
 	{
-		super(self);
+		this.self = self;
 	}
 	
 	/**
@@ -26,7 +28,7 @@ public class BpmnProcessLifecycleFeature extends MicroAgentFeature
 	{
 		IInternalBpmnComponentFeature ibf = IInternalBpmnComponentFeature.get();
 		ibf.init();
-		return IFuture.DONE; // super.onStart();
+		return IFuture.DONE; 
 	}
 	
 	/**
@@ -38,6 +40,6 @@ public class BpmnProcessLifecycleFeature extends MicroAgentFeature
 	{
 		IInternalBpmnComponentFeature ibf = IInternalBpmnComponentFeature.get();
 		ibf.terminate();
-		return IFuture.DONE; // super.onEnd();
+		return IFuture.DONE; 
 	}
 }
