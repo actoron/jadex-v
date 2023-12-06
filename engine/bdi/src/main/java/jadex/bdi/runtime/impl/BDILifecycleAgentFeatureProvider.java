@@ -15,7 +15,7 @@ import jadex.micro.annotation.Agent;
 import jadex.micro.impl.MicroAgentFeature;
 import jadex.micro.impl.MicroAgentFeatureProvider;
 
-public class BDILifecycleAgentFeatureProvider	extends FeatureProvider<MicroAgentFeature>  implements IComponentLifecycleManager
+public class BDILifecycleAgentFeatureProvider extends FeatureProvider<MicroAgentFeature>  implements IComponentLifecycleManager
 {
 	@Override
 	public Class<MicroAgentFeature> getFeatureType()

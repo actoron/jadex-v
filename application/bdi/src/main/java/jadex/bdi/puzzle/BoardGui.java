@@ -7,10 +7,10 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.JFrame;
 
+import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingConsumer;
-import jadex.quickstart.cleanerworld.gui.SGUI;
 
 /**
  *  The board gui.

@@ -107,7 +107,7 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 		Map<String, INFProperty<?, ?>> nfmap = methodnfproperties != null? methodnfproperties.get(method) : null;
 		final String[] myprops = nfmap != null? nfmap.keySet().toArray(new String[nfproperties.size()]) : new String[0];
 		
-		if(getParentId()!=null)
+		/*if(getParentId()!=null)
 		{
 //			IComponentManagementService cms = getInternalAccess().getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IComponentManagementService.class));
 			getComponent().getExternalAccessAsync(getParentId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
@@ -134,9 +134,9 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 			});
 		}
 		else
-		{
+		{*/
 			ret.setResult(myprops);		
-		}
+		//}
 		
 //		getParent().addResultListener(new ExceptionDelegationResultListener<INFPropertyProvider, String[]>(ret)
 //		{

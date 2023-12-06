@@ -594,9 +594,9 @@ public class APL
 				try
 				{
 					SAccess.setAccessible(m, true);
-					Collection<Object> col = new ArrayList<Object>();
-					col.add(getCandidates());
-					cand = (ICandidateInfo)m.invoke(element.getPojoElement(), BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(), melem, null, null, element, col));
+					cand = (ICandidateInfo)m.invoke(element.getPojoElement(),
+								BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(), melem, null, null, element,
+									Collections.singletonList(getCandidates())));
 				}
 				catch(Exception e)
 				{
@@ -1199,7 +1199,7 @@ public class APL
 		 */
 		public String toString()
 		{
-			return SReflect.getInnerClassName(getClass())+" "+mplan;
+			return SReflect.getInnerClassName(getClass())+" "+pojo;
 		}
 	}
 	

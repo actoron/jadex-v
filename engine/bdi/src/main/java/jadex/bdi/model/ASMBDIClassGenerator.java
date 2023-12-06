@@ -483,7 +483,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		if(ret.getClassName().equals("byte"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Byte", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I"));
 			nl.add(new InsnNode(Opcodes.I2B));
@@ -492,7 +492,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("short"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Short", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I"));
 			nl.add(new InsnNode(Opcodes.I2S));
@@ -501,7 +501,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("int"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Integer", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I"));
 			nl.add(new InsnNode(Opcodes.IRETURN));
@@ -509,7 +509,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("char"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Character", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Character"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C"));
 			nl.add(new InsnNode(Opcodes.IRETURN));
@@ -517,7 +517,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("boolean"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Boolean", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Boolean"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z"));
 			nl.add(new InsnNode(Opcodes.IRETURN));
@@ -525,7 +525,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("long"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Long", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J"));
 			nl.add(new InsnNode(Opcodes.LRETURN));							
@@ -533,7 +533,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("float"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Float", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F"));
 			nl.add(new InsnNode(Opcodes.FRETURN));							
@@ -541,7 +541,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else if(ret.getClassName().equals("double"))
 		{
 			nl.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/Double", "TYPE", "Ljava/lang/Class;"));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Number"));
 			nl.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D"));
 			nl.add(new InsnNode(Opcodes.DRETURN));
@@ -549,7 +549,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		else // Object
 		{
 			nl.add(new LdcInsnNode(ret));
-			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
+			nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "getAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"));
 			nl.add(new TypeInsnNode(Opcodes.CHECKCAST, ret.getInternalName()));
 			nl.add(new InsnNode(Opcodes.ARETURN));
 		}
@@ -574,7 +574,7 @@ public class ASMBDIClassGenerator extends AbstractAsmBdiClassGenerator
 		
 		SASM.makeObject(nl, arg);
 		
-		nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "setAbstractBeliefValue", "(Ljadex/core/IComponent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"));
+		nl.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "jadex/bdi/runtime/impl/BDIAgentFeature", "setAbstractBeliefValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"));
 		nl.add(new InsnNode(Opcodes.RETURN));
 		
 		mn.instructions = nl;

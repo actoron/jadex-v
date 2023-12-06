@@ -27,6 +27,8 @@ import jadex.common.UnparsedExpression;
 import jadex.core.impl.Component;
 import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.future.ComponentFutureFunctionality;
+import jadex.execution.future.FutureFunctionality;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.CounterResultListener;
 import jadex.future.DelegationResultListener;
@@ -45,8 +47,8 @@ import jadex.future.TerminationCommand;
 import jadex.javaparser.SJavaParser;
 import jadex.micro.MicroAgent;
 import jadex.micro.MicroClassReader;
-import jadex.model.AbstractModelLoader;
 import jadex.model.IModelFeature;
+import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
@@ -66,7 +68,6 @@ import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.providedservice.impl.service.ServiceInvocationHandler;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
 import jadex.providedservice.impl.service.interceptors.DecouplingReturnInterceptor;
-import jadex.providedservice.impl.service.interceptors.FutureFunctionality;
 import jadex.providedservice.impl.service.interceptors.MethodInvocationInterceptor;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.RequiredServiceBinding;
@@ -110,7 +111,13 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 		{
 			mymodel = (RequiredServiceModel)RequiredServiceLoader.readFeatureModel(((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
 			final RequiredServiceModel fmymodel = mymodel;
-			AbstractModelLoader loader = AbstractModelLoader.getLoader(self.getClass());
+			AbstractModelLoader loader = null;
+			Class<?>	clazz	= self.getClass();
+			while(loader==null && !clazz.equals(Object.class))
+			{
+				loader	= AbstractModelLoader.getLoader((Class< ? extends Component>)clazz);
+				clazz	= clazz.getSuperclass();
+			}
 			loader.updateCachedModel(() ->
 			{
 				model.putFeatureModel(IRequiredServiceFeature.class, fmymodel);

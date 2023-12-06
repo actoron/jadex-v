@@ -15,6 +15,7 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-		IBDIAgent.create("jadex.bdi.puzzle.SokratesAgent");
+		IBDIAgent.create("jadex.bdi.puzzle.SokratesMLRAgent");
+//		IBDIAgent.create("jadex.bdi.puzzle.SokratesV3Agent");
 	}
 }

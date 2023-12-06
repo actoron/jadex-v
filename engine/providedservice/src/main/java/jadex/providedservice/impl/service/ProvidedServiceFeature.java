@@ -24,8 +24,8 @@ import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.micro.MicroAgent;
-import jadex.model.AbstractModelLoader;
 import jadex.model.IModelFeature;
+import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
@@ -63,7 +63,13 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 		{
 			mymodel = (ProvidedServiceModel)ProvidedServiceLoader.readFeatureModel(((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
 			final ProvidedServiceModel fmymodel = mymodel;
-			AbstractModelLoader loader = AbstractModelLoader.getLoader(self.getClass());
+			AbstractModelLoader loader = null;
+			Class<?>	clazz	= self.getClass();
+			while(loader==null && !clazz.equals(Object.class))
+			{
+				loader	= AbstractModelLoader.getLoader((Class< ? extends Component>)clazz);
+				clazz	= clazz.getSuperclass();
+			}
 			loader.updateCachedModel(() ->
 			{
 				model.putFeatureModel(IProvidedServiceFeature.class, fmymodel);

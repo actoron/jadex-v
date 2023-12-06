@@ -27,9 +27,12 @@ includeBuild('engine/simulation') {}
 includeBuild('engine/communication') {}
 includeBuild('engine/micro'){}
 includeBuild('engine/bdi') {}
+includeBuild('engine/bpmn') {}
 
 includeBuild('rules/eca') {}
 
 includeBuild('application/micro'){name='application-micro'}
 includeBuild('application/bdi'){name='application-bdi'}
+includeBuild('application/bdi-service'){name='application-bdi-service'}
+includeBuild('application/bpmn'){name='application-bpmn'}
 

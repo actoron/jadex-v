@@ -2,10 +2,11 @@ package jadex.bdi.puzzle;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.puzzle.SokratesAgent.ChooseMoveGoal;
+import jadex.bdi.puzzle.SokratesMLRAgent.ChooseMoveGoal;
 import jadex.bdi.runtime.impl.ICandidateInfo;
 
 /**
@@ -18,7 +19,7 @@ public class ChooseMovePlan
 	 *  The plan body.
 	 */
 	@PlanBody
-	public void body(SokratesAgent agent, ChooseMoveGoal goal)
+	public void body(SokratesMLRAgent agent, ChooseMoveGoal goal)
 	{
 		switch(agent.ml)
 		{
@@ -45,10 +46,10 @@ public class ChooseMovePlan
 	 *  @param consider_color Consider the color.
 	 *  @param consider_jump Consider the move kind.
 	 */
-	protected ICandidateInfo selectPlan(Collection<ICandidateInfo> plans, IBoard board, boolean same, boolean jump,
+	protected ICandidateInfo selectPlan(List<ICandidateInfo> plans, IBoard board, boolean same, boolean jump,
 		boolean consider_color, boolean consider_jump)
 	{
-		Collection<ICandidateInfo> sel_col = new ArrayList<>();
+		List<ICandidateInfo> sel_col = new ArrayList<>();
 		if(consider_color)
 		{
 			for(ICandidateInfo plan: plans)
@@ -59,39 +60,30 @@ public class ChooseMovePlan
 				}
 			}
 		}
-		else
+		
+		if(sel_col.isEmpty())
 		{
 			sel_col = plans;
 		}
 
-		Collection<ICandidateInfo> sel_jump = new ArrayList<>();
+		List<ICandidateInfo> sel_jump = new ArrayList<>();
 		if(consider_jump)
 		{
-			for(int i=0; i<sel_col.size(); i++)
+			for(ICandidateInfo plan: sel_col)
 			{
-				ICandidateInfo	plan	= sel_col.iterator().next();
 				if(matchJump(board, ((MovePlan)plan.getRawCandidate()).move, jump))
 				{
 					sel_jump.add(plan);
 				}
 			}
 		}
-		else
+
+		if(sel_jump.isEmpty())
 		{
 			sel_jump = sel_col;
 		}
 
-		assert sel_col.size()>0 || sel_jump.size()>0 || plans.size()>0;
-
-		ICandidateInfo ret = null;
-		if(sel_jump.size()>0)
-			ret = sel_jump.iterator().next();
-		else if(sel_col.size()>0)
-			ret = sel_col.iterator().next();
-		else
-			ret = plans.iterator().next();
-
-		return ret;
+		return sel_jump.get(0);
 	}
 
 	/**
@@ -102,7 +94,7 @@ public class ChooseMovePlan
 		Piece piece = board.getPiece(move.getStart());
 		if(piece==null)
 			throw new RuntimeException("Impossible move: "+move);
-		boolean same = board.wasLastMoveWhite()==board.getPiece(move.getStart()).isWhite();
+		boolean same = board.wasLastMoveWhite()==piece.isWhite();
 		return prefer_samecolor==same;
 	}
 

@@ -19,6 +19,7 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
 import jadex.core.impl.Component;
+import jadex.execution.future.FutureFunctionality;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.FutureHelper;
@@ -34,7 +35,6 @@ import jadex.providedservice.annotation.ServiceComponent;
 import jadex.providedservice.annotation.ServiceIdentifier;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
 import jadex.providedservice.impl.service.interceptors.DecouplingReturnInterceptor;
-import jadex.providedservice.impl.service.interceptors.FutureFunctionality;
 import jadex.providedservice.impl.service.interceptors.MethodInvocationInterceptor;
 import jadex.providedservice.impl.service.interceptors.ResolveInterceptor;
 

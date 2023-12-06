@@ -19,7 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIDefaults;
 
-import jadex.quickstart.cleanerworld.gui.SGUI;
+import jadex.common.SGUI;
 
 /**
  *  Display the board.

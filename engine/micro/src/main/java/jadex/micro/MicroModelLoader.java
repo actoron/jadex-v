@@ -1,8 +1,8 @@
 package jadex.micro;
 
 import jadex.common.ResourceInfo;
-import jadex.model.AbstractModelLoader;
 import jadex.model.ICacheableModel;
+import jadex.model.impl.AbstractModelLoader;
 
 /**
  *  Loader for micro models.
@@ -55,8 +55,8 @@ public class MicroModelLoader extends AbstractModelLoader
 	 *  @param name	The original name (i.e. not filename).
 	 *  @param info	The resource info.
 	 */
-	protected ICacheableModel doLoadModel(String name, Object pojo, String[] imports,// ResourceInfo info, 
-		ClassLoader classloader) throws Exception
+	protected ICacheableModel doLoadModel(String name, Object pojo, String[] imports,  
+		ClassLoader classloader, ResourceInfo info) throws Exception
 	{
 //		if(name.indexOf("HelloWorldAgent")!=-1)
 //			System.out.println("cache miss: "+name);

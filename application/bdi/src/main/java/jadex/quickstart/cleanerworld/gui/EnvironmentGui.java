@@ -36,6 +36,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import jadex.common.SGUI;
 import jadex.quickstart.cleanerworld.environment.ILocation;
 import jadex.quickstart.cleanerworld.environment.IPheromone;
 import jadex.quickstart.cleanerworld.environment.impl.Chargingstation;

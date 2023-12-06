@@ -1,0 +1,4 @@
+jadex.bpmn.runtime.BpmnProcessLifecycleFeatureProvider
+jadex.bpmn.runtime.BpmnProcessFeatureProvider
+jadex.bpmn.runtime.BpmnProcessModelFeatureProvider
+

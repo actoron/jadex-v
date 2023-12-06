@@ -5,7 +5,7 @@ import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
-import jadex.bdi.puzzle.SokratesAgent.MakeMoveGoal;
+import jadex.bdi.puzzle.SokratesMLRAgent.MakeMoveGoal;
 import jadex.bdi.runtime.IPlan;
 
 
@@ -30,7 +30,7 @@ public class MovePlan
 	 *  The plan body.
 	 */
 	@PlanBody
-	void body(SokratesAgent agent, MakeMoveGoal goal, IPlan plan)
+	void body(SokratesMLRAgent agent, MakeMoveGoal goal, IPlan plan)
 	{
 		agent.triescnt++;
 		print("Trying "+move+" ("+agent.triescnt+") ", goal.depth);
@@ -45,7 +45,7 @@ public class MovePlan
 	 *  The plan failure code.
 	 */
 	@PlanFailed
-	void failed(SokratesAgent agent, MakeMoveGoal goal, IPlan plan)
+	void failed(SokratesMLRAgent agent, MakeMoveGoal goal, IPlan plan)
 	{
 		print("Failed "+move, goal.depth);
 		agent.board.takeback();
@@ -81,4 +81,10 @@ public class MovePlan
             System.out.print(" ");
         System.out.println(text);
     }
+	
+	@Override
+	public String toString()
+	{
+		return "MovePlan("+move+")";
+	}
 }

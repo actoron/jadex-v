@@ -1,7 +1,7 @@
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
-def excludes	= ['communication', 'nfproperties']
+def excludes = ['communication', 'nfproperties']
 
-['clean', 'compileJava', 'build', 'test', 'wrapper'].each { mytask ->
+['clean', 'compileJava', 'build', 'test', 'wrapper', 'sonarcube'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
 		//println "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {

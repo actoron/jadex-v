@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import jadex.common.SGUI;
 import jadex.execution.IExecutionFeature;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
 

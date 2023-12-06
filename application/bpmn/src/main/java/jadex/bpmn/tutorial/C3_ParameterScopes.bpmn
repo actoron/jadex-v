@@ -1,0 +1,114 @@
+<?xml version="1.0" ?><bpmn:definitions targetNamespace="http://www.activecomponents.org/bpmn/" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:jadex="http://www.activecomponents.org/bpmnextensions" xmlns:jadexvisual="http://www.activecomponents.org/bpmnvisualextensions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <bpmn:extension>
+    <jadex:modelname>C3_ParameterScopes</jadex:modelname>
+    <jadex:package>jadex.bpmn.tutorial</jadex:package>
+    <jadex:componentflags keepalive="false" monitoring="OFF" persistable="false" suspend="false" synchronous="false"/>
+  </bpmn:extension>
+  <bpmn:process id="2RbJFnzUiSilPFbW" name="Pool">
+    <bpmn:subProcess id="s/AZCBoqBWctZ+/0">
+      <bpmn:incoming>YsV28BPT9RJt03ft</bpmn:incoming>
+      <bpmn:outgoing>HakJpo0AxxWeMxrK</bpmn:outgoing>
+      <bpmn:startEvent id="9z9dehmHXlGFD4gS">
+        <bpmn:outgoing>uV2zwDUJFho2SZuS</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:task id="Xi66YKSWMuqB/NJC" name="Enter Address">
+        <bpmn:incoming>uV2zwDUJFho2SZuS</bpmn:incoming>
+        <bpmn:outgoing>Gr2TDocT2Zd+DBpF</bpmn:outgoing>
+        <bpmn:extensionElements>
+          <jadex:class>jadex.bpmn.runtime.task.UserInteractionTask</jadex:class>
+        </bpmn:extensionElements>
+      </bpmn:task>
+      <bpmn:task id="dDIbBTrs9IMTAZg1" name="Start Shipping">
+        <bpmn:incoming>Gr2TDocT2Zd+DBpF</bpmn:incoming>
+        <bpmn:outgoing>Mv9z5jshw8c3K0vs</bpmn:outgoing>
+        <bpmn:extensionElements>
+          <jadex:class>jadex.bpmn.runtime.task.PrintTask</jadex:class>
+          <jadex:parameter direction="in" name="text" type="java.lang.String">&quot;Shipping to: &quot;+address</jadex:parameter>
+        </bpmn:extensionElements>
+      </bpmn:task>
+      <bpmn:task id="aKaGmvdz7qJ4sUEv" name="Shipping Finished">
+        <bpmn:incoming>Mv9z5jshw8c3K0vs</bpmn:incoming>
+        <bpmn:outgoing>xu/h5yLBzb2+N6Ml</bpmn:outgoing>
+        <bpmn:extensionElements>
+          <jadex:class>jadex.bpmn.runtime.task.PrintTask</jadex:class>
+          <jadex:parameter direction="in" name="text" type="java.lang.String">&quot;Arrived at: &quot;+address</jadex:parameter>
+        </bpmn:extensionElements>
+      </bpmn:task>
+      <bpmn:endEvent id="XkhW0lsJ7+aCicu2">
+        <bpmn:incoming>xu/h5yLBzb2+N6Ml</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:extensionElements>
+        <jadex:parameter direction="inout" name="address" type="java.lang.String"/>
+      </bpmn:extensionElements>
+    </bpmn:subProcess>
+    <bpmn:startEvent id="gnQjqJrwcaty5unp">
+      <bpmn:outgoing>YsV28BPT9RJt03ft</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Yd11gU7eozBINupU">
+      <bpmn:incoming>HakJpo0AxxWeMxrK</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="HakJpo0AxxWeMxrK" sourceRef="s/AZCBoqBWctZ+/0" targetRef="Yd11gU7eozBINupU">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="uV2zwDUJFho2SZuS" sourceRef="9z9dehmHXlGFD4gS" targetRef="Xi66YKSWMuqB/NJC">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Gr2TDocT2Zd+DBpF" sourceRef="Xi66YKSWMuqB/NJC" targetRef="dDIbBTrs9IMTAZg1">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Mv9z5jshw8c3K0vs" sourceRef="dDIbBTrs9IMTAZg1" targetRef="aKaGmvdz7qJ4sUEv">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="xu/h5yLBzb2+N6Ml" sourceRef="aKaGmvdz7qJ4sUEv" targetRef="XkhW0lsJ7+aCicu2">
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="YsV28BPT9RJt03ft" sourceRef="gnQjqJrwcaty5unp" targetRef="s/AZCBoqBWctZ+/0">
+    </bpmn:sequenceFlow>
+    <bpmn:extensionElements>
+    </bpmn:extensionElements>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane>
+      <bpmndi:BPMNShape bpmnElement="2RbJFnzUiSilPFbW">
+        <dc:Bounds height="400.0" width="1300.0" x="50.0" y="50.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="s/AZCBoqBWctZ+/0" isExpanded="true">
+        <dc:Bounds height="240.0" width="910.0" x="190.0" y="80.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="9z9dehmHXlGFD4gS">
+        <dc:Bounds height="40.0" width="40.0" x="60.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Xi66YKSWMuqB/NJC">
+        <dc:Bounds height="100.0" width="160.0" x="150.0" y="70.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="dDIbBTrs9IMTAZg1">
+        <dc:Bounds height="100.0" width="160.0" x="370.0" y="70.0"/>
+        <di:extension>
+          <jadexvisual:internalParameter>text</jadexvisual:internalParameter>
+        </di:extension>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="aKaGmvdz7qJ4sUEv">
+        <dc:Bounds height="100.0" width="160.0" x="600.0" y="70.0"/>
+        <di:extension>
+          <jadexvisual:internalParameter>text</jadexvisual:internalParameter>
+        </di:extension>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="XkhW0lsJ7+aCicu2">
+        <dc:Bounds height="40.0" width="40.0" x="810.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gnQjqJrwcaty5unp">
+        <dc:Bounds height="40.0" width="40.0" x="80.0" y="180.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Yd11gU7eozBINupU">
+        <dc:Bounds height="40.0" width="40.0" x="1160.0" y="180.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="uV2zwDUJFho2SZuS">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Gr2TDocT2Zd+DBpF">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Mv9z5jshw8c3K0vs">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="xu/h5yLBzb2+N6Ml">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="YsV28BPT9RJt03ft">
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="HakJpo0AxxWeMxrK">
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
