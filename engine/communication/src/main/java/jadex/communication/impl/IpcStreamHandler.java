@@ -1,33 +1,80 @@
-package jadex.communication;
+package jadex.communication.impl;
 
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.ConnectException;
+import java.net.StandardProtocolFamily;
+import java.net.UnixDomainSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
+import java.nio.file.Path;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
 import jadex.collection.LeaseTimeMap;
 import jadex.collection.RwMapWrapper;
-import jadex.core.ComponentIdentifier;
+import jadex.common.IAutoLock;
+import jadex.common.SUtil;
+import jadex.communication.IIpcService;
+import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
+import jadex.core.impl.ComponentManager;
 
-public class UnixSocketStreamHandler implements IMessageSender
+public class IpcStreamHandler implements IIpcService
 {
+	/** Directory used for IPC. */
+	private static Path socketdir;
+	static
+	{
+		socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve("jadexsockets");
+	}
+	
+	/**
+	 *  Sets the directory for the domain socket IPC.
+	 *  Must be called before any component is started.
+	 *  
+	 *  @param dir The file system directory used for IPC.
+	 */
+	public static final void setSocketDirectory(Path dir)
+	{
+		if (singleton != null) {
+			throw new IllegalStateException("Communication is already running. Set socket directory before communication start.");
+		}
+			
+		socketdir = dir;
+	}
+	
+	/** If a connection was requested, timeout for awaiting that connection. */
+	private static final int CONNECTION_WAIT_TIMEOUT = 2000;
+	
+	/** Currently established connections. */
 	private RwMapWrapper<Long, SocketChannel> connectioncache;
 	
-	//private RwMapWrapper<ComponentIdentifier, IComponent>
+	/** Latch that is triggered (released) if a new connection was established. */
+	private CountDownLatch connectionlatch = new CountDownLatch(1);
 	
-	private volatile static UnixSocketStreamHandler singleton;
+	/** Singleton instance used for communication. */
+	private volatile static IpcStreamHandler singleton;
 	
 	/**
 	 *  Gets the singleton instance of the handler.
 	 *  @return Singleton instance of the handler.
 	 */
-	public static final UnixSocketStreamHandler get()
+	public static final IpcStreamHandler get()
 	{
 		if (singleton == null)
 		{
-			synchronized (UnixSocketStreamHandler.class)
+			synchronized (IpcStreamHandler.class)
 			{
 				if (singleton == null)
 				{
-					singleton = new UnixSocketStreamHandler();
+					singleton = new IpcStreamHandler();
+					singleton.open();
 				}
 			}
 		}
@@ -37,9 +84,28 @@ public class UnixSocketStreamHandler implements IMessageSender
 	/**
 	 *  Creates a new UnixSocketStreamHandler.
 	 */
-	private UnixSocketStreamHandler()
+	private IpcStreamHandler()
 	{
-		 connectioncache = new RwMapWrapper<>(new LeaseTimeMap<>(900000, null, false, false, false));
+		LeaseTimeMap<Long, SocketChannel> ltm = new LeaseTimeMap<>(900000, true);
+		ltm.setTouchOnRead(true);
+		ltm.setTouchOnWrite(true);
+		ltm.setRawRemoveCommand((map, entry) ->
+		{
+			try (IAutoLock l = connectioncache.writeLock())
+			{
+				System.out.println("Lease time expired for " + entry.getFirstEntity());
+				SocketChannel removedchan = map.remove(entry.getFirstEntity());
+				SUtil.close(removedchan);
+			}
+		});
+		
+		connectioncache = new RwMapWrapper<>(ltm);
+		System.out.println(System.getProperty("java.version"));
+		socketdir.toFile().mkdirs();
+		
+		File dir = socketdir.toFile();
+		if (!dir.isDirectory() || !dir.canRead() || !dir.canWrite())
+			throw new UncheckedIOException(new IOException("Cannot access socket directory: " + dir.getAbsolutePath()));
 	}
 	
 	/**
@@ -48,9 +114,262 @@ public class UnixSocketStreamHandler implements IMessageSender
 	 *  @param receiver The intended message receiver.
 	 *  @param message The message.
 	 */
-	public void sendMessage(ComponentIdentifier receiver, byte[] message)
+	public void sendMessage(GlobalProcessIdentifier receiver, ByteBuffer message)
 	{
 		
+		
+		if (ComponentManager.get().host().equals(receiver.host()))
+		{
+			SocketChannel connection = null;
+			
+			connection = connectioncache.get(receiver.pid());
+			if (connection == null)
+				connection = connect(receiver.pid());
+			
+			try {
+				if (connection != null)
+				{
+					ByteBuffer sizebuf = ByteBuffer.allocate(4);
+					sizebuf.putInt(message.remaining());
+					sizebuf.rewind();
+					System.out.println("Write size to recipient.");
+					connection.write(sizebuf);
+					message.rewind();
+					System.out.println("Write msg to recipient.");
+					connection.write(message);
+				}
+				else
+					throw new IOException("Could not connect to " + receiver.pid());
+			}
+			catch (IOException e)
+			{
+				throw SUtil.throwUnchecked(e);
+			}
+			
+		}
+		else
+		{
+			// TODO: Remote
+		}
 	}
 	
+	private void open()
+	{
+		SUtil.getExecutor().execute(() -> {
+			try
+			{
+				String pidstr = String.valueOf(ComponentManager.get().pid());
+				Path socketpath = socketdir.resolve(pidstr);
+				
+				UnixDomainSocketAddress socketaddress = UnixDomainSocketAddress.of(socketpath);
+				ServerSocketChannel serverchannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
+				serverchannel.configureBlocking(true);
+				serverchannel.bind(socketaddress);
+				
+				while (true)
+				{
+					try
+					{
+						System.out.println("Waiting for new connections");
+						SocketChannel conn = serverchannel.accept();
+						System.out.println("New connection, handling...");
+						handleNewConnection(conn);
+					}
+					catch (IOException e)
+					{
+						throw SUtil.throwUnchecked(e);
+					}
+				}
+			}
+			catch(IOException e)
+			{
+				throw new UncheckedIOException(e);
+			}
+		});
+	}
+	
+	private SocketChannel connect(long remotepid)
+	{
+		SocketChannel channel = null;
+		if (isConnector(remotepid))
+		{
+			try
+			{
+				channel = SocketChannel.open(StandardProtocolFamily.UNIX);
+				Path remotesocketpath = socketdir.resolve(String.valueOf(remotepid));
+				UnixDomainSocketAddress remotesocketaddress = UnixDomainSocketAddress.of(remotesocketpath);
+				channel.connect(remotesocketaddress);
+				ByteBuffer numbuf = ByteBuffer.allocate(8);
+				numbuf.putLong(ComponentManager.get().pid());
+				numbuf.rewind();
+				channel.write(numbuf);
+				addConnection(remotepid, channel);
+			}
+			catch (IOException e)
+			{
+				channel = null;
+				SUtil.throwUnchecked(e);
+			}
+		}
+		else
+		{
+			try
+			{
+				SocketChannel tmpchannel = SocketChannel.open(StandardProtocolFamily.UNIX);
+				Path remotesocketpath = socketdir.resolve(String.valueOf(remotepid));
+				UnixDomainSocketAddress remotesocketaddress = UnixDomainSocketAddress.of(remotesocketpath);
+				tmpchannel.connect(remotesocketaddress);
+				ByteBuffer numbuf = ByteBuffer.allocate(8);
+				numbuf.putLong(ComponentManager.get().pid());
+				numbuf.rewind();
+				
+				// Triggered the other side to connect to us, waiting for connection...
+				CountDownLatch cl = connectionlatch;
+				tmpchannel.write(numbuf);
+				SUtil.close(tmpchannel);
+				
+				long timeout = CONNECTION_WAIT_TIMEOUT;
+				long timestamp = System.currentTimeMillis();
+				try
+				{
+					while (channel == null && timeout > 0)
+					{
+						cl.await(timeout, TimeUnit.MILLISECONDS);
+						timeout -= (System.currentTimeMillis() - timestamp);
+						channel = connectioncache.get(remotepid);
+					}
+				}
+				catch (InterruptedException e)
+				{
+				}
+			}
+			catch (IOException e)
+			{
+				SUtil.throwUnchecked(e);
+			}
+		}
+		
+		if (channel == null)
+			throw new UncheckedIOException(new IOException("Failed to establish connection to " + remotepid + "."));
+		
+		return channel;
+	}
+	
+	private void handleNewConnection(SocketChannel channel)
+	{
+		SUtil.getExecutor().execute(() ->
+		{
+			try
+			{
+				long pid = ComponentManager.get().pid();
+				channel.configureBlocking(true);
+				long remotepid = 0;
+				SocketChannel remotechannel = null;
+				ByteBuffer numbuf = ByteBuffer.allocate(8);
+				
+				// Read remote PID
+				while (numbuf.hasRemaining())
+					channel.read(numbuf);
+				numbuf.rewind();
+				remotepid = numbuf.getLong();
+				
+				if (isConnector(remotepid))
+				{
+					// Close requesting connection...
+					SUtil.close(channel);
+					
+					// Establish new connection
+					SocketChannel newchannel = connect(remotepid);
+					remotechannel = newchannel;
+				}
+				else
+				{
+					remotechannel = channel;
+					addConnection(remotepid, remotechannel);
+				}
+				
+				if (remotechannel != null)
+				{
+					handleMessages(remotepid, remotechannel);
+				}
+			}
+			catch (IOException e)
+			{
+				SUtil.close(channel);
+			}
+		});
+	}
+	
+	private void handleMessages(long remotepid, SocketChannel channel)
+	{
+		SUtil.getExecutor().execute(() -> {
+			System.out.println("handling messages");
+			ByteBuffer numbuf = ByteBuffer.allocate(4);
+			ByteBuffer buf = null;
+			try
+			{
+				while (channel.isConnected())
+				{
+					if (buf == null)
+					{
+						System.out.println("Reading msg size");
+						int ds = channel.read(numbuf);
+						if (ds < 0)
+							throw new EOFException("Connection closed");
+						System.out.println("Got msg size" + ds + " " + numbuf.hasRemaining());
+						if (!numbuf.hasRemaining())
+						{
+							numbuf.rewind();
+							int size = numbuf.getInt();
+							numbuf.rewind();
+							System.out.println("New message size " + size);
+							buf = ByteBuffer.wrap(new byte[size]);
+						}
+					}
+					else
+					{
+						channel.read(buf);
+						if (!buf.hasRemaining())
+						{
+							String msg = new String(buf.array(), SUtil.UTF8);
+							System.out.println("Message from " + remotepid + ": " + msg);
+							buf = null;
+						}
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				SUtil.close(channel);
+			}
+		});
+	}
+	
+	private void addConnection(long remoteip, SocketChannel channel)
+	{
+		try (IAutoLock l = connectioncache.writeLock())
+		{
+			SocketChannel old = connectioncache.get(remoteip);
+			SUtil.close(old);
+			connectioncache.put(remoteip, channel);
+		}
+		
+		// Signal a new connection via latch...
+		connectionlatch.countDown();
+		connectionlatch = new CountDownLatch(1);
+	}
+	
+	/**
+	 *  Tests if the process should directly connect to the remote process (true)
+	 *  or if it should ask to for the remote process to connect back.
+	 *  
+	 *  @param remotepid Remote pid;
+	 *  @return True, if the process should directly connect to the remote process.
+	 */
+	private boolean isConnector(long remotepid)
+	{
+		if (remotepid > ComponentManager.get().pid())
+			return true;
+		return false;
+	}
 }

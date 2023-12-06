@@ -1,14 +1,16 @@
 package jadex.communication;
 
-import jadex.core.ComponentIdentifier;
+import java.nio.ByteBuffer;
+
+import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
 
 /**
- *  Interface for sending messages to components outside the current JVM.
+ *  Interface for sending and receiving messages to components outside the current JVM.
  *  
  *  The implementation can be optimized for the local operating system, but
  *  only one implementation should be used per-system to avoid incompatibility.
  */
-public interface IMessageSender
+public interface IIpcService
 {
 	/**
 	 *  Sends a message to a component outside the current JVM.
@@ -16,5 +18,5 @@ public interface IMessageSender
 	 *  @param receiver The intended message receiver.
 	 *  @param message The message.
 	 */
-	public void sendMessage(ComponentIdentifier receiver, byte[] message);
+	public void sendMessage(GlobalProcessIdentifier receiver, ByteBuffer message);
 }
