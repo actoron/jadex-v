@@ -1,21 +1,13 @@
 package jadex.mj.feature.nfproperties.sensor.service;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.bytecode.ProxyFactory;
 import jadex.common.MethodInfo;
+import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.mj.feature.nfproperties.sensor.time.TimedProperty;
+import jadex.providedservice.IMethodInvocationListener;
+import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.impl.search.ServiceQuery;
-import jadex.providedservice.impl.service.ServiceInvocationContext;
 
 /**
  *  Property for the waiting time of a method or a service as a whole.
@@ -35,17 +27,21 @@ public class WaitingTimeProperty extends TimedProperty
 	protected MethodInfo method;
 	
 	/** The clock. */
-	protected IClockService clock;
+	//protected IClockService clock;
 	
 	/**
 	 *  Create a new property.
 	 */
-	public WaitingTimeProperty(final IInternalAccess comp, IService service, MethodInfo method)
+	public WaitingTimeProperty(final IComponent comp, IService service, MethodInfo method)
 	{
 		super(NAME, comp, true);
 		this.method = method;
 		this.sid = service.getServiceId();
 		
+		// todo:
+		throw new UnsupportedOperationException();
+		
+		/*
 		WaitingTimeProperty.this.clock = comp.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IClockService.class));
 		
 		if(ProxyFactory.isProxyClass(service.getClass()))
@@ -79,7 +75,7 @@ public class WaitingTimeProperty extends TimedProperty
 		else
 		{
 			throw new RuntimeException("Cannot install waiting time listener hook.");
-		}
+		}*/
 	}
 	
 	/**
@@ -116,7 +112,7 @@ public class WaitingTimeProperty extends TimedProperty
 	 */
 	public IFuture<Void> dispose()
 	{
-		comp.getFeature(IProvidedServicesFeature.class).removeMethodInvocationListener(sid, method, listener);
+		comp.getFeature(IProvidedServiceFeature.class).removeMethodInvocationListener(sid, method, listener);
 		return IFuture.DONE;
 	}
 }

@@ -103,7 +103,9 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 	 */
 	protected IFuture<T> getPropertyValue(final IServiceIdentifier sid)
 	{
-		final Future<T> ret = new Future<T>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<T> ret = new Future<T>();
 		
 		if(required)
 		{
@@ -178,6 +180,6 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 			});
 		}
 
-		return ret;
+		return ret;*/
 	}
 }

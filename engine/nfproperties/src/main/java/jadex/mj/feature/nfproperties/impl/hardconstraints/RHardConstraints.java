@@ -5,17 +5,16 @@ import java.util.Collection;
 import java.util.List;
 
 import jadex.common.MethodInfo;
+import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.future.CollectionResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.future.TerminableIntermediateFuture;
 import jadex.model.IAsyncFilter;
 import jadex.providedservice.IService;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.impl.search.ServiceQuery;
 
 /**
  *  Class defining runtime hard constraints.
@@ -106,7 +105,8 @@ public class RHardConstraints
 		} 
 		else
 		{
-			ret = new ComposedRemoteFilter(filters.toArray(new IAsyncFilter[filters.size()]));
+			throw new UnsupportedOperationException();
+			//ret = new ComposedRemoteFilter(filters.toArray(new IAsyncFilter[filters.size()]));
 		}
 		
 		return (IAsyncFilter<?>) ret;
@@ -181,7 +181,7 @@ public class RHardConstraints
 					{
 						final ConstantValueFilter filter = unboundconstantfilters.get(i);
 						
-						component.getMethodNFPropertyValue(((IService)service).getServiceId(), method, filter.getValueName())
+						/*component.getMethodNFPropertyValue(((IService)service).getServiceId(), method, filter.getValueName())
 							.addResultListener(new IResultListener<Object>()
 						{
 							public void resultAvailable(Object result)
@@ -198,7 +198,7 @@ public class RHardConstraints
 							{
 								constantrl.exceptionOccurred(exception);
 							}
-						});
+						});*/
 						
 //						INFMixedPropertyProvider prov = ((INFMixedPropertyProvider)((IService)service).getExternalComponentFeature(INFPropertyComponentFeature.class));
 //						((IService)service).getNFPropertyValue(propname).addResultListener(new IResultListener<Object>()
@@ -250,9 +250,11 @@ public class RHardConstraints
 		unboundconstantfilters = newunboundconstantfilters;
 	}
 	
-	public static <T> ITerminableIntermediateFuture<T> getServices(final IInternalAccess ia, final Class<T> type, final ServiceScope scope, final MethodInfo method, final RHardConstraints hardconstraints)
+	public static <T> ITerminableIntermediateFuture<T> getServices(final IComponent ia, final Class<T> type, final ServiceScope scope, final MethodInfo method, final RHardConstraints hardconstraints)
 	{
-		if(hardconstraints == null)
+		throw new UnsupportedOperationException();
+		
+		/*if(hardconstraints == null)
 		{
 			return ia.getFeature(IRequiredServicesFeature.class).searchServices(new ServiceQuery<>(type, scope));
 		}
@@ -284,6 +286,6 @@ public class RHardConstraints
 //				}
 //			});
 		}
-		return null;
+		return null;*/
 	}
 }

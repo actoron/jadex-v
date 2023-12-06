@@ -42,7 +42,9 @@ public abstract class NFRootProperty<T, U> extends SimpleValueNFProperty<T, U>
 	 */
 	protected IFuture<Void> injectPropertyToRootComponent()
 	{
-		final Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void> ret = new Future<Void>();
 
 		if(!injected)
 		{
@@ -69,7 +71,7 @@ public abstract class NFRootProperty<T, U> extends SimpleValueNFProperty<T, U>
 			ret.setResult(null);
 		}
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -77,7 +79,9 @@ public abstract class NFRootProperty<T, U> extends SimpleValueNFProperty<T, U>
 	 */
 	public IFuture<Void> dispose()
 	{
-		final Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void> ret = new Future<Void>();
 		
 		if(root!=null && injected)
 		{
@@ -100,7 +104,7 @@ public abstract class NFRootProperty<T, U> extends SimpleValueNFProperty<T, U>
 			return super.dispose();
 		}
 		
-		return ret;
+		return ret;*/
 	}
 
 	/**

@@ -51,7 +51,9 @@ public class NFPropertyRef<T, U> extends AbstractNFProperty<T, U>
 //	public IFuture<T> getValue(Class<U> unit)
 	public IFuture<T> getValue(U unit)
 	{
-		final Future<T> ret = new Future<T>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<T> ret = new Future<T>();
 //		IFuture<T> fut = source.getNFPropertyValue(getName(), unit);
 		
 		IFuture<T> fut;
@@ -99,13 +101,15 @@ public class NFPropertyRef<T, U> extends AbstractNFProperty<T, U>
 				ret.setException(exception);
 			}
 		});
-		return ret;
+		return ret;*/
 	}
 	
 	@Override
 	public IFuture<String> getPrettyPrintValue() 
 	{
-		final Future<String> ret = new Future<String>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<String> ret = new Future<String>();
 		
 		IFuture<String> fut;
 		if(sid==null && method==null)
@@ -152,7 +156,7 @@ public class NFPropertyRef<T, U> extends AbstractNFProperty<T, U>
 				ret.setException(exception);
 			}
 		});
-		return ret;
+		return ret;*/
 	}
 }
 

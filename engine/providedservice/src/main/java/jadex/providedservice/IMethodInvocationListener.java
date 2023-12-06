@@ -1,4 +1,4 @@
-package jadex.mj.feature.nfproperties.sensor.service;
+package jadex.providedservice;
 
 import java.lang.reflect.Method;
 

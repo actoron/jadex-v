@@ -340,14 +340,14 @@ public class NFPropertyProvider implements INFPropertyProvider
 			nfproperties = new HashMap<String, INFProperty<?,?>>();
 		nfproperties.put(nfprop.getName(), nfprop);
 		
-		if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
+		/*if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
 		{
 			MonitoringEvent me = new MonitoringEvent(getComponent().getId(), getComponent().getDescription().getCreationTime(), 
 				MonitoringEvent.TYPE_PROPERTY_ADDED, System.currentTimeMillis(), PublishEventLevel.COARSE);
 			me.setProperty("propname", nfprop.getName());
 			getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(me, PublishTarget.TOALL).addResultListener(new DelegationResultListener<Void>(ret));
 		}
-		else
+		else*/
 		{
 			ret.setResult(null);
 		}
@@ -370,14 +370,14 @@ public class NFPropertyProvider implements INFPropertyProvider
 				{
 					public void customResultAvailable(Void result)
 					{
-						if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
+						/*if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
 						{
 							MonitoringEvent me = new MonitoringEvent(getComponent().getId(), getComponent().getDescription().getCreationTime(), 
 								MonitoringEvent.TYPE_PROPERTY_REMOVED, System.currentTimeMillis(), PublishEventLevel.COARSE);
 							me.setProperty("propname", name);
 							getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(me, PublishTarget.TOALL).addResultListener(new DelegationResultListener<Void>(ret));
 						}
-						else
+						else*/
 						{
 							ret.setResult(null);
 						}

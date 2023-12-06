@@ -24,11 +24,13 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getNFPropertyNames(IExternalAccess component)
 	{
-		return component.scheduleStep(ia ->
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(ia ->
 		{
 			INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 			return nfp.getComponentPropertyProvider().getNFPropertyNames();
-		});
+		});*/
 	}
 	
 	/**
@@ -54,7 +56,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getNFAllPropertyNames(IExternalAccess component)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<String[]>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<String[]>()
 		{
 			@Classname("getNFAllPropertyName1")
 			public IFuture<String[]> execute(IInternalAccess ia)
@@ -62,7 +66,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp==null? new Future<String[]>(SUtil.EMPTY_STRING_ARRAY): nfp.getComponentPropertyProvider().getNFAllPropertyNames();
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -72,7 +76,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Map<String, INFPropertyMetaInfo>> getNFPropertyMetaInfos(IExternalAccess component)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Map<String, INFPropertyMetaInfo>>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Map<String, INFPropertyMetaInfo>>()
 		{
 			@Classname("getNFPropertyMetaInfos2")
 			public IFuture<Map<String, INFPropertyMetaInfo>> execute(IInternalAccess ia)
@@ -80,7 +86,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp==null? new Future<Map<String, INFPropertyMetaInfo>>((Map<String, INFPropertyMetaInfo>)null) :nfp.getComponentPropertyProvider().getNFPropertyMetaInfos();
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -90,7 +96,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(IExternalAccess component, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<INFPropertyMetaInfo>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<INFPropertyMetaInfo>()
 		{
 			@Classname("getNFPropertyMetaInfo3")
 			public IFuture<INFPropertyMetaInfo> execute(IInternalAccess ia)
@@ -98,7 +106,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getComponentPropertyProvider().getNFPropertyMetaInfo(name);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -109,7 +117,9 @@ public class SNFPropertyProvider
 	 */
 	public static <T> IFuture<T> getNFPropertyValue(IExternalAccess component, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<T>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<T>()
 		{
 			@Classname("getNFPropertyValue4")
 			public IFuture<T> execute(IInternalAccess ia)
@@ -117,7 +127,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getComponentPropertyProvider().getNFPropertyValue(name);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -130,7 +140,9 @@ public class SNFPropertyProvider
 //	public <T, U> IFuture<T> getNFPropertyValue(String name, Class<U> unit);
 	public static <T, U> IFuture<T> getNFPropertyValue(IExternalAccess component, final String name, final U unit)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<T>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<T>()
 		{
 			@Classname("getNFPropertyValue5")
 			public IFuture<T> execute(IInternalAccess ia)
@@ -138,7 +150,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getComponentPropertyProvider().getNFPropertyValue(name, unit);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -147,7 +159,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> addNFProperty(IExternalAccess component, final INFProperty<?, ?> nfprop)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Void>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Void>()
 		{
 			@Classname("addNFProperty6")
 			public IFuture<Void> execute(IInternalAccess ia)
@@ -155,7 +169,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getComponentPropertyProvider().addNFProperty(nfprop);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -164,7 +178,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> removeNFProperty(IExternalAccess component, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Void>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Void>()
 		{
 			@Classname("removeNFProperty7")
 			public IFuture<Void> execute(IInternalAccess ia)
@@ -172,7 +188,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getComponentPropertyProvider().removeNFProperty(name);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -180,7 +196,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> shutdownNFPropertyProvider(IExternalAccess component)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Void>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Void>()
 		{
 			@Classname("shutdownNFPropertyProvider8")
 			public IFuture<Void> execute(IInternalAccess ia)
@@ -188,7 +206,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getComponentPropertyProvider().shutdownNFPropertyProvider();
 			}
-		});
+		});*/
 	}
 	
 	//-------- service methods --------
@@ -199,7 +217,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getNFPropertyNames(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		final Future<String[]> ret = new Future<String[]>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<String[]> ret = new Future<String[]>();
 
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
 		{
@@ -217,7 +237,7 @@ public class SNFPropertyProvider
 			}
 		});
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -226,7 +246,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getNFAllPropertyNames(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		final Future<String[]> ret = new Future<String[]>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<String[]> ret = new Future<String[]>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
 		{
@@ -244,7 +266,7 @@ public class SNFPropertyProvider
 			}
 		});
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -254,7 +276,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Map<String, INFPropertyMetaInfo>> getNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		final Future<Map<String, INFPropertyMetaInfo>> ret = new Future<Map<String, INFPropertyMetaInfo>>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Map<String, INFPropertyMetaInfo>> ret = new Future<Map<String, INFPropertyMetaInfo>>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Map<String, INFPropertyMetaInfo>>(ret)
 		{
@@ -284,7 +308,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -294,7 +318,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(IExternalAccess component, final IServiceIdentifier sid, final String name)
 	{
-		final Future<INFPropertyMetaInfo> ret = new Future<INFPropertyMetaInfo>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<INFPropertyMetaInfo> ret = new Future<INFPropertyMetaInfo>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, INFPropertyMetaInfo>(ret)
 		{
@@ -312,7 +338,7 @@ public class SNFPropertyProvider
 			}
 		});
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -323,7 +349,9 @@ public class SNFPropertyProvider
 	 */
 	public static <T> IFuture<T> getNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final String name)
 	{
-		final Future<T> ret = new Future<T>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<T> ret = new Future<T>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
 		{
@@ -341,7 +369,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -354,7 +382,9 @@ public class SNFPropertyProvider
 //	public <T, U> IFuture<T> getNFPropertyValue(String name, Class<U> unit);
 	public static <T, U> IFuture<T> getNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final String name, final U unit)
 	{
-		final Future<T> ret = new Future<T>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<T> ret = new Future<T>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
 		{
@@ -372,7 +402,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -381,7 +411,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> addNFProperty(IExternalAccess component, final IServiceIdentifier sid, final INFProperty<?, ?> nfprop)
 	{
-		final Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void> ret = new Future<Void>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
 		{
@@ -399,7 +431,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -408,7 +440,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> removeNFProperty(IExternalAccess component, final IServiceIdentifier sid, final String name)
 	{
-		final Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void> ret = new Future<Void>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
 		{
@@ -426,7 +460,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -434,7 +468,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> shutdownNFPropertyProvider(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		final Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void> ret = new Future<Void>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
 		{
@@ -452,7 +488,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	//-------- provided service methods --------
@@ -463,7 +499,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> getMethodNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		final Future<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> ret = new Future<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> ret = new Future<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>(ret)
 		{
@@ -481,7 +519,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -491,7 +529,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getMethodNFPropertyNames(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
 	{
-		final Future<String[]> ret = new Future<String[]>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<String[]> ret = new Future<String[]>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
 		{
@@ -509,7 +549,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -519,7 +559,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getMethodNFAllPropertyNames(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
 	{
-		final Future<String[]> ret = new Future<String[]>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<String[]> ret = new Future<String[]>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
 		{
@@ -537,7 +579,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -546,7 +588,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Map<String, INFPropertyMetaInfo>> getMethodNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
 	{
-		final Future<Map<String, INFPropertyMetaInfo>> ret = new Future<Map<String, INFPropertyMetaInfo>>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Map<String, INFPropertyMetaInfo>> ret = new Future<Map<String, INFPropertyMetaInfo>>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Map<String, INFPropertyMetaInfo>>(ret)
 		{
@@ -564,7 +608,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -575,7 +619,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<INFPropertyMetaInfo> getMethodNFPropertyMetaInfo(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		final Future<INFPropertyMetaInfo> ret = new Future<INFPropertyMetaInfo>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<INFPropertyMetaInfo> ret = new Future<INFPropertyMetaInfo>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, INFPropertyMetaInfo>(ret)
 		{
@@ -593,7 +639,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -605,7 +651,9 @@ public class SNFPropertyProvider
 	 */
 	public static <T> IFuture<T> getMethodNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		final Future<T> ret = new Future<T>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<T> ret = new Future<T>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
 		{
@@ -636,7 +684,7 @@ public class SNFPropertyProvider
 //			}
 //		});
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -650,7 +698,9 @@ public class SNFPropertyProvider
 //	public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
 	public static <T, U> IFuture<T> getMethodNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
 	{
-		final Future<T> ret = new Future<T>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<T> ret = new Future<T>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
 		{
@@ -668,7 +718,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -678,7 +728,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> addMethodNFProperty(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final INFProperty<?, ?> nfprop)
 	{
-		final Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void> ret = new Future<Void>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
 		{
@@ -696,7 +748,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -706,7 +758,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> removeMethodNFProperty(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		final Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Void> ret = new Future<Void>();
 		
 		component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
 		{
@@ -724,7 +778,7 @@ public class SNFPropertyProvider
 			}
 		});
 
-		return ret;
+		return ret;*/
 	}
 
 	//-------- required properties --------
@@ -735,7 +789,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getRequiredNFPropertyNames(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<String[]>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<String[]>()
 		{
 			@Classname("getRequiredNFPropertyNames27")
 			public IFuture<String[]> execute(IInternalAccess ia)
@@ -743,7 +799,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getNFPropertyNames();
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -752,7 +808,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getRequiredNFAllPropertyNames(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<String[]>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<String[]>()
 		{
 			@Classname("getRequiredNFAllPropertyNames28")
 			public IFuture<String[]> execute(IInternalAccess ia)
@@ -760,7 +818,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getNFAllPropertyNames();
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -770,7 +828,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Map<String, INFPropertyMetaInfo>> getRequiredNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Map<String, INFPropertyMetaInfo>>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Map<String, INFPropertyMetaInfo>>()
 		{
 			@Classname("getRequiredNFPropertyMetaInfos29")
 			public IFuture<Map<String, INFPropertyMetaInfo>> execute(IInternalAccess ia)
@@ -778,7 +838,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getNFPropertyMetaInfos();
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -788,7 +848,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<INFPropertyMetaInfo> getRequiredNFPropertyMetaInfo(IExternalAccess component, final IServiceIdentifier sid, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<INFPropertyMetaInfo>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<INFPropertyMetaInfo>()
 		{
 			@Classname("getRequiredNFPropertyMetaInfo30")
 			public IFuture<INFPropertyMetaInfo> execute(IInternalAccess ia)
@@ -796,7 +858,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getNFPropertyMetaInfo(name);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -807,7 +869,9 @@ public class SNFPropertyProvider
 	 */
 	public static <T> IFuture<T> getRequiredNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<T>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<T>()
 		{
 			@Classname("getRequiredNFPropertyValue31")
 			public IFuture<T> execute(IInternalAccess ia)
@@ -815,7 +879,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getNFPropertyValue(name);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -828,7 +892,9 @@ public class SNFPropertyProvider
 //	public <T, U> IFuture<T> getNFPropertyValue(String name, Class<U> unit);
 	public static <T, U> IFuture<T> getRequiredNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final String name, final U unit)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<T>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<T>()
 		{
 			@Classname("getRequiredNFPropertyValue32")
 			public IFuture<T> execute(IInternalAccess ia)
@@ -836,7 +902,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getNFPropertyValue(name, unit);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -845,7 +911,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> addRequiredNFProperty(IExternalAccess component, final IServiceIdentifier sid, final INFProperty<?, ?> nfprop)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Void>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Void>()
 		{
 			@Classname("addRequiredNFProperty33")
 			public IFuture<Void> execute(IInternalAccess ia)
@@ -853,7 +921,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).addNFProperty(nfprop);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -862,7 +930,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> removeRequiredNFProperty(IExternalAccess component, final IServiceIdentifier sid, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Void>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Void>()
 		{
 			@Classname("removeRequiredNFProperty34")
 			public IFuture<Void> execute(IInternalAccess ia)
@@ -870,7 +940,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).removeNFProperty(name);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -878,7 +948,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> shutdownRequiredNFPropertyProvider(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Void>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Void>()
 		{
 			@Classname("shutdownRequiredNFPropertyProvider35")
 			public IFuture<Void> execute(IInternalAccess ia)
@@ -886,7 +958,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).shutdownNFPropertyProvider();
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -895,7 +967,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> getRequiredMethodNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>()
 		{
 			@Classname("getRequiredMethodNFPropertyMetaInfos36")
 			public IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> execute(IInternalAccess ia)
@@ -903,7 +977,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getMethodNFPropertyMetaInfos();
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -913,7 +987,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getRequiredMethodNFPropertyNames(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<String[]>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<String[]>()
 		{
 			@Classname("getRequiredMethodNFPropertyNames37")
 			public IFuture<String[]> execute(IInternalAccess ia)
@@ -921,7 +997,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getMethodNFPropertyNames(method);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -931,7 +1007,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<String[]> getRequiredMethodNFAllPropertyNames(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<String[]>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<String[]>()
 		{
 			@Classname("getRequiredMethodNFAllPropertyNames38")
 			public IFuture<String[]> execute(IInternalAccess ia)
@@ -939,7 +1017,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getMethodNFAllPropertyNames(method);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -948,7 +1026,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Map<String, INFPropertyMetaInfo>> getRequiredMethodNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Map<String, INFPropertyMetaInfo>>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Map<String, INFPropertyMetaInfo>>()
 		{
 			@Classname("getRequiredMethodNFPropertyMetaInfos39")
 			public IFuture<Map<String, INFPropertyMetaInfo>> execute(IInternalAccess ia)
@@ -956,7 +1036,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getMethodNFPropertyMetaInfos(method);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -967,7 +1047,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<INFPropertyMetaInfo> getRequiredMethodNFPropertyMetaInfo(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<INFPropertyMetaInfo>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<INFPropertyMetaInfo>()
 		{
 			@Classname("getRequiredMethodNFPropertyMetaInfo40")
 			public IFuture<INFPropertyMetaInfo> execute(IInternalAccess ia)
@@ -975,7 +1057,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getMethodNFPropertyMetaInfo(method, name);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -987,7 +1069,9 @@ public class SNFPropertyProvider
 	 */
 	public static <T> IFuture<T> getRequiredMethodNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<T>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<T>()
 		{
 			@Classname("getRequiredMethodNFPropertyValue41")
 			public IFuture<T> execute(IInternalAccess ia)
@@ -995,7 +1079,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getMethodNFPropertyValue(method, name);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -1009,7 +1093,9 @@ public class SNFPropertyProvider
 //	public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
 	public static <T, U> IFuture<T> getRequiredMethodNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<T>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<T>()
 		{
 			@Classname("getRequiredMethodNFPropertyValue42")
 			public IFuture<T> execute(IInternalAccess ia)
@@ -1017,7 +1103,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).getMethodNFPropertyValue(method, name, unit);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -1027,7 +1113,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> addRequiredMethodNFProperty(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final INFProperty<?, ?> nfprop)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Void>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Void>()
 		{
 			@Classname("addRequiredMethodNFProperty43")
 			public IFuture<Void> execute(IInternalAccess ia)
@@ -1035,7 +1123,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).addMethodNFProperty(method, nfprop);
 			}
-		});
+		});*/
 	}
 	
 	/**
@@ -1045,7 +1133,9 @@ public class SNFPropertyProvider
 	 */
 	public static IFuture<Void> removeRequiredMethodNFProperty(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		return component.scheduleStep(new IPriorityComponentStep<Void>()
+		throw new UnsupportedOperationException();
+		
+		/*return component.scheduleStep(new IPriorityComponentStep<Void>()
 		{
 			@Classname("removeRequiredMethodNFProperty44")
 			public IFuture<Void> execute(IInternalAccess ia)
@@ -1053,7 +1143,7 @@ public class SNFPropertyProvider
 				INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
 				return nfp.getRequiredServicePropertyProvider(sid).removeMethodNFProperty(method, name);
 			}
-		});
+		});*/
 	}
 	
 }

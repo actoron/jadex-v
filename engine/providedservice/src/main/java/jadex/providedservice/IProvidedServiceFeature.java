@@ -1,5 +1,7 @@
 package jadex.providedservice;
 
+import jadex.common.MethodInfo;
+
 public interface IProvidedServiceFeature 
 {
 	/**
@@ -63,16 +65,16 @@ public interface IProvidedServiceFeature
 	 *  @param sid The service identifier.
 	 *  @param mi The method info.
 	 *  @param listener The method listener.
-	 * /
-	public void addMethodInvocationListener(IServiceIdentifier sid, MethodInfo mi, IMethodInvocationListener listener);*/
+	 */
+	public void addMethodInvocationListener(IServiceIdentifier sid, MethodInfo mi, IMethodInvocationListener listener);
 	
 	/**
 	 *  Remove a method invocation handler.
 	 *  @param sid The service identifier.
 	 *  @param mi The method info.
 	 *  @param listener The method listener.
-	 * /
-	public void removeMethodInvocationListener(IServiceIdentifier sid, MethodInfo mi, IMethodInvocationListener listener);*/
+	 */
+	public void removeMethodInvocationListener(IServiceIdentifier sid, MethodInfo mi, IMethodInvocationListener listener);
 
 	/**
 	 *  Test if service and method has listeners.

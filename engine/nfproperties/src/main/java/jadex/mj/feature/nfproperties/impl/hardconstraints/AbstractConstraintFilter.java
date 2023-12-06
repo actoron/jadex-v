@@ -48,7 +48,9 @@ public abstract class AbstractConstraintFilter<T> implements IAsyncFilter<T>
 		if(getValue() == null)
 			return IFuture.TRUE;
 		
-		final Future<Boolean> ret = new Future<Boolean>();
+		throw new UnsupportedOperationException();
+		
+		/*final Future<Boolean> ret = new Future<Boolean>();
 		component.getNFPropertyValue(((IService)service).getServiceId(), propname)
 			.addResultListener(new ExceptionDelegationResultListener<Object, Boolean>(ret)
 		{
@@ -56,7 +58,8 @@ public abstract class AbstractConstraintFilter<T> implements IAsyncFilter<T>
 			{
 				doFilter((IService) service, result).addResultListener(new DelegationResultListener<Boolean>(ret));
 			}
-		});
+		});*/
+		
 //		
 //		INFMixedPropertyProvider prov = ((INFMixedPropertyProvider)((IService)service).getExternalComponentFeature(INFPropertyComponentFeature.class));
 ////		((IService)service).getNFPropertyValue(propname).addResultListener(new IResultListener<Object>()
@@ -72,7 +75,7 @@ public abstract class AbstractConstraintFilter<T> implements IAsyncFilter<T>
 //				ret.setException(exception);
 //			}
 //		});
-		return ret;
+		//return ret;
 	}
 	
 	/**

@@ -1,6 +1,7 @@
 package jadex.providedservice.impl.service;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 import jadex.bytecode.ProxyFactory;
 import jadex.common.IValueFetcher;
+import jadex.common.MethodInfo;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
 import jadex.core.impl.Component;
@@ -27,14 +29,13 @@ import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
 import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
+import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.ServiceRegistry;
-import jadex.serialization.ISerializationServices;
-import jadex.serialization.SerializationServices;
 
 public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeature//, IParameterGuesser
 {
@@ -45,6 +46,9 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 	
 	/** The map of provided service infos. (sid -> provided service info) */
 	protected Map<IServiceIdentifier, ProvidedServiceInfo> serviceinfos;
+	
+	/** The map of provided service infos. (sid -> method listener) */
+	protected Map<IServiceIdentifier, MethodListenerHandler> servicelisteners;
 	
 	protected ProvidedServiceFeature(Component self)
 	{
@@ -997,4 +1001,71 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 			guesser	= new SimpleParameterGuesser(Collections.singleton(this));
 		return guesser.guessParameter(type, exact);
 	}*/
+	
+	/**
+	 *  Add a method invocation handler.
+	 */
+	public void addMethodInvocationListener(IServiceIdentifier sid, MethodInfo mi, IMethodInvocationListener listener)
+	{
+//		System.out.println("added lis: "+sid+" "+mi+" "+hashCode());
+		
+		if(servicelisteners==null)
+			servicelisteners = new HashMap<IServiceIdentifier, MethodListenerHandler>();
+		MethodListenerHandler handler = servicelisteners.get(sid);
+		if(handler==null)
+		{
+			handler = new MethodListenerHandler();
+			servicelisteners.put(sid, handler);
+		}
+		handler.addMethodListener(mi, listener);
+	}
+	
+	/**
+	 *  Remove a method invocation handler.
+	 */
+	public void removeMethodInvocationListener(IServiceIdentifier sid, MethodInfo mi, IMethodInvocationListener listener)
+	{
+		if(servicelisteners!=null)
+		{
+			MethodListenerHandler handler = servicelisteners.get(sid);
+			if(handler!=null)
+			{
+				handler.removeMethodListener(mi, listener);
+			}
+		}
+	}
+	
+	/**
+	 *  Notify listeners that a service method has been called.
+	 */
+	public void notifyMethodListeners(IServiceIdentifier sid, boolean start, Object proxy, final Method method, final Object[] args, Object callid, ServiceInvocationContext context)
+	{
+		if(servicelisteners!=null)
+		{
+			MethodListenerHandler handler = servicelisteners.get(sid);
+			if(handler!=null)
+			{
+//				MethodInfo mi = new MethodInfo(method);
+				handler.notifyMethodListeners(start, proxy, method, args, callid, context);
+			}
+		}
+	}
+	
+	/**
+	 *  Test if service and method has listeners.
+	 */
+	public boolean hasMethodListeners(IServiceIdentifier sid, MethodInfo mi)
+	{
+		boolean ret = false;
+		if(servicelisteners!=null)
+		{
+			MethodListenerHandler handler = servicelisteners.get(sid);
+			if(handler!=null)
+			{
+				ret = handler.hasMethodListeners(sid, mi);
+			}
+		}
+		
+		return ret;
+	}
 }

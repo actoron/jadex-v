@@ -2,6 +2,7 @@ package jadex.mj.feature.nfproperties.sensor.service;
 
 import java.lang.reflect.Method;
 
+import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.impl.service.ServiceInvocationContext;
 import jadex.providedservice.impl.service.interceptors.ResolveInterceptor;
 

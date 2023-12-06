@@ -2,13 +2,13 @@ package jadex.mj.feature.nfproperties.sensor.service;
 
 import java.lang.reflect.Method;
 
-import jadex.bridge.service.component.IProvidedServicesFeature;
 import jadex.bytecode.ProxyFactory;
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.mj.feature.nfproperties.impl.NFPropertyMetaInfo;
 import jadex.mj.feature.nfproperties.impl.SimpleValueNFProperty;
+import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
@@ -61,6 +61,7 @@ public class WaitqueueProperty extends SimpleValueNFProperty<Integer, Void>
 					setValue(Integer.valueOf(cnt));
 				}
 			});
+			
 			comp.getFeature(IProvidedServiceFeature.class).addMethodInvocationListener(sid, method, listener);
 		}
 		else
@@ -83,7 +84,7 @@ public class WaitqueueProperty extends SimpleValueNFProperty<Integer, Void>
 	 */
 	public IFuture<Void> dispose()
 	{
-		comp.getFeature(IProvidedServicesFeature.class).removeMethodInvocationListener(sid, method, listener);
+		comp.getFeature(IProvidedServiceFeature.class).removeMethodInvocationListener(sid, method, listener);
 		return IFuture.DONE;
 	}
 }

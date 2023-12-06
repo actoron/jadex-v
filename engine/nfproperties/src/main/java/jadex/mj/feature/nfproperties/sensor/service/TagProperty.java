@@ -7,10 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bridge.VersionInfo;
-import jadex.bridge.component.IArgumentsResultsFeature;
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
+import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -47,7 +46,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	public static final String JADEX_VERSION = "\""+JADEX_VERSION_INTERNAL+"\"";
 	
 	/** The component. */
-	protected IInternalAccess component;
+	protected IComponent component;
 	
 	/** The parameters. */
 	protected Map<String, Object> params;
@@ -55,7 +54,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	/**
 	 *  Creates the property.
 	 */
-	public TagProperty(IInternalAccess comp, IService service, MethodInfo method, Map<String, Object> params)
+	public TagProperty(IComponent comp, IService service, MethodInfo method, Map<String, Object> params)
 	{
 		super(new NFPropertyMetaInfo(NAME, String.class, Void.class, false));
 		this.component = comp;
@@ -71,7 +70,9 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	{
 		Future<Collection<String>> ret = new Future<Collection<String>>();
 		
-		boolean found = false;
+		throw new UnsupportedOperationException();
+		
+		/*boolean found = false;
 		if(params!=null)
 		{
 			Collection<String> tags = null;
@@ -88,6 +89,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 			if(params.containsKey(ARGUMENT))
 			{
 				Map<String, Object> args = component.getFeature(IArgumentsResultsFeature.class).getArguments();
+				
 				Collection<String> tags2 = convertToCollection(args.get((String)params.get(ARGUMENT)));
 				if(tags==null)
 				{
@@ -155,7 +157,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 		if(!found)
 			ret.setException(new RuntimeException("Could not evaluate tag value, no hint given (value or argument name)"));
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -207,14 +209,14 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 		for(int i=0; i<tags.size(); i++)
 		{
 			String tag = it.next();
-			if(PLATFORM_NAME_INTERNAL.equals(tag) || PLATFORM_NAME.equals(tag))
+			/*if(PLATFORM_NAME_INTERNAL.equals(tag) || PLATFORM_NAME.equals(tag))
 			{
 				tag = component.getId().getPlatformPrefix();
 			}
 			else if(JADEX_VERSION_INTERNAL.equals(tag) || JADEX_VERSION.equals(tag))
 			{
 				tag = VersionInfo.getInstance().getVersion();
-			}
+			}*/
 			ret.add(tag);
 		}
 		return ret;

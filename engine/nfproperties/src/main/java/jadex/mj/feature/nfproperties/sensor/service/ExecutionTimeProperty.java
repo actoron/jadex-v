@@ -1,21 +1,13 @@
 package jadex.mj.feature.nfproperties.sensor.service;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-
-import jadex.bridge.service.component.IProvidedServicesFeature;
-import jadex.bridge.service.component.IRequiredServicesFeature;
-import jadex.bridge.service.types.clock.IClockService;
-import jadex.bytecode.ProxyFactory;
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.mj.feature.nfproperties.sensor.time.TimedProperty;
+import jadex.providedservice.IMethodInvocationListener;
+import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.impl.search.ServiceQuery;
-import jadex.providedservice.impl.service.ServiceInvocationContext;
 
 /**
  *  Property for the overall execution time of a method or a service.
@@ -35,7 +27,7 @@ public class ExecutionTimeProperty extends TimedProperty
 	protected MethodInfo method;
 	
 	/** The clock. */
-	protected IClockService clock;
+	//protected IClockService clock;
 	
 	/**
 	 *  Create a new property.
@@ -45,7 +37,10 @@ public class ExecutionTimeProperty extends TimedProperty
 		super(NAME, comp, true);
 		this.method = method;
 		
-		if(service!=null)
+		// todo:
+		throw new UnsupportedOperationException();
+		
+		/*if(service!=null)
 		{
 			this.sid = service.getServiceId();
 		
@@ -78,13 +73,13 @@ public class ExecutionTimeProperty extends TimedProperty
 					}
 				});
 	//			System.out.println("installing lis: "+comp.getComponentIdentifier().getName());
-				comp.getFeature(IProvidedServicesFeature.class).addMethodInvocationListener(service.getServiceId(), method, listener);
+				comp.getFeature(IProvidedServiceFeature.class).addMethodInvocationListener(service.getServiceId(), method, listener);
 			}
 			else
 			{
 				throw new RuntimeException("Cannot install waiting time listener hook.");
 			}
-		}
+		}*/
 	}
 	
 	/**
@@ -123,7 +118,7 @@ public class ExecutionTimeProperty extends TimedProperty
 	 */
 	public IFuture<Void> dispose()
 	{
-		comp.getFeature(IProvidedServicesFeature.class).removeMethodInvocationListener(sid, method, listener);
+		comp.getFeature(IProvidedServiceFeature.class).removeMethodInvocationListener(sid, method, listener);
 		return IFuture.DONE;
 	}
 }

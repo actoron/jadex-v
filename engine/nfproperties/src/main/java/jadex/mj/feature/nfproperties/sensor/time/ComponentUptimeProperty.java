@@ -13,12 +13,15 @@ public class ComponentUptimeProperty extends NFRootProperty<Long, TimeUnit>//ext
 	/** The name of the property. */
 	public static final String NAME = "uptime";
 	
+	protected long creationtime;
+	
 	/**
 	 *  Create a new property.
 	 */
 	public ComponentUptimeProperty(final IComponent comp)
 	{
 		super(comp, new NFPropertyMetaInfo(NAME, long.class, TimeUnit.class, true));
+		this.creationtime = System.currentTimeMillis();
 	}
 	
 	/**
@@ -26,6 +29,7 @@ public class ComponentUptimeProperty extends NFRootProperty<Long, TimeUnit>//ext
 	 */
 	public Long measureValue()
 	{
-		return System.currentTimeMillis()-comp.getDescription().getCreationTime();
+		//return System.currentTimeMillis()-comp.getDescription().getCreationTime();
+		return System.currentTimeMillis()-creationtime;
 	}
 }

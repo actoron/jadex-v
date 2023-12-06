@@ -26,7 +26,6 @@ import jadex.mj.feature.nfproperties.INFPropertyComponentFeature;
 import jadex.mj.feature.nfproperties.impl.annotation.NFProperties;
 import jadex.mj.feature.nfproperties.impl.annotation.NFProperty;
 import jadex.mj.feature.nfproperties.impl.annotation.SNameValue;
-import jadex.mj.feature.nfproperties.impl.modelinfo.NFPropertyInfo;
 import jadex.mj.feature.nfproperties.sensor.service.TagProperty;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
@@ -88,8 +87,10 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void>	init()
 	{
-//		System.out.println("init start: "+getComponent().getComponentIdentifier());
+		return IFuture.DONE;
 		
+//		System.out.println("init start: "+getComponent().getComponentIdentifier());
+	/*	
 		final Future<Void> ret = new Future<Void>();
 		
 		int cnt = 0;
@@ -104,7 +105,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				try
 				{
 					Class<?> clazz = nfprop.getClazz().getType(getComponent().getClassLoader(), getComponent().getModel().getAllImports());
-					INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, getInternalAccess(), null, null, nfprop.getParameters());
+					INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, getComponent(), null, null, nfprop.getParameters());
 					cnt++;
 					getComponentPropertyProvider().addNFProperty(nfp).addResultListener(lis);
 				}
@@ -149,7 +150,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 //			}
 //		});
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -168,10 +169,13 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public INFPropertyProvider getComponentPropertyProvider()
 	{
-		if(compprovider==null)
-			this.compprovider = new NFPropertyProvider(getComponent().getId().getParent(), getInternalAccess()); 
+		throw new UnsupportedOperationException();
 		
-		return compprovider;
+		/*
+		if(compprovider==null)
+			this.compprovider = new NFPropertyProvider(getComponent().getId().getParent(), getComponent()); 
+		
+		return compprovider;*/
 	}
 	
 	/**
@@ -198,7 +202,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		ret = reqserprops.get(sid);
 		if(ret==null)
 		{
-			ret = new NFMethodPropertyProvider(null, getInternalAccess()); 
+			ret = new NFMethodPropertyProvider(getComponent()); 
 			reqserprops.put(sid, ret);
 //			System.out.println("created req ser provider: "+sid+" "+hashCode());
 		}
@@ -228,7 +232,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		{
 			// TODO: parent???
 //			ret = new NFMethodPropertyProvider(getComponent().getComponentIdentifier(), getComponent()); 
-			ret = new NFMethodPropertyProvider(null, getInternalAccess()); 
+			ret = new NFMethodPropertyProvider(getComponent()); 
 			proserprops.put(sid, ret);
 		}
 		return ret;
@@ -249,7 +253,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		final Future<Void> ret = new Future<Void>();
 		
 		List<Class<?>> classes = new ArrayList<Class<?>>();
-		Class<?> superclazz = ser.getServiceId().getServiceType().getType(getComponent().getClassLoader());
+		Class<?> superclazz = ser.getServiceId().getServiceType().getType(getComponent().getClass().getClassLoader());
 		while(superclazz != null && !Object.class.equals(superclazz))
 		{
 			classes.add(superclazz);
@@ -317,18 +321,20 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> addNFProperties(NFProperties nfprops, IService ser)
 	{
-		Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*Future<Void> ret = new Future<Void>();
 		INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(ser.getServiceId());
 		
 		CounterResultListener<Void> lis = new CounterResultListener<Void>(nfprops.value().length, new DelegationResultListener<Void>(ret));
 		for(NFProperty nfprop : nfprops.value())
 		{
 			Class<?> clazz = nfprop.value();
-			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(clazz, getInternalAccess(), ser, null, SNameValue.createUnparsedExpressionsList(nfprop.parameters()));
+			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(clazz, getComponent(), ser, null, SNameValue.createUnparsedExpressionsList(nfprop.parameters()));
 			prov.addNFProperty(prop).addResultListener(lis);
 		}
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -336,7 +342,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> addTags(Tags tags, IService ser)
 	{
-		INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(ser.getServiceId());
+		throw new UnsupportedOperationException();
+		
+		/*INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(ser.getServiceId());
 		
 		List<UnparsedExpression> params = new ArrayList<>();
 		
@@ -351,7 +359,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 			{
 				try
 				{
-					Object val = SJavaParser.evaluateExpression(tag.include(), getInternalAccess().getModel().getAllImports(), getInternalAccess().getFetcher(), getInternalAccess().getClassLoader());
+					Object val = SJavaParser.evaluateExpression(tag.include(), getComponent().getModel().getAllImports(), getComponent().getFetcher(), getComponent().getClassLoader());
 					if(val instanceof Boolean && ((Boolean)val).booleanValue())
 						params.add(new UnparsedExpression(TagProperty.NAME+"_"+i, tag.value()));
 				}
@@ -369,10 +377,10 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		IFuture<Void> ret = IFuture.DONE;
 		if(params.size()>0)
 		{
-			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(TagProperty.class, getInternalAccess(), ser, null, params);
+			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(TagProperty.class, getComponent(), ser, null, params);
 			ret = prov.addNFProperty(prop);
 		}
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -380,18 +388,20 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> addNFMethodProperties(NFProperties nfprops, IService ser, MethodInfo mi)
 	{
-		Future<Void> ret = new Future<Void>();
+		throw new UnsupportedOperationException();
+		
+		/*Future<Void> ret = new Future<Void>();
 		
 		INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(ser.getServiceId());
 		CounterResultListener<Void> lis = new CounterResultListener<Void>(nfprops.value().length, new DelegationResultListener<Void>(ret));
 		for(NFProperty nfprop : nfprops.value())
 		{
 			Class<?> clazz = ((NFProperty)nfprop).value();
-			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(clazz, getInternalAccess(), ser, mi, SNameValue.createUnparsedExpressionsList(nfprop.parameters()));
+			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(clazz, getComponent(), ser, mi, SNameValue.createUnparsedExpressionsList(nfprop.parameters()));
 			prov.addMethodNFProperty(mi, prop).addResultListener(lis);
 		}
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -533,7 +543,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String[]> getNFPropertyNames(IServiceIdentifier sid)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			 return getProvidedServicePropertyProvider(sid).getNFPropertyNames();
 		}
@@ -558,7 +570,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 			});
 
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -567,7 +579,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String[]> getNFAllPropertyNames(final IServiceIdentifier sid)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			 return getProvidedServicePropertyProvider(sid).getNFAllPropertyNames();
 		}
@@ -590,7 +604,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -600,7 +614,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Map<String, INFPropertyMetaInfo>> getNFPropertyMetaInfos(IServiceIdentifier sid)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(sid);
 			if(prov!=null)
@@ -641,7 +657,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -651,7 +667,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(final IServiceIdentifier sid, final String name)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getNFPropertyMetaInfo(name);
 		}
@@ -674,7 +692,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -685,7 +703,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public <T> IFuture<T> getNFPropertyValue(final IServiceIdentifier sid, final String name)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getNFPropertyValue(name);
 		}
@@ -708,7 +728,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -720,7 +740,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public <T, U> IFuture<T> getNFPropertyValue(final IServiceIdentifier sid, final String name, final U unit)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getNFPropertyValue(name, unit);
 		}
@@ -743,7 +765,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -755,7 +777,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String> getNFPropertyPrettyPrintValue(IServiceIdentifier sid, String name) 
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getNFPropertyPrettyPrintValue(name);
 		}
@@ -778,7 +802,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -787,7 +811,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> addNFProperty(final IServiceIdentifier sid, final INFProperty<?, ?> nfprop)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).addNFProperty(nfprop);
 		}
@@ -810,7 +836,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -819,7 +845,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> removeNFProperty(final IServiceIdentifier sid, final String name)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).removeNFProperty(name);
 		}
@@ -842,7 +870,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -850,7 +878,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> shutdownNFPropertyProvider(final IServiceIdentifier sid)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).shutdownNFPropertyProvider();
 		}
@@ -873,7 +903,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	//-------- provided service methods --------
@@ -884,7 +914,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> getMethodNFPropertyMetaInfos(final IServiceIdentifier sid)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfos();
 		}
@@ -908,7 +940,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -918,7 +950,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String[]> getMethodNFPropertyNames(final IServiceIdentifier sid, final MethodInfo method)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyNames(method);
 		}
@@ -941,7 +975,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -951,7 +985,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String[]> getMethodNFAllPropertyNames(final IServiceIdentifier sid, final MethodInfo method)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyNames(method);
 		}
@@ -974,7 +1010,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -983,7 +1019,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Map<String, INFPropertyMetaInfo>> getMethodNFPropertyMetaInfos(final IServiceIdentifier sid, final MethodInfo method)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfos(method);
 		}
@@ -1006,7 +1044,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -1020,7 +1058,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<INFPropertyMetaInfo> getMethodNFPropertyMetaInfo(final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfo(method, name);
 		}
@@ -1043,7 +1083,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -1055,7 +1095,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public <T> IFuture<T> getMethodNFPropertyValue(final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyValue(method, name);
 		}
@@ -1091,7 +1133,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 //			{
 //				System.out.println("ex: "+exception);
 //			}
-//		});
+//		});*/
 	}
 	
 	/**
@@ -1105,7 +1147,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 //	public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
 	public <T, U> IFuture<T> getMethodNFPropertyValue(final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyValue(method, name, unit);
 		}
@@ -1128,13 +1172,15 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 
 	public IFuture<String> getMethodNFPropertyPrettyPrintValue(IServiceIdentifier sid, MethodInfo method, String name) 
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyPrettyPrintValue(method, name);
 		}
@@ -1157,7 +1203,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -1167,7 +1213,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> addMethodNFProperty(final IServiceIdentifier sid, final MethodInfo method, final INFProperty<?, ?> nfprop)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).addMethodNFProperty(method, nfprop);
 		}
@@ -1190,7 +1238,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 	
 	/**
@@ -1200,7 +1248,9 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> removeMethodNFProperty(final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		if(sid.getProviderId().equals(getInternalAccess().getId()))
+		throw new UnsupportedOperationException();
+		
+		/*if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).removeMethodNFProperty(method, name);
 		}
@@ -1223,7 +1273,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				}
 			});
 			return ret;
-		}
+		}*/
 	}
 
 	//-------- required properties --------

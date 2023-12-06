@@ -34,9 +34,10 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 	/**
 	 *  Create a new provider.
 	 */
-	public NFMethodPropertyProvider(ComponentIdentifier parent, IComponent component)
+	//public NFMethodPropertyProvider(ComponentIdentifier parent, IComponent component)
+	public NFMethodPropertyProvider(IComponent component)
 	{
-		super(parent, component);
+		super(component);
 	}
 	
 	/**
@@ -295,14 +296,14 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 		}
 		nfmap.put(nfprop.getName(), nfprop);
 		
-		if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
+		/*if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
 		{
 			MonitoringEvent me = new MonitoringEvent(getComponent().getId(), getComponent().getDescription().getCreationTime(), 
 				MonitoringEvent.TYPE_PROPERTY_REMOVED, System.currentTimeMillis(), PublishEventLevel.COARSE);
 			me.setProperty("propname", nfprop.getName());
 			getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(me, PublishTarget.TOALL).addResultListener(new DelegationResultListener<Void>(ret));
 		}
-		else
+		else*/
 		{
 			ret.setResult(null);
 		}
@@ -328,14 +329,14 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 				{
 					public void customResultAvailable(Void result)
 					{
-						if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
+						/*if(getComponent().getFeature(IMonitoringComponentFeature.class).hasEventTargets(PublishTarget.TOALL, PublishEventLevel.COARSE))
 						{
 							MonitoringEvent me = new MonitoringEvent(getComponent().getId(), getComponent().getDescription().getCreationTime(), 
 								MonitoringEvent.TYPE_PROPERTY_REMOVED, System.currentTimeMillis(), PublishEventLevel.COARSE);
 							me.setProperty("propname", name);
 							getComponent().getFeature(IMonitoringComponentFeature.class).publishEvent(me, PublishTarget.TOALL).addResultListener(new DelegationResultListener<Void>(ret));
 						}
-						else
+						else*/
 						{
 							ret.setResult(null);
 						}
