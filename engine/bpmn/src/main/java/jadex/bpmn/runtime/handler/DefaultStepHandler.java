@@ -33,7 +33,7 @@ public class DefaultStepHandler implements IStepHandler
 	{
 		assert instance.getFeature(IExecutionFeature.class).isComponentThread();
 		
-		System.out.println("stephandler: "+thread.getId()+" "+instance.getId().getLocalName()+": step "+activity+", data "+thread.getData());
+		//System.out.println("stephandler: "+thread.getId()+" "+instance.getId().getLocalName()+": step "+activity+", data "+thread.getData());
 		
 //		if("Participant_1".equals(instance.getComponentIdentifier().getLocalName()))
 //		{
@@ -277,6 +277,13 @@ public class DefaultStepHandler implements IStepHandler
 			thread.setActivity(null);
 			if(thread.getParent()!=null)
 				thread.getParent().removeThread(thread);
+			
+			ProcessThread topthread = thread.getTopLevelThread();
+			if(topthread.isFinished(null, null))
+			{
+				// todo: check for new event triggers that can continue process
+				instance.terminate();
+			}
 		} 
 		else
 		{

@@ -1419,6 +1419,19 @@ public class ProcessThread	implements ITaskContext
 		return ret;
 	}	
 	
+	/**
+	 *  Get the top level thread.
+	 */
+	public ProcessThread getTopLevelThread()
+	{
+		ProcessThread ret = this;
+		
+		while(ret.getParent()!=null)
+			ret = ret.getParent();
+		
+		return ret;
+	}
+	
 //	public void removeSubcontext(ThreadContext context)
 //	{
 ////		assert threads!=null && threads.containsKey(context.getInitiator());
