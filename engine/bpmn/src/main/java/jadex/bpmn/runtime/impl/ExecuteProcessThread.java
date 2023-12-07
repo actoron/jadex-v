@@ -1,9 +1,10 @@
-package jadex.bpmn.runtime;
+package jadex.bpmn.runtime.impl;
 
 import java.util.List;
 
-import jadex.bpmn.features.IBpmnComponentFeature;
 import jadex.bpmn.model.MActivity;
+import jadex.bpmn.runtime.IActivityHandler;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.common.IFilter;
 import jadex.core.IComponent;
 import jadex.core.IThrowingConsumer;

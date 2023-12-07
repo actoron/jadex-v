@@ -1,10 +1,10 @@
-package jadex.bpmn.features;
+package jadex.bpmn.runtime.impl;
 
 import java.util.List;
 
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.runtime.IActivityHandler;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 
@@ -72,6 +72,13 @@ public interface IInternalBpmnComponentFeature
 	 *  @return The activity handler.
 	 */
 	public IActivityHandler getActivityHandler(MActivity activity);
+	
+	/**
+	 *  Get the activity handler for an activity.
+	 *  @param type The activity type.
+	 *  @return The activity handler.
+	 */
+	public IActivityHandler getActivityHandler(String type);
 	
 	/**
 	 *  Get the top level thread (is not executed and just acts as top level thread container).

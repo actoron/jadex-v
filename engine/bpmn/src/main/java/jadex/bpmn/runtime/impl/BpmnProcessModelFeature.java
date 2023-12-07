@@ -1,7 +1,9 @@
-package jadex.bpmn.runtime;
+package jadex.bpmn.runtime.impl;
 
 import java.util.Collections;
 
+import jadex.bpmn.runtime.BpmnProcess;
+import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SimpleParameterGuesser;

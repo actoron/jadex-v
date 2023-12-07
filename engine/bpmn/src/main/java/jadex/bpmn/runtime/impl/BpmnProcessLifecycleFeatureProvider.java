@@ -1,7 +1,9 @@
-package jadex.bpmn.runtime;
+package jadex.bpmn.runtime.impl;
 
 import java.util.Set;
 
+import jadex.bpmn.runtime.BpmnProcess;
+import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;

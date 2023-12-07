@@ -1,5 +1,6 @@
-package jadex.bpmn.runtime;
+package jadex.bpmn.runtime.impl;
 
+import jadex.bpmn.runtime.BpmnProcess;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.model.IModelFeature;

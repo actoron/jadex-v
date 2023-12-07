@@ -1,4 +1,4 @@
-package jadex.bpmn.runtime;
+package jadex.bpmn.runtime.impl;
 
 import java.util.Map;
 

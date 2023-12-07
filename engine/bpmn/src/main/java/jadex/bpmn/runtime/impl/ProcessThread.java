@@ -1,4 +1,4 @@
-package jadex.bpmn.runtime;
+package jadex.bpmn.runtime.impl;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -13,8 +13,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import jadex.bpmn.features.IBpmnComponentFeature;
-import jadex.bpmn.features.IInternalBpmnComponentFeature;
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.MDataEdge;
@@ -26,6 +24,9 @@ import jadex.bpmn.model.MSubProcess;
 import jadex.bpmn.model.MTask;
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
+import jadex.bpmn.runtime.BpmnProcess;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
+import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.bpmn.runtime.handler.ICancelable;
 import jadex.bpmn.runtime.handler.SplitInfo;
 import jadex.bpmn.runtime.handler.SubProcessActivityHandler.SubprocessResultHandler;

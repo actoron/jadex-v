@@ -1,4 +1,4 @@
-package jadex.bpmn.runtime;
+package jadex.bpmn.runtime.impl;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -9,13 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bpmn.features.IBpmnComponentFeature;
-import jadex.bpmn.features.IInternalBpmnComponentFeature;
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.MSequenceEdge;
 import jadex.bpmn.model.MSubProcess;
 import jadex.bpmn.model.MTask;
+import jadex.bpmn.runtime.BpmnProcess;
+import jadex.bpmn.runtime.IActivityHandler;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
+import jadex.bpmn.runtime.IStepHandler;
+import jadex.bpmn.runtime.ProcessThreadInfo;
 import jadex.bpmn.runtime.handler.DefaultActivityHandler;
 import jadex.bpmn.runtime.handler.DefaultStepHandler;
 import jadex.bpmn.runtime.handler.EventEndErrorActivityHandler;
@@ -516,6 +519,16 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 	public IActivityHandler getActivityHandler(MActivity activity)
 	{
 		return (IActivityHandler)activityhandlers.get(activity.getActivityType());
+	}
+	
+	/**
+	 *  Get the activity handler for an activity.
+	 *  @param type The activity type.
+	 *  @return The activity handler.
+	 */
+	public IActivityHandler getActivityHandler(String type)
+	{
+		return (IActivityHandler)activityhandlers.get(type);
 	}
 	
 	/**

@@ -1,4 +1,4 @@
-package jadex.bpmn;
+package jadex.bpmn.model.io;
 
 import java.util.Map;
 

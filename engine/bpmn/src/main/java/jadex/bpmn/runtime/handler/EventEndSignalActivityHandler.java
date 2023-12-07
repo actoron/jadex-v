@@ -1,8 +1,8 @@
 package jadex.bpmn.runtime.handler;
 
 import jadex.bpmn.model.MActivity;
-import jadex.bpmn.runtime.ProcessServiceInvocationHandler;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessServiceInvocationHandler;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.core.IComponent;
 import jadex.future.Future;
 

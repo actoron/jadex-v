@@ -6,8 +6,8 @@ import java.util.StringTokenizer;
 
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
-import jadex.bpmn.runtime.IInternalProcessEngineService;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.IInternalProcessEngineService;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.IResultCommand;
 import jadex.common.UnparsedExpression;
 import jadex.core.ComponentIdentifier;

@@ -9,7 +9,7 @@ import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 

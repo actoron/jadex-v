@@ -7,8 +7,10 @@ import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.MNamedIdElement;
 import jadex.bpmn.model.MSequenceEdge;
 import jadex.bpmn.model.MSubProcess;
+import jadex.bpmn.runtime.IActivityHandler;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.bpmn.runtime.IStepHandler;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
@@ -31,7 +33,7 @@ public class DefaultStepHandler implements IStepHandler
 	{
 		assert instance.getFeature(IExecutionFeature.class).isComponentThread();
 		
-		//System.out.println("stephandler: "+thread.getId()+" "+instance.getId().getLocalName()+": step "+activity+", data "+thread.getData());
+		System.out.println("stephandler: "+thread.getId()+" "+instance.getId().getLocalName()+": step "+activity+", data "+thread.getData());
 		
 //		if("Participant_1".equals(instance.getComponentIdentifier().getLocalName()))
 //		{
@@ -100,7 +102,11 @@ public class DefaultStepHandler implements IStepHandler
 					}
 					else if(outgoing!=null && outgoing.size()>1)
 					{
-						throw new UnsupportedOperationException("Activity has more than one one outgoing edge. Please overridge step() for disambiguation: "+activity);
+						IBpmnComponentFeature bcf = (IBpmnComponentFeature)instance.getFeature(IBpmnComponentFeature.class);
+						IActivityHandler par = bcf.getActivityHandler(MBpmnModel.GATEWAY_PARALLEL);
+						par.execute(activity, instance, thread);
+						return;
+						//throw new UnsupportedOperationException("Activity has more than one one outgoing edge. Please overridge step() for disambiguation: "+activity);
 					}
 					// else no outgoing edge -> check parent context, if any.
 				}

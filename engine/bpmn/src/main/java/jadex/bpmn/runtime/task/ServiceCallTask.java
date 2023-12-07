@@ -28,7 +28,7 @@ import jadex.bpmn.model.task.ITaskPropertyGui;
 import jadex.bpmn.model.task.annotation.Task;
 import jadex.bpmn.model.task.annotation.TaskProperty;
 import jadex.bpmn.model.task.annotation.TaskPropertyGui;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.bpmn.runtime.task.ServiceCallTask.ServiceCallTaskGui;
 import jadex.bpmn.task.info.ParameterMetaInfo;
 import jadex.common.ClassInfo;

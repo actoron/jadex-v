@@ -7,7 +7,7 @@ import java.util.List;
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MSequenceEdge;
 import jadex.bpmn.runtime.IActivityHandler;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.core.IComponent;
 
 
@@ -35,7 +35,7 @@ public class GatewayParallelActivityHandler	extends AbstractGatewayActivityHandl
 			}
 			else
 			{
-				ProcessThread	newthread	= thread.createCopy();
+				ProcessThread newthread = thread.createCopy();
 				newthread.setLastEdge((MSequenceEdge)outgoing.get(i));
 				thread.getParent().addThread(newthread);
 				threads.add(newthread);

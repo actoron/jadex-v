@@ -1,4 +1,4 @@
-package jadex.bpmn.runtime;
+package jadex.bpmn.runtime.impl;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -7,11 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import jadex.bpmn.features.IBpmnComponentFeature;
-import jadex.bpmn.features.IInternalBpmnComponentFeature;
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.MSubProcess;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;

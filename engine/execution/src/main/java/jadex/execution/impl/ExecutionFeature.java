@@ -230,8 +230,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				@Override
 				public void run()
 				{
-					if(!this.cancel())
-						return;
+					//if(!this.cancel())
+					//	return;
 					
 					scheduleStep(() -> ret.setResult(null));
 					
@@ -260,8 +260,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			{
 				synchronized(ExecutionFeature.class)
 				{
-					if(!task.getTask().cancel())
-						return;
+					//if(!task.getTask().cancel())
+					//	return;
 					
 					entries.remove(task);
 					if(entries.size()==0)

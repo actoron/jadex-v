@@ -1,7 +1,7 @@
 package jadex.bpmn.runtime;
 
-import jadex.bpmn.BpmnModelLoader;
 import jadex.bpmn.model.MBpmnModel;
+import jadex.bpmn.model.io.BpmnModelLoader;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;

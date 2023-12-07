@@ -1,10 +1,10 @@
 package jadex.bpmn.runtime.handler;
 
-import jadex.bpmn.features.IBpmnComponentFeature;
-import jadex.bpmn.features.IInternalBpmnComponentFeature;
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.runtime.IActivityHandler;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
+import jadex.bpmn.runtime.impl.IInternalBpmnComponentFeature;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.core.IComponent;
 
 

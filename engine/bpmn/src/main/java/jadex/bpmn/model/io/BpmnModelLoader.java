@@ -1,7 +1,6 @@
-package jadex.bpmn;
+package jadex.bpmn.model.io;
 
 import jadex.bpmn.model.MBpmnModel;
-import jadex.bpmn.model.io.SBpmnModelReader;
 import jadex.common.ResourceInfo;
 import jadex.model.ICacheableModel;
 import jadex.model.impl.AbstractModelLoader;
