@@ -4,7 +4,6 @@ import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 
@@ -12,10 +11,7 @@ import jadex.model.annotation.OnStart;
  *  The micro version of the hello world agent.
  */
 @Agent(type="micro")
-@Description("This agent prints out a hello message.")
-//@Arguments(@Argument(name="welcome text", description= "This parameter is the text printed by the agent.", 
-//	clazz=String.class, defaultvalue="\"Hello world, this is a Jadex micro agent.\""))
-public class HelloWorldAgent
+public class HelloWorldAgent2
 {
 	//-------- attributes --------
 	
@@ -24,12 +20,11 @@ public class HelloWorldAgent
 	protected MicroAgent agent;
 	
 	/** The welcome text. */
-//	@AgentArgument("welcome text")
 	protected String text;
 	
 	//-------- methods --------
 	
-	public HelloWorldAgent(String text) 
+	public HelloWorldAgent2(String text) 
 	{
 		this.text=text;
 	}
@@ -37,25 +32,19 @@ public class HelloWorldAgent
 	/**
 	 *  Execute an agent step.
 	 */
-//	@AgentBody
 	@OnStart
 	public void executeBody()
 	{
-		System.out.println(text+" "+agent);//.getId());
-		IExecutionFeature.get().waitForDelay(2000).get();
+		System.out.println(text+" "+agent.getId());
+		agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
 		System.out.println("Good bye world.");
-		IExecutionFeature.get().terminate();
+		agent.terminate();
 	}
 	
 	@OnEnd
 	public void end()
 	{
-		System.out.println("end in pojo: "+agent);//.getId());
-	}
-	
-	public String	toString() 
-	{
-		return "Hello "+text;
+		System.out.println("end in pojo: "+agent.getId());
 	}
 	
 	//-------- static part --------
@@ -66,8 +55,11 @@ public class HelloWorldAgent
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MicroAgent.create(new HelloWorldAgent("007"));
+		MicroAgent.create(new HelloWorldAgent2("007"));
 		
 		IComponent.waitForLastComponentTerminated();
+		
+		System.out.println("last component terminated");
 	}
+	
 }

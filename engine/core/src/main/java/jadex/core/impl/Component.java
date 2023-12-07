@@ -152,6 +152,8 @@ public class Component implements IComponent
 	 */
 	public void	terminate()
 	{
+		ComponentManager.get().removeComponent(this.getId());
+		
 		Map<Class<Object>, FeatureProvider<Object>> provs = SFeatureProvider.getProvidersForComponent((Class<? extends Component>)getClass());
 		Optional<IComponentLifecycleManager> opt = provs.values().stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
 		if(opt.isPresent())
@@ -160,6 +162,7 @@ public class Component implements IComponent
 			lm.terminate(this);
 //			return;
 		}
+		
 //		throw new UnsupportedOperationException("No termination code for component: "+getId());
 	}
 	

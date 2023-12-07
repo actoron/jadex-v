@@ -148,7 +148,7 @@ public interface IComponent
 		{
 			IComponent comp = ComponentManager.get().getComponent(cid);
 			IExternalAccess	exta = comp.getExternalAccess();
-			ComponentManager.get().removeComponent(cid);
+			//ComponentManager.get().removeComponent(cid); // done in Component
 			if(exta.isExecutable())
 			{
 				ret	= exta.scheduleStep(icomp ->
@@ -182,7 +182,7 @@ public interface IComponent
 				@Override
 				public void lastComponentRemoved(ComponentIdentifier cid) 
 				{
-					System.out.println("removed last: "+cid);
+					//System.out.println("removed last: "+cid);
 					sem.release();
 				}
 			}, IComponent.COMPONENT_LASTREMOVED);
