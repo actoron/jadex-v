@@ -3,6 +3,7 @@ package jadex.core;
 import java.util.concurrent.atomic.AtomicLong;
 
 import jadex.core.impl.ComponentManager;
+import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.idgenerator.IdGenerator;
 
 /**
@@ -10,22 +11,6 @@ import jadex.idgenerator.IdGenerator;
  */
 public class ComponentIdentifier
 {
-	/**
-	 * Represents a globally identifiable process on a host (JVM instance).
-	 */
-	public record GlobalProcessIdentifier(long pid, String host)
-	{
-		public GlobalProcessIdentifier()
-		{
-			this(ComponentManager.get().pid(), ComponentManager.get().host());
-		}
-		
-		public String toString()
-		{
-			return pid + "@" + host;
-		}
-	}
-	
 	protected static IdGenerator gen = new IdGenerator();
 	
 	/** Counter for auto-generated local IDs */
