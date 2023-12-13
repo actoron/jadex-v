@@ -8,7 +8,7 @@ D5 sending messages
 
 todo: 
 - rule handler support for ECA
-- messages with different plugable profiles, e.g. email, messenger, etc.
+- messages with different plugable profiles, e.g. email, messenger, service etc.
 - general property-based extension mechanism for bpmn
 
 

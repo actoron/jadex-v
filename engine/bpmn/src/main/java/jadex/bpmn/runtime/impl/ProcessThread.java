@@ -43,7 +43,6 @@ import jadex.common.transformation.IObjectStringConverter;
 import jadex.common.transformation.IStringObjectConverter;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
-import jadex.future.IResultListener;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SimpleValueFetcher;
 import jadex.model.IModelFeature;
@@ -54,6 +53,18 @@ import jadex.model.IModelFeature;
  */
 public class ProcessThread	implements ITaskContext
 {
+	//-------- constants --------
+	
+	//todo: hack, for service impl :-(
+	// used in several handlers. move their impl to service?!
+	
+	/** The future result parameter name. */
+	public static final String	THREAD_PARAMETER_SERVICE_RESULT	= "$$service_result";
+	
+	/** The user result parameter name. */
+	// Todo: remove. use explicit model.
+	public static final String	EVENT_PARAMETER_SERVICE_RESULT	= "service_result";
+	
 	//-------- attributes --------
 	
 	/** The thread id. */
@@ -959,7 +970,7 @@ public class ProcessThread	implements ITaskContext
 			// todo: parameter direction / class
 			
 			Set<String> before = data!=null? new HashSet<String>(data.keySet()): Collections.EMPTY_SET;
-			before.remove(ProcessServiceInvocationHandler.THREAD_PARAMETER_SERVICE_RESULT);	// Hack!!! Keep future available locally for thread.
+			before.remove(THREAD_PARAMETER_SERVICE_RESULT);	// Hack!!! Keep future available locally for thread.
 			IValueFetcher fetcher = new ProcessThreadValueFetcher(this, true, instance.getFeature(IModelFeature.class).getFetcher());
 			IndexMap<String, MParameter> params = getActivity().getParameters();
 			if(params!=null)

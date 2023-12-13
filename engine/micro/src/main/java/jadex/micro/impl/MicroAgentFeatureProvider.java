@@ -1,5 +1,9 @@
 package jadex.micro.impl;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import jadex.core.ComponentIdentifier;
@@ -73,9 +77,29 @@ public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature
 	public boolean isCreator(Object obj) 
 	{
 		boolean ret = false;
-		Agent val = MicroClassReader.getAnnotation(obj.getClass(), Agent.class, getClass().getClassLoader());
+		Agent val = findAnnotation(obj.getClass(), Agent.class, getClass().getClassLoader());
 		if(val!=null)
 			ret = "micro".equals(val.type());
+		return ret;
+	}
+	
+	protected static <T extends Annotation> T findAnnotation(Class<?> clazz, Class<T> anclazz, ClassLoader cl)
+	{
+		T ret = null;
+		
+		List<Class<?>> todo = new ArrayList<Class<?>>();
+		todo.add(clazz);
+		while(!todo.isEmpty())
+		{
+			clazz = todo.remove(0);
+			todo.addAll(Arrays.asList(clazz.getInterfaces()));
+			if(clazz.getSuperclass()!=null && !Object.class.equals(clazz.getSuperclass()))
+				todo.add(clazz.getSuperclass());
+			ret = MicroClassReader.getAnnotation(clazz, anclazz, cl);
+			if(ret!=null)
+				break;
+		}
+		
 		return ret;
 	}
 	

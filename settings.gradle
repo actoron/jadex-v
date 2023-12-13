@@ -28,6 +28,7 @@ includeBuild('engine/communication') {}
 includeBuild('engine/micro'){}
 includeBuild('engine/bdi') {}
 includeBuild('engine/bpmn') {}
+includeBuild('engine/providedservicebpmn') {}
 
 includeBuild('rules/eca') {}
 

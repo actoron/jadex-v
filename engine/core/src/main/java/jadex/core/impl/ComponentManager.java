@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
@@ -25,10 +26,8 @@ public class ComponentManager
 		{
 			synchronized(ComponentManager.class)
 			{
-				if (instance == null)
-				{
+				if(instance == null)
 					instance = new ComponentManager();
-				}
 			}
 		}
 		return instance;
@@ -43,9 +42,15 @@ public class ComponentManager
 	/** The component id number mode. */
 	private boolean cidnumbermode;
 	
+	/** The component listeners. */
 	public final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
 
+	/** The components. */
 	protected Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
+	
+	/** The exception handlers. */
+	//protected Map<Object, Map<Object, IExceptionHandler<? extends Exception>>> exceptionhandlers = new HashMap<>();	
+	protected Map<Object, Map<Object, BiConsumer<? extends Exception, IComponent>>> exceptionhandlers = new HashMap<>();	
 	
 	private ComponentManager()
 	{
@@ -61,6 +66,14 @@ public class ComponentManager
 		{
 			e.printStackTrace();
 		}
+		
+		// Add default exception handler
+		addExceptionHandler(Exception.class, (ex, comp) ->
+		{
+			System.out.println("Exception in user code of component; component will be terminated: "+comp.getId());
+			ex.printStackTrace();
+			comp.terminate();
+		});
 	}
 	
 	public long pid()
@@ -105,6 +118,7 @@ public class ComponentManager
 	
 	public void removeComponent(ComponentIdentifier cid)
 	{
+		//System.out.println("removing: "+cid);
 		boolean last;
 		synchronized(components)
 		{
@@ -174,5 +188,96 @@ public class ComponentManager
 			else if(IComponent.COMPONENT_LASTREMOVED.equals(type))
 				mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
 		}
+	}
+	
+	public synchronized void addExceptionHandler(ComponentIdentifier cid, Class<? extends Exception> clazz, BiConsumer<? extends Exception, IComponent> handler)
+	{
+		Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+		if(handlers==null)
+		{
+			handlers = new HashMap<>();
+			exceptionhandlers.put(clazz, handlers);
+		}
+		handlers.put(cid, handler);
+	}
+	
+	public synchronized void addExceptionHandler(Class<?> type, Class<? extends Exception> clazz, BiConsumer<? extends Exception, IComponent> handler)
+	{
+		Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+		if(handlers==null)
+		{
+			handlers = new HashMap<>();
+			exceptionhandlers.put(clazz, handlers);
+		}
+		handlers.put(type, handler);
+	}
+	
+	public synchronized void addExceptionHandler(Class<? extends Exception> clazz, BiConsumer<? extends Exception, IComponent> handler)
+	{
+		Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+		if(handlers==null)
+		{
+			handlers = new HashMap<>();
+			exceptionhandlers.put(clazz, handlers);
+		}
+		handlers.put(null, handler);
+	}
+	
+	public synchronized void removeExceptionHandler(Object key, Class<? extends Exception> clazz)
+	{
+		Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+		if(handlers!=null)
+		{
+			handlers.remove(key);
+			if(handlers.isEmpty())
+				exceptionhandlers.remove(clazz);
+		}
+	}
+	
+	public synchronized <E extends Exception> BiConsumer<? extends Exception, IComponent> getExceptionHandler(E exception, Component component)
+	{
+		BiConsumer<? extends Exception, IComponent> ret = null;
+		Class<?> clazz = exception.getClass();
+		
+		while(ret==null)
+		{
+			// search by exception type
+			Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+			if(handlers!=null)
+			{
+				// try get individual handler by cid
+				ret = handlers.get(component.getId());
+				if(ret==null)
+				{
+					// try getting by pojo type
+					ret = handlers.get(component.getPojo().getClass());
+					if(ret==null)
+					{
+						// try getting by engine type
+						ret = handlers.get(component.getClass());
+						if(ret==null)
+						{
+							// try getting generic handler
+							ret = handlers.get(null);
+						}
+					}
+				}
+			}
+			
+			if(ret==null)
+			{
+				clazz = clazz.getSuperclass();
+				if(clazz==null)
+					break;
+				if(Object.class.equals(clazz))
+					clazz = null;
+			}
+			else
+			{
+				break;
+			}
+		}
+		
+		return ret;
 	}
 }

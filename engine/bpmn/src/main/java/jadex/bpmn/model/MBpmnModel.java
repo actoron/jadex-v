@@ -210,6 +210,9 @@ public class MBpmnModel extends MAnnotationElement implements ICacheableModel//,
 	/** The model info. */
 	protected ModelInfo modelinfo;
 	
+	/** The extensions. */
+	protected Map<String, Map<String, Object>> extensions;
+	
 	//-------- methods --------
 
 	/**
@@ -1633,9 +1636,7 @@ public class MBpmnModel extends MAnnotationElement implements ICacheableModel//,
 	public Map<MSubProcess, List<MActivity>> getEventSubProcessStartEventMapping()
 	{
 		if(eventsubprocessstartevents == null)
-		{
 			initMatchedStartEventCache();
-		}
 		return eventsubprocessstartevents;
 	}
 	
@@ -1646,10 +1647,21 @@ public class MBpmnModel extends MAnnotationElement implements ICacheableModel//,
 	public List<MActivity> getWaitingEvents()
 	{
 		if(waitingevents == null)
-		{
 			initMatchedStartEventCache();
-		}
 		return waitingevents;
+	}
+	
+	public MBpmnModel addExtension(String name, Map<String, Object> ext)
+	{
+		if(extensions==null)
+			extensions = new HashMap<String, Map<String,Object>>();
+		extensions.put(name, ext);
+		return this;
+	}
+	
+	public Map<String, Object> getExtension(String name)
+	{
+		return extensions==null? null: extensions.get(name);
 	}
 	
 	/**

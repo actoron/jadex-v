@@ -1,4 +1,4 @@
-package jadex.bpmn.runtime.impl;
+package jadex.providedservice.impl;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -11,6 +11,8 @@ import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.MSubProcess;
 import jadex.bpmn.runtime.IBpmnComponentFeature;
+import jadex.bpmn.runtime.impl.IInternalBpmnComponentFeature;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
@@ -19,6 +21,7 @@ import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
+import jadex.providedservice.annotation.Service;
 
 // todo
 
@@ -26,17 +29,19 @@ import jadex.model.IModelFeature;
  *  Invocation handler for mapping service requests to
  *  start events of BPMN processes.
  */
-//@Service	// Hack!!! Let BasicServiceInvocationHandler know that this is a service implementation.
+@Service	// Hack!!! Let BasicServiceInvocationHandler know that this is a service implementation.
+// Used to avoid: Pojo service should declare @Service annotation 
 public class ProcessServiceInvocationHandler implements InvocationHandler
 {
 	//-------- constants --------
 	
+	// todo: unify with constant in ProcessThread 
 	/** The future result parameter name. */
 	public static final String	THREAD_PARAMETER_SERVICE_RESULT	= "$$service_result";
 	
 	/** The user result parameter name. */
 	// Todo: remove. use explicit model.
-	public static final String	EVENT_PARAMETER_SERVICE_RESULT	= "service_result";
+	//public static final String	EVENT_PARAMETER_SERVICE_RESULT	= "service_result";
 	
 	//-------- attributes --------
 	

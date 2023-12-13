@@ -1,6 +1,7 @@
 package jadex.bpmn.model.io;
 
 import jadex.bpmn.model.MBpmnModel;
+import jadex.bpmn.runtime.BpmnProcess;
 import jadex.common.ResourceInfo;
 import jadex.model.ICacheableModel;
 import jadex.model.impl.AbstractModelLoader;
@@ -27,6 +28,8 @@ public class BpmnModelLoader extends AbstractModelLoader
 	public BpmnModelLoader()
 	{
 		super(new String[]{FILE_EXTENSION_BPMN, FILE_EXTENSION_BPMN2});
+		
+		AbstractModelLoader.addLoader(BpmnProcess.class, this);
 	}
 
 	//-------- methods --------
@@ -41,9 +44,7 @@ public class BpmnModelLoader extends AbstractModelLoader
 	{
 		String ext = FILE_EXTENSION_BPMN;
 		if(name.endsWith(".bpmn2"))
-		{
 			ext = FILE_EXTENSION_BPMN2;
-		}
 		MBpmnModel	ret	= (MBpmnModel)loadModel(name, ext, imports, classloader, classloader, context);	// Todo RID as clkey
 		//ret.setClassLoader(classloader);
 		return ret;

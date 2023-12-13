@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import jadex.bytecode.ProxyFactory;
 import jadex.common.ClassInfo;
+import jadex.common.IParameterGuesser;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -111,13 +112,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 		{
 			mymodel = (RequiredServiceModel)RequiredServiceLoader.readFeatureModel(((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
 			final RequiredServiceModel fmymodel = mymodel;
-			AbstractModelLoader loader = null;
-			Class<?>	clazz	= self.getClass();
-			while(loader==null && !clazz.equals(Object.class))
-			{
-				loader	= AbstractModelLoader.getLoader((Class< ? extends Component>)clazz);
-				clazz	= clazz.getSuperclass();
-			}
+			AbstractModelLoader loader = AbstractModelLoader.getLoader((Class< ? extends Component>)self.getClass());
 			loader.updateCachedModel(() ->
 			{
 				model.putFeatureModel(IRequiredServiceFeature.class, fmymodel);
@@ -2183,7 +2178,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 		return ret;
 	}
 
-	protected static boolean fillMethodParameter(Method m, Object[] args, Object result)
+	protected static boolean fillMethodParameter(Method m, Object[] args, Object result, IParameterGuesser guesser)
 	{
 		boolean ret = false;
 		for(int i=0; i<m.getParameterCount(); i++)
@@ -2194,6 +2189,23 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 				ret = true;
 				break;
 			}
+			else
+			{
+				if(guesser!=null)
+				{
+					try
+					{
+						args[i] = guesser.guessParameter(m.getParameterTypes()[i], false);
+					}
+					catch(Exception e)
+					{
+					}
+				}
+			}
+			/*else
+			{
+				System.out.println("arg does not fit: "+m.getParameterTypes()[i]+" "+result.getClass());
+			}*/
 		}
 		return ret;
 	}
@@ -2208,7 +2220,11 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 	{
 		Object[] args = new Object[m.getParameterCount()];
 		
-		boolean invoke = fillMethodParameter(m, args, result);
+		IParameterGuesser guesser = null;
+		if(component.getFeature(IModelFeature.class)!=null)
+			guesser = component.getFeature(IModelFeature.class).getParameterGuesser();
+		
+		boolean invoke = fillMethodParameter(m, args, result, guesser);
 		
 		if(!invoke && result instanceof ServiceEvent)
 		{
@@ -2217,7 +2233,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 			result = getServiceProxy(sid, null, component);  
 			if(event.getType()==ServiceEvent.SERVICE_ADDED)
 			{
-				invoke = fillMethodParameter(m, args, result);
+				invoke = fillMethodParameter(m, args, result, guesser);
 			}
 			else if(event.getType()==ServiceEvent.SERVICE_REMOVED)
 			{
@@ -2227,6 +2243,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 		
 		if(invoke)
 		{
+			// what to do with exception in user code?
 			component.getFeature(IExecutionFeature.class).scheduleStep(() ->
 			{
 				try
@@ -2234,17 +2251,17 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 					SAccess.setAccessible(m, true);
 					m.invoke(target, args);
 				}
-				catch(Throwable t)
+				catch(Exception t)
 				{
-					throw SUtil.throwUnchecked(t);
+					//throw SUtil.throwUnchecked(t);
+					t.printStackTrace();
 				}
-				return IFuture.DONE;
 			});
 		}
-		else
+		/*else
 		{
 			System.out.println("cannot invoke method as result type does not fit parameter types: "+result+" "+m);
-		}
+		}*/
 	}
 		
 		

@@ -611,6 +611,8 @@ public class ServiceInvocationHandler implements InvocationHandler, ISwitchCall
 					//ia.getLogger().warning("Pojo service should declare @Service annotation: "+service.getClass());
 //					throw new RuntimeException("Pojo service must declare @Service annotation: "+service.getClass());
 					System.out.println("Pojo service should declare @Service annotation: "+service.getClass());
+					boolean b = ProxyFactory.isProxyClass(service.getClass());
+					System.out.println(b);
 				}
 				addPojoServiceProxy(service, ret);
 			}

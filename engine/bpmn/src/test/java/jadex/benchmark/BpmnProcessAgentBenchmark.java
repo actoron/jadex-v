@@ -11,6 +11,7 @@ import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.model.annotation.OnStart;
@@ -74,3 +75,5 @@ public class BpmnProcessAgentBenchmark	extends AbstractComponentBenchmark
 		System.out.println("runThroughputBenchmark end");
 	}
 }
+
+

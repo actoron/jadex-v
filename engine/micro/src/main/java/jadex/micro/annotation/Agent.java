@@ -21,25 +21,25 @@ public @interface Agent
 	 *  If the agent body has a void return value
 	 *  or no body at all this flag can be used to 
 	 *  determine if the agent should be kept alive.
-	 */
-	public Boolean3 keepalive() default Boolean3.NULL;
+	 * /
+	public Boolean3 keepalive() default Boolean3.NULL;*/
 	
 	/**
 	 *  Specify if the component should be suspened on creation.
-	 */
-	public Boolean3 suspend() default Boolean3.NULL;
+	 * /
+	public Boolean3 suspend() default Boolean3.NULL;*/
 	
 	/**
 	 *  Required predecessors (dependencies).
 	 */
 //	public Class<?>[] predecessors() default {};
-	public String[] predecessors() default {};
+//	public String[] predecessors() default {};
 	
 	/**
 	 *  Declared successors (dependencies).
 	 */
 //	public Class<?>[] successors() default {};
-	public String[] successors() default {};
+//	public String[] successors() default {};
 	
 //	/**
 //	 *  Specify if the component is a master and leads to killing of parent when stopped.
@@ -59,7 +59,7 @@ public @interface Agent
 	/**
 	 *  Specify if the subcomponent should run synchronously on its parent's thread.
 	 */
-	public Boolean3 synchronous() default Boolean3.NULL;
+//	public Boolean3 synchronous() default Boolean3.NULL;
 	
 //	/**
 //	 *  Specify if the component is persistable.
@@ -79,7 +79,7 @@ public @interface Agent
 	/**
 	 *  Auto-start this agent on platform startup.
 	 */
-	public Boolean3 autostart() default Boolean3.NULL;
+//	public Boolean3 autostart() default Boolean3.NULL;
 	
 	/**
 	 *  Default name for the started component.

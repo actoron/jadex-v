@@ -1,6 +1,7 @@
 package jadex.micro.example.helloworld;
 
 import jadex.core.IComponent;
+import jadex.core.impl.ComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
@@ -35,7 +36,7 @@ public class HelloWorldAgent2
 	@OnStart
 	public void executeBody()
 	{
-		System.out.println(text+" "+agent.getId());
+		System.out.println(text+" "+agent.getId().getLocalName());
 		agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
 		System.out.println("Good bye world.");
 		agent.terminate();
@@ -44,7 +45,7 @@ public class HelloWorldAgent2
 	@OnEnd
 	public void end()
 	{
-		System.out.println("end in pojo: "+agent.getId());
+		System.out.println("end in pojo: "+agent.getId().getLocalName());
 	}
 	
 	//-------- static part --------
@@ -55,11 +56,13 @@ public class HelloWorldAgent2
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
+		//ComponentManager.get().setComponentIdNumberMode(true);
+		
 		MicroAgent.create(new HelloWorldAgent2("007"));
 		
-		IComponent.waitForLastComponentTerminated();
+		//IComponent.waitForLastComponentTerminated();
 		
-		System.out.println("last component terminated");
+		//System.out.println("last component terminated");
 	}
 	
 }

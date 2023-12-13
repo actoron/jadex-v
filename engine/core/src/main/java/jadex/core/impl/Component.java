@@ -3,20 +3,16 @@ package jadex.core.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import jadex.common.IValueFetcher;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IComponentListener;
 import jadex.core.IExternalAccess;
 
 /**
@@ -39,7 +35,7 @@ public class Component implements IComponent
 	
 	/** The external access supplier. */
 	protected static Function<Component, IExternalAccess> accessfactory;
-	
+		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 *  Uses an auto-generated componment identifier.
@@ -74,8 +70,6 @@ public class Component implements IComponent
 			}
 		});
 	}
-	
-	
 	
 	/**
 	 *  Get the id.
@@ -158,12 +152,21 @@ public class Component implements IComponent
 		Optional<IComponentLifecycleManager> opt = provs.values().stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
 		if(opt.isPresent())
 		{
-			IComponentLifecycleManager lm =  opt.get();
+			IComponentLifecycleManager lm = opt.get();
 			lm.terminate(this);
 //			return;
 		}
 		
 //		throw new UnsupportedOperationException("No termination code for component: "+getId());
+	}
+	
+	/**
+	 *  Get the pojo.
+	 *  @return The pojo.
+	 */
+	public Object getPojo()
+	{
+		return null;
 	}
 	
 	protected void putFeature(Class<Object> type, Object feature)
@@ -335,6 +338,12 @@ public class Component implements IComponent
 			}
 		}
 		return access;
+	}
+	
+	public void handleException(Exception exception)
+	{
+		BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getExceptionHandler(exception, this);
+		handler.accept(exception, this);
 	}
 	
 	/**

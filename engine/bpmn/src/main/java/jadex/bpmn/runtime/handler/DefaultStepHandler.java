@@ -14,6 +14,7 @@ import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
+import jadex.core.impl.Component;
 import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
 import jadex.model.IModelFeature;
@@ -243,7 +244,8 @@ public class DefaultStepHandler implements IStepHandler
 			{
 				// If component scope and exception terminate the component
 				//instance.killComponent(ex);
-				instance.terminate();
+				((Component)instance).handleException(ex);
+				//instance.terminate();
 				
 				// Does not work because components now tolerate exceptions in steps
 //				if(ex instanceof RuntimeException)

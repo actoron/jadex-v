@@ -35,12 +35,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
 	
-	protected Queue<Runnable>	steps	= new ArrayDeque<>(4);
-	protected boolean	executing;
-	protected boolean	do_switch;
+	protected Queue<Runnable> steps = new ArrayDeque<>(4);
+	protected boolean executing;
+	protected boolean do_switch;
 	protected boolean terminated;
-	protected ThreadRunner	runner	= null;
-	protected Component	self	= null;
+	protected ThreadRunner runner = null;
+	protected Component	self = null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
 	
@@ -203,7 +203,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	}
 	
 	// Global on-demand timer shared by all components.
-	private static volatile Timer timer = new Timer();
+	private static volatile Timer timer = new Timer(true);
 	//protected static volatile int	timer_entries;
 	protected static volatile Set<TimerTaskInfo> entries;
 	
@@ -361,9 +361,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			synchronized(ExecutionFeature.this)
 			{
 				if(threads==null)
-				{
 					threads	= new LinkedHashSet<>(2, 1);
-				}
 				threads.add(sus);
 			}
 			ISuspendable.SUSPENDABLE.set(sus);
@@ -701,10 +699,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			// Pass abort error to thread runner main loop
 			throw t;
 		}
+		catch(Exception e)
+		{
+			self.handleException(e);
+		}
 		catch(Throwable t)
 		{
 			// Print and otherwise ignore any other exceptions
-			new RuntimeException("Exception in step", t).printStackTrace();
+			RuntimeException ex = new RuntimeException("Exception in step", t);//.printStackTrace();
+			self.handleException(ex);
 		}
 		
 		afterStep();

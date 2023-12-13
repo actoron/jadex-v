@@ -923,14 +923,14 @@ public class SBpmnModelReader
 //				{
 //					((ModelInfo) model.getModelInfo()).setPersistable(Boolean.parseBoolean(attrs.get("persistable")));
 //				}
-				if (attrs.containsKey("keepalive"))
+				/*if (attrs.containsKey("keepalive"))
 				{
 					model.setKeepAlive(Boolean.parseBoolean(attrs.get("keepalive")));
 				}
 				if (attrs.containsKey("monitoring"))
 				{
 //					((ModelInfo) model.getModelInfo()).setMonitoring(Boolean.parseBoolean(attrs.get("monitoring")));
-					/*String monattr = attrs.get("monitoring");
+					String monattr = attrs.get("monitoring");
 					if ((monattr != null) && monattr.equalsIgnoreCase("true"))
 					{
 						((ModelInfo) model.getModelInfo()).setMonitoring(PublishEventLevel.MEDIUM);
@@ -942,8 +942,8 @@ public class SBpmnModelReader
 					else
 					{
 						((ModelInfo) model.getModelInfo()).setMonitoring(PublishEventLevel.valueOf(attrs.get("monitoring")));
-					}*/
-				}
+					}
+				}*/
 			}
 			else if ("import".equals(tag.getLocalPart()))
 			{
@@ -1185,6 +1185,19 @@ public class SBpmnModelReader
 				
 				((ModelInfo) model.getModelInfo()).addConfiguration(conf);
 			}*/
+			else if(attrs!=null)// handle unknown extensions in a generic way
+			{
+				String name = tag.getLocalPart();
+				Map<String, Object> ext = model.getExtension(name);
+				
+				if(ext==null)
+				{
+					ext = new HashMap<String, Object>();
+					model.addExtension(name, ext);
+				}
+				
+				ext.put(attrs.get(name), attrs);
+			}
 		}
 		else if("dataFlow".equals(tag.getLocalPart()))
 		{
