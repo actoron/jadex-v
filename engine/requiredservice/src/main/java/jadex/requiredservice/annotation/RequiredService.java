@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 import jadex.model.annotation.Value;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.impl.service.ServiceInvocationHandler;
+import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.requiredservice.RequiredServiceInfo;
 
 /**
@@ -21,13 +21,13 @@ import jadex.requiredservice.RequiredServiceInfo;
 public @interface RequiredService
 {	
 	/** The raw proxy type (i.e. no proxy). */
-	public static final String	PROXYTYPE_RAW	= ServiceInvocationHandler.PROXYTYPE_RAW;
+	public static final String	PROXYTYPE_RAW	= AbstractServiceInvocationHandler.PROXYTYPE_RAW;
 	
 	/** The direct proxy type (supports custom interceptors, but uses caller thread). */
-	public static final String	PROXYTYPE_DIRECT	= ServiceInvocationHandler.PROXYTYPE_DIRECT;
+	public static final String	PROXYTYPE_DIRECT	= AbstractServiceInvocationHandler.PROXYTYPE_DIRECT;
 	
 	/** The (default) decoupled proxy type (decouples from component thread to caller thread). */
-	public static final String	PROXYTYPE_DECOUPLED	= ServiceInvocationHandler.PROXYTYPE_DECOUPLED;
+	public static final String	PROXYTYPE_DECOUPLED	= AbstractServiceInvocationHandler.PROXYTYPE_DECOUPLED;
 	
 	/** Constant for multiplicity many. */
 	public static final int MANY = RequiredServiceInfo.MANY;

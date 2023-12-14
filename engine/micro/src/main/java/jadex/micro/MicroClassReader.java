@@ -653,6 +653,7 @@ public class MicroClassReader
 			}
 			
 			// Take all but new overrides old
+			/*
 			if(!compdone && isAnnotationPresent(cma, ComponentTypes.class, cl))
 			{
 				SubcomponentTypeInfo[] subinfos = null;
@@ -673,7 +674,7 @@ public class MicroClassReader
 						res.put(ctypes[i].name(), subinfo);
 					}
 				}
-			}
+			}*/
 			
 			/*if(!confdone && isAnnotationPresent(cma, Configurations.class, cl))
 			{
@@ -766,7 +767,7 @@ public class MicroClassReader
 			// Find injection targets by reflection (agent, arguments, services)
 			//Map<String, Object> rsers = getOrCreateMap("reqservices", toset);
 			//micromodel.getInjectionInfoHolder().setRequiredServiceInfos((Map)rsers); // Hack! todo
-			//findInjections(cma, cl, micromodel.getInjectionInfoHolder(), rsers);
+			findInjections(cma, cl, micromodel.getInjectionInfoHolder());//, rsers);
 			
 			/*Field[] fields = cma.getDeclaredFields();
 			for(int i=0; i<fields.length; i++)
@@ -2374,7 +2375,7 @@ public class MicroClassReader
 	 *  @param ii
 	 *  @param rsers
 	 */
-	public static void findInjections(Class<?> cma, ClassLoader cl, InjectionInfoHolder ii, Map<String, Object> rsers)
+	public static void findInjections(Class<?> cma, ClassLoader cl, InjectionInfoHolder ii)//, Map<String, Object> rsers)
 	{
 		//Map<String, RequiredServiceInfo> rsers = ii.getRequiredServiceInfos();
 		

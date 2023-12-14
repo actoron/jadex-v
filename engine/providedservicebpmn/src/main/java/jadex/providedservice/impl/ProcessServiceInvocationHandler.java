@@ -22,6 +22,7 @@ import jadex.future.Future;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
 import jadex.providedservice.annotation.Service;
+import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 
 // todo
 
@@ -31,7 +32,8 @@ import jadex.providedservice.annotation.Service;
  */
 @Service	// Hack!!! Let BasicServiceInvocationHandler know that this is a service implementation.
 // Used to avoid: Pojo service should declare @Service annotation 
-public class ProcessServiceInvocationHandler implements InvocationHandler
+// todo: extends AbstractServiceInvocationHandler
+public class ProcessServiceInvocationHandler  implements InvocationHandler
 {
 	//-------- constants --------
 	

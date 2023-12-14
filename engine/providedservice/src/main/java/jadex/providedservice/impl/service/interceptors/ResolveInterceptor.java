@@ -22,7 +22,6 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.IStringConverter;
-import jadex.core.IComponent;
 import jadex.core.impl.Component;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -31,10 +30,7 @@ import jadex.future.IResultListener;
 import jadex.model.IModelFeature;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
-import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
-import jadex.providedservice.annotation.ServiceShutdown;
-import jadex.providedservice.annotation.ServiceStart;
 import jadex.providedservice.impl.service.IInternalService;
 import jadex.providedservice.impl.service.ServiceInfo;
 import jadex.providedservice.impl.service.ServiceInvocationContext;
@@ -127,50 +123,40 @@ public class ResolveInterceptor extends AbstractApplicableInterceptor
 			if(START_METHOD.equals(sic.getMethod()))
 			{
 				// invoke 1) basic service start 2) domain service start
-				invokeDoubleMethod(sic, si, START_METHOD, ServiceStart.class, true, false)
-					.then(x->ret.setResult(null))
-					.catchEx(x->
+				// Hack! Check if impl class has @Agent annotation -> defer method call to agent lifecycle start
+				Object obj = ProxyFactory.isProxyClass(si.getDomainService().getClass())? ProxyFactory.getInvocationHandler(si.getDomainService()): si.getDomainService();
+				boolean isagentimpl = false;
+				Annotation[] ans = obj.getClass().getAnnotations();
+				if(ans!=null)
+				{
+					for(Annotation an: ans)
 					{
-						// Hack! Check if impl class has @Agent annotation -> defer method call to agent lifecycle start
-						Object obj = ProxyFactory.isProxyClass(si.getDomainService().getClass())? ProxyFactory.getInvocationHandler(si.getDomainService()): si.getDomainService();
-						boolean isagentimpl = false;
-						Annotation[] ans = obj.getClass().getAnnotations();
-						if(ans!=null)
+						// HACK!!!
+						if(an.annotationType().getName().indexOf("jadex.micro.annotation.Agent")!=-1)
 						{
-							for(Annotation an: ans)
-							{
-								if(an.annotationType().getName().indexOf("jadex.micro.annotation.Agent")!=-1)
-								{
-									isagentimpl = true;
-									break;
-								}
-							}
+							isagentimpl = true;
+							break;
 						}
-						
-						if(!isagentimpl)
-						{
-							invokeDoubleMethod(sic, si, START_METHOD, OnStart.class, true, true).delegateTo(ret);	
-						}
-						else
-						{
-							// Only invokes start on management service (pojo is agent)
-							//System.out.println("Deferring call on OnStart method as impl is agent class: "+obj.getClass());
-							sic.setObject(si.getManagementService());
-							sic.invoke().delegateTo(ret);
-						}
-					});
+					}
+				}
+				
+				if(!isagentimpl)
+				{
+					invokeDoubleMethod(sic, si, START_METHOD, OnStart.class, true, true).delegateTo(ret);	
+				}
+				else
+				{
+					// Only invokes start on management service (pojo is agent)
+					//System.out.println("Deferring call on OnStart method as impl is agent class: "+obj.getClass());
+					sic.setObject(si.getManagementService());
+					sic.invoke().delegateTo(ret);
+				}
 				//.addResultListener(new DelegationResultListener<Void>(ret));
 			}
 			else if(SHUTDOWN_METHOD.equals(sic.getMethod()))
 			{
 				// invoke 1) domain service shutdown 2) basic service shutdown
-				
-				invokeDoubleMethod(sic, si, SHUTDOWN_METHOD, ServiceShutdown.class, true, false)
-					.then(x->ret.setResult(null))
-					.catchEx(x->
-					{
-						invokeDoubleMethod(sic, si, SHUTDOWN_METHOD, OnEnd.class, true, true).delegateTo(ret);	
-					});
+				invokeDoubleMethod(sic, si, SHUTDOWN_METHOD, OnEnd.class, true, true).delegateTo(ret);	
 				//invokeDoubleMethod(sic, si, SHUTDOWN_METHOD, ServiceShutdown.class, false).addResultListener(new DelegationResultListener<Void>(ret));
 			}
 			else if(INVOKE_METHOD.equals(sic.getMethod()))

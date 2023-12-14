@@ -12,10 +12,10 @@ import jadex.common.ClassInfo;
 import jadex.common.UnparsedExpression;
 import jadex.javaparser.SJavaParser;
 import jadex.model.modelinfo.IModelInfo;
+import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.providedservice.impl.service.ProvidedServiceImplementation;
 import jadex.providedservice.impl.service.ProvidedServiceInfo;
 import jadex.providedservice.impl.service.ProvidedServiceModel;
-import jadex.providedservice.impl.service.ServiceInvocationHandler;
 
 public class BpmnProvidedServiceLoader 
 {
@@ -98,7 +98,7 @@ public class BpmnProvidedServiceLoader
 					String exp = "java.lang.reflect.Proxy.newProxyInstance($component.getClassLoader()," 
 						+ "new Class[]{"+iface.getName()+".class"
 						+ "}, new jadex.providedservice.impl.ProcessServiceInvocationHandler($component, \""+entry.getKey().getId()+"\"))";
-					ProvidedServiceImplementation psim = new ProvidedServiceImplementation(null, exp, ServiceInvocationHandler.PROXYTYPE_DECOUPLED, null);
+					ProvidedServiceImplementation psim = new ProvidedServiceImplementation(null, exp, AbstractServiceInvocationHandler.PROXYTYPE_DECOUPLED, null);
 					ProvidedServiceInfo psi = new ProvidedServiceInfo("internal_"+iface.getName(), iface, psim);
 					//modelinfo.addProvidedService(psi);
 					

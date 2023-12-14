@@ -4,17 +4,9 @@ import jadex.core.IComponent;
 import jadex.core.impl.ComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
-import jadex.model.annotation.OnStart;
 
 public class LambdaExceptions 
 {
-	@OnStart
-	public void onStart(IComponent agent)
-	{
-		
-			
-	}
-	
 	public static void main(String[] args) throws InterruptedException 
 	{
 		ComponentManager.get().addExceptionHandler(RuntimeException.class, true, (ex, comp) ->

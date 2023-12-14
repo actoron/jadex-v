@@ -55,6 +55,7 @@ import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Service;
+import jadex.providedservice.impl.ServiceInvocationHandler;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.MultiplicityException;
 import jadex.providedservice.impl.search.ServiceEvent;
@@ -64,9 +65,9 @@ import jadex.providedservice.impl.search.ServiceQuery.Multiplicity;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.IInternalService;
+import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.providedservice.impl.service.IServiceInvocationInterceptor;
 import jadex.providedservice.impl.service.ServiceIdentifier;
-import jadex.providedservice.impl.service.ServiceInvocationHandler;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
 import jadex.providedservice.impl.service.interceptors.DecouplingReturnInterceptor;
 import jadex.providedservice.impl.service.interceptors.MethodInvocationInterceptor;
@@ -1537,7 +1538,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 //		System.out.println("cRSP:"+service.getServiceIdentifier());
 		IService ret = service;
 		
-		if(binding==null || !ServiceInvocationHandler.PROXYTYPE_RAW.equals(binding.getProxytype()))
+		if(binding==null || !AbstractServiceInvocationHandler.PROXYTYPE_RAW.equals(binding.getProxytype()))
 		{
 	//		System.out.println("create: "+service.getServiceIdentifier().getServiceType());
 			ServiceInvocationHandler handler = new ServiceInvocationHandler(ia, service, true); // ia.getDescription().getCause()
@@ -1546,7 +1547,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 			// Dropped for v4???
 //			if(binding!=null && binding.isRecover())
 //				handler.addFirstServiceInterceptor(new RecoveryInterceptor(ia.getExternalAccess(), info, binding, fetcher));
-			if(binding==null || ServiceInvocationHandler.PROXYTYPE_DECOUPLED.equals(binding.getProxytype())) // done on provided side
+			if(binding==null || AbstractServiceInvocationHandler.PROXYTYPE_DECOUPLED.equals(binding.getProxytype())) // done on provided side
 				handler.addFirstServiceInterceptor(new DecouplingReturnInterceptor());
 			//handler.addFirstServiceInterceptor(new MethodCallListenerInterceptor(ia, service.getServiceId()));
 //			handler.addFirstServiceInterceptor(new NFRequiredServicePropertyProviderInterceptor(ia, service.getId()));
@@ -1563,7 +1564,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 			}
 			// Decoupling interceptor on required chains ensures that wrong incoming calls e.g. from gui thread
 			// are automatically pushed to the req component thread
-			if(binding==null || ServiceInvocationHandler.PROXYTYPE_DECOUPLED.equals(binding.getProxytype())) // done on provided side
+			if(binding==null || AbstractServiceInvocationHandler.PROXYTYPE_DECOUPLED.equals(binding.getProxytype())) // done on provided side
 				handler.addFirstServiceInterceptor(new DecouplingInterceptor(ia, false, true));
 			
 			// Collect service interfaces (if interfaces are not present they are omitted. 
@@ -1603,9 +1604,9 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 		if(ProxyFactory.isProxyClass(service.getClass()))
 		{
 			Object tmp = ProxyFactory.getInvocationHandler(service);
-			if(tmp instanceof ServiceInvocationHandler)
+			if(tmp instanceof AbstractServiceInvocationHandler)
 			{
-				ServiceInvocationHandler handler = (ServiceInvocationHandler)tmp;
+				AbstractServiceInvocationHandler handler = (AbstractServiceInvocationHandler)tmp;
 				ret = handler.isRequired();
 			}
 		}

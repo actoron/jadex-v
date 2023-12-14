@@ -585,7 +585,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 
 		// Deregister pojo->sid mapping in shutdown.
 		if(sid!=null)	// sid is null for shared/wrapped service impls.
-			ServiceInvocationHandler.removePojoServiceProxy(sid);
+			ProvidedServiceFeature.removePojoServiceProxy(sid);
 		
 		final Future<Void> ret = new Future<Void>();
 		/*isValid().addResultListener(new ExceptionDelegationResultListener<Boolean, Void>(ret)
@@ -967,4 +967,6 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 //		IComponentFeature feat = (IComponentFeature)getInternalAccess().getComponentFeature(type);
 //		return feat.getExternalFacadeType(this);
 //	}
+	
+	
 }

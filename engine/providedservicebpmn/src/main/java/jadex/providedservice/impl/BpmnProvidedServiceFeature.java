@@ -5,7 +5,9 @@ import jadex.model.IModelFeature;
 import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IProvidedServiceFeature;
+import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.providedservice.impl.service.ProvidedServiceFeature;
+import jadex.providedservice.impl.service.ProvidedServiceInfo;
 import jadex.providedservice.impl.service.ProvidedServiceModel;
 
 public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
@@ -21,7 +23,7 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 		
 		if(mymodel!=null)
 		{
-			AbstractModelLoader loader = AbstractModelLoader.getLoader((Class< ? extends Component>)self.getClass());
+			AbstractModelLoader loader = AbstractModelLoader.getLoader((Class<? extends Component>)self.getClass());
 			loader.updateCachedModel(() ->
 			{
 				ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
@@ -30,5 +32,14 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 		}
 		
 		return mymodel;
+	}
+	
+	// todo: should bpmn use the method?!
+	/**
+	 *  Create a basic invocation handler for a provided service.
+	 */
+	public AbstractServiceInvocationHandler createProvidedHandler(String name, Component ia, Class<?> type, Object service, ProvidedServiceInfo info)
+	{
+		throw new UnsupportedOperationException();
 	}
 }

@@ -5,7 +5,7 @@ import java.util.List;
 
 import jadex.common.UnparsedExpression;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.impl.service.ServiceInvocationHandler;
+import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 
 /**
  *  Required service binding information.
@@ -65,7 +65,7 @@ public class RequiredServiceBinding
 	public RequiredServiceBinding(String name, ServiceScope scope)
 	{
 		this(name, null, null,
-			scope, null, ServiceInvocationHandler.PROXYTYPE_DECOUPLED);
+			scope, null, AbstractServiceInvocationHandler.PROXYTYPE_DECOUPLED);
 	}
 
 	/**

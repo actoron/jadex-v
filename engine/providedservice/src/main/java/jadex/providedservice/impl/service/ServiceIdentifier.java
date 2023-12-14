@@ -79,9 +79,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 		for(Class<?> sin: SReflect.getSuperInterfaces(new Class[]{type}))
 		{
 			if(sin.isAnnotationPresent(Service.class))
-			{
 				superinfos.add(new ClassInfo(sin));
-			}
 		}
 		this.providerid = provider.getId();
 		this.type	= new ClassInfo(type);
