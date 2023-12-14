@@ -50,7 +50,7 @@ public class ComponentManager
 	
 	/** The exception handlers. */
 	//protected Map<Object, Map<Object, IExceptionHandler<? extends Exception>>> exceptionhandlers = new HashMap<>();	
-	protected Map<Object, Map<Object, BiConsumer<? extends Exception, IComponent>>> exceptionhandlers = new HashMap<>();	
+	protected Map<Object, Map<Object, HandlerInfo>> exceptionhandlers = new HashMap<>();	
 	
 	private ComponentManager()
 	{
@@ -68,7 +68,7 @@ public class ComponentManager
 		}
 		
 		// Add default exception handler
-		addExceptionHandler(Exception.class, (ex, comp) ->
+		addExceptionHandler(Exception.class, false, (ex, comp) ->
 		{
 			System.out.println("Exception in user code of component; component will be terminated: "+comp.getId());
 			ex.printStackTrace();
@@ -190,42 +190,42 @@ public class ComponentManager
 		}
 	}
 	
-	public synchronized void addExceptionHandler(ComponentIdentifier cid, Class<? extends Exception> clazz, BiConsumer<? extends Exception, IComponent> handler)
+	public synchronized void addExceptionHandler(ComponentIdentifier cid, Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
-		Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
 		if(handlers==null)
 		{
 			handlers = new HashMap<>();
 			exceptionhandlers.put(clazz, handlers);
 		}
-		handlers.put(cid, handler);
+		handlers.put(cid, new HandlerInfo(handler, exactmatch));
 	}
 	
-	public synchronized void addExceptionHandler(Class<?> type, Class<? extends Exception> clazz, BiConsumer<? extends Exception, IComponent> handler)
+	public synchronized void addExceptionHandler(Class<?> type, Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
-		Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
 		if(handlers==null)
 		{
 			handlers = new HashMap<>();
 			exceptionhandlers.put(clazz, handlers);
 		}
-		handlers.put(type, handler);
+		handlers.put(type, new HandlerInfo(handler, exactmatch));
 	}
 	
-	public synchronized void addExceptionHandler(Class<? extends Exception> clazz, BiConsumer<? extends Exception, IComponent> handler)
+	public synchronized void addExceptionHandler(Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
-		Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
 		if(handlers==null)
 		{
 			handlers = new HashMap<>();
 			exceptionhandlers.put(clazz, handlers);
 		}
-		handlers.put(null, handler);
+		handlers.put(null, new HandlerInfo(handler, exactmatch));
 	}
 	
 	public synchronized void removeExceptionHandler(Object key, Class<? extends Exception> clazz)
 	{
-		Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
 		if(handlers!=null)
 		{
 			handlers.remove(key);
@@ -237,36 +237,47 @@ public class ComponentManager
 	public synchronized <E extends Exception> BiConsumer<? extends Exception, IComponent> getExceptionHandler(E exception, Component component)
 	{
 		BiConsumer<? extends Exception, IComponent> ret = null;
+		HandlerInfo info;
 		Class<?> clazz = exception.getClass();
+		boolean exact = true;
 		
 		while(ret==null)
 		{
 			// search by exception type
-			Map<Object, BiConsumer<? extends Exception, IComponent>> handlers = exceptionhandlers.get(clazz);
+			Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
 			if(handlers!=null)
 			{
 				// try get individual handler by cid
-				ret = handlers.get(component.getId());
+				info = handlers.get(component.getId());
+				if(info!=null && (!info.exact() || exact))
+					ret = info.handler(); 
 				if(ret==null)
 				{
 					// try getting by pojo type
-					ret = handlers.get(component.getPojo().getClass());
+					info = component.getPojo()!=null? handlers.get(component.getPojo().getClass()): null;
+					if(info!=null && (!info.exact() || exact))
+						ret = info.handler(); 
 					if(ret==null)
 					{
 						// try getting by engine type
-						ret = handlers.get(component.getClass());
+						info = handlers.get(component.getClass());
+						if(info!=null && (!info.exact() || exact))
+							ret = info.handler(); 
 						if(ret==null)
 						{
 							// try getting generic handler
-							ret = handlers.get(null);
+							info = handlers.get(null);
+							if(info!=null && (!info.exact() || exact))
+								ret = info.handler(); 
 						}
 					}
 				}
 			}
 			
-			if(ret==null)
+			if(ret==null && clazz!=null)
 			{
 				clazz = clazz.getSuperclass();
+				exact = false;
 				if(clazz==null)
 					break;
 				if(Object.class.equals(clazz))
@@ -280,4 +291,8 @@ public class ComponentManager
 		
 		return ret;
 	}
+	
+	protected record HandlerInfo(BiConsumer<? extends Exception, IComponent> handler, boolean exact) 
+	{
+	};
 }

@@ -94,7 +94,7 @@ public interface IExecutionFeature
 	/**
 	 *  Get the component to which this feature belongs. 
 	 */
-	public IComponent	getComponent();
+	public IComponent getComponent();
 	
 	/**
 	 *  Get the current time.

@@ -3,6 +3,7 @@ package jadex.micro.example.helloworld;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IThrowingFunction;
+import jadex.execution.LambdaAgent;
 import jadex.micro.annotation.Agent;
 
 /**
@@ -26,7 +27,7 @@ public class LambdaCreationAgent
 		Long startmem = smem==null? Long.valueOf(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()): smem;
 		Long starttime = stime==null? Long.valueOf(System.currentTimeMillis()): stime;
 
-		IComponent.create(agent ->
+		LambdaAgent.create(agent ->
 		{
 			System.out.println("Created agent: "+agent.getId().getLocalName());
 			long[] end = new long[1];

@@ -21,7 +21,16 @@ public class LambdaAgent
 	 *  Create a fire-and-forget component.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public IExternalAccess create(Runnable body)
+	public static IExternalAccess create(Runnable body)
+	{
+		return create(body, null);
+	}
+	
+	/**
+	 *  Create a fire-and-forget component.
+	 *  @param body	The code to be executed in the new component.
+	 */
+	public static IExternalAccess create(IThrowingConsumer<IComponent> body)
 	{
 		return create(body, null);
 	}
@@ -83,9 +92,10 @@ public class LambdaAgent
 	 *  Create a component and receive a result, when the body finishes.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static <T> void	create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid)
+	public static <T> IExternalAccess create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid)
 	{
-		Component	comp = Component.createComponent(Component.class, () -> new Component(cid));
+		Component comp = Component.createComponent(Component.class, () -> new Component(cid));
 		comp.getExternalAccess().scheduleStep(body);
+		return comp.getExternalAccess();
 	}
 }

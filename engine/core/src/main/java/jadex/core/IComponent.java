@@ -46,12 +46,6 @@ public interface IComponent
 	public void terminate();
 	
 	/**
-	 *  Terminate the component.
-	 *  @param e The exception.
-	 * /
-	public void terminate(Exception e);*/
-	
-	/**
 	 *  Get the pojo.
 	 *  @return The pojo.
 	 */
@@ -100,28 +94,28 @@ public interface IComponent
 	}
 	
 	// todo: remove
-	public static IFuture<IExternalAccess> create(Runnable pojo)
+	/*public static IFuture<IExternalAccess> create(Runnable pojo)
 	{
 		return create(pojo, null);
-	}
+	}*/
 	
 	// todo: remove
-	public static IFuture<IExternalAccess> create(Runnable pojo, ComponentIdentifier cid)
+	/*public static IFuture<IExternalAccess> create(Runnable pojo, ComponentIdentifier cid)
 	{
 		return create((Object)pojo, cid);
-	}
+	}*/
 	
 	// todo: remove
-	public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo)
+	/*public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo)
 	{
 		return create(pojo, null);
-	}
+	}*/
 	
 	// todo: remove
-	public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
+	/*public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
 	{
 		return create((Object)pojo, cid);
-	}
+	}*/
 	
 	public static IFuture<IExternalAccess> create(Object pojo)
 	{

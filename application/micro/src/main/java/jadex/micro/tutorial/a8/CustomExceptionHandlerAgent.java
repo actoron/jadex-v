@@ -8,7 +8,7 @@ import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
 @Agent
-public class ExceptionAgent2
+public class CustomExceptionHandlerAgent
 {
 	@OnStart
 	public void onStart(IComponent agent)
@@ -18,7 +18,7 @@ public class ExceptionAgent2
 	
 	public static void main(String[] args) throws InterruptedException 
 	{
-		ComponentManager.get().addExceptionHandler(RuntimeException.class, (ex, comp) ->
+		ComponentManager.get().addExceptionHandler(RuntimeException.class, true, (ex, comp) ->
 		{
 			System.out.println("custom exception handler ignoring: "+ex);
 			
@@ -30,7 +30,7 @@ public class ExceptionAgent2
 			}));
 		});
 		
-		IComponent.create(new ExceptionAgent());
+		IComponent.create(new CustomExceptionHandlerAgent());
 		
 		IComponent.waitForLastComponentTerminated();
 	}
