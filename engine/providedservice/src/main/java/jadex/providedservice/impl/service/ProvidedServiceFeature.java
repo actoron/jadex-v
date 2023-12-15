@@ -1,6 +1,7 @@
 package jadex.providedservice.impl.service;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.Map;
 import jadex.bytecode.ProxyFactory;
 import jadex.common.IValueFetcher;
 import jadex.common.MethodInfo;
+import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
@@ -36,6 +38,7 @@ import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Service;
+import jadex.providedservice.annotation.ServiceComponent;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
@@ -1131,11 +1134,6 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 	}
 	
 	/**
-	 *  Create a basic invocation handler for a provided service.
-	 */
-	public abstract AbstractServiceInvocationHandler createProvidedHandler(String name, Component ia, Class<?> type, Object service, ProvidedServiceInfo info);
-	
-	/**
 	 *  Test if a service is a provided service proxy.
 	 *  @param service The service.
 	 *  @return True, if is provided service proxy.
@@ -1314,5 +1312,139 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 				handler.addServiceInterceptor(ics[i], -1);
 			}
 		}
+	}
+	
+	// very problematic method:
+	// needs many annotations
+	/**
+	 *  Create a basic invocation handler for a provided service.
+	 */
+	protected static ServiceInvocationHandler createProvidedHandler(String name, Component ia, Class<?> type, Object service, ProvidedServiceInfo info)
+	{
+//		if(type.getName().indexOf("ITestService")!=-1 && ia.getComponentIdentifier().getName().startsWith("Global"))
+//			System.out.println("gaga");
+		
+		Map<String, Object> serprops = new HashMap<String, Object>();
+		if(info != null && info.getProperties() != null)
+		{
+			for(UnparsedExpression exp : info.getProperties())
+			{
+				Object val = SJavaParser.parseExpression(exp, ia.getFeature(IModelFeature.class).getModel().getAllImports(), ia.getClassLoader()).getValue(ia.getFeature(IModelFeature.class).getFetcher());
+				serprops.put(exp.getName(), val);
+			}
+		}
+		
+		ServiceInvocationHandler handler;
+		if(service instanceof IService)
+		{
+			IService ser = (IService)service;
+			
+			if(service instanceof BasicService)
+			{
+				//serprops.putAll(((BasicService)service).getPropertyMap());
+				((BasicService)service).setPropertyMap(serprops);
+			}
+			
+			handler = new ServiceInvocationHandler(ia, ser, false);
+			
+//			if(type==null)
+//			{
+//				type = ser.getServiceIdentifier().getServiceType();
+//			}
+//			else if(!type.equals(ser.getServiceIdentifier().getServiceType()))
+//			{
+//				throw new RuntimeException("Service does not match its type: "+type+", "+ser.getServiceIdentifier().getServiceType());
+//			}
+		}
+		else
+		{
+			if(type==null)
+			{
+				// Try to find service interface via annotation
+				if(service.getClass().isAnnotationPresent(Service.class))
+				{
+					Service si = (Service)service.getClass().getAnnotation(Service.class);
+					if(!si.value().equals(Object.class))
+					{
+						type = si.value();
+					}
+				}
+				// Otherwise take interface if there is only one
+				else
+				{
+					Class<?>[] types = service.getClass().getInterfaces();
+					if(types.length!=1)
+						throw new RuntimeException("Unknown service interface: "+SUtil.arrayToString(types));
+					type = types[0];
+				}
+			}
+			
+			Class<?> serclass = service.getClass();
+
+			BasicService mgmntservice = new BasicService(ia.getId(), type, serclass, null);
+			mgmntservice.setServiceIdentifier(BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info));
+			//serprops.putAll(mgmntservice.getPropertyMap());
+			//mgmntservice.setPropertyMap(serprops);
+			
+			// Do not try to call isAnnotationPresent for Proxy on Android
+			// see http://code.google.com/p/android/issues/detail?id=24846
+			if(!(ProxyFactory.isProxyClass(serclass)))
+			//if(!(SReflect.isAndroid() && ProxyFactory.isProxyClass(serclass)))
+			{
+				while(!Object.class.equals(serclass))
+				{
+					Field[] fields = serclass.getDeclaredFields();
+					for(int i=0; i<fields.length; i++)
+					{
+						if(fields[i].isAnnotationPresent(jadex.providedservice.annotation.ServiceIdentifier.class))
+						{
+							jadex.providedservice.annotation.ServiceIdentifier si = (jadex.providedservice.annotation.ServiceIdentifier)fields[i].getAnnotation(jadex.providedservice.annotation.ServiceIdentifier.class);
+							if(si.value().equals(Object.class) || si.value().equals(type))
+							{
+								if(SReflect.isSupertype(IServiceIdentifier.class, fields[i].getType()))
+								{
+									try
+									{
+										SAccess.setAccessible(fields[i], true);
+										fields[i].set(service, mgmntservice.getServiceId());
+									}
+									catch(Exception e)
+									{
+										e.printStackTrace();
+									}
+								}
+								else
+								{
+									throw new RuntimeException("Field cannot store IServiceIdentifer: "+fields[i]);
+								}
+							}
+						}
+						
+						if(fields[i].isAnnotationPresent(ServiceComponent.class))
+						{
+							try
+							{
+								Object val	= ia.getFeature(IModelFeature.class).getParameterGuesser().guessParameter(fields[i].getType(), false);
+								SAccess.setAccessible(fields[i], true);
+								fields[i].set(service, val);
+							}
+							catch(Exception e)
+							{
+//								e.printStackTrace();
+								throw new RuntimeException(e);
+							}
+						}
+					}
+					serclass = serclass.getSuperclass();
+				}
+			}
+			
+			ServiceInfo si = new ServiceInfo(service, mgmntservice);
+			handler = new ServiceInvocationHandler(ia, si);//, ia.getDescription().getCause());
+			
+//			addPojoServiceIdentifier(service, mgmntservice.getServiceIdentifier());
+		}
+		
+		return handler;
 	}
 }

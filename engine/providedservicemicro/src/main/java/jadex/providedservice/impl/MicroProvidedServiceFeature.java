@@ -1,32 +1,13 @@
 package jadex.providedservice.impl;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import jadex.bytecode.ProxyFactory;
-import jadex.common.SAccess;
-import jadex.common.SReflect;
-import jadex.common.SUtil;
-import jadex.common.UnparsedExpression;
 import jadex.core.impl.Component;
-import jadex.javaparser.SJavaParser;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
 import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IProvidedServiceFeature;
-import jadex.providedservice.IService;
-import jadex.providedservice.annotation.Service;
-import jadex.providedservice.annotation.ServiceComponent;
-import jadex.providedservice.annotation.ServiceIdentifier;
-import jadex.providedservice.impl.service.BasicService;
-import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.providedservice.impl.service.ProvidedServiceFeature;
-import jadex.providedservice.impl.service.ProvidedServiceInfo;
 import jadex.providedservice.impl.service.ProvidedServiceModel;
-import jadex.providedservice.impl.service.ServiceInfo;
 
 public class MicroProvidedServiceFeature extends ProvidedServiceFeature
 {
@@ -56,7 +37,7 @@ public class MicroProvidedServiceFeature extends ProvidedServiceFeature
 	
 	/**
 	 *  Create a basic invocation handler for a provided service.
-	 */
+	 * /
 	public AbstractServiceInvocationHandler createProvidedHandler(String name, Component ia, Class<?> type, Object service, ProvidedServiceInfo info)
 	{
 //		if(type.getName().indexOf("ITestService")!=-1 && ia.getComponentIdentifier().getName().startsWith("Global"))
@@ -185,5 +166,5 @@ public class MicroProvidedServiceFeature extends ProvidedServiceFeature
 		}
 		
 		return handler;
-	}
+	}*/
 }

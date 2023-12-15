@@ -1,4 +1,4 @@
-package jadex.providedservice.impl;
+package jadex.providedservice.impl.service;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
@@ -19,13 +19,6 @@ import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.annotation.FutureReturnType;
 import jadex.providedservice.annotation.Raw;
-import jadex.providedservice.impl.service.CallAccess;
-import jadex.providedservice.impl.service.IInternalService;
-import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
-import jadex.providedservice.impl.service.ISwitchCall;
-import jadex.providedservice.impl.service.ServiceCall;
-import jadex.providedservice.impl.service.ServiceInfo;
-import jadex.providedservice.impl.service.ServiceInvocationContext;
 import jadex.providedservice.impl.service.interceptors.ResolveInterceptor;
 
 /**
