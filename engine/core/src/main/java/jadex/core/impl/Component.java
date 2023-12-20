@@ -89,6 +89,15 @@ public class Component implements IComponent
 		return features!=null ? (Collection<Object>)features.values() : Collections.emptySet();
 	}
 	
+	/**
+	 *  Check if has a feature.
+	 *  @return True, if it has the feature.
+	 */
+	public boolean hasFeature(Class<?> type)
+	{
+		return features!=null && features.containsKey(type);
+	}
+	
 	// TODO: needed?
 //	/**
 //	 *  Get the feature instance for the given type.

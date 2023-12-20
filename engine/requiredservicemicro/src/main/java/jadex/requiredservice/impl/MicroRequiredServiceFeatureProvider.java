@@ -1,15 +1,15 @@
 package jadex.requiredservice.impl;
 
-import java.util.Collections;
 import java.util.Set;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.micro.MicroAgent;
+import jadex.micro.impl.MicroAgentFeatureProvider;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredServiceFeature> 
+public class MicroRequiredServiceFeatureProvider extends FeatureProvider<IRequiredServiceFeature> 
 {
 	@Override
 	public Class<IRequiredServiceFeature> getFeatureType()
@@ -20,13 +20,13 @@ public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredSer
 	@Override
 	public IRequiredServiceFeature createFeatureInstance(Component self)
 	{
-		return new RequiredServiceFeature(self);
+		return new MicroRequiredServiceFeature(self);
 	}
 	
 	@Override
 	public Class<? extends Component> getRequiredComponentType() 
 	{
-		return Component.class;
+		return MicroAgent.class;
 	}
 	
 	/**
@@ -36,5 +36,11 @@ public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredSer
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
 		return Set.of(IProvidedServiceFeature.class);
+	}
+	
+	@Override
+	public boolean replacesFeatureProvider(FeatureProvider<IRequiredServiceFeature> provider) 
+	{
+		return provider instanceof RequiredServiceFeatureProvider;
 	}
 }

@@ -9,7 +9,6 @@ import jadex.model.IModelFeature;
 import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IProvidedServiceFeature;
-import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.providedservice.impl.service.ProvidedServiceFeature;
 import jadex.providedservice.impl.service.ProvidedServiceImplementation;
 import jadex.providedservice.impl.service.ProvidedServiceInfo;
@@ -22,7 +21,7 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 		super(self);
 	}
 	
-	protected ProvidedServiceModel loadModel()
+	public ProvidedServiceModel loadModel()
 	{
 		final ProvidedServiceModel mymodel = (ProvidedServiceModel)BpmnProvidedServiceLoader.readFeatureModel(self.getFeature(IModelFeature.class).getModel());
 		

@@ -68,7 +68,10 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 		this.self	= self;
 	}
 	
-	protected abstract ProvidedServiceModel loadModel();
+	public ProvidedServiceModel loadModel()
+	{
+		return null;
+	}
 	
 	@Override
 	public IFuture<Void> onStart()

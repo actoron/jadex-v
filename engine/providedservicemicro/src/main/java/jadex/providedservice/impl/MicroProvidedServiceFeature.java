@@ -16,7 +16,7 @@ public class MicroProvidedServiceFeature extends ProvidedServiceFeature
 		super(self);
 	}
 	
-	protected ProvidedServiceModel loadModel()
+	public ProvidedServiceModel loadModel()
 	{
 		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
 

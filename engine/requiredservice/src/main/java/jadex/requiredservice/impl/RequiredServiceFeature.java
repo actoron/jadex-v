@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -51,6 +52,7 @@ import jadex.micro.MicroClassReader;
 import jadex.model.IModelFeature;
 import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
+import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
@@ -66,6 +68,7 @@ import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.IInternalService;
 import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.providedservice.impl.service.IServiceInvocationInterceptor;
+import jadex.providedservice.impl.service.ProvidedServiceModel;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.providedservice.impl.service.ServiceInvocationHandler;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
@@ -101,118 +104,121 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 		this.self	= self;
 	}
 	
+	public RequiredServiceModel loadModel()
+	{
+		return null;
+	}
+	
 	@Override
 	public IFuture<Void> onStart()
 	{
 		Future<Void> ret = new Future<Void>();
 		
-		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
+		ModelInfo model = self.hasFeature(IModelFeature.class)? (ModelInfo)self.getFeature(IModelFeature.class).getModel(): null;
+		RequiredServiceModel mymodel = model!=null? (RequiredServiceModel)model.getFeatureModel(IRequiredServiceFeature.class): null;
+		if(mymodel==null)
+			mymodel = loadModel();
 		
-		RequiredServiceModel mymodel = (RequiredServiceModel)model.getFeatureModel(IRequiredServiceFeature.class);
 		if(mymodel==null)
 		{
-			mymodel = (RequiredServiceModel)RequiredServiceLoader.readFeatureModel(((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			final RequiredServiceModel fmymodel = mymodel;
-			AbstractModelLoader loader = AbstractModelLoader.getLoader((Class< ? extends Component>)self.getClass());
-			loader.updateCachedModel(() ->
-			{
-				model.putFeatureModel(IRequiredServiceFeature.class, fmymodel);
-			});
-		}
-		
-		// Required services. (Todo: prefix for capabilities)
-		Map<String, RequiredServiceInfo> rservices = mymodel.getRequiredServices();
-		
-		//String config = model.getConfiguration();
-		
-		Map<String, RequiredServiceInfo> sermap = new LinkedHashMap<String, RequiredServiceInfo>(rservices);
-		/*for(int i=0; i<ms.length; i++)
-		{
-			ms[i] = new RequiredServiceInfo(/*getServicePrefix()+* /ms[i].getName(), ms[i].getType().getType(cl, model.getAllImports()), ms[i].getMin(), ms[i].getMax(), 
-				ms[i].getDefaultBinding(), 
-				//ms[i].getNFRProperties(), 
-				ms[i].getTags());
-			sermap.put(ms[i].getName(), ms[i]);
-		}*/
-
-		/*if(config!=null && model.getConfiguration(config)!=null)
-		{
-			ConfigurationInfo cinfo = model.getConfiguration(config);
-			RequiredServiceInfo[] cs = cinfo.getServices();
-			for(int i=0; i<cs.length; i++)
-			{
-				RequiredServiceInfo rsi = sermap.get(/*getServicePrefix()+* /cs[i].getName());
-				RequiredServiceInfo newrsi = new RequiredServiceInfo(rsi.getName(), rsi.getType().getType(cl, model.getAllImports()), ms[i].getMin(), ms[i].getMax(), 
-					new RequiredServiceBinding(cs[i].getDefaultBinding()), ms[i].getNFRProperties(), ms[i].getTags());
-				sermap.put(rsi.getName(), newrsi);
-			}
-		}*/
-		
-		// Todo: Bindings from outside
-		/*RequiredServiceBinding[] bindings = cinfo.getRequiredServiceBindings();
-		if(bindings!=null)
-		{
-			for(int i=0; i<bindings.length; i++)
-			{
-				RequiredServiceInfo rsi = sermap.get(bindings[i].getName());
-				RequiredServiceInfo newrsi = new RequiredServiceInfo(rsi.getName(), rsi.getType().getType(cl, model.getAllImports()), ms[i].getMin(), ms[i].getMax(), 
-					new RequiredServiceBinding(bindings[i]), ms[i].getNFRProperties(), ms[i].getTags());
-				sermap.put(rsi.getName(), newrsi);
-			}
-		}
-		
-		RequiredServiceInfo[] rservices = sermap.values().toArray(new RequiredServiceInfo[sermap.size()]);*/
-		
-		addRequiredServiceInfos(sermap.values().toArray(new RequiredServiceInfo[sermap.size()]));
-		
-		/*sqms = getLocalService(new ServiceQuery<>(query).setMultiplicity(0));
-		if(sqms == null)
-		{
-			delayedremotequeries = new ArrayList<>();
-			
-			ISubscriptionIntermediateFuture<ISearchQueryManagerService> sqmsfut = addQuery(query);
-			sqmsfut.addResultListener(new IntermediateEmptyResultListener<ISearchQueryManagerService>()
-			{
-				public void intermediateResultAvailable(ISearchQueryManagerService result)
-				{
-					//System.out.println("ISearchQueryManagerService "+result);
-					if(sqms == null)
-					{
-						sqms = result;
-						sqmsfut.terminate();
-						for (Tuple2<ServiceQuery<?>, SubscriptionIntermediateDelegationFuture<?>> sqi : delayedremotequeries)
-						{
-							@SuppressWarnings({"unchecked"})
-							ISubscriptionIntermediateFuture<Object> source = (ISubscriptionIntermediateFuture<Object>)addQuery(sqi.getFirstEntity());
-							@SuppressWarnings("unchecked")
-							SubscriptionIntermediateDelegationFuture<Object>	target	= (SubscriptionIntermediateDelegationFuture<Object>)sqi.getSecondEntity();
-							
-							source.delegateTo(target);
-						}
-						delayedremotequeries = null;
-					}
-				}
-			});
-		}*/
-		/*else
-		{
-			System.out.println("directly found ISearchQueryManagerService");
-		}*/
-		
-		
-		final RequiredServiceModel fmymodel = mymodel;
-		String[] sernames = mymodel.getServiceInjectionNames();
-		
-		Stream<Tuple2<String, ServiceInjectionInfo[]>> s = Arrays.stream(sernames).map(sername -> new Tuple2<String, ServiceInjectionInfo[]>(sername, fmymodel.getServiceInjections(sername)));
-		
-		Map<String, ServiceInjectionInfo[]> serinfos = s.collect(Collectors.toMap(t -> t.getFirstEntity(), t -> t.getSecondEntity())); 
-		
-		Object pojo = ((MicroAgent)self).getPojo(); // hack
-		injectServices(getComponent(), pojo, sernames, serinfos, mymodel)
-			.then(q ->
-		{
 			ret.setResult(null);
-		}).catchEx(ret);
+		}
+		else
+		{
+			// Required services. (Todo: prefix for capabilities)
+			Map<String, RequiredServiceInfo> rservices = mymodel.getRequiredServices();
+			
+			//String config = model.getConfiguration();
+			
+			Map<String, RequiredServiceInfo> sermap = new LinkedHashMap<String, RequiredServiceInfo>(rservices!=null? rservices: Collections.EMPTY_MAP);
+			/*for(int i=0; i<ms.length; i++)
+			{
+				ms[i] = new RequiredServiceInfo(/*getServicePrefix()+* /ms[i].getName(), ms[i].getType().getType(cl, model.getAllImports()), ms[i].getMin(), ms[i].getMax(), 
+					ms[i].getDefaultBinding(), 
+					//ms[i].getNFRProperties(), 
+					ms[i].getTags());
+				sermap.put(ms[i].getName(), ms[i]);
+			}*/
+	
+			/*if(config!=null && model.getConfiguration(config)!=null)
+			{
+				ConfigurationInfo cinfo = model.getConfiguration(config);
+				RequiredServiceInfo[] cs = cinfo.getServices();
+				for(int i=0; i<cs.length; i++)
+				{
+					RequiredServiceInfo rsi = sermap.get(/*getServicePrefix()+* /cs[i].getName());
+					RequiredServiceInfo newrsi = new RequiredServiceInfo(rsi.getName(), rsi.getType().getType(cl, model.getAllImports()), ms[i].getMin(), ms[i].getMax(), 
+						new RequiredServiceBinding(cs[i].getDefaultBinding()), ms[i].getNFRProperties(), ms[i].getTags());
+					sermap.put(rsi.getName(), newrsi);
+				}
+			}*/
+			
+			// Todo: Bindings from outside
+			/*RequiredServiceBinding[] bindings = cinfo.getRequiredServiceBindings();
+			if(bindings!=null)
+			{
+				for(int i=0; i<bindings.length; i++)
+				{
+					RequiredServiceInfo rsi = sermap.get(bindings[i].getName());
+					RequiredServiceInfo newrsi = new RequiredServiceInfo(rsi.getName(), rsi.getType().getType(cl, model.getAllImports()), ms[i].getMin(), ms[i].getMax(), 
+						new RequiredServiceBinding(bindings[i]), ms[i].getNFRProperties(), ms[i].getTags());
+					sermap.put(rsi.getName(), newrsi);
+				}
+			}
+			
+			RequiredServiceInfo[] rservices = sermap.values().toArray(new RequiredServiceInfo[sermap.size()]);*/
+			
+			addRequiredServiceInfos(sermap.values().toArray(new RequiredServiceInfo[sermap.size()]));
+			
+			/*sqms = getLocalService(new ServiceQuery<>(query).setMultiplicity(0));
+			if(sqms == null)
+			{
+				delayedremotequeries = new ArrayList<>();
+				
+				ISubscriptionIntermediateFuture<ISearchQueryManagerService> sqmsfut = addQuery(query);
+				sqmsfut.addResultListener(new IntermediateEmptyResultListener<ISearchQueryManagerService>()
+				{
+					public void intermediateResultAvailable(ISearchQueryManagerService result)
+					{
+						//System.out.println("ISearchQueryManagerService "+result);
+						if(sqms == null)
+						{
+							sqms = result;
+							sqmsfut.terminate();
+							for (Tuple2<ServiceQuery<?>, SubscriptionIntermediateDelegationFuture<?>> sqi : delayedremotequeries)
+							{
+								@SuppressWarnings({"unchecked"})
+								ISubscriptionIntermediateFuture<Object> source = (ISubscriptionIntermediateFuture<Object>)addQuery(sqi.getFirstEntity());
+								@SuppressWarnings("unchecked")
+								SubscriptionIntermediateDelegationFuture<Object>	target	= (SubscriptionIntermediateDelegationFuture<Object>)sqi.getSecondEntity();
+								
+								source.delegateTo(target);
+							}
+							delayedremotequeries = null;
+						}
+					}
+				});
+			}*/
+			/*else
+			{
+				System.out.println("directly found ISearchQueryManagerService");
+			}*/
+			
+			
+			final RequiredServiceModel fmymodel = mymodel;
+			String[] sernames = mymodel.getServiceInjectionNames();
+			
+			Stream<Tuple2<String, ServiceInjectionInfo[]>> s = Arrays.stream(sernames).map(sername -> new Tuple2<String, ServiceInjectionInfo[]>(sername, fmymodel.getServiceInjections(sername)));
+			
+			Map<String, ServiceInjectionInfo[]> serinfos = s.collect(Collectors.toMap(t -> t.getFirstEntity(), t -> t.getSecondEntity())); 
+			
+			Object pojo = ((MicroAgent)self).getPojo(); // hack
+			injectServices(getComponent(), pojo, sernames, serinfos, mymodel)
+				.then(q ->
+			{
+				ret.setResult(null);
+			}).catchEx(ret);
+		}
 		
 		return ret;
 	}
