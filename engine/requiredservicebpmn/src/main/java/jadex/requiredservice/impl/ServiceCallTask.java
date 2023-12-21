@@ -77,7 +77,7 @@ public class ServiceCallTask implements ITask
 		final Future<Void>	ret	= new Future<Void>();
 		String	service	= (String)context.getPropertyValue(PROPERTY_SERVICE);
 		String	method	= (String)context.getPropertyValue(PROPERTY_METHOD);
-		String	rank	= (String)context.getPropertyValue(PROPERTY_RANKING);
+		//String	rank	= (String)context.getPropertyValue(PROPERTY_RANKING);
 		String	resultparam	= null;
 		
 		String[] imports = process.getFeature(IModelFeature.class).getModel().getAllImports();
@@ -357,7 +357,7 @@ public class ServiceCallTask implements ITask
 				{
 					public void customResultAvailable(Object result)
 					{
-//						System.out.println("result is: "+result);
+						System.out.println("result is: "+result);
 						if(fresultparam!=null)
 							context.setParameterValue(fresultparam, result);
 						ret.setResult(null);

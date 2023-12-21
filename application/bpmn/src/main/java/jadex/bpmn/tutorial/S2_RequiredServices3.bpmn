@@ -12,7 +12,7 @@
       <bpmn:incoming>w4U41tjrSTlZ3iUf</bpmn:incoming>
       <bpmn:outgoing>2uhMQcfXPPVuWqKu</bpmn:outgoing>
       <bpmn:extensionElements>
-        <jadex:class>jadex.bpmn.runtime.task.ServiceCallTask</jadex:class>
+        <jadex:class>jadex.requiredservice.impl.ServiceCallTask</jadex:class>
         <jadex:property name="service" type="java.lang.String">&quot;bser&quot;</jadex:property>
         <jadex:property name="method">&quot;IIntermediateFuture&lt;Integer&gt; count()&quot;</jadex:property>
       </bpmn:extensionElements>

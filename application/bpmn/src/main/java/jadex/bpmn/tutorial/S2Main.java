@@ -19,7 +19,9 @@ public class S2Main
 		
 		SUtil.sleep(1000);
 		
-		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S2_RequiredServices.bpmn"));
+		//BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S2_RequiredServices.bpmn"));
+		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S2_RequiredServices2.bpmn"));
+		//BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S2_RequiredServices.bpmn"));
 		
 		IComponent.waitForLastComponentTerminated();
 		

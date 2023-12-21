@@ -12,7 +12,7 @@
       <bpmn:incoming>w4U41tjrSTlZ3iUf</bpmn:incoming>
       <bpmn:outgoing>2uhMQcfXPPVuWqKu</bpmn:outgoing>
       <bpmn:extensionElements>
-        <jadex:class>jadex.bpmn.runtime.task.ServiceCallTask</jadex:class>
+        <jadex:class>jadex.requiredservice.impl.ServiceCallTask</jadex:class>
         <jadex:parameter direction="in" name="param0" type="int">2</jadex:parameter>
         <jadex:parameter direction="in" name="param1" type="int">3</jadex:parameter>
         <jadex:parameter direction="out" name="return" type="java.lang.Integer"/>
