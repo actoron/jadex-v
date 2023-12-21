@@ -34,6 +34,7 @@ includeBuild('engine/bdi') {}
 
 includeBuild('engine/bpmn') {}
 includeBuild('engine/providedservicebpmn') {}
+includeBuild('engine/requiredservicebpmn') {}
 
 includeBuild('rules/eca') {}
 

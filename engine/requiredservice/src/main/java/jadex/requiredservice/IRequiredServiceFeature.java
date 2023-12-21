@@ -175,4 +175,11 @@ public interface IRequiredServiceFeature
 	 *  @return The service query.
 	 */
 	public ServiceQuery<?> getServiceQuery(String name);
+	
+	/**
+	 *  Get the required service info for a name.
+	 *  @param name	The required service name.
+	 */
+	// Hack?! used by e.g. bpmn
+	public RequiredServiceInfo	getServiceInfo(String name);
 }

@@ -16,7 +16,7 @@ dependencies
 {
 	implementation 'jadex:core:5.0.0'
 	implementation 'jadex:execution:5.0.0'
-	implementation 'jadex:providedservice:5.0.0'
+	implementation 'jadex:providedservicemicro:5.0.0' //hack
 	implementation 'jadex:requiredservice:5.0.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

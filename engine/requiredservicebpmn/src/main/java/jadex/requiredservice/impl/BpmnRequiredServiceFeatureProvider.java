@@ -2,12 +2,13 @@ package jadex.requiredservice.impl;
 
 import java.util.Set;
 
+import jadex.bpmn.runtime.BpmnProcess;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredServiceFeature> 
+public class BpmnRequiredServiceFeatureProvider extends FeatureProvider<IRequiredServiceFeature> 
 {
 	@Override
 	public Class<IRequiredServiceFeature> getFeatureType()
@@ -18,13 +19,13 @@ public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredSer
 	@Override
 	public IRequiredServiceFeature createFeatureInstance(Component self)
 	{
-		return new RequiredServiceFeature(self);
+		return new BpmnRequiredServiceFeature(self);
 	}
 	
 	@Override
 	public Class<? extends Component> getRequiredComponentType() 
 	{
-		return Component.class;
+		return BpmnProcess.class;
 	}
 	
 	/**
@@ -34,5 +35,11 @@ public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredSer
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
 		return Set.of(IProvidedServiceFeature.class);
+	}
+	
+	@Override
+	public boolean replacesFeatureProvider(FeatureProvider<IRequiredServiceFeature> provider) 
+	{
+		return provider instanceof RequiredServiceFeatureProvider;
 	}
 }

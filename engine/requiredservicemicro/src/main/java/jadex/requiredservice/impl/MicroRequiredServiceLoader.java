@@ -12,13 +12,14 @@ import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
 import jadex.micro.MicroClassReader;
 import jadex.providedservice.ServiceScope;
+import jadex.providedservice.annotation.Service;
 import jadex.requiredservice.RequiredServiceBinding;
 import jadex.requiredservice.RequiredServiceInfo;
 import jadex.requiredservice.annotation.OnService;
 import jadex.requiredservice.annotation.RequiredService;
 import jadex.requiredservice.annotation.RequiredServices;
 
-public class RequiredServiceLoader 
+public class MicroRequiredServiceLoader 
 {
 	public static Object readFeatureModel(final Class<?> clazz, ClassLoader cl)
 	{
@@ -144,7 +145,7 @@ public class RequiredServiceLoader
 							
 							if(new ClassInfo(Object.class).equals(rsis.getType()))
 							{
-								Class<?> iftype = Object.class.equals(ser.requiredservice().type())? MicroRequiredServiceFeature.guessParameterType(methods[i].getParameterTypes(), cl): ser.requiredservice().type();
+								Class<?> iftype = Object.class.equals(ser.requiredservice().type())? guessParameterType(methods[i].getParameterTypes(), cl): ser.requiredservice().type();
 								rsis.setType(new ClassInfo(iftype));
 							}
 							
@@ -231,5 +232,27 @@ public class RequiredServiceLoader
 		{
 			rsers.put(rsis.getName(), rsis);
 		}
+	}
+	
+	/**
+	 * 
+	 */
+	public static Class<?> guessParameterType(Class<?>[] ptypes, ClassLoader cl)
+	{
+		Class<?> iftype = null;
+		
+		for(Class<?> ptype: ptypes)
+		{
+			if(MicroClassReader.isAnnotationPresent(ptype, Service.class, cl))
+			{
+				iftype = ptype;
+				break;
+			}
+		}
+		
+		if(iftype==null || Object.class.equals(iftype))
+			throw new RuntimeException("No service interface found for service query");
+		
+		return iftype;
 	}
 }

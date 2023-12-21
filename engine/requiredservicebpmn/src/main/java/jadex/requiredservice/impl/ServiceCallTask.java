@@ -1,49 +1,39 @@
-package jadex.bpmn.runtime.task;
+package jadex.requiredservice.impl;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import jadex.bpmn.model.IModelContainer;
 import jadex.bpmn.model.MActivity;
-import jadex.bpmn.model.MProperty;
+import jadex.bpmn.model.MParameter;
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
-import jadex.bpmn.model.task.ITaskPropertyGui;
 import jadex.bpmn.model.task.annotation.Task;
 import jadex.bpmn.model.task.annotation.TaskProperty;
 import jadex.bpmn.model.task.annotation.TaskPropertyGui;
 import jadex.bpmn.runtime.impl.ProcessThread;
-import jadex.bpmn.runtime.task.ServiceCallTask.ServiceCallTaskGui;
-import jadex.bpmn.task.info.ParameterMetaInfo;
-import jadex.common.ClassInfo;
+import jadex.collection.IndexMap;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.execution.StepAborted;
+import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
 import jadex.future.IntermediateDefaultResultListener;
-import jadex.javaparser.SJavaParser;
+import jadex.model.IModelFeature;
 import jadex.model.modelinfo.IModelInfo;
-
-// todo!
+import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.impl.ServiceCallTask.ServiceCallTaskGui;
 
 /**
  *  Call a service.
@@ -76,7 +66,6 @@ public class ServiceCallTask implements ITask
 	
 	//-------- ITask interface --------
 	
-
 	/**
 	 *  Execute the task.
 	 *  @param context	The accessible values.
@@ -85,13 +74,14 @@ public class ServiceCallTask implements ITask
 	 */
 	public IFuture<Void> execute(final ITaskContext context, final IComponent process)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*final Future<Void>	ret	= new Future<Void>();
+		final Future<Void>	ret	= new Future<Void>();
 		String	service	= (String)context.getPropertyValue(PROPERTY_SERVICE);
 		String	method	= (String)context.getPropertyValue(PROPERTY_METHOD);
 		String	rank	= (String)context.getPropertyValue(PROPERTY_RANKING);
 		String	resultparam	= null;
+		
+		String[] imports = process.getFeature(IModelFeature.class).getModel().getAllImports();
+		ClassLoader cl = process.getClass().getClassLoader();
 		
 		// Collect arguments and settings.
 		final List<Object>	args = new ArrayList<Object>();
@@ -113,7 +103,7 @@ public class ServiceCallTask implements ITask
 				else if(MParameter.DIRECTION_IN.equals(param.getDirection()))
 				{
 					args.add(context.getParameterValue(param.getName()));
-					argtypes.add(param.getClazz().getType(process.getClassLoader(), process.getModel().getAllImports()));
+					argtypes.add(param.getClazz().getType(cl, imports));
 				}
 				else if(MParameter.DIRECTION_INOUT.equals(param.getDirection()))
 				{
@@ -122,7 +112,7 @@ public class ServiceCallTask implements ITask
 					
 					resultparam	= param.getName();
 					args.add(context.getParameterValue(param.getName()));
-					argtypes.add(param.getClazz().getType(process.getClassLoader(), process.getModel().getAllImports()));
+					argtypes.add(param.getClazz().getType(cl, imports));
 				}
 				else if(MParameter.DIRECTION_OUT.equals(param.getDirection()))
 				{
@@ -160,7 +150,7 @@ public class ServiceCallTask implements ITask
 		final String	fmethod	= method;
 		final String	fresultparam	= resultparam;
 		
-		Class<?> servicetype = ((IInternalRequiredServicesFeature)process.getFeature(IRequiredServicesFeature.class)).getServiceInfo(fservice).getType().getType(process.getClassLoader(), process.getModel().getAllImports());
+		Class<?> servicetype = process.getFeature(IRequiredServiceFeature.class).getServiceInfo(fservice).getType().getType(process.getClass().getClassLoader(), process.getFeature(IModelFeature.class).getModel().getAllImports());
 		Method[] methods = servicetype.getMethods();
 		Method met = null;
 		for(Method meth : methods)
@@ -174,17 +164,17 @@ public class ServiceCallTask implements ITask
 		}
 		if(met==null)
 		{
-			ret.setException(new RuntimeException("SCT: "+ String.valueOf(process.getModel().getFilename()) + " Method "+fmethod+" not found for service "+fservice+": "+context));
+			ret.setException(new RuntimeException("SCT: "+ String.valueOf(process.getFeature(IModelFeature.class).getModel().getFilename()) + " Method "+fmethod+" not found for service "+fservice+": "+context));
 			return ret;
 		}
 		final Method m = met;
 		
-		if(rank!=null) //|| multiple)
+		/*if(rank!=null) //|| multiple)
 		{
 			IServiceEvaluator eval = null;
 			try
 			{
-				Class<?> evacl = SReflect.findClass(rank, process.getModel().getAllImports(), process.getClassLoader());
+				Class<?> evacl = SReflect.findClass(rank, imports, cl);
 				try
 				{
 					Constructor con = evacl.getConstructor(new Class[]{IExternalAccess.class, MethodInfo.class});
@@ -231,9 +221,9 @@ public class ServiceCallTask implements ITask
 				ret.setException(e);
 			}
 		}
-		else
+		else*/
 		{
-			process.getFeature(IRequiredServicesFeature.class).getService(service)
+			process.getFeature(IRequiredServiceFeature.class).getService(service)
 				.addResultListener(new ExceptionDelegationResultListener<Object, Void>(ret)
 			{
 				public void customResultAvailable(Object result)
@@ -243,7 +233,7 @@ public class ServiceCallTask implements ITask
 			});
 		}
 		
-		return ret;*/
+		return ret;
 	}
 	
 	/**

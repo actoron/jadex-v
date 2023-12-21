@@ -8,8 +8,9 @@ import jadex.core.IExternalAccess;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.micro.IMicroAgent;
+import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.requiredservice.annotation.OnService;
+//import jadex.requiredservice.annotation.OnService;
 
 /**
  *  Main for starting the example programmatically.
@@ -26,18 +27,18 @@ public class S1Main
 		// Bpmn end check must be improved
 		IExternalAccess s1 = BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S1_ProvidedServices.bpmn"));
 		
-		/*LambdaAgent.create(agent ->
+		LambdaAgent.create(agent ->
 		{
-			agent.getFeature(IExecutionFeature.class).waitForDelay(1000).get();
-			
+			//agent.getFeature(IExecutionFeature.class).waitForDelay(1000).get();
 			IRequiredServiceFeature rsf = agent.getFeature(IRequiredServiceFeature.class);
-			IAService aser = rsf.getLocalService(IAService.class);
+			//IAService aser = rsf.getLocalService(IAService.class);
+			IAService aser = rsf.searchService(new ServiceQuery<IAService>(IAService.class), 10000).get();
 			String ret = aser.appendHello("hohoho").get();
 			System.out.println("terminating: "+agent.getId());
 			agent.terminate();
-		});*/
+		});
 		
-		IComponent.create(new IMicroAgent()
+		/*IComponent.create(new IMicroAgent()
 		{
 			//public void onStart(IComponent agent)
 			//{
@@ -53,7 +54,7 @@ public class S1Main
 				//IComponent.terminate(s1.getId()).get();
 				agent.terminate();
 			}
-		}).get();
+		}).get();*/
 		
 		IComponent.waitForLastComponentTerminated();
 		

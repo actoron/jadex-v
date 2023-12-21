@@ -1196,7 +1196,7 @@ public class SBpmnModelReader
 					model.addExtension(name, ext);
 				}
 				
-				ext.put(attrs.get(name), attrs);
+				ext.put(attrs.get("name"), attrs);
 			}
 		}
 		else if("dataFlow".equals(tag.getLocalPart()))
