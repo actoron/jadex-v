@@ -74,6 +74,9 @@ public class ComponentManager
 			ex.printStackTrace();
 			comp.terminate();
 		});
+		
+		// remove default handler
+		//removeExceptionHandler(null, Exception.class);
 	}
 	
 	public long pid()
