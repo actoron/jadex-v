@@ -325,6 +325,8 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
             }
         } 
         
+        getTopLevelThread().terminateOnEnd();
+        
         //started = true;
         
         //return IFuture.DONE;

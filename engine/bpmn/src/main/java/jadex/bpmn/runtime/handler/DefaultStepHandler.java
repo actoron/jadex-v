@@ -280,12 +280,7 @@ public class DefaultStepHandler implements IStepHandler
 			if(thread.getParent()!=null)
 				thread.getParent().removeThread(thread);
 			
-			ProcessThread topthread = thread.getTopLevelThread();
-			if(topthread.isFinished(null, null))
-			{
-				// todo: check for new event triggers that can continue process
-				instance.terminate();
-			}
+			thread.terminateOnEnd();
 		} 
 		else
 		{

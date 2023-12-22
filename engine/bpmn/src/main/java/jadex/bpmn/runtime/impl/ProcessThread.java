@@ -1612,6 +1612,16 @@ public class ProcessThread	implements ITaskContext
 	}
 	
 	/**
+	 *  Terminate the component when no process thread is active any more.
+	 */
+	public void terminateOnEnd()
+	{
+		ProcessThread topthread = getTopLevelThread();
+		if(topthread.isFinished(null, null))
+			instance.terminate();
+	}
+	
+	/**
 	 *  Create a string representation of this process thread.
 	 *  @return A string representation of this process thread.
 	 */
