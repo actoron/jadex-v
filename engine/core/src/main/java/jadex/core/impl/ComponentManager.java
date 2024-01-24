@@ -33,6 +33,9 @@ public class ComponentManager
 		return instance;
 	}
 	
+	/** Classloader used by components. */
+	private ClassLoader classloader = ComponentManager.class.getClassLoader();
+	
 	/** Cached process ID. */
 	private long pid;
 	
@@ -79,26 +82,67 @@ public class ComponentManager
 		//removeExceptionHandler(null, Exception.class);
 	}
 	
+	/**
+	 *  Returns the process identifier of the Java process.
+	 *  
+	 *  @return Process identifier of the Java process.
+	 */
 	public long pid()
 	{
 		return pid;
 	}
 	
+	/**
+	 *  Returns the name of the host on which the Java process is running.
+	 *  
+	 *  @return Name of the host on which the Java process is running.
+	 */
 	public String host()
 	{
 		return host;
+	}
+	
+	/**
+	 *  Sets the class loader used by components.
+	 *  
+	 *  @param classloader The class loader that components should use.
+	 */
+	public void setClassLoader(ClassLoader classloader)
+	{
+		this.classloader = classloader;
+	}
+	
+	/**
+	 *  Gets the class loader used by components.
+	 *  
+	 *  @return The class loader that components should use.
+	 */
+	public ClassLoader getClassLoader()
+	{
+		return classloader;
 	}
 	
 	public boolean isComponentIdNumberMode() 
 	{
 		return cidnumbermode;
 	}
-
+	
+	/**
+	 *  Configure if numbers instead words should be used
+	 *  as automatically generated component names.
+	 *  
+	 *  @param cidnumbermode True, if automatically generated names should be numbers.
+	 */
 	public void setComponentIdNumberMode(boolean cidnumbermode) 
 	{
 		this.cidnumbermode = cidnumbermode;
 	}
-
+	
+	/**
+	 *  Turns on debug messages globally.
+	 *  
+	 *  @param debug If true, debug messages are emitted globally.
+	 */
 	public void setDebug(boolean debug)
 	{
 		SUtil.DEBUG = debug;
