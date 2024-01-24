@@ -1,7 +1,7 @@
 package jadex.bpmn.runtime;
 
-import jadex.bpmn.BpmnModelLoader;
 import jadex.bpmn.model.MBpmnModel;
+import jadex.bpmn.model.io.BpmnModelLoader;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;
@@ -29,8 +29,15 @@ public class BpmnProcess extends Component
 			if(filename.startsWith("bpmn:"))
 				filename	= filename.substring(5);
 			String	ffilename	= filename ;
-			comp = Component.createComponent(BpmnProcess.class,
-				() -> new BpmnProcess((Object)null, loadModel(ffilename), cid));
+			//comp = Component.createComponent(BpmnProcess.class,
+			//	() -> new BpmnProcess((Object)null, loadModel(ffilename), cid));
+			comp = Component.createComponent(BpmnProcess.class, () -> 
+			{
+				// this is executed before the features are inited
+				IModelInfo model = loadModel(ffilename);
+				return new BpmnProcess((Object)null, model, cid);
+			});
+			
 		}
 		else if(pojo instanceof RBpmnProcess)
 		{
@@ -38,8 +45,15 @@ public class BpmnProcess extends Component
 			if(filename.startsWith("bpmn:"))
 				filename = filename.substring(5);
 			String	ffilename	= filename ;
-			comp = Component.createComponent(BpmnProcess.class,
-				() -> new BpmnProcess((RBpmnProcess)pojo, loadModel(ffilename), cid));
+			//comp = Component.createComponent(BpmnProcess.class,
+			//	() -> new BpmnProcess((RBpmnProcess)pojo, loadModel(ffilename), cid));
+		
+			comp = Component.createComponent(BpmnProcess.class, () -> 
+			{
+				// this is executed before the features are inited
+				IModelInfo model = loadModel(ffilename);
+				return new BpmnProcess((RBpmnProcess)pojo, model, cid);
+			});
 		}
 		
 		return comp.getExternalAccess();

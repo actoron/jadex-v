@@ -11,7 +11,7 @@ public interface IModelFeature
 	 *  by providing an optional parameter guesser. The selection order is the reverse
 	 *  init order, i.e., later features can override values from earlier features.
 	 */
-	public IParameterGuesser	getParameterGuesser();
+	public IParameterGuesser getParameterGuesser();
 
 	public IModelInfo getModel();
 

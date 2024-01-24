@@ -19,9 +19,21 @@ public class RequiredServiceModel
 		return services;
 	}
 
-	public void setRequiredServices(Map<String, RequiredServiceInfo> requiredServices) 
+	public void setRequiredServices(Map<String, RequiredServiceInfo> services) 
 	{
-		this.services = requiredServices;
+		this.services = services;
+	}
+	
+	public void addRequiredService(RequiredServiceInfo info)
+	{
+		addRequiredService(info.getName(), info);
+	}
+	
+	public void addRequiredService(String name, RequiredServiceInfo info)
+	{
+		if(name==null)
+			throw new RuntimeException("Name must not null");
+		this.services.put(name, info);
 	}
 	
 	/**

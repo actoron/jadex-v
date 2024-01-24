@@ -1,11 +1,9 @@
 package jadex.requiredservice.impl;
 
-import java.util.Collections;
 import java.util.Set;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
-import jadex.micro.MicroAgent;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
@@ -26,7 +24,7 @@ public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredSer
 	@Override
 	public Class<? extends Component> getRequiredComponentType() 
 	{
-		return MicroAgent.class;
+		return Component.class;
 	}
 	
 	/**

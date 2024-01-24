@@ -25,9 +25,16 @@ includeBuild('engine/publishservicejetty') {}
 includeBuild('engine/nfproperties') {}
 includeBuild('engine/simulation') {}
 includeBuild('engine/communication') {}
+
 includeBuild('engine/micro'){}
+includeBuild('engine/providedservicemicro') {}
+includeBuild('engine/requiredservicemicro') {}
+
 includeBuild('engine/bdi') {}
+
 includeBuild('engine/bpmn') {}
+includeBuild('engine/providedservicebpmn') {}
+includeBuild('engine/requiredservicebpmn') {}
 
 includeBuild('rules/eca') {}
 

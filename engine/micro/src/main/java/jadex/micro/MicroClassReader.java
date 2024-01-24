@@ -11,6 +11,7 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -20,7 +21,6 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.bytecode.ProxyFactory;
-import jadex.common.Boolean3;
 import jadex.common.ClassInfo;
 import jadex.common.FieldInfo;
 import jadex.common.IValueFetcher;
@@ -44,8 +44,6 @@ import jadex.micro.annotation.Breakpoints;
 import jadex.micro.annotation.Component;
 import jadex.micro.annotation.ComponentType;
 import jadex.micro.annotation.ComponentTypes;
-import jadex.micro.annotation.Configuration;
-import jadex.micro.annotation.Configurations;
 import jadex.micro.annotation.CreationInfo;
 import jadex.micro.annotation.Description;
 import jadex.micro.annotation.Imports;
@@ -58,11 +56,9 @@ import jadex.micro.annotation.Results;
 import jadex.model.ServiceCallInfo;
 import jadex.model.annotation.NameValue;
 import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnInit;
 import jadex.model.annotation.OnStart;
 import jadex.model.annotation.Value;
 import jadex.model.modelinfo.ComponentInstanceInfo;
-import jadex.model.modelinfo.ConfigurationInfo;
 import jadex.model.modelinfo.IArgument;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.model.modelinfo.SubcomponentTypeInfo;
@@ -104,7 +100,7 @@ public class MicroClassReader
 			// try loading from pojo class (class of dynamically generated pojo could not be available on disk)
 			if(pojo!=null)
 			{
-				System.out.println("using pojo class to read model, resetting classloader: "+model);
+				//System.out.println("using pojo class to read model, resetting classloader: "+model);
 				cma = pojo.getClass();
 				classloader = pojo.getClass().getClassLoader();
 			}
@@ -260,35 +256,39 @@ public class MicroClassReader
 		int cnt = 0;
 		Map<String, Object> toset = new HashMap<String, Object>();
 		boolean propdone = false;
-		boolean reqsdone = false;
-		boolean prosdone = false;
+		//boolean reqsdone = false;
+		//boolean prosdone = false;
 		boolean argsdone = false;
 		boolean resudone = false;
-		boolean confdone = false;
+		//boolean confdone = false;
 		boolean compdone = false;
 		boolean breaksdone = false;
-		boolean nfpropsdone = false;
-		boolean featdone = false;
-		boolean tagsdone = false;
+		//boolean nfpropsdone = false;
+		//boolean featdone = false;
+		//boolean tagsdone = false;
 		
 		boolean addfeat = false;
 		Set<String> configdone = new HashSet<String>();
 		
-		Boolean3	autoprovide	= Boolean3.NULL;
-		Set<Class<?>> serifaces = new HashSet<Class<?>>(); 
+		//Boolean3	autoprovide	= Boolean3.NULL;
+		//Set<Class<?>> serifaces = new HashSet<Class<?>>(); 
+		
+		List<Class<?>> todo = new ArrayList<Class<?>>();
 		
 		while(cma!=null && !cma.equals(Object.class))
 		{
+			todo.addAll(Arrays.asList(cma.getInterfaces()));
+			
 			if(isAnnotationPresent(cma, Agent.class, cl))
 			{
 				Agent	val	= getAnnotation(cma, Agent.class, cl);
-				Boolean	susp	= val.suspend().toBoolean();
+				//Boolean	susp	= val.suspend().toBoolean();
 //				Boolean	mast	= val.master().toBoolean();
 //				Boolean	daem	= val.daemon().toBoolean();
 //				Boolean	auto	= val.autoshutdown().toBoolean();
-				Boolean	sync	= val.synchronous().toBoolean();
+				//Boolean	sync	= val.synchronous().toBoolean();
 //				Boolean	persist	= val.persistable().toBoolean();
-				Boolean	keep	= val.keepalive().toBoolean();
+				//Boolean	keep	= val.keepalive().toBoolean();
 				
 				//modelinfo.setNameHint(!"".equals(val.name()) ? val.name() : null);
 				//modelinfo.addPredecessors(val.predecessors());
@@ -297,10 +297,10 @@ public class MicroClassReader
 				// Use most specific autoprovide setting.
 				//autoprovide	= autoprovide != Boolean3.NULL ? autoprovide : val.autoprovide();
 
-				if(susp!=null && modelinfo.getSuspend()==null)
+				/*if(susp!=null && modelinfo.getSuspend()==null)
 				{
 					modelinfo.setSuspend(susp);
-				}
+				}*/
 //				if(mast!=null && modelinfo.getMaster()==null)
 //				{
 //					modelinfo.setMaster(mast);
@@ -313,18 +313,18 @@ public class MicroClassReader
 //				{
 //					modelinfo.setAutoShutdown(auto);
 //				}
-				if(sync!=null && modelinfo.getSynchronous()==null)
+				/*if(sync!=null && modelinfo.getSynchronous()==null)
 				{
 					modelinfo.setSynchronous(sync);
-				}
+				}*/
 //				if(persist!=null && modelinfo.getPersistable()==null)
 //				{
 //					modelinfo.setPersistable(persist);
 //				}
-				if(keep!=null && modelinfo.getKeepalive()==null)
+				/*if(keep!=null && modelinfo.getKeepalive()==null)
 				{
 					modelinfo.setKeepalive(keep);
-				}
+				}*/
 				
 				/*PublishEventLevel moni = val.monitoring();
 				if(!PublishEventLevel.NULL.equals(moni))
@@ -653,6 +653,7 @@ public class MicroClassReader
 			}
 			
 			// Take all but new overrides old
+			/*
 			if(!compdone && isAnnotationPresent(cma, ComponentTypes.class, cl))
 			{
 				SubcomponentTypeInfo[] subinfos = null;
@@ -673,9 +674,9 @@ public class MicroClassReader
 						res.put(ctypes[i].name(), subinfo);
 					}
 				}
-			}
+			}*/
 			
-			if(!confdone && isAnnotationPresent(cma, Configurations.class, cl))
+			/*if(!confdone && isAnnotationPresent(cma, Configurations.class, cl))
 			{
 				Configurations val = (Configurations)getAnnotation(cma, Configurations.class, cl);
 				Configuration[] configs = val.value();
@@ -750,7 +751,7 @@ public class MicroClassReader
 								configinfo.addRequiredService(rsi);
 							}
 						}
-						*/
+						* /
 						Component[] comps = config.components();
 						for(int j=0; j<comps.length; j++)
 						{
@@ -761,12 +762,12 @@ public class MicroClassReader
 						}
 					}
 				}
-			}
+			}*/
 			
 			// Find injection targets by reflection (agent, arguments, services)
-			Map<String, Object> rsers = getOrCreateMap("reqservices", toset);
+			//Map<String, Object> rsers = getOrCreateMap("reqservices", toset);
 			//micromodel.getInjectionInfoHolder().setRequiredServiceInfos((Map)rsers); // Hack! todo
-			findInjections(cma, cl, micromodel.getInjectionInfoHolder(), rsers);
+			findInjections(cma, cl, micromodel.getInjectionInfoHolder());//, rsers);
 			
 			/*Field[] fields = cma.getDeclaredFields();
 			for(int i=0; i<fields.length; i++)
@@ -958,11 +959,11 @@ public class MicroClassReader
 					checkMethodReturnType(AgentCreated.class, methods[i], cl);
 					micromodel.setAgentMethod(AgentCreated.class, new MethodInfo(methods[i]));
 				}*/
-				if(isAnnotationPresent(methods[i], OnInit.class, cl))
+				/*if(isAnnotationPresent(methods[i], OnInit.class, cl))
 				{
 					checkMethodReturnType(OnInit.class, methods[i], cl);
 					micromodel.setAgentMethod(OnInit.class, new MethodInfo(methods[i]));
-				}
+				}*/
 				/*if(isAnnotationPresent(methods[i], AgentBody.class, cl))
 				{
 					checkMethodReturnType(AgentBody.class, methods[i], cl);
@@ -1073,6 +1074,12 @@ public class MicroClassReader
 			}
 
 			cma = cma.getSuperclass();
+			
+			if(cma==null || Object.class.equals(cma))
+			{
+				if(!todo.isEmpty())	
+					cma = todo.remove(0);
+			}
 		}
 				
 		Set imp = (Set)toset.get("imports");
@@ -2368,7 +2375,7 @@ public class MicroClassReader
 	 *  @param ii
 	 *  @param rsers
 	 */
-	public static void findInjections(Class<?> cma, ClassLoader cl, InjectionInfoHolder ii, Map<String, Object> rsers)
+	public static void findInjections(Class<?> cma, ClassLoader cl, InjectionInfoHolder ii)//, Map<String, Object> rsers)
 	{
 		//Map<String, RequiredServiceInfo> rsers = ii.getRequiredServiceInfos();
 		

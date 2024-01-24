@@ -21,8 +21,8 @@ public class GetTimeTask implements ITask
 	public IFuture<Void> execute(final ITaskContext context, final IComponent process)
 	{
 		final Future<Void> ret = new Future<Void>();
-		//IClockService clock = process.getFeature(IRequiredServicesFeature.class).getLocalService(IClockService.class);
-		//context.setParameterValue("time", Long.valueOf(clock.getTime()));
+		context.setParameterValue("time", System.currentTimeMillis());
+		ret.setResult(null);
 		return ret;
 	}
 	

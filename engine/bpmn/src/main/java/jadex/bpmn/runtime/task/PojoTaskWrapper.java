@@ -11,7 +11,7 @@ import java.util.Set;
 import jadex.bpmn.model.MParameter;
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.FieldInfo;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;

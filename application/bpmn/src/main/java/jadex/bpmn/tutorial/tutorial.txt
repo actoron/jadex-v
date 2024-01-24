@@ -1,8 +1,26 @@
 B3 debugger
+
 D3 receiving messages
 D4 multiple events
+D5 sending messages
+
+
 
 todo: 
 - rule handler support for ECA
-- messages with different plugable profiles, e.g. email, messenger, etc.
+- messages with different plugable profiles, e.g. email, messenger, service etc.
 - general property-based extension mechanism for bpmn
+
+
+altes todo: further topics
+
+    data
+        parameters in AND-join
+        loops
+        complex Java values (business objects)
+        reserved variables: $interpreter, $thread, $event, $platform, $clock, $args, $results
+        arguments and results
+    tasks
+        predefined tasks (esp. create comp for external subprocess)
+        custom tasks
+    other elements (lanes etc. - discuss only, no lesson?)

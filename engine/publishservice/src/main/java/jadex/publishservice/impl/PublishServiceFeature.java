@@ -48,7 +48,6 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 		{
 			mymodel = (PublishServiceModel)PublishServiceLoader.readFeatureModel(((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
 			PublishServiceModel fmymodel = mymodel;
-			
 			AbstractModelLoader loader = AbstractModelLoader.getLoader(self.getClass());
 			loader.updateCachedModel(() ->
 			{

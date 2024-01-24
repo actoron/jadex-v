@@ -1,8 +1,7 @@
 package jadex.bpmn.runtime.handler;
 
 import jadex.bpmn.model.MActivity;
-import jadex.bpmn.runtime.ProcessServiceInvocationHandler;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.core.IComponent;
 import jadex.future.Future;
 
@@ -16,8 +15,8 @@ public class EventEndSignalActivityHandler extends DefaultActivityHandler
 	 */
 	protected void doExecute(MActivity activity, IComponent instance, ProcessThread thread)
 	{
-		Future	ret	= (Future)thread.getParameterValue(ProcessServiceInvocationHandler.THREAD_PARAMETER_SERVICE_RESULT);
-		Object	result	= thread.getPropertyValue(ProcessServiceInvocationHandler.EVENT_PARAMETER_SERVICE_RESULT);
+		Future	ret	= (Future)thread.getParameterValue(ProcessThread.THREAD_PARAMETER_SERVICE_RESULT);
+		Object	result	= thread.getPropertyValue(ProcessThread.EVENT_PARAMETER_SERVICE_RESULT);
 		ret.setResult(result);
 	}
 }

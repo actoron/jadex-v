@@ -503,7 +503,15 @@ public abstract class AbstractModelLoader
 	
 	public static AbstractModelLoader getLoader(Class<? extends Component> type)
 	{
-		return loaders.get(type);
+		AbstractModelLoader ret = null;
+		
+		while(ret==null && !type.equals(Object.class))
+		{
+			ret = loaders.get(type);
+			type = (Class< ? extends Component>)type.getSuperclass();
+		}
+		
+		return ret;
 	}
 	
 	public static void addLoader(Class<? extends Component> type, AbstractModelLoader loader)

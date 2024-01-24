@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import jadex.bpmn.model.MActivity;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.IFilter;
 import jadex.common.SReflect;
 import jadex.common.SUtil;

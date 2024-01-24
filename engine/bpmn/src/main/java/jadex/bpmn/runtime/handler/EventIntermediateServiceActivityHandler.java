@@ -3,8 +3,7 @@ package jadex.bpmn.runtime.handler;
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.MSubProcess;
-import jadex.bpmn.runtime.ProcessServiceInvocationHandler;
-import jadex.bpmn.runtime.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IntermediateFuture;
@@ -71,7 +70,7 @@ public class EventIntermediateServiceActivityHandler extends EventIntermediateMe
 	 */
 	protected void sendReturnValue(final MActivity activity, final IComponent instance, final ProcessThread thread)
 	{
-		Future<Object> ret	= (Future<Object>)thread.getParameterValue(ProcessServiceInvocationHandler.THREAD_PARAMETER_SERVICE_RESULT);
+		Future<Object> ret	= (Future<Object>)thread.getParameterValue(ProcessThread.THREAD_PARAMETER_SERVICE_RESULT);
 		
 		boolean hasret = activity.getIncomingDataEdges()!=null && activity.getIncomingDataEdges().size()>0;
 		Object res = hasret? thread.getParameterValue(MActivity.RETURNPARAM): null;

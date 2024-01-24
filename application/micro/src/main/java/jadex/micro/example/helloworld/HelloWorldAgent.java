@@ -29,6 +29,11 @@ public class HelloWorldAgent
 	
 	//-------- methods --------
 	
+	public HelloWorldAgent(String text) 
+	{
+		this.text=text;
+	}
+	
 	/**
 	 *  Execute an agent step.
 	 */
@@ -38,11 +43,7 @@ public class HelloWorldAgent
 	{
 		System.out.println(text+" "+agent);//.getId());
 		IExecutionFeature.get().waitForDelay(2000).get();
-		IExecutionFeature.get().scheduleStep(() -> 
-		{
-			System.out.println("Good bye world.");
-			return null;
-		}).get();
+		System.out.println("Good bye world.");
 		IExecutionFeature.get().terminate();
 	}
 	
@@ -50,6 +51,11 @@ public class HelloWorldAgent
 	public void end()
 	{
 		System.out.println("end in pojo: "+agent);//.getId());
+	}
+	
+	public String	toString() 
+	{
+		return "Hello "+text;
 	}
 	
 	//-------- static part --------
@@ -64,7 +70,4 @@ public class HelloWorldAgent
 		
 		IComponent.waitForLastComponentTerminated();
 	}
-	
-	public HelloWorldAgent(String text) {this.text=text;}
-	public String	toString() {return "Hello "+text;}
 }

@@ -1,10 +1,9 @@
 package jadex.bpmn.runtime.handler;
 
 import jadex.bpmn.model.MActivity;
-import jadex.bpmn.runtime.ProcessServiceInvocationHandler;
-import jadex.bpmn.runtime.ProcessThread;
-import jadex.bpmn.runtime.ProcessThreadValueFetcher;
 import jadex.bpmn.runtime.handler.EventIntermediateErrorActivityHandler.EventIntermediateErrorException;
+import jadex.bpmn.runtime.impl.ProcessThread;
+import jadex.bpmn.runtime.impl.ProcessThreadValueFetcher;
 import jadex.common.IValueFetcher;
 import jadex.common.UnparsedExpression;
 import jadex.core.IComponent;
@@ -38,7 +37,7 @@ public class EventEndErrorActivityHandler extends DefaultActivityHandler
 			ex = new EventIntermediateErrorException(activity.getDescription());
 		
 		// If service call: propagate exception.
-		Future	ret	= (Future)thread.getParameterValue(ProcessServiceInvocationHandler.THREAD_PARAMETER_SERVICE_RESULT);
+		Future	ret	= (Future)thread.getParameterValue(ProcessThread.THREAD_PARAMETER_SERVICE_RESULT);
 		if(ret!=null)
 		{
 			ret.setException(ex);

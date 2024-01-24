@@ -1,10 +1,10 @@
 package jadex.bpmn.runtime.task;
 
-import jadex.bpmn.features.IBpmnComponentFeature;
-import jadex.bpmn.features.IInternalBpmnComponentFeature;
 import jadex.bpmn.model.task.ITaskContext;
 import jadex.bpmn.model.task.annotation.Task;
 import jadex.bpmn.model.task.annotation.TaskParameter;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
+import jadex.bpmn.runtime.impl.IInternalBpmnComponentFeature;
 import jadex.core.IComponent;
 
 /**

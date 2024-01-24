@@ -9,7 +9,6 @@ import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IPlan;
 import jadex.bdi.runtime.PlanFailureException;
-import jadex.common.Boolean3;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -18,7 +17,7 @@ import jadex.model.annotation.OnStart;
  *  Go to university example taken from  
  *  Winikoff, Padgham: developing intelligent agent systems, 2004.
  */
-@Agent(type="bdi", keepalive=Boolean3.FALSE)
+@Agent(type="bdi")//, keepalive=Boolean3.FALSE)
 public class UniversityAgent
 {
 	/** The bdi agent. */

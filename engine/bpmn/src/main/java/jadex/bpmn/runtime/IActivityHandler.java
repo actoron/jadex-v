@@ -1,6 +1,7 @@
 package jadex.bpmn.runtime;
 
 import jadex.bpmn.model.MActivity;
+import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.core.IComponent;
 
 /**

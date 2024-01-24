@@ -1,12 +1,15 @@
 package jadex.providedservice.impl.service;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -16,6 +19,8 @@ import java.util.Map;
 import jadex.bytecode.ProxyFactory;
 import jadex.common.IValueFetcher;
 import jadex.common.MethodInfo;
+import jadex.common.SAccess;
+import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
 import jadex.core.impl.Component;
@@ -25,19 +30,23 @@ import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
-import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
+import jadex.providedservice.annotation.Service;
+import jadex.providedservice.annotation.ServiceComponent;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.ServiceRegistry;
+import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
+import jadex.providedservice.impl.service.interceptors.DecouplingReturnInterceptor;
+import jadex.providedservice.impl.service.interceptors.MethodInvocationInterceptor;
+import jadex.providedservice.impl.service.interceptors.ResolveInterceptor;
 
-public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeature//, IParameterGuesser
+public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedServiceFeature//, IParameterGuesser
 {
 	protected Component self;
 	
@@ -50,9 +59,18 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 	/** The map of provided service infos. (sid -> method listener) */
 	protected Map<IServiceIdentifier, MethodListenerHandler> servicelisteners;
 	
+	/** The pojo service map (pojo -> proxy). */
+	protected static Map<Object, IService>	pojoproxies;
+
+	
 	protected ProvidedServiceFeature(Component self)
 	{
 		this.self	= self;
+	}
+	
+	public ProvidedServiceModel loadModel()
+	{
+		return null;
 	}
 	
 	@Override
@@ -61,201 +79,198 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 		Future<Void> ret = new Future<Void>();
 		
 		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
-		
 		ProvidedServiceModel mymodel = (ProvidedServiceModel)model.getFeatureModel(IProvidedServiceFeature.class);
 		if(mymodel==null)
-		{
-			mymodel = (ProvidedServiceModel)ProvidedServiceLoader.readFeatureModel(((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			final ProvidedServiceModel fmymodel = mymodel;
-			AbstractModelLoader loader = null;
-			Class<?>	clazz	= self.getClass();
-			while(loader==null && !clazz.equals(Object.class))
-			{
-				loader	= AbstractModelLoader.getLoader((Class< ? extends Component>)clazz);
-				clazz	= clazz.getSuperclass();
-			}
-			loader.updateCachedModel(() ->
-			{
-				model.putFeatureModel(IProvidedServiceFeature.class, fmymodel);
-			});
-		}
+			mymodel = loadModel();
 		
-		// Collect provided services from model (name or type -> provided service info)
-		//ProvidedServiceInfo[] ps = (ProvidedServiceInfo[])model.getFeatureModel(IMjProvidedServiceFeature.class);
-		ProvidedServiceInfo[] ps = mymodel.getServices();
-		Map<Object, ProvidedServiceInfo> sermap = new LinkedHashMap<Object, ProvidedServiceInfo>();
-		if(ps!=null)
+		if(mymodel==null)
 		{
-			for(int i=0; i<ps.length; i++)
-			{
-				Object key = ps[i].getName()!=null? ps[i].getName(): ps[i].getType().getType(self.getClass().getClassLoader(), model.getAllImports());
-				if(sermap.put(key, ps[i])!=null)
-				{
-					ret.setException(new RuntimeException("Services with same type must have different name."));  // Is catched and set to ret below
-					return ret;
-				}
-			}
+			ret.setResult(null);
 		}
 		else
 		{
-			System.out.println("has no services: "+self);
-		}
-				
-		// Adapt services to configuration (if any).
-		/*
-		if(component.getConfiguration()!=null)
-		{
-			ConfigurationInfo cinfo = component.getModel().getConfiguration(component.getConfiguration());
-			ProvidedServiceInfo[] cs = cinfo.getProvidedServices();
-			for(int i=0; i<cs.length; i++)
+			// Collect provided services from model (name or type -> provided service info)
+			//ProvidedServiceInfo[] ps = (ProvidedServiceInfo[])model.getFeatureModel(IMjProvidedServiceFeature.class);
+			ProvidedServiceInfo[] ps = mymodel.getServices();
+			Map<Object, ProvidedServiceInfo> sermap = new LinkedHashMap<Object, ProvidedServiceInfo>();
+			if(ps!=null)
 			{
-				Object key = cs[i].getName()!=null? cs[i].getName(): cs[i].getType().getType(component.getClassLoader(), component.getModel().getAllImports());
-				ProvidedServiceInfo psi = (ProvidedServiceInfo)sermap.get(key);
-				ProvidedServiceInfo newpsi= new ProvidedServiceInfo(psi.getName(), psi.getType().getType(component.getClassLoader(), component.getModel().getAllImports()), 
-					new ProvidedServiceImplementation(cs[i].getImplementation()), 
-					cs[i].getScope()!=null? cs[i].getScope(): psi.getScope(),
-					cs[i].getScopeExpression()!=null? cs[i].getScopeExpression(): psi.getScopeExpression(),
-					cs[i].getSecurity()!=null? cs[i].getSecurity(): psi.getSecurity(),
-					cs[i].getPublish()!=null? cs[i].getPublish(): psi.getPublish(), 
-					cs[i].getProperties()!=null? cs[i].getProperties() : psi.getProperties());
-				sermap.put(key, newpsi);
-			}
-		}*/
-				
-		// Add custom service infos from outside.
-		/*
-		ProvidedServiceInfo[] pinfos = cinfo.getProvidedServiceInfos();
-		for(int i=0; pinfos!=null && i<pinfos.length; i++)
-		{
-			Object key = pinfos[i].getName()!=null? pinfos[i].getName(): pinfos[i].getType().getType(component.getClassLoader(), component.getModel().getAllImports());
-			ProvidedServiceInfo psi = (ProvidedServiceInfo)sermap.get(key);
-			ProvidedServiceInfo newpsi= new ProvidedServiceInfo(psi.getName(), psi.getType().getType(component.getClassLoader(), component.getModel().getAllImports()), 
-				pinfos[i].getImplementation()!=null? new ProvidedServiceImplementation(pinfos[i].getImplementation()): psi.getImplementation(), 
-				pinfos[i].getScope()!=null? pinfos[i].getScope(): psi.getScope(),
-				pinfos[i].getScopeExpression()!=null? pinfos[i].getScopeExpression(): psi.getScopeExpression(),
-				pinfos[i].getSecurity()!=null? pinfos[i].getSecurity(): psi.getSecurity(),
-				pinfos[i].getPublish()!=null? pinfos[i].getPublish(): psi.getPublish(), 
-				pinfos[i].getProperties()!=null? pinfos[i].getProperties() : psi.getProperties());
-			sermap.put(key, newpsi);
-		}*/
-				
-		// Add external access service when not turned off
-		/*		
-		Map<String, Object> args = getComponent().getInternalAccess().getArguments();
-		Boolean extaarg = (Boolean)args.get("externalaccess");
-		Boolean extaplatarg = (Boolean)((Map<String, Object>)Starter.getPlatformValue(getComponent().getId(), IPlatformConfiguration.PLATFORMARGS)).get("externalaccess");
-		boolean on = extaarg!=null? extaarg.booleanValue(): extaplatarg!=null? extaplatarg.booleanValue(): true;
-//					System.out.println("on: "+on+" "+extaarg+" "+extaplatarg);
-		if(on)
-		{
-			ProvidedServiceImplementation impl = new ProvidedServiceImplementation();
-			impl.setValue("$component.getExternalAccess()");
-			// platform external access service will be published network wide, all others only on platform
-			ProvidedServiceInfo psi= new ProvidedServiceInfo("externalaccessservice", IExternalAccess.class, impl, 
-				getComponent().getId().equals(getComponent().getId().getRoot())? ServiceScope.NETWORK: ServiceScope.PLATFORM, null, null, null, null);
-			sermap.put("externalaccessservice", psi);
-		}*/
-				
-		FutureBarrier<Void> bar = new FutureBarrier<>();
-		
-		// Instantiate service objects
-		for(ProvidedServiceInfo info: sermap.values())
-		{
-			// Evaluate and replace scope expression, if any.
-			ServiceScope scope = info.getScope();
-			if(ServiceScope.EXPRESSION.equals(scope))
-			{
-				scope = (ServiceScope)SJavaParser.getParsedValue(info.getScopeExpression(), model.getAllImports(), self.getFeature(IModelFeature.class).getFetcher(), self.getClassLoader());
-				info = new ProvidedServiceInfo(info.getName(), info.getType(), info.getImplementation(), scope, info.getScopeExpression(), info.getSecurity(), 
-						//info.getPublish(), 
-						info.getProperties(), info.isSystemService());
-//						System.out.println("expression scope '"
-//							+ (info.getScopeExpression()!=null ? info.getScopeExpression().getValue() : "")
-//							+ "': "+scope);
-			}
-				
-			final Future<Void> fut = new Future<>();
-			bar.addFuture(fut);
-			
-			final ProvidedServiceImplementation	impl = info.getImplementation();
-			// Virtual service (e.g. promoted)
-			/*if(impl!=null && impl.getBinding()!=null)
-			{
-				RequiredServiceInfo rsi = new RequiredServiceInfo(BasicService.generateServiceName(info.getType().getType( 
-					component.getClassLoader(), component.getModel().getAllImports()))+":virtual", info.getType().getType(component.getClassLoader(), component.getModel().getAllImports()));
-				IServiceIdentifier sid = BasicService.createServiceIdentifier(component, 
-					rsi.getName(), rsi.getType().getType(component.getClassLoader(), component.getModel().getAllImports()),
-					BasicServiceInvocationHandler.class, component.getModel().getResourceIdentifier(), info);
-				final IInternalService service = BasicServiceInvocationHandler.createDelegationProvidedServiceProxy(
-					component, sid, rsi, impl.getBinding(), component.getClassLoader(), Starter.isRealtimeTimeout(component.getId(), true));
-				
-				addService(service, info);
-				fut.setResult(null);
+				for(int i=0; i<ps.length; i++)
+				{
+					Object key = ps[i].getName()!=null? ps[i].getName(): ps[i].getType().getType(self.getClass().getClassLoader(), model.getAllImports());
+					if(sermap.put(key, ps[i])!=null)
+					{
+						ret.setException(new RuntimeException("Services with same type must have different name."));  // Is catched and set to ret below
+						return ret;
+					}
+				}
 			}
 			else
-			{*/
-				final ProvidedServiceInfo finfo = info;
-				createServiceImplementation(info, self.getFeature(IModelFeature.class).getFetcher())
-					.then(ser ->
+			{
+				System.out.println("has no services: "+self);
+			}
+					
+			// Adapt services to configuration (if any).
+			/*
+			if(component.getConfiguration()!=null)
+			{
+				ConfigurationInfo cinfo = component.getModel().getConfiguration(component.getConfiguration());
+				ProvidedServiceInfo[] cs = cinfo.getProvidedServices();
+				for(int i=0; i<cs.length; i++)
 				{
-					// Implementation may null to disable service in some configurations.
-					if(ser!=null)
+					Object key = cs[i].getName()!=null? cs[i].getName(): cs[i].getType().getType(component.getClassLoader(), component.getModel().getAllImports());
+					ProvidedServiceInfo psi = (ProvidedServiceInfo)sermap.get(key);
+					ProvidedServiceInfo newpsi= new ProvidedServiceInfo(psi.getName(), psi.getType().getType(component.getClassLoader(), component.getModel().getAllImports()), 
+						new ProvidedServiceImplementation(cs[i].getImplementation()), 
+						cs[i].getScope()!=null? cs[i].getScope(): psi.getScope(),
+						cs[i].getScopeExpression()!=null? cs[i].getScopeExpression(): psi.getScopeExpression(),
+						cs[i].getSecurity()!=null? cs[i].getSecurity(): psi.getSecurity(),
+						cs[i].getPublish()!=null? cs[i].getPublish(): psi.getPublish(), 
+						cs[i].getProperties()!=null? cs[i].getProperties() : psi.getProperties());
+					sermap.put(key, newpsi);
+				}
+			}*/
+					
+			// Add custom service infos from outside.
+			/*
+			ProvidedServiceInfo[] pinfos = cinfo.getProvidedServiceInfos();
+			for(int i=0; pinfos!=null && i<pinfos.length; i++)
+			{
+				Object key = pinfos[i].getName()!=null? pinfos[i].getName(): pinfos[i].getType().getType(component.getClassLoader(), component.getModel().getAllImports());
+				ProvidedServiceInfo psi = (ProvidedServiceInfo)sermap.get(key);
+				ProvidedServiceInfo newpsi= new ProvidedServiceInfo(psi.getName(), psi.getType().getType(component.getClassLoader(), component.getModel().getAllImports()), 
+					pinfos[i].getImplementation()!=null? new ProvidedServiceImplementation(pinfos[i].getImplementation()): psi.getImplementation(), 
+					pinfos[i].getScope()!=null? pinfos[i].getScope(): psi.getScope(),
+					pinfos[i].getScopeExpression()!=null? pinfos[i].getScopeExpression(): psi.getScopeExpression(),
+					pinfos[i].getSecurity()!=null? pinfos[i].getSecurity(): psi.getSecurity(),
+					pinfos[i].getPublish()!=null? pinfos[i].getPublish(): psi.getPublish(), 
+					pinfos[i].getProperties()!=null? pinfos[i].getProperties() : psi.getProperties());
+				sermap.put(key, newpsi);
+			}*/
+					
+			// Add external access service when not turned off
+			/*		
+			Map<String, Object> args = getComponent().getInternalAccess().getArguments();
+			Boolean extaarg = (Boolean)args.get("externalaccess");
+			Boolean extaplatarg = (Boolean)((Map<String, Object>)Starter.getPlatformValue(getComponent().getId(), IPlatformConfiguration.PLATFORMARGS)).get("externalaccess");
+			boolean on = extaarg!=null? extaarg.booleanValue(): extaplatarg!=null? extaplatarg.booleanValue(): true;
+	//					System.out.println("on: "+on+" "+extaarg+" "+extaplatarg);
+			if(on)
+			{
+				ProvidedServiceImplementation impl = new ProvidedServiceImplementation();
+				impl.setValue("$component.getExternalAccess()");
+				// platform external access service will be published network wide, all others only on platform
+				ProvidedServiceInfo psi= new ProvidedServiceInfo("externalaccessservice", IExternalAccess.class, impl, 
+					getComponent().getId().equals(getComponent().getId().getRoot())? ServiceScope.NETWORK: ServiceScope.PLATFORM, null, null, null, null);
+				sermap.put("externalaccessservice", psi);
+			}*/
+					
+			FutureBarrier<Void> bar = new FutureBarrier<>();
+			
+			// Instantiate service objects
+			for(ProvidedServiceInfo info: sermap.values())
+			{
+				// Evaluate and replace scope expression, if any.
+				ServiceScope scope = info.getScope();
+				if(ServiceScope.EXPRESSION.equals(scope))
+				{
+					scope = (ServiceScope)SJavaParser.getParsedValue(info.getScopeExpression(), model.getAllImports(), self.getFeature(IModelFeature.class).getFetcher(), self.getClassLoader());
+					info = new ProvidedServiceInfo(info.getName(), info.getType(), info.getImplementation(), scope, info.getScopeExpression(), info.getSecurity(), 
+							//info.getPublish(), 
+							info.getProperties(), info.isSystemService());
+	//						System.out.println("expression scope '"
+	//							+ (info.getScopeExpression()!=null ? info.getScopeExpression().getValue() : "")
+	//							+ "': "+scope);
+				}
+					
+				final Future<Void> fut = new Future<>();
+				bar.addFuture(fut);
+				
+				final ProvidedServiceImplementation	impl = info.getImplementation();
+				// Virtual service (e.g. promoted)
+				/*if(impl!=null && impl.getBinding()!=null)
+				{
+					RequiredServiceInfo rsi = new RequiredServiceInfo(BasicService.generateServiceName(info.getType().getType( 
+						component.getClassLoader(), component.getModel().getAllImports()))+":virtual", info.getType().getType(component.getClassLoader(), component.getModel().getAllImports()));
+					IServiceIdentifier sid = BasicService.createServiceIdentifier(component, 
+						rsi.getName(), rsi.getType().getType(component.getClassLoader(), component.getModel().getAllImports()),
+						BasicServiceInvocationHandler.class, component.getModel().getResourceIdentifier(), info);
+					final IInternalService service = BasicServiceInvocationHandler.createDelegationProvidedServiceProxy(
+						component, sid, rsi, impl.getBinding(), component.getClassLoader(), Starter.isRealtimeTimeout(component.getId(), true));
+					
+					addService(service, info);
+					fut.setResult(null);
+				}
+				else
+				{*/
+					final ProvidedServiceInfo finfo = info;
+					createServiceImplementation(info, self.getFeature(IModelFeature.class).getFetcher())
+						.then(ser ->
 					{
-						UnparsedExpression[] ins = finfo.getImplementation().getInterceptors();
-						IServiceInvocationInterceptor[] ics = null;
-						if(ins!=null)
+						// Implementation may null to disable service in some configurations.
+						if(ser!=null)
 						{
-							ics = new IServiceInvocationInterceptor[ins.length];
-							for(int i=0; i<ins.length; i++)
+							UnparsedExpression[] ins = finfo.getImplementation().getInterceptors();
+							IServiceInvocationInterceptor[] ics = null;
+							if(ins!=null)
 							{
-								if(ins[i].getValue()!=null && ins[i].getValue().length()>0)
+								ics = new IServiceInvocationInterceptor[ins.length];
+								for(int i=0; i<ins.length; i++)
 								{
-									ics[i] = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(ins[i].getValue(), self.getFeature(IModelFeature.class).getModel().getAllImports(), self.getFeature(IModelFeature.class).getFetcher(), self.getClassLoader());
-								}
-								else
-								{
-									try
+									if(ins[i].getValue()!=null && ins[i].getValue().length()>0)
 									{
-										ics[i] = (IServiceInvocationInterceptor)ins[i].getClazz().getType(self.getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports()).newInstance();
+										ics[i] = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(ins[i].getValue(), self.getFeature(IModelFeature.class).getModel().getAllImports(), self.getFeature(IModelFeature.class).getFetcher(), self.getClassLoader());
 									}
-									catch(Exception e)
+									else
 									{
-										e.printStackTrace();
+										try
+										{
+											ics[i] = (IServiceInvocationInterceptor)ins[i].getClazz().getType(self.getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports()).newInstance();
+										}
+										catch(Exception e)
+										{
+											e.printStackTrace();
+										}
 									}
 								}
 							}
+							
+							final Class<?> type = finfo.getType().getType(self.getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports());
+							//PublishEventLevel elm = component.getDescription().getMonitoring()!=null? component.getDescription().getMonitoring(): null;
+	//								 todo: remove this? currently the level cannot be turned on due to missing interceptor
+							//boolean moni = elm!=null? !PublishEventLevel.OFF.equals(elm.getLevel()): false; 
+							final IInternalService proxy = this.createProvidedServiceProxy(
+								self, ser, finfo.getName(), type, ics,
+								//moni, 
+								finfo);
+							
+							addService(proxy, finfo);
 						}
+						fut.setResult(null);
 						
-						final Class<?> type = finfo.getType().getType(self.getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports());
-						//PublishEventLevel elm = component.getDescription().getMonitoring()!=null? component.getDescription().getMonitoring(): null;
-//								 todo: remove this? currently the level cannot be turned on due to missing interceptor
-						//boolean moni = elm!=null? !PublishEventLevel.OFF.equals(elm.getLevel()): false; 
-						final IInternalService proxy = ServiceInvocationHandler.createProvidedServiceProxy(
-							self, ser, finfo.getName(), type, ics,
-							//moni, 
-							finfo);
-						
-						addService(proxy, finfo);
-					}
-					fut.setResult(null);
-					
-				}).catchEx(e -> {e.printStackTrace(); fut.setResult(null);});
-			//}
+					}).catchEx(e -> {e.printStackTrace(); fut.setResult(null);});
+				//}
+			}
+			
+			bar.waitFor().then(v ->
+			{
+				// Start the services.
+				Collection<IInternalService> allservices = getAllServices();
+				if(!allservices.isEmpty())
+				{
+					initServices(allservices.iterator()).addResultListener(new DelegationResultListener<Void>(ret));
+				}
+				else
+				{
+					ret.setResult(null);
+				}
+			}).catchEx(ret);
 		}
 		
-		bar.waitFor().then(v ->
+		/*ret.then(v ->
 		{
-			// Start the services.
-			Collection<IInternalService> allservices = getAllServices();
-			if(!allservices.isEmpty())
-			{
-				initServices(allservices.iterator()).addResultListener(new DelegationResultListener<Void>(ret));
-			}
-			else
-			{
-				ret.setResult(null);
-			}
-		}).catchEx(ret);
+			System.out.println("onstart of providedservices finished: "+self.getId());
+		});*/
 		
 		return ret;
 	}
@@ -898,7 +913,7 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 		Object service = getProvidedService(name);
 		if(service!=null)
 		{
-			ServiceInvocationHandler handler = (ServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
+			AbstractServiceInvocationHandler handler = (AbstractServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
 			ret = handler.getDomainService();
 		}
 		
@@ -917,7 +932,7 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 		T service = getProvidedService(clazz);
 		if(service!=null)
 		{
-			ServiceInvocationHandler handler = (ServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
+			AbstractServiceInvocationHandler handler = (AbstractServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
 			ret = clazz.cast(handler.getDomainService());
 		}
 		
@@ -961,7 +976,7 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 			{
 				if(ProxyFactory.isProxyClass(service.getClass()))
 				{
-					ServiceInvocationHandler handler = (ServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
+					AbstractServiceInvocationHandler handler = (AbstractServiceInvocationHandler)ProxyFactory.getInvocationHandler(service);
 					ret = handler.getDomainService();
 				}
 				else
@@ -1067,5 +1082,372 @@ public class ProvidedServiceFeature	implements ILifecycle, IProvidedServiceFeatu
 		}
 		
 		return ret;
+	}
+	
+	/**
+	 *  Add a service proxy.
+	 *  @param pojo The pojo.
+	 *  @param proxy The proxy.
+	 */
+	public static void addPojoServiceProxy(Object pojo, IService proxy)
+	{
+//		System.out.println("add pojoproxy: "+proxy.getServiceIdentifier());
+		
+		synchronized(ProvidedServiceFeature.class)
+		{
+			if(pojoproxies==null)
+				pojoproxies = new IdentityHashMap<Object, IService>();
+			pojoproxies.put(pojo, proxy);
+		}
+	}
+	
+	/**
+	 *  Remove a pojo - proxy pair.
+	 *  @param sid The service identifier.
+	 */
+	public static void removePojoServiceProxy(IServiceIdentifier sid)
+	{
+		synchronized(ProvidedServiceFeature.class)
+		{
+			for(Iterator<IService> it=pojoproxies.values().iterator(); it.hasNext(); )
+			{
+				IService proxy = it.next();
+				
+				if(sid.equals(proxy.getServiceId()))
+				{
+					it.remove();
+					break;
+//					System.out.println("rem: "+pojosids.size());	
+				}
+			}
+		}
+	}
+	
+	/**
+	 *  Get the proxy of a pojo service.
+	 *  @param pojo The pojo service.
+	 *  @return The proxy of the service.
+	 */
+	public static IService getPojoServiceProxy(Object pojo)
+	{
+		synchronized(ProvidedServiceFeature.class)
+		{
+			return pojoproxies.get(pojo);
+		}
+	}
+	
+	/**
+	 *  Test if a service is a provided service proxy.
+	 *  @param service The service.
+	 *  @return True, if is provided service proxy.
+	 */
+	public static boolean isProvidedServiceProxy(Object service)
+	{
+		boolean ret = false;
+		if(ProxyFactory.isProxyClass(service.getClass()))
+		{
+			Object tmp = ProxyFactory.getInvocationHandler(service);
+			if(tmp instanceof AbstractServiceInvocationHandler)
+			{
+				AbstractServiceInvocationHandler handler = (AbstractServiceInvocationHandler)tmp;
+				ret = !handler.isRequired();
+			}
+		}
+		return ret;
+	}
+	
+	/**
+	 *  Static method for creating a standard service proxy for a provided service.
+	 */
+	public IInternalService createProvidedServiceProxy(Component ia, Object service, 
+		String name, Class<?> type, IServiceInvocationInterceptor[] ics, 
+		//boolean monitoring, 
+		ProvidedServiceInfo info)
+	{
+		IServiceIdentifier sid = null;
+		
+		if(isProvidedServiceProxy(service))
+		{
+			System.out.println("Already provided service proxy: "+service);
+			return (IInternalService)service;
+		}
+		
+		IInternalService ret;
+		
+		if(!SReflect.isSupertype(type, service.getClass()))
+			throw new RuntimeException("Service implementation '"+service.getClass().getName()+"' does not implement service interface: "+type.getName());
+		
+		if(service instanceof IInternalService)
+		{
+			//sid = UUID.randomUUID();
+			sid = BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info);
+			((IInternalService)service).setServiceIdentifier(sid);
+		}
+			
+		
+//		if(type.getName().indexOf("IServiceCallService")!=-1)
+//			System.out.println("hijijij");
+		String proxytype = info!=null && info.getImplementation()!=null && info.getImplementation().getProxytype()!=null
+			? info.getImplementation().getProxytype() : AbstractServiceInvocationHandler.PROXYTYPE_DECOUPLED;
+		
+		if(!AbstractServiceInvocationHandler.PROXYTYPE_RAW.equals(proxytype) || (ics!=null && ics.length>0))
+		{
+			AbstractServiceInvocationHandler handler = createProvidedHandler(name, ia, type, service, info);
+			if(sid==null)
+			{
+				Object ser = handler.getService();
+				if(ser instanceof ServiceInfo)
+					sid = ((ServiceInfo)ser).getManagementService().getServiceId();
+			}
+			ret	= (IInternalService)ProxyFactory.newProxyInstance(ia.getClassLoader(), new Class[]{IInternalService.class, type}, (InvocationHandler)handler);
+//			try
+//			{
+//				((IService)service).getServiceIdentifier();
+//			}
+//			catch(Exception e)
+//			{
+//				e.printStackTrace();
+//			}
+			
+			addProvidedInterceptors(handler, service, ics, ia, proxytype, sid!=null? sid: ret.getServiceId());
+//			ret	= (IInternalService)Proxy.newProxyInstance(ia.getExternalAccess()
+//				.getModel().getClassLoader(), new Class[]{IInternalService.class, type}, handler);
+			if(!(service instanceof IService))
+			{
+				if(!service.getClass().isAnnotationPresent(Service.class)
+					// Hack!!! BPMN uses a proxy as service implementation.
+					&& !(ProxyFactory.isProxyClass(service.getClass())
+					&& ProxyFactory.getInvocationHandler(service).getClass().isAnnotationPresent(Service.class)))
+				{
+					//throw new RuntimeException("Pojo service must declare @Service annotation: "+service.getClass());
+					//ia.getLogger().warning("Pojo service should declare @Service annotation: "+service.getClass());
+//					throw new RuntimeException("Pojo service must declare @Service annotation: "+service.getClass());
+					System.out.println("Pojo service should declare @Service annotation: "+service.getClass());
+					boolean b = ProxyFactory.isProxyClass(service.getClass());
+					System.out.println(b);
+				}
+				addPojoServiceProxy(service, ret);
+			}
+		}
+		else
+		{
+			if(service instanceof IInternalService)
+			{
+				ret	= (IInternalService)service;
+			}
+			else
+			{
+				throw new RuntimeException("Raw services must implement IInternalService (e.g. by extending BasicService): " + service.getClass().getCanonicalName());
+			}
+		}
+		return ret;
+	}
+	
+	/**
+	 *  Add the standard and custom interceptors.
+	 */
+	public void addProvidedInterceptors(AbstractServiceInvocationHandler handler, Object service, 
+		IServiceInvocationInterceptor[] ics, Component ia, String proxytype, 
+		//boolean monitoring, 
+		IServiceIdentifier sid)
+	{
+//		System.out.println("addI:"+service);
+
+		// Only add standard interceptors if not raw.
+		if(!AbstractServiceInvocationHandler.PROXYTYPE_RAW.equals(proxytype))
+		{
+			handler.addFirstServiceInterceptor(new MethodInvocationInterceptor());
+			
+			/*if(Starter.TRACING!=null && TracingMode.OFF!=Starter.TRACING)
+			{
+				//System.out.println("Tracing addProv: "+BasicServiceInvocationHandler.class.getClassLoader());
+				handler.addFirstServiceInterceptor(new TracingInterceptor(ia));
+			}*/
+			
+//			if(monitoring)
+//				handler.addFirstServiceInterceptor(new MonitoringInterceptor(ia));
+//			handler.addFirstServiceInterceptor(new AuthenticationInterceptor(ia, false));
+			
+			/*try
+			{
+				Class<?> clazz = sid.getServiceType().getType(ia.getClassLoader());
+				boolean addhandler = false;
+				Method[] ms = SReflect.getAllMethods(clazz);
+				
+				formethod:
+				for (Method m : ms)
+				{
+					Annotation[] as = m.getAnnotations();
+					for (Annotation anno : as)
+						if (anno instanceof CheckNotNull 
+							|| anno instanceof CheckState
+							|| anno instanceof CheckIndex)
+						{
+							addhandler = true;
+							break formethod;
+						}
+				}
+				if (addhandler)
+					handler.addFirstServiceInterceptor(new PrePostConditionInterceptor(ia));
+			}
+			catch (Exception e)
+			{
+			}*/
+			
+			if(!(service instanceof IService))
+				handler.addFirstServiceInterceptor(new ResolveInterceptor(ia));
+			
+			//handler.addFirstServiceInterceptor(new MethodCallListenerInterceptor(ia, sid));
+//			handler.addFirstServiceInterceptor(new ValidationInterceptor(ia));
+			if(!AbstractServiceInvocationHandler.PROXYTYPE_DIRECT.equals(proxytype))
+				//handler.addFirstServiceInterceptor(new DecouplingInterceptor(ia, Starter.isParameterCopy(sid.getProviderId()), false));
+				handler.addFirstServiceInterceptor(new DecouplingInterceptor(ia, true, false));
+			handler.addFirstServiceInterceptor(new DecouplingReturnInterceptor());
+			
+			// used only by global service pool, todo add contionally
+			//handler.addFirstServiceInterceptor(new IntelligentProxyInterceptor(ia.getExternalAccess(), sid));
+		}
+		
+		if(ics!=null)
+		{
+			for(int i=0; i<ics.length; i++)
+			{
+				handler.addServiceInterceptor(ics[i], -1);
+			}
+		}
+	}
+	
+	// very problematic method:
+	// needs many annotations
+	/**
+	 *  Create a basic invocation handler for a provided service.
+	 */
+	protected static ServiceInvocationHandler createProvidedHandler(String name, Component ia, Class<?> type, Object service, ProvidedServiceInfo info)
+	{
+//		if(type.getName().indexOf("ITestService")!=-1 && ia.getComponentIdentifier().getName().startsWith("Global"))
+//			System.out.println("gaga");
+		
+		Map<String, Object> serprops = new HashMap<String, Object>();
+		if(info != null && info.getProperties() != null)
+		{
+			for(UnparsedExpression exp : info.getProperties())
+			{
+				Object val = SJavaParser.parseExpression(exp, ia.getFeature(IModelFeature.class).getModel().getAllImports(), ia.getClassLoader()).getValue(ia.getFeature(IModelFeature.class).getFetcher());
+				serprops.put(exp.getName(), val);
+			}
+		}
+		
+		ServiceInvocationHandler handler;
+		if(service instanceof IService)
+		{
+			IService ser = (IService)service;
+			
+			if(service instanceof BasicService)
+			{
+				//serprops.putAll(((BasicService)service).getPropertyMap());
+				((BasicService)service).setPropertyMap(serprops);
+			}
+			
+			handler = new ServiceInvocationHandler(ia, ser, false);
+			
+//			if(type==null)
+//			{
+//				type = ser.getServiceIdentifier().getServiceType();
+//			}
+//			else if(!type.equals(ser.getServiceIdentifier().getServiceType()))
+//			{
+//				throw new RuntimeException("Service does not match its type: "+type+", "+ser.getServiceIdentifier().getServiceType());
+//			}
+		}
+		else
+		{
+			if(type==null)
+			{
+				// Try to find service interface via annotation
+				if(service.getClass().isAnnotationPresent(Service.class))
+				{
+					Service si = (Service)service.getClass().getAnnotation(Service.class);
+					if(!si.value().equals(Object.class))
+					{
+						type = si.value();
+					}
+				}
+				// Otherwise take interface if there is only one
+				else
+				{
+					Class<?>[] types = service.getClass().getInterfaces();
+					if(types.length!=1)
+						throw new RuntimeException("Unknown service interface: "+SUtil.arrayToString(types));
+					type = types[0];
+				}
+			}
+			
+			Class<?> serclass = service.getClass();
+
+			BasicService mgmntservice = new BasicService(ia.getId(), type, serclass, null);
+			mgmntservice.setServiceIdentifier(BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info));
+			//serprops.putAll(mgmntservice.getPropertyMap());
+			//mgmntservice.setPropertyMap(serprops);
+			
+			// Do not try to call isAnnotationPresent for Proxy on Android
+			// see http://code.google.com/p/android/issues/detail?id=24846
+			if(!(ProxyFactory.isProxyClass(serclass)))
+			//if(!(SReflect.isAndroid() && ProxyFactory.isProxyClass(serclass)))
+			{
+				while(!Object.class.equals(serclass))
+				{
+					Field[] fields = serclass.getDeclaredFields();
+					for(int i=0; i<fields.length; i++)
+					{
+						if(fields[i].isAnnotationPresent(jadex.providedservice.annotation.ServiceIdentifier.class))
+						{
+							jadex.providedservice.annotation.ServiceIdentifier si = (jadex.providedservice.annotation.ServiceIdentifier)fields[i].getAnnotation(jadex.providedservice.annotation.ServiceIdentifier.class);
+							if(si.value().equals(Object.class) || si.value().equals(type))
+							{
+								if(SReflect.isSupertype(IServiceIdentifier.class, fields[i].getType()))
+								{
+									try
+									{
+										SAccess.setAccessible(fields[i], true);
+										fields[i].set(service, mgmntservice.getServiceId());
+									}
+									catch(Exception e)
+									{
+										e.printStackTrace();
+									}
+								}
+								else
+								{
+									throw new RuntimeException("Field cannot store IServiceIdentifer: "+fields[i]);
+								}
+							}
+						}
+						
+						if(fields[i].isAnnotationPresent(ServiceComponent.class))
+						{
+							try
+							{
+								Object val	= ia.getFeature(IModelFeature.class).getParameterGuesser().guessParameter(fields[i].getType(), false);
+								SAccess.setAccessible(fields[i], true);
+								fields[i].set(service, val);
+							}
+							catch(Exception e)
+							{
+//								e.printStackTrace();
+								throw new RuntimeException(e);
+							}
+						}
+					}
+					serclass = serclass.getSuperclass();
+				}
+			}
+			
+			ServiceInfo si = new ServiceInfo(service, mgmntservice);
+			handler = new ServiceInvocationHandler(ia, si);//, ia.getDescription().getCause());
+			
+//			addPojoServiceIdentifier(service, mgmntservice.getServiceIdentifier());
+		}
+		
+		return handler;
 	}
 }

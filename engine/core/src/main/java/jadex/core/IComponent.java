@@ -44,7 +44,12 @@ public interface IComponent
 	 *  Terminate the component.
 	 */
 	public void terminate();
-	// todo: terminate(Exception e) ?!
+	
+	/**
+	 *  Get the pojo.
+	 *  @return The pojo.
+	 */
+	public Object getPojo();
 	
 	//-------- static part for generic component creation --------
 	
@@ -89,28 +94,28 @@ public interface IComponent
 	}
 	
 	// todo: remove
-	public static IFuture<IExternalAccess> create(Runnable pojo)
+	/*public static IFuture<IExternalAccess> create(Runnable pojo)
 	{
 		return create(pojo, null);
-	}
+	}*/
 	
 	// todo: remove
-	public static IFuture<IExternalAccess> create(Runnable pojo, ComponentIdentifier cid)
+	/*public static IFuture<IExternalAccess> create(Runnable pojo, ComponentIdentifier cid)
 	{
 		return create((Object)pojo, cid);
-	}
+	}*/
 	
 	// todo: remove
-	public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo)
+	/*public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo)
 	{
 		return create(pojo, null);
-	}
+	}*/
 	
 	// todo: remove
-	public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
+	/*public static <T> IFuture<IExternalAccess> create(IThrowingFunction<IComponent, T> pojo, ComponentIdentifier cid)
 	{
 		return create((Object)pojo, cid);
-	}
+	}*/
 	
 	public static IFuture<IExternalAccess> create(Object pojo)
 	{
@@ -142,26 +147,33 @@ public interface IComponent
 	{
 		IFuture<Void> ret;
 		
-		//System.out.println("terminate: "+cid);
+		System.out.println("terminate: "+cid+" comps: "+ComponentManager.get().getNumberOfComponents());
 		
 		try
 		{
 			IComponent comp = ComponentManager.get().getComponent(cid);
-			IExternalAccess	exta = comp.getExternalAccess();
-			ComponentManager.get().removeComponent(cid);
-			if(exta.isExecutable())
+			if(comp!=null)
 			{
-				ret	= exta.scheduleStep(icomp ->
+				IExternalAccess	exta = comp.getExternalAccess();
+				//ComponentManager.get().removeComponent(cid); // done in Component
+				if(exta.isExecutable())
 				{
-					icomp.terminate();
-					return (Void)null;
-				});
+					ret	= exta.scheduleStep(icomp ->
+					{
+						icomp.terminate();
+						return (Void)null;
+					});
+				}
+				else
+				{
+					// Hack!!! Concurrency issue?
+					comp.terminate();
+					ret	= IFuture.DONE;
+				}
 			}
 			else
 			{
-				// Hack!!! Concurrency issue?
-				comp.terminate();
-				ret	= IFuture.DONE;
+				ret	= new Future<>(new ComponentNotFoundException(cid));
 			}
 		}
 		catch(Exception e)
@@ -182,7 +194,7 @@ public interface IComponent
 				@Override
 				public void lastComponentRemoved(ComponentIdentifier cid) 
 				{
-					System.out.println("removed last: "+cid);
+					//System.out.println("removed last: "+cid);
 					sem.release();
 				}
 			}, IComponent.COMPONENT_LASTREMOVED);

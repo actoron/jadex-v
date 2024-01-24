@@ -5,9 +5,6 @@ import jadex.bpmn.runtime.RBpmnProcess;
 
 /**
  *  Main for starting the example programmatically.
- *  
- *  To start the example via this Main.java Jadex platform 
- *  as well as examples must be in classpath.
  */
 public class Main 
 {
