@@ -1,6 +1,6 @@
 package jadex.communication.impl.security.handshake;
 
-import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
+import jadex.core.impl.GlobalProcessIdentifier;
 
 /**
  *  Base class for security messages.

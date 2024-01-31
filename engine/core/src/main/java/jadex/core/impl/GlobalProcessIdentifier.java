@@ -5,6 +5,8 @@ package jadex.core.impl;
  */
 public record GlobalProcessIdentifier(long pid, String host)
 {
+	public static final GlobalProcessIdentifier SELF = new GlobalProcessIdentifier(); 
+	
 	/**
 	 *  Default constructor for a local GPID.
 	 */

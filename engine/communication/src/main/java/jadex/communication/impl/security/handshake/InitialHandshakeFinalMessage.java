@@ -1,6 +1,6 @@
 package jadex.communication.impl.security.handshake;
 
-import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
+import jadex.core.impl.GlobalProcessIdentifier;
 
 /**
  *  Final message in the initial handshake.

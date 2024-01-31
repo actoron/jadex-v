@@ -2,7 +2,10 @@ package jadex.communication;
 
 import java.nio.ByteBuffer;
 
-import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
+import jadex.communication.impl.IpcStreamHandler;
+import jadex.core.ComponentIdentifier;
+import jadex.core.impl.GlobalProcessIdentifier;
+
 
 /**
  *  Interface for sending and receiving messages to components outside the current JVM.
@@ -13,10 +16,19 @@ import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
 public interface IIpcService
 {
 	/**
+	 *  Gets the singleton instance of the handler.
+	 *  @return Singleton instance of the handler.
+	 */
+	public static IIpcService get()
+	{
+		return IpcStreamHandler.get();
+	}
+	
+	/**
 	 *  Sends a message to a component outside the current JVM.
 	 *  
 	 *  @param receiver The intended message receiver.
 	 *  @param message The message.
 	 */
-	public void sendMessage(GlobalProcessIdentifier receiver, ByteBuffer message);
+	public void sendMessage(ComponentIdentifier receiver, ByteBuffer message);
 }

@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,11 +57,13 @@ import org.bouncycastle.crypto.Mac;
 import org.bouncycastle.crypto.digests.SHA512Digest;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
 import org.bouncycastle.crypto.generators.DSAKeyPairGenerator;
 import org.bouncycastle.crypto.generators.DSAParametersGenerator;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
 import org.bouncycastle.crypto.generators.RSAKeyPairGenerator;
 import org.bouncycastle.crypto.macs.HMac;
+import org.bouncycastle.crypto.params.Argon2Parameters;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.params.DSAKeyGenerationParameters;
 import org.bouncycastle.crypto.params.DSAParameters;
@@ -107,6 +110,12 @@ import jadex.communication.impl.security.random.SecureThreadedRandom;
  */
 public class SSecurity
 {
+	/** Argon2 memory size in KiB. */
+	public static final int ARGON_MEM = 32768;
+	
+	/** Argon2 iterations. */
+	public static final int ARGON_IT = 6;
+	
 	/** Default hash used for signatures. */
 	protected static final String DEFAULT_SIGNATURE_HASH = "SHA512";
 	
@@ -126,15 +135,6 @@ public class SSecurity
 	
 	/** Enable this to test the seeding fallback, do not change, used by tests only. */
 	protected static boolean TEST_ENTROPY_FALLBACK = false;
-	
-	/** SCrypt work factor / hardness for password strengthening. */
-	protected static final int SCRYPT_N = 131072;
-	
-	/** SCrypt block size. */
-	protected static final int SCRYPT_R = 8;
-	
-	/** SCrypt parallelization. */
-	protected static final int SCRYPT_P = 4;
 	
 	static
 	{
@@ -1324,19 +1324,43 @@ public class SSecurity
 	}
 	
 	/**
-	 *  Derive a key from a password via scrypt.
+	 *  Derive a key from a password via Argon2id.
 	 *  @param pw The password.
 	 *  @param salt The salt.
 	 *  @return The key.
 	 */
 	public static byte[] deriveKeyFromPassword(String pw, byte[] salt)
 	{
+		return deriveKeyFromPassword(pw, salt, 32);
+	}
+	
+	/**
+	 *  Derive a key from a password via Argon2id.
+	 *  @param pw The password.
+	 *  @param salt The salt.
+	 *  @return The key.
+	 */
+	public static byte[] deriveKeyFromPassword(String pw, byte[] salt, int keysize)
+	{
 		if(pw==null)
 			throw new IllegalArgumentException();
 		
 		if(salt==null)
 			salt = pw.getBytes(SUtil.UTF8);
-		final byte[] keydata = SCryptParallel.generate(pw.getBytes(SUtil.UTF8), salt, SCRYPT_N, SCRYPT_R, SCRYPT_P, 32);
+		
+		Argon2BytesGenerator argen = new Argon2BytesGenerator();
+		Argon2Parameters params = (new Argon2Parameters.Builder(Argon2Parameters.ARGON2_id))
+			.withMemoryAsKB(ARGON_MEM)
+			.withParallelism(1)
+			.withSalt(salt)
+			.withIterations(ARGON_IT)
+			.build();
+		argen.init(params);
+		
+		byte[] keydata = new byte[keysize];
+		argen.generateBytes(pw.getBytes(StandardCharsets.UTF_8), keydata);
+		
+		//final byte[] keydata = SCryptParallel.generate(pw.getBytes(SUtil.UTF8), salt, SCRYPT_N, SCRYPT_R, SCRYPT_P, 32);
 		return keydata;
 	}
 	
