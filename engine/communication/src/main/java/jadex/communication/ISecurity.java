@@ -1,14 +1,26 @@
 package jadex.communication;
 
-import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
-import jadex.future.IFuture;
+import jadex.communication.impl.security.Security;
+import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.messaging.ISecurityInfo;
 
 /**
  *  Security is responsible for validating (remote) requests.
  */
 public interface ISecurity
 {
+	/** Special "trusted" role indicating that flagged entity may invoke any service remotely. */
+	public static final String TRUSTED = "trusted";
+	
 	//-------- message-level encryption/authentication -------
+	
+	/**
+	 *  Get the security instance.
+	 */
+	public static ISecurity get()
+	{
+		return Security.get();
+	}
 	
 	/**
 	 *  Encrypts and signs the message for a receiver.
@@ -17,7 +29,9 @@ public interface ISecurity
 	 *  @param content The content
 	 *  @return Encrypted/signed message.
 	 */
-	public IFuture<byte[]> encryptAndSign(GlobalProcessIdentifier receiver, byte[] content);
+	//public IFuture<byte[]> encryptAndSign(GlobalProcessIdentifier receiver, byte[] content);
+	
+	public record DecodedMessage(ISecurityInfo secinfo, byte[] message) {};
 	
 	/**
 	 *  Decrypt and authenticates the message from a sender.
@@ -26,8 +40,7 @@ public interface ISecurity
 	 *  @param content The content.
 	 *  @return Decrypted/authenticated message or null on invalid message.
 	 */
-	//public IFuture<Tuple2<ISecurityInfo,byte[]>> decryptAndAuth(IComponentIdentifier sender, byte[] content);
-	
+	public DecodedMessage decryptAndAuth(GlobalProcessIdentifier sender, byte[] content);
 	/**
 	 *  Checks if platform secret is used.
 	 *  

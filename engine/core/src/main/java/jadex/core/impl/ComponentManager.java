@@ -12,14 +12,19 @@ import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentListener;
+import jadex.core.IComponentManager;
 
 /**
  *  Singleton class providing general information for supporting components.
  */
-public class ComponentManager
+public class ComponentManager implements IComponentManager
 {
 	private static volatile ComponentManager instance;
-		
+	
+	/**
+	 *  Returns the component manager instance.
+	 *  @return The component manager instance.
+	 */
 	public static final ComponentManager get()
 	{
 		if(instance == null)

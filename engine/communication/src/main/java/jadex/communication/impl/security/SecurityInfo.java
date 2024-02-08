@@ -5,8 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import jadex.communication.ISecurityInfo;
-import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
+import jadex.messaging.ISecurityInfo;
 
 /**
  *  Security meta-information of a message;
@@ -23,8 +22,8 @@ public class SecurityInfo implements ISecurityInfo
 	/** Flag if default authorization is allowed. */
 //	protected boolean allowdefaultauthorization;
 	
-	/** Global process identifier, if authenticated. */
-	protected GlobalProcessIdentifier authgpid;
+	/** Host name, if authenticated. */
+	protected String authhost;
 	
 	/** Groups shared with the sender. */
 	protected Set<String> sharedgroups;
@@ -80,23 +79,23 @@ public class SecurityInfo implements ISecurityInfo
 //	}
 	
 	/**
-	 *  Returns the authenticated global process ID as String.
+	 *  Returns the authenticated host as String.
 	 *
-	 *  @return The authenticated global process ID, null if not authenticated.
+	 *  @return The authenticated host, null if not authenticated.
 	 */
-	public GlobalProcessIdentifier getAuthenticatedGlobalProcessId()
+	public String getAuthenticatedHostName()
 	{
-		return authgpid;
+		return authhost;
 	}
 	
 	/**
-	 *  Sets the authenticated global process ID.
+	 *  Sets the authenticated host name.
 	 *
-	 *  @param authgpid The authenticated global process ID, null if not authenticated.
+	 *  @param authhost The authenticated host name, null if not authenticated.
 	 */
-	public void setAuthenticatedPlatformName(GlobalProcessIdentifier authgpid)
+	public void setAuthenticatedHostName(String authhost)
 	{
-		this.authgpid = authgpid;
+		this.authhost = authhost;
 	}
 
 	/**

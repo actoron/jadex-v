@@ -4,17 +4,13 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.ConnectException;
 import java.net.StandardProtocolFamily;
 import java.net.UnixDomainSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 import jadex.collection.LeaseTimeMap;
@@ -22,7 +18,8 @@ import jadex.collection.RwMapWrapper;
 import jadex.common.IAutoLock;
 import jadex.common.SUtil;
 import jadex.communication.IIpcService;
-import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
+import jadex.communication.impl.security.Security;
+import jadex.core.ComponentIdentifier;
 import jadex.core.impl.ComponentManager;
 
 public class IpcStreamHandler implements IIpcService
@@ -118,32 +115,46 @@ public class IpcStreamHandler implements IIpcService
 	 *  @param receiver The intended message receiver.
 	 *  @param message The message.
 	 */
-	public void sendMessage(GlobalProcessIdentifier receiver, ByteBuffer message)
+	public void sendMessage(ComponentIdentifier receiver, ByteBuffer message)
 	{
-		
-		
-		if (ComponentManager.get().host().equals(receiver.host()))
+		if (ComponentManager.get().host().equals(receiver.getGlobalProcessIdentifier().host()))
 		{
 			SocketChannel connection = null;
 			
-			connection = connectioncache.get(receiver.pid());
+			long receiverpid = receiver.getGlobalProcessIdentifier().pid();
+			connection = connectioncache.get(receiverpid);
 			if (connection == null)
-				connection = connect(receiver.pid());
+				connection = connect(receiverpid);
 			
 			try {
 				if (connection != null)
 				{
 					ByteBuffer sizebuf = ByteBuffer.allocate(4);
+					if (receiver.getLocalName() != null)
+					{
+						byte[] namearr = receiver.getLocalName().getBytes(SUtil.UTF8);
+						namearr = Security.get().encryptAndSign(receiver.getGlobalProcessIdentifier(), namearr);
+						sizebuf.putInt(namearr.length);
+						sizebuf.rewind();
+						ByteBuffer namebuf = ByteBuffer.wrap(namearr);
+						connection.write(sizebuf);
+						connection.write(namebuf);
+					}
+					else
+					{
+						sizebuf.putInt(0);
+						sizebuf.rewind();
+						connection.write(sizebuf);
+					}
+					
+					sizebuf.rewind();
 					sizebuf.putInt(message.remaining());
 					sizebuf.rewind();
-					System.out.println("Write size to recipient.");
 					connection.write(sizebuf);
-					message.rewind();
-					System.out.println("Write msg to recipient.");
 					connection.write(message);
 				}
 				else
-					throw new IOException("Could not connect to " + receiver.pid());
+					throw new IOException("Could not connect to " + receiver.getGlobalProcessIdentifier());
 			}
 			catch (IOException e)
 			{
@@ -312,34 +323,16 @@ public class IpcStreamHandler implements IIpcService
 			ByteBuffer buf = null;
 			try
 			{
-				while (channel.isConnected())
+				byte[] localname = readChunk(channel);
+				byte[] message = readChunk(channel);
+				
+				if (localname == null)
 				{
-					if (buf == null)
-					{
-						System.out.println("Reading msg size");
-						int ds = channel.read(numbuf);
-						if (ds < 0)
-							throw new EOFException("Connection closed");
-						System.out.println("Got msg size" + ds + " " + numbuf.hasRemaining());
-						if (!numbuf.hasRemaining())
-						{
-							numbuf.rewind();
-							int size = numbuf.getInt();
-							numbuf.rewind();
-							System.out.println("New message size " + size);
-							buf = ByteBuffer.wrap(new byte[size]);
-						}
-					}
-					else
-					{
-						channel.read(buf);
-						if (!buf.hasRemaining())
-						{
-							String msg = new String(buf.array(), SUtil.UTF8);
-							System.out.println("Message from " + remotepid + ": " + msg);
-							buf = null;
-						}
-					}
+					Security.get().handleMessage(message);
+				}
+				else
+				{
+					// TODO: Component handover
 				}
 			}
 			catch (Exception e)
@@ -361,6 +354,51 @@ public class IpcStreamHandler implements IIpcService
 		// Signal a new connection via latch...
 		connectionlatch.countDown();
 		connectionlatch = new CountDownLatch(1);
+	}
+	
+	/**
+	 *  Reads a chunk from the channel that is prefixed with its size.
+	 * 
+	 *  @param channel The channel.
+	 *  @return The bytes read or null if size was zero.
+	 *  @throws Exception If an error occurred.
+	 */
+	private byte[] readChunk(SocketChannel channel) throws Exception
+	{
+		ByteBuffer numbuf = ByteBuffer.allocate(4);
+		ByteBuffer buf = null;
+		boolean notdone = true;
+		
+		while (notdone)
+		{
+			if (buf == null)
+			{
+				System.out.println("Reading msg size");
+				int ds = channel.read(numbuf);
+				if (ds < 0)
+					throw new EOFException("Connection closed");
+				System.out.println("Got msg size" + ds + " " + numbuf.hasRemaining());
+				if (!numbuf.hasRemaining())
+				{
+					numbuf.rewind();
+					int size = numbuf.getInt();
+					numbuf.rewind();
+					
+					if (size > 0)
+						buf = ByteBuffer.wrap(new byte[size]);
+					else
+						notdone = false;
+				}
+			}
+			else
+			{
+				channel.read(buf);
+				if (!buf.hasRemaining())
+					notdone = false;
+			}
+		}
+		
+		return buf.array();
 	}
 	
 	/**
