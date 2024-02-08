@@ -21,7 +21,7 @@ public class JadexBasicTypeSerializer implements ISerializer, IStringConverter
 	//-------- constants --------
 	
 	/** The serializer id. */
-	//public static final int SERIALIZER_ID = 3;
+	public static final int SERIALIZER_ID = 2;
 
 	public static final String TYPE = IStringConverter.TYPE_BASIC;
 	
@@ -38,8 +38,8 @@ public class JadexBasicTypeSerializer implements ISerializer, IStringConverter
 	 */
 	public int getSerializerId()
 	{
-		throw new UnsupportedOperationException();
-		//return SERIALIZER_ID;
+		//throw new UnsupportedOperationException();
+		return SERIALIZER_ID;
 	}
 	
 	 /** The basic type converter. */

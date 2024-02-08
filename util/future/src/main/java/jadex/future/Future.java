@@ -1351,6 +1351,28 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
         return this;
     }
 	
+	/**
+	 *  Print an exception.
+	 */
+	public IFuture<E> printOnEx()
+	{
+		this.addResultListener(new IResultListener<E>()
+		{
+			@Override
+			public void exceptionOccurred(Exception exception)
+			{
+				exception.printStackTrace();
+			}
+			
+			@Override
+			public void resultAvailable(E result)
+			{
+			}
+		});
+		
+		return this;
+	}
+	
 //	/**
 //	 *  Called on exception.
 //	 *  @param delegate The future the exception will be delegated to.

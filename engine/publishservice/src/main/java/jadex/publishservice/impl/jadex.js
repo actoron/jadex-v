@@ -22,10 +22,10 @@
 	
 		init: function()
 		{
-			console.log("jadex init running: "+this.getPath());
-			
 			// need to set the path because document is null 
 			this.path = document.currentScript.src.substring(0, document.currentScript.src.lastIndexOf('/'));
+
+			console.log("jadex init running: "+this.getPath());
 			
 			var self = this;
 			
@@ -38,20 +38,27 @@
 				console.log("created Jadex cookie: "+id);
 			}
 			
-			this.source = new EventSource(this.baseurl);
-			this.source.addEventListener('open', function(e) 
+			console.log("jadex event source: "+this.baseurl);
+
+			this.connectToEventSource();			
+		},
+		
+		connectToEventSource()
+		{
+			let self = this;
+			
+  			this.source = new EventSource(this.baseurl);
+  
+  			this.source.addEventListener('open', function(e) 
 			{
-				console.log('see connection established');
+				console.log('see connection established: '+self.baseurl);
 			}, false);
+			
 			this.source.onmessage = function(event) 
 			{
 				self.processEvent(event, 0);
 			};
-			/*this.source.addEventListener('message', function (e) 
-			{
-				console.log("message received: "+e.data);
-				
-			}, false);*/
+			
 			var retries = 0;
 			this.source.addEventListener('error', function(e) 
 			{
@@ -63,20 +70,15 @@
 				}		
 			    if(e.target.readyState === EventSource.CLOSED || retries===2) 
 				{
-			    	console.log('sse connection closed');
-					retries = 0;
-					var event = {data: {name: 'sse connection closed'}};
-					for(var convid in self.conversations) 
+					setTimeout(function() 
 					{
-						var cb = self.conversations[convid];
-						cb[1](event);
-						self.terminateCall(convid, "sse closed", true);
-					}
-					self.conversations = {};
+						console.log('Event source reconnect attempt ...');
+					    self.connectToEventSource();
+					}, 3000);
 				}
 			}, false);
 		},
-		
+
 		getPath: function()
 		{
 			//let path = document.currentScript.src;
@@ -93,9 +95,9 @@
 			var callid = sseevent.callId;
 			
 			// sseping
-			if("sseping"===sseevent?.data?.toLowerCase())
+			if(sseevent?.data && (typeof sseevent.data === 'string') && sseevent.data.toLowerCase() === 'sseping')
 			{
-				console.log("sseping received");
+				//console.log("sseping received, send alive to: "+self.getPath()+"/ssealive");
 				let sendalive = x =>
 				{
 					let headers = 
@@ -105,7 +107,7 @@
 						'cache-control': 'no-cache, no-store'
 					};
 					
-					fetch(self.getPath(), {method: 'GET', headers: headers})
+					fetch(self.getPath()+"/ssealive", {method: 'UPDATE', headers: headers})
 				    .then(response => 
 				    {
 				        if(!response.ok)
@@ -113,7 +115,7 @@
 				    })
 				    .catch(err => 
 				    {
-				        console.log("error when sending sse alive");
+				        console.log("error when sending sse alive: "+err);
 				    });
 				};
 				sendalive();
@@ -363,7 +365,7 @@
 			{
 				callid = self.generateUUID();
 			
-				console.log("response via sse: "+path+" "+callid);
+				//console.log("response via sse: "+path+" "+callid);
 				if(self.conversations[callid]==null)
 				{
 					console.log("saved conversation: "+callid+" "+self);
@@ -572,9 +574,15 @@
 			this.deleteCookie(cname);
 			// without any path browser suppresses cookie for calls of subdirs
 			let curpath = this.getPath();
-			let cookval = cname+"="+btoa(encodeURIComponent(value))+"; path="+curpath+"; SameSite=None";
+			let cookval = cname+"="+btoa(encodeURIComponent(value))+"; path="+curpath;+"; SameSite=Lax"; 
+			// None would be correct here, but none requires https :-( i.e. secure cookies 
+			// https://medium.com/swlh/how-the-new-chrome-80-cookie-rule-samesite-none-secure-affects-web-development-c06380220ced
 			document.cookie = cookval;
-			console.log("cookie set: "+cookval); 
+			
+			if(document.cookie.length==0 && cookval.length>0)
+				console.log("cookie was not set: "+cookval);
+			else if(document.cookie.length>0)
+				console.log("cookie set: "+cookval); 
 		}
 	};
 	Jadex.init();

@@ -1,11 +1,10 @@
 package jadex.micro.gobble;
 
-import java.awt.Desktop;
-import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -38,7 +37,7 @@ public class GobbleAgent implements IGobbleGuiService
 		ps.publishResources("http://localhost:8081/${cid}", "jadex/micro/gobble");
 		
 		System.out.println("open in browser");
-		openInBrowser("http://localhost:8081/"+agent.getId().getLocalName());
+		SGUI.openInBrowser("http://localhost:8081/"+agent.getId().getLocalName());
 	}
 	
 	/**
@@ -166,7 +165,7 @@ public class GobbleAgent implements IGobbleGuiService
 	/**
 	 *  Open the url in the browser.
 	 *  @param url The url.
-	 */
+	 * /
 	protected void openInBrowser(String url)
 	{
 		try 
@@ -178,7 +177,7 @@ public class GobbleAgent implements IGobbleGuiService
 		{
 			e.printStackTrace();
 		}
-	}
+	}*/
 	
 	/**
 	 *  Start the example.

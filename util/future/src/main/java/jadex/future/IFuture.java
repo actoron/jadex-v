@@ -268,6 +268,11 @@ public interface IFuture<E>	extends Supplier<E>
 	public IFuture<E> catchEx(final Consumer<? super Exception> function, Class<?> consumer);
 	
 	/**
+	 *  Print an exception.
+	 */
+	public IFuture<E> printOnEx();
+	
+	/**
 	 *  Delegate the result and exception to another future.
 	 *  Short form for adding a delegation listener.
 	 *  @param delegate The other future.

@@ -1,9 +1,13 @@
 package jadex.micro.impl;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collections;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
+import jadex.common.SAccess;
+import jadex.common.SReflect;
 import jadex.common.SimpleParameterGuesser;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
@@ -55,7 +59,76 @@ public class MicroModelFeature implements IModelFeature, IInternalModelFeature, 
 		}*/
 		else
 		{
-			throw new RuntimeException("Value not found: "+name);
+			Object pojo = self.getPojo();
+			
+			Class<?> clazz = pojo.getClass();
+			boolean found = false;
+			Object value = null;
+			
+			String mname = "get"+name.substring(0,1).toUpperCase()+name.substring(1);
+			Method[] getters = SReflect.getAllMethods(pojo.getClass(), mname);
+
+			for(Method m: getters)
+			{
+				if(m.getParameterCount()==0)
+				{
+					try
+					{
+						value = m.invoke(pojo, new Object[0]);
+						found = true;
+					}
+					catch(Exception e)
+					{
+					}
+				}
+			}
+
+			if(!found)
+			{
+				mname = "is"+name.substring(0,1).toUpperCase()+name.substring(1);
+				getters = SReflect.getAllMethods(pojo.getClass(), mname);
+				
+				for(Method m: getters)
+				{
+					if(m.getParameterCount()==0)
+					{
+						try
+						{
+							value = m.invoke(pojo, new Object[0]);
+							found = true;
+						}
+						catch(Exception e)
+						{
+						}
+					}
+				}
+			}
+			
+			if(!found)
+			{
+				Field f = SReflect.getField(clazz, name);
+				if(f!=null)
+				{
+					try
+					{
+						SAccess.setAccessible(f, true);
+						value = f.get(pojo);
+						found = true;
+					}
+					catch(Exception e)
+					{
+					}
+				}
+			}
+			
+			if(found)
+			{
+				return value;
+			}
+			else
+			{
+				throw new RuntimeException("Value not found: "+name);
+			}
 		}
 	}
 

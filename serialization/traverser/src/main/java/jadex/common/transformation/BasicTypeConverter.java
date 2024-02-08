@@ -341,7 +341,17 @@ class IntegerTypeConverter implements IStringObjectConverter
 	 */
 	public Object convertString(String val, Object context)
 	{
-		return Integer.valueOf(val);
+		Object ret;
+		try
+		{
+			ret = Integer.valueOf(val);
+		}
+		catch(NumberFormatException e)
+		{
+			double d = Double.parseDouble(val);
+			ret = Integer.valueOf((int)d); 
+		}
+		return ret;
 	}
 	
 }
@@ -357,7 +367,17 @@ class LongTypeConverter implements IStringObjectConverter
 	 */
 	public Object convertString(String val, Object context)
 	{
-		return Long.valueOf(val);
+		Object ret;
+		try
+		{
+			ret = Long.valueOf(val);
+		}
+		catch(NumberFormatException e)
+		{
+			double d = Double.parseDouble(val);
+			ret = Long.valueOf((long)d); 
+		}
+		return ret;
 	}
 }
 

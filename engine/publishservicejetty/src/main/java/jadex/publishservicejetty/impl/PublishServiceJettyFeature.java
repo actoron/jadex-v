@@ -45,9 +45,9 @@ public class PublishServiceJettyFeature extends PublishServiceFeature
 	 * @param service The original service.
 	 * @param pid The publish id (e.g. url or name).
 	 */
-	public void publishService(IServiceIdentifier serviceid, PublishInfo info)
+	public IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo info)
 	{
-		ServerManager.getInstance().publishService(serviceid, info, self);
+		return ServerManager.getInstance().publishService(serviceid, info, self);
 	}
 	
 	/**

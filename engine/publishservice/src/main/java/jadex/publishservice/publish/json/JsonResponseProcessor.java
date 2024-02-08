@@ -118,7 +118,7 @@ public class JsonResponseProcessor extends AbstractJsonProcessor
 		wr.write("\"headers\":");
 		traverser.traverse(r.getHeaders(), Map.class, conversionprocessors, processors, converter, mode, targetcl, context);
 		if(wr.isWriteClass())
-			wr.write(",").writeClass(IServiceIdentifier.class);
+			wr.write(",").writeClass(Response.class);
 		wr.write("}");
 	
 		return object;

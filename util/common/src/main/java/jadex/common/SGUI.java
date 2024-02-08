@@ -5,6 +5,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Desktop;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -28,6 +29,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -1146,6 +1148,23 @@ public class SGUI
 	{
 		assert rgba != null && rgba.length == 4;
 		return new Color((float) rgba[0], (float) rgba[1], (float) rgba[2], (float) rgba[3]);
+	}
+	
+	/**
+	 *  Open the url in the browser.
+	 *  @param url The url.
+	 */
+	public static void openInBrowser(String url)
+	{
+		try 
+		{
+			URI uri = new URI(url);
+			Desktop.getDesktop().browse(uri);
+		}	
+		catch(Exception e) 
+		{
+			e.printStackTrace();
+		}
 	}
 	
 //	/** Lookup table for divider locations (split->Integer).*/

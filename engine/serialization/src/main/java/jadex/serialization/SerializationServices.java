@@ -3,6 +3,7 @@ package jadex.serialization;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,6 +19,9 @@ import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.TransformProcessor;
 import jadex.common.transformation.traverser.Traverser;
+import jadex.common.transformation.traverser.Traverser.MODE;
+import jadex.core.ComponentIdentifier;
+import jadex.serialization.serializers.JadexBasicTypeSerializer;
 import jadex.serialization.serializers.JadexBinarySerializer;
 import jadex.serialization.serializers.JadexJsonSerializer;
 
@@ -40,10 +44,10 @@ public class SerializationServices implements ISerializationServices
 	protected ISerializer[] serializers;
 	
 	/** Preprocessors for encoding. */
-	protected ITraverseProcessor[] preprocessors;
+	protected List<ITraverseProcessor> preprocessors;
 	
 	/** Postprocessors for decoding. */
-	protected ITraverseProcessor[] postprocessors;
+	protected List<ITraverseProcessor> postprocessors;
 	
 	/** Singleton instance. */
 	protected static volatile SerializationServices instance;
@@ -71,6 +75,8 @@ public class SerializationServices implements ISerializationServices
 	private SerializationServices()
 	{
 		serializers = new ISerializer[3];
+		preprocessors = createPreprocessors();
+		postprocessors = createPostprocessors();
 		
 		ISerializer serial = new JadexBinarySerializer();
 		serializers[serial.getSerializerId()] = serial;
@@ -79,10 +85,8 @@ public class SerializationServices implements ISerializationServices
 		serial = new JadexJsonSerializer();
 		serializers[serial.getSerializerId()] = serial;
 		
-		List<ITraverseProcessor> procs = createPreprocessors();
-		preprocessors = procs.toArray(new ITraverseProcessor[procs.size()]);
-		procs = createPostprocessors();
-		postprocessors = procs.toArray(new ITraverseProcessor[procs.size()]);
+		serial = new JadexBasicTypeSerializer();
+		serializers[serial.getSerializerId()] = serial;
 	}
 	
 	/**
@@ -102,7 +106,7 @@ public class SerializationServices implements ISerializationServices
 		{
 			SUtil.throwUnchecked(e);
 		}
-		serializers[defaultserializer].encode(os, cl, null, preprocessors, obj);
+		serializers[defaultserializer].encode(os, cl, null, internalGetPreprocessors(), obj);
 	}
 	
 	/**
@@ -120,7 +124,7 @@ public class SerializationServices implements ISerializationServices
 		SUtil.readStream(intbuf, is);
 		ISerializer ser = serializers[SUtil.bytesToInt(intbuf)];
 		
-		return ser.decode(is, cl, postprocessors, null, ser);
+		return ser.decode(is, cl, internalGetPostprocessors(), null, ser);
 	}
 	
 	/**
@@ -145,9 +149,17 @@ public class SerializationServices implements ISerializationServices
 	}
 	
 	/**
+	 *  Gets the pre-processors for encoding a received message.
+	 */
+	public List<ITraverseProcessor> getPreprocessors()
+	{
+		return preprocessors;
+	}
+	
+	/**
 	 *  Gets the post-processors for decoding a received message.
 	 */
-	public ITraverseProcessor[] getPostprocessors()
+	public List<ITraverseProcessor> getPostprocessors()
 	{
 		return postprocessors;
 	}
@@ -155,23 +167,17 @@ public class SerializationServices implements ISerializationServices
 	/**
 	 *  Gets the pre-processors for encoding a received message.
 	 */
-	public ITraverseProcessor[] getPreprocessors()
+	public ITraverseProcessor[] internalGetPreprocessors()
 	{
-		return preprocessors;
+		return preprocessors.toArray(new ITraverseProcessor[preprocessors.size()]);
 	}
 	
-	
-	
-	
 	/**
-	 *  Create the preprocessors.
+	 *  Gets the post-processors for decoding a received message.
 	 */
-	public List<ITraverseProcessor> createPostprocessors()
+	public ITraverseProcessor[] internalGetPostprocessors()
 	{
-		// Equivalent pre- and postprocessors for binary mode.
-		List<ITraverseProcessor> procs = new ArrayList<ITraverseProcessor>();
-		
-		return procs;
+		return postprocessors.toArray(new ITraverseProcessor[postprocessors.size()]);
 	}
 	
 	/**
@@ -184,9 +190,89 @@ public class SerializationServices implements ISerializationServices
 		// Preprocessor to copy the networknames cache object (used by security service and all service ids)
 		procs.add(new TransformProcessor());
 		
+		procs.add(new ITraverseProcessor()
+		{
+			@Override
+			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
+			{
+				return object instanceof ComponentIdentifier;
+			}
+			
+			@Override
+			public Object process(Object object, Type type, Traverser traverser,
+				List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors,
+				IStringConverter converter, MODE mode, ClassLoader targetcl, Object context) 
+			{
+				return object.toString();
+			}
+		});
 		
 		return procs;
 	}
+	
+	/**
+	 *  Create the preprocessors.
+	 */
+	public List<ITraverseProcessor> createPostprocessors()
+	{
+		// Equivalent pre- and postprocessors for binary mode.
+		List<ITraverseProcessor> procs = new ArrayList<ITraverseProcessor>();
+		
+		procs.add(new ITraverseProcessor()
+		{
+			@Override
+			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
+			{
+				return object instanceof String && ComponentIdentifier.class.equals(type);
+			}
+			
+			@Override
+			public Object process(Object object, Type type, Traverser traverser,
+				List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors,
+				IStringConverter converter, MODE mode, ClassLoader targetcl, Object context) 
+			{
+				return ComponentIdentifier.fromString((String)object);
+			}
+		});
+		
+		return procs;
+	}
+	
+	// todo: replace cid with below?
+	
+	//public static record CID(String cid) {};
+	/*	// add cid support
+	serser.getPreprocessors().add(new ITraverseProcessor() 
+	{
+		@Override
+		public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors,
+			List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context) 
+		{
+			return new CID(((ComponentIdentifier)object).toString());
+		}
+		
+		@Override
+		public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
+		{
+			return object instanceof ComponentIdentifier;
+		}
+	});
+	serser.getPostprocessors().add(new ITraverseProcessor() 
+	{
+		@Override
+		public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors,
+			List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context) 
+		{
+			return ComponentIdentifier.fromString(((CID)object).cid());
+		}
+		
+		@Override
+		public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
+		{
+			return object instanceof CID;
+		}
+	});
+	*/
 	
 	/**
 	 *  Test if an object has reference semantics. It is a reference when:
@@ -277,23 +363,23 @@ public class SerializationServices implements ISerializationServices
 	 *  Convert object to string.
 	 *  @param val The value.
 	 *  @return The string value.
-	 */
+	 * /
 	public String convertObjectToString(Object val, Class<?> type, ClassLoader cl, String mediatype, Object context)
 	{
 		mediatype = mediatype!=null? mediatype: "basic";
 		IStringConverter conv = getStringConverters().get(mediatype);
 		return conv.convertObject(val, type, cl, context);	
-	}
+	}*/
 	
 	/**
 	 *  Convert string to object.
 	 *  @param val The value.
 	 *  @return The object.
-	 */
+	 * /
 	public Object convertStringToObject(String val, Class<?> type, ClassLoader cl, String mediatype, Object context)
 	{
 		mediatype = mediatype!=null? mediatype: "basic";
 		IStringConverter conv = getStringConverters().get(mediatype);
 		return conv.convertString(val, type, cl, context);
-	}
+	}*/
 }

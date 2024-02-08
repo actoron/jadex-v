@@ -58,6 +58,16 @@ public interface ISerializationServices
 	public boolean isLocalReference(Object object);
 	
 	/**
+	 *  Gets the pre-processors for encoding a received message.
+	 */
+	public List<ITraverseProcessor> getPreprocessors();
+	
+	/**
+	 *  Gets the post-processors for decoding a received message.
+	 */
+	public List<ITraverseProcessor> getPostprocessors();
+	
+	/**
 	 *  Get the clone processors.
 	 *  @return The clone processors.
 	 */
@@ -73,15 +83,15 @@ public interface ISerializationServices
 	 *  Convert object to string.
 	 *  @param val The value.
 	 *  @return The string value.
-	 */
-	public String convertObjectToString(Object val, Class<?> type, ClassLoader cl, String mediatype, Object context);
+	 * /
+	public String convertObjectToString(Object val, Class<?> type, ClassLoader cl, String mediatype, Object context);*/
 	
 	/**
 	 *  Convert string to object.
 	 *  @param val The value.
 	 *  @return The object.
-	 */
-	public Object convertStringToObject(String val, Class<?> type, ClassLoader cl, String mediatype, Object context);
+	 * /
+	public Object convertStringToObject(String val, Class<?> type, ClassLoader cl, String mediatype, Object context);*/
 
 	
 //	/**

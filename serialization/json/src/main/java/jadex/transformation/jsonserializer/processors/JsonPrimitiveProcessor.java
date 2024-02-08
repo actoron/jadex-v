@@ -57,15 +57,36 @@ public class JsonPrimitiveProcessor implements ITraverseProcessor
 			}
 			else if(Integer.class.equals(clazz) || int.class.equals(clazz))
 			{
-				ret = val.asInt();
+				try
+				{
+					ret = val.asInt();
+				}
+				catch(Exception e)
+				{
+					ret = (int)val.asDouble();
+				}
 			}
 			else if(Long.class.equals(clazz) || long.class.equals(clazz))
 			{
-				ret = val.asLong();
+				try
+				{
+					ret = val.asLong();
+				}
+				catch(Exception e)
+				{
+					ret = (long)val.asDouble();
+				}
 			}
 			else if(Short.class.equals(clazz) || short.class.equals(clazz))
 			{
-				ret = (short)val.asInt();
+				try
+				{
+					ret = (short)val.asInt();
+				}
+				catch(Exception e)
+				{
+					ret = (short)val.asDouble();
+				}
 			}
 			else if(String.class.equals(clazz))
 			{

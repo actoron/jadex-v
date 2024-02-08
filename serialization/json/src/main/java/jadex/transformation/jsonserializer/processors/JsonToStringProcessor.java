@@ -38,7 +38,8 @@ public class JsonToStringProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = object!=null? object.getClass(): SReflect.getClass(type);
+		//Class<?> clazz = SReflect.getClass(type);
 		return SReflect.isStringConvertableType(clazz) 
 			|| SReflect.isSupertype(URL.class, clazz)
 			|| SReflect.isSupertype(URI.class, clazz);

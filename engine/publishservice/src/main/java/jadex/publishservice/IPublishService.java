@@ -38,7 +38,7 @@ public interface IPublishService
 	 *  @param service The original service.
 	 *  @param pid The publish id (e.g. url or name).
 	 */
-	public void publishService(IServiceIdentifier serviceid, PublishInfo pi);
+	public IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo pi);
 	
 	/**
 	 *  Unpublish a service.

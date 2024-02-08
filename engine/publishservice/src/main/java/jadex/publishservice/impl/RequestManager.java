@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -22,7 +23,6 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.eclipsesource.json.Json;
@@ -30,8 +30,8 @@ import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
-import jadex.collection.LeaseTimeMap;
 import jadex.collection.MultiCollection;
+import jadex.collection.PassiveLeaseTimeMap;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
@@ -39,6 +39,8 @@ import jadex.common.transformation.IObjectStringConverter;
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.STransformation;
 import jadex.common.transformation.traverser.ITraverseProcessor;
+import jadex.common.transformation.traverser.Traverser;
+import jadex.common.transformation.traverser.Traverser.MODE;
 import jadex.core.IComponent;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
@@ -59,15 +61,12 @@ import jadex.publishservice.publish.IAsyncContextInfo;
 import jadex.publishservice.publish.PathManager;
 import jadex.publishservice.publish.annotation.ParametersMapper;
 import jadex.publishservice.publish.annotation.ResultMapper;
-import jadex.publishservice.publish.binary.BinaryResponseProcessor;
 import jadex.publishservice.publish.clone.CloneResponseProcessor;
-import jadex.publishservice.publish.json.JsonResponseProcessor;
 import jadex.publishservice.publish.mapper.DefaultParameterMapper;
 import jadex.publishservice.publish.mapper.IParameterMapper;
 import jadex.publishservice.publish.mapper.IParameterMapper2;
 import jadex.publishservice.publish.mapper.IValueMapper;
 import jadex.serialization.ISerializationServices;
-import jadex.serialization.serializers.JadexBinarySerializer;
 import jadex.serialization.serializers.JadexJsonSerializer;
 import jadex.transformation.jsonserializer.JsonTraverser;
 import jakarta.servlet.AsyncContext;
@@ -91,6 +90,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.ResponseBuilder;
 
 public class RequestManager 
 {
@@ -107,7 +107,7 @@ public class RequestManager
 	public static final String DEFAULT_COMPLETECONTEXT = "http://"+DEFAULT_HOST+":"+DEFAULT_PORT+"/"+DEFAULT_APP+"/";
 	
 	/** The conversation timeout. */
-	public static long CONVERSATION_TIMEOUT = 30000;
+	public static long CONVERSATION_TIMEOUT = 10000;
 	
 	
 	/** Async context info. */
@@ -186,8 +186,8 @@ public class RequestManager
 	/** The json processor. */
 	protected JadexJsonSerializer jsonser;
 	
-	/** The binary processor. */
-	protected JadexBinarySerializer binser;
+	///** The binary processor. */
+	//protected JadexBinarySerializer binser;
 
 	/** The serialization services. */
 	protected ISerializationServices serser;
@@ -212,6 +212,50 @@ public class RequestManager
 		return serser;
 	}
 	
+	public static class Resp
+	{
+		protected Map<String, Object> headers;
+		protected Object entity;
+		protected int status;
+		
+		public Resp()
+		{
+		}
+
+		public Map<String, Object> getHeaders() 
+		{
+			return headers;
+		}
+
+		public Resp setHeaders(Map<String, Object> headers) 
+		{
+			this.headers = headers;
+			return this;
+		}
+
+		public Object getEntity() 
+		{
+			return entity;
+		}
+
+		public Resp setEntity(Object entity) 
+		{
+			this.entity = entity;
+			return this;
+		}
+
+		public int getStatus() 
+		{
+			return status;
+		}
+
+		public Resp setStatus(int status) 
+		{
+			this.status = status;
+			return this;
+		}
+	}
+	
 	public RequestManager(ISerializationServices serser)
 	{
 		this.serser = serser;
@@ -219,7 +263,9 @@ public class RequestManager
 		conversationinfos = new LinkedHashMap<String, ConversationInfo>();
 		sseevents = new ArrayList<SSEEvent>();
 		sseinfos = new HashMap<String, RequestManager.SSEInfo>();
-		sessions = new LeaseTimeMap<String, Map<String,Object>>(1000*60*10);// new HashMap<String, Map<String,Object>>();
+		//sessions = new LeaseTimeMap<String, Map<String,Object>>(1000*60*20); // 20 min session timeout
+		//sessions = new PassiveLeaseTimeMap<String, Map<String,Object>>(1000*60*1); // 20 min session timeout
+		sessions = new HashMap<String, Map<String,Object>>();
 		
 		this.loginsec = false;
 		
@@ -230,12 +276,65 @@ public class RequestManager
 		//SerializationServices.getSerializationServices(self.getId());
 		
 		jsonser = (JadexJsonSerializer)serser.getSerializer(JadexJsonSerializer.SERIALIZER_ID);
-		JsonResponseProcessor jrp = new JsonResponseProcessor();
-		jsonser.addProcessor(jrp, jrp);
-		binser = (JadexBinarySerializer)serser.getSerializer(JadexBinarySerializer.SERIALIZER_ID);
-		BinaryResponseProcessor brp = new BinaryResponseProcessor();
-		binser.addProcessor(brp, brp);
+		//JsonResponseProcessor jrp = new JsonResponseProcessor();
+		//jsonser.addProcessor(jrp, jrp);
+		
+		// add response support
+		serser.getPreprocessors().add(new ITraverseProcessor() 
+		{
+			@Override
+			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors,
+				List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context) 
+			{
+				Response res = (Response)object;
+				//Object e = traverser.traverse(res.getEntity(), Map.class, conversionprocessors, processors, converter, mode, targetcl, context);
+				//Object h = traverser.traverse(res.getHeaders(), Map.class, conversionprocessors, processors, converter, mode, targetcl, context);
+				Resp ret = new Resp().setStatus(res.getStatus()).setEntity(res.getEntity()).setHeaders((Map)res.getHeaders());
+				return ret;
+			}
+			
+			@Override
+			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
+			{
+				return object instanceof Response;
+			}
+		});
+		
+		serser.getPostprocessors().add(new ITraverseProcessor() 
+		{
+			@Override
+			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors,
+				List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context) 
+			{
+				Resp resp = (Resp)object;
+				ResponseBuilder rb = Response.status(resp.getStatus()).entity(resp.getEntity());
+				for(Map.Entry<String, Object> entry: resp.getHeaders().entrySet())
+				{
+					if(entry.getValue() instanceof Collection)
+					{
+						for(Object v: (Collection)entry.getValue())
+						{
+							rb.header(entry.getKey(), (String)v);
+						}
+					}
+				}
+				Response ret = rb.build();
+				return ret;
+			}
+			
+			@Override
+			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
+			{
+				return object instanceof Resp;
+			}
+		});
+		
 		serser.getCloneProcessors().add(0, new CloneResponseProcessor());
+
+		//binser = (JadexBinarySerializer)serser.getSerializer(JadexBinarySerializer.SERIALIZER_ID);
+		//BinaryResponseProcessor brp = new BinaryResponseProcessor();
+		//binser.addProcessor(brp, brp);
+		
 		// System.out.println("added response processors for:
 		// "+component.getId().getRoot());
 
@@ -257,7 +356,7 @@ public class RequestManager
 			{
 				// System.out.println("write response in json");
 				
-				byte[] data = jsonser.encode(val, getClassLoader(), null, conv);
+				byte[] data = jsonser.encode(val, getClassLoader(), serser.getPreprocessors().toArray(new ITraverseProcessor[0]), conv);
 				//byte[] data = JsonTraverser.objectToByteArray(val, component.getClassLoader(), null, false, false, null, null, null);
 				return new String(data, StandardCharsets.UTF_8);
 			}
@@ -270,7 +369,7 @@ public class RequestManager
 		{
 			public String convertObject(Object val, Object context)
 			{
-				byte[] data = jsonser.encode(val, getClassLoader(), null, null);
+				byte[] data = jsonser.encode(val, getClassLoader(), serser.getPreprocessors().toArray(new ITraverseProcessor[0]), null);
 				//byte[] data = JsonTraverser.objectToByteArray(val, component.getClassLoader(), null, true, true, null, null, null);
 				String ret = new String(data, StandardCharsets.UTF_8);
 				//System.out.println("rest json: "+ret);
@@ -469,6 +568,25 @@ public class RequestManager
 		getSession(sessionid, true).put(name, value);
 	}
 	
+	public synchronized Map<String, Object> getSession(String sessionid)
+	{
+		return sessions.get(sessionid);
+	}
+	
+	public synchronized void putSession(String sessionid, Map<String, Object> session)
+	{
+		if(SUtil.DEBUG)
+			System.out.println("adding session: "+sessionid+" "+session);
+		sessions.put(sessionid, session);
+	}
+	
+	public synchronized void removeSession(String sessionid)
+	{
+		Map<String, Object> session = sessions.remove(sessionid);
+		if(SUtil.DEBUG)
+			System.out.println("removing session: "+sessionid+" "+session);
+	}
+	
 	/**
 	 *  Get a session id.
 	 *  @param request The request
@@ -542,7 +660,8 @@ public class RequestManager
 		// todo: if missing generate one?! as it is cookie it would be used by further requests
 		
 		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
-		//	System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId());
+		//System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
+		//System.out.println("handleRequest: "+request.getRequestURI()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
 		
 		getAsyncContextInfo(request); // ensure async request processing
 
@@ -560,6 +679,10 @@ public class RequestManager
 		
 		String alive = request.getHeader(HEADER_JADEX_ALIVE);
 		String ssealive = request.getHeader(HEADER_JADEX_SSEALIVE);
+
+		//if(ssealive!=null)
+		//	System.out.println("handleRequest ssealive: "+request.getRequestURI()+" session: "+request.getSession().getId());
+
 		
 		// check if it is a login request
 		String secret = request.getHeader(HEADER_JADEX_LOGIN);
@@ -605,6 +728,7 @@ public class RequestManager
 			// update all timer values of session conversations and remove checking sseinfo if alive is received
 			if(cinfo!=null)
 			{
+				//System.out.println("received ssealive: "+cinfo.getSessionId());
 				updateTimestamps(cinfo.getSessionId());
 				removeSSEInfo(cinfo.getSessionId());
 				writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true));
@@ -755,7 +879,7 @@ public class RequestManager
 				}
 				else if(mis!=null && mis.size()>0)
 				{
-					//if(request.toString().indexOf("generateArea")!=-1)
+					//if(request.toString().indexOf("gen")!=-1)
 					//	System.out.println("call 4: "+request);
 					
 					// convert and map parameters
@@ -1173,7 +1297,7 @@ public class RequestManager
 					    response.setStatus(HttpServletResponse.SC_OK);
 						//out.write("data: {'a': 'a'}\n\n");
 						response.flushBuffer();
-					    System.out.println("sse connection saved: "+request.getAsyncContext()+" "+fsessionid+" "+getSessionId(request));
+					    //System.out.println("sse connection saved: "+request.getAsyncContext()+" "+fsessionid+" "+getSessionId(request));
 					    
 					    sendDelayedSSEEvents(getSession(fsessionid, true));
 					}
@@ -1219,13 +1343,16 @@ public class RequestManager
 				});
 				
 				removeSSEInfo(sessionid);
+				removeSession(sessionid);
 			}
 		});
 		
 		// Create sse pings for sse sources that have conversations that are all timed out
 		
-		Map<String, List<ConversationInfo>> ginfos = conversationinfos.values().stream().filter(cinfo -> !sseinfos.containsKey(cinfo.getSessionId()))
+		Map<String, List<ConversationInfo>> ginfos = conversationinfos.values().stream()
+			.filter(cinfo -> !sseinfos.containsKey(cinfo.getSessionId()))
 			.collect(Collectors.groupingBy(ConversationInfo::getSessionId));
+		
 		ginfos.forEach((sessionid, infos) -> 
 		{
             // Find newest time value
@@ -1305,6 +1432,8 @@ public class RequestManager
 	
 	protected synchronized void addConversation(String callid, ConversationInfo cinfo)
 	{
+		if(cinfo.getSessionId()==null)
+			throw new IllegalArgumentException();
 		conversationinfos.put(callid, cinfo);
 	}
 	
@@ -1687,7 +1816,6 @@ public class RequestManager
 				}
 				else
 				{
-					
 					String str = new String(bytes, SUtil.UTF8);
 					
 					if(ct!=null && ct.trim().startsWith("application/x-www-form-urlencoded"))
@@ -1837,7 +1965,7 @@ public class RequestManager
 			
 			// Natural auto map if there are in parameters
 			// Mappers can return null to not handle the mapping and let default mapping being applied
-			if(targetparams==null)
+            if(targetparams==null)
 			{
 				targetparams = new Object[types.length];
 
@@ -2026,7 +2154,7 @@ public class RequestManager
 		{
 			ret = val;
 		}
-		else if(val instanceof String && ((String)val).length() > 0 && conv.isSupportedType(target))
+		else if(val instanceof String && ((String)val).length() > 0 && conv!=null && conv.isSupportedType(target))
 		{
 			try
 			{
@@ -2054,7 +2182,7 @@ public class RequestManager
 
 		if(val instanceof String)
 		{
-			if(sr != null && sr.contains(MediaType.APPLICATION_JSON))
+			if(sr != null && (sr.contains(MediaType.APPLICATION_JSON) || sr.contains(MediaType.WILDCARD)))
 			{
 				try
 				{
@@ -2070,7 +2198,10 @@ public class RequestManager
 				}
 			}
 	
-			if(!done && sr != null && sr.contains(MediaType.APPLICATION_XML))
+			
+			// todo?
+			
+			/*if(!done && sr != null && (sr.contains(MediaType.APPLICATION_XML) || sr.contains(MediaType.WILDCARD)))
 			{
 				try
 				{
@@ -2081,7 +2212,7 @@ public class RequestManager
 				catch(Exception e)
 				{
 				}
-			}
+			}*/
 		}
 				
 		if(!done)
@@ -2441,6 +2572,9 @@ public class RequestManager
 	 */
 	protected SSEEvent createSSEEvent(Object result, boolean finished, String callid, Integer max, String exceptiontype)
 	{
+		//if(result!=null && result.getClass().toString().indexOf("PartDataChunk")!=-1)
+		//	System.out.println("fff");
+		
 		SSEEvent event = new SSEEvent();
 		// Wrap content in SSE event class to add Jadex meta info 
 		event.setData(result).setFinished(finished).setCallId(callid).setMax(max).setExecptionType(exceptiontype);
@@ -2913,12 +3047,9 @@ public class RequestManager
 		return ret;
 	}
 
-	
-	
-
 	protected ClassLoader getClassLoader()
 	{
-		return RequestManager.class.getClassLoader();
+		return ComponentManager.get().getClassLoader();
 	}
 	
 	/*protected ClassLoader getClassLoader(IComponent component)

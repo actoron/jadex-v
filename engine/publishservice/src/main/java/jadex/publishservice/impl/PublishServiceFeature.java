@@ -62,7 +62,7 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 			for(PublishInfo pi: mymodel.getPublishInfos())
 			{
 				IServiceIdentifier sid = findService(pi.getPublishTarget());
-				publishService(sid, pi);
+				publishService(sid, pi).get();
 			}
 			
 			ret.setResult(null);
@@ -165,7 +165,7 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 	 * @param service The original service.
 	 * @param pid The publish id (e.g. url or name).
 	 */
-	public abstract void publishService(IServiceIdentifier serviceid, PublishInfo info);
+	public abstract IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo info);
 
 	/**
 	 * Get or start an api to the http server.

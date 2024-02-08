@@ -26,6 +26,14 @@ public interface IExternalAccess
 	}
 	
 	/**
+	 *  Terminate the component.
+	 */
+	public default IFuture<Void> terminate()
+	{
+		return IComponent.terminate(getId());
+	}
+	
+	/**
 	 *  Schedule a step to be run on the component.
 	 *  @param step	A step that is executed via the {@link Runnable#run()} method.
 	 */

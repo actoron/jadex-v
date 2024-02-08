@@ -2,9 +2,13 @@ package jadex.publishservicejetty.impl;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -18,11 +22,11 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.component.LifeCycle;
 
-import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.model.IModelFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.ServiceQuery;
@@ -65,7 +69,7 @@ public class ServerManager
      *  @param service The original service.
      *  @param pid The publish id (e.g. url or name).
      */
-    public synchronized void publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
+    public synchronized IFuture<Void> publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
     {
     	Future<Void> ret = new Future<>();
     	
@@ -125,6 +129,8 @@ public class ServerManager
 	    	//SUtil.rethrowAsUnchecked(e);
 	    	ret.setException(e);
 	    }
+		
+		return ret;
     }
 
     /**
@@ -247,7 +253,7 @@ public class ServerManager
                     	
                     	//System.out.println("handler is: "+request.getRequestURI());
 
-                    	if(target.indexOf("jadex.js")!=-1 || target.endsWith("events"))
+                    	if(target.indexOf("jadex.js")!=-1 || target.endsWith("events") || target.endsWith("ssealive"))
                     	{
                     		RequestManager.getInstance().handleRequest(null, null, request, response, new Object[]{target, baseRequest});
                     		//handleRequest(null, null, request, response, new Object[]{target, baseRequest});
@@ -430,8 +436,32 @@ public class ServerManager
 		id = id != null ? id.replace("[", "").replace("]", "") : null;
 		id = id.replace("${componentid}", ""+component.getId().getLocalName());
 		id = id.replace("${cid}", ""+component.getId().getLocalName());
+		
+		String[] vars = findVariables(id);
+		for(String var: vars)
+		{
+			String val = ""+component.getFeature(IModelFeature.class).getFetcher().fetchValue(var);
+			id = id.replace("${"+var+"}", val);
+		}
+		
 		return id;
 	}
+	
+	public static String[] findVariables(String str) 
+	{
+		List<String> res = new ArrayList<String>();
+		
+        Pattern pattern = Pattern.compile("\\$\\{([^}]+)\\}");
+        Matcher matcher = pattern.matcher(str);
+
+        while(matcher.find()) 
+        {
+            String name = matcher.group(1);
+            res.add(name);
+        }
+        
+        return res.toArray(new String[res.size()]);
+    }
 	
 	public synchronized Server getServer(int port)
 	{
