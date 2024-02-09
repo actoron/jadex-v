@@ -12,8 +12,6 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
-import jadex.future.IIntermediateResultListener;
-import jadex.future.IntermediateEmptyResultListener;
 import jadex.future.IntermediateFuture;
 import jadex.micro.mandelbrot_new.calculate.ICalculateService;
 import jadex.micro.mandelbrot_new.display.IDisplayService;
@@ -22,6 +20,7 @@ import jadex.micro.mandelbrot_new.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot_new.model.LyapunovAlgorithm;
 import jadex.micro.mandelbrot_new.model.MandelbrotAlgorithm;
 import jadex.micro.mandelbrot_new.model.PartDataChunk;
+import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.IService;
 import jadex.providedservice.annotation.Service;
@@ -62,7 +61,7 @@ public class GenerateService implements IGenerateService
 	//-------- methods --------
 	
 	@OnStart
-	public void body()
+	public void onStart()
 	{
 		Object pagent = agent.getPojo();
 		
@@ -70,6 +69,14 @@ public class GenerateService implements IGenerateService
 			ggui = (IGenerateGui)pagent;
 		else
 			System.out.println("gen gui interface not found");
+	}
+	
+	public IIntermediateTaskDistributor<PartDataChunk, AreaData> getTaskDistributor()
+	{
+		//System.out.println("search task distri");
+		IIntermediateTaskDistributor<PartDataChunk, AreaData> ret = agent.getFeature(IRequiredServiceFeature.class).searchService(new ServiceQuery<IIntermediateTaskDistributor>(IIntermediateTaskDistributor.class)).get();
+		//System.out.println("found task distri: "+ret);
+		return ret;
 	}
 	
 	/**
@@ -342,123 +349,52 @@ public class GenerateService implements IGenerateService
 			// Inform display service that the following area/size is calculated
 			ds.displayResult(complete).then(vo ->
 			{
-				// inform display service about the partitioning is calculated
-				//ds.displayIntermediateResult(pd).then(v ->
-				//{
-					//System.out.println("calc start: "+Thread.currentThread());
+				//System.out.println("calc start: "+Thread.currentThread());
+				
+				getTaskDistributor().publish(part).next(chunk ->
+				{
+					//System.out.println("generate got chunk (calls display): "+chunk);
 					
-					//IFuture<ICalculateService> futc = agent.getFeature(IRequiredServicesFeature.class).getService("calculateservice");
-					IFuture<ICalculateService> futc = getCalculateService();
-					//IFuture<ICalculateService> futc = getNextCalculateService();
+					chunk.setDisplayId(part.getDisplayId());
+					chunk.setArea(new Rectangle(part.getXOffset(), part.getYOffset(), part.getSizeX(), part.getSizeY()));
+					chunk.setImageWidth(complete.getSizeX());
+					chunk.setImageHeight(complete.getSizeY());
 					
-					futc.then(cs -> 
+					part.addChunk(chunk);
+					
+					// Inform display service that a chunk is finsihed
+					ds.displayIntermediateResult(chunk).then(v2 -> {}
+						//System.out.println("da")
+						// Use result from calculation service instead of result from display service.
+						//ret.setResult(calcresult)
+					).catchEx(ex -> {}
+						//System.out.println("da2: "+ex)
+						// Use result from calculation service instead of exception from display service.
+						//ret.setResult(calcresult)
+					);
+				}).finished(Void ->
+				{
+					// Add result of task execution.
+					alda.taskFinished(part);
+					//System.out.println("perform task ended: "+task);
+					ret.setResult(part);
+				}).catchEx(ex ->
+				{
+					System.out.println("exception during task execution: "+ex+" "+task);
+					
+					// retry 
+					// todo: abort after some tries
+					if(alda.isRetry() && task.getRetryCount()<maxretries)
 					{
-						cs.calculateArea(part).addResultListener(new IIntermediateResultListener<PartDataChunk>() 
-						{
-							public void resultAvailable(Collection<PartDataChunk> results)
-							{
-							}
-							
-							public void intermediateResultAvailable(PartDataChunk chunk)
-							{
-								//System.out.println("generate got chunk (calls display): "+chunk);
-								
-								chunk.setDisplayId(part.getDisplayId());
-								chunk.setArea(new Rectangle(part.getXOffset(), part.getYOffset(), part.getSizeX(), part.getSizeY()));
-								chunk.setImageWidth(complete.getSizeX());
-								chunk.setImageHeight(complete.getSizeY());
-								
-								part.addChunk(chunk);
-								
-								// Inform display service that a chunk is finsihed
-								ds.displayIntermediateResult(chunk).then(v2 -> {}
-									//System.out.println("da")
-									// Use result from calculation service instead of result from display service.
-									//ret.setResult(calcresult)
-								).catchEx(ex -> {}
-									//System.out.println("da2: "+ex)
-									// Use result from calculation service instead of exception from display service.
-									//ret.setResult(calcresult)
-								);
-							}
-							
-						    public void finished()
-						    {
-						    	// Add result of task execution.
-								alda.taskFinished(part);
-								//System.out.println("perform task ended: "+task);
-								ret.setResult(part);
-						    }
-						    
-							public void maxResultCountAvailable(int max)
-							{
-							}
-							
-							public void exceptionOccurred(Exception e)
-							{
-								System.out.println("exception during task execution: "+e+" "+task);
-								
-								// retry 
-								// todo: abort after some tries
-								if(alda.isRetry() && task.getRetryCount()<maxretries)
-								{
-									System.out.println("retrying task after delay: "+task);
-									task.setRetryCount(task.getRetryCount()+1);
-									agent.getFeature(IExecutionFeature.class).waitForDelay(5000).then(t -> performTask(task, alda).delegateTo(ret)).catchEx(ret);
-								}
-								else
-								{
-									ret.setException(e);
-								}
-							}
-						});
-						
-						/*cs.calculateArea(part).next(chunk ->
-						{
-							System.out.println("generate got chunk (calls display): "+chunk);
-							
-							chunk.setDisplayId(part.getDisplayId());
-							chunk.setArea(new Rectangle(part.getXOffset(), part.getYOffset(), part.getSizeX(), part.getSizeY()));
-							chunk.setImageWidth(complete.getSizeX());
-							chunk.setImageHeight(complete.getSizeY());
-							
-							part.addChunk(chunk);
-							
-							// Inform display service that a chunk is finsihed
-							ds.displayIntermediateResult(chunk).then(v2 -> {}
-								//System.out.println("da")
-								// Use result from calculation service instead of result from display service.
-								//ret.setResult(calcresult)
-							).catchErr(ex -> {}
-								//System.out.println("da2: "+ex)
-								// Use result from calculation service instead of exception from display service.
-								//ret.setResult(calcresult)
-							);
-						})
-						.finished(Void ->
-						{
-							// Add result of task execution.
-							alda.taskFinished(part);
-							//System.out.println("perform task ended: "+task);
-							ret.setResult(part);
-						})
-						.catchErr(ex -> 
-						{
-	//						System.out.println("ex");
-							System.out.println("exception during task execution: "+ex);
-							performTask(task, alda).delegate(ret);
-						});*/
-					}).catchEx(ex ->
+						System.out.println("retrying task after delay: "+task);
+						task.setRetryCount(task.getRetryCount()+1);
+						agent.getFeature(IExecutionFeature.class).waitForDelay(5000).then(t -> performTask(task, alda).delegateTo(ret)).catchEx(ret);
+					}
+					else
 					{
-						System.out.println("ex: "+ex);
 						ret.setException(ex);
 					}
-					);
-//				}).catchErr(ex -> 
-//				{	
-//					System.out.println("ex: "+ex);
-//					ret.setException(ex);
-//				});
+				});
 			}).catchEx(ex -> 
 			{	
 				System.out.println("ex: "+ex);

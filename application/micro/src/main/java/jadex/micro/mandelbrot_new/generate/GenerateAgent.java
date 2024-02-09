@@ -11,6 +11,8 @@ import jadex.micro.annotation.Description;
 import jadex.micro.mandelbrot_new.calculate.ICalculateService;
 import jadex.micro.mandelbrot_new.display.IDisplayService;
 import jadex.micro.mandelbrot_new.model.AreaData;
+import jadex.micro.mandelbrot_new.model.PartDataChunk;
+import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.ServiceScope;

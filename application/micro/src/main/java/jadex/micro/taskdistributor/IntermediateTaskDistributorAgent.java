@@ -7,31 +7,34 @@ import java.util.Queue;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 import jadex.micro.annotation.Agent;
+import jadex.micro.taskdistributor.ITaskDistributor.Task;
 import jadex.providedservice.annotation.Service;
 
 @Agent
 @Service
-public class TaskDistributorAgent<R, T> implements ITaskDistributor<R, T>
+public class IntermediateTaskDistributorAgent<R, T> implements IIntermediateTaskDistributor<R, T>
 {
 	protected Queue<TaskFuture<T, R>> tasks = new LinkedList<TaskFuture<T, R>>();
 	
 	protected Queue<Future<Task<T>>> requestors = new LinkedList<Future<Task<T>>>();
 	
-	protected Map<String, Future<R>> ongoingtasks = new HashMap<String, Future<R>>();
+	protected Map<String, SubscriptionIntermediateFuture<R>> ongoingtasks = new HashMap<String, SubscriptionIntermediateFuture<R>>();
 	
 	protected int cnt;
 	
-	record TaskFuture<T, R>(Task<T> task, Future<R> future){}
+	record TaskFuture<T, R>(Task<T> task, SubscriptionIntermediateFuture<R> future){}
 	
 	/**
 	 *  Publish a new task.
 	 *  @param task The task to publish.
 	 */
 	@Override
-	public IFuture<R> publish(T task)
+	public ISubscriptionIntermediateFuture<R> publish(T task)
 	{
-		Future<R> ret = new Future<R>();
+		SubscriptionIntermediateFuture<R> ret = new SubscriptionIntermediateFuture<R>();
 		
 		Task<T> mytask = new Task<T>(""+cnt++, task);
 		
@@ -42,7 +45,7 @@ public class TaskDistributorAgent<R, T> implements ITaskDistributor<R, T>
 		}
 		else
 		{
-			tasks.add(new TaskFuture<T, R>(mytask, ret));
+			tasks.add(new TaskFuture<T,R>(mytask, ret));
 		}
 		
 		return ret;
@@ -53,13 +56,30 @@ public class TaskDistributorAgent<R, T> implements ITaskDistributor<R, T>
 	 *  @param id The task id.
 	 *  @param result The result.
 	 */
-	public IFuture<Void> setTaskResult(String id, R result)
+	public IFuture<Void> addTaskResult(String id, R result)
 	{
-		Future<R> ret = ongoingtasks.get(id);
+		//System.out.println("adding result: "+id);
+		SubscriptionIntermediateFuture<R> ret = ongoingtasks.get(id);
+		if(ret!=null)
+			ret.addIntermediateResult(result);
+		else
+			System.out.println("Task not found: "+id);
+		return IFuture.DONE;
+	}
+	
+	/** 
+	 *  Set a task finished.
+	 *  @param id The task id.
+	 *  @param result The result.
+	 */
+	public IFuture<Void> setTaskFinished(String id)
+	{
+		SubscriptionIntermediateFuture<R> ret = ongoingtasks.get(id);
 		if(ret!=null)
 		{
+			//System.out.println("removing tf: "+id);
 			ongoingtasks.remove(id);
-			ret.setResult(result);
+			ret.setFinished();
 		}
 		else
 		{
@@ -75,9 +95,10 @@ public class TaskDistributorAgent<R, T> implements ITaskDistributor<R, T>
 	 */
 	public IFuture<Void> setTaskException(String id, Exception ex)
 	{
-		Future<R> ret = ongoingtasks.get(id);
+		SubscriptionIntermediateFuture<R> ret = ongoingtasks.get(id);
 		if(ret!=null)
 		{
+			//System.out.println("removing ex: "+id+" "+ex);
 			ongoingtasks.remove(id);
 			ret.setException(ex);
 		}
@@ -97,14 +118,14 @@ public class TaskDistributorAgent<R, T> implements ITaskDistributor<R, T>
 		Future<Task<T>> ret = new Future<Task<T>>();
 		if(!tasks.isEmpty())
 		{
-			TaskFuture<T, R> task = tasks.poll();
-			ongoingtasks.put(task.task().id(), task.future());
-			ret.setResult(task.task());
+			TaskFuture<T,R> tf = tasks.poll();
+			ongoingtasks.put(tf.task().id(), tf.future());
+			ret.setResult(tf.task);
 		}
 		else
-		{
 			requestors.add(ret);
-		}	
+			
 		return ret;
 	}
 }
+
