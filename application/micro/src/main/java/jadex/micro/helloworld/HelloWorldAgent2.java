@@ -1,7 +1,6 @@
-package jadex.micro.example.helloworld;
+package jadex.micro.helloworld;
 
 import jadex.core.IComponent;
-import jadex.core.impl.ComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
@@ -18,7 +17,7 @@ public class HelloWorldAgent2
 	
 	/** The micro agent class. */
 	@Agent
-	protected MicroAgent agent;
+	protected IComponent agent;
 	
 	/** The welcome text. */
 	protected String text;

@@ -1,4 +1,4 @@
-package jadex.micro.example.helloworld;
+package jadex.micro.helloworld;
 
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -13,18 +13,15 @@ import jadex.model.annotation.OnStart;
  */
 @Agent(type="micro")
 @Description("This agent prints out a hello message.")
-//@Arguments(@Argument(name="welcome text", description= "This parameter is the text printed by the agent.", 
-//	clazz=String.class, defaultvalue="\"Hello world, this is a Jadex micro agent.\""))
 public class HelloWorldAgent
 {
 	//-------- attributes --------
 	
 	/** The micro agent class. */
 	@Agent
-	protected MicroAgent agent;
+	protected IComponent agent;
 	
 	/** The welcome text. */
-//	@AgentArgument("welcome text")
 	protected String text;
 	
 	//-------- methods --------
@@ -37,11 +34,10 @@ public class HelloWorldAgent
 	/**
 	 *  Execute an agent step.
 	 */
-//	@AgentBody
 	@OnStart
 	public void executeBody()
 	{
-		System.out.println(text+" "+agent);//.getId());
+		System.out.println(text+" "+agent.getId());
 		IExecutionFeature.get().waitForDelay(2000).get();
 		System.out.println("Good bye world.");
 		IExecutionFeature.get().terminate();
@@ -50,10 +46,10 @@ public class HelloWorldAgent
 	@OnEnd
 	public void end()
 	{
-		System.out.println("end in pojo: "+agent);//.getId());
+		System.out.println("end in pojo: "+agent.getId());
 	}
 	
-	public String	toString() 
+	public String toString() 
 	{
 		return "Hello "+text;
 	}

@@ -1,4 +1,4 @@
-package jadex.micro.example.helloworld;
+package jadex.micro.helloworld;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
