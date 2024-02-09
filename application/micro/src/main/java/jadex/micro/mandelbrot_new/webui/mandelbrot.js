@@ -100,11 +100,9 @@ class MandelbrotElement extends HTMLElement
 		this.setColorScheme([this.createColor(50, 100, 0), this.createColor(255, 0, 0)], true);
 					
 		// shadow dom not available here :-(	
-		// -> firstUpdated()
-		//this.addMouseListener();				
 
 		// must not use args_0 as parameter name as this will be made to args list
-		let terminate = jadex.getIntermediate('mandelbrotdisplay/subscribeToDisplayUpdates?a='+this.displayid+'&returntype=jadex.commons.future.ISubscriptionIntermediateFuture',
+		this.terminate = jadex.getIntermediate('mandelbrotdisplay/subscribeToDisplayUpdates?a='+this.displayid+'&returntype=jadex.commons.future.ISubscriptionIntermediateFuture',
 		function(response)
 		{
 			//console.log("subscribe received: "+response.data);
@@ -121,25 +119,15 @@ class MandelbrotElement extends HTMLElement
 			self.calcArea();
 		});
 		
-		/*axios.get('/mandelbrotdisplay/subscribeToDisplayUpdates?args_0=webdisplay&returntype=jadex.commons.future.ISubscriptionIntermediateFuture', this.transform)
-		.then(function(resp)
-		{
-			console.log("recceived display update: "+resp.data);
-		})
-		.catch(ex => console.log(ex))*/
-	
-		/*axios.get(this.getMethodPrefix()+'&methodname=subscribeToDisplayUpdates&args_0=webdisplay&returntype=jadex.commons.future.ISubscriptionIntermediateFuture', this.transform)
-		.then(function(resp)
-		{
-			console.log("recceived display update: "+resp.data);
-		})
-		.catch(ex => console.log(ex))*/
-		
-		//this.firstUpdated();
-		
 		this.update();
-		//this.shadowRoot.innerHTML = this.getHtml();
-		//this.initListener();
+	}
+	
+	disconnectedCallback()
+	{
+		console.log('disconnected');
+		
+		if(this.terminate)
+			jadex.terminateCall(this.terminate);
 	}
 	
 	initListener() 
@@ -183,11 +171,6 @@ class MandelbrotElement extends HTMLElement
 		
 		//this.resetSettings(e);
   	}
-	
-	disconnectedCallback()
-	{
-		console.log('disconnected')
-	}
 	
 	handleDisplayUpdate(response)
 	{
@@ -1256,7 +1239,7 @@ class MandelbrotElement extends HTMLElement
 		let owidth = this.data.xEnd-this.data.xStart;
 		let oheight	= this.data.yEnd-this.data.yStart;
 
-		// adapt cutout to size				
+		// adapt cutout to image data size				
 		let neww;
 		let newh;
 		let rw = this.range.width/this.range.height;
@@ -1272,6 +1255,7 @@ class MandelbrotElement extends HTMLElement
 			newh = ih;
 		}
 		
+		// adapt image data size to screen size
 		let size = [neww, newh];
 		if(this.isTrackSize())
 			 size = this.adaptSize(neww, newh, this.getCanvasScreenWidth(), this.getCanvasScreenHeight());

@@ -31,7 +31,6 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
 import jadex.collection.MultiCollection;
-import jadex.collection.PassiveLeaseTimeMap;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
@@ -92,6 +91,27 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.ResponseBuilder;
 
+/**
+ *  The request manager is used to handle REST web requests.
+ *  It follows tha Jadex manager pattern, i.e. it is a singleton accessible
+ *  also from static contexts. 
+ *  
+ *  - Requests with jadex.js contained will be delivered the jadex.js file.
+ *  
+ *  - Requests on the base url of a published service will be delivered an
+ *    overview site for the service.
+ *  
+ *  The request manager has a sophisticated mapping mechanisms for request
+ *  paramaters and tries to map naturally as much as possible.
+ *  
+ *  There is (nearly) a 1:1 relationship between sessions and sseinfos. Each jadex.js 
+ *  uses the "jadex" cookie for session id. The cookie is path wide (from a path all subpaths)
+ *  so that multiple jadex.js and thus applications can coexist using different sessions.
+ *  Sessions do not need explicit timeouts as SSE pings are sent to the see clients.
+ *  Each client responds via a call to baseurl/ssealive path, which must be routed to
+ *  the request manager.
+ *  
+ */
 public class RequestManager 
 {
 	/** The default host name. */
@@ -107,8 +127,7 @@ public class RequestManager
 	public static final String DEFAULT_COMPLETECONTEXT = "http://"+DEFAULT_HOST+":"+DEFAULT_PORT+"/"+DEFAULT_APP+"/";
 	
 	/** The conversation timeout. */
-	public static long CONVERSATION_TIMEOUT = 10000;
-	
+	public static long CONVERSATION_TIMEOUT = 30000;
 	
 	/** Async context info. */
 	public static final String ASYNC_CONTEXT_INFO = "__cinfo";
@@ -173,7 +192,7 @@ public class RequestManager
 	
 	/** Infos about the sse sources. */
 	protected Map<String, SSEInfo> sseinfos;
-		
+			
 	/** State end */
 
 	
@@ -1330,7 +1349,7 @@ public class RequestManager
 		{
 			String sessionid = sseinfo.getSessionId();
 			if(curtime - sseinfo.getLastCheck() > CONVERSATION_TIMEOUT)  
-			{
+			{ 
 				System.out.println("sse source does not respond, removing: "+sessionid);
 				List<ConversationInfo> cinfos = conversationinfos.values().stream().filter(info -> info.getSessionId()==sessionid).collect(Collectors.toList());
 				cinfos.forEach(cinfo ->

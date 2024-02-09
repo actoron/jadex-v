@@ -18,36 +18,17 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
+		//SUtil.DEBUG = true;
+
 		/*
 		IComponent.create(new GenerateAgent());
 		IComponent.create(new CalculateAgent());
 		IComponent.create(new DisplayAgent());
 		**/
 		
-		SUtil.DEBUG = true;
-		
 		IComponent.create(new GenerateWebAgent());
 		IComponent.create(new CalculateAgent());
 		IComponent.create(new DisplayWebAgent());
-		
-		/*IFuture<IExternalAccess> comp = IComponent.createVirtual(new IComponentAccessHandler
-		{
-			public void onCreate()
-			{
-			}
-			
-			public void onTerminate()
-			{
-			}
-			
-			public void onScheduleStep(Object step)
-			{
-			}
-			
-			public void onAccess(Access)
-			{
-			}
-		});*/
 	}
 }
 
