@@ -1562,6 +1562,7 @@ class MandelbrotElement extends HTMLElement
 					<select name="algorithm" id="algorithm" onchange="let host = window['getHost'](event.target); host.setDefaultSettings(event)">
 						<option value="jadex.micro.mandelbrot_new.model.MandelbrotAlgorithm">Mandelbrot</option>
 	  					<option value="jadex.micro.mandelbrot_new.model.LyapunovAlgorithm">Lyapunov</option>
+						<option value="jadex.micro.mandelbrot_new.model.BurningShipFractalAlgorithm">Burning Ship</option>
 					</select> 
 					
 					<label for="xmin">Min x</label> 

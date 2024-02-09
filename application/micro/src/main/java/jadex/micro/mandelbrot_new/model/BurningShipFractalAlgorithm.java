@@ -5,7 +5,7 @@ import jadex.common.ClassInfo;
 /**
  *  Algorithm for calculating the mandelbrot set.
  */
-public class MandelbrotAlgorithm implements IFractalAlgorithm
+public class BurningShipFractalAlgorithm implements IFractalAlgorithm
 {
 	//-------- IFractalAlgorithm interface --------
 	
@@ -18,21 +18,21 @@ public class MandelbrotAlgorithm implements IFractalAlgorithm
 	 */
 	public short determineColor(double xn, double yn, short max)
 	{
-		double x0 = xn;
-		double y0 = yn;
-		short i = 0;
-		double c =  Math.sqrt(xn*xn + yn*yn);
-		
-		for(i=0; c<2 && i<max; i++)
-		{
-			double xn1 = xn*xn - yn*yn + x0;
-			double yn1 = 2*xn*yn + y0;
-			xn = xn1;
-			yn = yn1;
-			c =  Math.sqrt(xn*xn + yn*yn);
-		}
-		
-		return i==max? -1: i;
+		double zx = 0;
+	    double zy = 0;
+	    double cX = xn;
+	    double cY = yn;
+
+	    short i = 0;
+	    while (zx * zx + zy * zy < 4 && i < max) 
+	    {
+	    	double tmp = zx * zx - zy * zy + cX;
+	        zy = Math.abs(2.0 * zx * zy) + cY;
+	        zx = tmp;
+	        i++;
+	    }
+
+	    return i==max? -1: i;
 	}
 	
 
@@ -50,11 +50,7 @@ public class MandelbrotAlgorithm implements IFractalAlgorithm
 	 */
 	public AreaData	getDefaultSettings()
 	{
-		//return new AreaData(-2, 1, -1.5, 1.5, 100, 100, (short)256, 10, 300, this, null);
-//		return new AreaData(-2, 1, -1.5, 1.5, 100, 100, (short)256, 300, this, null, 20);
-//		return new AreaData(-2, 1, -1.5, 1.5, 300, 300, (short)256, 300, new ClassInfo(MandelbrotAlgorithm.class), null, 4);
-		return new AreaData(-2, 1, -1.5, 1.5, 300, 300).setMax((short)256).setTaskSize(300).setAlgorithmClass(new ClassInfo(MandelbrotAlgorithm.class)).setChunkCount(4);
-
+		return new AreaData(-2, 1, -2, 1, 300, 300).setMax((short)256).setTaskSize(300).setAlgorithmClass(new ClassInfo(BurningShipFractalAlgorithm.class)).setChunkCount(4);
 	}
 	
 	/**
@@ -72,7 +68,7 @@ public class MandelbrotAlgorithm implements IFractalAlgorithm
 	 */
 	public String toString()
 	{
-		return "Mandelbrot";
+		return "BurningShipFractal";
 	}
 	
 	/**
@@ -80,7 +76,7 @@ public class MandelbrotAlgorithm implements IFractalAlgorithm
 	 */
 	public boolean equals(Object obj)
 	{
-		return obj instanceof MandelbrotAlgorithm;
+		return obj instanceof BurningShipFractalAlgorithm;
 	}
 	
 	/**
@@ -90,4 +86,5 @@ public class MandelbrotAlgorithm implements IFractalAlgorithm
 	{
 		return 31 + getClass().hashCode();
 	}
+
 }

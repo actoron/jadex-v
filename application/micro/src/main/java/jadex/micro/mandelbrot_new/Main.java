@@ -32,7 +32,7 @@ public class Main
 		IComponent.create(new DisplayWebAgent());
 		
 		int cores = Runtime.getRuntime().availableProcessors();
-		System.out.println("creating calculators: "+cores);
+		System.out.println("creating calculators: "+(cores+1));
 		for(int i=0; i<=cores; i++)
 			IComponent.create(new CalculateAgent());
 	}
