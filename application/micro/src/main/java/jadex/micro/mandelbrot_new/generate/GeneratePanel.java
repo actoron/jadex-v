@@ -1,22 +1,27 @@
 package jadex.micro.mandelbrot_new.generate;
 
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import jadex.common.ClassInfo;
 import jadex.common.SGUI;
 import jadex.core.IExternalAccess;
 import jadex.future.DefaultResultListener;
+import jadex.micro.mandelbrot_new.display.IDisplayService;
+import jadex.micro.mandelbrot_new.model.AbstractFractalAlgorithm;
 import jadex.micro.mandelbrot_new.model.AreaData;
 import jadex.micro.mandelbrot_new.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot_new.ui.PropertiesPanel;
@@ -37,15 +42,30 @@ public class GeneratePanel extends JPanel
 	/** The ok button. */
 	protected JButton okbut;
 	
+	protected List<IFractalAlgorithm> algos;
+	
 	/**
 	 *  Create a new panel.
 	 */
-	public GeneratePanel(final IExternalAccess agent)
+	public GeneratePanel(final IExternalAccess agent) 
+	{
+		agent.scheduleStep(ag ->
+		{
+			IDisplayService ds = ag.getFeature(IRequiredServiceFeature.class).getService(IDisplayService.class).get();
+			List<Class<IFractalAlgorithm>> algos = ds.getAlgorithms().get();
+			this.algos = AbstractFractalAlgorithm.createAlgorithms(algos);
+		
+			SwingUtilities.invokeLater(() -> init(agent));
+		});
+	}
+	
+	protected void init(final IExternalAccess agent)
 	{
 		this.setLayout(new BorderLayout());
 		this.pp	= new PropertiesPanel("Generate Options");
 		
-		final JComboBox	alg	= new JComboBox(GenerateService.ALGORITHMS);
+		final JComboBox	alg	= new JComboBox(algos.toArray());
+		alg.setSelectedItem(AbstractFractalAlgorithm.getDefaultAlgorithm(algos));
 		alg.addItemListener(new ItemListener()
 		{
 			public void itemStateChanged(ItemEvent e)
@@ -55,7 +75,7 @@ public class GeneratePanel extends JPanel
 		});
 		
 		pp.addComponent("algorithm", alg, 0);
-		AreaData data = GenerateService.ALGORITHMS[0].getDefaultSettings();
+		AreaData data = AbstractFractalAlgorithm.getDefaultAlgorithm(algos).getDefaultSettings();
 		
 		pp.createTextField("xmin", ""+data.getXStart(), true, 0);
 		pp.createTextField("xmax", ""+data.getXEnd(), true, 0);
@@ -146,6 +166,8 @@ public class GeneratePanel extends JPanel
 
 		this.add(pp, BorderLayout.CENTER);
 		this.add(sb, BorderLayout.SOUTH);
+		
+		pack();
 	}
 	
 	/**
@@ -206,5 +228,17 @@ public class GeneratePanel extends JPanel
 		});
 		
 		return gp;
+	}
+	
+	protected void pack()
+	{
+		Container parent = this.getTopLevelAncestor();
+        if(parent instanceof JFrame) 
+        {
+            JFrame topLevelFrame = (JFrame)parent;
+            topLevelFrame.pack();
+            topLevelFrame.revalidate(); 
+            topLevelFrame.repaint(); 
+        }
 	}
 }

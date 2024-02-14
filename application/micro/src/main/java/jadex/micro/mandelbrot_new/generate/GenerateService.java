@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import jadex.common.ClassInfo;
@@ -17,8 +18,6 @@ import jadex.micro.mandelbrot_new.calculate.ICalculateService;
 import jadex.micro.mandelbrot_new.display.IDisplayService;
 import jadex.micro.mandelbrot_new.model.AreaData;
 import jadex.micro.mandelbrot_new.model.IFractalAlgorithm;
-import jadex.micro.mandelbrot_new.model.LyapunovAlgorithm;
-import jadex.micro.mandelbrot_new.model.MandelbrotAlgorithm;
 import jadex.micro.mandelbrot_new.model.PartDataChunk;
 import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
 import jadex.model.annotation.OnStart;
@@ -38,11 +37,11 @@ public class GenerateService implements IGenerateService
 	//-------- constants --------
 	
 	/** The available algorithms. */
-	public static IFractalAlgorithm[] ALGORITHMS = new IFractalAlgorithm[] 
+	/*public static IFractalAlgorithm[] ALGORITHMS = new IFractalAlgorithm[] 
 	{
 		new MandelbrotAlgorithm(),
 		new LyapunovAlgorithm()
-	};
+	};*/
 	
 	//-------- attributes --------
 	
@@ -58,10 +57,12 @@ public class GenerateService implements IGenerateService
 	/** The number of maximum retries for calculations. */
 	protected int maxretries = 1;
 	
+	protected IFractalAlgorithm defalgo;
+	
 	//-------- methods --------
 	
 	@OnStart
-	public void onStart()
+	public void onStart() throws Exception
 	{
 		Object pagent = agent.getPojo();
 		
@@ -69,6 +70,10 @@ public class GenerateService implements IGenerateService
 			ggui = (IGenerateGui)pagent;
 		else
 			System.out.println("gen gui interface not found");
+		
+		IDisplayService ds = agent.getFeature(IRequiredServiceFeature.class).getService(IDisplayService.class).get();
+		List<Class<IFractalAlgorithm>> algos = ds.getAlgorithms().get();
+		defalgo = algos.get(0).getConstructor().newInstance(new Object[0]);
 	}
 	
 	public IIntermediateTaskDistributor<PartDataChunk, AreaData> getTaskDistributor()
@@ -94,7 +99,7 @@ public class GenerateService implements IGenerateService
 	//public IFuture<AreaData> generateArea(final AreaData data)
 	public IFuture<Void> generateArea(AreaData data)
 	{
-		//System.out.println("data: "+data);
+		//System.out.println("generateArea data: "+data);
 		//System.out.println("default data: "+ALGORITHMS[0].getDefaultSettings());
 		
 		if(data==null)
@@ -113,7 +118,7 @@ public class GenerateService implements IGenerateService
 		if(data==null)
 		{
 			//System.out.println("no generate info supplied, using defaults.");
-			data = ALGORITHMS[0].getDefaultSettings();
+			data = defalgo.getDefaultSettings();
 		}
 		else
 		{
@@ -121,7 +126,7 @@ public class GenerateService implements IGenerateService
 			if(alg==null)
 			{
 				//System.out.println("no algorithm set, using: "+ALGORITHMS[0]);
-				alg = ALGORITHMS[0];
+				alg = defalgo;
 				data.setAlgorithmClass(new ClassInfo(alg.getClass()));
 			}
 			AreaData defaults = alg.getDefaultSettings();

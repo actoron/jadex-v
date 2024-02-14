@@ -20,6 +20,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -34,7 +35,9 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.IntermediateEmptyResultListener;
 import jadex.micro.mandelbrot_new.generate.GenerateService;
 import jadex.micro.mandelbrot_new.generate.IGenerateService;
+import jadex.micro.mandelbrot_new.model.AbstractFractalAlgorithm;
 import jadex.micro.mandelbrot_new.model.AreaData;
+import jadex.micro.mandelbrot_new.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot_new.model.PartDataChunk;
 import jadex.micro.mandelbrot_new.model.ProgressData;
 import jadex.providedservice.impl.search.ServiceQuery;
@@ -93,6 +96,8 @@ public class DisplayPanel extends JComponent
 	protected IGenerateService genservice;
 	
 	protected boolean dirty;
+	
+	protected List<IFractalAlgorithm> algos;
 
 	//-------- constructors --------
 	
@@ -148,6 +153,9 @@ public class DisplayPanel extends JComponent
 	//@OnService(requiredservice = @RequiredService(min = 1, max = 1))
 	public void	displayServiceAvailable(IDisplayService ds)
 	{
+		List<Class<IFractalAlgorithm>> algos = ds.getAlgorithms().get();
+		this.algos = AbstractFractalAlgorithm.createAlgorithms(algos);
+		
 		ISubscriptionIntermediateFuture<Object> sub = ds.subscribeToDisplayUpdates(displayid);
 		sub.addResultListener(new IntermediateEmptyResultListener<Object>()
 		{
@@ -865,7 +873,7 @@ public class DisplayPanel extends JComponent
 		}
 		else
 		{
-			short	max	= data!=null ? data.getMax() : GenerateService.ALGORITHMS[0].getDefaultSettings().getMax();
+			short	max	= data!=null ? data.getMax() : AbstractFractalAlgorithm.getDefaultAlgorithm(algos).getDefaultSettings().getMax();
 			colors	= new Color[max];
 			for(int i=0; i<colors.length; i++)
 			{
@@ -966,7 +974,7 @@ public class DisplayPanel extends JComponent
 		}
 		else
 		{
-			settings = GenerateService.ALGORITHMS[0].getDefaultSettings();
+			settings = AbstractFractalAlgorithm.getDefaultAlgorithm(algos).getDefaultSettings();
 		}
 		
 		final Rectangle	bounds	= getInnerBounds(false);
@@ -1039,7 +1047,7 @@ public class DisplayPanel extends JComponent
 	{
 		AreaData settings;
 		if(data==null)
-			settings = GenerateService.ALGORITHMS[0].getDefaultSettings();
+			settings = AbstractFractalAlgorithm.getDefaultAlgorithm(algos).getDefaultSettings();
 		else
 			settings = data;
 		

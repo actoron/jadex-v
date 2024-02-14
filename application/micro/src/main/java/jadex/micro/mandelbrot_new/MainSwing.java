@@ -2,8 +2,8 @@ package jadex.micro.mandelbrot_new;
 
 import jadex.core.IComponent;
 import jadex.micro.mandelbrot_new.calculate.CalculateAgent;
-import jadex.micro.mandelbrot_new.display.DisplayWebAgent;
-import jadex.micro.mandelbrot_new.generate.GenerateWebAgent;
+import jadex.micro.mandelbrot_new.display.DisplayAgent;
+import jadex.micro.mandelbrot_new.generate.GenerateAgent;
 import jadex.micro.mandelbrot_new.model.AreaData;
 import jadex.micro.mandelbrot_new.model.PartDataChunk;
 import jadex.micro.taskdistributor.IntermediateTaskDistributorAgent;
@@ -11,7 +11,7 @@ import jadex.micro.taskdistributor.IntermediateTaskDistributorAgent;
 /**
  *  Main for starting the example programmatically.
  */
-public class Main 
+public class MainSwing 
 {
 	/**
 	 *  Start a platform and the example.
@@ -20,21 +20,16 @@ public class Main
 	{
 		//SUtil.DEBUG = true;
 
-		/*
-		IComponent.create(new GenerateAgent());
-		IComponent.create(new CalculateAgent());
-		IComponent.create(new DisplayAgent());
-		**/
-		
 		IComponent.create(new IntermediateTaskDistributorAgent<PartDataChunk, AreaData>());
-		
-		IComponent.create(new GenerateWebAgent());
-		IComponent.create(new DisplayWebAgent());
+		IComponent.create(new GenerateAgent());
+		IComponent.create(new DisplayAgent());
 		
 		int cores = Runtime.getRuntime().availableProcessors();
 		System.out.println("creating calculators: "+(cores+1));
 		for(int i=0; i<=cores; i++)
 			IComponent.create(new CalculateAgent());
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }
 

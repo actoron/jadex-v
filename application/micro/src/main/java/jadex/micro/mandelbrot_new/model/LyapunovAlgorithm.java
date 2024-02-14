@@ -5,7 +5,7 @@ import jadex.common.ClassInfo;
 /**
  *  Algorithm for calculating Lyapunov fractals.
  */
-public class LyapunovAlgorithm implements IFractalAlgorithm
+public class LyapunovAlgorithm extends AbstractFractalAlgorithm
 {
 	//-------- constants --------
 	
@@ -70,31 +70,5 @@ public class LyapunovAlgorithm implements IFractalAlgorithm
 	public boolean isOptimizationAllowed()
 	{
 		return false;
-	}
-
-	//-------- singleton semantics --------
-	
-	/**
-	 *  Get a string representation.
-	 */
-	public String toString()
-	{
-		return "Lyapunov";
-	}
-	
-	/**
-	 *  Test if two objects are equal.
-	 */
-	public boolean equals(Object obj)
-	{
-		return obj instanceof LyapunovAlgorithm;
-	}
-	
-	/**
-	 *  Get the hash code.
-	 */
-	public int hashCode()
-	{
-		return 31 + getClass().hashCode();
 	}
 }

@@ -1,5 +1,7 @@
 package jadex.micro.mandelbrot_new.display;
 
+import java.util.List;
+
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.micro.mandelbrot_new.model.AreaData;
@@ -43,4 +45,10 @@ public interface IDisplayService
 	 *  @return The info.
 	 */
 	public IFuture<AreaData> getAlgorithmDefaultSettings(Class<IFractalAlgorithm> clazz);
+	
+	/**
+	 *  Get available algorithms.
+	 *  @return The algos.
+	 */
+	public IFuture<List<Class<IFractalAlgorithm>>> getAlgorithms();
 }
