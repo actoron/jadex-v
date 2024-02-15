@@ -19,8 +19,6 @@ public class TimerPanel extends JPanel
     protected JLabel timerLabel;
     protected Timer stimer;
     protected int duration;
-    //protected int yellow;
-    //protected int red;
     protected Runnable due;
     protected Consumer<TimerPanel> ticker;
     protected Color oldback;
@@ -126,9 +124,9 @@ public class TimerPanel extends JPanel
     	@Override
     	public void accept(TimerPanel t) 
     	{
-    		if(t.getDuration() <= 5) 
+    		if(t.getDuration() <= 3) 
 				t.setBackground(Color.RED);
-			else if(t.getDuration() <= 3) 
+			else if(t.getDuration() <= 5) 
 				t.setBackground(Color.YELLOW);
     	}
     }

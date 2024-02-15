@@ -76,30 +76,11 @@ public class QuizMasterAgent implements IQuizService
 			agent.getFeature(IExecutionFeature.class).waitForDelay(delay).get();
 		}
 		
+		publishResults();
+		
 		System.out.println("quiz ended: "+quiz);
 	}
-	
-	/**
-	 *  Publish a question to all subscribers.
-	 *  @param question The question.
-	 */
-	public void publishQuestion(Question question, int questioncnt)
-	{
-		publishEvent(new QuestionEvent(question, questioncnt));
-	}
-	
-	/**
-	 *  Publish a quiz event.
-	 *  @param event The event.
-	 */
-	public void publishEvent(QuizEvent event)
-	{
-		for(SubscriptionIntermediateFuture<QuizEvent> subscription: subscriptions.values())
-		{
-			subscription.addIntermediateResult(event);
-		}
-	}
-	
+
 	/**
 	 *  Create a quiz.
 	 */
@@ -122,6 +103,13 @@ public class QuizMasterAgent implements IQuizService
 		SubscriptionIntermediateFuture<QuizEvent> ret = new SubscriptionIntermediateFuture<QuizEvent>();
 		ComponentIdentifier caller = ServiceCall.getCurrentInvocation().getCaller();
 		subscriptions.put(caller, ret);
+		
+		QuizResults res = results.get(caller);
+		if(res==null)
+		{
+			res = new QuizResults();
+			results.put(caller, res);
+		}
 		
 		ret.addIntermediateResult(new NewQuizEvent(quiz.getName(), quiz.getNumberOfQuestions(), delay, quiz.getStart()));
 		
@@ -152,16 +140,13 @@ public class QuizMasterAgent implements IQuizService
 			return new Future<Void>(new RuntimeException("Answer only to current questions allowed: "+questioncnt+" "+this.questioncnt));
 		
 		QuizResults res = results.get(caller);
-		if(res==null)
-		{
-			res = new QuizResults();
-			results.put(caller, res);
-		}
+		
 		System.out.println("answer: "+answer+" "+questioncnt+" "+(quiz.getQuestion(questioncnt).getSolution()==answer));
 		//System.out.println("antwort: "+(quiz.getQuestion(questioncnt).getSolution()==answer)+" "+answer);
 		res.addResult(questioncnt, quiz.getQuestion(questioncnt).getSolution()==answer);
 		//System.out.println("res: "+res.size()+" "+quiz.getNumberOfQuestions());
-		if(res.size()==quiz.getNumberOfQuestions())
+		
+		/*if(res.size()==quiz.getNumberOfQuestions())
 		{
 			SubscriptionIntermediateFuture<QuizEvent> s = subscriptions.get(caller);
 			if(s!=null)
@@ -174,8 +159,45 @@ public class QuizMasterAgent implements IQuizService
 			{
 				System.out.println("not found: "+caller+" "+results+" "+subscriptions);
 			}
-		}
+		}*/
 		
 		return IFuture.DONE;
 	}
+	
+	/**
+	 *  Publish a question to all subscribers.
+	 *  @param question The question.
+	 */
+	public void publishQuestion(Question question, int questioncnt)
+	{
+		publishEvent(new QuestionEvent(question, questioncnt));
+	}
+	
+	/**
+	 *  Publish the results.
+	 */
+	public void publishResults()
+	{
+		for(ComponentIdentifier cid: results.keySet())
+		{
+			QuizResults res = results.get(cid);
+			SubscriptionIntermediateFuture<QuizEvent> s = subscriptions.get(cid);
+			s.addIntermediateResult(new ResultEvent(res));
+			s.setFinished();
+			subscriptions.remove(cid);
+		}
+	}
+	
+	/**
+	 *  Publish a quiz event.
+	 *  @param event The event.
+	 */
+	public void publishEvent(QuizEvent event)
+	{
+		for(SubscriptionIntermediateFuture<QuizEvent> subscription: subscriptions.values())
+		{
+			subscription.addIntermediateResult(event);
+		}
+	}
+	
 }
