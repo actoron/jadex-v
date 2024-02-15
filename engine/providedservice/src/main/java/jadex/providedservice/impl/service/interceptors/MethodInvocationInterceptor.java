@@ -9,6 +9,7 @@ import jadex.common.SUtil;
 import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.providedservice.impl.service.CallAccess;
 import jadex.providedservice.impl.service.ISwitchCall;
 import jadex.providedservice.impl.service.ServiceCall;
 import jadex.providedservice.impl.service.ServiceInvocationContext;
@@ -29,8 +30,8 @@ public class MethodInvocationInterceptor extends AbstractApplicableInterceptor
 	 */
 	public IFuture<Void> execute(ServiceInvocationContext sic)
 	{
-//		if(sic.getMethod().getName().indexOf("invoke")!=-1)
-//			System.out.println("herere");
+		//if(sic.getMethod().getName().indexOf("participate")!=-1)
+		//	System.out.println("MethodInvocationInterceptor: "+sic.getMethod());
 		
 		try
 		{

@@ -2,11 +2,15 @@ package jadex.providedservice.impl.service;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jadex.bytecode.ProxyFactory;
 import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
+import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
@@ -60,10 +64,10 @@ public class ServiceInvocationContext
 	protected List<Integer> used;
 	
 	/** The next service call (will be current during call and last after call). */
-	protected ServiceCall	nextcall;
+	protected ServiceCall nextcall;
 	
 	/** The current service call (to be reestablished after call). */
-	protected ServiceCall	currentcall;
+	protected ServiceCall currentcall;
 	
 	/** The caller component. */
 	protected ComponentIdentifier caller;
@@ -105,24 +109,24 @@ public class ServiceInvocationContext
 		this.used = new ArrayList<Integer>();
 		this.interceptors = interceptors;
 		
-		//this.caller = ServiceCall.getOrCreateNextInvocation().getCaller();
+		this.caller = ServiceCall.getOrCreateNextInvocation().getCaller();
 		
 		// Caller can be null when caller is external process such as swing gui
-		//if(this.caller==null)
-		//	System.out.println("no caller: "+IComponentIdentifier.LOCAL.get()+" "+method);
+		if(this.caller==null)
+			System.out.println("no caller: "+ExecutionFeature.LOCAL.get()+" "+method);
 
 		//		IComponentIdentifier caller2 = IComponentIdentifier.LOCAL.get();
 //		if(caller!=null && (!caller.equals(caller2)))
 //			System.out.println("Caller different: "+caller+" "+caller2);
 			
 		// Is next call defined by user?
-		//this.nextcall = CallAccess.getNextInvocation();
-		//this.currentcall = CallAccess.getCurrentInvocation();
+		this.nextcall = CallAccess.getNextInvocation();
+		this.currentcall = CallAccess.getCurrentInvocation();
 		// Delete next invocation to ensure that data is erased before decoupling
 		// Problem: how to ensure that results are set in lastcall
-		//CallAccess.resetNextInvocation();
+		CallAccess.resetNextInvocation();
 		
-		/*if(nextcall==null)
+		if(nextcall==null)
 		{
 	//		Map<String, Object> props = call!=null ? new HashMap<String, Object>(call.getProperties()) : new HashMap<String, Object>();
 			Map<String, Object> props = null;
@@ -132,12 +136,12 @@ public class ServiceInvocationContext
 			{
 				try
 				{
-					props = new HashMap<String, Object>(currentcall.getProperties());
+					props = currentcall.getPropertiesClone();
 				}
 				catch(ConcurrentModificationException e)
 				{
-					throw new RuntimeException("Dreck: "+this
-						+"\nlocal: "+IComponentIdentifier.LOCAL.get()
+					throw new RuntimeException("Err: "+this
+						+"\nlocal: "+ExecutionFeature.LOCAL.get()
 						+"\ncurrentcall: "+currentcall
 //						+"\ncause: "+currentcall.getCause()
 						+"\nmethod: "+method
@@ -151,7 +155,7 @@ public class ServiceInvocationContext
 			}
 //			props.put("method", method.getName());
 			this.nextcall = CallAccess.createServiceCall(caller, props);
-		}*/
+		}
 //		else
 //		{
 //			this.call.setProperty("method", method.getName());
@@ -177,7 +181,7 @@ public class ServiceInvocationContext
 		if(!nextcall.getProperties().containsKey(ServiceCall.REALTIME))
 		{
 			nextcall.setProperty(ServiceCall.REALTIME, Starter.isRealtimeTimeout(sid.getProviderId(), true));
-		}
+		}*/
 		
 //		// Init the cause of the next call based on the last one
 //		if(this.nextcall.getCause()==null)

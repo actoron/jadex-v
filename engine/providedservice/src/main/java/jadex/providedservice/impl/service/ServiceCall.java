@@ -59,6 +59,8 @@ public class ServiceCall
 	/** The service call properties. */
 	public Map<String, Object> properties;
 	
+	protected ExecutionFeature lastmod;
+	
 	//-------- constructors --------
 	
 //	static Set<Integer> sprops = Collections.synchronizedSet(new HashSet<Integer>());
@@ -188,7 +190,7 @@ public class ServiceCall
 //				System.out.println("abgsdoyi: "+ret);
 ////				Thread.dumpStack();
 //			}
-			//ret.lastmod	= MjExecutionFeature.LOCAL.get();
+			ret.lastmod	= ExecutionFeature.LOCAL.get();
 			ret.properties.putAll(props);
 		}
 		return ret;
@@ -334,14 +336,13 @@ public class ServiceCall
 	}*/
 	
 	/**
-	 *  Get a property.
-	 *  @param name The property name.
-	 *  @return The property.
-	 * /
-	public Map<String, Object> getProperties()
+	 *  Get a shallow clone from all props.
+	 *  @return The properties clone.
+	 */
+	public Map<String, Object> getPropertiesClone()
 	{
-		return properties;
-	}*/
+		return new HashMap<String, Object>(properties);
+	}
 
 	/** 
 	 *  Get the string represntation.

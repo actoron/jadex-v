@@ -7,7 +7,7 @@ import jadex.core.ComponentIdentifier;
 /**
  *  Helper class to deal with service calls
  */
-public abstract class CallAccess	extends ServiceCall
+public abstract class CallAccess extends ServiceCall
 {
 	//-------- constructors --------
 	
