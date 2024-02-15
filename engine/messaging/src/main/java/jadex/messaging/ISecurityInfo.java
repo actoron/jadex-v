@@ -1,8 +1,6 @@
-package jadex.communication;
+package jadex.messaging;
 
 import java.util.Set;
-
-import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
 
 /**
  *  Security meta-information of a message;
@@ -11,11 +9,11 @@ import jadex.core.ComponentIdentifier.GlobalProcessIdentifier;
 public interface ISecurityInfo
 {
 	/**
-	 *  Returns the authenticated global process ID as String.
+	 *  Returns the authenticated host as String.
 	 *
-	 *  @return The authenticated global process ID, null if not authenticated.
+	 *  @return The authenticated host, null if not authenticated.
 	 */
-	public GlobalProcessIdentifier getAuthenticatedGlobalProcessId();
+	public String getAuthenticatedHostName();
 	
 	/**
 	 *  Gets the authenticated groups of the sender.
