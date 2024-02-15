@@ -29,4 +29,9 @@ public interface IFractalAlgorithm
 	 *  Should a cyclic color scheme be used?
 	 */
 	public boolean useColorCycle();
+	
+	/**
+	 *  The default algorithm.
+	 */
+	public boolean isDefault();
 }

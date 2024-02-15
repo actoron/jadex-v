@@ -5,7 +5,7 @@ import jadex.common.ClassInfo;
 /**
  *  Algorithm for calculating the mandelbrot set.
  */
-public class MandelbrotAlgorithm implements IFractalAlgorithm
+public class MandelbrotAlgorithm extends AbstractFractalAlgorithm
 {
 	//-------- IFractalAlgorithm interface --------
 	
@@ -35,16 +35,6 @@ public class MandelbrotAlgorithm implements IFractalAlgorithm
 		return i==max? -1: i;
 	}
 	
-
-	/**
-	 *  Can areas be filled?
-	 */
-	public boolean isOptimizationAllowed()
-	{
-		return true;
-	}
-
-	
 	/**
 	 *  Get default settings for rendering the fractal. 
 	 */
@@ -58,36 +48,10 @@ public class MandelbrotAlgorithm implements IFractalAlgorithm
 	}
 	
 	/**
-	 *  Should a cyclic color scheme be used?
+	 *  The default algorithm.
 	 */
-	public boolean useColorCycle()
+	public boolean isDefault()
 	{
 		return true;
-	}
-	
-	//-------- singleton semantics --------
-	
-	/**
-	 *  Get a string representation.
-	 */
-	public String toString()
-	{
-		return "Mandelbrot";
-	}
-	
-	/**
-	 *  Test if two objects are equal.
-	 */
-	public boolean equals(Object obj)
-	{
-		return obj instanceof MandelbrotAlgorithm;
-	}
-	
-	/**
-	 *  Get the hash code.
-	 */
-	public int hashCode()
-	{
-		return 31 + getClass().hashCode();
 	}
 }

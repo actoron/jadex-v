@@ -680,7 +680,7 @@ public class RequestManager
 		
 		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
 		//System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
-		//System.out.println("handleRequest: "+request.getRequestURI()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
+		//System.out.println("handleRequest: "+request.getRequestURI());
 		
 		getAsyncContextInfo(request); // ensure async request processing
 

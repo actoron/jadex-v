@@ -37,6 +37,7 @@ public class IntermediateTaskDistributorAgent<R, T> implements IIntermediateTask
 		SubscriptionIntermediateFuture<R> ret = new SubscriptionIntermediateFuture<R>();
 		
 		Task<T> mytask = new Task<T>(""+cnt++, task);
+		//System.out.println("published task: "+mytask.id());
 		
 		if(!requestors.isEmpty())
 		{
@@ -123,8 +124,10 @@ public class IntermediateTaskDistributorAgent<R, T> implements IIntermediateTask
 			ret.setResult(tf.task);
 		}
 		else
+		{
 			requestors.add(ret);
-			
+		}
+		
 		return ret;
 	}
 }

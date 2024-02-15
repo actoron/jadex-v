@@ -1,5 +1,7 @@
 package jadex.micro.mandelbrot_new.generate;
 
+import java.util.List;
+
 import javax.swing.SwingUtilities;
 
 import jadex.common.SGUI;
@@ -11,8 +13,7 @@ import jadex.micro.annotation.Description;
 import jadex.micro.mandelbrot_new.calculate.ICalculateService;
 import jadex.micro.mandelbrot_new.display.IDisplayService;
 import jadex.micro.mandelbrot_new.model.AreaData;
-import jadex.micro.mandelbrot_new.model.PartDataChunk;
-import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
+import jadex.micro.mandelbrot_new.model.IFractalAlgorithm;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.ServiceScope;
@@ -45,11 +46,11 @@ public class GenerateAgent implements IGenerateGui
 	//protected List<ICalculateService> calcservices = new ArrayList<>();
 	protected IDisplayService displayservice;
 	
-	@OnStart
+	/*@OnStart
 	protected void body()
 	{
 		this.panel = (GeneratePanel)GeneratePanel.createGui(agent.getExternalAccess());
-	}
+	}*/
 	
 	/**
 	 *  Update the area data.
@@ -115,12 +116,20 @@ public class GenerateAgent implements IGenerateGui
 	{
 		//System.out.println("Found display service: "+cs);
 		this.displayservice = ds;
+		
+		this.panel = (GeneratePanel)GeneratePanel.createGui(agent.getExternalAccess());
+		
 		//if(calcservices.size()>0)
 			//agent.getLocalService(IGenerateService.class).calcDefaultImage();
 		//agent.getLocalService(IGenerateService.class).generateArea(null);
 		// makes it sense at all to generate on display service discovery?
 		// better is when display itself initiates a generation request,
 		// because it knows the displayid (generate does not).
+	}
+
+	public IDisplayService getDisplayService() 
+	{
+		return displayservice;
 	}
 
 	/**

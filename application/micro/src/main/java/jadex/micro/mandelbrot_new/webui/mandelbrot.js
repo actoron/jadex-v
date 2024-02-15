@@ -116,10 +116,27 @@ class MandelbrotElement extends HTMLElement
 		function() // init handler
 		{
 			console.log("display subscribed");
-			self.calcArea();
+			
+			self.getAlgorithms().then(algos =>
+			{
+				self.algorithms = algos.map(a => 
+				{
+					let parts = a.value.split(".");
+					let name = parts[parts.length-1];
+					let suffix = "Algorithm";
+					if(name.endsWith(suffix)) 
+    					name = name.slice(0, -suffix.length);
+					return {classname: a.value, name: name};
+				});
+				//console.log("received algos: "+self.algorithms);
+				self.calcArea();
+				self.update();
+			})
+			.catch(ex =>
+			{
+				console.log(ex);
+			});
 		});
-		
-		this.update();
 	}
 	
 	disconnectedCallback()
@@ -1305,6 +1322,30 @@ class MandelbrotElement extends HTMLElement
 				reject(err);
 			});*/
 		});
+	}
+	
+	getAlgorithms()
+	{
+		return new Promise((resolve, reject) => 
+		{
+			fetch('mandelbrotdisplay/getAlgorithms')
+			.then(response => 
+			{
+				if(!response.ok) 
+			      throw new Error('Network response was not ok');
+			    return response.json();
+			})
+			.then(data => 
+			{
+			    console.log("fetching algos finished: " + data);
+			    resolve(data);
+			})
+			.catch(error => 
+			{
+			    console.error('There was a problem with the fetch operation:', error);
+			    reject(error);
+			});
+		});
 		
 	}
 		
@@ -1560,9 +1601,9 @@ class MandelbrotElement extends HTMLElement
 				<div class="grid">
 					<label for="alogrithm">Algorithm</label> 
 					<select name="algorithm" id="algorithm" onchange="let host = window['getHost'](event.target); host.setDefaultSettings(event)">
-						<option value="jadex.micro.mandelbrot_new.model.MandelbrotAlgorithm">Mandelbrot</option>
-	  					<option value="jadex.micro.mandelbrot_new.model.LyapunovAlgorithm">Lyapunov</option>
-						<option value="jadex.micro.mandelbrot_new.model.BurningShipFractalAlgorithm">Burning Ship</option>
+						${(this.algorithms).map(algo => {return `
+							<option value="${algo.classname}">${algo.name}</option>
+						`}).join(' \n')}
 					</select> 
 					
 					<label for="xmin">Min x</label> 

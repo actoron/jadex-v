@@ -5,7 +5,7 @@ import jadex.common.ClassInfo;
 /**
  *  Algorithm for calculating the mandelbrot set.
  */
-public class BurningShipFractalAlgorithm implements IFractalAlgorithm
+public class BurningShipFractalAlgorithm extends AbstractFractalAlgorithm
 {
 	//-------- IFractalAlgorithm interface --------
 	
@@ -35,16 +35,6 @@ public class BurningShipFractalAlgorithm implements IFractalAlgorithm
 	    return i==max? -1: i;
 	}
 	
-
-	/**
-	 *  Can areas be filled?
-	 */
-	public boolean isOptimizationAllowed()
-	{
-		return true;
-	}
-
-	
 	/**
 	 *  Get default settings for rendering the fractal. 
 	 */
@@ -52,39 +42,4 @@ public class BurningShipFractalAlgorithm implements IFractalAlgorithm
 	{
 		return new AreaData(-2, 1, -2, 1, 300, 300).setMax((short)256).setTaskSize(300).setAlgorithmClass(new ClassInfo(BurningShipFractalAlgorithm.class)).setChunkCount(4);
 	}
-	
-	/**
-	 *  Should a cyclic color scheme be used?
-	 */
-	public boolean useColorCycle()
-	{
-		return true;
-	}
-	
-	//-------- singleton semantics --------
-	
-	/**
-	 *  Get a string representation.
-	 */
-	public String toString()
-	{
-		return "BurningShipFractal";
-	}
-	
-	/**
-	 *  Test if two objects are equal.
-	 */
-	public boolean equals(Object obj)
-	{
-		return obj instanceof BurningShipFractalAlgorithm;
-	}
-	
-	/**
-	 *  Get the hash code.
-	 */
-	public int hashCode()
-	{
-		return 31 + getClass().hashCode();
-	}
-
 }
