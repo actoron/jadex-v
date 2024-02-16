@@ -54,12 +54,15 @@ public class ComponentManager implements IComponentManager
 	public final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
 
 	/** The components. */
-	protected Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
+	public final Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
 	
 	/** The exception handlers. */
 	//protected Map<Object, Map<Object, IExceptionHandler<? extends Exception>>> exceptionhandlers = new HashMap<>();	
 	protected Map<Object, Map<Object, HandlerInfo>> exceptionhandlers = new HashMap<>();	
 	
+	/**
+	 *  Create a new component manager.
+	 */
 	private ComponentManager()
 	{
 		pid = ProcessHandle.current().pid();
@@ -127,6 +130,10 @@ public class ComponentManager implements IComponentManager
 		return classloader;
 	}
 	
+	/**
+	 *  Are component ids numbers or strings.
+	 *  @return True, if number mode.
+	 */
 	public boolean isComponentIdNumberMode() 
 	{
 		return cidnumbermode;
@@ -153,6 +160,10 @@ public class ComponentManager implements IComponentManager
 		SUtil.DEBUG = debug;
 	}
 	
+	/**
+	 *  Add a component.
+	 *  @param comp The component.
+	 */
 	public void addComponent(IComponent comp)
 	{
 		//System.out.println("added: "+comp.getId());
@@ -168,6 +179,10 @@ public class ComponentManager implements IComponentManager
 		notifyEventListener(IComponent.COMPONENT_ADDED, comp.getId());
 	}
 	
+	/**
+	 *  Remove a component.
+	 *  @param cid The component id.
+	 */
 	public void removeComponent(ComponentIdentifier cid)
 	{
 		//System.out.println("removing: "+cid);

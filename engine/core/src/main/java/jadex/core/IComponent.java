@@ -1,5 +1,6 @@
 package jadex.core;
 
+import java.awt.image.ComponentSampleModel;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -50,6 +51,15 @@ public interface IComponent
 	 *  @return The pojo.
 	 */
 	public Object getPojo();
+	
+	/**
+	 *  Wait for termination.
+	 *  @return True on termination; false on component not found.
+	 */
+	public default IFuture<Boolean> waitForTermination()
+	{
+		return IComponent.waitForTermination(getId());
+	}
 	
 	//-------- static part for generic component creation --------
 	
@@ -204,6 +214,36 @@ public interface IComponent
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 *  Wait for termination.
+	 *  @param cid The component id;
+	 *  @return True on termination; false on component not found.
+	 */
+	public static IFuture<Boolean> waitForTermination(ComponentIdentifier cid)
+	{
+		Future<Boolean> ret = new Future<>();
+		boolean found = false;
+		synchronized(ComponentManager.get().components)
+		{
+			if(ComponentManager.get().getComponent(cid)!=null)
+			{
+				found = true;
+				IComponent.addComponentListener(new IComponentListener() 
+				{
+					@Override
+					public void componentRemoved(ComponentIdentifier ccid) 
+					{
+						if(cid.equals(ccid))
+							ret.setResult(true);
+					}
+				}, IComponent.COMPONENT_REMOVED);
+			}
+		}
+		if(!found)
+			ret.setResult(false);
+		return ret;
 	}
 	
 	/**

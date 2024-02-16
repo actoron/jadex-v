@@ -151,7 +151,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
-		Future<T>	ret	= new Future<>();
+		Future<T> ret = new Future<>();
 		
 		if(terminated)
 		{

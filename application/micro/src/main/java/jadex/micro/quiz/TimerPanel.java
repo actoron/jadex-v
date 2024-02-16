@@ -42,8 +42,6 @@ public class TimerPanel extends JPanel
     {
         setLayout(new BorderLayout());
 
-		//this.yellow = yellow;
-    	//this.red = red;
     	this.due = due;
     	this.ticker = ticker;
  

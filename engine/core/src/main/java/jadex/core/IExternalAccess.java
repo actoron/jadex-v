@@ -34,6 +34,15 @@ public interface IExternalAccess
 	}
 	
 	/**
+	 *  Wait for termination.
+	 *  @return True on termination; false on component not found.
+	 */
+	public default IFuture<Boolean> waitForTermination()
+	{
+		return IComponent.waitForTermination(getId());
+	}
+	
+	/**
 	 *  Schedule a step to be run on the component.
 	 *  @param step	A step that is executed via the {@link Runnable#run()} method.
 	 */
