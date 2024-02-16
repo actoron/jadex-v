@@ -8,12 +8,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
-import java.security.Provider.Service;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,12 +34,11 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import jadex.collection.RwMapWrapper;
 import jadex.common.ClassInfo;
 import jadex.common.IAutoLock;
-import jadex.common.MethodInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.traverser.SCloner;
-import jadex.communication.IIpcService;
 import jadex.communication.ISecurity;
+import jadex.communication.impl.IpcStreamHandler;
 import jadex.communication.impl.security.authentication.AbstractAuthenticationSecret;
 import jadex.communication.impl.security.authentication.AbstractX509PemSecret;
 import jadex.communication.impl.security.handshake.BasicSecurityMessage;
@@ -54,9 +51,6 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.messaging.IMessageFeature;
-import jadex.messaging.ISecurityInfo;
-import jadex.serialization.IMsgHeader;
 import jadex.serialization.ISerializationServices;
 
 /**
@@ -1690,7 +1684,7 @@ public class Security implements ISecurity
 		ComponentIdentifier secid = new ComponentIdentifier(null, receiver);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ISerializationServices.get().encode(baos, this.getClass().getClassLoader(), message);
-		IIpcService.get().sendMessage(secid, ByteBuffer.wrap(baos.toByteArray()));
+		IpcStreamHandler.get().sendMessage(secid, ByteBuffer.wrap(baos.toByteArray()));
 		//return agent.getFeature(IMessageFeature.class).sendMessage(message, addheader, receiver);
 	}
 	

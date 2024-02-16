@@ -25,6 +25,7 @@ includeBuild('engine/publishservicejetty') {}
 includeBuild('engine/nfproperties') {}
 includeBuild('engine/simulation') {}
 includeBuild('engine/communication') {}
+includeBuild('engine/messaging') {}
 
 includeBuild('engine/micro'){}
 includeBuild('engine/providedservicemicro') {}

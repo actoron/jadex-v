@@ -17,10 +17,11 @@ import jadex.collection.LeaseTimeMap;
 import jadex.collection.RwMapWrapper;
 import jadex.common.IAutoLock;
 import jadex.common.SUtil;
-import jadex.communication.IIpcService;
 import jadex.communication.impl.security.Security;
+import jadex.communication.impl.security.random.SecureThreadedRandom;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.ComponentManager;
+import jadex.messaging.impl.IIpcService;
 
 public class IpcStreamHandler implements IIpcService
 {
@@ -59,6 +60,15 @@ public class IpcStreamHandler implements IIpcService
 	/** Latch that is triggered (released) if a new connection was established. */
 	private CountDownLatch connectionlatch = new CountDownLatch(1);
 	
+	/**
+	 *  Does some global initialization when the service is requested the first time.
+	 *  Replaces the SUtil default secure random with one that has higher performace.
+	 */
+	static
+	{
+		SUtil.SECURE_RANDOM = new SecureThreadedRandom();
+	}
+	
 	/** Singleton instance used for communication. */
 	private volatile static IpcStreamHandler singleton;
 	
@@ -85,7 +95,7 @@ public class IpcStreamHandler implements IIpcService
 	/**
 	 *  Creates a new UnixSocketStreamHandler.
 	 */
-	private IpcStreamHandler()
+	public IpcStreamHandler()
 	{
 		LeaseTimeMap<Long, SocketChannel> ltm = new LeaseTimeMap<>(900000, true);
 		ltm.setTouchOnRead(true);
