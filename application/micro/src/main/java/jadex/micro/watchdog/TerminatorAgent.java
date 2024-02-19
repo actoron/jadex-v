@@ -48,7 +48,7 @@ public class TerminatorAgent
 				access.scheduleStep(agent ->
 				{
 					System.out.println("killing: "+victim);
-					agent.getFeature(IExecutionFeature.class).terminate();
+					agent.terminate();
 				});
 			}
 		}

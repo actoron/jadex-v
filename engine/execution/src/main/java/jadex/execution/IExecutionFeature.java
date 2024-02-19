@@ -7,6 +7,7 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
+import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -102,8 +103,11 @@ public interface IExecutionFeature
 	 */
 	public long	getTime();
 	
+	// This does not terminate the component properly. Must call component terminate before feature
+	// due to ComponentManager.get().removeComponent(this.getId());
+	// Or do we want to move that remove to the feature?
 	/**
 	 *  Terminate the component and abort all blocked steps.
-	 */
-	public void terminate();
+	 * /
+	public void terminate();*/
 }

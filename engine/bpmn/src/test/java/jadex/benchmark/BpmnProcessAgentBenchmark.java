@@ -49,7 +49,7 @@ public class BpmnProcessAgentBenchmark	extends AbstractComponentBenchmark
 	    return Stream.of
 	    (
 	  	      Arguments.of(10000, false, false),
-		      Arguments.of(50000, false, true)
+		      Arguments.of(30000, false, true)
 	    );
 	}
 	

@@ -41,6 +41,12 @@ test
   useJUnitPlatform()
 }
 
+processResources {
+    from ('src/test/java') {
+        include '**/*.bpmn'
+    }
+}
+
 // Hack for broken test fixtures in eclipse
 // cf. https://github.com/eclipse/buildship/issues/1206#issuecomment-1367742986
 eclipse.classpath {

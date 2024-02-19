@@ -196,7 +196,7 @@ public class ComponentManager implements IComponentManager
 		notifyEventListener(IComponent.COMPONENT_REMOVED, cid);
 		if(last)
 			notifyEventListener(IComponent.COMPONENT_LASTREMOVED, cid);
-//		System.out.println("size: "+components.size()+" "+cid);
+		//System.out.println("size: "+components.size()+" "+cid);
 	}
 	
 	/**
@@ -216,7 +216,10 @@ public class ComponentManager implements IComponentManager
 	 */
 	public int getNumberOfComponents()
 	{
-		return components.size();
+		synchronized(components)
+		{
+			return components.size();
+		}
 	}
 	
 	/**
@@ -224,7 +227,7 @@ public class ComponentManager implements IComponentManager
 	 */
 	public void printNumberOfComponents()
 	{
-		System.out.println("Running components: "+components.size());
+		System.out.println("Running components: "+getNumberOfComponents());
 	}
 	
 	/**
@@ -232,7 +235,10 @@ public class ComponentManager implements IComponentManager
 	 */
 	public void printComponents()
 	{
-		System.out.println("Running components: "+components);
+		synchronized(components)
+		{
+			System.out.println("Running components: "+components);
+		}
 	}
 	
 	public void notifyEventListener(String type, ComponentIdentifier cid)

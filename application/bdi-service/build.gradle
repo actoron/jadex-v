@@ -21,7 +21,11 @@ dependencies
     implementation 'jadex:execution:5.0.0'
     implementation 'jadex:micro:5.0.0'
     implementation 'jadex:bdi:5.0.0'
+    implementation 'jadex:providedservice:5.0.0'
     implementation 'jadex:providedservicemicro:5.0.0'
+    implementation 'jadex:requiredservice:5.0.0'
     implementation 'jadex:requiredservicemicro:5.0.0'
+    implementation 'jadex:eca:5.0.0'
+    implementation 'jadex:traverser:5.0.0'
     //implementation 'jadex:simulation:5.0.0'
 }

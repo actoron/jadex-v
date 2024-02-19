@@ -21,7 +21,9 @@ dependencies
 	implementation 'jadex:execution:5.0.0'
 	implementation 'jadex:micro:5.0.0'
 	implementation 'jadex:bpmn:5.0.0'
+	implementation 'jadex:requiredservice:5.0.0'
 	implementation 'jadex:requiredservicebpmn:5.0.0'
+	implementation 'jadex:providedservice:5.0.0'
 	implementation 'jadex:providedservicebpmn:5.0.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

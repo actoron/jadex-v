@@ -124,6 +124,6 @@ public class SokratesMLRAgent
 		long end = exe.getTime();
 		System.out.println("Needed: "+(end-start)+" millis.");
 
-		exe.terminate();
+		agent.terminate();
 	}
 }

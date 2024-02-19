@@ -38,7 +38,7 @@ public class SensorGui
 	public SensorGui(SensorActuator sensor)
 	{
 		String	id	= sensor.getSelf().getId();
-		IExecutionFeature	lifecycle	= IExecutionFeature.get();
+		IExecutionFeature lifecycle	= IExecutionFeature.get();
 		
 		// Open window on swing thread
 		SwingUtilities.invokeLater(()->
@@ -67,7 +67,8 @@ public class SensorGui
 			{
 				public void windowClosing(WindowEvent e)
 				{
-					lifecycle.terminate();
+					// todo!
+					//lifecycle.terminate();
 				}
 			});
 		});

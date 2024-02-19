@@ -11,6 +11,7 @@ import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.IInternalExecutionFeature;
 
 public class BpmnProcessLifecycleFeatureProvider extends FeatureProvider<BpmnProcessLifecycleFeature>  implements IComponentLifecycleManager
 {
@@ -56,7 +57,7 @@ public class BpmnProcessLifecycleFeatureProvider extends FeatureProvider<BpmnPro
 	@Override
 	public void terminate(IComponent component)
 	{
-		component.getFeature(IExecutionFeature.class).terminate();
+		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 	
 	/**

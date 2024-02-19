@@ -38,9 +38,9 @@ public class HelloWorldAgent
 	public void executeBody()
 	{
 		System.out.println(text+" "+agent.getId());
-		IExecutionFeature.get().waitForDelay(2000).get();
+		agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
 		System.out.println("Good bye world.");
-		IExecutionFeature.get().terminate();
+		agent.terminate();
 	}
 	
 	@OnEnd
@@ -65,5 +65,6 @@ public class HelloWorldAgent
 		MicroAgent.create(new HelloWorldAgent("007"));
 		
 		IComponent.waitForLastComponentTerminated();
+		//System.out.println("ended");
 	}
 }

@@ -13,6 +13,7 @@ import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.micro.MicroAgent;
 import jadex.micro.MicroClassReader;
 import jadex.micro.annotation.Agent;
@@ -118,7 +119,7 @@ public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature
 	@Override
 	public void terminate(IComponent component) 
 	{
-		component.getFeature(IExecutionFeature.class).terminate();
+		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 	
 	/**

@@ -77,7 +77,7 @@ public class ChatGui extends JFrame
 			{
 				access.scheduleStep(agent ->
 				{
-					agent.getFeature(IExecutionFeature.class).terminate();
+					agent.terminate();
 				});
 			}
 		});

@@ -349,7 +349,7 @@ public class SBpmnModelReader
 		if("multiInstanceLoopCharacteristics".equals(tag.getLocalPart()))
 		{
 			String seq = attrs.get("isSequential");
-			buffer.put("multiInstance", seq!=null? new Boolean(seq): Boolean.FALSE);
+			buffer.put("multiInstance", seq!=null? Boolean.parseBoolean(seq): Boolean.FALSE);
 		}
 		else if("lane".equals(tag.getLocalPart()))
 		{

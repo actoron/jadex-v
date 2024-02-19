@@ -23,3 +23,4 @@ def excludes = ['communication', 'nfproperties']
 		}
 	}
 }
+
