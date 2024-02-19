@@ -36,3 +36,11 @@ dependencies
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
+
+processResources {
+    from ('src/main/java') {
+        include '**/*.png'
+        include '**/*.js'
+        include '**/*.css'
+    }
+}
