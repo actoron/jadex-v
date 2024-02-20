@@ -24,3 +24,25 @@ def excludes = ['communication', 'nfproperties']
 	}
 }
 
+
+/*def hasSources(build) {
+    return file("${build.projectDir}/src").exists()
+}
+
+gradle.includedBuilds.each { build ->
+    if (hasSources(build)) {
+        tasks.register("copyDeps_${build.name}", Copy) {
+        	println "register $build.name"
+            doLast {
+                println "in copy"
+                copy {
+                    from configurations.implementation
+                    into 'build/deps'
+                }
+            }
+        }
+        ['build'].each { taskName ->
+            tasks.named(taskName) { dependsOn "copyDeps_${build.name}" }
+        }
+    }
+}*/

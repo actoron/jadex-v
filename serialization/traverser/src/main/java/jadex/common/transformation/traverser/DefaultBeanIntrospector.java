@@ -244,6 +244,7 @@ public class DefaultBeanIntrospector implements IBeanIntrospector
 		}
 		catch(Throwable t)
 		{
+			t.printStackTrace();
 			System.out.println("err: "+clazz);
 		}
 		

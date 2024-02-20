@@ -26,5 +26,6 @@ public class Main
 				new InformationEntry("Lennie Lost", "Savely reached Mainville Hospital.", cur)
 			}));
 		
+		IComponent.waitForLastComponentTerminated();
 	}
 }

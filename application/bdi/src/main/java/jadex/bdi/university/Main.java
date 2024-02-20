@@ -2,6 +2,7 @@ package jadex.bdi.university;
 
 import jadex.bdi.runtime.BDICreationInfo;
 import jadex.bdi.runtime.IBDIAgent;
+import jadex.core.IComponent;
 
 /**
  *  Main for starting the example programmatically.
@@ -20,5 +21,7 @@ public class Main
 		IBDIAgent.create(new BDICreationInfo("jadex.bdi.university.UniversityAgent")
 			.addArgument("raining", true)
 			.addArgument("waiting", false));
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }

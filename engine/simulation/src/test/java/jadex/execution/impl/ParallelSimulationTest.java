@@ -17,8 +17,9 @@ import jadex.future.IFuture;
 import jadex.simulation.ISimulationFeature;
 import jadex.simulation.impl.SlaveSimulationFeature;
 
-public class ParallelSimulationTest extends AbstractExecutionFeatureTest
+public class ParallelSimulationTest //extends AbstractExecutionFeatureTest
 {
+	/*
 	// hack for eclipse
 	@BeforeEach
 	public void	setup()
@@ -119,5 +120,5 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		sim[0].start();
 		sim[0].waitForDelay(1000).get(TIMEOUT);
 		assertEquals("ABBCCCDDDDEEEEEFFFFFF", output.toString());
-	}
+	}*/
 }

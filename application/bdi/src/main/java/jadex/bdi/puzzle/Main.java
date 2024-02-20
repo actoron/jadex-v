@@ -1,6 +1,7 @@
 package jadex.bdi.puzzle;
 
 import jadex.bdi.runtime.IBDIAgent;
+import jadex.core.IComponent;
 
 /**
  *  Main for starting the example programmatically.
@@ -17,5 +18,7 @@ public class Main
 	{
 		IBDIAgent.create("jadex.bdi.puzzle.SokratesMLRAgent");
 //		IBDIAgent.create("jadex.bdi.puzzle.SokratesV3Agent");
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }
