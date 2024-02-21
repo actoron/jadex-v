@@ -1,5 +1,6 @@
 java -cp \
 ./application/micro/build/libs/application-micro.jar:\
+./application/bdi/build/libs/application-bdi.jar:\
 ./serialization/binary/build/libs/binary.jar:\
 ./util/bytecode/build/libs/bytecode.jar:\
 ./util/classreader/build/libs/classreader.jar:\
@@ -14,6 +15,8 @@ java -cp \
 ./serialization/json/build/libs/json.jar:\
 ./engine/micro/build/libs/micro.jar:\
 ./engine/model/build/libs/model.jar:\
+./engine/bdi/build/libs/bdi.jar:\
+./rules/eca/build/libs/eca.jar:\
 ./util/nativetools/build/libs/nativetools.jar:\
 ./engine/providedservice/build/libs/providedservice.jar:\
 ./engine/providedservicemicro/build/libs/providedservicemicro.jar:\
@@ -51,5 +54,12 @@ java -cp \
 ./engine/publishservicejetty/build/libs/external-dependencies/websocket-jetty-api-11.0.6.jar:\
 ./engine/publishservicejetty/build/libs/external-dependencies/websocket-jetty-common-11.0.6.jar:\
 ./engine/publishservicejetty/build/libs/external-dependencies/websocket-jetty-server-11.0.6.jar:\
-./engine/publishservicejetty/build/libs/external-dependencies/websocket-servlet-11.0.6.jar \
+./engine/publishservicejetty/build/libs/external-dependencies/websocket-servlet-11.0.6.jar:\
+./engine/requiredservice/build/libs/external-dependencies/nano-cuckoo-3.0.2.jar:\
+./engine/requiredservice/build/libs/external-dependencies/lz4-1.3.0.jar \
 jadex.micro.helloworld.HelloWorldAgent
+# jadex.bdi.puzzle.Main
+# jadex.micro.mandelbrot_new.MainWeb
+# jadex.micro.gobble.GobbleAgent \
+
+

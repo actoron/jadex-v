@@ -5,20 +5,15 @@ import jadex.core.IComponent;
 
 /**
  *  Main for starting the example programmatically.
- *  
- *  To start the example via this Main.java Jadex platform 
- *  as well as examples must be in classpath.
  */
-public class Main 
+public class MainBenchmark
 {
 	/**
 	 *  Start a platform and the example.
 	 */
 	public static void main(String[] args) 
 	{
-//		IBDIAgent.create("jadex.bdi.puzzle.SokratesMLRAgent");
-		IBDIAgent.create("jadex.bdi.puzzle.SokratesV3Agent");
-		
+		IBDIAgent.create("jadex.bdi.puzzle.BenchmarkAgent");
 		IComponent.waitForLastComponentTerminated();
 	}
 }
