@@ -13,14 +13,12 @@ includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
 includeBuild('serialization/json') {}
 
-includeBuild('communication/serialization') {}
-
 includeBuild('core/engine') {}
 includeBuild('core/featuretest') {}
 includeBuild('core/execution') {}
 includeBuild('core/simulation') {}
 
-includeBuild('model') {}
+includeBuild('model/model') {}
 
 includeBuild('service/provided') {}
 includeBuild('service/required') {}
@@ -28,18 +26,19 @@ includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {}
 
-includeBuild('engine/communication') {}
-includeBuild('engine/messaging') {}
+includeBuild('communication/ipc') {}
+includeBuild('communication/messaging') {}
+includeBuild('communication/serialization') {}
 
-includeBuild('micro/engine'){}
-includeBuild('micro/providedservicemicro') {}
-includeBuild('micro/requiredservicemicro') {}
+includeBuild('micro/engine'){name='micro'}
+includeBuild('micro/providedservice') {name='providedservicemicro'}
+includeBuild('micro/requiredservice') {name='requiredservicemicro'}
 
-includeBuild('bdi/engine') {}
+includeBuild('bdi/engine') {name='bdi'}
 
-includeBuild('bpmn/engine') {}
-includeBuild('bpmn/providedservicebpmn') {}
-includeBuild('bpmn/requiredservicebpmn') {}
+includeBuild('bpmn/engine') {name='bpmn'}
+includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
+includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 
 includeBuild('rules/eca') {}
 
@@ -53,4 +52,6 @@ includeBuild('benchmark/execution'){name='benchmark-execution'}
 includeBuild('benchmark/bdi'){name='benchmark-bdi'}
 includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
 includeBuild('benchmark/micro'){name='benchmark-micro'}
+
+
 
