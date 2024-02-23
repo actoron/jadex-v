@@ -1,4 +1,4 @@
-package jadex.micro.mandelbrot;
+package jadex.lamdbaservice.mandelbrot;
 
 public class LambdaService
 {
