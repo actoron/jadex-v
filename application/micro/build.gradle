@@ -52,7 +52,17 @@ task runMandelbrot(type: JavaExec) {
     main = 'jadex.micro.mandelbrot_new.MainWeb'
 }
 
+task runQuiz(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'jadex.micro.quiz.Main'
+}
+
 task runGobble(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'jadex.micro.gobble.GobbleAgent'
+}
+
+task runHelpline(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'jadex.micro.helpline.Main'
 }

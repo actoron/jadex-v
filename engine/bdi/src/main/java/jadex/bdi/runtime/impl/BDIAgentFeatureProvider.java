@@ -17,4 +17,10 @@ public class BDIAgentFeatureProvider extends FeatureProvider<IBDIAgentFeature>
 	{
 		return IBDIAgentFeature.class;
 	}
+	
+	@Override
+	public Class< ? extends Component> getRequiredComponentType()
+	{
+		return BDIAgent.class;
+	}
 }

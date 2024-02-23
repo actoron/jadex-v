@@ -1,6 +1,7 @@
 package jadex.core.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -8,8 +9,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import jadex.common.transformation.traverser.SCloner;
 
 /**
  *  The dependency resolver can be used to find a valid
@@ -30,6 +29,15 @@ public class DependencyResolver<T>
 	{
 		this.nodes = new LinkedHashMap<T, NodeInfo<T>>();
 		this.nodeps = new LinkedHashSet<T>();
+	}
+	
+	/**
+	 *  Create a new dependency resolver.
+	 */
+	public DependencyResolver(Map<T, NodeInfo<T>> nodes, Set<T> nodeps) 
+	{
+		this.nodes = nodes;
+		this.nodeps = nodeps;
 	}
 	
 	/**
@@ -90,7 +98,8 @@ public class DependencyResolver<T>
 	{
 		List<T> ret = new ArrayList<T>();
 		
-		DependencyResolver<T> dr2 = !keep? null: (DependencyResolver<T>)SCloner.clone(this);
+		DependencyResolver<T> dr2 = !keep? null: new DependencyResolver<T>(new HashMap<T, NodeInfo<T>>(nodes), new HashSet<T>(nodeps));
+		//DependencyResolver<T> dr2 = !keep? null: (DependencyResolver<T>)SCloner.clone(this);
 //		DependencyResolver<T> dr2 = !keep? null: (DependencyResolver<T>)Traverser.traverseObject(this, null, Traverser.getDefaultProcessors(), null, true, null);
 		
 		while(!nodes.isEmpty())

@@ -75,6 +75,7 @@ public class UniversityAgent
 		{
 			System.out.println("stayed at home");
 		}
+		agent.terminate();
 	}
 	
 	/**

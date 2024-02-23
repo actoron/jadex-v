@@ -2,6 +2,7 @@ package jadex.micro.mandelbrot_new.display;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -10,11 +11,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jadex.classreader.SClassReader;
-import jadex.classreader.SClassReader.AnnotationInfo;
 import jadex.classreader.SClassReader.ClassFileInfo;
 import jadex.common.ClassInfo;
 import jadex.common.FileFilter;
-import jadex.common.SScan;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.impl.ComponentManager;
@@ -23,7 +22,7 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminationCommand;
-import jadex.micro.annotation.Agent;
+import jadex.micro.mandelbrot_new.model.AbstractFractalAlgorithm;
 import jadex.micro.mandelbrot_new.model.AreaData;
 import jadex.micro.mandelbrot_new.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot_new.model.PartDataChunk;
@@ -255,7 +254,18 @@ public class DisplayService implements IDisplayService
 			return cfi.getClassInfo().getSuperClassName().indexOf("AbstractFractalAlgorithm")!=-1;
 		});
 		
+		// move the default algo at first position
+		
 		List<Class<IFractalAlgorithm>> ret = algos.stream().map(cfi -> (Class<IFractalAlgorithm>)new ClassInfo(cfi.getClassInfo().getClassName()).getType(cl)).collect(Collectors.toList());
+		List<IFractalAlgorithm> algs = AbstractFractalAlgorithm.createAlgorithms(ret);
+		IFractalAlgorithm def = algs.stream()
+			.filter(IFractalAlgorithm::isDefault)
+			.findFirst()
+			.orElse(null);
+		
+		int idx = ret.indexOf(def.getClass());
+		Class<IFractalAlgorithm> dec = ret.remove(idx);
+		ret.add(0, dec);
 		
 		return new Future<List<Class<IFractalAlgorithm>>>(ret);
 	}

@@ -88,6 +88,7 @@ public class SCloner
 	{
 		Object bean = null;
 		
+		//System.out.println("getMethodHandle: "+clazz+" "+intro);
 		MethodHandle mcon = intro.getBeanConstructor(clazz, true, false);
 		if (mcon == null)
 		{

@@ -1,8 +1,6 @@
 package jadex.micro.quiz;
 
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
-import jadex.providedservice.ServiceScope;
 
 /**
  *  Main for starting the application.
@@ -17,6 +15,8 @@ public class Main
 		IComponent.create(new QuizMasterAgent());
 		
 		IComponent.create(new QuizClientAgent());
+		
+		IComponent.waitForLastComponentTerminated();
 		
 		/**IExternalAccess platform = Starter.createPlatform(PlatformConfigurationHandler.getDefaultNoGui()).get();
 		platform.createComponent(new CreationInfo()

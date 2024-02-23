@@ -5,6 +5,8 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.BDIBaseAgent;
 import jadex.bdi.runtime.IBDIAgent;
+import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
@@ -37,10 +39,12 @@ public class HelloPureAgent extends BDIBaseAgent
 	 *  The agent body.
 	 */
 	@OnStart
-	public void body()
+	public void body(IComponent agent)
 	{		
 		setBeliefValue("sayhello", "Hello BDI pure agent V3.");
 		System.out.println("body end: "+getClass().getName());
+		agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
+		agent.terminate();
 	}
 	
 	@Plan(trigger=@Trigger(factchanged = "sayhello"))
@@ -55,5 +59,7 @@ public class HelloPureAgent extends BDIBaseAgent
 	public static void main(String[] args) 
 	{
 		IBDIAgent.create(new HelloPureAgent());
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }

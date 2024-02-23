@@ -27,3 +27,19 @@ dependencies
 	implementation 'net.java.dev.jna:jna-platform:5.13.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
+
+task copyDependencies {
+    doLast {
+        copy {
+            configurations.compileClasspath.each { File file ->
+                  if (!file.absolutePath.startsWith(project.rootDir.absolutePath)) {
+                    if (file.name.endsWith('.jar'))
+                        from file.getParent()
+                }
+            } 
+            into 'build/libs/external-dependencies'
+        }
+    }
+    outputs.upToDateWhen { false }
+}
+build.dependsOn(copyDependencies)

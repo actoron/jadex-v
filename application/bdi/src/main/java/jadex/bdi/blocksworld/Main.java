@@ -1,6 +1,7 @@
 package jadex.bdi.blocksworld;
 
 import jadex.bdi.runtime.IBDIAgent;
+import jadex.core.IComponent;
 
 /**
  *  Main for starting the example programmatically.
@@ -16,5 +17,7 @@ public class Main
 	public static void main(String[] args) 
 	{
 		IBDIAgent.create("jadex.bdi.blocksworld.BlocksworldAgent");
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }

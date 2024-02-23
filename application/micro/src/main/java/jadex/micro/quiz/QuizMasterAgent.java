@@ -13,7 +13,6 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminationCommand;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.AgentArgument;
 import jadex.micro.quiz.model.NewQuizEvent;
 import jadex.micro.quiz.model.Question;
 import jadex.micro.quiz.model.QuestionEvent;
