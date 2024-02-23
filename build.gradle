@@ -24,6 +24,9 @@ def excludes = ['communication', 'nfproperties']
 	}
 }
 
+task benchmarkBdi(type: GradleBuild) {
+  tasks = [':benchmark-bdi:benchmark']  
+}
 
 /*def hasSources(build) {
     return file("${build.projectDir}/src").exists()

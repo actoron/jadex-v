@@ -157,7 +157,7 @@ public interface IComponent
 	{
 		IFuture<Void> ret;
 		
-		System.out.println("terminate: "+cid+" comps: "+ComponentManager.get().getNumberOfComponents());
+		//System.out.println("terminate: "+cid+" comps: "+ComponentManager.get().getNumberOfComponents());
 		
 		try
 		{

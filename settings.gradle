@@ -44,3 +44,9 @@ includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
 includeBuild('application/bpmn'){name='application-bpmn'}
 
+includeBuild('benchmark/core'){name='benchmark-core'}
+includeBuild('benchmark/execution'){name='benchmark-execution'}
+includeBuild('benchmark/bdi'){name='benchmark-bdi'}
+includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
+includeBuild('benchmark/micro'){name='benchmark-micro'}
+

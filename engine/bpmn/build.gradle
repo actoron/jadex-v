@@ -1,7 +1,6 @@
 plugins 
 {
 	id 'java-library'
-	id 'eclipse'
 }
 
 group = 'jadex'
@@ -28,8 +27,6 @@ dependencies
 	
 	//implementation 'jadex:xml:5.0.0'
 	
-	testImplementation testFixtures('jadex:core:5.0.0')
-	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
@@ -45,13 +42,4 @@ processResources {
     from ('src/test/java') {
         include '**/*.bpmn'
     }
-}
-
-// Hack for broken test fixtures in eclipse
-// cf. https://github.com/eclipse/buildship/issues/1206#issuecomment-1367742986
-eclipse.classpath {
-    file.whenMerged { classpath ->
-        classpath.entries.findAll { entry -> entry instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency && entry.entryAttributes.test }
-        	.each { it.entryAttributes['test'] = 'false' }
-	}
 }
