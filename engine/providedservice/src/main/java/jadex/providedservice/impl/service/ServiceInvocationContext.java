@@ -109,6 +109,9 @@ public class ServiceInvocationContext
 		this.used = new ArrayList<Integer>();
 		this.interceptors = interceptors;
 		
+		if(ExecutionFeature.LOCAL.get()==null)
+			throw new RuntimeException("Service methods must be called from component context. Otherwise use scheduleStep() before invocation.");
+		
 		this.caller = ServiceCall.getOrCreateNextInvocation().getCaller();
 		
 		// Caller can be null when caller is external process such as swing gui

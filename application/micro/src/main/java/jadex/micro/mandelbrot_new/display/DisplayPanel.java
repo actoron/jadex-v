@@ -226,8 +226,8 @@ public class DisplayPanel extends JComponent
 			{
 				if(startdrag!=null && enddrag!=null)
 				{
-//							System.out.println("dragged: "+startdrag+" "+enddrag);
-					dragImage();
+//					System.out.println("dragged: "+startdrag+" "+enddrag);
+					agent.scheduleStep(() -> dragImage());
 				}
 			}
 		};
@@ -253,7 +253,7 @@ public class DisplayPanel extends JComponent
 					{
 						factor	= 100/(100+percent);
 					}
-					zoomImage(e.getX(), e.getY(), factor);
+					agent.scheduleStep(() -> zoomImage(e.getX(), e.getY(), factor));
 				}
 			}
 		});
@@ -265,7 +265,7 @@ public class DisplayPanel extends JComponent
 			{
 				if(SwingUtilities.isRightMouseButton(e))
 				{
-					calcDefaultImage();
+					agent.scheduleStep(() -> calcDefaultImage());
 				}
 				
 				else if(!calculating && range!=null)
@@ -273,7 +273,7 @@ public class DisplayPanel extends JComponent
 					if(e.getX()>=range.x && e.getX()<=range.x+range.width
 						&& e.getY()>=range.y && e.getY()<=range.y+range.height)
 					{
-						zoomIntoRange();
+						agent.scheduleStep(() -> zoomIntoRange());
 					}
 				}
 			}

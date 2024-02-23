@@ -244,7 +244,7 @@ public class DisplayService implements IDisplayService
 	 *  Get available algorithms.
 	 *  @return The algos.
 	 */
-	public IFuture<List<Class<IFractalAlgorithm>>> getAlgorithms()
+	public IFuture<List<Class<IFractalAlgorithm>>> getAlgorithms() 
 	{
 		ClassLoader cl = ComponentManager.get().getClassLoader();
 		URL[] urls = SUtil.getClasspathURLs(cl, false).toArray(new URL[0]);
