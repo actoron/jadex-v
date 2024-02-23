@@ -3,13 +3,12 @@ package jadex.execution;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
-import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
 import jadex.future.ITerminableFuture;
 
 /**
@@ -78,6 +77,13 @@ public interface IExecutionFeature
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step);
+	
+	/**
+	 *  Schedule a step that provides potenitially multiple results.
+	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
+	 *  @return	An intermediate future that provides access to the step result, once it is available.
+	 */
+	//public <T> IIntermediateFuture<T> scheduleSteps(IThrowingFunction<IComponent, IIntermediateFuture<T>> step);
 	
 	/**
 	 *  Test if the current thread is used for current component execution.

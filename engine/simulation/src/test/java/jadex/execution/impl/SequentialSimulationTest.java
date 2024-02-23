@@ -10,9 +10,8 @@ import jadex.execution.IExecutionFeature;
 import jadex.simulation.ISimulationFeature;
 import jadex.simulation.impl.SlaveSimulationFeature;
 
-public class SequentialSimulationTest// extends ParallelSimulationTest
+public class SequentialSimulationTest extends ParallelSimulationTest
 {
-	/*
 	// hack for eclipse
 	@BeforeEach
 	public void	setup()
@@ -53,5 +52,5 @@ public class SequentialSimulationTest// extends ParallelSimulationTest
 		sim[0].start();
 		sim[0].waitForDelay(1000).get(TIMEOUT);
 		assertEquals("AABABCABCDABCDEABCDEF", output.toString());
-	}*/
+	}
 }

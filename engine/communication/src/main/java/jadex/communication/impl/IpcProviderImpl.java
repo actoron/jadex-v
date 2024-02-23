@@ -1,9 +1,5 @@
 package jadex.communication.impl;
 
-import java.nio.ByteBuffer;
-import java.util.ServiceLoader;
-
-import jadex.core.ComponentIdentifier;
 import jadex.messaging.impl.IIpcService;
 import jadex.messaging.impl.IpcProvider;
 

@@ -1,7 +1,6 @@
 plugins 
 {
 	id 'java-library'
-	id 'java-test-fixtures'
 }
 
 group = 'jadex'
@@ -25,12 +24,8 @@ dependencies
 	implementation 'jadex:javaparser:5.0.0'
 	implementation 'jadex:bytecode:5.0.0'
 	implementation 'jadex:idgenerator:5.0.0'
-
-	// why needed!?
-	testFixturesImplementation 'jadex:common:5.0.0'
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
-	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }
 

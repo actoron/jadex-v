@@ -1,0 +1,43 @@
+plugins 
+{
+    id 'java-library'
+}
+
+group = 'jadex'
+
+sourceCompatibility = 1.17
+
+repositories
+{
+    mavenCentral()
+}
+
+dependencies
+{
+	implementation 'jadex:common:5.0.0'
+	implementation 'jadex:core:5.0.0'
+	implementation 'jadex:execution:5.0.0'
+	implementation 'jadex:model:5.0.0'
+	implementation 'jadex:eca:5.0.0'
+	implementation 'jadex:micro:5.0.0'
+	implementation 'jadex:bdi:5.0.0'
+	implementation 'jadex:benchmark-core:5.0.0'
+
+	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test {
+  useJUnitPlatform()
+  exclude 'jadex/benchmark/**'
+}
+
+task benchmark(type : Test) {
+  useJUnitPlatform()
+  include 'jadex/benchmark/**'
+  // Shared dummy directory to force all benchmarks across projects to run sequentially
+  mkdir "../disable-parallel"
+  outputs.dir "../disable-parallel"
+}
