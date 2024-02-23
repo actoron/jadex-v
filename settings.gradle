@@ -13,29 +13,33 @@ includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
 includeBuild('serialization/json') {}
 
-includeBuild('engine/serialization') {}
-includeBuild('engine/core') {}
-includeBuild('engine/featuretest') {}
-includeBuild('engine/execution') {}
-includeBuild('engine/model') {}
-includeBuild('engine/providedservice') {}
-includeBuild('engine/requiredservice') {}
-includeBuild('engine/publishservice') {}
-includeBuild('engine/publishservicejetty') {}
-includeBuild('engine/nfproperties') {}
-includeBuild('engine/simulation') {}
+includeBuild('communication/serialization') {}
+
+includeBuild('core/engine') {}
+includeBuild('core/featuretest') {}
+includeBuild('core/execution') {}
+includeBuild('core/simulation') {}
+
+includeBuild('model') {}
+
+includeBuild('service/providedservice') {}
+includeBuild('service/requiredservice') {}
+includeBuild('service/publishservice') {}
+includeBuild('service/publishservicejetty') {}
+includeBuild('service/nfproperties') {}
+
 includeBuild('engine/communication') {}
 includeBuild('engine/messaging') {}
 
-includeBuild('engine/micro'){}
-includeBuild('engine/providedservicemicro') {}
-includeBuild('engine/requiredservicemicro') {}
+includeBuild('micro/engine'){}
+includeBuild('micro/providedservicemicro') {}
+includeBuild('micro/requiredservicemicro') {}
 
-includeBuild('engine/bdi') {}
+includeBuild('bdi/engine') {}
 
-includeBuild('engine/bpmn') {}
-includeBuild('engine/providedservicebpmn') {}
-includeBuild('engine/requiredservicebpmn') {}
+includeBuild('bpmn/engine') {}
+includeBuild('bpmn/providedservicebpmn') {}
+includeBuild('bpmn/requiredservicebpmn') {}
 
 includeBuild('rules/eca') {}
 
