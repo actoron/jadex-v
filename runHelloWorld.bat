@@ -58,6 +58,6 @@ engine/publishservicejetty/build/libs/external-dependencies/websocket-servlet-11
 engine/requiredservice/build/libs/external-dependencies/nano-cuckoo-3.0.2.jar;^
 engine/requiredservice/build/libs/external-dependencies/lz4-1.3.0.jar ^
 jadex.micro.helloworld.HelloWorldAgent
-# jadex.bdi.puzzle.Main
-# jadex.micro.mandelbrot_new.MainWeb
-# jadex.micro.gobble.GobbleAgent 
+REM jadex.bdi.puzzle.Main
+REM jadex.micro.mandelbrot_new.MainWeb
+REM jadex.micro.gobble.GobbleAgent 
