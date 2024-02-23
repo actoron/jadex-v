@@ -118,12 +118,15 @@ public class JadexJPakeParticipant extends JPAKEParticipant
 			SSecurity.getSecureRandom().nextBytes(derivedkey);
 	}
 	
+	
+	// gradle build fail 
+	// communication/ipc/src/main/java/jadex/communication/impl/security/authentication/JadexJPakeParticipant.java:124: warning: [removal] finalize() in Object has been deprecated and marked for removal
 	/**
 	 *  Override.
-	 */
+	 * /
 	protected void finalize() throws Throwable
 	{
 		//super.finalize();
 		dispose();
-	}
+	}*/
 }

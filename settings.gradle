@@ -24,9 +24,9 @@ includeBuild('service/provided') {}
 includeBuild('service/required') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
-includeBuild('service/nfproperty') {}
+includeBuild('service/nfproperty') {name='nfproperties'}
 
-includeBuild('communication/ipc') {}
+includeBuild('communication/ipc') {name='communication'}
 includeBuild('communication/messaging') {}
 includeBuild('communication/serialization') {}
 

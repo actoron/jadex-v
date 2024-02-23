@@ -14,6 +14,7 @@ repositories
 
 dependencies
 {
+	implementation 'jadex:traverser:5.0.0'
 	implementation 'jadex:serialization:5.0.0'
 	implementation 'jadex:common:5.0.0'
 	implementation 'jadex:future:5.0.0'
