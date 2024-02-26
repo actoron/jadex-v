@@ -1,0 +1,64 @@
+image: gradle:latest
+
+before_script:
+  - GRADLE_USER_HOME="$(pwd)/.gradle"
+  - export GRADLE_USER_HOME
+
+stages:
+  - build
+  - test
+  - benchmark
+  - deploy
+
+build:
+  stage: build
+  script: 
+    - ls -al
+    - cat build.gradle
+    - ./gradlew --build-cache compileJava
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - build
+      - .gradle
+
+test:
+  stage: test
+  script: ./gradlew check
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+
+benchmark:
+  stage: benchmark
+  script: ./gradlew benchmark
+  needs: ["build"]
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+
+deploy:
+  stage: deploy
+  script:
+    - mkdir deploy
+    - find . -name "*.jar" -type f -exec cp {} deploy/ \;
+    - cd deploy
+    - java -jar /path/to/fat-jar-builder.jar
+    - mv output-fat-jar.jar jadex.jar
+  artifacts:
+    paths:
+      - jadex.zip
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+
