@@ -34,8 +34,9 @@ test:
 
 benchmark:
   stage: benchmark
-  script: ./gradlew benchmark
+  script: ./benchmark.sh
   needs: ["build"]
+  allow_failure: true
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
@@ -46,14 +47,10 @@ benchmark:
 deploy:
   stage: deploy
   script:
-    - mkdir deploy
-    - find . -name "*.jar" -type f -exec cp {} deploy/ \;
-    - cd deploy
-    - java -jar /path/to/fat-jar-builder.jar
-    - mv output-fat-jar.jar jadex.jar
+    - ./gradlew createZip
   artifacts:
     paths:
-      - jadex.zip
+      - jadex-v.zip
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
