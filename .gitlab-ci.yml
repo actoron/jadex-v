@@ -34,8 +34,9 @@ test:
 
 benchmark:
   stage: benchmark
-  script: ./gradlew benchmark
+  script: ./benchmark.sh
   needs: ["build"]
+  allow_failure: true
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
