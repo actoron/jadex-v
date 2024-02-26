@@ -14,7 +14,8 @@ build:
   stage: build
   script: 
     - ls -al
-    - ./gradlew --build-cache assemble
+    - cat build.gradle
+    - ./gradlew --build-cache compileJava
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
