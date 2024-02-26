@@ -13,7 +13,6 @@ stages:
 build:
   stage: build
   script: 
-    - ls -al
     - cat build.gradle
     - ./gradlew --build-cache assemble
   cache:
@@ -25,7 +24,7 @@ build:
 
 test:
   stage: test
-  script: ./gradlew check
+  script: ./gradlew test
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
