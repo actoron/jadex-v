@@ -1,7 +1,13 @@
+plugins {
+  id 'com.github.johnrengelman.shadow' version '8.1.1'
+  id 'java'
+}
+
+
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
 def excludes = ['communication', 'nfproperties']
 
-['clean', 'compileJava', 'assemble', 'build', 'test', 'wrapper', 'sonarcube'].each { mytask ->
+['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
 		//println "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {
@@ -23,6 +29,34 @@ def excludes = ['communication', 'nfproperties']
 		}
 	}
 }
+
+task createZip(type: Zip) {
+    archiveFileName = 'jadex-v.zip'
+    destinationDirectory = file('deploy')
+    includeEmptyDirs = false
+    
+    from(sourceSets.main.output) {
+        gradle.includedBuilds.each { build ->
+            from("${build.projectDir}/build/libs") {
+                include '**/*.jar'
+                into 'lib' // Zielverzeichnis für JAR-Dateien festlegen
+                eachFile { f -> f.path = "lib/${f.name}" }
+                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            }
+        }
+    }
+
+    //def classpath = gradle.includedBuilds.collect { build -> build.projectDir.path + "/build/libs/*.jar" }.join(':')
+    def scriptContent = "#!/bin/bash\njava -cp \"lib/*\" jadex.micro.helloworld.HelloWorldAgent"
+    def scriptFile = file('startHelloWorld.sh')
+    scriptFile.text = scriptContent
+    scriptFile.setExecutable(true)
+    
+    into('') {
+        from scriptFile
+    }
+}
+
 
 /*def hasSources(build) {
     return file("${build.projectDir}/src").exists()
