@@ -19,7 +19,7 @@ build:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
     paths:
-      - build
+      - **/build
       - .gradle
 
 test:
@@ -29,7 +29,7 @@ test:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
-      - build
+      - **/build
       - .gradle
 
 benchmark:
@@ -41,7 +41,7 @@ benchmark:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
-      - build
+      - **/build
       - .gradle
 
 deployZip:
@@ -52,6 +52,6 @@ deployZip:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
-      - build
+      - **/build
       - .gradle
 
