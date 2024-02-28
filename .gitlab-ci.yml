@@ -44,13 +44,10 @@ benchmark:
       - build
       - .gradle
 
-deploy:
+deployZip:
   stage: deploy
   script:
-    - ./gradlew createZip
-  artifacts:
-    paths:
-      - jadex-v.zip
+    - ./gradlew deployZip
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
