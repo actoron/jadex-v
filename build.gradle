@@ -1,7 +1,8 @@
 // For deployment on server
-// ORG_GRADLE_PROJECT_dl_host 
-// ORG_GRADLE_PROJECT_repoactoron
-// ORG_GRADLE_PROJECT_tag_url
+// ORG_GRADLE_PROJECT_dl_host - download host
+// ORG_GRADLE_PROJECT_tag_url - git repo
+
+// ORG_GRADLE_PROJECT_repoactoron - nexus
 
 // Maven central needs
 // ORG_GRADLE_PROJECT_repocentral
@@ -60,6 +61,38 @@ def getVar(String key, Project p) {
     return value
 }
 
+def createEmptyDirOnSSH(net.schmizz.sshj.SSHClient ssh, String dir) {
+	def session = ssh.startSession();
+	def cmd = session.exec("ls " + dir);
+	waitForSSHCmd(cmd);
+	cmd.close();
+	
+	if (cmd.getExitStatus() == 0) {
+		// Old deployment exist, remove...
+		session = ssh.startSession();
+		cmd = session.exec("rm -rf " + dir);
+		waitForSSHCmd(cmd);
+		cmd.close();
+	}
+	
+	session = ssh.startSession();
+	cmd = session.exec("mkdir " + dir);
+	waitForSSHCmd(cmd);
+	cmd.close();
+}
+
+def waitForSSHCmd(cmd) {
+	// BufferedReader reader = new BufferedReader(new InputStreamReader(cmd.getInputStream()));
+	// reader.lines().collect(java.util.stream.Collectors.joining("\n"));
+	def is = cmd.getInputStream();
+	def data = new byte[4096];
+	int cnt;
+	while((cnt = is.read(data, 0, data.length))!=-1) {
+		//System.out.write(data, 0, cnt);
+		//System.out.flush();
+	}
+}
+
 /**
  * Parse a URI into its components.
  * see, e.g., https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
@@ -69,6 +102,8 @@ def getVar(String key, Project p) {
  * ssh://a:b;fingerprint=SHA256-ABC@myserver.com:22000  -> {host: "myserver.com", port: 22000, user: "a", password: "b", fingerprint: "SHA256:ABC", url: "ssh://myserver.com:22000"}
  */
 def parseURLWithCredentials(urlstring) {
+	//println "urlstring: "+urlstring
+	
 	def ret = [:];
 	def uri	= new URI(urlstring)
 	ret.host = uri.host;
@@ -142,10 +177,14 @@ task deployZip() {
 		//if(!gradle.ext.productionmode)
 		//	throw new IllegalStateException("Can only deploy zips in production mode.");
 		
+		if(getVar('dl_host', project)==null)
+			throw new RuntimeException("Deploy requires deployment variables set: dl_host, tag_url");
+		
 		def acc = getDownloadServerAccess();
 		
 		def dir = "/www/releases/" + project.ext.jadex_build_version;
-		def zipsdir = "" + project.buildDir + File.separator + 'distributions' + File.separator + 'zips';
+		//def zipsdir = "" + project.buildDir + File.separator + 'distributions' + File.separator + 'zips';
+		def zipsdir = file('deploy').path;
 
 		net.schmizz.sshj.SSHClient ssh = new net.schmizz.sshj.SSHClient();
 		ssh.addHostKeyVerifier(acc.fingerprint);
