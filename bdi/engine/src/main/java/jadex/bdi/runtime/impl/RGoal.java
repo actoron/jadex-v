@@ -1161,7 +1161,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 		{
 			try
 			{
-				BDIAgentFeature.writeParameterField(result, ((Field)wa).getName(), getPojoElement());
+				BDIAgentFeature.writeParameterField(result, ((Field)wa).getName(), getPojoElement(), null);
 				//Field f = (Field)wa;
 				//SAccess.setAccessible(f, true);
 				//f.set(getPojoElement(), result);

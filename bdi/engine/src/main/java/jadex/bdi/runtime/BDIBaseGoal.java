@@ -21,6 +21,6 @@ public class BDIBaseGoal
 	 */
 	public void setParameterValue(String paramname, Object value)
 	{
-		BDIAgentFeature.writeParameterField(value, paramname, this);
+		BDIAgentFeature.writeParameterField(value, paramname, this, null);
 	}
 }
