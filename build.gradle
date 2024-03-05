@@ -271,7 +271,7 @@ task createZip(type: Zip) {
     }
 
     //def classpath = gradle.includedBuilds.collect { build -> build.projectDir.path + "/build/libs/*.jar" }.join(':')
-    def scriptContent = "#!/bin/bash\njava -cp \"lib/*\" jadex.micro.helloworld.HelloWorldAgent"
+    def scriptContent = '#!/bin/bash\njava -cp "lib/*" jadex.micro.helloworld.HelloWorldAgent'
     def scriptFile = file('startHelloWorld.sh')
     scriptFile.text = scriptContent
     scriptFile.setExecutable(true)
