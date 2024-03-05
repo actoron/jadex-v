@@ -1,6 +1,7 @@
 plugins 
 {
     id 'java-library'
+	id 'idea'
     id 'ca.coglinc.javacc' version "2.4.0"
 }
 

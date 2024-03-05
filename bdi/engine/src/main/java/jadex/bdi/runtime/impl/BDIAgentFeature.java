@@ -912,7 +912,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  @param obj The pojo object of the goal.
 	 *  @param agent The agent.
 	 */
-	public static void writeParameterField(Object val, String fieldname, Object obj)
+	public static void writeParameterField(Object val, String fieldname, Object obj, IComponent dummy)
 	{
 //		System.out.println("write: "+val+" "+fieldname+" "+obj+" "+agent);
 		
