@@ -19,7 +19,6 @@ buildscript {
 }
 
 plugins {
-    id 'java'
     id 'java-library'
     id 'maven-publish'
     id 'signing'
@@ -28,64 +27,6 @@ plugins {
 //signing {
 //    sign(publishing.publications["mavenJava"])
 //}
-
-/*if(project.hasProperty('repos'))
-{
-	for(String repo: repos.split(","))
-	{
-		// Parse credentials from environment
-        def repourl = getVar('repo' + repo, project)
-        def repoaccess = parseURLWithCredentials(repourl)
-    	println 'publishing to: ' + repoaccess.url
-        println 'repouser: ' + repoaccess.user
- 	    println 'repopassword: ' + repoaccess.password
-		            
-		// Settings for staging when publishing to central repo
-		if("central".equals(repo))
-		{
-			project.rootProject.plugins.apply('io.codearte.nexus-staging') // auto-close nexus-oss staging
-			
-			project.rootProject.afterEvaluate {
-			    nexusStaging {
-			        packageGroup = "org.activecomponents" //optional if packageGroup == project.getGroup()
-			        stagingProfileId = "5bcba2b9075ec8" //when not defined will be got from server using "packageGroup"
-			        username = repoaccess.user
-			        password = repoaccess.password
-			        delayBetweenRetriesInMillis = 15000	// * default retries 20 -> 300 sec (5 min) total
-			    }	   
-			}
-			
-			nexusPublishing {
-				repositories {
-			    	sonatype() {
-			        	connectTimeout = Duration.ofMinutes(10)
-			        	clientTimeout = Duration.ofMinutes(10)
-			        	username = repoaccess.user
-			        	password = repoaccess.password
-			        }
-			    }
-			}
-	    }
-	    
-		// Settings for non-staging publications like nexus.actoron.com
-		else
-		{
-			publishing
-			{
-		        repositories 
-		        {
-		            maven {
-		                url repoaccess.url
-		                credentials {
-		                    username repoaccess.user
-		                    password repoaccess.password
-		                }
-		            }
-		        }
-		    }
-		}
-	}
-}*/
 
 if(project.hasProperty('repos')) {
     for(String repo: repos.split(",")) {
@@ -654,77 +595,6 @@ def createSignTask(origtask, classi, exten) {
 	}
 }
 
-publishing {
-
-    publications {
-    	// publish plugin requires each subproject having mavenJava
-    
-    	mavenJava(MavenPublication)
-    	{
-	        if(canSign)
-    		{ 
-    			// Sign archives and pom in separate tasks as archive signing can be cached while pom signing cannot, when jadex version changes.
-    			createSignTask(generatePomFileForMavenJavaPublication, null, 'pom')
-    			createSignTask(generateMetadataFileForMavenJavaPublication, null, 'module')
-    		}
-    		    		
-//    		// Disable generation of module.json
-//   		tasks.matching { it.name == "generateMetadataFileFor${name.capitalize()}Publication" }.all {
-//    			onlyIf { false }
-//    		}
-    		
-        	/*if(gradle.ext.webprojects.contains(project.getPath()))
-            {
-    			from components.web
-		        if(canSign)
-		        { 
-        			createSignTask(war, null, 'war')
-    			
-                  	// default artifact is xyz.war so add xyz.jar xyz-sources.jar and xyz-javadoc.jar for maven central to be happy
-        			project.tasks.withType(Jar) 
-                    {
-                        if(it.name.equals('jar') || it.name.equals('sourcesJar') || it.name.equals('javadocJar')) 
-                        {
-                            def arti 	= artifact(it)
-                            createSignTask(it, arti.classifier, arti.extension)
-                        }
-                    }
-                }
-    		}
-    		else*/
-    		//{
-    			from components.java
-		        if(canSign)
-		        { 
-        			createSignTask(jar, null, 'jar')
-        			
-                   	// add xyz-sources.jar and xyz-javadoc.jar for maven central to be happy
-        			project.tasks.withType(Jar) 
-                    {
-                        if(it.name.equals('sourcesJar') || it.name.equals('javadocJar')) 
-                        {
-                            def arti 	= artifact(it)
-                            createSignTask(it, arti.classifier, arti.extension)
-                        }
-                    }
-                }
-                else
-                {
-                	println "cannot sign"
-                }
-    		//}
-    		
-    		groupId 'org.activecomponents.jadex'
-			//groupId isCommercial(project) ? 'com.actoron.jadex' : 'org.activecomponents.jadex'
-			//artifactId project.name
-			artifactId getArtifactName(project)
-			//println 'ARTIDD!!! ' + artifactId + ' ' + project.getPath()
-			version project.version
-			configurePom(pom)
-    	}
-	}
-}
-
 if(canSign) {
 	signing {
 		// for signing with keys by environment variables https://docs.gradle.org/current/userguide/signing_plugin.html
@@ -760,3 +630,61 @@ def getArtifactName(project) {
     }
     return ret
 }
+
+
+
+
+gradle.includedBuilds.each { build ->
+	println build.getName()
+	println "Methoden von ${build}:"
+    build.metaClass.methods.each { method ->
+        println " - ${method.name}"
+    }
+    build.apply from: publishing {
+	    publications {
+	        mavenJava(MavenPublication) {
+	            from components.java
+	            groupId 'org.activecomponents.jadex'
+	            artifactId getArtifactName(project)
+	            version project.version
+	            configurePom(pom)
+	        }
+	    }
+    }
+}
+    
+
+/*publishing {
+    publications {
+        mavenJava(MavenPublication) {
+         println "Anzahl der Komponenten von components.java: ${components.java.each{ component -> println 'hi'}}"
+        
+            if (canSign) {
+                // Sign archives and pom in separate tasks as archive signing can be cached while pom signing cannot, when jadex version changes.
+                createSignTask(generatePomFileForMavenJavaPublication, null, 'pom')
+                createSignTask(generateMetadataFileForMavenJavaPublication, null, 'module')
+            }
+
+            from components.java
+            
+            if (canSign) {
+                createSignTask(jar, null, 'jar')
+
+                // Add xyz-sources.jar and xyz-javadoc.jar for Maven Central
+                project.tasks.withType(Jar) { task ->
+                    if (task.name.equals('sourcesJar') || task.name.equals('javadocJar')) {
+                        def artifact = artifact(task)
+                        createSignTask(task, artifact.classifier, artifact.extension)
+                    }
+                }
+            } else {
+                println "Cannot sign"
+            }
+
+            groupId 'org.activecomponents.jadex'
+            artifactId getArtifactName(project)
+            version project.version
+            configurePom(pom)
+        }
+    }
+}*/
