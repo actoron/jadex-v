@@ -1,3 +1,8 @@
+if(!System.getProperty("PUBLISH_SCRIPT_PATH")) {
+    System.setProperty("PUBLISH_SCRIPT_PATH", "${rootProject.projectDir}/publish.gradle")
+}
+println "publish script path: "+System.getProperty("PUBLISH_SCRIPT_PATH")
+
 includeBuild('util/common') {}
 includeBuild('util/collection') {}
 includeBuild('util/concurrent') {}

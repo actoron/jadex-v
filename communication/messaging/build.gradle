@@ -5,8 +5,8 @@ plugins
 	id 'idea'
 }
 
-if(System.getenv("PUBLISH_SCRIPT_PATH"))
-	apply from: System.getenv("PUBLISH_SCRIPT_PATH")
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
 group = 'jadex'
 

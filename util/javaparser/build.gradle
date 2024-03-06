@@ -3,12 +3,14 @@ plugins
     id 'java-library'
 	id 'idea'
     id 'ca.coglinc.javacc' version "2.4.0"
+    id 'maven-publish'
+    id 'signing'
 }
 
 group = 'jadex'
 
-if(System.getenv("PUBLISH_SCRIPT_PATH"))
-	apply from: System.getenv("PUBLISH_SCRIPT_PATH")
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
 sourceCompatibility = '1.17'
 
