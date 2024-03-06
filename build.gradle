@@ -40,11 +40,11 @@ if(project.hasProperty('repos')) {
         if("central".equals(repo)) {
             // Settings for staging when publishing to central repo
             publishing {
-                publications {
+                /*publications {
                     mavenJava(MavenPublication) {
                         from components.java
                     }
-                }
+                }*/
                 repositories {
                     maven {
                         url = uri('https://oss.sonatype.org/service/local/staging/deploy/maven2/')
@@ -631,30 +631,7 @@ def getArtifactName(project) {
     return ret
 }
 
-
-
-
-gradle.includedBuilds.each { build ->
-	println build.getName()
-	println "Methoden von ${build}:"
-    build.metaClass.methods.each { method ->
-        println " - ${method.name}"
-    }
-    build.apply from: publishing {
-	    publications {
-	        mavenJava(MavenPublication) {
-	            from components.java
-	            groupId 'org.activecomponents.jadex'
-	            artifactId getArtifactName(project)
-	            version project.version
-	            configurePom(pom)
-	        }
-	    }
-    }
-}
-    
-
-/*publishing {
+publishing {
     publications {
         mavenJava(MavenPublication) {
          println "Anzahl der Komponenten von components.java: ${components.java.each{ component -> println 'hi'}}"
@@ -687,4 +664,4 @@ gradle.includedBuilds.each { build ->
             configurePom(pom)
         }
     }
-}*/
+}
