@@ -1,5 +1,8 @@
-if(!System.getProperty("PUBLISH_SCRIPT_PATH")) {
-    System.setProperty("PUBLISH_SCRIPT_PATH", "${rootProject.projectDir}/publish.gradle")
+def pscript = "PUBLISH_SCRIPT_PATH"
+if(System.getenv(pscript)) {
+	System.setProperty(pscript, System.getenv(pscript))
+} else if (!System.getProperty(pscript)) {
+    System.setProperty(pscript, "${rootProject.projectDir}/publish.gradle")
 }
 println "publish script path: "+System.getProperty("PUBLISH_SCRIPT_PATH")
 
