@@ -5,6 +5,12 @@ plugins
 
 group = 'jadex'
 
+if(System.getenv("PUBLISH_SCRIPT_PATH"))
+	System.exit(0)
+	//apply from: System.getenv("PUBLISH_SCRIPT_PATH")
+println "publish script path: "+System.getenv("PUBLISH_SCRIPT_PATH")
+//System.exit(0)
+
 sourceCompatibility = '1.17'
 
 repositories
