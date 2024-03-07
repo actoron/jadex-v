@@ -129,7 +129,7 @@ public class SokratesV3Agent
 		{
 			List<MovePlan>	ret	= new ArrayList<MovePlan>();
 			List<Move>	moves	= board.getPossibleMoves();
-			System.out.println("cands0: "+moves);
+//			System.out.println("cands0: "+moves);
 			Collections.sort(moves, new MoveComparator(board, strategy));
 			
 			for(Move move: moves)
@@ -137,7 +137,7 @@ public class SokratesV3Agent
 				ret.add(new MovePlan(move));
 			}
 			
-			System.out.println("cands1: "+ret);
+//			System.out.println("cands1: "+ret);
 		
 			return ret;
 		}

@@ -379,11 +379,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							step	= steps.poll();
 						}
 						
-						assert step!=null;
+						//assert step!=null;
 						
 						try
 						{
-							doRun(step);
+							if(step!=null)	// TODO: why can be null?
+								doRun(step);
 						}
 						catch(StepAborted d)
 						{
@@ -403,7 +404,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 								hasnext	= false;
 								executing	= false;
 								idle();
-							}					
+							}
 						}
 					}
 					// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
@@ -687,7 +688,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 *  Responsible for beforeStep/afterStep calls.
 	 */
 	public void doRun(Runnable step)
-	{		
+	{
 		beforeStep();
 		
 		try
@@ -710,7 +711,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			self.handleException(ex);
 		}
 		
-		afterStep();
+		if(!do_switch)	// Avoid user code called in step listener when running on two threads
+			afterStep();
 	}
 	
 	class StepInfo implements Runnable

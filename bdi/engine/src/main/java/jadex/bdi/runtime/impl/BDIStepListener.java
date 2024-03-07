@@ -1,5 +1,6 @@
 package jadex.bdi.runtime.impl;
 
+import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IStepListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -49,7 +50,7 @@ public class BDIStepListener implements IStepListener
 //			{
 //				System.out.println("afterBlock 1"+Thread.currentThread());
 //			}
-			rplan.afterBlock();
+			IExecutionFeature.get().scheduleStep(() -> rplan.afterBlock());
 		}
 	}
 	
