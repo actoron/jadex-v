@@ -3,6 +3,9 @@ plugins
 	id 'java-library'
 }
 
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+	
 description 'Small Java annotation-based event-condition-action rule engine.'
 group = 'jadex'
 

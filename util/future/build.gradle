@@ -1,12 +1,17 @@
 plugins 
 {
     id 'java-library'
+    id 'maven-publish'
+    id 'signing'
 }
 
 group = 'jadex'
 
 sourceCompatibility = '1.17'
 
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+	
 repositories
 {
     mavenCentral()

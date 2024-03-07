@@ -4,6 +4,9 @@ plugins
     id 'eclipse'
 }
 
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
 group = 'jadex'
 
 sourceCompatibility = '1.17'

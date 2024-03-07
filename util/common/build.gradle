@@ -5,6 +5,12 @@ plugins
 
 group = 'jadex'
 
+println "hallo"
+println "path: "+System.getProperty("PUBLISH_SCRIPT_PATH")
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
 sourceCompatibility = '1.17'
 
 repositories

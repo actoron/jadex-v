@@ -632,6 +632,65 @@ public class SClassReader
     }
     
     /**
+     *  Converts a type list to Java style.
+     *  @param type Internal name list.
+     *  @return Converted names.
+     */
+    protected static final String convertTypeNameList(String type)
+    {
+    	if (type == null || type.length() < 1)
+    		return null;
+    	
+    	StringBuilder ret = new StringBuilder();
+    	while(type.length() > 0)
+    	{
+    		int arraycount = 0;
+    		while (type.startsWith("["))
+    		{
+    			type = type.substring(1);
+    			++arraycount;
+    		}
+    		
+	    	String curtype = BASE_TYPE_MAP.get(type.substring(0, 1));
+	    	if (curtype != null)
+	    	{
+	    		type = type.substring(1);
+	    	}
+	    	else if (type.startsWith("L"))
+    		{
+    			int end = type.indexOf(';');
+    			curtype = type.substring(1, end).replace('/', '.');
+    			type = type.substring(end + 1);
+    		}
+	    	
+	    	ret.append(curtype);
+	    	for (;arraycount > 0; --arraycount)
+    			ret.append("[]");
+	    	
+	    	if (type.length() > 0)
+	    		ret.append(",");
+    	}
+    	return ret.toString();
+    }
+    
+    /**
+     *  Returns the visibility of a ClassEntity.
+     * 
+     *  @param e The entity.
+     *  @return The visibility as a String.
+     */
+    protected static final String getVisibility(ClassEntity e)
+    {
+    	if (e.isPublic())
+    		return "public";
+    	else if (e.isProtected())
+    		return "protected";
+    	else if (e.isPrivate())
+    		return "private";
+    	return "";
+    }
+    
+    /**
      *  Entity with optional annotations 
      */
     public static class AnnotatedEntity
@@ -793,6 +852,9 @@ public class SClassReader
     	/** The field descriptor. */
     	protected String fielddesc;
     	
+    	/** The field signature (cached). */
+    	protected String signature;
+    	
     	protected FieldInfo()
 		{
 		}
@@ -814,6 +876,28 @@ public class SClassReader
 		{
 			return fielddesc;
 		}
+    	
+    	/**
+    	 *  Returns a String representation of the field signature.
+    	 * 
+    	 *  @return Method signature.
+    	 */
+    	public String getFieldSignature()
+    	{
+    		if (signature == null)
+    		{
+	    		StringBuilder sig = new StringBuilder();
+	    		String vis = getVisibility(this);
+	    		sig.append(vis);
+	    		if (vis.length() > 0)
+	    			sig.append(" ");
+	    		sig.append(convertTypeName(fielddesc));
+	    		sig.append(" ");
+	    		sig.append(fieldname);
+	    		signature = sig.toString();
+    		}
+    		return signature;
+    	}
     	
     	/**
 		 *  Tests if field is volatile.
@@ -873,6 +957,9 @@ public class SClassReader
     	/** The method descriptor. */
     	protected String methoddesc;
     	
+    	/** The method signature (cached). */
+    	protected String signature;
+    	
     	/**
     	 *  Create mew method info.
     	 */
@@ -897,6 +984,32 @@ public class SClassReader
 		{
 			return methoddesc;
 		}
+    	
+    	/**
+    	 *  Returns a String representation of the method signature.
+    	 * 
+    	 *  @return Method signature.
+    	 */
+    	public String getMethodSignature()
+    	{
+    		if (signature == null)
+    		{
+	    		String[] sigparts = methoddesc.split("\\)"); // Split parameter list and return value
+	    		sigparts[0] = sigparts[0].substring(1);
+	    		StringBuilder sig = new StringBuilder(getVisibility(this));
+	    		if (sig.length() > 0)
+	    			sig.append(" ");
+	    		sig.append(convertTypeName(sigparts[1]));
+	    		sig.append(" ");
+	    		sig.append(methodname);
+	    		sig.append("(");
+	    		sig.append(convertTypeNameList(sigparts[0]));
+	    		sig.append(")");
+	    		
+	    		signature = sig.toString();
+    		}
+    		return signature;
+    	}
     	
     	/**
 		 *  Set the method name.
