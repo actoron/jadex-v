@@ -25,7 +25,7 @@ plugins {
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
 def excludes = ['communication', 'nfproperties']
 
-['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish'].each { mytask ->
+['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'publishCentral'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
 		println "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {

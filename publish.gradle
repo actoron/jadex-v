@@ -276,7 +276,8 @@ def singularize(name) {
 }
 
 def getArtifactName(project) {
-	def ret = 'jadex'
+	/*def ret = 'jadex'
+	println "path:"+project.getName()
     def pathcomps = project.getPath().split(':')
     for (int i = 1; i < pathcomps.length; ++i) {
     	def comp = pathcomps[i]
@@ -284,8 +285,17 @@ def getArtifactName(project) {
     		comp = singularize(comp)
     	ret += '-' + comp
     }
-    return ret
+    return ret*/
+    
+    return 'jadex-'+project.getName();
 }
+
+task publishCentral {
+    project.ext.repos = 'central'
+    outputs.upToDateWhen { false }
+    doLast { println 'Gradle is...' }
+}
+publishCentral.finalizedBy publish
 
 publishing {
     publications {
