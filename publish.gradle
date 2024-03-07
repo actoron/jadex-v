@@ -269,24 +269,7 @@ if(canSign) {
 	}
 }
 
-def singularize(name) {
-	if (name.endsWith('s') && !project.ext.keepplural.contains(name))
-		name = name.substring(0, name.length() - 1)
-	return name;
-}
-
 def getArtifactName(project) {
-	/*def ret = 'jadex'
-	println "path:"+project.getName()
-    def pathcomps = project.getPath().split(':')
-    for (int i = 1; i < pathcomps.length; ++i) {
-    	def comp = pathcomps[i]
-    	if (i == 1)
-    		comp = singularize(comp)
-    	ret += '-' + comp
-    }
-    return ret*/
-    
     return 'jadex-'+project.getName();
 }
 
