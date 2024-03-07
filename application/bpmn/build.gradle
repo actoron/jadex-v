@@ -17,17 +17,18 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:future:5.0.0'
-	implementation 'jadex:core:5.0.0'
-	implementation 'jadex:model:5.0.0'
-	implementation 'jadex:execution:5.0.0'
-	implementation 'jadex:micro:5.0.0'
-	implementation 'jadex:bpmn:5.0.0'
-	implementation 'jadex:requiredservice:5.0.0'
-	implementation 'jadex:requiredservicebpmn:5.0.0'
-	implementation 'jadex:providedservice:5.0.0'
-	implementation 'jadex:providedservicebpmn:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'jadex:common:'+v
+	implementation 'jadex:future:'+v
+	implementation 'jadex:core:'+v
+	implementation 'jadex:model:'+v
+	implementation 'jadex:execution:'+v
+	implementation 'jadex:micro:'+v
+	implementation 'jadex:bpmn:'+v
+	implementation 'jadex:requiredservice:'+v
+	implementation 'jadex:requiredservicebpmn:'+v
+	implementation 'jadex:providedservice:'+v
+	implementation 'jadex:providedservicebpmn:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 

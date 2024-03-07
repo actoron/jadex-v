@@ -19,8 +19,9 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:future:5.0.0'
-	implementation 'jadex:core:5.0.0'
-	implementation 'jadex:execution:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'jadex:common:'+v
+	implementation 'jadex:future:'+v
+	implementation 'jadex:core:'+v
+	implementation 'jadex:execution:'+v
 }

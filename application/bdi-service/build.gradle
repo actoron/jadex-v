@@ -17,18 +17,19 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:future:5.0.0'
-    implementation 'jadex:core:5.0.0'
-    implementation 'jadex:model:5.0.0'
-    implementation 'jadex:execution:5.0.0'
-    implementation 'jadex:micro:5.0.0'
-    implementation 'jadex:bdi:5.0.0'
-    implementation 'jadex:providedservice:5.0.0'
-    implementation 'jadex:providedservicemicro:5.0.0'
-    implementation 'jadex:requiredservice:5.0.0'
-    implementation 'jadex:requiredservicemicro:5.0.0'
-    implementation 'jadex:eca:5.0.0'
-    implementation 'jadex:traverser:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'jadex:common:'+v
+	implementation 'jadex:future:'+v
+    implementation 'jadex:core:'+v
+    implementation 'jadex:model:'+v
+    implementation 'jadex:execution:'+v
+    implementation 'jadex:micro:'+v
+    implementation 'jadex:bdi:'+v
+    implementation 'jadex:providedservice:'+v
+    implementation 'jadex:providedservicemicro:'+v
+    implementation 'jadex:requiredservice:'+v
+    implementation 'jadex:requiredservicemicro:'+v
+    implementation 'jadex:eca:'+v
+    implementation 'jadex:traverser:'+v
     //implementation 'jadex:simulation:5.0.0'
 }
