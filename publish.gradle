@@ -10,6 +10,14 @@ apply plugin: 'signing'
 
 def canSign = project.hasProperty('signing.secretKeyRingFile') || getVar("signingKey", project)!=null
 
+if (gradle.startParameter.taskNames.contains('publishCentral'))
+    project.ext.repos = 'central'
+task publishCentral {
+    outputs.upToDateWhen { false }
+    //doLast { println 'Gradle is...' }
+}
+publishCentral.finalizedBy publish
+
 def getVar(String key, Project p) {
     String value = System.getenv(key)
     print "key: $key, project: $p, value: $value \n"
@@ -273,12 +281,7 @@ def getArtifactName(project) {
     return 'jadex-'+project.getName();
 }
 
-task publishCentral {
-    project.ext.repos = 'central'
-    outputs.upToDateWhen { false }
-    doLast { println 'Gradle is...' }
-}
-publishCentral.finalizedBy publish
+
 
 publishing {
     publications {
@@ -306,7 +309,7 @@ publishing {
 
             groupId 'org.activecomponents.jadex'
             artifactId getArtifactName(project)
-            version project.version
+            version System.getProperty("JADEX_VERSION")
             configurePom(pom)
         }
     }
