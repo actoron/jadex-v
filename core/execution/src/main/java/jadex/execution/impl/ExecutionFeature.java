@@ -388,7 +388,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						}
 						catch(StepAborted d)
 						{
-							assert terminated;
 							// ignore aborted steps.
 						}
 						
@@ -440,6 +439,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			assert !blocked;
 			assert !aborted;
 			
+			beforeBlock(future);
+			
 			boolean startnew	= false;
 			
 			synchronized(ExecutionFeature.this)
@@ -455,16 +456,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				}
 			}
 	
-			if(startnew)
-			{
-				restart();
-			}
-			
-			beforeBlock(future);
-			
 			try
 			{
 				lock.lock();
+				
+				if(startnew)
+				{
+					restart();
+				}
+				
 				try
 				{
 					this.future	= future;
@@ -503,6 +503,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						lock.lock();
 						do_switch	= true;
 						wait.signal();
+						
+						// Abort this step to skip afterStep() call, because other thread is already running now.
+						throw new StepAborted(getComponent().getId());
 					}
 					finally
 					{
@@ -711,8 +714,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			self.handleException(ex);
 		}
 		
-		if(!do_switch)	// Avoid user code called in step listener when running on two threads
-			afterStep();
+		afterStep();
 	}
 	
 	class StepInfo implements Runnable
