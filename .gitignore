@@ -18,3 +18,4 @@ alarmclock_settings.ser
 **/workflows
 **/testkeystore
 *.iml
+jadex-deploy-vars.sh
