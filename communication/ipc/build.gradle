@@ -1,6 +1,8 @@
 plugins 
 {
 	id 'java-library'
+	id 'eclipse'
+	id 'idea'
 }
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
