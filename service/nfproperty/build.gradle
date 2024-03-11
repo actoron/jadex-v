@@ -18,9 +18,10 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:core:5.0.0'
-	implementation 'jadex:execution:5.0.0'
-	implementation 'jadex:providedservicemicro:5.0.0' //hack
-	implementation 'jadex:requiredservice:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'jadex:core:'+v
+	implementation 'jadex:execution:'+v
+	implementation 'jadex:providedservicemicro:'+v //hack
+	implementation 'jadex:requiredservice:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

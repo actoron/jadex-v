@@ -18,10 +18,11 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:core:5.0.0'
-	implementation 'jadex:execution:5.0.0'
-	implementation 'jadex:benchmark-core:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'jadex:common:'+v
+	implementation 'jadex:core:'+v
+	implementation 'jadex:execution:'+v
+	implementation 'jadex:benchmark-core:'+v
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'

@@ -50,7 +50,7 @@ public class BDIStepListener implements IStepListener
 //			{
 //				System.out.println("afterBlock 1"+Thread.currentThread());
 //			}
-			IExecutionFeature.get().scheduleStep(() -> rplan.afterBlock());
+			rplan.afterBlock();
 		}
 	}
 	

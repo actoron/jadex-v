@@ -18,12 +18,13 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:traverser:5.0.0'
-	implementation 'jadex:json:5.0.0'
-	implementation 'jadex:binary:5.0.0'
-	implementation 'jadex:bytecode:5.0.0'
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:collection:5.0.0'
-	implementation 'jadex:core:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'jadex:traverser:'+v
+	implementation 'jadex:json:'+v
+	implementation 'jadex:binary:'+v
+	implementation 'jadex:bytecode:'+v
+	implementation 'jadex:common:'+v
+	implementation 'jadex:collection:'+v
+	implementation 'jadex:core:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

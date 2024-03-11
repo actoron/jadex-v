@@ -18,17 +18,18 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:bytecode:5.0.0'
-	implementation 'jadex:collection:5.0.0'
-	implementation 'jadex:javaparser:5.0.0'
-	implementation 'jadex:core:5.0.0'
-	implementation 'jadex:model:5.0.0'
-	implementation 'jadex:execution:5.0.0'
-	implementation 'jadex:bpmn:5.0.0'
-	implementation 'jadex:providedservice:5.0.0'
-	implementation 'jadex:serialization:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'jadex:common:'+v
+	implementation 'jadex:bytecode:'+v
+	implementation 'jadex:collection:'+v
+	implementation 'jadex:javaparser:'+v
+	implementation 'jadex:core:'+v
+	implementation 'jadex:model:'+v
+	implementation 'jadex:execution:'+v
+	implementation 'jadex:bpmn:'+v
+	implementation 'jadex:providedservice:'+v
+	implementation 'jadex:serialization:'+v
 	implementation 'net.cinnom:nano-cuckoo:3.0.2'
-	implementation 'jadex:requiredservice:5.0.0'
+	implementation 'jadex:requiredservice:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

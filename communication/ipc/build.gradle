@@ -18,13 +18,14 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:traverser:5.0.0'
-	implementation 'jadex:serialization:5.0.0'
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:future:5.0.0'
-	implementation 'jadex:collection:5.0.0'
-	implementation 'jadex:core:5.0.0'
-	implementation 'jadex:messaging:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'jadex:traverser:'+v
+	implementation 'jadex:serialization:'+v
+	implementation 'jadex:common:'+v
+	implementation 'jadex:future:'+v
+	implementation 'jadex:collection:'+v
+	implementation 'jadex:core:'+v
+	implementation 'jadex:messaging:'+v
 
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.77'
 	implementation 'org.bouncycastle:bcpkix-jdk18on:1.77'
