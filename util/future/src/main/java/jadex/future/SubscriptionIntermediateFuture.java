@@ -137,7 +137,7 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
 	
 	/**
      *  Add a result listener.
-     *  @param listsner The listener.
+     *  @param listener The listener.
      */
 	@Override
     public void	addResultListener(IResultListener<Collection<E>> listener)
@@ -201,7 +201,7 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
      *  until a result is available or the future is finished.
      *  
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
 	@Override
     public E getNextIntermediateResult(long timeout, boolean realtime)
@@ -382,7 +382,8 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
     
     /**
    	 *  Called on exception.
-   	 *  @param delegate The future the exception will be delegated to.
+   	 *  @param consumer The future consumer
+   	 *  @param futuretype The future type
    	 */
     public IIntermediateFuture<E> catchEx(final Consumer<? super Exception> consumer, Class<?> futuretype)
     {
@@ -439,6 +440,7 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
      *  @return The future for chaining.
      * /
 	public IIntermediateFuture<? extends E> next(Consumer<? super E> function)
+	*/
 	
 	/**
      *  Called when the maximum number of results is available.

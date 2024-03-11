@@ -3,14 +3,13 @@ plugins
     id 'java-library'
 	id 'idea'
     id 'ca.coglinc.javacc' version "2.4.0"
-    id 'maven-publish'
-    id 'signing'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
 }
-
-group = 'jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+	
+group = 'jadex'
 
 sourceCompatibility = '1.17'
 
@@ -27,6 +26,17 @@ dependencies
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
 }
 
+def taskName = "sourcesJar"
+
+if (tasks.findByName(taskName)) {
+    def task = tasks.getByName(taskName)
+    if (tasks.findByName("compileJavacc") && tasks.findByName("compileJjtree"))
+        task.dependsOn "compileJavacc", "compileJjtree"
+} else {
+    println "Task $taskName does not exist"
+}
+
+/*def javacctasks = ['compileJavacc', 'compileJjtree']
 tasks.whenTaskAdded{ task ->
 	if( javacctasks.contains(task.name)
 		&& !project.gradle.startParameter.taskNames.any {taskname ->
@@ -35,7 +45,7 @@ tasks.whenTaskAdded{ task ->
 		task.enabled = false
 		println "Disabled $task"
 	}
-}
+}*/
 
 // Generate into 'src' folder instead of 'build' to be checked into repo
 def javaccOutputDirectory	= file('src/generated/javacc')

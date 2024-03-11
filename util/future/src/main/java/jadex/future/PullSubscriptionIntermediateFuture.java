@@ -33,7 +33,7 @@ public class PullSubscriptionIntermediateFuture<E> extends SubscriptionIntermedi
 	
 	/**
 	 *  Create a new future.
-	 *  @param terminate The runnable to be executed in case of termination.
+	 *  @param pullcmd The pull command.
 	 */
 	public PullSubscriptionIntermediateFuture(ICommand<PullSubscriptionIntermediateFuture<E>> pullcmd)
 	{
@@ -42,7 +42,8 @@ public class PullSubscriptionIntermediateFuture<E> extends SubscriptionIntermedi
 	
 	/**
 	 *  Create a new future.
-	 *  @param terminate The runnable to be executed in case of termination.
+	 *  @param pullcmd The pull command.
+	 *  @param termcom The runnable to be executed in case of termination.
 	 */
 	public PullSubscriptionIntermediateFuture(ICommand<PullSubscriptionIntermediateFuture<E>> pullcmd,
 		ITerminationCommand termcom)

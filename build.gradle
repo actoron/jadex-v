@@ -10,22 +10,29 @@
 // ORG_GRADLE_PROJECT_signingPassword
 
 buildscript {
-  repositories {
-    mavenCentral()
-  }
-  dependencies {
-  	classpath 'com.hierynomus:sshj:0.38.0'
-  }
+	repositories {
+    	mavenCentral()
+  	}	
+	dependencies {
+		classpath 'com.hierynomus:sshj:0.38.0'
+  	}
 }
 
 plugins {
     id 'java-library'
+    id "io.github.gradle-nexus.publish-plugin" version "2.0.0-rc-2"
 }
+
+//apply plugin: 'io.github.gradle-nexus.publish-plugin'
+
+apply plugin: 'java-library'
+//apply plugin: 'maven-publish'
+//apply plugin: 'signing'
 
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
 def excludes = ['communication', 'nfproperties']
 
-['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'publishCentral'].each { mytask ->
+['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc', 'publishToSonatype', 'closeAndReleaseSonatypeStagingRepository'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
 		println "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {
@@ -155,13 +162,6 @@ def getDownloadServerAccess() {
 	def downloadserver_url = getVar('dl_host', project)
     return parseURLWithCredentials(downloadserver_url)
 }
-
-/*ext 
-{
-	fetchNextBuildNameFromGitTag = this.&fetchNextBuildNameFromGitTag
-}
-*/
-
 
 
 

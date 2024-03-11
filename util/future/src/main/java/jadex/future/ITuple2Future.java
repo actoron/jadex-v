@@ -14,21 +14,21 @@ public interface ITuple2Future<E, F> extends IIntermediateFuture<TupleResult>
 	 *  @deprecated - From 3.0. Use method without suspendable. 
      *  Get the first result.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getFirstResult(ThreadSuspendable sus);
 	
 	/**
      *  Get the first result.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getFirstResult();
     
     /**
      *  Get the second result.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public F getSecondResult();
     
@@ -36,7 +36,7 @@ public interface ITuple2Future<E, F> extends IIntermediateFuture<TupleResult>
      *  Get the first result.
      *  @param timeout The timeout in millis.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getFirstResult(long timeout);
     
@@ -44,7 +44,7 @@ public interface ITuple2Future<E, F> extends IIntermediateFuture<TupleResult>
      *  Get the second result.
      *  @param timeout The timeout in millis.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public F getSecondResult(long timeout);
     
@@ -53,7 +53,7 @@ public interface ITuple2Future<E, F> extends IIntermediateFuture<TupleResult>
      *  @param timeout The timeout in millis.
      *  @param realtime Flag if wait should be realtime (in contrast to simulation time).
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getFirstResult(long timeout, boolean realtime);
     
@@ -62,7 +62,7 @@ public interface ITuple2Future<E, F> extends IIntermediateFuture<TupleResult>
      *  @param timeout The timeout in millis.
      *  @param realtime Flag if wait should be realtime (in contrast to simulation time).
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public F getSecondResult(long timeout, boolean realtime);
     
