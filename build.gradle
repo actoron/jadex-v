@@ -46,9 +46,6 @@ apply plugin: 'java-library'
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
 def excludes = ['communication', 'nfproperties']
 
-       
-
-
 tasks.whenTaskAdded { task ->
 	println "added: "+task
 	if(tasks.names.contains("publishToSonatype") && tasks.names.contains("closeAndReleaseSonatypeStagingRepository"))
@@ -64,6 +61,7 @@ tasks.whenTaskAdded { task ->
 								def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
 								//if(taskInBuild)
 								dependsOn taskInBuild
+								println "cot: "+build.getName()+" "+mytask
 							}
 						}
 						else
@@ -83,6 +81,7 @@ tasks.whenTaskAdded { task ->
 								def taskInBuild = build.task(':'+mytask)
 								//if(taskInBuild)
 								dependsOn build.task(':'+mytask)
+								println "crt: "+build.getName()+" "+mytask
 							}
 						}
 						else
