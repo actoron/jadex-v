@@ -15,7 +15,6 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
 	
 	/**
 	 *  Create a future that is already done.
-	 *  @param result	The result, if any.
 	 */
 	public Tuple2Future()
 	{
@@ -23,7 +22,8 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
 	
 	/**
 	 *  Create a future that is already done.
-	 *  @param result	The result, if any.
+	 *  @param result1	The first result.
+	 *  @param result2	The second result.
 	 */
 	public Tuple2Future(E result1, F result2)
 	{
@@ -33,7 +33,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
 	
 	/**
 	 *  Create a future that is already done (failed).
-	 *  @param exception	The exception.
+	 *  @param exception The exception.
 	 */
 	public Tuple2Future(Exception exception)
 	{
@@ -45,7 +45,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
 	 *  Will NOT use the suspendable that is supplied as parameter.
      *  Get the first result.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getFirstResult(ThreadSuspendable sus)
     {
@@ -55,7 +55,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
 	/**
      *  Get the first result.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getFirstResult()
     {
@@ -65,7 +65,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
     /**
      *  Get the second result.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public F getSecondResult()
     {
@@ -76,7 +76,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
      *  Get the first result.
      *  @param timeout The timeout in millis.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getFirstResult(long timeout)
     {
@@ -87,7 +87,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
      *  Get the second result.
      *  @param timeout The timeout in millis.
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public F getSecondResult(long timeout)
     {
@@ -99,7 +99,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
      *  @param timeout The timeout in millis.
      *  @param realtime Flag if wait should be realtime (in contrast to simulation time).
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getFirstResult(long timeout, boolean realtime)
     {
@@ -111,7 +111,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
      *  @param timeout The timeout in millis.
      *  @param realtime Flag if wait should be realtime (in contrast to simulation time).
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public F getSecondResult(long timeout, boolean realtime)
     {
@@ -237,7 +237,7 @@ public class Tuple2Future<E, F> extends IntermediateFuture<TupleResult> implemen
     /**  
 	 *  Get the x result.
 	 *  @return	The next intermediate result.
-	 *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+	 *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
 	 */
     protected Object getXResult(int idx, long timeout, boolean realtime)
     {

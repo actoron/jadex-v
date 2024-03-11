@@ -1,5 +1,18 @@
 def pscript = "PUBLISH_SCRIPT_PATH"
 def jversion = "JADEX_VERSION"
+def sk = "sigKey"
+def skp = "signingPassword"
+
+String getVar(String key) {
+	def ret = System.getenv(key)
+	if (ret == null)
+		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
+	if (ret == null)
+		ret = System.getProperty(key)
+	if (ret == null)
+		ret = System.getProperty("ORG_GRADLE_PROJECT_"+key)
+	return ret;
+}
 
 if(System.getenv(pscript)) {
 	System.setProperty(pscript, System.getenv(pscript))
@@ -7,17 +20,40 @@ if(System.getenv(pscript)) {
     System.setProperty(pscript, "${rootProject.projectDir}/publish.gradle")
 }
 println "publish script path: "+System.getProperty(pscript)
+def stagingProfileId = UUID.randomUUID().toString()
+System.setProperty("stagingProfileId", stagingProfileId)
+println "stagingProfileId: "+System.getProperty("stagingProfileId")
 
+// apply from: getSettingsDir().getAbsolutePath()+"/version.gradle" does not work
 def binding = new Binding()
 binding.settingsDir = settingsDir 
 def shell = new GroovyShell(binding)
 def versionScript = new File(settingsDir, 'version.gradle')
 def vs = shell.parse(versionScript)
-// apply from: getSettingsDir().getAbsolutePath()+"/version.gradle" does not work
 def jv = vs.fetchNextBuildNameFromGitTag()
 System.setProperty(jversion, jv.major+"."+jv.minor)
 println "Jadex version: "+System.getProperty(jversion)
 
+def sigkey = getVar(sk)
+if (sigkey != null)
+{
+	def signingKey=sigkey.replace("\\n", "\n")
+	System.setProperty("signingKey", signingKey)
+	//println "skp: "+System.getProperty("signingKey")
+}
+else
+	println "no signing key found"
+	
+def sigkeyp = getVar(skp)
+if (sigkeyp != null)
+{
+	System.setProperty("signingPassword", sigkeyp)
+	//println "skp: "+System.getProperty("signingPassword")
+}
+else
+	println "no signing key pass found"
+	
+includeBuild('.') {}
 includeBuild('util/common') {}
 includeBuild('util/collection') {}
 includeBuild('util/concurrent') {}

@@ -20,7 +20,6 @@ public class IntermediateDefaultResultListener<E>	extends DefaultResultListener<
 	
 	/**
 	 *  Create a new listener.
-	 *  @param logger The logger.
 	 */
 	public IntermediateDefaultResultListener()
 	{

@@ -4,19 +4,43 @@
 
 println "publish gradle used"
 
+// for some mysterious reason plugin cannot be loaded in external script :-(((
+/*
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'io.github.gradle-nexus:publish-plugin:2.0.0-rc-2'
+    }
+}
+apply plugin: 'io.github.gradle-nexus.publish-plugin'*/
+
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-def canSign = project.hasProperty('signing.secretKeyRingFile') || getVar("signingKey", project)!=null
+def canSign = project.hasProperty('signing.secretKeyRingFile') || System.getProperty("signingKey")!=null
+println "canSign: "+canSign
 
-if (gradle.startParameter.taskNames.contains('publishCentral'))
+/*if (gradle.startParameter.taskNames.contains('publishCentral'))
     project.ext.repos = 'central'
 task publishCentral {
     outputs.upToDateWhen { false }
     //doLast { println 'Gradle is...' }
 }
-publishCentral.finalizedBy publish
+publishCentral.finalizedBy publish*/
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
 
 def getVar(String key, Project p) {
     String value = System.getenv(key)
@@ -75,6 +99,18 @@ def parseURLWithCredentials(urlstring) {
 
 //println getVar("signingKey", project)
 
+String getSonatypeUser() {
+	def repourl = getVar('repocentral', project)
+	def repoaccess = parseURLWithCredentials(repourl)
+	return repoaccess.user
+}
+
+String getSonatypePassword() {
+	def repourl = getVar('repocentral', project)
+	def repoaccess = parseURLWithCredentials(repourl)
+	return repoaccess.password
+}
+
 if(project.hasProperty('repos')) {
     for(String repo: repos.split(",")) {
         // Parse credentials from environment
@@ -86,12 +122,12 @@ if(project.hasProperty('repos')) {
 
         if("central".equals(repo)) {
             // Settings for staging when publishing to central repo
-            publishing {
+            /*publishing {
                 /*publications {
                     mavenJava(MavenPublication) {
                         from components.java
                     }
-                }*/
+                }
                 repositories {
                     maven {
                         url = uri('https://oss.sonatype.org/service/local/staging/deploy/maven2/')
@@ -101,7 +137,7 @@ if(project.hasProperty('repos')) {
                         }
                     }
                 }
-            }
+            }*/
         } else {
             // Settings for non-staging publications like nexus.actoron.com
             publishing {
@@ -248,15 +284,53 @@ def createSignTask(origtask, classi, exten) {
 		}
 	}
 	// Signatory getting created for each task takes a long time -> reuse one signatory for all tasks
-	project.afterEvaluate {
-		def signat	= rootProject.ext.signatory
+	/*project.afterEvaluate {
+		if (project.hasProperty('ext') && project.ext.properties.containsKey('signatory')) {
+		    def signatory = project.ext.signatory
+		    println "Signatory: $signatory"
+		    rootProject.ext.signatory	= signat
+		} else {
+		    println "Signatory not found."
+		}
+	
+		def signat = rootProject.ext.signatory
 		if(signat==null) {
 			signat	= signtask.signatory
 			rootProject.ext.signatory	= signat
 		} else {
 			signtask.setSignatory(signat)
 		}
-	}
+	}*/
+}
+
+def getArtifactName(project) {
+    return project.getName();
+}
+
+/*nexusPublishing {
+    repositories {
+        sonatype {
+        	//println "user: "+getSonatypeUser()+" pass: "+getSonatypePassword()
+            username = getSonatypeUser()
+            password = getSonatypePassword()
+            stagingProfileId = '5bcba2b9075ec8'
+            //repositoryDescription = 'org.activecomponents.jadex'
+        }
+    }
+    packageGroup = 'org.activecomponents.jadex'
+}*/
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+        	//println "publish"
+        	groupId 'org.activecomponents.jadex'
+            artifactId getArtifactName(project)
+            version System.getProperty("JADEX_VERSION")
+        	from components.java
+        	configurePom(pom)
+        }
+    }
 }
 
 if(canSign) {
@@ -267,54 +341,16 @@ if(canSign) {
 		//println("sign key1: "+signingKey1)
 		
 		
-		def signingKey = getVar("signingKey", project)
-		def signingPassword = getVar("signingPassword", project)
-		//println("sign key2: "+signingKey)
+		def signingKey = System.getProperty("signingKey")
+		def signingPassword = System.getProperty("signingPassword")
+		//println "sign key: "+signingKey
+		//println "pass: "+signingPassword
 		useInMemoryPgpKeys(signingKey, signingPassword)
+		
+		sign publishing.publications.mavenJava
 
 		// Sign archives and pom in separate tasks as archive signing can be cached while pom signing cannot, when jadex version changes.
 		//sign publishing.publications.mavenJava
 	}
 }
-
-def getArtifactName(project) {
-    return 'jadex-'+project.getName();
-}
-
-
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-        	println "publish"
-        	from components.java
-        
-            if (canSign) {
-                // Sign archives and pom in separate tasks as archive signing can be cached while pom signing cannot, when jadex version changes.
-                createSignTask(generatePomFileForMavenJavaPublication, null, 'pom')
-                createSignTask(generateMetadataFileForMavenJavaPublication, null, 'module')
-                createSignTask(jar, null, 'jar')
-
-                // Add xyz-sources.jar and xyz-javadoc.jar for Maven Central
-                project.tasks.withType(Jar) { task ->
-                    if (task.name.equals('sourcesJar') || task.name.equals('javadocJar')) {
-                        def artifact = artifact(task)
-                        createSignTask(task, artifact.classifier, artifact.extension)
-                    }
-                }
-            } 
-            else {
-                println "Cannot sign"
-            }
-
-            groupId 'org.activecomponents.jadex'
-            artifactId getArtifactName(project)
-            version System.getProperty("JADEX_VERSION")
-            configurePom(pom)
-        }
-    }
-}
-
-
-
 

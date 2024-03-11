@@ -134,7 +134,7 @@ public class LoadManagingExecutionService
 	 *  Execute a task. Triggers the task to
 	 *  be executed in future. 
 	 *  @param executable The task to execute.
-	 *  @param listener Called when execution has started.
+	 *  @param priority The priority
 	 */
 	public synchronized void	execute(IExecutable executable, double priority)
 	{

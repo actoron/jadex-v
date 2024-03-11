@@ -5,7 +5,7 @@ import java.util.Collection;
 /**
  *  Empty implementation of the intermediate result listener.
  *  Allows for omitting methods if not used.
- *  Consider using instead of new IIntermediateResultListener<>()
+ *  Consider using instead of {@literal @code new IIntermediateResultListener<>()}
  */
 public class IntermediateEmptyResultListener<E> implements IIntermediateResultListener<E>
 {

@@ -36,7 +36,7 @@ public class TerminableFuture<E> extends Future<E> implements ITerminableFuture<
 	
 	/**
 	 *  Create a future that is already done.
-	 *  @param result	The result, if any.
+	 *  @param terminate The termination command.
 	 */
 	public TerminableFuture(ITerminationCommand terminate)
 	{

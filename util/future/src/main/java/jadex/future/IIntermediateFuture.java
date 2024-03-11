@@ -62,7 +62,7 @@ public interface IIntermediateFuture<E> extends IFuture<Collection <E>>
      *  until a result is available or the future is finished.
      *  
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getNextIntermediateResult();
     
@@ -78,7 +78,7 @@ public interface IIntermediateFuture<E> extends IFuture<Collection <E>>
 	 *  @param timeout The timeout in millis.
 	 *  @param realtime Flag, if wait should be realtime (in constrast to simulation time).
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getNextIntermediateResult(long timeout, boolean realtime);
     

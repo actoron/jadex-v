@@ -1,9 +1,5 @@
 println "inlcluded version.gradle"
 
-def hi() {
-	println 'hi'
-	println System.getProperty("user.dir")
-}
 
 // Separated versioning utilities, used by main build.gradle as well as docs/mkdocs-ng
 Object fetchNextBuildNameFromGitTag()
