@@ -23,7 +23,21 @@ plugins {
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0-rc-2"
 }
 
-//apply plugin: 'io.github.gradle-nexus.publish-plugin'
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+nexusPublishing {
+    repositories {
+        sonatype {
+        	//println "user: "+getSonatypeUser()+" pass: "+getSonatypePassword()
+            username = "Lars"//getSonatypeUser()
+            password = "JadexUpload20!"//getSonatypePassword()
+            stagingProfileId = '5bcba2b9075ec8'
+            //repositoryDescription = 'org.activecomponents.jadex'
+        }
+    }
+    packageGroup = 'org.activecomponents.jadex'
+}
 
 apply plugin: 'java-library'
 //apply plugin: 'maven-publish'
@@ -37,10 +51,17 @@ def excludes = ['communication', 'nfproperties']
 		println "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {
 			gradle.includedBuilds.each { build ->
-				if(!excludes.contains(build.name)) {
-					def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
-					//if(taskInBuild)
-					dependsOn taskInBuild
+				println "build name: "+build.getName()+" "+rootProject.name
+				if(!rootProject.name.equals(build.getName())) {
+					if(!excludes.contains(build.name)) {
+						def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
+						//if(taskInBuild)
+						dependsOn taskInBuild
+					}
+				}
+				else
+				{
+					println "skipping"+build.getName()
 				}
 			}
 		}
@@ -49,10 +70,17 @@ def excludes = ['communication', 'nfproperties']
 		println "Creating task '"+mytask+"'"
 		project.tasks.create([name: mytask]) {	
 			gradle.includedBuilds.each { build ->
-				if(!excludes.contains(build.name)) {
-					def taskInBuild = build.task(':'+mytask)
-					//if(taskInBuild)
-					dependsOn build.task(':'+mytask)
+				println "build name: "+build.getName()+" "+rootProject.name
+				if(!rootProject.name.equals(build.getName())) {
+					if(!excludes.contains(build.name)) {
+						def taskInBuild = build.task(':'+mytask)
+						//if(taskInBuild)
+						dependsOn build.task(':'+mytask)
+					}
+				}
+				else
+				{
+					println "skipping"+build.getName()
 				}
 			}
 		}

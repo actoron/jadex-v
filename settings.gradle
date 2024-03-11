@@ -20,6 +20,9 @@ if(System.getenv(pscript)) {
     System.setProperty(pscript, "${rootProject.projectDir}/publish.gradle")
 }
 println "publish script path: "+System.getProperty(pscript)
+def stagingProfileId = UUID.randomUUID().toString()
+System.setProperty("stagingProfileId", stagingProfileId)
+println "stagingProfileId: "+System.getProperty("stagingProfileId")
 
 // apply from: getSettingsDir().getAbsolutePath()+"/version.gradle" does not work
 def binding = new Binding()
@@ -50,6 +53,7 @@ if (sigkeyp != null)
 else
 	println "no signing key pass found"
 	
+includeBuild('.') {}
 includeBuild('util/common') {}
 includeBuild('util/collection') {}
 includeBuild('util/concurrent') {}

@@ -122,12 +122,12 @@ if(project.hasProperty('repos')) {
 
         if("central".equals(repo)) {
             // Settings for staging when publishing to central repo
-            publishing {
+            /*publishing {
                 /*publications {
                     mavenJava(MavenPublication) {
                         from components.java
                     }
-                }*/
+                }
                 repositories {
                     maven {
                         url = uri('https://oss.sonatype.org/service/local/staging/deploy/maven2/')
@@ -137,7 +137,7 @@ if(project.hasProperty('repos')) {
                         }
                     }
                 }
-            }
+            }*/
         } else {
             // Settings for non-staging publications like nexus.actoron.com
             publishing {
@@ -307,15 +307,18 @@ def getArtifactName(project) {
     return project.getName();
 }
 
-nexusPublishing {
+/*nexusPublishing {
     repositories {
         sonatype {
         	//println "user: "+getSonatypeUser()+" pass: "+getSonatypePassword()
             username = getSonatypeUser()
             password = getSonatypePassword()
+            stagingProfileId = '5bcba2b9075ec8'
+            //repositoryDescription = 'org.activecomponents.jadex'
         }
     }
-}
+    packageGroup = 'org.activecomponents.jadex'
+}*/
 
 publishing {
     publications {
@@ -326,7 +329,6 @@ publishing {
             version System.getProperty("JADEX_VERSION")
         	from components.java
         	configurePom(pom)
-        	println "canSign: "+canSign 
         }
     }
 }
