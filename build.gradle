@@ -46,41 +46,50 @@ apply plugin: 'java-library'
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
 def excludes = ['communication', 'nfproperties']
 
-['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc', 'publishToSonatype', 'closeAndReleaseSonatypeStagingRepository'].each { mytask ->
-	if(tasks.names.contains(mytask)) {
-		println "Configuring task '"+mytask+"'"
-		tasks.named(mytask) {
-			gradle.includedBuilds.each { build ->
-				println "build name: "+build.getName()+" "+rootProject.name
-				if(!rootProject.name.equals(build.getName())) {
-					if(!excludes.contains(build.name)) {
-						def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
-						//if(taskInBuild)
-						dependsOn taskInBuild
+       
+
+
+tasks.whenTaskAdded { task ->
+	println "added: "+task
+	if(tasks.names.contains("publishToSonatype") && tasks.names.contains("closeAndReleaseSonatypeStagingRepository"))
+	{
+		['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc', 'publishToSonatype', 'closeAndReleaseSonatypeStagingRepository'].each { mytask ->
+			if(tasks.names.contains(mytask)) {
+				println "Configuring task '"+mytask+"'"
+				tasks.named(mytask) {
+					gradle.includedBuilds.each { build ->
+						//println "build name: "+build.getName()+" "+rootProject.name
+						if(!rootProject.name.equals(build.getName())) {
+							if(!excludes.contains(build.name)) {
+								def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
+								//if(taskInBuild)
+								dependsOn taskInBuild
+							}
+						}
+						else
+						{
+							//println "skipping: "+build.getName()
+						}
 					}
-				}
-				else
-				{
-					println "skipping"+build.getName()
 				}
 			}
-		}
-	}
-	else {
-		println "Creating task '"+mytask+"'"
-		project.tasks.create([name: mytask]) {	
-			gradle.includedBuilds.each { build ->
-				println "build name: "+build.getName()+" "+rootProject.name
-				if(!rootProject.name.equals(build.getName())) {
-					if(!excludes.contains(build.name)) {
-						def taskInBuild = build.task(':'+mytask)
-						//if(taskInBuild)
-						dependsOn build.task(':'+mytask)
+			else {
+				println "Creating task '"+mytask+"'"
+				project.tasks.create([name: mytask]) {	
+					gradle.includedBuilds.each { build ->
+						//println "build name: "+build.getName()+" "+rootProject.name
+						if(!rootProject.name.equals(build.getName())) {
+							if(!excludes.contains(build.name)) {
+								def taskInBuild = build.task(':'+mytask)
+								//if(taskInBuild)
+								dependsOn build.task(':'+mytask)
+							}
+						}
+						else
+						{
+							//println "skipping: "+build.getName()
+						}
 					}
-				}
-				else
-				{
-					println "skipping"+build.getName()
 				}
 			}
 		}
