@@ -20,9 +20,6 @@ if(System.getenv(pscript)) {
     System.setProperty(pscript, "${rootProject.projectDir}/publish.gradle")
 }
 println "publish script path: "+System.getProperty(pscript)
-def stagingProfileId = UUID.randomUUID().toString()
-System.setProperty("stagingProfileId", stagingProfileId)
-println "stagingProfileId: "+System.getProperty("stagingProfileId")
 
 // apply from: getSettingsDir().getAbsolutePath()+"/version.gradle" does not work
 def binding = new Binding()
@@ -53,7 +50,100 @@ if (sigkeyp != null)
 else
 	println "no signing key pass found"
 	
-includeBuild('.') {}
+def parseURLWithCredentials(urlstring) {
+	//println "urlstring: "+urlstring
+	
+	def ret = [:];
+	def uri	= new URI(urlstring)
+	ret.host = uri.host;
+	ret.port = uri.port
+    ret.user = ''
+    ret.password = ''
+    ret.fingerprint = ''
+    def String userinfo = uri.userInfo
+    if(userinfo!=null)
+    {
+		def String[] split = userinfo.split(":|;")
+		//println 'userinfo: ' + split
+        ret.user = split.length>0 ? split[0] : ''
+        ret.password = split.length>1 ? split[1] : ''
+        
+        for(int i=2; i<split.length; i++)
+        {
+        	if(split[i].startsWith('fingerprint='))
+        	{
+        		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
+        		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
+        		//println 'fingerprint: ' + ret.fingerprint
+        	}
+        }
+	}
+
+	// URL without extra info (e.g. no password for security reasons)
+	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
+	//println 'url: ' + ret.url
+		
+	return ret;
+}
+
+def repourl = getVar('repocentral')
+def repoaccess = parseURLWithCredentials(repourl)
+
+def centraluser = repoaccess.user
+if(centraluser!=null)
+	System.setProperty("centralUser", centraluser)
+def centralpass = repoaccess.password
+if(centralpass!=null)
+	System.setProperty("centralPassword", centralpass)
+	
+def createStagingRepo() {
+    def descXml = """
+        <promoteRequest>
+            <data>
+                <description>Jadex</description>
+            </data>
+        </promoteRequest>
+    """
+
+    def connection = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/start").openConnection()
+    connection.setRequestMethod("POST")
+    connection.setDoOutput(true)
+    connection.setRequestProperty("Content-Type", "application/xml")
+    connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((System.getProperty("centralUser")+":"+System.getProperty("centralPassword")).getBytes()))
+
+    def outputStream = connection.getOutputStream()
+    outputStream.write(descXml.getBytes())
+    outputStream.flush()
+    outputStream.close()
+
+    def responseCode = connection.getResponseCode()
+    if (responseCode == 201) {
+        def responseStream = connection.getInputStream()
+        def responseText = new BufferedReader(new InputStreamReader(responseStream)).readLines().join('\n')
+        
+        println "Response: ${responseText}"
+        def matcher = responseText =~ /<stagedRepositoryId>(.*?)<\/stagedRepositoryId>/
+        if (matcher.find()) {
+            def repoId = matcher.group(1)
+            println "Repository ID: ${repoId}"
+            System.setProperty("repoId", repoId)
+        } else {
+            println "Repo-ID nicht gefunden"
+        }
+    } else {
+        println "HTTP-POST fehlgeschlagen: ${responseCode}"
+    }
+}
+//createStagingRepo()
+
+if(gradle.startParameter.taskNames.contains('publish')) {
+	println "publish task called. Creating staging repo ..."
+    createStagingRepo()
+} else {
+	println "publish task not called. no staging repo is created."
+}
+	
+//includeBuild('.') {}
 includeBuild('util/common') {}
 includeBuild('util/collection') {}
 includeBuild('util/concurrent') {}

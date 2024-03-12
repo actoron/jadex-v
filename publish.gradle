@@ -122,22 +122,28 @@ if(project.hasProperty('repos')) {
 
         if("central".equals(repo)) {
             // Settings for staging when publishing to central repo
-            /*publishing {
-                /*publications {
-                    mavenJava(MavenPublication) {
-                        from components.java
-                    }
+            publishing {
+                publications {
+                	 mavenJava(MavenPublication) {
+			        	//println "publish"
+			        	groupId 'org.activecomponents.jadex'
+			            artifactId getArtifactName(project)
+			            version System.getProperty("JADEX_VERSION")
+			        	from components.java
+			        	configurePom(pom)
+			        }
                 }
                 repositories {
                     maven {
-                        url = uri('https://oss.sonatype.org/service/local/staging/deploy/maven2/')
+                        url = uri("https://oss.sonatype.org/service/local/staging/deployByRepositoryId/${System.getProperty('repoId')}")
                         credentials {
                             username = repoaccess.user
                             password = repoaccess.password
                         }
+                        //stagingProfileId = '5bcba2b9075ec8'
                     }
                 }
-            }*/
+            }
         } else {
             // Settings for non-staging publications like nexus.actoron.com
             publishing {
@@ -314,13 +320,16 @@ def getArtifactName(project) {
             username = getSonatypeUser()
             password = getSonatypePassword()
             stagingProfileId = '5bcba2b9075ec8'
+            def repoid = System.getProperty("repoId");
+            println "repoid: "+repoid
+            snapshotRepositoryUrl.set(uri("https://oss.sonatype.org/service/local/staging/deployByRepositoryId/${repoid}"))
             //repositoryDescription = 'org.activecomponents.jadex'
         }
     }
     packageGroup = 'org.activecomponents.jadex'
 }*/
 
-publishing {
+/*publishing {
     publications {
         mavenJava(MavenPublication) {
         	//println "publish"
@@ -331,7 +340,7 @@ publishing {
         	configurePom(pom)
         }
     }
-}
+}*/
 
 if(canSign) {
 	signing {
@@ -347,7 +356,8 @@ if(canSign) {
 		//println "pass: "+signingPassword
 		useInMemoryPgpKeys(signingKey, signingPassword)
 		
-		sign publishing.publications.mavenJava
+		if(publishing && publishing.publications && publishing.publications.mavenJava)
+			sign publishing.publications.mavenJava
 
 		// Sign archives and pom in separate tasks as archive signing can be cached while pom signing cannot, when jadex version changes.
 		//sign publishing.publications.mavenJava

@@ -2,13 +2,15 @@ plugins
 {
     id 'java-library'
     id 'java-test-fixtures'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
+    
 }
+
+description = 'Support for object traversal, e.g. serialize or clone objects'
+
+group = 'jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
-
-group = 'jadex'
 
 sourceCompatibility = '1.17'
 

@@ -1,13 +1,15 @@
 plugins 
 {
 	id 'java-library'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
+    
 }
+
+description = 'Provided service support for micro agents'
+
+group = 'jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
-
-group = 'jadex'
 
 sourceCompatibility = '1.17'
 

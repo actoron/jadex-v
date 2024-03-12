@@ -20,80 +20,124 @@ buildscript {
 
 plugins {
     id 'java-library'
-    id "io.github.gradle-nexus.publish-plugin" version "2.0.0-rc-2"
 }
+
+description = 'Jadex root project'
+
+group = 'jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
-nexusPublishing {
-    repositories {
-        sonatype {
-        	//println "user: "+getSonatypeUser()+" pass: "+getSonatypePassword()
-            username = "Lars"//getSonatypeUser()
-            password = "JadexUpload20!"//getSonatypePassword()
-            stagingProfileId = '5bcba2b9075ec8'
-            //repositoryDescription = 'org.activecomponents.jadex'
-        }
-    }
-    packageGroup = 'org.activecomponents.jadex'
-}
-
-apply plugin: 'java-library'
-//apply plugin: 'maven-publish'
-//apply plugin: 'signing'
-
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
 def excludes = ['communication', 'nfproperties']
 
-tasks.whenTaskAdded { task ->
-	println "added: "+task
-	if(tasks.names.contains("publishToSonatype") && tasks.names.contains("closeAndReleaseSonatypeStagingRepository"))
-	{
-		['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc', 'publishToSonatype', 'closeAndReleaseSonatypeStagingRepository'].each { mytask ->
-			if(tasks.names.contains(mytask)) {
-				println "Configuring task '"+mytask+"'"
-				tasks.named(mytask) {
-					gradle.includedBuilds.each { build ->
-						//println "build name: "+build.getName()+" "+rootProject.name
-						if(!rootProject.name.equals(build.getName())) {
-							if(!excludes.contains(build.name)) {
-								def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
-								//if(taskInBuild)
-								dependsOn taskInBuild
-								println "cot: "+build.getName()+" "+mytask
-							}
-						}
-						else
-						{
-							//println "skipping: "+build.getName()
-						}
+['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc'].each { mytask ->
+	if(tasks.names.contains(mytask)) {
+		println "Configuring task '"+mytask+"'"
+		tasks.named(mytask) {
+			gradle.includedBuilds.each { build ->
+				//println "build name: "+build.getName()+" "+rootProject.name
+				if(!rootProject.name.equals(build.getName())) {
+					if(!excludes.contains(build.name)) {
+						def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
+						//if(taskInBuild)
+						dependsOn taskInBuild
+						println "cot: "+build.getName()+" "+mytask
 					}
 				}
+				else
+				{
+					//println "skipping: "+build.getName()
+				}
 			}
-			else {
-				println "Creating task '"+mytask+"'"
-				project.tasks.create([name: mytask]) {	
-					gradle.includedBuilds.each { build ->
-						//println "build name: "+build.getName()+" "+rootProject.name
-						if(!rootProject.name.equals(build.getName())) {
-							if(!excludes.contains(build.name)) {
-								def taskInBuild = build.task(':'+mytask)
-								//if(taskInBuild)
-								dependsOn build.task(':'+mytask)
-								println "crt: "+build.getName()+" "+mytask
-							}
-						}
-						else
-						{
-							//println "skipping: "+build.getName()
-						}
+		}
+	}
+	else {
+		println "Creating task '"+mytask+"'"
+		project.tasks.create([name: mytask]) {	
+			gradle.includedBuilds.each { build ->
+				//println "build name: "+build.getName()+" "+rootProject.name
+				if(!rootProject.name.equals(build.getName())) {
+					if(!excludes.contains(build.name)) {
+						def taskInBuild = build.task(':'+mytask)
+						//if(taskInBuild)
+						dependsOn build.task(':'+mytask)
+						println "crt: "+build.getName()+" "+mytask
 					}
+				}
+				else
+				{
+					//println "skipping: "+build.getName()
 				}
 			}
 		}
 	}
 }
+
+task closeStagingRepo {
+    group = "publishing"
+
+    doLast {
+        def stagedRepositoryId = System.getProperty("repoId")
+        if(stagedRepositoryId==null) {
+        	println "no staging repo id: "+stagedRepositoryId
+        }
+        else
+        {
+	        def url = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/finish")
+	        def connection = url.openConnection() as HttpURLConnection
+	        connection.setRequestMethod("POST")
+	        connection.setDoOutput(true)
+	        connection.setRequestProperty("Content-Type", "application/xml")
+	        def user = System.getProperty("centralUser")
+	        def pass = System.getProperty("centralPassword")
+    		connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user+":"+pass).getBytes()))
+	
+	        def requestBody = """
+	            <promoteRequest>
+	                <data>
+	                    <stagedRepositoryId>${stagedRepositoryId}</stagedRepositoryId>
+	                    <description>Jadex</description>
+	                </data>
+	            </promoteRequest>
+	        """
+	
+	        try (OutputStream os = connection.outputStream) {
+	            byte[] input = requestBody.getBytes("utf-8")
+	            os.write(input, 0, input.length)
+	        }
+	
+			def responseCode = connection.getResponseCode()
+			println "Response Code: ${responseCode}"
+    		
+	        if (responseCode == 201) {
+	            def response = new StringBuffer()
+	            try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.inputStream))) {
+	                String line
+	                while ((line = in.readLine()) != null) {
+	                    response.append(line)
+	                }
+	            }
+	            println "Response: ${response.toString()}"
+	        } else {
+	            println "POST request failed"
+	        }
+	
+	        connection.disconnect()
+		}
+    }
+}
+closeStagingRepo.mustRunAfter publish
+
+task releaseStagingRepo {
+    group = "publishing"
+
+    doLast {
+        publishing.repositories.maven.release()
+    }
+}
+releaseStagingRepo.mustRunAfter closeStagingRepo
 
 def createEmptyDirOnSSH(net.schmizz.sshj.SSHClient ssh, String dir) {
 	def session = ssh.startSession();
