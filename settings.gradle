@@ -176,7 +176,7 @@ includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {name='nfproperties'}
 
-includeBuild('communication/ipc')
+includeBuild('communication/ipc') {}
 includeBuild('communication/messaging') {}
 includeBuild('communication/serialization') {}
 
