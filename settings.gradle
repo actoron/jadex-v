@@ -28,8 +28,12 @@ def shell = new GroovyShell(binding)
 def versionScript = new File(settingsDir, 'version.gradle')
 def vs = shell.parse(versionScript)
 def jv = vs.fetchNextBuildNameFromGitTag()
-System.setProperty(jversion, jv.major+"."+jv.minor)
-println "Jadex version: "+System.getProperty(jversion)
+if (jv) {
+	System.setProperty(jversion, jv.major+"."+jv.minor);
+	println "Configured version: "+System.getProperty(jversion);
+}
+else
+	println "No version configured or detected";
 
 def sigkey = getVar(sk)
 if (sigkey != null)
@@ -86,13 +90,13 @@ def parseURLWithCredentials(urlstring) {
 	return ret;
 }
 
-def repourl = getVar('repocentral')
-def repoaccess = parseURLWithCredentials(repourl)
+def repourl = getVar('repocentral');
+def repoaccess = repourl ? parseURLWithCredentials(repourl) : null;
 
-def centraluser = repoaccess.user
+def centraluser = repoaccess ? repoaccess.user : null;
 if(centraluser!=null)
 	System.setProperty("centralUser", centraluser)
-def centralpass = repoaccess.password
+def centralpass = repoaccess ? repoaccess.password : null;
 if(centralpass!=null)
 	System.setProperty("centralPassword", centralpass)
 	
@@ -172,7 +176,7 @@ includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {name='nfproperties'}
 
-includeBuild('communication/ipc') {name='communication'}
+includeBuild('communication/ipc')
 includeBuild('communication/messaging') {}
 includeBuild('communication/serialization') {}
 

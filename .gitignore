@@ -19,3 +19,4 @@ alarmclock_settings.ser
 **/testkeystore
 *.iml
 jadex-deploy-vars.sh
+startHelloWorld.sh
