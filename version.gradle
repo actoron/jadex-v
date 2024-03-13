@@ -18,52 +18,26 @@ Object fetchNextBuildNameFromGitTag()
 		println "version from environment is: " + versionprops
 	}
 	
-	//TODO user.dir is wrong, change file name
-	if (!versionprops.jadexversion_major)
-	{
-		def propertiesFile = new File(System.getProperty("user.dir"), "donotuse_jadexversion.properties")
-		if (propertiesFile.exists())
-		{
-			propertiesFile.withInputStream { stream ->
-			    versionprops.load(stream)
-			}
-			
-			println "version from props file is: " + versionprops
-		}
-	}
-	
 	if (!versionprops.jadexversion_major)
 		return null;
 	
-	if (!versionprops.jadexversion_minor)
-		versionprops.jadexversion_minor = getLatestMinorVersion(versionprops);
+	def vsuffix = System.getenv("JADEX_VERSION_SUFFIX");
 	
-	def branchpatch = 1; // Start branch subnumbers at 1, because jadex-1.2-branch-0 is ugly(?)
+	def isnew = false;
+	
+	if (!versionprops.jadexversion_minor) {
+		versionprops.jadexversion_minor = getLatestMinorVersion(versionprops);
+		if (versionprops.jadexversion_minor)
+			isnew = true;
+	}
+	
 	def buildname	= null;
 	
 	if (versionprops.jadexversion_minor)
 	{
-		// Fetch latest major.minor[-branchname-branchpatch] tag from git for non-master/stable branches
-		// todo
-		/*if(includeBranchName(env.BRANCH_NAME)) {
-			def suffix = getLatestTagSuffix(version+"."+patch+"-"+env.BRANCH_NAME+"-")
-			if(suffix!=null)
-				branchpatch = suffix as Integer;
-		}*/
-		
 		// Create the build name based on version path and branch info.		
-		buildname = createBuildname(versionprops, branchpatch, false)
-		//println "buildname is"+buildname
+		buildname = createBuildname(versionprops, vsuffix, isnew)
 		
-		// If tag for buildname exists, but is not head -> there are commits since last tag -> increment (branch) patch number.
-		if(getLatestTagSuffix(buildname.full)!=null && !isHead(buildname.full))
-		{
-			//if(includeBranchName(env.BRANCH_NAME))
-			//	branchpatch++
-			//else
-				patch++
-			buildname = createBuildname(versionprops, branchpatch, true)
-		}
 		println 'Working on Jadex Version ' + buildname;
 	}
 	
@@ -71,32 +45,21 @@ Object fetchNextBuildNameFromGitTag()
 }
 
 // Create the build name object.
-Object createBuildname(versionprops, branchpatch, isnew)
+Object createBuildname(versionprops, suffix, isnew)
 {
 	def buildname = new HashMap() {
 		public String toString()
 		{
-			return "" + this.major + "." + this.minor;
+			return "" + this.major + "." + this.minor + this.suffix ? "-" + suffix : "";
 		}
 	};
 	
-	// Fetch timestamp from gradle command property (e.g. for checkDist rebuild of srcDist)
-	/*buildname.timestamp = gradle.startParameter.getProjectProperties().get('jadexversion_timestamp');
-	if (buildname.timestamp == null)
-	{
-		// Generate new timestamp (i.e. build time)
-		buildname.timestamp	= (long) ((new Date()).getTime() / 1000) // Divide by 1000 to make UNIX time
-	}*/
-	
-	//def buildname = [:]
-	//buildname.suffix = patch + (includeBranchName(env.BRANCH_NAME) ? "-"+env.BRANCH_NAME+"-"+branchpatch : "")
 	buildname.major = versionprops.jadexversion_major;
 	buildname.minor = versionprops.jadexversion_minor;
-	//buildname.patch = patch;
-	//buildname.suffix = patch;
-	buildname.suffix = branchpatch;
-	buildname.full = buildname.major + "." + buildname.minor + "." +buildname.suffix
-	buildname.isnew	= isnew;	// isnew -> no tag for this version exists, yet -> enable updateTag task 
+	if (suffix)
+		buildname.suffix = suffix;
+	buildname.full = buildname.major + "." + buildname.minor + "-" +buildname.suffix
+	buildname.isnew	= isnew;	// isnew -> no tag for this version exists, yet -> enable updateTag task todo?
 	return buildname;
 }
 
