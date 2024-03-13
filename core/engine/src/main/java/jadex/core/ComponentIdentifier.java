@@ -87,6 +87,15 @@ public class ComponentIdentifier
 	}
 	
 	/**
+	 *  Returns if the component runs on the local JVM.
+	 *  @return True, if the component runs on the local JVM.
+	 */
+	public boolean isLocaL()
+	{
+		return GlobalProcessIdentifier.SELF.equals(gpid);
+	}
+	
+	/**
 	 *  Generates a hashcode.
 	 */
 	public int hashCode()

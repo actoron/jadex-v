@@ -24,4 +24,18 @@ public record GlobalProcessIdentifier(long pid, String host)
 	{
 		return pid + "@" + host;
 	}
+	
+	/**
+	 *  Compares the GPID.
+	 *  @return True, if obj is a GPID and is equal.
+	 */
+	public boolean equals(Object obj)
+	{
+		if (obj instanceof GlobalProcessIdentifier)
+		{
+			GlobalProcessIdentifier other = (GlobalProcessIdentifier) obj;
+			return pid == other.pid && host.equals(other.host);
+		}
+		return false;
+	}
 }
