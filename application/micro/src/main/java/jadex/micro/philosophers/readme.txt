@@ -9,6 +9,9 @@ II) Agent based implementation
 - uses the sticks as synchronization objects with future queues,
 i.e. each getStick() call on table agent is enqueued if the
 stick is not available
+- table is realized as agent to protect the sticks against
+concurrent calls and allow future return values. additionally
+this allows for distributed execution.
 
 The agent based uses higher level synchronization with futures.
 I can be executed also in a distributed manner without code
