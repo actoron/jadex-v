@@ -1,0 +1,40 @@
+plugins 
+{
+    id 'java-library'
+}
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+group = 'jadex'
+
+sourceCompatibility = 1.17
+
+repositories
+{
+    mavenCentral()
+}
+
+dependencies
+{
+	implementation 'jadex:common:5.0.0'
+	implementation 'jadex:collection:5.0.0'
+	implementation 'jadex:future:5.0.0'
+    implementation 'jadex:core:5.0.0'
+    implementation 'jadex:model:5.0.0'
+    implementation 'jadex:execution:5.0.0'
+    implementation 'jadex:micro:5.0.0'
+    implementation 'jadex:bdi:5.0.0'
+    implementation 'jadex:classreader:5.0.0'
+}
+
+processResources {
+    from ('src/main/java') {
+        include '**/*.png'
+    }
+}
+
+task runGlasses(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'jadex.bdi.llm.glasses.Main'
+}
