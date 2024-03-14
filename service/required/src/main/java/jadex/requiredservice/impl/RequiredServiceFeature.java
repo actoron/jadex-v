@@ -1,8 +1,5 @@
 package jadex.requiredservice.impl;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,20 +8,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jadex.bytecode.ProxyFactory;
 import jadex.common.ClassInfo;
-import jadex.common.IParameterGuesser;
 import jadex.common.MethodInfo;
-import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
 import jadex.core.impl.Component;
 import jadex.execution.ComponentTerminatedException;
@@ -32,11 +23,8 @@ import jadex.execution.IExecutionFeature;
 import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.execution.impl.ILifecycle;
-import jadex.future.CounterResultListener;
-import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.IResultListener;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
@@ -48,25 +36,20 @@ import jadex.future.TerminableIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
-import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
-import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.MultiplicityException;
-import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.search.ServiceNotFoundException;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceQuery.Multiplicity;
 import jadex.providedservice.impl.search.ServiceRegistry;
+import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.IInternalService;
-import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 import jadex.providedservice.impl.service.IServiceInvocationInterceptor;
-import jadex.providedservice.impl.service.ProvidedServiceModel;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.providedservice.impl.service.ServiceInvocationHandler;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
@@ -1645,5 +1628,75 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 		
 		return ret;
 	}
+	
+	/**
+	 *  Gets a proxy for a known service at a target component.
+	 *  @return Service proxy.
+	 * /
+	public static <S> S getServiceProxy(IComponent component, final ComponentIdentifier providerid, final Class<S> servicetype)
+	{				
+		S ret = null;
+		
+		boolean local = component.getId().getGlobalProcessIdentifier().equals(providerid.getRoot());
+		if(local)
+		{
+			ret = component.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>( servicetype).setProvider(providerid));
+		}
+		else
+		{
+			try
+			{
+				final IServiceIdentifier sid = BasicService.createServiceIdentifier(providerid, new ClassInfo(servicetype), null, "NULL", null, ServiceScope.GLOBAL, null, true);
+
+				Class<?>[] interfaces = new Class[]{servicetype, IService.class};
+				ProxyInfo pi = new ProxyInfo(interfaces);
+				pi.addMethodReplacement(new MethodInfo("equals", new Class[]{Object.class}), new IMethodReplacement()
+				{
+					public Object invoke(Object obj, Object[] args)
+					{
+						return Boolean.valueOf(args[0]!=null && ProxyFactory.isProxyClass(args[0].getClass())
+							&& ProxyFactory.getInvocationHandler(obj).equals(ProxyFactory.getInvocationHandler(args[0])));
+					}
+				});
+				pi.addMethodReplacement(new MethodInfo("hashCode", new Class[0]), new IMethodReplacement()
+				{
+					public Object invoke(Object obj, Object[] args)
+					{
+						return Integer.valueOf(ProxyFactory.getInvocationHandler(obj).hashCode());
+					}
+				});
+				pi.addMethodReplacement(new MethodInfo("toString", new Class[0]), new IMethodReplacement()
+				{
+					public Object invoke(Object obj, Object[] args)
+					{
+						return "Fake proxy for service("+sid+")";
+					}
+				});
+				pi.addMethodReplacement(new MethodInfo("getId", new Class[0]), new IMethodReplacement()
+				{
+					public Object invoke(Object obj, Object[] args)
+					{
+						return sid;
+					}
+				});
+				Method getclass = SReflect.getMethod(Object.class, "getClass", new Class[0]);
+				pi.addExcludedMethod(new MethodInfo(getclass));
+				
+				RemoteReference rr = new RemoteReference(providerid, sid);
+				ProxyReference pr = new ProxyReference(pi, rr);
+				InvocationHandler handler = new RemoteMethodInvocationHandler(component, pr);
+				ret = (S)ProxyFactory.newProxyInstance(component.getClassLoader(), 
+					interfaces, handler);
+//				ret = (S)ProxyFactory.newProxyInstance(component.getClassLoader(), 
+//					interfaces, new RemoteMethodInvocationHandler(component, pr));
+			}
+			catch(Exception e)
+			{
+				SUtil.rethrowAsUnchecked(e);
+			}
+		}
+		
+		return ret;
+	}*/
 	
 }
