@@ -10,17 +10,19 @@ Object fetchNextBuildNameFromGitTag()
 	if (envverstr) {
 		if (envverstr.contains(".")) {
 			def vercomps = envverstr.split("\\.");
-			versionprops.jadexversion_major = Integer.parseInt(vercomps[0]);
-			versionprops.jadexversion_minor = Integer.parseInt(vercomps[1]);
+			versionprops.setProperty("jadexversion_major", vercomps[0]);
+			versionprops.setProperty("jadexversion_minor", vercomps[1]);
 		}
 		else
-			versionprops.jadexversion_major = Integer.parseInt(envverstr);
+			versionprops.setProperty("jadexversion_major", envverstr);
 		println "version from environment is: " + versionprops
 	}
 	
-	if (versionprops.getProperty("versionprops.jadexversion_major") == null)
+	if (versionprops.getProperty("jadexversion_major") == null)
+	{
+	println " NO MAJOR";
 		return null;
-	
+	}	
 	def vsuffix = System.getenv("JADEX_VERSION_SUFFIX");
 	
 	def isnew = false;
@@ -32,9 +34,8 @@ Object fetchNextBuildNameFromGitTag()
 			isnew = true;
 	}
 	
-	def buildname	= null;
-	
-	if (versionprops.jadexversion_minor)
+	def buildname = null;
+	if (versionprops.getProperty("jadexversion_minor") != null)
 	{
 		// Create the build name based on version path and branch info.		
 		buildname = createBuildname(versionprops, vsuffix, isnew)
@@ -55,11 +56,11 @@ Object createBuildname(versionprops, suffix, isnew)
 		}
 	};
 	
-	buildname.major = versionprops.jadexversion_major;
-	buildname.minor = versionprops.jadexversion_minor;
-	if (suffix)
+	buildname.major = versionprops.getProperty("jadexversion_major");
+	buildname.minor = versionprops.getProperty("jadexversion_minor");
+	if (suffix != null)
 		buildname.suffix = suffix;
-	buildname.full = buildname.major + "." + buildname.minor + "-" +buildname.suffix
+	buildname.full = buildname.major + "." + buildname.minor + (suffix != null? "-" + buildname.suffix : "");
 	buildname.isnew	= isnew;	// isnew -> no tag for this version exists, yet -> enable updateTag task todo?
 	return buildname;
 }

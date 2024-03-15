@@ -28,12 +28,13 @@ def shell = new GroovyShell(binding)
 def versionScript = new File(settingsDir, 'version.gradle')
 def vs = shell.parse(versionScript)
 def jv = vs.fetchNextBuildNameFromGitTag()
-if (jv) {
-	System.setProperty(jversion, jv.major+"."+jv.minor+"-"+jv.suffix);
+if (jv != null) {
+	System.setProperty(jversion, jv.full);
 	println "Configured version: "+System.getProperty(jversion);
 }
 else
 	println "No version configured or detected";
+System.exit(1);
 
 def sigkey = getVar(sk)
 if (sigkey != null)
