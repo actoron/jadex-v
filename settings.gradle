@@ -34,7 +34,6 @@ if (jv != null) {
 }
 else
 	println "No version configured or detected";
-System.exit(1);
 
 def sigkey = getVar(sk)
 if (sigkey != null)
