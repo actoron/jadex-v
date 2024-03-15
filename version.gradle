@@ -19,10 +19,8 @@ Object fetchNextBuildNameFromGitTag()
 	}
 	
 	if (versionprops.getProperty("jadexversion_major") == null)
-	{
-	println " NO MAJOR";
 		return null;
-	}	
+
 	def vsuffix = System.getenv("JADEX_VERSION_SUFFIX");
 	
 	def isnew = false;
@@ -58,9 +56,14 @@ Object createBuildname(versionprops, suffix, isnew)
 	
 	buildname.major = versionprops.getProperty("jadexversion_major");
 	buildname.minor = versionprops.getProperty("jadexversion_minor");
+	def fullver = buildname.major + "." + buildname.minor;
 	if (suffix != null)
-		buildname.suffix = suffix;
-	buildname.full = buildname.major + "." + buildname.minor + (suffix != null? "-" + buildname.suffix : "");
+	{
+		buildname.put("suffix", suffix);
+		fullver += "-";
+		fullver += suffix;
+	}
+	buildname.full = fullver;
 	buildname.isnew	= isnew;	// isnew -> no tag for this version exists, yet -> enable updateTag task todo?
 	return buildname;
 }
