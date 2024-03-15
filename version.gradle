@@ -9,7 +9,7 @@ Object fetchNextBuildNameFromGitTag()
 	def envverstr = System.getenv("JADEX_VERSION");
 	if (envverstr) {
 		if (envverstr.contains(".")) {
-			def vercomps = envverstr.split(".");
+			def vercomps = envverstr.split("\\.");
 			versionprops.jadexversion_major = Integer.parseInt(vercomps[0]);
 			versionprops.jadexversion_minor = Integer.parseInt(vercomps[1]);
 		}
@@ -18,16 +18,17 @@ Object fetchNextBuildNameFromGitTag()
 		println "version from environment is: " + versionprops
 	}
 	
-	if (!versionprops.jadexversion_major)
+	if (versionprops.getProperty("versionprops.jadexversion_major") == null)
 		return null;
 	
 	def vsuffix = System.getenv("JADEX_VERSION_SUFFIX");
 	
 	def isnew = false;
-	
-	if (!versionprops.jadexversion_minor) {
-		versionprops.jadexversion_minor = getLatestMinorVersion(versionprops);
-		if (versionprops.jadexversion_minor)
+	if (versionprops.getProperty("jadexversion_minor") == null) {
+		def mv = getLatestMinorVersion(versionprops);
+		if (mv != null)
+			versionprops.jadexversion_minor = mv;
+		if (versionprops.getProperty("jadexversion_minor") != null)
 			isnew = true;
 	}
 	
