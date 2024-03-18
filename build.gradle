@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 // For deployment on server
 // ORG_GRADLE_PROJECT_dl_host - download host
 // ORG_GRADLE_PROJECT_tag_url - git repo
@@ -30,7 +32,7 @@ if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
-def excludes = ['communication', 'nfproperties']
+def excludes = ['communication', 'nfproperties', ]
 
 ['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
@@ -112,16 +114,11 @@ task closeStagingRepo {
 			println "Response Code: ${responseCode}"
     		
 	        if (responseCode == 201) {
-	            def response = new StringBuffer()
-	            try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.inputStream))) {
-	                String line
-	                while ((line = in.readLine()) != null) {
-	                    response.append(line)
-	                }
-	            }
-	            println "Response: ${response.toString()}"
+	            println "Response: ${readStream(connection.getInputStream())}"
+	            waitForStagingRepoClosed()
 	        } else {
-	            println "POST request failed"
+	            println "Failed to execute request. Response code: ${connection.responseCode}"
+            	println "Payload: ${readStream(connection.errorStream)}"
 	        }
 	
 	        connection.disconnect()
@@ -130,14 +127,130 @@ task closeStagingRepo {
 }
 closeStagingRepo.mustRunAfter publish
 
+def waitForStagingRepoClosed() {
+	def repoid = System.getProperty("repoId")
+	def closed = false
+	
+	while(!closed) {	
+		def data = fetchStagingRepos()
+		closed = extractRepoStatus(repoid, data)
+		if(!closed) {
+			println 'Waiting for repo to close: '+repoid
+			Thread.sleep(5000)
+		}
+	}
+}
+
+def fetchStagingRepos() {
+    def user = System.getProperty("centralUser")
+    def pass = System.getProperty("centralPassword")
+
+    def url = new URL("https://oss.sonatype.org/service/local/staging/profile_repositories/5bcba2b9075ec8")
+
+    try {
+        def connection = url.openConnection() as HttpURLConnection
+        connection.setRequestMethod("GET")
+        connection.setRequestProperty("Accept", "application/json")
+        connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
+
+        println "Fetching staging repositories..."
+
+        int responseCode = connection.responseCode
+        println "Response Code: ${responseCode}"
+
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            def jsonResponse = readStream(connection.getInputStream())
+            //println "Response: ${jsonResponse}"
+            return jsonResponse
+        } else {
+            println "Failed to execute request. Response code: ${responseCode}"
+            println "Payload: ${readStream(connection.errorStream)}"
+            return null
+        }
+    } catch (Exception e) {
+        println "Exception occurred while fetching staging repositories: ${e.message}"
+        return null
+    }
+}
+
+def extractRepoStatus(repoId, jsonResponse) {
+    def jsonSlurper = new JsonSlurper()
+    def json = jsonSlurper.parseText(jsonResponse)
+    
+    def data = json.data.find { it.repositoryId == repoId }
+    
+    def ret = false;
+    if(data)
+    	ret = data.type.toLowerCase()=="closed"? true: false;
+    return ret;
+}
+
 task releaseStagingRepo {
     group = "publishing"
 
     doLast {
-        publishing.repositories.maven.release()
+        def stagedRepositoryId = System.getProperty("repoId")
+        if (stagedRepositoryId == null) {
+            println "No staging repo id provided."
+            return
+        }
+
+        def url = new URL("https://oss.sonatype.org/service/local/staging/bulk/promote")
+        def data = '{"data":{"stagedRepositoryIds":["' + stagedRepositoryId + '"],"description":"Jadex"}}'
+        def user = System.getProperty("centralUser")
+        def pass = System.getProperty("centralPassword")
+        
+        def maxAttempts = 5
+        def attempts = 0
+
+        while (attempts < maxAttempts) {
+            attempts++
+            println "Attempt $attempts to release staging repository..."
+
+            def connection = url.openConnection() as HttpURLConnection
+            connection.setRequestMethod("POST")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
+            connection.setDoOutput(true)
+
+            def writer = new OutputStreamWriter(connection.getOutputStream())
+            writer.write(data)
+            writer.flush()
+            writer.close()
+
+            println "Response Code: ${connection.responseCode}"
+
+            if (connection.responseCode == 201) {
+                println "Response: ${readStream(connection.getInputStream())}"
+                break
+            } else {
+                println "Failed to execute request. Response code: ${connection.responseCode}"
+                println "Payload: ${readStream(connection.errorStream)}"
+                if (attempts < maxAttempts) {
+                    println "Retrying... "+attempts
+                } else {
+                    println "Maximum attempts reached. Exiting."
+                }
+            }
+            connection.disconnect()
+
+            Thread.sleep(10000) 
+        }
     }
 }
 releaseStagingRepo.mustRunAfter closeStagingRepo
+
+String readStream(InputStream stream) {
+    def reader = new BufferedReader(new InputStreamReader(stream))
+    def ret = new StringBuffer()
+    String line
+    while ((line = reader.readLine()) != null) {
+        ret.append(line)
+    }
+    reader.close()
+    return ret.toString()
+}
 
 def createEmptyDirOnSSH(net.schmizz.sshj.SSHClient ssh, String dir) {
 	def session = ssh.startSession();
