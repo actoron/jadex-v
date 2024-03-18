@@ -18,7 +18,7 @@ public class Main
 	public static void main(String[] args) 
 	{
 		int psize = 3;
-		int csize = 20;
+		int csize = 2;
 		
 		FutureBlockingQueue<String> queue = new FutureBlockingQueue<>(10);
 		
