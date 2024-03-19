@@ -33,5 +33,4 @@ dependencies
     implementation 'org.activecomponents.jadex:requiredservicemicro:'+v
     implementation 'org.activecomponents.jadex:eca:'+v
     implementation 'org.activecomponents.jadex:traverser:'+v
-    //implementation 'org.activecomponents.jadex:simulation:5.0.0'
 }

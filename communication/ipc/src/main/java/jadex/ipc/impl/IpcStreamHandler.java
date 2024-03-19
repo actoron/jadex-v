@@ -104,14 +104,13 @@ public class IpcStreamHandler implements IIpcService
 		{
 			try (IAutoLock l = connectioncache.writeLock())
 			{
-				System.out.println("Lease time expired for " + entry.getFirstEntity());
+				//System.out.println("Lease time expired for " + entry.getFirstEntity());
 				SocketChannel removedchan = map.remove(entry.getFirstEntity());
 				SUtil.close(removedchan);
 			}
 		});
 		
 		connectioncache = new RwMapWrapper<>(ltm);
-		System.out.println(System.getProperty("java.version"));
 		socketdir.toFile().mkdirs();
 		
 		File dir = socketdir.toFile();
@@ -178,12 +177,25 @@ public class IpcStreamHandler implements IIpcService
 		}
 	}
 	
-	private void open()
+	/**
+	 *  Opens a socket allowing incoming connections.
+	 */
+	protected void open()
+	{
+		String pidstr = String.valueOf(ComponentManager.get().pid());
+		open(pidstr);
+	}
+	
+	/**
+	 *  Opens a socket allowing incoming connections.
+	 *  
+	 *  @param pidstr PID string to use.
+	 */
+	protected void open(String pidstr)
 	{
 		SUtil.getExecutor().execute(() -> {
 			try
 			{
-				String pidstr = String.valueOf(ComponentManager.get().pid());
 				Path socketpath = socketdir.resolve(pidstr);
 				
 				UnixDomainSocketAddress socketaddress = UnixDomainSocketAddress.of(socketpath);

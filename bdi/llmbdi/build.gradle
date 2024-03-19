@@ -15,14 +15,15 @@ repositories
 
 dependencies
 {
-	implementation 'org.activecomponents.jadex:common:5.0.0'
-	implementation 'org.activecomponents.jadex:core:5.0.0'
-	implementation 'org.activecomponents.jadex:future:5.0.0'
-	implementation 'org.activecomponents.jadex:execution:5.0.0'
-	implementation 'org.activecomponents.jadex:model:5.0.0'
-	implementation 'org.activecomponents.jadex:bdi:5.0.0'
-	implementation 'org.activecomponents.jadex:classreader:5.0.0'
-	implementation 'org.activecomponents.jadex:providedservice:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:bdi:'+v
+	implementation 'org.activecomponents.jadex:classreader:'+v
+	implementation 'org.activecomponents.jadex:providedservice:'+v
 
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
