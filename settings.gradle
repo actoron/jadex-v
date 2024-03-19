@@ -195,6 +195,7 @@ includeBuild('rules/eca') {}
 includeBuild('application/micro'){name='application-micro'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
+includeBuild('application/bdi-llm'){name='application-bdi-llm'}
 includeBuild('application/bpmn'){name='application-bpmn'}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
