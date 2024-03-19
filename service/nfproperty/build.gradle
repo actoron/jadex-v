@@ -6,7 +6,7 @@ plugins
 
 description = 'Non functional properties feature'
 
-group = 'jadex'
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
@@ -21,9 +21,9 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:core:'+v
-	implementation 'jadex:execution:'+v
-	implementation 'jadex:providedservicemicro:'+v //hack
-	implementation 'jadex:requiredservice:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:providedservicemicro:'+v //hack
+	implementation 'org.activecomponents.jadex:requiredservice:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

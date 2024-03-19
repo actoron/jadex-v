@@ -5,7 +5,7 @@ plugins
 
 description = 'Idgenerator can create nice random ids based on word combinations'
 	
-group = 'jadex'
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
@@ -20,7 +20,7 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:common:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'com.squareup:javapoet:1.13.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

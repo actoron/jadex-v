@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 // For deployment on server
 // ORG_GRADLE_PROJECT_dl_host - download host
 // ORG_GRADLE_PROJECT_tag_url - git repo
@@ -15,6 +17,7 @@ buildscript {
   	}	
 	dependencies {
 		classpath 'com.hierynomus:sshj:0.38.0'
+		classpath 'org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r'
   	}
 }
 
@@ -24,13 +27,13 @@ plugins {
 
 description = 'Jadex root project'
 
-group = 'jadex'
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
 // Skip old/unfinished projects in gradle build. these are still included in eclipse
-def excludes = ['communication', 'nfproperties']
+def excludes = ['communication', 'nfproperties', ]
 
 ['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
@@ -112,16 +115,11 @@ task closeStagingRepo {
 			println "Response Code: ${responseCode}"
     		
 	        if (responseCode == 201) {
-	            def response = new StringBuffer()
-	            try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.inputStream))) {
-	                String line
-	                while ((line = in.readLine()) != null) {
-	                    response.append(line)
-	                }
-	            }
-	            println "Response: ${response.toString()}"
+	            println "Response: ${readStream(connection.getInputStream())}"
+	            waitForStagingRepoClosed()
 	        } else {
-	            println "POST request failed"
+	            println "Failed to execute request. Response code: ${connection.responseCode}"
+            	println "Payload: ${readStream(connection.errorStream)}"
 	        }
 	
 	        connection.disconnect()
@@ -130,14 +128,154 @@ task closeStagingRepo {
 }
 closeStagingRepo.mustRunAfter publish
 
+def waitForStagingRepoClosed() {
+	def repoid = System.getProperty("repoId")
+	def closed = false
+	
+	while(!closed) {	
+		def data = fetchStagingRepos()
+		closed = extractRepoStatus(repoid, data)
+		if(!closed) {
+			println 'Waiting for repo to close: '+repoid
+			Thread.sleep(5000)
+		}
+	}
+}
+
+def fetchStagingRepos() {
+    def user = System.getProperty("centralUser")
+    def pass = System.getProperty("centralPassword")
+
+    def url = new URL("https://oss.sonatype.org/service/local/staging/profile_repositories/5bcba2b9075ec8")
+
+    try {
+        def connection = url.openConnection() as HttpURLConnection
+        connection.setRequestMethod("GET")
+        connection.setRequestProperty("Accept", "application/json")
+        connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
+
+        println "Fetching staging repositories..."
+
+        int responseCode = connection.responseCode
+        println "Response Code: ${responseCode}"
+
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            def jsonResponse = readStream(connection.getInputStream())
+            //println "Response: ${jsonResponse}"
+            return jsonResponse
+        } else {
+            println "Failed to execute request. Response code: ${responseCode}"
+            println "Payload: ${readStream(connection.errorStream)}"
+            return null
+        }
+    } catch (Exception e) {
+        println "Exception occurred while fetching staging repositories: ${e.message}"
+        return null
+    }
+}
+
+def extractRepoStatus(repoId, jsonResponse) {
+    def jsonSlurper = new JsonSlurper()
+    def json = jsonSlurper.parseText(jsonResponse)
+    
+    def data = json.data.find { it.repositoryId == repoId }
+    
+    def ret = false;
+    if(data)
+    	ret = data.type.toLowerCase()=="closed"? true: false;
+    return ret;
+}
+
 task releaseStagingRepo {
     group = "publishing"
 
     doLast {
-        publishing.repositories.maven.release()
+        def stagedRepositoryId = System.getProperty("repoId")
+        if (stagedRepositoryId == null) {
+            println "No staging repo id provided."
+            return
+        }
+
+        def url = new URL("https://oss.sonatype.org/service/local/staging/bulk/promote")
+        def data = '{"data":{"stagedRepositoryIds":["' + stagedRepositoryId + '"],"description":"Jadex"}}'
+        def user = System.getProperty("centralUser")
+        def pass = System.getProperty("centralPassword")
+        
+        def maxAttempts = 5
+        def attempts = 0
+
+        while (attempts < maxAttempts) {
+            attempts++
+            println "Attempt $attempts to release staging repository..."
+
+            def connection = url.openConnection() as HttpURLConnection
+            connection.setRequestMethod("POST")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
+            connection.setDoOutput(true)
+
+            def writer = new OutputStreamWriter(connection.getOutputStream())
+            writer.write(data)
+            writer.flush()
+            writer.close()
+
+            println "Response Code: ${connection.responseCode}"
+
+            if (connection.responseCode == 201) {
+                println "Response: ${readStream(connection.getInputStream())}"
+                break
+            } else {
+                println "Failed to execute request. Response code: ${connection.responseCode}"
+                println "Payload: ${readStream(connection.errorStream)}"
+                if (attempts < maxAttempts) {
+                    println "Retrying... "+attempts
+                } else {
+                    println "Maximum attempts reached. Exiting."
+                }
+            }
+            connection.disconnect()
+
+            Thread.sleep(10000) 
+        }
     }
 }
 releaseStagingRepo.mustRunAfter closeStagingRepo
+
+// Update the tag and commit it to repository.
+task updateTag() {
+	doLast() {
+		def tag_url = getVar('tag_url')
+    	def acc = parseURLWithCredentials(tag_url)
+				
+		def git = org.eclipse.jgit.api.Git.open(project.projectDir);
+		//org.eclipse.jgit.lib.Repository repo = new org.eclipse.jgit.storage.file.FileRepositoryBuilder().setMustExist(true).setGitDir(project.projectDir).readEnvironment().findGitDir().build();
+		def tags = git.tagList().call();
+		def cmd = git.tag();
+		cmd.setName(jadex_build_version);
+		cmd.setForceUpdate(true);
+		cmd.call();
+		cmd = git.push();
+		def pushopts = new ArrayList<String>();
+		pushopts.add("ci.skip"); 
+		cmd.setPushOptions(pushopts);
+		cmd.setRemote(acc.url);
+		cmd.setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(acc.user, acc.password))
+		cmd.setPushTags();
+		cmd.call();
+	}
+}
+
+String readStream(InputStream stream) {
+    def reader = new BufferedReader(new InputStreamReader(stream))
+    def ret = new StringBuffer()
+    String line
+    while ((line = reader.readLine()) != null) {
+        ret.append(line)
+    }
+    reader.close()
+    return ret.toString()
+}
 
 def createEmptyDirOnSSH(net.schmizz.sshj.SSHClient ssh, String dir) {
 	def session = ssh.startSession();
@@ -172,10 +310,13 @@ def waitForSSHCmd(cmd) {
 }
 
 task createZip(type: Zip) {
-	def jv = System.getProperty("JADEX_VERSION");
-	println "Jadex Build Version " + jv
+	def v = getVar("JADEX_VERSION")
+	def suf = getVar("JADEX_VERSION_SUFFIX")
+	if(suf!=null)
+		v += "-"+suf
+	println "Jadex Build Version " + v
 
-    archiveFileName = 'jadex-v'+jv+'.zip'
+    archiveFileName = 'jadex-'+v+'.zip'
     destinationDirectory = file('deploy')
     includeEmptyDirs = false
     
@@ -207,12 +348,17 @@ task deployZip() {
 		//if(!gradle.ext.productionmode)
 		//	throw new IllegalStateException("Can only deploy zips in production mode.");
 		
-		if(getVar('dl_host', project)==null)
+		if(getVar('dl_host')==null)
 			throw new RuntimeException("Deploy requires deployment variables set: dl_host, tag_url");
 		
 		def acc = getDownloadServerAccess();
 		
-		def dir = "/www/releases/" + project.ext.jadex_build_version;
+		def v = getVar("JADEX_VERSION")
+		def suf = getVar("JADEX_VERSION_SUFFIX")
+		if(suf!=null)
+			v += "-"+suf
+		
+		def dir = "/www/releases/" + v;
 		//def zipsdir = "" + project.buildDir + File.separator + 'distributions' + File.separator + 'zips';
 		def zipsdir = file('deploy').path;
 
@@ -239,10 +385,56 @@ task deployZip() {
 }
 
 def getDownloadServerAccess() {
-	def downloadserver_url = getVar('dl_host', project)
+	def downloadserver_url = getVar('dl_host')
     return parseURLWithCredentials(downloadserver_url)
 }
 
+String getVar(String key) {
+	def ret = System.getenv(key)
+	if (ret == null)
+		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
+	if (ret == null)
+		ret = System.getProperty(key)
+	if (ret == null)
+		ret = System.getProperty("ORG_GRADLE_PROJECT_"+key)
+	return ret;
+}
+
+def parseURLWithCredentials(urlstring) {
+	//println "urlstring: "+urlstring
+	
+	def ret = [:];
+	def uri	= new URI(urlstring)
+	ret.host = uri.host;
+	ret.port = uri.port
+    ret.user = ''
+    ret.password = ''
+    ret.fingerprint = ''
+    def String userinfo = uri.userInfo
+    if(userinfo!=null)
+    {
+		def String[] split = userinfo.split(":|;")
+		//println 'userinfo: ' + split
+        ret.user = split.length>0 ? split[0] : ''
+        ret.password = split.length>1 ? split[1] : ''
+        
+        for(int i=2; i<split.length; i++)
+        {
+        	if(split[i].startsWith('fingerprint='))
+        	{
+        		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
+        		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
+        		//println 'fingerprint: ' + ret.fingerprint
+        	}
+        }
+	}
+
+	// URL without extra info (e.g. no password for security reasons)
+	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
+	//println 'url: ' + ret.url
+		
+	return ret;
+}
 
 
 

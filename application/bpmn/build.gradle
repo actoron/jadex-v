@@ -5,7 +5,7 @@ plugins
 
 description = 'BPMN examples'
 
-group = 'jadex'
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
@@ -20,17 +20,17 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:common:'+v
-	implementation 'jadex:future:'+v
-	implementation 'jadex:core:'+v
-	implementation 'jadex:model:'+v
-	implementation 'jadex:execution:'+v
-	implementation 'jadex:micro:'+v
-	implementation 'jadex:bpmn:'+v
-	implementation 'jadex:requiredservice:'+v
-	implementation 'jadex:requiredservicebpmn:'+v
-	implementation 'jadex:providedservice:'+v
-	implementation 'jadex:providedservicebpmn:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:micro:'+v
+	implementation 'org.activecomponents.jadex:bpmn:'+v
+	implementation 'org.activecomponents.jadex:requiredservice:'+v
+	implementation 'org.activecomponents.jadex:requiredservicebpmn:'+v
+	implementation 'org.activecomponents.jadex:providedservice:'+v
+	implementation 'org.activecomponents.jadex:providedservicebpmn:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 

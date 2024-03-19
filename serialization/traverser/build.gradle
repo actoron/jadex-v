@@ -7,7 +7,7 @@ plugins
 
 description = 'Support for object traversal, e.g. serialize or clone objects'
 
-group = 'jadex'
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
@@ -22,10 +22,10 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:common:'+v
-	implementation 'jadex:collection:'+v
-	testFixturesImplementation 'jadex:common:'+v
-	testFixturesImplementation 'jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	testFixturesImplementation 'org.activecomponents.jadex:common:'+v
+	testFixturesImplementation 'org.activecomponents.jadex:collection:'+v
 	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 }
