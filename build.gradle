@@ -310,10 +310,13 @@ def waitForSSHCmd(cmd) {
 }
 
 task createZip(type: Zip) {
-	def jv = System.getProperty("JADEX_VERSION");
-	println "Jadex Build Version " + jv
+	def v = getVar("JADEX_VERSION")
+	def suf = getVar("JADEX_VERSION_SUFFIX")
+	if(suf!=null)
+		v += "-"+suf
+	println "Jadex Build Version " + v
 
-    archiveFileName = 'jadex-v'+jv+'.zip'
+    archiveFileName = 'jadex-'+v+'.zip'
     destinationDirectory = file('deploy')
     includeEmptyDirs = false
     
@@ -351,6 +354,9 @@ task deployZip() {
 		def acc = getDownloadServerAccess();
 		
 		def v = getVar("JADEX_VERSION")
+		def suf = getVar("JADEX_VERSION_SUFFIX")
+		if(suf!=null)
+			v += "-"+suf
 		
 		def dir = "/www/releases/" + v;
 		//def zipsdir = "" + project.buildDir + File.separator + 'distributions' + File.separator + 'zips';
