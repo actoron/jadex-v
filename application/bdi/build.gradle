@@ -5,7 +5,7 @@ plugins
 
 description = 'BDI agent examples'
 
-group = 'jadex'
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
@@ -20,15 +20,15 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:common:' + v
-	implementation 'jadex:collection:' + v
-	implementation 'jadex:future:' + v
-    implementation 'jadex:core:' + v
-    implementation 'jadex:model:' + v
-    implementation 'jadex:execution:' + v
-    implementation 'jadex:micro:' + v
-    implementation 'jadex:bdi:' + v
-    //implementation 'jadex:simulation:5.0.0'
+	implementation 'org.activecomponents.jadex:common:' + v
+	implementation 'org.activecomponents.jadex:collection:' + v
+	implementation 'org.activecomponents.jadex:future:' + v
+    implementation 'org.activecomponents.jadex:core:' + v
+    implementation 'org.activecomponents.jadex:model:' + v
+    implementation 'org.activecomponents.jadex:execution:' + v
+    implementation 'org.activecomponents.jadex:micro:' + v
+    implementation 'org.activecomponents.jadex:bdi:' + v
+    //implementation 'org.activecomponents.jadex:simulation:5.0.0'
 }
 
 processResources {

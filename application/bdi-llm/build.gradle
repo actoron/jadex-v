@@ -6,7 +6,7 @@ plugins
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
-group = 'jadex'
+group = 'org.activecomponents.jadex'
 
 sourceCompatibility = 1.17
 
@@ -17,15 +17,15 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:collection:5.0.0'
-	implementation 'jadex:future:5.0.0'
-    implementation 'jadex:core:5.0.0'
-    implementation 'jadex:model:5.0.0'
-    implementation 'jadex:execution:5.0.0'
-    implementation 'jadex:micro:5.0.0'
-    implementation 'jadex:bdi:5.0.0'
-    implementation 'jadex:classreader:5.0.0'
+	implementation 'org.activecomponents.jadex:common:5.0.0'
+	implementation 'org.activecomponents.jadex:collection:5.0.0'
+	implementation 'org.activecomponents.jadex:future:5.0.0'
+    implementation 'org.activecomponents.jadex:core:5.0.0'
+    implementation 'org.activecomponents.jadex:model:5.0.0'
+    implementation 'org.activecomponents.jadex:execution:5.0.0'
+    implementation 'org.activecomponents.jadex:micro:5.0.0'
+    implementation 'org.activecomponents.jadex:bdi:5.0.0'
+    implementation 'org.activecomponents.jadex:classreader:5.0.0'
 }
 
 processResources {
