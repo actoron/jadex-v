@@ -1,4 +1,4 @@
-package jadex.communication.impl.security.handshake;
+package jadex.ipc.impl.security.handshake;
 
 import jadex.core.impl.GlobalProcessIdentifier;
 

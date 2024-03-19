@@ -1,6 +1,6 @@
 package jadex.ipc.impl.security;
 
-import jadex.communication.impl.security.handshake.BasicSecurityMessage;
+import jadex.ipc.impl.security.handshake.BasicSecurityMessage;
 import jadex.messaging.ISecurityInfo;
 
 public interface ICryptoSuite

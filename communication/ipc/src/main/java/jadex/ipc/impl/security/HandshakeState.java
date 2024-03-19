@@ -3,8 +3,8 @@ package jadex.ipc.impl.security;
 import java.util.HashSet;
 import java.util.Set;
 
-import jadex.communication.impl.security.handshake.BasicSecurityMessage;
 import jadex.future.Future;
+import jadex.ipc.impl.security.handshake.BasicSecurityMessage;
 
 
 /**

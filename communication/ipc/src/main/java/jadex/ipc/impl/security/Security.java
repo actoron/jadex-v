@@ -37,10 +37,6 @@ import jadex.common.IAutoLock;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.traverser.SCloner;
-import jadex.communication.impl.security.handshake.BasicSecurityMessage;
-import jadex.communication.impl.security.handshake.InitialHandshakeFinalMessage;
-import jadex.communication.impl.security.handshake.InitialHandshakeMessage;
-import jadex.communication.impl.security.handshake.InitialHandshakeReplyMessage;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.DelegationResultListener;
@@ -51,6 +47,10 @@ import jadex.ipc.ISecurity;
 import jadex.ipc.impl.IpcStreamHandler;
 import jadex.ipc.impl.security.authentication.AbstractAuthenticationSecret;
 import jadex.ipc.impl.security.authentication.AbstractX509PemSecret;
+import jadex.ipc.impl.security.handshake.BasicSecurityMessage;
+import jadex.ipc.impl.security.handshake.InitialHandshakeFinalMessage;
+import jadex.ipc.impl.security.handshake.InitialHandshakeMessage;
+import jadex.ipc.impl.security.handshake.InitialHandshakeReplyMessage;
 import jadex.serialization.ISerializationServices;
 
 /**
