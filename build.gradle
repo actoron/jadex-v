@@ -17,6 +17,7 @@ buildscript {
   	}	
 	dependencies {
 		classpath 'com.hierynomus:sshj:0.38.0'
+		classpath 'org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r'
   	}
 }
 
@@ -241,6 +242,30 @@ task releaseStagingRepo {
 }
 releaseStagingRepo.mustRunAfter closeStagingRepo
 
+// Update the tag and commit it to repository.
+task updateTag() {
+	doLast() {
+		def tag_url = getVar('tag_url')
+    	def acc = parseURLWithCredentials(tag_url)
+				
+		def git = org.eclipse.jgit.api.Git.open(project.projectDir);
+		//org.eclipse.jgit.lib.Repository repo = new org.eclipse.jgit.storage.file.FileRepositoryBuilder().setMustExist(true).setGitDir(project.projectDir).readEnvironment().findGitDir().build();
+		def tags = git.tagList().call();
+		def cmd = git.tag();
+		cmd.setName(jadex_build_version);
+		cmd.setForceUpdate(true);
+		cmd.call();
+		cmd = git.push();
+		def pushopts = new ArrayList<String>();
+		pushopts.add("ci.skip"); 
+		cmd.setPushOptions(pushopts);
+		cmd.setRemote(acc.url);
+		cmd.setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(acc.user, acc.password))
+		cmd.setPushTags();
+		cmd.call();
+	}
+}
+
 String readStream(InputStream stream) {
     def reader = new BufferedReader(new InputStreamReader(stream))
     def ret = new StringBuffer()
@@ -320,12 +345,14 @@ task deployZip() {
 		//if(!gradle.ext.productionmode)
 		//	throw new IllegalStateException("Can only deploy zips in production mode.");
 		
-		if(getVar('dl_host', project)==null)
+		if(getVar('dl_host')==null)
 			throw new RuntimeException("Deploy requires deployment variables set: dl_host, tag_url");
 		
 		def acc = getDownloadServerAccess();
 		
-		def dir = "/www/releases/" + project.ext.jadex_build_version;
+		def v = getVar("JADEX_VERSION")
+		
+		def dir = "/www/releases/" + v;
 		//def zipsdir = "" + project.buildDir + File.separator + 'distributions' + File.separator + 'zips';
 		def zipsdir = file('deploy').path;
 
@@ -352,10 +379,56 @@ task deployZip() {
 }
 
 def getDownloadServerAccess() {
-	def downloadserver_url = getVar('dl_host', project)
+	def downloadserver_url = getVar('dl_host')
     return parseURLWithCredentials(downloadserver_url)
 }
 
+String getVar(String key) {
+	def ret = System.getenv(key)
+	if (ret == null)
+		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
+	if (ret == null)
+		ret = System.getProperty(key)
+	if (ret == null)
+		ret = System.getProperty("ORG_GRADLE_PROJECT_"+key)
+	return ret;
+}
+
+def parseURLWithCredentials(urlstring) {
+	//println "urlstring: "+urlstring
+	
+	def ret = [:];
+	def uri	= new URI(urlstring)
+	ret.host = uri.host;
+	ret.port = uri.port
+    ret.user = ''
+    ret.password = ''
+    ret.fingerprint = ''
+    def String userinfo = uri.userInfo
+    if(userinfo!=null)
+    {
+		def String[] split = userinfo.split(":|;")
+		//println 'userinfo: ' + split
+        ret.user = split.length>0 ? split[0] : ''
+        ret.password = split.length>1 ? split[1] : ''
+        
+        for(int i=2; i<split.length; i++)
+        {
+        	if(split[i].startsWith('fingerprint='))
+        	{
+        		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
+        		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
+        		//println 'fingerprint: ' + ret.fingerprint
+        	}
+        }
+	}
+
+	// URL without extra info (e.g. no password for security reasons)
+	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
+	//println 'url: ' + ret.url
+		
+	return ret;
+}
 
 
 
