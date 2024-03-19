@@ -27,5 +27,7 @@ public class Main
 		
 		for(int i=0; i<csize; i++)
 			IComponent.create(new ConsumerAgent<String>(queue));
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }
