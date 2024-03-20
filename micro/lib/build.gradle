@@ -3,7 +3,7 @@ plugins
     id 'java-library'
 }
 
-description = 'Micro agent examples'
+description = 'Micro agent library'
 
 group = 'org.activecomponents.jadex'
 
@@ -20,7 +20,6 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'org.activecomponents.jadex:libmicro:'+v
 	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:classreader:'+v
@@ -37,39 +36,4 @@ dependencies
     implementation 'org.activecomponents.jadex:publishservicejetty:'+v
     //implementation 'org.activecomponents.jadex:simulation:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
-}
-
-processResources {
-    from ('src/main/java') {
-        include '**/*.png'
-        include '**/*.html'
-        include '**/*.js'
-        include '**/*.css'
-        include '**/*.ttf'
-    }
-}
-
-task runHelloWorld(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.helloworld.HelloWorldAgent'
-}
-
-task runMandelbrot(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.mandelbrot_new.MainWeb'
-}
-
-task runQuiz(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.quiz.Main'
-}
-
-task runGobble(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.gobble.GobbleAgent'
-}
-
-task runHelpline(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.helpline.Main'
 }

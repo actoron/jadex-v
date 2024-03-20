@@ -1,9 +1,7 @@
-package jadex.micro.producerconsumer;
+package jadex.future;
 
 import java.util.LinkedList;
 import java.util.Queue;
-
-import jadex.future.Future;
 
 public class FutureBlockingQueue<T> 
 {
