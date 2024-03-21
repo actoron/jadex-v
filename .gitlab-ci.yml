@@ -35,7 +35,7 @@ test:
 benchmark:
   stage: benchmark
   script: ./benchmark.sh
-  needs: ["build"]
+  # needs: ["build"]
   allow_failure: true
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -48,6 +48,17 @@ deployZip:
   stage: deploy
   script:
     - ./gradlew deployZip
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - '**/build'
+      - .gradle
+
+deployCentral:
+  stage: deploy
+  script:
+    - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
