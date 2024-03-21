@@ -140,7 +140,8 @@ def createStagingRepo() {
 }
 //createStagingRepo()
 
-if(gradle.startParameter.taskNames.contains('publish')) {
+println 'version:'+getVar(jversion)+"|"
+if(gradle.startParameter.taskNames.contains('publish') && getVar(jversion)!=null && getVar(jversion).length()>0) {
 	println "publish task called. Creating staging repo ..."
     createStagingRepo()
 } else {

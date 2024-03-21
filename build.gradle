@@ -80,7 +80,7 @@ def excludes = ['communication', 'nfproperties', 'bdi-llm', 'llmbdi']
 
 task closeStagingRepo {
     group = "publishing"
-
+    
     doLast {
         def stagedRepositoryId = System.getProperty("repoId")
         if(stagedRepositoryId==null) {
@@ -188,7 +188,7 @@ def extractRepoStatus(repoId, jsonResponse) {
 
 task releaseStagingRepo {
     group = "publishing"
-
+    
     doLast {
         def stagedRepositoryId = System.getProperty("repoId")
         if (stagedRepositoryId == null) {
@@ -310,6 +310,8 @@ def waitForSSHCmd(cmd) {
 }
 
 task createZip(type: Zip) {
+	group = "publishing"
+	
 	def v = getVar("JADEX_VERSION")
 	def suf = getVar("JADEX_VERSION_SUFFIX")
 	if(suf!=null)
@@ -343,7 +345,10 @@ task createZip(type: Zip) {
 }
 
 task deployZip() {
+	group = "publishing"
+
 	dependsOn createZip
+	
 	doLast {
 		//if(!gradle.ext.productionmode)
 		//	throw new IllegalStateException("Can only deploy zips in production mode.");
