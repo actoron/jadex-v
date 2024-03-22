@@ -107,18 +107,6 @@ def parseURLWithCredentials(urlstring) {
 
 //println getVar("signingKey", project)
 
-/*String getSonatypeUser() {
-	def repourl = getVar('repocentral', project)
-	def repoaccess = parseURLWithCredentials(repourl)
-	return repoaccess!=null? repoaccess.user: null
-}
-
-String getSonatypePassword() {
-	def repourl = getVar('repocentral', project)
-	def repoaccess = parseURLWithCredentials(repourl)
-	return repoaccess!=null? repoaccess.password: null
-}*/
-
 if(project.hasProperty('repos')) {
     for(String repo: repos.split(",")) {
         // Parse credentials from environment
