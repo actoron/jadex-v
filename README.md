@@ -84,9 +84,9 @@ task runHelloWorld(type: JavaExec) {
 }
 ```
 
-You can execute an example via the gradle task from the command line
-./gradlew build
-./gradlew runHelloWorld
+You can execute an example via the gradle task from the command line  
+./gradlew build  
+./gradlew runHelloWorld  
 
 ### Integrated Development Environments (IDEs)
 
@@ -98,25 +98,16 @@ as Java application.
 ## Quick Start
 
 
-## Usage
-
-
 ## Support
 
 
-## Roadmap
+## Authors
+
+Kai Jander  
+Alexander Pokahr  
+Lars Braubach  
 
 
-## Contributing
-
-
-## Authors and acknowledgment
-Kai Jander
-Alexander Pokahr
-Lars Braubach
-
-## License
-GNU GENERAL PUBLIC LICENSE
 
 
 
