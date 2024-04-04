@@ -85,8 +85,8 @@ task runHelloWorld(type: JavaExec) {
 ```
 
 You can execute an example via the gradle task from the command line  
-./gradlew build  
-./gradlew runHelloWorld  
+`./gradlew build`  
+`./gradlew runHelloWorld`  
 
 ### Integrated Development Environments (IDEs)
 
@@ -133,16 +133,16 @@ public class HelloAgent
 	}
 }
 ```
-- @Agent is used to make a class an agent/actor class. To create other agent types
-from a pojo one can additionally declare the component type (@Agent(type="bdi"))
-- @OnStart is called once the actor is created and starts execution
+- `@Agent` is used to make a class an agent/actor class. To create other agent types
+from a pojo one can additionally declare the component type `@Agent(type="bdi")`
+- `@OnStart` is called once the actor is created and starts execution
 - API access is possible via the IComponent interface. It can be injected 
-into methods calls or it can be declared as agent variable (@Agent private IComponent agent;)  
-- Components can be created via IComponent interface. IComponent.create(new HelloAgent());
+into methods calls or it can be declared as agent variable `@Agent private IComponent agent;`  
+- Components can be created via IComponent interface. `IComponent.create(new HelloAgent());`
 creates a new active component from a HelloWorld pojo object. The component immediately
 starts execution.
 - Active components are started as daemons so that the main thread has to be blocked to
-prohibit program termination. This is done via IComponent.waitForLastComponentTerminated();
+prohibit program termination. This is done via `IComponent.waitForLastComponentTerminated();`
 
 ## Support
 
