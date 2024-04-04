@@ -97,6 +97,52 @@ as Java application.
 
 ## Quick Start
 
+After a successful installation, one can start programming with actors. Here is a small example:  
+
+```
+package helloworld;
+
+import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
+import jadex.micro.annotation.Agent;
+import jadex.micro.helloworld.HelloWorldAgent;
+import jadex.model.annotation.OnStart;
+
+@Agent
+public class HelloAgent 
+{
+	@OnStart
+	protected void start(IComponent agent)
+	{
+		System.out.println("agent started: "+agent.getId());
+		
+		for(int i=3; i>0; i--)
+		{
+			System.out.println("seconds to terminate: "+i);
+			agent.getFeature(IExecutionFeature.class).waitForDelay(1000).get();
+		}
+		
+		agent.terminate();
+	}
+	
+	public static void main(String[] args) 
+	{
+		IComponent.create(new HelloAgent());
+		
+		IComponent.waitForLastComponentTerminated();
+	}
+}
+```
+- @Agent is used to make a class an agent/actor class. To create other agent types
+from a pojo one can additionally declare the component type (@Agent(type="bdi"))
+- @OnStart is called once the actor is created and starts execution
+- API access is possible via the IComponent interface. It can be injected 
+into methods calls or it can be declared as agent variable (@Agent private IComponent agent;)  
+- Components can be created via IComponent interface. IComponent.create(new HelloAgent());
+creates a new active component from a HelloWorld pojo object. The component immediately
+starts execution.
+- Active components are started as daemons so that the main thread has to be blocked to
+prohibit program termination. This is done via IComponent.waitForLastComponentTerminated();
 
 ## Support
 
