@@ -37,7 +37,63 @@ Key Highlights:
 
 ### Maven Repository
 
+- Create a gradle or maven Java project
+- Add the dependencies of features you plan to use
+- Here is a rather minimal example gradle
+
+```
+plugins {
+    id 'java-library'
+}
+
+sourceCompatibility = '17'
+targetCompatibility = '17'	
+
+repositories {
+    mavenCentral() 
+}
+
+dependencies
+{
+	implementation 'org.activecomponents.jadex:json:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:binary:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:traverser:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:serialization:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:idgenerator:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:common:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:collection:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:classreader:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:future:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:core:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:model:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:execution:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:micro:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:providedservice:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:providedservicemicro:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:requiredservice:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:requiredservicemicro:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:publishservice:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:publishservicejetty:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:application-micro:5.0-alpha3'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}
+
+task runHelloWorld(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'jadex.micro.helloworld.HelloWorldAgent'
+}
+```
+
+You can execute an example via the gradle task from the command line
+./gradlew build
+./gradlew runHelloWorld
+
 ### Integrated Development Environments (IDEs)
+
+You can clone the repo/download and import Jadex as a gradle project to your IDE.
+To execute an example, e.g. start HelloWorldAgent.java in application/micro/jadex/micro/helloworld
+as Java application.
+
 
 ## Quick Start
 
