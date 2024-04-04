@@ -41,7 +41,7 @@ Key Highlights:
 - Add the dependencies of features you plan to use
 - Here is a rather minimal example gradle
 
-```
+```gradle
 plugins {
     id 'java-library'
 }
@@ -99,7 +99,7 @@ as Java application.
 
 After a successful installation, one can start programming with actors. Here is a small example:  
 
-```
+```java
 package helloworld;
 
 import jadex.core.IComponent;
