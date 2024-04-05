@@ -21,7 +21,7 @@ Building upon the Actor model, Jadex introduces the concept of active components
 Key points:
 - Support for multiple engines
 - Seamless interaction among component types
-- On-the-fly behavior determination
+- Directly start actors (without upfront platform/infrastructure setup and startup)
 
 ### Distributed Service Infrastructure
 
