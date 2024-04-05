@@ -33,4 +33,4 @@ contains a rather complete local version but without the remote service invocati
 
 [Jadex-V](https://central.sonatype.com/artifact/org.activecomponents.jadex/jadex-v)
 
---
+---

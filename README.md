@@ -4,7 +4,7 @@
 
 Jadex V is a versatile framework designed with a focus on modularity and simplicity, enabling a wide range of customizations with ease. By breaking down functionalities into separate modules, Jadex V adopts a feature-oriented approach that fosters flexibility and adaptability. Its architecture is rooted in the Java service locator pattern, allowing seamless integration of various features by simply adding modules to the classpath.
 
-[News](news.md)
+Project news can be found here: [News](news.md)
 
 ## Features
 
@@ -70,12 +70,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:model:5.0-alpha3'
 	implementation 'org.activecomponents.jadex:execution:5.0-alpha3'
 	implementation 'org.activecomponents.jadex:micro:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:providedservice:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:providedservicemicro:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:requiredservice:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:requiredservicemicro:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:publishservice:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:publishservicejetty:5.0-alpha3'
 	implementation 'org.activecomponents.jadex:application-micro:5.0-alpha3'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
@@ -89,6 +83,25 @@ task runHelloWorld(type: JavaExec) {
 You can execute an example via the gradle task from the command line  
 `./gradlew build`  
 `./gradlew runHelloWorld`  
+
+In order to set up active components with services we need to include the provided and
+required service features (with additional support for the engines we would like to use).
+So in case we want micro agents with services we additionally include the following:
+
+```gradle
+    implementation 'org.activecomponents.jadex:providedservice:5.0-alpha3'
+    implementation 'org.activecomponents.jadex:providedservicemicro:5.0-alpha3'
+    implementation 'org.activecomponents.jadex:requiredservice:5.0-alpha3'
+    implementation 'org.activecomponents.jadex:requiredservicemicro:5.0-alpha3'
+```
+
+If we additionally want to publish services of active components we need also the 
+publication feature and a suitable web server implementation such as Jetty:
+
+```gradle
+    implementation 'org.activecomponents.jadex:publishservice:5.0-alpha3'
+    implementation 'org.activecomponents.jadex:publishservicejetty:5.0-alpha3'
+```
 
 ### Integrated Development Environments (IDEs)
 
