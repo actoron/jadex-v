@@ -2634,7 +2634,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	{
 		String[] p = new String[2];
 		p[0] = rawev.value();
-		p[1] = /*Object.class.equals(rawev.secondc())? rawev.second():*/ rawev.secondc().getName();
+		p[1] = Object.class.equals(rawev.secondc())? rawev.second(): rawev.secondc().getName();
 //		System.out.println("eveve: "+p[0]+" "+p[1]);
 		return new EventType(p);
 	}
