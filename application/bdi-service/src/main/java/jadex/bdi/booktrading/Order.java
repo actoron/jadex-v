@@ -118,8 +118,8 @@ public class Order
 		
 		if(this.deadline!=null)
 		{
-//			System.out.println("Order: "+deadline.getTime()+" "+starttime);
-			final long wait = Math.max(0, deadline.getTime()-starttime);
+//			System.out.println("Order deadline: "+new Date(deadline.getTime()));
+			final long wait = Math.max(0, deadline.getTime()-exe.getTime());
 			
 			exe.waitForDelay(wait).then(v ->
 			{
@@ -127,7 +127,7 @@ public class Order
 				{
 					if(getState().equals(OPEN))
 					{
-	//					System.out.println("Order state failed: "+wait+" "+Order.this);
+//						System.out.println("Order state failed: "+wait+" "+Order.this);
 						setState(FAILED);
 					}				
 				}
