@@ -2,7 +2,7 @@
 
 ## Description
 
-Jadex V is a versatile framework designed with a focus on modularity and simplicity, enabling a wide range of customizations with ease. By breaking down functionalities into separate modules, Jadex V adopts a feature-oriented approach that fosters flexibility and adaptability. Its architecture is rooted in the Java service locator pattern, allowing seamless integration of various features by simply adding modules to the classpath.
+Jadex V is a versatile framework for actor and distributed service programming. It has been designed with a focus on modularity and simplicity, enabling a wide range of customizations with ease. By breaking down functionalities into separate modules, Jadex V adopts a feature-oriented approach that fosters flexibility and adaptability. Its architecture is rooted in the Java service locator pattern, allowing seamless integration of various features by simply adding modules to the classpath.
 
 Project news can be found [here](news.md)
 
@@ -95,7 +95,7 @@ So in case we want micro agents with services we additionally include the follow
     implementation 'org.activecomponents.jadex:requiredservicemicro:5.0-alpha3'
 ```
 
-If we additionally want to publish services of active components we need also the 
+If we additionally want to publish services of active components as REST web services we need also the 
 publication feature and a suitable web server implementation such as Jetty:
 
 ```gradle
