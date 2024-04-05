@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import jadex.rules.eca.EventType;
+
 /**
  *  Raw event allows to specify exactly on what condition to wait.
  */
@@ -22,10 +24,10 @@ public @interface RawEvent
 	 */
 	public String value();
 	
-//	/**
-//	 *  Second is the element type such as GoalX
-//	 */
-//	public String second() default EventType.MATCHALL;
+	/**
+	 *  Second is the element type such as GoalX
+	 */
+	public String second() default EventType.MATCHALL;
 	
 	/**
 	 *  Second is the element type such as GoalX as class.
