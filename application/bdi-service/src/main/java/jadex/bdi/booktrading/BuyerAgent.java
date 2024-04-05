@@ -29,23 +29,14 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IResultListener;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Argument;
-import jadex.micro.annotation.Arguments;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.requiredservice.annotation.RequiredService;
-import jadex.requiredservice.annotation.RequiredServices;
 
 /**
  * 
  */
 @Agent(type="bdi")
-@RequiredServices(
-{
-	@RequiredService(name="buyservice", type=IBuyBookService.class) // multiple=true
-})
-@Arguments(@Argument(name="initial_orders", clazz=Order[].class))
 public class BuyerAgent implements INegotiationAgent
 {
 	@Agent
@@ -175,8 +166,8 @@ public class BuyerAgent implements INegotiationAgent
 			+ order.getStartPrice();
 
 		// Find available seller agents.
-		IBuyBookService[]	services = agent.getFeature(IRequiredServiceFeature.class).getServices("buyservice").get().toArray(new IBuyBookService[0]);
-		if(services.length == 0)
+		Collection<IBuyBookService>	services = agent.getFeature(IRequiredServiceFeature.class).getServices(IBuyBookService.class).get();
+		if(services.isEmpty())
 		{
 //			System.out.println("No seller found, purchase failed.");
 			generateNegotiationReport(order, null, acceptable_price);
@@ -185,11 +176,10 @@ public class BuyerAgent implements INegotiationAgent
 
 		// Initiate a call-for-proposal.
 		Future<Collection<Tuple2<IBuyBookService, Integer>>>	cfp	= new Future<Collection<Tuple2<IBuyBookService, Integer>>>();
-		final CollectionResultListener<Tuple2<IBuyBookService, Integer>>	crl	= new CollectionResultListener<Tuple2<IBuyBookService, Integer>>(services.length, true,
+		final CollectionResultListener<Tuple2<IBuyBookService, Integer>>	crl	= new CollectionResultListener<Tuple2<IBuyBookService, Integer>>(services.size(), true,
 			new DelegationResultListener<Collection<Tuple2<IBuyBookService, Integer>>>(cfp));
-		for(int i=0; i<services.length; i++)
+		for(IBuyBookService seller: services)
 		{
-			final IBuyBookService	seller	= services[i];
 			seller.callForProposal(order.getTitle()).addResultListener(new IResultListener<Integer>()
 			{
 				public void resultAvailable(Integer result)
