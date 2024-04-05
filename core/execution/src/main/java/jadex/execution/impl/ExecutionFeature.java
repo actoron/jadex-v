@@ -379,12 +379,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							step	= steps.poll();
 						}
 						
-						//assert step!=null;
+						assert step!=null;
 						
 						try
 						{
-							if(step!=null)	// TODO: why can be null?
-								doRun(step);
+							doRun(step);
 						}
 						catch(StepAborted d)
 						{
