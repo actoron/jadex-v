@@ -1,0 +1,42 @@
+plugins 
+{
+	id 'java-library'
+	id 'idea'
+}
+
+group = 'org.activecomponents.jadex'
+
+sourceCompatibility	= 1.17
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:bdi:'+v
+	implementation 'org.activecomponents.jadex:classreader:'+v
+	implementation 'org.activecomponents.jadex:providedservice:'+v
+
+
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test 
+{
+  useJUnitPlatform()
+}
+
+task runGlasses(type: JavaExec) {
+	classpath = sourceSets.main.runtimeClasspath
+	main = 'jadex.llm.glasses.Main'
+}
+

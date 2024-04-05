@@ -3,13 +3,14 @@ plugins
     id 'java-library'
 	id 'idea'
     id 'ca.coglinc.javacc' version "2.4.0"
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
 }
+
+description = 'Java parser can evaluate Java expressions'
+	
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
-	
-group = 'jadex'
 
 sourceCompatibility = '1.17'
 
@@ -21,8 +22,8 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:common:'+v
-	implementation 'jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
 }

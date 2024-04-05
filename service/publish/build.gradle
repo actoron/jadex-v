@@ -1,13 +1,15 @@
 plugins 
 {
 	id 'java-library'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
+    
 }
+
+description = 'Basic feature to publish services as REST'
+
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
-
-group = 'jadex'
 
 sourceCompatibility = '1.17'
 
@@ -19,19 +21,19 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:common:'+v
-	implementation 'jadex:collection:'+v
-	implementation 'jadex:traverser:'+v
-	implementation 'jadex:javaparser:'+v
-	implementation 'jadex:core:'+v
-	implementation 'jadex:model:'+v
-	implementation 'jadex:execution:'+v
-	implementation 'jadex:micro:'+v
-    implementation 'jadex:requiredservice:'+v
-    implementation 'jadex:providedservice:'+v
-	implementation 'jadex:serialization:'+v
-	implementation 'jadex:binary:'+v
-	implementation 'jadex:json:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:traverser:'+v
+	implementation 'org.activecomponents.jadex:javaparser:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:micro:'+v
+    implementation 'org.activecomponents.jadex:requiredservice:'+v
+    implementation 'org.activecomponents.jadex:providedservice:'+v
+	implementation 'org.activecomponents.jadex:serialization:'+v
+	implementation 'org.activecomponents.jadex:binary:'+v
+	implementation 'org.activecomponents.jadex:json:'+v
 	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 	
 	api 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'

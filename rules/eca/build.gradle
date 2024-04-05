@@ -1,15 +1,14 @@
 plugins 
 {
 	id 'java-library'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
 }
+
+description 'Small Java annotation-based event-condition-action rule engine.'
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 	
-description 'Small Java annotation-based event-condition-action rule engine.'
-group = 'jadex'
-
 sourceCompatibility	= 1.17
 
 repositories
@@ -20,10 +19,10 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:common:'+v
-	implementation 'jadex:concurrent:'+v
-	implementation 'jadex:future:'+v
-	implementation 'jadex:javaparser:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:concurrent:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:javaparser:'+v
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }
 

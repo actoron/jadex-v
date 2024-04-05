@@ -1,14 +1,15 @@
 plugins 
 {
 	id 'java-library'
-	id 'java-test-fixtures'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
+	id 'java-test-fixtures'    
 }
+
+description = 'Component execution'
+
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
-
-group = 'jadex'
 
 sourceCompatibility = '1.17'
 
@@ -20,15 +21,15 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	api 'jadex:future:'+v	// TODO: why explicit redefinition of transitive dependency needed?
-	api 'jadex:core:'+v
+	api 'org.activecomponents.jadex:future:'+v	// TODO: why explicit redefinition of transitive dependency needed?
+	api 'org.activecomponents.jadex:core:'+v
 	
-	implementation 'jadex:common:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	
-	testFixturesImplementation 'jadex:core:'+v
-	testFixturesImplementation 'jadex:future:'+v
+	testFixturesImplementation 'org.activecomponents.jadex:core:'+v
+	testFixturesImplementation 'org.activecomponents.jadex:future:'+v
 	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'

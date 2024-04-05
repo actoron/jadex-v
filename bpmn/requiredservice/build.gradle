@@ -1,13 +1,14 @@
 plugins 
 {
 	id 'java-library'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
 }
+
+description = 'Required service support for bpmn'
+
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
-
-group = 'jadex'
 
 sourceCompatibility = '1.17'
 
@@ -19,17 +20,17 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:common:'+v
-	implementation 'jadex:bytecode:'+v
-	implementation 'jadex:collection:'+v
-	implementation 'jadex:javaparser:'+v
-	implementation 'jadex:core:'+v
-	implementation 'jadex:model:'+v
-	implementation 'jadex:execution:'+v
-	implementation 'jadex:bpmn:'+v
-	implementation 'jadex:providedservice:'+v
-	implementation 'jadex:serialization:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:bytecode:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:javaparser:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:bpmn:'+v
+	implementation 'org.activecomponents.jadex:providedservice:'+v
+	implementation 'org.activecomponents.jadex:serialization:'+v
 	implementation 'net.cinnom:nano-cuckoo:3.0.2'
-	implementation 'jadex:requiredservice:'+v
+	implementation 'org.activecomponents.jadex:requiredservice:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

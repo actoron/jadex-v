@@ -1,13 +1,14 @@
 plugins 
 {
 	id 'java-library'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-2'
 }
+
+description = 'BDI execution engine'
+
+group = 'org.activecomponents.jadex'
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
-
-group = 'jadex'
 
 sourceCompatibility	= 1.17
 
@@ -19,17 +20,17 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
-	implementation 'jadex:core:'+v
-	implementation 'jadex:execution:'+v
-	implementation 'jadex:model:'+v
-	implementation 'jadex:micro:'+v
-	implementation 'jadex:common:'+v
-	implementation 'jadex:future:'+v
-	implementation 'jadex:javaparser:'+v
-	implementation 'jadex:collection:'+v
-	implementation 'jadex:classreader:'+v
-	implementation 'jadex:bytecode:'+v
-	implementation 'jadex:eca:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:micro:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:javaparser:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:classreader:'+v
+	implementation 'org.activecomponents.jadex:bytecode:'+v
+	implementation 'org.activecomponents.jadex:eca:'+v
 	
 	implementation 'org.ow2.asm:asm:9.1'
 	implementation 'org.ow2.asm:asm-tree:9.1'

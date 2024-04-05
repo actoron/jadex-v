@@ -28,8 +28,12 @@ def shell = new GroovyShell(binding)
 def versionScript = new File(settingsDir, 'version.gradle')
 def vs = shell.parse(versionScript)
 def jv = vs.fetchNextBuildNameFromGitTag()
-System.setProperty(jversion, jv.major+"."+jv.minor)
-println "Jadex version: "+System.getProperty(jversion)
+if (jv != null) {
+	System.setProperty(jversion, jv.full);
+	println "Configured version: "+System.getProperty(jversion);
+}
+else
+	println "No version configured or detected";
 
 def sigkey = getVar(sk)
 if (sigkey != null)
@@ -50,6 +54,101 @@ if (sigkeyp != null)
 else
 	println "no signing key pass found"
 	
+def parseURLWithCredentials(urlstring) {
+	//println "urlstring: "+urlstring
+	
+	def ret = [:];
+	def uri	= new URI(urlstring)
+	ret.host = uri.host;
+	ret.port = uri.port
+    ret.user = ''
+    ret.password = ''
+    ret.fingerprint = ''
+    def String userinfo = uri.userInfo
+    if(userinfo!=null)
+    {
+		def String[] split = userinfo.split(":|;")
+		//println 'userinfo: ' + split
+        ret.user = split.length>0 ? split[0] : ''
+        ret.password = split.length>1 ? split[1] : ''
+        
+        for(int i=2; i<split.length; i++)
+        {
+        	if(split[i].startsWith('fingerprint='))
+        	{
+        		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
+        		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
+        		//println 'fingerprint: ' + ret.fingerprint
+        	}
+        }
+	}
+
+	// URL without extra info (e.g. no password for security reasons)
+	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
+	//println 'url: ' + ret.url
+		
+	return ret;
+}
+
+def repourl = getVar('repocentral');
+def repoaccess = repourl ? parseURLWithCredentials(repourl) : null;
+
+def centraluser = repoaccess ? repoaccess.user : null;
+if(centraluser!=null)
+	System.setProperty("centralUser", centraluser)
+def centralpass = repoaccess ? repoaccess.password : null;
+if(centralpass!=null)
+	System.setProperty("centralPassword", centralpass)
+	
+def createStagingRepo() {
+    def descXml = """
+        <promoteRequest>
+            <data>
+                <description>Jadex</description>
+            </data>
+        </promoteRequest>
+    """
+
+    def connection = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/start").openConnection()
+    connection.setRequestMethod("POST")
+    connection.setDoOutput(true)
+    connection.setRequestProperty("Content-Type", "application/xml")
+    connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((System.getProperty("centralUser")+":"+System.getProperty("centralPassword")).getBytes()))
+
+    def outputStream = connection.getOutputStream()
+    outputStream.write(descXml.getBytes())
+    outputStream.flush()
+    outputStream.close()
+
+    def responseCode = connection.getResponseCode()
+    if (responseCode == 201) {
+        def responseStream = connection.getInputStream()
+        def responseText = new BufferedReader(new InputStreamReader(responseStream)).readLines().join('\n')
+        
+        println "Response: ${responseText}"
+        def matcher = responseText =~ /<stagedRepositoryId>(.*?)<\/stagedRepositoryId>/
+        if (matcher.find()) {
+            def repoId = matcher.group(1)
+            println "Repository ID: ${repoId}"
+            System.setProperty("repoId", repoId)
+        } else {
+            println "Repo-ID nicht gefunden"
+        }
+    } else {
+        println "HTTP-POST fehlgeschlagen: ${responseCode}"
+    }
+}
+//createStagingRepo()
+
+println 'version:'+getVar(jversion)+"|"
+if(gradle.startParameter.taskNames.contains('publish') && getVar(jversion)!=null && getVar(jversion).length()>0) {
+	println "publish task called. Creating staging repo ..."
+    createStagingRepo()
+} else {
+	println "publish task not called. no staging repo is created."
+}
+	
+//includeBuild('.') {}
 includeBuild('util/common') {}
 includeBuild('util/collection') {}
 includeBuild('util/concurrent') {}
@@ -78,13 +177,14 @@ includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {name='nfproperties'}
 
-includeBuild('communication/ipc') {name='communication'}
+includeBuild('communication/ipc') {}
 includeBuild('communication/messaging') {}
 includeBuild('communication/serialization') {}
 
 includeBuild('micro/engine'){name='micro'}
 includeBuild('micro/providedservice') {name='providedservicemicro'}
 includeBuild('micro/requiredservice') {name='requiredservicemicro'}
+includeBuild('micro/lib'){name='libmicro'}
 
 includeBuild('bdi/engine') {name='bdi'}
 
@@ -97,6 +197,7 @@ includeBuild('rules/eca') {}
 includeBuild('application/micro'){name='application-micro'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
+//includeBuild('application/bdi-llm'){name='application-bdi-llm'}
 includeBuild('application/bpmn'){name='application-bpmn'}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
