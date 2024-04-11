@@ -3,7 +3,6 @@ package jadex.future;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import jadex.common.ICommand;
@@ -30,7 +29,7 @@ public class FutureBarrier<E>
 	 *  Add a future to the barrier.
 	 *  @param fut The future.
 	 */
-	public void addFuture(IFuture<E> fut)
+	public void add(IFuture<E> fut)
 	{
 		if(fut!=null)
 		{

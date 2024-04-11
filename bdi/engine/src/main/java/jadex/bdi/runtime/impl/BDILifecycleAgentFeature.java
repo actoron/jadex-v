@@ -1747,7 +1747,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 			for(final RGoal goal: goals)
 			{
 				IFuture<Void>	fut	= goal.drop();
-				bodyend.addFuture(fut);
+				bodyend.add(fut);
 //				fut.addResultListener(new IResultListener<Void>()
 //				{
 //					@Override
@@ -1770,7 +1770,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 			for(final RPlan plan: plans)
 			{
 				IFuture<Void>	fut	= plan.abort();
-				bodyend.addFuture(fut);
+				bodyend.add(fut);
 //				fut.addResultListener(new IResultListener<Void>()
 //				{
 //					@Override

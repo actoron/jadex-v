@@ -45,8 +45,8 @@ public class Main
 		);*/
 		
 		FutureBarrier<String> b = new FutureBarrier<String>();
-		b.addFuture(eggs);
-		b.addFuture(coffee);
+		b.add(eggs);
+		b.add(coffee);
 		
 		b.waitFor().get();
 		
