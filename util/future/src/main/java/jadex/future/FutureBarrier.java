@@ -1,7 +1,9 @@
 package jadex.future;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import jadex.common.ICommand;
@@ -15,6 +17,15 @@ public class FutureBarrier<E>
 	/** The list of futures. */
 	protected List<IFuture<E>> futures;
 
+	public FutureBarrier()
+	{
+	}
+	
+	public FutureBarrier(IFuture<E> ... futures)
+	{
+		this.futures = Arrays.asList(futures);
+	}
+	
 	/**
 	 *  Add a future to the barrier.
 	 *  @param fut The future.

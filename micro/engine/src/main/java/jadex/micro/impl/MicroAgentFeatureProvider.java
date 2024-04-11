@@ -1,15 +1,21 @@
 package jadex.micro.impl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
 import jadex.core.impl.FeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
@@ -17,6 +23,8 @@ import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.micro.MicroAgent;
 import jadex.micro.MicroClassReader;
 import jadex.micro.annotation.Agent;
+import jadex.micro.annotation.AgentResult;
+import jadex.micro.annotation.Result;
 
 public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature> implements IComponentLifecycleManager
 {
@@ -130,5 +138,34 @@ public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature
 	{
 		all.remove(getFeatureType());
 		return all;
+	}
+	
+	public Map<String, Object> getResults(Object pojo)
+	{
+		Map<String, Object> ret = new HashMap<String, Object>();
+		if(pojo!=null)
+		{
+			Class<?> pcl = pojo.getClass();
+			Field[] fls = SReflect.getAllFields(pcl);
+			
+			for(int i=0; i<fls.length; i++)
+			{
+				if(MicroClassReader.isAnnotationPresent(fls[i], AgentResult.class, ComponentManager.get().getClassLoader()))
+				{
+					try
+					{
+						AgentResult r = MicroClassReader.getAnnotation(fls[i], AgentResult.class, ComponentManager.get().getClassLoader());
+						fls[i].setAccessible(true);
+						Object val = fls[i].get(pojo);
+						ret.put(fls[i].getName(), val);
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return ret;
 	}
 }

@@ -186,6 +186,11 @@ public class Component implements IComponent
 		features.put(type, feature);
 	}
 	
+	/*public Map<String, Object> getResults(Object pojo)
+	{
+		return Collections.EMPTY_MAP;
+	}*/
+	
 	/* *
 	 *  Get the fetcher.
 	 *  @return The fetcher.

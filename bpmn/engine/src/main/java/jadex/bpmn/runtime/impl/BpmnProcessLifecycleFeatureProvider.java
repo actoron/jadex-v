@@ -1,5 +1,7 @@
 package jadex.bpmn.runtime.impl;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import jadex.bpmn.runtime.BpmnProcess;
@@ -68,5 +70,19 @@ public class BpmnProcessLifecycleFeatureProvider extends FeatureProvider<BpmnPro
 	{
 		all.remove(getFeatureType());
 		return all;
+	}
+	
+	public Map<String, Object> getResults(Object pojo)
+	{
+		Map<String, Object> ret = Collections.EMPTY_MAP;
+		if(pojo!=null)
+		{
+			if(pojo instanceof RBpmnProcess)
+			{
+				RBpmnProcess p = (RBpmnProcess)pojo;
+				ret = p.getResults();
+			}
+		}
+		return ret;
 	}
 }

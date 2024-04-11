@@ -1,8 +1,10 @@
 package jadex.core;
 
-import java.awt.image.ComponentSampleModel;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Semaphore;
 
 import jadex.core.impl.ComponentManager;
@@ -194,26 +196,45 @@ public interface IComponent
 		return ret;
 	}
 	
-	public static void waitForLastComponentTerminated()
+	public static void waitForLastComponentTerminated() 
 	{
-		try
-		{
-			Semaphore sem = new Semaphore(0);
-			IComponent.addComponentListener(new IComponentListener() 
-			{
-				@Override
-				public void lastComponentRemoved(ComponentIdentifier cid) 
-				{
-					//System.out.println("removed last: "+cid);
-					sem.release();
-				}
-			}, IComponent.COMPONENT_LASTREMOVED);
-			sem.acquire();
-		}
-		catch(InterruptedException e)
-		{
-			e.printStackTrace();
-		}
+	    Semaphore sem = new Semaphore(0);
+	    boolean[] released = new boolean[1];
+	    Object lock = new Object();
+
+	    synchronized(lock) 
+	    { 
+		    synchronized(ComponentManager.get().components) 
+		    {
+		        if(ComponentManager.get().getNumberOfComponents() == 0) 
+		        {
+		            return;
+		        }
+		        IComponent.addComponentListener(new IComponentListener() 
+		        {
+		            @Override
+		            public void lastComponentRemoved(ComponentIdentifier cid) 
+		            {
+		            	synchronized(lock) 
+		            	{
+		                    sem.release();
+		                    released[0] = true;
+		                    lock.notifyAll(); 
+		                }
+		            }
+		        }, IComponent.COMPONENT_LASTREMOVED);
+		    }
+		    
+	    	try 
+		    {
+		    	if(!released[0])
+		    		sem.acquire();
+		    } 
+		    catch(InterruptedException e) 
+		    {
+		        e.printStackTrace();
+		    }
+	    }
 	}
 	
 	/**
@@ -243,6 +264,54 @@ public interface IComponent
 		}
 		if(!found)
 			ret.setResult(false);
+		return ret;
+	}
+	
+	public static <T> IFuture<T> perform(IThrowingFunction<IComponent, T> body)
+	{
+		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
+		return perform(pojo);
+	}
+	
+	public static <T> IFuture<T> perform(Callable<T> body)
+	{
+		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
+		return perform(pojo);
+	}
+	
+	public static Map<String, Object> getResults(Object pojo)
+	{
+		Map<String, Object> ret = new HashMap<>();
+		
+		boolean done = false;
+		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
+		{
+			if(creator.isCreator(pojo))
+			{
+				ret = creator.getResults(pojo);
+				done = true;
+				break;
+			}
+		}
+		if(!done)
+			throw new RuntimeException("Could not get results: "+pojo);
+		
+		return ret;
+	}
+	
+	public static <T> IFuture<T> perform(Object pojo)
+	{
+		Future<T> ret = new Future<>();
+		IExternalAccess comp = IComponent.create(pojo).get();
+		comp.waitForTermination().then(Void -> 
+		{
+			Map<String, Object> res = IComponent.getResults(pojo);
+			if(res.size()==1)
+				ret.setResult((T)res.values().iterator().next());
+			else
+				ret.setException(new RuntimeException("no result found: "+res));
+		});
+		
 		return ret;
 	}
 	

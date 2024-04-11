@@ -1,10 +1,17 @@
 package jadex.micro;
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+
+import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.micro.annotation.AgentResult;
 import jadex.model.IModelFeature;
 import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
@@ -105,6 +112,35 @@ public class MicroAgent	extends Component
 		
 		return ret;
 	}
+	
+	/*public Map<String, Object> getResults()
+	{
+		Map<String, Object> ret = new HashMap<String, Object>();
+		if(pojo!=null)
+		{
+			Class<?> pcl = pojo.getClass();
+			Field[] fls = SReflect.getAllFields(pcl);
+			
+			for(int i=0; i<fls.length; i++)
+			{
+				if(MicroClassReader.isAnnotationPresent(fls[i], AgentResult.class, ComponentManager.get().getClassLoader()))
+				{
+					try
+					{
+						AgentResult r = MicroClassReader.getAnnotation(fls[i], AgentResult.class, ComponentManager.get().getClassLoader());
+						fls[i].setAccessible(true);
+						Object val = fls[i].get(pojo);
+						ret.put(fls[i].getName(), val);
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return ret;
+	}*/
 	
 	@Override
 	public String toString()

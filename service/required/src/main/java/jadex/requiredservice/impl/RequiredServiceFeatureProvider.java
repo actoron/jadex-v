@@ -30,9 +30,9 @@ public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredSer
 	/**
 	 *  Get the predecessors, i.e. features that should be inited first.
 	 *  @return The predecessors.
-	 */
+	 * /
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
 		return Set.of(IProvidedServiceFeature.class);
-	}
+	}*/
 }
