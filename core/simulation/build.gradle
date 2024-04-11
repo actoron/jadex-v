@@ -32,6 +32,7 @@ dependencies
 
 test {
   useJUnitPlatform()
+  maxParallelForks = Runtime.runtime.availableProcessors()
 }
 
 // Hack for broken test fixtures in eclipse
