@@ -106,7 +106,7 @@ public class SerializationServices implements ISerializationServices
 		{
 			SUtil.throwUnchecked(e);
 		}
-		serializers[defaultserializer].encode(os, cl, null, internalGetPreprocessors(), obj);
+		serializers[defaultserializer].encode(os, obj, cl, internalGetPreprocessors(), null);
 	}
 	
 	/**
