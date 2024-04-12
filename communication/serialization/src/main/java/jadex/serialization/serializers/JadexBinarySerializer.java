@@ -39,7 +39,7 @@ public class JadexBinarySerializer implements ISerializer
 	/**
 	 *  Config with pre-defined Strings for faster encoding/decoding.
 	 */
-	protected static SerializationConfig CONFIG = new SerializationConfig(new String[] {
+	/*protected static SerializationConfig CONFIG = new SerializationConfig(new String[] {
 		"jadex",
 		"bridge",
 		"platform",
@@ -101,7 +101,7 @@ public class JadexBinarySerializer implements ISerializer
 		IMsgHeader.RECEIVER,
 		IMsgHeader.CONVERSATION_ID,
 		IMsgHeader.XID
-	});
+	});*/
 	
 	/** The write processors. */
 	public List<ITraverseProcessor> writeprocs;
@@ -193,7 +193,7 @@ public class JadexBinarySerializer implements ISerializer
 	 */
 	public Object decode(InputStream is, ClassLoader classloader, ITraverseProcessor[] postprocs, IErrorReporter rep, Object usercontext)
 	{
-		Object ret = SBinarySerializer.readObjectFromStream(is, postprocs!=null?Arrays.asList(postprocs):null, usercontext, classloader, null, CONFIG, readprocs);
+		Object ret = SBinarySerializer.readObjectFromStream(is, postprocs!=null?Arrays.asList(postprocs):null, usercontext, classloader, null, null, readprocs);//CONFIG, readprocs);
 		
 		try
 		{
