@@ -3,12 +3,14 @@ package jadex.bdi.runtime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import jadex.core.ResultProvider;
+
 /**
  *  Allows providing arguments when starting an agent.
  */
-public class BDICreationInfo
+public class BDICreationInfo extends ResultProvider
 {
-	protected String	classname;
+	protected String classname;
 	protected Map<String, Object>	args;
 	
 	/**
