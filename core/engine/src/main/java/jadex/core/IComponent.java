@@ -219,7 +219,6 @@ public interface IComponent
 		            	{
 		                    sem.release();
 		                    released[0] = true;
-		                    lock.notifyAll(); 
 		                }
 		            }
 		        }, IComponent.COMPONENT_LASTREMOVED);

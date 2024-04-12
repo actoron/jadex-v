@@ -35,9 +35,7 @@ public class Main
 			System.out.println("bar: "+res)
 		);*/
 		
-		FutureBarrier<String> b = new FutureBarrier<String>();
-		b.add(eggs);
-		b.add(coffee);
+		FutureBarrier<String> b = new FutureBarrier<String>(eggs, coffee);
 		
 		b.waitFor().get();
 		

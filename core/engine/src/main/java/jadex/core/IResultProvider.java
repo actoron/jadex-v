@@ -32,11 +32,14 @@ public interface IResultProvider
 				subs = new ArrayList<SubscriptionIntermediateFuture<NameValue>>(getResultSubscribers());
 		}
 		if(subs!=null)
+		{
 			subs.forEach(sub -> 
 			{
 				//System.out.println("sub: "+name+" "+value);
+				//if(checkNotify(name, value))
 				sub.addIntermediateResult(new NameValue(name, value));
 			});
+		}
 	}
 	
 	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
@@ -61,8 +64,19 @@ public interface IResultProvider
 		}
 		
 		if(res!=null)
-			res.entrySet().stream().forEach(e -> ret.addIntermediateResult(new NameValue(e.getKey(), e.getValue())));
+		{
+			res.entrySet().stream().forEach(e -> 
+			{
+				if(checkInitialNotify(e.getKey(), e.getValue()))
+					ret.addIntermediateResult(new NameValue(e.getKey(), e.getValue()));
+			});
+		}
 		
 		return ret;
+	}
+	
+	public default boolean checkInitialNotify(String name, Object value)
+	{
+		return true;
 	}
 }

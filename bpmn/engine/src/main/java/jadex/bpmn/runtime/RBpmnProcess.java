@@ -2,8 +2,10 @@ package jadex.bpmn.runtime;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import jadex.core.ResultProvider;
 
@@ -13,6 +15,8 @@ public class RBpmnProcess extends ResultProvider
 	protected String filename;
 	
 	protected Map<String, Object> args;
+	
+	protected Set<String> onlydeclared = new HashSet<>();
 	
 	/**
 	 *  Builder pattern constructor.
@@ -97,6 +101,7 @@ public class RBpmnProcess extends ResultProvider
 	public RBpmnProcess	declareResult(String name)
 	{
 		results.put(name, null);
+		onlydeclared.add(name);
 		return this;
 	}
 	
@@ -106,6 +111,20 @@ public class RBpmnProcess extends ResultProvider
 	public boolean hasDeclaredResult(String name)
 	{
 		return results.containsKey(name);
+	}
+	
+	/**
+	 *  Do not notify the pure declarations.
+	 */
+	public boolean checkInitialNotify(String name, Object value)
+	{
+		return !onlydeclared.contains(name);
+	}
+	
+	public void addResult(String name, Object value)
+	{
+		onlydeclared.remove(name);
+		super.addResult(name, value);
 	}
 	
 	/**
