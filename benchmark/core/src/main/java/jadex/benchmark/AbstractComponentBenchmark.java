@@ -91,7 +91,7 @@ public abstract class AbstractComponentBenchmark
 			{
 				int start	= proc+1;
 				Future<Void> threadfut	= new Future<>();
-				threadsfinished.addFuture(threadfut);
+				threadsfinished.add(threadfut);
 				thread[proc]	= new Thread(() ->
 				{
 					try
@@ -106,7 +106,7 @@ public abstract class AbstractComponentBenchmark
 							// HACK!!! future barrier should be multi threaded!?
 							synchronized(AbstractComponentBenchmark.this)
 							{
-								compscreated.addFuture(compfut);
+								compscreated.add(compfut);
 							}
 						}
 						
@@ -148,7 +148,7 @@ public abstract class AbstractComponentBenchmark
 			try
 			{
 				IFuture<Void>	fut	= IComponent.terminate(comp);
-				killed.addFuture(fut);
+				killed.add(fut);
 				
 				if(print)
 				{
@@ -190,7 +190,7 @@ public abstract class AbstractComponentBenchmark
 			{
 				int start	= proc+1;
 				Future<Void> threadfut	= new Future<>();
-				threadsfinished.addFuture(threadfut);
+				threadsfinished.add(threadfut);
 				thread[proc]	= new Thread(() ->
 				{
 					for(int i=start; !benchmark.isDone() && i<=num; i+=numproc)

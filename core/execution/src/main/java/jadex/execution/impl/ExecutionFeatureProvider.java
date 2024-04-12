@@ -1,5 +1,6 @@
 package jadex.execution.impl;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -9,6 +10,7 @@ import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
+import jadex.core.LambdaPojo;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 import jadex.core.impl.IBootstrapping;
@@ -16,7 +18,6 @@ import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
-import jadex.execution.LambdaAgent.Result;
 import jadex.future.IFuture;
 
 public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
@@ -168,7 +169,8 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 	{
 		return Runnable.class.isAssignableFrom(obj.getClass())
 			|| Supplier.class.isAssignableFrom(obj.getClass())
-			|| IThrowingFunction.class.isAssignableFrom(obj.getClass());
+			|| IThrowingFunction.class.isAssignableFrom(obj.getClass())
+			|| LambdaPojo.class.isAssignableFrom(obj.getClass());
 	}
 	
 	@Override
@@ -182,6 +184,8 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 			ret = LambdaAgent.create((Callable<?>)pojo, cid).component();
 		else if(pojo instanceof IThrowingFunction)
 			ret = LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid).component();
+		else if(pojo instanceof LambdaPojo)
+			ret = LambdaAgent.create((LambdaPojo<?>)pojo, cid);
 		else
 			throw new RuntimeException("Cannot create lambda agent from: "+cid);
 	
@@ -198,5 +202,16 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 	public void terminate(IComponent component) 
 	{
 		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
+	}
+	
+	public Map<String, Object> getResults(Object pojo)
+	{
+		Map<String, Object> ret = new HashMap<String, Object>();
+		if(pojo instanceof LambdaPojo)
+		{
+			LambdaPojo<?> lp = (LambdaPojo<?>)pojo;
+			ret.put("result", lp.getResult());
+		}
+		return ret;
 	}
 }

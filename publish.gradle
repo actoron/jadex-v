@@ -25,21 +25,9 @@ apply plugin: 'signing'
 def canSign = project.hasProperty('signing.secretKeyRingFile') || System.getProperty("signingKey")!=null
 println "canSign: "+canSign
 
-/*if (gradle.startParameter.taskNames.contains('publishCentral'))
-    project.ext.repos = 'central'
-task publishCentral {
-    outputs.upToDateWhen { false }
-    //doLast { println 'Gradle is...' }
-}
-publishCentral.finalizedBy publish*/
-
 java {
     withSourcesJar()
     withJavadocJar()
-}
-
-tasks.withType(Javadoc) {
-    options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 def getVar(String key, Project p) {
@@ -55,6 +43,24 @@ def getVar(String key, Project p) {
     return value
 }
 
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+tasks.withType(Task) { task ->
+    if (task.name.startsWith('publish') || task.group == 'publishing') {
+        if (!isJadexVersionSet()) {
+            println "Skipping $task.name, Jadex version not set"
+            task.enabled = false
+        }
+    }
+}
+
+def isJadexVersionSet() {
+	def v = System.getProperty("JADEX_VERSION")
+	return v!=null && v.length()>0;
+}
+
 // Parse a URI into its components.
 // see, e.g., https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
 // Examples:
@@ -62,6 +68,8 @@ def getVar(String key, Project p) {
 // https://a@myserver.com/path -> {host: "myserver.com", port: -1, user: "a", password: "", fingerprint: "", url: "https://myserver.com/path"}
 // ssh://a:b;fingerprint=SHA256-ABC@myserver.com:22000  -> {host: "myserver.com", port: 22000, user: "a", password: "b", fingerprint: "SHA256:ABC", url: "ssh://myserver.com:22000"}
 def parseURLWithCredentials(urlstring) {
+	if(urlstring==null)
+		return null;
 	//println "urlstring: "+urlstring
 	
 	def ret = [:];
@@ -99,23 +107,17 @@ def parseURLWithCredentials(urlstring) {
 
 //println getVar("signingKey", project)
 
-String getSonatypeUser() {
-	def repourl = getVar('repocentral', project)
-	def repoaccess = parseURLWithCredentials(repourl)
-	return repoaccess.user
-}
-
-String getSonatypePassword() {
-	def repourl = getVar('repocentral', project)
-	def repoaccess = parseURLWithCredentials(repourl)
-	return repoaccess.password
-}
-
 if(project.hasProperty('repos')) {
     for(String repo: repos.split(",")) {
         // Parse credentials from environment
         def repourl = getVar('repo' + repo, project)
         def repoaccess = parseURLWithCredentials(repourl)
+        
+        if(repoaccess==null) {
+    		println 'no repo access credentials'
+    		return
+    	}
+        
         println 'publishing to: ' + repoaccess.url
         println 'repouser: ' + repoaccess.user
         println 'repopassword: ' + repoaccess.password

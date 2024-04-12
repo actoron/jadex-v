@@ -184,7 +184,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 				}
 					
 				final Future<Void> fut = new Future<>();
-				bar.addFuture(fut);
+				bar.add(fut);
 				
 				final ProvidedServiceImplementation	impl = info.getImplementation();
 				// Virtual service (e.g. promoted)

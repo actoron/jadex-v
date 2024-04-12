@@ -72,7 +72,7 @@ public class WatchdogAgent	implements IWatchdogService
 			services.stream().forEach(service ->
 			{
 				IFuture<Void> fut = service.ping();
-				barrier.addFuture(fut);
+				barrier.add(fut);
 				fut.then(x -> System.out.println("ping ok: "+service))
 				.catchEx(ex -> {System.out.println("Watchdog triggered: "+service); watchdogs.remove(service);} );
 			});

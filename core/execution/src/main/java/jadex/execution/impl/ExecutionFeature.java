@@ -36,8 +36,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
 	
 	protected Queue<Runnable> steps = new ArrayDeque<>(4);
-	protected boolean executing;
-	protected boolean do_switch;
+	protected volatile boolean executing;
+	protected volatile boolean do_switch;
 	protected boolean terminated;
 	protected ThreadRunner runner = null;
 	protected Component	self = null;
@@ -379,11 +379,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							step	= steps.poll();
 						}
 						
-						//assert step!=null;
+						assert step!=null;
 						
 						try
 						{
-							if(step!=null)	// TODO: why can be null?
+//							if(step!=null)	// TODO: why can be null?
 								doRun(step);
 						}
 						catch(StepAborted d)

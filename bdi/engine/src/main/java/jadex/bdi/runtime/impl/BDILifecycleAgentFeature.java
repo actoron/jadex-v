@@ -1742,12 +1742,12 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 			FutureBarrier<Void>	bodyend	= new FutureBarrier<Void>();
 						
 			// Abort running goals.
-			Collection<RGoal> goals = bdif.getCapability().getGoals();
+			Collection<RGoal> goals = new ArrayList<>(bdif.getCapability().getGoals());
 //			System.out.println(component.getComponentIdentifier()+" dropping body goals: "+goals);
 			for(final RGoal goal: goals)
 			{
 				IFuture<Void>	fut	= goal.drop();
-				bodyend.addFuture(fut);
+				bodyend.add(fut);
 //				fut.addResultListener(new IResultListener<Void>()
 //				{
 //					@Override
@@ -1770,7 +1770,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 			for(final RPlan plan: plans)
 			{
 				IFuture<Void>	fut	= plan.abort();
-				bodyend.addFuture(fut);
+				bodyend.add(fut);
 //				fut.addResultListener(new IResultListener<Void>()
 //				{
 //					@Override

@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
+import jadex.future.FutureBlockingQueue;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 

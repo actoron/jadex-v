@@ -1,10 +1,12 @@
 package jadex.bdi.booktrading;
 
 import jadex.future.IFuture;
+import jadex.providedservice.annotation.Service;
 
 /**
  *  The buy book service is provided by the seller and used by the buyer.
  */
+@Service
 public interface IBuyBookService
 {
 	/**

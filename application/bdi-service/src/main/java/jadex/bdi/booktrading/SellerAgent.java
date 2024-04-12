@@ -27,18 +27,12 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Argument;
-import jadex.micro.annotation.Arguments;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
 import jadex.providedservice.annotation.Service;
 
 @Agent(type="bdi")
 @Service
-@ProvidedServices(@ProvidedService(type=IBuyBookService.class))
-@Arguments(@Argument(name="initial_orders", clazz=Order[].class))
 public class SellerAgent implements IBuyBookService, INegotiationAgent
 {
 	@Agent
@@ -269,7 +263,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 			double elapsed_time = getTime() - order.getStartTime();
 			double price_span = order.getLimit() - order.getStartPrice();
 			int acceptable_price =  (int)(price_span * elapsed_time / time_span) + order.getStartPrice();
-			System.out.println(agent.getId().getLocalName()+" proposed: " + acceptable_price);
+//			System.out.println(agent.getId().getLocalName()+" proposed: " + acceptable_price);
 			
 			// Store proposal data in plan parameters.
 			goal.setProposal(acceptable_price);

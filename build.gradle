@@ -80,7 +80,7 @@ def excludes = ['communication', 'nfproperties', 'bdi-llm', 'llmbdi']
 
 task closeStagingRepo {
     group = "publishing"
-
+    
     doLast {
         def stagedRepositoryId = System.getProperty("repoId")
         if(stagedRepositoryId==null) {
@@ -188,7 +188,7 @@ def extractRepoStatus(repoId, jsonResponse) {
 
 task releaseStagingRepo {
     group = "publishing"
-
+    
     doLast {
         def stagedRepositoryId = System.getProperty("repoId")
         if (stagedRepositoryId == null) {
@@ -247,6 +247,11 @@ task updateTag() {
 	doLast() {
 		def tag_url = getVar('tag_url')
     	def acc = parseURLWithCredentials(tag_url)
+    	
+    	if(acc==null) {
+    		println 'no repo access credentials'
+    		return
+    	}
 				
 		def git = org.eclipse.jgit.api.Git.open(project.projectDir);
 		//org.eclipse.jgit.lib.Repository repo = new org.eclipse.jgit.storage.file.FileRepositoryBuilder().setMustExist(true).setGitDir(project.projectDir).readEnvironment().findGitDir().build();
@@ -310,6 +315,8 @@ def waitForSSHCmd(cmd) {
 }
 
 task createZip(type: Zip) {
+	group = "publishing"
+	
 	def v = getVar("JADEX_VERSION")
 	def suf = getVar("JADEX_VERSION_SUFFIX")
 	if(suf!=null)
@@ -343,7 +350,10 @@ task createZip(type: Zip) {
 }
 
 task deployZip() {
+	group = "publishing"
+
 	dependsOn createZip
+	
 	doLast {
 		//if(!gradle.ext.productionmode)
 		//	throw new IllegalStateException("Can only deploy zips in production mode.");
@@ -352,6 +362,11 @@ task deployZip() {
 			throw new RuntimeException("Deploy requires deployment variables set: dl_host, tag_url");
 		
 		def acc = getDownloadServerAccess();
+		
+		if(acc==null) {
+    		println 'no repo access credentials'
+    		return
+    	}
 		
 		def v = getVar("JADEX_VERSION")
 		def suf = getVar("JADEX_VERSION_SUFFIX")
@@ -436,6 +451,19 @@ def parseURLWithCredentials(urlstring) {
 	return ret;
 }
 
+tasks.withType(Task) { task ->
+    if (task.name.startsWith('publish') || task.group == 'publishing') {
+        if (!isJadexVersionSet()) {
+            println "Skipping $task.name, Jadex version not set"
+            task.enabled = false
+        }
+    }
+    println task.name+' '+task.enabled
+}
 
+def isJadexVersionSet() {
+	def v = System.getProperty("JADEX_VERSION")
+	return v!=null && v.length()>0;
+}
 
 

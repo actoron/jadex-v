@@ -59,10 +59,8 @@ public class SokratesV3Agent
 	 *  Setup the gui and start playing.
 	 */
 	@OnStart
-	public IFuture<Void>	body(IComponent agent)
+	public void	body(IComponent agent)
 	{
-		final Future<Void>	ret	= new Future<Void>();
-
 //		strategy = agent.getConfiguration();
 		System.out.println("strategy is: "+strategy);
 		createGui(agent);
@@ -76,17 +74,15 @@ public class SokratesV3Agent
 			{
 				long end = System.currentTimeMillis();
 				System.out.println("Needed: "+(end-start)+" millis.");
-				ret.setResult(null);
+				agent.terminate();
 			}
 			
 			public void exceptionOccurred(Exception exception)
 			{
 				System.out.println("No solution found :-(");
-				ret.setResult(null);
+				agent.terminate();
 			}
 		});
-		
-		return ret;
 	}
 	
 	/**

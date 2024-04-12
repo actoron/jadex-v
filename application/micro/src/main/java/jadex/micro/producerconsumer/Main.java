@@ -1,6 +1,7 @@
 package jadex.micro.producerconsumer;
 
 import jadex.core.IComponent;
+import jadex.future.FutureBlockingQueue;
 
 /**
  *  This example shows how a producer consumer pattern can be built with a future based 
