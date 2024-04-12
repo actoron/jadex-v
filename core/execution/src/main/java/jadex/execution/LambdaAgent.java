@@ -111,7 +111,11 @@ public class LambdaAgent //extends Component
 	public static IExternalAccess create(Runnable body, ComponentIdentifier cid)
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(cid));
-		comp.getExternalAccess().scheduleStep(body);
+		comp.getExternalAccess().scheduleStep(() -> body);
+		/*{
+			body.run();
+			comp.terminate();
+		});*/
 		return comp.getExternalAccess();
 	}
 	
@@ -124,7 +128,7 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(cid));
 		IFuture<T> res = comp.getExternalAccess().scheduleStep(body);
-		res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
+		//res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
 		//comp.result = res;
 		return new Result<T>(comp.getExternalAccess(), res);
 	}
@@ -137,7 +141,7 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(cid));
 		IFuture<T> res = comp.getExternalAccess().scheduleStep(body);
-		res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
+		//res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
 		//comp.result = res;
 		return new Result<T>(comp.getExternalAccess(), res);
 	}
@@ -165,13 +169,15 @@ public class LambdaAgent //extends Component
 		{
 			Result<T> res = create((IThrowingFunction)body, cid);
 			ret = res.component();
-			res.result().then(r -> pojo.setResult(r));
+			res.result().then(r -> 
+				pojo.addResult("result", r));
 		}
 		else if(body instanceof Callable)
 		{
 			Result<T> res = create((Callable)body, cid);
 			ret = res.component();
-			res.result().then(r -> pojo.setResult(r));
+			res.result().then(r -> 
+				pojo.addResult("result", r));
 		}
 		/*else if(body instanceof IThrowingConsumer)
 		{

@@ -1,20 +1,11 @@
 package jadex.micro.breakfast;
 
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
-import jadex.core.IThrowingFunction;
-import jadex.core.impl.ComponentManager;
+import jadex.core.ResultProvider;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.LambdaAgent;
-import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.AgentResult;
 import jadex.model.annotation.OnStart;
 
 /**
@@ -26,7 +17,7 @@ public class Main
 	{
 		long start = System.currentTimeMillis();
 		
-		IFuture<String> eggs = IComponent.perform(agent ->
+		IFuture<String> eggs = IComponent.run(agent ->
 		{
 			// boil eggs
 			agent.getFeature(IExecutionFeature.class).waitForDelay(5000).get();
@@ -34,7 +25,7 @@ public class Main
 			return "Eggs ready";
 		});
 		
-		IFuture<String> coffee = IComponent.perform(new CoffeeMaker());
+		IFuture<String> coffee = IComponent.run(new CoffeeMaker());
 		
 		/*eggs.then(res -> 
 			System.out.println("bar: "+res)
@@ -58,10 +49,23 @@ public class Main
 	}
 
 	@Agent
-	public static class CoffeeMaker
+	public static class CoffeeMaker extends ResultProvider
+	{
+		@OnStart
+		public void start(IComponent agent)
+		{
+			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
+			System.out.println("Coffee ready");
+			addResult("result", "Coffee ready");
+		}
+	}
+	
+	/*@Agent
+	public static class CoffeeMaker 
 	{
 		@AgentResult
 		protected String result;
+		
 		
 		@OnStart
 		public void start(IComponent agent)
@@ -71,5 +75,30 @@ public class Main
 			result = "Coffee ready";
 			agent.terminate();
 		}
-	}
+	}*/
+	
+	/*@Agent
+	public static class CoffeeMaker implements IResultProvider
+	{
+		protected List<SubscriptionIntermediateFuture<NameValue>> resultsubscribers = new ArrayList<SubscriptionIntermediateFuture<NameValue>>();
+		protected Map<String, Object> results = new HashMap<String, Object>();
+		
+		@OnStart
+		public void start(IComponent agent)
+		{
+			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
+			System.out.println("Coffee ready");
+			addResult("result", "Coffee ready");
+		}
+		
+		public Map<String, Object> getResultMap()
+		{
+			return results;
+		}
+		
+		public List<SubscriptionIntermediateFuture<NameValue>> getResultSubscribers()
+		{
+			return resultsubscribers;
+		}
+	}*/
 }

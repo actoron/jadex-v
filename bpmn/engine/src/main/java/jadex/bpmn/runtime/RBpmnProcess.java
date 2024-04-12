@@ -1,26 +1,18 @@
 package jadex.bpmn.runtime;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import jadex.common.NameValue;
-import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.future.SubscriptionIntermediateFuture;
+import jadex.core.ResultProvider;
 
 
-public class RBpmnProcess 
+public class RBpmnProcess extends ResultProvider
 {
 	protected String filename;
 	
 	protected Map<String, Object> args;
-	
-	protected Map<String, Object> results;
-	
-	protected List<SubscriptionIntermediateFuture<NameValue>> resultsubscribers;
 	
 	/**
 	 *  Builder pattern constructor.
@@ -91,24 +83,12 @@ public class RBpmnProcess
 	}
 	
 	/**
-	 *  Add an result as name/value pair.
-	 */
-	public RBpmnProcess	addResult(String name, Object value)
-	{
-		if(results==null)
-			results = new LinkedHashMap<>();
-		results.put(name, value);
-		notifyResult(name, value);
-		return this;
-	}
-	
-	/**
 	 *  Get the result value.
 	 *  @return the value or null, if not set.
 	 */
 	public Object getResult(String name)
 	{
-		return results==null? null: results.get(name); 
+		return results.get(name); 
 	}
 	
 	/**
@@ -116,8 +96,6 @@ public class RBpmnProcess
 	 */
 	public RBpmnProcess	declareResult(String name)
 	{
-		if(results==null)
-			results = new LinkedHashMap<>();
 		results.put(name, null);
 		return this;
 	}
@@ -125,9 +103,9 @@ public class RBpmnProcess
 	/**
 	 *  Declare a result value.
 	 */
-	public boolean	hasDeclaredResult(String name)
+	public boolean hasDeclaredResult(String name)
 	{
-		return results==null? false: results.containsKey(name);
+		return results.containsKey(name);
 	}
 	
 	/**
@@ -136,32 +114,6 @@ public class RBpmnProcess
 	 */
 	public Map<String, Object> getResults()
 	{
-		return results==null? Collections.EMPTY_MAP: new HashMap<>(results); 
-	}
-	
-	protected void notifyResult(String name, Object value)
-	{
-		if(resultsubscribers!=null)
-		{
-			NameValue val = new NameValue(name, value);
-			resultsubscribers.forEach(sub -> sub.addIntermediateResult(val));
-		}
-	}
-	
-	public synchronized ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
-	{
-		SubscriptionIntermediateFuture<NameValue> ret = new SubscriptionIntermediateFuture<>();
-		
-		if(resultsubscribers==null)
-			resultsubscribers = new ArrayList<>();
-		
-		resultsubscribers.add(ret);
-		
-		ret.setTerminationCommand(ex ->
-		{
-			resultsubscribers.remove(ret);
-		});
-		
-		return ret;
+		return new HashMap<>(results); 
 	}
 }

@@ -267,42 +267,31 @@ public interface IComponent
 		return ret;
 	}
 	
-	public static <T> IFuture<T> perform(IThrowingFunction<IComponent, T> body)
+	public static <T> IFuture<T> run(IThrowingFunction<IComponent, T> body)
 	{
 		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
-		return perform(pojo);
+		return run(pojo);
 	}
 	
-	public static <T> IFuture<T> perform(Callable<T> body)
+	public static <T> IFuture<T> run(Callable<T> body)
 	{
 		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
-		return perform(pojo);
+		return run(pojo);
 	}
 	
-	public static Map<String, Object> getResults(Object pojo)
-	{
-		Map<String, Object> ret = new HashMap<>();
-		
-		boolean done = false;
-		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
-		{
-			if(creator.isCreator(pojo))
-			{
-				ret = creator.getResults(pojo);
-				done = true;
-				break;
-			}
-		}
-		if(!done)
-			throw new RuntimeException("Could not get results: "+pojo);
-		
-		return ret;
-	}
-	
-	public static <T> IFuture<T> perform(Object pojo)
+	public static <T> IFuture<T> run(Object pojo)
 	{
 		Future<T> ret = new Future<>();
 		IExternalAccess comp = IComponent.create(pojo).get();
+		// all pojos of type IResultProvider will be terminate component after result is received
+		if(pojo instanceof IResultProvider)
+		{
+			((IResultProvider)pojo).subscribeToResults().next(r -> 
+			{
+				//System.out.println("received: "+r);	
+				comp.terminate();
+			});
+		}
 		comp.waitForTermination().then(Void -> 
 		{
 			Map<String, Object> res = IComponent.getResults(pojo);
@@ -311,6 +300,35 @@ public interface IComponent
 			else
 				ret.setException(new RuntimeException("no result found: "+res));
 		});
+		
+		return ret;
+	}
+	
+	public static Map<String, Object> getResults(Object pojo)
+	{
+		Map<String, Object> ret = new HashMap<>();
+		boolean done = false;
+		
+		if(pojo instanceof IResultProvider)
+		{
+			IResultProvider rp = (IResultProvider)pojo;
+			ret = new HashMap<String, Object>(rp.getResultMap());
+			done = true;
+		}
+		else
+		{
+			for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
+			{
+				if(creator.isCreator(pojo))
+				{
+					ret = creator.getResults(pojo);
+					done = true;
+					break;
+				}
+			}
+		}
+		if(!done)
+			throw new RuntimeException("Could not get results: "+pojo);
 		
 		return ret;
 	}

@@ -2,10 +2,9 @@ package jadex.core;
 
 import java.util.concurrent.Callable;
 
-public class LambdaPojo<T> 
+public class LambdaPojo<T> extends ResultProvider
 {
 	protected Object body;
-	protected T result;
 	
 	public LambdaPojo(Callable<T> body)
 	{
@@ -16,7 +15,7 @@ public class LambdaPojo<T>
 	{
 		this.body = body;
 	}
-
+	
 	public Object getBody() 
 	{
 		return body;
@@ -24,11 +23,6 @@ public class LambdaPojo<T>
 
 	public T getResult() 
 	{
-		return result;
-	}
-
-	public void setResult(T result) 
-	{
-		this.result = result;
+		return results.size()>0? (T)results.values().iterator().next(): null;
 	}
 };
