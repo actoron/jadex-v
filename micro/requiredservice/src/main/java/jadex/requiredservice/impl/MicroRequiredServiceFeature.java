@@ -619,14 +619,14 @@ public class MicroRequiredServiceFeature extends RequiredServiceFeature
 	{
 		// Evaluate and replace scope expression, if any.
 		ServiceScope scope = info.getDefaultBinding()!=null ? info.getDefaultBinding().getScope() : null;
-		if(ServiceScope.EXPRESSION.equals(scope))
+		/*if(ServiceScope.EXPRESSION.equals(scope))
 		{
 			scope = (ServiceScope)SJavaParser.getParsedValue(info.getDefaultBinding().getScopeExpression(), component.getFeature(IModelFeature.class).getModel().getAllImports(), component.getFeature(IModelFeature.class).getFetcher(), component.getClassLoader());
 			info	= new RequiredServiceInfo(info.getName(), info.getType(), info.getMin(), info.getMax(),
 				new RequiredServiceBinding(info.getDefaultBinding()).setScope(scope),
 				//info.getNFRProperties(), 
 				info.getTags());
-		}
+		}*/
 		return getServiceQuery(component, info);
 	}
 	

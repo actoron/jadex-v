@@ -13,7 +13,7 @@ import jadex.requiredservice.annotation.RequiredServices;
  */
 @Agent(type="bdi")
 @RequiredServices({
-	@RequiredService(name="localshopservices", type=IShopService.class, scope=ServiceScope.PLATFORM), //multiple=true,
+	@RequiredService(name="localshopservices", type=IShopService.class, scope=ServiceScope.LOCAL), //multiple=true,
 	@RequiredService(name="remoteshopservices", type=IShopService.class, scope=ServiceScope.GLOBAL), // multiple=true,
 })
 public class CustomerAgent

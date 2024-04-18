@@ -70,6 +70,12 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 				}
 				
 				@Override
+				public String getAppId()
+				{
+					return comp.getAppId();
+				}
+				
+				@Override
 				public boolean isExecutable()
 				{
 					return true;

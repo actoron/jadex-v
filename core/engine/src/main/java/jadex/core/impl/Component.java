@@ -30,6 +30,9 @@ public class Component implements IComponent
 	/** The id. */
 	protected ComponentIdentifier id;
 	
+	/** The app id. */
+	protected String appid;
+	
 	/** The external access. */
 	protected IExternalAccess access;
 	
@@ -57,6 +60,8 @@ public class Component implements IComponent
 		ComponentManager.get().addComponent(this);
 		//Component.addComponent(this); // is this good here?! 
 		
+		this.appid = ComponentManager.get().getApplicationContext().id();
+		
 		providers	= SFeatureProvider.getProvidersForComponent(getClass());
 		
 		// Instantiate all features (except lazy ones).
@@ -78,6 +83,15 @@ public class Component implements IComponent
 	public ComponentIdentifier getId() 
 	{
 		return id;
+	}
+	
+	/**
+	 *  Get the app id.
+	 *  return The app id.
+	 */
+	public String getAppId()
+	{
+		return appid;
 	}
 
 	/**
@@ -347,6 +361,12 @@ public class Component implements IComponent
 					public ComponentIdentifier getId() 
 					{
 						return Component.this.getId();
+					}
+					
+					@Override
+					public String getAppId() 
+					{
+						return Component.this.getAppId();
 					}
 				};
 			}

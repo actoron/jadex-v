@@ -25,6 +25,12 @@ public interface IComponent
 	public ComponentIdentifier getId();
 	
 	/**
+	 *  Get the app id.
+	 *  return The app id.
+	 */
+	public String getAppId();
+	
+	/**
 	 *  Get the feature instance for the given type.
 	 *  Instantiates lazy features if needed.
 	 */
@@ -341,4 +347,5 @@ public interface IComponent
 	{
 		return ComponentManager.get().getComponent(cid).getExternalAccess();
 	}*/
+	
 }

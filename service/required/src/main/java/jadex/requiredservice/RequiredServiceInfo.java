@@ -17,23 +17,11 @@ public class RequiredServiceInfo
 	//-------- legacy constants --------
 	
 	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_NONE = ServiceScope.NONE;
-	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_PARENT = ServiceScope.PARENT;
-	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_COMPONENT_ONLY = ServiceScope.COMPONENT_ONLY;
-	/** @deprecated Use {@link ServiceScope} instead */
 	public static final ServiceScope SCOPE_COMPONENT = ServiceScope.COMPONENT;
 	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_APPLICATION = ServiceScope.APPLICATION;
+	public static final ServiceScope SCOPE_LOCAL = ServiceScope.LOCAL;
 	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_PLATFORM = ServiceScope.PLATFORM;	
-	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_APPLICATION_NETWORK = ServiceScope.APPLICATION_NETWORK;
-	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_NETWORK = ServiceScope.NETWORK;
-	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_APPLICATION_GLOBAL = ServiceScope.APPLICATION_GLOBAL;
+	public static final ServiceScope SCOPE_HOST = ServiceScope.HOST;
 	/** @deprecated Use {@link ServiceScope} instead */
 	public static final ServiceScope SCOPE_GLOBAL = ServiceScope.GLOBAL;
 	
@@ -142,7 +130,7 @@ public class RequiredServiceInfo
 	 */
 	public RequiredServiceInfo(String name, Class<?> type)
 	{
-		this(name, type, ServiceScope.APPLICATION);
+		this(name, type, ServiceScope.LOCAL);
 	}
 	
 	/**
@@ -150,7 +138,7 @@ public class RequiredServiceInfo
 	 */
 	public RequiredServiceInfo(Class<?> type)
 	{
-		this(null, type, ServiceScope.APPLICATION);
+		this(null, type, ServiceScope.LOCAL);
 	}
 	
 	/**

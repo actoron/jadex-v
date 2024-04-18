@@ -31,7 +31,7 @@ public record GlobalProcessIdentifier(long pid, String host)
 	 */
 	public boolean equals(Object obj)
 	{
-		if (obj instanceof GlobalProcessIdentifier)
+		if(obj instanceof GlobalProcessIdentifier)
 		{
 			GlobalProcessIdentifier other = (GlobalProcessIdentifier) obj;
 			return pid == other.pid && host.equals(other.host);

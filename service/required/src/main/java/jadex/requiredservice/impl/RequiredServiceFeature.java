@@ -1172,7 +1172,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 	{
 		// Evaluate and replace scope expression, if any.
 		ServiceScope scope = info.getDefaultBinding()!=null ? info.getDefaultBinding().getScope() : null;
-		if(ServiceScope.EXPRESSION.equals(scope))
+		/*if(ServiceScope.EXPRESSION.equals(scope))
 		{
 			scope = (ServiceScope)SJavaParser.getParsedValue(info.getDefaultBinding().getScopeExpression(), 
 				getComponent().getFeature(IModelFeature.class).getModel().getAllImports(), getComponent().getFeature(IModelFeature.class).getFetcher(), getComponent().getClassLoader());
@@ -1180,7 +1180,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 				new RequiredServiceBinding(info.getDefaultBinding()).setScope(scope),
 				//info.getNFRProperties(), 
 				info.getTags());
-		}
+		}*/
 		return getServiceQuery(getComponent(), info);
 	}
 	
@@ -1393,12 +1393,12 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 			query.setOwner(self.getId());
 		
 		// Set scope if not set
-		if(ServiceScope.DEFAULT.equals(query.getScope()))
+		/*if(ServiceScope.DEFAULT.equals(query.getScope()))
 		{
 			// Default to application if service type not set or not system service
 			query.setScope(query.getServiceType()!=null && ServiceIdentifier.isSystemService(query.getServiceType().getType(self.getClassLoader()))
 				? ServiceScope.PLATFORM : ServiceScope.APPLICATION);
-		}
+		}*/
 		
 		if(query.getMultiplicity()==null)
 		{

@@ -58,4 +58,6 @@ public interface IComponentManager
 	public void addExceptionHandler(Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler);
 	
 	public void removeExceptionHandler(Object key, Class<? extends Exception> clazz);
+	
+	public void setApplicationContext(ApplicationContext appcontext);
 }

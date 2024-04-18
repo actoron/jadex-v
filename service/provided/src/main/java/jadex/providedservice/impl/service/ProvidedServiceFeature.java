@@ -172,7 +172,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 			{
 				// Evaluate and replace scope expression, if any.
 				ServiceScope scope = info.getScope();
-				if(ServiceScope.EXPRESSION.equals(scope))
+				/*if(ServiceScope.EXPRESSION.equals(scope))
 				{
 					scope = (ServiceScope)SJavaParser.getParsedValue(info.getScopeExpression(), model.getAllImports(), self.getFeature(IModelFeature.class).getFetcher(), self.getClassLoader());
 					info = new ProvidedServiceInfo(info.getName(), info.getType(), info.getImplementation(), scope, info.getScopeExpression(), info.getSecurity(), 
@@ -181,7 +181,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 	//						System.out.println("expression scope '"
 	//							+ (info.getScopeExpression()!=null ? info.getScopeExpression().getValue() : "")
 	//							+ "': "+scope);
-				}
+				}*/
 					
 				final Future<Void> fut = new Future<>();
 				bar.add(fut);

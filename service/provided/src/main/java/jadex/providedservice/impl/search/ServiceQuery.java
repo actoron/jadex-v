@@ -332,10 +332,9 @@ public class ServiceQuery<T>
 	 */
 	public ServiceQuery<T> setScope(ServiceScope scope)
 	{
-		if(ServiceScope.EXPRESSION.equals(scope))
-			throw new IllegalArgumentException("Cannot use scope 'expression' directly.");
-
-		this.scope = scope!=null?scope:ServiceScope.DEFAULT;
+		//if(ServiceScope.EXPRESSION.equals(scope))
+		//	throw new IllegalArgumentException("Cannot use scope 'expression' directly.");
+		this.scope = scope;//scope!=null?scope:ServiceScope.DEFAULT;
 		return this;
 	}
 	
@@ -380,7 +379,7 @@ public class ServiceQuery<T>
 	public ServiceQuery<T> setProvider(ComponentIdentifier provider)
 	{
 		//this.searchstart = provider;
-		this.scope = ServiceScope.COMPONENT_ONLY;
+		this.scope = ServiceScope.COMPONENT;
 		return this;
 	}
 	
@@ -842,7 +841,7 @@ public class ServiceQuery<T>
 			ret.append(unrestricted);
 		}
 
-		if(scope!=null && !ServiceScope.DEFAULT.equals(scope))
+		if(scope!=null)
 		{
 			ret.append(ret.length()==13?"":", ");
 			ret.append("scope=");

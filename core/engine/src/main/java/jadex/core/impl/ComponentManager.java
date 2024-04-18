@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import jadex.common.SUtil;
+import jadex.core.ApplicationContext;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentListener;
@@ -49,6 +50,9 @@ public class ComponentManager implements IComponentManager
 	
 	/** The component id number mode. */
 	private boolean cidnumbermode;
+	
+	/** The application context. */
+	private ApplicationContext appcontext;
 	
 	/** The component listeners. */
 	public final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
@@ -239,6 +243,17 @@ public class ComponentManager implements IComponentManager
 		{
 			System.out.println("Running components: "+components);
 		}
+	}
+	
+	public synchronized void setApplicationContext(ApplicationContext appcontext)
+	{
+		// todo: add group on security
+		this.appcontext = appcontext;
+	}
+	
+	public synchronized ApplicationContext getApplicationContext()
+	{
+		return appcontext;
 	}
 	
 	public void notifyEventListener(String type, ComponentIdentifier cid)

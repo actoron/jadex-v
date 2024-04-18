@@ -14,6 +14,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.core.ComponentIdentifier;
+import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -96,12 +97,12 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 //			System.out.println("sdgo");
 		
 		IServiceIdentifier ret = null;
-		if(!ServiceScope.NONE.equals(query.getScope()))
-		{
+		//if(!ServiceScope.NONE.equals(query.getScope()))
+		//{
 			Set<IServiceIdentifier> sers = getServices(query);
 			
-			if(query.toString().indexOf("IComponentFac")!=-1 && sers.size()==0)
-				System.out.println("found: "+sers);
+			//if(query.toString().indexOf("IComponentFac")!=-1 && sers.size()==0)
+			//	System.out.println("found: "+sers);
 			
 //			Set<IServiceIdentifier> ownerservices = null;
 //			rwlock.readLock().lock();
@@ -126,7 +127,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 					}
 				}
 			}
-		}
+		//}
 		
 		return ret;
 	}
@@ -139,8 +140,8 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	public Set<IServiceIdentifier> searchServices(ServiceQuery<?> query)
 	{
 		Set<IServiceIdentifier> ret = null;
-		if(!ServiceScope.NONE.equals(query.getScope()))
-		{
+		//if(!ServiceScope.NONE.equals(query.getScope()))
+		//{
 			ret = getServices(query);
 			
 //			Set<IServiceIdentifier> ownerservices = null;
@@ -166,7 +167,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 					}
 				}
 			}
-		}
+		//}
 		
 		if (ret == null)
 			ret = Collections.emptySet();
@@ -838,65 +839,34 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 //			: query.getPlatform()!=null ? query.getPlatform() : query.getOwner();
 		//IComponentIdentifier searchstart = query.getSearchStart() != null ? query.getSearchStart() : query.getOwner();
 		ComponentIdentifier searchstart = query.getOwner();
-		
+		ComponentIdentifier sercid = ser.getProviderId();
 		
 		if(ServiceScope.GLOBAL.equals(scope))
 		{
 			ret = true;
 		}
-		else if(ServiceScope.NETWORK.equals(scope))
+		else if(ServiceScope.HOST.equals(scope))
 		{
-			// todo: fixme
-			ret = true;
+			GlobalProcessIdentifier gpi1 = searchstart.getGlobalProcessIdentifier();
+			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
+			ret = gpi1.host().equals(gpi2.host());
 		}
-		else if(ServiceScope.APPLICATION_GLOBAL.equals(scope))
+		else if(ServiceScope.LOCAL.equals(scope))
 		{
-			// todo: fixme
-			ret = true;
-		}
-		else if(ServiceScope.APPLICATION_NETWORK.equals(scope))
-		{
-			// todo: fixme
-			ret = true;
-		}
-		else if(ServiceScope.PLATFORM.equals(scope))
-		{
-			// Test if searcher and service are on same platform
-			//ret = searchstart.getPlatformName().equals(ser.getProviderId().getPlatformName());
-			ret = true;
-		}
-		else if(ServiceScope.APPLICATION.equals(scope))
-		{
-			/*IComponentIdentifier sercid = ser.getProviderId();
-			ret = sercid.getPlatformName().equals(searchstart.getPlatformName())
-				&& getApplicationName(sercid).equals(getApplicationName(searchstart));*/
-			ret = true;
+			GlobalProcessIdentifier gpi1 = searchstart.getGlobalProcessIdentifier();
+			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
+			ret = gpi1.equals(gpi2);
 		}
 		else if(ServiceScope.COMPONENT.equals(scope))
 		{
-			//IComponentIdentifier sercid = ser.getProviderId();
-			//ret = getDotName(sercid).endsWith(getDotName(searchstart));
-			ret = true;
+			ret = searchstart.equals(sercid);
+			ser.getProviderId().equals(query.getOwner());
 		}
-		else if(ServiceScope.COMPONENT_ONLY.equals(scope))
-		{
-			// only the component itself
-			ret = ser.getProviderId().equals(searchstart);
-		}
-		/*else if(ServiceScope.PARENT.equals(scope))
-		{
-			// check if parent of searcher reaches the service
-			IComponentIdentifier sercid = ser.getProviderId();
-			String subname = getSubcomponentName(searchstart);
-			ret = sercid.getName().endsWith(subname);
-		}*/
-		
-		//if(query.getServiceType()!=null && query.getServiceType().toString().indexOf("Calc")!=-1)
-		//	System.out.println("calc check: "+query.getOwner()+" "+scope+" "+ser+" "+ret);
 		
 		return ret;
 	}
 	
+	//todo: refactor: logic is now the same as for checkSearchScope except other scope is used
 	/**
 	 *  Check if service is ok with respect to publication scope.
 	 */
@@ -904,70 +874,32 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	{
 		boolean ret = false;
 		
-		ServiceScope scope = ser.getScope()!=null && !ServiceScope.DEFAULT.equals(ser.getScope())?
-			ser.getScope(): ServiceScope.PLATFORM;
+		ServiceScope scope = ser.getScope();//!=null && !ServiceScope.DEFAULT.equals(ser.getScope())?
+		//	ser.getScope(): ServiceScope.PLATFORM;
+		
+		ComponentIdentifier searchstart = query.getOwner();
+		ComponentIdentifier sercid = ser.getProviderId();
 		
 		if(ServiceScope.GLOBAL.equals(scope))
 		{
 			ret = true;
 		}
-		else if(ServiceScope.NETWORK.equals(scope))
+		else if(ServiceScope.HOST.equals(scope))
 		{
-			// todo: fixme
-			ret = true;
+			GlobalProcessIdentifier gpi1 = searchstart.getGlobalProcessIdentifier();
+			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
+			ret = gpi1.host().equals(gpi2.host());
 		}
-		else if(ServiceScope.APPLICATION_GLOBAL.equals(scope))
+		else if(ServiceScope.LOCAL.equals(scope))
 		{
-			// todo: fixme
-			ret = true;
-		}
-		else if(ServiceScope.APPLICATION_NETWORK.equals(scope))
-		{
-			// todo: fixme
-			ret = true;
-		}
-		else if(ServiceScope.PLATFORM.equals(scope))
-		{
-			// Test if searcher and service are on same platform
-			//ret = query.getOwner().getPlatformName().equals(ser.getProviderId().getPlatformName());
-			ret = true;
-		}
-		else if(ServiceScope.APPLICATION.equals(scope))
-		{
-			// todo: special case platform service with app scope
-			/*IComponentIdentifier sercid = ser.getProviderId();
-			ret = sercid.getPlatformName().equals(query.getOwner().getPlatformName())
-				&& getApplicationName(sercid).equals(getApplicationName(query.getOwner()));*/
-			ret = true;
+			GlobalProcessIdentifier gpi1 = searchstart.getGlobalProcessIdentifier();
+			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
+			ret = gpi1.equals(gpi2);
 		}
 		else if(ServiceScope.COMPONENT.equals(scope))
 		{
-			//IComponentIdentifier sercid = ser.getProviderId();
-			//	ret = getDotName(query.getOwner()).endsWith(getDotName(sercid));
-			ret = true;
+			ret = searchstart.equals(sercid);
 		}
-		else if(ServiceScope.COMPONENT_ONLY.equals(scope))
-		{
-			// only the component itself
-			ret = ser.getProviderId().equals(query.getOwner());
-		}
-		/*else if(ServiceScope.PARENT.equals(scope))
-		{
-			//if(query.getServiceType()!=null && query.getServiceType().toString().indexOf("Calc")!=-1)
-			//	System.out.println("found");
-				
-			// check if parent of service reaches the searcher
-			IComponentIdentifier sercid = ser.getProviderId();
-			String subname = getSubcomponentName(sercid);
-			String owner = getDotName(query.getOwner());
-			ret = owner.equals(subname) || owner.endsWith(":"+subname);
-			// Must include delimiter to avoid special cases like
-			// DistributedServicePoolAgent:MandelbrotAgent:DESKTOP-TMQFG7J_tyg
-			// ServicePoolAgent:MandelbrotAgent:DESKTOP-TMQFG7J_tyg
-			// delivering true
-			
-			//System.out.println("parent check: "+subname+" "+getDotName(query.getOwner())+" "+ret);
-		}*/
 		
 		return ret;
 	}

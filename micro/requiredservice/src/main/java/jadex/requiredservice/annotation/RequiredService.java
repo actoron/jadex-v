@@ -48,7 +48,7 @@ public @interface RequiredService
 	/**
 	 *  The search scope.
 	 */
-	public ServiceScope scope() default ServiceScope.DEFAULT;
+	public ServiceScope scope() default ServiceScope.LOCAL;
 	
 	/** 
 	 *  The service tags to search for. 

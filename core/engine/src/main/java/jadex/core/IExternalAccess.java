@@ -17,6 +17,12 @@ public interface IExternalAccess
 	public ComponentIdentifier getId();
 	
 	/**
+	 *  Get the app id.
+	 *  return The app id.
+	 */
+	public String getAppId();
+	
+	/**
 	 *  Check if this component allows the execution of steps.
 	 *  Otherwise scheduleStep(...) methods with throw UnsupportedOperationException
 	 */
