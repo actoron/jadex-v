@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import jadex.core.ApplicationContext;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
@@ -60,7 +61,8 @@ public class Component implements IComponent
 		ComponentManager.get().addComponent(this);
 		//Component.addComponent(this); // is this good here?! 
 		
-		this.appid = ComponentManager.get().getApplicationContext().id();
+		ApplicationContext appctx = ComponentManager.get().getApplicationContext();
+		this.appid = appctx!=null? appctx.id(): null;
 		
 		providers	= SFeatureProvider.getProvidersForComponent(getClass());
 		
