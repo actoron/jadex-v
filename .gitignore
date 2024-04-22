@@ -20,3 +20,4 @@ alarmclock_settings.ser
 *.iml
 jadex-deploy-vars.sh
 startHelloWorld.sh
+/jadex-deploy-vars.bat
