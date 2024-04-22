@@ -54,6 +54,8 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 		
 		synchronized(this)
 		{
+			System.out.println("Sim waitForDelay executing="+executing);
+			
 			TimerEntry te = new TimerEntry(current_time+millis)
 			{
 				@Override
@@ -153,37 +155,31 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	// Called when all components have finished executing
 	protected void idle()
 	{
-		Future<Void>	stop	= null;
-		TimerEntry	next	= null;
-		synchronized(this)
+		if(simulating && busy==0)
 		{
-			if(simulating && busy==0)
+			if(stopping!=null)
 			{
-				if(stopping!=null)
+				Future<Void>	stop	= stopping;
+				simulating	= false;
+				stopping	= null;
+				
+				// Do on another step, because idle() runs while holding lock
+				scheduleStep(() -> stop.setResult(null));
+			}
+			else
+			{
+				TimerEntry	next	= timer_entries.poll();
+				if(next!=null)
 				{
-					stop	= stopping;
-					simulating	= false;
-					stopping	= null;
-				}
-				else
-				{
-					next	= timer_entries.poll();
-					if(next!=null && next.time>current_time)
+					if(next.time>current_time)
 					{
 						// Outdated entries might have older time (e.g. when setTime() was used to fast-forward)
 						current_time	= next.time;
 					}
+					// Do on another step, because idle() runs while holding lock
+					scheduleStep(next);
 				}
 			}
-		}
-		
-		if(stop!=null)
-		{
-			stop.setResult(null);
-		}
-		else if(next!=null)
-		{
-			scheduleStep(next);
 		}
 	}
 

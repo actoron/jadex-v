@@ -77,14 +77,14 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		assertThrows(IllegalStateException.class, () -> sim.start());
 		sim.stop().get(TIMEOUT);
 		List<String>	results	= new ArrayList<>();
-		sim.waitForDelay(1000).then((v) -> results.add("A"));
-		sim.waitForDelay(2000).then((v) -> sim.stop().get());
-		sim.waitForDelay(3000).then((v) -> results.add("B"));
+		sim.waitForDelay(100).then((v) -> results.add("A"));
+		sim.waitForDelay(200).then((v) -> sim.stop().get());
+		sim.waitForDelay(300).then((v) -> results.add("B"));
 		sim.start();
-		assertThrows(TimeoutException.class, () -> sim.waitForDelay(3000).get(TIMEOUT));
+		assertThrows(TimeoutException.class, () -> sim.waitForDelay(300).get(500));
 		assertEquals(Arrays.asList("A"), results);
 		sim.start();
-		sim.waitForDelay(2000).get(TIMEOUT);
+		sim.waitForDelay(200).get(TIMEOUT);
 		assertEquals(Arrays.asList("A", "B"), results);
 	}
 
