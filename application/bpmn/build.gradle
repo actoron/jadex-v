@@ -10,7 +10,10 @@ group = 'org.activecomponents.jadex'
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
-sourceCompatibility = 1.17
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 repositories
 {
@@ -42,5 +45,5 @@ processResources {
 
 task runHelloWorld(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.bpmn.helloworld.Main'
+    mainClass = 'jadex.bpmn.helloworld.Main'
 }

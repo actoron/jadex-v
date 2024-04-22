@@ -7,7 +7,10 @@ description = 'Future support with simpler API than Java futures'
 	
 group = 'org.activecomponents.jadex'
 
-sourceCompatibility = '1.17'
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")

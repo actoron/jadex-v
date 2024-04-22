@@ -10,7 +10,10 @@ group = 'org.activecomponents.jadex'
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
-sourceCompatibility = 1.17
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 repositories
 {
@@ -38,20 +41,20 @@ processResources {
 
 task runHelloWorld(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.bdi.hellopure.HelloPureAgent'
+    mainClass = 'jadex.bdi.hellopure.HelloPureAgent'
 }
 
 task runUni(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.bdi.university.Main'
+    mainClass = 'jadex.bdi.university.Main'
 }
 
 task runBlocksWorld(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.bdi.blocksworld.Main'
+    mainClass = 'jadex.bdi.blocksworld.Main'
 }
 
 task runPuzzle(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.bdi.puzzle.Main'
+    mainClass = 'jadex.bdi.puzzle.Main'
 }

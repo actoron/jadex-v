@@ -10,7 +10,10 @@ group = 'org.activecomponents.jadex'
 if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
 
-sourceCompatibility = 1.17
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 repositories
 {
@@ -51,25 +54,25 @@ processResources {
 
 task runHelloWorld(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.helloworld.HelloWorldAgent'
+    mainClass = 'jadex.micro.helloworld.HelloWorldAgent'
 }
 
 task runMandelbrot(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.mandelbrot_new.MainWeb'
+    mainClass = 'jadex.micro.mandelbrot_new.MainWeb'
 }
 
 task runQuiz(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.quiz.Main'
+    mainClass = 'jadex.micro.quiz.Main'
 }
 
 task runGobble(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.gobble.GobbleAgent'
+    mainClass = 'jadex.micro.gobble.GobbleAgent'
 }
 
 task runHelpline(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.helpline.Main'
+    mainClass = 'jadex.micro.helpline.Main'
 }
