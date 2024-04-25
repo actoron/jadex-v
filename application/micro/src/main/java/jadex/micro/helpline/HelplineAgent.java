@@ -27,7 +27,7 @@ import jadex.requiredservice.annotation.RequiredServices;
 @Description("This agent offers a helpline for getting information about missing persons.")
 @RequiredServices({
 	@RequiredService(name="remotehelplineservices", type=IHelpline.class, scope=ServiceScope.GLOBAL), //multiple=true,
-	@RequiredService(name="localhelplineservices", type=IHelpline.class, scope=ServiceScope.LOCAL) //multiple=true,
+	@RequiredService(name="localhelplineservices", type=IHelpline.class, scope=ServiceScope.VM) //multiple=true,
 })
 @ProvidedServices(@ProvidedService(type=IHelpline.class, implementation=@Implementation(HelplineService.class), scope=ServiceScope.GLOBAL))
 @Agent

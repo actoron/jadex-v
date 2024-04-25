@@ -19,7 +19,7 @@ public class RequiredServiceInfo
 	/** @deprecated Use {@link ServiceScope} instead */
 	public static final ServiceScope SCOPE_COMPONENT = ServiceScope.COMPONENT;
 	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_LOCAL = ServiceScope.LOCAL;
+	public static final ServiceScope SCOPE_LOCAL = ServiceScope.VM;
 	/** @deprecated Use {@link ServiceScope} instead */
 	public static final ServiceScope SCOPE_HOST = ServiceScope.HOST;
 	/** @deprecated Use {@link ServiceScope} instead */
@@ -130,7 +130,7 @@ public class RequiredServiceInfo
 	 */
 	public RequiredServiceInfo(String name, Class<?> type)
 	{
-		this(name, type, ServiceScope.LOCAL);
+		this(name, type, ServiceScope.VM);
 	}
 	
 	/**
@@ -138,7 +138,7 @@ public class RequiredServiceInfo
 	 */
 	public RequiredServiceInfo(Class<?> type)
 	{
-		this(null, type, ServiceScope.LOCAL);
+		this(null, type, ServiceScope.VM);
 	}
 	
 	/**

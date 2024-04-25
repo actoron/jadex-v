@@ -851,7 +851,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
 			ret = gpi1.host().equals(gpi2.host());
 		}
-		else if(ServiceScope.LOCAL.equals(scope))
+		else if(ServiceScope.VM.equals(scope))
 		{
 			GlobalProcessIdentifier gpi1 = searchstart.getGlobalProcessIdentifier();
 			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
@@ -890,7 +890,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
 			ret = gpi1.host().equals(gpi2.host());
 		}
-		else if(ServiceScope.LOCAL.equals(scope))
+		else if(ServiceScope.VM.equals(scope))
 		{
 			GlobalProcessIdentifier gpi1 = searchstart.getGlobalProcessIdentifier();
 			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
