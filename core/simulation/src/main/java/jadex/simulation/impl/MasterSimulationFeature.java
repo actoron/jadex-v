@@ -17,6 +17,27 @@ import jadex.simulation.ISimulationFeature;
  */
 public class MasterSimulationFeature	extends ExecutionFeature	implements ISimulationFeature
 {
+	// Hack!!! public to allow reset for testing in eclipse
+	public static volatile MasterSimulationFeature	master;
+	
+	/**
+	 *  Get the appropriate master for this component.
+	 */
+	protected static MasterSimulationFeature	getMaster()
+	{
+		if(master==null)
+		{
+			synchronized(MasterSimulationFeature.class)
+			{
+				if(master==null)
+				{
+					master = new MasterSimulationFeature();
+				}
+			}
+		}
+		return master;
+	}
+
 	/** Flag indicating that the simulation is active. */
 	protected boolean	simulating	= true;
 	

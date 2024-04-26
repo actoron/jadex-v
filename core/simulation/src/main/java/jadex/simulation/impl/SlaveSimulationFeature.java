@@ -7,8 +7,7 @@ import jadex.simulation.ISimulationFeature;
 
 public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulationFeature
 {
-	// Hack!!! public to allow reset for testing in eclipse
-	public static volatile MasterSimulationFeature	master;
+	protected MasterSimulationFeature	master;
 	
 	// Hack!!! public to allow reset for testing in eclipse
 	public static boolean	parallel	= true;
@@ -20,13 +19,7 @@ public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulat
 	{
 		if(master==null)
 		{
-			synchronized(this.getClass())
-			{
-				if(master==null)
-				{
-					master = new MasterSimulationFeature();
-				}
-			}
+			master	= MasterSimulationFeature.getMaster();
 		}
 		return master;
 	}
