@@ -107,6 +107,7 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	{
 		synchronized(this)
 		{
+			System.out.println("MSF simulating="+simulating+", executing="+executing+", busy="+busy);
 			if(simulating)
 			{
 				throw new IllegalStateException("Simulation already running.");
@@ -198,7 +199,10 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	{
 		synchronized(this)
 		{
-			if(--busy==0)
+			busy--;
+			if(busy<0)
+				throw new IllegalStateException("Negative busy components value!");
+			if(busy==0)
 			{
 				idle();
 			}

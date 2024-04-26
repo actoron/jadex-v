@@ -74,10 +74,15 @@ public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulat
 		return getMaster().stop();
 	}
 	
+	volatile boolean	busy	= false;
+	
 	@Override
 	protected void busy()
 	{
 		assert parallel;
+		if(busy)
+			throw new IllegalStateException("Already busy!");
+		busy	= true;
 		getMaster().componentBusy();
 	}
 	
@@ -85,6 +90,9 @@ public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulat
 	protected void idle()
 	{
 		assert parallel;
+		if(!busy)
+			throw new IllegalStateException("Not busy!");
+		busy	= false;
 		getMaster().componentIdle();
 	}
 }
