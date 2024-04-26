@@ -10,9 +10,9 @@ import java.util.Set;
 public enum ServiceScope
 {
 	COMPONENT, // Only component itself
-	LOCAL, // LOCAL or VM or PLATFORM (same VM)
+	VM, // LOCAL or VM or PLATFORM (same VM)
 	HOST, // HOST	(same HOST)
-	GLOBAL; // GLOBAL (all hosts)
+	GLOBAL; // UNBOUND ALL GLOBAL (all hosts)
 	
 	//-------- constants --------
 	
@@ -22,7 +22,7 @@ public enum ServiceScope
 	{
 		Set<ServiceScope> localscopes = new HashSet<>();
 		localscopes.add(COMPONENT);
-		localscopes.add(LOCAL);
+		localscopes.add(VM);
 		LOCAL_SCOPES = Collections.unmodifiableSet(localscopes);
 	}
 
