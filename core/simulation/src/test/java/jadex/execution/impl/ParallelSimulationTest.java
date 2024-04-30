@@ -59,7 +59,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testInverseOrder()
 	{
-		System.out.println("testInverseOrder");
+//		System.out.println("testInverseOrder");
 		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
 		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 		sim.stop().get(TIMEOUT);
