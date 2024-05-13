@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.quickstart.cleanerworld.environment.ILocationObject;
 
@@ -85,19 +86,31 @@ public class Environment
 	 *  Get a cleaner object for an agent.
 	 *  Creates a new cleaner object if none exists.
 	 */
-	public Cleaner	createCleaner(IComponent agent)
+	public Cleaner	createCleaner(IComponent agent, Cleaner self)
 	{
-		String	cid	= agent.getId().getLocalName();
+		ComponentIdentifier	cid	= agent.getId();
 		Cleaner	ret;
 		boolean	create;
 		synchronized(this)
 		{
-			ret	= cleaners.get(cid);
+			ret	= cleaners.get(cid.getLocalName());
 			create	= ret==null;
 			if(create)
 			{
-				ret	= new Cleaner(cid, new Location(Math.random()*0.4+0.3, Math.random()*0.4+0.3), null, 0.1, 0.8);
-				cleaners.put(cid, ret);
+				if(self!=null)
+				{
+					ret	= self;
+					ret.setId(cid.getLocalName());
+					ret.setLocation(new Location(Math.random()*0.4+0.3, Math.random()*0.4+0.3));
+					ret.setCid(cid);
+					ret.setVisionRange(0.1);
+					ret.setChargestate(0.1);
+				}
+				else
+				{
+					ret	= new Cleaner(cid.getLocalName(), new Location(Math.random()*0.4+0.3, Math.random()*0.4+0.3), cid, null, 0.1, 0.8);
+				}
+				cleaners.put(cid.getLocalName(), ret);
 			}
 		}
 		
@@ -229,6 +242,14 @@ public class Environment
 	public synchronized Cleaner[] getCleaners()
 	{
 		return cloneList(cleaners.values(), Cleaner.class);
+	}
+
+	/**
+	 *  Get a cleaner for a component opr null.
+	 */
+	public synchronized Cleaner getCleaner(String id)
+	{
+		return cleaners.get(id);
 	}
 
 	/**

@@ -33,7 +33,7 @@ public class BDIAgent extends MicroAgent
 				classname	= classname.substring(4);
 			String	fclassname	= classname ;
 			agent = Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent((Object)null, loadModel(fclassname), cid));
+				() -> new BDIAgent((Object)null, loadModel(fclassname, null), cid));
 		}
 		else if(pojo instanceof BDICreationInfo)
 		{
@@ -42,12 +42,12 @@ public class BDIAgent extends MicroAgent
 				classname	= classname.substring(4);
 			String	fclassname	= classname ;
 			agent = Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname), cid));
+				() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname, null), cid));
 		}
 		else
 		{
 			agent = Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName()), cid));
+				() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName(), pojo), cid));
 		}
 		
 		return agent.getExternalAccess();
@@ -85,7 +85,7 @@ public class BDIAgent extends MicroAgent
 	 *  @param The imports (if any).
 	 *  @return The loaded model.
 	 */
-	static public IModelInfo	loadModel(final String model)
+	static public IModelInfo	loadModel(String model, Object pojo)
 	{
 		try
 		{
@@ -97,7 +97,7 @@ public class BDIAgent extends MicroAgent
 			else
 			{
 				ClassLoader cl = BDIAgent.class.getClassLoader();
-				IModelInfo mi = loader.loadComponentModel(model, null, null, null, cl, null).getModelInfo();
+				IModelInfo mi = loader.loadComponentModel(model, pojo, null, null, cl, null).getModelInfo();
 				return mi;
 			}
 		}

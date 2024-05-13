@@ -91,4 +91,9 @@ public interface IInternalBDIAgentFeature	extends IBDIAgentFeature
 	 *  Get the class loader for the pojo agent.
 	 */
 	public ClassLoader getClassLoader();
+	
+	/**
+	 *  Check, if the agent is a pure BDI agent, i.e. without class generation.
+	 */
+	public boolean isPure();
 }

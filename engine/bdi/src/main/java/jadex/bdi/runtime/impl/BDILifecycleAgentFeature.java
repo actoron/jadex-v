@@ -1,6 +1,7 @@
 package jadex.bdi.runtime.impl;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -615,6 +616,26 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 						name	= mbel.getName();
 					}
 				}
+				
+				// Generate init events for pure bdi beliefs
+				if(mbel.isFieldBelief() && IInternalBDIAgentFeature.get().isPure())
+				{
+					try
+					{
+						Field	f	= mbel.getField().getField(null);
+						f.setAccessible(true);
+						Object	val	= f.get(capa);
+						EventType etype = new EventType(ChangeEvent.BELIEFCHANGED, name);
+						rulesystem.addEvent(new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(val, null, null)));
+						BDIAgentFeature.observeValue(rulesystem, val, new EventType(ChangeEvent.FACTCHANGED, name), mbel);
+					}
+					catch(Exception e)
+					{
+						SUtil.throwUnchecked(e);
+					}
+				}
+
+				
 				final String fname = name;
 				final Object fcapa = capa;
 				
