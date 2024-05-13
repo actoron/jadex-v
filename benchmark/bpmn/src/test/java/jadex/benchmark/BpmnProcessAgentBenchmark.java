@@ -33,8 +33,8 @@ public class BpmnProcessAgentBenchmark	extends AbstractComponentBenchmark
 		
 		pojo.subscribeToResults().next(res ->
 		{
-			//System.out.println("received result: "+res.name()+" "+res.value());
-			ret.setResult((ComponentIdentifier)res.value());
+			System.out.println("received result: "+res.name()+" "+res.value());
+			ret.setResultIfUndone((ComponentIdentifier)res.value());
 		}).catchEx(ret);
 		
 		BpmnProcess.create(pojo, new ComponentIdentifier(name));

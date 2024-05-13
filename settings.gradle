@@ -1,6 +1,156 @@
+def pscript = "PUBLISH_SCRIPT_PATH"
+def jversion = "JADEX_VERSION"
+def sk = "sigKey"
+def skp = "signingPassword"
+
+String getVar(String key) {
+	def ret = System.getenv(key)
+	if (ret == null)
+		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
+	if (ret == null)
+		ret = System.getProperty(key)
+	if (ret == null)
+		ret = System.getProperty("ORG_GRADLE_PROJECT_"+key)
+	return ret;
+}
+
+if(System.getenv(pscript)) {
+	System.setProperty(pscript, System.getenv(pscript))
+} else if (!System.getProperty(pscript)) {
+    System.setProperty(pscript, "${rootProject.projectDir}/publish.gradle")
+}
+println "publish script path: "+System.getProperty(pscript)
+
+// apply from: getSettingsDir().getAbsolutePath()+"/version.gradle" does not work
+def binding = new Binding()
+binding.settingsDir = settingsDir 
+def shell = new GroovyShell(binding)
+def versionScript = new File(settingsDir, 'version.gradle')
+def vs = shell.parse(versionScript)
+def jv = vs.fetchNextBuildNameFromGitTag()
+if (jv != null) {
+	System.setProperty(jversion, jv.full);
+	println "Configured version: "+System.getProperty(jversion);
+}
+else
+	println "No version configured or detected";
+
+def sigkey = getVar(sk)
+if (sigkey != null)
+{
+	def signingKey=sigkey.replace("\\n", "\n")
+	System.setProperty("signingKey", signingKey)
+	//println "skp: "+System.getProperty("signingKey")
+}
+else
+	println "no signing key found"
+	
+def sigkeyp = getVar(skp)
+if (sigkeyp != null)
+{
+	System.setProperty("signingPassword", sigkeyp)
+	//println "skp: "+System.getProperty("signingPassword")
+}
+else
+	println "no signing key pass found"
+	
+def parseURLWithCredentials(urlstring) {
+	//println "urlstring: "+urlstring
+	
+	def ret = [:];
+	def uri	= new URI(urlstring)
+	ret.host = uri.host;
+	ret.port = uri.port
+    ret.user = ''
+    ret.password = ''
+    ret.fingerprint = ''
+    def String userinfo = uri.userInfo
+    if(userinfo!=null)
+    {
+		def String[] split = userinfo.split(":|;")
+		//println 'userinfo: ' + split
+        ret.user = split.length>0 ? split[0] : ''
+        ret.password = split.length>1 ? split[1] : ''
+        
+        for(int i=2; i<split.length; i++)
+        {
+        	if(split[i].startsWith('fingerprint='))
+        	{
+        		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
+        		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
+        		//println 'fingerprint: ' + ret.fingerprint
+        	}
+        }
+	}
+
+	// URL without extra info (e.g. no password for security reasons)
+	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
+	//println 'url: ' + ret.url
+		
+	return ret;
+}
+
+def repourl = getVar('repocentral');
+def repoaccess = repourl ? parseURLWithCredentials(repourl) : null;
+
+def centraluser = repoaccess ? repoaccess.user : null;
+if(centraluser!=null)
+	System.setProperty("centralUser", centraluser)
+def centralpass = repoaccess ? repoaccess.password : null;
+if(centralpass!=null)
+	System.setProperty("centralPassword", centralpass)
+	
+def createStagingRepo() {
+    def descXml = """
+        <promoteRequest>
+            <data>
+                <description>Jadex</description>
+            </data>
+        </promoteRequest>
+    """
+
+    def connection = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/start").openConnection()
+    connection.setRequestMethod("POST")
+    connection.setDoOutput(true)
+    connection.setRequestProperty("Content-Type", "application/xml")
+    connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((System.getProperty("centralUser")+":"+System.getProperty("centralPassword")).getBytes()))
+
+    def outputStream = connection.getOutputStream()
+    outputStream.write(descXml.getBytes())
+    outputStream.flush()
+    outputStream.close()
+
+    def responseCode = connection.getResponseCode()
+    if (responseCode == 201) {
+        def responseStream = connection.getInputStream()
+        def responseText = new BufferedReader(new InputStreamReader(responseStream)).readLines().join('\n')
+        
+        println "Response: ${responseText}"
+        def matcher = responseText =~ /<stagedRepositoryId>(.*?)<\/stagedRepositoryId>/
+        if (matcher.find()) {
+            def repoId = matcher.group(1)
+            println "Repository ID: ${repoId}"
+            System.setProperty("repoId", repoId)
+        } else {
+            println "Repo-ID nicht gefunden"
+        }
+    } else {
+        println "HTTP-POST fehlgeschlagen: ${responseCode}"
+    }
+}
+//createStagingRepo()
+
+println 'version:'+getVar(jversion)+"|"
+if(gradle.startParameter.taskNames.contains('publish') && getVar(jversion)!=null && getVar(jversion).length()>0) {
+	println "publish task called. Creating staging repo ..."
+    createStagingRepo()
+} else {
+	println "publish task not called. no staging repo is created."
+}
+	
+//includeBuild('.') {}
 includeBuild('util/common') {}
 includeBuild('util/collection') {}
-includeBuild('util/concurrent') {}
 includeBuild('util/future') {}
 includeBuild('util/bean') {}
 includeBuild('util/classreader') {}
@@ -13,35 +163,40 @@ includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
 includeBuild('serialization/json') {}
 
-includeBuild('engine/serialization') {}
-includeBuild('engine/core') {}
-includeBuild('engine/featuretest') {}
-includeBuild('engine/execution') {}
-includeBuild('engine/model') {}
-includeBuild('engine/providedservice') {}
-includeBuild('engine/requiredservice') {}
-includeBuild('engine/publishservice') {}
-includeBuild('engine/publishservicejetty') {}
-includeBuild('engine/nfproperties') {}
-includeBuild('engine/simulation') {}
-includeBuild('engine/communication') {}
-includeBuild('engine/messaging') {}
+includeBuild('core/engine') {}
+includeBuild('core/featuretest') {}
+includeBuild('core/execution') {}
+includeBuild('core/simulation') {}
 
-includeBuild('engine/micro'){}
-includeBuild('engine/providedservicemicro') {}
-includeBuild('engine/requiredservicemicro') {}
+includeBuild('model/model') {}
 
-includeBuild('engine/bdi') {}
+includeBuild('service/provided') {}
+includeBuild('service/required') {}
+includeBuild('service/publish') {}
+includeBuild('service/publishjetty') {}
+includeBuild('service/nfproperty') {name='nfproperties'}
 
-includeBuild('engine/bpmn') {}
-includeBuild('engine/providedservicebpmn') {}
-includeBuild('engine/requiredservicebpmn') {}
+includeBuild('communication/ipc') {}
+includeBuild('communication/messaging') {}
+includeBuild('communication/serialization') {}
+
+includeBuild('micro/engine'){name='micro'}
+includeBuild('micro/providedservice') {name='providedservicemicro'}
+includeBuild('micro/requiredservice') {name='requiredservicemicro'}
+includeBuild('micro/lib'){name='libmicro'}
+
+includeBuild('bdi/engine') {name='bdi'}
+
+includeBuild('bpmn/engine') {name='bpmn'}
+includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
+includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 
 includeBuild('rules/eca') {}
 
 includeBuild('application/micro'){name='application-micro'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
+//includeBuild('application/bdi-llm'){name='application-bdi-llm'}
 includeBuild('application/bpmn'){name='application-bpmn'}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
@@ -49,4 +204,6 @@ includeBuild('benchmark/execution'){name='benchmark-execution'}
 includeBuild('benchmark/bdi'){name='benchmark-bdi'}
 includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
 includeBuild('benchmark/micro'){name='benchmark-micro'}
+
+
 

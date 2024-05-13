@@ -44,7 +44,7 @@ public class UnlimitedIntermediateDelegationResultListener<E> implements IInterm
 	 *  This method is only called for non-intermediate futures,
 	 *  i.e. when this method is called it is guaranteed that the
 	 *  intermediateResultAvailable method has not been called.
-	 *  @param result The final result.
+	 *  @param results The final result.
 	 */
 	public void resultAvailable(Collection<E> results)
 	{

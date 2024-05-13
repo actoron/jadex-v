@@ -1,47 +1,469 @@
-// Skip old/unfinished projects in gradle build. these are still included in eclipse
-def excludes = ['communication', 'nfproperties']
+import groovy.json.JsonSlurper
 
-['clean', 'compileJava', 'build', 'test', 'wrapper', 'sonarcube'].each { mytask ->
+// For deployment on server
+// ORG_GRADLE_PROJECT_dl_host - download host
+// ORG_GRADLE_PROJECT_tag_url - git repo
+
+// ORG_GRADLE_PROJECT_repoactoron - nexus
+
+// Maven central needs
+// ORG_GRADLE_PROJECT_repocentral
+// ORG_GRADLE_PROJECT_sigKey
+// ORG_GRADLE_PROJECT_signingPassword
+
+buildscript {
+	repositories {
+    	mavenCentral()
+  	}	
+	dependencies {
+		classpath 'com.hierynomus:sshj:0.38.0'
+		classpath 'org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r'
+  	}
+}
+
+plugins {
+    id 'java-library'
+}
+
+description = 'Jadex root project'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+// Skip old/unfinished projects in gradle build. these are still included in eclipse
+def excludes = ['communication', 'nfproperties', 'bdi-llm', 'llmbdi']
+
+['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
-		//println "Configuring task '"+mytask+"'"
+		println "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {
 			gradle.includedBuilds.each { build ->
-				if(!excludes.contains(build.name)) {
-					dependsOn build.task(':'+mytask)
+				//println "build name: "+build.getName()+" "+rootProject.name
+				if(!rootProject.name.equals(build.getName())) {
+					if(!excludes.contains(build.name)) {
+						def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
+						//if(taskInBuild)
+						dependsOn taskInBuild
+						println "cot: "+build.getName()+" "+mytask
+					}
+				}
+				else
+				{
+					//println "skipping: "+build.getName()
 				}
 			}
 		}
 	}
 	else {
-		//println "Creating task '"+mytask+"'"
+		println "Creating task '"+mytask+"'"
 		project.tasks.create([name: mytask]) {	
 			gradle.includedBuilds.each { build ->
-				if(!excludes.contains(build.name)) {
-					dependsOn build.task(':'+mytask)
+				//println "build name: "+build.getName()+" "+rootProject.name
+				if(!rootProject.name.equals(build.getName())) {
+					if(!excludes.contains(build.name)) {
+						def taskInBuild = build.task(':'+mytask)
+						//if(taskInBuild)
+						dependsOn build.task(':'+mytask)
+						println "crt: "+build.getName()+" "+mytask
+					}
+				}
+				else
+				{
+					//println "skipping: "+build.getName()
 				}
 			}
 		}
 	}
 }
 
-/*def hasSources(build) {
-    return file("${build.projectDir}/src").exists()
+task closeStagingRepo {
+    group = "publishing"
+    
+    doLast {
+        def stagedRepositoryId = System.getProperty("repoId")
+        if(stagedRepositoryId==null) {
+        	println "no staging repo id: "+stagedRepositoryId
+        }
+        else
+        {
+	        def url = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/finish")
+	        def connection = url.openConnection() as HttpURLConnection
+	        connection.setRequestMethod("POST")
+	        connection.setDoOutput(true)
+	        connection.setRequestProperty("Content-Type", "application/xml")
+	        def user = System.getProperty("centralUser")
+	        def pass = System.getProperty("centralPassword")
+    		connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user+":"+pass).getBytes()))
+	
+	        def requestBody = """
+	            <promoteRequest>
+	                <data>
+	                    <stagedRepositoryId>${stagedRepositoryId}</stagedRepositoryId>
+	                    <description>Jadex</description>
+	                </data>
+	            </promoteRequest>
+	        """
+	
+	        try (OutputStream os = connection.outputStream) {
+	            byte[] input = requestBody.getBytes("utf-8")
+	            os.write(input, 0, input.length)
+	        }
+	
+			def responseCode = connection.getResponseCode()
+			println "Response Code: ${responseCode}"
+    		
+	        if (responseCode == 201) {
+	            println "Response: ${readStream(connection.getInputStream())}"
+	            waitForStagingRepoClosed()
+	        } else {
+	            println "Failed to execute request. Response code: ${connection.responseCode}"
+            	println "Payload: ${readStream(connection.errorStream)}"
+	        }
+	
+	        connection.disconnect()
+		}
+    }
+}
+closeStagingRepo.mustRunAfter publish
+
+def waitForStagingRepoClosed() {
+	def repoid = System.getProperty("repoId")
+	def closed = false
+	
+	while(!closed) {	
+		def data = fetchStagingRepos()
+		closed = extractRepoStatus(repoid, data)
+		if(!closed) {
+			println 'Waiting for repo to close: '+repoid
+			Thread.sleep(5000)
+		}
+	}
 }
 
-gradle.includedBuilds.each { build ->
-    if (hasSources(build)) {
-        tasks.register("copyDeps_${build.name}", Copy) {
-        	println "register $build.name"
-            doLast {
-                println "in copy"
-                copy {
-                    from configurations.implementation
-                    into 'build/deps'
+def fetchStagingRepos() {
+    def user = System.getProperty("centralUser")
+    def pass = System.getProperty("centralPassword")
+
+    def url = new URL("https://oss.sonatype.org/service/local/staging/profile_repositories/5bcba2b9075ec8")
+
+    try {
+        def connection = url.openConnection() as HttpURLConnection
+        connection.setRequestMethod("GET")
+        connection.setRequestProperty("Accept", "application/json")
+        connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
+
+        println "Fetching staging repositories..."
+
+        int responseCode = connection.responseCode
+        println "Response Code: ${responseCode}"
+
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            def jsonResponse = readStream(connection.getInputStream())
+            //println "Response: ${jsonResponse}"
+            return jsonResponse
+        } else {
+            println "Failed to execute request. Response code: ${responseCode}"
+            println "Payload: ${readStream(connection.errorStream)}"
+            return null
+        }
+    } catch (Exception e) {
+        println "Exception occurred while fetching staging repositories: ${e.message}"
+        return null
+    }
+}
+
+def extractRepoStatus(repoId, jsonResponse) {
+    def jsonSlurper = new JsonSlurper()
+    def json = jsonSlurper.parseText(jsonResponse)
+    
+    def data = json.data.find { it.repositoryId == repoId }
+    
+    def ret = false;
+    if(data)
+    	ret = data.type.toLowerCase()=="closed"? true: false;
+    return ret;
+}
+
+task releaseStagingRepo {
+    group = "publishing"
+    
+    doLast {
+        def stagedRepositoryId = System.getProperty("repoId")
+        if (stagedRepositoryId == null) {
+            println "No staging repo id provided."
+            return
+        }
+
+        def url = new URL("https://oss.sonatype.org/service/local/staging/bulk/promote")
+        def data = '{"data":{"stagedRepositoryIds":["' + stagedRepositoryId + '"],"description":"Jadex"}}'
+        def user = System.getProperty("centralUser")
+        def pass = System.getProperty("centralPassword")
+        
+        def maxAttempts = 5
+        def attempts = 0
+
+        while (attempts < maxAttempts) {
+            attempts++
+            println "Attempt $attempts to release staging repository..."
+
+            def connection = url.openConnection() as HttpURLConnection
+            connection.setRequestMethod("POST")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
+            connection.setDoOutput(true)
+
+            def writer = new OutputStreamWriter(connection.getOutputStream())
+            writer.write(data)
+            writer.flush()
+            writer.close()
+
+            println "Response Code: ${connection.responseCode}"
+
+            if (connection.responseCode == 201) {
+                println "Response: ${readStream(connection.getInputStream())}"
+                break
+            } else {
+                println "Failed to execute request. Response code: ${connection.responseCode}"
+                println "Payload: ${readStream(connection.errorStream)}"
+                if (attempts < maxAttempts) {
+                    println "Retrying... "+attempts
+                } else {
+                    println "Maximum attempts reached. Exiting."
                 }
             }
-        }
-        ['build'].each { taskName ->
-            tasks.named(taskName) { dependsOn "copyDeps_${build.name}" }
+            connection.disconnect()
+
+            Thread.sleep(10000) 
         }
     }
-}*/
+}
+releaseStagingRepo.mustRunAfter closeStagingRepo
+
+// Update the tag and commit it to repository.
+task updateTag() {
+	doLast() {
+		def tag_url = getVar('tag_url')
+    	def acc = parseURLWithCredentials(tag_url)
+    	
+    	if(acc==null) {
+    		println 'no repo access credentials'
+    		return
+    	}
+				
+		def git = org.eclipse.jgit.api.Git.open(project.projectDir);
+		//org.eclipse.jgit.lib.Repository repo = new org.eclipse.jgit.storage.file.FileRepositoryBuilder().setMustExist(true).setGitDir(project.projectDir).readEnvironment().findGitDir().build();
+		def tags = git.tagList().call();
+		def cmd = git.tag();
+		cmd.setName(jadex_build_version);
+		cmd.setForceUpdate(true);
+		cmd.call();
+		cmd = git.push();
+		def pushopts = new ArrayList<String>();
+		pushopts.add("ci.skip"); 
+		cmd.setPushOptions(pushopts);
+		cmd.setRemote(acc.url);
+		cmd.setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(acc.user, acc.password))
+		cmd.setPushTags();
+		cmd.call();
+	}
+}
+
+String readStream(InputStream stream) {
+    def reader = new BufferedReader(new InputStreamReader(stream))
+    def ret = new StringBuffer()
+    String line
+    while ((line = reader.readLine()) != null) {
+        ret.append(line)
+    }
+    reader.close()
+    return ret.toString()
+}
+
+def createEmptyDirOnSSH(net.schmizz.sshj.SSHClient ssh, String dir) {
+	def session = ssh.startSession();
+	def cmd = session.exec("ls " + dir);
+	waitForSSHCmd(cmd);
+	cmd.close();
+	
+	if (cmd.getExitStatus() == 0) {
+		// Old deployment exist, remove...
+		session = ssh.startSession();
+		cmd = session.exec("rm -rf " + dir);
+		waitForSSHCmd(cmd);
+		cmd.close();
+	}
+	
+	session = ssh.startSession();
+	cmd = session.exec("mkdir " + dir);
+	waitForSSHCmd(cmd);
+	cmd.close();
+}
+
+def waitForSSHCmd(cmd) {
+	// BufferedReader reader = new BufferedReader(new InputStreamReader(cmd.getInputStream()));
+	// reader.lines().collect(java.util.stream.Collectors.joining("\n"));
+	def is = cmd.getInputStream();
+	def data = new byte[4096];
+	int cnt;
+	while((cnt = is.read(data, 0, data.length))!=-1) {
+		//System.out.write(data, 0, cnt);
+		//System.out.flush();
+	}
+}
+
+task createZip(type: Zip) {
+	group = "publishing"
+	
+	def v = getVar("JADEX_VERSION")
+	def suf = getVar("JADEX_VERSION_SUFFIX")
+	if(suf!=null)
+		v += "-"+suf
+	println "Jadex Build Version " + v
+
+    archiveFileName = 'jadex-'+v+'.zip'
+    destinationDirectory = file('deploy')
+    includeEmptyDirs = false
+    
+    from(sourceSets.main.output) {
+        gradle.includedBuilds.each { build ->
+            from("${build.projectDir}/build/libs") {
+                include '**/*.jar'
+                into 'lib' 
+                eachFile { f -> f.path = "lib/${f.name}" }
+                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            }
+        }
+    }
+
+    //def classpath = gradle.includedBuilds.collect { build -> build.projectDir.path + "/build/libs/*.jar" }.join(':')
+    def scriptContent = '#!/bin/bash\njava -cp "lib/*" jadex.micro.helloworld.HelloWorldAgent'
+    def scriptFile = file('startHelloWorld.sh')
+    scriptFile.text = scriptContent
+    scriptFile.setExecutable(true)
+    
+    into('') {
+        from scriptFile
+    }
+}
+
+task deployZip() {
+	group = "publishing"
+
+	dependsOn createZip
+	
+	doLast {
+		//if(!gradle.ext.productionmode)
+		//	throw new IllegalStateException("Can only deploy zips in production mode.");
+		
+		if(getVar('dl_host')==null)
+			throw new RuntimeException("Deploy requires deployment variables set: dl_host, tag_url");
+		
+		def acc = getDownloadServerAccess();
+		
+		if(acc==null) {
+    		println 'no repo access credentials'
+    		return
+    	}
+		
+		def v = getVar("JADEX_VERSION")
+		def suf = getVar("JADEX_VERSION_SUFFIX")
+		if(suf!=null)
+			v += "-"+suf
+		
+		def dir = "/www/releases/" + v;
+		//def zipsdir = "" + project.buildDir + File.separator + 'distributions' + File.separator + 'zips';
+		def zipsdir = file('deploy').path;
+
+		net.schmizz.sshj.SSHClient ssh = new net.schmizz.sshj.SSHClient();
+		ssh.addHostKeyVerifier(acc.fingerprint);
+		ssh.connect(acc.host, acc.port);
+		try {
+			ssh.authPassword(acc.user, acc.password);
+			
+			createEmptyDirOnSSH(ssh, dir);
+			
+			def children = new net.schmizz.sshj.xfer.FileSystemFile(zipsdir).getChildren();
+			for (def child : children) {
+				ssh.newSCPFileTransfer().upload(child, dir + "/");
+			}
+        } catch (Exception e) {
+        	throw new RuntimeException(e); 
+        } finally {
+            ssh.disconnect();
+        }
+        
+		println "Zip deployed.";
+	}
+}
+
+def getDownloadServerAccess() {
+	def downloadserver_url = getVar('dl_host')
+    return parseURLWithCredentials(downloadserver_url)
+}
+
+String getVar(String key) {
+	def ret = System.getenv(key)
+	if (ret == null)
+		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
+	if (ret == null)
+		ret = System.getProperty(key)
+	if (ret == null)
+		ret = System.getProperty("ORG_GRADLE_PROJECT_"+key)
+	return ret;
+}
+
+def parseURLWithCredentials(urlstring) {
+	//println "urlstring: "+urlstring
+	
+	def ret = [:];
+	def uri	= new URI(urlstring)
+	ret.host = uri.host;
+	ret.port = uri.port
+    ret.user = ''
+    ret.password = ''
+    ret.fingerprint = ''
+    def String userinfo = uri.userInfo
+    if(userinfo!=null)
+    {
+		def String[] split = userinfo.split(":|;")
+		//println 'userinfo: ' + split
+        ret.user = split.length>0 ? split[0] : ''
+        ret.password = split.length>1 ? split[1] : ''
+        
+        for(int i=2; i<split.length; i++)
+        {
+        	if(split[i].startsWith('fingerprint='))
+        	{
+        		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
+        		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
+        		//println 'fingerprint: ' + ret.fingerprint
+        	}
+        }
+	}
+
+	// URL without extra info (e.g. no password for security reasons)
+	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
+	//println 'url: ' + ret.url
+		
+	return ret;
+}
+
+tasks.withType(Task) { task ->
+    if (task.name.startsWith('publish') || task.group == 'publishing') {
+        if (!isJadexVersionSet()) {
+            println "Skipping $task.name, Jadex version not set"
+            task.enabled = false
+        }
+    }
+    println task.name+' '+task.enabled
+}
+
+def isJadexVersionSet() {
+	def v = System.getProperty("JADEX_VERSION")
+	return v!=null && v.length()>0;
+}
+
+

@@ -1,0 +1,42 @@
+plugins 
+{
+    id 'java-library'
+}
+
+description = 'Micro agent library'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
+repositories
+{
+    mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:classreader:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+    implementation 'org.activecomponents.jadex:core:'+v
+    implementation 'org.activecomponents.jadex:model:'+v
+    implementation 'org.activecomponents.jadex:execution:'+v
+    implementation 'org.activecomponents.jadex:micro:'+v
+    implementation 'org.activecomponents.jadex:providedservice:'+v
+    implementation 'org.activecomponents.jadex:providedservicemicro:'+v
+    implementation 'org.activecomponents.jadex:requiredservice:'+v
+    implementation 'org.activecomponents.jadex:requiredservicemicro:'+v
+    implementation 'org.activecomponents.jadex:publishservice:'+v
+    implementation 'org.activecomponents.jadex:publishservicejetty:'+v
+    //implementation 'org.activecomponents.jadex:simulation:'+v
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}

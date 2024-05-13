@@ -34,10 +34,11 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	
 	//-------- constants --------
 	
-	/** Notification queues for active notification threads.
+	/** 
+	 *  Notification queues for active notification threads.
 	 *  Notifications for a specific future/listener combination are assigned to only one thread at a time
 	 *  to assure notification ordering across threads and avoid duplicate notifications.
-	 *  @see(listeners) */
+	 */
 	public static final Map<Thread, List<Tuple3<Future<?>, IResultListener<?>, ICommand<IResultListener<?>>>>>	NOTIFICATIONS	= new IdentityHashMap<>();
 	
 	/** Marker indicating if a given thread is currently executing the notification loop. */
@@ -300,6 +301,8 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	
 	/**
 	 *  Throw an exception but include the current stack trace. 
+	 *  @param t The throwable.
+	 *  @return The runtime exception.
 	 */
 	public static RuntimeException	throwException(Throwable t)
 	{
@@ -331,6 +334,9 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	
 	/**
 	 *  Set the exception (internal implementation for normal and if-undone).
+	 *  @param exception The exception.
+	 *  @param undone The undone flag.
+	 *  @return True, if exception was set.
 	 */
     protected boolean	doSetException(Exception exception, boolean undone)
     {
@@ -427,6 +433,9 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 
     /**
      *  Set the result without notifying listeners.
+     *  @param result The result.
+	 *  @param undone The undone flag.
+	 *  @return True, if exception was set.
      */
     protected synchronized boolean doSetResult(E result, boolean undone)
     {
@@ -474,6 +483,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
     
     /**
      *  Was the result/exception (scheduled to be) notified to some listener/blocked caller?
+     *  @return True, if notified.
      */
     public boolean	isNotified()
     {
@@ -527,6 +537,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	
 	/**
 	 *  Abort a blocking get call.
+	 *  @param caller The caller
 	 */
 	public void abortGet(ISuspendable caller)
 	{
@@ -1312,7 +1323,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	
 	/**
 	 *  Called on exception.
-	 *  @param delegate The future the exception will be delegated to.
+	 *  @param consumer The consumer the exception will be delegated to.
 	 */
 	public IFuture<E> catchEx(final Consumer<? super Exception> consumer)
     {

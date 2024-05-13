@@ -59,10 +59,8 @@ public class SokratesV3Agent
 	 *  Setup the gui and start playing.
 	 */
 	@OnStart
-	public IFuture<Void>	body(IComponent agent)
+	public void	body(IComponent agent)
 	{
-		final Future<Void>	ret	= new Future<Void>();
-
 //		strategy = agent.getConfiguration();
 		System.out.println("strategy is: "+strategy);
 		createGui(agent);
@@ -76,17 +74,15 @@ public class SokratesV3Agent
 			{
 				long end = System.currentTimeMillis();
 				System.out.println("Needed: "+(end-start)+" millis.");
-				ret.setResult(null);
+				agent.terminate();
 			}
 			
 			public void exceptionOccurred(Exception exception)
 			{
 				System.out.println("No solution found :-(");
-				ret.setResult(null);
+				agent.terminate();
 			}
 		});
-		
-		return ret;
 	}
 	
 	/**
@@ -129,7 +125,7 @@ public class SokratesV3Agent
 		{
 			List<MovePlan>	ret	= new ArrayList<MovePlan>();
 			List<Move>	moves	= board.getPossibleMoves();
-			System.out.println("cands0: "+moves);
+//			System.out.println("cands0: "+moves);
 			Collections.sort(moves, new MoveComparator(board, strategy));
 			
 			for(Move move: moves)
@@ -137,7 +133,7 @@ public class SokratesV3Agent
 				ret.add(new MovePlan(move));
 			}
 			
-			System.out.println("cands1: "+ret);
+//			System.out.println("cands1: "+ret);
 		
 			return ret;
 		}

@@ -1,0 +1,54 @@
+plugins 
+{
+	id 'java-library'
+    
+}
+
+description = 'Required service support'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:bytecode:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:javaparser:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+    implementation 'org.activecomponents.jadex:providedservice:'+v
+	implementation 'org.activecomponents.jadex:serialization:'+v
+	implementation 'net.cinnom:nano-cuckoo:3.0.2'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}
+
+task copyDependencies {
+    doLast {
+        copy {
+            configurations.compileClasspath.each { File file ->
+                  if (!file.absolutePath.startsWith(project.rootDir.absolutePath)) {
+                    if (file.name.endsWith('.jar'))
+                        from file.getParent()
+                }
+            } 
+            into 'build/libs/external-dependencies'
+        }
+    }
+    outputs.upToDateWhen { false }
+}
+build.dependsOn(copyDependencies)

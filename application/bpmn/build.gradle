@@ -3,9 +3,17 @@ plugins
     id 'java-library'
 }
 
-group = 'jadex'
+description = 'BPMN examples'
 
-sourceCompatibility = 1.17
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 repositories
 {
@@ -14,17 +22,18 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:future:5.0.0'
-	implementation 'jadex:core:5.0.0'
-	implementation 'jadex:model:5.0.0'
-	implementation 'jadex:execution:5.0.0'
-	implementation 'jadex:micro:5.0.0'
-	implementation 'jadex:bpmn:5.0.0'
-	implementation 'jadex:requiredservice:5.0.0'
-	implementation 'jadex:requiredservicebpmn:5.0.0'
-	implementation 'jadex:providedservice:5.0.0'
-	implementation 'jadex:providedservicebpmn:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:micro:'+v
+	implementation 'org.activecomponents.jadex:bpmn:'+v
+	implementation 'org.activecomponents.jadex:requiredservice:'+v
+	implementation 'org.activecomponents.jadex:requiredservicebpmn:'+v
+	implementation 'org.activecomponents.jadex:providedservice:'+v
+	implementation 'org.activecomponents.jadex:providedservicebpmn:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 
@@ -36,5 +45,5 @@ processResources {
 
 task runHelloWorld(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.bpmn.helloworld.Main'
+    mainClass = 'jadex.bpmn.helloworld.Main'
 }

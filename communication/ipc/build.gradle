@@ -1,0 +1,57 @@
+plugins 
+{
+	id 'java-library'
+	id 'eclipse'
+	id 'idea'
+}
+
+description = 'Basic component communication infrastructure'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:traverser:'+v
+	implementation 'org.activecomponents.jadex:serialization:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:messaging:'+v
+
+	implementation 'org.bouncycastle:bcprov-jdk18on:1.77'
+	implementation 'org.bouncycastle:bcpkix-jdk18on:1.77'
+	implementation 'net.java.dev.jna:jna:5.13.0'
+	implementation 'net.java.dev.jna:jna-platform:5.13.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+}
+
+task copyDependencies {
+    doLast {
+        copy {
+            configurations.compileClasspath.each { File file ->
+                  if (!file.absolutePath.startsWith(project.rootDir.absolutePath)) {
+                    if (file.name.endsWith('.jar'))
+                        from file.getParent()
+                }
+            } 
+            into 'build/libs/external-dependencies'
+        }
+    }
+    outputs.upToDateWhen { false }
+}
+build.dependsOn(copyDependencies)

@@ -3,9 +3,17 @@ plugins
     id 'java-library'
 }
 
-group = 'jadex'
+description = 'Micro agent examples'
 
-sourceCompatibility = 1.17
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 repositories
 {
@@ -14,21 +22,23 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:collection:5.0.0'
-	implementation 'jadex:classreader:5.0.0'
-	implementation 'jadex:future:5.0.0'
-    implementation 'jadex:core:5.0.0'
-    implementation 'jadex:model:5.0.0'
-    implementation 'jadex:execution:5.0.0'
-    implementation 'jadex:micro:5.0.0'
-    implementation 'jadex:providedservice:5.0.0'
-    implementation 'jadex:providedservicemicro:5.0.0'
-    implementation 'jadex:requiredservice:5.0.0'
-    implementation 'jadex:requiredservicemicro:5.0.0'
-    implementation 'jadex:publishservice:5.0.0'
-    implementation 'jadex:publishservicejetty:5.0.0'
-    //implementation 'jadex:simulation:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:libmicro:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:classreader:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+    implementation 'org.activecomponents.jadex:core:'+v
+    implementation 'org.activecomponents.jadex:model:'+v
+    implementation 'org.activecomponents.jadex:execution:'+v
+    implementation 'org.activecomponents.jadex:micro:'+v
+    implementation 'org.activecomponents.jadex:providedservice:'+v
+    implementation 'org.activecomponents.jadex:providedservicemicro:'+v
+    implementation 'org.activecomponents.jadex:requiredservice:'+v
+    implementation 'org.activecomponents.jadex:requiredservicemicro:'+v
+    implementation 'org.activecomponents.jadex:publishservice:'+v
+    implementation 'org.activecomponents.jadex:publishservicejetty:'+v
+    //implementation 'org.activecomponents.jadex:simulation:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 
@@ -44,25 +54,25 @@ processResources {
 
 task runHelloWorld(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.helloworld.HelloWorldAgent'
+    mainClass = 'jadex.micro.helloworld.HelloWorldAgent'
 }
 
 task runMandelbrot(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.mandelbrot_new.MainWeb'
+    mainClass = 'jadex.micro.mandelbrot_new.MainWeb'
 }
 
 task runQuiz(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.quiz.Main'
+    mainClass = 'jadex.micro.quiz.Main'
 }
 
 task runGobble(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.gobble.GobbleAgent'
+    mainClass = 'jadex.micro.gobble.GobbleAgent'
 }
 
 task runHelpline(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.helpline.Main'
+    mainClass = 'jadex.micro.helpline.Main'
 }

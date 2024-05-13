@@ -1,0 +1,340 @@
+// -------------------------------------
+// ------------ PUBLISH ----------------
+// -------------------------------------
+
+println "publish gradle used"
+
+// for some mysterious reason plugin cannot be loaded in external script :-(((
+/*
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'io.github.gradle-nexus:publish-plugin:2.0.0-rc-2'
+    }
+}
+apply plugin: 'io.github.gradle-nexus.publish-plugin'*/
+
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+def canSign = project.hasProperty('signing.secretKeyRingFile') || System.getProperty("signingKey")!=null
+println "canSign: "+canSign
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+def getVar(String key, Project p) {
+    String value = System.getenv(key)
+    print "key: $key, project: $p, value: $value \n"
+    if (!value || value.isEmpty()) {
+        if (project.hasProperty(key)) {
+            value = project[key]
+        } else {
+            value = null
+        }
+    }
+    return value
+}
+
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+tasks.withType(Task) { task ->
+    if (task.name.startsWith('publish') || task.group == 'publishing') {
+        if (!isJadexVersionSet()) {
+            println "Skipping $task.name, Jadex version not set"
+            task.enabled = false
+        }
+    }
+}
+
+def isJadexVersionSet() {
+	def v = System.getProperty("JADEX_VERSION")
+	return v!=null && v.length()>0;
+}
+
+// Parse a URI into its components.
+// see, e.g., https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
+// Examples:
+// https://myserver.com/path -> {host: "myserver.com", port: -1, user: "", password: "", fingerprint: "", url: "https://myserver.com/path"}
+// https://a@myserver.com/path -> {host: "myserver.com", port: -1, user: "a", password: "", fingerprint: "", url: "https://myserver.com/path"}
+// ssh://a:b;fingerprint=SHA256-ABC@myserver.com:22000  -> {host: "myserver.com", port: 22000, user: "a", password: "b", fingerprint: "SHA256:ABC", url: "ssh://myserver.com:22000"}
+def parseURLWithCredentials(urlstring) {
+	if(urlstring==null)
+		return null;
+	//println "urlstring: "+urlstring
+	
+	def ret = [:];
+	def uri	= new URI(urlstring)
+	ret.host = uri.host;
+	ret.port = uri.port
+    ret.user = ''
+    ret.password = ''
+    ret.fingerprint = ''
+    def String userinfo = uri.userInfo
+    if(userinfo!=null)
+    {
+		def String[] split = userinfo.split(":|;")
+		//println 'userinfo: ' + split
+        ret.user = split.length>0 ? split[0] : ''
+        ret.password = split.length>1 ? split[1] : ''
+        
+        for(int i=2; i<split.length; i++)
+        {
+        	if(split[i].startsWith('fingerprint='))
+        	{
+        		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
+        		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
+        		//println 'fingerprint: ' + ret.fingerprint
+        	}
+        }
+	}
+
+	// URL without extra info (e.g. no password for security reasons)
+	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
+	//println 'url: ' + ret.url
+		
+	return ret;
+}
+
+//println getVar("signingKey", project)
+
+if(project.hasProperty('repos')) {
+    for(String repo: repos.split(",")) {
+        // Parse credentials from environment
+        def repourl = getVar('repo' + repo, project)
+        def repoaccess = parseURLWithCredentials(repourl)
+        
+        if(repoaccess==null) {
+    		println 'no repo access credentials'
+    		return
+    	}
+        
+        println 'publishing to: ' + repoaccess.url
+        println 'repouser: ' + repoaccess.user
+        println 'repopassword: ' + repoaccess.password
+
+        if("central".equals(repo)) {
+            // Settings for staging when publishing to central repo
+            publishing {
+                publications {
+                	 mavenJava(MavenPublication) {
+			        	//println "publish"
+			        	groupId 'org.activecomponents.jadex'
+			        	//groupId 'jadex'
+			            artifactId getArtifactName(project)
+			            version System.getProperty("JADEX_VERSION")
+			        	from components.java
+			        	configurePom(pom)
+			        }
+                }
+                repositories {
+                    maven {
+                        url = uri("https://oss.sonatype.org/service/local/staging/deployByRepositoryId/${System.getProperty('repoId')}")
+                        credentials {
+                            username = repoaccess.user
+                            password = repoaccess.password
+                        }
+                        //stagingProfileId = '5bcba2b9075ec8'
+                    }
+                }
+            }
+        } else {
+            // Settings for non-staging publications like nexus.actoron.com
+            publishing {
+                publications {
+                    mavenJava(MavenPublication) {
+                        from components.java
+                    }
+                }
+                repositories {
+                    maven {
+                        url = uri(repoaccess.url)
+                        credentials {
+                            username = repoaccess.user
+                            password = repoaccess.password
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------
+// ---------- POM contents -------------
+// -------------------------------------
+
+def common() {
+	return {
+        scm {
+            url 'https://github.com/actoron/jadex.git'
+        }
+
+        url 'https://www.activecomponents.org'
+
+        // beware: organization needs '=' assignment:
+        // https://issues.gradle.org/browse/GRADLE-2719
+        developers {
+            developer {
+                id 'alex'
+                name 'Alexander Pokahr'
+                email 'pokahr@gmx.net'
+                //                url 'http://vsis-www.informatik.uni-hamburg.de/members/info.php/84'
+                //                organization 'University of Hamburg'
+                //                organizationUrl 'http://vsis-www.informatik.uni-hamburg.de/'
+                organization 'Actoron GmbH'
+                organizationUrl 'https://actoron.com/'
+            }
+            developer {
+                id 'lars'
+                name 'Lars Braubach'
+                email 'braubach@gmx.net'
+                //                url 'http://vsis-www.informatik.uni-hamburg.de/members/info.php/80'
+                //                organization 'University of Hamburg'
+                //                organizationUrl 'http://vsis-www.informatik.uni-hamburg.de/'
+                organization 'Actoron GmbH'
+                organizationUrl 'https://actoron.com/'
+            }
+            developer {
+                id 'kai'
+                name 'Kai Jander'
+                email 'kai.jander@googlemail.com'
+                //                url 'http://vsis-www.informatik.uni-hamburg.de/members/info.php/974'
+                //                organization 'University of Hamburg'
+                //                organizationUrl 'http://vsis-www.informatik.uni-hamburg.de/'
+                organization 'Actoron GmbH'
+                organizationUrl 'https://actoron.com/'
+            }
+            developer {
+                id 'julian'
+                name 'Julian Kalinowski'
+                email 'kalinowski@informatik.uni-hamburg.de'
+                //                url 'http://vsis-www.informatik.uni-hamburg.de/members/info.php/974'
+                //                organization 'Actoron GmbH'
+                //                organizationUrl 'https://actoron.com/'
+                organization 'University of Hamburg'
+                organizationUrl 'http://vsis-www.informatik.uni-hamburg.de/'
+            }
+        }
+
+    }
+}
+
+def commercial() {
+	return {
+        licenses {
+            license {
+                name 'Actoron GmbH Commercial Licence'
+            }
+        }
+    }
+}
+
+def gpl() {
+	return {
+		licenses {
+			license {
+				name 'GPL-3.0'
+				url 'https://gnu.org/licenses/gpl-3.0'
+				distribution 'repo'
+			}
+		}
+	}
+}
+
+def configurePom(pom) {
+    pom.withXml {
+        def root = asNode()
+        root.appendNode('description', project.description)
+        root.appendNode('name', project.name)
+        if (!root.get('packaging').isEmpty()) 
+        {
+            root.remove(root.get('packaging'))
+        }
+        root.children().last() + common()
+        root.children().last() + gpl()
+    }
+}
+
+// Sign the (single) output of another task.
+def createSignTask(origtask, classi, exten) {
+    def signtask = project.tasks.create('sign' + origtask.name.capitalize(), Sign) {
+    	outputs.cacheIf { true }
+   		dependsOn origtask
+   		//doLast {
+		//	println "signtask: " + origtask+", "+classi+", "+exten
+   		//}
+    }
+        
+    signtask.sign(classi, origtask.outputs.files.singleFile)
+    
+    // Change name of signature file to not include version number -> allows caching across version as long as jar contents haven't changed
+    if(origtask instanceof AbstractArchiveTask) {
+	    signtask.signatures.each { sig ->
+	    	sig.name	= origtask.archiveBaseName.get() + (classi!=null ? '-' + classi : '') + '.' + exten + sig.name.substring(sig.name.lastIndexOf('.'))
+	    }
+	}
+	
+	signtask.signatureFiles.each { sigfile ->
+		publishing.publications.mavenJava.artifact(sigfile)
+		{
+			builtBy signtask
+			classifier classi
+			extension exten + sigfile.name.substring(sigfile.name.lastIndexOf('.'))
+		}
+	}
+	// Signatory getting created for each task takes a long time -> reuse one signatory for all tasks
+	/*project.afterEvaluate {
+		if (project.hasProperty('ext') && project.ext.properties.containsKey('signatory')) {
+		    def signatory = project.ext.signatory
+		    println "Signatory: $signatory"
+		    rootProject.ext.signatory	= signat
+		} else {
+		    println "Signatory not found."
+		}
+	
+		def signat = rootProject.ext.signatory
+		if(signat==null) {
+			signat	= signtask.signatory
+			rootProject.ext.signatory	= signat
+		} else {
+			signtask.setSignatory(signat)
+		}
+	}*/
+}
+
+def getArtifactName(project) {
+    return project.getName();
+}
+
+if(canSign) {
+	signing {
+		// for signing with keys by environment variables https://docs.gradle.org/current/userguide/signing_plugin.html
+		//def signingKey1 = findProperty("signingKey")
+		//def signingPassword1 = findProperty("signingPassword")
+		//println("sign key1: "+signingKey1)
+		
+		
+		def signingKey = System.getProperty("signingKey")
+		def signingPassword = System.getProperty("signingPassword")
+		//println "sign key: "+signingKey
+		//println "pass: "+signingPassword
+		useInMemoryPgpKeys(signingKey, signingPassword)
+		
+		if(publishing && publishing.publications && publishing.publications.mavenJava)
+			sign publishing.publications.mavenJava
+
+		// Sign archives and pom in separate tasks as archive signing can be cached while pom signing cannot, when jadex version changes.
+		//sign publishing.publications.mavenJava
+	}
+}
+

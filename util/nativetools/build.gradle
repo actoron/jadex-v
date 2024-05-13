@@ -3,9 +3,17 @@ plugins
     id 'java-library'
 }
 
-group = 'jadex'
+description = 'Native helpers'
 
-sourceCompatibility = '1.17'
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 repositories
 {

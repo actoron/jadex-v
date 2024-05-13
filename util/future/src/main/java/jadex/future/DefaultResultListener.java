@@ -26,7 +26,6 @@ public abstract class DefaultResultListener<E> implements IFutureCommandResultLi
 	
 	/**
 	 *  Create a new listener.
-	 *  @param logger The logger.
 	 */
 	public DefaultResultListener()
 	{

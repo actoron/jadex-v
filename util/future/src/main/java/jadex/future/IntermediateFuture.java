@@ -42,7 +42,6 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 	
 	/**
 	 *  Create a future that is already done.
-	 *  @param result	The result, if any.
 	 */
 	public IntermediateFuture()
 	{
@@ -50,7 +49,7 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 	
 	/**
 	 *  Create a future that is already done.
-	 *  @param result	The result, if any.
+	 *  @param results	The results, if any.
 	 */
 	public IntermediateFuture(Collection<E> results)
 	{
@@ -59,7 +58,7 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 	
 	/**
 	 *  Create a future that is already done (failed).
-	 *  @param exception	The exception.
+	 *  @param exception The exception.
 	 */
 	public IntermediateFuture(Exception exception)
 	{
@@ -605,7 +604,7 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
      *  until a result is available or the future is finished.
      *  
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getNextIntermediateResult()
     {
@@ -622,7 +621,7 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
      *  until a result is available or the future is finished.
      *  
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getNextIntermediateResult(boolean realtime)
     {
@@ -639,7 +638,7 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
      *  until a result is available or the future is finished.
      *  
      *  @return	The next intermediate result.
-     *  @throws NoSuchElementException, when there are no more intermediate results and the future is finished. 
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
      */
     public E getNextIntermediateResult(long timeout, boolean realtime)
     {
@@ -694,8 +693,8 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
     }
     
     /**
-     * 
-     * @param max
+     * Schedule max notification
+     * @param lis The result listener
      */
     protected boolean scheduleMaxNotification(IResultListener<Collection<E>> lis)
     {

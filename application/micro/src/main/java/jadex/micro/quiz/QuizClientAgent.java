@@ -22,7 +22,7 @@ import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
-import jadex.micro.mandelbrot_new.ui.PropertiesPanel;
+import jadex.micro.mandelbrot.ui.PropertiesPanel;
 import jadex.micro.quiz.TimerPanel.Colorizer;
 import jadex.micro.quiz.model.NewQuizEvent;
 import jadex.micro.quiz.model.Question;

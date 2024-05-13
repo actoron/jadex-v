@@ -1,11 +1,19 @@
 plugins 
 {
-    id 'java-library'
+    id 'java-library'    
 }
 
-group = 'jadex'
+description = 'BDI agent examples with services'
 
-sourceCompatibility = 1.17
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 repositories
 {
@@ -14,18 +22,18 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:future:5.0.0'
-    implementation 'jadex:core:5.0.0'
-    implementation 'jadex:model:5.0.0'
-    implementation 'jadex:execution:5.0.0'
-    implementation 'jadex:micro:5.0.0'
-    implementation 'jadex:bdi:5.0.0'
-    implementation 'jadex:providedservice:5.0.0'
-    implementation 'jadex:providedservicemicro:5.0.0'
-    implementation 'jadex:requiredservice:5.0.0'
-    implementation 'jadex:requiredservicemicro:5.0.0'
-    implementation 'jadex:eca:5.0.0'
-    implementation 'jadex:traverser:5.0.0'
-    //implementation 'jadex:simulation:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+    implementation 'org.activecomponents.jadex:core:'+v
+    implementation 'org.activecomponents.jadex:model:'+v
+    implementation 'org.activecomponents.jadex:execution:'+v
+    implementation 'org.activecomponents.jadex:micro:'+v
+    implementation 'org.activecomponents.jadex:bdi:'+v
+    implementation 'org.activecomponents.jadex:providedservice:'+v
+    implementation 'org.activecomponents.jadex:providedservicemicro:'+v
+    implementation 'org.activecomponents.jadex:requiredservice:'+v
+    implementation 'org.activecomponents.jadex:requiredservicemicro:'+v
+    implementation 'org.activecomponents.jadex:eca:'+v
+    implementation 'org.activecomponents.jadex:traverser:'+v
 }

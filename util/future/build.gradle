@@ -3,10 +3,18 @@ plugins
     id 'java-library'
 }
 
-group = 'jadex'
+description = 'Future support with simpler API than Java futures'
+	
+group = 'org.activecomponents.jadex'
 
-sourceCompatibility = '1.17'
+java
+{
+	sourceCompatibility = '1.17'
+}
 
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+	
 repositories
 {
     mavenCentral()
@@ -14,8 +22,9 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:collection:5.0.0'
-	//implementation 'jadex:concurrent:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	//implementation 'org.activecomponents.jadex:concurrent:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }

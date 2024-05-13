@@ -1,0 +1,165 @@
+println "inlcluded version.gradle"
+
+
+// Separated versioning utilities, used by main build.gradle as well as docs/mkdocs-ng
+Object fetchNextBuildNameFromGitTag()
+{
+	def versionprops = new Properties()
+	
+	def envverstr = System.getenv("JADEX_VERSION");
+	if (envverstr) {
+		if (envverstr.contains(".")) {
+			def vercomps = envverstr.split("\\.");
+			versionprops.setProperty("jadexversion_major", vercomps[0]);
+			versionprops.setProperty("jadexversion_minor", vercomps[1]);
+		}
+		else
+			versionprops.setProperty("jadexversion_major", envverstr);
+		println "version from environment is: " + versionprops
+	}
+	
+	if (versionprops.getProperty("jadexversion_major") == null)
+		return null;
+
+	def vsuffix = System.getenv("JADEX_VERSION_SUFFIX");
+	
+	def isnew = false;
+	if (versionprops.getProperty("jadexversion_minor") == null) {
+		def mv = getLatestMinorVersion(versionprops);
+		if (mv != null)
+			versionprops.jadexversion_minor = mv;
+		if (versionprops.getProperty("jadexversion_minor") != null)
+			isnew = true;
+	}
+	
+	def buildname = null;
+	if (versionprops.getProperty("jadexversion_minor") != null)
+	{
+		// Create the build name based on version path and branch info.		
+		buildname = createBuildname(versionprops, vsuffix, isnew)
+		
+		println 'Working on Jadex Version ' + buildname;
+	}
+	
+	return buildname;// buildname!=null ? buildname : createBuildname(versionprops, branchpatch, false);
+}
+
+// Create the build name object.
+Object createBuildname(versionprops, suffix, isnew)
+{
+	def buildname = new HashMap() {
+		public String toString()
+		{
+			return "" + this.major + "." + this.minor + this.suffix ? "-" + suffix : "";
+		}
+	};
+	
+	buildname.major = versionprops.getProperty("jadexversion_major");
+	buildname.minor = versionprops.getProperty("jadexversion_minor");
+	def fullver = buildname.major + "." + buildname.minor;
+	if (suffix != null)
+	{
+		buildname.put("suffix", suffix);
+		fullver += "-";
+		fullver += suffix;
+	}
+	buildname.full = fullver;
+	buildname.isnew	= isnew;	// isnew -> no tag for this version exists, yet -> enable updateTag task todo?
+	return buildname;
+}
+
+// Fetch all tags matching the given major.minor version and 
+// return the latest patch version.
+// @return The found patch version or 0 if not found.
+Integer getLatestMinorVersion(versionprops)
+{
+	def	patch = null
+	//def status = sh (returnStatus: true,
+	//	script: "git log --tags=\"${version}.*\" --no-walk --format=%D >tags.txt")
+	
+	def major = versionprops.jadexversion_major;
+	def git = "git log --tags=${major}.* --no-walk --format=%D";
+	//println "git command: "+git
+	
+	def p1 = git.execute()
+	p1.waitFor()
+	//println p1.errorStream.text
+	
+	def status = p1.exitValue()
+	def txt = p1.text;
+	if (txt.length() > 0)
+	{
+		def tags = txt.split("\\n")
+		
+		//println "tags are: "+ tags
+		
+		if(status==0)
+		{
+			for(String tag: tags)
+			{
+				println 'checking tag> ' + tag;
+				if(tag.startsWith("tag: "+major+"."))
+				{
+					tag	= tag.substring(("tag: "+major+".").length())
+					if(tag.indexOf("-")!=-1)	// Strip version branch names in tag
+						tag	= tag.substring(0, tag.indexOf("-"));
+					if(tag.indexOf(",")!=-1)	// Strip git branch names after tag
+						tag	= tag.substring(0, tag.indexOf(","));
+					
+					if(tag.matches("\\d+"))	// Skip tags not conforming to <major>.<minor>.<patch> or <major>.<minor>.<patch>-<branch>-<branchpatch>
+					{
+					 	patch = Math.max(patch, tag as Integer)
+					}
+					else
+					{
+						println "ignored "+tag
+					}
+				}
+			}
+		}
+	}
+	return patch
+}
+
+// Fetch the latest tag matching the given prefix and return the suffix.
+// @return The suffix or null, when no matching tag is found.
+String getLatestTagSuffix(prefix)
+{
+	//def status = sh (returnStatus: true,
+	//	script: "git describe --match \"${prefix}*\" --abbrev=0 > tag.txt")
+	//git log --tags="4.0.*" --no-walk --format=%D >tags.txt
+	
+	//if (project.ext.productionmode)
+	//{
+		def cmd = "git describe --match ${prefix} --abbrev=0";
+		def p1 = cmd.execute();
+		p1.waitFor()
+		
+		def status = p1.exitValue()
+		return status==0? p1.text.trim().substring(prefix.length()): null;
+	//}
+}
+
+// Check if a branch name should be included in version number.
+boolean includeBranchName(branch)
+{
+	return !"master".equals(branch) && !"stable".equals(branch);
+}
+
+// Check if a tag points to HEAD.
+boolean	isHead(tag)
+{
+	println "Checking if "+ tag +" points to HEAD"
+	//def status = sh (returnStatus: true,
+	//	script: "git tag --points-at HEAD > tags.txt")
+	
+	def p1 = "git tag --points-at HEAD.execute()".execute()
+	p1.waitFor()
+	
+	def status = p1.exitValue()
+	def tags = p1.text
+		
+	if(status==0)
+		return java.util.Arrays.asList(tags.trim().split("\\n")).contains(tag)
+	return false;
+}

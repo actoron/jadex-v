@@ -1,0 +1,68 @@
+image: gradle:latest
+
+before_script:
+  - GRADLE_USER_HOME="$(pwd)/.gradle"
+  - export GRADLE_USER_HOME
+
+stages:
+  - build
+  - test
+  - benchmark
+  - deploy
+
+build:
+  stage: build
+  script: 
+    - cat build.gradle
+    - ./gradlew --build-cache assemble
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - '**/build'
+      - .gradle
+
+test:
+  stage: test
+  script: ./gradlew test
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - '**/build'
+      - .gradle
+
+benchmark:
+  stage: benchmark
+  script: ./benchmark.sh
+  # needs: ["build"]
+  allow_failure: true
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - '**/build'
+      - .gradle
+
+deployZip:
+  stage: deploy
+  script:
+    - ./gradlew deployZip
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - '**/build'
+      - .gradle
+
+deployCentral:
+  stage: deploy
+  script:
+    - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - '**/build'
+      - .gradle
+

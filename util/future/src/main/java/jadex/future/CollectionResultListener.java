@@ -51,7 +51,6 @@ public class CollectionResultListener<E> implements IResultListener<E>, IUndoneR
 	
 	/**
 	 *  Create a new collection listener that stops on failures.
-	 *  @param num The expected number of results.
 	 *  @param delegate	The delegate result listener.
 	 */
 	public CollectionResultListener(IResultListener<Collection<E>> delegate)
@@ -76,7 +75,6 @@ public class CollectionResultListener<E> implements IResultListener<E>, IUndoneR
 	
 	/**
 	 *  Create a new collection listener.
-	 *  @param num The expected number of results.
 	 *  @param ignorefailures When set to true failures will be 
 	 *  	tolerated and just not be added to the result collection.
 	 *  @param delegate	The delegate result listener.

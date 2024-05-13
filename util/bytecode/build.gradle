@@ -3,9 +3,17 @@ plugins
     id 'java-library'
 }
 
-group = 'jadex'
+description = 'Bytecode engineering support'
 
-sourceCompatibility = '1.17'
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+	
+java
+{
+	sourceCompatibility = '1.17'
+}
 
 repositories
 {
@@ -14,9 +22,10 @@ repositories
 
 dependencies
 {
-	implementation 'jadex:common:5.0.0'
-	implementation 'jadex:collection:5.0.0'
-	implementation 'jadex:nativetools:5.0.0'
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:nativetools:'+v
 	implementation 'org.ow2.asm:asm:9.1'
 	implementation 'org.ow2.asm:asm-tree:9.1'
 	implementation 'org.ow2.asm:asm-util:9.1'
