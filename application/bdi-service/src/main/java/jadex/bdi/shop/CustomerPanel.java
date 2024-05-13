@@ -58,6 +58,7 @@ public class CustomerPanel extends JPanel
 {
 	//-------- attributes --------
 	
+	protected IComponent agent;
 	protected ICapability capa;
 	protected List shoplist = new ArrayList();
 	protected JCheckBox remote;
@@ -76,6 +77,7 @@ public class CustomerPanel extends JPanel
 	 */
 	public CustomerPanel(IComponent agent, ICapability capa)
 	{
+		this.agent	= agent;
 		this.capa	= capa;
 		this.shops	= new HashMap();
 		
@@ -124,8 +126,9 @@ public class CustomerPanel extends JPanel
 						for(Iterator<Object> it=coll.iterator(); it.hasNext(); )
 						{
 							IShopService	shop	= (IShopService)it.next();
-							shops.put(shop.getName(), shop);
-							((DefaultComboBoxModel)shopscombo.getModel()).addElement(shop.getName());
+							String	name	= agent.getExternalAccess().scheduleStep(() -> shop.getName()).get();
+							shops.put(name, shop);
+							((DefaultComboBoxModel)shopscombo.getModel()).addElement(name);
 						}
 					}
 					else
@@ -373,7 +376,8 @@ public class CustomerPanel extends JPanel
 	{
 		if(shop!=null)
 		{
-			shop.getCatalog().addResultListener(new IResultListener()
+			agent.getExternalAccess().scheduleStep(() ->shop.getCatalog())
+				.addResultListener(new IResultListener()
 			{
 				public void resultAvailable(Object result)
 				{
