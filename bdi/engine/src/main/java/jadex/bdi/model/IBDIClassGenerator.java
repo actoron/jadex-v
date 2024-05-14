@@ -2,7 +2,6 @@ package jadex.bdi.model;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.lang.reflect.Field;
 import java.util.List;
 
 import jadex.classreader.SClassReader;
@@ -10,6 +9,7 @@ import jadex.classreader.SClassReader.ClassFileInfo;
 import jadex.classreader.SClassReader.ClassInfo;
 import jadex.classreader.SClassReader.FieldInfo;
 import jadex.common.SUtil;
+import jadex.micro.annotation.Agent;
 
 /**
  *  Interface for BDI class enhancement/generation.
@@ -45,7 +45,7 @@ public interface IBDIClassGenerator
 		boolean isEnhanced = false;
 		try 
 		{
-			Field field = clazz.getField(AGENT_FIELD_NAME);
+			/*Field field =*/ clazz.getField(AGENT_FIELD_NAME);
 //			Field field = clazz.getField(GLOBALNAME_FIELD_NAME);
 			isEnhanced = true;
 		} 
@@ -103,5 +103,15 @@ public interface IBDIClassGenerator
 		{
 			throw new RuntimeException("BDI agent class was not bytecode enhanced: " + clazz.getName() + " This may happen if the class is accessed directly in application code before loadModel() was called.");
 		}
+	}
+	
+	/**
+	 *  Check if a bdi agent class was enhanced.
+	 *  @throws RuntimeException if was not enhanced.
+	 */
+	public static boolean	isPure(Class<?> clazz)
+	{
+		return clazz.isAnnotationPresent(Agent.class)
+			&& clazz.getAnnotation(Agent.class).type().equalsIgnoreCase("bdip");
 	}
 }

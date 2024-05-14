@@ -21,7 +21,7 @@ import jadex.model.annotation.OnStart;
 /**
  *  Blocksworld agent for stacking blocks.
  */
-@Agent(type="bdi")
+@Agent(type="bdip")
 @Plans({
 	@Plan(body=@Body(ClearBlocksPlan.class), trigger=@Trigger(goals=BlocksworldAgent.ClearGoal.class)),
 	@Plan(body=@Body(StackBlocksPlan.class), trigger=@Trigger(goals=BlocksworldAgent.StackGoal.class)),

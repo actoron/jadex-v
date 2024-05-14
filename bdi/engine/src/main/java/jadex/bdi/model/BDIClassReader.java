@@ -525,10 +525,11 @@ public class BDIClassReader extends MicroClassReader
 		{
 			for(Class<?> agcl: agtcls)
 			{
+				
 				try 
 				{
 					
-					if(!IBDIClassGenerator.isEnhanced(agcl))
+					if(!IBDIClassGenerator.isPure(agcl) && !IBDIClassGenerator.isEnhanced(agcl))
 						gen.generateBDIClass(agcl.getName(), bdimodel, cl);
 //					else
 //						System.out.println("already enhanced: "+agcl);
