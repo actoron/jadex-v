@@ -75,7 +75,7 @@ public class CleanerBDIAgentB1
 	/**
 	 *  Declare a plan for the PerformPatrol goal by using a method with @Plan and @Trigger annotation.
 	 */
-	@Plan(trigger=@Trigger(goals=PerformPatrol.class))	// The plan annotation makes a method or class a plan. The trigger states, when the plan should considered for execution.
+	@Plan(trigger=@Trigger(goals=PerformPatrol.class), priority = 1)	// The plan annotation makes a method or class a plan. The trigger states, when the plan should considered for execution.
 	private void	performPatrolPlan()
 	{
 		// Follow a simple path around the four corners of the museum and back to the first corner.

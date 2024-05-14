@@ -83,8 +83,7 @@ public class Environment
 	//-------- cleaner handling --------
 	
 	/**
-	 *  Get a cleaner object for an agent.
-	 *  Creates a new cleaner object if none exists.
+	 *  Creates a new cleaner object.
 	 */
 	public Cleaner	createCleaner(IComponent agent, Cleaner self)
 	{
@@ -104,7 +103,7 @@ public class Environment
 					ret.setLocation(new Location(Math.random()*0.4+0.3, Math.random()*0.4+0.3));
 					ret.setCid(cid);
 					ret.setVisionRange(0.1);
-					ret.setChargestate(0.1);
+					ret.setChargestate(0.8);
 				}
 				else
 				{
@@ -139,7 +138,7 @@ public class Environment
 			throw new IllegalStateException("Cleaner for agent "+cid+" already exists (duplicate actsense?).");
 		}
 		
-		return ret.clone();
+		return ret;
 	}
 	
 	//-------- methods --------

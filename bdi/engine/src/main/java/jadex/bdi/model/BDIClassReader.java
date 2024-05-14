@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -285,8 +286,12 @@ public class BDIClassReader extends MicroClassReader
 				}
 			}
 
-			// Find method beliefs
 			Method[] methods = clazz.getDeclaredMethods();
+			List<Method>	lmethods	= Arrays.asList(methods);
+			lmethods.sort((m1, m2) -> m1.getName().compareTo(m2.getName()));
+			methods	= lmethods.toArray(new Method[methods.length]);
+			
+			// Find method beliefs
 			for(int i=0; i<methods.length; i++)
 			{
 				if(isAnnotationPresent(methods[i], Belief.class, cl))
@@ -342,17 +347,20 @@ public class BDIClassReader extends MicroClassReader
 			
 			// Find inner goal and plan classes
 			Class<?>[] cls = clazz.getDeclaredClasses();
+			List<Class<?>>	lcls	= Arrays.asList(cls);
+			lcls.sort((c1, c2) -> c1.getName().compareTo(c2.getName()));
+			cls	= lcls.toArray(new Class[cls.length]);
 			for(int i=0; i<cls.length; i++)
 			{
 				if(isAnnotationPresent(cls[i], Goal.class, cl))
 				{
-//					System.out.println("found belief: "+fields[i].getName());
+//					System.out.println("found goal: "+cls[i].getName());
 					Goal goal = getAnnotation(cls[i], Goal.class, cl);
 					getMGoal(bdimodel, goal, cls[i], cl, pubs);
 				}
 				if(isAnnotationPresent(cls[i], Plan.class, cl))
 				{
-//					System.out.println("found belief: "+fields[i].getName());
+//					System.out.println("found plan: "+cls[i].getName());
 					Plan plan = getAnnotation(cls[i], Plan.class, cl);
 					getMPlan(bdimodel, plan, null, new ClassInfo(cls[i].getName()), cl, pubs, -1);
 				}
