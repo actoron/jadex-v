@@ -6,6 +6,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import jadex.common.SGUI;
 import jadex.core.IComponent;
@@ -15,6 +16,7 @@ import jadex.core.IThrowingConsumer;
 /**
  *  The board gui.
  */
+@SuppressWarnings("serial")
 public class BoardGui extends JFrame
 {
 	//-------- attributes --------
@@ -66,6 +68,8 @@ public class BoardGui extends JFrame
 			}
 		});
 		
-		// TODO: close gui on agent termination
+		// close gui on agent termination
+		agent.waitForTermination().then(b ->
+			SwingUtilities.invokeLater(() -> BoardGui.this.dispose()));
 	}
 }

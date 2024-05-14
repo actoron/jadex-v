@@ -15,6 +15,7 @@ import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
+import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.impl.ICandidateInfo;
 import jadex.core.IComponent;
@@ -33,7 +34,7 @@ import jadex.model.annotation.OnStart;
   between the moves. Measurements were done
   with the Benchmark.agent in this package.
  */
-@Agent(type = "bdi")
+@Agent(type="bdip")
 @Plans({
 	@Plan(trigger=@Trigger(goals = SokratesMLRAgent.ChooseMoveGoal.class), body = @Body(ChooseMovePlan.class)),
 	// TODO: binding options for pojo plans?
@@ -125,5 +126,11 @@ public class SokratesMLRAgent
 		System.out.println("Needed: "+(end-start)+" millis.");
 
 		agent.terminate();
+	}
+
+
+	public static void main(String[] args)
+	{
+		IBDIAgent.create(new SokratesMLRAgent());
 	}
 }

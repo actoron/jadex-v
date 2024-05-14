@@ -14,9 +14,7 @@ import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPrecondition;
-import jadex.bdi.annotation.RawEvent;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.ChangeEvent;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IGoal;
 import jadex.bdi.runtime.IPlan;
@@ -32,7 +30,7 @@ import jadex.quickstart.cleanerworld.gui.SensorGui;
 /**
  *  Using inner classes for plans with conditions.
  */
-@Agent(type="bdi")	// This annotation makes the java class and agent and enabled BDI features
+@Agent(type="bdip")	// This annotation makes the java class and agent and enabled BDI features
 public class CleanerBDIAgentE1
 {
 	//-------- fields holding agent data --------
@@ -97,13 +95,13 @@ public class CleanerBDIAgentE1
 		deliberation=@Deliberation(inhibits={PerformPatrol.class, AchieveCleanupWaste.class}))	// Pause patrol goal while loading battery
 	class MaintainBatteryLoaded
 	{
-		@GoalMaintainCondition	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
+		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
 			return self.getChargestate()>=0.4; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
 		}
 			
-		@GoalTargetCondition	// Only stop charging, when this condition is true
+		@GoalTargetCondition(beliefs="self")	// Only stop charging, when this condition is true
 		boolean isBatteryFullyLoaded()
 		{
 			return self.getChargestate()>=0.9; // Charge until 90%
@@ -120,7 +118,7 @@ public class CleanerBDIAgentE1
 		IChargingstation	station;
 		
 		// Check if there is a station in the beliefs
-		@GoalTargetCondition
+		@GoalTargetCondition(beliefs="stations")
 		boolean isStationKnown()
 		{
 			station	= stations.isEmpty() ? null : stations.iterator().next();
@@ -138,7 +136,7 @@ public class CleanerBDIAgentE1
 		IWastebin	wastebin;
 		
 		// Check if there is a waste bin in the beliefs
-		@GoalTargetCondition
+		@GoalTargetCondition(beliefs="wastebins")
 		boolean isWastebinKnown()
 		{
 			wastebin	= wastebins.isEmpty() ? null : wastebins.iterator().next();
@@ -150,8 +148,7 @@ public class CleanerBDIAgentE1
 	 *  A goal to cleanup waste.
 	 */
 	@Goal(recur=true, recurdelay=3000,
-//		deliberation=@Deliberation(inhibits={PerformPatrol.class, AchieveCleanupWaste.class}))
-		deliberation=@Deliberation(inhibits=PerformPatrol.class, cardinalityone=true))
+			deliberation=@Deliberation(inhibits=PerformPatrol.class, cardinalityone=true))
 	class AchieveCleanupWaste
 	{
 		// Remember the waste item to clean up
@@ -159,8 +156,7 @@ public class CleanerBDIAgentE1
 		
 		// Create a new goal instance for each new waste item
 //		@GoalCreationCondition(beliefs="wastes")	// Bad: reacts also on fact removed and initial empty event.
-//		@GoalCreationCondition(factadded="wastes")	// TODO: support this
-		@GoalCreationCondition(rawevents=@RawEvent(value=ChangeEvent.FACTADDED, secondc=IWaste.class))
+		@GoalCreationCondition(factadded="wastes")
 		public AchieveCleanupWaste(IWaste waste)
 		{
 			System.out.println("Created achieve cleanup goal for "+waste);

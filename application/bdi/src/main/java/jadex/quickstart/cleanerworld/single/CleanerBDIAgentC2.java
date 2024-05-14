@@ -23,7 +23,7 @@ import jadex.quickstart.cleanerworld.gui.SensorGui;
 /**
  *  A Plan for Finding a Charging Station
  */
-@Agent(type="bdi")	// This annotation makes the java class and agent and enabled BDI features
+@Agent(type="bdip")	// This annotation makes the java class and agent and enabled BDI features
 public class CleanerBDIAgentC2
 {
 	//-------- fields holding agent data --------
@@ -78,13 +78,13 @@ public class CleanerBDIAgentC2
 		deliberation=@Deliberation(inhibits=PerformPatrol.class))	// Pause patrol goal while loading battery
 	class MaintainBatteryLoaded
 	{
-		@GoalMaintainCondition	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
+		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
 			return self.getChargestate()>=0.4; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
 		}
 			
-		@GoalTargetCondition	// Only stop charging, when this condition is true
+		@GoalTargetCondition(beliefs="self")	// Only stop charging, when this condition is true
 		boolean isBatteryFullyLoaded()
 		{
 			return self.getChargestate()>=0.9; // Charge until 90%
@@ -101,7 +101,7 @@ public class CleanerBDIAgentC2
 		IChargingstation	station;
 		
 		// Check if there is a station in the beliefs
-		@GoalTargetCondition
+		@GoalTargetCondition(beliefs="stations")
 		boolean isStationKnown()
 		{
 			station	= stations.isEmpty() ? null : stations.iterator().next();

@@ -32,6 +32,7 @@ import jadex.bdi.runtime.impl.BDIAgentFeature.NotInShutdownCondition;
 import jadex.bdi.runtime.impl.BDIAgentFeature.PlansExistCondition;
 import jadex.bdi.runtime.impl.RParameterElement.RParameter;
 import jadex.bdi.runtime.impl.RParameterElement.RParameterSet;
+import jadex.bdi.runtime.wrappers.ListWrapper;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -622,12 +623,10 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 				{
 					try
 					{
-						Field	f	= mbel.getField().getField(null);
+						Field	f	= mbel.getField().getField(MicroAgentFeature.get().getSelf().getPojo().getClass().getClassLoader());
 						f.setAccessible(true);
 						Object	val	= f.get(capa);
-						EventType etype = new EventType(ChangeEvent.BELIEFCHANGED, name);
-						rulesystem.addEvent(new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(val, null, null)));
-						BDIAgentFeature.observeValue(rulesystem, val, new EventType(ChangeEvent.FACTCHANGED, name), mbel);
+						BDIAgentFeature.writeField(val, mbel.getName(), capa, MicroAgentFeature.get().getSelf());
 					}
 					catch(Exception e)
 					{

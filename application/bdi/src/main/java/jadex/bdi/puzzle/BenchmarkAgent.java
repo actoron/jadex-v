@@ -1,9 +1,10 @@
 package jadex.bdi.puzzle;
 
+import jadex.bdi.runtime.IBDIAgent;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
 
-@Agent(type="bdi")
+@Agent(type="bdip")
 public class BenchmarkAgent extends SokratesV3Agent
 {
 	/**
@@ -19,5 +20,11 @@ public class BenchmarkAgent extends SokratesV3Agent
 	 */
 	protected void createGui(IComponent agent)
 	{
+	}
+	
+	public static void main(String[] args)
+	{
+		IBDIAgent.create(new BenchmarkAgent());
+		IComponent.waitForLastComponentTerminated();
 	}
 }

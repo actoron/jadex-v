@@ -21,7 +21,7 @@ import jadex.quickstart.cleanerworld.gui.SensorGui;
 /**
  *  Managing known charging stations in a belief set.
  */
-@Agent(type="bdi")	// This annotation makes the java class and agent and enabled BDI features
+@Agent(type="bdip")	// This annotation makes the java class and agent and enabled BDI features
 public class CleanerBDIAgentC0
 {
 	//-------- fields holding agent data --------

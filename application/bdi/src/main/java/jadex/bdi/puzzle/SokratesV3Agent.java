@@ -15,6 +15,7 @@ import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
+import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
@@ -30,7 +31,7 @@ import jadex.model.annotation.OnStart;
  *  Puzzle agent tries to solve a solitair board game
  *  by recursiveky applying means-end-reasoning.
  */
-@Agent(type="bdi")
+@Agent(type="bdip")
 public class SokratesV3Agent
 {
 	//-------- attributes --------
@@ -264,4 +265,9 @@ public class SokratesV3Agent
             System.out.print(" ");
         System.out.println(text);
     }
+
+	public static void main(String[] args)
+	{
+		IBDIAgent.create(new SokratesV3Agent());
+	}
 }

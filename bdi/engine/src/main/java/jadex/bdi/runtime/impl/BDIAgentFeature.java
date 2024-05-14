@@ -905,7 +905,8 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			// -> no such field for pure BDI agents
+			//e.printStackTrace();
 		}
 		
 		String belname	= gn!=null ? gn + MElement.CAPABILITY_SEPARATOR + fieldname : fieldname;
