@@ -1,6 +1,7 @@
 package jadex.quickstart.cleanerworld.environment.impl;
 
 import jadex.common.SUtil;
+import jadex.core.ComponentIdentifier;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 
 
@@ -11,8 +12,8 @@ public class Cleaner extends LocationObject	implements ICleaner
 {
 	//-------- attributes ----------
 
-//	/** The agent that is controlling the cleaner. */
-//	private IComponentIdentifier	cid;
+	/** The agent that is controlling the cleaner. */
+	private ComponentIdentifier	cid;
 	
 	/** Charge state of the battery (0.0-1.0). */
 	private double chargestate;
@@ -36,9 +37,10 @@ public class Cleaner extends LocationObject	implements ICleaner
 	/**
 	 *  Create a new Cleaner.
 	 */
-	public Cleaner(String name, Location location, Waste carriedwaste, double vision, double chargestate)
+	public Cleaner(String name, Location location, ComponentIdentifier cid, Waste carriedwaste, double vision, double chargestate)
 	{
 		super(name, location);
+		this.cid	= cid;
 		setCarriedWaste(carriedwaste);
 		setVisionRange(vision);
 		setChargestate(chargestate);
@@ -46,22 +48,23 @@ public class Cleaner extends LocationObject	implements ICleaner
 	
 	//-------- methods --------
 	
-//	/**
-//	 *  Get the associated agent.
-//	 *  @return The id of the associated agent.
-//	 */
-//	public IComponentIdentifier	getAgentIdentifier()
-//	{
-//		return cid;
-//	}
-//
-//	/**
-//	 *  Set the associated agent.
-//	 */
-//	public void	setAgentIdentifier(IComponentIdentifier cid)
-//	{
-//		this.cid	= cid;
-//	}
+	/**
+	 *  Get the associated agent.
+	 *  @return The id of the associated agent.
+	 */
+	public ComponentIdentifier	getCid()
+	{
+		return cid;
+	}
+
+	/**
+	 *  Set the associated agent.
+	 *  @return The id of the associated agent.
+	 */
+	public void	setCid(ComponentIdentifier cid)
+	{
+		this.cid	= cid;
+	}
 
 	/**
 	 *  Get the chargestate of this Cleaner.

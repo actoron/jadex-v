@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -204,12 +206,13 @@ public interface IComponent
 	
 	public static void waitForLastComponentTerminated() 
 	{
-	    Semaphore sem = new Semaphore(0);
-	    boolean[] released = new boolean[1];
-	    Object lock = new Object();
+		// Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads.
+		ReentrantLock lock	= new ReentrantLock();
+		Condition	wait	= lock.newCondition();
 
-	    synchronized(lock) 
+	    try 
 	    { 
+	    	lock.lock();
 		    synchronized(ComponentManager.get().components) 
 		    {
 		        if(ComponentManager.get().getNumberOfComponents() == 0) 
@@ -221,25 +224,32 @@ public interface IComponent
 		            @Override
 		            public void lastComponentRemoved(ComponentIdentifier cid) 
 		            {
-		            	synchronized(lock) 
-		            	{
-		                    sem.release();
-		                    released[0] = true;
+		        	    try 
+		        	    { 
+		        	    	lock.lock();
+		                    wait.signal();
 		                }
+		        	    finally
+		        	    {
+		        			lock.unlock();
+		        		}
 		            }
 		        }, IComponent.COMPONENT_LASTREMOVED);
 		    }
 		    
 	    	try 
 		    {
-		    	if(!released[0])
-		    		sem.acquire();
+		    	wait.await();
 		    } 
 		    catch(InterruptedException e) 
 		    {
 		        e.printStackTrace();
 		    }
 	    }
+	    finally
+	    {
+			lock.unlock();
+		}
 	}
 	
 	/**

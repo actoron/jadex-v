@@ -16,7 +16,7 @@ import jadex.quickstart.cleanerworld.gui.SensorGui;
 /**
  *  Use a belief to control a declarative goal.
  */
-@Agent(type="bdi")	// This annotation makes the java class and agent and enabled BDI features
+@Agent(type="bdip")	// This annotation makes the java class and agent and enabled BDI features
 public class CleanerBDIAgentB1
 {
 	//-------- fields holding agent data --------
@@ -63,7 +63,7 @@ public class CleanerBDIAgentB1
 	@Goal(recur=true, recurdelay=3000)
 	class MaintainBatteryLoaded
 	{
-		@GoalMaintainCondition	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
+		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
 			return self.getChargestate()>=0.2; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.

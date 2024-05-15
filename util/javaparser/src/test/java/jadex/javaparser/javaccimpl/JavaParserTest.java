@@ -38,7 +38,7 @@ public class JavaParserTest //extends TestCase
 	{
 		// Load tests from properties.
 		Properties props	= new Properties();
-		InputStream	is	= getClass().getResourceAsStream("TestExpressions.properties");
+		InputStream	is	= getClass().getResourceAsStream("/TestExpressions.properties");
 		props.load(is);
 		is.close();
 

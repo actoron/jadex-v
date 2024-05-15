@@ -7,8 +7,7 @@ import jadex.simulation.ISimulationFeature;
 
 public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulationFeature
 {
-	// Hack!!! public to allow reset for testing in eclipse
-	public static volatile MasterSimulationFeature	master;
+	protected MasterSimulationFeature	master;
 	
 	// Hack!!! public to allow reset for testing in eclipse
 	public static boolean	parallel	= true;
@@ -20,13 +19,7 @@ public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulat
 	{
 		if(master==null)
 		{
-			synchronized(this.getClass())
-			{
-				if(master==null)
-				{
-					master = new MasterSimulationFeature();
-				}
-			}
+			master	= MasterSimulationFeature.getMaster();
 		}
 		return master;
 	}
@@ -74,10 +67,15 @@ public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulat
 		return getMaster().stop();
 	}
 	
+//	volatile boolean	busy	= false;
+	
 	@Override
 	protected void busy()
 	{
 		assert parallel;
+//		if(busy)
+//			throw new IllegalStateException("Already busy!");
+//		busy	= true;
 		getMaster().componentBusy();
 	}
 	
@@ -85,6 +83,9 @@ public class SlaveSimulationFeature extends ExecutionFeature	implements ISimulat
 	protected void idle()
 	{
 		assert parallel;
+//		if(!busy)
+//			throw new IllegalStateException("Not busy!");
+//		busy	= false;
 		getMaster().componentIdle();
 	}
 }

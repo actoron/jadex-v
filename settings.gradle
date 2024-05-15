@@ -151,7 +151,6 @@ if(gradle.startParameter.taskNames.contains('publish') && getVar(jversion)!=null
 //includeBuild('.') {}
 includeBuild('util/common') {}
 includeBuild('util/collection') {}
-includeBuild('util/concurrent') {}
 includeBuild('util/future') {}
 includeBuild('util/bean') {}
 includeBuild('util/classreader') {}

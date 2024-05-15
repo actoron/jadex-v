@@ -109,7 +109,10 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	public void	init()
 	{
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener());
-		IBDIClassGenerator.checkEnhanced(self.getPojo().getClass());
+		if(!isPure())
+		{
+			IBDIClassGenerator.checkEnhanced(self.getPojo().getClass());
+		}
 		this.bdimodel = (BDIModel)self.getModel().getRawModel();
 		this.capa = new RCapability(bdimodel.getCapability());
 		this.rulesystem = new RuleSystem(self.getPojo(), true);
@@ -221,12 +224,19 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		try
 		{
 			Field f	= SReflect.getField(clazz, IBDIClassGenerator.INITARGS_FIELD_NAME);
-			//Field f	= clazz.getDeclaredField(IBDIClassGenerator.INITARGS_FIELD_NAME);
-			SAccess.setAccessible(f, true);
-			@SuppressWarnings("unchecked")
-			List<Tuple2<Class<?>[], Object[]>> initcalls = (List<Tuple2<Class<?>[], Object[]>>)f.get(obj);
-			f.set(obj, null);
-			return initcalls;
+			if(f!=null)
+			{
+				//Field f	= clazz.getDeclaredField(IBDIClassGenerator.INITARGS_FIELD_NAME);
+				SAccess.setAccessible(f, true);
+				@SuppressWarnings("unchecked")
+				List<Tuple2<Class<?>[], Object[]>> initcalls = (List<Tuple2<Class<?>[], Object[]>>)f.get(obj);
+				f.set(obj, null);
+				return initcalls;
+			}
+			else
+			{
+				return null;
+			}
 		}
 		catch(Exception e)
 		{
@@ -1187,12 +1197,18 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				try
 				{
 					Field field = agcl.getDeclaredField(IBDIClassGenerator.AGENT_FIELD_NAME);
-					SAccess.setAccessible(field, true);
-					field.set(agent, self);
+					if(field!=null)
+					{
+						SAccess.setAccessible(field, true);
+						field.set(agent, self);
+					}
 					
 					field = agcl.getDeclaredField(IBDIClassGenerator.GLOBALNAME_FIELD_NAME);
-					SAccess.setAccessible(field, true);
-					field.set(agent, globalname);
+					if(field!=null)
+					{
+						SAccess.setAccessible(field, true);
+						field.set(agent, globalname);
+					}
 					break;
 				}
 				catch(Exception e)
@@ -2680,5 +2696,15 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	public Object getArgument(String name)
 	{
 		return self.info==null ? null : self.info.getArgument(name); 
+	}
+
+	/**
+	 *  Check, if the agent is a pure BDI agent, i.e. without class generation.
+	 */
+	@Override
+	public boolean isPure()
+	{
+		Agent	agent	= self.getPojo().getClass().getAnnotation(Agent.class);
+		return agent!=null && agent.type().toLowerCase().equals("bdip");
 	}
 }

@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import jadex.benchmark.AbstractComponentBenchmark;
+import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.execution.LambdaAgent;
 import jadex.execution.LambdaAgent.Result;
@@ -37,8 +38,8 @@ public class LambdaAgentBenchmark	extends AbstractComponentBenchmark
 
 	protected static Stream<Arguments> provideBenchmarkParams() {
 	    return Stream.of(
-	  	      Arguments.of(10000, false, false),
-		      Arguments.of(100000, false, true)	
+	  	      Arguments.of(SUtil.isVirtualExecutor()  ? 10000 : 1000, false, false),
+		      Arguments.of(SUtil.isVirtualExecutor()  ? 100000 : 10000, false, true)	
 	    );
 	}
 	

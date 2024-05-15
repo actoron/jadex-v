@@ -40,35 +40,19 @@ public class SensorActuator
 	private String	pheromone;
 	
 	/** The known other cleaners. */
-	private Set<ICleaner>	cleaners;
+	private Set<ICleaner>	cleaners	= new LinkedHashSet<>();
 	
 	/** The known waste pieces. */
-	private Set<IWaste>	wastes;
+	private Set<IWaste>	wastes	= new LinkedHashSet<>();
 	
 	/** The known charging stations. */
-	private Set<IChargingstation>	chargingstations;
+	private Set<IChargingstation>	chargingstations	= new LinkedHashSet<>();
 	
 	/** The known waste bins. */
-	private Set<IWastebin>	wastebins;
+	private Set<IWastebin>	wastebins	= new LinkedHashSet<>();
 	
 	/** Future allowing to wait for recharging. */
 	private Future<Void>	recharging;
-	
-	//-------- constructors --------
-	
-	/**
-	 *  Create a sensor for a new cleaner robot.
-	 */
-	public SensorActuator()
-	{
-		this.agent	= IExecutionFeature.get();
-
-		self	= Environment.getInstance().createCleaner(agent.getComponent());
-		this.cleaners	= new LinkedHashSet<>();
-		this.wastes	= new LinkedHashSet<>();
-		this.chargingstations	= new LinkedHashSet<>();
-		this.wastebins	= new LinkedHashSet<>();
-	}
 	
 	//-------- sensor methods --------
 	
@@ -78,14 +62,11 @@ public class SensorActuator
 	 */
 	public ICleaner getSelf()
 	{
-		if(!agent.isComponentThread())
-		{
-			throw new IllegalStateException("Error: Must be called on agent thread.");
-		}
+		lazyInit();
 
 		return self;
 	}
-	
+
 	/**
 	 *  Check, if it is at day or at night.
 	 *  @return true, if at day.
@@ -101,10 +82,7 @@ public class SensorActuator
 	 */
 	public Set<ICleaner>	getCleaners()
 	{
-		if(!agent.isComponentThread())
-		{
-			throw new IllegalStateException("Error: Must be called on agent thread.");
-		}
+		lazyInit();
 		return cleaners;
 	}
 	
@@ -114,10 +92,7 @@ public class SensorActuator
 	 */
 	public Set<IWaste>	getWastes()
 	{
-		if(!agent.isComponentThread())
-		{
-			throw new IllegalStateException("Error: Must be called on agent thread.");
-		}
+		lazyInit();
 		return wastes;
 	}
 		
@@ -127,10 +102,7 @@ public class SensorActuator
 	 */
 	public Set<IChargingstation>	getChargingstations()
 	{
-		if(!agent.isComponentThread())
-		{
-			throw new IllegalStateException("Error: Must be called on agent thread.");
-		}
+		lazyInit();
 		return chargingstations;
 	}
 		
@@ -140,10 +112,7 @@ public class SensorActuator
 	 */
 	public Set<IWastebin>	getWastebins()
 	{
-		if(!agent.isComponentThread())
-		{
-			throw new IllegalStateException("Error: Must be called on agent thread.");
-		}
+		lazyInit();
 		return wastebins;
 	}
 		
@@ -153,10 +122,7 @@ public class SensorActuator
 //	 */
 //	public Set<IPheromone>	getPheromones()
 //	{
-//		if(!agent.getFeature(IExecutionFeature.class).isComponentThread())
-//		{
-//			throw new IllegalStateException("Error: Must be called on agent thread.");
-//		}
+//		lazyInit();
 //		
 //		Set<IPheromone>	ret	= new LinkedHashSet<>(Arrays.asList(Environment.getInstance().getPheromones()));
 //		for(Iterator<IPheromone> phi= ret.iterator(); phi.hasNext(); )
@@ -177,6 +143,7 @@ public class SensorActuator
 	 */
 	public void	manageWastesIn(Set<IWaste> wastes)
 	{
+		lazyInit();
 		wastes.addAll(this.wastes);
 		this.wastes	= wastes;
 	}
@@ -187,6 +154,7 @@ public class SensorActuator
 	 */
 	public void	manageWastebinsIn(Set<IWastebin> wastebins)
 	{
+		lazyInit();
 		wastebins.addAll(this.wastebins);
 		this.wastebins	= wastebins;
 	}
@@ -197,6 +165,7 @@ public class SensorActuator
 	 */
 	public void	manageChargingstationsIn(Set<IChargingstation> chargingstations)
 	{
+		lazyInit();
 		chargingstations.addAll(this.chargingstations);
 		this.chargingstations	= chargingstations;
 	}
@@ -207,6 +176,7 @@ public class SensorActuator
 	 */
 	public void	manageCleanersIn(Set<ICleaner> cleaners)
 	{
+		lazyInit();
 		cleaners.addAll(this.cleaners);
 		this.cleaners	= cleaners;
 	}
@@ -233,10 +203,7 @@ public class SensorActuator
 	 */
 	public void moveTo(double x, double y)
 	{
-		if(!agent.isComponentThread())
-		{
-			throw new IllegalStateException("Error: Must be called on agent thread.");
-		}
+		lazyInit();
 		if(target!=null)
 		{
 			throw new IllegalStateException("Cannot move to multiple targets simultaneously. Target exists: "+target);
@@ -353,10 +320,7 @@ public class SensorActuator
 	 */
 	public synchronized void	recharge(IChargingstation chargingstation, double level)
 	{
-		if(!agent.isComponentThread())
-		{
-			throw new IllegalStateException("Error: Must be called on agent thread.");
-		}
+		lazyInit();
 		
 		// Signal variable to check when level is reached.
 		final Future<Void>	reached	= new Future<>();
@@ -432,6 +396,7 @@ public class SensorActuator
 	 */
 	public ILocation getTarget()
 	{
+		lazyInit();
 		return target;
 	}
 	
@@ -441,6 +406,8 @@ public class SensorActuator
 	 */
 	public void	pickUpWaste(IWaste waste)
 	{
+		lazyInit();
+		
 		// Try action in environment
 		Environment.getInstance().pickupWaste(self, (Waste)waste);
 		
@@ -455,6 +422,8 @@ public class SensorActuator
 	 */
 	public void dropWasteInWastebin(IWaste waste, IWastebin wastebin)
 	{
+		lazyInit();
+		
 		// Try action in environment
 		Environment.getInstance().dropWasteInWastebin(self, (Waste)waste, (Wastebin)wastebin);
 		
@@ -470,10 +439,39 @@ public class SensorActuator
 //	 */
 //	public void	dispersePheromones(String type)
 //	{
+//		lazyInit();
 //		this.pheromone	= type;
 //	}
 	
 	//-------- internal methods --------
+	
+	void lazyInit()
+	{
+		if(agent!=null &&!agent.isComponentThread())
+		{
+			throw new IllegalStateException("Error: Must be called on agent thread.");
+		}
+		
+		// lazy init to allow pure BDI pojo creation before component exists
+		if(agent==null)
+		{
+			IExecutionFeature	local	= IExecutionFeature.isAnyComponentThread() ? IExecutionFeature.get() : null;
+			// Not running on a component or created from a different cleaner
+			if(local==null
+				|| Environment.getInstance().getCleaner(local.getComponent().getId().getLocalName())!=null)
+			{
+				// Create dummy cleaner to be filled later
+				self	= new Cleaner();
+			}
+			
+			// First call on own component thread
+			else
+			{
+				agent	= local;
+				self	= Environment.getInstance().createCleaner(agent.getComponent(), self);
+			}
+		}
+	}
 	
 	/**
 	 *  Update the sensor based on current vision.

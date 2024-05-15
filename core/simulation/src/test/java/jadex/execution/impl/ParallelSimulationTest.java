@@ -15,6 +15,7 @@ import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.simulation.ISimulationFeature;
+import jadex.simulation.impl.MasterSimulationFeature;
 import jadex.simulation.impl.SlaveSimulationFeature;
 
 public class ParallelSimulationTest extends AbstractExecutionFeatureTest
@@ -23,7 +24,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@BeforeEach
 	public void	setup()
 	{
-		SlaveSimulationFeature.master	= null;
+		MasterSimulationFeature.master	= null;
 		SlaveSimulationFeature.parallel	= true;
 	}
 	
@@ -58,6 +59,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testInverseOrder()
 	{
+//		System.out.println("testInverseOrder");
 		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
 		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
 		sim.stop().get(TIMEOUT);

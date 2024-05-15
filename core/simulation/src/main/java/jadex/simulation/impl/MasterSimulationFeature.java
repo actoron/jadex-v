@@ -17,6 +17,27 @@ import jadex.simulation.ISimulationFeature;
  */
 public class MasterSimulationFeature	extends ExecutionFeature	implements ISimulationFeature
 {
+	// Hack!!! public to allow reset for testing in eclipse
+	public static volatile MasterSimulationFeature	master;
+	
+	/**
+	 *  Get the appropriate master for this component.
+	 */
+	protected static MasterSimulationFeature	getMaster()
+	{
+		if(master==null)
+		{
+			synchronized(MasterSimulationFeature.class)
+			{
+				if(master==null)
+				{
+					master = new MasterSimulationFeature();
+				}
+			}
+		}
+		return master;
+	}
+
 	/** Flag indicating that the simulation is active. */
 	protected boolean	simulating	= true;
 	
@@ -54,7 +75,7 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 		
 		synchronized(this)
 		{
-			System.out.println("Sim waitForDelay executing="+executing);
+//			System.out.println("Sim waitForDelay executing="+executing);
 			
 			TimerEntry te = new TimerEntry(current_time+millis)
 			{
@@ -107,6 +128,7 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	{
 		synchronized(this)
 		{
+//			System.out.println("MSF simulating="+simulating+", executing="+executing+", busy="+busy);
 			if(simulating)
 			{
 				throw new IllegalStateException("Simulation already running.");
@@ -198,7 +220,10 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	{
 		synchronized(this)
 		{
-			if(--busy==0)
+			busy--;
+			if(busy<0)
+				throw new IllegalStateException("Negative busy components value!");
+			if(busy==0)
 			{
 				idle();
 			}
