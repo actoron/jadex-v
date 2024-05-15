@@ -1,7 +1,8 @@
 package jadex.nfproperty.impl;
 
 import jadex.common.ClassInfo;
-import jadex.nfproperty.impl.INFProperty.Target;
+import jadex.nfproperty.INFPropertyMetaInfo;
+import jadex.nfproperty.INFProperty.Target;
 
 
 /**

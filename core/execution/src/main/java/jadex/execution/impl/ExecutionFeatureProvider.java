@@ -104,6 +104,18 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 				{
 					comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 				}
+				
+				@Override
+				public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
+				{
+					return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
+				}
+				
+				@Override
+				public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
+				{
+					return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
+				}
 			};
 		});
 	}

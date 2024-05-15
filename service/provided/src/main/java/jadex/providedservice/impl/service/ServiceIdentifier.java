@@ -207,8 +207,8 @@ public class ServiceIdentifier implements IServiceIdentifier
 		
 		// default publication scope is platform
 		// Replace DEFAULT with PLATFORM scope (do we want this here or during resolution?) 
-		this.scope = scope;//scope!=null && !ServiceScope.DEFAULT.equals(scope)? 
-			//scope : ServiceScope.PLATFORM;
+		this.scope = scope!=null? //&& !ServiceScope.DEFAULT.equals(scope)? 
+			scope : ServiceScope.VM;
 	}
 	
 	/**

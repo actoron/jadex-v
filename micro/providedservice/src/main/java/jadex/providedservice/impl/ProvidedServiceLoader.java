@@ -33,7 +33,6 @@ public class ProvidedServiceLoader
 	{
 		Class<?> cma = clazz;
 		
-		int cnt = 0;
 		ProvidedServiceModel model = new ProvidedServiceModel();
 		boolean prosdone = false;
 		
@@ -82,8 +81,8 @@ public class ProvidedServiceLoader
 			for(ProvidedServiceInfo psi: psis)
 			{
 				String val = psi.getImplementation().getValue();
-				if(psi.getImplementation().getClazz()!=null || (val!=null && val.length()!=0 
-					&& (val.equals("$pojoagent") || val.equals("$pojoagent!=null? $pojoagent: $component"))))
+				if(psi.getImplementation().getClazz()!=null || (val!=null && val.length()!=0))
+					//&& (val.equals("$pojoagent") || val.equals("$pojoagent!=null? $pojoagent: $component"))))
 				{
 					Class<?> tt = psi.getType().getType(cl);
 					serifaces.remove(tt);
@@ -93,7 +92,8 @@ public class ProvidedServiceLoader
 			// All interfaces that are still in the set do not have an implementation
 			for(Class<?> iface: serifaces)
 			{
-				ProvidedServiceImplementation impl = new ProvidedServiceImplementation(null, "$pojoagent!=null? $pojoagent: $component", Implementation.PROXYTYPE_DECOUPLED, null);
+				//ProvidedServiceImplementation impl = new ProvidedServiceImplementation(null, "$pojoagent!=null? $pojoagent: $component", Implementation.PROXYTYPE_DECOUPLED, null);
+				ProvidedServiceImplementation impl = new ProvidedServiceImplementation(null, null, Implementation.PROXYTYPE_DECOUPLED, null);
 				ProvidedServiceInfo psi = new ProvidedServiceInfo(BasicService.generateServiceName(iface), iface, impl);
 				//String name = psi.getName()==null? ("#"+cnt++): psi.getName();
 				model.addService(psi);

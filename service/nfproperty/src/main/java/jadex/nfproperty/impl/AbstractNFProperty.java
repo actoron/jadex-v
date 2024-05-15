@@ -16,9 +16,10 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
-import jadex.nfproperty.impl.annotation.NFProperties;
-import jadex.nfproperty.impl.annotation.NFProperty;
-import jadex.nfproperty.impl.annotation.SNameValue;
+import jadex.nfproperty.INFProperty;
+import jadex.nfproperty.annotation.NFProperties;
+import jadex.nfproperty.annotation.NFProperty;
+import jadex.nfproperty.annotation.SNameValue;
 import jadex.providedservice.IService;
 
 /**

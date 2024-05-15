@@ -26,6 +26,13 @@ public interface IComponentManager
 	public void setClassLoader(ClassLoader classloader);
 	
 	/**
+	 *  Gets the class loader used by components.
+	 *  
+	 *  @return The class loader that components should use.
+	 */
+	public ClassLoader getClassLoader();
+	
+	/**
 	 *  Configure if numbers instead words should be used
 	 *  as automatically generated component names.
 	 *  

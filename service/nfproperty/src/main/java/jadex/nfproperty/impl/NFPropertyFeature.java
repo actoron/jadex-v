@@ -1,7 +1,7 @@
 package jadex.nfproperty.impl;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,32 +10,50 @@ import java.util.Map.Entry;
 import jadex.collection.ILRUEntryCleaner;
 import jadex.collection.LRU;
 import jadex.common.MethodInfo;
+import jadex.common.SUtil;
+import jadex.common.Tuple2;
+import jadex.common.UnparsedExpression;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
+import jadex.core.IExternalAccess;
+import jadex.core.IThrowingFunction;
+import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
+import jadex.execution.impl.ILifecycle;
 import jadex.future.DefaultResultListener;
-import jadex.future.DelegationResultListener;
 import jadex.future.Future;
+import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.nfproperty.INFPropertyComponentFeature;
-import jadex.nfproperty.impl.annotation.NFProperties;
+import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.TerminableIntermediateDelegationFuture;
+import jadex.javaparser.SJavaParser;
+import jadex.micro.MicroAgent;
+import jadex.model.IModelFeature;
+import jadex.model.impl.AbstractModelLoader;
+import jadex.model.modelinfo.ModelInfo;
+import jadex.nfproperty.INFMixedPropertyProvider;
+import jadex.nfproperty.INFProperty;
+import jadex.nfproperty.INFPropertyFeature;
+import jadex.nfproperty.INFPropertyMetaInfo;
+import jadex.nfproperty.INFPropertyProvider;
+import jadex.nfproperty.annotation.Tag;
+import jadex.nfproperty.annotation.Tags;
+import jadex.nfproperty.impl.modelinfo.NFPropertyInfo;
+import jadex.nfproperty.impl.search.IRankingSearchTerminationDecider;
+import jadex.nfproperty.impl.search.IServiceRanker;
+import jadex.nfproperty.impl.search.ServiceRankingDelegationResultListener;
+import jadex.nfproperty.impl.search.ServiceRankingDelegationResultListener2;
+import jadex.nfproperty.sensor.service.TagProperty;
+import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.annotation.Tags;
-import jadex.providedservice.impl.service.BasicService;
-import jadex.providedservice.impl.service.IInternalService;
 
-/**
- *  Feature for non functional properties of the component, provided/required services and methods.
- */
-public class NFPropertyComponentFeature implements INFPropertyComponentFeature
+public class NFPropertyFeature implements ILifecycle, INFPropertyFeature  
 {
-	//-------- constants --------
-	
-	/** The factory. * /
-	public static final IComponentFeatureFactory FACTORY = new ComponentFeatureFactory(INFPropertyComponentFeature.class, NFPropertyComponentFeature.class,
-		new Class<?>[]{IProvidedServicesFeature.class, IRequiredServicesFeature.class}, null, false);*/
-	
 	//-------- attributes --------
+	
+	protected Component self;
 	
 	/** The component property provider. */
 	protected INFPropertyProvider compprovider;
@@ -49,109 +67,112 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	/** The max number of preserved req service providers. */
 	protected int maxreq;
 	
-	/** The parent provider. */
-	protected INFPropertyProvider parent;
-	
-	/** The component:*/
-	protected IComponent component;
+	///** The parent provider. */
+	//protected INFPropertyProvider parent;
 	
 	//-------- constructors --------
 	
-	/**
-	 *  Create the feature.
-	 */
-	public NFPropertyComponentFeature(IComponent component)
+	protected NFPropertyFeature(Component self)
 	{
-		this.component = component;
-		this.maxreq = 100; // todo: make configurable
+		this.self = self;
 	}
 	
-	protected IComponent getComponent()
+	public Component getComponent()
 	{
-		return component;
+		return self;
 	}
 	
-	/**
-	 *  Initialize the feature.
-	 *  Empty implementation that can be overridden.
-	 */
-	public IFuture<Void>	init()
+	@Override
+	public IFuture<Void> onStart()
 	{
-		return IFuture.DONE;
+		Future<Void> ret = new Future<Void>();
 		
-//		System.out.println("init start: "+getComponent().getComponentIdentifier());
-	/*	
-		final Future<Void> ret = new Future<Void>();
+		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
+		NFPropertyModel mymodel = (NFPropertyModel)model.getFeatureModel(INFPropertyFeature.class);
+		if(mymodel==null)
+			mymodel = loadModel();
 		
-		int cnt = 0;
-		LateCounterListener<Void> lis = new LateCounterListener<Void>(new DelegationResultListener<Void>(ret));
-		
-		// Init nf component props
-		List<NFPropertyInfo> nfprops = getComponent().getModel().getNFProperties();
-		if(nfprops!=null)
+		if(mymodel==null)
 		{
+			ret.setResult(null);
+		}
+		else
+		{
+			// Init nf component props
+			FutureBarrier<Void> bar = new FutureBarrier<Void>();
+			
+			Collection<NFPropertyInfo> nfprops = mymodel.getComponentProperties();
 			for(NFPropertyInfo nfprop: nfprops)
 			{
 				try
 				{
-					Class<?> clazz = nfprop.getClazz().getType(getComponent().getClassLoader(), getComponent().getModel().getAllImports());
+					Class<?> clazz = nfprop.getClazz().getType(getComponent().getClassLoader(), model.getAllImports());
 					INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, getComponent(), null, null, nfprop.getParameters());
-					cnt++;
-					getComponentPropertyProvider().addNFProperty(nfp).addResultListener(lis);
+					bar.add(getComponentPropertyProvider().addNFProperty(nfp));
 				}
 				catch(Exception e)
 				{
-					getComponent().getLogger().warning("Property creation problem: "+e);
+					System.out.println("Property creation problem: "+e);
 				}
 			}
-		}
+			
+			Collection<String> names = mymodel.getProvidedServiceNames();
+			IProvidedServiceFeature psf = self.getFeature(IProvidedServiceFeature.class);
+			final NFPropertyModel fmymodel = mymodel;
+			names.forEach(name -> 
+			{
+				IService ser = psf.getProvidedService(name);
 				
-		// now done in basic service
-//		IProvidedServicesFeature psf = getComponent().getComponentFeature(IProvidedServicesFeature.class);
-//		if(psf!=null)
-//		{
-//			Map<Class<?>, Collection<IInternalService>> sers = ((ProvidedServicesComponentFeature)psf).getServices();
-//			if(sers!=null)
-//			{
-//				for(Class<?> type: sers.keySet())
-//				{
-//					for(IInternalService ser: sers.get(type))
-//					{
-//						cnt++;
-//						Class<?> impltype = psf.getProvidedServiceRawImpl(ser.getId())!=null? psf.getProvidedServiceRawImpl(ser.getServiceIdentifier()).getClass(): null;
-//						initNFProperties(ser, impltype).addResultListener(lis);
-//					}
-//				}
-//			}
-//		}
+				Map<MethodInfo, List<NFPropertyInfo>> nfps = fmymodel.getProvidedServiceMethodProperties(name);
+				nfps.entrySet().forEach(entry ->
+				{
+					bar.add(addNFMethodProperties(entry.getValue(), ser, entry.getKey()));
+				});
+				
+				List<NFPropertyInfo> snfps = fmymodel.getProvidedServiceProperties(name);
+				if(snfps!=null)
+				{
+					bar.add(addNFProperties(snfps, ser));
+				}
+			});
+			
+			bar.waitFor().delegateTo(ret);
+		}
 		
-		lis.setMax(cnt);
-		
-//		ret.addResultListener(new IResultListener<Void>()
-//		{
-//			public void resultAvailable(Void result)
-//			{
-//				System.out.println("init end: "+getComponent().getComponentIdentifier());
-//			}
-//			
-//			public void exceptionOccurred(Exception exception)
-//			{
-//				System.out.println("init end ex: "+getComponent().getComponentIdentifier());
-//			}
-//		});
-		
-		return ret;*/
+		return ret;
 	}
 	
 	/**
-	 *  Check if the feature potentially executed user code in body.
-	 *  Allows blocking operations in user bodies by using separate steps for each feature.
-	 *  Non-user-body-features are directly executed for speed.
-	 *  If unsure just return true. ;-)
+	 *  Called when the feature is shutdowned.
 	 */
-	public boolean	hasUserBody()
+	public IFuture<Void> onEnd()
 	{
-		return false;
+		FutureBarrier<Void> bar = new FutureBarrier<Void>();
+		
+		bar.add(compprovider.shutdownNFPropertyProvider());
+		proserprops.values().stream().forEach(p -> bar.add(p.shutdownNFPropertyProvider()));
+		reqserprops.values().stream().forEach(p -> bar.add(p.shutdownNFPropertyProvider()));
+
+		return bar.waitFor();
+	}
+	
+	public NFPropertyModel loadModel()
+	{
+		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
+
+		NFPropertyModel mymodel = (NFPropertyModel)model.getFeatureModel(INFPropertyFeature.class);
+		if(mymodel==null)
+		{
+			mymodel = (NFPropertyModel)NFPropertyLoader.readFeatureModel(model, ((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
+			final NFPropertyModel fmymodel = mymodel;
+			AbstractModelLoader loader = AbstractModelLoader.getLoader((Class< ? extends Component>)self.getClass());
+			loader.updateCachedModel(() ->
+			{
+				model.putFeatureModel(INFPropertyFeature.class, fmymodel);
+			});
+		}
+		
+		return mymodel;
 	}
 	
 	/**
@@ -159,13 +180,10 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public INFPropertyProvider getComponentPropertyProvider()
 	{
-		throw new UnsupportedOperationException();
-		
-		/*
 		if(compprovider==null)
-			this.compprovider = new NFPropertyProvider(getComponent().getId().getParent(), getComponent()); 
+			this.compprovider = new NFPropertyProvider(getComponent()); 
 		
-		return compprovider;*/
+		return compprovider;
 	}
 	
 	/**
@@ -194,7 +212,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		{
 			ret = new NFMethodPropertyProvider(getComponent()); 
 			reqserprops.put(sid, ret);
-//			System.out.println("created req ser provider: "+sid+" "+hashCode());
+//				System.out.println("created req ser provider: "+sid+" "+hashCode());
 		}
 		return ret;
 	}
@@ -221,29 +239,29 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		if(ret==null)
 		{
 			// TODO: parent???
-//			ret = new NFMethodPropertyProvider(getComponent().getComponentIdentifier(), getComponent()); 
+//				ret = new NFMethodPropertyProvider(getComponent().getComponentIdentifier(), getComponent()); 
 			ret = new NFMethodPropertyProvider(getComponent()); 
 			proserprops.put(sid, ret);
 		}
 		return ret;
 	}
 	
-//	/**
-//	 *  Get the provided service property provider for a service.
-//	 */
-//	public INFMixedPropertyProvider getProvidedServicePropertyProvider(Class<?> iface)
-//	{
-//	}
+//		/**
+//		 *  Get the provided service property provider for a service.
+//		 */
+//		public INFMixedPropertyProvider getProvidedServicePropertyProvider(Class<?> iface)
+//		{
+//		}
 	
 	/**
 	 *  Init the service and method nf properties. 
-	 */
+	 * /
 	public IFuture<Void> initNFProperties(final IInternalService ser, Class<?> impltype)
 	{
 		final Future<Void> ret = new Future<Void>();
 		
 		List<Class<?>> classes = new ArrayList<Class<?>>();
-		Class<?> superclazz = ser.getServiceId().getServiceType().getType(getComponent().getClass().getClassLoader());
+		Class<?> superclazz = ser.getServiceId().getServiceType().getType(getComponent().getClassLoader());
 		while(superclazz != null && !Object.class.equals(superclazz))
 		{
 			classes.add(superclazz);
@@ -259,7 +277,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 				superclazz = superclazz.getSuperclass();
 			}
 		}
-//		Collections.reverse(classes);
+//			Collections.reverse(classes);
 		
 		int cnt = 0;
 		
@@ -304,27 +322,23 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		lis.setMax(cnt);
 
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Add nf properties from a type.
 	 */
-	public IFuture<Void> addNFProperties(NFProperties nfprops, IService ser)
+	public IFuture<Void> addNFProperties(List<NFPropertyInfo> infos, IService ser)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*Future<Void> ret = new Future<Void>();
+		FutureBarrier<Void> bar = new FutureBarrier<>();
 		INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(ser.getServiceId());
 		
-		CounterResultListener<Void> lis = new CounterResultListener<Void>(nfprops.value().length, new DelegationResultListener<Void>(ret));
-		for(NFProperty nfprop : nfprops.value())
+		for(NFPropertyInfo nfprop : infos)
 		{
-			Class<?> clazz = nfprop.value();
-			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(clazz, getComponent(), ser, null, SNameValue.createUnparsedExpressionsList(nfprop.parameters()));
-			prov.addNFProperty(prop).addResultListener(lis);
+			Class<?> clazz = nfprop.getClazz().getType(ComponentManager.get().getClassLoader());
+			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(clazz, getComponent(), ser, null, nfprop.getParameters());
+			bar.add(prov.addNFProperty(prop));
 		}
-		
-		return ret;*/
+		return bar.waitFor();
 	}
 	
 	/**
@@ -332,14 +346,12 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> addTags(Tags tags, IService ser)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(ser.getServiceId());
+		INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(ser.getServiceId());
 		
 		List<UnparsedExpression> params = new ArrayList<>();
 		
-//		if(tags.argumentname().length()>0)
-//			params.add(new UnparsedExpression(TagProperty.ARGUMENT, "\""+tags.argumentname()+"\""));
+//			if(tags.argumentname().length()>0)
+//				params.add(new UnparsedExpression(TagProperty.ARGUMENT, "\""+tags.argumentname()+"\""));
 		
 		for(int i=0; i<tags.value().length; i++)
 		{
@@ -349,7 +361,8 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 			{
 				try
 				{
-					Object val = SJavaParser.evaluateExpression(tag.include(), getComponent().getModel().getAllImports(), getComponent().getFetcher(), getComponent().getClassLoader());
+					IModelFeature mf = getComponent().getFeature(IModelFeature.class);
+					Object val = SJavaParser.evaluateExpression(tag.include(), mf.getModel().getAllImports(), mf.getFetcher(), IComponentManager.get().getClassLoader());
 					if(val instanceof Boolean && ((Boolean)val).booleanValue())
 						params.add(new UnparsedExpression(TagProperty.NAME+"_"+i, tag.value()));
 				}
@@ -370,28 +383,25 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(TagProperty.class, getComponent(), ser, null, params);
 			ret = prov.addNFProperty(prop);
 		}
-		return ret;*/
+		return ret;
 	}
 	
 	/**
 	 *  Add nf properties from a type.
 	 */
-	public IFuture<Void> addNFMethodProperties(NFProperties nfprops, IService ser, MethodInfo mi)
+	public IFuture<Void> addNFMethodProperties(List<NFPropertyInfo> nfprops, IService ser, MethodInfo mi)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*Future<Void> ret = new Future<Void>();
-		
 		INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(ser.getServiceId());
-		CounterResultListener<Void> lis = new CounterResultListener<Void>(nfprops.value().length, new DelegationResultListener<Void>(ret));
-		for(NFProperty nfprop : nfprops.value())
+		FutureBarrier<Void> bar = new FutureBarrier<>();
+		
+		for(NFPropertyInfo nfprop: nfprops)
 		{
-			Class<?> clazz = ((NFProperty)nfprop).value();
-			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(clazz, getComponent(), ser, mi, SNameValue.createUnparsedExpressionsList(nfprop.parameters()));
-			prov.addMethodNFProperty(mi, prop).addResultListener(lis);
+			Class<?> clazz = nfprop.getClazz().getType(ComponentManager.get().getClassLoader());
+			INFProperty<?, ?> prop = AbstractNFProperty.createProperty(clazz, getComponent(), ser, mi, nfprop.getParameters());
+			bar.add(prov.addMethodNFProperty(mi, prop));
 		}
 		
-		return ret;*/
+		return bar.waitFor();
 	}
 	
 	/**
@@ -402,7 +412,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		T ret = null;
 		if(context instanceof IService)
 		{
-//			IServiceIdentifier sid = (IServiceIdentifier)context;
+//				IServiceIdentifier sid = (IServiceIdentifier)context;
 			ret = (T)getProvidedServicePropertyProvider(((IService)context).getServiceId());
 		}
 		else 
@@ -413,18 +423,18 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		return ret;
 	}
 	
-//	/**
-//	 * 
-//	 */
-//	public <T> Class<T> getExternalFacadeType(Object context)
-//	{
-//		Class<T> ret = (Class<T>)INFPropertyComponentFeature.class;
-//		if(context instanceof IService)
+//		/**
+//		 * 
+//		 */
+//		public <T> Class<T> getExternalFacadeType(Object context)
 //		{
-//			ret = (Class<T>)INFMixedPropertyProvider.class;
+//			Class<T> ret = (Class<T>)INFPropertyComponentFeature.class;
+//			if(context instanceof IService)
+//			{
+//				ret = (Class<T>)INFMixedPropertyProvider.class;
+//			}
+//			return ret;
 //		}
-//		return ret;
-//	}
 	
 	
 	/**
@@ -533,9 +543,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String[]> getNFPropertyNames(IServiceIdentifier sid)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			 return getProvidedServicePropertyProvider(sid).getNFPropertyNames();
 		}
@@ -543,7 +551,16 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		{
 			final Future<String[]> ret = new Future<String[]>();
 
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String[]>>)agent ->
+			{
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				//return nfp.getProvidedServicePropertyProvider(sid).getNFPropertyNames();
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getNFPropertyNames(): new Future<String[]>(SUtil.EMPTY_STRING_ARRAY);
+			}).delegateTo(ret);
+			
+			/*component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
 			{
 				public void customResultAvailable(IExternalAccess result)
 				{
@@ -557,10 +574,10 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 						}
 					}).addResultListener(new DelegationResultListener<String[]>(ret));
 				}
-			});
+			});*/
 
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -569,32 +586,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String[]> getNFAllPropertyNames(final IServiceIdentifier sid)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			 return getProvidedServicePropertyProvider(sid).getNFAllPropertyNames();
 		}
 		else
 		{
 			final Future<String[]> ret = new Future<String[]>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String[]>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<String[]>()
-					{
-						@Classname("getNFAllPropertyNames10")
-						public IFuture<String[]> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getNFAllPropertyNames();
-						}
-					}).addResultListener(new DelegationResultListener<String[]>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getNFAllPropertyNames(): new Future<String[]>(SUtil.EMPTY_STRING_ARRAY);
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -604,9 +613,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Map<String, INFPropertyMetaInfo>> getNFPropertyMetaInfos(IServiceIdentifier sid)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			INFMixedPropertyProvider prov = getProvidedServicePropertyProvider(sid);
 			if(prov!=null)
@@ -622,32 +629,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		else
 		{
 			final Future<Map<String, INFPropertyMetaInfo>> ret = new Future<Map<String, INFPropertyMetaInfo>>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Map<String, INFPropertyMetaInfo>>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Map<String, INFPropertyMetaInfo>>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				INFMixedPropertyProvider prov = nfp.getProvidedServicePropertyProvider(sid);
+				if(prov!=null)
 				{
-					result.scheduleStep(new IPriorityComponentStep<Map<String, INFPropertyMetaInfo>>()
-					{
-						@Classname("getNFPropertyMetaInfos11")
-						public IFuture<Map<String, INFPropertyMetaInfo>> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							INFMixedPropertyProvider prov = nfp.getProvidedServicePropertyProvider(sid);
-							if(prov!=null)
-							{
-								IFuture<Map<String, INFPropertyMetaInfo>> metainf = prov.getNFPropertyMetaInfos();
-								if(metainf!=null)
-								{
-									return metainf;
-								}
-							}
-							return new Future<Map<String,INFPropertyMetaInfo>>(new HashMap<String,INFPropertyMetaInfo>());
-						}
-					}).addResultListener(new DelegationResultListener<Map<String, INFPropertyMetaInfo>>(ret));
+					IFuture<Map<String, INFPropertyMetaInfo>> metainf = prov.getNFPropertyMetaInfos();
+					if(metainf!=null)
+						return metainf;
 				}
-			});
+				return new Future<Map<String,INFPropertyMetaInfo>>(new HashMap<String,INFPropertyMetaInfo>());				
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -657,32 +656,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(final IServiceIdentifier sid, final String name)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getNFPropertyMetaInfo(name);
 		}
 		else
 		{
 			final Future<INFPropertyMetaInfo> ret = new Future<INFPropertyMetaInfo>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, INFPropertyMetaInfo>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<INFPropertyMetaInfo>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<INFPropertyMetaInfo>()
-					{
-						@Classname("getNFPropertyMetaInfo12")
-						public IFuture<INFPropertyMetaInfo> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getNFPropertyMetaInfo(name);
-						}
-					}).addResultListener(new DelegationResultListener<INFPropertyMetaInfo>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getNFPropertyMetaInfo(name): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -693,32 +684,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public <T> IFuture<T> getNFPropertyValue(final IServiceIdentifier sid, final String name)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getNFPropertyValue(name);
 		}
 		else
 		{
 			final Future<T> ret = new Future<T>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<T>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<T>()
-					{
-						@Classname("getNFPropertyValue13")
-						public IFuture<T> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getNFPropertyValue(name);
-						}
-					}).addResultListener(new DelegationResultListener<T>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getNFPropertyValue(name): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -730,32 +713,23 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public <T, U> IFuture<T> getNFPropertyValue(final IServiceIdentifier sid, final String name, final U unit)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getNFPropertyValue(name, unit);
 		}
 		else
 		{
 			final Future<T> ret = new Future<T>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<T>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<T>()
-					{
-						@Classname("getNFPropertyValue14")
-						public IFuture<T> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getNFPropertyValue(name, unit);
-						}
-					}).addResultListener(new DelegationResultListener<T>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getNFPropertyValue(name, unit): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -767,32 +741,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String> getNFPropertyPrettyPrintValue(IServiceIdentifier sid, String name) 
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getNFPropertyPrettyPrintValue(name);
 		}
 		else
 		{
 			final Future<String> ret = new Future<String>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<String>()
-					{
-						@Classname("getNFPropertyValue14+1")
-						public IFuture<String> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getNFPropertyPrettyPrintValue(name);
-						}
-					}).addResultListener(new DelegationResultListener<String>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getNFPropertyPrettyPrintValue(name): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -801,32 +767,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> addNFProperty(final IServiceIdentifier sid, final INFProperty<?, ?> nfprop)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).addNFProperty(nfprop);
 		}
 		else
 		{
 			final Future<Void> ret = new Future<Void>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<Void>()
-					{
-						@Classname("addNFProperty15")
-						public IFuture<Void> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).addNFProperty(nfprop);
-						}
-					}).addResultListener(new DelegationResultListener<Void>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).addNFProperty(nfprop): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -835,32 +793,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> removeNFProperty(final IServiceIdentifier sid, final String name)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).removeNFProperty(name);
 		}
 		else
 		{
 			final Future<Void> ret = new Future<Void>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<Void>()
-					{
-						@Classname("removeNFProperty16")
-						public IFuture<Void> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).removeNFProperty(name);
-						}
-					}).addResultListener(new DelegationResultListener<Void>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).removeNFProperty(name): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -868,32 +818,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> shutdownNFPropertyProvider(final IServiceIdentifier sid)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).shutdownNFPropertyProvider();
 		}
 		else
 		{
 			final Future<Void> ret = new Future<Void>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<Void>()
-					{
-						@Classname("shutdownNFPropertyProvider17")
-						public IFuture<Void> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).shutdownNFPropertyProvider();
-						}
-					}).addResultListener(new DelegationResultListener<Void>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).shutdownNFPropertyProvider(): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	//-------- provided service methods --------
@@ -904,9 +846,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> getMethodNFPropertyMetaInfos(final IServiceIdentifier sid)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfos();
 		}
@@ -914,23 +854,16 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 		{
 			final Future<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> ret = new Future<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>();
 
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>(ret)
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>()
-					{
-						@Classname("getMethodNFPropertyMetaInfos18")
-						public IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfos();
-						}
-					}).addResultListener(new DelegationResultListener<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfos(): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -940,32 +873,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String[]> getMethodNFPropertyNames(final IServiceIdentifier sid, final MethodInfo method)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyNames(method);
 		}
 		else
 		{
 			final Future<String[]> ret = new Future<String[]>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String[]>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<String[]>()
-					{
-						@Classname("getMethodNFPropertyNames19")
-						public IFuture<String[]> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyNames(method);
-						}
-					}).addResultListener(new DelegationResultListener<String[]>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyNames(method): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -975,32 +900,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<String[]> getMethodNFAllPropertyNames(final IServiceIdentifier sid, final MethodInfo method)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyNames(method);
 		}
 		else
 		{
 			final Future<String[]> ret = new Future<String[]>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String[]>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<String[]>()
-					{
-						@Classname("getMethodNFAllPropertyNames20")
-						public IFuture<String[]> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getMethodNFAllPropertyNames(method);
-						}
-					}).addResultListener(new DelegationResultListener<String[]>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getMethodNFAllPropertyNames(method): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -1009,71 +926,52 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Map<String, INFPropertyMetaInfo>> getMethodNFPropertyMetaInfos(final IServiceIdentifier sid, final MethodInfo method)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfos(method);
 		}
 		else
 		{
 			final Future<Map<String, INFPropertyMetaInfo>> ret = new Future<Map<String, INFPropertyMetaInfo>>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Map<String, INFPropertyMetaInfo>>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Map<String, INFPropertyMetaInfo>>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<Map<String, INFPropertyMetaInfo>>()
-					{
-						@Classname("getMethodNFPropertyMetaInfos21")
-						public IFuture<Map<String, INFPropertyMetaInfo>> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfos(method);
-						}
-					}).addResultListener(new DelegationResultListener<Map<String, INFPropertyMetaInfo>>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfos(method): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
 	 *  Returns the meta information about a non-functional property of the specified method.
-	 *  @param method The
-	public IFuture<String> getMethodNFPropertyPrettyPrintValue(IServiceIdentifier sid, MethodInfo method, String name) 
-	{
-	} method targeted by this operation.
+	 *  @param method The method targeted by this operation.
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of the specified method.
 	 */
 	public IFuture<INFPropertyMetaInfo> getMethodNFPropertyMetaInfo(final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfo(method, name);
 		}
 		else
 		{
 			final Future<INFPropertyMetaInfo> ret = new Future<INFPropertyMetaInfo>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, INFPropertyMetaInfo>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<INFPropertyMetaInfo>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<INFPropertyMetaInfo>()
-					{
-						@Classname("getMethodNFPropertyMetaInfo22")
-						public IFuture<INFPropertyMetaInfo> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfo(method, name);
-						}
-					}).addResultListener(new DelegationResultListener<INFPropertyMetaInfo>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyMetaInfo(method, name): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -1085,45 +983,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public <T> IFuture<T> getMethodNFPropertyValue(final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyValue(method, name);
 		}
 		else
 		{
 			final Future<T> ret = new Future<T>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<T>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<T>()
-					{
-						@Classname("getMethodNFPropertyValue23")
-						public IFuture<T> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyValue(method, name);
-						}
-					}).addResultListener(new DelegationResultListener<T>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyValue(method, name): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
 		}
-		
-//		ret.addResultListener(new IResultListener<T>()
-//		{
-//			public void resultAvailable(T result)
-//			{
-//				System.out.println("t: "+result);
-//			}
-//
-//			public void exceptionOccurred(Exception exception)
-//			{
-//				System.out.println("ex: "+exception);
-//			}
-//		});*/
 	}
 	
 	/**
@@ -1134,66 +1011,50 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 *  @param unit Unit of the property value.
 	 *  @return The current value of a non-functional property of the specified method.
 	 */
-//	public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
+//		public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
 	public <T, U> IFuture<T> getMethodNFPropertyValue(final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyValue(method, name, unit);
 		}
 		else
 		{
 			final Future<T> ret = new Future<T>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<T>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<T>()
-					{
-						@Classname("getMethodNFPropertyValue24")
-						public IFuture<T> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyValue(method, name, unit);
-						}
-					}).addResultListener(new DelegationResultListener<T>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyValue(method, name, unit): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 
 	public IFuture<String> getMethodNFPropertyPrettyPrintValue(IServiceIdentifier sid, MethodInfo method, String name) 
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).getMethodNFPropertyPrettyPrintValue(method, name);
 		}
 		else
 		{
 			final Future<String> ret = new Future<String>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<String>()
-					{
-						@Classname("getMethodNFPropertyPrettyPrintValue24+1")
-						public IFuture<String> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyPrettyPrintValue(method, name);
-						}
-					}).addResultListener(new DelegationResultListener<String>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getMethodNFPropertyPrettyPrintValue(method, name): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -1203,32 +1064,24 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> addMethodNFProperty(final IServiceIdentifier sid, final MethodInfo method, final INFProperty<?, ?> nfprop)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).addMethodNFProperty(method, nfprop);
 		}
 		else
 		{
 			final Future<Void> ret = new Future<Void>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
+			
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<Void>()
-					{
-						@Classname("addMethodNFProperty25")
-						public IFuture<Void> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).addMethodNFProperty(method, nfprop);
-						}
-					}).addResultListener(new DelegationResultListener<Void>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).addMethodNFProperty(method, nfprop): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 	
 	/**
@@ -1238,32 +1091,23 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 */
 	public IFuture<Void> removeMethodNFProperty(final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*if(sid.getProviderId().equals(getComponent().getId()))
+		if(sid.getProviderId().equals(getComponent().getId()))
 		{
 			return getProvidedServicePropertyProvider(sid).removeMethodNFProperty(method, name);
 		}
 		else
 		{
 			final Future<Void> ret = new Future<Void>();
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, Void>(ret)
+			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			
+			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
-				{
-					result.scheduleStep(new IPriorityComponentStep<Void>()
-					{
-						@Classname("removeMethodNFProperty26")
-						public IFuture<Void> execute(IInternalAccess ia)
-						{
-							INFPropertyComponentFeature nfp = ia.getFeature(INFPropertyComponentFeature.class);
-							return nfp.getProvidedServicePropertyProvider(sid).removeMethodNFProperty(method, name);
-						}
-					}).addResultListener(new DelegationResultListener<Void>(ret));
-				}
-			});
+				INFPropertyFeature nfp = agent.getFeature(INFPropertyFeature.class);
+				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).removeMethodNFProperty(method, name): new Future<>(new RuntimeException("No nf properties"));
+			}).delegateTo(ret);
+			
 			return ret;
-		}*/
+		}
 	}
 
 	//-------- required properties --------
@@ -1324,7 +1168,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 *  @param unit Unit of the property value.
 	 *  @return The current value of a non-functional property of this service.
 	 */
-//	public <T, U> IFuture<T> getNFPropertyValue(String name, Class<U> unit);
+//		public <T, U> IFuture<T> getNFPropertyValue(String name, Class<U> unit);
 	public <T, U> IFuture<T> getRequiredNFPropertyValue(final IServiceIdentifier sid, final String name, final U unit)
 	{
 		return getRequiredServicePropertyProvider(sid).getNFPropertyValue(name, unit);
@@ -1436,7 +1280,7 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	 *  @param unit Unit of the property value.
 	 *  @return The current value of a non-functional property of the specified method.
 	 */
-//	public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
+//		public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
 	public <T, U> IFuture<T> getRequiredMethodNFPropertyValue(final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
 	{
 		return getRequiredServicePropertyProvider(sid).getMethodNFPropertyValue(method, name, unit);
@@ -1474,6 +1318,28 @@ public class NFPropertyComponentFeature implements INFPropertyComponentFeature
 	{
 		return getRequiredServicePropertyProvider(sid).removeMethodNFProperty(method, name);
 	}
+	
+	/**
+	 *  Rank the services of a search with a specific ranker.
+	 */
+	public <S> ITerminableIntermediateFuture<S> rankServices(ITerminableIntermediateFuture<S> searchfut, 
+		IServiceRanker<S> ranker, IRankingSearchTerminationDecider<S> decider)
+	{
+		TerminableIntermediateDelegationFuture<S> ret = new TerminableIntermediateDelegationFuture<S>();
+		searchfut.addResultListener(new ServiceRankingDelegationResultListener<S>(ret, searchfut, ranker, decider));
+		return ret;
+	}
+	
+	/**
+	 *  Rank the services of a search with a specific ranker and emit the scores.
+	 */
+	public <S> ITerminableIntermediateFuture<Tuple2<S, Double>> rankServicesWithScores(ITerminableIntermediateFuture<S> searchfut, 
+		IServiceRanker<S> ranker, IRankingSearchTerminationDecider<S> decider)
+	{
+		TerminableIntermediateDelegationFuture<Tuple2<S, Double>> ret = new TerminableIntermediateDelegationFuture<Tuple2<S, Double>>();
+		searchfut.addResultListener(new ServiceRankingDelegationResultListener2<S>(ret, searchfut, ranker, decider));
+		return ret;
+	}	
 	
 	/**
 	 *  Counter listener that allows to set the max after usage.

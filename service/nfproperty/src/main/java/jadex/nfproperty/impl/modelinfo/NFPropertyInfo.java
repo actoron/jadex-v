@@ -17,7 +17,7 @@ public class NFPropertyInfo
 	protected ClassInfo clazz;
 
 	/** The parameters (optional). */
-	protected  List<UnparsedExpression> parameters;
+	protected List<UnparsedExpression> parameters;
 	
 	/**
 	 *  Create a new property.

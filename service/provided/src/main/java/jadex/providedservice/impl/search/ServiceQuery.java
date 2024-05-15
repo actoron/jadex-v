@@ -334,7 +334,8 @@ public class ServiceQuery<T>
 	{
 		//if(ServiceScope.EXPRESSION.equals(scope))
 		//	throw new IllegalArgumentException("Cannot use scope 'expression' directly.");
-		this.scope = scope;//scope!=null?scope:ServiceScope.DEFAULT;
+		//this.scope = scope;
+		this.scope = scope!=null? scope: ServiceScope.VM;
 		return this;
 	}
 	

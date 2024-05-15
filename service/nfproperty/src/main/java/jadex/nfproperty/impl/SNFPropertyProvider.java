@@ -5,6 +5,8 @@ import java.util.Map;
 import jadex.common.MethodInfo;
 import jadex.core.IExternalAccess;
 import jadex.future.IFuture;
+import jadex.nfproperty.INFProperty;
+import jadex.nfproperty.INFPropertyMetaInfo;
 import jadex.providedservice.IServiceIdentifier;
 
 /**

@@ -1,4 +1,4 @@
-package jadex.nfproperty.impl.annotation;
+package jadex.nfproperty.annotation;
 
 import java.util.ArrayList;
 import java.util.List;

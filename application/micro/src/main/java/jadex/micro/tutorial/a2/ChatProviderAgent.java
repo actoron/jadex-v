@@ -6,6 +6,7 @@ import java.util.Date;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
+import jadex.providedservice.annotation.Service;
 
 /**
  *  Chat micro agent provides a basic chat service. 
@@ -13,6 +14,7 @@ import jadex.model.annotation.OnStart;
  *  The agent provides the service implementation by itself. 
  */
 @Agent
+@Service
 public class ChatProviderAgent implements IChatService
 {
 	/** The underlying micro agent. */

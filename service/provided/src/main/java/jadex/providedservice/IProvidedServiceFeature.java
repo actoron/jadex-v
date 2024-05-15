@@ -1,6 +1,9 @@
 package jadex.providedservice;
 
+import java.lang.reflect.Method;
+
 import jadex.common.MethodInfo;
+import jadex.providedservice.impl.service.ServiceInvocationContext;
 
 public interface IProvidedServiceFeature 
 {
@@ -80,13 +83,13 @@ public interface IProvidedServiceFeature
 	 *  Test if service and method has listeners.
 	 *  @param sid The service identifier.
 	 *  @param mi The method info.
-	 * /
-	public boolean hasMethodListeners(IServiceIdentifier sid, MethodInfo mi);*/
+	 */
+	public boolean hasMethodListeners(IServiceIdentifier sid, MethodInfo mi);
 	
 	/**
 	 *  Notify listeners that a service method has been called.
-	 * /
-	public void notifyMethodListeners(IServiceIdentifier sid, boolean start, Object proxy, final Method method, final Object[] args, Object callid, ServiceInvocationContext context);*/
+	 */
+	public void notifyMethodListeners(IServiceIdentifier sid, boolean start, Object proxy, final Method method, final Object[] args, Object callid, ServiceInvocationContext context);
 	
 	/**
 	 *  Add a service interceptor.

@@ -1,4 +1,4 @@
-package jadex.nfproperty.impl;
+package jadex.nfproperty;
 
 import java.util.Map;
 

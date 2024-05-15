@@ -1,7 +1,7 @@
-package jadex.nfproperty.impl;
+package jadex.nfproperty;
 
 import jadex.common.ClassInfo;
-import jadex.nfproperty.impl.INFProperty.Target;
+import jadex.nfproperty.INFProperty.Target;
 
 /**
  * Meta information about a non-functional property.

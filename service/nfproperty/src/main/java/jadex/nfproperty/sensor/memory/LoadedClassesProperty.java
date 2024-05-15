@@ -3,7 +3,7 @@ package jadex.nfproperty.sensor.memory;
 import java.lang.management.ManagementFactory;
 
 import jadex.core.IComponent;
-import jadex.nfproperty.impl.INFProperty.Target;
+import jadex.nfproperty.INFProperty.Target;
 import jadex.nfproperty.impl.NFPropertyMetaInfo;
 import jadex.nfproperty.impl.NFRootProperty;
 import jadex.nfproperty.sensor.unit.MemoryUnit;
