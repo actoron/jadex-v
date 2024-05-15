@@ -5,7 +5,7 @@ import java.util.List;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
 import jadex.bdi.annotation.Mapping;
-import jadex.bdi.runtime.wrappers.belief;
+import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -45,7 +45,7 @@ public class ShopAndCustomerAgent
 	
 	/** The money. */
 	@Belief
-	protected belief<Double> money = new belief<>(100.0);
+	protected Val<Double> money = new Val<>(100.0);
 	
 	// TODO: support @OnStart for capabilities
 	@OnStart

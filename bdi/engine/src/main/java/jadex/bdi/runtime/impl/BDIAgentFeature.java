@@ -33,6 +33,7 @@ import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IBeliefListener;
 import jadex.bdi.runtime.ICapability;
 import jadex.bdi.runtime.IGoal;
+import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.IGoal.GoalLifecycleState;
 import jadex.bdi.runtime.impl.APL.CandidateInfoMPlan;
 import jadex.bdi.runtime.impl.APL.CandidateInfoPojoPlan;
@@ -40,7 +41,6 @@ import jadex.bdi.runtime.impl.APL.MPlanInfo;
 import jadex.bdi.runtime.wrappers.ListWrapper;
 import jadex.bdi.runtime.wrappers.MapWrapper;
 import jadex.bdi.runtime.wrappers.SetWrapper;
-import jadex.bdi.runtime.wrappers.belief;
 import jadex.common.FieldInfo;
 import jadex.common.IResultCommand;
 import jadex.common.SAccess;
@@ -271,9 +271,9 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 
 			Object oldval	= getFieldValue(obj, fieldname, null, false);
-			if(oldval instanceof belief)
+			if(oldval instanceof Val)
 			{
-				belief<?>	bel	= (belief< ? >)oldval;
+				Val<?>	bel	= (Val< ? >)oldval;
 				Object	newoldval	= bel.get();
 				belval.set(bel, val);
 				
@@ -454,9 +454,9 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		writeField(val, fieldname, mbel, obj, comp);
 	}
 	
-	static Field	belval	= SReflect.getField(belief.class, "value");
-	static Field	belpojo	= SReflect.getField(belief.class, "pojo");
-	static Field	belfield	= SReflect.getField(belief.class, "mbel");
+	static Field	belval	= SReflect.getField(Val.class, "value");
+	static Field	belpojo	= SReflect.getField(Val.class, "pojo");
+	static Field	belfield	= SReflect.getField(Val.class, "mbel");
 	{
 		belval.setAccessible(true);
 		belpojo.setAccessible(true);
@@ -487,19 +487,6 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			else if(val instanceof Map && !(val instanceof jadex.collection.MapWrapper))
 			{
 				val = new MapWrapper((Map<?,?>)val, IExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
-			}
-		}
-		
-		if(val instanceof belief<?>)
-		{
-			try
-			{
-				belpojo.set(val, obj);
-				belfield.set(val, mbel);
-			}
-			catch(Exception e)
-			{
-				SUtil.throwUnchecked(e);
 			}
 		}
 		

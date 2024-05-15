@@ -1,16 +1,16 @@
-package jadex.bdi.runtime.wrappers;
+package jadex.bdi.runtime;
 
 import jadex.bdi.model.MBelief;
 import jadex.bdi.runtime.impl.BDIAgentFeature;
 import jadex.micro.impl.MicroAgentFeature;
 
-public class belief<T>
+public class Val<T>
 {
 	T	value;
 	Object	pojo;
 	MBelief	mbel;
 	
-	public belief(T value)
+	public Val(T value)
 	{
 		this.value	= value;
 	}

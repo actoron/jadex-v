@@ -11,7 +11,7 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.ICapability;
-import jadex.bdi.runtime.wrappers.belief;
+import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
@@ -43,7 +43,7 @@ public class CustomerCapability
 	protected List<ItemInfo> inventory = new ArrayList<ItemInfo>();
 	
 	@Belief
-	protected belief<Double>	money;	// Abstract belief -> value is injected automatically
+	protected Val<Double>	money;	// Abstract belief -> value is injected automatically
 	
 	//-------- methods --------
 	

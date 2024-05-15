@@ -25,6 +25,7 @@ import jadex.bdi.model.MTrigger;
 import jadex.bdi.runtime.ChangeEvent;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IDeliberationStrategy;
+import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.impl.APL.CandidateInfoMPlan;
 import jadex.bdi.runtime.impl.APL.MPlanInfo;
 import jadex.bdi.runtime.impl.BDIAgentFeature.GoalsExistCondition;
@@ -33,7 +34,6 @@ import jadex.bdi.runtime.impl.BDIAgentFeature.NotInShutdownCondition;
 import jadex.bdi.runtime.impl.BDIAgentFeature.PlansExistCondition;
 import jadex.bdi.runtime.impl.RParameterElement.RParameter;
 import jadex.bdi.runtime.impl.RParameterElement.RParameterSet;
-import jadex.bdi.runtime.wrappers.belief;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -666,6 +666,21 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 						Field	f	= mbel.getField().getField(MicroAgentFeature.get().getSelf().getPojo().getClass().getClassLoader());
 						f.setAccessible(true);
 						Object	val	= f.get(capa);
+						
+						// Lazy init of belief wrapper
+						if(val instanceof Val<?>)
+						{
+							try
+							{
+								BDIAgentFeature.belpojo.set(val, capa);
+								BDIAgentFeature.belfield.set(val, mbel);
+							}
+							catch(Exception e)
+							{
+								SUtil.throwUnchecked(e);
+							}
+						}
+
 						BDIAgentFeature.writeField(val, mbel.getField().getName(), mbel, capa, MicroAgentFeature.get().getSelf());
 					}
 					catch(Exception e)

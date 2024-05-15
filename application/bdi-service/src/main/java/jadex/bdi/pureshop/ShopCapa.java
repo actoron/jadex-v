@@ -8,7 +8,7 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalResult;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.wrappers.belief;
+import jadex.bdi.runtime.Val;
 
 /**
  * 
@@ -27,7 +27,7 @@ public class ShopCapa
 	protected List<ItemInfo> catalog;
 	
 	@Belief
-	protected belief<Double>	money;	// Abstract belief -> value is injected automatically
+	protected Val<Double>	money;	// Abstract belief -> value is injected automatically
 	
 	/**
 	 *  Create a shop capability.
