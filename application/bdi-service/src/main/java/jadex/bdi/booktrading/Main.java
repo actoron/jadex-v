@@ -1,6 +1,5 @@
 package jadex.bdi.booktrading;
 
-import jadex.bdi.runtime.BDICreationInfo;
 import jadex.bdi.runtime.IBDIAgent;
 
 /**
@@ -13,8 +12,7 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-		IBDIAgent.create(new BDICreationInfo("jadex.bdi.booktrading.BuyerAgent")
-			.addArgument("initial_orders", 
+		IBDIAgent.create(new BuyerAgent(
 				new Order[]
 				{
 					new Order("All about agents", 60000, 100, 120, true),
@@ -23,8 +21,7 @@ public class Main
 					new Order("Agents in the real world", 60000, 30, 65, true)
 				}));
 
-		IBDIAgent.create(new BDICreationInfo("jadex.bdi.booktrading.SellerAgent")
-			.addArgument("initial_orders", 
+		IBDIAgent.create(new SellerAgent(
 				new Order[]
 				{
 					new Order("All about agents", 60000, 130, 110, false),

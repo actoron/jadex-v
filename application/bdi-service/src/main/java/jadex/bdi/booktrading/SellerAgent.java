@@ -43,6 +43,13 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 
 	protected Future<Gui> gui;
 	
+	protected Order[]	ios;
+	
+	public SellerAgent(Order[] ios)
+	{
+		this.ios	= ios;
+	}
+
 	/**
 	 *  The agent body.
 	 */
@@ -51,7 +58,6 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 	public void body()
 	{
 		IExecutionFeature	exe	= agent.getFeature(IExecutionFeature.class);
-		Order[] ios = (Order[])agent.getFeature(IBDIAgentFeature.class).getArgument("initial_orders");
 		if(ios!=null)
 		{
 			for(Order o: ios)

@@ -47,15 +47,20 @@ public class BuyerAgent implements INegotiationAgent
 	
 	protected Future<Gui> gui;
 	
+	protected Order[]	ios;
+	
+	public BuyerAgent(Order[] ios)
+	{
+		this.ios	= ios;
+	}
+	
 	/**
 	 *  The agent body.
 	 */
-	//@AgentBody
 	@OnStart
 	public void body()
 	{
 		IExecutionFeature	exe	= agent.getFeature(IExecutionFeature.class);
-		Order[] ios = (Order[])agent.getFeature(IBDIAgentFeature.class).getArgument("initial_orders");
 		if(ios!=null)
 		{
 			for(Order o: ios)
