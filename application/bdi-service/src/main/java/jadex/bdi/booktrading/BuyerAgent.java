@@ -36,7 +36,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
 /**
  * 
  */
-@Agent(type="bdi")
+@Agent(type="bdip")
 public class BuyerAgent implements INegotiationAgent
 {
 	@Agent

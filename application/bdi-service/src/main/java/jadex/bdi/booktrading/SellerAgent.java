@@ -31,7 +31,7 @@ import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
 
-@Agent(type="bdi")
+@Agent(type="bdip")
 @Service
 public class SellerAgent implements IBuyBookService, INegotiationAgent
 {
