@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import jadex.bdi.model.IBDIClassGenerator;
@@ -18,9 +19,9 @@ import jadex.bdi.model.MCondition;
 import jadex.bdi.model.MElement;
 import jadex.bdi.model.MGoal;
 import jadex.bdi.model.MParameter;
+import jadex.bdi.model.MParameter.EvaluationMode;
 import jadex.bdi.model.MPlan;
 import jadex.bdi.model.MTrigger;
-import jadex.bdi.model.MParameter.EvaluationMode;
 import jadex.bdi.runtime.ChangeEvent;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IDeliberationStrategy;
@@ -32,7 +33,7 @@ import jadex.bdi.runtime.impl.BDIAgentFeature.NotInShutdownCondition;
 import jadex.bdi.runtime.impl.BDIAgentFeature.PlansExistCondition;
 import jadex.bdi.runtime.impl.RParameterElement.RParameter;
 import jadex.bdi.runtime.impl.RParameterElement.RParameterSet;
-import jadex.bdi.runtime.wrappers.ListWrapper;
+import jadex.bdi.runtime.wrappers.belief;
 import jadex.common.MethodInfo;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -90,6 +91,45 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
 		bdif.init();
 		createStartBehavior().startBehavior(bdif.getBDIModel(), bdif.getRuleSystem(), bdif.getCapability());
+		
+		//TODO?
+//		// call @OnStart for capabilities
+//		BDIModel	model	= (BDIModel)bdif.getBDIModel();
+//		for(Tuple2<FieldInfo, BDIModel> subcap:	model.getSubcapabilities())
+//		{
+//			try
+//			{
+//				// Navigate though field(s) and remember inner capability object and globalname (i.e. path)
+//				FieldInfo	finfo	= subcap.getFirstEntity();
+//				Object	capa	= getSelf().getPojo();
+//				while(finfo!=null)
+//				{
+//					Field	f	= finfo.getField(bdif.getClassLoader());
+//					SAccess.setAccessible(f, true);
+//					capa	= f.get(capa);
+//					finfo	= finfo.getInner();
+//				}
+//				
+////				MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
+//				
+//				Class<? extends Annotation> ann = OnStart.class;
+//				if(model.getAgentMethod(ann)!=null)
+//				{
+//					//return invokeMethod(getInternalAccess(), OnInit.class, null);
+//					//if(wasAnnotationCalled(ann))
+//					//	return IFuture.DONE;
+//					//else
+//					
+////					invokeMethod(getSelf(), ann, null).delegateTo(ret);
+//				}
+//				
+//			}
+//			catch(Exception e)
+//			{
+//				SUtil.throwUnchecked(e);
+//			}
+//		}
+		
 		return super.onStart();
 	}
 	
@@ -626,7 +666,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 						Field	f	= mbel.getField().getField(MicroAgentFeature.get().getSelf().getPojo().getClass().getClassLoader());
 						f.setAccessible(true);
 						Object	val	= f.get(capa);
-						BDIAgentFeature.writeField(val, mbel.getName(), capa, MicroAgentFeature.get().getSelf());
+						BDIAgentFeature.writeField(val, mbel.getField().getName(), mbel, capa, MicroAgentFeature.get().getSelf());
 					}
 					catch(Exception e)
 					{
@@ -739,6 +779,61 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 					};
 					// Evaluate at time 0, updaterate*1, updaterate*2, ...
 					update.accept(null);
+				}
+			}
+			
+			// assign helper objects to belief references 
+			if(IInternalBDIAgentFeature.get().isPure())
+			{
+				Map<String, String> mbelrefs = bdimodel.getCapability().getBeliefReferences();
+				for(Entry<String, String> mbelref: mbelrefs.entrySet())
+				{
+					String origname = null;
+					Object origcapa = null;
+					int	i	= mbelref.getValue().indexOf(MElement.CAPABILITY_SEPARATOR);
+					if(i!=-1)
+					{
+						origcapa	= getCapabilityObject(mbelref.getValue().substring(0, mbelref.getValue().lastIndexOf(MElement.CAPABILITY_SEPARATOR)));
+						origname	= mbelref.getValue().substring(mbelref.getValue().lastIndexOf(MElement.CAPABILITY_SEPARATOR)+1); 
+					}
+					else
+					{
+						Object agent = MicroAgentFeature.get().getSelf().getPojo();
+						origcapa	= agent;
+						origname	= mbelref.getValue();
+					}
+
+					String refname = null;
+					Object refcapa = null;
+					i	= mbelref.getKey().indexOf(MElement.CAPABILITY_SEPARATOR);
+					if(i!=-1)
+					{
+						refcapa	= getCapabilityObject(mbelref.getKey().substring(0, mbelref.getKey().lastIndexOf(MElement.CAPABILITY_SEPARATOR)));
+						refname	= mbelref.getKey().substring(mbelref.getKey().lastIndexOf(MElement.CAPABILITY_SEPARATOR)+1); 
+					}
+					else
+					{
+						Object agent = MicroAgentFeature.get().getSelf().getPojo();
+						refcapa	= agent;
+						refname	= mbelref.getKey();
+					}
+
+					try
+					{
+						
+						Field	origfield	= SReflect.getField(origcapa.getClass(), origname);
+						origfield.setAccessible(true);
+						Object	val	= origfield.get(origcapa);
+						
+						Field	reffield	= SReflect.getField(refcapa.getClass(), refname);
+						reffield.setAccessible(true);
+						reffield.set(refcapa, val);
+
+					}
+					catch(Exception e)
+					{
+						SUtil.throwUnchecked(e);
+					}
 				}
 			}
 			

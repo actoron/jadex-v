@@ -15,5 +15,10 @@ public @interface Capability
 	/**
 	 *  Belief mappings from outer beliefs to inner abstract beliefs.
 	 */
-	public Mapping[]	beliefmapping() default {};	
+	public Mapping[]	beliefmapping() default {};
+	
+//	/**
+//	 *  Flag to indicate pure Java code (not to be bytecode enhanced).
+//	 */
+//	public boolean	pure() default false;
 }

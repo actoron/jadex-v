@@ -215,7 +215,7 @@ public class BDIClassReader extends MicroClassReader
 					try
 					{
 						// todo: support capa as pojo?!
-						BDIModel cap = loader.loadComponentModel(fields[i].getType().getName()+".class", null, null, clazz, ((DummyClassLoader)cl).getOriginal(), null);
+						BDIModel cap = loader.loadComponentModel(fields[i].getType().getName()+".class", null, null, clazz, cl instanceof DummyClassLoader ? ((DummyClassLoader)cl).getOriginal() : cl, null);
 //						System.out.println("found capability: "+fields[i].getName()+", "+cap);
 						capas.put(fields[i].getName(), cap);
 						

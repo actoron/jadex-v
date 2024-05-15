@@ -40,6 +40,7 @@ import jadex.bdi.runtime.impl.APL.MPlanInfo;
 import jadex.bdi.runtime.wrappers.ListWrapper;
 import jadex.bdi.runtime.wrappers.MapWrapper;
 import jadex.bdi.runtime.wrappers.SetWrapper;
+import jadex.bdi.runtime.wrappers.belief;
 import jadex.common.FieldInfo;
 import jadex.common.IResultCommand;
 import jadex.common.SAccess;
@@ -269,7 +270,18 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 //			BDIAgentInterpreter ip = (BDIAgentInterpreter)getInterpreter();
 			RuleSystem rs = IInternalBDIAgentFeature.get().getRuleSystem();
 
-			Object oldval = setFieldValue(obj, fieldname, val);
+			Object oldval	= getFieldValue(obj, fieldname, null, false);
+			if(oldval instanceof belief)
+			{
+				belief<?>	bel	= (belief< ? >)oldval;
+				Object	newoldval	= bel.get();
+				belval.set(bel, val);
+				
+			}
+			else
+			{
+				setFieldValue(obj, fieldname, val);
+			}
 			
 			// unobserve old value for property changes
 			unobserveObject(oldval, ev2, rs);
@@ -318,6 +330,17 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 */
 	protected static Object setFieldValue(Object obj, String fieldname, Object val) throws IllegalAccessException
 	{
+		return getFieldValue(obj, fieldname, val, true);
+	}
+	
+	/**
+	 *  Set the value of a field.
+	 *  @param obj The object.
+	 *  @param fieldname The name of the field.
+	 *  @return The old field value.
+	 */
+	protected static Object getFieldValue(Object obj, String fieldname, Object val, boolean set) throws IllegalAccessException
+	{
 		Tuple2<Field, Object> res = findFieldWithOuterClass(obj, fieldname, false);
 		Field f = res.getFirstEntity();
 		if(f==null)
@@ -326,7 +349,10 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		Object tmp = res.getSecondEntity();
 		SAccess.setAccessible(f, true);
 		Object oldval = f.get(tmp);
-		f.set(tmp, val);
+		if(set)
+		{
+			f.set(tmp, val);
+		}
 	
 		return oldval;
 	}
@@ -416,7 +442,6 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  Method that is called automatically when a belief 
 	 *  is written as field access.
 	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static void writeField(Object val, String fieldname, Object obj, IComponent comp)
 	{
 		if((""+obj).indexOf("Inner")!=-1)
@@ -426,13 +451,31 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 
 //		BDIAgentInterpreter ip = (BDIAgentInterpreter)agent.getInterpreter();
 		MBelief mbel = IInternalBDIAgentFeature.get().getBDIModel().getCapability().getBelief(belname);
+		writeField(val, fieldname, mbel, obj, comp);
+	}
+	
+	static Field	belval	= SReflect.getField(belief.class, "value");
+	static Field	belpojo	= SReflect.getField(belief.class, "pojo");
+	static Field	belfield	= SReflect.getField(belief.class, "mbel");
+	{
+		belval.setAccessible(true);
+		belpojo.setAccessible(true);
+		belfield.setAccessible(true);
+	}
+	/**
+	 *  Method that is called automatically when a belief 
+	 *  is written as field access.
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public static void writeField(Object val, String fieldname, MBelief mbel, Object obj, IComponent comp)
+	{
 		
 		// Wrap collections of multi beliefs (if not already a wrapper)
 		if(mbel.isMulti(IInternalBDIAgentFeature.get().getClassLoader()))
 		{
-			EventType addev = new EventType(ChangeEvent.FACTADDED, belname);
-			EventType remev = new EventType(ChangeEvent.FACTREMOVED, belname);
-			EventType chev = new EventType(ChangeEvent.FACTCHANGED, belname);
+			EventType addev = new EventType(ChangeEvent.FACTADDED, mbel.getName());
+			EventType remev = new EventType(ChangeEvent.FACTREMOVED, mbel.getName());
+			EventType chev = new EventType(ChangeEvent.FACTCHANGED, mbel.getName());
 			if(val instanceof List && !(val instanceof jadex.collection.ListWrapper))
 			{
 				val = new ListWrapper((List<?>)val, IExecutionFeature.get().getComponent(), addev, remev, chev, mbel);
@@ -447,11 +490,24 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			}
 		}
 		
+		if(val instanceof belief<?>)
+		{
+			try
+			{
+				belpojo.set(val, obj);
+				belfield.set(val, mbel);
+			}
+			catch(Exception e)
+			{
+				SUtil.throwUnchecked(e);
+			}
+		}
+		
 		// agent is not null any more due to deferred exe of init expressions but rules are
 		// available only after startBehavior
 		if(((IInternalBDILifecycleFeature)MicroAgentFeature.get()).isInited())
 		{
-			((BDIAgentFeature)IInternalBDIAgentFeature.get()).writeField(val, belname, fieldname, obj);
+			((BDIAgentFeature)IInternalBDIAgentFeature.get()).writeField(val, mbel.getName(), fieldname, obj);
 		}
 		// Only store event for non-update-rate beliefs (update rate beliefs get set later)
 //		else if(mbel.getUpdaterate()<=0)
@@ -464,7 +520,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				Object oldval = setFieldValue(obj, fieldname, val);
 				// rule engine not turned on so no unobserve necessary
 //				unobserveObject(agent, obj, etype, rs);
-				addInitWrite(IExecutionFeature.get().getComponent(), new InitWriteBelief(belname, val, oldval));
+				addInitWrite(IExecutionFeature.get().getComponent(), new InitWriteBelief(mbel.getName(), val, oldval));
 			}
 			catch(Exception e)
 			{
