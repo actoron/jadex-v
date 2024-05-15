@@ -1,4 +1,4 @@
-package jadex.nfproperty.impl;
+package jadex.nfproperty;
 
 /**
  *  Interface that combines property provider with method property provider.

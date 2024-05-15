@@ -1,13 +1,20 @@
 package jadex.nfproperty.sensor.service;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
+import jadex.bytecode.ProxyFactory;
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.nfproperty.sensor.time.TimedProperty;
 import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.impl.service.ServiceInvocationContext;
 
 /**
  *  Property for the waiting time of a method or a service as a whole.
@@ -26,9 +33,6 @@ public class WaitingTimeProperty extends TimedProperty
 	/** The method info. */
 	protected MethodInfo method;
 	
-	/** The clock. */
-	//protected IClockService clock;
-	
 	/**
 	 *  Create a new property.
 	 */
@@ -38,12 +42,6 @@ public class WaitingTimeProperty extends TimedProperty
 		this.method = method;
 		this.sid = service.getServiceId();
 		
-		// todo:
-		throw new UnsupportedOperationException();
-		
-		/*
-		WaitingTimeProperty.this.clock = comp.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IClockService.class));
-		
 		if(ProxyFactory.isProxyClass(service.getClass()))
 		{
 			listener = new UserMethodInvocationListener(new IMethodInvocationListener()
@@ -52,30 +50,26 @@ public class WaitingTimeProperty extends TimedProperty
 				
 				public void methodCallStarted(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
 				{
-					if(clock!=null)
-						times.put(callid, Long.valueOf(clock.getTime()));
+					times.put(callid, Long.valueOf(comp.getFeature(IExecutionFeature.class).getTime()));
 				}
 				
 				public void methodCallFinished(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
 				{
-					if(clock!=null)
+					Long start = times.remove(callid);
+					// May happen that property is added during ongoing call
+					if(start!=null)
 					{
-						Long start = times.remove(callid);
-						// May happen that property is added during ongoing call
-						if(start!=null)
-						{
-							long dur = clock.getTime() - start.longValue();
-							setValue(dur);
-						}
+						long dur = comp.getFeature(IExecutionFeature.class).getTime() - start.longValue();
+						setValue(dur);
 					}
 				}
 			});
-			comp.getFeature(IProvidedServicesFeature.class).addMethodInvocationListener(service.getServiceId(), method, listener);
+			comp.getFeature(IProvidedServiceFeature.class).addMethodInvocationListener(service.getServiceId(), method, listener);
 		}
 		else
 		{
 			throw new RuntimeException("Cannot install waiting time listener hook.");
-		}*/
+		}
 	}
 	
 	/**

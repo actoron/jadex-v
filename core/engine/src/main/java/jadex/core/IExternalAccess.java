@@ -86,4 +86,24 @@ public interface IExternalAccess
 	{
 		throw new UnsupportedOperationException("Missing execution feature");
 	}
+	
+	/**
+	 *  Schedule a step that provides a result.
+	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
+	 *  @return	A future that provides access to the step result, once it is available.
+	 */
+	public default <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
+	{
+		throw new UnsupportedOperationException("Missing execution feature");
+	}
+	
+	/**
+	 *  Schedule a step that provides a result.
+	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
+	 *  @return	A future that provides access to the step result, once it is available.
+	 */
+	public default <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
+	{
+		throw new UnsupportedOperationException("Missing execution feature");
+	}
 }

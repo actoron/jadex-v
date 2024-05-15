@@ -1,13 +1,21 @@
 package jadex.nfproperty.sensor.service;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
+import jadex.bytecode.ProxyFactory;
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.nfproperty.sensor.time.TimedProperty;
 import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.impl.service.ServiceInvocationContext;
 
 /**
  *  Property for the overall execution time of a method or a service.
@@ -26,9 +34,6 @@ public class ExecutionTimeProperty extends TimedProperty
 	/** The method info. */
 	protected MethodInfo method;
 	
-	/** The clock. */
-	//protected IClockService clock;
-	
 	/**
 	 *  Create a new property.
 	 */
@@ -37,14 +42,9 @@ public class ExecutionTimeProperty extends TimedProperty
 		super(NAME, comp, true);
 		this.method = method;
 		
-		// todo:
-		throw new UnsupportedOperationException();
-		
-		/*if(service!=null)
+		if(service!=null)
 		{
 			this.sid = service.getServiceId();
-		
-			clock = comp.getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IClockService.class));
 		
 			if(ProxyFactory.isProxyClass(service.getClass()))
 			{
@@ -54,21 +54,17 @@ public class ExecutionTimeProperty extends TimedProperty
 					
 					public void methodCallStarted(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
 					{
-						if(clock!=null)
-							times.put(callid, Long.valueOf(clock.getTime()));
+						times.put(callid, Long.valueOf(comp.getFeature(IExecutionFeature.class).getTime()));
 					}
 					
 					public void methodCallFinished(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
 					{
-						if(clock!=null)
+						Long start = times.remove(callid);
+						// May happen that property is added during ongoing call
+						if(start!=null)
 						{
-							Long start = times.remove(callid);
-							// May happen that property is added during ongoing call
-							if(start!=null)
-							{
-								long dur = clock.getTime() - start.longValue();
-								setValue(dur);
-							}
+							long dur = comp.getFeature(IExecutionFeature.class).getTime() - start.longValue();
+							setValue(dur);
 						}
 					}
 				});
@@ -79,7 +75,7 @@ public class ExecutionTimeProperty extends TimedProperty
 			{
 				throw new RuntimeException("Cannot install waiting time listener hook.");
 			}
-		}*/
+		}
 	}
 	
 	/**

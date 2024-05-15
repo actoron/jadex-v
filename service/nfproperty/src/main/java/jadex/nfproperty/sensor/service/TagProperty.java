@@ -69,9 +69,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	{
 		Future<Collection<String>> ret = new Future<Collection<String>>();
 		
-		throw new UnsupportedOperationException();
-		
-		/*boolean found = false;
+		boolean found = false;
 		if(params!=null)
 		{
 			Collection<String> tags = null;
@@ -85,7 +83,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 			}
 			
 			// get values from component args under name specified in ARGUMENT
-			if(params.containsKey(ARGUMENT))
+			/*if(params.containsKey(ARGUMENT))
 			{
 				Map<String, Object> args = component.getFeature(IArgumentsResultsFeature.class).getArguments();
 				
@@ -99,10 +97,10 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 					tags.addAll(tags2);
 				}
 				found = true;
-			}
+			}*/
 			
 			// get values directyl from init parameters under TAG_0, TAG_1 ... (from @Tags)
-			if(params.containsKey(NAME+"_0"))
+			/*if(params.containsKey(NAME+"_0"))
 			{
 				List<Object> vals = new ArrayList<>();
 				for(int i=0; params.containsKey(NAME+"_"+i); i++)
@@ -135,14 +133,14 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 				else
 					tags.addAll(ts);
 				found = true;
-			}
+			}*/
 			
 			if(found)
 				ret.setResult(tags);
 		}
 		
 		// directly search argument "tag"
-		if(!found)
+		/*if(!found)
 		{
 			Map<String, Object> args = component.getFeature(IArgumentsResultsFeature.class).getArguments();
 			if(args.containsKey(NAME))
@@ -151,12 +149,12 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 				ret.setResult(tags);
 				found = true;
 			}
-		}
+		}*/
 		
 		if(!found)
 			ret.setException(new RuntimeException("Could not evaluate tag value, no hint given (value or argument name)"));
 		
-		return ret;*/
+		return ret;
 	}
 	
 	/**

@@ -1,7 +1,5 @@
 package jadex.nfproperty;
 
-import jadex.nfproperty.impl.INFMixedPropertyProvider;
-import jadex.nfproperty.impl.INFPropertyProvider;
 import jadex.providedservice.IServiceIdentifier;
 
 /**

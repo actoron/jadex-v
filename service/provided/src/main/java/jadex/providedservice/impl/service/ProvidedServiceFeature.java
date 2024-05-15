@@ -43,6 +43,7 @@ import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
 import jadex.providedservice.impl.service.interceptors.DecouplingReturnInterceptor;
+import jadex.providedservice.impl.service.interceptors.MethodCallListenerInterceptor;
 import jadex.providedservice.impl.service.interceptors.MethodInvocationInterceptor;
 import jadex.providedservice.impl.service.interceptors.ResolveInterceptor;
 
@@ -495,7 +496,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 			{
 				try
 				{
-					ser = impl.getClazz().getType(self.getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports()).newInstance();
+					ser = impl.getClazz().getType(self.getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports()).getDeclaredConstructor().newInstance();
 					ret.setResult(ser);
 				}
 				catch(Exception e)
@@ -504,6 +505,10 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 				}
 			}
 			else
+			{
+				ret.setException(new RuntimeException("Service class not found: "+impl.getClazz()));
+			}
+			/*else
 			{
 				try
 				{
@@ -515,7 +520,11 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 					e.printStackTrace();
 				}
 				ret.setException(new RuntimeException("Could not load service implementation class: "+impl.getClazz()+" "+self.getClassLoader()));
-			}
+			}*/
+		}
+		else if(impl!=null && self.getPojo()!=null)
+		{
+			ret.setResult(self.getPojo());
 		}
 		else
 		{
@@ -1223,8 +1232,8 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 					//ia.getLogger().warning("Pojo service should declare @Service annotation: "+service.getClass());
 //					throw new RuntimeException("Pojo service must declare @Service annotation: "+service.getClass());
 					System.out.println("Pojo service should declare @Service annotation: "+service.getClass());
-					boolean b = ProxyFactory.isProxyClass(service.getClass());
-					System.out.println(b);
+					//boolean b = ProxyFactory.isProxyClass(service.getClass());
+					//System.out.println("isproxy: "+b);
 				}
 				addPojoServiceProxy(service, ret);
 			}
@@ -1297,7 +1306,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 			if(!(service instanceof IService))
 				handler.addFirstServiceInterceptor(new ResolveInterceptor(ia));
 			
-			//handler.addFirstServiceInterceptor(new MethodCallListenerInterceptor(ia, sid));
+			handler.addFirstServiceInterceptor(new MethodCallListenerInterceptor(ia, sid));
 //			handler.addFirstServiceInterceptor(new ValidationInterceptor(ia));
 			if(!AbstractServiceInvocationHandler.PROXYTYPE_DIRECT.equals(proxytype))
 				//handler.addFirstServiceInterceptor(new DecouplingInterceptor(ia, Starter.isParameterCopy(sid.getProviderId()), false));

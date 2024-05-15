@@ -193,6 +193,88 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	}
 	
 	/**
+	 *  Schedule a step that provides a result.
+	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
+	 *  @return	A future that provides access to the step result, once it is available.
+	 */
+	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
+	{
+		Future<T> ret = new Future<>();
+		
+		if(terminated)
+		{
+			ret.setException(new ComponentTerminatedException(self.getId()));
+			return ret;
+		}
+		
+		scheduleStep(new StepInfo(() ->
+		{
+			try
+			{
+				IFuture<T> res = step.call();
+				
+				if(!saveEndStep(res, (Future)ret))
+				{
+					@SuppressWarnings("unchecked")
+					Future<T>	resfut	= (Future<T>)res;
+					// Use generic connection method to avoid issues with different future types.
+					resfut.delegateTo(ret);
+				}
+			}
+			catch(Exception e)
+			{
+				ret.setException(e);
+			}
+			catch(Throwable t)
+			{
+				ret.setException(new RuntimeException("Error in step", t));
+			}
+		}, ret));
+		return ret;
+	}
+	
+	/**
+	 *  Schedule a step that provides a result.
+	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
+	 *  @return	A future that provides access to the step result, once it is available.
+	 */
+	public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
+	{
+		Future<T> ret = new Future<>();
+		
+		if(terminated)
+		{
+			ret.setException(new ComponentTerminatedException(self.getId()));
+			return ret;
+		}
+		
+		scheduleStep(new StepInfo(() ->
+		{
+			try
+			{
+				IFuture<T> res = step.apply(self);
+				
+				if(!saveEndStep(res, (Future)ret))
+				{
+					@SuppressWarnings("unchecked")
+					Future<T>	resfut	= (Future<T>)res;
+					// Use generic connection method to avoid issues with different future types.
+					resfut.delegateTo(ret);
+				}
+			}
+			catch(Exception e)
+			{
+				ret.setException(e);
+			}
+			catch(Throwable t)
+			{
+				ret.setException(new RuntimeException("Error in step", t));
+			}
+		}, ret));
+		return ret;
+	}
+	
+	/**
 	 *  Test if the current thread is used for current component execution.
 	 *  @return True, if it is the currently executing component thread.
 	 */

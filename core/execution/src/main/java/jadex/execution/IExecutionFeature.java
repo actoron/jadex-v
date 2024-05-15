@@ -79,6 +79,20 @@ public interface IExecutionFeature
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step);
 	
 	/**
+	 *  Schedule a step that provides a result.
+	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
+	 *  @return	A future that provides access to the step result, once it is available.
+	 */
+	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step);
+	
+	/**
+	 *  Schedule a step that provides a result.
+	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
+	 *  @return	A future that provides access to the step result, once it is available.
+	 */
+	public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step);
+	
+	/**
 	 *  Schedule a step that provides potenitially multiple results.
 	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
 	 *  @return	An intermediate future that provides access to the step result, once it is available.

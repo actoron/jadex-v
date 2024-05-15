@@ -175,7 +175,7 @@ includeBuild('service/provided') {}
 includeBuild('service/required') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
-includeBuild('service/nfproperty') {name='nfproperties'}
+includeBuild('service/nfproperty') {}
 
 includeBuild('communication/ipc') {}
 includeBuild('communication/messaging') {}
@@ -195,6 +195,7 @@ includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 includeBuild('rules/eca') {}
 
 includeBuild('application/micro'){name='application-micro'}
+includeBuild('application/micro-nfp'){name='application-micro-nfp'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
 //includeBuild('application/bdi-llm'){name='application-bdi-llm'}

@@ -1,19 +1,18 @@
-package jadex.nfproperty.impl.annotation;
+package jadex.nfproperty.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.model.annotation.NameValue;
-import jadex.nfproperty.impl.INFProperty;
+import jadex.nfproperty.INFProperty;
 
 /**
- *  Non-functional property annotation.
+ *  Property for required services and methods.
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface NFProperty
+public @interface NFRProperty
 {
 	/**
 	 *  The name of the property.
@@ -26,7 +25,13 @@ public @interface NFProperty
 	public Class<? extends INFProperty> value();
 	
 	/**
-	 *  The init parameter values.
+	 *  The method name (if method property).
 	 */
-	public NameValue[] parameters() default {};
+	public String methodname() default "";
+	
+	/**
+	 *  The method name (if method property).
+	 */
+	public Class<?>[] methodparametertypes() default {};
 }
+

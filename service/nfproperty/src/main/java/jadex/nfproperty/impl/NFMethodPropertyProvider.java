@@ -14,6 +14,9 @@ import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.nfproperty.INFMixedPropertyProvider;
+import jadex.nfproperty.INFProperty;
+import jadex.nfproperty.INFPropertyMetaInfo;
 
 /**
  *  Default implementation for a method property provider.

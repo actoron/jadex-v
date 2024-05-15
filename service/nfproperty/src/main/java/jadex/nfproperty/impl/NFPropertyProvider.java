@@ -8,6 +8,9 @@ import jadex.future.CounterResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.nfproperty.INFProperty;
+import jadex.nfproperty.INFPropertyMetaInfo;
+import jadex.nfproperty.INFPropertyProvider;
 
 /**
  *  Base impl for nf property property provider.
