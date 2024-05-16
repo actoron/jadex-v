@@ -7,7 +7,6 @@ import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
-import jadex.future.Future;
 import jadex.micro.MicroAgent;
 import jadex.model.modelinfo.IModelInfo;
 
@@ -22,8 +21,6 @@ public class BDIAgent extends MicroAgent
 	
 	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
-		Future<IExternalAccess> ret = new Future<>();
-		
 		String	classname;
 		BDIAgent agent = null;
 		if(pojo instanceof String)

@@ -274,7 +274,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			if(oldval instanceof Val)
 			{
 				Val<?>	bel	= (Val< ? >)oldval;
-				Object	newoldval	= bel.get();
+				oldval	= bel.get();
 				belval.set(bel, val);
 				
 			}
@@ -457,10 +457,14 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	static Field	belval	= SReflect.getField(Val.class, "value");
 	static Field	belpojo	= SReflect.getField(Val.class, "pojo");
 	static Field	belfield	= SReflect.getField(Val.class, "mbel");
+	static Field	belupd	= SReflect.getField(Val.class, "updaterate");
+	static Field	beldyn	= SReflect.getField(Val.class, "dynamic");
 	{
 		belval.setAccessible(true);
 		belpojo.setAccessible(true);
 		belfield.setAccessible(true);
+		belupd.setAccessible(true);
+		beldyn.setAccessible(true);
 	}
 	/**
 	 *  Method that is called automatically when a belief 

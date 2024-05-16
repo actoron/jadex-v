@@ -45,12 +45,6 @@ public class MBelief extends MElement
 	protected MethodInfo mgetter;
 	protected MethodInfo msetter;
 	
-	/** The collection implementation class. */
-	protected String impl;
-	
-//	/** The dynamic flag. */
-//	protected boolean dynamic;
-	
 	/** The update rate. */
 	protected UnparsedExpression updaterate;
 	
@@ -99,11 +93,10 @@ public class MBelief extends MElement
 	/**
 	 *  Create a new belief.
 	 */
-	public MBelief(FieldInfo target, String impl, boolean dynamic, UnparsedExpression updaterate, Set<String> beliefevents, Collection<EventType> rawevents)
+	public MBelief(FieldInfo target, boolean dynamic, UnparsedExpression updaterate, Set<String> beliefevents, Collection<EventType> rawevents)
 	{
 		super(target!=null? target.getName(): null);
 		this.ftarget = target;
-		this.impl = impl;
 		if(dynamic)
 			this.evaluationmode = updaterate!=null ? MParameter.EvaluationMode.POLLING : MParameter.EvaluationMode.PULL;
 		this.updaterate	= updaterate;
@@ -122,11 +115,10 @@ public class MBelief extends MElement
 	/**
 	 *  Create a new belief.
 	 */
-	public MBelief(FieldInfo target, String impl, boolean dynamic, long updaterate, Set<String> beliefevents, Collection<EventType> rawevents)
+	public MBelief(FieldInfo target, boolean dynamic, long updaterate, Set<String> beliefevents, Collection<EventType> rawevents)
 	{
 		super(target!=null? target.getName(): null);
 		this.ftarget = target;
-		this.impl = impl;
 		if(dynamic)
 			this.evaluationmode = updaterate>0 ? MParameter.EvaluationMode.POLLING : MParameter.EvaluationMode.PULL;
 //		this.dynamic = dynamic;
@@ -157,17 +149,17 @@ public class MBelief extends MElement
 	/**
 	 *  Create a new belief.
 	 */
-	public MBelief(FieldInfo target, String impl, boolean dynamic, long updaterate, String[] beliefevents, Collection<EventType> rawevents)
+	public MBelief(FieldInfo target, boolean dynamic, long updaterate, String[] beliefevents, Collection<EventType> rawevents)
 	{
-		this(target, impl, dynamic, updaterate, beliefevents!=null ? new LinkedHashSet<String>(Arrays.asList(beliefevents)) : null, rawevents);
+		this(target, dynamic, updaterate, beliefevents!=null ? new LinkedHashSet<String>(Arrays.asList(beliefevents)) : null, rawevents);
 	}
 	
 	/**
 	 *  Create a new belief.
 	 */
-	public MBelief(MethodInfo target, String impl, boolean dynamic, UnparsedExpression updaterate, Set<String> beliefevents, Collection<EventType> rawevents)
+	public MBelief(MethodInfo target, boolean dynamic, UnparsedExpression updaterate, Set<String> beliefevents, Collection<EventType> rawevents)
 	{
-		this((FieldInfo)null, impl, dynamic, updaterate, beliefevents, rawevents);
+		this((FieldInfo)null, dynamic, updaterate, beliefevents, rawevents);
 		
 		if(target.getName().startsWith("get"))
 		{
@@ -191,17 +183,17 @@ public class MBelief extends MElement
 	/**
 	 *  Create a new belief.
 	 */
-	public MBelief(MethodInfo target, String impl, boolean dynamic, long updaterate, Set<String> beliefevents, Collection<EventType> rawevents)
+	public MBelief(MethodInfo target, boolean dynamic, long updaterate, Set<String> beliefevents, Collection<EventType> rawevents)
 	{
-		this(target, impl, dynamic, updaterate>0? new UnparsedExpression(null, ""+updaterate): null, beliefevents, rawevents);
+		this(target, dynamic, updaterate>0? new UnparsedExpression(null, ""+updaterate): null, beliefevents, rawevents);
 	}
 	
 	/**
 	 *  Create a new belief.
 	 */
-	public MBelief(MethodInfo target, String impl, boolean dynamic, long updaterate, String[] beliefevents, Collection<EventType> rawevents)
+	public MBelief(MethodInfo target, boolean dynamic, long updaterate, String[] beliefevents, Collection<EventType> rawevents)
 	{
-		this(target, impl, dynamic, updaterate, beliefevents!=null ? new LinkedHashSet<String>(Arrays.asList(beliefevents)) : null, rawevents);
+		this(target, dynamic, updaterate, beliefevents!=null ? new LinkedHashSet<String>(Arrays.asList(beliefevents)) : null, rawevents);
 	}
 	
 
@@ -241,23 +233,6 @@ public class MBelief extends MElement
 //		this.mtarget = target;
 //	}
 	
-	/**
-	 *  Get the impl.
-	 *  @return The impl.
-	 */
-	public String getImplClassName()
-	{
-		return impl;
-	}
-
-	/**
-	 *  Set the impl.
-	 *  @param impl The impl to set.
-	 */
-	public void setImplClassName(String impl)
-	{
-		this.impl = impl;
-	}
 	
 	/**
 	 *  Get the dynamic.

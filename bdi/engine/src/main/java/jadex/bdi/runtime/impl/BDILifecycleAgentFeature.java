@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import jadex.bdi.model.IBDIClassGenerator;
@@ -674,6 +675,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 							{
 								BDIAgentFeature.belpojo.set(val, capa);
 								BDIAgentFeature.belfield.set(val, mbel);
+								BDIAgentFeature.belupd.set(val, mbel.getUpdaterateValue()>0);
 							}
 							catch(Exception e)
 							{
@@ -756,8 +758,20 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 								// Invoke dynamic update method if field belief
 								if(mbel.isFieldBelief())
 								{
-									Method um = fcapa.getClass().getMethod(IBDIClassGenerator.DYNAMIC_BELIEF_UPDATEMETHOD_PREFIX+SUtil.firstToUpperCase(fname), new Class[0]);
-									um.invoke(fcapa, new Object[0]);
+									if(IInternalBDIAgentFeature.get().isPure())
+									{
+										Field	f	= mbel.getField().getField(MicroAgentFeature.get().getSelf().getPojo().getClass().getClassLoader());
+										f.setAccessible(true);
+										Val<?>	val	= (Val<?>)f.get(fcapa);
+										Callable<?>	c	= (Callable<?>)BDIAgentFeature.beldyn.get(val);
+										Object	value	= c.call();
+										BDIAgentFeature.belval.set(val, value);
+									}
+									else
+									{
+										Method um = fcapa.getClass().getMethod(IBDIClassGenerator.DYNAMIC_BELIEF_UPDATEMETHOD_PREFIX+SUtil.firstToUpperCase(fname), new Class[0]);
+										um.invoke(fcapa, new Object[0]);
+									}
 								}
 								// Otherwise just call getValue and throw event
 								else if(fcapa!=null)

@@ -239,7 +239,7 @@ public class EventPublisher implements IEventPublisher
 	public void	entryRemoved(Object key, Object value)
 	{
 		unobserveValue(value);
-		getRuleSystem().addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(null, value, key)));
+		getRuleSystem().addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(value, null, key)));
 		publishToolBeliefEvent();
 	}
 	

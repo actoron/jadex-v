@@ -13,12 +13,8 @@ import java.lang.annotation.Target;
 public @interface Belief
 {
 	/**
-	 *  The implementation type for collection types.
-	 */
-	public Class<?> implementation() default Object.class;
-
-	/**
-	 *  A dynamic belief reevaluated on every access. 
+	 *  A dynamic belief reevaluated on every access.
+	 *  For relevant only for bytecode-enhanced field beliefs.
 	 */
 	public boolean dynamic() default false;
 	
@@ -28,7 +24,7 @@ public @interface Belief
 	public String[] beliefs() default {};
 	
 	/**
-	 *  The events this condition should react to.
+	 *  The events this belief should react to.
 	 */
 	public RawEvent[] rawevents() default {};
 	

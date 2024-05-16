@@ -62,11 +62,11 @@ public class SBDIModel
 					MBelief	bel2;
 					if(bel.getGetter()==null)
 					{
-						bel2 = new MBelief(bel.getField(), bel.getImplClassName(), bel.isDynamic(), bel.getUpdateRate(), null, null);	// Not necessary to copy raw/belief events, because inited events are copied below
+						bel2 = new MBelief(bel.getField(), bel.isDynamic(), bel.getUpdateRate(), null, null);	// Not necessary to copy raw/belief events, because inited events are copied below
 					}
 					else
 					{
-						bel2 = new MBelief(bel.getGetter(), bel.getImplClassName(), bel.isDynamic(), bel.getUpdateRate(), null, null);	// Not necessary to copy raw/belief events, because inited events are copied below
+						bel2 = new MBelief(bel.getGetter(), bel.isDynamic(), bel.getUpdateRate(), null, null);	// Not necessary to copy raw/belief events, because inited events are copied below
 						bel2.setSetter(bel.getSetter());
 					}
 					bel2.setName(belname);
