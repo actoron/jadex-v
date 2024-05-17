@@ -27,7 +27,7 @@ import jadex.transformation.jsonserializer.JsonTraverser;
 public class JsonBeanProcessor extends AbstractJsonProcessor
 {
 	/** Bean introspector for inspecting beans. */
-	protected IBeanIntrospector intro = BeanIntrospectorFactory.getInstance().getBeanIntrospector(5000);
+	protected IBeanIntrospector intro = BeanIntrospectorFactory.get().getBeanIntrospector(5000);
 	
 	/**
 	 *  Test if the processor is applicable.

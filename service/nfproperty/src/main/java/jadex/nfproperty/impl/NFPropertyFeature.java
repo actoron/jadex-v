@@ -3,9 +3,11 @@ package jadex.nfproperty.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import jadex.collection.ILRUEntryCleaner;
 import jadex.collection.LRU;
@@ -37,8 +39,6 @@ import jadex.nfproperty.INFProperty;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.INFPropertyMetaInfo;
 import jadex.nfproperty.INFPropertyProvider;
-import jadex.nfproperty.annotation.Tag;
-import jadex.nfproperty.annotation.Tags;
 import jadex.nfproperty.impl.modelinfo.NFPropertyInfo;
 import jadex.nfproperty.impl.search.IRankingSearchTerminationDecider;
 import jadex.nfproperty.impl.search.IServiceRanker;
@@ -48,6 +48,10 @@ import jadex.nfproperty.sensor.service.TagProperty;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.annotation.Tag;
+import jadex.providedservice.annotation.Tags;
+import jadex.providedservice.impl.search.ServiceRegistry;
+import jadex.providedservice.impl.service.ServiceIdentifier;
 
 public class NFPropertyFeature implements ILifecycle, INFPropertyFeature  
 {
@@ -133,6 +137,18 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 				if(snfps!=null)
 				{
 					bar.add(addNFProperties(snfps, ser));
+					
+					// Hack?! must update tags in sid :-(
+					IServiceIdentifier sid = ser.getServiceId();
+					getProvidedServicePropertyProvider(sid).getNFPropertyValue(TagProperty.NAME).then(val ->
+					{
+						Collection<String> coll = val == null ? new ArrayList<String>() : new LinkedHashSet<String>((Collection<String>)val);
+						Set<String> tags = new LinkedHashSet<String>(coll);
+						((ServiceIdentifier)sid).setTags(tags);
+						// Hack!!! re-index
+						ServiceRegistry reg = (ServiceRegistry)ServiceRegistry.getRegistry();
+						reg.updateService(sid);
+					}); //.catchEx(ex ->)
 				}
 			});
 			
@@ -149,9 +165,12 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	{
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		
-		bar.add(compprovider.shutdownNFPropertyProvider());
-		proserprops.values().stream().forEach(p -> bar.add(p.shutdownNFPropertyProvider()));
-		reqserprops.values().stream().forEach(p -> bar.add(p.shutdownNFPropertyProvider()));
+		if(compprovider!=null)
+			bar.add(compprovider.shutdownNFPropertyProvider());
+		if(proserprops!=null)
+			proserprops.values().stream().forEach(p -> bar.add(p.shutdownNFPropertyProvider()));
+		if(reqserprops!=null)
+			reqserprops.values().stream().forEach(p -> bar.add(p.shutdownNFPropertyProvider()));
 
 		return bar.waitFor();
 	}
@@ -357,7 +376,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			Tag tag = tags.value()[i];
 			
-			if(tag.include().length()>0)
+			/*if(tag.include().length()>0)
 			{
 				try
 				{
@@ -372,9 +391,9 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 				}
 			}
 			else
-			{
+			{*/
 				params.add(new UnparsedExpression(TagProperty.NAME+"_"+i, tag.value()));
-			}
+			//}
 		}
 		
 		IFuture<Void> ret = IFuture.DONE;

@@ -111,6 +111,8 @@ public class NFMethodPropTestAgent //extends JunitAgentTest
 		
 		//agent.getFeature(IArgumentsResultsFeature.class).getResults().put("testresults", new Testcase(results.size(), 
 		//	(TestReport[])results.toArray(new TestReport[results.size()])));
+		
+		IComponent.terminate(((IService)ser).getServiceId().getProviderId());
 		agent.terminate();
 	}
 	

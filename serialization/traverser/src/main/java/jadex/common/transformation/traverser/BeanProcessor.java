@@ -18,7 +18,7 @@ public class BeanProcessor implements ITraverseProcessor
 {
 //	protected BeanReflectionIntrospector intro = new BeanReflectionIntrospector();
 	/** Bean introspector for inspecting beans. */
-	protected IBeanIntrospector intro = BeanIntrospectorFactory.getInstance().getBeanIntrospector(20000);
+	protected IBeanIntrospector intro = BeanIntrospectorFactory.get().getBeanIntrospector(20000);
 	
 	/**
 	 *  Test if the processor is applicable.

@@ -18,11 +18,11 @@ import jadex.model.modelinfo.ModelInfo;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
 import jadex.nfproperty.annotation.SNameValue;
-import jadex.nfproperty.annotation.Tag;
-import jadex.nfproperty.annotation.Tags;
 import jadex.nfproperty.impl.modelinfo.NFPropertyInfo;
 import jadex.nfproperty.sensor.service.TagProperty;
 import jadex.providedservice.IProvidedServiceFeature;
+import jadex.providedservice.annotation.Tag;
+import jadex.providedservice.annotation.Tags;
 import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.ProvidedServiceImplementation;
 import jadex.providedservice.impl.service.ProvidedServiceInfo;
@@ -151,8 +151,8 @@ public class NFPropertyLoader
 			
 			//Object val = SJavaParser.evaluateExpression(tag.include(), agent.getModel().getAllImports(), getInternalAccess().getFetcher(), getInternalAccess().getClassLoader());
 			//if(val instanceof Boolean && ((Boolean)val).booleanValue())
-			if(tag.include().length()>0)
-				params.add(new UnparsedExpression(TagProperty.NAME+"_condition_"+i, tag.include()));
+			//if(tag.include().length()>0)
+			//	params.add(new UnparsedExpression(TagProperty.NAME+"_condition_"+i, tag.include()));
 			params.add(new UnparsedExpression(TagProperty.NAME+"_"+i, tag.value()));
 		}
 		

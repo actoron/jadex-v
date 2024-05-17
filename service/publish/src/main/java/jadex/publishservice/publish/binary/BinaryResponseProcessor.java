@@ -26,7 +26,7 @@ import jakarta.ws.rs.core.Response.ResponseBuilder;
 public class BinaryResponseProcessor extends AbstractCodec
 {
 	/** Bean introspector for inspecting beans. */
-	protected IBeanIntrospector intro = BeanIntrospectorFactory.getInstance().getBeanIntrospector(500);
+	protected IBeanIntrospector intro = BeanIntrospectorFactory.get().getBeanIntrospector(500);
 	
 	/**
 	 *  Tests if the decoder can decode the class.

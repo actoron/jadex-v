@@ -5,16 +5,19 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
+import jadex.core.impl.ComponentManager;
 import jadex.future.IFuture;
 import jadex.micro.MicroClassReader;
-import jadex.model.annotation.NameValue;
 import jadex.model.annotation.Value;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Implementation;
@@ -22,6 +25,8 @@ import jadex.providedservice.annotation.ProvidedService;
 import jadex.providedservice.annotation.ProvidedServices;
 import jadex.providedservice.annotation.Security;
 import jadex.providedservice.annotation.Service;
+import jadex.providedservice.annotation.Tag;
+import jadex.providedservice.annotation.Tags;
 import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.ProvidedServiceImplementation;
 import jadex.providedservice.impl.service.ProvidedServiceInfo;
@@ -51,7 +56,7 @@ public class ProvidedServiceLoader
 				{
 					if(!model.hasService(vals[i].name()))
 					{
-						ProvidedServiceInfo psi = createProvidedServiceInfo(vals[i]);
+						ProvidedServiceInfo psi = createProvidedServiceInfo(vals[i], clazz);
 						//String name = vals[i].name().length()==0? ("#"+cnt++): vals[i].name();
 						model.addService(psi);
 						//pservices.put(vals[i].name().length()==0? ("#"+cnt++): vals[i].name(), psi);
@@ -107,7 +112,7 @@ public class ProvidedServiceLoader
 	/**
 	 *  Create info from annotation.
 	 */
-	protected static ProvidedServiceInfo createProvidedServiceInfo(ProvidedService prov)
+	protected static ProvidedServiceInfo createProvidedServiceInfo(ProvidedService prov, Class<?> clazz)
 	{
 		Implementation im = prov.implementation();
 		Value[] inters = im.interceptors();
@@ -137,13 +142,19 @@ public class ProvidedServiceLoader
 		// Only keep security settings explicitly set in @ProvidedService annotation (default: empty roles)
 		Security security = prov.security().roles().length>0 ? prov.security() : null;
 		
-		NameValue[] props = prov.properties();
-		List<UnparsedExpression> serprops = (props != null && props.length > 0) ? new ArrayList<UnparsedExpression>(Arrays.asList(MicroClassReader.createUnparsedExpressions(props))) : null;
+		//NameValue[] props = prov.properties();
+		//List<UnparsedExpression> serprops = (props != null && props.length > 0) ? new ArrayList<UnparsedExpression>(Arrays.asList(MicroClassReader.createUnparsedExpressions(props))) : null;
+		
+		Class<?> implcl = null;
+		if(impl.getClazz()!=null)
+			implcl = impl.getClazz().getType(ComponentManager.get().getClassLoader());
+		else if(impl.getClazz()==null && impl.getValue()==null)
+			implcl = clazz; // pojoclass
+		
+		Collection<String> tags = createTags(implcl, prov.type());
 		
 		String name = prov.name().length()>0? prov.name(): BasicService.generateServiceName(prov.type()); // null
-		ProvidedServiceInfo psi = new ProvidedServiceInfo(name, prov.type(), impl,  prov.scope(), scopeexpression, security, 
-			//null, //pi, 
-			serprops);
+		ProvidedServiceInfo psi = new ProvidedServiceInfo(name, prov.type(), impl,  prov.scope(), scopeexpression, security, tags); 
 		return psi;
 	}
 	
@@ -171,9 +182,6 @@ public class ProvidedServiceLoader
 			throw new RuntimeException("@"+ann.getSimpleName()+" method requires return type 'void' or 'IFuture<Void>': "+m);
 	}
 	
-	/**
-	 * 
-	 */
 	public static Class<?> getClass(Class<?> clazz, ClassLoader cl)
 	{
 		Class<?> ret = clazz;
@@ -189,6 +197,53 @@ public class ProvidedServiceLoader
 		{
 			e.printStackTrace();
 			throw new RuntimeException(e);
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  Create tag strings (unparsed) from Tags and Tag annotations.
+	 */
+	public static Collection<String> createTags(Class<?> impltype, Class<?> sertype)
+	{
+		List<String> ret = new ArrayList<String>();
+		
+		List<Class<?>> classes = new ArrayList<Class<?>>();
+		Class<?> superclazz = sertype;
+		while(superclazz != null && !Object.class.equals(superclazz))
+		{
+			classes.add(superclazz);
+			superclazz = superclazz.getSuperclass();
+		}
+		
+		superclazz = impltype;
+		while(superclazz != null && !BasicService.class.equals(superclazz) && !Object.class.equals(superclazz))
+		{
+			classes.add(superclazz);
+			superclazz = superclazz.getSuperclass();
+		}
+		
+		Map<MethodInfo, Method> meths = new HashMap<MethodInfo, Method>();
+		for(Class<?> sclazz: classes)
+		{
+			if(sclazz.isAnnotationPresent(Tags.class))
+			{
+				Tags tags = sclazz.getAnnotation(Tags.class);
+				for(Tag tag: tags.value())
+				{
+					ret.add(tag.value());
+				}
+			}
+			
+			if(sclazz.isAnnotationPresent(Tag.class))
+			{
+				Tag[] tags = sclazz.getAnnotationsByType(Tag.class);
+				for(Tag tag: tags)
+				{
+					ret.add(tag.value());
+				}
+			}
 		}
 		
 		return ret;

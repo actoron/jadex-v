@@ -31,8 +31,8 @@ public class NFPropertyModel
 		if(compprops==null)
 			compprops = new ArrayList<NFPropertyInfo>();
 		
-		if(compprops.removeIf(prop -> info.getName().equals(prop.getName())))
-			System.out.println("overridden prop: "+info.getName());
+		if(compprops.removeIf(prop -> info.getClazz().equals(prop.getClazz())))
+			System.out.println("overridden prop: "+info.getClazz());
 		
 		compprops.add(info);
 	}
@@ -62,8 +62,8 @@ public class NFPropertyModel
 			provprops.put(sername, props);
 		}
 		
-		if(props.removeIf(prop -> info.getName().equals(prop.getName())))
-			System.out.println("overridden prop: "+info.getName());
+		if(props.removeIf(prop -> info.getClazz().equals(prop.getClazz())))
+			System.out.println("overridden prop: "+info.getClazz());
 
 		props.add(info);
 	}
@@ -109,8 +109,8 @@ public class NFPropertyModel
 			props.put(mi, props2);
 		}
 		
-		if(props2.removeIf(prop -> info.getName().equals(prop.getName())))
-			System.out.println("overridden prop: "+info.getName());
+		if(props2.removeIf(prop -> info.getClazz().equals(prop.getClazz())))
+			System.out.println("overridden prop: "+info.getClazz());
 
 		props2.add(info);
 	}
@@ -168,8 +168,8 @@ public class NFPropertyModel
 			reqprops.put(sername, props);
 		}
 		
-		if(props.removeIf(prop -> info.getName().equals(prop.getName())))
-			System.out.println("overridden prop: "+info.getName());
+		if(props.removeIf(prop -> info.getClazz().equals(prop.getClazz())))
+			System.out.println("overridden prop: "+info.getClazz());
 
 		props.add(info);
 	}
@@ -215,8 +215,8 @@ public class NFPropertyModel
 			props.put(mi, props2);
 		}
 		
-		if(props2.removeIf(prop -> info.getName().equals(prop.getName())))
-			System.out.println("overridden prop: "+info.getName());
+		if(props2.removeIf(prop -> info.getClazz().equals(prop.getClazz())))
+			System.out.println("overridden prop: "+info.getClazz());
 
 		props2.add(info);
 	}

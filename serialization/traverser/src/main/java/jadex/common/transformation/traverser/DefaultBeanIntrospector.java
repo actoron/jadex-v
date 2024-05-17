@@ -179,7 +179,7 @@ public class DefaultBeanIntrospector implements IBeanIntrospector
 					String property_java_name = fields[i].getName();
 					
 					// Only allow exported fields.
-					if (SReflect.isExported(fields[i].getDeclaringClass()))
+					if(SReflect.isExported(fields[i].getDeclaringClass()))
 					{
 						// Include public, private or annotated field?
 						if(includefields && (includePrivateFields || Modifier.isPublic(modifiers)) || fields[i].isAnnotationPresent(Include.class))

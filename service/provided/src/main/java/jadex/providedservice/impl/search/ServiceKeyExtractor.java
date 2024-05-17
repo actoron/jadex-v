@@ -116,7 +116,8 @@ public class ServiceKeyExtractor implements IKeyExtractor<IServiceIdentifier>
 //			Map<String, Object> sprops = service.getPropertyMap();
 //			if(sprops != null)
 //				ret = (Set<String>)sprops.get(TagProperty.SERVICE_PROPERTY_NAME);
-			ret = serv.getTags();
+			Collection<String> res = serv.getTags();
+			ret = res!=null? new HashSet<>(res): null;
 		}
 		else if(KEY_TYPE_PROVIDER.equals(keytype))
 		{

@@ -1,6 +1,7 @@
 package jadex.providedservice.impl.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -54,7 +55,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	protected String tostring;
 	
 	/** The tags. */
-	protected Set<String> tags;
+	protected Collection<String> tags;
 	
 	//-------- constructors --------
 	
@@ -68,20 +69,18 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/**
 	 *  Create a new service identifier.
 	 */
-	public ServiceIdentifier(IComponent provider, Class<?> type, String servicename, ServiceScope scope, Boolean unrestricted)
+	public ServiceIdentifier(IComponent provider, Class<?> type, String servicename, ServiceScope scope, Boolean unrestricted, Collection<String> tags)
 	{
 //		if(!type.isInterface())
 //		{
 //			System.out.println("dreck");
 //		}
 		
-		List<ClassInfo> superinfos = new ArrayList<ClassInfo>();
-		for(Class<?> sin: SReflect.getSuperInterfaces(new Class[]{type}))
-		{
-			if(sin.isAnnotationPresent(Service.class))
-				superinfos.add(new ClassInfo(sin));
-		}
-		this.providerid = provider.getId();
+		
+		this(provider.getId(), new ClassInfo(type), getSuperClasses(type), servicename,
+			scope, null, unrestricted, tags);
+		
+		/*this.providerid = provider.getId();
 		this.type	= new ClassInfo(type);
 		this.supertypes = superinfos.toArray(new ClassInfo[superinfos.size()]);
 		this.servicename = servicename;
@@ -92,13 +91,16 @@ public class ServiceIdentifier implements IServiceIdentifier
 		
 		//this.unrestricted = unrestricted!=null ? unrestricted : isUnrestricted(provider, type);
 		
-		setScope(scope);
+		setScope(scope);*/
 	}
+	
+	
 	
 	/**
 	 *  Create a new service identifier.
 	 */
-	public ServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted)
+	public ServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, 
+		ServiceScope scope, Set<String> networknames, boolean unrestricted, Collection<String> tags)
 	{
 		this.providerid = providerid;
 		this.type	= type;
@@ -106,7 +108,19 @@ public class ServiceIdentifier implements IServiceIdentifier
 		this.servicename = servicename;
 		this.networknames = networknames;
 		this.unrestricted = unrestricted;
+		this.tags = tags;
 		setScope(scope);
+	}
+	
+	public static ClassInfo[] getSuperClasses(Class<?> type)
+	{
+		List<ClassInfo> superinfos = new ArrayList<ClassInfo>();
+		for(Class<?> sin: SReflect.getSuperInterfaces(new Class[]{type}))
+		{
+			if(sin.isAnnotationPresent(Service.class))
+				superinfos.add(new ClassInfo(sin));
+		}
+		return superinfos.toArray(new ClassInfo[superinfos.size()]);
 	}
 	
 	//-------- methods --------
@@ -251,7 +265,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Get the service tags.
 	 *  @return The tags.
 	 */
-	public Set<String> getTags()
+	public Collection<String> getTags()
 	{
 		return tags;
 	}

@@ -14,7 +14,7 @@ public class SimpleValueFetcher implements IValueFetcher
 	//-------- attributes --------
 	
 	/** The values. */
-	protected Map values;
+	protected Map<String, Object> values;
 	
 	/** The parent fetcher if any. */
 	protected IValueFetcher	parent;
@@ -98,7 +98,7 @@ public class SimpleValueFetcher implements IValueFetcher
 	public void setValue(String key, Object value)
 	{
 		if(values==null)
-			values = new HashMap();
+			values = new HashMap<String, Object>();
 		values.put(key, value);
 	}
 	
@@ -109,7 +109,7 @@ public class SimpleValueFetcher implements IValueFetcher
 	public void setValues(Map<String, Object> values)
 	{
 		if(this.values==null)
-			this.values = new HashMap();
+			this.values = new HashMap<String, Object>();
 		this.values.putAll(values);
 	}
 }

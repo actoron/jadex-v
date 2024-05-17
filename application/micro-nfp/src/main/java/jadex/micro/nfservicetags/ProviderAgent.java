@@ -12,17 +12,24 @@ import jadex.providedservice.annotation.Service;
 
 
 @Agent
-@Arguments(
+//@Arguments(
 	//@Argument(name=TagProperty.NAME, clazz=String.class, defaultvalue="new String[]{\"mytag1\",\"mytag2\"}")
-	@Argument(name=TagProperty.NAME, clazz=String[].class, defaultvalue="new String[]{jadex.bridge.sensor.service.TagProperty.PLATFORM_NAME, null}")
+//	@Argument(name=TagProperty.NAME, clazz=String[].class, defaultvalue="new String[]{jadex.nfproperty.sensor.service.TagProperty.HOST_NAME, null}")
 //	@Argument(name=TagProperty.NAME, clazz=String.class, defaultvalue="new String[]{"+TagProperty.PLATFORM_NAME+","+TagProperty.JADEX_VERSION+"}")
-)
+//)
 @ProvidedServices(@ProvidedService(type=ITestService.class))
 @Service
 public class ProviderAgent implements ITestService
 {
 	@Agent
 	protected IComponent agent;
+	
+	protected String[] tags;
+	
+	public ProviderAgent(String... tags)
+	{
+		this.tags = tags;
+	}
 	
 	public IFuture<Void> method(String msg)
 	{

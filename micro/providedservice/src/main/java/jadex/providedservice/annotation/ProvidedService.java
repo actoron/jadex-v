@@ -54,5 +54,5 @@ public @interface ProvidedService
 	/**
 	 *  Properties for the provided service.
 	 */
-	public NameValue[] properties() default {};
+	//public NameValue[] properties() default {};
 }

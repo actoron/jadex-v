@@ -18,7 +18,7 @@ import jadex.common.transformation.traverser.Traverser.MODE;
 public class SimpleDateFormatCodec extends BeanCodec
 {
 	/** Bean introspector for inspecting beans. */
-	protected IBeanIntrospector intro = BeanIntrospectorFactory.getInstance().getBeanIntrospector(10);
+	protected IBeanIntrospector intro = BeanIntrospectorFactory.get().getBeanIntrospector(10);
 
 	/**
 	 *  Tests if the decoder can decode the class.

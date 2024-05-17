@@ -9,10 +9,17 @@ import java.util.Map;
 
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
+import jadex.common.transformation.BeanIntrospectorFactory;
+import jadex.common.transformation.traverser.BeanProperty;
+import jadex.common.transformation.traverser.IBeanIntrospector;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
+import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.javaparser.SJavaParser;
+import jadex.model.IModelFeature;
+import jadex.model.modelinfo.IModelInfo;
 import jadex.nfproperty.impl.AbstractNFProperty;
 import jadex.nfproperty.impl.NFPropertyMetaInfo;
 import jadex.providedservice.IService;
@@ -36,13 +43,21 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	/** The key used to store the tags in the service property map. */
 	public static final String SERVICE_PROPERTY_NAME = "__service_tags__";
 	
-	/** The platform name tag. */
-	private static final String PLATFORM_NAME_INTERNAL = "platform_name";
-	public static final String PLATFORM_NAME = "\""+PLATFORM_NAME_INTERNAL+"\"";
+	/** The host name tag. */
+	private static final String HOST_NAME_INTERNAL = "host_name";
+	public static final String HOST_NAME = "\""+HOST_NAME_INTERNAL+"\"";
 	
-	/** The Jadex version tag. */
-	private static final String JADEX_VERSION_INTERNAL = "jadex_version";
-	public static final String JADEX_VERSION = "\""+JADEX_VERSION_INTERNAL+"\"";
+	/** The pid tag. */
+	private static final String PID_INTERNAL = "pid";
+	public static final String PID = "\""+PID_INTERNAL+"\"";
+	
+	/** The app id tag. */
+	private static final String APPID_INTERNAL = "appid";
+	public static final String APPID = "\""+APPID_INTERNAL+"\"";
+	
+	///** The Jadex version tag. */
+	//private static final String JADEX_VERSION_INTERNAL = "jadex_version";
+	//public static final String JADEX_VERSION = "\""+JADEX_VERSION_INTERNAL+"\"";
 	
 	/** The component. */
 	protected IComponent component;
@@ -58,6 +73,8 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 		super(new NFPropertyMetaInfo(NAME, String.class, Void.class, false));
 		this.component = comp;
 		this.params = params;
+		
+		System.out.println("tag prop created: "+comp.getId()+" "+service.getServiceId()+" "+method);
 	}
 	
 	/**
@@ -68,11 +85,13 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	public IFuture<Collection<String>> getValue(Void unit)
 	{
 		Future<Collection<String>> ret = new Future<Collection<String>>();
+		IBeanIntrospector insp = BeanIntrospectorFactory.get().getBeanIntrospector();
 		
 		boolean found = false;
 		if(params!=null)
 		{
 			Collection<String> tags = null;
+			Collection<String> tags2 = null;
 			
 			// get values directyl from init parameters under TAG
 			if(params.containsKey(NAME))
@@ -83,24 +102,28 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 			}
 			
 			// get values from component args under name specified in ARGUMENT
-			/*if(params.containsKey(ARGUMENT))
+			if(params.containsKey(ARGUMENT) && component.getPojo()!=null)
 			{
-				Map<String, Object> args = component.getFeature(IArgumentsResultsFeature.class).getArguments();
-				
-				Collection<String> tags2 = convertToCollection(args.get((String)params.get(ARGUMENT)));
-				if(tags==null)
+				Map<String, BeanProperty> props = insp.getBeanProperties(component.getPojo().getClass(), true, true);
+				BeanProperty prop = props.get(ARGUMENT);
+				if(prop!=null)
 				{
-					tags = tags2;
+					tags2 = convertToCollection(prop.getPropertyValue(component.getPojo()));
+					
+					if(tags==null)
+					{
+						tags = tags2;
+					}
+					else if(tags2!=null)
+					{
+						tags.addAll(tags2);
+					}
+					found = true;
 				}
-				else if(tags2!=null)
-				{
-					tags.addAll(tags2);
-				}
-				found = true;
-			}*/
+			}
 			
 			// get values directyl from init parameters under TAG_0, TAG_1 ... (from @Tags)
-			/*if(params.containsKey(NAME+"_0"))
+			if(params.containsKey(NAME+"_0"))
 			{
 				List<Object> vals = new ArrayList<>();
 				for(int i=0; params.containsKey(NAME+"_"+i); i++)
@@ -112,7 +135,8 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 					{
 						try
 						{
-							Object c = SJavaParser.evaluateExpression(cond, component.getModel().getAllImports(), component.getFetcher(), component.getClassLoader());
+							IModelFeature mf = component.getFeature(IModelFeature.class);
+							Object c = SJavaParser.evaluateExpression(cond, mf.getModel().getAllImports(), mf.getFetcher(), ComponentManager.get().getClassLoader());
 							if(c instanceof Boolean && ((Boolean)c).booleanValue())
 								vals.add(val);
 						}
@@ -133,23 +157,24 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 				else
 					tags.addAll(ts);
 				found = true;
-			}*/
+			}
 			
 			if(found)
 				ret.setResult(tags);
 		}
 		
 		// directly search argument "tag"
-		/*if(!found)
+		if(!found)
 		{
-			Map<String, Object> args = component.getFeature(IArgumentsResultsFeature.class).getArguments();
-			if(args.containsKey(NAME))
+			Map<String, BeanProperty> props = insp.getBeanProperties(component.getPojo().getClass(), true, true);
+			if(props.containsKey(NAME))
 			{
-				Collection<String> tags = createRuntimeTags(args.get(NAME), component.getExternalAccess());
+				BeanProperty prop = props.get(NAME);
+				Collection<String> tags = createRuntimeTags(prop.getPropertyValue(component.getPojo()), component.getExternalAccess());
 				ret.setResult(tags);
 				found = true;
 			}
-		}*/
+		}
 		
 		if(!found)
 			ret.setException(new RuntimeException("Could not evaluate tag value, no hint given (value or argument name)"));
@@ -206,14 +231,18 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 		for(int i=0; i<tags.size(); i++)
 		{
 			String tag = it.next();
-			/*if(PLATFORM_NAME_INTERNAL.equals(tag) || PLATFORM_NAME.equals(tag))
+			if(HOST_NAME_INTERNAL.equals(tag) || HOST_NAME.equals(tag))
 			{
-				tag = component.getId().getPlatformPrefix();
+				tag = component.getId().getGlobalProcessIdentifier().host();
 			}
-			else if(JADEX_VERSION_INTERNAL.equals(tag) || JADEX_VERSION.equals(tag))
+			else if(PID.equals(tag) || PID.equals(tag))
 			{
-				tag = VersionInfo.getInstance().getVersion();
-			}*/
+				tag = ""+component.getId().getGlobalProcessIdentifier().pid();
+			}
+			else if(APPID.equals(tag) || APPID.equals(tag))
+			{
+				tag = component.getAppId();
+			}
 			ret.add(tag);
 		}
 		return ret;
@@ -239,8 +268,10 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	 */
 	public static void checkReservedTag(String tag)
 	{
-		if(PLATFORM_NAME_INTERNAL.equals(tag) || PLATFORM_NAME.equals(tag) || JADEX_VERSION_INTERNAL.equals(tag) 
-			|| JADEX_VERSION.equals(tag))
+		if(HOST_NAME_INTERNAL.equals(tag) || HOST_NAME.equals(tag)
+			|| PID_INTERNAL.equals(tag) || PID.equals(tag) 
+			|| APPID_INTERNAL.equals(tag) || APPID.equals(tag)
+		)
 		{
 			throw new IllegalArgumentException("Tag name is reserved.");
 		}

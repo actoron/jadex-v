@@ -17,7 +17,7 @@ import jadex.common.transformation.traverser.Traverser.MODE;
 public class ThrowableCodec extends AbstractCodec
 {
 	/** Bean introspector for inspecting beans. */
-	protected IBeanIntrospector intro = BeanIntrospectorFactory.getInstance().getBeanIntrospector(500);
+	protected IBeanIntrospector intro = BeanIntrospectorFactory.get().getBeanIntrospector(500);
 	
 	/**
 	 *  Tests if the decoder can decode the class.

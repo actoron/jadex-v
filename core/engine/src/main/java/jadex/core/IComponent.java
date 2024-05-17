@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -54,7 +53,7 @@ public interface IComponent
 	/**
 	 *  Terminate the component.
 	 */
-	public void terminate();
+	public  IFuture<Void> terminate(ComponentIdentifier... cids);
 	
 	/**
 	 *  Get the pojo.

@@ -1,13 +1,13 @@
 package jadex.providedservice.impl.service;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.common.UnparsedExpression;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Security;
-
 
 /**
  *  Info for provided services.
@@ -40,11 +40,13 @@ public class ProvidedServiceInfo
 	/** The security settings (empty roles if unset). */
 	protected Security security;
 	
-	/** The service properties. */
-	protected List<UnparsedExpression> properties;
+	///** The service properties. */
+	//protected List<UnparsedExpression> properties;
 	
-	/** Flag if it is a system service. */
-	protected boolean systemservice;
+	///** Flag if it is a system service. */
+	//protected boolean systemservice;
+	
+	protected Collection<String> tags;
 	
 	//-------- constructors --------
 	
@@ -61,7 +63,7 @@ public class ProvidedServiceInfo
 	 */
 	public ProvidedServiceInfo(String name, ClassInfo type, ProvidedServiceImplementation implementation)
 	{
-		this(name, type, implementation, null, null, null, null, false);
+		this(name, type, implementation, null, null, null, null);
 	}
 	
 	/**
@@ -75,31 +77,25 @@ public class ProvidedServiceInfo
 	/**
 	 *  Create a new service info.
 	 */
-	public ProvidedServiceInfo(String name, Class<?> type, ProvidedServiceImplementation implementation, ServiceScope scope, UnparsedExpression scopeexpression, Security security, 
-		//PublishInfo publish, 
-		List<UnparsedExpression> properties)
+	public ProvidedServiceInfo(String name, Class<?> type, ProvidedServiceImplementation implementation, ServiceScope scope, UnparsedExpression scopeexpression, Security security, Collection<String> tags) 
 	{
-		this(name, type!=null? new ClassInfo(SReflect.getClassName(type)): null, implementation, scope, scopeexpression, security, 
-			//publish, 
-			properties, 
-			true);//ServiceIdentifier.isSystemService(type));
+		this(name, type!=null? new ClassInfo(SReflect.getClassName(type)): null, implementation, scope, scopeexpression, security, tags);
 	}
 	
 	/**
 	 *  Create a new service info.
 	 */
-	public ProvidedServiceInfo(String name, ClassInfo type, ProvidedServiceImplementation implementation, ServiceScope scope, UnparsedExpression scopeexpression, Security security, 
-		//PublishInfo publish, 
-		List<UnparsedExpression> properties, boolean systemservice)
+	public ProvidedServiceInfo(String name, ClassInfo type, ProvidedServiceImplementation implementation, ServiceScope scope, UnparsedExpression scopeexpression, Security security, Collection<String> tags)
 	{
 		this.name = name;
 		this.implementation = implementation;
 		//this.publish = publish;
-		this.properties = properties;
+		//this.properties = properties;
 		this.scope = scope;
 		this.scopeexpression = scopeexpression;
 		this.security = security;
-		this.systemservice = systemservice;
+		//this.systemservice = systemservice;
+		this.tags = tags;
 		setType(type);
 	}
 	
@@ -187,19 +183,19 @@ public class ProvidedServiceInfo
 
 	/**
 	 * @return the properties
-	 */
+	 * /
 	public List<UnparsedExpression> getProperties()
 	{
 		return properties;
-	}
+	}*/
 
 	/**
 	 * @param properties the properties to set
-	 */
+	 * /
 	public void setProperties(List<UnparsedExpression> properties)
 	{
 		this.properties = properties;
-	}
+	}*/
 	
 	/**
 	 *  Get the scope expression.
@@ -255,22 +251,40 @@ public class ProvidedServiceInfo
 		this.security = security;
 	}
 	
+	
+	
 	/**
 	 *  Get the systemservice.
 	 *  @return The systemservice
-	 */
+	 * /
 	public boolean isSystemService()
 	{
 		return systemservice;
-	}
+	}*/
 
 	/**
 	 *  Set the systemservice.
 	 *  @param systemservice The systemservice to set
-	 */
+	 * /
 	public void setSystemService(boolean systemservice)
 	{
 		this.systemservice = systemservice;
+	}*/
+
+	/**
+	 * @return the tags
+	 */
+	public Collection<String> getTags() 
+	{
+		return tags;
+	}
+
+	/**
+	 * @param tags the tags to set
+	 */
+	public void setTags(Set<String> tags) 
+	{
+		this.tags = tags;
 	}
 
 	/**

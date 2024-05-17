@@ -15,6 +15,8 @@ import jadex.core.ApplicationContext;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
+import jadex.future.FutureBarrier;
+import jadex.future.IFuture;
 
 /**
  *  Base class for Jadex components, which provides access to component features.
@@ -169,17 +171,30 @@ public class Component implements IComponent
 	/**
 	 *  Terminate the component.
 	 */
-	public void	terminate()
+	public IFuture<Void> terminate(ComponentIdentifier... cids)
 	{
-		ComponentManager.get().removeComponent(this.getId());
-		
-		Map<Class<Object>, FeatureProvider<Object>> provs = SFeatureProvider.getProvidersForComponent((Class<? extends Component>)getClass());
-		Optional<IComponentLifecycleManager> opt = provs.values().stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
-		if(opt.isPresent())
+		if(cids.length==0)
 		{
-			IComponentLifecycleManager lm = opt.get();
-			lm.terminate(this);
-//			return;
+			ComponentManager.get().removeComponent(this.getId());
+			
+			Map<Class<Object>, FeatureProvider<Object>> provs = SFeatureProvider.getProvidersForComponent((Class<? extends Component>)getClass());
+			Optional<IComponentLifecycleManager> opt = provs.values().stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
+			if(opt.isPresent())
+			{
+				IComponentLifecycleManager lm = opt.get();
+				lm.terminate(this);
+			}
+			
+			return IFuture.DONE;
+		}
+		else
+		{
+			FutureBarrier<Void> bar = new FutureBarrier<Void>();
+			for(ComponentIdentifier cid: cids)
+			{
+				bar.add(IComponent.terminate(cid));
+			}
+			return bar.waitFor();
 		}
 		
 //		throw new UnsupportedOperationException("No termination code for component: "+getId());

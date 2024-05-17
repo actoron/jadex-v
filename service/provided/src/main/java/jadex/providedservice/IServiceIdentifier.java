@@ -1,6 +1,6 @@
 package jadex.providedservice;
 
-import java.util.Set;
+import java.util.Collection;
 
 import jadex.common.ClassInfo;
 import jadex.core.ComponentIdentifier;
@@ -64,5 +64,5 @@ public interface IServiceIdentifier
 	 *  Get the service tags.
 	 *  @return The tags.
 	 */
-	public Set<String> getTags();
+	public Collection<String> getTags();
 }

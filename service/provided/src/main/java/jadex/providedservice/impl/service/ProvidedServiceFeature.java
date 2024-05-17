@@ -23,13 +23,17 @@ import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.UnparsedExpression;
+import jadex.core.IComponent;
 import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
+import jadex.javaparser.IExpressionParser;
 import jadex.javaparser.SJavaParser;
+import jadex.javaparser.SimpleValueFetcher;
 import jadex.model.IModelFeature;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IMethodInvocationListener;
@@ -172,7 +176,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 			for(ProvidedServiceInfo info: sermap.values())
 			{
 				// Evaluate and replace scope expression, if any.
-				ServiceScope scope = info.getScope();
+				//ServiceScope scope = info.getScope();
 				/*if(ServiceScope.EXPRESSION.equals(scope))
 				{
 					scope = (ServiceScope)SJavaParser.getParsedValue(info.getScopeExpression(), model.getAllImports(), self.getFeature(IModelFeature.class).getFetcher(), self.getClassLoader());
@@ -187,7 +191,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 				final Future<Void> fut = new Future<>();
 				bar.add(fut);
 				
-				final ProvidedServiceImplementation	impl = info.getImplementation();
+				//final ProvidedServiceImplementation	impl = info.getImplementation();
 				// Virtual service (e.g. promoted)
 				/*if(impl!=null && impl.getBinding()!=null)
 				{
@@ -1165,6 +1169,28 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 		return ret;
 	}
 	
+	protected static Collection<String> evaluateTags(IComponent component, Collection<String> tags)
+	{
+		Collection<String> ret = new ArrayList<String>();
+		IModelFeature mf = component.getFeature(IModelFeature.class);
+		
+		for(String tag: tags)
+		{
+			try
+			{
+				String ptag = (String)SJavaParser.evaluateExpression(tag, mf.getModel().getAllImports(), mf.getFetcher(), ComponentManager.get().getClassLoader());
+				ret.add(ptag);
+			}
+			catch(Exception e)
+			{
+				//e.printStackTrace();
+				ret.add(tag);
+			}
+		}
+		
+		return ret;
+	}
+	
 	/**
 	 *  Static method for creating a standard service proxy for a provided service.
 	 */
@@ -1189,7 +1215,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 		if(service instanceof IInternalService)
 		{
 			//sid = UUID.randomUUID();
-			sid = BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info);
+			sid = BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info, evaluateTags(self, info.getTags()));
 			((IInternalService)service).setServiceIdentifier(sid);
 		}
 			
@@ -1336,7 +1362,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 //		if(type.getName().indexOf("ITestService")!=-1 && ia.getComponentIdentifier().getName().startsWith("Global"))
 //			System.out.println("gaga");
 		
-		Map<String, Object> serprops = new HashMap<String, Object>();
+		/*Map<String, Object> serprops = new HashMap<String, Object>();
 		if(info != null && info.getProperties() != null)
 		{
 			for(UnparsedExpression exp : info.getProperties())
@@ -1344,18 +1370,18 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 				Object val = SJavaParser.parseExpression(exp, ia.getFeature(IModelFeature.class).getModel().getAllImports(), ia.getClassLoader()).getValue(ia.getFeature(IModelFeature.class).getFetcher());
 				serprops.put(exp.getName(), val);
 			}
-		}
+		}*/
 		
 		ServiceInvocationHandler handler;
 		if(service instanceof IService)
 		{
 			IService ser = (IService)service;
 			
-			if(service instanceof BasicService)
+			/*if(service instanceof BasicService)
 			{
 				//serprops.putAll(((BasicService)service).getPropertyMap());
 				((BasicService)service).setPropertyMap(serprops);
-			}
+			}*/
 			
 			handler = new ServiceInvocationHandler(ia, ser, false);
 			
@@ -1394,7 +1420,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 			Class<?> serclass = service.getClass();
 
 			BasicService mgmntservice = new BasicService(ia.getId(), type, serclass, null);
-			mgmntservice.setServiceIdentifier(BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info));
+			mgmntservice.setServiceIdentifier(BasicService.createServiceIdentifier(ia, name, type, service.getClass(), info, evaluateTags(ia, info.getTags())));
 			//serprops.putAll(mgmntservice.getPropertyMap());
 			//mgmntservice.setPropertyMap(serprops);
 			

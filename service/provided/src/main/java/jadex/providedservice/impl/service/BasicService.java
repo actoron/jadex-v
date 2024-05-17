@@ -3,6 +3,7 @@ package jadex.providedservice.impl.service;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -58,7 +59,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	protected IServiceIdentifier sid;
 	
 	/** The service properties. */
-	private Map<String, Object> properties;
+	//private Map<String, Object> properties;
 	
 	/** The provider id. */
 	protected ComponentIdentifier providerid;
@@ -94,7 +95,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 		this.providerid = providerid;
 //		this.type = type;
 //		this.implclazz = implclazz;
-		this.properties	= properties;
+		//this.properties	= properties;
 		
 		this.type = type;
 		this.impltype = impltype;
@@ -526,11 +527,11 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	/**
 	 *  Set the properties.
 	 *  @param properties The properties to set.
-	 */
+	 * /
 	public void setPropertyMap(Map<String, Object> properties)
 	{
 		this.properties = properties;
-	}
+	}*/
 	
 //	/**
 //	 *  Get the hosting component of the service.
@@ -632,7 +633,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	 *  Create a new service identifier for the own component.
 	 */
 	public static IServiceIdentifier createServiceIdentifier(Component provider, String servicename, 
-		Class<?> servicetype, Class<?> serviceimpl, ProvidedServiceInfo info)
+		Class<?> servicetype, Class<?> serviceimpl, ProvidedServiceInfo info, Collection<String> tags)
 	{
 //		if(servicetype.getName().indexOf("IServicePool")!=-1)
 //			System.out.println("sdjhvkl");
@@ -641,7 +642,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 		ServiceScope scope = info!=null ? info.getScope() : null;
 		
 		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope,
-				roles!=null && roles.contains(Security.UNRESTRICTED));
+			roles!=null && roles.contains(Security.UNRESTRICTED), tags);
 
 		
 		//return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), rid, scope,

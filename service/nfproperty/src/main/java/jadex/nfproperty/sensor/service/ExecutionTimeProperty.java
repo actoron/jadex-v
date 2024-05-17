@@ -42,6 +42,8 @@ public class ExecutionTimeProperty extends TimedProperty
 		super(NAME, comp, true);
 		this.method = method;
 		
+		//System.out.println("creating exetimeprop:"+service.getServiceId()+" "+method);
+		
 		if(service!=null)
 		{
 			this.sid = service.getServiceId();

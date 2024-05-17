@@ -32,7 +32,7 @@ public class BeanIntrospectorFactory
 	 *  
 	 *  @return Instance.
 	 */
-	public static BeanIntrospectorFactory getInstance() 
+	public static BeanIntrospectorFactory get() 
 	{
 		if(instance == null)
 		{
@@ -82,7 +82,7 @@ public class BeanIntrospectorFactory
 		if(cl == null)
 			cl = SUtil.class.getClassLoader();
 		StringBuilder beanstr = new StringBuilder("[");
-		IBeanIntrospector is = BeanIntrospectorFactory.getInstance().getBeanIntrospector();
+		IBeanIntrospector is = BeanIntrospectorFactory.get().getBeanIntrospector();
 		Map<String, BeanProperty> props = is.getBeanProperties(bean.getClass(), true, false);
 		boolean notfirst = false;
 		for(Map.Entry<String, BeanProperty> entry : props.entrySet())

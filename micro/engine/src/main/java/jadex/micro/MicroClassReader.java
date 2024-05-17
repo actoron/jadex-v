@@ -42,8 +42,6 @@ import jadex.micro.annotation.Argument;
 import jadex.micro.annotation.Arguments;
 import jadex.micro.annotation.Breakpoints;
 import jadex.micro.annotation.Component;
-import jadex.micro.annotation.ComponentType;
-import jadex.micro.annotation.ComponentTypes;
 import jadex.micro.annotation.CreationInfo;
 import jadex.micro.annotation.Description;
 import jadex.micro.annotation.Imports;
@@ -61,7 +59,6 @@ import jadex.model.annotation.Value;
 import jadex.model.modelinfo.ComponentInstanceInfo;
 import jadex.model.modelinfo.IArgument;
 import jadex.model.modelinfo.ModelInfo;
-import jadex.model.modelinfo.SubcomponentTypeInfo;
 
 /**
  *  Reads micro agent classes and generates a model from metainfo and annotations.

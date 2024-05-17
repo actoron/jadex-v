@@ -21,7 +21,7 @@ import jadex.transformation.jsonserializer.JsonTraverser;
 public class JsonOptionalProcessor extends AbstractJsonProcessor
 {
 	/** Bean introspector for inspecting beans. */
-	protected IBeanIntrospector intro = BeanIntrospectorFactory.getInstance().getBeanIntrospector(500);
+	protected IBeanIntrospector intro = BeanIntrospectorFactory.get().getBeanIntrospector(500);
 
 	/**
 	 * Name of the java 8 optional class.

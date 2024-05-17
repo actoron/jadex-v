@@ -44,9 +44,29 @@ public class MicroModelFeature implements IModelFeature, IInternalModelFeature, 
 		{
 			return self;
 		}
+		else if("$component".equals(name))
+		{
+			return self;
+		}
 		else if("$pojoagent".equals(name))
 		{
 			return self.getPojo();
+		}
+		else if("$cid".equals(name) || "$id".equals(name))
+		{
+			return self.getId();
+		}
+		else if("$host".equals(name))
+		{
+			return self.getId().getGlobalProcessIdentifier().host();
+		}
+		else if("$pid".equals(name))
+		{
+			return self.getId().getGlobalProcessIdentifier().pid();
+		}
+		else if("$appid".equals(name))
+		{
+			return self.getAppId();
 		}
 		/*else if(name!=null && name.startsWith(IPlatformConfiguration.PLATFORMARGS))
 		{

@@ -4,10 +4,14 @@ import jadex.future.IFuture;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
 import jadex.nfproperty.sensor.service.TagProperty;
+import jadex.providedservice.annotation.Tag;
 
 /**
  *  Example service interface.
  */
+
+//@Tag("$component.getArguments().get(\"tagarg\")")
+
 // per default use component argument 'tag' (shortcut for the second)
 @NFProperties(@NFProperty(value=TagProperty.class)) 
 //@NFProperties(@NFProperty(value=TagProperty.class, parameters=@NameValue(name=TagProperty.ARGUMENT, value="\"tag\""))) // == TagProperty.NAME
@@ -19,6 +23,10 @@ import jadex.nfproperty.sensor.service.TagProperty;
 //	@NameValue(name=TagProperty.NAME, values={TagProperty.PLATFORM_NAME, TagProperty.JADEX_VERSION, "\"mytag\""}), 
 //	@NameValue(name=TagProperty.ARGUMENT, value="\"tag\"") // additionally get tags from arguments 'tag'
 //}))
+
+@Tag("hello") 
+@Tag("$cid") 
+@Tag("$host") 
 public interface ITestService
 {
 	/**
