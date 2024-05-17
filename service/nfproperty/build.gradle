@@ -24,8 +24,15 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:bytecode:'+v
+	implementation 'org.activecomponents.jadex:javaparser:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:model:'+v
+	implementation 'org.activecomponents.jadex:micro:'+v //hack
+	implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation 'org.activecomponents.jadex:providedservicemicro:'+v //hack
 	implementation 'org.activecomponents.jadex:requiredservice:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
