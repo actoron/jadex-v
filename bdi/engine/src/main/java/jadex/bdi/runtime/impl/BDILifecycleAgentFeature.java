@@ -673,9 +673,9 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 						{
 							try
 							{
-								BDIAgentFeature.belpojo.set(val, capa);
-								BDIAgentFeature.belfield.set(val, mbel);
-								BDIAgentFeature.belupd.set(val, mbel.getUpdaterateValue()>0);
+								BDIAgentFeature.valpojo.set(val, capa);
+								BDIAgentFeature.valmbel.set(val, mbel);
+								BDIAgentFeature.valupd.set(val, mbel.getUpdaterateValue()>0);
 							}
 							catch(Exception e)
 							{
@@ -716,7 +716,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 										Field	f	= mbel.getField().getField(MicroAgentFeature.get().getSelf().getPojo().getClass().getClassLoader());
 										f.setAccessible(true);
 										Val<?>	val	= (Val<?>)f.get(fcapa);
-										Callable<?>	c	= (Callable<?>)BDIAgentFeature.beldyn.get(val);
+										Callable<?>	c	= (Callable<?>)BDIAgentFeature.valdyn.get(val);
 										Object	value	= c.call();
 										BDIAgentFeature.writeField(value, mbel.getField().getName(), mbel, fcapa, MicroAgentFeature.get().getSelf());
 									}
@@ -775,7 +775,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 										Field	f	= mbel.getField().getField(MicroAgentFeature.get().getSelf().getPojo().getClass().getClassLoader());
 										f.setAccessible(true);
 										Val<?>	val	= (Val<?>)f.get(fcapa);
-										Callable<?>	c	= (Callable<?>)BDIAgentFeature.beldyn.get(val);
+										Callable<?>	c	= (Callable<?>)BDIAgentFeature.valdyn.get(val);
 										Object	value	= c.call();
 										BDIAgentFeature.writeField(value, mbel.getField().getName(), mbel, fcapa, MicroAgentFeature.get().getSelf());
 									}

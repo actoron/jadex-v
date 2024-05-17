@@ -9,6 +9,7 @@ import jadex.bdi.annotation.GoalParent;
 import jadex.bdi.model.IBDIClassGenerator;
 import jadex.bdi.model.MGoal;
 import jadex.bdi.model.MParameter;
+import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.impl.RPlan.PlanLifecycleState;
 import jadex.bdi.runtime.wrappers.ListWrapper;
 import jadex.bdi.runtime.wrappers.MapWrapper;
@@ -82,10 +83,13 @@ public class AdoptGoalAction implements Runnable
 			{
 				try
 				{
-					Field f = gcl.getDeclaredField(IBDIClassGenerator.AGENT_FIELD_NAME);
-					f.set(goal.getPojoElement(), IExecutionFeature.get().getComponent());
+					if(!IInternalBDIAgentFeature.get().isPure())
+					{
+						Field f = gcl.getDeclaredField(IBDIClassGenerator.AGENT_FIELD_NAME);
+						f.set(goal.getPojoElement(), IExecutionFeature.get().getComponent());
+					}
 
-					// Init goal parameter list/map/set wrappers with the agent
+					// Init goal parameter val/list/map/set wrappers with the agent
 					List<MParameter> mps = mgoal.getParameters();
 					if(mps!=null)
 					{
@@ -104,6 +108,29 @@ public class AdoptGoalAction implements Runnable
 							{
 								((SetWrapper<?>)val).setAgent(IExecutionFeature.get().getComponent());
 							}
+							
+							else if(val instanceof Val)
+							{
+								try
+								{
+									// Set value to null for initial event (null -> initial value)
+									Object	value	= BDIAgentFeature.valvalue.get(val);
+									BDIAgentFeature.valvalue.set(val, null);
+									
+									BDIAgentFeature.valpojo.set(val, goal.getPojoElement());
+									BDIAgentFeature.valparam.set(val, mp.getName());
+									
+									// initial value is set below
+									val	= value;
+
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+							}
+
+							BDIAgentFeature.writeParameterField(val, mp.getName(), goal.getPojoElement(), null);
 						}
 					}
 					

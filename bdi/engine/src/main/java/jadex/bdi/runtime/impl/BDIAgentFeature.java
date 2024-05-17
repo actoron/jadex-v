@@ -274,8 +274,8 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			if(oldval instanceof Val)
 			{
 				Val<?>	bel	= (Val< ? >)oldval;
-				oldval	= belval.get(bel);
-				belval.set(bel, val);
+				oldval	= valvalue.get(bel);
+				valvalue.set(bel, val);
 				
 			}
 			else
@@ -454,17 +454,19 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		writeField(val, fieldname, mbel, obj, comp);
 	}
 	
-	static Field	belval	= SReflect.getField(Val.class, "value");
-	static Field	belpojo	= SReflect.getField(Val.class, "pojo");
-	static Field	belfield	= SReflect.getField(Val.class, "mbel");
-	static Field	belupd	= SReflect.getField(Val.class, "updaterate");
-	static Field	beldyn	= SReflect.getField(Val.class, "dynamic");
+	static Field	valvalue	= SReflect.getField(Val.class, "value");
+	static Field	valpojo	= SReflect.getField(Val.class, "pojo");
+	static Field	valmbel	= SReflect.getField(Val.class, "mbel");
+	static Field	valparam	= SReflect.getField(Val.class, "param");
+	static Field	valupd	= SReflect.getField(Val.class, "updaterate");
+	static Field	valdyn	= SReflect.getField(Val.class, "dynamic");
 	{
-		belval.setAccessible(true);
-		belpojo.setAccessible(true);
-		belfield.setAccessible(true);
-		belupd.setAccessible(true);
-		beldyn.setAccessible(true);
+		valvalue.setAccessible(true);
+		valpojo.setAccessible(true);
+		valmbel.setAccessible(true);
+		valparam.setAccessible(true);
+		valupd.setAccessible(true);
+		valdyn.setAccessible(true);
 	}
 	/**
 	 *  Method that is called automatically when a belief 

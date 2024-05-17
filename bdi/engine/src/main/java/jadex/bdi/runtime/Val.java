@@ -19,6 +19,7 @@ public class Val<T>
 	// Fields set via reflection from BDILifecycleAgentFeature
 	Object	pojo;
 	MBelief	mbel;
+	String	param;
 	boolean	updaterate;
 	
 	/**
@@ -61,6 +62,16 @@ public class Val<T>
 		if(dynamic!=null)
 			throw new IllegalStateException("Should not set value on dynamic belief.");
 		
-		BDIAgentFeature.writeField(value, mbel.getField().getName(), mbel, pojo, MicroAgentFeature.get().getSelf());
+		// belief
+		if(mbel!=null)
+		{
+			BDIAgentFeature.writeField(value, mbel.getField().getName(), mbel, pojo, MicroAgentFeature.get().getSelf());
+		}
+		
+		// parameter
+		else
+		{
+			BDIAgentFeature.writeParameterField(value, param, pojo, null);
+		}
 	}
 }

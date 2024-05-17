@@ -14,7 +14,7 @@ public @interface Belief
 {
 	/**
 	 *  A dynamic belief reevaluated on every access.
-	 *  For relevant only for bytecode-enhanced field beliefs.
+	 *  Relevant only for bytecode-enhanced field beliefs.
 	 */
 	public boolean dynamic() default false;
 	
