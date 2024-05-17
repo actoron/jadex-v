@@ -274,7 +274,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			if(oldval instanceof Val)
 			{
 				Val<?>	bel	= (Val< ? >)oldval;
-				oldval	= bel.get();
+				oldval	= belval.get(bel);
 				belval.set(bel, val);
 				
 			}

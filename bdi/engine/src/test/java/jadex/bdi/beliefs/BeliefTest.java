@@ -59,9 +59,8 @@ public class BeliefTest
 			put("2", "wto");
 		}};
 		
-		int cnt=0;
-		@Belief
-		Val<Integer>	dynamicbelief	= new Val<>(()->++cnt);
+		@Belief(beliefs="valbelief")
+		Val<Integer>	dynamicbelief	= new Val<>(()->valbelief.get()+1);
 
 		@Belief(updaterate = 1000)
 		Val<Long>	updatebelief	= new Val<>(()->System.currentTimeMillis());
@@ -200,12 +199,15 @@ public class BeliefTest
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
 		Future<Integer>	firstfut	= new Future<>();
+		Future<IEvent>	changedfut	= new Future<>();
 		Future<Integer>	secondfut	= new Future<>();
 		Future<Void>	exfut	= new Future<>();
 		
 		exta.scheduleStep(() ->
 		{
+			addEventListenerRule(changedfut, "beliefchanged", "dynamicbelief");
 			firstfut.setResult(pojo.dynamicbelief.get());
+			pojo.valbelief.set(2);
 			secondfut.setResult(pojo.dynamicbelief.get());
 			try
 			{
@@ -218,9 +220,10 @@ public class BeliefTest
 			}
 		});
 		
-		assertEquals(1, firstfut.get(1000));
-		assertEquals(2, secondfut.get(1000));
+		assertEquals(2, firstfut.get(1000));
+		assertEquals(3, secondfut.get(1000));
 		assertThrows(IllegalStateException.class, ()->exfut.get(1000));
+		checkEventInfo(changedfut, 2, 3, null);
 	}
 	
 	@Test
@@ -230,10 +233,12 @@ public class BeliefTest
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
 		Future<Long>	firstfut	= new Future<>();
 		Future<Long>	secondfut	= new Future<>();
+		Future<IEvent>	changedfut	= new Future<>();
 		Future<Long>	thirdfut	= new Future<>();
 		
 		exta.scheduleStep(() ->
 		{
+			addEventListenerRule(changedfut, "beliefchanged", "updatebelief");
 			firstfut.setResult(pojo.updatebelief.get());
 			IExecutionFeature.get().waitForDelay(500).get();
 			secondfut.setResult(pojo.updatebelief.get());
@@ -243,6 +248,7 @@ public class BeliefTest
 		
 		assertEquals(firstfut.get(1000), secondfut.get(1000));
 		assertNotEquals(firstfut.get(1000), thirdfut.get(2000));
+		changedfut.get(1000);	// Check if event was generated
 	}
 
 	//-------- helper methods --------
