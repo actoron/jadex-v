@@ -307,7 +307,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 								try
 								{
 									SAccess.setAccessible(dm, true);
-									ret = ((Boolean)dm.invoke(goal.getPojoElement(), new Object[]{other.getPojoElement()})).booleanValue();
+									ret = ((Boolean)dm.invoke(goal.getPojo(), new Object[]{other.getPojo()})).booleanValue();
 								}
 								catch(Exception e)
 								{

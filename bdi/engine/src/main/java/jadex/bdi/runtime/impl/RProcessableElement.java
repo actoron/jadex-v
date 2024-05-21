@@ -74,20 +74,11 @@ public abstract class RProcessableElement extends RParameterElement
 	 *  Get the pojoelement.
 	 *  @return The pojoelement.
 	 */
-	public Object getPojoElement()
+	public Object getPojo()
 	{
 		return pojoelement;
 	}
 
-	/**
-	 *  Set the pojoelement.
-	 *  @param pojoelement The pojoelement to set.
-	 */
-	public void setPojoElement(Object pojoelement)
-	{
-		this.pojoelement = pojoelement;
-	}
-	
 	/**
 	 *  Add a tried plan.
 	 */
@@ -202,14 +193,14 @@ public abstract class RProcessableElement extends RParameterElement
 		String	ret	= null;
 		
 		// Use pojo.toString() if not Object.toString()
-		if(getPojoElement()!=null)
+		if(getPojo()!=null)
 		{
 			try
 			{
-				Method	m	= getPojoElement().getClass().getMethod("toString");
+				Method	m	= getPojo().getClass().getMethod("toString");
 				if(!m.getDeclaringClass().equals(Object.class))
 				{
-					ret	= getPojoElement().toString();
+					ret	= getPojo().toString();
 				}
 			}
 			catch (Exception e)

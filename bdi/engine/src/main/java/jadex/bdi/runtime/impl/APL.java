@@ -102,7 +102,7 @@ public class APL
 		{
 			boolean	done	= false;
 
-			Object pojo = element.getPojoElement();
+			Object pojo = element.getPojo();
 			if(pojo!=null && element instanceof IGoal)
 			{
 				IGoal goal = (IGoal)element;
@@ -594,7 +594,7 @@ public class APL
 				try
 				{
 					SAccess.setAccessible(m, true);
-					cand = (ICandidateInfo)m.invoke(element.getPojoElement(),
+					cand = (ICandidateInfo)m.invoke(element.getPojo(),
 								BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(), melem, null, null, element,
 									Collections.singletonList(getCandidates())));
 				}

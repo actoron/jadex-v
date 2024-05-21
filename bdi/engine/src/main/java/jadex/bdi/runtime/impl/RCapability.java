@@ -132,7 +132,7 @@ public class RCapability extends RElement
 		{
 			for(RGoal rgoal: rgoals)
 			{
-				if(rgoal.getPojoElement().equals(pojogoal))
+				if(rgoal.getPojo().equals(pojogoal))
 				{
 					ret = rgoal;
 					break;
@@ -201,13 +201,13 @@ public class RCapability extends RElement
 		mymgoals.add(goal);
 		
 		// for pojo goal also add to class map
-		if(goal.getPojoElement()!=null)
+		if(goal.getPojo()!=null)
 		{
-			Collection<RGoal> mycgoals = cgoals.get(goal.getPojoElement().getClass());
+			Collection<RGoal> mycgoals = cgoals.get(goal.getPojo().getClass());
 			if(mycgoals==null)
 			{
 				mycgoals	= new LinkedHashSet<RGoal>();
-				cgoals.put(goal.getPojoElement().getClass(), mycgoals);
+				cgoals.put(goal.getPojo().getClass(), mycgoals);
 			}
 			mycgoals.add(goal);
 		}
@@ -255,13 +255,13 @@ public class RCapability extends RElement
 			}
 			
 			// for pojo goal also remove from class map
-			if(goal.getPojoElement()!=null)
+			if(goal.getPojo()!=null)
 			{
-				Collection<RGoal>	mycgoals	= cgoals.get(goal.getPojoElement().getClass());
+				Collection<RGoal>	mycgoals	= cgoals.get(goal.getPojo().getClass());
 				mycgoals.remove(goal);
 				if(mycgoals.isEmpty())
 				{
-					cgoals.remove(goal.getPojoElement().getClass());
+					cgoals.remove(goal.getPojo().getClass());
 				}
 			}
 		}

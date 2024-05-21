@@ -1645,7 +1645,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		List<T>	ret	= new ArrayList<T>();
 		for(RProcessableElement rgoal: rgoals)
 		{
-			ret.add((T)rgoal.getPojoElement());
+			ret.add((T)rgoal.getPojo());
 		}
 		return ret;
 	}
@@ -1705,7 +1705,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	{
 		for(RGoal rgoal: getCapability().getGoals(goal.getClass()))
 		{
-			if(goal.equals(rgoal.getPojoElement()))
+			if(goal.equals(rgoal.getPojo()))
 			{
 				rgoal.drop();
 				break;
@@ -1888,7 +1888,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			}
 			else if(event.getValue() instanceof RGoal)
 			{
-				vals.add(((RGoal)event.getValue()).getPojoElement());
+				vals.add(((RGoal)event.getValue()).getPojo());
 			}
 		}
 
@@ -1896,12 +1896,12 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		if(rpe!=null)
 		{
 			vals.add(rpe);
-			if(rpe.getPojoElement()!=null)
+			if(rpe.getPojo()!=null)
 			{
-				vals.add(rpe.getPojoElement());
+				vals.add(rpe.getPojo());
 				if(rpe instanceof RGoal)
 				{
-					Object pojo = rpe.getPojoElement();
+					Object pojo = rpe.getPojo();
 					MGoal mgoal = (MGoal)rpe.getModelElement();
 					List<MParameter> params = mgoal.getParameters();
 					for(MParameter param: SUtil.notNull(params))
@@ -1913,9 +1913,9 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			}
 			
 			// Special case service call
-			if(rpe.getPojoElement() instanceof InvocationInfo)
+			if(rpe.getPojo() instanceof InvocationInfo)
 			{
-				vals.add(((InvocationInfo)rpe.getPojoElement()).getParams());
+				vals.add(((InvocationInfo)rpe.getPojo()).getParams());
 			}
 		}
 		
@@ -2003,9 +2003,9 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 //				}
 			}
 			
-			if(!done && rpe!=null && rpe.getPojoElement() instanceof InvocationInfo)
+			if(!done && rpe!=null && rpe.getPojo() instanceof InvocationInfo)
 			{
-				Object[] serviceparams = ((InvocationInfo)rpe.getPojoElement()).getParams();
+				Object[] serviceparams = ((InvocationInfo)rpe.getPojo()).getParams();
 				if(SReflect.isSupertype(ptypes[i], serviceparams[i].getClass()))
 				{
 					ret[i] = serviceparams[i];

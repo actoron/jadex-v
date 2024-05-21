@@ -219,7 +219,7 @@ public class ClassPlanBody extends AbstractPlanBody
 						Object r = getRPlan().getReason();
 						if(r instanceof RProcessableElement)
 						{
-							Object reason = ((RProcessableElement)r).getPojoElement();
+							Object reason = ((RProcessableElement)r).getPojo();
 							if(reason!=null)
 							{
 								SAccess.setAccessible(f, true);

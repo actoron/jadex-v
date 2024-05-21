@@ -596,9 +596,9 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 		int ret;
 		if(getMGoal().isUnique())
 		{
-			if(getPojoElement()!=null)
+			if(getPojo()!=null)
 			{
-				ret = getPojoElement().hashCode();
+				ret = getPojo().hashCode();
 			}
 			else
 			{
@@ -643,9 +643,9 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 			RGoal other = (RGoal)obj;
 			if(getMGoal().isUnique())
 			{
-				if(getPojoElement()!=null)
+				if(getPojo()!=null)
 				{
-					ret = getPojoElement().equals(other.getPojoElement());
+					ret = getPojo().equals(other.getPojo());
 				}
 				else
 				{
@@ -938,7 +938,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	public static Object getGoalResult(RGoal rgoal, ClassLoader cl)
 	{
 		Object ret = null;
-		Object pojo = rgoal.getPojoElement();
+		Object pojo = rgoal.getPojo();
 		MGoal mgoal = rgoal.getMGoal();
 		
 		if(pojo!=null)
@@ -1161,7 +1161,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 		{
 			try
 			{
-				BDIAgentFeature.writeParameterField(result, ((Field)wa).getName(), getPojoElement(), null);
+				BDIAgentFeature.writeParameterField(result, ((Field)wa).getName(), getPojo(), null);
 				//Field f = (Field)wa;
 				//SAccess.setAccessible(f, true);
 				//f.set(getPojoElement(), result);
@@ -1183,7 +1183,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 					rplan!=null? rplan.getModelElement(): rpe.getModelElement(), event, rplan, rpe, res);
 				if(params==null)
 					System.out.println("Invalid parameter assignment");
-				m.invoke(getPojoElement(), params);
+				m.invoke(getPojo(), params);
 			}
 			catch(Exception e)
 			{
@@ -1199,7 +1199,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	{
 		final Future<Void> ret = new Future<Void>();
 		
-		Object pojo = getPojoElement();
+		Object pojo = getPojo();
 		if(pojo!=null)
 		{
 			MGoal mgoal = (MGoal)getModelElement();

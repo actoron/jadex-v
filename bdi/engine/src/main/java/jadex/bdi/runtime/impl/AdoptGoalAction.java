@@ -78,7 +78,7 @@ public class AdoptGoalAction implements Runnable
 		{
 			// inject agent in static inner class goals
 			MGoal mgoal = (MGoal)goal.getModelElement();
-			Class<?> gcl = mgoal.getTargetClass(goal.getPojoElement().getClass().getClassLoader());
+			Class<?> gcl = mgoal.getTargetClass(goal.getPojo().getClass().getClassLoader());
 			if(gcl!=null)// && gcl.isMemberClass() && Modifier.isStatic(gcl.getModifiers()))
 			{
 				try
@@ -86,7 +86,7 @@ public class AdoptGoalAction implements Runnable
 					if(!IInternalBDIAgentFeature.get().isPure())
 					{
 						Field f = gcl.getDeclaredField(IBDIClassGenerator.AGENT_FIELD_NAME);
-						f.set(goal.getPojoElement(), IExecutionFeature.get().getComponent());
+						f.set(goal.getPojo(), IExecutionFeature.get().getComponent());
 					}
 
 					// Init goal parameter val/list/map/set wrappers with the agent
@@ -95,7 +95,7 @@ public class AdoptGoalAction implements Runnable
 					{
 						for(MParameter mp: mps)
 						{
-							Object val = mp.getValue(goal.getPojoElement(), goal.getPojoElement().getClass().getClassLoader());
+							Object val = mp.getValue(goal.getPojo(), goal.getPojo().getClass().getClassLoader());
 							if(val instanceof ListWrapper && ((ListWrapper<?>)val).isInitWrite())
 							{
 								((ListWrapper<?>)val).setAgent(IExecutionFeature.get().getComponent());
@@ -117,7 +117,7 @@ public class AdoptGoalAction implements Runnable
 									Object	value	= BDIAgentFeature.valvalue.get(val);
 									BDIAgentFeature.valvalue.set(val, null);
 									
-									BDIAgentFeature.valpojo.set(val, goal.getPojoElement());
+									BDIAgentFeature.valpojo.set(val, goal.getPojo());
 									BDIAgentFeature.valparam.set(val, mp.getName());
 									
 									// initial value is set below
@@ -130,12 +130,12 @@ public class AdoptGoalAction implements Runnable
 								}
 							}
 
-							BDIAgentFeature.writeParameterField(val, mp.getName(), goal.getPojoElement(), null);
+							BDIAgentFeature.writeParameterField(val, mp.getName(), goal.getPojo(), null);
 						}
 					}
 					
 					// Perform init writes means that the events of constructor parameter changes are thrown
-					BDIAgentFeature.performInitWrites(goal.getPojoElement());
+					BDIAgentFeature.performInitWrites(goal.getPojo());
 				}
 				catch(Exception e)
 				{
@@ -144,9 +144,9 @@ public class AdoptGoalAction implements Runnable
 			}
 			
 			// inject goal elements
-			if(goal.getPojoElement()!=null)
+			if(goal.getPojo()!=null)
 			{
-				Class<?> cl = goal.getPojoElement().getClass();
+				Class<?> cl = goal.getPojo().getClass();
 			
 				while(cl.isAnnotationPresent(Goal.class))
 				{
@@ -156,7 +156,7 @@ public class AdoptGoalAction implements Runnable
 						if(f.isAnnotationPresent(GoalAPI.class))
 						{
 							SAccess.setAccessible(f, true);
-							f.set(goal.getPojoElement(), goal);
+							f.set(goal.getPojo(), goal);
 						}
 						else if(f.isAnnotationPresent(GoalParent.class))
 						{
@@ -170,18 +170,18 @@ public class AdoptGoalAction implements Runnable
 								}
 								else if(pa instanceof RGoal)
 								{
-									pojopa = ((RGoal)pa).getPojoElement();
+									pojopa = ((RGoal)pa).getPojo();
 								}	
 									
 								if(SReflect.isSupertype(f.getType(), pa.getClass()))
 								{
 									SAccess.setAccessible(f, true);
-									f.set(goal.getPojoElement(), pa);
+									f.set(goal.getPojo(), pa);
 								}
 								else if(pojopa!=null && SReflect.isSupertype(f.getType(), pojopa.getClass()))
 								{
 									SAccess.setAccessible(f, true);
-									f.set(goal.getPojoElement(), pojopa);
+									f.set(goal.getPojo(), pojopa);
 								}
 							}
 						}

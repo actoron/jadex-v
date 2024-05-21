@@ -166,7 +166,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 	 */
 	protected static boolean executeGoalMethod(Method m, RProcessableElement goal, IEvent event)
 	{
-		return invokeBooleanMethod(goal.getPojoElement(), m, goal.getModelElement(), event, null);
+		return invokeBooleanMethod(goal.getPojo(), m, goal.getModelElement(), event, null);
 	}
 	
 	/**

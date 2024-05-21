@@ -58,6 +58,11 @@ public interface IGoal extends IParameterElement, IFinishableElement<Void>// nee
 	// legacy v2 method.
 	public boolean isActive();
 	
+	/**
+	 *  Get the pojo of the goal
+	 */
+	public Object	getPojo();
+	
 //	/**
 //	 *  Get the parent of the goal.
 //	 */
