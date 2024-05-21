@@ -13,8 +13,6 @@ import jadex.common.UnparsedExpression;
  */
 public class MTrigger
 {
-	protected List<MInternalEvent> internalevents;
-	
 	/** The message events. */
 	protected List<MMessageEvent> messageevents;
 	
@@ -58,14 +56,6 @@ public class MTrigger
 	{
 	}
 	
-	/**
-	 *  Get the internal events.
-	 */
-	public List<MInternalEvent>	getInternalEvents()
-	{
-		return internalevents;
-	}
-
 	/**
 	 *  Get the message events.
 	 */
@@ -118,16 +108,6 @@ public class MTrigger
 		if(goalfinisheds==null)
 			this.goalfinisheds = new ArrayList<MGoal>();
 		goalfinisheds.add(goal);
-	}
-	
-	/**
-	 * 
-	 */
-	public void addInternalEvent(MInternalEvent event)
-	{
-		if(internalevents==null)
-			this.internalevents = new ArrayList<MInternalEvent>();
-		internalevents.add(event);
 	}
 	
 	/**

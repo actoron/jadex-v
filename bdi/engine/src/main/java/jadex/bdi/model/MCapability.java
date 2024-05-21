@@ -58,9 +58,6 @@ public class MCapability extends MElement
 	/** The subcapabilities. */
 	protected List<MCapabilityReference> subcapabilities;
 	
-	/** The internal events. */
-	protected List<MInternalEvent> ievents;
-	
 	/** The goal/service publications. */
 	protected Map<ClassInfo, List<Tuple2<MGoal, String>>> pubs = new HashMap<ClassInfo, List<Tuple2<MGoal, String>>>();
 	
@@ -381,76 +378,6 @@ public class MCapability extends MElement
 	}
 	
 	/**
-	 *  Get the Internals.
-	 *  @return The Internals.
-	 */
-	public List<MInternalEvent> getInternalEvents()
-	{
-		return ievents==null? Collections.emptyList(): ievents;
-	}
-
-	/**
-	 *  Set the internal events.
-	 *  @param ievents The internal events to set.
-	 */
-	public void setInternalEvents(List<MInternalEvent> ievents)
-	{
-		this.ievents = ievents;
-	}
-
-	/**
-	 *  Add an internal event.
-	 */
-	public void addInternalEvent(MInternalEvent event)
-	{
-		if(ievents==null)
-			ievents = new ArrayList<MInternalEvent>();
-		ievents.add(event);
-	}
-	
-	/**
-	 *  Test if an internal event is contained.
-	 */
-	public boolean hasInternalEvent(String name)
-	{
-		boolean ret = false;
-		
-		if(ievents!=null && name!=null)
-		{
-			for(MInternalEvent bel: ievents)
-			{
-				ret = name.equals(bel.getName());
-				if(ret)
-					break;
-			}
-		}
-		
-		return ret;
-	}
-	
-	/**
-	 *  Get an internal event.
-	 */
-	public MInternalEvent getInternalEvent(String name)
-	{
-		MInternalEvent ret = null;
-		
-		if(ievents!=null && name!=null)
-		{
-			for(MInternalEvent ievent: ievents)
-			{
-				if(name.equals(ievent.getName()))
-				{
-					ret = ievent;
-					break;
-				}
-			}
-		}
-		
-		return ret;
-	}
-
-	/**
 	 *  Get the messages.
 	 *  @return The messages.
 	 */
@@ -552,42 +479,6 @@ public class MCapability extends MElement
 		if(melement==null)
 		{
 			throw new RuntimeException("Goal not found: "+name+(scope!=null ? "("+scope+")" : ""));
-		}
-		return melement;
-	}
-
-	/**
-	 *  Get an internal event by resolved name. Exception if not found.
-	 *  This method is meant handles calls from user code (e.g. createXYZ() in a plan).
-	 *  Internally, all references should be mapped to the correct concrete elements already during loading (e.g. config elements).
-	 *  @param scope	The local scope.
-	 *  @param name	The name, relative to scope.
-	 */
-	public MInternalEvent	getResolvedInternalEvent(String scope, String name)
-	{
-		MInternalEvent melement = null;
-		name	= scope!=null ? scope + MElement.CAPABILITY_SEPARATOR + MElement.internalName(name) : MElement.internalName(name);
-		if(eventreferences!=null && eventreferences.containsKey(name))
-		{
-			String	ref	= eventreferences.get(name);
-			if(ref==null)
-			{
-				// Abstract element -> create dummy element to hold name.
-				melement	= new MInternalEvent();
-				melement.setName(name);
-			}
-			else
-			{
-				name	= ref;
-			}
-		}
-		if(melement==null)
-		{
-			melement	= getInternalEvent(name);
-		}
-		if(melement==null)
-		{
-			throw new RuntimeException("Internal event not found: "+name+(scope!=null ? "("+scope+")" : ""));
 		}
 		return melement;
 	}

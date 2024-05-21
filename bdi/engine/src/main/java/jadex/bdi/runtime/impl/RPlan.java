@@ -12,7 +12,6 @@ import jadex.bdi.model.IBDIModel;
 import jadex.bdi.model.MBody;
 import jadex.bdi.model.MCapability;
 import jadex.bdi.model.MGoal;
-import jadex.bdi.model.MInternalEvent;
 import jadex.bdi.model.MMessageEvent;
 import jadex.bdi.model.MParameter;
 import jadex.bdi.model.MPlan;
@@ -330,11 +329,6 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 				rplan.setupEventsRule(events);
 			}
 			
-			for(MInternalEvent mevent: SUtil.notNull(wqtr.getInternalEvents()))
-			{
-				WaitAbstraction wa = rplan.getOrCreateWaitqueueWaitAbstraction();
-				wa.addModelElement(mevent);
-			}
 			for(MMessageEvent mevent: SUtil.notNull(wqtr.getMessageEvents()))
 			{
 				WaitAbstraction wa = rplan.getOrCreateWaitqueueWaitAbstraction();

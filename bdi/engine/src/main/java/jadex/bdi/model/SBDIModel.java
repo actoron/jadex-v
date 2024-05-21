@@ -151,26 +151,6 @@ public class SBDIModel
 				bdimodel.getCapability().addMessageEvent(event2);
 			}
 			
-			for(MInternalEvent event : capa.getCapability().getInternalEvents())
-			{
-				MInternalEvent event2	= new MInternalEvent();
-				event2.setName(capaname+MElement.CAPABILITY_SEPARATOR+event.getName());
-				event2.setDescription(event.getDescription());
-				event2.setExcludeMode(event.getExcludeMode());
-				event2.setPostToAll(event.isPostToAll());
-				event2.setRandomSelection(event.isRandomSelection());
-				event2.setRebuild(event.isRebuild());
-				if(event.getParameters()!=null)
-				{
-					for(MParameter param: event.getParameters())
-					{
-						MParameter param2 = copyParameter(bdimodel, cl, capaname, param);
-						event2.addParameter(param2);
-					}
-				}
-				bdimodel.getCapability().addInternalEvent(event2);
-			}
-			
 			for(MGoal goal: capa.getCapability().getGoals())
 			{
 				MGoal goal2	= new MGoal(capaname+MElement.CAPABILITY_SEPARATOR+goal.getName(), goal.getTarget(),
@@ -564,13 +544,6 @@ public class SBDIModel
 				for(MMessageEvent event: trigger.getMessageEvents())
 				{
 					trigger2.addMessageEvent(bdimodel.getCapability().getResolvedMessageEvent(capa, event.getName()));
-				}
-			}
-			if(trigger.getInternalEvents()!=null)
-			{
-				for(MInternalEvent event: trigger.getInternalEvents())
-				{
-					trigger2.addInternalEvent(bdimodel.getCapability().getResolvedInternalEvent(capa, event.getName()));
 				}
 			}
 			if(trigger.getCondition()!=null)
