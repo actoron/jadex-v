@@ -2,7 +2,6 @@ package jadex.bdi.runtime.impl;
 
 import java.util.Map;
 
-import jadex.bdi.model.MConfigParameterElement;
 import jadex.bdi.model.MProcessableElement;
 
 /**
@@ -12,9 +11,9 @@ public class RMessageEvent<T> extends RProcessableElement //implements IMessageE
 {
 
 	public RMessageEvent(MProcessableElement modelelement, Object pojoelement,
-			Map<String, Object> vals, MConfigParameterElement config)
+			Map<String, Object> vals)
 	{
-		super(modelelement, pojoelement, vals, config);
+		super(modelelement, pojoelement, vals);
 		// TODO Auto-generated constructor stub
 	}
 

@@ -37,9 +37,6 @@ public class MCapability extends MElement
 	/** The expressions. */
 	protected List<UnparsedExpression> expressions;
 	
-	/** The configurations. */
-	protected List<MConfiguration> configurations;
-	
 	/** The belief mappings (abstract/reference name -> concrete belief name). */
 	protected Map<String, String> beliefreferences;
 	
@@ -629,55 +626,6 @@ public class MCapability extends MElement
 			throw new RuntimeException("Message event not found: "+name+(scope!=null ? "("+scope+")" : ""));
 		}
 		return melement;
-	}
-
-	/**
-	 *  Get the configurations.
-	 *  @return The configurations.
-	 */
-	public List<MConfiguration> getConfigurations()
-	{
-		return configurations==null? Collections.emptyList(): configurations;
-	}
-
-	/**
-	 *  Set the configurations.
-	 *  @param configurations The configurations to set.
-	 */
-	public void setConfigurations(List<MConfiguration> configurations)
-	{
-		this.configurations = configurations;
-	}
-	
-	/**
-	 *  Add a configuration.
-	 */
-	public void addConfiguration(MConfiguration config)
-	{
-		if(configurations==null)
-			configurations = new ArrayList<MConfiguration>();
-		configurations.add(config);
-	}
-	
-	/**
-	 *  Get the configurations.
-	 *  @return The configurations.
-	 */
-	public MConfiguration getConfiguration(String name)
-	{
-		MConfiguration ret = null;
-		if(configurations!=null)
-		{
-			for(MConfiguration conf: configurations)
-			{
-				if(conf.getName().equals(name))
-				{
-					ret = conf;
-					break;
-				}
-			}
-		}
-		return ret;
 	}
 
 	/**

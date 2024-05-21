@@ -1681,7 +1681,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		final MGoal mgoal = ((MCapability)capa.getModelElement()).getGoal(goal.getClass().getName());
 		if(mgoal==null)
 			throw new RuntimeException("Unknown goal type: "+goal);
-		final RGoal rgoal = new RGoal(mgoal, goal, null, null, null, null);
+		final RGoal rgoal = new RGoal(mgoal, goal, null, null, null);
 		rgoal.addListener(new ExceptionDelegationResultListener<Void, E>(ret)
 		{
 			public void customResultAvailable(Void result)
@@ -1739,7 +1739,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		ICandidateInfo ci = plan instanceof String? new CandidateInfoMPlan(new MPlanInfo(mplan, null), null):
 			new CandidateInfoPojoPlan(plan, null);
 		
-		final RPlan rplan = RPlan.createRPlan(mplan, ci, new ChangeEvent(null, null, args, null), null, null);
+		final RPlan rplan = RPlan.createRPlan(mplan, ci, new ChangeEvent(null, null, args, null), null);
 		rplan.addListener(new DelegationResultListener(ret));
 		rplan.executePlan();
 		return ret;

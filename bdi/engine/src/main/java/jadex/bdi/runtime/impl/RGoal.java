@@ -10,12 +10,11 @@ import java.util.Map;
 
 import jadex.bdi.model.IBDIModel;
 import jadex.bdi.model.MCapability;
-import jadex.bdi.model.MConfigParameterElement;
 import jadex.bdi.model.MGoal;
 import jadex.bdi.model.MParameter;
+import jadex.bdi.model.MParameter.Direction;
 import jadex.bdi.model.MPlan;
 import jadex.bdi.model.MPlanParameter;
-import jadex.bdi.model.MParameter.Direction;
 import jadex.bdi.runtime.ChangeEvent;
 import jadex.bdi.runtime.GoalFailureException;
 import jadex.bdi.runtime.IGoal;
@@ -63,9 +62,9 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	/**
 	 *  Create a new rgoal. 
 	 */
-	public RGoal(MGoal mgoal, Object goal, RGoal parentgoal, Map<String, Object> vals, MConfigParameterElement config, ICandidateInfo candidate)
+	public RGoal(MGoal mgoal, Object goal, RGoal parentgoal, Map<String, Object> vals, ICandidateInfo candidate)
 	{
-		super(mgoal, goal, vals, config);
+		super(mgoal, goal, vals);
 		this.parentgoal = parentgoal;
 		this.lifecyclestate = GoalLifecycleState.NEW;
 		this.processingstate = GoalProcessingState.IDLE;

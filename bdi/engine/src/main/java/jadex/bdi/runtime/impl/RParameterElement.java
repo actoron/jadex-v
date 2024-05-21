@@ -8,10 +8,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bdi.model.MConfigParameterElement;
 import jadex.bdi.model.MParameter;
-import jadex.bdi.model.MParameterElement;
 import jadex.bdi.model.MParameter.EvaluationMode;
+import jadex.bdi.model.MParameterElement;
 import jadex.bdi.runtime.ChangeEvent;
 import jadex.bdi.runtime.IParameter;
 import jadex.bdi.runtime.IParameterElement;
@@ -48,16 +47,16 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 	/**
 	 *  Create a new parameter element.
 	 */
-	public RParameterElement(MParameterElement melement, Map<String, Object> vals, MConfigParameterElement config)
+	public RParameterElement(MParameterElement melement, Map<String, Object> vals)
 	{
 		super(melement);
-		initParameters(vals, config);
+		initParameters(vals);
 	}
 	
 	/**
 	 *  Create the parameters from model spec.
 	 */
-	public void initParameters(Map<String, Object> vals, MConfigParameterElement config)
+	public void initParameters(Map<String, Object> vals)
 	{
 		List<MParameter> mparams = getModelElement()!=null ? ((MParameterElement)getModelElement()).getParameters() : null;
 		if(mparams!=null)
@@ -72,7 +71,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 					}
 					else
 					{
-						addParameter(createParameter(mparam, mparam.getName(), config!=null ? config.getParameter(mparam.getName()) : null));
+						addParameter(createParameter(mparam, mparam.getName(), null));
 					}
 				}
 				else
@@ -83,7 +82,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 					}
 					else
 					{
-						addParameterSet(createParameterSet(mparam, mparam.getName(), config!=null ? config.getParameters(mparam.getName()) : null));
+						addParameterSet(createParameterSet(mparam, mparam.getName(), null));
 					}
 				}
 			}

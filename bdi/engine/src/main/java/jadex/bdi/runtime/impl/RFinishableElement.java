@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bdi.model.MConfigParameterElement;
 import jadex.bdi.model.MProcessableElement;
 import jadex.bdi.runtime.IFinishableElement;
 import jadex.future.IResultListener;
@@ -27,9 +26,9 @@ public abstract class RFinishableElement extends RProcessableElement implements 
 	/**
 	 *  Create a new element.
 	 */
-	public RFinishableElement(MProcessableElement modelelement, Object pojoelement, Map<String, Object> vals, MConfigParameterElement config)
+	public RFinishableElement(MProcessableElement modelelement, Object pojoelement, Map<String, Object> vals)
 	{
-		super(modelelement, pojoelement, vals, config);
+		super(modelelement, pojoelement, vals);
 	}
 	
 	//-------- methods --------

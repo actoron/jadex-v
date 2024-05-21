@@ -5,10 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bdi.model.MConfigParameterElement;
 import jadex.bdi.model.MParameter;
-import jadex.bdi.model.MProcessableElement;
 import jadex.bdi.model.MParameter.Direction;
+import jadex.bdi.model.MProcessableElement;
 import jadex.execution.IExecutionFeature;
 
 /**
@@ -42,9 +41,9 @@ public abstract class RProcessableElement extends RParameterElement
 	/**
 	 *  Create a new element.
 	 */
-	public RProcessableElement(MProcessableElement modelelement, Object pojoelement, Map<String, Object> vals, MConfigParameterElement config)
+	public RProcessableElement(MProcessableElement modelelement, Object pojoelement, Map<String, Object> vals)
 	{
-		super(modelelement, vals, config);
+		super(modelelement, vals);
 		this.pojoelement = pojoelement;
 		this.state = State.INITIAL;
 	}

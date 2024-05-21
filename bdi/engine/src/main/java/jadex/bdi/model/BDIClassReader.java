@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bdi.annotation.BDIConfiguration;
-import jadex.bdi.annotation.BDIConfigurations;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Body;
 import jadex.bdi.annotation.Capability;
@@ -53,12 +51,9 @@ import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
-import jadex.common.UnparsedExpression;
 import jadex.micro.MicroClassReader;
 import jadex.micro.MicroModel;
 import jadex.micro.annotation.Agent;
-import jadex.model.annotation.NameValue;
-import jadex.model.modelinfo.ConfigurationInfo;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.rules.eca.EventType;
 
@@ -185,10 +180,6 @@ public class BDIClassReader extends MicroClassReader
 		final Class<?> fcma = cma;
 		
 		Map<String, IBDIModel>	capas	= new LinkedHashMap<String, IBDIModel>();
-		
-		Map<String, ConfigurationInfo> confs = new LinkedHashMap<String, ConfigurationInfo>();
-		List<MConfiguration> bdiconfs = new ArrayList<MConfiguration>();
-		boolean confdone = false;
 		
 		Map<ClassInfo, List<Tuple2<MGoal, String>>> pubs = new HashMap<ClassInfo, List<Tuple2<MGoal, String>>>();
 		
@@ -383,77 +374,6 @@ public class BDIClassReader extends MicroClassReader
 				for(Plan p: plans)
 				{
 					getMPlan(bdimodel, p, null, null, cl, pubs, cnt++);
-				}
-			}
-			
-			if(!confdone && isAnnotationPresent(clazz, BDIConfigurations.class, cl))
-			{
-				BDIConfigurations val = (BDIConfigurations)getAnnotation(clazz, BDIConfigurations.class, cl);
-				BDIConfiguration[] configs = val.value();
-				confdone = val.replace();
-				
-				for(int i=0; i<configs.length; i++)
-				{
-					if(!confs.containsKey(configs[i].name()))
-					{
-						MConfiguration bdiconf = new MConfiguration(configs[i].name());
-						bdiconfs.add(bdiconf);
-							
-						bdiconf.setInitialBeliefs(createConfigBeliefsList(configs[i].initialbeliefs()));
-						bdiconf.setEndBeliefs(createConfigBeliefsList(configs[i].endbeliefs()));
-						
-						bdiconf.setInitialPlans(createConfigParamElementsList(configs[i].initialplans()));
-						bdiconf.setEndPlans(createConfigParamElementsList(configs[i].endplans()));
-						
-						bdiconf.setInitialGoals(createConfigParamElementsList(configs[i].initialgoals()));
-						bdiconf.setEndGoals(createConfigParamElementsList(configs[i].endgoals()));
-						
-						// Need to repeat the code as annotation type BDIConfiguration is different :-(
-						
-						ConfigurationInfo configinfo = new ConfigurationInfo(configs[i].name());
-						confs.put(configs[i].name(), configinfo);
-						
-						configinfo.setSynchronous(configs[i].synchronous());
-//						configinfo.setPersistable(configs[i].persistable());
-						configinfo.setSuspend(configs[i].suspend());
-						
-						NameValue[] argvals = configs[i].arguments();
-						for(int j=0; j<argvals.length; j++)
-						{
-							configinfo.addArgument(new UnparsedExpression(argvals[j].name(), argvals[j].clazz().getName(), argvals[j].value(), null));
-						}
-						NameValue[] resvals = configs[i].results();
-						for(int j=0; j<resvals.length; j++)
-						{
-							configinfo.addResult(new UnparsedExpression(resvals[j].name(), resvals[j].clazz().getName(), resvals[j].value(), null));
-						}
-						
-//						ProvidedService[] provs = configs[i].providedservices();
-//						ProvidedServiceInfo[] psis = new ProvidedServiceInfo[provs.length];
-//						for(int j=0; j<provs.length; j++)
-//						{
-//							psis[j] = createProvidedServiceInfo(provs[j]);
-//							configinfo.setProvidedServices(psis);
-//						}
-//						
-//						RequiredService[] reqs = configs[i].requiredservices();
-//						RequiredServiceInfo[] rsis = new RequiredServiceInfo[reqs.length];
-//						for(int j=0; j<reqs.length; j++)
-//						{
-////							RequiredServiceBinding binding = createBinding(reqs[j].binding());
-//							RequiredServiceBinding binding = createBinding(reqs[j]);
-//							List<NFRPropertyInfo> nfprops = createNFRProperties(reqs[j].nfprops());
-//							rsis[j] = new RequiredServiceInfo(reqs[j].name(), reqs[j].type(), reqs[j].min(), reqs[j].max(), 
-//								binding, nfprops, Arrays.asList(reqs[j].tags()));
-//							configinfo.setRequiredServices(rsis);
-//						}
-						
-//						Component[] comps = configs[i].components();
-//						for(int j=0; j<comps.length; j++)
-//						{
-//							configinfo.addComponentInstance(createComponentInstanceInfo(comps[j]));
-//						}
-					}
 				}
 			}
 		}
@@ -1216,48 +1136,6 @@ public class BDIClassReader extends MicroClassReader
 		return ret;
 	}
 
-	/**
-	 *  Create config beliefs.
-	 */
-	protected List<MConfigBeliefElement> createConfigBeliefsList(NameValue[] values)
-	{
-		List<MConfigBeliefElement>  ret = null;
-		if(values.length>0)
-		{
-			ret = new ArrayList<MConfigBeliefElement>();
-			for(int i=0; i<values.length; i++)
-			{
-				MConfigBeliefElement	elm	= new MConfigBeliefElement();
-				elm.setFlatName(values[i].name());
-				elm.addFact(new UnparsedExpression(null, values[i].value()));
-				ret.add(elm);
-			}
-		}
-		return ret;
-	}
-	
-	/**
-	 *  Create config parameter elements.
-	 */
-	protected List<MConfigParameterElement> createConfigParamElementsList(NameValue[] values)
-	{
-		List<MConfigParameterElement>  ret = null;
-		if(values.length>0)
-		{
-			ret = new ArrayList<MConfigParameterElement>();
-			for(int i=0; i<values.length; i++)
-			{
-				String val = values[i].value();
-				String clname = values[i].clazz().equals(Object.class) ? null : values[i].clazz().getName();
-				String v = (val==null || val.length()==0) ? clname!=null? clname/*+".class"*/: null : val;
-				MConfigParameterElement	elm	= new MConfigParameterElement();
-				elm.setFlatRef(v==null ? values[i].name() : v);
-				ret.add(elm);
-			}
-		}
-		return ret;
-	}
-	
 //	/**
 //	 * 
 //	 */

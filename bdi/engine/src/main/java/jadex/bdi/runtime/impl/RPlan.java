@@ -11,7 +11,6 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.model.IBDIModel;
 import jadex.bdi.model.MBody;
 import jadex.bdi.model.MCapability;
-import jadex.bdi.model.MConfigParameterElement;
 import jadex.bdi.model.MGoal;
 import jadex.bdi.model.MInternalEvent;
 import jadex.bdi.model.MMessageEvent;
@@ -164,7 +163,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	 *  
 	 *  Reason is Object (not RProcessableElement) because it can be also ChangeEvent
 	 */
-	public static RPlan createRPlan(MPlan mplan, ICandidateInfo candidate, Object reason, Map<String, Object> binding, MConfigParameterElement config)
+	public static RPlan createRPlan(MPlan mplan, ICandidateInfo candidate, Object reason, Map<String, Object> binding)
 	{
 		// Find parameter mappings for xml agents
 		Map<String, Object> mappingvals = binding;
@@ -217,7 +216,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			}
 		}
 		
-		final RPlan rplan = new RPlan(mplan, candidate, reason, mappingvals, config); //mappingvals==null? new RPlan(mplan, candidate, ia): 
+		final RPlan rplan = new RPlan(mplan, candidate, reason, mappingvals); //mappingvals==null? new RPlan(mplan, candidate, ia): 
 //		rplan.setInternalAccess(ia);
 		rplan.setDispatchedElement(reason);
 		
@@ -402,23 +401,23 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	/**
 	 *  Create a new plan.
 	 */
-	public RPlan(MPlan mplan, ICandidateInfo candidate, Object reason, Map<String, Object> mappingvals, MConfigParameterElement config)
+	public RPlan(MPlan mplan, ICandidateInfo candidate, Object reason, Map<String, Object> mappingvals)
 	{
-		super(mplan, mappingvals, config);
+		super(mplan, mappingvals);
 		this.candidate = candidate;
 		this.reason = reason;
 		setLifecycleState(PlanLifecycleState.NEW);
 		setProcessingState(PlanProcessingState.READY);
 		
 		// Tricky, requires reason to be set before initing parameters.
-		super.initParameters(mappingvals, config);
+		super.initParameters(mappingvals);
 	}
 	
 	/**
 	 *  Create the parameters from model spec.
 	 */
 	@Override
-	public void initParameters(Map<String, Object> vals, MConfigParameterElement config)
+	public void initParameters(Map<String, Object> vals)
 	{
 		// do nothing in super constructor init 
 	}
@@ -1131,7 +1130,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		final MGoal mgoal = bdim.getCapability().getGoal(goal.getClass().getName());
 		if(mgoal==null)
 			throw new RuntimeException("Unknown goal type: "+goal);
-		final RGoal rgoal = new RGoal(mgoal, goal, null, null, null, null);
+		final RGoal rgoal = new RGoal(mgoal, goal, null, null, null);
 		rgoal.setParent(this);
 		
 		final ResumeCommand<E> rescom = new ResumeCommand<E>(ret, false);

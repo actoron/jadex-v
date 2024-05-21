@@ -1156,14 +1156,14 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 									{
 										for(Map<String, Object> binding: bindings)
 										{
-											RGoal rgoal = new RGoal(mgoal, null, null, binding, null, null);
+											RGoal rgoal = new RGoal(mgoal, null, null, binding, null);
 											dispatchTopLevelGoal(rgoal).addResultListener(goallis);
 										}
 									}
 									// No binding: generate one candidate.
 									else
 									{
-										RGoal rgoal = new RGoal(mgoal, null, null, null, null, null);
+										RGoal rgoal = new RGoal(mgoal, null, null, null, null);
 										dispatchTopLevelGoal(rgoal).addResultListener(goallis);
 									}
 									
@@ -1541,7 +1541,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 								for(ICandidateInfo ci: result)
 								{
 //									System.out.println("Create plan 1: "+mplan);
-									RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null), new ChangeEvent<Object>(event), ((MPlanInfo)ci.getRawCandidate()).getBinding(), null);
+									RPlan rplan = RPlan.createRPlan(mplan, new CandidateInfoMPlan(new MPlanInfo(mplan, null), null), new ChangeEvent<Object>(event), ((MPlanInfo)ci.getRawCandidate()).getBinding());
 //									System.out.println("Create plan 2: "+mplan);
 									rplan.executePlan();
 								}

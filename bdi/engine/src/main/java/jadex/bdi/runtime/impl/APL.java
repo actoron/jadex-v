@@ -127,7 +127,7 @@ public class APL
 									MCapability	mcapa = (MCapability)IInternalBDIAgentFeature.get().getCapability().getModelElement();
 									MPlan mplan = mcapa.getPlan(cand.getClass().getName());
 									CandidateInfoPojoPlan ci = new CandidateInfoPojoPlan(cand, element);
-									RPlan rplan = RPlan.createRPlan(mplan, ci, element, null, null);
+									RPlan rplan = RPlan.createRPlan(mplan, ci, element, null);
 									ci.rplan = rplan;
 									
 									candidates.add(ci);
@@ -516,7 +516,7 @@ public class APL
 				Object pojo = null;
 				if(!Modifier.isStatic(m.getModifiers()))
 				{
-					RPlan rp = RPlan.createRPlan(mplan, cand, element, mplaninfo.getBinding(), null);
+					RPlan rp = RPlan.createRPlan(mplan, cand, element, mplaninfo.getBinding());
 					pojo = rp.getBody().getBody();
 				}
 				
@@ -1065,7 +1065,7 @@ public class APL
 //				System.out.println("access");
 			
 			if(rplan==null)
-				rplan = RPlan.createRPlan((MPlan)getModelElement(), this, element, mplaninfo.getBinding(), null);
+				rplan = RPlan.createRPlan((MPlan)getModelElement(), this, element, mplaninfo.getBinding());
 			return rplan;
 		}
 
@@ -1154,7 +1154,7 @@ public class APL
 //				System.out.println("access: "+this);
 			
 			if(rplan==null)
-				rplan = RPlan.createRPlan((MPlan)getModelElement(), this, element, null, null);
+				rplan = RPlan.createRPlan((MPlan)getModelElement(), this, element, null);
 			return rplan;
 		}
 
@@ -1240,7 +1240,7 @@ public class APL
 			RProcessableElement pae = (RProcessableElement)element;
 			RGoal pagoal = pae instanceof RGoal? (RGoal)pae: null;
 			Object pgoal = mgoalinfo.getMGoal().createPojoInstance(pagoal);
-			rgoal = new RGoal(mgoalinfo.getMGoal(), pgoal, pagoal, mgoalinfo.getBinding(), null, this);
+			rgoal = new RGoal(mgoalinfo.getMGoal(), pgoal, pagoal, mgoalinfo.getBinding(), this);
 			return rgoal;
 		}
 
