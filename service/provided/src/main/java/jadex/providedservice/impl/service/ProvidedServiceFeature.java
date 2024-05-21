@@ -1174,7 +1174,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 		Collection<String> ret = new ArrayList<String>();
 		IModelFeature mf = component.getFeature(IModelFeature.class);
 		
-		for(String tag: tags)
+		for(String tag: SUtil.notNull(tags))
 		{
 			try
 			{
