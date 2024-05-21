@@ -161,7 +161,7 @@ public class CleanerBDIAgentD3b
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		@GoalTargetCondition
+		@GoalTargetCondition(beliefs={"self", "wastes"})
 		boolean	isClean()
 		{
 			// Test if the waste is not believed to be in the environment

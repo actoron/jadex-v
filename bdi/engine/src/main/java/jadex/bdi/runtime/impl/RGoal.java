@@ -165,6 +165,7 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	 */
 	public void doSetLifecycleState(GoalLifecycleState lifecyclestate)
 	{
+//		System.out.println("lfclstate: "+getId()+", "+lifecyclestate);
 		this.lifecyclestate = lifecyclestate;
 //		if(GoalLifecycleState.ADOPTED.equals(lifecyclestate))
 //		{
