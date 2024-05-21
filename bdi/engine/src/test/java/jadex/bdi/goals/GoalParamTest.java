@@ -1,4 +1,4 @@
-package jadex.bdi.beliefs;
+package jadex.bdi.goals;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
