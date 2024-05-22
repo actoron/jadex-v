@@ -11,12 +11,14 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
+import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.IBDIAgentFeature;
+import jadex.bdi.runtime.IGoal;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
 import jadex.future.DelegationResultListener;
@@ -243,9 +245,19 @@ public class SokratesV3Agent
 		public void passed()
 		{
 			depth--;
-			print("Succeeded "+move, depth);
+			print("Passed "+move, depth);
 		}
-		
+
+		/**
+		 *  The plan passed code.
+		 */
+		@PlanAborted
+		public void aborted(IGoal goal)
+		{
+			depth--;
+			print((goal.isSucceeded()?"Succeeded ":"Aborted ")+move, depth);
+		}
+
 		@Override
 		public String toString()
 		{
