@@ -24,6 +24,7 @@ import jadex.providedservice.annotation.Tag;
 @Tag("hello") 
 @Tag("$cid") 
 @Tag("$host") 
+@Tag("null") 
 public interface ITestService
 {
 	/**

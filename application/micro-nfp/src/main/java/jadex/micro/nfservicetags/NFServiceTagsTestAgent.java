@@ -78,11 +78,11 @@ public class NFServiceTagsTestAgent //extends JunitAgentTest
 		{
 			agent.getFeature(IRequiredServiceFeature.class).getService("testser3").get();
 			//tr3.setReason("Found service that does not have the tag");
-			System.out.println("Succeeded: "+tstname);
+			System.out.println("Failed: "+tstname);
 		}
 		catch(Exception e)
 		{
-			System.out.println("Failed: "+tstname);
+			System.out.println("Succeeded: "+tstname);
 			//tr3.setSucceeded(true);
 		}
 		//results.add(tr3);
@@ -91,7 +91,7 @@ public class NFServiceTagsTestAgent //extends JunitAgentTest
 		tstname = "Test if can find service via getServices()";
 		//try
 		//{
-			Collection<ITestService> sers = agent.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>(ITestService.class, ServiceScope.VM).setServiceTags(new String[]{"$host"}, agent));
+			Collection<ITestService> sers = agent.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>(ITestService.class, ServiceScope.VM).setServiceTags(new String[]{"horst"}, agent));
 			if(sers.isEmpty())
 			{
 				System.out.println("Succeeded: "+tstname);
@@ -99,7 +99,7 @@ public class NFServiceTagsTestAgent //extends JunitAgentTest
 			}
 			else
 			{
-				System.out.println("Failed: "+tstname);
+				System.out.println("Failed: "+tstname+sers);
 				//tr4.setSucceeded(true);
 			}
 		/*}
@@ -128,7 +128,7 @@ public class NFServiceTagsTestAgent //extends JunitAgentTest
 		//TestReport tr6 = new TestReport("#6", "Test if can find null tagged service service via SServiceProvider.getService()");
 		try
 		{
-			agent.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>(ITestService.class).setServiceTags(new String[]{null}, agent)); 
+			agent.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>(ITestService.class).setServiceTags(new String[]{"null"}, agent)); 
 			System.out.println("Succeeded: "+tstname);
 			//tr6.setSucceeded(true);
 		}

@@ -372,7 +372,7 @@ public class ServiceQuery<T>
 	public ServiceQuery<T> setServiceTags(String[] servicetags, IComponent component)
 	{
 		//this.servicetags = TagFilter.createRuntimeTags(servicetags).toArray(new String[servicetags!=null ? servicetags.length : 0]);
-		ProvidedServiceFeature.evaluateTags(component,  Arrays.asList(servicetags));
+		this.servicetags = ProvidedServiceFeature.evaluateTags(component,  Arrays.asList(servicetags)).toArray(new String[0]);
 		return this;
 	}
 
