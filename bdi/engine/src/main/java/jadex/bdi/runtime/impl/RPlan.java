@@ -919,17 +919,20 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	//					}
 	//				});
 				}
-				else
-				{
-					// happens with state=RUNNING ?!
+//				else
+//				{
+//					// happens with state=RUNNING ?!
 //					System.out.println("plan abort: not performing abort due to plan state: "+getProcessingState());
-				}
-	//			// Can be currently executing and being abort due to e.g. goal condition triggering
-	//			else if(PlanProcessingState.RUNNING.equals(getProcessingState()))
-	//			{
-					// it will detect the abort in beforeBlock() when next future.get() is
+//				}
+				// Can be currently executing and being abort due to e.g. goal condition triggering
+				else if(PlanProcessingState.RUNNING.equals(getProcessingState()))
+				{
+					// abort immediately
+					throw new StepAborted();
+					
+					// if not immediately it will detect the abort in beforeBlock() when next future.get() is
 					// called and will avoid the next wait
-	//			}
+				}
 	//			else if(!PlanLifecycleState.NEW.equals(getLifecycleState()))
 	//			{
 	//				System.out.println("Cannot abort plan: "+getId()+" "+getProcessingState()+" "+getLifecycleState());

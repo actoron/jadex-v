@@ -380,10 +380,11 @@ public class RuleSystem
 						// Simulate microplansteps by executing all effects immediately (hack: allow configuration sync/async)
 						FutureHelper.notifyStackedListeners();
 
-						if(!ret.isDone())
-						{
-							System.err.println("WARNING: Asyncronous rule execution.");
-						}
+						// Happens on exception, e.g. StepAborted
+//						if(!ret.isDone())
+//						{
+//							System.err.println("WARNING: Asyncronous rule execution.");
+//						}
 					}
 				}
 			}

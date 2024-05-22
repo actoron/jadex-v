@@ -524,7 +524,7 @@ public class APL
 				{
 					SAccess.setAccessible(m, true);
 					
-					Object[] params = BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(), element.getModelElement(), null, null, element);
+					Object[] params = BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(), element!=null ? element.getModelElement(): null, null, null, element);
 					if(params==null)
 						System.out.println("Invalid parameter assignment");
 					Boolean val = (Boolean)m.invoke(pojo, params);
