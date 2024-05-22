@@ -925,9 +925,9 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 //					System.out.println("plan abort: not performing abort due to plan state: "+getProcessingState());
 //				}
 				// Can be currently executing and being abort due to e.g. goal condition triggering
-				else if(PlanProcessingState.RUNNING.equals(getProcessingState()))
+				else if(!atomic && PlanProcessingState.RUNNING.equals(getProcessingState()))
 				{
-					// abort immediately
+					// abort immediately when not atomic
 					throw new StepAborted();
 					
 					// if not immediately it will detect the abort in beforeBlock() when next future.get() is
@@ -1827,21 +1827,22 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 	}
 	
 	/**
-	 *  Get the atomic.
-	 *  @return The atomic
+	 *  When in atomic mode, plans will not be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
 	 */
-	public boolean isAtomic()
+	@Override
+	public void startAtomic()
 	{
-		return atomic;
+		this.atomic	= true;
 	}
 
 	/**
-	 *  The atomic to set.
-	 *  @param atomic The atomic to set
+	 *  When not atomic mode, plans will be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
 	 */
-	public void setAtomic(boolean atomic)
+	@Override
+	public void endAtomic()
 	{
-		this.atomic = atomic;
+		this.atomic	= false;
+		testBodyAborted();
 	}
 
 //	/**

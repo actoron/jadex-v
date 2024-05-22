@@ -133,4 +133,13 @@ public interface IPlan extends IParameterElement, IFinishableElement<Object>  //
 //	 */
 //	public <T> IFuture<T> invokeInterruptable(IResultCommand<IFuture<T>, Void> command);
 
+	/**
+	 *  When in atomic mode, plans will not be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
+	 */
+	public void startAtomic();
+
+	/**
+	 *  When bot atomic mode, plans will be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
+	 */
+	public void endAtomic();
 }

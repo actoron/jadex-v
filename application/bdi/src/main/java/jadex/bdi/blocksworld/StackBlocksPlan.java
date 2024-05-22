@@ -37,8 +37,8 @@ public class StackBlocksPlan
 	{
 		// Clear blocks.
 		
-//		try
-//		{
+		try
+		{
 //		System.out.println(getClass().getName()+" "+getBlock()+" "+getTarget());
 		
 		ClearGoal clear = capa.new ClearGoal(getBlock());
@@ -66,14 +66,14 @@ public class StackBlocksPlan
 
 		// This operation has to be performed atomic,
 		// because it fires bean changes on several affected blocks. 
-//		startAtomic();
+		rplan.startAtomic();
 		getBlock().stackOn(getTarget());
-//		endAtomic();
-//		}
-//		catch(Exception e)
-//		{
-//			e.printStackTrace();
-//		}
+		rplan.endAtomic();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	/**

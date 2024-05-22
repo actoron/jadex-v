@@ -37,6 +37,7 @@ public class PlanConditionTest
 
 		Future<String>	prefut	= new Future<>();
 		Future<String>	contextfut	= new Future<>();
+		Future<String>	atomicfut	= new Future<>();
 		
 		@Plan(trigger=@Trigger(factadded="trigger"))
 		class PrePlan1
@@ -83,6 +84,32 @@ public class PlanConditionTest
 			void body(IPlan plan)
 			{
 				bel.set(false);
+				contextfut.setException(new RuntimeException("not aborted"));
+			}
+			
+			@PlanAborted
+			void aborted()
+			{
+				contextfut.setResultIfUndone("aborted");				
+			}
+		}
+		
+		@Plan(trigger=@Trigger(factadded="trigger"))
+		class AtomicPlan
+		{
+			@PlanContextCondition(beliefs="bel")
+			boolean context()
+			{
+				return bel.get();
+			}
+			
+			@PlanBody
+			void body(IPlan plan)
+			{
+				plan.startAtomic();
+				bel.set(false);
+				atomicfut.setResultIfUndone("not aborted");
+				plan.endAtomic();
 			}
 			
 			@PlanAborted
@@ -123,6 +150,17 @@ public class PlanConditionTest
 		PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
 		IExternalAccess	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.trigger.add("go"));
+		assertEquals("aborted", pojo.contextfut.get(1000));
+	}
+
+	
+	@Test
+	void testAtomicPlan()
+	{
+		PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
+		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		agent.scheduleStep(() -> pojo.trigger.add("go"));
+		assertEquals("not aborted", pojo.atomicfut.get(1000));
 		assertEquals("aborted", pojo.contextfut.get(1000));
 	}
 }
