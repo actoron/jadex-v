@@ -1624,7 +1624,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 			m.setTo(info.getMax());
 		
 		if(info.getTags()!=null)
-			ret.setServiceTags(info.getTags().toArray(new String[info.getTags().size()]));//, ia.getExternalAccess());
+			ret.setServiceTags(info.getTags().toArray(new String[info.getTags().size()]), ia);
 		
 		return ret;
 	}

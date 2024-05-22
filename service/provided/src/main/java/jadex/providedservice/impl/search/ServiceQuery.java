@@ -11,9 +11,11 @@ import jadex.common.ClassInfo;
 import jadex.common.SUtil;
 import jadex.common.Tuple3;
 import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
+import jadex.providedservice.impl.service.ProvidedServiceFeature;
 
 /**
  *  Service query definition. T is the return type for search methods.
@@ -367,9 +369,10 @@ public class ServiceQuery<T>
 	 *  
 	 *  todo: move or refactor to hide complexity!?
 	 */
-	public ServiceQuery<T> setServiceTags(String[] servicetags)//, IExternalAccess component)
+	public ServiceQuery<T> setServiceTags(String[] servicetags, IComponent component)
 	{
-		this.servicetags = TagFilter.createRuntimeTags(servicetags).toArray(new String[servicetags!=null ? servicetags.length : 0]);
+		//this.servicetags = TagFilter.createRuntimeTags(servicetags).toArray(new String[servicetags!=null ? servicetags.length : 0]);
+		ProvidedServiceFeature.evaluateTags(component,  Arrays.asList(servicetags));
 		return this;
 	}
 

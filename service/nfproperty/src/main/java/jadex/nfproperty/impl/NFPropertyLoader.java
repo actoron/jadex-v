@@ -3,14 +3,11 @@ package jadex.nfproperty.impl;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
-import jadex.common.UnparsedExpression;
 import jadex.core.impl.ComponentManager;
 import jadex.micro.MicroClassReader;
 import jadex.model.annotation.NameValue;
@@ -19,16 +16,12 @@ import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
 import jadex.nfproperty.annotation.SNameValue;
 import jadex.nfproperty.impl.modelinfo.NFPropertyInfo;
-import jadex.nfproperty.sensor.service.TagProperty;
 import jadex.providedservice.IProvidedServiceFeature;
-import jadex.providedservice.annotation.Tag;
-import jadex.providedservice.annotation.Tags;
 import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.ProvidedServiceImplementation;
 import jadex.providedservice.impl.service.ProvidedServiceInfo;
 import jadex.providedservice.impl.service.ProvidedServiceModel;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.requiredservice.RequiredServiceInfo;
 import jadex.requiredservice.impl.RequiredServiceModel;
 
 public class NFPropertyLoader 
@@ -39,7 +32,7 @@ public class NFPropertyLoader
 		
 		NFPropertyModel model = new NFPropertyModel();
 		boolean done = false;
-		boolean tagsdone = false;
+		//boolean tagsdone = false;
 		
 		while(cma!=null && !cma.equals(Object.class))
 		{
@@ -56,7 +49,7 @@ public class NFPropertyLoader
 			}
 			
 			// Take all, upper replace lower
-			if(!tagsdone && MicroClassReader.isAnnotationPresent(cma, Tags.class, cl))
+			/*if(!tagsdone && MicroClassReader.isAnnotationPresent(cma, Tags.class, cl))
 			{
 				Tags tags = (Tags)MicroClassReader.getAnnotation(cma, Tags.class, cl);
 				
@@ -65,7 +58,7 @@ public class NFPropertyLoader
 				
 				// todo!
 //				tagsdone = val.replace();
-			}
+			}*/
 			
 			cma = cma.getSuperclass();
 		}
@@ -139,7 +132,7 @@ public class NFPropertyLoader
 		return ret;
 	}
 	
-	public static NFPropertyInfo createNFPropertyInfo(Tags tags)
+	/*public static NFPropertyInfo createNFPropertyInfo(Tags tags)
 	{		
 		List<UnparsedExpression> params = new ArrayList<>();
 //		if(val.argumentname().length()>0)
@@ -159,7 +152,7 @@ public class NFPropertyLoader
 		NFPropertyInfo nfp = new NFPropertyInfo(TagProperty.NAME, new ClassInfo(TagProperty.class), params);
 		
 		return nfp;
-	}
+	}*/
 	
 	public static Map<MethodInfo, List<NFPropertyInfo>> createProvidedNFProperties(Class<?> impltype, Class<?> sertype)
 	{
@@ -191,11 +184,11 @@ public class NFPropertyLoader
 				nfps.forEach(nfp -> serprops.add(nfp));
 			}
 			
-			if(sclazz.isAnnotationPresent(Tags.class))
+			/*if(sclazz.isAnnotationPresent(Tags.class))
 			{
 				NFPropertyInfo nfp = createNFPropertyInfo(sclazz.getAnnotation(Tags.class));
 				serprops.add(nfp);
-			}
+			}*/
 			
 			Method[] methods = sclazz.getMethods();
 			for(Method m : methods)

@@ -21,7 +21,7 @@ import jadex.requiredservice.annotation.RequiredServices;
 @Service
 @RequiredServices({
 	@RequiredService(name="testser1", type=ITestService.class),
-	@RequiredService(name="testser2", type=ITestService.class, tags=TagProperty.HOST_NAME),
+	@RequiredService(name="testser2", type=ITestService.class, tags="$host"),
 	@RequiredService(name="testser3", type=ITestService.class, tags="blatag")
 })
 //@ComponentTypes(@ComponentType(name="provider", filename="jadex.micro.testcases.nfservicetags.ProviderAgent.class"))
@@ -91,7 +91,7 @@ public class NFServiceTagsTestAgent //extends JunitAgentTest
 		tstname = "Test if can find service via getServices()";
 		//try
 		//{
-			Collection<ITestService> sers = agent.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>(ITestService.class, ServiceScope.VM).setServiceTags(new String[]{TagProperty.HOST_NAME}));
+			Collection<ITestService> sers = agent.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>(ITestService.class, ServiceScope.VM).setServiceTags(new String[]{"$host"}, agent));
 			if(sers.isEmpty())
 			{
 				System.out.println("Succeeded: "+tstname);
@@ -113,7 +113,7 @@ public class NFServiceTagsTestAgent //extends JunitAgentTest
 		tstname = "Test if can find service via getService()";
 		try
 		{
-			agent.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>(ITestService.class).setServiceTags(new String[]{TagProperty.HOST_NAME})); 
+			agent.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>(ITestService.class).setServiceTags(new String[]{"$host"}, agent)); 
 			//tr5.setSucceeded(true);
 			System.out.println("Succeeded: "+tstname);
 		}
@@ -128,7 +128,7 @@ public class NFServiceTagsTestAgent //extends JunitAgentTest
 		//TestReport tr6 = new TestReport("#6", "Test if can find null tagged service service via SServiceProvider.getService()");
 		try
 		{
-			agent.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>(ITestService.class).setServiceTags(new String[]{null})); 
+			agent.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>(ITestService.class).setServiceTags(new String[]{null}, agent)); 
 			System.out.println("Succeeded: "+tstname);
 			//tr6.setSucceeded(true);
 		}
@@ -146,7 +146,7 @@ public class NFServiceTagsTestAgent //extends JunitAgentTest
 	
 	public static void main(String[] args) 
 	{
-		IComponent.create(new ProviderAgent(TagProperty.HOST_NAME, null)).get();
+		IComponent.create(new ProviderAgent("$host", null)).get();
 		IComponent.create(new NFServiceTagsTestAgent()).get();
 		IComponent.waitForLastComponentTerminated();
 	}
