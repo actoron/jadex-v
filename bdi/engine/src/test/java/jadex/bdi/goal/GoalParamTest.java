@@ -1,4 +1,4 @@
-package jadex.bdi.goals;
+package jadex.bdi.goal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -94,7 +94,7 @@ public class GoalParamTest
 	}
 	
 	@Test
-	public void testValparam()
+	public void testValParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -112,7 +112,7 @@ public class GoalParamTest
 	}
 
 	@Test
-	public void testBeanparam()
+	public void testBeanParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -130,7 +130,7 @@ public class GoalParamTest
 	}
 
 	@Test
-	public void testListparam()
+	public void testListParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -157,7 +157,7 @@ public class GoalParamTest
 	}
 
 	@Test
-	public void testSetparam()
+	public void testSetParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -180,7 +180,7 @@ public class GoalParamTest
 	}
 	
 	@Test
-	public void testMapparam()
+	public void testMapParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -207,7 +207,7 @@ public class GoalParamTest
 	}
 
 //	@Test
-//	public void testDynamicparam()
+//	public void testDynamicParam()
 //	{
 //		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 //		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -240,7 +240,7 @@ public class GoalParamTest
 //	}
 //	
 //	@Test
-//	public void testUpdaterateparam()
+//	public void testUpdaterateParam()
 //	{
 //		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 //		IExternalAccess	exta	= IBDIAgent.create(pojo);
