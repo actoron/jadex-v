@@ -44,15 +44,15 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	public static final String SERVICE_PROPERTY_NAME = "__service_tags__";
 	
 	/** The host name tag. */
-	private static final String HOST_NAME_INTERNAL = "host_name";
-	public static final String HOST_NAME = "\""+HOST_NAME_INTERNAL+"\"";
+	private static final String HOST_INTERNAL = "$host";
+	public static final String HOST = "\""+HOST_INTERNAL+"\"";
 	
 	/** The pid tag. */
-	private static final String PID_INTERNAL = "pid";
+	private static final String PID_INTERNAL = "$pid";
 	public static final String PID = "\""+PID_INTERNAL+"\"";
 	
 	/** The app id tag. */
-	private static final String APPID_INTERNAL = "appid";
+	private static final String APPID_INTERNAL = "$appid";
 	public static final String APPID = "\""+APPID_INTERNAL+"\"";
 	
 	///** The Jadex version tag. */
@@ -231,7 +231,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 		for(int i=0; i<tags.size(); i++)
 		{
 			String tag = it.next();
-			if(HOST_NAME_INTERNAL.equals(tag) || HOST_NAME.equals(tag))
+			if(HOST_INTERNAL.equals(tag) || HOST.equals(tag))
 			{
 				tag = component.getId().getGlobalProcessIdentifier().host();
 			}
@@ -268,7 +268,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	 */
 	public static void checkReservedTag(String tag)
 	{
-		if(HOST_NAME_INTERNAL.equals(tag) || HOST_NAME.equals(tag)
+		if(HOST_INTERNAL.equals(tag) || HOST.equals(tag)
 			|| PID_INTERNAL.equals(tag) || PID.equals(tag) 
 			|| APPID_INTERNAL.equals(tag) || APPID.equals(tag)
 		)

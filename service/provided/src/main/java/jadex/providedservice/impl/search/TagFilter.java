@@ -12,6 +12,7 @@ import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.model.IAsyncFilter;
+import jadex.providedservice.impl.service.ProvidedServiceFeature;
 
 /**
  *  Tag filter class. Allows for filtering according to a collection of tags.
@@ -62,7 +63,7 @@ public class TagFilter<T> implements IAsyncFilter<T>
 	public TagFilter(IComponent component, Collection<String> tags)
 	{
 		this.component = component;
-		this.tags = createRuntimeTags(tags);//, component);
+		this.tags = ProvidedServiceFeature.evaluateTags(component, tags);
 	}
 
 	/**
@@ -123,13 +124,13 @@ public class TagFilter<T> implements IAsyncFilter<T>
 	
 	/**
 	 *  Create a collection of tags and replace the variable values.
-	 */
+	 * /
 	public static Collection<String> createRuntimeTags(Object vals)
 	{
 		Collection<String> tags = convertToCollection(vals);
 		Iterator<String> it = tags.iterator();
 		List<String> ret = new ArrayList<String>();
-		for(int i=0; i<tags.size(); i++)
+		for(int i=0; i<tags.size(); i++)jn,j
 		{
 			String tag = it.next();
 			/*if(PLATFORM_NAME_INTERNAL.equals(tag) || PLATFORM_NAME.equals(tag))
@@ -139,11 +140,11 @@ public class TagFilter<T> implements IAsyncFilter<T>
 			else if(JADEX_VERSION_INTERNAL.equals(tag) || JADEX_VERSION.equals(tag))
 			{
 				tag = VersionInfo.getInstance().getVersion();
-			}*/
+			}* /
 			ret.add(tag);
 		}
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Convert user defined tag(s) to collection.

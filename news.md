@@ -4,10 +4,22 @@ Here are the latest news about our project:
 
 | Date of News | News Title                                            |
 |--------------|-------------------------------------------------------|
+| [2024-05-22](#2024-05-22) | Added service tagging |
 | [2024-04-12](#2024-04-12) | Added IComponent.run() |
 | [2024-04-05](#2024-04-05) | News site available |
 | [2024-04-04](#2024-04-04) | Readme site available |
 | [2024-03-19](#2024-03-19) | Alpha on Maven Central |
+
+---
+
+#### 2024-05-22
+### Added service tagging
+
+Service tags have been supported via nf-properties in Jadex 4.
+Tag support has now been simplified and moved to the provided service feature.
+One can simply use the Tag("val") annotation to tag a service interface.
+One can also use the tags for searching a service either via setServiceTags()
+method on a ServiceQuery or via a RequiredService definition.
 
 ---
 

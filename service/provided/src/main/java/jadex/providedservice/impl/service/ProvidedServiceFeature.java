@@ -1169,7 +1169,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 		return ret;
 	}
 	
-	protected static Collection<String> evaluateTags(IComponent component, Collection<String> tags)
+	public static Collection<String> evaluateTags(IComponent component, Collection<String> tags)
 	{
 		Collection<String> ret = new ArrayList<String>();
 		IModelFeature mf = component.getFeature(IModelFeature.class);
@@ -1178,8 +1178,8 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 		{
 			try
 			{
-				String ptag = (String)SJavaParser.evaluateExpression(tag, mf.getModel().getAllImports(), mf.getFetcher(), ComponentManager.get().getClassLoader());
-				ret.add(ptag);
+				Object ptag = SJavaParser.evaluateExpression(tag, mf.getModel().getAllImports(), mf.getFetcher(), ComponentManager.get().getClassLoader());
+				ret.add(""+ptag);
 			}
 			catch(Exception e)
 			{
