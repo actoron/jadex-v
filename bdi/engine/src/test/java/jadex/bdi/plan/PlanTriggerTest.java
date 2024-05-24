@@ -55,8 +55,7 @@ public class PlanTriggerTest
 		void changedPlan(IPlan plan)
 		{
 			ChangeEvent<?>	event	= (ChangeEvent<?>)plan.getReason();
-			
-			// TODO: check also for initial and subsequent beliefchanged events?
+			// Ignore initial "beliefchanged" event
 			if("factchanged".equals(event.getType()))
 			{
 				changed.setResult(event);
@@ -100,10 +99,7 @@ public class PlanTriggerTest
 		{
 			pojo.bel.add("old fact");
 			pojo.bel.set(0, "new fact");
-		});
-		
-		// TODO 
-//		checkEventInfo(pojo.changed1, "bel", "beliefchanged", null, Arrays.asList(new String[]{"new fact"}), null);
+		});		
 		checkEventInfo(pojo.changed, "bel", "factchanged", "old fact", "new fact", 0);
 	}
 
