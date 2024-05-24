@@ -1,4 +1,4 @@
-package jadex.bdi.goals;
+package jadex.bdi.goal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.runtime.IBDIAgent;
@@ -94,7 +95,7 @@ public class GoalParamTest
 	}
 	
 	@Test
-	public void testValparam()
+	public void testValParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -112,7 +113,7 @@ public class GoalParamTest
 	}
 
 	@Test
-	public void testBeanparam()
+	public void testBeanParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -130,7 +131,7 @@ public class GoalParamTest
 	}
 
 	@Test
-	public void testListparam()
+	public void testListParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -157,7 +158,7 @@ public class GoalParamTest
 	}
 
 	@Test
-	public void testSetparam()
+	public void testSetParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -180,7 +181,7 @@ public class GoalParamTest
 	}
 	
 	@Test
-	public void testMapparam()
+	public void testMapParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -207,7 +208,7 @@ public class GoalParamTest
 	}
 
 //	@Test
-//	public void testDynamicparam()
+//	public void testDynamicParam()
 //	{
 //		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 //		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -233,14 +234,14 @@ public class GoalParamTest
 //			}
 //		});
 //		
-//		assertEquals(2, firstfut.get(1000));
-//		assertEquals(3, secondfut.get(1000));
-//		assertThrows(IllegalStateException.class, ()->exfut.get(1000));
+//		assertEquals(2, firstfut.get(TestHelper.TIMEOUT));
+//		assertEquals(3, secondfut.get(TestHelper.TIMEOUT));
+//		assertThrows(IllegalStateException.class, ()->exfut.get(TestHelper.TIMEOUT));
 //		checkEventInfo(changedfut, 2, 3, null);
 //	}
 //	
 //	@Test
-//	public void testUpdaterateparam()
+//	public void testUpdaterateParam()
 //	{
 //		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
 //		IExternalAccess	exta	= IBDIAgent.create(pojo);
@@ -259,9 +260,9 @@ public class GoalParamTest
 //			thirdfut.setResult(pojo.updateparam.get());
 //		});
 //		
-//		assertEquals(firstfut.get(1000), secondfut.get(1000));
-//		assertNotEquals(firstfut.get(1000), thirdfut.get(2000));
-//		changedfut.get(1000);	// Check if event was generated
+//		assertEquals(firstfut.get(TestHelper.TIMEOUT), secondfut.get(TestHelper.TIMEOUT));
+//		assertNotEquals(firstfut.get(TestHelper.TIMEOUT), thirdfut.get(2000));
+//		changedfut.get(TestHelper.TIMEOUT);	// Check if event was generated
 //	}
 
 	//-------- helper methods --------
@@ -286,7 +287,7 @@ public class GoalParamTest
 	 */
 	public static void checkEventInfo(Future<IEvent> fut, Object oldval, Object newval, Object info)
 	{
-		IEvent	event	= fut.get(1000);
+		IEvent	event	= fut.get(TestHelper.TIMEOUT);
 		@SuppressWarnings("unchecked")
 		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
 		assertEquals(oldval, ci.getOldValue(), "old value");

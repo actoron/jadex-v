@@ -381,10 +381,10 @@ public class RuleSystem
 						FutureHelper.notifyStackedListeners();
 
 						// Happens on exception, e.g. StepAborted
-//						if(!ret.isDone())
-//						{
-//							System.err.println("WARNING: Asyncronous rule execution.");
-//						}
+						if(!ret.isDone())
+						{
+							System.err.println("WARNING: Asyncronous rule execution.");
+						}
 					}
 				}
 			}

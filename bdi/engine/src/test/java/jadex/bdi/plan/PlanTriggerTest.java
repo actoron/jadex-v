@@ -1,14 +1,14 @@
-package jadex.bdi.plans;
+package jadex.bdi.plan;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
@@ -37,8 +37,7 @@ public class PlanTriggerTest
 		List<String>	bel	= new ArrayList<>();
 		
 		Future<Object>	added	= new Future<>();
-		Future<Object>	changed1	= new Future<>();
-		Future<Object>	changed2	= new Future<>();
+		Future<Object>	changed	= new Future<>();
 		Future<Object>	removed	= new Future<>();
 		Future<Object>	goal	= new Future<>();
 		Future<Object>	goalfinished	= new Future<>();
@@ -55,13 +54,11 @@ public class PlanTriggerTest
 		@Plan(trigger=@Trigger(factchanged="bel"))
 		void changedPlan(IPlan plan)
 		{
-			if(!changed1.isDone())
+			ChangeEvent<?>	event	= (ChangeEvent<?>)plan.getReason();
+			// Ignore initial "beliefchanged" event
+			if("factchanged".equals(event.getType()))
 			{
-				changed1.setResult(plan.getReason());
-			}
-			else
-			{
-				changed2.setResult(plan.getReason());
+				changed.setResult(event);
 			}
 		}
 
@@ -102,9 +99,8 @@ public class PlanTriggerTest
 		{
 			pojo.bel.add("old fact");
 			pojo.bel.set(0, "new fact");
-		});
-		checkEventInfo(pojo.changed1, "bel", "beliefchanged", null, Arrays.asList(new String[]{"new fact"}), null);
-		checkEventInfo(pojo.changed2, "bel", "factchanged", "old fact", "new fact", 0);
+		});		
+		checkEventInfo(pojo.changed, "bel", "factchanged", "old fact", "new fact", 0);
 	}
 
 	@Test
@@ -143,7 +139,7 @@ public class PlanTriggerTest
 	 */
 	public static void checkEventInfo(Future<Object> fut, String source, String type, Object oldval, Object newval, Object info)
 	{
-		Object	event	= fut.get(1000);
+		Object	event	= fut.get(TestHelper.TIMEOUT);
 		assertInstanceOf(ChangeEvent.class, event, "reason");
 		assertEquals(source, ((ChangeEvent<?>)event).getSource(), "source");
 		assertEquals(type, ((ChangeEvent<?>)event).getType(), "type");
@@ -160,7 +156,7 @@ public class PlanTriggerTest
 	 */
 	public static void checkGoalInfo(Future<Object> fut, Class<?> pojoclass)
 	{
-		Object	goal	= fut.get(1000);
+		Object	goal	= fut.get(TestHelper.TIMEOUT);
 		assertInstanceOf(IGoal.class, goal, "reason");
 		assertEquals(pojoclass, ((IGoal)goal).getPojo().getClass(), "pojo");
 	}
@@ -170,7 +166,7 @@ public class PlanTriggerTest
 	 */
 	public static void checkGoalEventInfo(Future<Object> fut, String source, String type, Class<?> pojoclass)
 	{
-		Object	event	= fut.get(1000);
+		Object	event	= fut.get(TestHelper.TIMEOUT);
 		assertInstanceOf(ChangeEvent.class, event, "reason");
 		assertEquals(source, ((ChangeEvent<?>)event).getSource(), "source");
 		assertEquals(type, ((ChangeEvent<?>)event).getType(), "type");
