@@ -52,29 +52,25 @@ public class MicroAgentFeature	implements ILifecycle
 	{
 		Future<Void> ret = new Future<Void>();
 		//System.out.println("start: "+getSelf());
-		injectStuff(getSelf(), getSelf().getPojo(), ((MicroModel)getSelf().getModel().getRawModel()).getInjectionInfoHolder())
-			.then(v ->
+		injectStuff(getSelf(), getSelf().getPojo(), ((MicroModel)getSelf().getModel().getRawModel()).getInjectionInfoHolder());
+		MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
+		
+		Class<? extends Annotation> ann = OnStart.class;
+		if(model.getAgentMethod(ann)!=null)
 		{
-			MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
-			
-			Class<? extends Annotation> ann = OnStart.class;
-			if(model.getAgentMethod(ann)!=null)
-			{
-				//return invokeMethod(getInternalAccess(), OnInit.class, null);
-				//if(wasAnnotationCalled(ann))
-				//	return IFuture.DONE;
-				//else
-				
-				invokeMethod(getSelf(), ann, null).delegateTo(ret);
-			}
-			else
-			{
-				ret.setResult(null);
-				//ret.setException(new RuntimeException("no oninit found"));
-				//return invokeMethod(getInternalAccess(), AgentCreated.class, null);
-			}
-		}).catchEx(ret);
-		return ret;
+			//return invokeMethod(getInternalAccess(), OnInit.class, null);
+			//if(wasAnnotationCalled(ann))
+			//	return IFuture.DONE;
+			//else
+			getSelf().getFeature(IExecutionFeature.class).scheduleStep(() -> invokeMethod(getSelf(), ann, null));
+		}
+		else
+		{
+			ret.setResult(null);
+			//ret.setException(new RuntimeException("no oninit found"));
+			//return invokeMethod(getInternalAccess(), AgentCreated.class, null);
+		}
+		return IFuture.DONE;
 	}
 	
 	/*@Override
@@ -249,10 +245,8 @@ public class MicroAgentFeature	implements ILifecycle
 	 *  @param component The component.
 	 *  @param target The target.
 	 */
-	public static IFuture<Void> injectStuff(MicroAgent component, Object target, InjectionInfoHolder holder)
+	public static void injectStuff(MicroAgent component, Object target, InjectionInfoHolder holder)
 	{
-		final Future<Void> ret = new Future<>();
-		
 		//Map<String, Object>	args = component.getFeature(IArgumentsResultsFeature.class).getArguments();
 		//Map<String, Object>	results	= component.getFeature(IArgumentsResultsFeature.class).getResults();
 		//final MicroModel model = (MicroModel)component.getModel().getRawModel();
@@ -267,7 +261,6 @@ public class MicroAgentFeature	implements ILifecycle
 				SAccess.setAccessible(f, true);
 				f.set(target, component);
 			}
-			ret.setResult(null);
 	
 			// Inject argument values
 			/*if(args!=null)
@@ -394,10 +387,8 @@ public class MicroAgentFeature	implements ILifecycle
 		}
 		catch(Exception e)
 		{
-			ret.setException(e);
+			SUtil.throwUnchecked(e);
 		}
-		
-		return ret;
 	}
 	
 	//-------- helper methods --------
