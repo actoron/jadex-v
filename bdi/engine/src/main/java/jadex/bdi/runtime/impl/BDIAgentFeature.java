@@ -116,7 +116,32 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		}
 		this.bdimodel = (BDIModel)self.getModel().getRawModel();
 		this.capa = new RCapability(bdimodel.getCapability());
-		this.rulesystem = new RuleSystem(self.getPojo(), true);
+		this.rulesystem = new RuleSystem(self.getPojo(), true)
+		{
+			@Override
+			public IFuture<Void> addEvent(IEvent event)
+			{
+				// Avoid micro plan step inside event processing
+				RPlan	rplan	= RPlan.RPLANS.get();
+				if(rplan!=null && !rplan.atomic)
+				{
+					try
+					{
+						rplan.startAtomic();
+						return super.addEvent(event);
+					}
+					finally
+					{
+						rplan.endAtomic();
+					}
+				}
+				
+				else
+				{
+					return super.addEvent(event);
+				}
+			}
+		};
 		
 		// cannot do this in constructor because it needs access to this feature in expressions
 		try
