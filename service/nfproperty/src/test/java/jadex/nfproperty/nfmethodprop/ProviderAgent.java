@@ -1,4 +1,4 @@
-package jadex.micro.nfmethodprop;
+package jadex.nfproperty.nfmethodprop;
 
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -19,9 +19,6 @@ public class ProviderAgent implements ITestService
 	@Agent
 	protected IComponent agent;
 	
-	/**
-	 * 
-	 */
 //	@NFProperties(@NFProperty(value=WaitingTimeProperty.class))
 	public IFuture<Void> methodA(long wait)
 	{
@@ -31,9 +28,6 @@ public class ProviderAgent implements ITestService
 		return ret;
 	}
 	
-	/**
-	 * 
-	 */
 //	@NFProperties(@NFProperty(value=WaitingTimeProperty.class))
 	public IFuture<Void> methodB(long wait)
 	{

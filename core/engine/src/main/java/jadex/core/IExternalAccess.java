@@ -3,6 +3,7 @@ package jadex.core;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import jadex.core.impl.ComponentManager;
 import jadex.future.IFuture;
 
 /**
@@ -21,6 +22,16 @@ public interface IExternalAccess
 	 *  return The app id.
 	 */
 	public String getAppId();
+	
+	/**
+	 *  Get the external access.
+	 *  @param The id of the component.
+	 *  @return The external access.
+	 */
+	public default IExternalAccess getExternalAccess(ComponentIdentifier cid)
+	{
+		return ComponentManager.get().getComponent(cid).getExternalAccess();
+	}
 	
 	/**
 	 *  Check if this component allows the execution of steps.

@@ -2,11 +2,11 @@ package jadex.nfproperty.impl.search;
 
 import jadex.common.MethodInfo;
 import jadex.core.IExternalAccess;
-import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.nfproperty.INFPropertyFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 
@@ -103,9 +103,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 	 */
 	protected IFuture<T> getPropertyValue(final IServiceIdentifier sid)
 	{
-		throw new UnsupportedOperationException();
-		
-		/*final Future<T> ret = new Future<T>();
+		final Future<T> ret = new Future<T>();
 		
 		if(required)
 		{
@@ -113,73 +111,76 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 			{
 				if(unit!=null)
 				{
-					IFuture<T> res = component.getRequiredMethodNFPropertyValue(sid, methodinfo, propertyname, unit);
-					res.addResultListener(new DelegationResultListener<T>(ret));
-//								return provider.getMethodNFPropertyValue(methodinfo, propertyname, unit);
+					component.scheduleStep(agent ->
+					{
+						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getRequiredMethodNFPropertyValue(sid, methodinfo, propertyname, unit);
+						fut.delegateTo(ret);
+					});
 				}
 				else
 				{
-					IFuture<T> res = component.getRequiredMethodNFPropertyValue(sid, methodinfo, propertyname);
-					res.addResultListener(new DelegationResultListener<T>(ret));
-//								return provider.getMethodNFPropertyValue(methodinfo, propertyname);
+					component.scheduleStep(agent ->
+					{
+						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getRequiredMethodNFPropertyValue(sid, methodinfo, propertyname);
+						fut.delegateTo(ret);
+					});
 				}
 			}
 			else
 			{
 				if(unit!=null)
 				{
-					IFuture<T> res = component.getRequiredNFPropertyValue(sid, propertyname, unit);
-					res.addResultListener(new DelegationResultListener<T>(ret));
-//								return provider.getNFPropertyValue(propertyname, unit);
+					component.scheduleStep(agent ->
+					{
+						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getRequiredNFPropertyValue(sid, propertyname, unit);
+						fut.delegateTo(ret);
+					});
 				}
 				else
 				{
-					IFuture<T> res = component.getRequiredNFPropertyValue(sid, propertyname);
-					res.addResultListener(new DelegationResultListener<T>(ret));
-//								return provider.getNFPropertyValue(propertyname);
+					component.scheduleStep(agent ->
+					{
+						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getRequiredNFPropertyValue(sid, propertyname);
+						fut.delegateTo(ret);
+					});
 				}
 			}
 		}
 		else
 		{
-			component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, T>(ret)
+			
+			IExternalAccess exta = component.getExternalAccess(sid.getProviderId());
+			exta.scheduleStep(agent ->
 			{
-				public void customResultAvailable(IExternalAccess result)
+				if(methodinfo!=null)
 				{
-					if(methodinfo!=null)
+					if(unit!=null)
 					{
-						if(unit!=null)
-						{
-							IFuture<T> res = result.getMethodNFPropertyValue(sid, methodinfo, propertyname, unit);
-							res.addResultListener(new DelegationResultListener<T>(ret));
-//								return provider.getMethodNFPropertyValue(methodinfo, propertyname, unit);
-						}
-						else
-						{
-							IFuture<T> res = result.getMethodNFPropertyValue(sid, methodinfo, propertyname);
-							res.addResultListener(new DelegationResultListener<T>(ret));
-//								return provider.getMethodNFPropertyValue(methodinfo, propertyname);
-						}
+						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getMethodNFPropertyValue(sid, methodinfo, propertyname, unit);
+						fut.delegateTo(ret);
 					}
 					else
 					{
-						if(unit!=null)
-						{
-							IFuture<T> res = result.getNFPropertyValue(sid, propertyname, unit);
-							res.addResultListener(new DelegationResultListener<T>(ret));
-//								return provider.getNFPropertyValue(propertyname, unit);
-						}
-						else
-						{
-							IFuture<T> res = result.getNFPropertyValue(sid, propertyname);
-							res.addResultListener(new DelegationResultListener<T>(ret));
-//								return provider.getNFPropertyValue(propertyname);
-						}
+						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getMethodNFPropertyValue(sid, methodinfo, propertyname);
+						fut.delegateTo(ret);
+					}
+				}
+				else
+				{
+					if(unit!=null)
+					{
+						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getNFPropertyValue(sid, propertyname, unit);
+						fut.delegateTo(ret);
+					}
+					else
+					{
+						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getNFPropertyValue(sid, propertyname);
+						fut.delegateTo(ret);
 					}
 				}
 			});
 		}
 
-		return ret;*/
+		return ret;
 	}
 }

@@ -34,7 +34,6 @@ public class ServiceRankingDelegationResultListener<S> extends IntermediateDeleg
 		IServiceRanker<S> ranker, IRankingSearchTerminationDecider<S> decider)
 	{
 		super(future);
-		src.delegateTo(future);
 		this.ranker = ranker;
 		this.decider = decider;
 	}

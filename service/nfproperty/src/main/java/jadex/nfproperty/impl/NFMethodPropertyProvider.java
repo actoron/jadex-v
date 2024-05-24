@@ -37,10 +37,10 @@ public class NFMethodPropertyProvider extends NFPropertyProvider implements INFM
 	/**
 	 *  Create a new provider.
 	 */
-	//public NFMethodPropertyProvider(ComponentIdentifier parent, IComponent component)
-	public NFMethodPropertyProvider(IComponent component)
+	public NFMethodPropertyProvider(ComponentIdentifier parent, IComponent component)
+	//public NFMethodPropertyProvider(IComponent component)
 	{
-		super(component);
+		super(parent, component);
 	}
 	
 	/**

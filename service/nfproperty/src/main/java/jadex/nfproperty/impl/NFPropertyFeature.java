@@ -123,6 +123,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 			Collection<String> names = mymodel.getProvidedServiceNames();
 			IProvidedServiceFeature psf = self.getFeature(IProvidedServiceFeature.class);
 			final NFPropertyModel fmymodel = mymodel;
+			
 			names.forEach(name -> 
 			{
 				IService ser = psf.getProvidedService(name);
@@ -138,8 +139,9 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 				{
 					bar.add(addNFProperties(snfps, ser));
 					
+					// tags handled directly in provided service now
 					// Hack?! must update tags in sid :-(
-					IServiceIdentifier sid = ser.getServiceId();
+					/*IServiceIdentifier sid = ser.getServiceId();
 					getProvidedServicePropertyProvider(sid).getNFPropertyValue(TagProperty.NAME).then(val ->
 					{
 						Collection<String> coll = val == null ? new ArrayList<String>() : new LinkedHashSet<String>((Collection<String>)val);
@@ -148,7 +150,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 						// Hack!!! re-index
 						ServiceRegistry reg = (ServiceRegistry)ServiceRegistry.getRegistry();
 						reg.updateService(sid);
-					}); //.catchEx(ex ->)
+					}).catchEx(ex -> System.out.println("not found tag"));*/
 				}
 			});
 			
@@ -200,7 +202,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	public INFPropertyProvider getComponentPropertyProvider()
 	{
 		if(compprovider==null)
-			this.compprovider = new NFPropertyProvider(getComponent()); 
+			this.compprovider = new NFPropertyProvider(null, getComponent()); 
 		
 		return compprovider;
 	}
@@ -229,9 +231,9 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		ret = reqserprops.get(sid);
 		if(ret==null)
 		{
-			ret = new NFMethodPropertyProvider(getComponent()); 
+			ret = new NFMethodPropertyProvider(getComponent().getId(), getComponent()); 
 			reqserprops.put(sid, ret);
-//				System.out.println("created req ser provider: "+sid+" "+hashCode());
+//			System.out.println("created req ser provider: "+sid+" "+hashCode());
 		}
 		return ret;
 	}
@@ -257,9 +259,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		ret = proserprops.get(sid);
 		if(ret==null)
 		{
-			// TODO: parent???
-//				ret = new NFMethodPropertyProvider(getComponent().getComponentIdentifier(), getComponent()); 
-			ret = new NFMethodPropertyProvider(getComponent()); 
+			ret = new NFMethodPropertyProvider(getComponent().getId(), getComponent()); 
 			proserprops.put(sid, ret);
 		}
 		return ret;

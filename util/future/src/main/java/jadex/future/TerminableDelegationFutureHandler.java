@@ -110,8 +110,9 @@ public class TerminableDelegationFutureHandler<E>
 		boolean mynotify;
 		synchronized(this)
 		{
-			if(terminated||terminate)
-				throw new IllegalStateException("Already terminated: "+this);//, tex);
+			// It is allowed to call terminate multiple times as in TerminableFuture
+			//if(terminated || terminate)
+			//	throw new IllegalStateException("Already terminated: "+this);//, tex);
 			this.terminate	= true;
 			this.reason	= reason;
 			mynotify = src!=null;

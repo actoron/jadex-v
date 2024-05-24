@@ -28,6 +28,8 @@ public class ServiceRankingDelegationResultListener2<S> extends ServiceRankingDe
 	{
 		if(!isFinished())
 		{
+			if(future.isDone())
+				System.out.println("!!!!notifyResults: "+future.hashCode());
 			finished = Boolean.TRUE;
 			
 			TerminableIntermediateDelegationFuture<Tuple2<S, Double>> fut = (TerminableIntermediateDelegationFuture<Tuple2<S, Double>>)future;

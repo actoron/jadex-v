@@ -73,39 +73,38 @@ public class UserAgent
 	/** The evaluator. */
 	protected ComposedEvaluator<ICryptoService> ranker;
 		
-//	/**
-//	 *  The agent body.
-//	 */
-//	@AgentBody
-//	public void body()
-//	{
-//		// todo: make ITerminable in DefaultServiceFetcher
-//		
-//		try
-//		{
-//			while(true)
-//			{
-//				ComposedEvaluator<IAService> ranker = new ComposedEvaluator<IAService>();
-//				ranker.addEvaluator(new WaitqueueEvaluator(new MethodInfo(IAService.class.getMethod("test", new Class[0]))));
-//				ITerminableIntermediateFuture<IAService> sfut = agent.getComponentFeature(IRequiredServicesFeature.class).getServices("aser");
-//				Collection<Tuple2<IAService, Double>> res = SServiceProvider.rankServicesWithScores(sfut, ranker, null).get();
-//				System.out.println("Found: "+res);
-//				if(agent.getConfiguration().equals("with gui"))
-//					addData(res);
-//				IAService aser = res.iterator().next().getFirstEntity();
-//				aser.test().get();
-//			}
-//		}
-//		catch(Exception e)
-//		{
-//			e.printStackTrace();
-//		}
-//	}
+	/**
+	 *  The agent body.
+	 * /
+	@OnStart
+	public void body()
+	{
+		// todo: make ITerminable in DefaultServiceFetcher
+		
+		try
+		{
+			while(true)
+			{
+				ComposedEvaluator<IAService> ranker = new ComposedEvaluator<IAService>();
+				ranker.addEvaluator(new WaitqueueEvaluator(new MethodInfo(IAService.class.getMethod("test", new Class[0]))));
+				ITerminableIntermediateFuture<IAService> sfut = agent.getComponentFeature(IRequiredServicesFeature.class).getServices("aser");
+				Collection<Tuple2<IAService, Double>> res = SServiceProvider.rankServicesWithScores(sfut, ranker, null).get();
+				System.out.println("Found: "+res);
+				if(agent.getConfiguration().equals("with gui"))
+					addData(res);
+				IAService aser = res.iterator().next().getFirstEntity();
+				aser.test().get();
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}*/
 	
 	/**
 	 *  The agent body.
 	 */
-	//@AgentBody
 	@OnStart
 	public void body() throws Exception
 	{

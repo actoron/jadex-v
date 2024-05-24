@@ -26,6 +26,10 @@ public class CountThresholdSearchTerminationDecider<S> implements IRankingSearch
 	 */
 	public IFuture<Boolean> isStartRanking(Collection<S> currentresults, IServiceEvaluator evaluator)
 	{
-		return currentresults.size()>=threshold ? IFuture.TRUE : IFuture.FALSE;
+		IFuture<Boolean> ret = currentresults.size()>=threshold ? IFuture.TRUE : IFuture.FALSE;
+		
+		System.out.println("isStartRank: "+currentresults.size()+" "+ret.get());
+
+		return ret;
 	}
 }

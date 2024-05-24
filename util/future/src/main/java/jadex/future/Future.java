@@ -54,7 +54,6 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	protected static final String	CALLER_SUSPENDED	= "suspended";
 	
 	/** Debug flag. */
-	// Hack!!! Non-final to be setable from Starter 
 	public static boolean DEBUG = false;
 	
 	/** Disable Stack unfolding for easier debugging. */

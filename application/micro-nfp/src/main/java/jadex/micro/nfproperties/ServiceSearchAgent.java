@@ -12,18 +12,17 @@ import jadex.future.IResultListener;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
+import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
 import jadex.nfproperty.impl.search.BasicEvaluator;
 import jadex.nfproperty.impl.search.ComposedEvaluator;
 import jadex.nfproperty.impl.search.CountThresholdSearchTerminationDecider;
 import jadex.nfproperty.sensor.unit.MemoryUnit;
-import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Implementation;
 import jadex.providedservice.annotation.ProvidedService;
 import jadex.providedservice.annotation.ProvidedServices;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.impl.search.SServiceProvider;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
@@ -50,7 +49,7 @@ public class ServiceSearchAgent
 	public IFuture<Void> body()
 	{
 		final Future<Void> done = new Future<Void>();
-		final ComposedEvaluator ce = new ComposedEvaluator();
+		final ComposedEvaluator<ICoreDependentService> ce = new ComposedEvaluator<>();
 		ce.addEvaluator(new BasicEvaluator<Double>(agent.getExternalAccess(), "fakecpuload")
 		{
 			public double calculateEvaluation(Double propertyvalue)
@@ -86,7 +85,50 @@ public class ServiceSearchAgent
 //		BasicEvaluatorConstraints cts = new BasicEvaluatorConstraints(null, evaluator, evaluationsize)
 //		SServiceProvider.getServices(agent.getServiceProvider(), ICoreDependentService.class, ServiceScope.PLATFORM, new Basic)
 		
-		agent.getFeature(IExecutionFeature.class).waitForDelay(SEARCH_DELAY).get();
+		//agent.getFeature(IExecutionFeature.class).waitForDelay(SEARCH_DELAY).get();
+		
+		ITerminableIntermediateFuture<ICoreDependentService> fut = agent.getFeature(IRequiredServiceFeature.class).searchServices(new ServiceQuery<>(ICoreDependentService.class));
+		//fut.next(v -> System.out.println("found: "+v));
+		
+		ITerminableIntermediateFuture<Tuple2<ICoreDependentService, Double>> res = agent.getFeature(INFPropertyFeature.class)
+			.rankServicesWithScores(fut, ce, new CountThresholdSearchTerminationDecider<ICoreDependentService>(10));
+		
+		res.addResultListener(new IResultListener<Collection<Tuple2<ICoreDependentService, Double>>>()
+		{
+			public void resultAvailable(Collection<Tuple2<ICoreDependentService, Double>> result)
+			{
+				System.out.println(Arrays.toString(result.toArray()));
+			}
+
+			public void exceptionOccurred(Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		});
+		
+		/*res.next(val ->
+		{
+			System.out.println("res: "+val);
+		});*/
+		
+		
+		/*agent.getFeature(IRequiredServiceFeature.class).getServices(ICoreDependentService.class)
+			.addResultListener(new ServiceRankingResultListener<ICoreDependentService>(ce, new CountThresholdSearchTerminationDecider<ICoreDependentService>(10), 
+			new IResultListener<Collection<ICoreDependentService>>()
+		{
+			public void resultAvailable(Collection<ICoreDependentService> result)
+			{
+				System.out.println(Arrays.toString(((List<ICoreDependentService>) result).toArray()));
+				
+				agent.getComponentFeature(IExecutionFeature.class).scheduleStep(step, SEARCH_DELAY);
+			}
+		
+			public void exceptionOccurred(Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		}));*/
+		
 //				SServiceProvider.getServices(agent.getServiceProvider(), ICoreDependentService.class, ServiceScope.PLATFORM)
 //					.addResultListener(new ServiceRankingResultListener<ICoreDependentService>(ce, new CountThresholdSearchTerminationDecider<ICoreDependentService>(10), 
 //					new IResultListener<Collection<ICoreDependentService>>()
@@ -152,5 +194,17 @@ public class ServiceSearchAgent
 				
 		
 		return done;
+	}
+	
+	public static void main(String[] args) 
+	{
+		int n = 11;
+		for(int i=0; i<n; i++)
+			IComponent.create(new ServiceSearchAgent()).get();
+			//IComponent.create(new NFPropertyTestAgent()).get();
+		
+		//IComponent.create(new ServiceSearchAgent()).get();
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }

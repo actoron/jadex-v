@@ -26,7 +26,9 @@ public class NFPropertyTestAgent
 	@OnStart
 	public IFuture<Void> body()
 	{
-		ICoreDependentService cds = agent.getFeature(IRequiredServiceFeature.class).searchService(new ServiceQuery<>( ICoreDependentService.class)).get();
+		System.out.println("started: "+agent.getId());
+		
+		ICoreDependentService cds = agent.getFeature(IRequiredServiceFeature.class).searchService(new ServiceQuery<>(ICoreDependentService.class)).get();
 		IService iscds = (IService)cds;
 //		INFPropertyProvider prov = (INFPropertyProvider)iscds.getExternalComponentFeature(INFPropertyComponentFeature.class);
 //		String[] names = SNFPropertyProvider.getNFPropertyNames(agent.getExternalAccess(), iscds.getId()).get();
@@ -42,7 +44,9 @@ public class NFPropertyTestAgent
 		
 		System.out.println("Service Value: " + agent.getFeature(INFPropertyFeature.class).getNFPropertyValue(iscds.getServiceId(), "cores").get());
 		
-		System.out.println("Component Value, requested from Service: " + agent.getFeature(INFPropertyFeature.class).getNFPropertyValue(iscds.getServiceId(), "componentcores").get());
+		// todo: would need parent nfprovider
+		System.out.println("Component Value, requested from component: " + agent.getFeature(INFPropertyFeature.class).getNFPropertyValue("componentcores").get());
+		System.out.println("Component Value, requested from service: " + agent.getFeature(INFPropertyFeature.class).getNFPropertyValue(iscds.getServiceId(), "componentcores").get());
 //		try
 //		{
 //			System.out.println("Speed Value for method: " +iscds.getNFPropertyValue(ICoreDependentService.class.getMethod("testMethod", new Class<?>[0]), "methodspeed").get());
@@ -53,5 +57,12 @@ public class NFPropertyTestAgent
 //		}
 		
 		return IFuture.DONE;
+	}
+	
+	public static void main(String[] args) 
+	{
+		IComponent.create(new NFPropertyTestAgent()).get();
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 }
