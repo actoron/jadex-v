@@ -362,7 +362,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 	/**
 	 *  Called after a service has been shutdowned.
 	 *  
-	 *  todo!!!
+	 *  todo: add code to unpublish in publication feature!
 	 */
 	public IFuture<Void> serviceShutdowned(final IInternalService service)
 	{

@@ -1623,7 +1623,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 		if(info.getMax()!=RequiredServiceInfo.UNDEFINED)
 			m.setTo(info.getMax());
 		
-		if(info.getTags()!=null)
+		if(info.getTags()!=null && info.getTags().size()>0)
 			ret.setServiceTags(info.getTags().toArray(new String[info.getTags().size()]), ia);
 		
 		return ret;

@@ -100,6 +100,10 @@ public class ProvidedServiceLoader
 				//ProvidedServiceImplementation impl = new ProvidedServiceImplementation(null, "$pojoagent!=null? $pojoagent: $component", Implementation.PROXYTYPE_DECOUPLED, null);
 				ProvidedServiceImplementation impl = new ProvidedServiceImplementation(null, null, Implementation.PROXYTYPE_DECOUPLED, null);
 				ProvidedServiceInfo psi = new ProvidedServiceInfo(BasicService.generateServiceName(iface), iface, impl);
+				Collection<String> tags = createTags(clazz, iface);
+				if(tags!=null && tags.size()>0)
+					psi.setTags(tags);
+				
 				//String name = psi.getName()==null? ("#"+cnt++): psi.getName();
 				model.addService(psi);
 				//pservices.put(psi.getName()==null? ("#"+cnt++): psi.getName(), psi);
@@ -224,7 +228,6 @@ public class ProvidedServiceLoader
 			superclazz = superclazz.getSuperclass();
 		}
 		
-		Map<MethodInfo, Method> meths = new HashMap<MethodInfo, Method>();
 		for(Class<?> sclazz: classes)
 		{
 			if(sclazz.isAnnotationPresent(Tags.class))

@@ -31,6 +31,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:javaparser:'+v
 	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:traverser:'+v
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 

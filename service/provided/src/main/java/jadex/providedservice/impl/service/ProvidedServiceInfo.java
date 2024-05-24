@@ -282,7 +282,7 @@ public class ProvidedServiceInfo
 	/**
 	 * @param tags the tags to set
 	 */
-	public void setTags(Set<String> tags) 
+	public void setTags(Collection<String> tags) 
 	{
 		this.tags = tags;
 	}
