@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
@@ -69,8 +70,8 @@ public class PlanAtomicTest
 		PlanAtomicTestAgent	pojo	= new PlanAtomicTestAgent();
 		IExternalAccess	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.trigger.add("go"));
-		assertEquals("not aborted", pojo.atomicfut.get(1000));
-		assertEquals("aborted", pojo.contextfut.get(1000));
+		assertEquals("not aborted", pojo.atomicfut.get(TestHelper.TIMEOUT));
+		assertEquals("aborted", pojo.contextfut.get(TestHelper.TIMEOUT));
 	}
 }
 

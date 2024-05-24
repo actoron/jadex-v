@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
@@ -85,7 +86,7 @@ public class PlanPassedFailedAbortedTest
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
 		IExternalAccess	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.bel.set("pass"));
-		assertEquals("passed", pojo.fut.get(1000));
+		assertEquals("passed", pojo.fut.get(TestHelper.TIMEOUT));
 	}
 	
 	@Test
@@ -94,7 +95,7 @@ public class PlanPassedFailedAbortedTest
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
 		IExternalAccess	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.bel.set("fail"));
-		assertEquals("failed", pojo.fut.get(1000));
+		assertEquals("failed", pojo.fut.get(TestHelper.TIMEOUT));
 	}
 	
 	@Test
@@ -103,6 +104,6 @@ public class PlanPassedFailedAbortedTest
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
 		IExternalAccess	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.bel.set("abort"));
-		assertEquals("aborted", pojo.fut.get(1000));
+		assertEquals("aborted", pojo.fut.get(TestHelper.TIMEOUT));
 	}
 }

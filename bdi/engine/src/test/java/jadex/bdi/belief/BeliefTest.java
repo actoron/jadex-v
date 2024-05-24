@@ -16,6 +16,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.Val;
@@ -220,9 +221,9 @@ public class BeliefTest
 			}
 		});
 		
-		assertEquals(2, firstfut.get(1000));
-		assertEquals(3, secondfut.get(1000));
-		assertThrows(IllegalStateException.class, ()->exfut.get(1000));
+		assertEquals(2, firstfut.get(TestHelper.TIMEOUT));
+		assertEquals(3, secondfut.get(TestHelper.TIMEOUT));
+		assertThrows(IllegalStateException.class, ()->exfut.get(TestHelper.TIMEOUT));
 		checkEventInfo(changedfut, 2, 3, null);
 	}
 	
@@ -246,9 +247,9 @@ public class BeliefTest
 			thirdfut.setResult(pojo.updatebelief.get());
 		});
 		
-		assertEquals(firstfut.get(1000), secondfut.get(1000));
-		assertNotEquals(firstfut.get(1000), thirdfut.get(2000));
-		changedfut.get(1000);	// Check if event was generated
+		assertEquals(firstfut.get(TestHelper.TIMEOUT), secondfut.get(TestHelper.TIMEOUT));
+		assertNotEquals(firstfut.get(TestHelper.TIMEOUT), thirdfut.get(2000));
+		changedfut.get(TestHelper.TIMEOUT);	// Check if event was generated
 	}
 
 	//-------- helper methods --------
@@ -263,7 +264,7 @@ public class BeliefTest
 		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
 			"EventListenerRule"+Arrays.toString(events),	// Rule Name
 			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
-			(event, rule, context, condresult) -> {fut.setResult(event); return IFuture.DONE;}, // Action -> set future
+			(event, rule, context, condresult) -> {fut.setResultIfUndone(event); return IFuture.DONE;}, // Action -> set future
 			new EventType[] {new EventType(events)}	// Trigger Event(s)
 		));
 	}
@@ -273,7 +274,7 @@ public class BeliefTest
 	 */
 	public static void checkEventInfo(Future<IEvent> fut, Object oldval, Object newval, Object info)
 	{
-		IEvent	event	= fut.get(1000);
+		IEvent	event	= fut.get(TestHelper.TIMEOUT);
 		@SuppressWarnings("unchecked")
 		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
 		assertEquals(oldval, ci.getOldValue(), "old value");

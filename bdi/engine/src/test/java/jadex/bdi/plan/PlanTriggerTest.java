@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
@@ -143,7 +144,7 @@ public class PlanTriggerTest
 	 */
 	public static void checkEventInfo(Future<Object> fut, String source, String type, Object oldval, Object newval, Object info)
 	{
-		Object	event	= fut.get(1000);
+		Object	event	= fut.get(TestHelper.TIMEOUT);
 		assertInstanceOf(ChangeEvent.class, event, "reason");
 		assertEquals(source, ((ChangeEvent<?>)event).getSource(), "source");
 		assertEquals(type, ((ChangeEvent<?>)event).getType(), "type");
@@ -160,7 +161,7 @@ public class PlanTriggerTest
 	 */
 	public static void checkGoalInfo(Future<Object> fut, Class<?> pojoclass)
 	{
-		Object	goal	= fut.get(1000);
+		Object	goal	= fut.get(TestHelper.TIMEOUT);
 		assertInstanceOf(IGoal.class, goal, "reason");
 		assertEquals(pojoclass, ((IGoal)goal).getPojo().getClass(), "pojo");
 	}
@@ -170,7 +171,7 @@ public class PlanTriggerTest
 	 */
 	public static void checkGoalEventInfo(Future<Object> fut, String source, String type, Class<?> pojoclass)
 	{
-		Object	event	= fut.get(1000);
+		Object	event	= fut.get(TestHelper.TIMEOUT);
 		assertInstanceOf(ChangeEvent.class, event, "reason");
 		assertEquals(source, ((ChangeEvent<?>)event).getSource(), "source");
 		assertEquals(type, ((ChangeEvent<?>)event).getType(), "type");

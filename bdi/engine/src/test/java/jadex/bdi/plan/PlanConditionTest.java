@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
@@ -102,7 +103,7 @@ public class PlanConditionTest
 			PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
 			IExternalAccess	agent	= IBDIAgent.create(pojo);
 			agent.scheduleStep(() -> pojo.trigger.add("go"));
-			assertEquals(PlanConditionTestAgent.PrePlan1.class.getName(), pojo.prefut.get(1000));
+			assertEquals(PlanConditionTestAgent.PrePlan1.class.getName(), pojo.prefut.get(TestHelper.TIMEOUT));
 		}
 		
 		// Second plan
@@ -114,7 +115,7 @@ public class PlanConditionTest
 				pojo.bel.set(false);
 				pojo.trigger.add("go");			
 			});
-			assertEquals(PlanConditionTestAgent.PrePlan2.class.getName(), pojo.prefut.get(1000));
+			assertEquals(PlanConditionTestAgent.PrePlan2.class.getName(), pojo.prefut.get(TestHelper.TIMEOUT));
 		}
 	}
 	
@@ -124,7 +125,7 @@ public class PlanConditionTest
 		PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
 		IExternalAccess	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.trigger.add("go"));
-		assertEquals("aborted", pojo.contextfut.get(1000));
+		assertEquals("aborted", pojo.contextfut.get(TestHelper.TIMEOUT));
 	}
 }
 
