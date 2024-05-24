@@ -1,13 +1,9 @@
-package jadex.micro.nfservicetags;
+package jadex.requiredservicemicro.tag;
 
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Argument;
-import jadex.micro.annotation.Arguments;
-import jadex.nfproperty.sensor.service.TagProperty;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
+import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
 
 
@@ -17,19 +13,21 @@ import jadex.providedservice.annotation.Service;
 //	@Argument(name=TagProperty.NAME, clazz=String[].class, defaultvalue="new String[]{jadex.nfproperty.sensor.service.TagProperty.HOST_NAME, null}")
 //	@Argument(name=TagProperty.NAME, clazz=String.class, defaultvalue="new String[]{"+TagProperty.PLATFORM_NAME+","+TagProperty.JADEX_VERSION+"}")
 //)
-@ProvidedServices(@ProvidedService(type=ITestService.class))
 @Service
 public class ProviderAgent implements ITestService
 {
 	@Agent
 	protected IComponent agent;
 	
-	protected String[] tags;
-	
-	public ProviderAgent(String... tags)
+	public ProviderAgent()
 	{
-		this.tags = tags;
 	}
+	
+	/*@OnStart
+	protected void onStart()
+	{
+		System.out.println("started: "+agent.getId());
+	}*/
 	
 	public IFuture<Void> method(String msg)
 	{

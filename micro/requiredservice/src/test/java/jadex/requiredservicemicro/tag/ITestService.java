@@ -1,6 +1,8 @@
-package jadex.micro.nfservicetags;
+package jadex.requiredservicemicro.tag;
+
 
 import jadex.future.IFuture;
+import jadex.providedservice.annotation.Service;
 import jadex.providedservice.annotation.Tag;
 
 /**
@@ -21,6 +23,7 @@ import jadex.providedservice.annotation.Tag;
 //	@NameValue(name=TagProperty.ARGUMENT, value="\"tag\"") // additionally get tags from arguments 'tag'
 //}))
 
+@Service
 @Tag("hello") 
 @Tag("$cid") 
 @Tag("$host") 

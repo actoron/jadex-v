@@ -60,7 +60,7 @@ public class NFMethodPropTestAgent //extends JunitAgentTest
 			if(d<0.15)
 			{
 				//tr1.setSucceeded(true);
-				System.out.println("methodA ok");
+				System.out.println("methodA ok: "+d+" "+w+" "+wa);
 			}
 			else
 			{
@@ -78,7 +78,7 @@ public class NFMethodPropTestAgent //extends JunitAgentTest
 			if(d<0.15)
 			{
 				//tr2.setSucceeded(true);
-				System.out.println("methodA ok");
+				System.out.println("methodA ok: "+d+" "+w+" "+wa);
 			}
 			else
 			{
@@ -95,7 +95,7 @@ public class NFMethodPropTestAgent //extends JunitAgentTest
 			d = Math.abs(w-wab)/wab;
 			if(d<0.15)
 			{
-				System.out.println("methodAB ok");
+				System.out.println("methodAB ok"+d+" "+w+" "+wab);
 				//tr3.setSucceeded(true);
 			}
 			else

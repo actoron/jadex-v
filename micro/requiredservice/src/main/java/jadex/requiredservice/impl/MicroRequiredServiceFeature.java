@@ -396,6 +396,10 @@ public class MicroRequiredServiceFeature extends RequiredServiceFeature
 				}
 			}
 		}
+		else
+		{
+			ret.setResult(null);
+		}
 		
 		return ret;
 	}

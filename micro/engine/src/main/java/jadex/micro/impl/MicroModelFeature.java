@@ -2,13 +2,18 @@ package jadex.micro.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SimpleParameterGuesser;
+import jadex.common.transformation.BeanIntrospectorFactory;
+import jadex.common.transformation.traverser.BeanProperty;
+import jadex.common.transformation.traverser.IBeanIntrospector;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
 import jadex.model.IParameterGuesserProvider;
@@ -40,11 +45,7 @@ public class MicroModelFeature implements IModelFeature, IInternalModelFeature, 
 	 */
 	public Object fetchValue(String name)
 	{
-		if("$agent".equals(name))
-		{
-			return self;
-		}
-		else if("$component".equals(name))
+		if("$agent".equals(name) || "$component".equals(name))
 		{
 			return self;
 		}
@@ -68,16 +69,11 @@ public class MicroModelFeature implements IModelFeature, IInternalModelFeature, 
 		{
 			return self.getAppId();
 		}
-		/*else if(name!=null && name.startsWith(IPlatformConfiguration.PLATFORMARGS))
+		else if("$args".equals(name) || "$arguments".equals(name) || "$results".equals(name))
 		{
-			String valname = name.length()>13? name.substring(14): null;
-			return valname==null? Starter.getPlatformValue(getComponent().getId(), IPlatformConfiguration.PLATFORMARGS): Starter.getPlatformValue(getComponent().getId(), valname);
-		}*/
-		/*else if(Starter.hasPlatformValue(getComponent().getId(), name))
-		{
-			return Starter.getPlatformValue(getComponent().getId(), name);
-		}*/
-		else
+			return self.getPojo();
+		}
+		else // make accessible pojo values
 		{
 			Object pojo = self.getPojo();
 			
