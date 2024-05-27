@@ -78,6 +78,22 @@ def excludes = ['communication', 'nfproperties', 'bdi-llm', 'llmbdi']
 	}
 }
 
+// add benchmark tasks
+project.tasks.create([name: 'cleanBenchmark']) {
+	gradle.includedBuilds.each { build ->
+		if(build.name.contains('benchmark')) {
+			dependsOn build.task(':cleanBenchmark')
+		}				
+	}
+}
+project.tasks.create([name: 'benchmark']) {
+	gradle.includedBuilds.each { build ->
+		if(build.name.contains('benchmark')) {
+			dependsOn build.task(':benchmark')
+		}				
+	}
+}
+
 task closeStagingRepo {
     group = "publishing"
     

@@ -44,7 +44,4 @@ test {
 task benchmark(type : Test) {
   useJUnitPlatform()
   include 'jadex/benchmark/**'
-  // Shared dummy directory to force all benchmarks across projects to run sequentially
-  mkdir "../disable-parallel"
-  outputs.dir "../disable-parallel"
 }
