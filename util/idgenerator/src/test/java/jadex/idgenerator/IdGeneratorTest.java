@@ -15,7 +15,7 @@ public class IdGeneratorTest
 	@Test
 	void testIdGenerator()
 	{
-		IdGenerator	idgen	= new IdGenerator(false);
+		IdGenerator	idgen	= new IdGenerator(true);
 		Set<String>	ids	= new HashSet<>();
 		for(int i=0; i<1234567; i++)
 		{
