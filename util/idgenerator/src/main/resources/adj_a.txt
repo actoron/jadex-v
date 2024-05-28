@@ -166,7 +166,6 @@ Another
 Antagonistic
 Antediluvian
 Anticipated
-Anticipated
 Anticipating
 Anticorrosive
 Anticsridden
@@ -258,3 +257,4 @@ Awful
 Awkward
 Axial
 Azure
+Animous

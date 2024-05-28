@@ -25,5 +25,11 @@ dependencies
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'com.squareup:javapoet:1.13.0'
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test {
+  useJUnitPlatform()
 }

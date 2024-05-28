@@ -47,7 +47,7 @@ public class WordsClassGenerator
 	public static String[] readValuesFromFile(String filename, int len)
 	{
 		String values = SUtil.readFile(filename);
-		StringTokenizer stok = new StringTokenizer(values, "\n,\"");
+		StringTokenizer stok = new StringTokenizer(values, "\r\n,\"");
 		if(len==0)
 			len = stok.countTokens();
 		String[] ret = new String[len];
