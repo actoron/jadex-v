@@ -1,4 +1,4 @@
-package jadex.micro.nfproperties;
+package jadex.nfproperty.ranking;
 
 import jadex.future.IFuture;
 import jadex.model.annotation.OnStart;

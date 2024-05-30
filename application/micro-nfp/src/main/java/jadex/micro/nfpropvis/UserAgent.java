@@ -72,7 +72,19 @@ public class UserAgent
 	
 	/** The evaluator. */
 	protected ComposedEvaluator<ICryptoService> ranker;
+	
+	protected boolean gui;
 		
+	public UserAgent()
+	{
+		this(false);
+	}
+	
+	public UserAgent(boolean gui)
+	{
+		this.gui = gui;
+	}
+	
 	/**
 	 *  The agent body.
 	 * /
@@ -145,12 +157,48 @@ public class UserAgent
 	 */
 	public void invoke()
 	{
-		boolean wgui = true;
-		
 		ITerminableIntermediateFuture<ICryptoService> sfut = agent.getFeature(IRequiredServiceFeature.class).getServices("aser");
-		agent.getFeature(INFPropertyFeature.class).rankServicesWithScores(sfut, ranker, null).then(res ->
+		ITerminableIntermediateFuture<Tuple2<ICryptoService, Double>> fut = agent.getFeature(INFPropertyFeature.class).rankServicesWithScores(sfut, ranker, null);
+		fut.addResultListener(new IResultListener<Collection<Tuple2<ICryptoService,Double>>>() {
+			
+			@Override
+			public void resultAvailable(Collection<Tuple2<ICryptoService, Double>> res) 
+			{
+				System.out.println("next: "+res);
+				
+				if(gui)
+					addData(res);
+				if(res.size()>0)
+				{
+					ICryptoService aser = res.iterator().next().getFirstEntity();
+					aser.encrypt("bla").then(enc -> 
+					{
+						System.out.println("next invoke");
+						invoke();
+					}).catchEx(ex ->
+					{
+						agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
+						agent.getFeature(IExecutionFeature.class).scheduleStep(() -> invoke());
+					});
+				}
+				else
+				{
+					agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
+					agent.getFeature(IExecutionFeature.class).scheduleStep(() -> invoke());
+				}
+			}
+			
+			@Override
+			public void exceptionOccurred(Exception exception) 
+			{
+				System.out.println("ex: "+exception);
+			}
+		});
+		
+		/*.then(res ->
 		{
-			if(wgui)
+			System.out.println("next: "+res);
+			if(gui)
 				addData(res);
 			ICryptoService aser = res.iterator().next().getFirstEntity();
 			aser.encrypt("bla").then(enc -> 
@@ -161,14 +209,13 @@ public class UserAgent
 				agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
 				agent.getFeature(IExecutionFeature.class).scheduleStep(() -> invoke());
 			});
-			
 		}).catchEx(ex ->
 		{
 //			if(wgui)
 //				exception.printStackTrace();
 			agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
 			agent.getFeature(IExecutionFeature.class).scheduleStep(() -> invoke());
-		});	
+		});	*/
 	}
 	
 	/**
