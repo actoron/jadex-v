@@ -1,11 +1,11 @@
-package jadex.micro.nfproperties;
+package jadex.nfproperty.ranking;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
-import jadex.execution.IExecutionFeature;
+import jadex.core.IExternalAccess;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
@@ -42,69 +42,23 @@ public class ServiceSearchAgent
 	@Agent
 	protected IComponent agent;
 
+	protected boolean search;
+	
+	public ServiceSearchAgent(boolean search)
+	{
+		this.search = search;
+	}
+	
 	/**
 	 *  Body.
 	 */
 	@OnStart
-	public IFuture<Void> body()
+	public void body()
 	{
-		final Future<Void> done = new Future<Void>();
-		final ComposedEvaluator<ICoreDependentService> ce = new ComposedEvaluator<>();
-		ce.addEvaluator(new BasicEvaluator<Double>(agent.getExternalAccess(), "fakecpuload")
-		{
-			public double calculateEvaluation(Double propertyvalue)
-			{
-				return (100.0 - propertyvalue) * 0.01;
-			}
-		});
+		//final Future<Void> done = new Future<Void>();
 		
-		ce.addEvaluator(new BasicEvaluator<Double>(agent.getExternalAccess(), "fakereliability")
-		{
-			public double calculateEvaluation(Double propertyvalue)
-			{
-				return propertyvalue * 0.01;
-			}
-		});
-		
-		ce.addEvaluator(new BasicEvaluator<Long>(agent.getExternalAccess(), "fakefreemem", MemoryUnit.MB)
-		{
-			public double calculateEvaluation(Long propertyvalue)
-			{
-				return Math.min(4096.0, propertyvalue) / 4096.0;
-			}
-		});
-		
-		ce.addEvaluator(new BasicEvaluator<Long>(agent.getExternalAccess(), "fakenetworkbandwith", MemoryUnit.MB)
-		{
-			public double calculateEvaluation(Long propertyvalue)
-			{
-				return Math.min(100.0, propertyvalue) / 100.0;
-			}
-		});
-		
-//		BasicEvaluatorConstraints cts = new BasicEvaluatorConstraints(null, evaluator, evaluationsize)
-//		SServiceProvider.getServices(agent.getServiceProvider(), ICoreDependentService.class, ServiceScope.PLATFORM, new Basic)
-		
-		//agent.getFeature(IExecutionFeature.class).waitForDelay(SEARCH_DELAY).get();
-		
-		ITerminableIntermediateFuture<ICoreDependentService> fut = agent.getFeature(IRequiredServiceFeature.class).searchServices(new ServiceQuery<>(ICoreDependentService.class));
-		//fut.next(v -> System.out.println("found: "+v));
-		
-		ITerminableIntermediateFuture<Tuple2<ICoreDependentService, Double>> res = agent.getFeature(INFPropertyFeature.class)
-			.rankServicesWithScores(fut, ce, new CountThresholdSearchTerminationDecider<ICoreDependentService>(10));
-		
-		res.addResultListener(new IResultListener<Collection<Tuple2<ICoreDependentService, Double>>>()
-		{
-			public void resultAvailable(Collection<Tuple2<ICoreDependentService, Double>> result)
-			{
-				System.out.println(Arrays.toString(result.toArray()));
-			}
-
-			public void exceptionOccurred(Exception exception)
-			{
-				exception.printStackTrace();
-			}
-		});
+		if(search)
+			searchAndRank(agent.getExternalAccess());
 		
 		/*res.next(val ->
 		{
@@ -193,14 +147,83 @@ public class ServiceSearchAgent
 		});*/
 				
 		
-		return done;
+		//return done;
+	}
+	
+	public static IFuture<Collection<Tuple2<ICoreDependentService, Double>>> searchAndRank(IExternalAccess exta)
+	{
+		Future<Collection<Tuple2<ICoreDependentService, Double>>> ret = new Future<>();
+		
+		final ComposedEvaluator<ICoreDependentService> ce = new ComposedEvaluator<>();
+		ce.addEvaluator(new BasicEvaluator<Double>(exta, "fakecpuload")
+		{
+			public double calculateEvaluation(Double propertyvalue)
+			{
+				return (100.0 - propertyvalue) * 0.01;
+			}
+		});
+		
+		ce.addEvaluator(new BasicEvaluator<Double>(exta, "fakereliability")
+		{
+			public double calculateEvaluation(Double propertyvalue)
+			{
+				return propertyvalue * 0.01;
+			}
+		});
+		
+		ce.addEvaluator(new BasicEvaluator<Long>(exta, "fakefreemem", MemoryUnit.MB)
+		{
+			public double calculateEvaluation(Long propertyvalue)
+			{
+				return Math.min(4096.0, propertyvalue) / 4096.0;
+			}
+		});
+		
+		ce.addEvaluator(new BasicEvaluator<Long>(exta, "fakenetworkbandwith", MemoryUnit.MB)
+		{
+			public double calculateEvaluation(Long propertyvalue)
+			{
+				return Math.min(100.0, propertyvalue) / 100.0;
+			}
+		});
+		
+		exta.scheduleAsyncStep(agent ->
+		{
+			Future<Collection<Tuple2<ICoreDependentService, Double>>> myret = new Future<>();
+			//agent.getFeature(IExecutionFeature.class).waitForDelay(SEARCH_DELAY).get();
+			
+			ITerminableIntermediateFuture<ICoreDependentService> fut = agent.getFeature(IRequiredServiceFeature.class).searchServices(new ServiceQuery<>(ICoreDependentService.class));
+			//fut.next(v -> System.out.println("found: "+v));
+			
+			ITerminableIntermediateFuture<Tuple2<ICoreDependentService, Double>> res = agent.getFeature(INFPropertyFeature.class)
+				.rankServicesWithScores(fut, ce, new CountThresholdSearchTerminationDecider<ICoreDependentService>(10));
+			
+			res.addResultListener(new IResultListener<Collection<Tuple2<ICoreDependentService, Double>>>()
+			{
+				public void resultAvailable(Collection<Tuple2<ICoreDependentService, Double>> result)
+				{
+					//System.out.println("Found services: "+result.size()+" "+Arrays.toString(result.toArray()));
+					myret.setResult(result);
+				}
+
+				public void exceptionOccurred(Exception exception)
+				{
+					exception.printStackTrace();
+					myret.setException(exception);
+				}
+			});
+			
+			return myret;
+		}).delegateTo(ret);
+		
+		return ret;
 	}
 	
 	public static void main(String[] args) 
 	{
-		int n = 11;
+		int n = 20;
 		for(int i=0; i<n; i++)
-			IComponent.create(new ServiceSearchAgent()).get();
+			IComponent.create(new ServiceSearchAgent(true)).get();
 			//IComponent.create(new NFPropertyTestAgent()).get();
 		
 		//IComponent.create(new ServiceSearchAgent()).get();

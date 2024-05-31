@@ -1,4 +1,4 @@
-package jadex.micro.nfproperties;
+package jadex.nfproperty.ranking;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -6,10 +6,10 @@ import jadex.nfproperty.impl.AbstractNFProperty;
 import jadex.nfproperty.impl.NFPropertyMetaInfo;
 
 /**
- *  Non-functional property reporting the CPU core count.
+ *  Non-functional property reporting the CPU core count with a different name.
  *
  */
-public class CoreNumberProperty extends AbstractNFProperty<Integer, Void>
+public class CoreNumberProperty2 extends AbstractNFProperty<Integer, Void>
 {
 	/** CPU core count. */
 	protected int cores;
@@ -17,9 +17,9 @@ public class CoreNumberProperty extends AbstractNFProperty<Integer, Void>
 	/**
 	 *  Create the property.
 	 */
-	public CoreNumberProperty()
+	public CoreNumberProperty2()
 	{
-		super(new NFPropertyMetaInfo("cores", int.class, null, false, -1, false, null));
+		super(new NFPropertyMetaInfo("componentcores", int.class, null, false, -1, false, null));
 		cores = Runtime.getRuntime().availableProcessors();
 		
 //		Properties props = System.getProperties();
@@ -31,7 +31,7 @@ public class CoreNumberProperty extends AbstractNFProperty<Integer, Void>
 
 //	public IFuture<Integer> getValue(Class<Void> unit)
 	/**
-	 *  Returns the value.
+	 *  Gets the value.
 	 */
 	public IFuture<Integer> getValue(Void unit)
 	{

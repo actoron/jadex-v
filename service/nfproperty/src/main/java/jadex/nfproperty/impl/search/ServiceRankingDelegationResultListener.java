@@ -2,6 +2,7 @@ package jadex.nfproperty.impl.search;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import jadex.common.Tuple2;
@@ -16,10 +17,12 @@ import jadex.future.TerminableIntermediateDelegationFuture;
 public class ServiceRankingDelegationResultListener<S> extends IntermediateDelegationResultListener<S>
 {
 	/** The saved results. */
-	protected List<S> results = new ArrayList<S>();
+	protected Collection<S> results = new LinkedHashSet<S>();
 	
 	/** The listener state (false=unfinished, null=finishing, true=finished. */
-	protected Boolean finished = Boolean.FALSE;
+	protected boolean closed = false;
+	protected boolean finished = false;
+	protected boolean hasranked = false;
 	
 	/** The ranker. */
 	protected IServiceRanker<S> ranker;
@@ -41,31 +44,37 @@ public class ServiceRankingDelegationResultListener<S> extends IntermediateDeleg
 	/**
 	 *  Process intermediate results for ranking.
 	 */
+	protected int opencalls = 0;
 	public void customIntermediateResultAvailable(S result)
 	{
-		if(!isFinished() && !isFinishing())
+		if(!closed)
 		{			
+			opencalls++;
 			results.add(result);
 			if(decider!=null)
 			{
 				decider.isStartRanking(results, ranker instanceof IServiceEvaluator? (IServiceEvaluator) ranker : null).addResultListener(new IResultListener<Boolean>()
 				{
-					public void resultAvailable(Boolean result)
+					public void resultAvailable(Boolean fini)
 					{
-						if(!isFinished() && result)
-						{
-							if(Boolean.FALSE.equals(finished))
-								finished = null; // set finishing
-							
+						opencalls--;
+						if(!closed)
+							closed = true;
+						if(fini && opencalls==0)
 							rankResults();
-						}
 					}
 					
 					public void exceptionOccurred(Exception exception)
 					{
+						opencalls--;
 						notifyException(exception);
 					}
 				});
+			}
+			else
+			{
+				results.add(result);
+				opencalls--;
 			}
 		}
 		else
@@ -109,16 +118,7 @@ public class ServiceRankingDelegationResultListener<S> extends IntermediateDeleg
 	 */
 	public boolean isFinished()
 	{
-		return finished!=null? finished.booleanValue(): Boolean.FALSE;
-	}
-	
-	/**
-	 *  Get the finished.
-	 *  @return The finished.
-	 */
-	public boolean isFinishing()
-	{
-		return finished==null;
+		return finished;
 	}
 	
 	/**
@@ -126,24 +126,28 @@ public class ServiceRankingDelegationResultListener<S> extends IntermediateDeleg
 	 */
 	protected void rankResults()
 	{
-		if(!isFinished())
-		{
-			// Terminate the source
-			((TerminableIntermediateDelegationFuture<S>)future).terminate();
+		if(hasranked)
+			return;
+		
+		hasranked = true;
+		
+		System.out.println("start ranking: "+this.hashCode());
+		
+		// Terminate the source
+		((TerminableIntermediateDelegationFuture<S>)future).terminate();
 			
-			ranker.rankWithScores(results).addResultListener(new IResultListener<List<Tuple2<S, Double>>>()
+		ranker.rankWithScores(new ArrayList<S>(results)).addResultListener(new IResultListener<List<Tuple2<S, Double>>>()
+		{
+			public void resultAvailable(List<Tuple2<S, Double>> result)
 			{
-				public void resultAvailable(List<Tuple2<S, Double>> result)
-				{
-					notifyResults(result);
-				}
-				
-				public void exceptionOccurred(Exception exception)
-				{
-					notifyException(exception);
-				}
-			});
-		}
+				notifyResults(result);
+			}
+			
+			public void exceptionOccurred(Exception exception)
+			{
+				notifyException(exception);
+			}
+		});
 	}
 	
 	/**
@@ -153,7 +157,7 @@ public class ServiceRankingDelegationResultListener<S> extends IntermediateDeleg
 	{
 		if(!isFinished())
 		{
-			finished = Boolean.TRUE;
+			finished = true;
 			
 			for(Tuple2<S, Double> res: results)
 			{
@@ -170,7 +174,7 @@ public class ServiceRankingDelegationResultListener<S> extends IntermediateDeleg
 	{
 		if(!isFinished())
 		{
-			finished = Boolean.TRUE;
+			finished = true;
 			future.setException(exception);
 		}
 	}

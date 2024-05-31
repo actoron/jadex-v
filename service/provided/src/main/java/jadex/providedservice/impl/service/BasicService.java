@@ -688,9 +688,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 	public boolean equals(Object obj)
 	{
 		if(obj instanceof IService)
-		{
 			return getServiceId().equals(((IService) obj).getServiceId());
-		}
 		return false;
 	}
 	

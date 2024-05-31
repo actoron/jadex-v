@@ -30,13 +30,15 @@ public class ApplicationAgent
 {
 	public static void main(String[] args) 
 	{
-		IComponent.create(new UserAgent()); // gui
+		IComponent.create(new UserAgent(true));
 	
 		for(int i=0; i<10; i++)
 			IComponent.create(new UserAgent()).get();
 		
 		for(int i=0; i<5; i++)
 			IComponent.create(new ProviderAgent()).get();
+		
+		IComponent.waitForLastComponentTerminated();
 	}
 	
 }

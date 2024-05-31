@@ -5,8 +5,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jadex.common.Tuple2;
 import jadex.future.CollectionResultListener;
@@ -191,20 +193,28 @@ public class ComposedEvaluator<S> implements IServiceEvaluator, IServiceRanker<S
 	 *  @param unrankedservices Unranked list of services.
 	 *  @return Ranked list of services and scores.
 	 */
+	protected static int counter = 0;
 	public IFuture<List<Tuple2<S, Double>>> rankWithScores(final List<S> unrankedservices)
 	{
+		final int cnt = counter++;
 		final Future<List<Tuple2<S, Double>>> ret = new Future<List<Tuple2<S, Double>>>();
 		final Map<IService, Double> evalmap = Collections.synchronizedMap(new HashMap<IService, Double>());
 		
+		//System.out.println("created: "+unrankedservices.size()+" "+cnt);
 		final CounterResultListener<Void> crl = new CounterResultListener<Void>(unrankedservices.size(), new IResultListener<Void>()
 		{
 			public void resultAvailable(Void result)
 			{
+				//System.out.println("sizes: "+unrankedservices.size()+" "+evalmap.size()+" "+cnt);
 				Collections.sort(unrankedservices, new Comparator<S>()
 				{
 					public int compare(S s1, S s2)
 					{
-						return (int)-Math.signum(evalmap.get(s1) - evalmap.get(s2));
+						Double v1 = evalmap.get(s1);
+						Double v2 = evalmap.get(s2);
+						//if(v1==null || v2==null)
+						//	System.out.println("nulllll"+" "+cnt);
+						return (int)-Math.signum(v1 - v2);
 					}
 				});
 				List<Tuple2<S, Double>> evas = new ArrayList<Tuple2<S, Double>>();
@@ -221,20 +231,29 @@ public class ComposedEvaluator<S> implements IServiceEvaluator, IServiceRanker<S
 			}
 		});
 		
+		Set<IService> done = new HashSet<>();
 		for(int i = 0; i < unrankedservices.size(); ++i)
 		{
-			final IService service = (IService) unrankedservices.get(i);
+			final IService service = (IService)unrankedservices.get(i);
+			if(done.contains(service))
+				System.out.println("problem: "+service+" "+done+" "+cnt);
+			done.add(service);
+			//System.out.println("now at: "+i+" "+service+" "+cnt);
 			
 			evaluate(service).addResultListener(new IResultListener<Double>()
 			{
 				public void resultAvailable(Double result)
 				{
+					//System.out.println("eval: "+result+" "+service+" "+cnt);
+					//if(evalmap.containsKey(service))
+					//	System.out.println("buuuuug: "+service+" "+evalmap+" "+cnt);
 					evalmap.put(service, result);
 					crl.resultAvailable(null);
 				}
 				
 				public void exceptionOccurred(Exception exception)
 				{
+					//System.out.println("exeception is: "+exception+" "+cnt);
 					crl.exceptionOccurred(exception);
 				}
 			});
