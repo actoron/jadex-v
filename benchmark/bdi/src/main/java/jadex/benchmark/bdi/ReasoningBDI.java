@@ -1,6 +1,9 @@
 package jadex.benchmark.bdi;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
@@ -12,23 +15,21 @@ import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
-import jadex.rules.eca.annotations.Event;
 
 /**
  *  Change a belief -> create a goal -> execute a plan
  */
-@Agent
+@Agent(type="bdip")
 public class ReasoningBDI
 {
 	@Belief
-	private boolean start;
+	private List<String> trigger	= new ArrayList<>();	
 	
 	@Goal
 	public class StartGoal
 	{
-		@GoalCreationCondition()
-//		@GoalCreationCondition(factchanged = "start")	// TODO: why does not work?
-		public StartGoal(@Event("start") boolean dummy)
+		@GoalCreationCondition(factadded="trigger")
+		public StartGoal()
 		{
 //			System.out.println("goal: "+this);
 		}
@@ -38,7 +39,7 @@ public class ReasoningBDI
 	public void body()
 	{
 //		System.out.println("body: "+this);
-		start	= true;
+		trigger.add("start");
 	}
 	
 	/**

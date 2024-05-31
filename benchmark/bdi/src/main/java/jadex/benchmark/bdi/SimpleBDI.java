@@ -7,7 +7,7 @@ import jadex.future.Future;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
-@Agent
+@Agent(type="bdip")
 public class SimpleBDI
 {
 	@OnStart
