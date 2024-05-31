@@ -39,6 +39,7 @@ dependencies
     implementation 'org.activecomponents.jadex:publishservice:'+v
     implementation 'org.activecomponents.jadex:publishservicejetty:'+v
     implementation 'org.activecomponents.jadex:nfproperty:'+v
+    implementation 'org.activecomponents.jadex:graylog:'+v
     //implementation 'org.activecomponents.jadex:simulation:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 	implementation 'org.jfree:jfreechart:1.5.4'

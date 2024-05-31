@@ -17,6 +17,12 @@ import jadex.core.IComponentManager;
 
 /**
  *  Singleton class providing general information for supporting components.
+ *  
+ *  - Application context
+ *  - Exception handling
+ *  - Logger
+ *  - Managing classloader
+ *  - Component id generation 
  */
 public class ComponentManager implements IComponentManager
 {
@@ -245,12 +251,20 @@ public class ComponentManager implements IComponentManager
 		}
 	}
 	
+	/**
+	 *  Set an application context for the components.
+	 *  @param appcontext The context.
+	 */
 	public synchronized void setApplicationContext(ApplicationContext appcontext)
 	{
 		// todo: add group on security
 		this.appcontext = appcontext;
 	}
 	
+	/**
+	 *  Get the application context.
+	 *  @return The context.
+	 */
 	public synchronized ApplicationContext getApplicationContext()
 	{
 		return appcontext;
@@ -278,6 +292,13 @@ public class ComponentManager implements IComponentManager
 		}
 	}
 	
+	/**
+	 *  Add an exception handler.
+	 *  @param cid The component id.
+	 *  @param clazz The exception class to match.
+	 *  @param exactmatch How clazz should be interpreted.
+	 *  @param handler The handler.
+	 */
 	public synchronized void addExceptionHandler(ComponentIdentifier cid, Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
 		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
@@ -289,6 +310,13 @@ public class ComponentManager implements IComponentManager
 		handlers.put(cid, new HandlerInfo(handler, exactmatch));
 	}
 	
+	/**
+	 *  Add an exception handler.
+	 *  @param type The component pojo type.
+	 *  @param clazz The exception class to match.
+	 *  @param exactmatch How clazz should be interpreted.
+	 *  @param handler The handler.
+	 */
 	public synchronized void addExceptionHandler(Class<?> type, Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
 		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
@@ -300,6 +328,12 @@ public class ComponentManager implements IComponentManager
 		handlers.put(type, new HandlerInfo(handler, exactmatch));
 	}
 	
+	/**
+	 *  Add an exception handler for all.
+	 *  @param clazz The exception class to match.
+	 *  @param exactmatch How clazz should be interpreted.
+	 *  @param handler The handler.
+	 */
 	public synchronized void addExceptionHandler(Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
 		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
@@ -311,6 +345,11 @@ public class ComponentManager implements IComponentManager
 		handlers.put(null, new HandlerInfo(handler, exactmatch));
 	}
 	
+	/**
+	 *  Remove an exception handler.
+	 *  @param key The key.
+	 *  @param clazz The exception class.
+	 */
 	public synchronized void removeExceptionHandler(Object key, Class<? extends Exception> clazz)
 	{
 		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);

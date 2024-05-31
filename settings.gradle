@@ -158,6 +158,7 @@ includeBuild('util/javaparser') {}
 includeBuild('util/nativetools') {}
 includeBuild('util/bytecode') {}
 includeBuild('util/idgenerator') {}
+includeBuild('util/graylog') {}
 
 includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
