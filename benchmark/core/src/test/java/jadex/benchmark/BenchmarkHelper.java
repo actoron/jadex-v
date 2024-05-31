@@ -119,9 +119,11 @@ public class BenchmarkHelper
 
 	protected static double	addToDB(double value) throws IOException
 	{
+		boolean	gradle	= System.getenv().toString().contains("gradle");
+		
 		double	pct	= 0;
 		String	caller	= getCaller(3);
-		Path	db	= Path.of(".benchmark", caller+".json");
+		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark", caller+".json");
 		if(db.toFile().exists())
 		{
 			double	prev	= Double.valueOf(Files.readString(db));
