@@ -1,8 +1,13 @@
 package jadex.core;
 
+import java.lang.System.Logger;
+import java.util.Collection;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import jadex.core.impl.ComponentManager;
+import jadex.core.impl.ComponentManager.LoggerConfigurator;
 
 /**
  *  Interface providing configuration options and general information for supporting components.
@@ -94,6 +99,19 @@ public interface IComponentManager
 	 *  @param clazz The exception class.
 	 */
 	public void removeExceptionHandler(Object key, Class<? extends Exception> clazz);
+	
+	/**
+	 *  Add a logger configurator.
+	 *  @param filter The filter if the configurator matches.
+	 *  @param configurator The configurator.
+	 */
+	public void addLoggerConfigurator(LoggerConfigurator configurator);
+	
+	/**
+	 *  Get all logger configurators.
+	 *  @return The logger configurators
+	 */
+	public Collection<LoggerConfigurator> getLoggerConfigurators();
 	
 	/**
 	 *  Set an application context for the components.

@@ -36,3 +36,11 @@ dependencies
 	implementation 'org.activecomponents.jadex:bytecode:'+v
 	implementation 'org.activecomponents.jadex:idgenerator:'+v
 }
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}

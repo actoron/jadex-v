@@ -1,21 +1,30 @@
 package jadex.logger;
 
 import java.util.ResourceBundle;
+import java.util.logging.Logger;
 
-import org.graylog2.logging.GelfHandler;
 
-public class GraylogLogger implements java.lang.System.Logger 
+/**
+ *  Graylog implementation of a logger.
+ */
+public class GraylogLogger implements java.lang.System.Logger //, IJavaLoggerImplementationProvider
 {
     protected final java.util.logging.Logger logger;
 
-    public GraylogLogger() 
+    public GraylogLogger(String name) 
     {
-        logger = java.util.logging.Logger.getLogger("GraylogLogger");
-        logger.setUseParentHandlers(false);
+        logger = java.util.logging.Logger.getLogger(name);
+        
+        /*logger.setUseParentHandlers(false);
         GelfHandler handler = new GelfHandler();
         handler.setGraylogHost("localhost");
         handler.setGraylogPort(12201);
-        logger.addHandler(handler);
+        logger.addHandler(handler);*/
+    }
+    
+    public Logger getLoggerImplementation() 
+    {
+    	return logger;
     }
 
     @Override

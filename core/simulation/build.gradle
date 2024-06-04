@@ -33,16 +33,27 @@ dependencies
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }
 
-test {
-  useJUnitPlatform()
-  maxParallelForks = Runtime.runtime.availableProcessors()
+test 
+{
+	useJUnitPlatform()
+	maxParallelForks = Runtime.runtime.availableProcessors()
 }
 
 // Hack for broken test fixtures in eclipse
 // cf. https://github.com/eclipse/buildship/issues/1206#issuecomment-1367742986
-eclipse.classpath {
+eclipse.classpath 
+{
     file.whenMerged { classpath ->
         classpath.entries.findAll { entry -> entry instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency && entry.entryAttributes.test }
         	.each { it.entryAttributes['test'] = 'false' }
 	}
 }
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}
+

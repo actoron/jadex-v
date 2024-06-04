@@ -158,7 +158,6 @@ includeBuild('util/javaparser') {}
 includeBuild('util/nativetools') {}
 includeBuild('util/bytecode') {}
 includeBuild('util/idgenerator') {}
-includeBuild('util/graylog') {}
 
 includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
@@ -193,6 +192,8 @@ includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
 includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 
 includeBuild('rules/eca') {}
+
+includeBuild('monitoring/graylog') {}
 
 includeBuild('application/micro'){name='application-micro'}
 includeBuild('application/micro-nfp'){name='application-micro-nfp'}

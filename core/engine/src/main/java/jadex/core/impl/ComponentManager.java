@@ -1,12 +1,19 @@
 package jadex.core.impl;
 
+import java.lang.System.Logger.Level;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.logging.ConsoleHandler;
 
 import jadex.common.SUtil;
 import jadex.core.ApplicationContext;
@@ -70,6 +77,13 @@ public class ComponentManager implements IComponentManager
 	//protected Map<Object, Map<Object, IExceptionHandler<? extends Exception>>> exceptionhandlers = new HashMap<>();	
 	protected Map<Object, Map<Object, HandlerInfo>> exceptionhandlers = new HashMap<>();	
 	
+	/** The logger configurators. */
+	protected List<LoggerConfigurator> loggerconfigurators = new ArrayList<>();
+	
+	public record LoggerConfigurator(Function<String, Boolean> filter, Consumer<Object> configurator, boolean system)
+	{
+	}
+	
 	/**
 	 *  Create a new component manager.
 	 */
@@ -98,6 +112,38 @@ public class ComponentManager implements IComponentManager
 		
 		// remove default handler
 		//removeExceptionHandler(null, Exception.class);
+		
+		// Add default logger configurators
+		// system
+		addLoggerConfigurator(new LoggerConfigurator(null, logger -> 
+		{
+			if(logger instanceof java.util.logging.Logger)
+			{
+				java.util.logging.Logger mylogger = (java.util.logging.Logger)logger;
+				ConsoleHandler chandler = new ConsoleHandler();
+		        chandler.setLevel(java.util.logging.Level.ALL); 
+		        mylogger.addHandler(chandler);
+			}
+			else
+			{
+				System.out.println("Default configurator cannot configure logger of type: "+logger);
+			}
+		}, true));
+		// application
+		addLoggerConfigurator(new LoggerConfigurator(null, logger -> 
+		{
+			if(logger instanceof java.util.logging.Logger)
+			{
+				java.util.logging.Logger mylogger = (java.util.logging.Logger)logger;
+				ConsoleHandler chandler = new ConsoleHandler();
+		        chandler.setLevel(java.util.logging.Level.ALL); 
+		        mylogger.addHandler(chandler);
+			}
+			else
+			{
+				System.out.println("Default configurator cannot configure logger of type: "+logger);
+			}
+		}, false));
 	}
 	
 	/**
@@ -177,6 +223,8 @@ public class ComponentManager implements IComponentManager
 	public void addComponent(IComponent comp)
 	{
 		//System.out.println("added: "+comp.getId());
+		System.getLogger(IComponent.class.getName()).log(Level.INFO, "Component created: "+comp.getId());
+		
 		synchronized(components)
 		{
 			if(components.containsKey(comp.getId()))
@@ -195,6 +243,8 @@ public class ComponentManager implements IComponentManager
 	 */
 	public void removeComponent(ComponentIdentifier cid)
 	{
+		System.getLogger(IComponent.class.getName()).log(Level.INFO, "Component removed: "+cid);
+		
 		//System.out.println("removing: "+cid);
 		boolean last;
 		synchronized(components)
@@ -422,4 +472,27 @@ public class ComponentManager implements IComponentManager
 	protected record HandlerInfo(BiConsumer<? extends Exception, IComponent> handler, boolean exact) 
 	{
 	};
+	
+	/**
+	 *  Add a logger configurator.
+	 *  @param filter The filter if the configurator matches.
+	 *  @param configurator The configurator.
+	 */
+	public synchronized void addLoggerConfigurator(LoggerConfigurator configurator)
+	{
+		// remove existing fallback configurator
+		if(configurator.filter()==null)
+			loggerconfigurators.removeIf(lc -> lc.filter()==null && lc.system()==configurator.system());
+		
+		loggerconfigurators.add(configurator);
+	}
+	
+	/**
+	 *  Get all logger configurators.
+	 *  @return The logger configurators
+	 */
+	public synchronized Collection<LoggerConfigurator> getLoggerConfigurators()
+	{
+		return loggerconfigurators;
+	}
 }

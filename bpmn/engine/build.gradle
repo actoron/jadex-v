@@ -47,8 +47,14 @@ test
   useJUnitPlatform()
 }
 
-processResources {
-    from ('src/test/java') {
+processResources 
+{
+    from ('src/test/java') 
+    {
         include '**/*.bpmn'
+    }
+    from ('src/main/java') 
+    {
+        include '**/.system'
     }
 }

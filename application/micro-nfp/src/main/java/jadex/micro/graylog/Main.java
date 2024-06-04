@@ -8,6 +8,7 @@ public class Main
 	public static void main(String[] args) 
 	{
 		Logger logger = System.getLogger("logger");
+		Logger logger2 = System.getLogger("logger");
 		
 		for(int i=0; i<100; i++)
 		{
