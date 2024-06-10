@@ -1,7 +1,5 @@
 package jadex.benchmark;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,52 +66,44 @@ public class BenchmarkHelper
 		}
 	}
 
-	public static void	benchmarkTime(Runnable code)
+	public static double	benchmarkTime(Runnable code)
 	{
+		long msecs	= 10000;	// How long to run the benchmark
+		int	warmups	= 100; 	// How many warm-ups to run
+		int	runs	= 10;	// How many runs for measurement 
 		try
-		{	
-			// run once
-			code.run();
-			
-			// Dry run to get number of runs
-			long	 num	= 0;
-			for(long starttime=System.currentTimeMillis();
-					starttime+1000>System.currentTimeMillis(); num++)
+		{
+			long	mstart	= System.currentTimeMillis();
+			long	took	= Long.MAX_VALUE;
+			long	cnt;
+			for(cnt=0; mstart+msecs>System.currentTimeMillis(); cnt++)
 			{
-				code.run();
-			}
-			System.out.println("Benchmark size (#): "+num);
-			
-			// Actual benchmark
-			double	pct;
-			int	sec	= 1;
-			do
-			{
-				sec*=3;
-				Thread.sleep(100*sec);
-				System.gc();
-				Thread.sleep(100*sec);
-				System.out.println("Running for (s): "+sec);
+				for(int i=0; i<warmups; i++)
+					code.run();
+				long	start	= System.nanoTime();
+				for(int i=0; i<runs; i++)
+					code.run();
+				long	end	= System.nanoTime();
 				
-				long	nanos	= System.nanoTime();
-				for(long i=0; i<(num*sec); i++)
+				if(end-start<took)
 				{
-					code.run();				
+					took	= end-start;
 				}
-				long	nanos2	= System.nanoTime();
-				
-				long	took	= (nanos2-nanos)/(num*sec);
-				System.out.println("Code took (ns): "+took);
-				
-				pct	= addToDB(took);
+//				else
+//				{
+//					System.out.println("hier");
+//					break;
+//				}
 			}
-			while(pct>5 && sec<100);
-			
-			assertTrue(pct<5);
+			System.out.println("took: "+took/runs);
+			System.out.println("runs: "+cnt);
+//			System.out.println("max heap: "+Runtime.getRuntime().maxMemory());
+			double	pct	= addToDB(took/runs);
+			return pct;
 		}
 		catch(Exception e)
 		{
-			SUtil.throwUnchecked(e);
+			throw SUtil.throwUnchecked(e);
 		}
 	}
 
