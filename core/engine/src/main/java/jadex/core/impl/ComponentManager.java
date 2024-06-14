@@ -486,7 +486,7 @@ public class ComponentManager implements IComponentManager
 	/**
 	 *  Add a logger configurator.
 	 *  @param filter The filter if the configurator matches.
-	 *  @param configurator The configurator.
+	 *  @param creator The creator.
 	 */
 	public synchronized void addLoggerCreator(LoggerCreator creator)
 	{

@@ -27,6 +27,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.graylog2:gelfj:1.1.16'
 	implementation 'org.graylog2:gelfclient:1.5.1'
 	testImplementation 'org.activecomponents.jadex:common:'+v
