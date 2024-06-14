@@ -1,0 +1,69 @@
+curl -fsSL https://toolbelt.treasuredata.com/sh/install-ubuntu-jammy-fluent-package5-lts.sh | sh
+
+sudo systemctl start fluentd.service
+
+curl -X POST -d 'json={"json":"message"}' http://localhost:8888/debug.test
+tail -n 1 /var/log/fluent/fluentd.log
+
+edit config at /etc/fluent/fluentd.conf
+
+<match application_log.**>
+  @type elasticsearch
+  host localhost
+  port 9200
+  index_name application_logs
+  <buffer>
+    @type file
+    path /var/log/fluentd/buffer/application_logs
+  </buffer> 
+  <format>
+    @type json
+  </format>
+  include_timestamp true
+</match>
+
+<match jadex_log.**>
+  @type elasticsearch
+  host localhost
+  port 9200
+  index_name jadex_logs       
+  <buffer>
+    @type file
+    path /var/log/fluentd/buffer/jadex_logs
+  </buffer>
+  <format>
+    @type json
+  </format>
+  include_timestamp true                                                                      
+</match>
+
+#<match *.**>
+#  @type stdout
+#  @id output_stdout_2
+#</match>
+
+important to add include_timestamp true for grafana
+
+
+In Elasticsearch the indices have to be created via rest calls:
+PUT http://localhost:9200/application_logs
+PUT http://localhost:9200/jadex_logs
+
+
+In Grafana two datasources have to be created for each index name.
+Timestamp must be present for a connection.
+
+
+implementation 'org.activecomponents.jadex:fluentd:'+v
+implementation 'org.fluentd:fluent-logger:0.3.4'
+
+runtimeOnly 'org.slf4j:slf4j-jdk14:1.8.0-beta4' // seems to use it only itself; not to direct log messages to a slf4j
+
+
+Start the services
+sudo systemctl start fluentd
+sudo systemctl start elasticsearch
+sudo systemctl start grafana
+
+
+

@@ -3,18 +3,18 @@ package jadex.logger;
 import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
-
 /**
- *  Graylog implementation of a logger.
+ *  Logger implementation that uses java.util.logging.Logger
  */
-public class GraylogLogger implements java.lang.System.Logger 
+public class JulLogger implements java.lang.System.Logger
 {
     protected final java.util.logging.Logger logger;
 
-    public GraylogLogger(String name) 
+    public JulLogger(String name) 
     {
-    	System.out.println("created graylog logger: "+name);
         logger = java.util.logging.Logger.getLogger(name);
+        logger.setUseParentHandlers(false);
+        System.out.println("created jul logger: "+name);
     }
     
     public Logger getLoggerImplementation() 

@@ -1,4 +1,4 @@
-package jadex.core.impl;
+package jadex.logger;
 
 import java.io.File;
 import java.io.IOException;

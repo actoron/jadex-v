@@ -1,21 +1,19 @@
-package jadex.micro.graylog;
+package jadex.micro.fluentdlog;
 
 import java.lang.System.Logger.Level;
 import java.util.logging.ConsoleHandler;
-
-import org.graylog2.logging.GelfHandler;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager.LoggerCreator;
 import jadex.execution.IExecutionFeature;
-import jadex.logger.GraylogLogger;
+import jadex.logger.FluentdLogger;
 import jadex.logger.JulLogger;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
 @Agent
-public class UseGraylogAgent 
+public class UseFluentdAgent 
 {
 	@OnStart
 	protected void onStart(IComponent agent)
@@ -35,57 +33,38 @@ public class UseGraylogAgent
 	
 	public static void main(String[] args) 
 	{
-		 // only necessary when multiple unordered external loggers are in cp or config is not default
-		
 		// Configure Jadex system logger
 		// application
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(
-		null
-		/*name ->
+		IComponentManager.get().addLoggerCreator(new LoggerCreator(name ->
+		{
+			JulLogger ret = new JulLogger(name);
+			ConsoleHandler chandler = new ConsoleHandler();
+	        chandler.setLevel(java.util.logging.Level.OFF); 
+	        ret.getLoggerImplementation().addHandler(chandler);
+			return ret;
+		}, name -> 
+		{
+			return new FluentdLogger(name, true); // only necessary when multiple unordered external loggers are in cp
+		}, true));
+		
+		// application
+		IComponentManager.get().addLoggerCreator(new LoggerCreator(name ->
 		{
 			JulLogger ret = new JulLogger(name);
 			ConsoleHandler chandler = new ConsoleHandler();
 	        chandler.setLevel(java.util.logging.Level.ALL); 
 	        ret.getLoggerImplementation().addHandler(chandler);
 			return ret;
-		}*/
-		, name -> 
+		}, name -> 
 		{
-			GraylogLogger ret = new GraylogLogger(name);
-			java.util.logging.Logger logger = ret.getLoggerImplementation();
-	        logger.setUseParentHandlers(false);
-	        GelfHandler handler = new GelfHandler();
-	        handler.setGraylogHost("localhost");
-	        handler.setGraylogPort(12201);
-	        logger.addHandler(handler);
-	        return ret;
-		}));
+			return new FluentdLogger(name, false);  // only necessary when multiple unordered external loggers are in cp
+		}, false));
 		
 		// Configure Jadex application logger
 		// system
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(
-		null
-		/*name ->
-		{
-			JulLogger ret = new JulLogger(name);
-			ConsoleHandler chandler = new ConsoleHandler();
-	        chandler.setLevel(java.util.logging.Level.ALL); 
-	        ret.getLoggerImplementation().addHandler(chandler);
-			return ret;
-		}*/
-		, name -> 
-		{
-			GraylogLogger gl = new GraylogLogger(name);
-			java.util.logging.Logger logger = gl.getLoggerImplementation();
-	        logger.setUseParentHandlers(false);
-	        GelfHandler handler = new GelfHandler();
-	        handler.setGraylogHost("localhost");
-	        handler.setGraylogPort(12201);
-	        logger.addHandler(handler);
-	        return gl;
-		}, true));
 		
-		IComponent.create(new UseGraylogAgent()).get();
+		for(int i=0; i<1; i++)
+			IComponent.create(new UseFluentdAgent()).get();
 		
 		IComponent.waitForLastComponentTerminated();
 	}

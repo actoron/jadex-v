@@ -193,7 +193,10 @@ includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 
 includeBuild('rules/eca') {}
 
+includeBuild('monitoring/logbase') {}
 includeBuild('monitoring/graylog') {}
+includeBuild('monitoring/fluentd') {}
+includeBuild('monitoring/log4j') {}
 
 includeBuild('application/micro'){name='application-micro'}
 includeBuild('application/micro-nfp'){name='application-micro-nfp'}

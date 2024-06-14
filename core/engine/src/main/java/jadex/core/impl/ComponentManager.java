@@ -1,5 +1,6 @@
 package jadex.core.impl;
 
+import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -10,10 +11,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.ConsoleHandler;
 
 import jadex.common.SUtil;
 import jadex.core.ApplicationContext;
@@ -78,10 +79,51 @@ public class ComponentManager implements IComponentManager
 	protected Map<Object, Map<Object, HandlerInfo>> exceptionhandlers = new HashMap<>();	
 	
 	/** The logger configurators. */
-	protected List<LoggerConfigurator> loggerconfigurators = new ArrayList<>();
+	protected List<LoggerCreator> loggercreators = new ArrayList<>();
 	
-	public record LoggerConfigurator(Function<String, Boolean> filter, Consumer<Object> configurator, boolean system)
+	/** The active state of loglibs. */
+	protected Map<String, Boolean> loglibsactive = new HashMap<String, Boolean>();
+	
+	public record LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
 	{
+	    private static final ConcurrentHashMap<Function<String, Boolean>, Integer> ids = new ConcurrentHashMap<>();
+	    private static final AtomicInteger nextid = new AtomicInteger(1);
+
+	    public LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
+	    {
+	        this.name = name;
+	        this.filter = filter;
+	        this.icreator = icreator;
+	        this.ecreator = ecreator;
+	        this.system = system;
+	    }
+
+	    public LoggerCreator(Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
+	    {
+	        this(null, null, icreator, ecreator, system);
+	    }
+
+	    public LoggerCreator(Function<String, Logger> icreator, Function<String, Logger> ecreator) 
+	    {
+	        this(null, null, icreator, ecreator, false);
+	    }
+
+	    public String getLoggerName() 
+	    {
+	        String ret = name;
+	        if (ret == null) 
+	        {
+	            ret = system ? "system" : "application";
+	            if(filter != null) 
+	                ret += "_" + getFilterId(filter);
+	        }
+	        return ret;
+	    }
+
+	    private static int getFilterId(Function<String, Boolean> filter) 
+	    {
+	        return ids.computeIfAbsent(filter, key -> nextid.getAndIncrement());
+	    }
 	}
 	
 	/**
@@ -112,38 +154,6 @@ public class ComponentManager implements IComponentManager
 		
 		// remove default handler
 		//removeExceptionHandler(null, Exception.class);
-		
-		// Add default logger configurators
-		// system
-		addLoggerConfigurator(new LoggerConfigurator(null, logger -> 
-		{
-			if(logger instanceof java.util.logging.Logger)
-			{
-				java.util.logging.Logger mylogger = (java.util.logging.Logger)logger;
-				ConsoleHandler chandler = new ConsoleHandler();
-		        chandler.setLevel(java.util.logging.Level.ALL); 
-		        mylogger.addHandler(chandler);
-			}
-			else
-			{
-				System.out.println("Default configurator cannot configure logger of type: "+logger);
-			}
-		}, true));
-		// application
-		addLoggerConfigurator(new LoggerConfigurator(null, logger -> 
-		{
-			if(logger instanceof java.util.logging.Logger)
-			{
-				java.util.logging.Logger mylogger = (java.util.logging.Logger)logger;
-				ConsoleHandler chandler = new ConsoleHandler();
-		        chandler.setLevel(java.util.logging.Level.ALL); 
-		        mylogger.addHandler(chandler);
-			}
-			else
-			{
-				System.out.println("Default configurator cannot configure logger of type: "+logger);
-			}
-		}, false));
 	}
 	
 	/**
@@ -478,21 +488,48 @@ public class ComponentManager implements IComponentManager
 	 *  @param filter The filter if the configurator matches.
 	 *  @param configurator The configurator.
 	 */
-	public synchronized void addLoggerConfigurator(LoggerConfigurator configurator)
+	public synchronized void addLoggerCreator(LoggerCreator creator)
 	{
 		// remove existing fallback configurator
-		if(configurator.filter()==null)
-			loggerconfigurators.removeIf(lc -> lc.filter()==null && lc.system()==configurator.system());
+		if(creator.filter()==null)
+			loggercreators.removeIf(lc -> lc.filter()==null && lc.system()==creator.system());
 		
-		loggerconfigurators.add(configurator);
+		loggercreators.add(creator);
+	}
+	
+	/**
+	 *  Update a logger creator by exchanging it against it old version.
+	 *  @param ocreator The old creator.
+	 *  @param ncreator The new creator.
+	 */
+	public synchronized void updateLoggerCreator(LoggerCreator ocreator, LoggerCreator ncreator)
+	{
+		if(ncreator==null)
+			throw new NullPointerException("new creator must not null");
+		
+		// remove existing fallback configurator
+		if(ocreator==null && ncreator.filter()==null)
+			loggercreators.removeIf(lc -> lc.filter()==null && lc.system()==ncreator.system());
+
+		loggercreators.remove(ocreator);
+		loggercreators.add(ncreator);
+	}
+	
+	/**
+	 *  Remove a logger creator.
+	 *  @param creator The creator.
+	 */
+	public synchronized void removeLoggerCreator(LoggerCreator creator)
+	{
+		loggercreators.remove(creator);
 	}
 	
 	/**
 	 *  Get all logger configurators.
 	 *  @return The logger configurators
 	 */
-	public synchronized Collection<LoggerConfigurator> getLoggerConfigurators()
+	public synchronized Collection<LoggerCreator> getLoggerCreators()
 	{
-		return loggerconfigurators;
+		return loggercreators;
 	}
 }

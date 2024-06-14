@@ -28,8 +28,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:logbase:'+v
-	implementation 'org.graylog2:gelfj:1.1.16'
-	implementation 'org.graylog2:gelfclient:1.5.1'
+	implementation 'org.fluentd:fluent-logger:0.3.4'
 	testImplementation 'org.activecomponents.jadex:common:'+v
 	testImplementation testFixtures('org.activecomponents.jadex:execution:'+v)
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'

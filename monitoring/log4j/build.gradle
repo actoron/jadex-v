@@ -28,8 +28,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:logbase:'+v
-	implementation 'org.graylog2:gelfj:1.1.16'
-	implementation 'org.graylog2:gelfclient:1.5.1'
+    implementation 'org.apache.logging.log4j:log4j-core:3.0.0-beta2'
 	testImplementation 'org.activecomponents.jadex:common:'+v
 	testImplementation testFixtures('org.activecomponents.jadex:execution:'+v)
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
@@ -39,15 +38,6 @@ dependencies
 test 
 {
 	useJUnitPlatform()
-}
-
-// Hack for broken test fixtures in eclipse
-// cf. https://github.com/eclipse/buildship/issues/1206#issuecomment-1367742986
-eclipse.classpath {
-    file.whenMerged { classpath ->
-        classpath.entries.findAll { entry -> entry instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency && entry.entryAttributes.test }
-        	.each { it.entryAttributes['test'] = 'false' }
-	}
 }
 
 processResources 
