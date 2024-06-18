@@ -1,61 +1,23 @@
 package jadex.benchmark;
 
-import java.util.stream.Stream;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.Test;
 
-import jadex.benchmark.AbstractComponentBenchmark;
-import jadex.common.SUtil;
-import jadex.core.ComponentIdentifier;
 import jadex.execution.LambdaAgent;
-import jadex.execution.LambdaAgent.Result;
-import jadex.future.Future;
-import jadex.future.IFuture;
 
 /**
  *  Benchmark plain MjComponent with included execution feature.
  */
-public class LambdaAgentBenchmark	extends AbstractComponentBenchmark 
+public class LambdaAgentBenchmark
 {
-	@Override
-	protected String getComponentTypeName()
+	@Test
+	void	benchmarkTime()
 	{
-		return "Lambda agent";
-	}
-	
-	@Override
-	protected IFuture<ComponentIdentifier>	createComponent(String name)
-	{
-		Result<ComponentIdentifier> res = LambdaAgent.create(comp ->
+		double pct	= BenchmarkHelper.benchmarkTime(() -> 
 		{
-			return comp.getId();
-		}, new ComponentIdentifier(name));
-		
-		return res.result();
-	}
-
-	protected static Stream<Arguments> provideBenchmarkParams() {
-	    return Stream.of(
-	  	      Arguments.of(SUtil.isVirtualExecutor()  ? 10000 : 1000, false, false),
-		      Arguments.of(SUtil.isVirtualExecutor()  ? 100000 : 10000, false, true)	
-	    );
-	}
-	
-	@Override
-	@ParameterizedTest
-	@MethodSource("provideBenchmarkParams")
-	public void runCreationBenchmark(int num, boolean print, boolean parallel)
-	{
-		super.runCreationBenchmark(num, print, parallel);
-	}
-
-	@Override
-	@ParameterizedTest
-	@MethodSource("provideBenchmarkParams")
-	public void runThroughputBenchmark(int num, boolean print, boolean parallel)
-	{
-		super.runThroughputBenchmark(num, print, parallel);
+			LambdaAgent.create(comp -> {return comp.getId();}).result().get();
+		});
+		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
 }
