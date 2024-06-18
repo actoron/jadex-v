@@ -42,4 +42,7 @@ test {
 task benchmark(type : Test) {
   useJUnitPlatform()
   include 'jadex/benchmark/**'
+  minHeapSize = "4g"
+  maxHeapSize = "4g"
+  enableAssertions = false
 }

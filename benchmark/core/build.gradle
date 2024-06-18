@@ -42,4 +42,5 @@ task benchmark(type : Test) {
   include 'jadex/benchmark/**'
   minHeapSize = "4g"
   maxHeapSize = "4g"
+  enableAssertions = false
 }
