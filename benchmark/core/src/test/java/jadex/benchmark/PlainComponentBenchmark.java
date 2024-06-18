@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.core.impl.Component;
 
-public class TestBenchmark
+public class PlainComponentBenchmark
 {
 //	@Test
 //	void testBenchmark()
