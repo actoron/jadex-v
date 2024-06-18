@@ -68,38 +68,40 @@ public class BenchmarkHelper
 
 	public static double	benchmarkTime(Runnable code)
 	{
-		long msecs	= 10000;	// How long to run the benchmark
+		int	retries	= 10;	// how often to repeat everything 
+		long cooldown	= 10000;	// How long to sleep before runs
+		long msecs	= 1000;	// How long to run the benchmark
 		int	warmups	= 100; 	// How many warm-ups to run
 		int	runs	= 10;	// How many runs for measurement 
+		long	best	= Long.MAX_VALUE;
 		try
 		{
-			long	mstart	= System.currentTimeMillis();
-			long	took	= Long.MAX_VALUE;
-			long	cnt;
-			for(cnt=0; mstart+msecs>System.currentTimeMillis(); cnt++)
+			for(int j=0; j<retries; j++)
 			{
-				for(int i=0; i<warmups; i++)
-					code.run();
-				long	start	= System.nanoTime();
-				for(int i=0; i<runs; i++)
-					code.run();
-				long	end	= System.nanoTime();
-				
-				if(end-start<took)
+				Thread.sleep(cooldown);
+				long	mstart	= System.currentTimeMillis();
+				long	cnt;
+				long	took	= 0;
+				for(cnt=0; mstart+msecs>System.currentTimeMillis(); cnt++)
 				{
-					took	= end-start;
+					for(int i=0; i<warmups; i++)
+						code.run();
+					long	start	= System.nanoTime();
+					for(int i=0; i<runs; i++)
+						code.run();
+					long	end	= System.nanoTime();
+					
+					took	+= (end-start)/runs;
+
 				}
-//				else
-//				{
-//					System.out.println("hier");
-//					break;
-//				}
+				took	/= cnt;
+				System.out.println("took: "+took);
+				System.out.println("runs: "+cnt);
+
+				addToDB(took);
+				best	= Math.min(best, took);
 			}
-			System.out.println("took: "+took/runs);
-			System.out.println("runs: "+cnt);
-//			System.out.println("max heap: "+Runtime.getRuntime().maxMemory());
-			double	pct	= addToDB(took/runs);
-			return pct;
+			return addToDB(best);
 		}
 		catch(Exception e)
 		{
@@ -117,7 +119,7 @@ public class BenchmarkHelper
 		if(db.toFile().exists())
 		{
 			double	prev	= Double.valueOf(Files.readString(db));
-			pct	= (value - prev)*100.0/value;
+			pct	= (value - prev)*100.0/prev;
 			System.out.println("Change(%): "+pct);				
 			if(value<prev)
 			{
