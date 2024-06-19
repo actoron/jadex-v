@@ -18,12 +18,12 @@ import jadex.model.annotation.OnStart;
  *  Change a belief -> create a goal -> execute a plan
  */
 @Agent(type="bdip")
-public class TestBenchmarkAgent
+public class ReasoningBDIBenchmarkAgent
 {
 	@Belief
 	private List<String> trigger	= new ArrayList<>();	
 	
-	Future<Void>	inited	= new Future<>();
+	Future<Void>	completed	= new Future<>();
 	
 	@Goal
 	public class StartGoal
@@ -49,6 +49,6 @@ public class TestBenchmarkAgent
 	protected void	printHello1(StartGoal goal, IComponent agent)
 	{
 //		System.out.println("plan: "+this);
-		inited.setResult(null);
+		completed.setResult(null);
 	}
 }

@@ -11,11 +11,16 @@ import jadex.common.SUtil;
 
 public class BenchmarkHelper
 {
-	public static String	getCaller(int depth)
+	public static String	getCaller()
 	{
-		StackTraceElement[]	stel	= new Exception().fillInStackTrace().getStackTrace();
-		String	clazz	= stel[depth].getClassName();
-		return clazz.substring(clazz.lastIndexOf(".")+1)+"."+stel[depth].getMethodName();
+		StackTraceElement[]	stels	= new Exception().fillInStackTrace().getStackTrace();
+		for(StackTraceElement stel: stels)
+		{
+			String	clazz	= stel.getClassName();
+			if(!BenchmarkHelper.class.getName().equals(clazz))
+				return clazz.substring(clazz.lastIndexOf(".")+1)+"."+stel.getMethodName();
+		}
+		throw new IllegalCallerException("Must be called from outside class");
 	}
 	
 	public static void	benchmarkTwoStage(Callable<Runnable> startup)
@@ -114,7 +119,7 @@ public class BenchmarkHelper
 		boolean	gradle	= System.getenv().toString().contains("gradle");
 		
 		double	pct	= 0;
-		String	caller	= getCaller(3);
+		String	caller	= getCaller();
 		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark", caller+".json");
 		if(db.toFile().exists())
 		{

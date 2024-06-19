@@ -1,75 +1,40 @@
 package jadex.benchmark;
 
 
-import java.util.stream.Stream;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.Test;
 
-import jadex.benchmark.AbstractComponentBenchmark;
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.core.ComponentIdentifier;
+import jadex.core.IExternalAccess;
 import jadex.future.Future;
-import jadex.future.IFuture;
 
 /**
  *  Benchmark creation and killing of micro agents.
  */
-public class BpmnProcessAgentBenchmark	extends AbstractComponentBenchmark 
+public class BpmnProcessAgentBenchmark 
 {
-	@Override
-	protected String getComponentTypeName()
+	@Test
+	void	benchmarkTime()
 	{
-		return "BPMN Process";
-	}
-	
-	@Override
-	protected IFuture<ComponentIdentifier>	createComponent(String name)
-	{
-		Future<ComponentIdentifier>	ret	= new Future<>();
-		RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
-		
-		pojo.subscribeToResults().next(res ->
+		double pct	= BenchmarkHelper.benchmarkTime(() -> 
 		{
-			System.out.println("received result: "+res.name()+" "+res.value());
-			ret.setResultIfUndone((ComponentIdentifier)res.value());
-		}).catchEx(ret);
-		
-		BpmnProcess.create(pojo, new ComponentIdentifier(name));
-		//System.out.println(name);
-		return ret;
-	}
-
-	protected static Stream<Arguments> provideBenchmarkParams() 
-	{
-	    return Stream.of
-	    (
-	  	      Arguments.of(1000, false, false),
-		      Arguments.of(1000, false, true)
-	    );
-	}
-	
-	@Override
-	@ParameterizedTest
-	@MethodSource("provideBenchmarkParams")
-	public void runCreationBenchmark(int num, boolean print, boolean parallel)
-	{
-		System.out.println("runCreationBenchmark: "+num+" "+print+" "+parallel);
-		super.runCreationBenchmark(num, print, parallel);
-		System.out.println("runCreationBenchmark end");
-	}
-
-	@Override
-	@ParameterizedTest
-	@MethodSource("provideBenchmarkParams")
-	public void runThroughputBenchmark(int num, boolean print, boolean parallel)
-	{
-		TIMEOUT	= 300000;
-		System.out.println("runThroughputBenchmark: "+num+" "+print+" "+parallel);
-		super.runThroughputBenchmark(num, print, parallel);
-		System.out.println("runThroughputBenchmark end");
+			Future<ComponentIdentifier>	ret	= new Future<>();
+			RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
+			
+			pojo.subscribeToResults().next(res ->
+			{
+//				System.out.println("received result: "+res.name()+" "+res.value());
+				ret.setResultIfUndone((ComponentIdentifier)res.value());
+			}).catchEx(ret);
+			
+			IExternalAccess	agent	= BpmnProcess.create(pojo);
+			ret.get();
+			agent.terminate().get();
+		});
+		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
 }
 

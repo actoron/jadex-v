@@ -7,14 +7,14 @@ import org.junit.jupiter.api.Test;
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.core.IExternalAccess;
 
-public class TestBenchmark
+public class SimpleBDIBenchmark
 {
 	@Test
 	void	benchmarkTime()
 	{
 		double pct	= BenchmarkHelper.benchmarkTime(() -> 
 		{
-			TestBenchmarkAgent	pojo	= new TestBenchmarkAgent();
+			SimpleBDIBenchmarkAgent	pojo	= new SimpleBDIBenchmarkAgent();
 			IExternalAccess	agent	= IBDIAgent.create(pojo);
 			pojo.inited.get();
 			agent.terminate().get();
