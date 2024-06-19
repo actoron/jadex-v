@@ -1,5 +1,6 @@
 package jadex.nfproperty.impl;
 
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,7 +69,8 @@ public class NFPropertyLoader
 		
 		RequiredServiceModel rmodel = (RequiredServiceModel)modelinfo.getFeatureModel(IRequiredServiceFeature.class);
 		//Map<String, RequiredServiceInfo> rsers = rmodel.getRequiredServices();
-		System.out.println("todo: required service nfprops");
+		//System.out.println("todo: required service nfprops");
+		System.getLogger(NFPropertyLoader.class.getName()).log(Level.WARNING, "todo: required service nfprops");
 		
 //		RequiredServiceInfo[] rsis = new RequiredServiceInfo[reqs.length];
 		/*for(int j=0; j<reqs.length; j++)

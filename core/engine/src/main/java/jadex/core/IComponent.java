@@ -1,5 +1,6 @@
 package jadex.core;
 
+import java.lang.System.Logger.Level;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -142,7 +144,7 @@ public interface IComponent
 	}
 	
 	public static IFuture<IExternalAccess> create(Object pojo, ComponentIdentifier cid)
-	{
+	{		
 		Future<IExternalAccess> ret = new Future<>();
 		
 		boolean created = false;

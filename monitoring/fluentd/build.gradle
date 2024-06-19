@@ -1,0 +1,58 @@
+plugins 
+{
+	id 'java-library'
+	id 'eclipse'
+}
+
+description = 'Component centralized logging support'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:logbase:'+v
+	implementation 'org.fluentd:fluent-logger:0.3.4'
+	testImplementation 'org.activecomponents.jadex:common:'+v
+	testImplementation testFixtures('org.activecomponents.jadex:execution:'+v)
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test 
+{
+	useJUnitPlatform()
+}
+
+// Hack for broken test fixtures in eclipse
+// cf. https://github.com/eclipse/buildship/issues/1206#issuecomment-1367742986
+eclipse.classpath {
+    file.whenMerged { classpath ->
+        classpath.entries.findAll { entry -> entry instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency && entry.entryAttributes.test }
+        	.each { it.entryAttributes['test'] = 'false' }
+	}
+}
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}

@@ -1,12 +1,20 @@
 package jadex.core.impl;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import jadex.common.SUtil;
 import jadex.core.ApplicationContext;
@@ -17,6 +25,12 @@ import jadex.core.IComponentManager;
 
 /**
  *  Singleton class providing general information for supporting components.
+ *  
+ *  - Application context
+ *  - Exception handling
+ *  - Logger
+ *  - Managing classloader
+ *  - Component id generation 
  */
 public class ComponentManager implements IComponentManager
 {
@@ -63,6 +77,54 @@ public class ComponentManager implements IComponentManager
 	/** The exception handlers. */
 	//protected Map<Object, Map<Object, IExceptionHandler<? extends Exception>>> exceptionhandlers = new HashMap<>();	
 	protected Map<Object, Map<Object, HandlerInfo>> exceptionhandlers = new HashMap<>();	
+	
+	/** The logger configurators. */
+	protected List<LoggerCreator> loggercreators = new ArrayList<>();
+	
+	/** The active state of loglibs. */
+	protected Map<String, Boolean> loglibsactive = new HashMap<String, Boolean>();
+	
+	public record LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
+	{
+	    private static final ConcurrentHashMap<Function<String, Boolean>, Integer> ids = new ConcurrentHashMap<>();
+	    private static final AtomicInteger nextid = new AtomicInteger(1);
+
+	    public LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
+	    {
+	        this.name = name;
+	        this.filter = filter;
+	        this.icreator = icreator;
+	        this.ecreator = ecreator;
+	        this.system = system;
+	    }
+
+	    public LoggerCreator(Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
+	    {
+	        this(null, null, icreator, ecreator, system);
+	    }
+
+	    public LoggerCreator(Function<String, Logger> icreator, Function<String, Logger> ecreator) 
+	    {
+	        this(null, null, icreator, ecreator, false);
+	    }
+
+	    public String getLoggerName() 
+	    {
+	        String ret = name;
+	        if (ret == null) 
+	        {
+	            ret = system ? "system" : "application";
+	            if(filter != null) 
+	                ret += "_" + getFilterId(filter);
+	        }
+	        return ret;
+	    }
+
+	    private static int getFilterId(Function<String, Boolean> filter) 
+	    {
+	        return ids.computeIfAbsent(filter, key -> nextid.getAndIncrement());
+	    }
+	}
 	
 	/**
 	 *  Create a new component manager.
@@ -171,6 +233,8 @@ public class ComponentManager implements IComponentManager
 	public void addComponent(IComponent comp)
 	{
 		//System.out.println("added: "+comp.getId());
+		System.getLogger(IComponent.class.getName()).log(Level.INFO, "Component created: "+comp.getId());
+		
 		synchronized(components)
 		{
 			if(components.containsKey(comp.getId()))
@@ -189,6 +253,8 @@ public class ComponentManager implements IComponentManager
 	 */
 	public void removeComponent(ComponentIdentifier cid)
 	{
+		System.getLogger(IComponent.class.getName()).log(Level.INFO, "Component removed: "+cid);
+		
 		//System.out.println("removing: "+cid);
 		boolean last;
 		synchronized(components)
@@ -245,12 +311,20 @@ public class ComponentManager implements IComponentManager
 		}
 	}
 	
+	/**
+	 *  Set an application context for the components.
+	 *  @param appcontext The context.
+	 */
 	public synchronized void setApplicationContext(ApplicationContext appcontext)
 	{
 		// todo: add group on security
 		this.appcontext = appcontext;
 	}
 	
+	/**
+	 *  Get the application context.
+	 *  @return The context.
+	 */
 	public synchronized ApplicationContext getApplicationContext()
 	{
 		return appcontext;
@@ -278,6 +352,13 @@ public class ComponentManager implements IComponentManager
 		}
 	}
 	
+	/**
+	 *  Add an exception handler.
+	 *  @param cid The component id.
+	 *  @param clazz The exception class to match.
+	 *  @param exactmatch How clazz should be interpreted.
+	 *  @param handler The handler.
+	 */
 	public synchronized void addExceptionHandler(ComponentIdentifier cid, Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
 		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
@@ -289,6 +370,13 @@ public class ComponentManager implements IComponentManager
 		handlers.put(cid, new HandlerInfo(handler, exactmatch));
 	}
 	
+	/**
+	 *  Add an exception handler.
+	 *  @param type The component pojo type.
+	 *  @param clazz The exception class to match.
+	 *  @param exactmatch How clazz should be interpreted.
+	 *  @param handler The handler.
+	 */
 	public synchronized void addExceptionHandler(Class<?> type, Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
 		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
@@ -300,6 +388,12 @@ public class ComponentManager implements IComponentManager
 		handlers.put(type, new HandlerInfo(handler, exactmatch));
 	}
 	
+	/**
+	 *  Add an exception handler for all.
+	 *  @param clazz The exception class to match.
+	 *  @param exactmatch How clazz should be interpreted.
+	 *  @param handler The handler.
+	 */
 	public synchronized void addExceptionHandler(Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
 	{
 		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
@@ -311,6 +405,11 @@ public class ComponentManager implements IComponentManager
 		handlers.put(null, new HandlerInfo(handler, exactmatch));
 	}
 	
+	/**
+	 *  Remove an exception handler.
+	 *  @param key The key.
+	 *  @param clazz The exception class.
+	 */
 	public synchronized void removeExceptionHandler(Object key, Class<? extends Exception> clazz)
 	{
 		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
@@ -383,4 +482,54 @@ public class ComponentManager implements IComponentManager
 	protected record HandlerInfo(BiConsumer<? extends Exception, IComponent> handler, boolean exact) 
 	{
 	};
+	
+	/**
+	 *  Add a logger configurator.
+	 *  @param filter The filter if the configurator matches.
+	 *  @param creator The creator.
+	 */
+	public synchronized void addLoggerCreator(LoggerCreator creator)
+	{
+		// remove existing fallback configurator
+		if(creator.filter()==null)
+			loggercreators.removeIf(lc -> lc.filter()==null && lc.system()==creator.system());
+		
+		loggercreators.add(creator);
+	}
+	
+	/**
+	 *  Update a logger creator by exchanging it against it old version.
+	 *  @param ocreator The old creator.
+	 *  @param ncreator The new creator.
+	 */
+	public synchronized void updateLoggerCreator(LoggerCreator ocreator, LoggerCreator ncreator)
+	{
+		if(ncreator==null)
+			throw new NullPointerException("new creator must not null");
+		
+		// remove existing fallback configurator
+		if(ocreator==null && ncreator.filter()==null)
+			loggercreators.removeIf(lc -> lc.filter()==null && lc.system()==ncreator.system());
+
+		loggercreators.remove(ocreator);
+		loggercreators.add(ncreator);
+	}
+	
+	/**
+	 *  Remove a logger creator.
+	 *  @param creator The creator.
+	 */
+	public synchronized void removeLoggerCreator(LoggerCreator creator)
+	{
+		loggercreators.remove(creator);
+	}
+	
+	/**
+	 *  Get all logger configurators.
+	 *  @return The logger configurators
+	 */
+	public synchronized Collection<LoggerCreator> getLoggerCreators()
+	{
+		return loggercreators;
+	}
 }

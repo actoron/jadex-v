@@ -30,6 +30,15 @@ dependencies
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }
 
-test {
-  useJUnitPlatform()
+test 
+{
+	useJUnitPlatform()
+}
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
 }

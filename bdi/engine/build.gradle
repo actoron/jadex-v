@@ -64,3 +64,11 @@ task copyDependencies {
     outputs.upToDateWhen { false }
 }
 build.dependsOn(copyDependencies)
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}

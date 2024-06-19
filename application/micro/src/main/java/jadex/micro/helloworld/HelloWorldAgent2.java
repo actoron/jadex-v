@@ -59,7 +59,7 @@ public class HelloWorldAgent2
 		
 		MicroAgent.create(new HelloWorldAgent2("007"));
 		
-		//IComponent.waitForLastComponentTerminated();
+		IComponent.waitForLastComponentTerminated();
 		
 		//System.out.println("last component terminated");
 	}

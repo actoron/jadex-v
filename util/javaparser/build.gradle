@@ -85,3 +85,11 @@ sourceSets {
 		}
 	}
 }
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}

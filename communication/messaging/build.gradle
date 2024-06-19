@@ -30,3 +30,11 @@ dependencies
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
 }
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}

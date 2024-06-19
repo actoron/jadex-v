@@ -32,3 +32,11 @@ dependencies
 	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 }
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}
