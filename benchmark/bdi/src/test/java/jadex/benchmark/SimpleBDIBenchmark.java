@@ -1,17 +1,24 @@
 package jadex.benchmark;
 
-public class SimpleBDIBenchmark	extends AbstractBDIBenchmark
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
+
+import jadex.bdi.runtime.IBDIAgent;
+import jadex.core.IExternalAccess;
+
+public class SimpleBDIBenchmark
 {
-	// Corresponding BDI agent is in testFixtures so class is not loaded by JUnit to check for tests.
-	@Override
-	protected String getClassname()
+	@Test
+	void	benchmarkTime()
 	{
-		return "jadex.benchmark.bdi.SimpleBDI";
-	}
-	
-	@Override
-	protected String getComponentTypeName()
-	{
-		return "Simple BDI";
+		double pct	= BenchmarkHelper.benchmarkTime(() -> 
+		{
+			SimpleBDIBenchmarkAgent	pojo	= new SimpleBDIBenchmarkAgent();
+			IExternalAccess	agent	= IBDIAgent.create(pojo);
+			pojo.inited.get();
+			agent.terminate().get();
+		});
+		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
 }
