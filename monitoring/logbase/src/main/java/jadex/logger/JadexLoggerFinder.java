@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
@@ -25,19 +27,19 @@ public class JadexLoggerFinder extends LoggerFinder
 	
 	public JadexLoggerFinder()
 	{
-		Collection<ILoggerProvider> iproviders = new ArrayList<ILoggerProvider>(); 
+		Collection<IInternalLoggerProvider> iproviders = new ArrayList<IInternalLoggerProvider>(); 
 		ServiceLoader.load(IInternalLoggerProvider.class).forEach(prov ->
 		{
 			iproviders.add(prov);
 		});
-		ILoggerProvider iprov = getLoggerProvider(iproviders);
+		IInternalLoggerProvider iprov = (IInternalLoggerProvider)getLoggerProvider(iproviders);
 		
-		Collection<ILoggerProvider> eproviders = new ArrayList<ILoggerProvider>(); 
+		Collection<IExternalLoggerProvider> eproviders = new ArrayList<IExternalLoggerProvider>(); 
 		ServiceLoader.load(IExternalLoggerProvider.class).forEach(prov ->
 		{
 			eproviders.add(prov);
 		});
-		ILoggerProvider eprov = getLoggerProvider(eproviders);
+		IExternalLoggerProvider eprov = (IExternalLoggerProvider)getLoggerProvider(eproviders);
 		
 		if(iprov!=null || eprov!=null)
 		{
@@ -45,13 +47,16 @@ public class JadexLoggerFinder extends LoggerFinder
 			
 			LoggerCreator appc = IComponentManager.get().getLoggerCreators().stream().filter(c -> !c.system() && c.filter()==null).findFirst().orElse(null);
 			
+			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? java.lang.System.Logger.Level.WARNING: null; 
+			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? java.lang.System.Logger.Level.ALL: null; 
+			
 			LoggerCreator nsysc = new LoggerCreator( 
-				sysc!=null && sysc.icreator()!=null? sysc.icreator(): iprov!=null? name -> iprov.getLogger(name): null, 
+				sysc!=null && sysc.icreator()!=null? sysc.icreator(): iprov!=null? name -> iprov.getLogger(name, syslevel): null, 
 				sysc!=null && sysc.ecreator()!=null? sysc.ecreator(): eprov!=null? name -> eprov.getLogger(name): null, 
 				true);
 			
 			LoggerCreator nappc = new LoggerCreator(
-				appc!=null && appc.icreator()!=null? appc.icreator(): iprov!=null? name -> iprov.getLogger(name): null, 
+				appc!=null && appc.icreator()!=null? appc.icreator(): iprov!=null? name -> iprov.getLogger(name, applevel): null, 
 				appc!=null && appc.ecreator()!=null? appc.ecreator(): eprov!=null? name -> eprov.getLogger(name): null, 
 				false);
 			
@@ -67,7 +72,7 @@ public class JadexLoggerFinder extends LoggerFinder
 		}
 	}
 	
-	protected ILoggerProvider getLoggerProvider(Collection<ILoggerProvider> providers)
+	protected ILoggerProvider getLoggerProvider(Collection<? extends ILoggerProvider> providers)
 	{
 		ILoggerProvider ret = null;
 		for(ILoggerProvider provider: providers)
