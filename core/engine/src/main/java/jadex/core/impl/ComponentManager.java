@@ -234,10 +234,7 @@ public class ComponentManager implements IComponentManager
 	{
 		//System.out.println("added: "+comp.getId());
 		if(getLogger().isLoggable(Level.INFO))
-		{
-			System.out.println("added: "+comp.getId());
 			getLogger().log(Level.INFO, "Component created: "+comp.getId());
-		}
 		
 		synchronized(components)
 		{
@@ -275,13 +272,13 @@ public class ComponentManager implements IComponentManager
 	}
 
 	static final Logger	logger	= System.getLogger(IComponent.class.getName());
-	static
-	{
-		System.out.println("CM created logger "+logger);
-	}
+//	static
+//	{
+//		System.out.println("CM created logger "+logger);
+//	}
 	static Logger getLogger()
 	{
-		System.out.println("CM get logger "+logger);
+//		System.out.println("CM get logger "+logger);
 		return logger;
 	}
 	

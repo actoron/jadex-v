@@ -64,4 +64,10 @@ public class CombinedLogger implements System.Logger
         if(elogger != null)
             elogger.log(level, bundle, format, params);
     }
+    
+    @Override
+	public String toString()
+	{
+		return super.toString()+"(ilogger="+ilogger+", elogger="+elogger+")";
+	}
 }

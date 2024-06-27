@@ -11,12 +11,14 @@ public class JulInternalLoggerProvider implements IInternalLoggerProvider
 	public Logger getLogger(String name, Level level)
 	{
 		JulLogger ret = new JulLogger(name);
-		System.out.println("getLogger level: "+level);
+//		System.out.println("getLogger level: "+level+", "+ret);
 		if(level!=null)
 		{
-			ret.getLoggerImplementation().setLevel(JulLogger.convertToJulLevel(level)); 
+//			ret.getLoggerImplementation().setLevel(JulLogger.convertToJulLevel(level));
+			ret.setLevel(level);
 			ConsoleHandler chandler = new ConsoleHandler();
 			ret.getLoggerImplementation().addHandler(chandler);
+//			System.out.println("getLogger set level: "+ret.getLoggerImplementation().getLevel()+", "+ret);
 		}
         return ret;
 	}
