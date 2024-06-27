@@ -6,6 +6,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -39,29 +40,45 @@ public class SystemPackageScanner
         
         try
         {
-	        Enumeration<URL> resources = ComponentManager.get().getClassLoader().getResources("");
+        	List<URL> urls = SUtil.getClasspathURLs(ComponentManager.get().getClassLoader(), true);
 	        
-	        while(resources.hasMoreElements()) 
+        	for(URL url: urls)
 	        {
-	            URL resource = resources.nextElement();
-	            String protocol = resource.getProtocol();
-	
+	            String protocol = url.getProtocol();
+
 	            if(protocol.equals("file")) 
 	            {
-	                File dir = new File(URLDecoder.decode(resource.getFile(), "UTF-8"));
-	                if (dir.isDirectory()) 
+	                String path = URLDecoder.decode(url.getFile(), "UTF-8");
+	                //String path = url.getPath();
+	                File file = new File(path);
+	                
+	                if(file.isDirectory()) 
 	                {
-	                    findSystemPackagesInDirectory(dir, "", ret);
+	                    findSystemPackagesInDirectory(file, "", ret);
+	                } 
+	                else if(path.endsWith(".jar")) 
+	                {
+	  	                //String jpath = path.substring(5, path.indexOf("!"));
+	  	                try(JarFile jfile = new JarFile(file))
+	  	                {
+	  	                    findSystemPackagesInJar(jfile, ret);
+	  	                }
 	                }
 	            } 
-	            else if (protocol.equals("jar")) 
+	            else if(protocol.equals("jar"))
 	            {
-	                String path = resource.getPath();
-	                String jpath = path.substring(5, path.indexOf("!"));
-	                try(JarFile file = new JarFile(URLDecoder.decode(jpath, "UTF-8"))) 
-	                {
-	                    findSystemPackagesInJar(file, ret);
-	                }
+	            	String path = URLDecoder.decode(url.getFile(), "UTF-8");
+	            	//String path = url.getPath();
+	            	int idx = path.indexOf("!");
+	            	String jpath = idx!=-1? path.substring(4, idx): path;
+	            	try(JarFile jfile = new JarFile(jpath))
+  	                {
+  	                    findSystemPackagesInJar(jfile, ret);
+  	                }
+	            }
+	            else 
+	            {
+	            	System.out.println("Unknown protocol: "+protocol);
 	            }
 	        }
         }
@@ -137,7 +154,7 @@ public class SystemPackageScanner
     private static void findSystemPackagesInJar(JarFile file, Set<String> ret) throws IOException 
     {
         Enumeration<JarEntry> entries = file.entries();
-        Set<String> names = new HashSet<>();
+        String rootpck = null;
 
         while(entries.hasMoreElements()) 
         {
@@ -146,20 +163,21 @@ public class SystemPackageScanner
 
             if(name.endsWith(MARKER_FILE)) 
             {
-            	String pckname = getPackageName(name);
-            	if(pckname!=null)
-            		names.add(pckname);
+            	rootpck = getPackageName(name);
+            	break;
             }
         }
 
-        for(String name : names) 
-            addPackagesFromJar(file, name, ret);
+        if(rootpck!=null)
+            addPackagesFromJar(file, rootpck, ret);
     }
     
     private static void addPackagesFromJar(JarFile file, String pckname, Set<String> ret) throws IOException 
     {
         Enumeration<JarEntry> entries = file.entries();
-        String path = pckname.replace('.', '/') + "/";
+        String path = pckname.replace('.', '/');
+        if(!path.isEmpty() && !path.endsWith("/")) 
+            path += "/";
         
         while(entries.hasMoreElements()) 
         {
@@ -183,7 +201,7 @@ public class SystemPackageScanner
     
     private static String getPackageName(String name)
     {
-    	String ret = null;
+    	String ret = "";
     	int idx = name.lastIndexOf('/');
         if(idx > 0) 
             ret = name.substring(0, idx).replace('/', '.');
@@ -195,14 +213,21 @@ public class SystemPackageScanner
     	boolean ret = false;
     	
     	Enumeration<JarEntry> entries = file.entries();
-    	String path = pckname.replace('.', '/') + "/";
+    	String path = pckname.replace('.', '/');
 
     	while(entries.hasMoreElements()) 
     	{
     		JarEntry entry = entries.nextElement();
     		String name = entry.getName();
 
-    		if(name.startsWith(path) && !entry.isDirectory() && name.endsWith(".class")) 
+    		if(entry.isDirectory() || !entry.getName().endsWith(".class"))
+                continue;
+    		
+    		String ename = name.substring(0, name.lastIndexOf('/'));
+            //ename = ename.replace('/', '.');
+    		
+    		//System.out.println("vgl: "+ename+" "+path);
+    		if(ename.equals(path)) 
     		{
     			ret = true;
     			break; 

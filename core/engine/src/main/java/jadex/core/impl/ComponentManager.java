@@ -506,6 +506,10 @@ public class ComponentManager implements IComponentManager
 	{
 		if(ncreator==null)
 			throw new NullPointerException("new creator must not null");
+
+		/*if(ocreator!=null)
+			removeLoggerCreator(ocreator);
+		addLoggerCreator(ncreator);*/
 		
 		// remove existing fallback configurator
 		if(ocreator==null && ncreator.filter()==null)

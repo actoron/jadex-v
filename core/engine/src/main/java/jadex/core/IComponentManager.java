@@ -105,7 +105,7 @@ public interface IComponentManager
 	public void addLoggerCreator(LoggerCreator creator);
 	
 	/**
-	 *  Update a logger creator by exchanging it against it old version.
+	 *  Update a logger creator by exchanging it against the old version.
 	 *  @param ocreator The old creator.
 	 *  @param ncreator The new creator.
 	 */

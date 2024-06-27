@@ -29,8 +29,8 @@ public class Log4jInternalLoggerProvider implements IInternalLoggerProvider
 	        appender.start();
 
 	        config.addAppender(appender);
-	        LoggerConfig loggerConfig = config.getLoggerConfig(name);
-	        loggerConfig.addAppender(appender,  convertLevel(level), null);
+	        LoggerConfig lconfig = config.getLoggerConfig(name);
+	        lconfig.addAppender(appender,  convertLevel(level), null);
 
 	        context.updateLoggers();
 	    }
