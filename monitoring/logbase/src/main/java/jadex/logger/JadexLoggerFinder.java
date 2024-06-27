@@ -50,6 +50,9 @@ public class JadexLoggerFinder extends LoggerFinder
 			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? java.lang.System.Logger.Level.WARNING: null; 
 			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? java.lang.System.Logger.Level.ALL: null; 
 			
+			System.out.println("syslevel: "+syslevel);
+			System.out.println("applevel: "+applevel);
+			
 			LoggerCreator nsysc = new LoggerCreator( 
 				sysc!=null && sysc.icreator()!=null? sysc.icreator(): iprov!=null? name -> iprov.getLogger(name, syslevel): null, 
 				sysc!=null && sysc.ecreator()!=null? sysc.ecreator(): eprov!=null? name -> eprov.getLogger(name): null, 

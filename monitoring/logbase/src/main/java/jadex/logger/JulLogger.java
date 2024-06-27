@@ -14,7 +14,7 @@ public class JulLogger implements java.lang.System.Logger
     {
         logger = java.util.logging.Logger.getLogger(name);
         logger.setUseParentHandlers(false);
-        //System.out.println("created jul logger: "+name);
+        System.out.println("created jul logger: "+name);
     }
     
     public Logger getLoggerImplementation() 
@@ -31,6 +31,8 @@ public class JulLogger implements java.lang.System.Logger
     @Override
     public boolean isLoggable(Level level) 
     {
+    	System.out.println("level: "+logger.getLevel()+", "+level);
+    	System.out.println("isLoggable: "+logger.isLoggable(convertToJulLevel(level)));
         return logger.isLoggable(convertToJulLevel(level));
     }
 

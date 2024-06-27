@@ -233,7 +233,11 @@ public class ComponentManager implements IComponentManager
 	public void addComponent(IComponent comp)
 	{
 		//System.out.println("added: "+comp.getId());
-		System.getLogger(IComponent.class.getName()).log(Level.INFO, "Component created: "+comp.getId());
+		if(getLogger().isLoggable(Level.INFO))
+		{
+			System.out.println("added: "+comp.getId());
+			getLogger().log(Level.INFO, "Component created: "+comp.getId());
+		}
 		
 		synchronized(components)
 		{
@@ -253,7 +257,8 @@ public class ComponentManager implements IComponentManager
 	 */
 	public void removeComponent(ComponentIdentifier cid)
 	{
-		System.getLogger(IComponent.class.getName()).log(Level.INFO, "Component removed: "+cid);
+		if(getLogger().isLoggable(Level.INFO))
+			getLogger().log(Level.INFO, "Component removed: "+cid);
 		
 		//System.out.println("removing: "+cid);
 		boolean last;
@@ -267,6 +272,17 @@ public class ComponentManager implements IComponentManager
 		if(last)
 			notifyEventListener(IComponent.COMPONENT_LASTREMOVED, cid);
 		//System.out.println("size: "+components.size()+" "+cid);
+	}
+
+	static final Logger	logger	= System.getLogger(IComponent.class.getName());
+	static
+	{
+		System.out.println("CM created logger "+logger);
+	}
+	static Logger getLogger()
+	{
+		System.out.println("CM get logger "+logger);
+		return logger;
 	}
 	
 	/**
