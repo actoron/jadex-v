@@ -25,6 +25,7 @@ dependencies
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:logbase:'+v
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'

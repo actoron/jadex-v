@@ -26,6 +26,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:logbase:'+v
 	implementation 'org.activecomponents.jadex:benchmark-core:'+v
 	implementation 'org.activecomponents.jadex:model:'+v
 	implementation 'org.activecomponents.jadex:micro:'+v
