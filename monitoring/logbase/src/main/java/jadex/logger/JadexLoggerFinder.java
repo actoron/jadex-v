@@ -157,6 +157,8 @@ public class JadexLoggerFinder extends LoggerFinder
 	        {
 	            System.out.println("No logger creator found for: " + name);
 	        }
+	        
+	        System.out.println("Created logger: "+name+" "+isSystem);
         }
         
         return logger;
@@ -191,6 +193,8 @@ public class JadexLoggerFinder extends LoggerFinder
 			//systempackages.forEach(System.out::println);
 	        //long end = System.currentTimeMillis();
 	        //System.out.println("Needed: "+(end-start));
+			
+			System.out.println("Scanner found system packages: "+systempackages);
 		}
 		
 		return systempackages.contains(name);
