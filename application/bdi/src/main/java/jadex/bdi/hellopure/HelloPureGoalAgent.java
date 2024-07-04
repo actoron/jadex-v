@@ -7,14 +7,11 @@ import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.BDIBaseGoal;
-import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.PlanFailureException;
+import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.AgentFeature;
-import jadex.micro.annotation.Feature;
 import jadex.model.annotation.OnStart;
 
 /**
@@ -29,46 +26,42 @@ import jadex.model.annotation.OnStart;
 public class HelloPureGoalAgent
 {
 	@Belief
-	private String sayhello;
-
-	@AgentFeature
-	protected IBDIAgentFeature bdi;
+	private Val<String> sayhello;
 	
 	@Goal
 	public class HelloGoal
 	{
 		@GoalParameter
-		protected String text;
+		protected Val<String> text;
 		
 		@GoalCreationCondition(beliefs="sayhello")
 		public HelloGoal(String text) 
 		{
-			setText(text);
+			this.text	= new Val<>(text);
 		}
 		
 		@GoalTargetCondition(parameters="text")
 		public boolean checkTarget()
 		{
 			System.out.println("checkTarget: "+text);
-			return "finished".equals(text);
+			return "finished".equals(text.get());
 		}
 		
 		public String getText()
 		{
-			return text;
+			return text.get();
 		}
 		
 		public void setText(String val)
 		{
-			bdi.setParameterValue(this, "text", val);
+			text.set(val);
 		}
 	}
 	
 	@OnStart
 	public void body()
 	{		
-		//sayhello = "Hello BDI pure agent V3.";
-		bdi.setBeliefValue("sayhello", "Hello BDI pure agent V3.");
+		sayhello.set("Hello BDI pure agent V3.");
 		System.out.println("body end: "+getClass().getName());
 	}
 	
