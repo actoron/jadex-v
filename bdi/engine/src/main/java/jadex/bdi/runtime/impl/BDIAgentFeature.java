@@ -219,6 +219,17 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		BDIAgentFeature.writeField(value, beliefname, self.getPojo(), self);
 	}
 	
+	/**
+	 *  Set a value and throw the change events.
+	 *  @param target The target.
+	 *  @param paramname The name.
+	 *  @param value The value.
+	 */
+	public void setParameterValue(Object target, String paramname, Object value)
+	{
+		BDIAgentFeature.writeParameterField(value, paramname, target, null);
+	}
+	
 	//-------- internal method used for rewriting field access -------- 
 	
 	/**
