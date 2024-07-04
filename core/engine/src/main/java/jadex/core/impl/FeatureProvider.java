@@ -60,6 +60,6 @@ public abstract class FeatureProvider<T>
 	 */
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
-		return Collections.EMPTY_SET;
+		return Collections.emptySet();
 	}
 }

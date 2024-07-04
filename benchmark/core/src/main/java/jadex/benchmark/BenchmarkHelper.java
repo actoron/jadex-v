@@ -23,51 +23,41 @@ public class BenchmarkHelper
 		throw new IllegalCallerException("Must be called from outside class");
 	}
 	
-	public static void	benchmarkTwoStage(Callable<Runnable> startup)
+	public static double	benchmarkMemory(Callable<Runnable> startup)
 	{
-		List<Runnable>	teardowns	= new ArrayList<>();
+		int	runs	= 10000;
+		int retries	= 10;
+		long	best	= Long.MAX_VALUE;
 		try
-		{			
-			// Dry run to get number of runs
-			long	starttime	= System.currentTimeMillis();
-			while(starttime+2000>System.currentTimeMillis())
+		{
+			for(int r=0; r<retries; r++)
 			{
-				teardowns.add(startup.call());
+				List<Runnable>	teardowns	= new ArrayList<>();
+				
+				System.gc();
+				long	start	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//				System.out.println("Used at start: "+start);
+				
+				for(int i=0; i<runs; i++)
+					teardowns.add(startup.call());
+				
+				System.gc();
+				long	end	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//				System.out.println("Used at end: "+end);
+				
+				long took	= (end-start)/runs;
+				addToDB(took);
+				best	= Math.min(best, took);
+				System.out.println("Per component: "+took);
+				
+				for(Runnable teardown: teardowns)
+					teardown.run();
 			}
-			int	num	= teardowns.size();
-			for(Runnable teardown: teardowns)
-			{
-				teardown.run();
-			}
-			System.out.println("Benchmark size: "+num);
-			
-			// Actual benchmark
-			teardowns.clear();
-			Thread.sleep(500);
-			System.gc();
-			Thread.sleep(500);
-			long	nanos	= System.nanoTime();
-			for(int i=0; i<num; i++)
-			{
-				teardowns.add(startup.call());				
-			}
-			long	nanos2	= System.nanoTime();
-			for(Runnable teardown: teardowns)
-			{
-				teardown.run();
-			}
-			long	nanos3	= System.nanoTime();
-			
-			long	took	= (nanos2-nanos)/num;
-			System.out.println("Startup took: "+took);
-			System.out.println("Teardown took: "+(nanos3-nanos2)/num);
-			
-			addToDB(took);
+			return addToDB(best);
 		}
 		catch(Exception e)
 		{
-			System.out.println("Benchmark size: "+teardowns.size());
-			SUtil.throwUnchecked(e);
+			throw SUtil.throwUnchecked(e);
 		}
 	}
 
