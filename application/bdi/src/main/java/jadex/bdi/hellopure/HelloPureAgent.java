@@ -4,6 +4,7 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.IBDIAgentFeature;
+import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
@@ -21,16 +22,15 @@ public class HelloPureAgent
 {
 	/** The text that is printed. */
 	@Belief
-	private String sayhello;
+	private Val<String> sayhello;
 	
 	/**
 	 *  The agent body.
 	 */
 	@OnStart
-	public void body(IComponent agent, IBDIAgentFeature bdi)
+	public void body(IComponent agent)
 	{		
-		bdi.setBeliefValue("sayhello", "Hello BDI pure agent V3.");
-		System.out.println("body end: "+getClass().getName());
+		sayhello.set("Hello BDI pure agent V3.");
 		agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
 		agent.terminate();
 	}
