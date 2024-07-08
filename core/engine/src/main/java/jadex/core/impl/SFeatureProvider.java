@@ -1,6 +1,5 @@
 package jadex.core.impl;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,6 +43,23 @@ public class SFeatureProvider
 			
 	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 
 	protected static final Map<Class<? extends Component>, Map<Class<Object>, FeatureProvider<Object>>>	PROVIDERS_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
+	
+	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 
+	protected static final Map<Class<? extends Component>, List<FeatureProvider<Object>>>	PROVIDERLIST_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
+	
+	/**
+	 *  Helper method to get the providers, that are relevant for the given component type.
+	 */
+	public static List<FeatureProvider<Object>>	getProviderListForComponent(Class<? extends Component> type)
+	{
+		List<FeatureProvider<Object>>	ret	= PROVIDERLIST_BY_TYPE.get(type);
+		if(ret==null)
+		{
+			getProvidersForComponent(type);
+			ret	= PROVIDERLIST_BY_TYPE.get(type);
+		}
+		return ret;
+	}
 	
 	/**
 	 *  Helper method to get the providers, that are relevant for the given component type.
@@ -105,6 +121,7 @@ public class SFeatureProvider
 			);
 			
 			PROVIDERS_BY_TYPE.put(type, ret);
+			PROVIDERLIST_BY_TYPE.put(type, new ArrayList<>(ret.values()));
 		}
 		return ret;
 	}
@@ -122,29 +139,6 @@ public class SFeatureProvider
 				.collect(Collectors.toList());
 		}
 		return LIFECYCLE_PROVIDERS;
-	}
-
-	/** 
-	 *  Helper method to convert (potentially) checked exceptions to unchecked ones.
-	 */
-	public static RuntimeException	throwUnchecked(Throwable t)
-	{
-		if(t instanceof InvocationTargetException)
-		{
-			throw throwUnchecked(((InvocationTargetException)t).getTargetException());
-		}
-		else if(t instanceof Error)
-		{
-			throw (Error)t;
-		}
-		else if(t instanceof RuntimeException)
-		{
-			throw (RuntimeException)t;
-		}
-		else
-		{
-			throw new RuntimeException(t);
-		}
 	}
 	
 	/**

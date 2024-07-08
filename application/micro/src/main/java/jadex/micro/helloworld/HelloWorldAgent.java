@@ -18,8 +18,8 @@ public class HelloWorldAgent
 	//-------- attributes --------
 	
 	/** The micro agent class. */
-	@Agent
-	protected IComponent agent;
+	//@Agent
+	//protected IComponent agent;
 	
 	/** The welcome text. */
 	protected String text;
@@ -35,23 +35,18 @@ public class HelloWorldAgent
 	 *  Execute an agent step.
 	 */
 	@OnStart
-	public void executeBody()
+	public void executeBody(IComponent agent)
 	{
-		System.out.println(text+" "+agent.getId());
+		System.out.println("started:"+agent.getId()+" text: "+text);
 		agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
 		System.out.println("Good bye world.");
 		agent.terminate();
 	}
 	
 	@OnEnd
-	public void end()
+	public void end(IComponent agent)
 	{
-		System.out.println("end in pojo: "+agent.getId());
-	}
-	
-	public String toString() 
-	{
-		return "Hello "+text;
+		System.out.println("end: "+agent.getId());
 	}
 	
 	//-------- static part --------
@@ -60,11 +55,9 @@ public class HelloWorldAgent
 	 *  Start the example.
 	 * @throws InterruptedException 
 	 */
-	public static void main(String[] args) throws InterruptedException 
+	public static void main(String[] args)
 	{
-		MicroAgent.create(new HelloWorldAgent("007"));
-		
+		IComponent.create(new HelloWorldAgent("007"));
 		IComponent.waitForLastComponentTerminated();
-		//System.out.println("ended");
 	}
 }

@@ -2,6 +2,8 @@ package jadex.bdi.runtime;
 
 import java.util.Collection;
 
+import jadex.bdi.runtime.impl.BDIAgentFeature;
+
 /**
  *  Public methods for working with BDI agents.
  */
@@ -56,6 +58,13 @@ public interface IBDIAgentFeature extends IExternalBDIAgentFeature
 //	public <T, E> IFuture<E> adoptPlan(T plan, Object... args);
 	
 	/**
+	 *  Set a belief value and throw the change events.
+	 *  @param beliefname The belief name.
+	 *  @param value The value.
+	 */
+	public void setBeliefValue(String beliefname, Object value);
+	
+	/**
 	 *  Add a belief listener.
 	 *  @param name The belief name.
 	 *  @param listener The belief listener.
@@ -70,7 +79,16 @@ public interface IBDIAgentFeature extends IExternalBDIAgentFeature
 	public void removeBeliefListener(String name, IBeliefListener<?> listener);
 	
 	/**
+	 *  Set a value and throw the change events.
+	 *  @param target The target object.
+	 *  @param paramname The name.
+	 *  @param value The value.
+	 */
+	public void setParameterValue(Object target, String paramname, Object value);
+	
+	// todo: remove!
+	/**
 	 *  Get an argument if supplied at agent creation.
 	 */
-	public Object	getArgument(String name);
+	public Object getArgument(String name);
 }

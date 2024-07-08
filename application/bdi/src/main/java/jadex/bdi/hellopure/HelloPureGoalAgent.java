@@ -7,10 +7,9 @@ import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.BDIBaseAgent;
-import jadex.bdi.runtime.BDIBaseGoal;
-import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.PlanFailureException;
+import jadex.bdi.runtime.Val;
+import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -23,48 +22,46 @@ import jadex.model.annotation.OnStart;
  *  This is achieved by using the baseclass BDIAgent that signals enhancement
  *  has already been done.
  */
-@Agent(type="bdi")
-public class HelloPureGoalAgent extends BDIBaseAgent
+@Agent(type="bdip")
+public class HelloPureGoalAgent
 {
 	@Belief
-	private String sayhello;
+	private Val<String> sayhello;
 	
 	@Goal
-	public class HelloGoal extends BDIBaseGoal
+	public class HelloGoal
 	{
 		@GoalParameter
-		protected String text;
+		protected Val<String> text;
 		
 		@GoalCreationCondition(beliefs="sayhello")
 		public HelloGoal(String text) 
 		{
-			setText(text);
+			this.text	= new Val<>(text);
 		}
 		
 		@GoalTargetCondition(parameters="text")
 		public boolean checkTarget()
 		{
-			//System.out.println("checkTarget: "+text);
-			return "finished".equals(text);
+			System.out.println("checkTarget: "+text);
+			return "finished".equals(text.get());
 		}
 		
 		public String getText()
 		{
-			return text;
+			return text.get();
 		}
 		
 		public void setText(String val)
 		{
-			setParameterValue("text", val);
+			text.set(val);
 		}
 	}
 	
 	@OnStart
 	public void body()
 	{		
-		//sayhello = "Hello BDI pure agent V3.";
-		//beliefChanged("sayhello", null, sayhello);
-		setBeliefValue("sayhello", "Hello BDI pure agent V3.");
+		sayhello.set("Hello BDI pure agent V3.");
 		System.out.println("body end: "+getClass().getName());
 	}
 	
@@ -78,8 +75,8 @@ public class HelloPureGoalAgent extends BDIBaseAgent
 	@Plan(trigger=@Trigger(goals=HelloGoal.class))
 	protected void printHello2(HelloGoal goal)
 	{
-		goal.setText("finished");
 		System.out.println("2: "+goal.getText());
+		goal.setText("finished");
 		//return new Future<Void>(new PlanFailureException());
 	}
 	
@@ -95,6 +92,7 @@ public class HelloPureGoalAgent extends BDIBaseAgent
 	 */
 	public static void main(String[] args) 
 	{
-		IBDIAgent.create(new HelloPureGoalAgent());
+		IComponent.create(new HelloPureGoalAgent());
+		IComponent.waitForLastComponentTerminated();
 	}
 }

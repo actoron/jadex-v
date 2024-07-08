@@ -34,4 +34,25 @@ public class MicroAgentBenchmark
 		});
 		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
+
+	@Test
+	void	benchmarkMemory()
+	{
+		double pct	= BenchmarkHelper.benchmarkMemory(() -> 
+		{
+			Future<Void>	ret	= new Future<>();
+			IExternalAccess	agent	= MicroAgent.create(new Object()
+			{
+				@OnStart
+				public void	start()
+				{
+					ret.setResult(null);
+				}
+			});
+			ret.get();
+			return () -> agent.terminate().get();
+		});
+		assertTrue(pct<20);	// Fail when more than 20% worse
+	}
+
 }

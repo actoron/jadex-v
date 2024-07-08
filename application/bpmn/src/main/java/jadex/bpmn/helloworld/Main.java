@@ -1,6 +1,5 @@
 package jadex.bpmn.helloworld;
 
-import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.core.IComponent;
 
@@ -14,8 +13,7 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/helloworld/HelloWorld.bpmn"));
-		
+		IComponent.create(new RBpmnProcess("jadex/bpmn/helloworld/HelloWorld.bpmn"));
 		IComponent.waitForLastComponentTerminated();
 	}
 }

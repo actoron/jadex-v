@@ -8,7 +8,6 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.IFuture;
-import jadex.future.IIntermediateFuture;
 import jadex.future.ITerminableFuture;
 
 /**

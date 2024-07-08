@@ -81,7 +81,7 @@ import jadex.rules.eca.annotations.Event;
 public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeature
 {
 	/** The component. */
-	protected BDIAgent	self;
+	protected BDIAgent self;
 	
 	/** The bdi model. */
 	protected BDIModel bdimodel;
@@ -208,6 +208,27 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 //			belief.cleanup(getInternalAccess());
 //		}
 //	}
+	
+	/**
+	 *  Set a belief value and throw the change events.
+	 *  @param beliefname The belief name.
+	 *  @param value The value.
+	 */
+	public void setBeliefValue(String beliefname, Object value)
+	{
+		BDIAgentFeature.writeField(value, beliefname, self.getPojo(), self);
+	}
+	
+	/**
+	 *  Set a value and throw the change events.
+	 *  @param target The target.
+	 *  @param paramname The name.
+	 *  @param value The value.
+	 */
+	public void setParameterValue(Object target, String paramname, Object value)
+	{
+		BDIAgentFeature.writeParameterField(value, paramname, target, null);
+	}
 	
 	//-------- internal method used for rewriting field access -------- 
 	
@@ -469,8 +490,8 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 */
 	public static void writeField(Object val, String fieldname, Object obj, IComponent comp)
 	{
-		if((""+obj).indexOf("Inner")!=-1)
-			System.out.println("write: "+val+" "+fieldname+" "+obj);
+		//if((""+obj).indexOf("Inner")!=-1)
+		//	System.out.println("write: "+val+" "+fieldname+" "+obj);
 		
 		String belname	= getBeliefName(obj, fieldname);
 

@@ -1,6 +1,5 @@
 package jadex.core;
 
-import java.lang.System.Logger.Level;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -8,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Logger;
 
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -66,11 +64,11 @@ public interface IComponent
 	/**
 	 *  Wait for termination.
 	 *  @return True on termination; false on component not found.
-	 */
+	 * /
 	public default IFuture<Boolean> waitForTermination()
 	{
 		return IComponent.waitForTermination(getId());
-	}
+	}*/
 	
 	//-------- static part for generic component creation --------
 	

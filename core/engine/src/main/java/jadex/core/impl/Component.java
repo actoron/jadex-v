@@ -1,6 +1,5 @@
 package jadex.core.impl;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -11,6 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import jadex.common.SUtil;
 import jadex.core.ApplicationContext;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -69,7 +69,8 @@ public class Component implements IComponent
 		providers	= SFeatureProvider.getProvidersForComponent(getClass());
 		
 		// Instantiate all features (except lazy ones).
-		providers.values().forEach(provider ->
+		// Use getProviderListForComponent as it uses a cached array list
+		SFeatureProvider.getProviderListForComponent(getClass()).forEach(provider ->
 		{
 			if(!provider.isLazyFeature())
 			{
@@ -159,7 +160,7 @@ public class Component implements IComponent
 			}
 			catch(Throwable t)
 			{
-				throw SFeatureProvider.throwUnchecked(t);
+				throw SUtil.throwUnchecked(t);
 			}
 		}
 		else
@@ -177,8 +178,8 @@ public class Component implements IComponent
 		{
 			ComponentManager.get().removeComponent(this.getId());
 			
-			Map<Class<Object>, FeatureProvider<Object>> provs = SFeatureProvider.getProvidersForComponent((Class<? extends Component>)getClass());
-			Optional<IComponentLifecycleManager> opt = provs.values().stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
+			List<FeatureProvider<Object>> provs = SFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
+			Optional<IComponentLifecycleManager> opt = provs.stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
 			if(opt.isPresent())
 			{
 				IComponentLifecycleManager lm = opt.get();
@@ -393,6 +394,7 @@ public class Component implements IComponent
 	
 	public void handleException(Exception exception)
 	{
+		@SuppressWarnings("unchecked")
 		BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getExceptionHandler(exception, this);
 		handler.accept(exception, this);
 	}
@@ -425,7 +427,7 @@ public class Component implements IComponent
 
 	public static <T extends Component> T createComponent(Class<T> type, Supplier<T> creator)
 	{
-		List<FeatureProvider<Object>>	providers	= new ArrayList<>(SFeatureProvider.getProvidersForComponent(type).values());
+		List<FeatureProvider<Object>>	providers	= SFeatureProvider.getProviderListForComponent(type);
 		for(int i=providers.size()-1; i>=0; i--)
 		{
 			FeatureProvider<Object>	provider	= providers.get(i);

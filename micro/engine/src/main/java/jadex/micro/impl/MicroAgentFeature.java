@@ -62,7 +62,7 @@ public class MicroAgentFeature	implements ILifecycle
 			//if(wasAnnotationCalled(ann))
 			//	return IFuture.DONE;
 			//else
-			getSelf().getFeature(IExecutionFeature.class).scheduleStep(() -> invokeMethod(getSelf(), ann, null));
+			getSelf().getFeature(IExecutionFeature.class).scheduleStep(() -> invokeMethod(getSelf(), ann, null)).catchEx(ret);
 		}
 		else
 		{
@@ -70,7 +70,7 @@ public class MicroAgentFeature	implements ILifecycle
 			//ret.setException(new RuntimeException("no oninit found"));
 			//return invokeMethod(getInternalAccess(), AgentCreated.class, null);
 		}
-		return IFuture.DONE;
+		return ret;
 	}
 	
 	/*@Override

@@ -18,6 +18,7 @@ import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
+import jadex.future.Future;
 import jadex.future.IFuture;
 
 public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
@@ -158,7 +159,8 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 		Map<Class<Object>, FeatureProvider<Object>>	providers	= SFeatureProvider.getProvidersForComponent(type);
 		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
-		return exe.scheduleStep(() -> 
+		Future<T>	ret	= new Future<>();
+		exe.scheduleStep(() -> 
 		{
 			T self = creator.get();
 			for(Object feature:	self.getFeatures())
@@ -176,9 +178,10 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 				{
 					System.out.println("feature without lifecycle: "+feature);
 				}*/
-			};
-			return self;
-		}).get();
+			}
+			ret.setResult(self);
+		});
+		return ret.get();
 	}
 	
 	

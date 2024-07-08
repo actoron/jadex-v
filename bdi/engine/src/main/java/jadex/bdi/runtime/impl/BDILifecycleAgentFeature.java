@@ -667,6 +667,13 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 						Field	f	= mbel.getField().getField(MicroAgentFeature.get().getSelf().getPojo().getClass().getClassLoader());
 						f.setAccessible(true);
 						Object	val	= f.get(capa);
+						boolean	dowrite	= val!=null;
+						
+						if(val==null && SReflect.isSupertype(Val.class, f.getType()))
+						{
+							val	= new Val(null);
+							f.set(capa, val);
+						}
 						
 						// Lazy init of belief wrapper
 						if(val instanceof Val<?>)
@@ -681,9 +688,14 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 							{
 								SUtil.throwUnchecked(e);
 							}
+							
+							dowrite	= ((Val)val).get()!=null;
 						}
-
-						BDIAgentFeature.writeField(val, mbel.getField().getName(), mbel, capa, MicroAgentFeature.get().getSelf());
+						
+						if(dowrite)
+						{
+							BDIAgentFeature.writeField(val, mbel.getField().getName(), mbel, capa, MicroAgentFeature.get().getSelf());
+						}
 					}
 					catch(Exception e)
 					{
