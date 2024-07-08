@@ -2,6 +2,7 @@ package jadex.execution.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Queue;
@@ -660,14 +661,16 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		executeEndStep();
 		
-		self.getFeatures().forEach(feature ->
+		Collection<Object>	cfeatures	= self.getFeatures();
+		Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
+		for(int i=features.length-1; i>=0; i--)
 		{
-			if(feature instanceof ILifecycle) 
+			if(features[i] instanceof ILifecycle) 
 			{
-				ILifecycle lfeature = (ILifecycle)feature;
-				lfeature.onEnd().get();
+				ILifecycle lfeature = (ILifecycle)features[i];
+				lfeature.onEnd();
 			}
-		});
+		}
 		
 		terminated = true;
 		

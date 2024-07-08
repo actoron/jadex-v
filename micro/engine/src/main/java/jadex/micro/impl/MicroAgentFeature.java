@@ -48,7 +48,7 @@ public class MicroAgentFeature	implements ILifecycle
 	}
 
 	@Override
-	public IFuture<Void> onStart()
+	public void	onStart()
 	{
 		//System.out.println("start: "+getSelf());
 		injectStuff(getSelf(), getSelf().getPojo(), ((MicroModel)getSelf().getModel().getRawModel()).getInjectionInfoHolder());
@@ -63,7 +63,6 @@ public class MicroAgentFeature	implements ILifecycle
 			//else
 			getSelf().getFeature(IExecutionFeature.class).scheduleStep(() -> invokeMethod(getSelf(), ann, null)).catchEx(e -> getSelf().handleException(e));
 		}
-		return IFuture.DONE;
 	}
 	
 	/*@Override
@@ -93,7 +92,7 @@ public class MicroAgentFeature	implements ILifecycle
 	}*/
 	
 	@Override
-	public IFuture<Void> onEnd()
+	public void	onEnd()
 	{
 		//System.out.println("end: "+getSelf());
 		
@@ -106,13 +105,7 @@ public class MicroAgentFeature	implements ILifecycle
 			//if(wasAnnotationCalled(ann))
 			//	return IFuture.DONE;
 			//else
-			return invokeMethod(getSelf(), ann, null);
-		}
-		else
-		{
-			//throw new RuntimeException("no onend found");
-			//return invokeMethod(getInternalAccess(), AgentBody.class, null);
-			return Future.DONE;
+			invokeMethod(getSelf(), ann, null).catchEx(e -> getSelf().handleException(e));
 		}
 	}
 	

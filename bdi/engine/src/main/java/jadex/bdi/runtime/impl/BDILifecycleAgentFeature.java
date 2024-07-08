@@ -87,7 +87,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 	 *  Is only called once.
 	 */
 	@Override
-	public IFuture<Void> onStart()
+	public void	onStart()
 	{
 		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
 		bdif.init();
@@ -131,7 +131,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 //			}
 //		}
 		
-		return super.onStart();
+		super.onStart();
 	}
 	
 	/**
@@ -151,14 +151,13 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 	}
 	
 	@Override
-	public IFuture<Void>	onEnd()
+	public void	onEnd()
 	{
 		setShutdown(true);
 		IInternalBDIAgentFeature bdif = IInternalBDIAgentFeature.get();
 		createEndBehavior().startEndBehavior(bdif.getBDIModel(), bdif.getRuleSystem(), bdif.getCapability()).get();
-		super.onEnd().get();
+		super.onEnd();
 		bdif.terminate();
-		return IFuture.DONE;
 	}
 	
 	/**
