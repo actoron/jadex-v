@@ -176,8 +176,6 @@ includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {}
 
-includeBuild('communication/ipc') {}
-includeBuild('communication/messaging') {}
 includeBuild('communication/serialization') {}
 
 includeBuild('micro/engine'){name='micro'}
