@@ -25,7 +25,7 @@ public class BenchmarkHelper
 	
 	public static double	benchmarkMemory(Callable<Runnable> startup)
 	{
-		int	runs	= 10000;
+		int	runs	= 1000;
 		int retries	= 10;
 		long	best	= Long.MAX_VALUE;
 		try

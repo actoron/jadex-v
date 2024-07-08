@@ -8,15 +8,16 @@ import jadex.core.impl.Component;
 
 public class PlainComponentBenchmark
 {
-//	@Test
-//	void testBenchmark()
-//	{
-//		BenchmarkHelper.benchmarkTwoStage(() ->
-//		{
-//			IComponent	comp	= new Component();
-//			return () -> comp.terminate().get();
-//		});
-//	}
+	@Test
+	void	benchmarkMemory()
+	{
+		double	pct	= BenchmarkHelper.benchmarkMemory(() ->
+		{
+			Component	comp	= Component.createComponent(Component.class, () -> new Component());
+			return () -> comp.terminate().get();
+		});
+		assertTrue(pct<20);	// Fail when more than 20% worse
+	}
 	
 	@Test
 	void	benchmarkTime()
