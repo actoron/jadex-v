@@ -62,6 +62,9 @@ public class Val<T>
 		if(dynamic!=null)
 			throw new IllegalStateException("Should not set value on dynamic belief.");
 		
+		if(mbel==null && param==null)
+			throw new IllegalStateException("Wrapper not inited. Missing @Belief/@GoalParameter annotation.");
+		
 		// belief
 		if(mbel!=null)
 		{
@@ -73,5 +76,11 @@ public class Val<T>
 		{
 			BDIAgentFeature.writeParameterField(value, param, pojo, null);
 		}
+	}
+	
+	@Override
+	public String toString()
+	{
+		return String.valueOf(get());
 	}
 }
