@@ -27,6 +27,7 @@ dependencies
     implementation 'org.activecomponents.jadex:micro:'+v
     implementation 'org.activecomponents.jadex:bdi:'+v
     implementation 'org.activecomponents.jadex:classreader:'+v
+    implementation 'org.activecomponents.jadex:bdi-llm:'+v
 }
 
 processResources {
@@ -37,5 +38,5 @@ processResources {
 
 task runGlasses(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.bdi.llm.glasses.Main'
+    main = 'jadex.llm.glasses.Main'
 }
