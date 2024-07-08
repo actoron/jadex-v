@@ -30,7 +30,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:model:'+v
 	implementation 'org.activecomponents.jadex:bdi:'+v
-	implementation 'org.activecomponents.jadex:bdi-llm:'+v
 	implementation 'org.activecomponents.jadex:classreader:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.6'

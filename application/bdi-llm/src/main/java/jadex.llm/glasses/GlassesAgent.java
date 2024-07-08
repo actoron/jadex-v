@@ -1,6 +1,7 @@
 package jadex.llm.glasses;
 
 import jadex.bdi.annotation.*;
+import jadex.bdi.llm.ILlmFeature;
 import jadex.bdi.model.BDIModelLoader;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IPlan;
