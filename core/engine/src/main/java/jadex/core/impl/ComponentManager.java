@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.logging.ConsoleHandler;
 
 import jadex.common.SUtil;
 import jadex.core.ApplicationContext;
@@ -154,7 +155,30 @@ public class ComponentManager implements IComponentManager
 		
 		// remove default handler
 		//removeExceptionHandler(null, Exception.class);
+		
+		// Set the root logger to warining.
+		// Otherwise without logbase feature internal logs get printed
+		// With logbase feature the parent logger is ignored anyway.
+		configureRootLogger(java.util.logging.Level.WARNING);
 	}
+	
+	/**
+	 *  Set the level of the root logger and its handlers.
+	 *  @param level The level to set.
+	 */
+	public static void configureRootLogger(java.util.logging.Level level) 
+	{
+        java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+        rootLogger.setLevel(level);
+
+        for(var handler : rootLogger.getHandlers()) 
+        {
+            if(handler instanceof ConsoleHandler) 
+            {
+                handler.setLevel(level);
+            }
+        }
+    }
 	
 	/**
 	 *  Returns the process identifier of the Java process.

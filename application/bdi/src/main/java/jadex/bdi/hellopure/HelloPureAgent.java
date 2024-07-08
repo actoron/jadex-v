@@ -3,7 +3,6 @@ package jadex.bdi.hellopure;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -32,6 +31,7 @@ public class HelloPureAgent
 	{		
 		sayhello.set("Hello BDI pure agent V3.");
 		agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
+		System.out.println("terminating");
 		agent.terminate();
 	}
 	
@@ -46,7 +46,8 @@ public class HelloPureAgent
 	 */
 	public static void main(String[] args) 
 	{
-		IComponent.create(new HelloPureAgent());
+		IComponent.create(new HelloPureAgent()).get();
+		System.out.println("after create");
 		IComponent.waitForLastComponentTerminated();
 	}
 }
