@@ -37,5 +37,5 @@ processResources {
 
 task runGlasses(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.bdi.llm.glasses.Main'
+    main = 'jadex.llm.glasses.Main'
 }

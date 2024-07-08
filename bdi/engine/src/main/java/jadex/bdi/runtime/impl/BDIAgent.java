@@ -12,7 +12,7 @@ import jadex.model.modelinfo.IModelInfo;
 
 public class BDIAgent extends MicroAgent
 {
-	protected static BDIModelLoader loader = new BDIModelLoader();
+	public static BDIModelLoader loader = new BDIModelLoader();
 	
 	public static IExternalAccess create(Object pojo)
 	{
