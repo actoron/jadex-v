@@ -96,6 +96,14 @@ public class AdoptGoalAction implements Runnable
 						for(MParameter mp: mps)
 						{
 							Object val = mp.getValue(goal.getPojo(), goal.getPojo().getClass().getClassLoader());
+							boolean	dowrite	= val!=null;
+							
+							if(val==null && SReflect.isSupertype(Val.class, mp.getType(goal.getPojo().getClass().getClassLoader())))
+							{
+								val	= new Val(null);
+								mp.setValue(goal.getPojo(), val, goal.getPojo().getClass().getClassLoader());
+							}
+							
 							if(val instanceof ListWrapper && ((ListWrapper<?>)val).isInitWrite())
 							{
 								((ListWrapper<?>)val).setAgent(IExecutionFeature.get().getComponent());
@@ -122,15 +130,18 @@ public class AdoptGoalAction implements Runnable
 									
 									// initial value is set below
 									val	= value;
-
-								}
+									dowrite	= val!=null;
+								}								
 								catch(Exception e)
 								{
 									SUtil.throwUnchecked(e);
 								}
 							}
 
-							BDIAgentFeature.writeParameterField(val, mp.getName(), goal.getPojo(), null);
+							if(dowrite)
+							{
+								BDIAgentFeature.writeParameterField(val, mp.getName(), goal.getPojo(), null);
+							}
 						}
 					}
 					
