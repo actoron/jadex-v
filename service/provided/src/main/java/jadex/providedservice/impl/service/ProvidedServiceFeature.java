@@ -31,16 +31,13 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
-import jadex.javaparser.IExpressionParser;
 import jadex.javaparser.SJavaParser;
-import jadex.javaparser.SimpleValueFetcher;
 import jadex.model.IModelFeature;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Service;
 import jadex.providedservice.annotation.ServiceComponent;
 import jadex.providedservice.impl.search.IServiceRegistry;
@@ -79,20 +76,14 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 	}
 	
 	@Override
-	public IFuture<Void> onStart()
+	public void	onStart()
 	{
-		Future<Void> ret = new Future<Void>();
-		
 		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
 		ProvidedServiceModel mymodel = (ProvidedServiceModel)model.getFeatureModel(IProvidedServiceFeature.class);
 		if(mymodel==null)
 			mymodel = loadModel();
 		
-		if(mymodel==null)
-		{
-			ret.setResult(null);
-		}
-		else
+		if(mymodel!=null)
 		{
 			// Collect provided services from model (name or type -> provided service info)
 			//ProvidedServiceInfo[] ps = (ProvidedServiceInfo[])model.getFeatureModel(IMjProvidedServiceFeature.class);
@@ -105,8 +96,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 					Object key = ps[i].getName()!=null? ps[i].getName(): ps[i].getType().getType(self.getClass().getClassLoader(), model.getAllImports());
 					if(sermap.put(key, ps[i])!=null)
 					{
-						ret.setException(new RuntimeException("Services with same type must have different name."));  // Is catched and set to ret below
-						return ret;
+						throw new RuntimeException("Services with same type must have different name.");
 					}
 				}
 			}
@@ -257,49 +247,28 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 				//}
 			}
 			
-			bar.waitFor().then(v ->
+			bar.waitFor().get();
+			// Start the services.
+			Collection<IInternalService> allservices = getAllServices();
+			if(!allservices.isEmpty())
 			{
-				// Start the services.
-				Collection<IInternalService> allservices = getAllServices();
-				if(!allservices.isEmpty())
-				{
-					initServices(allservices.iterator()).addResultListener(new DelegationResultListener<Void>(ret));
-				}
-				else
-				{
-					ret.setResult(null);
-				}
-			}).catchEx(ret);
+				initServices(allservices.iterator()).get();
+			}
 		}
-		
-		/*ret.then(v ->
-		{
-			System.out.println("onstart of providedservices finished: "+self.getId());
-		});*/
-		
-		return ret;
 	}
 	
 	/**
 	 *  Called when the feature is shutdowned.
 	 */
-	public IFuture<Void> onEnd()
+	public void	onEnd()
 	{
-		Future<Void> ret = new Future<Void>();
-		
 		// Shutdown the services.
 		Collection<IInternalService> allservices = getAllServices();
 		if(!allservices.isEmpty())
 		{
 			LinkedList<IInternalService> list = new LinkedList<IInternalService>(allservices);
-			shutdownServices(list.descendingIterator()).addResultListener(new DelegationResultListener<Void>(ret));
+			shutdownServices(list.descendingIterator()).get();
 		}
-		else
-		{
-			ret.setResult(null);
-		}
-		
-		return ret;
 	}
 	
 	/**

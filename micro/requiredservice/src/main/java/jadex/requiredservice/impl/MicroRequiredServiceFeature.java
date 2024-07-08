@@ -40,7 +40,6 @@ import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.search.ServiceNotFoundException;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.requiredservice.RequiredServiceBinding;
 import jadex.requiredservice.RequiredServiceInfo;
 
 public class MicroRequiredServiceFeature extends RequiredServiceFeature
@@ -51,39 +50,26 @@ public class MicroRequiredServiceFeature extends RequiredServiceFeature
 	}
 	
 	@Override
-	public IFuture<Void> onStart()
+	public void	onStart()
 	{
-		Future<Void> ret = new Future<>();
-		
-		super.onStart().then(v ->
-		{
-			ModelInfo model = self.hasFeature(IModelFeature.class)? (ModelInfo)self.getFeature(IModelFeature.class).getModel(): null;
-			RequiredServiceModel mymodel = model!=null? (RequiredServiceModel)model.getFeatureModel(IRequiredServiceFeature.class): null;
+		super.onStart();
 
-			if(mymodel!=null)
-			{
-				final RequiredServiceModel fmymodel = mymodel;
-				String[] sernames = mymodel.getServiceInjectionNames();
-				
-				Stream<Tuple2<String, ServiceInjectionInfo[]>> s = Arrays.stream(sernames).map(sername -> new Tuple2<String, ServiceInjectionInfo[]>(sername, fmymodel.getServiceInjections(sername)));
-				
-				Map<String, ServiceInjectionInfo[]> serinfos = s.collect(Collectors.toMap(t -> t.getFirstEntity(), t -> t.getSecondEntity())); 
-				
-				Object pojo = ((MicroAgent)self).getPojo(); // hack
-				
-				injectServices(getComponent(), pojo, sernames, serinfos, mymodel)
-					.then(q ->
-				{
-					ret.setResult(null);
-				}).catchEx(ret);
-			}
-			else
-			{
-				ret.setResult(null);
-			}
-		}).catchEx(ret);
-		
-		return ret;
+		ModelInfo model = self.hasFeature(IModelFeature.class)? (ModelInfo)self.getFeature(IModelFeature.class).getModel(): null;
+		RequiredServiceModel mymodel = model!=null? (RequiredServiceModel)model.getFeatureModel(IRequiredServiceFeature.class): null;
+
+		if(mymodel!=null)
+		{
+			final RequiredServiceModel fmymodel = mymodel;
+			String[] sernames = mymodel.getServiceInjectionNames();
+			
+			Stream<Tuple2<String, ServiceInjectionInfo[]>> s = Arrays.stream(sernames).map(sername -> new Tuple2<String, ServiceInjectionInfo[]>(sername, fmymodel.getServiceInjections(sername)));
+			
+			Map<String, ServiceInjectionInfo[]> serinfos = s.collect(Collectors.toMap(t -> t.getFirstEntity(), t -> t.getSecondEntity())); 
+			
+			Object pojo = ((MicroAgent)self).getPojo(); // hack
+			
+			injectServices(getComponent(), pojo, sernames, serinfos, mymodel).get();
+		}
 	}
 	
 	public RequiredServiceModel loadModel()

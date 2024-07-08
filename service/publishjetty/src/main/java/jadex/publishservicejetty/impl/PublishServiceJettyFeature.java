@@ -21,21 +21,18 @@ public class PublishServiceJettyFeature extends PublishServiceFeature
 		this.ports = new HashSet<Integer>();
 	}
     
-    public IFuture<Void> onStart()
+    public void	onStart()
     {
-    	super.onStart().get();
+    	super.onStart();
     	//System.out.println("Jetty started");
-    	return IFuture.DONE;
     }
     
-    public IFuture<Void> onEnd()
+    public void	onEnd()
     {
-    	super.onEnd().get();
+    	super.onEnd();
     	
     	// Terminate all servers created by this component
     	ServerManager.getInstance().terminateServers(ports);
-    	
-    	return IFuture.DONE;
     }
     
     /**

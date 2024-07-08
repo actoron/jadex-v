@@ -3,11 +3,9 @@ package jadex.nfproperty.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import jadex.collection.ILRUEntryCleaner;
 import jadex.collection.LRU;
@@ -16,7 +14,6 @@ import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
@@ -29,7 +26,6 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.TerminableIntermediateDelegationFuture;
-import jadex.javaparser.SJavaParser;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
 import jadex.model.impl.AbstractModelLoader;
@@ -50,8 +46,6 @@ import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.annotation.Tag;
 import jadex.providedservice.annotation.Tags;
-import jadex.providedservice.impl.search.ServiceRegistry;
-import jadex.providedservice.impl.service.ServiceIdentifier;
 
 public class NFPropertyFeature implements ILifecycle, INFPropertyFeature  
 {
@@ -87,20 +81,14 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	}
 	
 	@Override
-	public IFuture<Void> onStart()
+	public void	onStart()
 	{
-		Future<Void> ret = new Future<Void>();
-		
 		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
 		NFPropertyModel mymodel = (NFPropertyModel)model.getFeatureModel(INFPropertyFeature.class);
 		if(mymodel==null)
 			mymodel = loadModel();
 		
-		if(mymodel==null)
-		{
-			ret.setResult(null);
-		}
-		else
+		if(mymodel!=null)
 		{
 			// Init nf component props
 			FutureBarrier<Void> bar = new FutureBarrier<Void>();
@@ -154,16 +142,14 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 				}
 			});
 			
-			bar.waitFor().delegateTo(ret);
+			bar.waitFor().get();
 		}
-		
-		return ret;
 	}
 	
 	/**
 	 *  Called when the feature is shutdowned.
 	 */
-	public IFuture<Void> onEnd()
+	public void	onEnd()
 	{
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		
@@ -174,7 +160,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		if(reqserprops!=null)
 			reqserprops.values().stream().forEach(p -> bar.add(p.shutdownNFPropertyProvider()));
 
-		return bar.waitFor();
+		bar.waitFor().get();
 	}
 	
 	public NFPropertyModel loadModel()

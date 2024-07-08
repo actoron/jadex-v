@@ -3,7 +3,6 @@ package jadex.bpmn.runtime.impl;
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ILifecycle;
-import jadex.future.IFuture;
 
 public class BpmnProcessLifecycleFeature implements ILifecycle
 {
@@ -24,11 +23,10 @@ public class BpmnProcessLifecycleFeature implements ILifecycle
 	 *  Is only called once.
 	 */
 	@Override
-	public IFuture<Void> onStart()
+	public void	onStart()
 	{
 		IInternalBpmnComponentFeature ibf = IInternalBpmnComponentFeature.get();
 		ibf.init();
-		return IFuture.DONE; 
 	}
 	
 	/**
@@ -36,10 +34,9 @@ public class BpmnProcessLifecycleFeature implements ILifecycle
 	 *  Is only called once.
 	 */
 	@Override
-	public IFuture<Void> onEnd()
+	public void	onEnd()
 	{
 		IInternalBpmnComponentFeature ibf = IInternalBpmnComponentFeature.get();
 		ibf.terminate();
-		return IFuture.DONE; 
 	}
 }

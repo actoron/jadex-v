@@ -37,10 +37,8 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 		RequestManager.createInstance(ss);
 	}
 	
-	public IFuture<Void> onStart()
+	public void	onStart()
 	{
-		Future<Void> ret = new Future<Void>();
-		
 		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
 		
 		PublishServiceModel mymodel = (PublishServiceModel)model.getFeatureModel(IPublishServiceFeature.class);
@@ -55,29 +53,17 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 			});
 		}
 		
-		try
+		// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
+		// how could this be done? with listeners on other feature?!
+		for(PublishInfo pi: mymodel.getPublishInfos())
 		{
-			// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
-			// how could this be done? with listeners on other feature?!
-			for(PublishInfo pi: mymodel.getPublishInfos())
-			{
-				IServiceIdentifier sid = findService(pi.getPublishTarget());
-				publishService(sid, pi).get();
-			}
-			
-			ret.setResult(null);
+			IServiceIdentifier sid = findService(pi.getPublishTarget());
+			publishService(sid, pi).get();
 		}
-		catch(Exception e)
-		{
-			ret.setException(e);
-		}
-		
-		return ret;
 	}
 	
-	public IFuture<Void> onEnd()
+	public void	onEnd()
 	{
-		return IFuture.DONE;
 	}
 	
 	/**

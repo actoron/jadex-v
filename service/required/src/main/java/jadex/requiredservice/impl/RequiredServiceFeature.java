@@ -91,20 +91,14 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 	}
 	
 	@Override
-	public IFuture<Void> onStart()
+	public void	onStart()
 	{
-		Future<Void> ret = new Future<Void>();
-		
 		ModelInfo model = self.hasFeature(IModelFeature.class)? (ModelInfo)self.getFeature(IModelFeature.class).getModel(): null;
 		RequiredServiceModel mymodel = model!=null? (RequiredServiceModel)model.getFeatureModel(IRequiredServiceFeature.class): null;
 		if(mymodel==null)
 			mymodel = loadModel();
 		
-		if(mymodel==null)
-		{
-			ret.setResult(null);
-		}
-		else
+		if(mymodel!=null)
 		{
 			// Required services. (Todo: prefix for capabilities)
 			Map<String, RequiredServiceInfo> rservices = mymodel.getRequiredServices();
@@ -200,16 +194,12 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 			{
 				ret.setResult(null);
 			}).catchEx(ret);*/
-			ret.setResult(null);
 		}
-		
-		return ret;
 	}
 	
 	@Override
-	public IFuture<Void> onEnd()
+	public void	onEnd()
 	{
-		return IFuture.DONE;
 	}
 	
 	/**
