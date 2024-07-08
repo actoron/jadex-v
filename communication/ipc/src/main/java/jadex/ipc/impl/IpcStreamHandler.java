@@ -10,8 +10,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import jadex.collection.LeaseTimeMap;
 import jadex.collection.RwMapWrapper;
@@ -91,6 +93,13 @@ public class IpcStreamHandler implements IIpcService
 		}
 		return singleton;
 	}
+	
+	/** Handler dealing with received messages. */
+	private BiConsumer<ComponentIdentifier, byte[]> rcbmsghandler = (rcv, msg) ->
+	{
+		ComponentManager.get().getComponent(rcv);
+		//TODO: Write component step.
+	};
 	
 	/**
 	 *  Creates a new UnixSocketStreamHandler.
@@ -178,6 +187,15 @@ public class IpcStreamHandler implements IIpcService
 	}
 	
 	/**
+	 *  Sets the message handle for received messages, overwriting the default.
+	 *  @param rcvmsghandler The new message handler.
+	 */
+	public void setReceivedMessageHandler(BiConsumer<ComponentIdentifier, byte[]> rcvmsghandler)
+	{
+		this.rcbmsghandler = rcvmsghandler;
+	}
+	
+	/**
 	 *  Opens a socket allowing incoming connections.
 	 */
 	protected void open()
@@ -197,11 +215,24 @@ public class IpcStreamHandler implements IIpcService
 			try
 			{
 				Path socketpath = socketdir.resolve(pidstr);
+				if (socketpath.toFile().exists())
+					socketpath.toFile().delete();
+				socketpath.toFile().deleteOnExit();
 				
 				UnixDomainSocketAddress socketaddress = UnixDomainSocketAddress.of(socketpath);
 				ServerSocketChannel serverchannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
 				serverchannel.configureBlocking(true);
 				serverchannel.bind(socketaddress);
+				
+				Runtime.getRuntime().addShutdownHook(new Thread(() -> 
+				{
+					try
+					{
+						serverchannel.close();
+					}
+					catch (Exception e) {};
+					socketpath.toFile().delete();
+				}));
 				
 				while (true)
 				{
@@ -340,12 +371,11 @@ public class IpcStreamHandler implements IIpcService
 	private void handleMessages(long remotepid, SocketChannel channel)
 	{
 		SUtil.getExecutor().execute(() -> {
-			System.out.println("handling messages");
-			ByteBuffer numbuf = ByteBuffer.allocate(4);
-			ByteBuffer buf = null;
+			System.out.println("handling message");
 			try
 			{
 				byte[] localname = readChunk(channel);
+				System.out.println("Local name is: " + localname);
 				byte[] message = readChunk(channel);
 				
 				if (localname == null)
@@ -354,6 +384,7 @@ public class IpcStreamHandler implements IIpcService
 				}
 				else
 				{
+					rcbmsghandler.accept(new ComponentIdentifier(new String(localname, SUtil.UTF8)), message);
 					// TODO: Component handover
 				}
 			}
@@ -393,6 +424,7 @@ public class IpcStreamHandler implements IIpcService
 		
 		while (notdone)
 		{
+			System.out.println("wnd");
 			if (buf == null)
 			{
 				System.out.println("Reading msg size");
@@ -402,25 +434,33 @@ public class IpcStreamHandler implements IIpcService
 				System.out.println("Got msg size" + ds + " " + numbuf.hasRemaining());
 				if (!numbuf.hasRemaining())
 				{
+					System.out.println("reading chunk size " + ds);
 					numbuf.rewind();
 					int size = numbuf.getInt();
 					numbuf.rewind();
+					System.out.println("read chunk size " + ds);
 					
 					if (size > 0)
 						buf = ByteBuffer.wrap(new byte[size]);
-					else
+					else {
 						notdone = false;
-				}
+					}
+										}
+				System.out.println("fini if round");
 			}
 			else
 			{
+				System.out.println("Reading actual chunk of size " + buf.array().length);
 				channel.read(buf);
+				System.out.println("Reading actual chunk, remaining " + buf.remaining());
+				System.out.println("Actual chunk " + Arrays.toString(buf.array()));
 				if (!buf.hasRemaining())
 					notdone = false;
 			}
+			System.out.println("fini round: " + notdone);
 		}
 		
-		return buf.array();
+		return buf != null ? buf.array() : null;
 	}
 	
 	/**

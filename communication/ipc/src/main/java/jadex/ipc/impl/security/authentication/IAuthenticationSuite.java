@@ -1,6 +1,7 @@
 package jadex.ipc.impl.security.authentication;
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.ipc.impl.security.Security;
 
 /**
@@ -43,17 +44,17 @@ public interface IAuthenticationSuite
 	 *  
 	 *  @return First round payload.
 	 */
-	public byte[] getPakeRound1(Security agent, ComponentIdentifier remoteid);
+	public byte[] getPakeRound1(Security sec, GlobalProcessIdentifier remoteid);
 	
 	/** 
 	 *  Gets the second round of the password-authenticated key-exchange.
 	 *  
 	 *  @return Second round payload.
 	 */
-	public byte[] getPakeRound2(Security agent, ComponentIdentifier remoteid, byte[] round1data);
+	public byte[] getPakeRound2(Security sec, GlobalProcessIdentifier remoteid, byte[] round1data);
 	
 	/**
 	 *  Finalizes the password-authenticated key exchange.
 	 */
-	public void finalizePake(Security agent, ComponentIdentifier remoteid, byte[] round2data);
+	public void finalizePake(Security sec, GlobalProcessIdentifier remoteid, byte[] round2data);
 }

@@ -38,6 +38,7 @@ import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.traverser.SCloner;
 import jadex.core.ComponentIdentifier;
+import jadex.core.impl.ComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -47,6 +48,7 @@ import jadex.ipc.ISecurity;
 import jadex.ipc.impl.IpcStreamHandler;
 import jadex.ipc.impl.security.authentication.AbstractAuthenticationSecret;
 import jadex.ipc.impl.security.authentication.AbstractX509PemSecret;
+import jadex.ipc.impl.security.authentication.Blake3X509AuthenticationSuite;
 import jadex.ipc.impl.security.handshake.BasicSecurityMessage;
 import jadex.ipc.impl.security.handshake.InitialHandshakeFinalMessage;
 import jadex.ipc.impl.security.handshake.InitialHandshakeMessage;
@@ -89,11 +91,11 @@ public class Security implements ISecurity
 	/** Flag whether to refuse unauthenticated connections. */
 	protected boolean refuseuntrusted = false;
 	
-	/** Flag if connection with platforms without authenticated names are allowed. */
+	/** Flag if connection with hosts without authenticated names are allowed. */
 	protected boolean allownoauthname = true;
 	
-	/** Flag if connection with platforms without authenticated networks are allowed. */
-	protected boolean allownonetwork = true;
+	/** Flag if connection without authenticated group are allowed. */
+	protected boolean allownogroup = true;
 	
 	/** Flag whether to use the default Java trust store. */
 	protected boolean loadjavatruststore = true;
@@ -137,8 +139,8 @@ public class Security implements ISecurity
 //	protected Map<String, AbstractAuthenticationSecret> networks = new HashMap<String, AbstractAuthenticationSecret>();
 	protected Map<String, List<AbstractAuthenticationSecret>> groups = new HashMap<>();
 	
-	/** The platform name certificate if available. */
-	protected AbstractX509PemSecret platformnamecertificate;
+	/** The host name certificate if available. */
+	protected AbstractX509PemSecret hostnamecertificate;
 	
 	/** The host names that are trusted and identified by name. */
 	protected Set<String> trustedhosts = new HashSet<>();
@@ -176,6 +178,8 @@ public class Security implements ISecurity
 	
 	public void start()
 	{
+		allowedcryptosuites = new LinkedHashMap<String, Class<?>>();
+		allowedcryptosuites.put(Blake3X509AuthenticationSuite.class.getName(), Blake3X509AuthenticationSuite.class);
 		if (loadjavatruststore)
 		{
 			String tst = System.getProperty("javax.net.ssl.trustStoreType");
@@ -1017,7 +1021,7 @@ public class Security implements ISecurity
 	}
 	
 	/** 
-	 *  Adds an authority for authenticating platform names.
+	 *  Gets an authority for authenticating host names.
 	 *  
 	 *  @param secret The secret, only X.509 secrets allowed.
 	 *  @return Null, when done.
@@ -1034,7 +1038,22 @@ public class Security implements ISecurity
 	}
 	
 	/** 
-	 *  Gets all authorities not defined in the Java trust store for authenticating platform names.
+	 *  Gets an authority for authenticating host names.
+	 *  
+	 *  @param secret The secret, only X.509 secrets allowed.
+	 *  @return Null, when done.
+	 */
+	public Set<X509CertificateHolder> getNameAuthorityCerts()
+	{
+		synchronized(this)
+		{
+			Set<X509CertificateHolder> ret = new HashSet<>(SUtil.notNull(nameauthorities));
+			return ret;
+		}
+	}
+	
+	/** 
+	 *  Gets all authorities not defined in the Java trust store for authenticating host names.
 	 *  
 	 *  @return List of name authorities.
 	 */
@@ -1096,6 +1115,18 @@ public class Security implements ISecurity
 		synchronized(this)
 		{
 			return new HashSet<>(trustedhosts);
+		}
+	}
+	
+	/**
+	 *  Tests if the host is a trusted host. 
+	 *  @return True, if the host is trusted.
+	 */
+	public boolean isTrustedHosts(String host)
+	{
+		synchronized(this)
+		{
+			return trustedhosts.contains(host);
 		}
 	}
 	
@@ -1281,9 +1312,12 @@ public class Security implements ISecurity
 	/**
 	 *  Get the platform name certificate.
 	 */
-	public AbstractX509PemSecret getInternalPlatformNameCertificate()
+	public AbstractX509PemSecret getHostNameCertificate()
 	{
-		return platformnamecertificate;
+		synchronized(this)
+		{
+			return hostnamecertificate;
+		}
 	}
 	
 	
@@ -1319,13 +1353,13 @@ public class Security implements ISecurity
 	}
 	
 	/**
-	 *  Checks whether to allow connections without network authentication.
+	 *  Checks whether to allow connections without group authentication.
 	 *  
 	 *  @return True, if used.
 	 */
-	public boolean getInternalAllowNoNetwork()
+	public boolean getInternalAllowNoGroup()
 	{
-		return allownonetwork;
+		return allownogroup;
 	}
 	
 	/**
@@ -1333,9 +1367,11 @@ public class Security implements ISecurity
 	 *  
 	 *  @return True, if used.
 	 */
-	public boolean getInternalDefaultAuthorization()
+	public boolean isDefaultAuthorization()
 	{
-		return defaultauthorization;
+		synchronized (this) {
+			return defaultauthorization;
+		}
 	}
 	
 	/**
@@ -1683,7 +1719,11 @@ public class Security implements ISecurity
 	{
 		ComponentIdentifier secid = new ComponentIdentifier(null, receiver);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ISerializationServices.get().encode(baos, this.getClass().getClassLoader(), message);
+		ISerializationServices.get().encode(baos, ComponentManager.get().getClassLoader(), message);
+		System.out.println("Encoded sec msg " + message.getClass() + " " + baos.toByteArray().length);
+		Object rec = ISerializationServices.get().decode(new ByteArrayInputStream(baos.toByteArray()), ComponentManager.get().getClassLoader());
+		//System.out.println("decoded sec msg before send " + rec.getClass() + " " + baos.toByteArray().length);
+		System.out.println("sending sec msg " + Arrays.toString(baos.toByteArray()));
 		IpcStreamHandler.get().sendMessage(secid, ByteBuffer.wrap(baos.toByteArray()));
 		//return agent.getFeature(IMessageFeature.class).sendMessage(message, addheader, receiver);
 	}
@@ -1738,7 +1778,17 @@ public class Security implements ISecurity
 	 */
 	public void handleMessage(byte[] message)
 	{
-		Object msg = ISerializationServices.get().decode(new ByteArrayInputStream(message), getClass().getClassLoader());
+		System.out.println("Got sec message, tyrying to decode");
+		Object msg = null;
+		try {
+			msg = ISerializationServices.get().decode(new ByteArrayInputStream(message), getClass().getClassLoader());
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			System.exit(1);;
+		}
+		System.out.println("sec message, decoded " + msg.getClass()) ;
 		if (msg instanceof InitialHandshakeMessage)
 		{
 			final InitialHandshakeMessage imsg = (InitialHandshakeMessage) msg;

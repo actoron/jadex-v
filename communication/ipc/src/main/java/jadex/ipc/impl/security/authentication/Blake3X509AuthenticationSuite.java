@@ -21,7 +21,6 @@ import org.bouncycastle.util.Pack;
 
 import jadex.common.ByteArrayWrapper;
 import jadex.common.SUtil;
-import jadex.core.ComponentIdentifier;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.ipc.impl.security.SSecurity;
 import jadex.ipc.impl.security.Security;
@@ -72,7 +71,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 *  
 	 *  @return First round payload.
 	 */
-	public byte[] getPakeRound1(Security security, ComponentIdentifier remoteid)
+	public byte[] getPakeRound1(Security security, GlobalProcessIdentifier remoteid)
 	{
 		byte[] idsalt = new byte[64];
 		SSecurity.getSecureRandom().nextBytes(idsalt);
@@ -116,7 +115,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 *  
 	 *  @return Second round payload.
 	 */
-	public byte[] getPakeRound2(Security security, ComponentIdentifier remoteid, byte[] round1data)
+	public byte[] getPakeRound2(Security security, GlobalProcessIdentifier remoteid, byte[] round1data)
 	{
 		List<byte[]> r1list = SUtil.splitData(round1data);
 		if (r1list.size() != 2)
@@ -195,7 +194,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	/**
 	 *  Finalizes the password-authenticated key exchange.
 	 */
-	public void finalizePake(Security security, ComponentIdentifier remoteid, byte[] round2data)
+	public void finalizePake(Security security, GlobalProcessIdentifier remoteid, byte[] round2data)
 	{
 		List<byte[]> r2list = SUtil.splitData(round2data);
 		if (r2list.size() != 2)
@@ -654,4 +653,5 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 		
 		return ret;
 	}
+
 }
