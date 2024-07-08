@@ -50,7 +50,6 @@ public class MicroAgentFeature	implements ILifecycle
 	@Override
 	public IFuture<Void> onStart()
 	{
-		Future<Void> ret = new Future<Void>();
 		//System.out.println("start: "+getSelf());
 		injectStuff(getSelf(), getSelf().getPojo(), ((MicroModel)getSelf().getModel().getRawModel()).getInjectionInfoHolder());
 		MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
@@ -62,15 +61,9 @@ public class MicroAgentFeature	implements ILifecycle
 			//if(wasAnnotationCalled(ann))
 			//	return IFuture.DONE;
 			//else
-			getSelf().getFeature(IExecutionFeature.class).scheduleStep(() -> invokeMethod(getSelf(), ann, null)).catchEx(ret);
+			getSelf().getFeature(IExecutionFeature.class).scheduleStep(() -> invokeMethod(getSelf(), ann, null)).catchEx(e -> getSelf().handleException(e));
 		}
-		else
-		{
-			ret.setResult(null);
-			//ret.setException(new RuntimeException("no oninit found"));
-			//return invokeMethod(getInternalAccess(), AgentCreated.class, null);
-		}
-		return ret;
+		return IFuture.DONE;
 	}
 	
 	/*@Override
