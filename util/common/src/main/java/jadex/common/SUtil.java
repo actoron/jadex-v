@@ -74,6 +74,7 @@ import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -481,7 +482,10 @@ public class SUtil
 					}
 					catch(NoSuchMethodException e)
 					{
-						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+						// LinkedTransferQueue is fastest? https://stackoverflow.com/a/3012547
+//						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10));
+						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new LinkedTransferQueue<Runnable>());
+//						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 						virtual	= false;
 					}
 					catch(Exception e)
