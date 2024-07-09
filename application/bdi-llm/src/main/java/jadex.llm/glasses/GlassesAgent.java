@@ -12,7 +12,6 @@ import jadex.model.annotation.OnStart;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.objectweb.asm.ClassReader;
 
 @Agent(type = "bdi")
 public class GlassesAgent
@@ -65,7 +64,7 @@ public class GlassesAgent
         SortGlassesListGoal sortingGoal = new SortGlassesListGoal();
         List<Glasses> glassesList = getGlassesList();
 
-        llmFeature.generateAndExecutePlanStep(this, sortingGoal, glassesList);
+        llmFeature.generateAndExecutePlanStep((Goal) sortingGoal, (Plan) context, glassesList);
     }
 
     private List<Glasses> getGlassesList()
@@ -84,8 +83,12 @@ public class GlassesAgent
         sortingGoal = new GlassesSortingGoal(characteristic);
         // call method from class reader
         BDIModelLoader loader = new BDIModelLoader();
-        ClassReader classReader = new ClassReader(loader);
-        classReader.readAllClassStructure();
+        // Initialize LLM feature
+        llmFeature.connectToLLM();
+
+        //Read class structure - Idee: Auslesen Klassen aufgrund gegebenen Pfad
+        llmFeature.readClassStructure(Glasses.class);
+        llmFeature.readClassStructure(GlassesAgent.class);
 
         agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new SortGlassesListGoal()).get();
         System.out.println("GlassesAgent finished");
