@@ -20,15 +20,16 @@ import java.util.*;
 
 import com.google.gson.Gson;
 
-public class LlmFeature implements ILlmFeature {
-    private LlmConnector llmConnector;
-    private LlmConnector.CodeCompiler codeCompiler;
-    private LlmConnector.ClassReader classReader;
+public class LlmFeature implements ILlmFeature
+{
+    protected LlmConnector llmConnector;
+    protected CodeCompiler codeCompiler;
+    protected ClassReader classReader;
 
     public LlmFeature(BDIModelLoader loader) {
         this.llmConnector = new LlmConnector();
-        this.codeCompiler = new LlmConnector.CodeCompiler();
-        this.classReader = new LlmConnector.ClassReader();
+        this.codeCompiler = new CodeCompiler();
+        this.classReader = new ClassReader();
     }
 
     @Override
@@ -92,9 +93,8 @@ public class LlmFeature implements ILlmFeature {
     {
         try
         {
-            LlmConnector.CodeCompiler codeCompiler = new LlmConnector.CodeCompiler();
-            byte[] byteCode = codeCompiler.compile(className, code);
-            return codeCompiler.execute(className, byteCode, methodName, parameterTypes, args);
+            byte[] byteCode = CodeCompiler.compile(className, code);
+            return CodeCompiler.execute(className, byteCode, methodName, parameterTypes, args);
         } catch (Exception e)
 
         {
@@ -275,149 +275,149 @@ public class LlmFeature implements ILlmFeature {
                 this.content = content;
             }
         }
+    }
 
-        static class CodeCompiler
+    private static class CodeCompiler
+    {
+        public static byte[] compile(String className, String code)
         {
-            public static byte[] compile(String className, String code)
+            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+            StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
+
+            StringJavaFileObject file = new StringJavaFileObject(className, code);
+            Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(file);
+
+            List<String> optionList = new ArrayList<>();
+            optionList.addAll(Arrays.asList("-classpath", System.getProperty("java.class.path")));
+            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, optionList, null, compilationUnits);
+
+            boolean success = task.call();
+            if (success)
             {
-                JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-                DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-                StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
-
-                StringJavaFileObject file = new StringJavaFileObject(className, code);
-                Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(file);
-
-                List<String> optionList = new ArrayList<>();
-                optionList.addAll(Arrays.asList("-classpath", System.getProperty("java.class.path")));
-                JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, optionList, null, compilationUnits);
-
-                boolean success = task.call();
-                if (success)
+                try (FileInputStream fis = new FileInputStream(className + ".class"))
                 {
-                    try (FileInputStream fis = new FileInputStream(className + ".class"))
-                    {
-                        return SUtil.readStream(fis);
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                } else {
-                    for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics())
-                    {
-                        System.out.format("Error on line %d in %s%n", diagnostic.getLineNumber(), diagnostic.getSource().toUri());
-                        System.out.println("Code: " + diagnostic.getCode());
-                        System.out.println("Position: " + diagnostic.getPosition());
-                        System.out.println("Message: " + diagnostic.getMessage(null));
-                    }
-                    System.out.println("Compilation failed");
-                }
-                return null;
-            }
-
-            public static Object execute(String className, byte[] byteCode, String methodName, Class<?>[] parameterTypes, Object[] args)
-            {
-                ByteCodeClassLoader cl = new ByteCodeClassLoader(CodeCompiler.class.getClassLoader());
-                cl.doDefineClass(byteCode);
-
-                // Schleife für innere Klassen
-                int i = 1;
-                while (true)
-                {
-                    try
-                    {
-                        FileInputStream fis = new FileInputStream(className + "$" + i + ".class");
-                        byte[] byteCodeInner = SUtil.readStream(fis);
-                        cl.doDefineClass(byteCodeInner);
-                        i++;
-                    } catch (FileNotFoundException e)
-                    {
-                        break;
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-
-                // Laden der Klasse + Methodenausführung
-                try
-                {
-                    Class<?> clazz = cl.loadClass(className);
-                    Object instance = clazz.getDeclaredConstructor().newInstance();
-                    Method method = clazz.getMethod(methodName, parameterTypes);
-                    return method.invoke(instance, args);
+                    return SUtil.readStream(fis);
                 } catch (Exception e)
                 {
                     e.printStackTrace();
-                    return null;
+                }
+            } else {
+                for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics())
+                {
+                    System.out.format("Error on line %d in %s%n", diagnostic.getLineNumber(), diagnostic.getSource().toUri());
+                    System.out.println("Code: " + diagnostic.getCode());
+                    System.out.println("Position: " + diagnostic.getPosition());
+                    System.out.println("Message: " + diagnostic.getMessage(null));
+                }
+                System.out.println("Compilation failed");
+            }
+            return null;
+        }
+
+        public static Object execute(String className, byte[] byteCode, String methodName, Class<?>[] parameterTypes, Object[] args)
+        {
+            ByteCodeClassLoader cl = new ByteCodeClassLoader(CodeCompiler.class.getClassLoader());
+            cl.doDefineClass(byteCode);
+
+            // Schleife für innere Klassen
+            int i = 1;
+            while (true)
+            {
+                try
+                {
+                    FileInputStream fis = new FileInputStream(className + "$" + i + ".class");
+                    byte[] byteCodeInner = SUtil.readStream(fis);
+                    cl.doDefineClass(byteCodeInner);
+                    i++;
+                } catch (FileNotFoundException e)
+                {
+                    break;
+                } catch (Exception e)
+                {
+                    e.printStackTrace();
                 }
             }
 
-            static class StringJavaFileObject extends SimpleJavaFileObject
+            // Laden der Klasse + Methodenausführung
+            try
             {
-                private final String code;
-
-                public StringJavaFileObject(String name, String code)
-                {
-                    super(URI.create("string:///" + name.replace('.', '/') + JavaFileObject.Kind.SOURCE.extension), JavaFileObject.Kind.SOURCE);
-                    this.code = code;
-                }
-
-                @Override
-                public CharSequence getCharContent(boolean ignoreEncodingErrors)
-                {
-                    return code;
-                }
+                Class<?> clazz = cl.loadClass(className);
+                Object instance = clazz.getDeclaredConstructor().newInstance();
+                Method method = clazz.getMethod(methodName, parameterTypes);
+                return method.invoke(instance, args);
+            } catch (Exception e)
+            {
+                e.printStackTrace();
+                return null;
             }
         }
 
-        static class ClassReader
+        static class StringJavaFileObject extends SimpleJavaFileObject
         {
-            private static Map<String, String> classStructure;
-            private BDIModelLoader loader;
+            private final String code;
 
-            public ClassReader()
+            public StringJavaFileObject(String name, String code)
             {
-                classStructure = new HashMap<>();
-                this.loader = loader;
-
+                super(URI.create("string:///" + name.replace('.', '/') + JavaFileObject.Kind.SOURCE.extension), JavaFileObject.Kind.SOURCE);
+                this.code = code;
             }
 
-            void readClassStructure(Class<?> clazz)
+            @Override
+            public CharSequence getCharContent(boolean ignoreEncodingErrors)
             {
-                try
+                return code;
+            }
+        }
+    }
+
+    private static class ClassReader
+    {
+        private static Map<String, String> classStructure;
+        private BDIModelLoader loader;
+
+        public ClassReader()
+        {
+            classStructure = new HashMap<>();
+            this.loader = loader;
+
+        }
+
+        void readClassStructure(Class<?> clazz)
+        {
+            try
+            {
+                SClassReader.ClassInfo ci = SClassReader.getClassInfo(clazz.getName(), clazz.getClassLoader(), true, true);
+
+                String className = ci.getClassName();
+                String superClass = ci.getSuperClassName();
+                List<SClassReader.FieldInfo> fields = ci.getFieldInfos();
+                List<SClassReader.MethodInfo> methods = ci.getMethodInfos();
+
+                System.out.println("Class: " + className);
+                System.out.println("Superclass: " + superClass);
+
+                System.out.println("Fields:");
+                for (SClassReader.FieldInfo fi : fields)
                 {
-                    SClassReader.ClassInfo ci = SClassReader.getClassInfo(clazz.getName(), clazz.getClassLoader(), true, true);
-
-                    String className = ci.getClassName();
-                    String superClass = ci.getSuperClassName();
-                    List<SClassReader.FieldInfo> fields = ci.getFieldInfos();
-                    List<SClassReader.MethodInfo> methods = ci.getMethodInfos();
-
-                    System.out.println("Class: " + className);
-                    System.out.println("Superclass: " + superClass);
-
-                    System.out.println("Fields:");
-                    for (SClassReader.FieldInfo fi : fields)
-                    {
-                        System.out.println("\tName: " + fi.getFieldName() + " -Type: " + fi.getFieldDescriptor());
-                    }
-                    System.out.println("Methods:");
-                    for (SClassReader.MethodInfo mi : methods)
-                    {
-                        System.out.println("\tName: " + mi.getMethodName() + " -Type: " + mi.getMethodDescriptor());
-                    }
-
-                } catch (Exception e)
-                {
-                    e.printStackTrace();
+                    System.out.println("\tName: " + fi.getFieldName() + " -Type: " + fi.getFieldDescriptor());
                 }
-            }
+                System.out.println("Methods:");
+                for (SClassReader.MethodInfo mi : methods)
+                {
+                    System.out.println("\tName: " + mi.getMethodName() + " -Type: " + mi.getMethodDescriptor());
+                }
 
-            public static String getClassStructure(String ci)
+            } catch (Exception e)
             {
-                System.out.println(ci);
-                return classStructure.get(ci);
+                e.printStackTrace();
             }
+        }
+
+        public static String getClassStructure(String ci)
+        {
+            System.out.println(ci);
+            return classStructure.get(ci);
         }
     }
 }

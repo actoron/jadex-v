@@ -16,6 +16,8 @@ import java.util.List;
 @Agent(type = "bdi")
 public class GlassesAgent
 {
+    private ILlmFeature llmFeature;
+
     static
     {
         System.out.println("GlassesAgent class loaded");
@@ -32,7 +34,6 @@ public class GlassesAgent
     @Belief
     private List<Glasses> glassesList = new ArrayList<>();
     private GlassesSortingGoal sortingGoal;
-    private ILlmFeature llmFeature;
 
     public class GlassesSortingGoal
     {
@@ -84,11 +85,21 @@ public class GlassesAgent
         // call method from class reader
         BDIModelLoader loader = new BDIModelLoader();
         // Initialize LLM feature
-        llmFeature.connectToLLM();
+        System.out.println("HelloFeature");
+        llmFeature = agent.getFeature(ILlmFeature.class);
 
+        System.out.println("Nope");
+        if (llmFeature != null)
+        {
+            llmFeature.connectToLLM();
         //Read class structure - Idee: Auslesen Klassen aufgrund gegebenen Pfad
         llmFeature.readClassStructure(Glasses.class);
         llmFeature.readClassStructure(GlassesAgent.class);
+        } else
+        {
+            System.out.println("LLM feature not found");
+        }
+
 
         agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new SortGlassesListGoal()).get();
         System.out.println("GlassesAgent finished");

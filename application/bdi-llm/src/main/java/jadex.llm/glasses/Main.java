@@ -9,12 +9,12 @@ public class Main
     public static void main(String[] args)
     {
 
-        String apiKey = args[0];
-        String classpath = args[1];
+        //String apiKey = args[0];
+        //String classpath = args[1];
 
-        IBDIAgent.create(new BDICreationInfo("jadex.llm.glasses.GlassesAgent")
-                .addArgument("apiKey", apiKey)
-                .addArgument("classpath", classpath));
+        IBDIAgent.create(new BDICreationInfo("jadex.llm.glasses.GlassesAgent"));
+                //.addArgument("apiKey", apiKey)
+                //.addArgument("classpath", classpath));
 
         IComponent.waitForLastComponentTerminated();
 
