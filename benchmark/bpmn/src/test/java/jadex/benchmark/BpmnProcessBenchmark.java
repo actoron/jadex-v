@@ -14,7 +14,7 @@ import jadex.future.Future;
 /**
  *  Benchmark creation and killing of bpmn processes.
  */
-public class BpmnProcessAgentBenchmark 
+public class BpmnProcessBenchmark 
 {
 	@Test
 	void	benchmarkMemory()
