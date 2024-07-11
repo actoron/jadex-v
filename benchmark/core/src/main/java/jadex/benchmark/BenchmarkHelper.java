@@ -45,10 +45,13 @@ public class BenchmarkHelper
 				long	end	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at end: "+end);
 				
-				long took	= (end-start)/runs;
-				addToDB(took);
-				best	= Math.min(best, took);
-				System.out.println("Per component: "+took);
+				if(r>0)	// Skip first for accuracy
+				{
+					long took	= (end-start)/runs;
+					addToDB(took);
+					best	= Math.min(best, took);
+					System.out.println("Per component: "+took);
+				}
 				
 				for(Runnable teardown: teardowns)
 					teardown.run();
@@ -106,7 +109,8 @@ public class BenchmarkHelper
 
 	protected static double	addToDB(double value) throws IOException
 	{
-		boolean	gradle	= System.getenv().toString().contains("gradle");
+//		boolean	gradle	= System.getenv().toString().contains("gradle");
+		boolean	gradle	= false;
 		
 		double	pct	= 0;
 		String	caller	= getCaller();
