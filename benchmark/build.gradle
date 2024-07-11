@@ -1,0 +1,13 @@
+plugins 
+{
+    id 'ru.vyarus.use-python' version '4.0.0'
+}
+
+description = 'Plot benchmark results using Python'
+
+group = 'org.activecomponents.jadex'
+
+task plot(type : PythonTask)
+{
+	command = 'plot_benchmarks.py'
+}

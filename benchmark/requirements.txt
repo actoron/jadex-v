@@ -1,0 +1,2 @@
+matplotlib:3.9.1
+PyQt5:5.15.10
