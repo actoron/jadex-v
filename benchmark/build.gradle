@@ -8,6 +8,14 @@ description = 'Plot benchmark results using Python'
 
 group = 'org.activecomponents.jadex'
 
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
 task plot(type : PythonTask)
 {
 	command = 'plot_benchmarks.py'
