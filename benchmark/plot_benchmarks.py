@@ -39,7 +39,10 @@ for dir in dirs:
                     if file.endswith('Time.json'):
                         time_names.append(name)
                         # round from nanos to microseconds
-                        time_values.append(round(val/1000))
+                        if val>10000:
+                            time_values.append(round(val/1000))
+                        else:
+                            time_values.append(round(val/100)/10)
                     elif file.endswith('Memory.json'):
                         memory_names.append(name)
                         memory_values.append(val)
