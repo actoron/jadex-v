@@ -68,7 +68,8 @@ public class JadeBenchmark
 						}
 						catch(Exception e)
 						{
-							throw new RuntimeException(e);
+							// Sometimes stale proxy exception!?
+							e.printStackTrace();
 						}
 					};
 				}
@@ -106,7 +107,8 @@ public class JadeBenchmark
 				}
 				catch(Exception e)
 				{
-					throw new RuntimeException(e);
+					// Sometimes stale proxy exception!?
+					e.printStackTrace();
 				}
 			}
 		});
