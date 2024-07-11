@@ -45,9 +45,9 @@ public class BenchmarkHelper
 				long	end	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at end: "+end);
 				
-				if(r>0)	// Skip first for accuracy
+				long took	= (end-start)/runs;
+				if(r>0 && took>0)	// Skip first for accuracy
 				{
-					long took	= (end-start)/runs;
 					addToDB(took);
 					best	= Math.min(best, took);
 					System.out.println("Per component: "+took);
