@@ -189,6 +189,8 @@ includeBuild('bpmn/engine') {name='bpmn'}
 includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
 includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 
+includeBuild('bt/engine') {name='bt'}
+
 includeBuild('rules/eca') {}
 
 includeBuild('monitoring/logbase') {}
@@ -201,6 +203,7 @@ includeBuild('application/micro-nfp'){name='application-micro-nfp'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
 includeBuild('application/bpmn'){name='application-bpmn'}
+includeBuild('application/bt'){name='application-bt'}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
 includeBuild('benchmark/execution'){name='benchmark-execution'}
