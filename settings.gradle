@@ -207,6 +207,5 @@ includeBuild('benchmark/execution'){name='benchmark-execution'}
 includeBuild('benchmark/bdi'){name='benchmark-bdi'}
 includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
 includeBuild('benchmark/micro'){name='benchmark-micro'}
-
-
+includeBuild('benchmark/thirdparty'){name='benchmark-thirdparty'}
 

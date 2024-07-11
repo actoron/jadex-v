@@ -1,0 +1,63 @@
+plugins 
+{
+    id 'java-library'
+}
+
+description = 'Benchmark tests for third party frameworks'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
+repositories
+{
+    mavenCentral()
+    maven {
+        url "https://repo.akka.io/maven"
+    }
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:benchmark-core:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+
+	// Jason
+	implementation files('libs/jason-3.2.0-SNAPSHOT.jar')
+    implementation group: 'javax.json', name: 'javax.json-api', version: '1.1.4'
+    implementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
+    
+    // Akka
+	implementation 'com.typesafe.akka:akka-actor-typed_2.13:2.9.3'
+	implementation 'ch.qos.logback:logback-classic:1.2.13'
+	//testImplementation 'com.typesafe.akka:akka-actor-testkit-typed_2.13:2.9.3'
+	
+	// JADE
+	//implementation 'com.tilab.jade:jade:4.5.0'
+	implementation 'net.sf.ingenias:jade:4.3'
+	
+	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test {
+  useJUnitPlatform()
+  exclude 'benchmark/**'
+}
+
+task benchmark(type : Test) {
+  useJUnitPlatform()
+  include 'benchmark/**'
+  minHeapSize = "4g"
+  maxHeapSize = "4g"
+  enableAssertions = false
+}
