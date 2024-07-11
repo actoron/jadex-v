@@ -8,8 +8,8 @@ import numpy as np
 
 ######## fetch values from file system ########
 
-dirname = '.benchmark'
-#dirname = '.benchmark_gradle'
+#dirname = '.benchmark'
+dirname = '.benchmark_gradle'
 
 memory_names = []
 memory_values = []

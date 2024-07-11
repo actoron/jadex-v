@@ -79,7 +79,11 @@ public class BenchmarkHelper
 		{
 			for(int j=0; j<retries; j++)
 			{
-				Thread.sleep(cooldown);
+				// skip first cooldown and ignore first result
+				if(j>0)
+				{
+					Thread.sleep(cooldown);
+				}
 				long	mstart	= System.currentTimeMillis();
 				long	cnt;
 				long	took	= 0;
@@ -95,12 +99,17 @@ public class BenchmarkHelper
 					took	+= (end-start)/runs;
 
 				}
-				took	/= cnt;
-				System.out.println("took: "+took);
-				System.out.println("runs: "+cnt);
-
-				addToDB(took);
-				best	= Math.min(best, took);
+				
+				// skip first cooldown and ignore first result
+				if(j>0)
+				{
+					took	/= cnt;
+					System.out.println("took: "+took);
+					System.out.println("runs: "+cnt);
+	
+					addToDB(took);
+					best	= Math.min(best, took);
+				}
 			}
 			return addToDB(best);
 		}
