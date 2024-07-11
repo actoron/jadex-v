@@ -167,13 +167,9 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 			{
 				if(feature instanceof ILifecycle)
 				{
-					exe.scheduleStep(() ->
-					{
-						ILifecycle lfeature = (ILifecycle)feature;
-						//System.out.println("starting: "+lfeature);
-						lfeature.onStart();
-						return null;
-					}).get();
+					ILifecycle lfeature = (ILifecycle)feature;
+					//System.out.println("starting: "+lfeature);
+					lfeature.onStart();
 				}
 				/*else
 				{
