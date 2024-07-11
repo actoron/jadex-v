@@ -1,5 +1,6 @@
 plugins 
 {
+	id	'java'	// hack otherwise global build misses tasks (build, clean, etc)
     id 'ru.vyarus.use-python' version '4.0.0'
 }
 
