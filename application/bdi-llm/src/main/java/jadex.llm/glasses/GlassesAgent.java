@@ -16,15 +16,15 @@ import java.util.List;
 @Agent(type = "bdi")
 public class GlassesAgent
 {
-    private ILlmFeature llmFeature;
-
     static
     {
         System.out.println("GlassesAgent class loaded");
     }
 
     @Belief
-    private final SortBy characteristic = SortBy.SHAPE;
+    public ILlmFeature llmFeature;
+
+    private SortBy characteristic = SortBy.SHAPE;
 
     public enum SortBy
     {
@@ -65,7 +65,8 @@ public class GlassesAgent
         SortGlassesListGoal sortingGoal = new SortGlassesListGoal();
         List<Glasses> glassesList = getGlassesList();
 
-        llmFeature.generateAndExecutePlanStep((Goal) sortingGoal, (Plan) context, glassesList);
+        //llmFeature.generateAndExecutePlanStep(sortingGoal, executeGeneratedPlan();, glassesList);
+        llmFeature.generatePlanStep(sortingGoal, context, glassesList);
     }
 
     private List<Glasses> getGlassesList()
@@ -78,7 +79,7 @@ public class GlassesAgent
     public void body(IComponent agent)
     {
         System.out.println("GlassesAgent active");
-
+        System.out.println("Agent Features: " + ILlmFeature.class);
         // call method from Glasses
         glassesList = Glasses.generateRandomGlassesList();
         sortingGoal = new GlassesSortingGoal(characteristic);
@@ -86,21 +87,31 @@ public class GlassesAgent
         BDIModelLoader loader = new BDIModelLoader();
         // Initialize LLM feature
         System.out.println("HelloFeature");
-        llmFeature = agent.getFeature(ILlmFeature.class);
+        try
+        {
+            llmFeature = agent.getFeature(ILlmFeature.class);
 
-        System.out.println("Nope");
-        if (llmFeature != null)
-        {
-            llmFeature.connectToLLM();
-        //Read class structure - Idee: Auslesen Klassen aufgrund gegebenen Pfad
-        llmFeature.readClassStructure(Glasses.class);
-        llmFeature.readClassStructure(GlassesAgent.class);
-        } else
-        {
-            System.out.println("LLM feature not found");
+            if (llmFeature != null)
+            {
+                List<Class<?>> cls = new ArrayList<>();
+                cls.add(GlassesAgent.class);
+                cls.add(Glasses.class);
+
+                List<Object> obj = new ArrayList<>();
+                obj.add(glassesList);
+                obj.add(sortingGoal);
+
+                llmFeature.connectToLLM(cls, obj);
+                //Read class structure - Idee: Auslesen Klassen aufgrund gegebenen Pfad
+                llmFeature.readClassStructure(Glasses.class);
+                llmFeature.readClassStructure(GlassesAgent.class);
+            } else
+            {
+                System.out.println("Nope, Feature not found");
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to initialize LLM feature: " + e.getMessage());
         }
-
-
         agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new SortGlassesListGoal()).get();
         System.out.println("GlassesAgent finished");
     }

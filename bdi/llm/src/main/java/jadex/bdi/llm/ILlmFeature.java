@@ -1,15 +1,9 @@
 package jadex.bdi.llm;
 
-import jadex.bdi.annotation.Goal;
-import jadex.bdi.annotation.Plan;
+import java.util.List;
 
 public interface ILlmFeature
 {
-    /**
-     * Generates a plan step using the LLM and executes it.
-     */
-    public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context);
-
     /**
      * Reads the structure of the given class.
      *
@@ -20,7 +14,13 @@ public interface ILlmFeature
     /**
      * Establishes a connection to the LLM.
      */
-    public void connectToLLM();
+    public void connectToLLM(List<Class<?>> classes, List<Object> objects);
+
+    /**
+     * Generates a plan step using the LLM and executes it.
+     */
+    //public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context);
+    public void generatePlanStep(Object goal, Object context, List<?> data);
 
     /**
      * Compiles the given code.

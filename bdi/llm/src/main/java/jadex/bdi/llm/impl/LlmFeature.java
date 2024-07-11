@@ -1,7 +1,5 @@
 package jadex.bdi.llm.impl;
 
-import jadex.bdi.annotation.Goal;
-import jadex.bdi.annotation.Plan;
 import jadex.bdi.llm.ILlmFeature;
 import jadex.bdi.model.BDIModelLoader;
 import jadex.bytecode.ByteCodeClassLoader;
@@ -22,46 +20,15 @@ import com.google.gson.Gson;
 
 public class LlmFeature implements ILlmFeature
 {
+    protected ClassReader classReader;
     protected LlmConnector llmConnector;
     protected CodeCompiler codeCompiler;
-    protected ClassReader classReader;
 
-    public LlmFeature(BDIModelLoader loader) {
+    public LlmFeature(BDIModelLoader loader)
+    {
+        this.classReader = new ClassReader();
         this.llmConnector = new LlmConnector();
         this.codeCompiler = new CodeCompiler();
-        this.classReader = new ClassReader();
-    }
-
-    @Override
-    public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context)
-    {
-        try
-        {
-            List<Class<?>> classes = new ArrayList<>();
-            List<Object> objects = new ArrayList<>();
-            for (Object obj : context)
-            {
-                if (obj instanceof Class<?>)
-                {
-                    classes.add((Class<?>) obj);
-                } else
-                {
-                    objects.add(obj);
-                }
-            }
-            String planStep = llmConnector.generatePlan(classes, objects);
-            byte[] byteCode = codeCompiler.compile("PlanStep", planStep);
-            if (byteCode != null)
-            {
-                codeCompiler.execute("PlanStep", byteCode, "doPlanStep", new Class<?>[]{List.class}, objects.toArray());
-            } else
-            {
-                System.err.println("Plan step generation or compilation failed.");
-            }
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -76,31 +43,63 @@ public class LlmFeature implements ILlmFeature
         }
     }
 
-    @Override
-    public void connectToLLM()
+    private static class ClassReader
     {
-        try {
-            System.out.println("Successfully connected to the LLM.");
-        } catch (Exception e)
+        private static Map<String, String> classStructure;
+        private BDIModelLoader loader;
+
+        public ClassReader()
         {
-            e.printStackTrace();
-            System.err.println("Failed to connect to the LLM.");
+            classStructure = new HashMap<>();
+            this.loader = loader;
+
+        }
+
+        void readClassStructure(Class<?> clazz)
+        {
+            try
+            {
+                SClassReader.ClassInfo ci = SClassReader.getClassInfo(clazz.getName(), clazz.getClassLoader(), true, true);
+
+                String className = ci.getClassName();
+                String superClass = ci.getSuperClassName();
+                List<SClassReader.FieldInfo> fields = ci.getFieldInfos();
+                List<SClassReader.MethodInfo> methods = ci.getMethodInfos();
+
+                System.out.println("Class: " + className);
+                System.out.println("Superclass: " + superClass);
+
+                System.out.println("Fields:");
+                for (SClassReader.FieldInfo fi : fields)
+                {
+                    System.out.println("\tName: " + fi.getFieldName() + " -Type: " + fi.getFieldDescriptor());
+                }
+                System.out.println("Methods:");
+                for (SClassReader.MethodInfo mi : methods)
+                {
+                    System.out.println("\tName: " + mi.getMethodName() + " -Type: " + mi.getMethodDescriptor());
+                }
+
+            } catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        public static String getClassStructure(String ci)
+        {
+            System.out.println(ci);
+            return classStructure.get(ci);
         }
     }
 
     @Override
-    public Object compileCode(String className, String code, String methodName, Class<?>[] parameterTypes, Object[] args)
+    public void connectToLLM(List<Class<?>> classes, List<Object> objects)
     {
-        try
-        {
-            byte[] byteCode = CodeCompiler.compile(className, code);
-            return CodeCompiler.execute(className, byteCode, methodName, parameterTypes, args);
-        } catch (Exception e)
+        System.out.println("Connecting to the LLM");
 
-        {
-            e.printStackTrace();
-            return false;
-        }
+        String generateCode = llmConnector.generateCode(classes, objects);
+        System.out.println("Generated code: " + generateCode);
     }
 
     private static class LlmConnector
@@ -121,7 +120,7 @@ public class LlmFeature implements ILlmFeature
             }
         }
 
-        public String generatePlan(List<Class<?>> classes, List<Object> objects)
+        public String generateCode(List<Class<?>> classes, List<Object> objects)
         {
             List<String> combinedInfo = new ArrayList<>();
 
@@ -277,6 +276,62 @@ public class LlmFeature implements ILlmFeature
         }
     }
 
+    @Override
+    //public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context)
+    public void generatePlanStep(Object goal, Object context, List<?> data)
+    {
+        try
+        {
+            List<Class<?>> classes = new ArrayList<>();
+            List<Object> objects = new ArrayList<>();
+            if (context instanceof Iterable)
+            {
+                for (Object obj : (Iterable<?>) context)
+                {
+                    if (obj instanceof Class<?>)
+                    {
+                        classes.add((Class<?>) obj);
+                    } else
+                    {
+                        objects.add(obj);
+                    }
+                }
+            } else
+            {
+                // Handle case where context is not Iterable (if needed)
+                System.err.println("Context is not iterable.");
+            }
+
+            String planStep = llmConnector.generateCode(classes, objects);
+            byte[] byteCode = codeCompiler.compile("PlanStep", planStep);
+            if (byteCode != null)
+            {
+                codeCompiler.execute("PlanStep", byteCode, "doPlanStep", new Class<?>[]{List.class}, objects.toArray());
+            } else
+            {
+                System.err.println("Plan step generation or compilation failed.");
+            }
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Object compileCode(String className, String code, String methodName, Class<?>[] parameterTypes, Object[] args)
+    {
+        try
+        {
+            byte[] byteCode = CodeCompiler.compile(className, code);
+            return CodeCompiler.execute(className, byteCode, methodName, parameterTypes, args);
+        } catch (Exception e)
+
+        {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private static class CodeCompiler
     {
         public static byte[] compile(String className, String code)
@@ -368,56 +423,6 @@ public class LlmFeature implements ILlmFeature
             {
                 return code;
             }
-        }
-    }
-
-    private static class ClassReader
-    {
-        private static Map<String, String> classStructure;
-        private BDIModelLoader loader;
-
-        public ClassReader()
-        {
-            classStructure = new HashMap<>();
-            this.loader = loader;
-
-        }
-
-        void readClassStructure(Class<?> clazz)
-        {
-            try
-            {
-                SClassReader.ClassInfo ci = SClassReader.getClassInfo(clazz.getName(), clazz.getClassLoader(), true, true);
-
-                String className = ci.getClassName();
-                String superClass = ci.getSuperClassName();
-                List<SClassReader.FieldInfo> fields = ci.getFieldInfos();
-                List<SClassReader.MethodInfo> methods = ci.getMethodInfos();
-
-                System.out.println("Class: " + className);
-                System.out.println("Superclass: " + superClass);
-
-                System.out.println("Fields:");
-                for (SClassReader.FieldInfo fi : fields)
-                {
-                    System.out.println("\tName: " + fi.getFieldName() + " -Type: " + fi.getFieldDescriptor());
-                }
-                System.out.println("Methods:");
-                for (SClassReader.MethodInfo mi : methods)
-                {
-                    System.out.println("\tName: " + mi.getMethodName() + " -Type: " + mi.getMethodDescriptor());
-                }
-
-            } catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        }
-
-        public static String getClassStructure(String ci)
-        {
-            System.out.println(ci);
-            return classStructure.get(ci);
         }
     }
 }
