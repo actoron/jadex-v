@@ -25,7 +25,7 @@ public class BenchmarkHelper
 	
 	public static double	benchmarkMemory(Callable<Runnable> startup)
 	{
-		int	runs	= 1000;
+		int	msecs	= 500;
 		int retries	= 10;
 		long	best	= Long.MAX_VALUE;
 		try
@@ -38,17 +38,20 @@ public class BenchmarkHelper
 				long	start	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at start: "+start);
 				
-				for(int i=0; i<runs; i++)
+				long	mstart	= System.currentTimeMillis();
+				long	cnt;
+				for(cnt=0; mstart+msecs>System.currentTimeMillis(); cnt++)
 					teardowns.add(startup.call());
 				
 				System.gc();
 				long	end	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at end: "+end);
 				
-				long took	= (end-start)/runs;
+				long took	= (end-start)/cnt;
 				if(r>0 && took>0)	// Skip first for accuracy
 				{
 					System.out.println("Per component: "+took);
+					System.out.println("runs: "+cnt);
 					addToDB(took);
 					best	= Math.min(best, took);
 				}
