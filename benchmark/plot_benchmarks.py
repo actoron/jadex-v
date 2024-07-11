@@ -55,33 +55,39 @@ width   = max(len(memory_names), len(time_names))
 
 ######## plot/save memory usage ########
 
-plt.figure(figsize=(width, 6))
-ax  = plt.subplot(1, 1, 1)
-bars    = plt.bar(memory_names, memory_values, color='skyblue')
-ax.bar_label(bars)
-plt.ylabel('Memory Footprint (KB)')
-#plt.title('Memory Footprint of Different Agents/Components')
-
-plt.tight_layout()
-
-plt.savefig('benchmark_memory.png')
-
-plt.show()
+if len(memory_names)>0:
+    plt.figure(figsize=(width, 6))
+    ax  = plt.subplot(1, 1, 1)
+    bars    = plt.bar(memory_names, memory_values, color='skyblue')
+    ax.bar_label(bars)
+    plt.ylabel('Memory Footprint (KB)')
+    #plt.title('Memory Footprint of Different Agents/Components')
+    
+    plt.tight_layout()
+    
+    plt.savefig('benchmark_memory.png')
+    
+    plt.show()
+else:
+    print("No memory benchmarks found. Try e.g. ./gradlew benchmark-micro:benchmark")
 
 
 ######## plot/save time usage ########
 
-plt.figure(figsize=(width, 6))
-ax  = plt.subplot(1, 1, 1)
-bars    = plt.bar(time_names, time_values, color='green')
-ax.bar_label(bars)
-plt.yscale('log')
-plt.ylabel('Startup/Shutdown Time (µs)')
-#plt.title('Startup/Shutdown Time of Different Agents/Components')
-plt.grid(True, which="both", ls="--")
-
-plt.tight_layout()
-
-plt.savefig('benchmark_execution.png')
-
-plt.show()
+if len(time_names)>0:
+    plt.figure(figsize=(width, 6))
+    ax  = plt.subplot(1, 1, 1)
+    bars    = plt.bar(time_names, time_values, color='green')
+    ax.bar_label(bars)
+    plt.yscale('log')
+    plt.ylabel('Startup/Shutdown Time (µs)')
+    #plt.title('Startup/Shutdown Time of Different Agents/Components')
+    plt.grid(True, which="both", ls="--")
+    
+    plt.tight_layout()
+    
+    plt.savefig('benchmark_execution.png')
+    
+    plt.show()
+else:
+    print("No time benchmarks found. Try e.g. ./gradlew benchmark-micro:benchmark")
