@@ -48,9 +48,9 @@ public class BenchmarkHelper
 				long took	= (end-start)/runs;
 				if(r>0 && took>0)	// Skip first for accuracy
 				{
+					System.out.println("Per component: "+took);
 					addToDB(took);
 					best	= Math.min(best, took);
-					System.out.println("Per component: "+took);
 				}
 				
 				for(Runnable teardown: teardowns)
@@ -109,8 +109,7 @@ public class BenchmarkHelper
 
 	protected static double	addToDB(double value) throws IOException
 	{
-//		boolean	gradle	= System.getenv().toString().contains("gradle");
-		boolean	gradle	= false;
+		boolean	gradle	= System.getenv().toString().contains("gradle");
 		
 		double	pct	= 0;
 		String	caller	= getCaller();
