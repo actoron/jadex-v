@@ -22,12 +22,12 @@ public class ExecutableComponentBenchmark
 	@Test
 	void	benchmarkMemory()
 	{
-		BenchmarkHelper.benchmarkMemory(() ->
+		double	pct	= BenchmarkHelper.benchmarkMemory(() ->
 		{
 			Component	comp	= Component.createComponent(Component.class, () -> new Component());
 //			Component	comp	= new Component();
 			return () -> comp.terminate().get();			
 		});
-//		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
 }
