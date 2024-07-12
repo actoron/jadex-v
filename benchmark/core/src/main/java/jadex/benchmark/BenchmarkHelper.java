@@ -59,6 +59,7 @@ public class BenchmarkHelper
 				for(Runnable teardown: teardowns)
 					teardown.run();
 			}
+			System.out.println("best: "+best);
 			return addToDB(best);
 		}
 		catch(Exception e)
@@ -111,6 +112,7 @@ public class BenchmarkHelper
 					best	= Math.min(best, took);
 				}
 			}
+			System.out.println("best: "+best);
 			return addToDB(best);
 		}
 		catch(Exception e)
