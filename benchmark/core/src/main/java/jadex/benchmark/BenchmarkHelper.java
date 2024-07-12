@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
+
 import jadex.common.SUtil;
 
 public class BenchmarkHelper
@@ -128,21 +132,27 @@ public class BenchmarkHelper
 		double	pct	= 0;
 		String	caller	= getCaller();
 		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark", caller+".json");
+		double	prev	= 0;
 		if(db.toFile().exists())
 		{
-			double	prev	= Double.valueOf(Files.readString(db));
-			pct	= (value - prev)*100.0/prev;
-			System.out.println("Change(%): "+pct);				
-			if(value<prev)
+			JsonValue	val	= Json.parse(Files.readString(db));
+			if(val.isNumber())	// Legacy support -> can be removed at some point
 			{
-				Files.writeString(db, String.valueOf(value));
+				prev	= val.asDouble();
 			}
+			else
+			{
+				prev	= ((JsonObject)val).get("best").asDouble();
+			}
+			pct	= (value - prev)*100.0/prev;
+			System.out.println("Change(%): "+pct);
 		}
-		else
-		{
-			db.toFile().getParentFile().mkdirs();
-			Files.writeString(db, String.valueOf(value));
-		}
+
+		JsonObject	obj	= new JsonObject();
+		obj.add("best", prev==0 ? value : Math.min(value, prev));
+		obj.add("last", value);
+		Files.writeString(db, obj.toString());
+		
 		return pct;
 	}
 }
