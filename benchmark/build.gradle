@@ -20,3 +20,11 @@ task plot(type : PythonTask)
 {
 	command = 'plot_benchmarks.py'
 }
+
+task purge(type: Delete)
+{
+	delete fileTree('.')
+	{
+        include '**/.benchmark*/*'
+    }
+}
