@@ -10,9 +10,11 @@ public class BenchmarkAgent extends SokratesV3Agent
 	/**
 	 *  Overwrite wait time.
 	 */
-	public BenchmarkAgent()
+	public BenchmarkAgent(boolean printresults)
 	{
 		delay	= 0;
+		printsteps	= false;
+		this.printresults	= printresults;
 	}
 
 	/**
@@ -24,7 +26,7 @@ public class BenchmarkAgent extends SokratesV3Agent
 	
 	public static void main(String[] args)
 	{
-		IBDIAgent.create(new BenchmarkAgent());
+		IBDIAgent.create(new BenchmarkAgent(true));
 		IComponent.waitForLastComponentTerminated();
 	}
 }

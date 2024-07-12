@@ -32,6 +32,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:micro:'+v
 	implementation 'org.activecomponents.jadex:bdi:'+v
 	implementation 'org.activecomponents.jadex:benchmark-core:'+v
+	implementation 'org.activecomponents.jadex:application-bdi:'+v
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
