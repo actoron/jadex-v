@@ -2,37 +2,25 @@ package jadex.bdi.llm.impl;
 
 import jadex.bdi.llm.ILlmFeature;
 import jadex.bdi.model.BDIModelLoader;
-import jadex.bytecode.ByteCodeClassLoader;
 import jadex.classreader.SClassReader;
-import jadex.common.SUtil;
 
-import javax.tools.*;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.lang.reflect.Method;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.*;
-
-import com.google.gson.Gson;
 
 public class LlmFeature implements ILlmFeature
 {
     protected ClassReader classReader;
-    protected LlmConnector llmConnector;
-    protected CodeCompiler codeCompiler;
+    //protected LlmConnector llmConnector;
+    //protected CodeCompiler codeCompiler;
 
     public LlmFeature(BDIModelLoader loader)
     {
         this.classReader = new ClassReader();
-        this.llmConnector = new LlmConnector();
-        this.codeCompiler = new CodeCompiler();
+        //this.llmConnector = new LlmConnector();
+        //this.codeCompiler = new CodeCompiler();
     }
 
     @Override
-    public void readClassStructure(Class<?> cls)
+    public ILlmFeature readClassStructure(Class<?> cls)
     {
         try
         {
@@ -41,6 +29,7 @@ public class LlmFeature implements ILlmFeature
         {
             e.printStackTrace();
         }
+        return null;
     }
 
     private static class ClassReader
@@ -93,7 +82,7 @@ public class LlmFeature implements ILlmFeature
         }
     }
 
-    @Override
+    /*@Override
     public void connectToLLM(List<Class<?>> classes, List<Object> objects)
     {
         System.out.println("Connecting to the LLM");
@@ -280,6 +269,21 @@ public class LlmFeature implements ILlmFeature
     //public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context)
     public void generatePlanStep(Object goal, Object context, List<?> data)
     {
+        if (goal == null)
+        {
+            System.err.println("Goal null");
+            return;
+        }
+        if (context == null)
+        {
+            System.err.println("Context null");
+            return;
+        }
+        if (data == null)
+        {
+            System.err.println("Data null");
+            return;
+        }
         try
         {
             List<Class<?>> classes = new ArrayList<>();
@@ -303,16 +307,22 @@ public class LlmFeature implements ILlmFeature
             }
 
             String planStep = llmConnector.generateCode(classes, objects);
-            byte[] byteCode = codeCompiler.compile("PlanStep", planStep);
-            if (byteCode != null)
+            if (planStep == null)
             {
-                codeCompiler.execute("PlanStep", byteCode, "doPlanStep", new Class<?>[]{List.class}, objects.toArray());
-            } else
-            {
-                System.err.println("Plan step generation or compilation failed.");
+                System.err.println("PlanStep null.");
+                return;
             }
+            byte[] byteCode = codeCompiler.compile("PlanStep", planStep);
+            if (byteCode == null)
+            {
+                System.err.println("Bytecode null.");
+                return;
+            }
+            codeCompiler.execute("PlanStep", byteCode, "doPlanStep", new Class<?>[]{List.class}, objects.toArray());
+
         } catch (Exception e)
         {
+            System.out.println("Exception in generatePlanStep: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -424,5 +434,5 @@ public class LlmFeature implements ILlmFeature
                 return code;
             }
         }
-    }
+    }*/
 }
