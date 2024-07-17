@@ -30,6 +30,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:model:'+v
 	implementation 'org.activecomponents.jadex:bdi:'+v
+	implementation 'org.activecomponents.jadex:micro:'+v
 	implementation 'org.activecomponents.jadex:classreader:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation 'org.activecomponents.jadex:bytecode:'+v

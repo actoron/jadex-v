@@ -1,5 +1,7 @@
 package jadex.bdi.llm;
 
+import java.util.List;
+
 public interface ILlmFeature
 {
     /**
@@ -13,13 +15,13 @@ public interface ILlmFeature
     /**
      * Establishes a connection to the LLM.
      */
-    //public void connectToLLM(List<Class<?>> classes, List<Object> objects);
+    public void connectToLLM(List<Class<?>> classes, List<Object> objects);
 
     /**
      * Generates a plan step using the LLM and executes it.
      */
     //public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context);
-    //public void generatePlanStep(Object goal, Object context, List<?> data);
+    public void generatePlanStep(Object goal, Object context, List<jadex.llm.glasses.Glasses> data);
 
     /**
      * Compiles the given code.
@@ -27,5 +29,5 @@ public interface ILlmFeature
      * @param code The code to compile.
      * @return true if the code compiled successfully, false otherwise.
      */
-    //Object compileCode(String className, String code, String methodName, Class<?>[] parameterTypes, Object[] args);
+    Object compileCode(String className, String code, String methodName, Class<?>[] parameterTypes, Object[] args);
 }

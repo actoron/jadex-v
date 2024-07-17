@@ -1,22 +1,34 @@
 package jadex.bdi.llm.impl;
 
+import com.google.gson.Gson;
 import jadex.bdi.llm.ILlmFeature;
 import jadex.bdi.model.BDIModelLoader;
+import jadex.bytecode.ByteCodeClassLoader;
 import jadex.classreader.SClassReader;
+import jadex.common.SUtil;
+import jadex.core.impl.Component;
 
+import javax.tools.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.*;
 
 public class LlmFeature implements ILlmFeature
 {
     protected ClassReader classReader;
-    //protected LlmConnector llmConnector;
-    //protected CodeCompiler codeCompiler;
+    protected LlmConnector llmConnector;
+    protected CodeCompiler codeCompiler;
 
-    public LlmFeature(BDIModelLoader loader)
+    public LlmFeature(Component loader)
     {
         this.classReader = new ClassReader();
-        //this.llmConnector = new LlmConnector();
-        //this.codeCompiler = new CodeCompiler();
+        this.llmConnector = new LlmConnector();
+        this.codeCompiler = new CodeCompiler();
     }
 
     @Override
@@ -82,7 +94,7 @@ public class LlmFeature implements ILlmFeature
         }
     }
 
-    /*@Override
+    @Override
     public void connectToLLM(List<Class<?>> classes, List<Object> objects)
     {
         System.out.println("Connecting to the LLM");
@@ -434,5 +446,5 @@ public class LlmFeature implements ILlmFeature
                 return code;
             }
         }
-    }*/
+    }
 }

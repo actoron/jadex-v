@@ -83,7 +83,7 @@ public class GlassesAgent
         try
         {
             System.out.println("Execute plan step: " + glassesList.size() + " glasses");
-            //llmFeature.generatePlanStep(new SortGlassesListGoal(), context, glassesList);
+            llmFeature.generatePlanStep(new SortGlassesListGoal(), context, glassesList);
         }
         catch (Exception e)
         {
@@ -110,7 +110,7 @@ public class GlassesAgent
         sortingGoal = new GlassesSortingGoal(characteristic);
 
         // Initialize LLM feature
-        System.out.println("HelloFeature");
+        System.out.println("Feature initialization started");
         try
         {
             ILlmFeature llmFeature = agent.getFeature(ILlmFeature.class);
@@ -131,14 +131,14 @@ public class GlassesAgent
                 llmFeature.readClassStructure(Glasses.class);
                 llmFeature.readClassStructure(GlassesAgent.class);
 
-                //llmFeature.connectToLLM(cls, obj);
+                llmFeature.connectToLLM(cls, obj);
 
             } else
             {
                 System.out.println("Nope, Feature not found");
             }
         } catch (Exception e) {
-            System.out.println("Failed to initialize LLM feature: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
         agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new SortGlassesListGoal()).get();
         System.out.println("GlassesAgent finished");
