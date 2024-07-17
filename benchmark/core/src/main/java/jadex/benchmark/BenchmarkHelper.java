@@ -111,6 +111,10 @@ public class BenchmarkHelper
 					took	/= cnt;
 					System.out.println("took: "+took);
 					System.out.println("runs: "+cnt);
+					
+					System.gc();
+					long	used	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+					System.out.println("Used memory: "+used);
 	
 					addToDB(took);
 					best	= Math.min(best, took);
