@@ -9,6 +9,7 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.LambdaPojo;
 import jadex.core.impl.Component;
+import jadex.execution.impl.FastLambda;
 import jadex.future.IFuture;
 
 /**
@@ -193,5 +194,14 @@ public class LambdaAgent //extends Component
 		}
 		
 		return ret;
+	}
+	
+	//-------- Fast Lambda methods --------
+	
+	public static <T>	T run(IThrowingFunction<IComponent, T> body)
+	{
+		@SuppressWarnings("unchecked")
+		FastLambda<T> comp = Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, true));
+		return comp.getResult();
 	}
 }
