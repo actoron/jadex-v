@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.core.ComponentIdentifier;
-import jadex.execution.LambdaAgent;
-import jadex.execution.LambdaAgent.Result;
+import jadex.core.IComponent;
 
 /**
  *  Benchmark plain MjComponent with included execution feature.
@@ -18,9 +16,7 @@ public class LambdaAgentBenchmark
 	{
 		double pct	= BenchmarkHelper.benchmarkTime(() -> 
 		{
-			Result<ComponentIdentifier>	result	= LambdaAgent.create(comp ->{return comp.getId();});
-			result.result().get();
-			result.component().terminate().get();
+			IComponent.run(comp ->{return comp.getId();}).get();
 		});
 		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
