@@ -80,6 +80,7 @@ public class BenchmarkHelper
 		int	warmups	= 100; 	// How many warm-ups to run
 		int	runs	= 10;	// How many runs for measurement 
 		long	best	= Long.MAX_VALUE;
+		long	basemem = 0;
 		try
 		{
 			for(int j=0; j<retries; j++)
@@ -105,6 +106,9 @@ public class BenchmarkHelper
 
 				}
 				
+				System.gc();
+				long	usedmem	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+
 				// skip first cooldown and ignore first result
 				if(j>0)
 				{
@@ -112,12 +116,16 @@ public class BenchmarkHelper
 					System.out.println("took: "+took);
 					System.out.println("runs: "+cnt);
 					
-					System.gc();
-					long	used	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-					System.out.println("Used memory: "+used);
-	
 					addToDB(took);
 					best	= Math.min(best, took);
+					
+					System.out.println("Used memory: "+usedmem);
+					double pct	= (usedmem - basemem)*100.0/basemem;
+					System.out.println("Mem change(%): "+pct);
+				}
+				else
+				{
+					basemem	= usedmem;
 				}
 			}
 			System.out.println("best: "+best);
