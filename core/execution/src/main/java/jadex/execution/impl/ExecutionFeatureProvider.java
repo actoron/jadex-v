@@ -171,10 +171,12 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 				FastLambda<Object> self = (FastLambda<Object>)creator.get();
 				startFeatures(self);
 				
-				// run body and termination in same step
+				// run body and termination in same step as init
 				try
 				{
-					self.body.apply(self);
+					Object	result	= self.body.apply(self);
+					if(self.result!=null)
+						self.result.setResult(result);
 				}
 				catch(Exception e)
 				{

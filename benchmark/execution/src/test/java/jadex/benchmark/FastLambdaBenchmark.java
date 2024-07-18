@@ -23,7 +23,7 @@ public class FastLambdaBenchmark
 		{
 			IThrowingFunction<IComponent, ComponentIdentifier>	body	= comp ->{return comp.getId();};
 			@SuppressWarnings("unchecked")
-			FastLambda<ComponentIdentifier> comp = Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, false));
+			FastLambda<ComponentIdentifier> comp = Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, null, false));
 			return () -> comp.terminate().get();
 		});
 		assertTrue(pct<20);	// Fail when more than 20% worse

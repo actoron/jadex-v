@@ -10,6 +10,7 @@ import jadex.core.IThrowingFunction;
 import jadex.core.LambdaPojo;
 import jadex.core.impl.Component;
 import jadex.execution.impl.FastLambda;
+import jadex.future.Future;
 import jadex.future.IFuture;
 
 /**
@@ -198,10 +199,10 @@ public class LambdaAgent //extends Component
 	
 	//-------- Fast Lambda methods --------
 	
-	public static <T>	T run(IThrowingFunction<IComponent, T> body)
+	public static <T>	IFuture<T> run(IThrowingFunction<IComponent, T> body)
 	{
-		@SuppressWarnings("unchecked")
-		FastLambda<T> comp = Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, true));
-		return comp.getResult();
+		Future<T>	ret	= new Future<>();
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
+		return ret;
 	}
 }
