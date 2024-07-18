@@ -14,6 +14,13 @@ public interface ILlmFeature
 
     /**
      * Establishes a connection to the LLM.
+     *
+     * This method uses the LlmConnector class to connect to a language model.
+     * The API key for accessing the language model must be saved in the
+     * environment variable "OPENAI_API_KEY".
+     *
+     * @param classes a list of class objects to be used in the connection
+     * @param objects a list of objects to be used in the connection
      */
     public void connectToLLM(List<Class<?>> classes, List<Object> objects);
 
@@ -21,7 +28,7 @@ public interface ILlmFeature
      * Generates a plan step using the LLM and executes it.
      */
     //public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context);
-    public void generatePlanStep(Object goal, Object context, List<jadex.llm.glasses.Glasses> data);
+    public void generatePlanStep(Object goal, Object context, List<?> data);
 
     /**
      * Compiles the given code.

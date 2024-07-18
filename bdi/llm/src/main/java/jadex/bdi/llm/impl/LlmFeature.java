@@ -2,7 +2,6 @@ package jadex.bdi.llm.impl;
 
 import com.google.gson.Gson;
 import jadex.bdi.llm.ILlmFeature;
-import jadex.bdi.model.BDIModelLoader;
 import jadex.bytecode.ByteCodeClassLoader;
 import jadex.classreader.SClassReader;
 import jadex.common.SUtil;
@@ -46,13 +45,14 @@ public class LlmFeature implements ILlmFeature
 
     private static class ClassReader
     {
-        private static Map<String, String> classStructure;
-        private BDIModelLoader loader;
+        private static Map<String, String> classStructure = new HashMap<>();
+        /*private static Map<String, String> classStructure;
+        private BDIModelLoader loader;*/
 
         public ClassReader()
         {
-            classStructure = new HashMap<>();
-            this.loader = loader;
+            //classStructure = new HashMap<>();
+            //this.loader = loader;
 
         }
 
@@ -67,10 +67,28 @@ public class LlmFeature implements ILlmFeature
                 List<SClassReader.FieldInfo> fields = ci.getFieldInfos();
                 List<SClassReader.MethodInfo> methods = ci.getMethodInfos();
 
-                System.out.println("Class: " + className);
-                System.out.println("Superclass: " + superClass);
+                //System.out.println("Class: " + className);
+                //System.out.println("Superclass: " + superClass);
 
-                System.out.println("Fields:");
+                StringBuilder classInfo = new StringBuilder();
+                classInfo.append("Class: ").append(className).append("\n");
+                classInfo.append("Superclass: ").append(superClass).append("\n");
+
+                classInfo.append("Fields:").append("\n");
+                for (SClassReader.FieldInfo fi : fields)
+                {
+                    classInfo.append("\tName: ").append(fi.getFieldName()).append(" -Type: ").append(fi.getFieldDescriptor()).append("\n");
+                }
+
+                classInfo.append("Methods:").append("\n");
+                for (SClassReader.MethodInfo mi : methods)
+                {
+                    classInfo.append("\tName: ").append(mi.getMethodName()).append(" -Type: ").append(mi.getMethodDescriptor()).append("\n");
+                }
+                classStructure.put(className, classInfo.toString());
+                System.out.println("Class structure added for" + className);
+
+                /*System.out.println("Fields:");
                 for (SClassReader.FieldInfo fi : fields)
                 {
                     System.out.println("\tName: " + fi.getFieldName() + " -Type: " + fi.getFieldDescriptor());
@@ -81,16 +99,19 @@ public class LlmFeature implements ILlmFeature
                     System.out.println("\tName: " + mi.getMethodName() + " -Type: " + mi.getMethodDescriptor());
                 }
 
+                classStructure.put(className, ci.toString());*/
+
             } catch (Exception e)
             {
                 e.printStackTrace();
             }
         }
 
-        public static String getClassStructure(String ci)
+        public static String getClassStructure(String className)
         {
-            System.out.println(ci);
-            return classStructure.get(ci);
+            String structure = classStructure.get(className);
+            System.out.println("---->Class structure: " +className + ": " + structure);
+            return structure;
         }
     }
 
@@ -99,7 +120,13 @@ public class LlmFeature implements ILlmFeature
     {
         System.out.println("Connecting to the LLM");
 
-        String generateCode = llmConnector.generateCode(classes, objects);
+        ClassReader cr = new ClassReader();
+        for (Class<?> cls : classes)
+        {
+            cr.readClassStructure(cls);
+        }
+
+        String generateCode = llmConnector.generatePrompt(classes, objects);
         System.out.println("Generated code: " + generateCode);
     }
 
@@ -113,7 +140,7 @@ public class LlmFeature implements ILlmFeature
         {
             this.client = HttpClient.newHttpClient();
             this.url = "https://api.openai.com/v1/chat/completions"; //OpenAI API
-            this.apiKey = System.getenv("API_KEY");
+            this.apiKey = System.getenv("OPENAI_API_KEY");
             if (apiKey == null || apiKey.isEmpty()) {
                 System.err.println("API key variable not set in environment.");
                 System.exit(1);
@@ -121,7 +148,7 @@ public class LlmFeature implements ILlmFeature
             }
         }
 
-        public String generateCode(List<Class<?>> classes, List<Object> objects)
+        public String generatePrompt(List<Class<?>> classes, List<Object> objects)
         {
             List<String> combinedInfo = new ArrayList<>();
 
@@ -174,6 +201,7 @@ public class LlmFeature implements ILlmFeature
         public String sendRequest(String infoString)
         {
             Gson gson = new Gson();
+
             String prompt = "You are a sophisticated code generator skilled in Java. Don't explain the code, just generate the code block itself. Create a Java class named PlanStep that is designed to work within a Jadex agent environment. The class should contain a method named doPlanStep, which takes a list of Glasses objects and a GlassesSortingGoal object as parameters. The 'doPlanStep' method should implement logic to sort the glassesList based on the sortingPreference defined in the GlassesSortingGoal object. After sorting the list, the method should print the sorted list and return it. Use Java's Comparator interface or lambda expressions for sorting. Assume that the Glasses, GlassesSortingGoal classes, and the SortBy enum are already defined in the project. Include the complete method implementation for sorting and returning the glassesList within the 'doPlanStep' method. The method should return the sorted list of Glasses. The class should not include a main method or the @Plan annotation. " + "\n" + "The project has the following class structures: \n" + infoString;
             String json = gson.toJson(new LLMRequest("gpt-3.5-turbo", new Message("user", prompt)));
 
@@ -318,7 +346,7 @@ public class LlmFeature implements ILlmFeature
                 System.err.println("Context is not iterable.");
             }
 
-            String planStep = llmConnector.generateCode(classes, objects);
+            String planStep = llmConnector.generatePrompt(classes, objects);
             if (planStep == null)
             {
                 System.err.println("PlanStep null.");
