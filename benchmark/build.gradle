@@ -1,5 +1,6 @@
 plugins 
 {
+	id	'java'	// hack otherwise global build misses tasks (build, clean, etc)
     id 'ru.vyarus.use-python' version '4.0.0'
 }
 
@@ -7,7 +8,23 @@ description = 'Plot benchmark results using Python'
 
 group = 'org.activecomponents.jadex'
 
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
 task plot(type : PythonTask)
 {
 	command = 'plot_benchmarks.py'
+}
+
+task purge(type: Delete)
+{
+	delete fileTree('.')
+	{
+        include '**/.benchmark*/*'
+    }
 }

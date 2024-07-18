@@ -28,6 +28,9 @@ dependencies
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:benchmark-core:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	
+	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
 	// Jason
 	implementation files('libs/jason-3.2.0-SNAPSHOT.jar')

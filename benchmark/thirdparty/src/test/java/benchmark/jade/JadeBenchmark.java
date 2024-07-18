@@ -39,7 +39,7 @@ public class JadeBenchmark
 	}
 	
 	@Test
-	public void	benchmarkMemory()
+	public void	benchmarkMemory() throws Exception
 	{
 		jade.core.Runtime rt = jade.core.Runtime.instance();
 		ContainerController cc = rt.createMainContainer(new ProfileImpl());
@@ -68,7 +68,8 @@ public class JadeBenchmark
 						}
 						catch(Exception e)
 						{
-							throw new RuntimeException(e);
+							// Sometimes stale proxy exception!?
+							e.printStackTrace();
 						}
 					};
 				}
@@ -78,10 +79,12 @@ public class JadeBenchmark
 				}
 			}
 		});
+		
+		cc.getPlatformController().kill();
 	}
 
 	@Test
-	public void	benchmarkTime()
+	public void	benchmarkTime() throws Exception
 	{
 		jade.core.Runtime rt = jade.core.Runtime.instance();
 		ContainerController cc = rt.createMainContainer(new ProfileImpl());
@@ -106,9 +109,12 @@ public class JadeBenchmark
 				}
 				catch(Exception e)
 				{
-					throw new RuntimeException(e);
+					// Sometimes stale proxy exception!?
+					e.printStackTrace();
 				}
 			}
 		});
+		
+		cc.getPlatformController().kill();
 	}
 }

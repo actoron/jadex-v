@@ -35,7 +35,8 @@ public class ComponentTimeoutDecorator extends TimeoutDecorator
 			@Override
 			public Class<? extends IFuture<?>> getFutureReturnType() 
 			{
-				return (Class<? extends IFuture<?>>)ITerminableFuture.class;
+				// necessary for Java compiler, wtf :-(
+				return (Class<? extends IFuture<?>>)(Class<?>)ITerminableFuture.class;
 			}
 		});
 		

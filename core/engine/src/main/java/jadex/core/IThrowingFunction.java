@@ -20,6 +20,7 @@ public interface IThrowingFunction<T, R>
      */
     default Class<? extends IFuture<?>> getFutureReturnType() 
     {
-        return (Class<? extends IFuture<?>>)IFuture.class;
+    	// necessary for Java compiler, wtf :-(
+    	return (Class<? extends IFuture<?>>)(Class<?>)IFuture.class;
     }
 }

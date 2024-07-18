@@ -3,13 +3,11 @@ package benchmark.jason;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
 import jadex.benchmark.BenchmarkHelper;
+import jadex.common.SUtil;
 import jadex.future.Future;
 import jason.architecture.AgArch;
 import jason.asSemantics.ActionExec;
@@ -69,10 +67,7 @@ public class JasonBenchmark
 	@Test
 	public void benchmarkTime() throws Exception
 	{
-		// LinkedTransferQueue is fastest? https://stackoverflow.com/a/3012547
-//		executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10));
-		ExecutorService	executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new LinkedTransferQueue<Runnable>());
-//		executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+		ExecutorService	executor = SUtil.getExecutor();
 		
 		// set up the Jason agent
 		Agent	model	= new Agent();
