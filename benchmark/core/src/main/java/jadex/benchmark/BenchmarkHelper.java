@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
+import com.eclipsesource.json.WriterConfig;
 
 import jadex.common.SUtil;
 
@@ -165,7 +166,8 @@ public class BenchmarkHelper
 		JsonObject	obj	= new JsonObject();
 		obj.add("best", prev==0 ? value : Math.min(value, prev));
 		obj.add("last", value);
-		Files.writeString(db, obj.toString());
+		db.toFile().getParentFile().mkdirs();
+		Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
 		
 		return pct;
 	}
