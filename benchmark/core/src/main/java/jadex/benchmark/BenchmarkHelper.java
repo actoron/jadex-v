@@ -15,7 +15,7 @@ import jadex.common.SUtil;
 
 public class BenchmarkHelper
 {
-	public static String	getCaller()
+	protected static String	getCaller()
 	{
 		StackTraceElement[]	stels	= new Exception().fillInStackTrace().getStackTrace();
 		for(StackTraceElement stel: stels)
@@ -115,7 +115,7 @@ public class BenchmarkHelper
 				{
 					took	/= cnt;
 					System.out.println("took: "+took);
-					System.out.println("runs: "+cnt);
+					System.out.println("runs: "+cnt*runs);
 					
 					addToDB(took);
 					best	= Math.min(best, took);
