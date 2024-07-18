@@ -66,15 +66,17 @@ width   = max(len(memory_values), len(time_values))
 ######## plot/save memory usage ########
 
 if len(memory_values)>0:
+    best    = [val['best'] for val in memory_values.values()]
     plt.figure(figsize=(width, 6))
     ax  = plt.subplot(1, 1, 1)
-    bars    = plt.bar(memory_values.keys(), [val['best'] for val in memory_values.values()], color='skyblue')
-    plt.bar(memory_values.keys(), [val['delta'] for val in memory_values.values()], color='red', bottom=[val['best'] for val in memory_values.values()])
+    bars    = plt.bar(memory_values.keys(), best, color='skyblue')
+    plt.bar(memory_values.keys(), [val['delta'] for val in memory_values.values()], color='red', bottom=best)
     ax.bar_label(bars)
     plt.ylabel('Memory Footprint (KB)')
     #plt.title('Memory Footprint of Different Agents/Components')
     
     plt.tight_layout()
+    plt.margins(x=0.2/len(memory_values))
     
     plt.savefig('benchmark_memory.png')
     
@@ -86,17 +88,22 @@ else:
 ######## plot/save time usage ########
 
 if len(time_values)>0:
+    best    = [val['best'] for val in time_values.values()]
+    min = min(best)
+    max = max([val['last'] for val in time_values.values()])
     plt.figure(figsize=(width, 6))
     ax  = plt.subplot(1, 1, 1)
-    bars    = plt.bar(time_values.keys(), [val['best'] for val in time_values.values()], color='green')
-    plt.bar(time_values.keys(), [val['delta'] for val in time_values.values()], color='red', bottom=[val['best'] for val in time_values.values()])
+    bars    = plt.bar(time_values.keys(), best, color='green')
+    plt.bar(time_values.keys(), [val['delta'] for val in time_values.values()], color='red', bottom=best)
     ax.bar_label(bars)
+    ax.set_ylim(min/2, max*2)
     plt.yscale('log')
-    plt.ylabel('Startup/Shutdown Time (µs)')
+    plt.ylabel('Execution Time (µs)')
     #plt.title('Startup/Shutdown Time of Different Agents/Components')
     plt.grid(True, which="both", ls="--")
     
     plt.tight_layout()
+    plt.margins(x=0.2/len(time_values))
     
     plt.savefig('benchmark_execution.png')
     

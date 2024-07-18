@@ -64,7 +64,9 @@ public class BenchmarkHelper
 					teardown.run();
 			}
 			System.out.println("best: "+best);
-			return addToDB(best);
+			double	pct	= addToDB(best);
+			System.out.println();
+			return pct;
 		}
 		catch(Exception e)
 		{
@@ -129,7 +131,9 @@ public class BenchmarkHelper
 				}
 			}
 			System.out.println("best: "+best);
-			return addToDB(best);
+			double	pct	= addToDB(best);
+			System.out.println();
+			return pct;
 		}
 		catch(Exception e)
 		{
