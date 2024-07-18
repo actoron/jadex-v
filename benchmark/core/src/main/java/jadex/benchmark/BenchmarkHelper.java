@@ -165,6 +165,7 @@ public class BenchmarkHelper
 		JsonObject	obj	= new JsonObject();
 		obj.add("best", prev==0 ? value : Math.min(value, prev));
 		obj.add("last", value);
+		db.toFile().getParentFile().mkdirs();
 		Files.writeString(db, obj.toString());
 		
 		return pct;
