@@ -168,7 +168,7 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 				if(feature instanceof ILifecycle)
 				{
 					ILifecycle lfeature = (ILifecycle)feature;
-					//System.out.println("starting: "+lfeature);
+					System.out.println("starting: "+lfeature);
 					lfeature.onStart();
 				}
 				/*else

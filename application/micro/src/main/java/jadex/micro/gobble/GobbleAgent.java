@@ -36,8 +36,9 @@ public class GobbleAgent implements IGobbleGuiService
 		IPublishServiceFeature ps = agent.getFeature(IPublishServiceFeature.class);
 		ps.publishResources("http://localhost:8081/${cid}", "jadex/micro/gobble");
 		
-		System.out.println("open in browser");
-		SGUI.openInBrowser("http://localhost:8081/"+agent.getId().getLocalName());
+		String url = "http://localhost:8081/"+agent.getId().getLocalName();
+		System.out.println("open in browser: "+url);
+		SGUI.openInBrowser(url);
 	}
 	
 	/**
@@ -184,7 +185,7 @@ public class GobbleAgent implements IGobbleGuiService
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		IComponent.create(new GobbleAgent());
+		IComponent.create(new GobbleAgent()).get();
 		
 		IComponent.waitForLastComponentTerminated();
 	}
