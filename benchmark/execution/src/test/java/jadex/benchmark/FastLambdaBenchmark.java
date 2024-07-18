@@ -34,7 +34,7 @@ public class FastLambdaBenchmark
 	{
 		double pct	= BenchmarkHelper.benchmarkTime(() -> 
 		{
-			LambdaAgent.run(comp ->{return comp.getId();});
+			LambdaAgent.run(comp ->{return comp.getId();}).get();
 		});
 		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
