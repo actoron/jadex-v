@@ -40,6 +40,9 @@ public class ThreadBenchmark
 		{
 			Future<Void>	fut	= new Future<>();
 			executor.execute(() -> fut.setResult(null));
+			
+			// Yield to give the other thread the opportunity to set the future
+			// -> .get() will be much faster when the result is already set
 			Thread.yield();
 			fut.get();
 		});
