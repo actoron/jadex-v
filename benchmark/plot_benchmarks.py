@@ -72,7 +72,7 @@ if len(memory_values)>0:
     bars    = plt.bar(memory_values.keys(), best, color='skyblue')
     plt.bar(memory_values.keys(), [val['delta'] for val in memory_values.values()], color='red', bottom=best)
     ax.bar_label(bars)
-    ymax = max([val['last'] for val in time_values.values()])
+    ymax = max([val['last'] for val in memory_values.values()])
     ax.set_ylim(0, ymax*1.2)
     plt.ylabel('Memory Footprint (KB)')
     #plt.title('Memory Footprint of Different Agents/Components')
