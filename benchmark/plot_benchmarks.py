@@ -72,6 +72,8 @@ if len(memory_values)>0:
     bars    = plt.bar(memory_values.keys(), best, color='skyblue')
     plt.bar(memory_values.keys(), [val['delta'] for val in memory_values.values()], color='red', bottom=best)
     ax.bar_label(bars)
+    ymax = max([val['last'] for val in time_values.values()])
+    ax.set_ylim(0, ymax*1.2)
     plt.ylabel('Memory Footprint (KB)')
     #plt.title('Memory Footprint of Different Agents/Components')
     
@@ -89,14 +91,14 @@ else:
 
 if len(time_values)>0:
     best    = [val['best'] for val in time_values.values()]
-    min = min(best)
-    max = max([val['last'] for val in time_values.values()])
     plt.figure(figsize=(width, 6))
     ax  = plt.subplot(1, 1, 1)
     bars    = plt.bar(time_values.keys(), best, color='green')
     plt.bar(time_values.keys(), [val['delta'] for val in time_values.values()], color='red', bottom=best)
     ax.bar_label(bars)
-    ax.set_ylim(min/2, max*2)
+    ymin = min(best)
+    ymax = max([val['last'] for val in time_values.values()])
+    ax.set_ylim(ymin/2, ymax*2)
     plt.yscale('log')
     plt.ylabel('Execution Time (µs)')
     #plt.title('Startup/Shutdown Time of Different Agents/Components')
