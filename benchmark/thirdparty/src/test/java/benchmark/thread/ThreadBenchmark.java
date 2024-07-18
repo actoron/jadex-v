@@ -40,6 +40,7 @@ public class ThreadBenchmark
 		{
 			Future<Void>	fut	= new Future<>();
 			executor.execute(() -> fut.setResult(null));
+			Thread.yield();
 			fut.get();
 		});
 	}
