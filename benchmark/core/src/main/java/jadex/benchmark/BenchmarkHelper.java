@@ -58,15 +58,14 @@ public class BenchmarkHelper
 					System.out.println("runs: "+cnt);
 					addToDB(took);
 					best	= Math.min(best, took);
+					System.out.println();
 				}
 				
 				for(Runnable teardown: teardowns)
 					teardown.run();
 			}
 			System.out.println("best: "+best);
-			double	pct	= addToDB(best);
-			System.out.println();
-			return pct;
+			return addToDB(best);
 		}
 		catch(Exception e)
 		{
@@ -124,6 +123,7 @@ public class BenchmarkHelper
 					System.out.println("Used memory: "+usedmem);
 					double pct	= (usedmem - basemem)*100.0/basemem;
 					System.out.println("Mem change(%): "+pct);
+					System.out.println();
 				}
 				else
 				{
@@ -131,9 +131,7 @@ public class BenchmarkHelper
 				}
 			}
 			System.out.println("best: "+best);
-			double	pct	= addToDB(best);
-			System.out.println();
-			return pct;
+			return addToDB(best);
 		}
 		catch(Exception e)
 		{
