@@ -27,7 +27,7 @@ public class DecoratorTest
 	public void testRetryDecorator() 
 	{
 	    AtomicInteger attempt = new AtomicInteger(0);
-	    Node an = new ActionNode(event -> 
+	    Node<Object> an = new ActionNode<>((event, context) -> 
 	    {
 	    	System.out.println("action called: "+attempt.get());
 	        Future<NodeState> ret = new Future<>();
@@ -42,7 +42,7 @@ public class DecoratorTest
 	        return ret;
 	    });
 
-	    RetryDecorator rd = new RetryDecorator(3);
+	    RetryDecorator<Object> rd = new RetryDecorator<>(3);
 	    an.addBeforeDecorator(rd);
 
 	    Event event = new Event("start", null);
@@ -59,12 +59,12 @@ public class DecoratorTest
 	    Blackboard blackboard = new Blackboard();
 	    blackboard.set("condition", true);
 
-	    Node an = new ActionNode(event -> 
+	    Node<Object> an = new ActionNode<>((event, context) -> 
 	    {
 	        return new Future<>(NodeState.SUCCEEDED);
 	    });
 
-	    ConditionalDecorator cd = new ConditionalDecorator(bb -> (Boolean)bb.get("condition"));
+	    ConditionalDecorator<Object> cd = new ConditionalDecorator<>(bb -> (Boolean)bb.get("condition"));
 	    an.setBlackboard(blackboard);
 	    an.addBeforeDecorator(cd);
 
@@ -92,7 +92,7 @@ public class DecoratorTest
 		when(access.scheduleAsyncStep(any(IThrowingFunction.class))).thenReturn(fut);
 		when(exe.waitForDelay(1000)).thenReturn(fut);
 		
-		Node an = new ActionNode(event -> 
+		Node<IComponent> an = new ActionNode<>((event, context) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -103,7 +103,7 @@ public class DecoratorTest
 		    return ret;
 		});
 		
-		TimeoutDecorator td = new ComponentTimeoutDecorator(access, 1000);
+		TimeoutDecorator<IComponent> td = new ComponentTimeoutDecorator<IComponent>(access, 1000);
 		an.addBeforeDecorator(td);
 		
 	    IFuture<NodeState> res = an.execute(new Event("start", null));
@@ -131,7 +131,7 @@ public class DecoratorTest
 		when(access.scheduleAsyncStep(any(IThrowingFunction.class))).thenReturn(fut);
 		when(exe.waitForDelay(1000)).thenReturn(fut);
 		
-		Node an = new ActionNode(event -> 
+		Node<IComponent> an = new ActionNode<>((event, context) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -142,7 +142,7 @@ public class DecoratorTest
 		    return ret;
 		});
 		
-		TimeoutDecorator td = new ComponentTimeoutDecorator(access, 500);
+		TimeoutDecorator<IComponent> td = new ComponentTimeoutDecorator<>(access, 500);
 		an.addBeforeDecorator(td);
 		
 	    IFuture<NodeState> res = an.execute(new Event("start", null));
@@ -160,7 +160,7 @@ public class DecoratorTest
 	{
 		IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 		
-		Node an = new ActionNode(event -> 
+		Node<IComponent> an = new ActionNode<>((event, compo) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -171,7 +171,7 @@ public class DecoratorTest
 		    return ret;
 		});
 		
-		TimeoutDecorator td = new ComponentTimeoutDecorator(comp, 1000);
+		TimeoutDecorator<IComponent> td = new ComponentTimeoutDecorator<>(comp, 1000);
 		an.addBeforeDecorator(td);
 		
 	    IFuture<NodeState> res = an.execute(new Event("start", null));
@@ -188,7 +188,7 @@ public class DecoratorTest
 	{
 		IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 		
-		Node an = new ActionNode(event -> 
+		Node<IComponent> an = new ActionNode<>((event, IComponent) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -199,7 +199,7 @@ public class DecoratorTest
 		    return ret;
 		});
 		
-		TimeoutDecorator td = new ComponentTimeoutDecorator(comp, 500);
+		TimeoutDecorator<IComponent> td = new ComponentTimeoutDecorator<>(comp, 500);
 		an.addBeforeDecorator(td);
 		
 	    IFuture<NodeState> res = an.execute(new Event("start", null));
@@ -214,13 +214,13 @@ public class DecoratorTest
 	@Test
 	public void testResultInvertDecorator() 
 	{
-	    Node an = new ActionNode(event -> 
+	    Node<Object> an = new ActionNode<>((event, context) -> 
 	    {
 	    	System.out.println("action called");
 	        return new Future<>(NodeState.FAILED);
 	    });
 
-	    Decorator id = new Decorator().setFunction((event, state) -> NodeState.SUCCEEDED==state? NodeState.FAILED: NodeState.SUCCEEDED);
+	    Decorator<Object> id = new Decorator<>().setFunction((event, state) -> NodeState.SUCCEEDED==state? NodeState.FAILED: NodeState.SUCCEEDED);
 	    an.addBeforeDecorator(id);
 
 	    Event event = new Event("start", null);
@@ -233,13 +233,13 @@ public class DecoratorTest
 	@Test
 	public void testSuccessDecorator() 
 	{
-	    Node an = new ActionNode(event -> 
+	    Node<Object> an = new ActionNode<>((event, context) -> 
 	    {
 	        System.out.println("action called");
 	        return new Future<>(NodeState.FAILED);
 	    });
 
-	    Decorator sd = new Decorator().setFunction((event, state) -> NodeState.SUCCEEDED);
+	    Decorator<Object> sd = new Decorator<>().setFunction((event, state) -> NodeState.SUCCEEDED);
 	    an.addBeforeDecorator(sd);
 
 	    Event event = new Event("start", null);
@@ -252,13 +252,13 @@ public class DecoratorTest
 	@Test
 	public void testFailureDecorator() 
 	{
-	    Node an = new ActionNode(event -> 
+	    Node<Object> an = new ActionNode<>((event, context) -> 
 	    {
 	        System.out.println("action called");
 	        return new Future<>(NodeState.SUCCEEDED);
 	    });
 
-	    Decorator sd = new Decorator().setFunction((event, state) -> NodeState.FAILED);
+	    Decorator<Object> sd = new Decorator<>().setFunction((event, state) -> NodeState.FAILED);
 	    an.addBeforeDecorator(sd);
 
 	    Event event = new Event("start", null);
@@ -281,13 +281,13 @@ public class DecoratorTest
 		
 		//IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 
-	    Node an = new ActionNode(event -> 
+	    Node<IComponent> an = new ActionNode<>((event, agent) -> 
 	    {
 	        System.out.println("action called");
 	        return new Future<>(NodeState.SUCCEEDED);
 	    });
 
-	    CooldownDecorator cd = new CooldownDecorator(1000);
+	    CooldownDecorator<IComponent> cd = new CooldownDecorator<>(1000);
 	    an.addBeforeDecorator(cd);
 
 	    Event event = new Event("start", null);

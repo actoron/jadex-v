@@ -5,13 +5,11 @@ import java.util.List;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ITerminableFuture;
-import jadex.future.TerminableFuture;
 
 /**
  * Execute nodes sequentially until all succeed or one fails.
  */
-public class ParallelNode extends CompositeNode
+public class ParallelNode<T> extends CompositeNode<T>
 {
 	public enum ResultMode
 	{
@@ -27,19 +25,19 @@ public class ParallelNode extends CompositeNode
 		super(parent, blackboard, abortmode);
 	}*/
 	
-	public ParallelNode setFailureMode(ResultMode failmode)
+	public ParallelNode<T> setFailureMode(ResultMode failmode)
 	{
 		this.failmode = failmode;
 		return this;
 	}
 	
-	public ParallelNode setSuccessMode(ResultMode successmode)
+	public ParallelNode<T> setSuccessMode(ResultMode successmode)
 	{
 		this.successmode = successmode;
 		return this;
 	}
 	
-    public IFuture<NodeState> internalExecute(Event event) 
+    public IFuture<NodeState> internalExecute(Event event, T context) 
     {
         List<IFuture<NodeState>> results = new ArrayList<>();
     	Future<NodeState> ret = new Future<>();

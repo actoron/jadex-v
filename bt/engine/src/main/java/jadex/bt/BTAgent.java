@@ -8,12 +8,12 @@ import jadex.model.modelinfo.IModelInfo;
 
 public class BTAgent extends MicroAgent
 {
-	public static IExternalAccess create(Node pojo)
+	public static IExternalAccess create(Object pojo)
 	{
 		return create(pojo, null);
 	}
 	
-	public static IExternalAccess create(Node pojo, ComponentIdentifier cid)
+	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
 	{
 		Component comp = Component.createComponent(BTAgent.class, () -> 
 		{
@@ -29,12 +29,12 @@ public class BTAgent extends MicroAgent
 		return comp.getExternalAccess();
 	}
 	
-	public BTAgent(Node pojo, IModelInfo model)
+	public BTAgent(Object pojo, IModelInfo model)
 	{
 		this(pojo, model, null);
 	}
 	
-	public BTAgent(Node pojo, IModelInfo model, ComponentIdentifier cid)
+	public BTAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
 	{
 		super(pojo, model, cid);
 	}

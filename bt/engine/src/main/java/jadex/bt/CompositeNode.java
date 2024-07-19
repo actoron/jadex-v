@@ -3,28 +3,28 @@ package jadex.bt;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class CompositeNode extends Node
+public abstract class CompositeNode<T> extends Node<T>
 {
-    protected List<Node> children = new ArrayList<>();
+    protected List<Node<T>> children = new ArrayList<>();
     
     /*public CompositeNode(Node parent, Blackboard blackboard, AbortMode abortmode)
     {
     	super(parent, blackboard, abortmode);
     }*/
     
-    public CompositeNode addChild(Node child) 
+    public CompositeNode<T> addChild(Node<T> child) 
     {
         children.add(child);
         child.setParent(this);
         return this;
     }
     
-    protected Node getChild(int n)
+    protected Node<T> getChild(int n)
     {
     	return children.get(n);
     }
     
-    protected List<Node> getChildren()
+    protected List<Node<T>> getChildren()
     {
     	return children;
     }

@@ -8,7 +8,7 @@ import java.util.logging.Level;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public abstract class Node
+public abstract class Node<T>
 {
 	public enum NodeState 
 	{
@@ -25,36 +25,53 @@ public abstract class Node
 	    LOW_PRIORITY
 	}
 	
-	protected Node parent;
+	protected Node<T> parent;
 	protected AbortMode abortmode = AbortMode.SUBTREE;
 	//protected NodeState state = NodeState.IDLE;
 	protected Future<NodeState> curaction;
 	protected Blackboard blackboard;
-	protected List<Decorator> beforedecos = new ArrayList<>();
-	protected List<Decorator> afterdecos = new ArrayList<>();
+	protected List<Decorator<T>> beforedecos = new ArrayList<>();
+	protected List<Decorator<T>> afterdecos = new ArrayList<>();
 	protected boolean aborted = false;
+	protected T context;
 	
-	public abstract IFuture<NodeState> internalExecute(Event event);
+	public abstract IFuture<NodeState> internalExecute(Event event, T context);
 	
-	public Node setParent(Node parent)
+	public Node<T> setContext(T context)
+	{
+		this.context = context;
+		return this;
+	}
+	
+	public T getContext()
+	{
+		if(context!=null)
+			return context;
+		else if(parent!=null)
+			return parent.getContext();
+		else
+			return null;
+	}
+	
+	public Node<T> setParent(Node<T> parent)
 	{
 		this.parent = parent;
 		return this;
 	}
 	
-	public Node setBlackboard(Blackboard blackboard)
+	public Node<T> setBlackboard(Blackboard blackboard)
 	{
 		this.blackboard = blackboard;
 		return this;
 	}
 	
-	public Node setAbortMode(AbortMode abortmode)
+	public Node<T> setAbortMode(AbortMode abortmode)
 	{
 		this.abortmode = abortmode;
 		return this;
 	}
 	
-	public Node getParent()
+	public Node<T> getParent()
 	{
 		return parent;
 	}
@@ -85,7 +102,7 @@ public abstract class Node
     	return abortmode;
     }
     
-	public void addBeforeDecorator(Decorator deco)
+	public void addBeforeDecorator(Decorator<T> deco)
 	{
 		if(!beforedecos.contains(deco))
 			beforedecos.add(deco);
@@ -93,7 +110,7 @@ public abstract class Node
 			System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "decorator already contained: "+deco);
 	}
 	
-	public void addAfterDecorator(Decorator deco)
+	public void addAfterDecorator(Decorator<T> deco)
 	{
 		if(!afterdecos.contains(deco))
 			afterdecos.add(deco);
@@ -101,7 +118,7 @@ public abstract class Node
 			System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "decorator already contained: "+deco);
 	}
 	
-	protected IFuture<NodeState> execute(Event event) 
+	public IFuture<NodeState> execute(Event event) 
 	{
 	   	if(curaction!=null)
     		return curaction;
@@ -119,7 +136,7 @@ public abstract class Node
       	    }
         	else
         	{
-        		IFuture<NodeState> fut = internalExecute(event);
+        		IFuture<NodeState> fut = internalExecute(event, getContext());
                  
     	        fut.then(state -> 
     	        {
@@ -150,7 +167,7 @@ public abstract class Node
         return ret;
 	}
 	
-	protected IFuture<NodeState> executeDecorators(List<Decorator> decos, int i, Event event, NodeState state, Predicate<NodeState> abort)
+	protected IFuture<NodeState> executeDecorators(List<Decorator<T>> decos, int i, Event event, NodeState state, Predicate<NodeState> abort)
 	{
 		Future<NodeState> ret = new Future<>();
 		
@@ -160,13 +177,13 @@ public abstract class Node
 		}
 		else
 		{
-			Decorator deco = i<beforedecos.size()? beforedecos.get(i): null;
+			Decorator<T> deco = i<beforedecos.size()? beforedecos.get(i): null;
 			
 			if(deco!=null)
 			{
 				try
 				{
-					deco.execute(this, event, state).then(s ->
+					deco.execute(this, event, state, getContext()).then(s ->
 					{
 						executeDecorators(decos, i+1, event, s, abort).delegateTo(ret);
 					}).catchEx(e ->

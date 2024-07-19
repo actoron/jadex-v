@@ -4,7 +4,7 @@ import jadex.bt.Node.NodeState;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class CooldownDecorator extends Decorator 
+public class CooldownDecorator<T> extends Decorator<T> 
 {
     protected long cooldown;
     protected long lasttime = 0;
@@ -22,13 +22,13 @@ public class CooldownDecorator extends Decorator
     }
 
     @Override
-    public IFuture<NodeState> execute(Node node, Event event, NodeState state) 
+    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, T context) 
     {
         long curtime = System.currentTimeMillis();
         if(curtime - lasttime >= cooldown) 
         {
             lasttime = curtime;
-            return node.internalExecute(event);
+            return node.internalExecute(event, context);
         } 
         else 
         {

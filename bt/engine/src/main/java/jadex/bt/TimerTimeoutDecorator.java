@@ -7,7 +7,7 @@ import java.util.concurrent.TimeoutException;
 import jadex.bt.Node.NodeState;
 import jadex.future.Future;
 
-public class TimerTimeoutDecorator extends TimeoutDecorator
+public class TimerTimeoutDecorator<T> extends TimeoutDecorator<T>
 {
 	protected Timer timer;
 	

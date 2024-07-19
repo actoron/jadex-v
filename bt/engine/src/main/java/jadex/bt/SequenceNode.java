@@ -6,17 +6,12 @@ import jadex.future.IFuture;
 /**
  * Execute nodes sequentially until all succeed or one fails.
  */
-public class SequenceNode extends CompositeNode
+public class SequenceNode<T> extends CompositeNode<T>
 {
 	protected int idx = 0;
 	
-	/*public SequenceNode(Node parent, Blackboard blackboard, AbortMode abortmode)
-	{
-		super(parent, blackboard, abortmode);
-	}*/
-	
     @Override
-    public Future<NodeState> internalExecute(Event event) 
+    public Future<NodeState> internalExecute(Event event, T context) 
     {
       	Future<NodeState> ret = new Future<>();
     	

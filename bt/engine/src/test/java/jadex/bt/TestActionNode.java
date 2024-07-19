@@ -18,14 +18,14 @@ public class TestActionNode
     @Test
     public void testActionNodeSuccess() 
     {
-        ActionNode actionNode = new ActionNode(event -> 
+        ActionNode<Object> an = new ActionNode<>((event, context) -> 
         {
             System.out.println("Performing action...");
             return new Future<NodeState>(NodeState.SUCCEEDED);
         });
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = actionNode.execute(event);
+        IFuture<NodeState> ret = an.execute(event);
 
         NodeState state = ret.get();
         assertEquals(NodeState.SUCCEEDED, state, "Node state should be SUCCEEDED");
@@ -34,14 +34,14 @@ public class TestActionNode
     @Test
     public void testActionNodeFailure() 
     {
-        ActionNode actionNode = new ActionNode(event -> 
+        ActionNode<Object> an = new ActionNode<>((event, context) -> 
         {
             System.out.println("Performing action...");
             return new Future<NodeState>(NodeState.FAILED);
         });
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = actionNode.execute(event);
+        IFuture<NodeState> ret = an.execute(event);
 
         NodeState state = ret.get();
         assertEquals(NodeState.FAILED, state, "Node state should be FAILED");
@@ -50,7 +50,7 @@ public class TestActionNode
     @Test
     public void testActionNodeAbort() 
     {
-        ActionNode actionNode = new ActionNode(event -> 
+        ActionNode<Object> an = new ActionNode<>((event, context) -> 
         {
             System.out.println("Performing action...");
             return new Future<>();
@@ -58,9 +58,9 @@ public class TestActionNode
         });
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = actionNode.execute(event);
+        IFuture<NodeState> ret = an.execute(event);
 
-        actionNode.abort();
+        an.abort();
         NodeState state = ret.get();
         assertEquals(NodeState.FAILED, state, "Node state should be FAILED after abort");
     }
@@ -68,14 +68,14 @@ public class TestActionNode
     @Test
     public void testActionNodeException() 
     {
-        ActionNode actionNode = new ActionNode(event -> 
+        ActionNode<Object> an = new ActionNode<>((event, context) -> 
         {
             System.out.println("Performing action...");
             throw new RuntimeException("Test exception");
         });
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = actionNode.execute(event);
+        IFuture<NodeState> ret = an.execute(event);
 
         NodeState state = ret.get();
         assertEquals(NodeState.FAILED, state, "Node state should be FAILED after exception in action");
@@ -87,7 +87,7 @@ public class TestActionNode
     {
     	AtomicBoolean stopped = new AtomicBoolean();
 
-        ActionNode actionNode = new ActionNode(event -> 
+        ActionNode<Object> an = new ActionNode<>((event, context) -> 
         {
         	System.out.println("Performing action...");
             AtomicBoolean aborted = new AtomicBoolean();
@@ -105,9 +105,9 @@ public class TestActionNode
         });
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = actionNode.execute(event);
+        IFuture<NodeState> ret = an.execute(event);
 
-        actionNode.abort();
+        an.abort();
         
         SUtil.sleep(1000);
         

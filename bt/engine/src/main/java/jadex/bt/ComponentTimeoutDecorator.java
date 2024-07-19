@@ -9,7 +9,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 
-public class ComponentTimeoutDecorator extends TimeoutDecorator
+public class ComponentTimeoutDecorator<T> extends TimeoutDecorator<T>
 {
 	protected IExternalAccess access;
 	

@@ -1,46 +1,29 @@
 package jadex.bt.helloworld;
 
+import jadex.bt.ActionNode;
+import jadex.bt.IBTProvider;
+import jadex.bt.Node;
+import jadex.bt.Node.NodeState;
 import jadex.core.IComponent;
-import jadex.execution.IExecutionFeature;
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Description;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
+import jadex.future.Future;
 
-@Agent(type="bt")
-public class HelloWorldAgent
+//@Agent(type="bt")
+public class HelloWorldAgent implements IBTProvider
 {
-	/** The micro agent class. */
-	//@Agent
-	//protected IComponent agent;
-	
-	/** The welcome text. */
-	protected String text;
-	
-	public HelloWorldAgent(String text) 
+	public Node<IComponent> createBehaviorTree()
 	{
-		this.text=text;
-	}
-	
-	@OnStart
-	public void executeBody(IComponent agent)
-	{
-		System.out.println("started:"+agent.getId()+" text: "+text+" "+agent);
-		agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
-		System.out.println("Good bye world.");
-		agent.terminate();
-	}
-	
-	@OnEnd
-	public void end(IComponent agent)
-	{
-		System.out.println("end: "+agent.getId());
+		ActionNode<IComponent> an = new ActionNode<>();
+		an.setAction((e, agent) -> 
+		{ 
+			System.out.println("Hello from behavior trees: "+agent.getId());
+			return new Future<>(NodeState.SUCCEEDED);
+		});
+		return an;
 	}
 	
 	public static void main(String[] args)
 	{
-		IComponent.create(new HelloWorldAgent("007"));
+		IComponent.create(new HelloWorldAgent());
 		IComponent.waitForLastComponentTerminated();
 	}
 }

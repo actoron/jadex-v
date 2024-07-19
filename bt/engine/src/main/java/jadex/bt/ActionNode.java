@@ -1,42 +1,40 @@
 package jadex.bt;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 
-public class ActionNode extends Node 
+public class ActionNode<T> extends Node<T> 
 {
-    protected Function<Event, IFuture<NodeState>> action;
+    protected BiFunction<Event, T, IFuture<NodeState>> action;
     protected IFuture<NodeState> icuraction; 
     
-    public ActionNode(Function<Event, IFuture<NodeState>> action)
+    public ActionNode()
+    {
+    }
+    
+    public ActionNode(BiFunction<Event, T, IFuture<NodeState>> action)
     {
     	this.action = action;
     }
     
-    /*public ActionNode(Node parent, Blackboard blackboard, AbortMode abortmode, Function<Event, NodeState> action) 
-    {
-    	super(parent, blackboard, abortmode);
-        this.action = action;
-    }*/
-    
-    public ActionNode setAction(Function<Event, IFuture<NodeState>> action)
+    public ActionNode<T> setAction(BiFunction<Event, T, IFuture<NodeState>> action)
     {
     	this.action = action;
     	return this;
     }
 
     @Override
-    public IFuture<NodeState> internalExecute(Event event) 
+    public IFuture<NodeState> internalExecute(Event event, T context) 
     {
     	Future<NodeState> ret = new Future<NodeState>();
       	
     	try
     	{
-			icuraction = action.apply(event);
+			icuraction = action.apply(event, context);
 			
 			icuraction.then(res ->
 			{

@@ -8,7 +8,7 @@ import jadex.future.IFuture;
  *  when all children fail.
  *  Also called fallback node.
  */
-public class SelectorNode extends CompositeNode 
+public class SelectorNode<T> extends CompositeNode<T> 
 {
 	protected int idx = 0;
 	
@@ -18,7 +18,7 @@ public class SelectorNode extends CompositeNode
 	}*/
 	
     @Override
-    public IFuture<NodeState> internalExecute(Event event) 
+    public IFuture<NodeState> internalExecute(Event event, T context) 
     {  	
     	Future<NodeState> ret = new Future<>();
     	//this.state = NodeState.RUNNING;

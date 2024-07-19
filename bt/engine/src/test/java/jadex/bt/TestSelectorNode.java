@@ -14,19 +14,19 @@ public class TestSelectorNode
 	@Test
 	public void testSelectorSuccessOnFirst() 
 	{
-		Node alwaysSucceed = new ActionNode(event -> 
+		Node<Object> alwaysSucceed = new ActionNode<>((event, context) -> 
 		{
 			System.out.println("Always succeed...");
 			return new Future<NodeState>(NodeState.SUCCEEDED);
         });
 
-        Node alwaysFail = new ActionNode(event -> 
+        Node<Object> alwaysFail = new ActionNode<>((event, context) -> 
         {
         	System.out.println("Always fail...");
         	return new Future<NodeState>(NodeState.FAILED);
         });
 
-        CompositeNode selector = new SelectorNode().addChild(alwaysSucceed).addChild(alwaysFail);
+        CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysSucceed).addChild(alwaysFail);
 
         Event event = new Event("start", null);
         IFuture<NodeState> ret = selector.execute(event);
@@ -38,19 +38,19 @@ public class TestSelectorNode
     @Test
     public void testSelectorSuccessOnSecond() 
     {
-        Node alwaysFail = new ActionNode(event -> 
+        Node<Object> alwaysFail = new ActionNode<>((event, context) -> 
         {
             System.out.println("Always fail...");
             return new Future<NodeState>(NodeState.FAILED);
         });
 
-        Node alwaysSucceed = new ActionNode(event -> 
+        Node<Object> alwaysSucceed = new ActionNode<>((event, context) -> 
         {
             System.out.println("Always succeed...");
             return new Future<NodeState>(NodeState.SUCCEEDED);
         });
 
-        CompositeNode selector = new SelectorNode().addChild(alwaysFail).addChild(alwaysSucceed);
+        CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysFail).addChild(alwaysSucceed);
 
         Event event = new Event("start", null);
         IFuture<NodeState> ret = selector.execute(event);
@@ -62,19 +62,19 @@ public class TestSelectorNode
     @Test
     public void testSelectorFailure() 
     {
-        Node alwaysFail1 = new ActionNode(event -> 
+        Node<Object> alwaysFail1 = new ActionNode<>((event, context) -> 
         {
             System.out.println("Always fail 1...");
             return new Future<NodeState>(NodeState.FAILED);
         });
 
-        Node alwaysFail2 = new ActionNode(event -> 
+        Node<Object> alwaysFail2 = new ActionNode<>((event, context) -> 
         {
             System.out.println("Always fail 2...");
             return new Future<NodeState>(NodeState.FAILED);
         });
 
-        CompositeNode selector = new SelectorNode().addChild(alwaysFail1).addChild(alwaysFail2);
+        CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysFail1).addChild(alwaysFail2);
 
         Event event = new Event("start", null);
         IFuture<NodeState> ret = selector.execute(event);
@@ -86,20 +86,20 @@ public class TestSelectorNode
     @Test
     public void testSelectorAbort() 
     {
-        Node alwaysFail = new ActionNode(event -> 
+        Node<Object> alwaysFail = new ActionNode<>((event, context) -> 
         {
             System.out.println("Always fail...");
             return new Future<>();
             // Simulate a running action
         });
 
-        Node alwaysSucceed = new ActionNode(event -> 
+        Node<Object> alwaysSucceed = new ActionNode<>((event, context) -> 
         {
             System.out.println("Always succeed...");
             return new Future<NodeState>(NodeState.SUCCEEDED);
         });
 
-        CompositeNode selector = new SelectorNode().addChild(alwaysFail).addChild(alwaysSucceed);
+        CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysFail).addChild(alwaysSucceed);
 
         Event event = new Event("start", null);
         IFuture<NodeState> ret = selector.execute(event);

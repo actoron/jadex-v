@@ -6,7 +6,7 @@ import jadex.bt.Node.NodeState;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class ConditionalDecorator extends Decorator 
+public class ConditionalDecorator<T> extends Decorator<T> 
 {
     private Predicate<Blackboard> condition;
 
@@ -16,11 +16,11 @@ public class ConditionalDecorator extends Decorator
     }
 
     @Override
-    public IFuture<NodeState> execute(Node node, Event event, NodeState state) 
+    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, T context) 
     {
         if(condition.test(node.getBlackboard())) 
         {
-            return node.internalExecute(event);
+            return node.internalExecute(event, context);
         } 
         else 
         {
