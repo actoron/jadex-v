@@ -146,7 +146,7 @@ public class BenchmarkHelper
 		
 		double	pct	= 0;
 		String	caller	= getCaller();
-		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark", caller+".json");
+		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark_ide", caller+".json");
 		double	prev	= 0;
 		if(db.toFile().exists())
 		{
