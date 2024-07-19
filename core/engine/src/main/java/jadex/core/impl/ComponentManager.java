@@ -112,7 +112,7 @@ public class ComponentManager implements IComponentManager
 	    public String getLoggerName() 
 	    {
 	        String ret = name;
-	        if (ret == null) 
+	        if(ret == null) 
 	        {
 	            ret = system ? "system" : "application";
 	            if(filter != null) 

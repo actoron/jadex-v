@@ -50,7 +50,7 @@ public class MicroAgentFeature	implements ILifecycle
 	@Override
 	public void	onStart()
 	{
-		//System.out.println("start: "+getSelf());
+		System.out.println("start: "+getSelf());
 		injectStuff(getSelf(), getSelf().getPojo(), ((MicroModel)getSelf().getModel().getRawModel()).getInjectionInfoHolder());
 		MicroModel model = (MicroModel)getSelf().getModel().getRawModel();
 		

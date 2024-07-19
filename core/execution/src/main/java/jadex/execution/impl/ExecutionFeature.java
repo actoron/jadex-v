@@ -1,5 +1,6 @@
 package jadex.execution.impl;
 
+import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +16,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
+import jadex.common.IResultCommand;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -25,6 +28,7 @@ import jadex.core.impl.Component;
 import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.StepAborted;
+import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISuspendable;
@@ -200,7 +204,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
 	{
-		Future<T> ret = new Future<>();
+		Future<T> ret = new Future<>();// createStepFuture(step);
 		
 		if(terminated)
 		{
@@ -241,7 +245,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
 	{
-		Future<T> ret = new Future<>();
+		Future<T> ret = createStepFuture(step);
 		
 		if(terminated)
 		{
@@ -272,6 +276,30 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				ret.setException(new RuntimeException("Error in step", t));
 			}
 		}, ret));
+		
+		return ret;
+	}
+	
+	/**
+	 *  Create intermediate of direct future.
+	 */
+	protected <T> Future<T> createStepFuture(IThrowingFunction<IComponent, ?> step)
+	{
+		Future<T> ret;
+		try
+		{
+			Class<?> clazz = step.getFutureReturnType();
+		
+			if(IFuture.class.equals(clazz))
+				ret = new Future<T>();
+			else
+				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+		
 		return ret;
 	}
 	
@@ -316,10 +344,13 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					//if(!this.cancel())
 					//	return;
 					
-					scheduleStep(() -> ret.setResult(null));
+					scheduleStep(() -> ret.setResultIfUndone(null));
 					
 					synchronized(ExecutionFeature.class)
 					{
+						if(entries==null)
+							return;
+
 						//timer_entries--;
 						entries.remove(task);
 						if(entries.size()==0)
@@ -345,6 +376,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				{
 					//if(!task.getTask().cancel())
 					//	return;
+					if(entries==null)
+						return;
 					
 					entries.remove(task);
 					if(entries.size()==0)
