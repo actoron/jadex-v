@@ -54,12 +54,6 @@ public interface IComponentManager
 	public void setDebug(boolean debug);
 	
 	/**
-	 *  Get a running component.
-	 *  @throws IllegalArgumentException when the component does not exist.
-	 */
-	public IComponent getComponent(ComponentIdentifier cid);
-	
-	/**
 	 *  Get the number of current components.
 	 */
 	public int getNumberOfComponents();
