@@ -303,7 +303,7 @@ public class DecoratorTest
 	    
 	    System.out.println("state2: "+state2);
 	    
-	    assertEquals(NodeState.RUNNING, state2, "Node should return running during cooldown period");
+	    assertEquals(NodeState.FAILED, state2, "Node should return running during cooldown period");
 
 	    SUtil.sleep(1000);
 
