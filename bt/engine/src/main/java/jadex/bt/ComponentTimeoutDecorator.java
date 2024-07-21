@@ -26,6 +26,7 @@ public class ComponentTimeoutDecorator<T> extends TimeoutDecorator<T>
 		
 		ITerminableFuture<Void> fut = (ITerminableFuture<Void>)access.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Void>>() 
 		{
+			// todo: support ITerminableFuture<Void> as more specialized return type
 			@Override
 			public IFuture<Void> apply(IComponent comp) throws Exception 
 			{

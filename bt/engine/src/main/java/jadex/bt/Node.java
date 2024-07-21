@@ -140,8 +140,15 @@ public abstract class Node<T>
                  
     	        fut.then(state -> 
     	        {
+    	        	if(state!=NodeState.SUCCEEDED && state!=NodeState.FAILED)
+    	        		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+state);
+    	        	//System.out.println("state is: "+state);
+    	        	
     	        	executeDecorators(afterdecos, 0, event, state, null).then(as ->
     	        	{
+    	   	        	if(as!=NodeState.SUCCEEDED && as!=NodeState.FAILED)
+        	        		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+as);
+     
     	        		reset();
         	        	ret.setResultIfUndone(as);
     	        	})
@@ -151,6 +158,9 @@ public abstract class Node<T>
     	        {
     	        	executeDecorators(afterdecos, 0, event, NodeState.FAILED, null).then(as ->
     	        	{
+    	   	        	if(as!=NodeState.SUCCEEDED && as!=NodeState.FAILED)
+        	        		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+as);
+     
     	        		reset();
         	        	ret.setResultIfUndone(as);
     	        	})
@@ -177,7 +187,7 @@ public abstract class Node<T>
 		}
 		else
 		{
-			Decorator<T> deco = i<beforedecos.size()? beforedecos.get(i): null;
+			Decorator<T> deco = i<decos.size()? decos.get(i): null;
 			
 			if(deco!=null)
 			{

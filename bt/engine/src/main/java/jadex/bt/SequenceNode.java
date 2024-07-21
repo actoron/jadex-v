@@ -46,6 +46,7 @@ public class SequenceNode<T> extends CompositeNode<T>
     
     protected void handleResult(Event event, NodeState state, Future<NodeState> ret) 
     {
+    	System.out.println("hadleRes: "+state);
     	if(state==NodeState.FAILED)
     	{
     		ret.setResult(NodeState.FAILED);

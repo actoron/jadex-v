@@ -8,19 +8,12 @@ public class CooldownDecorator<T> extends Decorator<T>
 {
     protected long cooldown;
     protected long lasttime = 0;
-    protected NodeState coolstate;
     
     public CooldownDecorator(long cooldown) 
     {
-    	this(cooldown, NodeState.RUNNING);
+    	this.cooldown = cooldown;
     }
     
-    public CooldownDecorator(long cooldown, NodeState coolstate) 
-    {
-        this.cooldown = cooldown;
-        this.coolstate = coolstate;
-    }
-
     @Override
     public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, T context) 
     {
@@ -32,7 +25,7 @@ public class CooldownDecorator<T> extends Decorator<T>
         } 
         else 
         {
-            return new Future<>(coolstate);
+            return new Future<>(NodeState.FAILED);
         }
     }
 }

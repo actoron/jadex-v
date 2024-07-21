@@ -1,5 +1,7 @@
 package jadex.bt;
 
+import java.util.logging.Level;
+
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -58,6 +60,10 @@ public class SelectorNode<T> extends CompositeNode<T>
     	else if(state==NodeState.FAILED)
     	{
     		executeNextChild(event, ret, ++idx);
+    	}
+    	else
+    	{
+    		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "received non final state: "+state);
     	}
     }
     

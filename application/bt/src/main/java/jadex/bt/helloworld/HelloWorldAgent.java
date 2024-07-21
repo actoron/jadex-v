@@ -6,8 +6,9 @@ import jadex.bt.Node;
 import jadex.bt.Node.NodeState;
 import jadex.core.IComponent;
 import jadex.future.Future;
+import jadex.micro.annotation.Agent;
 
-//@Agent(type="bt")
+@Agent(type="bt")
 public class HelloWorldAgent implements IBTProvider
 {
 	public Node<IComponent> createBehaviorTree()
