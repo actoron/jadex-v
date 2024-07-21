@@ -1,5 +1,6 @@
 package jadex.core.impl;
 
+import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ import java.util.function.Supplier;
 import jadex.common.SUtil;
 import jadex.core.ApplicationContext;
 import jadex.core.ComponentIdentifier;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.future.FutureBarrier;
@@ -394,9 +396,16 @@ public class Component implements IComponent
 	
 	public void handleException(Exception exception)
 	{
-		@SuppressWarnings("unchecked")
-		BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getExceptionHandler(exception, this);
-		handler.accept(exception, this);
+		if(exception instanceof ComponentTerminatedException && this.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
+		{
+			System.getLogger(this.getClass().getName()).log(Level.INFO, "Component terminated exception: "+exception);
+		}
+		else
+		{
+			@SuppressWarnings("unchecked")
+			BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getExceptionHandler(exception, this);
+			handler.accept(exception, this);
+		}
 	}
 	
 	/**

@@ -13,9 +13,9 @@ import jadex.bpmn.runtime.IStepHandler;
 import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
-import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
 import jadex.model.IModelFeature;
 
