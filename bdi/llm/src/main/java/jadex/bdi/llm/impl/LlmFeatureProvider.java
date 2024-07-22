@@ -20,9 +20,13 @@ public class LlmFeatureProvider extends FeatureProvider<ILlmFeature>
     }
 
     @Override
-    public ILlmFeature createFeatureInstance(Component self)
+    public ILlmFeature createFeatureInstance(Component self) {
+        return null;
+    }
+
+    public ILlmFeature createFeatureInstance(String chatgpt_url, String chatgpt_key, Class<?> agent_class, Class<?> feature_class)
     {
-        return new LlmFeature(self);
+        return new LlmFeature(chatgpt_url, chatgpt_key, agent_class, feature_class);
     }
 
     @Override

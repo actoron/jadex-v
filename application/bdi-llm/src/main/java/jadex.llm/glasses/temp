@@ -1,0 +1,130 @@
+//            public String generatePrompt(List<Class<?>> classes, List<Object> objects) {
+//                List<String> combinedInfo = new ArrayList<>();
+//
+//                for (Class<?> cls : classes) {
+//                    combinedInfo.add(ClassReader.getClassStructure(String.valueOf(cls)));
+//                }
+//
+//                for (Object obj : objects) {
+//                    combinedInfo.add(obj.toString());
+//                }
+//
+//                String infoString = String.join(", ", combinedInfo);
+//                String plan = sendRequest(infoString);
+//
+//                plan = "package aibdi;\nimport java.util.List;\nimport java.util.Comparator;\nimport java.util.Iterator;\n" + plan;
+//
+//                System.out.println("executeGeneratedPlan: " + plan);
+//
+//                if (!plan.isEmpty()) {
+//                    String className = "bdi-llm.PlanStep";
+//                    String methodName = "doPlanStep";
+//                    Class<?>[] parameterTypes = new Class<?>[]{List.class};
+//                    Object[] args = objects.toArray();
+//
+//                    byte[] byteCode = CodeCompiler.compile(className, plan);
+//                    if (byteCode != null) {
+//                        Object planInstance = CodeCompiler.execute(className, byteCode, methodName, parameterTypes, args);
+//                        if (planInstance != null) {
+//                            System.out.println("Plan instance created");
+//                        } else {
+//                            System.out.println("Plan instance could not be created");
+//                        }
+//                    } else {
+//                        System.out.println("Compilation failed");
+//                    }
+//                } else {
+//                    System.out.println("Generated code is empty");
+//                }
+//                return plan;
+//            }
+//
+//            public String sendRequest(String infoString) {
+//                Gson gson = new Gson();
+//
+//                String prompt = "You are a sophisticated code generator skilled in Java. Don't explain the code, just generate the code block itself. Create a Java class named PlanStep that is designed to work within a Jadex agent environment. The class should contain a method named doPlanStep, which takes a list of Glasses objects and a GlassesSortingGoal object as parameters. The 'doPlanStep' method should implement logic to sort the glassesList based on the sortingPreference defined in the GlassesSortingGoal object. After sorting the list, the method should print the sorted list and return it. Use Java's Comparator interface or lambda expressions for sorting. Assume that the Glasses, GlassesSortingGoal classes, and the SortBy enum are already defined in the project. Include the complete method implementation for sorting and returning the glassesList within the 'doPlanStep' method. The method should return the sorted list of Glasses. The class should not include a main method or the @Plan annotation. " + "\n" + "The project has the following class structures: \n" + infoString;
+//                String json = gson.toJson(new LLMRequest("gpt-3.5-turbo", new Message("user", prompt)));
+//
+//                System.out.println("Sending JSON: " + json);
+//
+//                HttpRequest request = HttpRequest.newBuilder()
+//                        .uri(URI.create(url))
+//                        .header("Content-Type", "application/json")
+//                        .header("Authorization", "Bearer " + apiKey)
+//                        .POST(HttpRequest.BodyPublishers.ofString(json))
+//                        .build();
+//
+//                try {
+//                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+//                    System.out.println("Response status code: " + response.statusCode());
+//                    System.out.println("Response body: " + response.body());
+//
+//                    if (response.statusCode() == 200) {
+//                        return extractGeneratedCode(response.body());
+//                    } else {
+//                        throw new Exception("LLM returned status code " + response.statusCode());
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    return null;
+//                }
+//            }
+//
+//            public String extractGeneratedCode(String responseBody) {
+//                System.out.println("--> Extracting code from response");
+//                int startIdx = -1;
+//                for (int i = 0, count = 0; i < responseBody.length(); i++) {
+//                    if (responseBody.charAt(i) == '{') {
+//                        count++;
+//                        if (count == 4) {
+//                            startIdx = i;
+//                            break;
+//                        }
+//                    }
+//                }
+//
+//                if (startIdx != -1) {
+//                    int bracketCount = 1;
+//                    int currentIdx = startIdx + 1;
+//
+//                    while (currentIdx < responseBody.length() && bracketCount > 0) {
+//                        char currentChar = responseBody.charAt(currentIdx);
+//                        if (currentChar == '{') {
+//                            bracketCount++;
+//                        } else if (currentChar == '}') {
+//                            bracketCount--;
+//                        }
+//                        currentIdx++;
+//                    }
+//
+//                    if (bracketCount == 0) {
+//                        String generatedCode = responseBody.substring(startIdx, currentIdx).trim();
+//                        generatedCode = generatedCode.replace("\\n", "\n").replace("\\t", "\t").replace("\\\"", "\"");
+//                        System.out.println("-->Trimmed code version:\n" + generatedCode);
+//                        return generatedCode;
+//                    }
+//                }
+//                System.out.println("No valid codeblock found");
+//                return "";
+//            }
+//
+//            class LLMRequest {
+//                String model;
+//                Message[] messages;
+//
+//                LLMRequest(String model, Message... messages) {
+//                    this.model = model;
+//                    this.messages = messages;
+//                }
+//            }
+//
+//            class Message {
+//                String role;
+//                String content;
+//
+//                Message(String role, String content) {
+//                    this.role = role;
+//                    this.content = content;
+//                }
+//            }
+//        }
