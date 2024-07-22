@@ -25,11 +25,6 @@ public class GlassesAgent
     @Belief
     protected ILlmFeature agent_llmfeature;
 
-    //    protected String api_key            = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("api_key");
-    //    protected String chatgpt_url        = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("chatgpt_url");
-    //    protected String agent_class_name   = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("agent_class_name");
-    //    protected String feature_class_name = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("feature_class_name");
-
     /** Constructor */
     public GlassesAgent(String chatgpt_url, String api_key, String agent_class_name, String feature_class_name) {
         System.out.println(chatgpt_url);
