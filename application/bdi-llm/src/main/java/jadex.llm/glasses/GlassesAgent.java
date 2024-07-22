@@ -3,82 +3,47 @@ package jadex.llm.glasses;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.ILlmFeature;
 import jadex.bdi.llm.impl.LlmFeature;
-import jadex.bdi.model.BDIModelLoader;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
+import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnStart;
-import jadex.classreader.SClassReader;
-import org.w3c.dom.ls.LSOutput;
-import java.io.IOException;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
-import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
 
 @Agent(type = "bdi")
+@Description("This agent uses ChatGPT to create the plan step.")
 public class GlassesAgent
 {
-    /** The bdi agent. */
-    @Agent
-    protected IComponent agent;
+    /** The Glasses agent class. */
+    // @Agent
+    // protected IComponent agent;
 
-    static {
-        System.out.println("GlassesAgent class loaded");
-    }
+    @Belief
+    protected ILlmFeature agent_llmfeature;
 
-    protected String api_key = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("api_key");
-    protected String chatgpt_url = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("chatgpt_url");
-    protected String agent_path = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("agent_path");
-    protected String agent_class_name = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("agent_class_name");
-    protected String feature_path = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("feature_path");
-    protected String feature_class_name = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("feature_class_name");
+    //    protected String api_key            = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("api_key");
+    //    protected String chatgpt_url        = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("chatgpt_url");
+    //    protected String agent_class_name   = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("agent_class_name");
+    //    protected String feature_class_name = (String)agent.getFeature(IBDIAgentFeature.class).getArgument("feature_class_name");
 
-    {
-        System.out.println(api_key);
+    /** Constructor */
+    public GlassesAgent(String chatgpt_url, String api_key, String agent_class_name, String feature_class_name) {
         System.out.println(chatgpt_url);
-        System.out.println(agent_path);
+        System.out.println(api_key);
         System.out.println(agent_class_name);
-        System.out.println(feature_path);
         System.out.println(feature_class_name);
-    }
 
-    private Class<?> LoadClassFromFile(String class_path, String class_name) {
-        try {
-            // Compile the .java file
-            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-            if (compiler == null) {
-                throw new IllegalStateException("Cannot find the system Java compiler. Check that your class path includes tools.jar");
-            }
-            int compilationResult = compiler.run(null, null, null, class_path);
-            if (compilationResult != 0) {
-                throw new RuntimeException("Compilation failed. Exit code: " + compilationResult);
-            }
+        this.agent_llmfeature = new LlmFeature(
+                chatgpt_url,
+                api_key,
+                agent_class_name,
+                feature_class_name);
 
-            // Get the directory containing the compiled class
-            File javaFile = new File(class_path);
-            File parentDir = javaFile.getParentFile();
-            if (parentDir == null) {
-                throw new IOException("Failed to get parent directory of the .java file.");
-            }
-
-            // Convert the directory to a URL
-            URL url = parentDir.toURI().toURL();
-            URLClassLoader classLoader = new URLClassLoader(new URL[] { url });
-
-            // Load and return the class
-            return classLoader.loadClass(class_name);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        System.out.println("GlassesAgent class loaded");
     }
 
     @Belief
@@ -107,13 +72,6 @@ public class GlassesAgent
         }
     }
 
-    @Belief
-    public ILlmFeature agent_llmfeature = new LlmFeature(
-            chatgpt_url,
-            api_key,
-            LoadClassFromFile(agent_path, agent_class_name),
-            LoadClassFromFile(feature_path, feature_class_name));
-
     @Goal
     class SortGlassesListGoal
     {
@@ -126,7 +84,7 @@ public class GlassesAgent
     @Plan(trigger = @Trigger(goals = SortGlassesListGoal.class))
     public void executeGeneratedPlan(IPlan context)
     {
-        System.out.println("executeGeneratedPlan is called");
+//        System.out.println("executeGeneratedPlan is called");
 //        if (llmFeature == null)
 //        {
 //            System.out.println("No LLM feature found");
@@ -203,5 +161,22 @@ public class GlassesAgent
         }
         agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new SortGlassesListGoal()).get();
         System.out.println("GlassesAgent finished");
+    }
+
+    /**
+     *  Start Glasses Agent.
+     * @throws InterruptedException
+     */
+    public static void main(String[] args)
+    {
+        System.out.println("GlassesAgent started");
+
+        IComponent.create(new GlassesAgent(
+                "https://api.openai.com/v1/chat/completions",
+                System.getenv("OPENAI_API_KEY"),
+                "jadex.llm.glasses.GlassesAgent",
+                "jadex.llm.glasses.Glasses")
+        );
+        IComponent.waitForLastComponentTerminated();
     }
 }

@@ -1,0 +1,14 @@
+{
+  "ChatgptPrompt" : "You are a sophisticated code generator skilled in Java. Don't explain the " +
+  "code, just generate the code block itself. Create a Java class named PlanStep that is designed to " +
+  "work within a Jadex agent environment. The class should contain a method named doPlanStep, which " +
+  "takes a list of Glasses objects and a GlassesSortingGoal object as parameters. The 'doPlanStep' " +
+  "method should implement logic to sort the glassesList based on the sortingPreference defined in " +
+  "the GlassesSortingGoal object. After sorting the list, the method should print the sorted list " +
+  "and return it. Use Java's Comparator interface or lambda expressions for sorting. Assume that the " +
+  "Glasses, GlassesSortingGoal classes, and the SortBy enum are already defined in the project. " +
+  "Include the complete method implementation for sorting and returning the glassesList within the " +
+  "'doPlanStep' method. The method should return the sorted list of Glasses. The class should not " +
+  "include a main method or the @Plan annotation. " + "\n" + "The project has the following class " +
+  "structures: \n"
+}

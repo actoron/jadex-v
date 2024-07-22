@@ -20,18 +20,15 @@ import java.util.*;
 
 public class LlmFeature implements ILlmFeature
 {
-//    protected ClassReader classReader;
-    private final LlmConnector llmConnector;
-
-    //protected CodeCompiler codeCompiler;
-
-    public LlmFeature(String chatgpt_url, String chatgpt_key, Class<?> agent_class, Class<?> feature_class)
+    /** Constructor */
+    public LlmFeature(String chatgpt_url, String chatgpt_key, String agent_class_name, String feature_class_name)
     {
         // init Chatgpt
-        this.llmConnector = new LlmConnector(chatgpt_url, chatgpt_key);
+        LlmConnector llmConnector = new LlmConnector(chatgpt_url, chatgpt_key);
 
         // init agent class structure
         try {
+            Class<?> agent_class = Class.forName(agent_class_name);
             SClassReader.ClassInfo agent_sclass_reader = SClassReader.getClassInfo(agent_class.getName(), agent_class.getClassLoader());
             System.out.println(agent_sclass_reader);
         }
@@ -42,6 +39,7 @@ public class LlmFeature implements ILlmFeature
 
         // init features
         try {
+            Class<?> feature_class = Class.forName(feature_class_name);
             SClassReader.ClassInfo feature_sclass_reader = SClassReader.getClassInfo(feature_class.getName(), feature_class.getClassLoader());
             System.out.println(feature_sclass_reader);
         }
@@ -50,25 +48,74 @@ public class LlmFeature implements ILlmFeature
             System.exit(1);
         }
 
-        // start training
-
-
-//        this.classReader = new ClassReader();
-//
-//        this.codeCompiler = new CodeCompiler();
+        // create
     }
 
-    private record LlmConnector(String url, String apiKey) {
-        private LlmConnector(String url, String apiKey) {
-            this.url = "https://api.openai.com/v1/chat/completions"; //OpenAI API
-            this.apiKey = System.getenv("OPENAI_API_KEY");
-            if (this.apiKey == null || this.apiKey.isEmpty()) {
+    /** ChapGPT Connection Class */
+    private static class LlmConnector {
+        protected String chatgpt_url;
+        protected String api_key;
+
+        protected String chatgpt_promt = "You are a sophisticated code generator skilled in Java. Don't explain the " +
+                "code, just generate the code block itself. Create a Java class named PlanStep that is designed to " +
+                "work within a Jadex agent environment. The class should contain a method named doPlanStep, which " +
+                "takes a list of Glasses objects and a GlassesSortingGoal object as parameters. The 'doPlanStep' " +
+                "method should implement logic to sort the glassesList based on the sortingPreference defined in " +
+                "the GlassesSortingGoal object. After sorting the list, the method should print the sorted list " +
+                "and return it. Use Java's Comparator interface or lambda expressions for sorting. Assume that the " +
+                "Glasses, GlassesSortingGoal classes, and the SortBy enum are already defined in the project. " +
+                "Include the complete method implementation for sorting and returning the glassesList within the " +
+                "'doPlanStep' method. The method should return the sorted list of Glasses. The class should not " +
+                "include a main method or the @Plan annotation. " + "\n" + "The project has the following class " +
+                "structures: \n";
+
+
+        /**
+         * Constructor
+         */
+        private LlmConnector(String chatgpt_url, String api_key) {
+            if (api_key == null || api_key.isEmpty()) {
                 System.err.println("API key variable not set in environment.");
+                System.err.println("Set OPENAI_API_KEY in system variables.");
                 System.exit(1);
             } else {
+                this.chatgpt_url = chatgpt_url;
+                this.api_key = api_key;
                 System.out.println("LlmConnector init successful!");
             }
         }
+
+//        public String sendRequest(String infoString) {
+//            // enable pretty print
+//            Gson gson = new Gson();
+//
+//            String prompt = this.chatgpt_promt + infoString;
+//            String json = gson.toJson(new LLMRequest("gpt-3.5-turbo", new Message("user", prompt)));
+//
+//            System.out.println("Sending JSON: " + json);
+//
+//            HttpRequest request = HttpRequest.newBuilder()
+//                    .uri(URI.create(url))
+//                    .header("Content-Type", "application/json")
+//                    .header("Authorization", "Bearer " + apiKey)
+//                    .POST(HttpRequest.BodyPublishers.ofString(json))
+//                    .build();
+//
+//            try {
+//                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+//                System.out.println("Response status code: " + response.statusCode());
+//                System.out.println("Response body: " + response.body());
+//
+//                if (response.statusCode() == 200) {
+//                    return extractGeneratedCode(response.body());
+//                } else {
+//                    throw new Exception("LLM returned status code " + response.statusCode());
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                return null;
+//            }
+//        }
     }
 
 
