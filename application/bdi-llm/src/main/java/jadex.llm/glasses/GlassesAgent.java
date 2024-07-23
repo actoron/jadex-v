@@ -2,10 +2,14 @@ package jadex.llm.glasses;
 
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.ILlmFeature;
+//import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.llm.impl.LlmFeature;
+import jadex.bdi.runtime.BDICreationInfo;
+import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnStart;
@@ -19,18 +23,18 @@ import java.util.List;
 public class GlassesAgent
 {
     /** The Glasses agent class. */
-    // @Agent
-    // protected IComponent agent;
+//    @Agent
+//    protected IComponent agent;
 
     @Belief
     protected ILlmFeature agent_llmfeature;
 
     /** Constructor */
     public GlassesAgent(String chatgpt_url, String api_key, String agent_class_name, String feature_class_name) {
-        System.out.println(chatgpt_url);
-        System.out.println(api_key);
-        System.out.println(agent_class_name);
-        System.out.println(feature_class_name);
+        System.out.println("A: " + chatgpt_url);
+        System.out.println("A: " + api_key);
+        System.out.println("A: " + agent_class_name);
+        System.out.println("A: " + feature_class_name);
 
         this.agent_llmfeature = new LlmFeature(
                 chatgpt_url,
@@ -38,7 +42,7 @@ public class GlassesAgent
                 agent_class_name,
                 feature_class_name);
 
-        System.out.println("GlassesAgent class loaded");
+        System.out.println("A: GlassesAgent class loaded");
     }
 
     @Belief
@@ -79,7 +83,7 @@ public class GlassesAgent
     @Plan(trigger = @Trigger(goals = SortGlassesListGoal.class))
     public void executeGeneratedPlan(IPlan context)
     {
-//        System.out.println("executeGeneratedPlan is called");
+//        System.out.println("A: executeGeneratedPlan is called");
 //        if (llmFeature == null)
 //        {
 //            System.out.println("No LLM feature found");
@@ -89,13 +93,13 @@ public class GlassesAgent
 //        List<Glasses> glassesList = getGlassesList();
 //        if (glassesList == null)
 //        {
-//            System.out.println("GlassesList is empty");
+//            System.out.println("A: GlassesList is empty");
 //            return;
 //        }
 //
 //        try
 //        {
-//            System.out.println("Execute plan step: " + glassesList.size() + " glasses");
+//            System.out.println("A: Execute plan step: " + glassesList.size() + " glasses");
 //            llmFeature.generatePlanStep(new SortGlassesListGoal(), context, glassesList);
 //        }
 //        catch (Exception e)
@@ -103,59 +107,59 @@ public class GlassesAgent
 //            System.out.println("Failed to generate plan step: " + e.getMessage());
 //        }
     }
-
-    public List<Glasses> getGlassesList()
-    {
-        if (glassesList == null)
-        {
-            glassesList = Glasses.generateRandomGlassesList();
-        }
-        return null;
-    }
+//
+//    public List<Glasses> getGlassesList()
+//    {
+//        if (glassesList == null)
+//        {
+//            glassesList = Glasses.generateRandomGlassesList();
+//        }
+//        return null;
+//    }
 
 
     @OnStart
     public void body(IComponent agent)
     {
-        System.out.println("GlassesAgent active");
-        // call method from Glasses
+        System.out.println("A: GlassesAgent active");
+        // Generate glasses list + set sorting goal
         glassesList = Glasses.generateRandomGlassesList();
         sortingGoal = new GlassesSortingGoal(characteristic);
 
         // Initialize LLM feature
-        System.out.println("Feature initialization started");
+        System.out.println("A: Feature initialization started");
         try
         {
             ILlmFeature llmFeature = agent.getFeature(ILlmFeature.class);
 
             if (llmFeature != null)
             {
-                System.out.println("LLM Feature found and initializing");
+                System.out.println("A: LLM Feature found and initializing");
 
-                List<Class<?>> cls = new ArrayList<>();
-                cls.add(GlassesAgent.class);
-                cls.add(Glasses.class);
-
-                List<Object> obj = new ArrayList<>();
-                obj.add(glassesList);
-                obj.add(sortingGoal);
+//                List<Class<?>> cls = new ArrayList<>();
+//                cls.add(GlassesAgent.class);
+//                cls.add(Glasses.class);
+//
+//                List<Object> obj = new ArrayList<>();
+//                obj.add(glassesList);
+//                obj.add(sortingGoal);
 
                 //Read class structure - Idee: Auslesen Klassen aufgrund gegebenen Pfad
                 //SClassReader.ClassInfo classInfo = SClassReader.getClassInfo("", ClassLoader.loadClass());
                 //llmFeature.readClassStructure(Glasses.class);
                 //llmFeature.readClassStructure(GlassesAgent.class);
 
-                llmFeature.connectToLLM(cls, obj);
+                //llmFeature.connectToLLM(cls, obj);
 
             } else
             {
-                System.out.println("Nope, Feature not found");
+                System.out.println("A: Nope, Feature not found");
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
         agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new SortGlassesListGoal()).get();
-        System.out.println("GlassesAgent finished");
+        System.out.println("A: GlassesAgent finished");
     }
 
     /**
@@ -164,7 +168,7 @@ public class GlassesAgent
      */
     public static void main(String[] args)
     {
-        System.out.println("GlassesAgent started");
+        System.out.println("A: GlassesAgent started");
 
         IComponent.create(new GlassesAgent(
                 "https://api.openai.com/v1/chat/completions",

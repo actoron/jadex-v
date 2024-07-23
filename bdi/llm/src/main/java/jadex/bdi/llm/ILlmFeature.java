@@ -7,22 +7,20 @@ public interface ILlmFeature
     /**
      * Reads the structure of the given class.
      *
-     * @param cls The class to read the structure from.
      * @return
      */
-    public ILlmFeature readClassStructure(Class<?> cls);
+    public String readClassStructure(String agent_class_name, String feature_class_name);
 
     /**
      * Establishes a connection to the LLM.
-     *
+     * <p>
      * This method uses the LlmConnector class to connect to a language model.
      * The API key for accessing the language model must be saved in the
      * environment variable "OPENAI_API_KEY".
      *
-     * @param classes a list of class objects to be used in the connection
-     * @param objects a list of objects to be used in the connection
+     * @return
      */
-    public void connectToLLM(List<Class<?>> classes, List<Object> objects);
+    public String connectToLLM(String chatgpt_url, String api_key);
 
     /**
      * Generates a plan step using the LLM and executes it.

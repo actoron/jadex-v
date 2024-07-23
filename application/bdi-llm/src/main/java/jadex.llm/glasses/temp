@@ -128,3 +128,77 @@
 //                }
 //            }
 //        }
+
+
+//    private static class ClassReader
+//    {
+//        private Map<String, String> classStructure;
+//        private BDIModelLoader loader;
+//
+//        public ClassReader()
+//        {
+//            this.classStructure = new HashMap<>();
+//            this.loader = new BDIModelLoader();
+//
+//        }
+//
+//        void readClassStructure(Class<?> clazz)
+//        {
+//            try
+//            {
+//                SClassReader.ClassInfo ci = SClassReader.getClassInfo(clazz.getName(), clazz.getClassLoader(), true, true);
+//
+//                String className = ci.getClassName();
+//                String superClass = ci.getSuperClassName();
+//                List<SClassReader.FieldInfo> fields = ci.getFieldInfos();
+//                List<SClassReader.MethodInfo> methods = ci.getMethodInfos();
+//
+//                //System.out.println("Class: " + className);
+//                //System.out.println("Superclass: " + superClass);
+//
+//                StringBuilder classInfo = new StringBuilder();
+//                classInfo.append("Class: ").append(className).append("\n");
+//                classInfo.append("Superclass: ").append(superClass).append("\n");
+//
+//                classInfo.append("Fields:").append("\n");
+//                for (SClassReader.FieldInfo fi : fields)
+//                {
+//                    classInfo.append("\tName: ").append(fi.getFieldName()).append(" -Type: ").append(fi.getFieldDescriptor()).append("\n");
+//                }
+//
+//                classInfo.append("Methods:").append("\n");
+//                for (SClassReader.MethodInfo mi : methods)
+//                {
+//                    classInfo.append("\tName: ").append(mi.getMethodName()).append(" -Type: ").append(mi.getMethodDescriptor()).append("\n");
+//                }
+//                /*String classStructure = classInfo.toString();
+//                classStructure.put(className, classStructure);
+//                System.out.println("Class structure added for" + className);*/
+//
+//                System.out.println("Fields:");
+//                for (SClassReader.FieldInfo fi : fields)
+//                {
+//                    System.out.println("\tName: " + fi.getFieldName() + " -Type: " + fi.getFieldDescriptor());
+//                }
+//                System.out.println("Methods:");
+//                for (SClassReader.MethodInfo mi : methods)
+//                {
+//                    System.out.println("\tName: " + mi.getMethodName() + " -Type: " + mi.getMethodDescriptor());
+//                }
+//
+//                classStructure.put(className, ci.toString());
+//
+//            } catch (Exception e)
+//            {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        public static String getClassStructure(String className)
+//        {
+//            System.out.println("test" + className);
+//            String structure = classStructure.get(className);
+//            System.out.println("---->Class structure: " +className + ": " + structure);
+//            return structure;
+//        }
+//    }
