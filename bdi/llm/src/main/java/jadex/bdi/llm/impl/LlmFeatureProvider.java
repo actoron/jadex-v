@@ -10,7 +10,6 @@ public class LlmFeatureProvider extends FeatureProvider<ILlmFeature>
     public LlmFeatureProvider()
     {
         super();
-        System.out.println("LlmFeatureProvider constructor");
     }
 
     @Override

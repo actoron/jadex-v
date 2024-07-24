@@ -1,5 +1,6 @@
 package jadex.bdi.llm;
 
+import java.net.URISyntaxException;
 import java.util.List;
 
 public interface ILlmFeature
@@ -20,7 +21,7 @@ public interface ILlmFeature
      *
      * @return
      */
-    public String connectToLLM(String chatgpt_url, String api_key);
+    public String connectToLLM(String ChatGptRequest) throws URISyntaxException;
 
     /**
      * Generates a plan step using the LLM and executes it.

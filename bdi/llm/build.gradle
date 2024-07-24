@@ -34,8 +34,10 @@ dependencies
 	implementation 'org.activecomponents.jadex:classreader:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation 'org.activecomponents.jadex:bytecode:'+v
-	implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
-
+	implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.6' +v
+	implementation group: 'commons-validator', name: 'commons-validator', version: '1.8.0' +v
+	implementation group: 'commons-io', name: 'commons-io', version: '2.16.1' +v
+	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1' +v
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
