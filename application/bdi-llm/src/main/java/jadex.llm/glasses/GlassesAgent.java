@@ -1,12 +1,16 @@
 package jadex.llm.glasses;
 
+
 import jadex.bdi.llm.impl.LlmFeature;
+import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 
 @Agent(type="bdip")
@@ -38,7 +42,6 @@ public class GlassesAgent
         System.out.println("A: GlassesAgent class loaded");
     }
 
-
     @OnStart
     public void body()
     {
@@ -51,9 +54,25 @@ public class GlassesAgent
                 agent_class_name,
                 feature_class_name);
 
-        String response = llmFeature.connectToLLM("test123");
+        String javacode = llmFeature.connectToLLM("Hello, World!");
+        Class<?> PlanStep = llmFeature.generatePlanStep(javacode);
 
-        System.out.println("A: Response: " + response);
+        try {
+            Method doPlanStep = PlanStep.getMethod("doPlanStep");
+            try {
+                doPlanStep.invoke(PlanStep.getDeclaredConstructor().newInstance());
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+
+
 
         agent.terminate();
     }
@@ -62,6 +81,13 @@ public class GlassesAgent
     public void end()
     {
         System.out.println("A: Agent "+agent.getId()+ " terminated");
+    }
+
+//    @Plan(trigger = @Trigger(goals = SortGlassesListGoal.class))
+    public void executeGeneratedPlan(IPlan context)
+    {
+        // java code = llmFeature.generatePlanStep()
+        System.out.println("A: executeGeneratedPlan");
     }
 
     /**

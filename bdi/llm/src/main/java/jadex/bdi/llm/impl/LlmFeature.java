@@ -1,25 +1,33 @@
 package jadex.bdi.llm.impl;
 
 import jadex.bdi.llm.ILlmFeature;
+import jadex.bytecode.ByteCodeClassLoader;
 import jadex.classreader.SClassReader;
 
+import jadex.common.SUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.apache.commons.io.FileUtils;
 import org.json.simple.parser.ParseException;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import javax.tools.*;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+
+//TODO: get important parts of response (JSONstuff)
+//TODO: convert JSON to Java code + check if it works
+//TODO: get parts of Java code + compile it
 
 public class LlmFeature implements ILlmFeature
 {
@@ -27,7 +35,7 @@ public class LlmFeature implements ILlmFeature
     private final URI chatgpt_url;
     private String api_key;
     
-    private JSONObject chatgptSettings;
+    private final JSONObject chatgptSettings;
 
     /**
      * Constructor
@@ -135,15 +143,6 @@ public class LlmFeature implements ILlmFeature
             System.out.println("Warning: Setting 'presence_penalty' to 0.0");
             chatgptSettings.put("presence_penalty", 0.0);
         }
-        
-
-        // read class structure
-
-
-        // connect to LLM
-        // generate plan step
-        // compile code
-
     }
 
     @Override
@@ -172,7 +171,6 @@ public class LlmFeature implements ILlmFeature
 
     @Override
     public String connectToLLM(String ChatGptRequest) {
-
         // update chatgptSettings with ChatGptRequest
         JSONArray messages = (JSONArray) chatgptSettings.get("messages");
 
@@ -185,7 +183,7 @@ public class LlmFeature implements ILlmFeature
         }
         chatgptSettings.put("messages", messages);
 
-        /** ChapGPT Connection Class */
+        // send request to LLM
         HttpClient client = HttpClient.newHttpClient();
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -195,110 +193,116 @@ public class LlmFeature implements ILlmFeature
                 .POST(HttpRequest.BodyPublishers.ofString(chatgptSettings.toString()))
                 .build();
 
+        // get response from LLM
+        String responseMessage = null;
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("Response status code: " + response.statusCode());
-            System.out.println("Response body: " + response.body());
 
             if (response.statusCode() == 200) {
-                return extractCode(response.body());
+                // parse response JSON
+                try {
+                    JSONParser parser = new JSONParser();
+                    JSONObject responseObject = (JSONObject) parser.parse(response.body());
+                    JSONArray choicesArray = (JSONArray) responseObject.get("choices");
+
+                    // get response message
+                    for (Object choice : choicesArray) {
+                        JSONObject choiceObject = (JSONObject) choice;
+                        long index = (long) choiceObject.get("index");
+                        // get first message
+                        if (index == 0) {
+                            JSONObject messageObject = (JSONObject) choiceObject.get("message");
+                            responseMessage = (String) messageObject.get("content");
+                        }
+                    }
+                } catch (ParseException e){
+                    throw new RuntimeException(e);
+                }
             } else {
                 throw new Exception("F: LLM returned status code " + response.statusCode());
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException(e);
         }
-    }
 
-    private String extractCode(String responseBody)
-    {
-        System.out.println("F: Extracting code from response");
-        int startIdx = -1;
-        for (int i = 0, count = 0; i < responseBody.length(); i++) {
-            if (responseBody.charAt(i) == '{') {
-                count++;
-                if (count == 4) {
-                    startIdx = i;
-                    break;
-                }
-            }
-        }
-        if (startIdx != -1) {
-            int bracketCount = 1;
-            int currentIdx = startIdx + 1;
+        // clean up responseMessage
+        // remove leading and trailing quotation marks from responseMessage
+        responseMessage = responseMessage.substring(7, responseMessage.length()-3);
 
-            while (currentIdx < responseBody.length() && bracketCount > 0) {
-                char currentChar = responseBody.charAt(currentIdx);
-                if (currentChar == '{') {
-                    bracketCount++;
-                } else if (currentChar == '}') {
-                    bracketCount--;
-                }
-                currentIdx++;
-            }
-            if (bracketCount == 0) {
-                String generatedCode = responseBody.substring(startIdx, currentIdx).trim();
-                generatedCode = generatedCode.replace("\\n", "\n")
-                        .replace("\\t", "\t").replace("\\\"", "\"");
-                System.out.println("F: Trimmed code version:\n" + generatedCode);
-                return generatedCode;
-            }
-        }
-        System.out.println("F: No valid codeblock found");
-        return "";
+        // add package to javacode
+        responseMessage = "package jadex.bdi.llm.impl;\n" + responseMessage;
+
+        return responseMessage;
     }
 
     @Override
-    //public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context)
-    // return sendRequest(goal, plan, context);
-    public void generatePlanStep(Object goal, Object context, List<?> data) {
-        if (goal == null) {
-            System.err.println("Goal null");
-            return;
-        }
-        if (context == null) {
-            System.err.println("Context null");
-            return;
-        }
-        if (data == null) {
-            System.err.println("Data null");
-            return;
+    public Class<?> generatePlanStep(String JavaCode) {
+        //TODO: String to Java Class
+        // Save source in .java file.
+        BufferedWriter writer = null;
+        String PlanStepPath = "bdi/llm/src/main/java/jadex/bdi/llm/impl/";
+        try {
+            writer = new BufferedWriter(new FileWriter(PlanStepPath + "PlanStep.java"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         try {
-            List<Class<?>> classes = new ArrayList<>();
-            List<Object> objects = new ArrayList<>();
-            if (context instanceof Iterable) {
-                for (Object obj : (Iterable<?>) context) {
-                    if (obj instanceof Class<?>) {
-                        classes.add((Class<?>) obj);
-                    } else {
-                        objects.add(obj);
-                    }
-                }
-            } else {
-                // Handle case where context is not Iterable (if needed)
-                System.err.println("Context is not iterable.");
-            }
-
-//            String planStep = llmConnector.generatePrompt(classes, objects);
-//            if (planStep == null)
-//            {
-//                System.err.println("PlanStep null.");
-//                return;
-//            }
-//            byte[] byteCode = codeCompiler.compile("PlanStep", planStep);
-//            if (byteCode == null)
-//            {
-//                System.err.println("Bytecode null.");
-//                return;
-//            }
-//            codeCompiler.execute("PlanStep", byteCode, "doPlanStep", new Class<?>[]{List.class}, objects.toArray());
-
-        } catch (Exception e) {
-            System.out.println("Exception in generatePlanStep: " + e.getMessage());
-            e.printStackTrace();
+            writer.write(JavaCode);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+        try {
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Compile source file.
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
+
+        Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromStrings(Arrays.asList(PlanStepPath));
+        List<String> optionList = new ArrayList<>();
+        optionList.addAll(Arrays.asList("-classpath", System.getProperty("java.class.path")));
+        JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, optionList, null, compilationUnits);
+
+        boolean success = task.call();
+
+        Class<?> clazz = null;
+        if(success) {
+            ByteCodeClassLoader cl = new ByteCodeClassLoader(LlmFeature.class.getClassLoader());
+            try{
+                FileInputStream fis = new FileInputStream(PlanStepPath + "PlanStep.class");
+                byte[] byteCode = SUtil.readStream(fis);
+                cl.doDefineClass(byteCode);
+                clazz = cl.loadClass("PlanStep");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return clazz;
+
+//        compiler.run(null, null, null, PlanStepPath);
+//
+//        // Load and instantiate compiled class.
+//        URLClassLoader classLoader = null;
+//        try {
+//            URL[] PlanStepRootURL = {Paths.get(PlanStepPath).getParent().toUri().toURL()};
+//            classLoader = URLClassLoader.newInstance(PlanStepRootURL);
+//        } catch (MalformedURLException e) {
+//            throw new RuntimeException(e);
+//        }
+//        System.out.println(classLoader);
+//        Class<?> cls = null;
+//        try {
+//            cls = Class.forName("jadex.bdi.llm.impl.PlanStep", true, classLoader);
+//        } catch (ClassNotFoundException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return cls;
+
     }
 
     @Override
