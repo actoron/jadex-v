@@ -1,6 +1,7 @@
 package jadex.llm.glasses;
 
 
+import jadex.bdi.annotation.Belief;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
@@ -9,9 +10,6 @@ import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.URISyntaxException;
 
 @Agent(type="bdip")
 @Description("This agent uses ChatGPT to create the plan step.")
@@ -41,6 +39,7 @@ public class GlassesAgent
 
         System.out.println("A: GlassesAgent class loaded");
     }
+    @Belief
 
     @OnStart
     public void body()
@@ -54,23 +53,26 @@ public class GlassesAgent
                 agent_class_name,
                 feature_class_name);
 
-        String javacode = llmFeature.connectToLLM("Hello, World!");
-        Class<?> PlanStep = llmFeature.generatePlanStep(javacode);
+//        String javacode = llmFeature.connectToLLM("Hello, World!");
+        String javacode = "class Plan { static doPlanStep() { print('Hello World JavaScript'); } };";
+//        Class<?> PlanStep = llmFeature.generatePlanStep(javacode);
+        llmFeature.generateAndInterpretPlanStep(javacode);
 
-        try {
-            Method doPlanStep = PlanStep.getMethod("doPlanStep");
-            try {
-                doPlanStep.invoke(PlanStep.getDeclaredConstructor().newInstance());
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
+
+//        try {
+//            Method doPlanStep = PlanStep.getMethod("doPlanStep");
+//            try {
+//                doPlanStep.invoke(PlanStep.getDeclaredConstructor().newInstance());
+//            } catch (IllegalAccessException e) {
+//                throw new RuntimeException(e);
+//            } catch (InvocationTargetException e) {
+//                throw new RuntimeException(e);
+//            } catch (InstantiationException e) {
+//                throw new RuntimeException(e);
+//            }
+//        } catch (NoSuchMethodException e) {
+//            throw new RuntimeException(e);
+//        }
 
 
 

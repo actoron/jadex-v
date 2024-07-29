@@ -26,14 +26,7 @@ public interface ILlmFeature
     /**
      * Generates a plan step using the LLM and executes it.
      */
-    //public void generateAndExecutePlanStep(Goal goal, Plan plan, Object... context);
-    public Class<?> generatePlanStep(String JavaCode);
+    public void generateAndInterpretPlanStep(String jsCode);
+    //public Class<?> generatePlanStep(String JavaCode);
 
-    /**
-     * Compiles the given code.
-     *
-     * @param code The code to compile.
-     * @return true if the code compiled successfully, false otherwise.
-     */
-    Object compileCode(String className, String code, String methodName, Class<?>[] parameterTypes, Object[] args);
 }

@@ -38,6 +38,7 @@ dependencies
 	implementation group: 'commons-validator', name: 'commons-validator', version: '1.8.0' +v
 	implementation group: 'commons-io', name: 'commons-io', version: '2.16.1' +v
 	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1' +v
+	implementation group: 'org.graalvm.js', name: 'js', version: '23.0.5' +v
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'

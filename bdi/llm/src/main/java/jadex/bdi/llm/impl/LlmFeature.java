@@ -1,33 +1,27 @@
 package jadex.bdi.llm.impl;
 
 import jadex.bdi.llm.ILlmFeature;
-import jadex.bytecode.ByteCodeClassLoader;
 import jadex.classreader.SClassReader;
 
-import jadex.common.SUtil;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.Value;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.apache.commons.io.FileUtils;
 import org.json.simple.parser.ParseException;
 
-import javax.tools.*;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
-
-//TODO: get important parts of response (JSONstuff)
-//TODO: convert JSON to Java code + check if it works
-//TODO: get parts of Java code + compile it
 
 public class LlmFeature implements ILlmFeature
 {
@@ -237,162 +231,32 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public Class<?> generatePlanStep(String JavaCode) {
-        //TODO: String to Java Class
-        // Save source in .java file.
-        BufferedWriter writer = null;
+    public void generateAndInterpretPlanStep(String jsCode) {
         String PlanStepPath = "bdi/llm/src/main/java/jadex/bdi/llm/impl/";
-        try {
-            writer = new BufferedWriter(new FileWriter(PlanStepPath + "PlanStep.java"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            writer.write(JavaCode);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            writer.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
-        // Compile source file.
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-        StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
+        Engine engine = Engine.newBuilder().option("engine.WarnInterpreterOnly", "false").build();
+        Context ctx = Context.newBuilder("js").engine(engine).build();
 
-        Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromStrings(Arrays.asList(PlanStepPath));
-        List<String> optionList = new ArrayList<>();
-        optionList.addAll(Arrays.asList("-classpath", System.getProperty("java.class.path")));
-        JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, optionList, null, compilationUnits);
+        ctx.eval("js", jsCode);
 
-        boolean success = task.call();
-
-        Class<?> clazz = null;
-        if(success) {
-            ByteCodeClassLoader cl = new ByteCodeClassLoader(LlmFeature.class.getClassLoader());
-            try{
-                FileInputStream fis = new FileInputStream(PlanStepPath + "PlanStep.class");
-                byte[] byteCode = SUtil.readStream(fis);
-                cl.doDefineClass(byteCode);
-                clazz = cl.loadClass("PlanStep");
-            } catch (Exception e) {
-                e.printStackTrace();
+            //Access + invoke doPlanStep method
+            Value globalObject = ctx.getBindings("js");
+            Value plan = globalObject.getMember("Plan");
+            if (plan != null && plan.hasMember("doPlanStep"))
+            {
+             Value doPlanStepFunction = plan.getMember("doPlanStep");
+             doPlanStepFunction.execute();
+            } else
+            {
+                System.out.println("F: Plan class or doPlanStep method not found");
             }
+    try{
+            //save js to file path
+            Files.write(Paths.get(PlanStepPath + "Plan.js"), jsCode.getBytes(), StandardOpenOption.CREATE);
+            System.out.println("F: Plan.js executed and saved");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return clazz;
-
-//        compiler.run(null, null, null, PlanStepPath);
-//
-//        // Load and instantiate compiled class.
-//        URLClassLoader classLoader = null;
-//        try {
-//            URL[] PlanStepRootURL = {Paths.get(PlanStepPath).getParent().toUri().toURL()};
-//            classLoader = URLClassLoader.newInstance(PlanStepRootURL);
-//        } catch (MalformedURLException e) {
-//            throw new RuntimeException(e);
-//        }
-//        System.out.println(classLoader);
-//        Class<?> cls = null;
-//        try {
-//            cls = Class.forName("jadex.bdi.llm.impl.PlanStep", true, classLoader);
-//        } catch (ClassNotFoundException e) {
-//            throw new RuntimeException(e);
-//        }
-//        return cls;
-
+    }
     }
 
-    @Override
-    public Object compileCode(String className, String code, String methodName, Class<?>[] parameterTypes, Object[] args)
-    {
-        try {
-//            byte[] byteCode = CodeCompiler.compile(className, code);
-//            return CodeCompiler.execute(className, byteCode, methodName, parameterTypes, args);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-
-//        private static class CodeCompiler {
-//            public static byte[] compile(String className, String code) {
-//                JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-//                DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-//                StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
-//
-//                StringJavaFileObject file = new StringJavaFileObject(className, code);
-//                Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(file);
-//
-//                List<String> optionList = new ArrayList<>();
-//                optionList.addAll(Arrays.asList("-classpath", System.getProperty("java.class.path")));
-//                JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, optionList, null, compilationUnits);
-//
-//                boolean success = task.call();
-//                if (success) {
-//                    try (FileInputStream fis = new FileInputStream(className + ".class")) {
-//                        return SUtil.readStream(fis);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                } else {
-//                    for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-//                        System.out.format("Error on line %d in %s%n", diagnostic.getLineNumber(), diagnostic.getSource().toUri());
-//                        System.out.println("Code: " + diagnostic.getCode());
-//                        System.out.println("Position: " + diagnostic.getPosition());
-//                        System.out.println("Message: " + diagnostic.getMessage(null));
-//                    }
-//                    System.out.println("Compilation failed");
-//                }
-//                return null;
-//            }
-//
-//            public static Object execute(String className, byte[] byteCode, String methodName, Class<?>[] parameterTypes, Object[] args) {
-//                ByteCodeClassLoader cl = new ByteCodeClassLoader(CodeCompiler.class.getClassLoader());
-//                cl.doDefineClass(byteCode);
-//
-//                // Schleife für innere Klassen
-//                int i = 1;
-//                while (true) {
-//                    try {
-//                        FileInputStream fis = new FileInputStream(className + "$" + i + ".class");
-//                        byte[] byteCodeInner = SUtil.readStream(fis);
-//                        cl.doDefineClass(byteCodeInner);
-//                        i++;
-//                    } catch (FileNotFoundException e) {
-//                        break;
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//
-//                // Laden der Klasse + Methodenausführung
-//                try {
-//                    Class<?> clazz = cl.loadClass(className);
-//                    Object instance = clazz.getDeclaredConstructor().newInstance();
-//                    Method method = clazz.getMethod(methodName, parameterTypes);
-//                    return method.invoke(instance, args);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    return null;
-//                }
-//            }
-//
-//            static class StringJavaFileObject extends SimpleJavaFileObject {
-//                private final String code;
-//
-//                public StringJavaFileObject(String name, String code) {
-//                    super(URI.create("string:///" + name.replace('.', '/') + Kind.SOURCE.extension), Kind.SOURCE);
-//                    this.code = code;
-//                }
-//
-//                @Override
-//                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
-//                    return code;
-//                }
-//            }
-//        }
-        return null;
-    }
-}

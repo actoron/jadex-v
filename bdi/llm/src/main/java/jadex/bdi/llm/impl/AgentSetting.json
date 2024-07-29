@@ -7,7 +7,7 @@
     },
     {
       "role": "user",
-      "content": "Create a Java class named PlanStep with a method called doPlanStep, which print 'Robert is cool' to the console."
+      "content": "Create a Java class named PlanStep with a method called doPlanStep, which print 'Hello World' to the console."
     }
   ],
   "temperature": 0.3,
