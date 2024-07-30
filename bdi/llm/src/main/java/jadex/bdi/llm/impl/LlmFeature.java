@@ -1,5 +1,6 @@
 package jadex.bdi.llm.impl;
 
+import jadex.bdi.annotation.Belief;
 import jadex.bdi.llm.ILlmFeature;
 import jadex.classreader.SClassReader;
 
@@ -13,6 +14,8 @@ import org.apache.commons.io.FileUtils;
 import org.json.simple.parser.ParseException;
 
 import java.io.*;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -26,29 +29,29 @@ import java.util.*;
 public class LlmFeature implements ILlmFeature
 {
     public String classStructure;
-    private final URI chatgpt_url;
-    private String api_key;
+    private final URI chatUrl;
+    private String apiKey;
     
     private final JSONObject chatgptSettings;
 
     /**
      * Constructor
      */
-    public LlmFeature(String chatgpt_url_string, String api_key_string, String agent_class_name, String feature_class_name) {
+    public LlmFeature(String chatUrlString, String apiKeyString, String AgentClassName, String FeatureClassName) {
         // check if chatgpt_url is valid
         try {
-            chatgpt_url = new URI(chatgpt_url_string);
+            chatUrl = new URI(chatUrlString);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
 
         // check if api_key is valid
-        if (api_key_string == null || api_key_string.isEmpty()) {
+        if (apiKeyString == null || apiKeyString.isEmpty()) {
             System.err.println("API key variable not set in environment.");
             System.err.println("Set OPENAI_API_KEY in system variables.");
             System.exit(1);
         } else {
-            api_key = api_key_string;
+            apiKey = apiKeyString;
             System.out.println("F: API key is valid.");
         }
 
@@ -140,12 +143,15 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public String readClassStructure(String agent_class_name, String feature_class_name) {
+    public String readClassStructure(String AgentClassName, String FeatureClassName) {
         // init agent class structure
         try {
-            Class<?> agent_class = Class.forName(agent_class_name);
-            SClassReader.ClassInfo agent_sclass_reader = SClassReader.getClassInfo(agent_class.getName(), agent_class.getClassLoader());
-            System.out.println("F: " + agent_sclass_reader);
+            Class<?> agentClass = Class.forName(AgentClassName);
+            SClassReader.ClassInfo agentClassReader = SClassReader.getClassInfo(agentClass.getName(), agentClass.getClassLoader());
+
+            Annotation[] classAnnotation = agentClass.getAnnotations();
+
+            System.out.println("--> F: " + agentClassReader);
         } catch (Exception e) {
             System.err.println("F: agent_sclass_reader FAILED");
             System.exit(1);
@@ -153,9 +159,10 @@ public class LlmFeature implements ILlmFeature
 
         // init feature class structure
         try {
-            Class<?> feature_class = Class.forName(feature_class_name);
-            SClassReader.ClassInfo feature_sclass_reader = SClassReader.getClassInfo(feature_class.getName(), feature_class.getClassLoader());
-            System.out.println("F: " + feature_sclass_reader);
+            Class<?> featureClass = Class.forName(FeatureClassName);
+            SClassReader.ClassInfo featureClassReader = SClassReader.getClassInfo(featureClass.getName(), featureClass.getClassLoader());
+//            SClassReader.ClassInfo annotationClassReader = SClassReader.getClassInfo(featureClass.getAnnotations().getClass().getName(), featureClass.getAnnotations().getClass().getClassLoader());
+            System.out.println("F: " + featureClassReader);
         } catch (Exception e) {
             System.err.println("F: feature_sclass_reader FAILED");
             System.exit(1);
@@ -164,13 +171,16 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public String connectToLLM(String ChatGptRequest) {
+    public String connectToLLM(String ChatGptRequest)
+    {
         // update chatgptSettings with ChatGptRequest
         JSONArray messages = (JSONArray) chatgptSettings.get("messages");
 
-        for (Object message : messages) {
+        for (Object message : messages)
+        {
             JSONObject messageObject = (JSONObject) message;
-            if (messageObject.get("role").equals("user")) {
+            if (messageObject.get("role").equals("user"))
+            {
                 String content = (String) messageObject.get("content") + " " + ChatGptRequest;
                 messageObject.put("content", content);
             }
@@ -181,42 +191,50 @@ public class LlmFeature implements ILlmFeature
         HttpClient client = HttpClient.newHttpClient();
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(chatgpt_url)
+                .uri(chatUrl)
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + api_key)
+                .header("Authorization", "Bearer " + apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(chatgptSettings.toString()))
                 .build();
 
         // get response from LLM
         String responseMessage = null;
-        try {
+        try
+        {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("Response status code: " + response.statusCode());
 
-            if (response.statusCode() == 200) {
+            if (response.statusCode() == 200)
+            {
                 // parse response JSON
-                try {
+                try
+                {
                     JSONParser parser = new JSONParser();
                     JSONObject responseObject = (JSONObject) parser.parse(response.body());
                     JSONArray choicesArray = (JSONArray) responseObject.get("choices");
 
                     // get response message
-                    for (Object choice : choicesArray) {
+                    for (Object choice : choicesArray)
+                    {
                         JSONObject choiceObject = (JSONObject) choice;
                         long index = (long) choiceObject.get("index");
                         // get first message
-                        if (index == 0) {
+                        if (index == 0)
+                        {
                             JSONObject messageObject = (JSONObject) choiceObject.get("message");
                             responseMessage = (String) messageObject.get("content");
                         }
                     }
-                } catch (ParseException e){
+                } catch (ParseException e)
+                {
                     throw new RuntimeException(e);
                 }
-            } else {
+            } else
+            {
                 throw new Exception("F: LLM returned status code " + response.statusCode());
             }
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             throw new RuntimeException(e);
         }
 
@@ -231,7 +249,8 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public void generateAndInterpretPlanStep(String jsCode) {
+    public void generateAndInterpretPlanStep(String jsCode)
+    {
         String PlanStepPath = "bdi/llm/src/main/java/jadex/bdi/llm/impl/";
 
         Engine engine = Engine.newBuilder().option("engine.WarnInterpreterOnly", "false").build();
@@ -250,13 +269,14 @@ public class LlmFeature implements ILlmFeature
             {
                 System.out.println("F: Plan class or doPlanStep method not found");
             }
-    try{
+    try
+    {
             //save js to file path
             Files.write(Paths.get(PlanStepPath + "Plan.js"), jsCode.getBytes(), StandardOpenOption.CREATE);
             System.out.println("F: Plan.js executed and saved");
-        } catch (IOException e) {
+    } catch (IOException e) {
             throw new RuntimeException(e);
-        }
     }
     }
+}
 

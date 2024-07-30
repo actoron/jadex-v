@@ -3,11 +3,11 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal."
+      "content": "You are an expert Javascript code generator. Provide only the code block with a complete method implementation based on the provided goal."
     },
     {
       "role": "user",
-      "content": "Create a Java class named PlanStep with a method called doPlanStep, which print 'Hello World' to the console."
+      "content": "Create a Javascript class named PlanStep with a method called doPlanStep, which print 'Hello World' to the console."
     }
   ],
   "temperature": 0.3,

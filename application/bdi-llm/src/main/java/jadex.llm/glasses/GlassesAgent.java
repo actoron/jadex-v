@@ -2,6 +2,8 @@ package jadex.llm.glasses;
 
 
 import jadex.bdi.annotation.Belief;
+import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.Plan;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
@@ -19,27 +21,34 @@ public class GlassesAgent
     @Agent
     protected IComponent agent;
 
-    private final String chatgpt_url;
-    private final String api_key;
-    private final String agent_class_name;
-    private final String feature_class_name;
+    private final String chatUrl;
+    private final String apiKey;
+    private final String agentClassName;
+    private final String featureClassName;
 
     /** Constructor */
-    public GlassesAgent(String chatgpt_url, String api_key, String agent_class_name, String feature_class_name)
+    public GlassesAgent(String chatUrl, String apiKey, String agentClassName, String featureClassName)
     {
-        this.chatgpt_url = chatgpt_url;
-        this.api_key = api_key;
-        this.agent_class_name = agent_class_name;
-        this.feature_class_name = feature_class_name;
+        this.chatUrl = chatUrl;
+        this.apiKey = apiKey;
+        this.agentClassName = agentClassName;
+        this.featureClassName = featureClassName;
 
-        System.out.println("A: " + chatgpt_url);
-        System.out.println("A: " + api_key);
-        System.out.println("A: " + agent_class_name);
-        System.out.println("A: " + feature_class_name);
+        System.out.println("A: " + chatUrl);
+        System.out.println("A: " + apiKey);
+        System.out.println("A: " + agentClassName);
+        System.out.println("A: " + featureClassName);
 
         System.out.println("A: GlassesAgent class loaded");
+        //Annotation
+        //read Dateset jsonarray im constructor laden und befüllen
     }
-    @Belief
+//    @Belief
+//    public JsonArray = null
+
+//    @Goal
+
+    @Plan
 
     @OnStart
     public void body()
@@ -48,14 +57,17 @@ public class GlassesAgent
 
         /** Initialize the LlmFeature */
         LlmFeature llmFeature = new LlmFeature(
-                chatgpt_url,
-                api_key,
-                agent_class_name,
-                feature_class_name);
+                chatUrl,
+                apiKey,
+                agentClassName,
+                featureClassName);
 
 //        String javacode = llmFeature.connectToLLM("Hello, World!");
-        String javacode = "class Plan { static doPlanStep() { print('Hello World JavaScript'); } };";
 //        Class<?> PlanStep = llmFeature.generatePlanStep(javacode);
+        //Ausgabe SclassReader
+        llmFeature.readClassStructure(agentClassName, featureClassName);
+
+        String javacode = "class Plan { static doPlanStep() { print('Hello World JavaScript'); } };";
         llmFeature.generateAndInterpretPlanStep(javacode);
 
 
