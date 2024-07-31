@@ -13,6 +13,7 @@ import org.json.simple.parser.JSONParser;
 import org.apache.commons.io.FileUtils;
 import org.json.simple.parser.ParseException;
 
+import javax.tools.*;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -25,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class LlmFeature implements ILlmFeature
 {
@@ -148,9 +150,6 @@ public class LlmFeature implements ILlmFeature
         try {
             Class<?> agentClass = Class.forName(AgentClassName);
             SClassReader.ClassInfo agentClassReader = SClassReader.getClassInfo(agentClass.getName(), agentClass.getClassLoader());
-
-            Annotation[] classAnnotation = agentClass.getAnnotations();
-
             System.out.println("--> F: " + agentClassReader);
         } catch (Exception e) {
             System.err.println("F: agent_sclass_reader FAILED");
@@ -161,7 +160,6 @@ public class LlmFeature implements ILlmFeature
         try {
             Class<?> featureClass = Class.forName(FeatureClassName);
             SClassReader.ClassInfo featureClassReader = SClassReader.getClassInfo(featureClass.getName(), featureClass.getClassLoader());
-//            SClassReader.ClassInfo annotationClassReader = SClassReader.getClassInfo(featureClass.getAnnotations().getClass().getName(), featureClass.getAnnotations().getClass().getClassLoader());
             System.out.println("F: " + featureClassReader);
         } catch (Exception e) {
             System.err.println("F: feature_sclass_reader FAILED");
@@ -249,34 +247,22 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public void generateAndInterpretPlanStep(String jsCode)
+    public void generateAndCompilePlanStep(String javaCode)
     {
-        String PlanStepPath = "bdi/llm/src/main/java/jadex/bdi/llm/impl/";
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+//        InMemoryFileManager manager = new InMemoryFileManager(compiler.getStandardFileManager(null, null,null))
+//
+//        List<JavaFileObject> sourceFiles = Collections.singletonList(new JavaSourceFromString(PlanStep.class, javaCode));
+//        JavaCompiler.CompilationTask task = compiler.getTask(null, manager, diagnostics, null, null, sourceFiles);
 
-        Engine engine = Engine.newBuilder().option("engine.WarnInterpreterOnly", "false").build();
-        Context ctx = Context.newBuilder("js").engine(engine).build();
+//        boolean result = task.call();
+//
+//        if (!result)
+//        {
+//        }
 
-        ctx.eval("js", jsCode);
-
-            //Access + invoke doPlanStep method
-            Value globalObject = ctx.getBindings("js");
-            Value plan = globalObject.getMember("Plan");
-            if (plan != null && plan.hasMember("doPlanStep"))
-            {
-             Value doPlanStepFunction = plan.getMember("doPlanStep");
-             doPlanStepFunction.execute();
-            } else
-            {
-                System.out.println("F: Plan class or doPlanStep method not found");
-            }
-    try
-    {
-            //save js to file path
-            Files.write(Paths.get(PlanStepPath + "Plan.js"), jsCode.getBytes(), StandardOpenOption.CREATE);
-            System.out.println("F: Plan.js executed and saved");
-    } catch (IOException e) {
-            throw new RuntimeException(e);
     }
-    }
+
 }
 

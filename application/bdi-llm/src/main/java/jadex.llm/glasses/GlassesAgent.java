@@ -1,6 +1,5 @@
 package jadex.llm.glasses;
 
-
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
@@ -41,6 +40,7 @@ public class GlassesAgent
 
         System.out.println("A: GlassesAgent class loaded");
         //Annotation
+
         //read Dateset jsonarray im constructor laden und befüllen
     }
 //    @Belief
@@ -63,12 +63,12 @@ public class GlassesAgent
                 featureClassName);
 
 //        String javacode = llmFeature.connectToLLM("Hello, World!");
-//        Class<?> PlanStep = llmFeature.generatePlanStep(javacode);
+//        llmFeature.generateAndInterpretPlanStep(javacode);
         //Ausgabe SclassReader
         llmFeature.readClassStructure(agentClassName, featureClassName);
 
-        String javacode = "class Plan { static doPlanStep() { print('Hello World JavaScript'); } };";
-        llmFeature.generateAndInterpretPlanStep(javacode);
+//        String javacode = "class Plan { static doPlanStep() { print('Hello World JavaScript'); } };";
+//        llmFeature.generateAndInterpretPlanStep(javacode);
 
 
 //        try {
