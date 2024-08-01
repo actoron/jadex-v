@@ -24,6 +24,7 @@ public class GlassesAgent
     private final String apiKey;
     private final String agentClassName;
     private final String featureClassName;
+//    private final JsonObject dataset;
 
     /** Constructor */
     public GlassesAgent(String chatUrl, String apiKey, String agentClassName, String featureClassName)
@@ -42,6 +43,7 @@ public class GlassesAgent
         //Annotation
 
         //read Dateset jsonarray im constructor laden und befüllen
+//        JsonObject dataset = null;
     }
 //    @Belief
 //    public JsonArray = null
@@ -62,10 +64,12 @@ public class GlassesAgent
                 agentClassName,
                 featureClassName);
 
-//        String javacode = llmFeature.connectToLLM("Hello, World!");
+        String javacode = llmFeature.connectToLLM("Hello, World!");
+        System.out.println("A: " + javacode);
 //        llmFeature.generateAndInterpretPlanStep(javacode);
         //Ausgabe SclassReader
-        llmFeature.readClassStructure(agentClassName, featureClassName);
+//        llmFeature.readClassStructure(agentClassName, featureClassName);
+//        llmFeature.generateAndCompilePlanStep(javacode);
 
 //        String javacode = "class Plan { static doPlanStep() { print('Hello World JavaScript'); } };";
 //        llmFeature.generateAndInterpretPlanStep(javacode);

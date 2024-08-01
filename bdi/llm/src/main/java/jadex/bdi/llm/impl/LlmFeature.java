@@ -249,19 +249,35 @@ public class LlmFeature implements ILlmFeature
     @Override
     public void generateAndCompilePlanStep(String javaCode)
     {
+        final String className = "jadex.bdi.llm.impl.PlanStep";
+        //Code into JavaCompiler API
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-//        InMemoryFileManager manager = new InMemoryFileManager(compiler.getStandardFileManager(null, null,null))
-//
-//        List<JavaFileObject> sourceFiles = Collections.singletonList(new JavaSourceFromString(PlanStep.class, javaCode));
-//        JavaCompiler.CompilationTask task = compiler.getTask(null, manager, diagnostics, null, null, sourceFiles);
+        InMemoryFileManager manager = new InMemoryFileManager(compiler.getStandardFileManager(null, null,null));
 
-//        boolean result = task.call();
-//
-//        if (!result)
-//        {
-//        }
+        List<JavaFileObject> sourceFiles = Collections.singletonList(new JavaSourceFromString(className, javaCode)); //className
+        JavaCompiler.CompilationTask task = compiler.getTask(null, manager, diagnostics, null, null, sourceFiles);
 
+        boolean result = task.call();
+
+        ClassLoader classLoader = manager.getClass().getClassLoader();
+        Class<?> clazz = null;
+        try {
+            clazz = classLoader.loadClass(className);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        InMemoryClass instanceOfClass = null;
+        try {
+            instanceOfClass = (InMemoryClass) clazz.newInstance();
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+
+//        return instanceOfClass;
+        instanceOfClass.runCode();
     }
 
 }

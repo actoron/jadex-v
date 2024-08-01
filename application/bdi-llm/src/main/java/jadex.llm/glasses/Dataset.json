@@ -1,0 +1,72 @@
+[
+    {
+        "id": 1,
+        "shape": "Round",
+        "material": "metal",
+        "brand": "Brand2",
+        "colour": "red"
+    },
+    {
+        "id": 2,
+        "shape": "Oval",
+        "material": "metal",
+        "brand": "Brand1",
+        "colour": "red"
+    },
+    {
+        "id": 3,
+        "shape": "Oval",
+        "material": "no",
+        "brand": "Brand1",
+        "colour": "yellow"
+    },
+    {
+        "id": 4,
+        "shape": "Square",
+        "material": "no",
+        "brand": "Brand2",
+        "colour": "red"
+    },
+    {
+        "id": 5,
+        "shape": "Square",
+        "material": "plastic",
+        "brand": "Brand3",
+        "colour": "red"
+    },
+    {
+        "id": 6,
+        "shape": "Oval",
+        "material": "metal",
+        "brand": "Brand3",
+        "colour": "black"
+    },
+    {
+        "id": 7,
+        "shape": "Round",
+        "material": "metal",
+        "brand": "Brand3",
+        "colour": "yellow"
+    },
+    {
+        "id": 8,
+        "shape": "Round",
+        "material": "plastic",
+        "brand": "Brand2",
+        "colour": "yellow"
+    },
+    {
+        "id": 9,
+        "shape": "Round",
+        "material": "plastic",
+        "brand": "Brand3",
+        "colour": "red"
+    },
+    {
+        "id": 10,
+        "shape": "Oval",
+        "material": "metal",
+        "brand": "Brand2",
+        "colour": "yellow"
+    }
+]
