@@ -1,15 +1,21 @@
 package jadex.llm.glasses;
 
-import jadex.bdi.annotation.Belief;
-import jadex.bdi.annotation.Goal;
-import jadex.bdi.annotation.Plan;
 import jadex.bdi.llm.impl.LlmFeature;
-import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import org.apache.commons.io.FileUtils;
+
 
 
 @Agent(type="bdip")
@@ -24,15 +30,17 @@ public class GlassesAgent
     private final String apiKey;
     private final String agentClassName;
     private final String featureClassName;
-//    private final JsonObject dataset;
+
+    private JSONObject dataset;
 
     /** Constructor */
-    public GlassesAgent(String chatUrl, String apiKey, String agentClassName, String featureClassName)
+    public GlassesAgent(String chatUrl, String apiKey, String agentClassName, String featureClassName, String dataSetPath)
     {
         this.chatUrl = chatUrl;
         this.apiKey = apiKey;
         this.agentClassName = agentClassName;
         this.featureClassName = featureClassName;
+
 
         System.out.println("A: " + chatUrl);
         System.out.println("A: " + apiKey);
@@ -43,19 +51,27 @@ public class GlassesAgent
         //Annotation
 
         //read Dateset jsonarray im constructor laden und befüllen
-//        JsonObject dataset = null;
+        String dataSetFileString = null;
+        try {
+            dataSetFileString = FileUtils.readFileToString(new File(dataSetPath), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            JSONParser parser = new JSONParser();
+            this.dataset = (JSONObject) parser.parse(dataSetFileString);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
-//    @Belief
-//    public JsonArray = null
-
-//    @Goal
-
-    @Plan
 
     @OnStart
     public void body()
     {
         System.out.println("A: Agent " +agent.getId()+ " active");
+
+        System.out.println(dataset);
 
         /** Initialize the LlmFeature */
         LlmFeature llmFeature = new LlmFeature(
@@ -64,33 +80,12 @@ public class GlassesAgent
                 agentClassName,
                 featureClassName);
 
-        String javacode = llmFeature.connectToLLM("Hello, World!");
-        System.out.println("A: " + javacode);
-//        llmFeature.generateAndInterpretPlanStep(javacode);
-        //Ausgabe SclassReader
-//        llmFeature.readClassStructure(agentClassName, featureClassName);
-//        llmFeature.generateAndCompilePlanStep(javacode);
+        llmFeature.connectToLLM("");
+        System.out.println(llmFeature.generatedJavaCode);
+        llmFeature.generateAndCompilePlanStep();
+        llmFeature.doPlanStep(dataset);
 
-//        String javacode = "class Plan { static doPlanStep() { print('Hello World JavaScript'); } };";
-//        llmFeature.generateAndInterpretPlanStep(javacode);
-
-
-//        try {
-//            Method doPlanStep = PlanStep.getMethod("doPlanStep");
-//            try {
-//                doPlanStep.invoke(PlanStep.getDeclaredConstructor().newInstance());
-//            } catch (IllegalAccessException e) {
-//                throw new RuntimeException(e);
-//            } catch (InvocationTargetException e) {
-//                throw new RuntimeException(e);
-//            } catch (InstantiationException e) {
-//                throw new RuntimeException(e);
-//            }
-//        } catch (NoSuchMethodException e) {
-//            throw new RuntimeException(e);
-//        }
-
-
+        //System.out.println(newDataset);
 
         agent.terminate();
     }
@@ -101,12 +96,6 @@ public class GlassesAgent
         System.out.println("A: Agent "+agent.getId()+ " terminated");
     }
 
-//    @Plan(trigger = @Trigger(goals = SortGlassesListGoal.class))
-    public void executeGeneratedPlan(IPlan context)
-    {
-        // java code = llmFeature.generatePlanStep()
-        System.out.println("A: executeGeneratedPlan");
-    }
 
     /**
      *  Start Glasses Agent.
@@ -120,7 +109,8 @@ public class GlassesAgent
                 "https://api.openai.com/v1/chat/completions",
                 System.getenv("OPENAI_API_KEY"),
                 "jadex.llm.glasses.GlassesAgent",
-                "jadex.llm.glasses.Glasses")
+                "jadex.llm.glasses.Glasses",
+                "C:/Users/resas/Documents/Coding/jadex-v/application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
         );
         IComponent.waitForLastComponentTerminated();
     }

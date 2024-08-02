@@ -1,5 +1,7 @@
 package jadex.bdi.llm;
 
+import jadex.bdi.llm.impl.InMemoryClass;
+
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -21,12 +23,12 @@ public interface ILlmFeature
      *
      * @return
      */
-    public String connectToLLM(String ChatGptRequest) throws URISyntaxException;
+    public void connectToLLM(String ChatGptRequest) throws URISyntaxException;
 
     /**
      * Generates a plan step using the LLM and executes it.
      */
-    public void generateAndCompilePlanStep(String javaCode);
+    public void generateAndCompilePlanStep();
     //public Class<?> generatePlanStep(String JavaCode);
 
 }

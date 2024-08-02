@@ -9,8 +9,8 @@ import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardJavaFileManager;
 
-public class InMemoryFileManager extends ForwardingJavaFileManager<JavaFileManager>
-{
+public class InMemoryFileManager extends ForwardingJavaFileManager<JavaFileManager> {
+
     private final Map<String, JavaClassAsBytes> compiledClasses;
     private final ClassLoader loader;
 
@@ -23,23 +23,30 @@ public class InMemoryFileManager extends ForwardingJavaFileManager<JavaFileManag
         );
     }
 
+    /**
+     * Used to get the class loader for our compiled class. It creates an anonymous class extending
+     * the SecureClassLoader which uses the byte code created by the compiler and stored in the
+     * JavaClassObject, and returns the Class for it
+     *
+     * @param location where to place or search for file objects.
+     */
     @Override
-    public ClassLoader getClassLoader(Location location)
-    {
+    public ClassLoader getClassLoader(Location location) {
         return loader;
     }
 
     @Override
-    public JavaFileObject getJavaFileForOutput(Location location, String className, Kind kind, FileObject sibling)
-    {
-        JavaClassAsBytes classAsBytes = new JavaClassAsBytes(className, kind);
+    public JavaFileObject getJavaFileForOutput(Location location, String className, Kind kind,
+                                               FileObject sibling) {
+
+        JavaClassAsBytes classAsBytes = new JavaClassAsBytes(
+                className, kind);
         compiledClasses.put(className, classAsBytes);
 
         return classAsBytes;
     }
-    public Map<String, JavaClassAsBytes> getBytesMap()
-    {
+
+    public Map<String, JavaClassAsBytes> getBytesMap() {
         return compiledClasses;
     }
 }
-

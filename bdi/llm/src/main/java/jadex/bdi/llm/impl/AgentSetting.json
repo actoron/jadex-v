@@ -7,7 +7,7 @@
     },
     {
       "role": "user",
-      "content": "Create a java class named PlanStep with a method called doPlanStep, which print 'Hello World' to the console."
+      "content": "Create a java class named PlanStep with implements InMemoryClass with a method called doPlanStep. The PlanStep function get a org.json.simple.JSONObject. The Object contains a List of 'Glasses' with different parameters. Sort the List by the key 'shape' the value is a string. Return the sorted org.json.simple.JSONObject."
     }
   ],
   "temperature": 0.3,
