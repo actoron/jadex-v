@@ -4,5 +4,5 @@ import org.json.simple.JSONObject;
 
 public interface InMemoryClass {
 
-    void doPlanStep(JSONObject dataset);
+    JSONObject doPlan(JSONObject dataset); //void doPlanStep(JSONObject dataset);
 }

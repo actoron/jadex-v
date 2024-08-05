@@ -1,12 +1,8 @@
 package jadex.bdi.llm.impl;
 
-import jadex.bdi.annotation.Belief;
 import jadex.bdi.llm.ILlmFeature;
 import jadex.classreader.SClassReader;
 
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.Value;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -15,26 +11,20 @@ import org.json.simple.parser.ParseException;
 
 import javax.tools.*;
 import java.io.*;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Array;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.logging.Logger;
 
-public class LlmFeature implements ILlmFeature
-{
+public class LlmFeature implements ILlmFeature {
     public String classStructure;
     private final URI chatUrl;
     private String apiKey;
-    
+
     private final JSONObject chatgptSettings;
+    public String generatedJavaCode;
 
     /**
      * Constructor
@@ -80,13 +70,13 @@ public class LlmFeature implements ILlmFeature
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
-        if (!chatgptSettings.containsKey("model") ) {
+        if (!chatgptSettings.containsKey("model")) {
             System.err.println("AgentSetting.json does not contain component 'model'.");
             System.exit(1);
         }
 
         JSONArray messages = null;
-        if (!chatgptSettings.containsKey("messages") ) {
+        if (!chatgptSettings.containsKey("messages")) {
             System.err.println("AgentSetting.json does not contain component 'messages'.");
             System.exit(1);
         } else {
@@ -113,31 +103,31 @@ public class LlmFeature implements ILlmFeature
             }
         }
 
-        if (!chatgptSettings.containsKey("temperature") ) {
+        if (!chatgptSettings.containsKey("temperature")) {
             System.out.println("Warning: AgentSetting.json does not contain component 'temperature'.");
             System.out.println("Warning: Setting 'temperature' to 0.3");
             chatgptSettings.put("temperature", 0.3);
         }
 
-        if (!chatgptSettings.containsKey("max_tokens") ) {
+        if (!chatgptSettings.containsKey("max_tokens")) {
             System.out.println("Warning: AgentSetting.json does not contain component 'max_tokens'.");
             System.out.println("Warning: Setting 'max_tokens' to 300");
             chatgptSettings.put("max_tokens", 300);
         }
 
-        if (!chatgptSettings.containsKey("top_p") ) {
+        if (!chatgptSettings.containsKey("top_p")) {
             System.out.println("Warning: AgentSetting.json does not contain component 'top_p'.");
             System.out.println("Warning: Setting 'top_p' to 1.0");
             chatgptSettings.put("top_p", 1.0);
         }
 
-        if (!chatgptSettings.containsKey("frequency_penalty") ) {
+        if (!chatgptSettings.containsKey("frequency_penalty")) {
             System.out.println("Warning: AgentSetting.json does not contain component 'frequency_penalty'.");
             System.out.println("Warning: Setting 'frequency_penalty' to 0.0");
             chatgptSettings.put("frequency_penalty", 0.0);
         }
 
-        if (!chatgptSettings.containsKey("presence_penalty") ) {
+        if (!chatgptSettings.containsKey("presence_penalty")) {
             System.out.println("Warning: AgentSetting.json does not contain component 'presence_penalty'.");
             System.out.println("Warning: Setting 'presence_penalty' to 0.0");
             chatgptSettings.put("presence_penalty", 0.0);
@@ -169,16 +159,13 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public String connectToLLM(String ChatGptRequest)
-    {
+    public void connectToLLM(String ChatGptRequest) {
         // update chatgptSettings with ChatGptRequest
         JSONArray messages = (JSONArray) chatgptSettings.get("messages");
 
-        for (Object message : messages)
-        {
+        for (Object message : messages) {
             JSONObject messageObject = (JSONObject) message;
-            if (messageObject.get("role").equals("user"))
-            {
+            if (messageObject.get("role").equals("user")) {
                 String content = (String) messageObject.get("content") + " " + ChatGptRequest;
                 messageObject.put("content", content);
             }
@@ -197,88 +184,93 @@ public class LlmFeature implements ILlmFeature
 
         // get response from LLM
         String responseMessage = null;
-        try
-        {
+        try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("Response status code: " + response.statusCode());
 
-            if (response.statusCode() == 200)
-            {
+            if (response.statusCode() == 200) {
                 // parse response JSON
-                try
-                {
+                try {
                     JSONParser parser = new JSONParser();
                     JSONObject responseObject = (JSONObject) parser.parse(response.body());
                     JSONArray choicesArray = (JSONArray) responseObject.get("choices");
 
                     // get response message
-                    for (Object choice : choicesArray)
-                    {
+                    for (Object choice : choicesArray) {
                         JSONObject choiceObject = (JSONObject) choice;
                         long index = (long) choiceObject.get("index");
                         // get first message
-                        if (index == 0)
-                        {
+                        if (index == 0) {
                             JSONObject messageObject = (JSONObject) choiceObject.get("message");
                             responseMessage = (String) messageObject.get("content");
                         }
                     }
-                } catch (ParseException e)
-                {
+                } catch (ParseException e) {
                     throw new RuntimeException(e);
                 }
-            } else
-            {
+            } else {
                 throw new Exception("F: LLM returned status code " + response.statusCode());
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         // clean up responseMessage
         // remove leading and trailing quotation marks from responseMessage
-        responseMessage = responseMessage.substring(7, responseMessage.length()-3);
+        responseMessage = responseMessage.substring(7, responseMessage.length() - 3);
 
         // add package to javacode
         responseMessage = "package jadex.bdi.llm.impl;\n" + responseMessage;
+        this.generatedJavaCode = responseMessage;
+        System.out.println(this.generatedJavaCode);
 
-        return responseMessage;
+//        return responseMessage;
     }
 
     @Override
-    public void generateAndCompilePlanStep(String javaCode)
-    {
-        final String className = "jadex.bdi.llm.impl.PlanStep";
-        //Code into JavaCompiler API
+    public InMemoryClass generateAndCompilePlanStep() {
+        final String classname = "jadex.bdi.llm.impl.Plan";
+
+//        final String SOURCE_CODE =
+//                "package jadex.bdi.llm.impl;\n"
+//                        + "public class Plan implements InMemoryClass {\n"
+//                        + "@Override\n"
+//                        + "    public void runCode() {\n"
+//                        + "        System.out.println(\"code is running...\");\n"
+//                        + "    }\n"
+//                        + "}\n";
+
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-        InMemoryFileManager manager = new InMemoryFileManager(compiler.getStandardFileManager(null, null,null));
+        InMemoryFileManager manager = new InMemoryFileManager(compiler.getStandardFileManager(null, null, null));
 
-        List<JavaFileObject> sourceFiles = Collections.singletonList(new JavaSourceFromString(className, javaCode)); //className
+        List<JavaFileObject> sourceFiles = Collections.singletonList(new JavaSourceFromString(classname, generatedJavaCode));
+
         JavaCompiler.CompilationTask task = compiler.getTask(null, manager, diagnostics, null, null, sourceFiles);
 
         boolean result = task.call();
-
-        ClassLoader classLoader = manager.getClass().getClassLoader();
-        Class<?> clazz = null;
-        try {
-            clazz = classLoader.loadClass(className);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
         InMemoryClass instanceOfClass = null;
-        try {
-            instanceOfClass = (InMemoryClass) clazz.newInstance();
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+
+        if (!result) {
+            diagnostics.getDiagnostics()
+                    .forEach(d -> System.out.println(d));
+        } else {
+            ClassLoader classLoader = manager.getClassLoader(null);
+            Class<?> clazz = null;
+            try {
+                clazz = classLoader.loadClass(classname);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                instanceOfClass = (InMemoryClass) clazz.newInstance();
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
-
-//        return instanceOfClass;
-        instanceOfClass.runCode();
+        return instanceOfClass;
     }
-
 }
 

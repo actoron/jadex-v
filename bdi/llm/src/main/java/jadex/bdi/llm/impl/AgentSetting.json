@@ -7,7 +7,7 @@
     },
     {
       "role": "user",
-      "content": "Create a java class named PlanStep with implements InMemoryClass with a method called doPlanStep. The PlanStep function get a org.json.simple.JSONObject. The Object contains a List of 'Glasses' with different parameters. Sort the List by the key 'shape' the value is a string. Return the sorted org.json.simple.JSONObject."
+      "content": "Create a java class named Plan with implements InMemoryClass with a method called doPlan. The Plan function get a org.json.simple.JSONObject. The Object contains a List of 'Glasses' with different parameters. Sort the List by the key 'shape' the value is a string. Return the sorted org.json.simple.JSONObject."
     }
   ],
   "temperature": 0.3,

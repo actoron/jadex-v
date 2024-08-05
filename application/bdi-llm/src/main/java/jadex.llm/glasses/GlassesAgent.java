@@ -1,5 +1,6 @@
 package jadex.llm.glasses;
 
+import jadex.bdi.llm.impl.InMemoryClass;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
@@ -82,10 +83,22 @@ public class GlassesAgent
 
         llmFeature.connectToLLM("");
         System.out.println(llmFeature.generatedJavaCode);
-        llmFeature.generateAndCompilePlanStep();
-        llmFeature.doPlanStep(dataset);
+//        llmFeature.generateAndCompilePlanStep();
+//        llmFeature.doPlanStep(dataset);
+//        llmFeature.generatedJavaCode = "package jadex.bdi.llm.impl;\n"
+//                + "import org.json.simple.JSONObject;\n"
+//                + "public class Plan implements InMemoryClass {\n"
+//                + "@Override\n"
+//                + "public JSONObject doPlan(JSONObject input) {\n"
+//                + "System.out.println(\"Plan is doing some shittyshit...\" + input);\n"
+//                + "return input;\n"
+//                + "}\n"
+//                + "}\n";
 
-        //System.out.println(newDataset);
+        llmFeature.generateAndCompilePlanStep();
+        InMemoryClass plan = llmFeature.generateAndCompilePlanStep();
+        JSONObject sortDataSet = plan.doPlan(dataset);
+        System.out.println(sortDataSet);
 
         agent.terminate();
     }
@@ -110,7 +123,7 @@ public class GlassesAgent
                 System.getenv("OPENAI_API_KEY"),
                 "jadex.llm.glasses.GlassesAgent",
                 "jadex.llm.glasses.Glasses",
-                "C:/Users/resas/Documents/Coding/jadex-v/application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
+                "/home/schuther/IdeaProjects/jadex-v/application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
         );
         IComponent.waitForLastComponentTerminated();
     }
