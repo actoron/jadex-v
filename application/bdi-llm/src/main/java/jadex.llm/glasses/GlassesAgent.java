@@ -1,7 +1,9 @@
 package jadex.llm.glasses;
 
+import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.InMemoryClass;
 import jadex.bdi.llm.impl.LlmFeature;
+import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
@@ -32,7 +34,8 @@ public class GlassesAgent
     private final String agentClassName;
     private final String featureClassName;
 
-    private JSONObject dataset;
+//    private JSONObject dataset;
+    private final String dataSetPath;
 
     /** Constructor */
     public GlassesAgent(String chatUrl, String apiKey, String agentClassName, String featureClassName, String dataSetPath)
@@ -41,6 +44,7 @@ public class GlassesAgent
         this.apiKey = apiKey;
         this.agentClassName = agentClassName;
         this.featureClassName = featureClassName;
+        this.dataSetPath = dataSetPath;
 
 
         System.out.println("A: " + chatUrl);
@@ -49,7 +53,42 @@ public class GlassesAgent
         System.out.println("A: " + featureClassName);
 
         System.out.println("A: GlassesAgent class loaded");
-        //Annotation
+    }
+
+    @Belief
+    private Val<JSONObject> dataset;
+
+    @Goal
+    public class AgentGoal
+    {
+        @GoalParameter
+        protected Val<JSONObject> convDataSet;
+
+        @GoalCreationCondition(beliefs="dataset")
+        public AgentGoal(JSONObject convDataSet)
+        {
+            this.convDataSet = new Val<>(convDataSet);
+            System.out.println("A: Goal created");
+        }
+
+        @GoalTargetCondition(parameters="convDataSet")
+        public boolean checkTarget()
+        {
+            System.out.println("A: Goal check");
+            //todo return true if the goal is achieved
+            return true;
+        }
+
+        public void setConvDataSet(JSONObject val)
+        {
+            convDataSet.set(val);
+        }
+    }
+
+    @OnStart
+    public void body()
+    {
+        System.out.println("A: Agent " +agent.getId()+ " active");
 
         //read Dateset jsonarray im constructor laden und befüllen
         String dataSetFileString = null;
@@ -61,19 +100,19 @@ public class GlassesAgent
 
         try {
             JSONParser parser = new JSONParser();
-            this.dataset = (JSONObject) parser.parse(dataSetFileString);
+            dataset.set((JSONObject) parser.parse(dataSetFileString));
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @OnStart
-    public void body()
-    {
-        System.out.println("A: Agent " +agent.getId()+ " active");
 
         System.out.println(dataset);
 
+        agent.terminate();
+    }
+
+    @Plan(trigger=@Trigger(goals=AgentGoal.class))
+    protected void generatePlan1(AgentGoal goal)
+    {
         /** Initialize the LlmFeature */
         LlmFeature llmFeature = new LlmFeature(
                 chatUrl,
@@ -81,26 +120,15 @@ public class GlassesAgent
                 agentClassName,
                 featureClassName);
 
+//        System.out.println(llmFeature.readClassStructure(agentClassName, featureClassName));
         llmFeature.connectToLLM("");
         System.out.println(llmFeature.generatedJavaCode);
-//        llmFeature.generateAndCompilePlanStep();
-//        llmFeature.doPlanStep(dataset);
-//        llmFeature.generatedJavaCode = "package jadex.bdi.llm.impl;\n"
-//                + "import org.json.simple.JSONObject;\n"
-//                + "public class Plan implements InMemoryClass {\n"
-//                + "@Override\n"
-//                + "public JSONObject doPlan(JSONObject input) {\n"
-//                + "System.out.println(\"Plan is doing some shittyshit...\" + input);\n"
-//                + "return input;\n"
-//                + "}\n"
-//                + "}\n";
 
-        llmFeature.generateAndCompilePlanStep();
-        InMemoryClass plan = llmFeature.generateAndCompilePlanStep();
-        JSONObject sortDataSet = plan.doPlan(dataset);
-        System.out.println(sortDataSet);
-
-        agent.terminate();
+        llmFeature.generateAndCompilePlan();
+        InMemoryClass plan = llmFeature.generateAndCompilePlan();
+        JSONObject sortDataSet = plan.doPlan(dataset.get());
+        goal.setConvDataSet(sortDataSet);
+//        System.out.println(sortDataSet);
     }
 
     @OnEnd

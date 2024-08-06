@@ -2,15 +2,11 @@ package jadex.bdi.llm;
 
 import jadex.bdi.llm.impl.InMemoryClass;
 
-import java.net.URISyntaxException;
-import java.util.List;
-
 public interface ILlmFeature
 {
     /**
-     * Reads the structure of the given class.
+     * Reads the structure of the given class and pojo.
      *
-     * @return
      */
     public String readClassStructure(String agent_class_name, String feature_class_name);
 
@@ -21,14 +17,14 @@ public interface ILlmFeature
      * The API key for accessing the language model must be saved in the
      * environment variable "OPENAI_API_KEY".
      *
-     * @return
      */
-    public void connectToLLM(String ChatGptRequest) throws URISyntaxException;
+    public void connectToLLM(String ChatGptRequest);
 
     /**
-     * Generates a plan step using the LLM and executes it.
+     * Generates a plan using the LLM-generated code and executes it in-memory.
+     *
      */
-    public InMemoryClass generateAndCompilePlanStep();
+    public InMemoryClass generateAndCompilePlan();
     //public Class<?> generatePlanStep(String JavaCode);
 
 }
