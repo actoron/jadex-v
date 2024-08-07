@@ -1,6 +1,7 @@
 package jadex.llm.glasses;
 
 import jadex.bdi.annotation.*;
+import jadex.bdi.llm.ILlmFeature;
 import jadex.bdi.llm.impl.InMemoryClass;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.runtime.Val;
@@ -56,32 +57,59 @@ public class GlassesAgent
     }
 
     @Belief
-    private Val<JSONObject> dataset;
+    private Val<String> datasetString;
 
     @Goal
     public class AgentGoal
     {
         @GoalParameter
-        protected Val<JSONObject> convDataSet;
+        protected Val<String> convDataSetString; //Val<String> convDataSet;
 
-        @GoalCreationCondition(beliefs="dataset")
-        public AgentGoal(JSONObject convDataSet)
+        @GoalCreationCondition(beliefs="datasetString")
+        public AgentGoal(String convDataSetString)
         {
-            this.convDataSet = new Val<>(convDataSet);
+            this.convDataSetString = new Val<>(convDataSetString);
             System.out.println("A: Goal created");
         }
 
-        @GoalTargetCondition(parameters="convDataSet")
-        public boolean checkTarget()
-        {
-            System.out.println("A: Goal check");
-            //todo return true if the goal is achieved
-            return true;
+        @GoalFinished
+        public void goalFinished() {
+            System.out.println("goal finished");
         }
 
-        public void setConvDataSet(JSONObject val)
+        @GoalTargetCondition(parameters="convDataSetString")
+        public boolean checkTarget()
         {
-            convDataSet.set(val);
+            System.out.println("--->Test Goal");
+            ILlmFeature llmFeature = new LlmFeature(
+                    chatUrl,
+                    apiKey,
+                    agentClassName,
+                    featureClassName,
+                    "bdi/llm/src/main/java/jadex/bdi/llm/impl/GoalSettings.json");
+
+            llmFeature.connectToLLM("");
+            llmFeature.generateAndCompilePlan();
+            InMemoryClass plan = llmFeature.generateAndCompilePlan();
+            JSONParser parser = new JSONParser();
+            JSONObject convDataSet = null;
+            try {
+                convDataSet = (JSONObject) parser.parse(convDataSetString.get());
+                Boolean checkStatus  = (Boolean) plan.runCode(convDataSet);
+                System.out.println("A: Goal check: " + checkStatus);
+                return checkStatus;
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public void setConvDataSetString(String val)
+        {
+            convDataSetString.set(val);
+        }
+        public String getConvDataSetString()
+        {
+            return convDataSetString.get();
         }
     }
 
@@ -100,12 +128,13 @@ public class GlassesAgent
 
         try {
             JSONParser parser = new JSONParser();
-            dataset.set((JSONObject) parser.parse(dataSetFileString));
+            JSONObject dataset = (JSONObject) parser.parse(dataSetFileString);
+            datasetString.set(dataset.toString());
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
 
-        System.out.println(dataset);
+        System.out.println(datasetString);
 
         agent.terminate();
     }
@@ -114,11 +143,13 @@ public class GlassesAgent
     protected void generatePlan1(AgentGoal goal)
     {
         /** Initialize the LlmFeature */
+        System.out.println("--->Test Plan");
         LlmFeature llmFeature = new LlmFeature(
                 chatUrl,
                 apiKey,
                 agentClassName,
-                featureClassName);
+                featureClassName,
+                "bdi/llm/src/main/java/jadex/bdi/llm/impl/PlanSettings.json");
 
 //        System.out.println(llmFeature.readClassStructure(agentClassName, featureClassName));
         llmFeature.connectToLLM("");
@@ -126,8 +157,15 @@ public class GlassesAgent
 
         llmFeature.generateAndCompilePlan();
         InMemoryClass plan = llmFeature.generateAndCompilePlan();
-        JSONObject sortDataSet = plan.doPlan(dataset.get());
-        goal.setConvDataSet(sortDataSet);
+        JSONParser parser = new JSONParser();
+        try {
+            JSONObject dataset = (JSONObject) parser.parse(goal.getConvDataSetString());
+            JSONObject convDataSet = (JSONObject) plan.runCode(dataset);
+            goal.setConvDataSetString(convDataSet.toString());
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+
 //        System.out.println(sortDataSet);
     }
 

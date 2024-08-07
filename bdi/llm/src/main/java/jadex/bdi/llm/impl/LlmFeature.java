@@ -26,13 +26,12 @@ public class LlmFeature implements ILlmFeature {
 
     private final JSONObject chatgptSettings;
     public String generatedJavaCode;
-    protected ClassLoader classloader;
 
 
     /**
      * Constructor
      */
-    public LlmFeature(String chatUrlString, String apiKeyString, String AgentClassName, String FeatureClassName)
+    public LlmFeature(String chatUrlString, String apiKeyString, String AgentClassName, String FeatureClassName, String settingsPath)
     {
         // check if chatgpt_url is valid
         try
@@ -55,18 +54,19 @@ public class LlmFeature implements ILlmFeature {
             System.out.println("F: API key is valid.");
         }
 
-        // check if AgentSetting.json is valid (given + readable) + have chatgptSettings
-        File settingsFile = new File("bdi/llm/src/main/java/jadex/bdi/llm/impl/AgentSetting.json");
+        // check if PlanSettings.json is valid (given + readable) + have chatgptSettings
+        System.out.println("F: " + settingsPath);
+        File settingsFile = new File(settingsPath);
         if (!settingsFile.exists() || !settingsFile.canRead())
         {
-            System.err.println("AgentSetting.json not found or not readable.");
+            System.err.println("PlanSettings.json not found or not readable.");
             System.exit(1);
         } else
         {
-            System.out.println("F: AgentSetting.json is valid.");
+            System.out.println("F: PlanSettings.json is valid.");
         }
 
-        // check if AgentSettings.json has chatgptSettings
+        // check if PlanSettings.json has chatgptSettings
         String settingsFileString = null;
         try
         {
@@ -85,14 +85,14 @@ public class LlmFeature implements ILlmFeature {
         }
         if (!chatgptSettings.containsKey("model"))
         {
-            System.err.println("AgentSetting.json does not contain component 'model'.");
+            System.err.println("PlanSettings.json does not contain component 'model'.");
             System.exit(1);
         }
 
         JSONArray messages = null;
         if (!chatgptSettings.containsKey("messages"))
         {
-            System.err.println("AgentSetting.json does not contain component 'messages'.");
+            System.err.println("PlanSettings.json does not contain component 'messages'.");
             System.exit(1);
         } else
         {
@@ -106,7 +106,7 @@ public class LlmFeature implements ILlmFeature {
                 JSONObject messageObject = (JSONObject) message;
                 if (!messageObject.containsKey("role") || !messageObject.containsKey("content"))
                 {
-                    System.err.println("AgentSetting.json does not contain component 'role' or 'content'.");
+                    System.err.println("PlanSettings.json does not contain component 'role' or 'content'.");
                     System.exit(1);
                 } else
                 {
@@ -119,42 +119,42 @@ public class LlmFeature implements ILlmFeature {
             }
             if (!roles.isEmpty())
             {
-                System.err.println("AgentSetting.json does not contain all roles." + roles);
+                System.err.println("PlanSettings.json does not contain all roles." + roles);
                 System.exit(1);
             }
         }
 
         if (!chatgptSettings.containsKey("temperature"))
         {
-            System.out.println("Warning: AgentSetting.json does not contain component 'temperature'.");
+            System.out.println("Warning: PlanSettings.json does not contain component 'temperature'.");
             System.out.println("Warning: Setting 'temperature' to 0.3");
             chatgptSettings.put("temperature", 0.3);
         }
 
         if (!chatgptSettings.containsKey("max_tokens"))
         {
-            System.out.println("Warning: AgentSetting.json does not contain component 'max_tokens'.");
+            System.out.println("Warning: PlanSettings.json does not contain component 'max_tokens'.");
             System.out.println("Warning: Setting 'max_tokens' to 300");
             chatgptSettings.put("max_tokens", 300);
         }
 
         if (!chatgptSettings.containsKey("top_p"))
         {
-            System.out.println("Warning: AgentSetting.json does not contain component 'top_p'.");
+            System.out.println("Warning: PlanSettings.json does not contain component 'top_p'.");
             System.out.println("Warning: Setting 'top_p' to 1.0");
             chatgptSettings.put("top_p", 1.0);
         }
 
         if (!chatgptSettings.containsKey("frequency_penalty"))
         {
-            System.out.println("Warning: AgentSetting.json does not contain component 'frequency_penalty'.");
+            System.out.println("Warning: PlanSettings.json does not contain component 'frequency_penalty'.");
             System.out.println("Warning: Setting 'frequency_penalty' to 0.0");
             chatgptSettings.put("frequency_penalty", 0.0);
         }
 
         if (!chatgptSettings.containsKey("presence_penalty"))
         {
-            System.out.println("Warning: AgentSetting.json does not contain component 'presence_penalty'.");
+            System.out.println("Warning: PlanSettings.json does not contain component 'presence_penalty'.");
             System.out.println("Warning: Setting 'presence_penalty' to 0.0");
             chatgptSettings.put("presence_penalty", 0.0);
         }
