@@ -1,4 +1,4 @@
-package jadex.bdi.llm.impl;
+package jadex.bdi.llm.impl.inmemory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;

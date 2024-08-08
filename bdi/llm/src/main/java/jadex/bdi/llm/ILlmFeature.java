@@ -1,15 +1,9 @@
 package jadex.bdi.llm;
 
-import jadex.bdi.llm.impl.InMemoryClass;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
 
 public interface ILlmFeature
 {
-    /**
-     * Reads the structure of the given class and pojo.
-     *
-     */
-    public String readClassStructure(String agent_class_name, String feature_class_name);
-
     /**
      * Establishes a connection to the LLM.
      * <p>
@@ -17,14 +11,13 @@ public interface ILlmFeature
      * The API key for accessing the language model must be saved in the
      * environment variable "OPENAI_API_KEY".
      *
+     * @param ChatGptRequestExtension The requestextension to be or not sent to the LLM.
      */
-    public void connectToLLM(String ChatGptRequest);
+    public void connectToLLM(String ChatGptRequestExtension);
 
     /**
      * Generates a plan using the LLM-generated code and executes it in-memory.
      *
      */
-    public InMemoryClass generateAndCompilePlan();
-    //public Class<?> generatePlanStep(String JavaCode);
-
+    public IPlanBody generateAndCompileCode();
 }

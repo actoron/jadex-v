@@ -1,8 +1,7 @@
 package jadex.llm.glasses;
 
 import jadex.bdi.annotation.*;
-import jadex.bdi.llm.ILlmFeature;
-import jadex.bdi.llm.impl.InMemoryClass;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
@@ -32,26 +31,20 @@ public class GlassesAgent
 
     private final String chatUrl;
     private final String apiKey;
-    private final String agentClassName;
-    private final String featureClassName;
 
 //    private JSONObject dataset;
     private final String dataSetPath;
 
     /** Constructor */
-    public GlassesAgent(String chatUrl, String apiKey, String agentClassName, String featureClassName, String dataSetPath)
+    public GlassesAgent(String chatUrl, String apiKey, String dataSetPath)
     {
         this.chatUrl = chatUrl;
         this.apiKey = apiKey;
-        this.agentClassName = agentClassName;
-        this.featureClassName = featureClassName;
         this.dataSetPath = dataSetPath;
 
 
         System.out.println("A: " + chatUrl);
         System.out.println("A: " + apiKey);
-        System.out.println("A: " + agentClassName);
-        System.out.println("A: " + featureClassName);
 
         System.out.println("A: GlassesAgent class loaded");
     }
@@ -74,23 +67,23 @@ public class GlassesAgent
 
         @GoalFinished
         public void goalFinished() {
-            System.out.println("goal finished");
+            System.out.println("A: Goal finished");
+            System.out.printf("Data: " + convDataSetString.get());
         }
 
         @GoalTargetCondition(parameters="convDataSetString")
         public boolean checkTarget()
         {
             System.out.println("--->Test Goal");
-            ILlmFeature llmFeature = new LlmFeature(
+            LlmFeature llmFeature = new LlmFeature(
                     chatUrl,
                     apiKey,
-                    agentClassName,
-                    featureClassName,
-                    "bdi/llm/src/main/java/jadex/bdi/llm/impl/GoalSettings.json");
+                    "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/GoalSettings.json");
 
             llmFeature.connectToLLM("");
-            llmFeature.generateAndCompilePlan();
-            InMemoryClass plan = llmFeature.generateAndCompilePlan();
+            llmFeature.generateAndCompileCode();
+
+            IPlanBody plan = llmFeature.generateAndCompileCode();
             JSONParser parser = new JSONParser();
             JSONObject convDataSet = null;
             try {
@@ -133,30 +126,22 @@ public class GlassesAgent
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
-
-        System.out.println(datasetString);
-
-        agent.terminate();
     }
 
     @Plan(trigger=@Trigger(goals=AgentGoal.class))
     protected void generatePlan1(AgentGoal goal)
     {
         /** Initialize the LlmFeature */
-        System.out.println("--->Test Plan");
+        System.out.println("--->Test Plan 1");
         LlmFeature llmFeature = new LlmFeature(
                 chatUrl,
                 apiKey,
-                agentClassName,
-                featureClassName,
-                "bdi/llm/src/main/java/jadex/bdi/llm/impl/PlanSettings.json");
+                "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/Plan1Settings.json");
 
-//        System.out.println(llmFeature.readClassStructure(agentClassName, featureClassName));
         llmFeature.connectToLLM("");
-        System.out.println(llmFeature.generatedJavaCode);
+        llmFeature.generateAndCompileCode();
 
-        llmFeature.generateAndCompilePlan();
-        InMemoryClass plan = llmFeature.generateAndCompilePlan();
+        IPlanBody plan = llmFeature.generateAndCompileCode();
         JSONParser parser = new JSONParser();
         try {
             JSONObject dataset = (JSONObject) parser.parse(goal.getConvDataSetString());
@@ -165,8 +150,30 @@ public class GlassesAgent
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
+    }
 
-//        System.out.println(sortDataSet);
+    @Plan(trigger=@Trigger(goals=AgentGoal.class))
+    protected void generatePlan2(AgentGoal goal)
+    {
+        /** Initialize the LlmFeature */
+        System.out.println("--->Test Plan 2");
+        LlmFeature llmFeature = new LlmFeature(
+                chatUrl,
+                apiKey,
+                "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/Plan2Settings.json");
+
+        llmFeature.connectToLLM("");
+        llmFeature.generateAndCompileCode();
+
+        IPlanBody plan = llmFeature.generateAndCompileCode();
+        JSONParser parser = new JSONParser();
+        try {
+            JSONObject dataset = (JSONObject) parser.parse(goal.getConvDataSetString());
+            JSONObject convDataSet = (JSONObject) plan.runCode(dataset);
+            goal.setConvDataSetString(convDataSet.toString());
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @OnEnd
@@ -187,8 +194,6 @@ public class GlassesAgent
         IComponent.create(new GlassesAgent(
                 "https://api.openai.com/v1/chat/completions",
                 System.getenv("OPENAI_API_KEY"),
-                "jadex.llm.glasses.GlassesAgent",
-                "jadex.llm.glasses.Glasses",
                 "/home/schuther/IdeaProjects/jadex-v/application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
         );
         IComponent.waitForLastComponentTerminated();

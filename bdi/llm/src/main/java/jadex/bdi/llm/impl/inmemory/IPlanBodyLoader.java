@@ -1,14 +1,14 @@
-package jadex.bdi.llm.impl;
+package jadex.bdi.llm.impl.inmemory;
 
 import static java.util.Objects.requireNonNull;
 
 import java.util.Map;
 
-public class InMemoryClassLoader extends ClassLoader {
+public class IPlanBodyLoader extends ClassLoader {
 
-    private final InMemoryFileManager manager;
+    private final IPlanBodyFileManager manager;
 
-    public InMemoryClassLoader(ClassLoader parent, InMemoryFileManager manager) {
+    public IPlanBodyLoader(ClassLoader parent, IPlanBodyFileManager manager) {
         super(parent);
         this.manager = requireNonNull(manager, "manager must not be null");
     }

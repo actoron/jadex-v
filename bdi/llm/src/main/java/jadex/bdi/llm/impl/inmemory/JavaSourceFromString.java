@@ -1,4 +1,4 @@
-package jadex.bdi.llm.impl;
+package jadex.bdi.llm.impl.inmemory;
 
 import static java.util.Objects.requireNonNull;
 

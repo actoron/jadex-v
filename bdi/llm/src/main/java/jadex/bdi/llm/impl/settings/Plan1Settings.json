@@ -1,0 +1,18 @@
+{
+  "model": "gpt-3.5-turbo",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal."
+    },
+    {
+      "role": "user",
+      "content": "Create a java class named Plan with implements IPlanBody with a method called runCode. The Plan function get an java Object that is a org.json.simple.JSONObject. The JSONObject contains a List of 'Glasses' with different parameters. Sort the List by the key 'colour' the value is a string. Return the sorted org.json.simple.JSONObject as an java 'Object'."
+    }
+  ],
+  "temperature": 0.3,
+  "max_tokens": 300,
+  "top_p": 1.0,
+  "frequency_penalty": 0.0,
+  "presence_penalty": 0.0
+}

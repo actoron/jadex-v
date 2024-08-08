@@ -1,4 +1,4 @@
-package jadex.bdi.llm.impl;
+package jadex.bdi.llm.impl.inmemory;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -9,15 +9,15 @@ import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardJavaFileManager;
 
-public class InMemoryFileManager extends ForwardingJavaFileManager<JavaFileManager> {
+public class IPlanBodyFileManager extends ForwardingJavaFileManager<JavaFileManager> {
 
     private final Map<String, JavaClassAsBytes> compiledClasses;
     private final ClassLoader loader;
 
-    public InMemoryFileManager(StandardJavaFileManager standardManager) {
+    public IPlanBodyFileManager(StandardJavaFileManager standardManager) {
         super(standardManager);
         this.compiledClasses = new Hashtable<>();
-        this.loader = new InMemoryClassLoader(this.getClass()
+        this.loader = new IPlanBodyLoader(this.getClass()
                 .getClassLoader(),
                 this
         );

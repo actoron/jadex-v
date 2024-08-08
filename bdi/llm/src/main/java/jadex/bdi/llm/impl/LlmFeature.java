@@ -1,8 +1,9 @@
 package jadex.bdi.llm.impl;
 
 import jadex.bdi.llm.ILlmFeature;
-import jadex.bdi.model.BDIClassReader;
-import jadex.classreader.SClassReader;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+import jadex.bdi.llm.impl.inmemory.IPlanBodyFileManager;
+import jadex.bdi.llm.impl.inmemory.JavaSourceFromString;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -19,19 +20,29 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/**
+ * This class is responsible for connecting to the LLM and generating the Java code.
+ */
 public class LlmFeature implements ILlmFeature {
-    public String classStructure;
-    private final URI chatUrl;
     private String apiKey;
-
+    private final URI chatUrl;
     private final JSONObject chatgptSettings;
+    /**
+     * The generated Java code.
+     */
     public String generatedJavaCode;
-
 
     /**
      * Constructor
+     * Check if chatgpt url is valid
+     * Check if api key is valid
+     * Check if Settings.json is valid (existing + readable) + have chatgptSettings
+     *
+     * @param chatUrlString chatgpt api url
+     * @param apiKeyString api key for accessing the language model
+     * @param settingsPath path to the Settings.json
      */
-    public LlmFeature(String chatUrlString, String apiKeyString, String AgentClassName, String FeatureClassName, String settingsPath)
+    public LlmFeature(String chatUrlString, String apiKeyString, String settingsPath)
     {
         // check if chatgpt_url is valid
         try
@@ -59,11 +70,11 @@ public class LlmFeature implements ILlmFeature {
         File settingsFile = new File(settingsPath);
         if (!settingsFile.exists() || !settingsFile.canRead())
         {
-            System.err.println("PlanSettings.json not found or not readable.");
+            System.err.println("Settings.json not found or not readable.");
             System.exit(1);
         } else
         {
-            System.out.println("F: PlanSettings.json is valid.");
+            System.out.println("F: Settings.json is valid.");
         }
 
         // check if PlanSettings.json has chatgptSettings
@@ -85,14 +96,14 @@ public class LlmFeature implements ILlmFeature {
         }
         if (!chatgptSettings.containsKey("model"))
         {
-            System.err.println("PlanSettings.json does not contain component 'model'.");
+            System.err.println("Settings.json does not contain component 'model'.");
             System.exit(1);
         }
 
         JSONArray messages = null;
         if (!chatgptSettings.containsKey("messages"))
         {
-            System.err.println("PlanSettings.json does not contain component 'messages'.");
+            System.err.println("Settings.json does not contain component 'messages'.");
             System.exit(1);
         } else
         {
@@ -106,7 +117,7 @@ public class LlmFeature implements ILlmFeature {
                 JSONObject messageObject = (JSONObject) message;
                 if (!messageObject.containsKey("role") || !messageObject.containsKey("content"))
                 {
-                    System.err.println("PlanSettings.json does not contain component 'role' or 'content'.");
+                    System.err.println("Settings.json does not contain component 'role' or 'content'.");
                     System.exit(1);
                 } else
                 {
@@ -119,79 +130,56 @@ public class LlmFeature implements ILlmFeature {
             }
             if (!roles.isEmpty())
             {
-                System.err.println("PlanSettings.json does not contain all roles." + roles);
+                System.err.println("Settings.json does not contain all roles." + roles);
                 System.exit(1);
             }
         }
 
         if (!chatgptSettings.containsKey("temperature"))
         {
-            System.out.println("Warning: PlanSettings.json does not contain component 'temperature'.");
+            System.out.println("Warning: Settings.json does not contain component 'temperature'.");
             System.out.println("Warning: Setting 'temperature' to 0.3");
             chatgptSettings.put("temperature", 0.3);
         }
 
         if (!chatgptSettings.containsKey("max_tokens"))
         {
-            System.out.println("Warning: PlanSettings.json does not contain component 'max_tokens'.");
+            System.out.println("Warning: Settings.json does not contain component 'max_tokens'.");
             System.out.println("Warning: Setting 'max_tokens' to 300");
             chatgptSettings.put("max_tokens", 300);
         }
 
         if (!chatgptSettings.containsKey("top_p"))
         {
-            System.out.println("Warning: PlanSettings.json does not contain component 'top_p'.");
+            System.out.println("Warning: Settings.json does not contain component 'top_p'.");
             System.out.println("Warning: Setting 'top_p' to 1.0");
             chatgptSettings.put("top_p", 1.0);
         }
 
         if (!chatgptSettings.containsKey("frequency_penalty"))
         {
-            System.out.println("Warning: PlanSettings.json does not contain component 'frequency_penalty'.");
+            System.out.println("Warning: Settings.json does not contain component 'frequency_penalty'.");
             System.out.println("Warning: Setting 'frequency_penalty' to 0.0");
             chatgptSettings.put("frequency_penalty", 0.0);
         }
 
         if (!chatgptSettings.containsKey("presence_penalty"))
         {
-            System.out.println("Warning: PlanSettings.json does not contain component 'presence_penalty'.");
+            System.out.println("Warning: Settings.json does not contain component 'presence_penalty'.");
             System.out.println("Warning: Setting 'presence_penalty' to 0.0");
             chatgptSettings.put("presence_penalty", 0.0);
         }
     }
 
+    /**
+     * Connect to LLM, send request and get response
+     * cleans up the response which is the java code
+     * save the java code in generatedJavaCode
+     *
+     * @param ChatGptRequestExtension
+     */
     @Override
-    public String readClassStructure(String AgentClassName, String FeatureClassName)
-    {
-        // init agent class structure
-        try
-        {
-            Class<?> agentClass = Class.forName(AgentClassName);
-//            SClassReader.AnnotationInfo ai =
-//            SClassReader.ClassInfo agentClassReader = SClassReader.getClassInfo(agentClass.getName(), agentClass.getClassLoader());
-            System.out.println("--> F: " + agentClass);
-        } catch (Exception e)
-        {
-            System.err.println("F: agent_sclass_reader FAILED");
-            System.exit(1);
-        }
-
-        // init feature class structure
-        try
-        {
-            Class<?> featureClass = Class.forName(FeatureClassName);
-            SClassReader.ClassInfo featureClassReader = SClassReader.getClassInfo(featureClass.getName(), featureClass.getClassLoader());
-            System.out.println("F: " + featureClassReader);
-        } catch (Exception e)
-        {
-            System.err.println("F: feature_sclass_reader FAILED");
-            System.exit(1);
-        }
-        return classStructure; //hier sollte eine zusammengesetze Klassenstruktur übergeben werden
-    }
-
-    @Override
-    public void connectToLLM(String ChatGptRequest)
+    public void connectToLLM(String ChatGptRequestExtension)
     {
         // update chatgptSettings with ChatGptRequest
         JSONArray messages = (JSONArray) chatgptSettings.get("messages");
@@ -201,7 +189,7 @@ public class LlmFeature implements ILlmFeature {
             JSONObject messageObject = (JSONObject) message;
             if (messageObject.get("role").equals("user"))
             {
-                String content = (String) messageObject.get("content") + " " + ChatGptRequest;
+                String content = (String) messageObject.get("content") + " " + ChatGptRequestExtension;
                 messageObject.put("content", content);
             }
         }
@@ -260,40 +248,38 @@ public class LlmFeature implements ILlmFeature {
 
         // clean up responseMessage
         // remove leading and trailing quotation marks from responseMessage
-        responseMessage = responseMessage.substring(7, responseMessage.length() - 3);
+        responseMessage = responseMessage.replaceFirst("```java", "");
+        responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
+        responseMessage = new StringBuilder(responseMessage).reverse().toString();
 
         // add package to javacode
-        responseMessage = "package jadex.bdi.llm.impl;\n" + responseMessage;
+        responseMessage =
+                "package jadex.bdi.llm.impl;\n" +
+                "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
+                responseMessage;
+
         this.generatedJavaCode = responseMessage;
-        System.out.println(this.generatedJavaCode);
-
-//        return responseMessage;
     }
-
+    /**
+     * Generate an IPlanBody and compiles the code at runtime
+     *
+     * @return IPlanBody
+     */
     @Override
-    public InMemoryClass generateAndCompilePlan()
+    public IPlanBody generateAndCompileCode()
     {
         final String classname = "jadex.bdi.llm.impl.Plan";
 
-//        final String SOURCE_CODE =
-//                "package jadex.bdi.llm.impl;\n"
-//                        + "public class Plan implements InMemoryClass {\n"
-//                        + "@Override\n"
-//                        + "    public void runCode() {\n"
-//                        + "        System.out.println(\"code is running...\");\n"
-//                        + "    }\n"
-//                        + "}\n";
-
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-        InMemoryFileManager manager = new InMemoryFileManager(compiler.getStandardFileManager(null, null, null));
+        IPlanBodyFileManager manager = new IPlanBodyFileManager(compiler.getStandardFileManager(null, null, null));
 
         List<JavaFileObject> sourceFiles = Collections.singletonList(new JavaSourceFromString(classname, generatedJavaCode));
 
         JavaCompiler.CompilationTask task = compiler.getTask(null, manager, diagnostics, null, null, sourceFiles);
 
         boolean result = task.call();
-        InMemoryClass instanceOfClass = null;
+        IPlanBody instanceOfClass = null;
 
         if (!result)
         {
@@ -312,7 +298,7 @@ public class LlmFeature implements ILlmFeature {
             }
             try
             {
-                instanceOfClass = (InMemoryClass) clazz.newInstance();
+                instanceOfClass = (IPlanBody) clazz.newInstance();
             } catch (InstantiationException e)
             {
                 throw new RuntimeException(e);
@@ -323,5 +309,7 @@ public class LlmFeature implements ILlmFeature {
         }
         return instanceOfClass;
     }
+
+
 }
 
