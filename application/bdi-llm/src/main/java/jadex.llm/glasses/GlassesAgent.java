@@ -17,6 +17,7 @@ import org.json.simple.parser.ParseException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
 import org.apache.commons.io.FileUtils;
 
 
@@ -31,23 +32,9 @@ public class GlassesAgent
 
     private final String chatUrl;
     private final String apiKey;
-
 //    private JSONObject dataset;
     private final String dataSetPath;
-
-    /** Constructor */
-    public GlassesAgent(String chatUrl, String apiKey, String dataSetPath)
-    {
-        this.chatUrl = chatUrl;
-        this.apiKey = apiKey;
-        this.dataSetPath = dataSetPath;
-
-
-        System.out.println("A: " + chatUrl);
-        System.out.println("A: " + apiKey);
-
-        System.out.println("A: GlassesAgent class loaded");
-    }
+    private final String beliefType;
 
     @Belief
     private Val<String> datasetString;
@@ -74,10 +61,12 @@ public class GlassesAgent
         @GoalTargetCondition(parameters="convDataSetString")
         public boolean checkTarget()
         {
+
             System.out.println("--->Test Goal");
             LlmFeature llmFeature = new LlmFeature(
                     chatUrl,
                     apiKey,
+                    beliefType,
                     "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/GoalSettings.json");
 
             llmFeature.connectToLLM("");
@@ -106,6 +95,21 @@ public class GlassesAgent
         }
     }
 
+    /** Constructor */
+    public GlassesAgent(String chatUrl, String apiKey, String dataSetPath)
+    {
+        this.chatUrl = chatUrl;
+        this.apiKey = apiKey;
+//        this.beliefType = datasetString.get().getClass().toString().replace("class ", "");
+        this.beliefType = "org.json.simple.JSONObject";
+        this.dataSetPath = dataSetPath;
+
+        System.out.println("A: " + chatUrl);
+        System.out.println("A: " + apiKey);
+
+        System.out.println("A: GlassesAgent class loaded");
+    }
+
     @OnStart
     public void body()
     {
@@ -123,6 +127,7 @@ public class GlassesAgent
             JSONParser parser = new JSONParser();
             JSONObject dataset = (JSONObject) parser.parse(dataSetFileString);
             datasetString.set(dataset.toString());
+
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
@@ -136,6 +141,7 @@ public class GlassesAgent
         LlmFeature llmFeature = new LlmFeature(
                 chatUrl,
                 apiKey,
+                beliefType,
                 "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/Plan1Settings.json");
 
         llmFeature.connectToLLM("");
@@ -160,6 +166,7 @@ public class GlassesAgent
         LlmFeature llmFeature = new LlmFeature(
                 chatUrl,
                 apiKey,
+                beliefType,
                 "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/Plan2Settings.json");
 
         llmFeature.connectToLLM("");
@@ -194,7 +201,7 @@ public class GlassesAgent
         IComponent.create(new GlassesAgent(
                 "https://api.openai.com/v1/chat/completions",
                 System.getenv("OPENAI_API_KEY"),
-                "/home/schuther/IdeaProjects/jadex-v/application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
+                "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
         );
         IComponent.waitForLastComponentTerminated();
     }

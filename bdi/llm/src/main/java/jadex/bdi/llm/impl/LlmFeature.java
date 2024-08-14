@@ -1,10 +1,12 @@
 package jadex.bdi.llm.impl;
 
+import jadex.bdi.annotation.Belief;
 import jadex.bdi.llm.ILlmFeature;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 import jadex.bdi.llm.impl.inmemory.IPlanBodyFileManager;
 import jadex.bdi.llm.impl.inmemory.JavaSourceFromString;
 
+import jadex.bdi.runtime.IBeliefListener;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -13,6 +15,7 @@ import org.json.simple.parser.ParseException;
 
 import javax.tools.*;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -42,7 +45,7 @@ public class LlmFeature implements ILlmFeature {
      * @param apiKeyString api key for accessing the language model
      * @param settingsPath path to the Settings.json
      */
-    public LlmFeature(String chatUrlString, String apiKeyString, String settingsPath)
+    public LlmFeature(String chatUrlString, String apiKeyString, String beliefType, String settingsPath)
     {
         // check if chatgpt_url is valid
         try
@@ -82,6 +85,10 @@ public class LlmFeature implements ILlmFeature {
         try
         {
             settingsFileString = FileUtils.readFileToString(settingsFile, StandardCharsets.UTF_8);
+            //TODO: settingsfileString replace $Beliefs$ with Variables
+            settingsFileString = settingsFileString.replace("$Belief$", beliefType);
+            System.out.println("Replaced: " + settingsFileString);
+
         } catch (IOException e)
         {
             throw new RuntimeException(e);

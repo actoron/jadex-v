@@ -23,9 +23,9 @@ public class LlmFeatureProvider extends FeatureProvider<ILlmFeature>
         return null;
     }
 
-    public ILlmFeature createFeatureInstance(String chatgptUrl, String chatgptKey, String settingsPath)
+    public ILlmFeature createFeatureInstance(String chatgptUrl, String chatgptKey, String beliefType, String settingsPath)
     {
-        return new LlmFeature(chatgptUrl, chatgptKey, settingsPath);
+        return new LlmFeature(chatgptUrl, chatgptKey, beliefType, settingsPath);
     }
 
     @Override
