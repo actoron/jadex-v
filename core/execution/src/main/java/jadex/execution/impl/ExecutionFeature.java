@@ -520,13 +520,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							}
 							else if(steps.isEmpty())
 							{
-								hasnext	= false;
-								executing	= false;
-								idle();
 								if(threadcount.decrementAndGet()<0)
 								{
 									throw new IllegalStateException("Threadcount<0");
 								}
+								
+								hasnext	= false;
+								executing	= false;
+								idle();
 							}
 						}
 					}
@@ -569,6 +570,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			
 			synchronized(ExecutionFeature.this)
 			{
+				if(threadcount.decrementAndGet()<0)
+				{
+					throw new IllegalStateException("Threadcount<0");
+				}
+				
 				if(!steps.isEmpty() && !aborted)
 				{
 					startnew	= true;
@@ -577,10 +583,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				{
 					executing	= false;
 					idle();
-				}
-				if(threadcount.decrementAndGet()<0)
-				{
-					throw new IllegalStateException("Threadcount<0");
 				}
 			}
 	
