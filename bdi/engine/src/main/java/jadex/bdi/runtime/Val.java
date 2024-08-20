@@ -63,7 +63,7 @@ public class Val<T>
 			throw new IllegalStateException("Should not set value on dynamic belief.");
 		
 		if(mbel==null && param==null)
-			throw new IllegalStateException("Wrapper not inited. Missing @Belief/@GoalParameter annotation.");
+			throw new IllegalStateException("Wrapper not inited. Missing @Belief/@GoalParameter annotation?");
 		
 		// belief
 		if(mbel!=null)
