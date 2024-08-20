@@ -92,7 +92,7 @@ public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature
 		return ret;
 	}
 	
-	protected static <T extends Annotation> T findAnnotation(Class<?> clazz, Class<T> anclazz, ClassLoader cl)
+	public static <T extends Annotation> T findAnnotation(Class<?> clazz, Class<T> anclazz, ClassLoader cl)
 	{
 		T ret = null;
 		

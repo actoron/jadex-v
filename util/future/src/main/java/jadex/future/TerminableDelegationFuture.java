@@ -31,9 +31,9 @@ public class TerminableDelegationFuture<E> extends Future<E> implements ITermina
 	 */
 	public TerminableDelegationFuture(ITerminableFuture<E> src)
 	{
-		this.handler	= new TerminableDelegationFutureHandler<>();
-		if(this.getClass().getName().indexOf("DelegatingTerminableDelegationFuture")!=-1)
-			System.out.println("func: "+hashCode());
+		this.handler = new TerminableDelegationFutureHandler<>();
+		//if(this.getClass().getName().indexOf("DelegatingTerminableDelegationFuture")!=-1)
+		//	System.out.println("func: "+hashCode());
 		delegateFrom(src);
 	}
 	

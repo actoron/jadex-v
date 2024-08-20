@@ -174,6 +174,10 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 				// run body and termination in same step as init
 				try
 				{
+					/*ILifecycle lfeature = (ILifecycle)feature;
+					System.out.println("starting: "+lfeature);
+					lfeature.onStart();*/
+					
 					Object	result	= self.body.apply(self);
 					if(self.result!=null)
 						self.result.setResult(result);

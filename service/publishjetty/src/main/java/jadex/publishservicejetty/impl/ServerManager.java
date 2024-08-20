@@ -22,6 +22,7 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.component.LifeCycle;
 
+import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.future.Future;
@@ -69,9 +70,10 @@ public class ServerManager
      *  @param service The original service.
      *  @param pid The publish id (e.g. url or name).
      */
-    public synchronized IFuture<Void> publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
+    //public synchronized IFuture<Void> publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
+    public synchronized void publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
     {
-    	Future<Void> ret = new Future<>();
+    	//Future<Void> ret = new Future<>();
     	
         PathManager<MappingInfo> pm = RequestManager.getInstance().evaluateMapping(serviceid, info, this.getClass().getClassLoader());
                
@@ -126,11 +128,11 @@ public class ServerManager
 	    }
 	    catch(Exception e)
 	    {
-	    	//SUtil.rethrowAsUnchecked(e);
-	    	ret.setException(e);
+	    	SUtil.rethrowAsUnchecked(e);
+	    	//ret.setException(e);
 	    }
 		
-		return ret;
+		//return ret;
     }
 
     /**

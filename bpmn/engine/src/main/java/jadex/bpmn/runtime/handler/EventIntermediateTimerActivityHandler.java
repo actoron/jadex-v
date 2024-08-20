@@ -2,8 +2,8 @@ package jadex.bpmn.runtime.handler;
 
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.runtime.impl.ProcessThread;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
-import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
