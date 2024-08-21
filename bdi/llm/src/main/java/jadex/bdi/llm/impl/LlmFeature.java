@@ -1,12 +1,10 @@
 package jadex.bdi.llm.impl;
 
-import jadex.bdi.annotation.Belief;
 import jadex.bdi.llm.ILlmFeature;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 import jadex.bdi.llm.impl.inmemory.IPlanBodyFileManager;
 import jadex.bdi.llm.impl.inmemory.JavaSourceFromString;
 
-import jadex.bdi.runtime.IBeliefListener;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -15,7 +13,6 @@ import org.json.simple.parser.ParseException;
 
 import javax.tools.*;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -40,6 +37,7 @@ public class LlmFeature implements ILlmFeature {
      * Check if chatgpt url is valid
      * Check if api key is valid
      * Check if Settings.json is valid (existing + readable) + have chatgptSettings
+     * Replace $Belief$ in Settings.json with beliefType
      *
      * @param chatUrlString chatgpt api url
      * @param apiKeyString api key for accessing the language model
@@ -85,9 +83,7 @@ public class LlmFeature implements ILlmFeature {
         try
         {
             settingsFileString = FileUtils.readFileToString(settingsFile, StandardCharsets.UTF_8);
-            //TODO: settingsfileString replace $Beliefs$ with Variables
             settingsFileString = settingsFileString.replace("$Belief$", beliefType);
-            System.out.println("Replaced: " + settingsFileString);
 
         } catch (IOException e)
         {
@@ -268,7 +264,7 @@ public class LlmFeature implements ILlmFeature {
         this.generatedJavaCode = responseMessage;
     }
     /**
-     * Generate an IPlanBody and compiles the code at runtime
+     * Generate an IPlanBody InMemoryClass and compiles the code at runtime
      *
      * @return IPlanBody
      */

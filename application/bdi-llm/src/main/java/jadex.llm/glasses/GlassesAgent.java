@@ -4,6 +4,7 @@ import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.runtime.Val;
+import jadex.classreader.SClassReader;
 import jadex.core.IComponent;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
@@ -108,6 +109,7 @@ public class GlassesAgent
         System.out.println("A: " + apiKey);
 
         System.out.println("A: GlassesAgent class loaded");
+//        System.out.println("Klasse:" + SClassReader.scanForClassFileInfos(GlassesAgent));
     }
 
     @OnStart
