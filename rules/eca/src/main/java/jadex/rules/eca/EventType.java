@@ -9,6 +9,8 @@ public class EventType
 {
 	public static final String MATCHALL = "*";
 	
+	public static final String DELIMITER = ":";
+	
 	/** The event type elements. */
 	protected String[] types;
 	
@@ -25,7 +27,7 @@ public class EventType
         if(types != null) 
         {
             this.types = Arrays.stream(types)
-            	.flatMap(type -> Arrays.stream(type.split("\\.")))
+            	.flatMap(type -> Arrays.stream(type.split("\\"+DELIMITER)))
                 .toArray(String[]::new);
         }
     }

@@ -240,24 +240,24 @@ public class MatcherNode
 	public static void main(String[] args)
 	{
 		MatcherNode node = new MatcherNode();
-		Rule<?> r1 = new Rule<Object>("a.b.c.d", null, null, new EventType[]{new EventType("a.b.c.d")});
+		Rule<?> r1 = new Rule<Object>("a:b:c:d", null, null, new EventType[]{new EventType("a:b:c:d")});
 		node.addRule(r1);
-		node.addRule(new Rule<Object>("a.b", null, null, new EventType[]{new EventType("a.b")}));
-		node.addRule(new Rule<Object>("a.b2", null, null, new EventType[]{new EventType("a.b2")}));
-		node.addRule(new Rule<Object>("a.b.c2", null, null, new EventType[]{new EventType("a.b.c2")}));
-		node.addRule(new Rule<Object>("a.b2", null, null, new EventType[]{new EventType("a.b2")}));
-		node.addRule(new Rule<Object>("a.b2.c", null, null, new EventType[]{new EventType("a.b2.c")}));
-		node.addRule(new Rule<Object>("a.b.c.d2", null, null, new EventType[]{new EventType("a.b.c.d")}));
+		node.addRule(new Rule<Object>("a:b", null, null, new EventType[]{new EventType("a:b")}));
+		node.addRule(new Rule<Object>("a:b2", null, null, new EventType[]{new EventType("a:b2")}));
+		node.addRule(new Rule<Object>("a:b:c2", null, null, new EventType[]{new EventType("a:b:c2")}));
+		node.addRule(new Rule<Object>("a:b2", null, null, new EventType[]{new EventType("a:b2")}));
+		node.addRule(new Rule<Object>("a:b2:c", null, null, new EventType[]{new EventType("a:b2:c")}));
+		node.addRule(new Rule<Object>("a:b:c.d2", null, null, new EventType[]{new EventType("a:b:c:d")}));
 		node.addRule(new Rule<Object>("a2", null, null, new EventType[]{new EventType("a2")}));
 		node.addRule(new Rule<Object>("*", null, null, new EventType[]{new EventType("*")}));
-		node.addRule(new Rule<Object>("a.b.*", null, null, new EventType[]{new EventType("a.b.*")}));
-		node.addRule(new Rule<Object>("a.*", null, null, new EventType[]{new EventType("a.*")}));
+		node.addRule(new Rule<Object>("a:b:*", null, null, new EventType[]{new EventType("a:b:*")}));
+		node.addRule(new Rule<Object>("a:*", null, null, new EventType[]{new EventType("a:*")}));
 		
 		System.out.println(node);
 		
 		//System.out.println("*: "+node.getRules("*"));
-		System.out.println("a.*: "+node.getRules("a.*"));
-		System.out.println("a.b.*: "+node.getRules("a.b.*"));
+		System.out.println("a:*: "+node.getRules("a:*"));
+		System.out.println("a:b:*: "+node.getRules("a:b.*"));
 		
 		//System.out.println("a.b: "+node.getRules("a.b"));
 		//System.out.println("a.b.c: "+node.getRules("a.b.c"));
