@@ -234,10 +234,12 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 				
 				BiFunction<Event, IComponent, ? extends IFuture<NodeState>> action2 = action.getAction();
 				
-				action.setAction((BiFunction<Event, IComponent, IFuture<NodeState>>)(e, agent) ->
+				// todo: how can this be done with generics?
+				//action.setAction((BiFunction<Event, IComponent, ? extends IFuture<NodeState>>)(e, agent) ->
+				action.setAction((BiFunction)(e, agent) ->
 				{
 					IFuture<NodeState>[] stepret = new IFuture[1]; 
-					stepret[0] = agent.getFeature(IExecutionFeature.class).scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<NodeState>>() 
+					stepret[0] = ((IComponent)agent).getFeature(IExecutionFeature.class).scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<NodeState>>() 
 					{
 						@Override
 						public IFuture<NodeState> apply(IComponent comp) throws Exception 
@@ -250,7 +252,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 								return donefut;
 							}
 							
-							IFuture<NodeState> ret = action2.apply(e, agent);
+							IFuture<NodeState> ret = action2.apply((Event)e, (IComponent)agent);
 							
 							Future<NodeState> ret2 = (Future<NodeState>)FutureFunctionality.getDelegationFuture(ret.getClass(), new FutureFunctionality()
 							{
