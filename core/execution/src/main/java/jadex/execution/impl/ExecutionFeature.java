@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -48,6 +49,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	protected Component	self = null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
+	
+	// Debug Heisenbug
+	AtomicInteger	threadcount	= new AtomicInteger();
 	
 	@Override
 	public IComponent getComponent()
@@ -512,10 +516,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							if(do_switch)
 							{
 								do_switch	= false;
-								hasnext	= false;							
+								hasnext	= false;
 							}
 							else if(steps.isEmpty())
 							{
+								if(threadcount.decrementAndGet()<0)
+								{
+									throw new IllegalStateException("Threadcount<0");
+								}
+								
 								hasnext	= false;
 								executing	= false;
 								idle();
@@ -561,6 +570,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			
 			synchronized(ExecutionFeature.this)
 			{
+				if(threadcount.decrementAndGet()<0)
+				{
+					throw new IllegalStateException("Threadcount<0");
+				}
+				
 				if(!steps.isEmpty() && !aborted)
 				{
 					startnew	= true;
@@ -593,6 +607,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				}
 				finally
 				{
+					if(threadcount.incrementAndGet()>1)
+					{
+						throw new IllegalStateException("Threadcount>1");
+					}
 					blocked=false;
 					this.future	= null;
 					if(aborted)
@@ -618,6 +636,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					{
 						lock.lock();
 						do_switch	= true;
+						if(threadcount.decrementAndGet()<0)
+						{
+							throw new IllegalStateException("Threadcount<0");
+						}
 						wait.signal();
 						
 						// Abort this step to skip afterStep() call, because other thread is already running now.
@@ -870,6 +892,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		if(runner==null)
 			runner	= new ThreadRunner();
+		if(threadcount.incrementAndGet()>1)
+		{
+			throw new IllegalStateException("Threadcount>1");
+		}
 		SUtil.getExecutor().execute(runner);
 	}
 	

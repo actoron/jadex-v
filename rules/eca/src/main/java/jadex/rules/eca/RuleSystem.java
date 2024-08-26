@@ -163,7 +163,12 @@ public class RuleSystem
 			{
 //				System.out.println("Rule selected: "+rules[i]+", "+event);
 				
-				rules[i].getCondition().evaluate(event).addResultListener(new IResultListener<Tuple2<Boolean,Object>>()
+				IFuture<Tuple2<Boolean, Object>>	fut	= rules[i].getCondition().evaluate(event);
+				if(!fut.isDone())
+				{
+					System.err.println("Async rule condition: "+rules[i].getCondition());								
+				}
+				fut.addResultListener(new IResultListener<Tuple2<Boolean,Object>>()
 				{
 					public void resultAvailable(Tuple2<Boolean, Object> result)
 					{
@@ -172,6 +177,10 @@ public class RuleSystem
 //							System.out.println("Rule triggered: "+rules[i]+", "+event);
 							
 							IFuture fut = (IFuture<Object>)rules[i].getAction().execute(event, (IRule)rules[i], context, result.getSecondEntity());
+							if(!fut.isDone())
+							{
+								System.err.println("Async rule action: "+rules[i].getAction());								
+							}
 							
 							if(fut instanceof IIntermediateFuture)
 							{
