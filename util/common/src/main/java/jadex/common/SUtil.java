@@ -75,6 +75,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -481,7 +482,14 @@ public class SUtil
 					}
 					catch(NoSuchMethodException e)
 					{
-						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), r -> {
+							{
+								Thread t = new Thread(r);
+								t.setDaemon(true);
+								return t;
+							}
+						});
+						
 						virtual	= false;
 					}
 					catch(Exception e)
