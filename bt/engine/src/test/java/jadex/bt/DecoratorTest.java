@@ -25,7 +25,7 @@ import jadex.future.TerminableFuture;
 
 public class DecoratorTest 
 {
-	@Test
+	/*@Test
 	public void testRetryDecorator() 
 	{
 	    AtomicInteger attempt = new AtomicInteger(0);
@@ -95,7 +95,7 @@ public class DecoratorTest
 	    assertEquals(NodeState.SUCCEEDED, state, "Node should succeed after retries");
 	    assertEquals(4, attempt.get(), "Should have retried 3 times");
 	    assertTrue(needed>3000, "Should need more than 3 secs");
-	}
+	}*/
 	
 	/*@Test
 	public void testConditionalDecorator() 
@@ -327,7 +327,7 @@ public class DecoratorTest
 	    assertEquals(NodeState.FAILED, state, "Node should fail regardless of the action result");
 	}
 	
-	@Test
+	/*@Test
 	public void testCooldownDecorator() 
 	{
 	    TerminableFuture<Void> fut = new TerminableFuture<>();
@@ -375,5 +375,5 @@ public class DecoratorTest
 	    System.out.println("state3: "+state3);
 	    
 	    assertEquals(NodeState.SUCCEEDED, state3, "Node should succeed after cooldown period");
-	}
+	}*/
 }

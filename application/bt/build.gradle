@@ -33,6 +33,7 @@ dependencies
     implementation 'org.activecomponents.jadex:execution:'+v
     implementation 'org.activecomponents.jadex:micro:'+v
     implementation 'org.activecomponents.jadex:bt:'+v
+    implementation 'org.activecomponents.jadex:eca:'+v
     implementation 'org.activecomponents.jadex:logbase:'+v 
     implementation 'org.activecomponents.jadex:providedservice:'+v
     implementation 'org.activecomponents.jadex:providedservicemicro:'+v
