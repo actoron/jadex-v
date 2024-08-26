@@ -1,12 +1,12 @@
 package jadex.bt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bt.Node.AbortMode;
 import jadex.bt.Node.NodeState;
 import jadex.common.SUtil;
 import jadex.future.Future;
@@ -18,14 +18,15 @@ public class TestActionNode
     @Test
     public void testActionNodeSuccess() 
     {
-        ActionNode<Object> an = new ActionNode<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
             return new Future<NodeState>(NodeState.SUCCEEDED);
-        });
+        }));
 
+        ExecutionContext<Object> context = new ExecutionContext<Object>();
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = an.execute(event);
+        IFuture<NodeState> ret = an.execute(event, context);
 
         NodeState state = ret.get();
         assertEquals(NodeState.SUCCEEDED, state, "Node state should be SUCCEEDED");
@@ -34,14 +35,15 @@ public class TestActionNode
     @Test
     public void testActionNodeFailure() 
     {
-        ActionNode<Object> an = new ActionNode<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
             return new Future<NodeState>(NodeState.FAILED);
-        });
+        }));
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = an.execute(event);
+        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        IFuture<NodeState> ret = an.execute(event, context);
 
         NodeState state = ret.get();
         assertEquals(NodeState.FAILED, state, "Node state should be FAILED");
@@ -50,17 +52,18 @@ public class TestActionNode
     @Test
     public void testActionNodeAbort() 
     {
-        ActionNode<Object> an = new ActionNode<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
             return new Future<>();
             // Simulate a running action
-        });
+        }));
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = an.execute(event);
+        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        IFuture<NodeState> ret = an.execute(event, context);
 
-        an.abort();
+        an.abort(AbortMode.SELF, NodeState.FAILED, context);
         NodeState state = ret.get();
         assertEquals(NodeState.FAILED, state, "Node state should be FAILED after abort");
     }
@@ -68,14 +71,15 @@ public class TestActionNode
     @Test
     public void testActionNodeException() 
     {
-        ActionNode<Object> an = new ActionNode<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
             throw new RuntimeException("Test exception");
-        });
+        }));
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = an.execute(event);
+        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        IFuture<NodeState> ret = an.execute(event, context);
 
         NodeState state = ret.get();
         assertEquals(NodeState.FAILED, state, "Node state should be FAILED after exception in action");
@@ -87,7 +91,7 @@ public class TestActionNode
     {
     	AtomicBoolean stopped = new AtomicBoolean();
 
-        ActionNode<Object> an = new ActionNode<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
         {
         	System.out.println("Performing action...");
             AtomicBoolean aborted = new AtomicBoolean();
@@ -102,12 +106,13 @@ public class TestActionNode
 	        	stopped.set(true);
 	        }).start();
             return ret;
-        });
+        }));
 
         Event event = new Event("start", null);
-        IFuture<NodeState> ret = an.execute(event);
+        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        IFuture<NodeState> ret = an.execute(event, context);
 
-        an.abort();
+        an.abort(AbortMode.SELF, NodeState.FAILED, context);
         
         SUtil.sleep(1000);
         

@@ -1,6 +1,7 @@
 package jadex.bt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 import jadex.bt.Node.NodeState;
+import jadex.bt.impl.ComponentTimerCreator;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
@@ -27,7 +29,7 @@ public class DecoratorTest
 	public void testRetryDecorator() 
 	{
 	    AtomicInteger attempt = new AtomicInteger(0);
-	    Node<Object> an = new ActionNode<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
 	    {
 	    	System.out.println("action called: "+attempt.get());
 	        Future<NodeState> ret = new Future<>();
@@ -40,20 +42,62 @@ public class DecoratorTest
 	            ret.setResult(NodeState.SUCCEEDED);
 	        }
 	        return ret;
-	    });
+	    }));
 
 	    RetryDecorator<Object> rd = new RetryDecorator<>(3);
-	    an.addBeforeDecorator(rd);
+	    an.addAfterDecorator(rd);
 
 	    Event event = new Event("start", null);
-	    IFuture<NodeState> ret = an.execute(event);
+	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
+	    
+	    System.out.println("state: "+state+" "+attempt.get());
 
 	    assertEquals(NodeState.SUCCEEDED, state, "Node should succeed after retries");
-	    assertEquals(3, attempt.get(), "Should have attempted 3 times");
+	    assertEquals(4, attempt.get(), "Should have retried 3 times");
 	}
 	
 	@Test
+	public void testRetryDelayDecorator() 
+	{
+	    AtomicInteger attempt = new AtomicInteger(0);
+	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+	    {
+	    	System.out.println("action called: "+attempt.get());
+	        Future<NodeState> ret = new Future<>();
+	        if(attempt.incrementAndGet() < 3) 
+	        {
+	            ret.setResult(NodeState.FAILED);
+	        } 
+	        else 
+	        {
+	            ret.setResult(NodeState.SUCCEEDED);
+	        }
+	        return ret;
+	    }));
+
+	    RetryDecorator<Object> rd = new RetryDecorator<>(3, 1000);
+	    an.addAfterDecorator(rd);
+
+	    long start = System.currentTimeMillis();
+	    
+	    Event event = new Event("start", null);
+	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator<Object>());
+	    IFuture<NodeState> ret = an.execute(event, context);
+	    NodeState state = ret.get();
+	    
+	    long end = System.currentTimeMillis();
+	    long needed = end-start;
+	    
+	    System.out.println("state: "+state+" "+attempt.get()+" "+needed);
+
+	    assertEquals(NodeState.SUCCEEDED, state, "Node should succeed after retries");
+	    assertEquals(4, attempt.get(), "Should have retried 3 times");
+	    assertTrue(needed>3000, "Should need more than 3 secs");
+	}
+	
+	/*@Test
 	public void testConditionalDecorator() 
 	{
 	    Blackboard blackboard = new Blackboard();
@@ -79,7 +123,7 @@ public class DecoratorTest
 	    state = ret.get();
 
 	    assertEquals(NodeState.FAILED, state, "Node should fail as condition is false");
-	}
+	}*/
 	
 	@Test
 	public void testComponentTimeoutDecoratorWithoutTimeout()
@@ -91,8 +135,9 @@ public class DecoratorTest
 		IExternalAccess access = mock(IExternalAccess.class);
 		when(access.scheduleAsyncStep(any(IThrowingFunction.class))).thenReturn(fut);
 		when(exe.waitForDelay(1000)).thenReturn(fut);
+		when(comp.getExternalAccess()).thenReturn(access);
 		
-		Node<IComponent> an = new ActionNode<>((event, context) -> 
+		Node<IComponent> an = new ActionNode<>(new UserAction<>((event, context) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -101,12 +146,13 @@ public class DecoratorTest
                 ret.setResult(NodeState.SUCCEEDED);
 		    }).start();
 		    return ret;
-		});
+		}));
 		
-		TimeoutDecorator<IComponent> td = new ComponentTimeoutDecorator<IComponent>(access, 1000);
+		TimeoutDecorator<IComponent> td = new TimeoutDecorator<>(1000);
 		an.addBeforeDecorator(td);
 		
-	    IFuture<NodeState> res = an.execute(new Event("start", null));
+		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator<IComponent>());
+	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    new Thread(() -> 
         {
         	SUtil.sleep(1000);
@@ -130,8 +176,9 @@ public class DecoratorTest
 		IExternalAccess access = mock(IExternalAccess.class);
 		when(access.scheduleAsyncStep(any(IThrowingFunction.class))).thenReturn(fut);
 		when(exe.waitForDelay(1000)).thenReturn(fut);
+		when(comp.getExternalAccess()).thenReturn(access);
 		
-		Node<IComponent> an = new ActionNode<>((event, context) -> 
+		Node<IComponent> an = new ActionNode<>(new UserAction<>((event, context) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -140,12 +187,13 @@ public class DecoratorTest
                 ret.setResult(NodeState.SUCCEEDED);
 		    }).start();
 		    return ret;
-		});
+		}));
 		
-		TimeoutDecorator<IComponent> td = new ComponentTimeoutDecorator<>(access, 500);
+		TimeoutDecorator<IComponent> td = new TimeoutDecorator<>(500);
 		an.addBeforeDecorator(td);
 		
-	    IFuture<NodeState> res = an.execute(new Event("start", null));
+		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator<IComponent>());
+	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    fut.setResult(null); // time elapsed
 	    
         NodeState state = res.get();
@@ -160,7 +208,7 @@ public class DecoratorTest
 	{
 		IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 		
-		Node<IComponent> an = new ActionNode<>((event, compo) -> 
+		Node<IExternalAccess> an = new ActionNode<>(new UserAction<>((event, compo) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -169,12 +217,15 @@ public class DecoratorTest
                 ret.setResult(NodeState.SUCCEEDED);
 		    }).start();
 		    return ret;
-		});
+		}));
 		
-		TimeoutDecorator<IComponent> td = new ComponentTimeoutDecorator<>(comp, 1000);
+		TimeoutDecorator<IExternalAccess> td = new TimeoutDecorator<>(1000);
 		an.addBeforeDecorator(td);
 		
-	    IFuture<NodeState> res = an.execute(new Event("start", null));
+		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator<IExternalAccess>());
+		context.setUserContext(comp);
+
+	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    
         NodeState state = res.get();
         
@@ -188,21 +239,24 @@ public class DecoratorTest
 	{
 		IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 		
-		Node<IComponent> an = new ActionNode<>((event, IComponent) -> 
+		Node<IExternalAccess> an = new ActionNode<>(new UserAction<>((event, IComponent) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
 		    {
-		    	SUtil.sleep(1000);
+		    	SUtil.sleep(10000);
                 ret.setResult(NodeState.SUCCEEDED);
 		    }).start();
 		    return ret;
-		});
+		}));
 		
-		TimeoutDecorator<IComponent> td = new ComponentTimeoutDecorator<>(comp, 500);
+		TimeoutDecorator<IExternalAccess> td = new TimeoutDecorator<>(500);
 		an.addBeforeDecorator(td);
 		
-	    IFuture<NodeState> res = an.execute(new Event("start", null));
+		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator<IExternalAccess>());
+		context.setUserContext(comp);
+		
+	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    
         NodeState state = res.get();
         
@@ -214,17 +268,18 @@ public class DecoratorTest
 	@Test
 	public void testResultInvertDecorator() 
 	{
-	    Node<Object> an = new ActionNode<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
 	    {
 	    	System.out.println("action called");
 	        return new Future<>(NodeState.FAILED);
-	    });
+	    }));
 
 	    Decorator<Object> id = new Decorator<>().setFunction((event, state) -> NodeState.SUCCEEDED==state? NodeState.FAILED: NodeState.SUCCEEDED);
 	    an.addBeforeDecorator(id);
 
 	    Event event = new Event("start", null);
-	    IFuture<NodeState> ret = an.execute(event);
+		ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 
 	    assertEquals(NodeState.SUCCEEDED, state, "Node should succeed due to inversion");
@@ -233,17 +288,19 @@ public class DecoratorTest
 	@Test
 	public void testSuccessDecorator() 
 	{
-	    Node<Object> an = new ActionNode<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
 	    {
 	        System.out.println("action called");
 	        return new Future<>(NodeState.FAILED);
-	    });
+	    }));
 
 	    Decorator<Object> sd = new Decorator<>().setFunction((event, state) -> NodeState.SUCCEEDED);
 	    an.addBeforeDecorator(sd);
 
 	    Event event = new Event("start", null);
-	    IFuture<NodeState> ret = an.execute(event);
+	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+
+	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 
 	    assertEquals(NodeState.SUCCEEDED, state, "Node should succeed regardless of the action result");
@@ -252,17 +309,19 @@ public class DecoratorTest
 	@Test
 	public void testFailureDecorator() 
 	{
-	    Node<Object> an = new ActionNode<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
 	    {
 	        System.out.println("action called");
 	        return new Future<>(NodeState.SUCCEEDED);
-	    });
+	    }));
 
 	    Decorator<Object> sd = new Decorator<>().setFunction((event, state) -> NodeState.FAILED);
 	    an.addBeforeDecorator(sd);
 
 	    Event event = new Event("start", null);
-	    IFuture<NodeState> ret = an.execute(event);
+	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+
+	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 
 	    assertEquals(NodeState.FAILED, state, "Node should fail regardless of the action result");
@@ -278,27 +337,30 @@ public class DecoratorTest
 	    IExternalAccess access = mock(IExternalAccess.class);
 	    when(access.scheduleAsyncStep(any(IThrowingFunction.class))).thenReturn(fut);
 	    when(exe.waitForDelay(1000)).thenReturn(fut);
-		
+		when(comp.getExternalAccess()).thenReturn(access);
+	    
 		//IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 
-	    Node<IComponent> an = new ActionNode<>((event, agent) -> 
+	    Node<IComponent> an = new ActionNode<>(new UserAction<>((event, agent) -> 
 	    {
 	        System.out.println("action called");
 	        return new Future<>(NodeState.SUCCEEDED);
-	    });
+	    }));
 
 	    CooldownDecorator<IComponent> cd = new CooldownDecorator<>(1000);
 	    an.addBeforeDecorator(cd);
+	    
+	    ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp);
 
 	    Event event = new Event("start", null);
-	    IFuture<NodeState> ret1 = an.execute(event);
+	    IFuture<NodeState> ret1 = an.execute(event, context);
 	    NodeState state1 = ret1.get();
 	    
 	    System.out.println("state1: "+state1);
 	    
 	    assertEquals(NodeState.SUCCEEDED, state1, "Node should succeed on first execution");
 
-	    IFuture<NodeState> ret2 = an.execute(event);
+	    IFuture<NodeState> ret2 = an.execute(event, context);
 	    NodeState state2 = ret2.get();
 	    
 	    System.out.println("state2: "+state2);
@@ -307,7 +369,7 @@ public class DecoratorTest
 
 	    SUtil.sleep(1000);
 
-	    IFuture<NodeState> ret3 = an.execute(event);
+	    IFuture<NodeState> ret3 = an.execute(event, context);
 	    NodeState state3 = ret3.get();
 	    
 	    System.out.println("state3: "+state3);

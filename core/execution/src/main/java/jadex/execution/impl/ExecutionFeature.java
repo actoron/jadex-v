@@ -204,7 +204,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
 	{
-		Future<T> ret = new Future<>();// createStepFuture(step);
+		Future<T> ret = new Future<>();// createStepFuture(step); // todo?!
 		
 		if(terminated)
 		{
@@ -262,7 +262,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				if(!saveEndStep(res, (Future)ret))
 				{
 					@SuppressWarnings("unchecked")
-					Future<T>	resfut	= (Future<T>)res;
+					Future<T> resfut = (Future<T>)res;
 					// Use generic connection method to avoid issues with different future types.
 					resfut.delegateTo(ret);
 				}

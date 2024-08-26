@@ -14,11 +14,21 @@ public class EventType
 	
 	/**
 	 *  Create an event type from a string.
-	 */
+	 * /
 	public EventType(String... types)
 	{
 		this.types = types;
-	}
+	}*/
+	
+	public EventType(String... types) 
+	{
+        if(types != null) 
+        {
+            this.types = Arrays.stream(types)
+            	.flatMap(type -> Arrays.stream(type.split("\\.")))
+                .toArray(String[]::new);
+        }
+    }
 	
 	/**
 	 *  Create an event type.

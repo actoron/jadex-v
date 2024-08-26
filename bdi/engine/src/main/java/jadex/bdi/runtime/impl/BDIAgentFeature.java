@@ -111,9 +111,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	{
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener());
 		if(!isPure())
-		{
 			IBDIClassGenerator.checkEnhanced(self.getPojo().getClass());
-		}
 		this.bdimodel = (BDIModel)self.getModel().getRawModel();
 		this.capa = new RCapability(bdimodel.getCapability());
 		this.rulesystem = new RuleSystem(self.getPojo(), true)
@@ -500,12 +498,12 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		writeField(val, fieldname, mbel, obj, comp);
 	}
 	
-	static Field	valvalue	= SReflect.getField(Val.class, "value");
-	static Field	valpojo	= SReflect.getField(Val.class, "pojo");
-	static Field	valmbel	= SReflect.getField(Val.class, "mbel");
-	static Field	valparam	= SReflect.getField(Val.class, "param");
-	static Field	valupd	= SReflect.getField(Val.class, "updaterate");
-	static Field	valdyn	= SReflect.getField(Val.class, "dynamic");
+	static Field valvalue = SReflect.getField(Val.class, "value");
+	static Field valpojo = SReflect.getField(Val.class, "pojo");
+	static Field valmbel = SReflect.getField(Val.class, "mbel");
+	static Field valparam = SReflect.getField(Val.class, "param");
+	static Field valupd = SReflect.getField(Val.class, "updaterate");
+	static Field valdyn = SReflect.getField(Val.class, "dynamic");
 	{
 		valvalue.setAccessible(true);
 		valpojo.setAccessible(true);
@@ -514,6 +512,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		valupd.setAccessible(true);
 		valdyn.setAccessible(true);
 	}
+	
 	/**
 	 *  Method that is called automatically when a belief 
 	 *  is written as field access.

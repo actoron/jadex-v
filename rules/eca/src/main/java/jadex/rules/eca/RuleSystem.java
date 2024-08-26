@@ -88,6 +88,15 @@ public class RuleSystem
 	}
 	
 	/**
+	 *  Get event count.
+	 *  @return The event count.
+	 */
+	public int getEventCount()
+	{
+		return pcman.getSize();
+	}
+	
+	/**
 	 *  Process the next event by
 	 *  - finding rules that are sensible to the event type
 	 *  - evaluate the conditions of these conditions
@@ -101,8 +110,8 @@ public class RuleSystem
 		{
 			IEvent event = pcman.removeEvent(0);
 			
-//			if(event.getType().toString().indexOf("factchanged.myself")!=-1)
-//				System.out.println("sdgfsdgf");
+			//if(event.getType().toString().indexOf("daytime")!=-1)
+			//	System.out.println("sdgfsdgf");
 			
 //			if(event.getType().getType(0).indexOf("factadded")!=-1)// && event.getType().getType(1).indexOf("mybean")!=-1)
 //				&& event.getType().getType(1).indexOf("Ambu")!=-1)
@@ -334,6 +343,8 @@ public class RuleSystem
 	/**
 	 *  Process events until the event queue is empty or max
 	 *  events have been processed.
+	 *  
+	 *  Note: method does not return the actions results 
 	 */
 	public IFuture<Void> processAllEvents()
 	{
@@ -438,6 +449,8 @@ public class RuleSystem
 	 */
 	public IFuture<Void> addEvent(IEvent event)
 	{
+		System.out.println("event added: "+event);
+		
 //		if(event.getType().toString().indexOf("factchanged.myself")!=-1)
 //			System.out.println("added: "+event.getType()+" "+event.getContent());
 //		if(event.getType().getTypes().length==1)

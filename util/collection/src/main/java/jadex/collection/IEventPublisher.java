@@ -1,4 +1,4 @@
-package jadex.bdi.runtime.wrappers;
+package jadex.collection;
 
 /**
  * 

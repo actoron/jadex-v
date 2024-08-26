@@ -4,7 +4,7 @@ import jadex.bt.Node.NodeState;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public abstract class TimeoutDecorator<T> extends Decorator<T> 
+public class TimeoutDecorator<T> extends Decorator<T> 
 {
     protected long timeout;
     
@@ -19,26 +19,10 @@ public abstract class TimeoutDecorator<T> extends Decorator<T>
 	}
     
     @Override
-    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, T context) 
+    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, ExecutionContext<T> context) 
     {
-        Future<NodeState> ret = new Future<>();
-       
-        Runnable abort = scheduleTimer(ret);
-        
-        node.internalExecute(event, context).then(s -> 
-        {
-        	abort.run();
-        	ret.setResultIfUndone(s);
-        })
-        .catchEx(ex -> 
-        {
-        	abort.run();
-        	ret.setResultIfUndone(NodeState.FAILED);
-        });
-
-        return ret;
+    	node.getNodeContext(context).setTimeout(timeout);
+        return new Future<NodeState>(state);
     }
     
-    protected abstract Runnable scheduleTimer(Future<NodeState> ret);
-    	
 }

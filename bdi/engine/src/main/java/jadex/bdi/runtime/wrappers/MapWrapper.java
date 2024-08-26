@@ -3,6 +3,7 @@ package jadex.bdi.runtime.wrappers;
 import java.util.Map;
 
 import jadex.bdi.model.MElement;
+import jadex.collection.IEventPublisher;
 import jadex.core.IComponent;
 import jadex.rules.eca.EventType;
 

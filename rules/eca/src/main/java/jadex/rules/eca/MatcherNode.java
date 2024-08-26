@@ -97,6 +97,9 @@ public class MatcherNode
 			ret.addAll(tmp);
 	}
 	
+	
+
+	
 	/**
 	 *  Add a rule for event at a level.
 	 *  @param type The event type.
@@ -252,15 +255,208 @@ public class MatcherNode
 		
 		System.out.println(node);
 		
-//		System.out.println("*: "+node.getRules("*"));
-//		System.out.println("a.*: "+node.getRules("a.*"));
-//		System.out.println("a.b.*: "+node.getRules("a.b.*"));
+		//System.out.println("*: "+node.getRules("*"));
+		System.out.println("a.*: "+node.getRules("a.*"));
+		System.out.println("a.b.*: "+node.getRules("a.b.*"));
 		
-//		System.out.println("a.b: "+node.getRules("a.b"));
-		System.out.println("a.b.c: "+node.getRules("a.b.c"));
-		System.out.println("a.b.c.d: "+node.getRules("a.b.c.d"));
+		//System.out.println("a.b: "+node.getRules("a.b"));
+		//System.out.println("a.b.c: "+node.getRules("a.b.c"));
+		//System.out.println("a.b.c.d: "+node.getRules("a.b.c.d"));
 //		System.out.println("a.b.c.d: "+node.getRules("a.b.c.d"));
 		
 		node.removeRule(r1);
 	}
 }
+
+/*
+public class MatcherNode 
+{
+    private final TrieNode root = new TrieNode("");
+
+    public List<IRule<?>> getRules(String type) 
+    {
+        return root.collectRules(new EventType(type).getTypes());
+    }
+    
+    public List<IRule<?>> getRules(EventType type) 
+    {
+        return root.collectRules(type.getTypes());
+    }
+    
+    public void addRule(IRule<?> rule) 
+    {
+        for(EventType type : rule.getEvents()) 
+            root.addRule(type, rule);
+    }
+    
+    public void removeRule(IRule<?> rule)
+    {
+        for(EventType type : rule.getEvents()) 
+            root.removeRule(type, rule);
+    }
+    
+    public String toString()
+    {
+        return "MatcherNode(root=" + root.toString() + ")";
+    }
+
+    public class TrieNode 
+    {
+        private Map<String, TrieNode> children = new HashMap<>();
+        
+        private List<IRule<?>> rules = new ArrayList<>();
+        
+        private String type;
+        
+        public TrieNode(String type)
+        {
+        	this.type = type;
+        }
+        
+        public void addRule(EventType eventType, IRule<?> rule) 
+        {
+            TrieNode node = this;
+            String[] types = eventType.getTypes();
+            
+            for(int i = 0; i < types.length; i++) 
+            {
+                String type = types[i];
+                node = node.getOrCreateChild(type);
+            }
+            
+            node.addRule(rule);
+        }
+        
+        public void removeRule(EventType eventType, IRule<?> rule) 
+        {
+            TrieNode node = this;
+            String[] types = eventType.getTypes();
+            
+            for(int i = 0; i < types.length; i++) 
+            {
+                String type = types[i];
+                node = node.getChild(type);
+                
+                if(node == null) 
+                    return; // Rule not found
+            }
+            
+            // Remove the rule from the final node that represents the full event type
+            node.removeRuleFromCurrentLevel(rule);
+        }
+        
+        public List<IRule<?>> collectRules(String[] types) 
+        {
+            Set<IRule<?>> collectedRules = new LinkedHashSet<>();
+            TrieNode node = this;
+            boolean wildcard = false;
+            
+            // Traverse the trie according to the event types
+            for(int i = 0; i < types.length && node!=null; i++) 
+            {
+                String type = types[i];
+                if(type.equals("*")) 
+                {
+                    wildcard = true;
+                    break; // Stop at wildcard, collect rules from current node
+                }
+                
+                node = node.getChild(type);
+            }
+            
+            // Collect rules for wildcard * at the last level and all siblings
+            if(wildcard && node != null) 
+            {
+                collectWildcardRules(node, collectedRules);
+            }
+            else if(node != null) 
+            {
+                collectedRules.addAll(node.rules);
+            }
+            
+            return new ArrayList<>(collectedRules);
+        }
+
+
+        private void collectWildcardRules(TrieNode node, Set<IRule<?>> collectedRules) 
+        {
+            TrieNode currentNode = node;
+            
+            // Collect rules for the current node and all its wildcard rules
+            collectedRules.addAll(currentNode.rules);
+            
+            // Recursively collect from child nodes
+            for(TrieNode child : node.children.values()) 
+                collectWildcardRules(child, collectedRules);
+        }
+
+        private void addRule(IRule<?> rule)
+        {
+        	rules.add(rule);
+        }
+        
+        private void removeRuleFromCurrentLevel(IRule<?> rule) 
+        {
+            rules.remove(rule);
+        }
+        
+        private TrieNode getOrCreateChild(String type) 
+        {
+            return children.computeIfAbsent(type, k -> new TrieNode(type));
+        }
+        
+        private TrieNode getChild(String type) 
+        {
+            return children.get(type);
+        }
+        
+        @Override
+        public String toString() 
+        {
+            StringBuilder sb = new StringBuilder();
+            toString(sb, "", true);
+            return sb.toString();
+        }
+        
+        private void toString(StringBuilder sb, String prefix, boolean isTail) 
+        {
+            sb.append(prefix).append(isTail ? "`- " : "|- ")
+              .append("Node(type="+type+" rules=").append(rules).append(")\n");
+            List<String> keys = new ArrayList<>(children.keySet());
+            for(int i = 0; i < keys.size(); i++) 
+            {
+                String key = keys.get(i);
+                TrieNode child = children.get(key);
+                child.toString(sb, prefix + (isTail ? "   " : "|  "), i == keys.size() - 1);
+            }
+        }
+    }
+    
+    public static void main(String[] args) 
+    {
+        MatcherNode node = new MatcherNode();
+        Rule<?> r1 = new Rule<Object>("a.b.c.d", null, null, new EventType[]{new EventType("a.b.c.d")});
+		node.addRule(r1);
+		node.addRule(new Rule<Object>("a.b", null, null, new EventType[]{new EventType("a.b")}));
+		node.addRule(new Rule<Object>("a.b2", null, null, new EventType[]{new EventType("a.b2")}));
+		node.addRule(new Rule<Object>("a.b.c2", null, null, new EventType[]{new EventType("a.b.c2")}));
+		node.addRule(new Rule<Object>("a.b2", null, null, new EventType[]{new EventType("a.b2")}));
+		node.addRule(new Rule<Object>("a.b2.c", null, null, new EventType[]{new EventType("a.b2.c")}));
+		node.addRule(new Rule<Object>("a.b.c.d2", null, null, new EventType[]{new EventType("a.b.c.d")}));
+		node.addRule(new Rule<Object>("a2", null, null, new EventType[]{new EventType("a2")}));
+		node.addRule(new Rule<Object>("*", null, null, new EventType[]{new EventType("*")}));
+		node.addRule(new Rule<Object>("a.b.*", null, null, new EventType[]{new EventType("a.b.*")}));
+		node.addRule(new Rule<Object>("a.*", null, null, new EventType[]{new EventType("a.*")}));
+
+        System.out.println(node);
+
+        System.out.println("a.*: " + node.getRules("a.*"));
+        System.out.println("a.b.*: " + node.getRules("a.b.*"));
+
+        node.removeRule(r1);
+
+        System.out.println("After removing rule 'a.b.c.d':");
+        System.out.println("a.*: " + node.getRules("a.*"));
+        System.out.println("a.b.*: " + node.getRules("a.b.*"));
+    }
+}*/

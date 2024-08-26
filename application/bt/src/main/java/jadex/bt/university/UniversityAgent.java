@@ -7,11 +7,16 @@ import jadex.bt.Node;
 import jadex.bt.Node.NodeState;
 import jadex.bt.SelectorNode;
 import jadex.bt.SequenceNode;
+import jadex.bt.UserAction;
+import jadex.bt.Val;
+import jadex.bt.impl.BTAgentFeature;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
+import jadex.rules.eca.EventType;
 
+@Agent(type="bt")
 public class UniversityAgent implements IBTProvider
 {
 	/** The bdi agent. */
@@ -19,63 +24,89 @@ public class UniversityAgent implements IBTProvider
 	protected IComponent agent;
 	
 	/** Belief if it is currently raining. Set through an agent argument. */
-	protected boolean raining = Boolean.TRUE;
+	protected Val<Boolean> raining = new Val<>(true);
 	
 	/** Belief if wait time is not too long. Set through an agent argument. */
-	protected boolean waiting = Boolean.TRUE;
+	protected Val<Boolean> waiting = new Val<>(true);
+	
+	public UniversityAgent()
+	{
+	}
+	
+	public UniversityAgent(boolean raining, boolean waiting)
+	{
+		this.raining.set(raining);
+		this.waiting.set(waiting);
+	}
 	
 	public Node<IComponent> createBehaviorTree()
 	{
-		// goal cometouni takex 	public enum Type{TRAIN, TRAM};
+		// train
+		// tram
+		// walk
 		
-		// plan WalkPlan precondition !raining
-		// TrainPlan precondition raining
-		// TakeTram always
-		// takeX check waiting -> fail
-		
+		// take train precondition raining
 		ActionNode<IComponent> train = new ActionNode<>();
-		train.setAction((e, agent) -> 
+		train.setAction(new UserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to train stop: "+agent.getId());
-			if(!waiting)
+			if(!waiting.get())
+			{
+				System.out.println("failed waiting for train");
 				return new Future<>(NodeState.FAILED);
+			}
 			System.out.println("Going by train");
 			return new Future<>(NodeState.SUCCEEDED);
-		});
+		}));
 		Decorator<IComponent> rainy = new Decorator<>();
-		rainy.setFunction((event, comp) -> raining? NodeState.RUNNING: NodeState.FAILED);
+		rainy.setFunction((event, comp) -> raining.get()? NodeState.RUNNING: NodeState.FAILED);
 		train.addBeforeDecorator(rainy);
+		//train.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});
+		train.setTriggerCondition((node, execontext) -> raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
 		
+		// take tram always
 		ActionNode<IComponent> tram = new ActionNode<>();
-		train.setAction((e, agent) -> 
+		tram.setAction(new UserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to tram stop: "+agent.getId());
-			if(!waiting)
+			if(!waiting.get())
+			{
+				System.out.println("failed waiting for tram");
+				if(!raining.get())
+				{
+					System.out.println("RAINING");
+					raining.set(true);
+					waiting.set(true);
+				}
 				return new Future<>(NodeState.FAILED);
+			}
 			System.out.println("Going by tram");
 			return new Future<>(NodeState.SUCCEEDED);
-		});
+		}));
 		
+		// walk when not raining
 		ActionNode<IComponent> walk = new ActionNode<>();
-		walk.setAction((e, agent) -> 
+		walk.setAction(new UserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to uni: "+agent.getId());
 			return new Future<>(NodeState.SUCCEEDED);
-		});
+		}));
 		Decorator<IComponent> notrainy = new Decorator<>();
-		notrainy.setFunction((event, comp) -> raining? NodeState.FAILED: NodeState.RUNNING);
+		notrainy.setFunction((event, comp) -> raining.get()? NodeState.FAILED: NodeState.RUNNING);
 		walk.addBeforeDecorator(notrainy);
+		//walk.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});
+		walk.setTriggerCondition((node, execontext) -> !raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
 		
 		SelectorNode<IComponent> sel = new SelectorNode<>();
 		sel.addChild(train).addChild(tram).addChild(walk);
 
 		ActionNode<IComponent> finish = new ActionNode<>();
-		finish.setAction((e, agent) ->
+		finish.setAction(new UserAction<IComponent>((e, agent) ->
 		{
 			System.out.println("Reached uni");
 			agent.terminate();
 			return new Future<>(NodeState.SUCCEEDED);
-		});
+		}));
 		
 		SequenceNode<IComponent> seq = new SequenceNode<>();
 		seq.addChild(sel).addChild(finish);
@@ -96,7 +127,8 @@ public class UniversityAgent implements IBTProvider
 	
 	public static void main(String[] args)
 	{
-		IComponent.create(new UniversityAgent());
+		// raining, waiting
+		IComponent.create(new UniversityAgent(false, false));
 		IComponent.waitForLastComponentTerminated();
 	}
 }

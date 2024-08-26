@@ -1,16 +1,12 @@
 package jadex.bt;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class CompositeNode<T> extends Node<T>
 {
     protected List<Node<T>> children = new ArrayList<>();
-    
-    /*public CompositeNode(Node parent, Blackboard blackboard, AbortMode abortmode)
-    {
-    	super(parent, blackboard, abortmode);
-    }*/
     
     public CompositeNode<T> addChild(Node<T> child) 
     {
@@ -34,31 +30,30 @@ public abstract class CompositeNode<T> extends Node<T>
     	return children.size();
     }
     
-    public abstract int getCurrentChildCount();
+	public void collectNodes(Collection<Node<T>> nodes)
+	{
+		super.collectNodes(nodes);
+		children.stream().forEach(c -> c.collectNodes(nodes));
+	}
+    
+    public abstract int getCurrentChildCount(ExecutionContext<T> context);
     
     @Override
-    public void abort() 
+    public void abort(AbortMode abortmode, NodeState state, ExecutionContext<T> context) 
     {
-    	if(aborted || getAbortMode()==AbortMode.NONE)
+    	if(getNodeContext(context).getAborted()!=null || abortmode==AbortMode.NONE)
     	{
     		return;
     	}
     	else 
      	{	
-    		super.abort();
+    		super.abort(abortmode, state, context);
     		
-    		if(getAbortMode()==AbortMode.SUBTREE)
+    		if(abortmode==AbortMode.SUBTREE || abortmode==AbortMode.SELF)
     		{
-    			getChildren().stream().forEach(child -> child.abort());
-    		}
-    		else if(getAbortMode()==AbortMode.LOW_PRIORITY)
-    		{
-    			for(int i = 0; i < getCurrentChildCount() && i < getChildCount(); i++) 
-    			{
-    				getChild(i).abort();
-    			}
+    			// must not propagate SUBTREE
+    			getChildren().stream().forEach(child -> child.abort(AbortMode.SELF, state, context));
     		}
     	}
     }
-    
 }

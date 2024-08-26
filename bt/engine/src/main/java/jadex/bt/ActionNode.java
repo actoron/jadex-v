@@ -1,7 +1,5 @@
 package jadex.bt;
 
-import java.util.function.BiFunction;
-
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
@@ -9,64 +7,143 @@ import jadex.future.ITerminableFuture;
 
 public class ActionNode<T> extends Node<T> 
 {
-    protected BiFunction<Event, T, IFuture<NodeState>> action;
-    protected IFuture<NodeState> icuraction; 
+    //protected BiFunction<Event, T, IFuture<NodeState>> action;
+    protected UserBaseAction<T, ? extends IFuture<NodeState>> action;
     
     public ActionNode()
     {
     }
     
-    public ActionNode(BiFunction<Event, T, IFuture<NodeState>> action)
+    //public ActionNode(BiFunction<Event, T, IFuture<NodeState>> action)
+    public ActionNode(UserBaseAction<T, ? extends IFuture<NodeState>> action)
     {
     	this.action = action;
     }
     
-    public ActionNode<T> setAction(BiFunction<Event, T, IFuture<NodeState>> action)
+    public UserBaseAction<T, ? extends IFuture<NodeState>> getAction() 
     {
+		return action;
+	}
+
+	public ActionNode<T> setAction(UserBaseAction<T, ? extends IFuture<NodeState>> action)
+    {
+		//System.out.println("action is: "+this+" "+action);
     	this.action = action;
     	return this;
     }
 
     @Override
-    public IFuture<NodeState> internalExecute(Event event, T context) 
+    public IFuture<NodeState> internalExecute(Event event, ExecutionContext<T> context) 
     {
-    	Future<NodeState> ret = new Future<NodeState>();
+  		System.out.println("exeuting action node: "+this);
+    	
+    	Future<NodeState> ret = new Future<>();
       	
     	try
     	{
-			icuraction = action.apply(event, context);
+			IFuture<NodeState> fut = action.getAction().apply(event, context.getUserContext());
+			getNodeContext(context).setUsercall(fut);
 			
-			icuraction.then(res ->
+			fut.then(res ->
 			{
 				ret.setResultIfUndone(res);
 			}).catchEx(e ->
 			{
 		   		if(!(e instanceof FutureTerminatedException))
 		   			System.out.println("exception in action: "+e);
-		   		ret.setResult(NodeState.FAILED);
+		   		ret.setResultIfUndone(NodeState.FAILED);
 			});
     	}
     	catch(Exception e)
     	{
      		System.out.println("exception in action: "+e);
-    		ret.setResult(NodeState.FAILED);
+    		ret.setResultIfUndone(NodeState.FAILED);
     	}
 		
 		return ret;
     }
     
     @Override
-    protected void reset() 
+    public void abort(AbortMode abortmode, NodeState state, ExecutionContext<T> execontext) 
     {
-    	super.reset();
-    	icuraction = null;
+    	ActionNodeContext<T> context = getNodeContext(execontext);
+    	
+     	if(context.getAborted()!=null || NodeState.RUNNING!=context.getState())
+    		return;
+ 
+     	IFuture<NodeState> usercall = context.getUsercall();
+     	
+      	super.abort(abortmode, state, execontext);
+
+    	if(abortmode==AbortMode.SELF)
+    	{
+    		if(usercall==null)
+    		{
+    			System.out.println("abort: no user action: "+this);
+    		}
+    		else
+    		{
+    			if(usercall.isDone())
+        		{
+        			System.out.println("abort: user action finished: "+this);
+        		}
+    			else if(usercall instanceof ITerminableFuture)
+    			{
+    				((ITerminableFuture<NodeState>)usercall).terminate();
+    				System.out.println("abort: aborting user action: "+this);
+    			}
+    			else
+    			{
+    				System.out.println("abort: cannot abort non-terminable action "+this);
+    			}
+    		}
+    	}
+    	else
+    	{
+    		System.out.println("ignoring abort: "+abortmode+" "+this);
+    	}
+     }
+    
+    @Override
+    public ActionNodeContext<T> getNodeContext(ExecutionContext<T> execontext) 
+    {
+    	return (ActionNodeContext<T>)super.getNodeContext(execontext);
+    }
+    
+    protected NodeContext<T> createNodeContext()
+    {
+    	return new ActionNodeContext<T>();
     }
     
     @Override
-    public void abort() 
+    public void reset(ExecutionContext<T> context, Boolean all) 
     {
-    	super.abort();
-    	if(icuraction instanceof ITerminableFuture)
-    		((ITerminableFuture<NodeState>)icuraction).terminate();
+    	super.reset(context, all);
+    	//System.out.println("removed call: "+getNodeContext(context).getUsercall());
+    	getNodeContext(context).setUsercall(null);
     }
+    
+    public static class ActionNodeContext<T> extends NodeContext<T>
+    {
+    	protected IFuture<NodeState> usercall;
+
+		public IFuture<NodeState> getUsercall() 
+		{
+			return usercall;
+		}
+
+		public void setUsercall(IFuture<NodeState> usercall) 
+		{
+			//System.out.println("usercall: "+usercall+" "+this);
+			this.usercall = usercall;
+		}
+    }
+    
+	@Override
+	public String toString() 
+	{
+		String ret = "ActionNode [id=" + id + ", action="+(action!=null? action.getDescription(): action)+"]";
+		//System.out.println("a: "+ret);
+		return ret;
+	}
 }

@@ -5,6 +5,7 @@ import java.beans.PropertyChangeEvent;
 import jadex.bdi.model.MElement;
 import jadex.bdi.runtime.impl.BDIAgentFeature;
 import jadex.bdi.runtime.impl.IInternalBDIAgentFeature;
+import jadex.collection.IEventPublisher;
 import jadex.common.IResultCommand;
 import jadex.core.ComponentTerminatedException;
 import jadex.future.Future;

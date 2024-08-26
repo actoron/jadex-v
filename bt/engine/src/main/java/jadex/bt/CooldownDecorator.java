@@ -7,25 +7,50 @@ import jadex.future.IFuture;
 public class CooldownDecorator<T> extends Decorator<T> 
 {
     protected long cooldown;
-    protected long lasttime = 0;
     
     public CooldownDecorator(long cooldown) 
     {
-    	this.cooldown = cooldown;
+    	setCooldown(cooldown);
     }
     
     @Override
-    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, T context) 
+    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, ExecutionContext<T> execontext) 
     {
+    	NodeContext<T> context = node.getNodeContext(execontext);
+    	
         long curtime = System.currentTimeMillis();
-        if(curtime - lasttime >= cooldown) 
+        long lasttime = getLastTime(context);
+        if(lasttime==0 || curtime - lasttime>= getCooldown()) 
         {
-            lasttime = curtime;
-            return node.internalExecute(event, context);
+        	setLastTime(curtime, context);
+            return new Future<>(state);
         } 
         else 
         {
             return new Future<>(NodeState.FAILED);
         }
     }
+    
+	public long getCooldown() 
+	{
+		return cooldown;
+	}
+
+	public void setCooldown(long cooldown) 
+	{
+		this.cooldown = cooldown;
+	}
+
+	public long getLastTime(NodeContext<T> context)
+	{
+		String name = this+".lasttime.noreset";
+		Object ret = context.getValue(name);
+		return ret!=null? (Long)ret: 0;
+	}
+
+	public void setLastTime(long lasttime, NodeContext<T> context) 
+	{
+		String name = this+".lasttime.noreset";
+		context.setValue(name, lasttime);
+	}
 }

@@ -11,13 +11,31 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	/** The delegate list. */
 	protected Collection<T> delegate;
 
+	/** The event publisher. */
+	protected IEventPublisher publisher;
+	
 	/**
 	 *  Create a new wrapper.
 	 *  @param delegate The delegate.
 	 */
 	public CollectionWrapper(Collection<T> delegate)
 	{
+		this(delegate, null);
+	}
+	
+	/**
+	 *  Create a new wrapper.
+	 *  @param delegate The delegate.
+	 */
+	public CollectionWrapper(Collection<T> delegate, IEventPublisher publisher)
+	{
 		this.delegate = delegate;
+		this.publisher = publisher;
+	}
+	
+	public IEventPublisher getEventPublisher()
+	{
+		return this.publisher;
 	}
 	
 	/**
@@ -301,15 +319,24 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	/**
 	 *  An entry was added to the collection.
 	 */
-	protected abstract void	entryAdded(T value, int index);
+	protected void entryAdded(T value, int index)
+	{
+		publisher.entryAdded(value, index);
+	}
 	
 	/**
 	 *  An entry was removed from the collection.
 	 */
-	protected abstract void	entryRemoved(T value, int index);
+	protected void entryRemoved(T value, int index)
+	{
+		publisher.entryRemoved(value, index);
+	}
 	
 	/**
 	 *  An entry was changed in the collection.
 	 */
-	protected abstract void	entryChanged(T oldvalue, T newvalue, int index);
+	protected void entryChanged(T oldvalue, T newvalue, int index)
+	{
+		publisher.entryChanged(oldvalue, newvalue, index);
+	}
 }

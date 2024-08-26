@@ -7,41 +7,62 @@ import jadex.future.IFuture;
 public class RetryDecorator<T> extends Decorator<T> 
 {
     protected int max;
+    
+    protected long delay;
 
+    public RetryDecorator() 
+    {
+    	this(0, 0);
+    }
+    
     public RetryDecorator(int max) 
     {
+    	this(max, 0);
+    }
+    
+    public RetryDecorator(int max, long delay) 
+    {
     	this.max = max;
+    	this.delay = delay;
     }
 
     @Override
-    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, T context) 
+    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, ExecutionContext<T> execontext) 
     {
         Future<NodeState> ret = new Future<>();
-        executeWithRetry(node, event, state, 0, ret, context);
+        
+        int attempt = getAttempt(node.getNodeContext(execontext));
+        
+        if(state == NodeState.FAILED && (attempt < max || max==0)) 
+        {
+        	setAttempt(attempt+1, node.getNodeContext(execontext));
+        	node.getNodeContext(execontext).setRepeat(true);
+        	System.out.println("retry deco: "+delay);
+        	if(delay>0)
+        		node.getNodeContext(execontext).setRepeatDelay(delay);
+        }
+            
+        ret.setResult(state);
+        
         return ret;
     }
     
-    protected void executeWithRetry(Node<T> node, Event event, NodeState state, int attempt, Future<NodeState> ret, T context) 
+    public void abort(NodeContext<T> context)
     {
-        if(attempt < max) 
-        {
-            node.internalExecute(event, context).then(s -> 
-            {
-                if(s == NodeState.FAILED && attempt + 1 < max) 
-                    executeWithRetry(node, event, state, attempt + 1, ret, context);
-                else 
-                    ret.setResult(s);
-            }).catchEx(ex -> 
-            {
-                if(attempt + 1 < max) 
-                    executeWithRetry(node, event, state, attempt + 1, ret, context);
-                else
-                    ret.setResult(NodeState.FAILED);
-            });
-        } 
-        else 
-        {
-            ret.setResult(NodeState.FAILED);
-        }
+    	String name = this+".attempt.noreset";
+    	context.removeValue(name);
+    }
+    
+    protected int getAttempt(NodeContext<T> context)
+    {
+    	String name = this+".attempt.noreset";
+		Object ret = context.getValue(name);
+		return ret!=null? (Integer)ret: 0;
+    }
+    
+    protected void setAttempt(int attempt, NodeContext<T> context)
+    {
+		String name = this+".attempt.noreset";
+		context.setValue(name, attempt);
     }
 }

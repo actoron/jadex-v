@@ -1,7 +1,5 @@
 package jadex.bt;
 
-import java.util.logging.Level;
-
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -12,37 +10,32 @@ import jadex.future.IFuture;
  */
 public class SelectorNode<T> extends CompositeNode<T> 
 {
-	protected int idx = 0;
-	
-	/*public SelectorNode(Node parent, Blackboard blackboard, AbortMode abortmode)
-	{
-		super(parent, blackboard, abortmode);
-	}*/
-	
     @Override
-    public IFuture<NodeState> internalExecute(Event event, T context) 
+    public IFuture<NodeState> internalExecute(Event event, ExecutionContext<T> context) 
     {  	
     	Future<NodeState> ret = new Future<>();
-    	//this.state = NodeState.RUNNING;
     	
-    	executeNextChild(event, ret, idx);
+    	executeNextChild(event, ret, context);
     
     	return ret;
     }
     
-    protected void executeNextChild(Event event, Future<NodeState> ret, int i)
+    protected void executeNextChild(Event event, Future<NodeState> ret, ExecutionContext<T> context)
     {
-    	if(i < getChildCount()) 
+   		getNodeContext(context).incIndex();
+    	 
+    	if(getNodeContext(context).getIndex() < getChildCount()) 
     	{
-            IFuture<NodeState> child = getChild(i).execute(event);
+    		System.out.println("Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
+    		IFuture<NodeState> child = getChild(getNodeContext(context).getIndex()).execute(event, context);
             
             if(child.isDone())
             {
-            	handleResult(event, child.get(), ret);
+            	handleResult(event, child.get(), ret, context);
             }
             else
             {
-            	child.then(res -> handleResult(event, res, ret)).catchEx(ex -> handleResult(event, NodeState.FAILED, ret));
+            	child.then(res -> handleResult(event, res, ret, context)).catchEx(ex -> handleResult(event, NodeState.FAILED, ret, context));
             }
         }
     	else
@@ -51,7 +44,7 @@ public class SelectorNode<T> extends CompositeNode<T>
     	}
     }
     
-    protected void handleResult(Event event, NodeState state, Future<NodeState> ret) 
+    protected void handleResult(Event event, NodeState state, Future<NodeState> ret, ExecutionContext<T> context) 
     {
     	if(state==NodeState.SUCCEEDED)
     	{
@@ -59,7 +52,7 @@ public class SelectorNode<T> extends CompositeNode<T>
     	}
     	else if(state==NodeState.FAILED)
     	{
-    		executeNextChild(event, ret, ++idx);
+    		executeNextChild(event, ret, context);
     	}
     	else
     	{
@@ -68,14 +61,45 @@ public class SelectorNode<T> extends CompositeNode<T>
     }
     
     @Override
-    protected void reset() 
+    public void reset(ExecutionContext<T> context, Boolean all) 
     {
-    	super.reset();
-    	idx = 0;
+    	super.reset(context, all);
+    	getNodeContext(context).setIndex(-1);
     }
     
-    public int getCurrentChildCount()
+    public int getCurrentChildCount(ExecutionContext<T> context)
     {
-    	return idx;
+    	return getNodeContext(context).getIndex();
+    }
+    
+    @Override
+    public SelectorNodeContext<T> getNodeContext(ExecutionContext<T> execontext) 
+    {
+    	return (SelectorNodeContext<T>)super.getNodeContext(execontext);
+    }
+    
+    protected NodeContext<T> createNodeContext() 
+    {
+    	return new SelectorNodeContext<T>();
+    }
+    
+    public static class SelectorNodeContext<T> extends NodeContext<T>
+    {
+    	protected int idx = -1;
+
+		public int getIndex() 
+		{
+			return idx;
+		}
+
+		public void setIndex(int idx) 
+		{
+			this.idx = idx;
+		}
+		
+		public void incIndex()
+		{
+			idx++;
+		}
     }
 }
