@@ -458,7 +458,7 @@ public class RuleSystem
 	 */
 	public IFuture<Void> addEvent(IEvent event)
 	{
-		System.out.println("event added: "+event);
+		//System.out.println("event added: "+event);
 		
 //		if(event.getType().toString().indexOf("factchanged.myself")!=-1)
 //			System.out.println("added: "+event.getType()+" "+event.getContent());
