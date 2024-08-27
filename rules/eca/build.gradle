@@ -23,7 +23,6 @@ dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:common:'+v
-	implementation 'org.activecomponents.jadex:concurrent:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:javaparser:'+v
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
