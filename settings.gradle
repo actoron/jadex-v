@@ -85,7 +85,7 @@ def parseURLWithCredentials(urlstring) {
 
 	// URL without extra info (e.g. no password for security reasons)
 	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
-	//println 'url: ' + ret.url
+	println 'url: ' + ret.url
 		
 	return ret;
 }
