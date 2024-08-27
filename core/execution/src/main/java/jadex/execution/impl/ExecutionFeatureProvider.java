@@ -188,7 +188,7 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 				}
 				if(self.terminate)
 				{
-					exe.scheduleStep(() -> self.terminate());
+					exe.scheduleStep((Runnable)() -> self.terminate());
 				}
 				
 				@SuppressWarnings("unchecked")

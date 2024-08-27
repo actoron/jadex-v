@@ -117,6 +117,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					}
 				}
 			}
+			catch(StepAborted t)
+			{
+				ret.setException(new RuntimeException("Error in step", t));
+				// Pass abort error to thread runner main loop
+				throw t;
+			}
 			catch(Exception e)
 			{
 				ret.setException(e);
@@ -189,6 +195,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					}
 				}
 			}
+			catch(StepAborted t)
+			{
+				ret.setException(new RuntimeException("Error in step", t));
+				// Pass abort error to thread runner main loop
+				throw t;
+			}
 			catch(Exception e)
 			{
 				ret.setException(e);
@@ -230,6 +242,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					resfut.delegateTo(ret);
 				}
 			}
+			catch(StepAborted t)
+			{
+				ret.setException(new RuntimeException("Error in step", t));
+				// Pass abort error to thread runner main loop
+				throw t;
+			}
 			catch(Exception e)
 			{
 				ret.setException(e);
@@ -270,6 +288,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					// Use generic connection method to avoid issues with different future types.
 					resfut.delegateTo(ret);
 				}
+			}
+			catch(StepAborted t)
+			{
+				ret.setException(new RuntimeException("Error in step", t));
+				// Pass abort error to thread runner main loop
+				throw t;
 			}
 			catch(Exception e)
 			{
@@ -348,7 +372,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					//if(!this.cancel())
 					//	return;
 					
-					scheduleStep(() -> ret.setResultIfUndone(null));
+					scheduleStep((Runnable)() -> ret.setResultIfUndone(null));
 					
 					synchronized(ExecutionFeature.class)
 					{
@@ -630,7 +654,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			if(!aborted)
 			{
-				scheduleStep(() ->
+				scheduleStep((Runnable)() ->
 				{
 					try
 					{
@@ -881,7 +905,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		@Override
 		public void run()
 		{
-			doRun(step);
+//			doRun(step);
+			step.run();
 		}
 	}
 	

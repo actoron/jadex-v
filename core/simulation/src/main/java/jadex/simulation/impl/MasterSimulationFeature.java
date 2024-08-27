@@ -246,7 +246,7 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 		public void run()
 		{
 			LOCAL.set(exe);
-			exe.doRun(step);
+			step.run();
 		}
 	}
 }
