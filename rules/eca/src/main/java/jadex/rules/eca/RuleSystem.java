@@ -95,7 +95,7 @@ public class RuleSystem
 	{
 		return pcman.getSize();
 	}
-	
+//volatile Exception	first;
 	/**
 	 *  Process the next event by
 	 *  - finding rules that are sensible to the event type
@@ -105,7 +105,20 @@ public class RuleSystem
 	public IIntermediateFuture<RuleEvent> processEvent()
 	{
 		final IntermediateFuture<RuleEvent> ret = new IntermediateFuture<RuleEvent>();
-		
+//try
+//{
+//synchronized(this)
+//{
+//	if(first!=null)
+//	{
+//		first.printStackTrace();
+//		new RuntimeException("second thread"+Thread.currentThread()).printStackTrace();
+//	}
+//	else
+//	{
+//		first	= new RuntimeException("first thread"+Thread.currentThread());
+//	}
+//}
 		if(pcman.hasEvents())
 		{
 			IEvent event = pcman.removeEvent(0);
@@ -146,7 +159,14 @@ public class RuleSystem
 		{
 			ret.setFinished();
 		}
-		
+//}
+//finally
+//{
+//	synchronized(this)
+//	{
+//		first	= null;
+//	}
+//}
 		return ret;
 	}
 	

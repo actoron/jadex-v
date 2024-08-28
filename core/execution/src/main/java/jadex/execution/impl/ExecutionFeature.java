@@ -667,7 +667,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						wait.signal();
 						
 						// Abort this step to skip afterStep() call, because other thread is already running now.
-						throw new StepAborted(getComponent().getId());
+						throw new StepAborted(null);//getComponent().getId()); // Use null because code is used in bootstrapping before getComponent() is available
 					}
 					finally
 					{
