@@ -280,8 +280,7 @@ public class ComponentManager implements IComponentManager
 	{
 		if(getLogger().isLoggable(Level.INFO))
 			getLogger().log(Level.INFO, "Component removed: "+cid);
-		
-		System.out.println("Component removed: "+cid);
+		//System.out.println("Component removed: "+cid);
 		
 		//System.out.println("removing: "+cid);
 		boolean last;
