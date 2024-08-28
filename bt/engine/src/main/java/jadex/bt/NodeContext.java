@@ -92,7 +92,7 @@ public class NodeContext<T>
 	{
 		if(values!=null)
 		{
-			for(String key: values.keySet())
+			for(String key: values.keySet().toArray(new String[values.size()]))
 			{
 				if(key.indexOf("noreset")==-1)
 					values.remove(key);

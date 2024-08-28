@@ -176,6 +176,60 @@ public abstract class Node<T>
 	        	ret.setResultIfUndone(NodeState.FAILED);
 			}
 		};
+		
+   		ITimerCreator<T> tc = execontext.getTimerCreator();
+		ITerminableFuture<Void>[] timeout = new ITerminableFuture[1];
+		
+		Consumer<NodeState> doafter = new Consumer<>()
+    	{
+    		public void accept(NodeState state)
+    		{
+    			try
+    			{
+	        		if(state!=NodeState.SUCCEEDED && state!=NodeState.FAILED)
+    	        		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+state);
+
+	        		if(timeout[0]!=null)
+	        			timeout[0].terminate();
+	        		
+	        		if(context.isRepeat() && context.getAborted()!=AbortMode.SELF)
+	   	        	{
+	              		ITerminableFuture<Void> delay = null;
+	              		if(context.getRepeatDelay()>0)
+	              		{
+	              			delay = tc.createTimer(Node.this, execontext, context.getRepeatDelay());
+	              			context.setRepeatDelayTimer(delay);
+	              		}
+	              		else
+	              		{
+	              			delay = new TerminableFuture<Void>();
+	              			((TerminableFuture<Void>)delay).setResult(null);
+	              		}
+	              			
+	              		delay.then(Void ->
+	            		{
+	            			System.out.println("repeat node: "+Node.this);
+	            			//reset(execontext); must not reset here, is done in execute on reexecution call
+	            			IFuture<NodeState> fut = execute(event, execontext);
+	            			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
+	            				fut.delegateTo(ret);
+    	   	        	}).catchEx(e ->
+    		            {
+    		            	handleerr.accept(e);
+    		            });
+	   	        	}
+	   	        	else
+	   	        	{
+	   	        		reset(execontext, true);
+	   	        		ret.setResultIfUndone(state);
+	   	        	}
+    			}
+    			catch(Exception e)
+    			{
+    				handleerr.accept(e);
+    			}
+    		}
+    	};
         
 		// Decorators are always executed independent of the node state
         executeDecorators(beforedecos, 0, event, NodeState.RUNNING, s -> s!=NodeState.RUNNING, execontext).then(bs ->
@@ -183,20 +237,29 @@ public abstract class Node<T>
         	if(bs != NodeState.RUNNING) 
       	    {
         		System.out.println("beforedecos give: "+bs+" "+this);
+        		
         		// no abort necessary because nothing is running
                 reset(execontext, true);
               	ret.setResult(bs);
+        		
+              	// node and after decorators will not be executed
+        		/*executeDecorators(afterdecos, 0, event, bs, null, execontext).then(as ->
+	        	{
+	   	        	doafter.accept(as);
+	        	})
+	        	.catchEx(e ->
+	            {
+	            	handleerr.accept(e);
+	            });*/
              }
         	else
         	{
-        		ITimerCreator<T> tc = execontext.getTimerCreator();
-        		
-        		ITerminableFuture<Void> timeout = context.getTimeout()>0? tc.createTimer(this, execontext, context.getTimeout()): null;
-        		if(timeout!=null)
+        		timeout[0] = context.getTimeout()>0? tc.createTimer(this, execontext, context.getTimeout()): null;
+        		if(timeout[0]!=null)
         		{
         			//System.out.println("timeout timer created: "+context.getTimeout());
-        			context.setTimeoutTimer(timeout);
-	        		timeout.then(Void ->
+        			context.setTimeoutTimer(timeout[0]);
+	        		timeout[0].then(Void ->
 	        		{
 	        			//System.out.println("timeout occurred: "+this);
 	        			abort(AbortMode.SELF, NodeState.FAILED, execontext);
@@ -208,57 +271,6 @@ public abstract class Node<T>
         		
         		System.out.println("internalExecute: "+this);
     			IFuture<NodeState> fut = internalExecute(event, execontext);
-    			
-        		Consumer<NodeState> doafter = new Consumer<>()
-	        	{
-	        		public void accept(NodeState state)
-	        		{
-	        			try
-	        			{
-	    	        		if(state!=NodeState.SUCCEEDED && state!=NodeState.FAILED)
-	        	        		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+state);
-	
-	    	        		if(timeout!=null)
-	    	        			timeout.terminate();
-	    	        		
-	    	        		if(context.isRepeat() && context.getAborted()!=AbortMode.SELF)
-	    	   	        	{
-	    	              		ITerminableFuture<Void> delay = null;
-	    	              		if(context.getRepeatDelay()>0)
-	    	              		{
-	    	              			delay = tc.createTimer(Node.this, execontext, context.getRepeatDelay());
-	    	              			context.setRepeatDelayTimer(delay);
-	    	              		}
-	    	              		else
-	    	              		{
-	    	              			delay = new TerminableFuture<Void>();
-	    	              			((TerminableFuture<Void>)delay).setResult(null);
-	    	              		}
-	    	              			
-	    	              		delay.then(Void ->
-	    	            		{
-	    	            			System.out.println("repeat node: "+Node.this);
-	    	            			//reset(execontext); must not reset here, is done in execute on reexecution call
-	    	            			IFuture<NodeState> fut = execute(event, execontext);
-	    	            			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
-	    	            				fut.delegateTo(ret);
-		    	   	        	}).catchEx(e ->
-		    		            {
-		    		            	handleerr.accept(e);
-		    		            });
-	    	   	        	}
-	    	   	        	else
-	    	   	        	{
-	    	   	        		reset(execontext, true);
-	    	   	        		ret.setResultIfUndone(state);
-	    	   	        	}
-	        			}
-	        			catch(Exception e)
-	        			{
-	        				handleerr.accept(e);
-	        			}
-	        		}
-	        	};
         		
     	        fut.then(state -> 
     	        {

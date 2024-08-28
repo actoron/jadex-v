@@ -20,6 +20,9 @@ public class CooldownDecorator<T> extends Decorator<T>
     	
         long curtime = System.currentTimeMillis();
         long lasttime = getLastTime(context);
+        
+        System.out.println("cooldown: "+lasttime+" "+curtime);
+        
         if(lasttime==0 || curtime - lasttime>= getCooldown()) 
         {
         	setLastTime(curtime, context);

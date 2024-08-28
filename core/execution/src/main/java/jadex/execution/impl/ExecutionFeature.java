@@ -776,7 +776,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			if(step instanceof StepInfo)
 			{
-				((StepInfo)step).getFuture().setException(ex);
+				((StepInfo)step).getFuture().setExceptionIfUndone(ex);
 			}
 		}
 		
@@ -800,7 +800,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		for(TimerTaskInfo tti: todo)
 		{
-			tti.getFuture().setException(ex);
+			tti.getFuture().setExceptionIfUndone(ex);
 		}
 		
 		//System.out.println("terminate end");

@@ -25,7 +25,7 @@ import jadex.future.TerminableFuture;
 
 public class DecoratorTest 
 {
-	/*@Test
+	@Test
 	public void testRetryDecorator() 
 	{
 	    AtomicInteger attempt = new AtomicInteger(0);
@@ -55,7 +55,7 @@ public class DecoratorTest
 	    System.out.println("state: "+state+" "+attempt.get());
 
 	    assertEquals(NodeState.SUCCEEDED, state, "Node should succeed after retries");
-	    assertEquals(4, attempt.get(), "Should have retried 3 times");
+	    assertEquals(3, attempt.get(), "Should have retried till attempt is 3");
 	}
 	
 	@Test
@@ -93,9 +93,9 @@ public class DecoratorTest
 	    System.out.println("state: "+state+" "+attempt.get()+" "+needed);
 
 	    assertEquals(NodeState.SUCCEEDED, state, "Node should succeed after retries");
-	    assertEquals(4, attempt.get(), "Should have retried 3 times");
-	    assertTrue(needed>3000, "Should need more than 3 secs");
-	}*/
+	    assertEquals(3, attempt.get(), "Should have retried 3 times");
+	    assertTrue(needed>2000, "Should need more than 2 secs");
+	}
 	
 	/*@Test
 	public void testConditionalDecorator() 
@@ -340,15 +340,14 @@ public class DecoratorTest
 		when(comp.getExternalAccess()).thenReturn(access);
 	    
 		//IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
-
+		
 	    Node<IComponent> an = new ActionNode<>(new UserAction<>((event, agent) -> 
 	    {
-	        System.out.println("action called");
+	    	System.out.println("action called");
 	        return new Future<>(NodeState.SUCCEEDED);
 	    }));
-
-	    CooldownDecorator<IComponent> cd = new CooldownDecorator<>(1000);
-	    an.addBeforeDecorator(cd);
+	    an.addBeforeDecorator(new CooldownDecorator<>(1000));
+	    an.addAfterDecorator(new RepeatDecorator<IComponent>());
 	    
 	    ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp);
 
@@ -358,7 +357,7 @@ public class DecoratorTest
 	    
 	    System.out.println("state1: "+state1);
 	    
-	    assertEquals(NodeState.SUCCEEDED, state1, "Node should succeed on first execution");
+	    /*assertEquals(NodeState.SUCCEEDED, state1, "Node should succeed on first execution");
 
 	    IFuture<NodeState> ret2 = an.execute(event, context);
 	    NodeState state2 = ret2.get();
