@@ -32,7 +32,7 @@ public class ParallelNode<T> extends CompositeNode<T>
 		return this;
 	}
 	
-    public IFuture<NodeState> internalExecute(Event event, ExecutionContext<T> context) 
+    public IFuture<NodeState> internalExecute(Event event, NodeState mystate, ExecutionContext<T> context) 
     {
         List<IFuture<NodeState>> results = new ArrayList<>();
     	Future<NodeState> ret = new Future<>();

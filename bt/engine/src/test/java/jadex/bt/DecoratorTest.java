@@ -45,7 +45,7 @@ public class DecoratorTest
 	    }));
 
 	    RetryDecorator<Object> rd = new RetryDecorator<>(3);
-	    an.addAfterDecorator(rd);
+	    an.addDecorator(rd);
 
 	    Event event = new Event("start", null);
 	    ExecutionContext<Object> context = new ExecutionContext<Object>();
@@ -78,7 +78,7 @@ public class DecoratorTest
 	    }));
 
 	    RetryDecorator<Object> rd = new RetryDecorator<>(3, 1000);
-	    an.addAfterDecorator(rd);
+	    an.addDecorator(rd);
 
 	    long start = System.currentTimeMillis();
 	    
@@ -149,7 +149,7 @@ public class DecoratorTest
 		}));
 		
 		TimeoutDecorator<IComponent> td = new TimeoutDecorator<>(1000);
-		an.addBeforeDecorator(td);
+		an.addDecorator(td);
 		
 		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator<IComponent>());
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
@@ -190,7 +190,7 @@ public class DecoratorTest
 		}));
 		
 		TimeoutDecorator<IComponent> td = new TimeoutDecorator<>(500);
-		an.addBeforeDecorator(td);
+		an.addDecorator(td);
 		
 		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator<IComponent>());
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
@@ -220,7 +220,7 @@ public class DecoratorTest
 		}));
 		
 		TimeoutDecorator<IExternalAccess> td = new TimeoutDecorator<>(1000);
-		an.addBeforeDecorator(td);
+		an.addDecorator(td);
 		
 		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator<IExternalAccess>());
 		context.setUserContext(comp);
@@ -251,7 +251,7 @@ public class DecoratorTest
 		}));
 		
 		TimeoutDecorator<IExternalAccess> td = new TimeoutDecorator<>(500);
-		an.addBeforeDecorator(td);
+		an.addDecorator(td);
 		
 		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator<IExternalAccess>());
 		context.setUserContext(comp);
@@ -274,8 +274,8 @@ public class DecoratorTest
 	        return new Future<>(NodeState.FAILED);
 	    }));
 
-	    Decorator<Object> id = new Decorator<>().setFunction((event, state) -> NodeState.SUCCEEDED==state? NodeState.FAILED: NodeState.SUCCEEDED);
-	    an.addBeforeDecorator(id);
+	    Decorator<Object> id = new ConditionalDecorator<>().setFunction((event, state, context) -> NodeState.SUCCEEDED==state? NodeState.FAILED: NodeState.SUCCEEDED);
+	    an.addDecorator(id);
 
 	    Event event = new Event("start", null);
 		ExecutionContext<Object> context = new ExecutionContext<Object>();
@@ -294,8 +294,8 @@ public class DecoratorTest
 	        return new Future<>(NodeState.FAILED);
 	    }));
 
-	    Decorator<Object> sd = new Decorator<>().setFunction((event, state) -> NodeState.SUCCEEDED);
-	    an.addBeforeDecorator(sd);
+	    Decorator<Object> sd = new ConditionalDecorator<>().setFunction((event, state, context) -> NodeState.SUCCEEDED);
+	    an.addDecorator(sd);
 
 	    Event event = new Event("start", null);
 	    ExecutionContext<Object> context = new ExecutionContext<Object>();
@@ -315,8 +315,8 @@ public class DecoratorTest
 	        return new Future<>(NodeState.SUCCEEDED);
 	    }));
 
-	    Decorator<Object> sd = new Decorator<>().setFunction((event, state) -> NodeState.FAILED);
-	    an.addBeforeDecorator(sd);
+	    Decorator<Object> sd = new ConditionalDecorator<>().setFunction((event, state, context) -> NodeState.FAILED);
+	    an.addDecorator(sd);
 
 	    Event event = new Event("start", null);
 	    ExecutionContext<Object> context = new ExecutionContext<Object>();

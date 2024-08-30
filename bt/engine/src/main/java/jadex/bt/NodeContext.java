@@ -12,6 +12,9 @@ public class NodeContext<T>
 {
 	protected NodeState state;
 	
+	/** Flag indicating that node was finished in before state. In that case node and after decos must not be executed. */
+	protected boolean finishedinbefore;
+	
 	protected AbortMode aborted = null;
 	
 	protected Future<NodeState> call;
@@ -27,6 +30,16 @@ public class NodeContext<T>
 	protected ITerminableFuture<Void> timeouttimer;
 
 	protected Map<String, Object> values;
+
+	public boolean isFinishedInBefore() 
+	{
+		return finishedinbefore;
+	}
+
+	public void setFinishedInBefore(boolean finishedinbefore) 
+	{
+		this.finishedinbefore = finishedinbefore;
+	}
 
 	public ITerminableFuture<Void> getRepeatDelayTimer() 
 	{
@@ -64,6 +77,7 @@ public class NodeContext<T>
 			state = null;
 		//else
 		//	state = NodeState.RUNNING;
+		finishedinbefore = false;
 		
 		aborted = null;
 		if(all)

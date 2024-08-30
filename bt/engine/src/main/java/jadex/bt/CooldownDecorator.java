@@ -13,11 +13,10 @@ public class CooldownDecorator<T> extends Decorator<T>
     	setCooldown(cooldown);
     }
     
-    @Override
-    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, ExecutionContext<T> execontext) 
-    {
-    	NodeContext<T> context = node.getNodeContext(execontext);
-    	
+    public IFuture<NodeState> beforeExecute(Event event, NodeState state, ExecutionContext<T> execontext)
+	{
+		NodeContext<T> context = node.getNodeContext(execontext);
+	    
         long curtime = System.currentTimeMillis();
         long lasttime = getLastTime(context);
         
@@ -32,7 +31,7 @@ public class CooldownDecorator<T> extends Decorator<T>
         {
             return new Future<>(NodeState.FAILED);
         }
-    }
+	}
     
 	public long getCooldown() 
 	{

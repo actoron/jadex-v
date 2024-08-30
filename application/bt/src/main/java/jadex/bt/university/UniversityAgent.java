@@ -1,6 +1,7 @@
 package jadex.bt.university;
 
 import jadex.bt.ActionNode;
+import jadex.bt.ConditionalDecorator;
 import jadex.bt.Decorator;
 import jadex.bt.IBTProvider;
 import jadex.bt.Node;
@@ -58,9 +59,7 @@ public class UniversityAgent implements IBTProvider
 			System.out.println("Going by train");
 			return new Future<>(NodeState.SUCCEEDED);
 		}));
-		Decorator<IComponent> rainy = new Decorator<>();
-		rainy.setFunction((event, comp) -> raining.get()? NodeState.RUNNING: NodeState.FAILED);
-		train.addBeforeDecorator(rainy);
+		train.addDecorator(new ConditionalDecorator<IComponent>().setFunction((event, state, comp) -> raining.get()? NodeState.RUNNING: NodeState.FAILED));
 		//train.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});
 		train.setTriggerCondition((node, execontext) -> raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
 		
@@ -91,9 +90,7 @@ public class UniversityAgent implements IBTProvider
 			System.out.println("Walking to uni: "+agent.getId());
 			return new Future<>(NodeState.SUCCEEDED);
 		}));
-		Decorator<IComponent> notrainy = new Decorator<>();
-		notrainy.setFunction((event, comp) -> raining.get()? NodeState.FAILED: NodeState.RUNNING);
-		walk.addBeforeDecorator(notrainy);
+		walk.addDecorator(new ConditionalDecorator<IComponent>().setFunction((event, state, comp) -> raining.get()? NodeState.FAILED: NodeState.RUNNING));
 		//walk.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});
 		walk.setTriggerCondition((node, execontext) -> !raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
 		

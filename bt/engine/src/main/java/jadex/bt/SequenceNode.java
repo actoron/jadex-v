@@ -9,7 +9,7 @@ import jadex.future.IFuture;
 public class SequenceNode<T> extends CompositeNode<T>
 {
     @Override
-    public IFuture<NodeState> internalExecute(Event event, ExecutionContext<T> context) 
+    public IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context) 
     {
     	return executeNextChild(event, context);
     }

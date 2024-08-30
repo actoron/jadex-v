@@ -11,7 +11,7 @@ import jadex.future.IFuture;
 public class SelectorNode<T> extends CompositeNode<T> 
 {
     @Override
-    public IFuture<NodeState> internalExecute(Event event, ExecutionContext<T> context) 
+    public IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context) 
     {  	
     	Future<NodeState> ret = new Future<>();
     	

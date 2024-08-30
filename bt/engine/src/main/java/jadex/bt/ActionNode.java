@@ -33,7 +33,7 @@ public class ActionNode<T> extends Node<T>
     }
 
     @Override
-    public IFuture<NodeState> internalExecute(Event event, ExecutionContext<T> context) 
+    public IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context) 
     {
   		System.out.println("exeuting action node: "+this);
     	

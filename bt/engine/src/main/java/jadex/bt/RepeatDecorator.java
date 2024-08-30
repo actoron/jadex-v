@@ -1,14 +1,16 @@
 package jadex.bt;
 
-import java.util.function.BiFunction;
-
+import jadex.bt.Node.AbortMode;
 import jadex.bt.Node.NodeState;
+import jadex.common.ITriFunction;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
+import jadex.future.TerminableFuture;
 
 public class RepeatDecorator<T> extends Decorator<T> 
 {
-	protected BiFunction<Node<T>, ExecutionContext<T>, IFuture<Boolean>> condition;
+	protected ITriFunction<Node<T>, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition;
     
     protected int max;
     
@@ -24,37 +26,76 @@ public class RepeatDecorator<T> extends Decorator<T>
     	this(null, max, delay);
     }
     
-    public RepeatDecorator(BiFunction<Node<T>, ExecutionContext<T>, IFuture<Boolean>> condition) 
+    public RepeatDecorator(ITriFunction<Node<T>, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition) 
     {
     	this(condition, 0, 0);
     }
     
-    public RepeatDecorator(BiFunction<Node<T>, ExecutionContext<T>, IFuture<Boolean>> condition, int max, long delay) 
+    public RepeatDecorator(ITriFunction<Node<T>, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition, int max, long delay) 
     {
-    	this.condition = condition==null? (node, context) -> new Future<Boolean>(true): condition;
+    	this.condition = condition==null? (node, state, context) -> new Future<Boolean>(true): condition;
     	this.max = max;
     	this.delay = delay;
     }
 
     @Override
-    public IFuture<NodeState> execute(Node<T> node, Event event, NodeState state, ExecutionContext<T> execontext) 
+    public IFuture<NodeState> afterExecute(Event event, NodeState state, ExecutionContext<T> execontext) 
     {
         Future<NodeState> ret = new Future<>();
-        
-        if(max==0 || getAttempt(node.getNodeContext(execontext))<max)
+
+        NodeContext<T> context = node.getNodeContext(execontext);
+        ITimerCreator<T> tc = execontext.getTimerCreator();
+
+        if(max == 0 || getAttempt(context) < max) 
         {
-        	incAttempt(node.getNodeContext(execontext));
-	        condition.apply(node, execontext).then(rep ->
-	        { 
-	        	System.out.println("repeat deco: "+node+" "+rep);
-	        	node.getNodeContext(execontext).setRepeat(rep);
-	        	if(rep)
-	        		node.getNodeContext(execontext).setRepeatDelay(delay);
-	        }).catchEx(ex2 -> ret.setResult(NodeState.FAILED));
+            incAttempt(context);
+            condition.apply(node, state, execontext).then(rep -> 
+            {
+                if(rep) 
+                {
+                	context.setRepeat(true);
+
+                    if(context.getAborted() != AbortMode.SELF) 
+                    {
+                        ITerminableFuture<Void> dfut = null;
+                        if(delay > 0) 
+                        {
+                        	context.setRepeatDelay(delay);
+                            dfut = tc.createTimer(getNode(), execontext, delay);
+                            context.setRepeatDelayTimer(dfut);
+                        } 
+                        else 
+                        {
+                            dfut = new TerminableFuture<>();
+                            ((TerminableFuture<Void>)dfut).setResult(null);
+                        }
+
+                        dfut.then(Void -> 
+                        {
+                            System.out.println("repeat node: "+getNode());
+	            			//reset(execontext); must not reset here, is done in execute on reexecution call
+	            			IFuture<NodeState> fut = getNode().execute(event, execontext);
+	            			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
+	            				fut.delegateTo(ret);
+                        }).catchEx(e -> 
+                        {
+                            e.printStackTrace();
+                            getNode().reset(execontext, true);
+                            ret.setResultIfUndone(NodeState.FAILED);
+                        });
+                    }
+                } 
+                else 
+                {
+                    ret.setResult(state); 
+                }
+            }).catchEx(ex2 -> ret.setResult(NodeState.FAILED));
+        } 
+        else 
+        {
+            ret.setResult(state); 
         }
-        
-        ret.setResult(state);
-        
+
         return ret;
     }
     

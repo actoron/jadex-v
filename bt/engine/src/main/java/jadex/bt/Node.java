@@ -17,7 +17,7 @@ import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 import jadex.rules.eca.EventType;
 
-public abstract class Node<T>
+public abstract class Node<T> implements IDecorator<T>
 {
 	public static AtomicInteger idgen = new AtomicInteger();
 	
@@ -37,8 +37,7 @@ public abstract class Node<T>
 	
 	protected int id = idgen.incrementAndGet();
 	protected Node<T> parent;
-	protected List<Decorator<T>> beforedecos = new ArrayList<>();
-	protected List<Decorator<T>> afterdecos = new ArrayList<>();
+	protected List<IDecorator<T>> decorators = new ArrayList<>();
 	
 	protected BiFunction<Node<T>, Supplier<ExecutionContext<T>>, Boolean> triggercondition;
 	protected EventType[] triggerevents;
@@ -46,7 +45,12 @@ public abstract class Node<T>
 	protected BiFunction<Node<T>, Supplier<ExecutionContext<T>>, Boolean> successcondition;
 	protected EventType[] successevents;
 
-	public abstract IFuture<NodeState> internalExecute(Event event, ExecutionContext<T> context);
+	public abstract IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context);
+	
+	public Node()
+	{
+		decorators.add(this);
+	}
 	
 	public Node<T> setParent(Node<T> parent)
 	{
@@ -106,14 +110,11 @@ public abstract class Node<T>
 		return ret;
 	}
 	
-	public void addBeforeDecorator(Decorator<T> deco)
+	public void addDecorator(Decorator<T> deco)
 	{
-		beforedecos.add(deco);
-	}
-	
-	public void addAfterDecorator(Decorator<T> deco)
-	{
-		afterdecos.add(deco);
+		deco.setNode(this);
+		deco.setWrapped(decorators.get(decorators.size()-1));
+		decorators.add(deco);
 	}
 	
 	public IFuture<NodeState> execute(Event event, ExecutionContext<T> execontext) 
@@ -139,8 +140,10 @@ public abstract class Node<T>
             context.setState(NodeState.RUNNING);  // Set state to running again (reset sets to null)
             
             // In case of repeat, nothing to abort and call must not return
+            // if not repeat that means a reexecution has been triggered by condition
             if(!rep)
             {
+            	System.out.println("execute assumes abort: "+this);
             	abort(AbortMode.SUBTREE, NodeState.FAILED, execontext);  // Then abort children to execute this node further
             	return ret;  // Return as execution is continued by the current context
             }
@@ -165,21 +168,6 @@ public abstract class Node<T>
 			});
 		}
 		
-        Consumer<Exception> handleerr = new Consumer<>() 
-        {
-			@Override
-			public void accept(Exception e)
-			{
-				if(e!=null)
-					e.printStackTrace();
-	           	reset(execontext, true);
-	        	ret.setResultIfUndone(NodeState.FAILED);
-			}
-		};
-		
-   		ITimerCreator<T> tc = execontext.getTimerCreator();
-		ITerminableFuture<Void>[] timeout = new ITerminableFuture[1];
-		
 		Consumer<NodeState> doafter = new Consumer<>()
     	{
     		public void accept(NodeState state)
@@ -189,166 +177,23 @@ public abstract class Node<T>
 	        		if(state!=NodeState.SUCCEEDED && state!=NodeState.FAILED)
     	        		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+state);
 
-	        		if(timeout[0]!=null)
-	        			timeout[0].terminate();
-	        		
-	        		if(context.isRepeat() && context.getAborted()!=AbortMode.SELF)
-	   	        	{
-	              		ITerminableFuture<Void> delay = null;
-	              		if(context.getRepeatDelay()>0)
-	              		{
-	              			delay = tc.createTimer(Node.this, execontext, context.getRepeatDelay());
-	              			context.setRepeatDelayTimer(delay);
-	              		}
-	              		else
-	              		{
-	              			delay = new TerminableFuture<Void>();
-	              			((TerminableFuture<Void>)delay).setResult(null);
-	              		}
-	              			
-	              		delay.then(Void ->
-	            		{
-	            			System.out.println("repeat node: "+Node.this);
-	            			//reset(execontext); must not reset here, is done in execute on reexecution call
-	            			IFuture<NodeState> fut = execute(event, execontext);
-	            			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
-	            				fut.delegateTo(ret);
-    	   	        	}).catchEx(e ->
-    		            {
-    		            	handleerr.accept(e);
-    		            });
-	   	        	}
-	   	        	else
-	   	        	{
-	   	        		reset(execontext, true);
-	   	        		ret.setResultIfUndone(state);
-	   	        	}
+	   	        	reset(execontext, true);
+	   	        	ret.setResultIfUndone(state);
     			}
     			catch(Exception e)
     			{
-    				handleerr.accept(e);
+    	           	reset(execontext, true);
+    	        	ret.setResultIfUndone(NodeState.FAILED);
     			}
     		}
     	};
         
-		// Decorators are always executed independent of the node state
-        executeDecorators(beforedecos, 0, event, NodeState.RUNNING, s -> s!=NodeState.RUNNING, execontext).then(bs ->
-        {
-        	if(bs != NodeState.RUNNING) 
-      	    {
-        		System.out.println("beforedecos give: "+bs+" "+this);
-        		
-        		// no abort necessary because nothing is running
-                reset(execontext, true);
-              	ret.setResult(bs);
-        		
-              	// node and after decorators will not be executed
-        		/*executeDecorators(afterdecos, 0, event, bs, null, execontext).then(as ->
-	        	{
-	   	        	doafter.accept(as);
-	        	})
-	        	.catchEx(e ->
-	            {
-	            	handleerr.accept(e);
-	            });*/
-             }
-        	else
-        	{
-        		timeout[0] = context.getTimeout()>0? tc.createTimer(this, execontext, context.getTimeout()): null;
-        		if(timeout[0]!=null)
-        		{
-        			//System.out.println("timeout timer created: "+context.getTimeout());
-        			context.setTimeoutTimer(timeout[0]);
-	        		timeout[0].then(Void ->
-	        		{
-	        			//System.out.println("timeout occurred: "+this);
-	        			abort(AbortMode.SELF, NodeState.FAILED, execontext);
-	        		}).catchEx(ex ->
-	        		{
-	        			System.out.println("timer aborted: "+this);
-	        		});
-        		}
-        		
-        		System.out.println("internalExecute: "+this);
-    			IFuture<NodeState> fut = internalExecute(event, execontext);
-        		
-    	        fut.then(state -> 
-    	        {
-    	        	if(state!=NodeState.SUCCEEDED && state!=NodeState.FAILED)
-    	        		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+state);
-    	        	//System.out.println("state is: "+state);
-    	        	
-    	        	executeDecorators(afterdecos, 0, event, state, null, execontext).then(as ->
-    	        	{
-    	   	        	doafter.accept(as);
-    	        	})
-    	        	.catchEx(e ->
-    	            {
-    	            	handleerr.accept(e);
-    	            });
-    	        	
-    	        }).catchEx(ex -> 
-    	        {
-    	        	executeDecorators(afterdecos, 0, event, NodeState.FAILED, null, execontext).then(as ->
-    	        	{
-    	        		doafter.accept(as);
-    	        	})
-    	        	.catchEx(e ->
-    	            {
-    	            	handleerr.accept(e);
-    	            });
-    	        });
-        		
-        	}
-        }).catchEx(e ->
-        {
-        	// Should not happen exceptions in decorators are handled in method
-        	handleerr.accept(e);
-        });
-        
+    	System.out.println("execution chain started: "+this);
+    	decorators.get(decorators.size()-1).internalExecute(event, NodeState.RUNNING, execontext).then(state -> doafter.accept(state)).catchEx(ex -> doafter.accept(NodeState.FAILED));
+    	
         return ret;
 	}
 	
-	protected IFuture<NodeState> executeDecorators(List<Decorator<T>> decos, int i, Event event, NodeState state, Predicate<NodeState> abort, ExecutionContext<T> context)
-	{
-		Future<NodeState> ret = new Future<>();
-		
-		if(abort!=null && abort.test(state)) // when to abort decorator execution
-		{
-			ret.setResult(state);
-		}
-		else
-		{
-			Decorator<T> deco = i<decos.size()? decos.get(i): null;
-			
-			if(deco!=null)
-			{
-				try
-				{
-					deco.execute(this, event, state, context).then(s ->
-					{
-						executeDecorators(decos, i+1, event, s, abort, context).delegateTo(ret);
-					}).catchEx(e ->
-					{
-						e.printStackTrace();
-						executeDecorators(decos, i+1, event, state, abort, context).delegateTo(ret); // ignore decorator exception?! 
-					});
-				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
-					executeDecorators(decos, i+1, event, state, abort, context).delegateTo(ret);
-				}
-			}
-			else
-			{
-				ret.setResult(state);
-			}
-		}
-		
-		return ret;
-	}
-
     public NodeContext<T> getNodeContext(ExecutionContext<T> execontext)
     {
     	NodeContext<T> ret = execontext.getNodeContext(this);
