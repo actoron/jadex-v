@@ -1,5 +1,8 @@
-package jadex.bt;
+package jadex.bt.nodes;
 
+import jadex.bt.impl.Event;
+import jadex.bt.state.ExecutionContext;
+import jadex.bt.state.NodeContext;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -8,6 +11,15 @@ import jadex.future.IFuture;
  */
 public class SequenceNode<T> extends CompositeNode<T>
 {
+	public SequenceNode()
+	{
+	}
+	
+	public SequenceNode(String name)
+	{
+		super(name);
+	}
+	
     @Override
     public IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context) 
     {

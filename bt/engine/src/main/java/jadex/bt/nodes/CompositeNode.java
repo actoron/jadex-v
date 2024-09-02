@@ -1,12 +1,23 @@
-package jadex.bt;
+package jadex.bt.nodes;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import jadex.bt.state.ExecutionContext;
+
 public abstract class CompositeNode<T> extends Node<T>
 {
     protected List<Node<T>> children = new ArrayList<>();
+    
+    public CompositeNode()
+    {
+    }
+    
+    public CompositeNode(String name)
+    {
+    	super(name);
+    }
     
     public CompositeNode<T> addChild(Node<T> child) 
     {

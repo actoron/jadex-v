@@ -183,7 +183,7 @@ public class RuleSystem
 			{
 //				System.out.println("Rule selected: "+rules[i]+", "+event);
 				
-				IFuture<Tuple2<Boolean, Object>>	fut	= rules[i].getCondition().evaluate(event);
+				IFuture<Tuple2<Boolean, Object>> fut = rules[i].getCondition().evaluate(event);
 				if(!fut.isDone())
 				{
 					System.err.println("Async rule condition: "+rules[i].getCondition());								

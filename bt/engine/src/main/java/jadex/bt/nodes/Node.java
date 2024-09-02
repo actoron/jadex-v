@@ -1,4 +1,4 @@
-package jadex.bt;
+package jadex.bt.nodes;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,14 +7,16 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import jadex.bt.decorators.Decorator;
+import jadex.bt.decorators.IDecorator;
+import jadex.bt.impl.Event;
+import jadex.bt.state.ExecutionContext;
+import jadex.bt.state.NodeContext;
 import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ITerminableFuture;
-import jadex.future.TerminableFuture;
 import jadex.rules.eca.EventType;
 
 public abstract class Node<T> implements IDecorator<T>
@@ -35,16 +37,11 @@ public abstract class Node<T> implements IDecorator<T>
 	    SUBTREE,
 	}
 	
+	protected String name;
 	protected int id = idgen.incrementAndGet();
 	protected Node<T> parent;
 	protected List<IDecorator<T>> decorators = new ArrayList<>();
 	
-	protected BiFunction<Node<T>, Supplier<ExecutionContext<T>>, Boolean> triggercondition;
-	protected EventType[] triggerevents;
-	
-	protected BiFunction<Node<T>, Supplier<ExecutionContext<T>>, Boolean> successcondition;
-	protected EventType[] successevents;
-
 	public abstract IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context);
 	
 	public Node()
@@ -52,6 +49,28 @@ public abstract class Node<T> implements IDecorator<T>
 		decorators.add(this);
 	}
 	
+	public Node(String name)
+	{
+		this();
+		this.name = name;
+	}
+	
+	public String getName() 
+	{
+		return name;
+	}
+
+	public Node<T> setName(String name) 
+	{
+		this.name = name;
+		return this;
+	}
+
+	public int getId() 
+	{
+		return id;
+	}
+
 	public Node<T> setParent(Node<T> parent)
 	{
 		this.parent = parent;
@@ -63,40 +82,11 @@ public abstract class Node<T> implements IDecorator<T>
 		return parent;
 	}
 	
-	public BiFunction<Node<T>, Supplier<ExecutionContext<T>>, Boolean> getTriggerCondition() 
+	public List<IDecorator<T>> getDecorators() 
 	{
-		return triggercondition;
-	}
-	
-	public EventType[] getTriggerEvents() 
-	{
-		return triggerevents;
+		return decorators;
 	}
 
-	public Node<T> setTriggerCondition(BiFunction<Node<T>, Supplier<ExecutionContext<T>>, Boolean> condition, EventType[] events) 
-	{
-		this.triggercondition = condition;
-		this.triggerevents = events;
-		return this;
-	}
-	
-	public BiFunction<Node<T>, Supplier<ExecutionContext<T>>, Boolean> getSuccessCondition() 
-	{
-		return successcondition;
-	}
-	
-	public EventType[] getSuccessEvents() 
-	{
-		return successevents;
-	}
-	
-	public Node<T> setSuccessCondition(BiFunction<Node<T>, Supplier<ExecutionContext<T>>, Boolean> condition, EventType[] events) 
-	{
-		this.successcondition = condition;
-		this.successevents = events;
-		return this;
-	}
-	
 	public void collectNodes(Collection<Node<T>> nodes)
 	{
 		nodes.add(this);
@@ -196,6 +186,8 @@ public abstract class Node<T> implements IDecorator<T>
 	
     public NodeContext<T> getNodeContext(ExecutionContext<T> execontext)
     {
+    	if(execontext==null)
+    		throw new NullPointerException();
     	NodeContext<T> ret = execontext.getNodeContext(this);
     	if(ret==null)
     	{
@@ -280,6 +272,6 @@ public abstract class Node<T> implements IDecorator<T>
 	@Override
 	public String toString() 
 	{
-		return "Node [id=" + id + ", class="+SReflect.getUnqualifiedClassName(getClass())+"]";
+		return "Node [id=" + id + ", class="+SReflect.getUnqualifiedClassName(getClass())+", name="+getName()+"]";
 	}
 }

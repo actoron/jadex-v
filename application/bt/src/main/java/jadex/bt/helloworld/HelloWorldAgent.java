@@ -1,10 +1,10 @@
 package jadex.bt.helloworld;
 
-import jadex.bt.ActionNode;
 import jadex.bt.IBTProvider;
-import jadex.bt.Node;
-import jadex.bt.Node.NodeState;
-import jadex.bt.UserAction;
+import jadex.bt.actions.UserAction;
+import jadex.bt.nodes.ActionNode;
+import jadex.bt.nodes.Node;
+import jadex.bt.nodes.Node.NodeState;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.micro.annotation.Agent;
@@ -14,7 +14,7 @@ public class HelloWorldAgent implements IBTProvider
 {
 	public Node<IComponent> createBehaviorTree()
 	{
-		ActionNode<IComponent> an = new ActionNode<>();
+		ActionNode<IComponent> an = new ActionNode<>("hello");
 		an.setAction(new UserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Hello from behavior trees: "+agent.getId());

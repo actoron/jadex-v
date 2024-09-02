@@ -1,9 +1,12 @@
-package jadex.bt;
+package jadex.bt.decorators;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import jadex.bt.Node.NodeState;
+import jadex.bt.impl.Event;
+import jadex.bt.nodes.Node;
+import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.state.ExecutionContext;
 import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;

@@ -1,10 +1,10 @@
-package jadex.bt;
+package jadex.bt.state;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bt.Node.AbortMode;
-import jadex.bt.Node.NodeState;
+import jadex.bt.nodes.Node.AbortMode;
+import jadex.bt.nodes.Node.NodeState;
 import jadex.future.Future;
 import jadex.future.ITerminableFuture;
 

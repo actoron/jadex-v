@@ -1,6 +1,6 @@
-package jadex.bt;
+package jadex.bt.decorators;
 
-import jadex.bt.Node.NodeState;
+import jadex.bt.nodes.Node.NodeState;
 import jadex.future.Future;
 
 public class RetryDecorator<T> extends RepeatDecorator<T>

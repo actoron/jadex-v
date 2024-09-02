@@ -1,4 +1,4 @@
-package jadex.bt;
+package jadex.bt.impl;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;

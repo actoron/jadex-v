@@ -2,9 +2,8 @@ package jadex.bt.impl;
 
 import java.util.function.BiFunction;
 
-import jadex.bt.ExecutionContext;
-import jadex.bt.ITimerCreator;
-import jadex.bt.Node;
+import jadex.bt.nodes.Node;
+import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingFunction;

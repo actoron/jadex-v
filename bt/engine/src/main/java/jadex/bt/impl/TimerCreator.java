@@ -1,8 +1,11 @@
-package jadex.bt;
+package jadex.bt.impl;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
+import jadex.bt.nodes.Node;
+import jadex.bt.state.ExecutionContext;
+import jadex.bt.state.NodeContext;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 

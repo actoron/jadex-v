@@ -8,27 +8,28 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import jadex.bt.ActionNode;
-import jadex.bt.BTAgent;
-import jadex.bt.BTStepListener;
-import jadex.bt.Event;
-import jadex.bt.ExecutionContext;
 import jadex.bt.IBTProvider;
-import jadex.bt.Node;
-import jadex.bt.Node.AbortMode;
-import jadex.bt.Node.NodeState;
-import jadex.bt.NodeContext;
-import jadex.bt.UserBaseAction;
 import jadex.bt.Val;
+import jadex.bt.actions.UserBaseAction;
+import jadex.bt.decorators.ConditionalDecorator;
+import jadex.bt.decorators.TriggerDecorator;
+import jadex.bt.nodes.ActionNode;
+import jadex.bt.nodes.Node;
+import jadex.bt.nodes.Node.AbortMode;
+import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.state.ExecutionContext;
+import jadex.bt.state.NodeContext;
 import jadex.collection.ListWrapper;
 import jadex.collection.MapWrapper;
 import jadex.collection.SetWrapper;
 import jadex.common.IResultCommand;
+import jadex.common.ITriFunction;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
@@ -109,7 +110,10 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 	public void	onStart()
 	{
 		IBTProvider prov = (IBTProvider)getSelf().getPojo();
+		
 		this.bt = prov.createBehaviorTree();
+		
+		this.context = createExecutionContext();
 		
 		this.rulesystem = new RuleSystem(self.getPojo(), true);
 		
@@ -246,7 +250,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 						{
 							if(stepret[0]!=null && stepret[0].isDone())
 							{
-								System.out.println("action omitted: "+action.getDescription());
+								System.out.println("action omitted: "+node);
 								Future<NodeState> donefut = Future.getFuture(getFutureReturnType());
 								stepret[0].delegateTo(donefut);
 								return donefut;
@@ -296,69 +300,58 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 				});
 			}
 			
-			if(node.getTriggerEvents()!=null || node.getTriggerCondition()!=null)
-			{
-				rulesystem.getRulebase().addRule(new Rule<Void>(
-					"trigger_"+node.toString(), 
-					e -> // condition
-					{
-						BiFunction<Node<IComponent>, Supplier<ExecutionContext<IComponent>>, Boolean> cond = node.getTriggerCondition();
-						Boolean triggered = cond==null? true: cond.apply(node, () -> getExecutionContext());
-						return new Future<Tuple2<Boolean, Object>>(new Tuple2<Boolean, Object>(triggered, null));
-					}, 
-					(event, rule, context, condresult) -> // action
-					{
-						System.out.println("trigger condition triggered: "+event);
-						
-						// Execution in next step is too late, as parent then executes next child before
-						/*getSelf().getFeature(IExecutionFeature.class).scheduleStep(agent ->
-						{
-							BTAgentFeature.get().executeBehaviorTree(node, new Event(event.getType().toString(), event));
-						});*/
-						
-						NodeContext<IComponent> ncontext = node.getNodeContext(getExecutionContext());
-						
-						if(NodeState.RUNNING==ncontext.getState())
-						{
-							System.out.println("node already active, ignoring: "+node);
-							return IFuture.DONE;
-						}
-						
-						boolean resetted = BTAgentFeature.get().resetOngoingExecution(node, getExecutionContext());
-						
-						if(!resetted)
-						{
-							getSelf().getFeature(IExecutionFeature.class).scheduleStep(agent ->
-							{
-								System.out.println("triggered complete tree reexecution");
-								BTAgentFeature.get().executeBehaviorTree(node, new Event(event.getType().toString(), event));
-							});
-						}
-						
-						return IFuture.DONE;
-					}, node.getTriggerEvents() // trigger events
-				));
-			}
+			List<ConditionalDecorator<IComponent>> cdecos = node.getDecorators().stream()
+				.filter(deco -> deco instanceof ConditionalDecorator)
+				.map(deco -> (ConditionalDecorator<IComponent>)deco)
+				.collect(Collectors.toList());
 			
-			if(node.getSuccessEvents()!=null || node.getSuccessCondition()!=null)
+			for(ConditionalDecorator<IComponent> deco: cdecos)
 			{
-				rulesystem.getRulebase().addRule(new Rule<Void>(
-					"success_"+node.toString(), 
-					e -> // condition
-					{
-						BiFunction<Node<IComponent>, Supplier<ExecutionContext<IComponent>>, Boolean> cond = node.getSuccessCondition();
-						Boolean succeeded = cond==null? true: cond.apply(node, () -> getExecutionContext());
-						return new Future<Tuple2<Boolean, Object>>(new Tuple2<Boolean, Object>(succeeded, null));
-					}, 
-					(event, rule, context, condresult) -> // action
-					{
-						System.out.println("success condition triggered: "+event);
-						
-						node.succeed(getExecutionContext());
-						
-						return IFuture.DONE;
-					}, node.getSuccessEvents() // trigger events
-				));
+				if(deco.getAction()==null || deco.getEvents()==null || deco.getEvents().length==0)
+				{
+					System.out.println("skipping condition: "+deco);
+				}
+				else
+				{
+					rulesystem.getRulebase().addRule(new Rule<Void>(
+						deco.toString()+"_"+node.getId(), 
+						e -> // condition
+						{
+							Future<Tuple2<Boolean, Object>> ret = new Future<>();
+							if(deco.getCondition()!=null)
+							{
+								ITriFunction<Event, NodeState, ExecutionContext<IComponent>, IFuture<Boolean>> cond = deco.getCondition();
+								IFuture<Boolean> fut = cond.apply(new Event(e.getType().toString(), e.getContent()), node.getNodeContext(getExecutionContext()).getState(), getExecutionContext());
+								fut.then(triggered ->
+								{
+									ret.setResult(new Tuple2<>(triggered, null));
+								}).catchEx(ex -> 
+								{
+									ret.setResult(new Tuple2<>(false, null));
+								});
+							}
+							else if(deco.getFunction()!=null)
+							{
+								ITriFunction<Event, NodeState, ExecutionContext<IComponent>, IFuture<NodeState>> cond = deco.getFunction();
+								IFuture<NodeState> fut = cond.apply(new Event(e.getType().toString(), e.getContent()), node.getNodeContext(getExecutionContext()).getState(), getExecutionContext());
+								fut.then(state ->
+								{
+									ret.setResult(new Tuple2<>(deco.mapToBoolean(state), null));
+								}).catchEx(ex -> 
+								{
+									ret.setResult(new Tuple2<>(false, null));
+								});
+							}
+							else
+							{
+								System.out.println("Rule without condition: "+deco);
+								ret.setResult(new Tuple2<>(false, null));
+							}
+							return ret;
+						}, 
+						deco.getAction(), deco.getEvents() // trigger events
+					));
+				}
 			}
 		});
 	}
@@ -401,7 +394,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 		return ret;
 	}
 	
-	protected ExecutionContext<IComponent> getExecutionContext()
+	public ExecutionContext<IComponent> getExecutionContext()
 	{
 		return context;
 	}

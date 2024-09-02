@@ -1,6 +1,5 @@
-package jadex.bt;
+package jadex.bt.impl;
 
-import jadex.bt.impl.BTAgentFeature;
 import jadex.execution.impl.IStepListener;
 import jadex.future.Future;
 import jadex.future.IFuture;

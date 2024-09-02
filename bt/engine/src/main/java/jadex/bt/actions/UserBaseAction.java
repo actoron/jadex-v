@@ -1,14 +1,15 @@
-package jadex.bt;
+package jadex.bt.actions;
 
 import java.util.function.BiFunction;
 
-import jadex.bt.Node.NodeState;
+import jadex.bt.impl.Event;
+import jadex.bt.nodes.Node.NodeState;
 import jadex.future.IFuture;
 
 public class UserBaseAction<T, F extends IFuture<NodeState>>
 { 
 	protected BiFunction<Event, T, F> action; 
-	protected String description;
+	//protected String description;
 	
 	public UserBaseAction(BiFunction<Event, T, F> action)
 	{
@@ -18,7 +19,7 @@ public class UserBaseAction<T, F extends IFuture<NodeState>>
 	public UserBaseAction(BiFunction<Event, T, F> action, String description)
 	{
 		this.action = action;
-		this.description = description;
+		//this.description = description;
 	}
 	
 	public BiFunction<Event, T, F> getAction() 
@@ -36,8 +37,8 @@ public class UserBaseAction<T, F extends IFuture<NodeState>>
 		return (Class<? extends IFuture<NodeState>>)(Class<?>)IFuture.class;
 	}
 	
-	public String getDescription()
+	/*public String getDescription()
 	{
 		return description;
-	}
+	}*/
 }

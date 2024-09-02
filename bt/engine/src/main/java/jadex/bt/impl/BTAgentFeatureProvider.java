@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bt.BTAgent;
 import jadex.bt.IBTProvider;
 import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;

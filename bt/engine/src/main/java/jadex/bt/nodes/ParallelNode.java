@@ -1,8 +1,10 @@
-package jadex.bt;
+package jadex.bt.nodes;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import jadex.bt.impl.Event;
+import jadex.bt.state.ExecutionContext;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -19,6 +21,15 @@ public class ParallelNode<T> extends CompositeNode<T>
 	
 	protected ResultMode failmode = ResultMode.ON_ONE;
 	protected ResultMode successmode = ResultMode.ON_ALL;
+	
+	public ParallelNode()
+	{
+	}
+	
+	public ParallelNode(String name)
+	{
+		super(name);
+	}
 	
 	public ParallelNode<T> setFailureMode(ResultMode failmode)
 	{

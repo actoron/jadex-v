@@ -1,5 +1,9 @@
-package jadex.bt;
+package jadex.bt.nodes;
 
+import jadex.bt.actions.UserBaseAction;
+import jadex.bt.impl.Event;
+import jadex.bt.state.ExecutionContext;
+import jadex.bt.state.NodeContext;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
@@ -12,6 +16,11 @@ public class ActionNode<T> extends Node<T>
     
     public ActionNode()
     {
+    }
+    
+    public ActionNode(String name)
+    {
+    	super(name);
     }
     
     //public ActionNode(BiFunction<Event, T, IFuture<NodeState>> action)
@@ -142,7 +151,7 @@ public class ActionNode<T> extends Node<T>
 	@Override
 	public String toString() 
 	{
-		String ret = "ActionNode [id=" + id + ", action="+(action!=null? action.getDescription(): action)+"]";
+		String ret = "ActionNode [id=" + id + ", action="+action+"]";
 		//System.out.println("a: "+ret);
 		return ret;
 	}

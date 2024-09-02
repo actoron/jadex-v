@@ -1,6 +1,10 @@
-package jadex.bt;
+package jadex.bt.decorators;
 
-import jadex.bt.Node.NodeState;
+import jadex.bt.impl.Event;
+import jadex.bt.nodes.Node;
+import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.state.ExecutionContext;
+import jadex.bt.state.NodeContext;
 import jadex.future.Future;
 import jadex.future.IFuture;
 

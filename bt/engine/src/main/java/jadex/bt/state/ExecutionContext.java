@@ -1,9 +1,11 @@
-package jadex.bt;
+package jadex.bt.state;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bt.Node.NodeState;
+import jadex.bt.impl.ITimerCreator;
+import jadex.bt.nodes.Node;
+import jadex.bt.nodes.Node.NodeState;
 import jadex.future.IFuture;
 
 public class ExecutionContext<T> 

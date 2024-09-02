@@ -6,8 +6,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bt.Node.AbortMode;
-import jadex.bt.Node.NodeState;
+import jadex.bt.actions.UserAction;
+import jadex.bt.impl.Event;
+import jadex.bt.nodes.ActionNode;
+import jadex.bt.nodes.Node.AbortMode;
+import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.state.ExecutionContext;
 import jadex.common.SUtil;
 import jadex.future.Future;
 import jadex.future.IFuture;

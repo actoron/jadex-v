@@ -1,8 +1,9 @@
-package jadex.bt;
+package jadex.bt.actions;
 
 import java.util.function.BiFunction;
 
-import jadex.bt.Node.NodeState;
+import jadex.bt.impl.Event;
+import jadex.bt.nodes.Node.NodeState;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 
@@ -10,13 +11,13 @@ public class TerminableUserAction<T> extends UserBaseAction<T, ITerminableFuture
 {
 	public TerminableUserAction(BiFunction<Event, T, ITerminableFuture<NodeState>> action)
 	{
-		this(action, null);
+		super(action);
 	}
 	
-	public TerminableUserAction(BiFunction<Event, T, ITerminableFuture<NodeState>> action, String description)
+	/*public TerminableUserAction(BiFunction<Event, T, ITerminableFuture<NodeState>> action, String description)
 	{
 		super(action, description);
-	}
+	}*/
 	
 	public Class<? extends IFuture<NodeState>> getFutureReturnType() 
 	{

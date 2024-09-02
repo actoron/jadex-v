@@ -1,16 +1,17 @@
 package jadex.bt.university;
 
-import jadex.bt.ActionNode;
-import jadex.bt.ConditionalDecorator;
-import jadex.bt.Decorator;
 import jadex.bt.IBTProvider;
-import jadex.bt.Node;
-import jadex.bt.Node.NodeState;
-import jadex.bt.SelectorNode;
-import jadex.bt.SequenceNode;
-import jadex.bt.UserAction;
+import jadex.bt.decorators.ConditionalDecorator;
+import jadex.bt.decorators.Decorator;
+import jadex.bt.decorators.TriggerDecorator;
 import jadex.bt.Val;
+import jadex.bt.actions.UserAction;
 import jadex.bt.impl.BTAgentFeature;
+import jadex.bt.nodes.ActionNode;
+import jadex.bt.nodes.Node;
+import jadex.bt.nodes.SelectorNode;
+import jadex.bt.nodes.SequenceNode;
+import jadex.bt.nodes.Node.NodeState;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.micro.annotation.Agent;
@@ -47,7 +48,7 @@ public class UniversityAgent implements IBTProvider
 		// walk
 		
 		// take train precondition raining
-		ActionNode<IComponent> train = new ActionNode<>();
+		ActionNode<IComponent> train = new ActionNode<>("train");
 		train.setAction(new UserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to train stop: "+agent.getId());
@@ -61,10 +62,13 @@ public class UniversityAgent implements IBTProvider
 		}));
 		train.addDecorator(new ConditionalDecorator<IComponent>().setFunction((event, state, comp) -> raining.get()? NodeState.RUNNING: NodeState.FAILED));
 		//train.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});
-		train.setTriggerCondition((node, execontext) -> raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
+		//train.setTriggerCondition((node, execontext) -> raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
+		//train.setTriggerCondition((node, execontext) -> raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
+		train.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> raining.get())
+			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "raining")}));
 		
 		// take tram always
-		ActionNode<IComponent> tram = new ActionNode<>();
+		ActionNode<IComponent> tram = new ActionNode<>("tram");
 		tram.setAction(new UserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to tram stop: "+agent.getId());
@@ -84,7 +88,7 @@ public class UniversityAgent implements IBTProvider
 		}));
 		
 		// walk when not raining
-		ActionNode<IComponent> walk = new ActionNode<>();
+		ActionNode<IComponent> walk = new ActionNode<>("walk");
 		walk.setAction(new UserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to uni: "+agent.getId());
@@ -92,12 +96,14 @@ public class UniversityAgent implements IBTProvider
 		}));
 		walk.addDecorator(new ConditionalDecorator<IComponent>().setFunction((event, state, comp) -> raining.get()? NodeState.FAILED: NodeState.RUNNING));
 		//walk.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});
-		walk.setTriggerCondition((node, execontext) -> !raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
+		//walk.setTriggerCondition((node, execontext) -> !raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
+		walk.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> !raining.get())
+			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "raining")}));
 		
-		SelectorNode<IComponent> sel = new SelectorNode<>();
+		SelectorNode<IComponent> sel = new SelectorNode<>("gotouni");
 		sel.addChild(train).addChild(tram).addChild(walk);
 
-		ActionNode<IComponent> finish = new ActionNode<>();
+		ActionNode<IComponent> finish = new ActionNode<>("finish");
 		finish.setAction(new UserAction<IComponent>((e, agent) ->
 		{
 			System.out.println("Reached uni");
@@ -105,7 +111,7 @@ public class UniversityAgent implements IBTProvider
 			return new Future<>(NodeState.SUCCEEDED);
 		}));
 		
-		SequenceNode<IComponent> seq = new SequenceNode<>();
+		SequenceNode<IComponent> seq = new SequenceNode<>("main");
 		seq.addChild(sel).addChild(finish);
 		
 		return seq;

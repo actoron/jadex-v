@@ -1,6 +1,8 @@
-package jadex.bt;
+package jadex.bt.decorators;
 
-import jadex.bt.Node.NodeState;
+import jadex.bt.impl.Event;
+import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.state.ExecutionContext;
 import jadex.future.IFuture;
 
 public interface IDecorator<T> 
