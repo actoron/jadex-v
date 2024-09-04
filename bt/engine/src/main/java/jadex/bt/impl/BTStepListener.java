@@ -18,7 +18,7 @@ public class BTStepListener implements IStepListener
 		//System.out.println("afterstep: "+btf.getRuleSystem().isEventAvailable());
 		while(btf.getRuleSystem()!=null && btf.getRuleSystem().isEventAvailable())
 		{
-			System.out.println("executeCycle.PAE start");
+			//System.out.println("executeCycle.PAE start");
 			IFuture<Void> fut = btf.getRuleSystem().processAllEvents();
 			if(!fut.isDone())
 				System.err.println("No async actions allowed.");

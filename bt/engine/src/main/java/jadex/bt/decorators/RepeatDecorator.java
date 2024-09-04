@@ -50,6 +50,9 @@ public class RepeatDecorator<T> extends Decorator<T>
 
         NodeContext<T> context = node.getNodeContext(execontext);
         ITimerCreator<T> tc = execontext.getTimerCreator();
+        
+        if(context.getCall()==null || context.getCall().isDone())
+        	System.out.println("after call finished");
 
         if(max == 0 || getAttempt(context) < max) 
         {

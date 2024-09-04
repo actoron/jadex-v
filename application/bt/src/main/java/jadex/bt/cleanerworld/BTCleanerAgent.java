@@ -64,11 +64,12 @@ public class BTCleanerAgent implements IBTProvider
 	protected Set<ICleaner> others = new LinkedHashSet<>();
 	
 	/** Knowledge about myself. Managed by SensorActuator object. */
-	//protected Val<ICleaner> self = new Val<>(actsense.getSelf());
-	protected ICleaner self = actsense.getSelf();
+	protected Val<ICleaner> self = new Val<>(actsense.getSelf());
+	//protected ICleaner self = actsense.getSelf();
 		
 	/** Day or night?. Use updaterate to re-check every second. */
 	protected Val<Boolean> daytime = new Val<Boolean>(() -> actsense.isDaytime(), 1000);
+	protected Val<Double> chargestate = new Val<Double>(() -> actsense.getSelf().getChargestate(), 1000);
 	
 	/** The patrol points. */
 	protected List<ILocation> patrolpoints = new ArrayList<ILocation>();
@@ -137,7 +138,7 @@ public class BTCleanerAgent implements IBTProvider
 			{
 				// todo: make abortable?!
 				actsense.recharge(station, 0.99).then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED))
-				.catchEx(ex -> ret.setResult(NodeState.FAILED));
+					.catchEx(ex -> ret.setResult(NodeState.FAILED));
 			}
 			catch(Exception ex)
 			{
@@ -290,8 +291,8 @@ public class BTCleanerAgent implements IBTProvider
 		loadbattery.addChild(loadatstation);
 		//loadbattery.setTriggerCondition((node, execontext) -> getSelf().getChargestate()<0.7, new EventType[]{	
 		//	new EventType(BTAgentFeature.PROPERTYCHANGED, "chargestate")});
-		loadbattery.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> getSelf().getChargestate()>0.7));
-		loadbattery.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> getSelf().getChargestate()<0.7)
+		loadbattery.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> getChargestate()>0.7));
+		loadbattery.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> getChargestate()<0.7)
 			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "chargestate")}));
 		
 		// || (nearStation() && chargestate<0.99)
@@ -325,8 +326,13 @@ public class BTCleanerAgent implements IBTProvider
 	
 	public ICleaner getSelf()
 	{
-		return self;
-		//return self.get();
+		//return self;
+		return self.get();
+	}
+	
+	public double getChargestate()
+	{
+		return chargestate.get();
 	}
 	
 	public static ILocationObject findClosestElement(Set<? extends ILocationObject> elements, ILocation loc) 

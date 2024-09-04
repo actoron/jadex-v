@@ -5,8 +5,10 @@ import java.util.function.Consumer;
 
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node;
+import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
+import jadex.bt.state.NodeContext;
 import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -29,6 +31,8 @@ public class Decorator<T> implements IDecorator<T>
 	{
 		Future<NodeState> ret = new Future<>();
 		
+		NodeContext<T> context = getNode().getNodeContext(execontext);
+		
 		Consumer<NodeState> doafter = new Consumer<>() 
 		{
 			@Override
@@ -38,7 +42,7 @@ public class Decorator<T> implements IDecorator<T>
 				{
 					System.out.println("decorator exit: "+Decorator.this+" "+state);
 		            ret.setResult(state);
-		            getNode().getNodeContext(execontext).setFinishedInBefore(true);
+		            context.setFinishedInBefore(true);
 		            return;
 		        }
 				
@@ -46,9 +50,19 @@ public class Decorator<T> implements IDecorator<T>
 				IFuture<NodeState> iret = wrapped.internalExecute(event, state, execontext);
 		        iret.then(istate -> 
 		        {
-		        	if(getNode().getNodeContext(execontext).isFinishedInBefore())
+		        	if(context.isFinishedInBefore())
 		        	{
-		        		System.out.println("decorator after skip: "+Decorator.this+" "+istate);
+		        		System.out.println("decorator after skip due to fin in before: "+Decorator.this+" "+istate);
+		        		ret.setResult(istate);
+		        	}
+		        	else if(context.getAborted()==AbortMode.SELF)
+		        	{
+		        		System.out.println("decorator after skip due to abort: "+Decorator.this+" "+istate);
+		        		ret.setResult(istate);
+		        	}
+		        	else if(context.getCall()==null || context.getCall().isDone())
+		        	{
+		        		System.out.println("decorator after skip due to call finished: "+Decorator.this+" "+istate);
 		        		ret.setResult(istate);
 		        	}
 		        	else

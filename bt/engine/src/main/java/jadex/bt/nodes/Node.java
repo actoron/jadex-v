@@ -240,7 +240,7 @@ public abstract class Node<T> implements IDecorator<T>
   		if(all==null)
       		all = !context.isRepeat();
       	
-      	//System.out.println("Clear context: "+this+" all="+!context.isRepeat());
+      	System.out.println("Node reset, clear context: "+this+" all="+!context.isRepeat());
       	context.reset(all);
     }
     

@@ -148,11 +148,11 @@ public class ActionNode<T> extends Node<T>
 		}
     }
     
-	@Override
+	/*@Override
 	public String toString() 
 	{
 		String ret = "ActionNode [id=" + id + ", action="+action+"]";
 		//System.out.println("a: "+ret);
 		return ret;
-	}
+	}*/
 }

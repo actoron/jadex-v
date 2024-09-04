@@ -364,7 +364,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 		//Set<Node<IComponent>> nodes = new HashSet<Node<IComponent>>();
 		while(btf.getRuleSystem()!=null && btf.getRuleSystem().isEventAvailable())
 		{
-			System.out.println("executeCycle.PAE start: "+btf.getRuleSystem().getEventCount());
+			//System.out.println("executeCycle.PAE start: "+btf.getRuleSystem().getEventCount());
 			IIntermediateFuture<RuleEvent> res = btf.getRuleSystem().processEvent();
 			FutureHelper.notifyStackedListeners();
 			if(!res.isDone())
