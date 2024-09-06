@@ -1,4 +1,4 @@
-package jadex.serialization.serializers;
+package jadex.publishservice.impl;
 
 import java.io.IOException;
 import java.io.InputStream;

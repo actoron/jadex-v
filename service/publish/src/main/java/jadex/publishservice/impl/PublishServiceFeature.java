@@ -7,7 +7,6 @@ import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
 import jadex.execution.impl.ILifecycle;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
@@ -20,7 +19,6 @@ import jadex.publishservice.IPublishService;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.impl.RequestManager.MappingInfo;
 import jadex.publishservice.publish.PathManager;
-import jadex.serialization.ISerializationServices;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,8 +31,7 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 	protected PublishServiceFeature(Component self)
 	{
 		this.self	= self;
-		ISerializationServices ss = ISerializationServices.get();
-		RequestManager.createInstance(ss);
+		RequestManager.createInstance();
 	}
 	
 	public void	onStart()
