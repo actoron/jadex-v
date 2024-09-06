@@ -1,8 +1,8 @@
 package jadex.nfproperty.impl;
 
 import jadex.common.ClassInfo;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
-import jadex.execution.ComponentTerminatedException;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;

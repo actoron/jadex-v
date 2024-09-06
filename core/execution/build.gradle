@@ -30,7 +30,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:common:'+v
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
-	
+
 	testFixturesImplementation 'org.activecomponents.jadex:core:'+v
 	testFixturesImplementation 'org.activecomponents.jadex:future:'+v
 	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'

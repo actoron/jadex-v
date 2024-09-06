@@ -7,12 +7,15 @@ import java.util.Set;
 /**
  * 	Wrap a map and call template methods on modification.
  */
-public abstract class MapWrapper<T, E> implements Map<T, E>
+public class MapWrapper<T, E> implements Map<T, E>
 {
 	//-------- attributes --------
 	
 	/** The delegate map. */
 	protected Map<T, E> delegate;
+	
+	/** The event publisher. */
+	protected IEventPublisher publisher;
 	
 	//-------- constructors --------
 	
@@ -21,7 +24,16 @@ public abstract class MapWrapper<T, E> implements Map<T, E>
 	 */
 	public MapWrapper(Map<T, E> delegate)
 	{
+		this(delegate, null);
+	}
+	
+	/**
+	 *  Create a new collection wrapper.
+	 */
+	public MapWrapper(Map<T, E> delegate, IEventPublisher publisher)
+	{
 		this.delegate = delegate;
+		this.publisher = publisher;
 	}
 	
 	//-------- Map interface --------
@@ -183,17 +195,26 @@ public abstract class MapWrapper<T, E> implements Map<T, E>
 	/**
 	 *  An entry was added to the map.
 	 */
-	protected abstract void	entryAdded(T key, E value);
+	protected void entryAdded(T key, E value)
+	{
+		publisher.entryAdded(key, value);
+	}
 	
 	/**
 	 *  An entry was removed from the map.
 	 */
-	protected abstract void	entryRemoved(T key, E value);
+	protected void entryRemoved(T key, E value)
+	{
+		publisher.entryRemoved(key, value);
+	}
 	
 	/**
 	 *  An entry was changed in the map.
 	 */
-	protected abstract void	entryChanged(T key, E oldvalue, E newvalue);
+	protected void entryChanged(T key, E oldvalue, E newvalue)
+	{
+		publisher.entryChanged(key, oldvalue, newvalue);
+	}
 
 	/**
 	 *  Entries were added to the map.

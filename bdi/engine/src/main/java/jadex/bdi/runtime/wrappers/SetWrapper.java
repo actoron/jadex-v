@@ -3,6 +3,7 @@ package jadex.bdi.runtime.wrappers;
 import java.util.Set;
 
 import jadex.bdi.model.MElement;
+import jadex.collection.IEventPublisher;
 import jadex.core.IComponent;
 import jadex.rules.eca.EventType;
 
@@ -11,9 +12,6 @@ import jadex.rules.eca.EventType;
  */
 public class SetWrapper<T> extends jadex.collection.SetWrapper<T>
 {
-	/** The event publisher. */
-	protected IEventPublisher publisher;
-	
 	/**
 	 *  Create a new set wrapper.
 	 */
@@ -53,28 +51,5 @@ public class SetWrapper<T> extends jadex.collection.SetWrapper<T>
 	{
 		return publisher instanceof InitEventPublisher;
 	}
-	
-	/**
-	 *  An entry was added to the collection.
-	 */
-	protected void entryAdded(T value, int index)
-	{
-		publisher.entryAdded(value, index);
-	}
-	
-	/**
-	 *  An entry was removed from the collection.
-	 */
-	protected void entryRemoved(T value, int index)
-	{
-		publisher.entryRemoved(value, index);
-	}
-	
-	/**
-	 *  An entry was changed in the collection.
-	 */
-	protected void entryChanged(T oldvalue, T newvalue, int index)
-	{
-		publisher.entryChanged(oldvalue, newvalue, index);
-	}
+
 }

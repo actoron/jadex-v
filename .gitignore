@@ -23,3 +23,9 @@ startHelloWorld.sh
 /jadex-deploy-vars.bat
 **/.benchmark
 **/.benchmark_gradle
+/.pydevproject
+/benchmark/benchmark_execution.png
+/benchmark/benchmark_memory.png
+/benchmark/thirdparty/APDescription.txt
+/benchmark/thirdparty/MTPs-Main-Container.txt
+/benchmark/.pydevproject

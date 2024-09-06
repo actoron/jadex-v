@@ -88,6 +88,15 @@ public class RuleSystem
 	}
 	
 	/**
+	 *  Get event count.
+	 *  @return The event count.
+	 */
+	public int getEventCount()
+	{
+		return pcman.getSize();
+	}
+//volatile Exception	first;
+	/**
 	 *  Process the next event by
 	 *  - finding rules that are sensible to the event type
 	 *  - evaluate the conditions of these conditions
@@ -96,13 +105,26 @@ public class RuleSystem
 	public IIntermediateFuture<RuleEvent> processEvent()
 	{
 		final IntermediateFuture<RuleEvent> ret = new IntermediateFuture<RuleEvent>();
-		
+//try
+//{
+//synchronized(this)
+//{
+//	if(first!=null)
+//	{
+//		first.printStackTrace();
+//		new RuntimeException("second thread"+Thread.currentThread()).printStackTrace();
+//	}
+//	else
+//	{
+//		first	= new RuntimeException("first thread"+Thread.currentThread());
+//	}
+//}
 		if(pcman.hasEvents())
 		{
 			IEvent event = pcman.removeEvent(0);
 			
-//			if(event.getType().toString().indexOf("factchanged.myself")!=-1)
-//				System.out.println("sdgfsdgf");
+			//if(event.getType().toString().indexOf("daytime")!=-1)
+			//	System.out.println("sdgfsdgf");
 			
 //			if(event.getType().getType(0).indexOf("factadded")!=-1)// && event.getType().getType(1).indexOf("mybean")!=-1)
 //				&& event.getType().getType(1).indexOf("Ambu")!=-1)
@@ -137,7 +159,14 @@ public class RuleSystem
 		{
 			ret.setFinished();
 		}
-		
+//}
+//finally
+//{
+//	synchronized(this)
+//	{
+//		first	= null;
+//	}
+//}
 		return ret;
 	}
 	
@@ -154,7 +183,14 @@ public class RuleSystem
 			{
 //				System.out.println("Rule selected: "+rules[i]+", "+event);
 				
-				rules[i].getCondition().evaluate(event).addResultListener(new IResultListener<Tuple2<Boolean,Object>>()
+				IFuture<Tuple2<Boolean, Object>> fut = rules[i].getCondition().evaluate(event);
+				// Simulate microplansteps by executing all effects immediately (hack: allow configuration sync/async)
+				FutureHelper.notifyStackedListeners();
+				if(!fut.isDone())
+				{
+					System.err.println("Async rule condition: "+rules[i].getCondition());								
+				}
+				fut.addResultListener(new IResultListener<Tuple2<Boolean,Object>>()
 				{
 					public void resultAvailable(Tuple2<Boolean, Object> result)
 					{
@@ -163,6 +199,10 @@ public class RuleSystem
 //							System.out.println("Rule triggered: "+rules[i]+", "+event);
 							
 							IFuture fut = (IFuture<Object>)rules[i].getAction().execute(event, (IRule)rules[i], context, result.getSecondEntity());
+							if(!fut.isDone())
+							{
+								System.err.println("Async rule action: "+rules[i].getAction());								
+							}
 							
 							if(fut instanceof IIntermediateFuture)
 							{
@@ -334,6 +374,8 @@ public class RuleSystem
 	/**
 	 *  Process events until the event queue is empty or max
 	 *  events have been processed.
+	 *  
+	 *  Note: method does not return the actions results 
 	 */
 	public IFuture<Void> processAllEvents()
 	{
@@ -438,6 +480,8 @@ public class RuleSystem
 	 */
 	public IFuture<Void> addEvent(IEvent event)
 	{
+		//System.out.println("event added: "+event);
+		
 //		if(event.getType().toString().indexOf("factchanged.myself")!=-1)
 //			System.out.println("added: "+event.getType()+" "+event.getContent());
 //		if(event.getType().getTypes().length==1)

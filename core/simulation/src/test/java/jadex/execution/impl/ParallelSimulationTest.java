@@ -113,7 +113,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 				
 				for(int j=0; j<=num; j++)
 				{
-					sim[j].scheduleStep(() -> output.append(input[num]));
+					sim[j].scheduleStep((Runnable)() -> output.append(input[num]));
 				}
 			});
 		}

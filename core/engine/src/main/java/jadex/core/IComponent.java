@@ -226,6 +226,7 @@ public interface IComponent
 		        	    try 
 		        	    { 
 		        	    	lock.lock();
+		        	    	IComponent.removeComponentListener(this, IComponent.COMPONENT_LASTREMOVED);
 		                    wait.signal();
 		                }
 		        	    finally
@@ -271,7 +272,10 @@ public interface IComponent
 					public void componentRemoved(ComponentIdentifier ccid) 
 					{
 						if(cid.equals(ccid))
+						{
+							IComponent.removeComponentListener(this, IComponent.COMPONENT_REMOVED);
 							ret.setResult(true);
+						}
 					}
 				}, IComponent.COMPONENT_REMOVED);
 			}

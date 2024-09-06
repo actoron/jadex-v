@@ -1,1 +1,1 @@
-call gradlew cleanBenchmark benchmark --max-workers 1
+call gradlew cleanBenchmark benchmark -x benchmark-thirdparty:benchmark --max-workers 1

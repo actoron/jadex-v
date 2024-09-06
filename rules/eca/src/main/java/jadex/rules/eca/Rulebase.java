@@ -47,6 +47,7 @@ public class Rulebase implements IRulebase
 //		System.out.println("evrules: "+evrules);
 	}
 	
+	
 	/**
 	 *  Remove a rule.
 	 *  @param rule The rule.

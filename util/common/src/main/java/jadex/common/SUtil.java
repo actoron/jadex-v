@@ -482,6 +482,10 @@ public class SUtil
 					}
 					catch(NoSuchMethodException e)
 					{
+						// LinkedTransferQueue is fastest? https://stackoverflow.com/a/3012547
+						// but some BDI tests hang when using LTQ, wtf!?
+//						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10));
+//						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new LinkedTransferQueue<Runnable>());
 						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), r -> {
 							{
 								Thread t = new Thread(r);
@@ -489,7 +493,6 @@ public class SUtil
 								return t;
 							}
 						});
-						
 						virtual	= false;
 					}
 					catch(Exception e)

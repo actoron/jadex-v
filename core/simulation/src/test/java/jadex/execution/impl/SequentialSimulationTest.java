@@ -44,7 +44,7 @@ public class SequentialSimulationTest extends ParallelSimulationTest
 				for(int j=0; j<=num; j++)
 				{
 					int dum	= j;
-					sim[j].scheduleStep(() -> output.append(input[dum]));
+					sim[j].scheduleStep((Runnable)() -> output.append(input[dum]));
 				}
 			});
 		}

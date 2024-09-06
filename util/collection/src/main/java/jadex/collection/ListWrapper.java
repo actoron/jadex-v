@@ -7,7 +7,7 @@ import java.util.ListIterator;
 /**
  * 
  */
-public abstract class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
+public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 {
 	/**
 	 *  Create a new wrapper.
@@ -15,7 +15,17 @@ public abstract class ListWrapper<T> extends CollectionWrapper<T> implements Lis
 	 */
 	public ListWrapper(List<T> delegate)
 	{
-		super(delegate);
+		this(delegate, null);
+	}
+	
+
+	/**
+	 *  Create a new wrapper.
+	 *  @param delegate The delegate.
+	 */
+	public ListWrapper(List<T> delegate, IEventPublisher publisher)
+	{
+		super(delegate, publisher);
 	}
 	
 	/**

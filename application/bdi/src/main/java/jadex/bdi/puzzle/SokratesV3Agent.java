@@ -52,6 +52,12 @@ public class SokratesV3Agent
 	/** The delay between two moves (in milliseconds). */
 	protected long	delay	= 500;
 	
+	/** Print each step? */
+	protected boolean	printsteps	= true;
+	
+	/** Print results? */
+	protected boolean	printresults	= true;
+	
 	/** The strategy (none=choose the first applicable, long=prefer jump moves,
 	 * same_long=prefer long moves of same color, alter_long=prefer long move of alternate color). */
 	protected String strategy	= MoveComparator.STRATEGY_SAME_LONG;
@@ -65,10 +71,14 @@ public class SokratesV3Agent
 	public void	body(IComponent agent)
 	{
 //		strategy = agent.getConfiguration();
-		System.out.println("strategy is: "+strategy);
 		createGui(agent);
 		
-		System.out.println("Now puzzling:");
+		if(printresults)
+		{
+			System.out.println("strategy is: "+strategy);
+			System.out.println("Now puzzling:");
+		}
+		
 		final long	start	= System.currentTimeMillis();
 		IFuture<MoveGoal> fut = agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MoveGoal());
 		fut.addResultListener(new IResultListener<MoveGoal>()
@@ -76,13 +86,19 @@ public class SokratesV3Agent
 			public void resultAvailable(MoveGoal movegoal)
 			{
 				long end = System.currentTimeMillis();
-				System.out.println("Needed: "+(end-start)+" millis.");
+				if(printresults)
+				{
+					System.out.println("Needed: "+(end-start)+" millis.");
+				}
 				agent.terminate();
 			}
 			
 			public void exceptionOccurred(Exception exception)
 			{
-				System.out.println("No solution found :-(");
+				if(printresults)
+				{
+					System.out.println("No solution found :-(");
+				}
 				agent.terminate();
 			}
 		});
@@ -273,9 +289,12 @@ public class SokratesV3Agent
 	 */
 	protected void print(String text, int indent)
     {
-        for(int x=0; x<indent; x++)
-            System.out.print(" ");
-        System.out.println(text);
+		if(printsteps)
+		{
+			for(int x=0; x<indent; x++)
+				System.out.print(" ");
+			System.out.println(text);
+		}
     }
 
 	public static void main(String[] args)
