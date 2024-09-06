@@ -29,6 +29,25 @@ dependencies
 	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:serialization:'+v
+	
+	implementation 'org.bouncycastle:bcprov-jdk18on:1.77'
+	implementation 'org.bouncycastle:bcpkix-jdk18on:1.77'
+	implementation 'net.java.dev.jna:jna:5.13.0'
+	implementation 'net.java.dev.jna:jna-platform:5.13.0'
+	
+	testImplementation 'org.activecomponents.jadex:libmicro:'+v
+	testImplementation 'org.activecomponents.jadex:collection:'+v
+	testImplementation 'org.activecomponents.jadex:classreader:'+v
+    testImplementation 'org.activecomponents.jadex:model:'+v
+    testImplementation 'org.activecomponents.jadex:micro:'+v
+    testImplementation 'org.activecomponents.jadex::'+v
+    testImplementation 'org.activecomponents.jadex:providedservice:'+v
+    testImplementation 'org.activecomponents.jadex:providedservicemicro:'+v
+    testImplementation 'org.activecomponents.jadex:requiredservice:'+v
+    testImplementation 'org.activecomponents.jadex:requiredservicemicro:'+v
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:+'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:+'
 }
 
 processResources 

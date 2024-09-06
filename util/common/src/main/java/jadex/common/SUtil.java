@@ -3520,6 +3520,61 @@ public class SUtil
 		}
 	}
 	
+	/**
+	 *  Runs a new JVM as a subprocess with a similar configuration as the parent JVM.
+	 *  
+	 *  @param clazz Class to run.
+	 *  @return The started process.
+	 *  
+	 *  @throws IOException 
+	 *  @throws InterruptedException
+	 */
+	public static Process runJvmSubprocess(Class<?> clazz)
+	{
+		return runJvmSubprocess(clazz, null, null, false);
+	}
+	
+	/**
+	 *  Runs a new JVM as a subprocess with a similar configuration as the parent JVM.
+	 *  
+	 *  @param clazz Class to run.
+	 *  @param jvmargs Arguments for the JVM.
+	 *  @param args Command-line arguments.
+	 *  @param inheritio If true, attach the subproces IO to main process IO.
+	 *  @return The started process.
+	 *  
+	 *  @throws IOException 
+	 *  @throws InterruptedException
+	 */
+	public static Process runJvmSubprocess(Class<?> clazz, List<String> jvmargs, List<String> args, boolean inheritio)
+	{
+		try
+		{
+			String jexec = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+			String classpath = System.getProperty("java.class.path");
+			String classname = clazz.getName();
+			
+			List<String> command = new ArrayList<>();
+			command.add(jexec);
+			if (jvmargs != null)
+				command.addAll(jvmargs);
+			command.add("-cp");
+			command.add(classpath);
+			command.add(classname);
+			if (args != null)
+				command.addAll(args);
+			
+			ProcessBuilder builder = new ProcessBuilder(command);
+			if (inheritio)
+				return builder.inheritIO().start();
+			return builder.start();
+		}
+		catch (Exception e)
+		{
+			throw throwUnchecked(e);
+		}
+	}
+	
 	protected static OutputStream	OUT_FOR_SYSTEM_IN;
 	
 	/**

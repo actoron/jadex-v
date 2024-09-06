@@ -190,7 +190,7 @@ public class SerializationServices implements ISerializationServices
 		// Preprocessor to copy the networknames cache object (used by security service and all service ids)
 		procs.add(new TransformProcessor());
 		
-		procs.add(new ITraverseProcessor()
+		/*procs.add(new ITraverseProcessor()
 		{
 			@Override
 			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
@@ -205,7 +205,7 @@ public class SerializationServices implements ISerializationServices
 			{
 				return object.toString();
 			}
-		});
+		});*/
 		
 		return procs;
 	}
@@ -218,7 +218,7 @@ public class SerializationServices implements ISerializationServices
 		// Equivalent pre- and postprocessors for binary mode.
 		List<ITraverseProcessor> procs = new ArrayList<ITraverseProcessor>();
 		
-		procs.add(new ITraverseProcessor()
+		/*procs.add(new ITraverseProcessor()
 		{
 			@Override
 			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
@@ -233,7 +233,7 @@ public class SerializationServices implements ISerializationServices
 			{
 				return ComponentIdentifier.fromString((String)object);
 			}
-		});
+		});*/
 		
 		return procs;
 	}

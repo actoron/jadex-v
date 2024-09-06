@@ -286,7 +286,7 @@ public class BeanCodec extends AbstractCodec
 	 * 	@param classloader The classloader.
 	 * 	@return The targeted inner class or null if not found.
 	 */
-	private static final Class findCorrectInnerClass(int level, String startname, String annotatedname, ClassLoader classloader)
+	protected static final Class findCorrectInnerClass(int level, String startname, String annotatedname, ClassLoader classloader)
 	{
 		int marker = 0;
 		String basename = startname;
@@ -354,7 +354,7 @@ public class BeanCodec extends AbstractCodec
 	 *  @param clazz The class.
 	 *  @return The identifier or null if none was found.
 	 */
-	private static final Classname getAnonClassName(Class clazz)
+	protected static final Classname getAnonClassName(Class clazz)
 	{
 		Field[] fields = clazz.getFields();
 		Classname cn = null;
