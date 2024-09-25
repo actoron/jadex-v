@@ -1,13 +1,14 @@
 package jadex.messaging;
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
 
 
 /**
  *  Feature for sending messages and handling incoming messages via handlers.
  */
-public interface IMessageFeature
+public interface IMessageFeature extends IComponentFeature
 {
 	/**
 	 *  Send a message.
