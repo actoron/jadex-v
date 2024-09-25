@@ -77,6 +77,7 @@ public class CleanerBDIAgentFinal
 	@OnStart	// This annotation informs the Jadex platform to call this method once the agent is started
 	private void	exampleBehavior(IBDIAgentFeature bdifeature)
 	{
+		System.out.println("RUNNING ON START");
 		// Tell the sensor to update the belief sets
 		actsense.manageWastesIn(wastes);
 		actsense.manageWastebinsIn(wastebins);
