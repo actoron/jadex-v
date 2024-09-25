@@ -35,7 +35,7 @@ public interface IComponent
 	 *  Get the feature instance for the given type.
 	 *  Instantiates lazy features if needed.
 	 */
-	public <T> T getFeature(Class<T> type);
+	public <T extends IComponentFeature> T getFeature(Class<T> type);
 	
 	/**
 	 *  Get the external access.

@@ -1,5 +1,6 @@
 package jadex.bt.nodes;
 
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.function.Supplier;
 import jadex.bt.decorators.Decorator;
 import jadex.bt.decorators.IDecorator;
 import jadex.bt.impl.Event;
+import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.common.SReflect;
@@ -124,23 +126,36 @@ public abstract class Node<T> implements IDecorator<T>
         if(call != null && !call.isDone()) 
         {
             ret = call;
-        	System.out.println("execute again called: "+this+" "+ret+" "+context.isRepeat());
+        	//System.out.println("execute again called: "+this+" "+ret+" "+context.isRepeat());
+   			System.getLogger(this.getClass().getName()).log(Level.INFO, "execute again called: "+this+" "+ret+" "+context.isRepeat());
+        	
             boolean rep = context.isRepeat();
+            
             reset(execontext, !rep);  // First, reset the state of this node
             context.setState(NodeState.RUNNING);  // Set state to running again (reset sets to null)
+            context.setCall(call); // could have been deleted in reset(all)
             
             // In case of repeat, nothing to abort and call must not return
             // if not repeat that means a reexecution has been triggered by condition
             if(!rep)
             {
-            	System.out.println("execute assumes abort: "+this);
+            	//System.out.println("execute assumes abort: "+this+", active children: "+getActiveChildCount(execontext));
+       			System.getLogger(this.getClass().getName()).log(Level.INFO, "execute assumes abort: "+this+", active children: "+getActiveChildCount(execontext));
+      			//System.getLogger(this.getClass().getName()).log(Level.INFO, "execute assumes abort: "+this+", active children: "+getActiveChildCount(execontext));
+
             	abort(AbortMode.SUBTREE, NodeState.FAILED, execontext);  // Then abort children to execute this node further
-            	return ret;  // Return as execution is continued by the current context
+            	if(getActiveChildCount(execontext)>0)
+            		return ret;  // Return as execution is continued by the current context
+            	else
+            		//System.out.println("Keeping execution in abort as no children active");
+      				System.getLogger(this.getClass().getName()).log(Level.INFO, "Keeping execution in abort as no children active");
             }
         }
 		else
 		{
-			System.out.println("execute newly called: "+this);
+			//System.out.println("execute newly called: "+this);
+			System.getLogger(this.getClass().getName()).log(Level.INFO, "execute newly called: "+this);
+				 
 			ret = new Future<>();
 			context.setCall(ret);
 				context.setState(NodeState.RUNNING);
@@ -149,11 +164,13 @@ public abstract class Node<T> implements IDecorator<T>
 				execontext.setRootCall(ret);
 			ret.then(state -> 
 			{
-				System.out.println("node fini: "+state+" "+this+" "+ret);
+				//System.out.println("node fini: "+state+" "+this+" "+ret);
+				System.getLogger(this.getClass().getName()).log(Level.INFO, "node fini: "+state+" "+this+" "+ret);
 				context.setState(state);
 			}).catchEx(ex -> 
 			{
-				System.out.println("node fini failed: "+ex+" "+this);
+				//System.out.println("node fini failed: "+ex+" "+this);
+				System.getLogger(this.getClass().getName()).log(Level.INFO, "node fini failed: "+ex+" "+this);
 				context.setState(NodeState.FAILED);
 			});
 		}
@@ -178,7 +195,9 @@ public abstract class Node<T> implements IDecorator<T>
     		}
     	};
         
-    	System.out.println("execution chain started: "+this);
+    	//System.out.println("execution chain started: "+this);
+		System.getLogger(this.getClass().getName()).log(Level.INFO, "execution chain started: "+this);
+
     	decorators.get(decorators.size()-1).internalExecute(event, NodeState.RUNNING, execontext).then(state -> doafter.accept(state)).catchEx(ex -> doafter.accept(NodeState.FAILED));
     	
         return ret;
@@ -192,6 +211,7 @@ public abstract class Node<T> implements IDecorator<T>
     	if(ret==null)
     	{
     		ret = createNodeContext();
+    		ret.setNodeid(getId());
     		execontext.setNodeContext(this, ret);
     	}
     	return ret;
@@ -218,10 +238,12 @@ public abstract class Node<T> implements IDecorator<T>
     	
     	if(AbortMode.SELF==abortmode)
     	{
-           	System.out.println("abort: "+this+" "+context.getState()+" "+state);
+           	//System.out.println("abort: "+this+" "+context.getState()+" "+state);
+    		System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: "+this+" "+context.getState()+" "+state);
+
            	
-           	if(this.toString().indexOf("patrol")!=-1)
-           		System.out.println("hererer");
+           	//if(this.toString().indexOf("patrol")!=-1)
+           	//	System.out.println("hererer");
            	
 	    	if(context.getRepeatDelayTimer()!=null)
 	    		context.getRepeatDelayTimer().terminate();
@@ -229,6 +251,7 @@ public abstract class Node<T> implements IDecorator<T>
 	    	if(context.getTimeoutTimer()!=null)
 	    		context.getTimeoutTimer().terminate();
 	    	
+	    	// ends call immediately
 	    	if(context.getCall()!=null)
 	    		context.getCall().setResultIfUndone(state);
     	}
@@ -240,14 +263,23 @@ public abstract class Node<T> implements IDecorator<T>
   		if(all==null)
       		all = !context.isRepeat();
       	
-      	System.out.println("Node reset, clear context: "+this+" all="+!context.isRepeat());
+  		//System.out.println("Node reset, clear context: "+this+" all="+all);
+   		System.getLogger(this.getClass().getName()).log(Level.INFO, "Node reset, clear context: "+this+" all="+all);
+
       	context.reset(all);
     }
     
     public void succeed(ExecutionContext<T> execontext)
     {
-    	System.out.println("node succeeded: "+this);
+    	//System.out.println("node succeeded: "+this);
+   		System.getLogger(this.getClass().getName()).log(Level.INFO, "node succeeded: "+this);
+
     	abort(AbortMode.SELF, NodeState.SUCCEEDED, execontext);
+    }
+    
+    public int getActiveChildCount(ExecutionContext<T> execontext)
+    {
+    	return 0;
     }
 
 	@Override

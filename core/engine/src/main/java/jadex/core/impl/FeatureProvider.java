@@ -3,6 +3,8 @@ package jadex.core.impl;
 import java.util.Collections;
 import java.util.Set;
 
+import jadex.core.IComponentFeature;
+
 /**
  *  A feature providers is loaded from the classpath and adds a specific feature to components.
  */
@@ -18,7 +20,7 @@ public abstract class FeatureProvider<T>
 	 *  @param self	The component to which the feature belongs.
 	 *  @return	The feature instance.
 	 */
-	public abstract T	createFeatureInstance(Component self);
+	public abstract <T extends IComponentFeature> T createFeatureInstance(Component self);
 	
 	/**
 	 *  If the feature does not apply to all kinds of components,

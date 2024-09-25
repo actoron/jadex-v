@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
 
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
@@ -24,6 +22,9 @@ public class JadexLoggerFinder extends LoggerFinder
 	protected Map<String, Logger> loggersbyname = new HashMap<>();
 	
 	protected Set<String> systempackages = null;
+	
+	protected static java.lang.System.Logger.Level defsystemlevel = java.lang.System.Logger.Level.WARNING;
+	protected static java.lang.System.Logger.Level defapplevel = java.lang.System.Logger.Level.INFO;
 	
 	public JadexLoggerFinder()
 	{
@@ -47,11 +48,11 @@ public class JadexLoggerFinder extends LoggerFinder
 			
 			LoggerCreator appc = IComponentManager.get().getLoggerCreators().stream().filter(c -> !c.system() && c.filter()==null).findFirst().orElse(null);
 			
-			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? java.lang.System.Logger.Level.WARNING: null; 
-			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? java.lang.System.Logger.Level.ALL: null; 
+			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? getDefaultSystemLoggingLevel(): null; 
+			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? getDefaultAppLogginglevel(): null; 
 			
-//			System.out.println("syslevel: "+syslevel);
-//			System.out.println("applevel: "+applevel);
+			//System.out.println("syslevel: "+syslevel);
+			//System.out.println("applevel: "+applevel);
 			
 			LoggerCreator nsysc = new LoggerCreator( 
 				sysc!=null && sysc.icreator()!=null? sysc.icreator(): iprov!=null? name -> iprov.getLogger(name, syslevel): null, 
@@ -201,5 +202,25 @@ public class JadexLoggerFinder extends LoggerFinder
 		}
 		
 		return systempackages.contains(name);
+	}
+	
+	public static void setDefaultSystemLoggingLevel(java.lang.System.Logger.Level level)
+	{
+		defsystemlevel = level;
+	}
+	
+	public static void setDefaultAppLoggingLevel(java.lang.System.Logger.Level level)
+	{
+		defapplevel = level;
+	}
+
+	public static java.lang.System.Logger.Level getDefaultSystemLoggingLevel() 
+	{
+		return defsystemlevel;
+	}
+
+	public static java.lang.System.Logger.Level getDefaultAppLogginglevel() 
+	{
+		return defapplevel;
 	}
 }

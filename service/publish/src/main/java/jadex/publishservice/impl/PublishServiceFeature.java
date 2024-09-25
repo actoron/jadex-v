@@ -5,9 +5,9 @@ import java.net.URI;
 
 import jadex.common.SReflect;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
 import jadex.core.impl.Component;
 import jadex.execution.impl.ILifecycle;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
@@ -25,7 +25,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public abstract class PublishServiceFeature implements ILifecycle, IPublishServiceFeature//, IParameterGuesser
+public abstract class PublishServiceFeature implements ILifecycle, IPublishServiceFeature, IComponentFeature//, IParameterGuesser
 {	
 	/** The component. */
 	protected Component self;

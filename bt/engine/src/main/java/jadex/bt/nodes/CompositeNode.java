@@ -1,9 +1,11 @@
 package jadex.bt.nodes;
 
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import jadex.bt.impl.Event;
 import jadex.bt.state.ExecutionContext;
 
 public abstract class CompositeNode<T> extends Node<T>
@@ -18,12 +20,24 @@ public abstract class CompositeNode<T> extends Node<T>
     {
     	super(name);
     }
-    
+     
     public CompositeNode<T> addChild(Node<T> child) 
     {
         children.add(child);
         child.setParent(this);
         return this;
+    }
+    
+    public CompositeNode<T> addChild(Node<T> child, Event event, ExecutionContext<T> execontext) 
+    {
+    	addChild(child);
+    	newChildAdded(child, event, execontext);
+    	return this;
+    }
+    
+    protected void newChildAdded(Node<T> child, Event event, ExecutionContext<T> execontext)
+    {
+    	System.out.println("child Added: "+this+" "+child);
     }
     
     protected Node<T> getChild(int n)
@@ -62,9 +76,32 @@ public abstract class CompositeNode<T> extends Node<T>
     		
     		if(abortmode==AbortMode.SUBTREE || abortmode==AbortMode.SELF)
     		{
+    			// check if active children exist
+    			int cnt = 0;
+    			for(Node<T> node: getChildren())
+    			{
+    				if(node.getNodeContext(context).getState()==NodeState.RUNNING)
+    					cnt++;
+    			}
+    			//System.out.println("abort, active children: "+this+cnt);
+    			System.getLogger(this.getClass().getName()).log(Level.INFO, "abort, active children: "+this+cnt);
+
+    			
     			// must not propagate SUBTREE
     			getChildren().stream().forEach(child -> child.abort(AbortMode.SELF, state, context));
     		}
     	}
+    }
+    
+    @Override
+    public int getActiveChildCount(ExecutionContext<T> context)
+    {
+    	int cnt = 0;
+		for(Node<T> node: getChildren())
+		{
+			if(node.getNodeContext(context).getState()==NodeState.RUNNING)
+				cnt++;
+		}
+		return cnt;
     }
 }

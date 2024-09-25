@@ -229,7 +229,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 					{
 						if(!invoked[0])
 						{
-							//ex0.printStackTrace();
+							ex0.printStackTrace();
 							System.out.println("schedule forward2: "+notification+"\n"+trace);
 							//Starter.scheduleRescueStep(component.getId(), () -> invocation.get());
 						}

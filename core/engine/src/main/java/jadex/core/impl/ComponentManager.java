@@ -168,10 +168,10 @@ public class ComponentManager implements IComponentManager
 	 */
 	public static void configureRootLogger(java.util.logging.Level level) 
 	{
-        java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
-        rootLogger.setLevel(level);
+        java.util.logging.Logger logger = java.util.logging.Logger.getLogger("");
+        logger.setLevel(level);
 
-        for(var handler : rootLogger.getHandlers()) 
+        for(var handler : logger.getHandlers()) 
         {
             if(handler instanceof ConsoleHandler) 
             {
@@ -574,4 +574,6 @@ public class ComponentManager implements IComponentManager
 	{
 		return loggercreators;
 	}
+	
+	
 }

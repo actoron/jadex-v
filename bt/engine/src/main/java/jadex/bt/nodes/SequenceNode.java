@@ -1,5 +1,7 @@
 package jadex.bt.nodes;
 
+import java.lang.System.Logger.Level;
+
 import jadex.bt.impl.Event;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
@@ -31,7 +33,9 @@ public class SequenceNode<T> extends CompositeNode<T>
     	Future<NodeState> ret = new Future<>();
     	
     	getNodeContext(context).incIndex();
-    	System.out.println("sequence executing child: "+getNodeContext(context).getIndex());
+    	//System.out.println("sequence executing child: "+getNodeContext(context).getIndex());
+  		System.getLogger(this.getClass().getName()).log(Level.INFO, "sequence executing child: "+getNodeContext(context).getIndex());
+
     	
     	if(getNodeContext(context).getIndex() < getChildCount()) 
     	{

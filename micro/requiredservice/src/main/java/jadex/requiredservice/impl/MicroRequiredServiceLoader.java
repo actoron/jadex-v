@@ -136,7 +136,7 @@ public class MicroRequiredServiceLoader
 						if(name.length()==0)
 							name = rs.name();
 						if(name.length()==0)
-							MicroClassReader.guessName(methods[i].getName());
+							name = MicroClassReader.guessName(methods[i].getName());
 						
 						RequiredServiceInfo rsis = (RequiredServiceInfo)rsm.getRequiredServices().get(name);
 						if(rsis==null)

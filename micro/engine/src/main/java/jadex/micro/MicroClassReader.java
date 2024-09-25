@@ -2589,9 +2589,6 @@ public class MicroClassReader
 		}
 	}
 	
-	/**
-	 * 
-	 */
 	public static String guessName(String methodname)
 	{
 		String ret = methodname;

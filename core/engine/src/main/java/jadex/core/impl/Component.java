@@ -16,6 +16,7 @@ import jadex.core.ApplicationContext;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
 import jadex.core.IExternalAccess;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -138,7 +139,7 @@ public class Component implements IComponent
 	 *  Get the feature instance for the given type.
 	 *  Instantiates lazy features if needed.
 	 */
-	public <T> T getFeature(Class<T> type)
+	public <T extends IComponentFeature> T getFeature(Class<T> type)
 	{
 		if(features!=null && features.containsKey(type))
 		{
@@ -154,9 +155,9 @@ public class Component implements IComponent
 				assert provider.isLazyFeature();
 				@SuppressWarnings("unchecked")
 				T ret = (T)provider.createFeatureInstance(this);
-				@SuppressWarnings("unchecked")
-				Class<Object> otype	= (Class<Object>)type;
-				putFeature(otype, ret);
+				//@SuppressWarnings("unchecked")
+				//Class<Object> otype	= (Class<Object>)type;
+				putFeature(type, ret);
 				//features.put(otype, ret);
 				return ret;
 			}
@@ -212,12 +213,12 @@ public class Component implements IComponent
 		return null;
 	}
 	
-	protected void putFeature(Class<Object> type, Object feature)
+	protected void putFeature(Class<?> type, Object feature)
 	{
 //		System.out.println("putFeature: "+type+" "+feature);
 		if(features==null)
 			features = new LinkedHashMap<>(providers.size(), 1);
-		features.put(type, feature);
+		features.put((Class)type, feature);
 	}
 	
 	/*public Map<String, Object> getResults(Object pojo)

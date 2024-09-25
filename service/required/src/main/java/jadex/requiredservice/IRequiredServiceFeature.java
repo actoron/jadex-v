@@ -2,6 +2,7 @@ package jadex.requiredservice;
 
 import java.util.Collection;
 
+import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableIntermediateFuture;
@@ -9,7 +10,7 @@ import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.ServiceQuery;
 
-public interface IRequiredServiceFeature 
+public interface IRequiredServiceFeature extends IComponentFeature
 {
 	//-------- accessors for declared services --------
 	

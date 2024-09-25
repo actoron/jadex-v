@@ -1,5 +1,7 @@
 package jadex.bt.decorators;
 
+import java.lang.System.Logger.Level;
+
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node;
@@ -9,11 +11,9 @@ import jadex.bt.state.NodeContext;
 import jadex.common.ITriFunction;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.rules.eca.EventType;
 
-// depends on agent usage
 public class TriggerDecorator<T> extends ConditionalDecorator<T>
 {
 	protected ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition;
@@ -38,7 +38,8 @@ public class TriggerDecorator<T> extends ConditionalDecorator<T>
 	{
 		super.observeCondition(events, (event, rule, context, condresult) -> // action
 		{
-			System.out.println("trigger condition triggered: "+event);
+			System.getLogger(getClass().getName()).log(Level.INFO, "trigger condition triggered: "+event);
+			//System.out.println("trigger condition triggered: "+event);
 			
 			// Execution in next step is too late, as parent then executes next child before
 			/*getSelf().getFeature(IExecutionFeature.class).scheduleStep(agent ->

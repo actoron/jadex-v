@@ -1,5 +1,6 @@
 package jadex.bt;
 
+import java.lang.System.Logger.Level;
 import java.util.concurrent.Callable;
 
 import jadex.bt.impl.BTAgentFeature;
@@ -40,8 +41,21 @@ public class Val<T>
 	{
 		this.pojo = pojo;
 		this.name = name;
-		if(value!=null)
+		if(dynamic!=null)
+		{
+			try
+			{
+				BTAgentFeature.writeField(dynamic.call(), name, pojo, MicroAgentFeature.get().getSelf());
+			}
+			catch(Exception e)
+			{
+				SUtil.rethrowAsUnchecked(e);
+			}
+		}
+		else if(value!=null)
+		{
 			set(value); // reset the value to generate initial event
+		}
 	}
 	
 	/**
@@ -75,7 +89,9 @@ public class Val<T>
 		
 		if(name==null)
 		{
-			System.out.println("val not inited, no event: "+value);
+			//System.out.println("val not inited, no event: "+value);
+	  		System.getLogger(this.getClass().getName()).log(Level.INFO, "val not inited, no event: "+value);
+
 			this.value = value;
 			return;
 			//throw new IllegalStateException("Wrapper not inited. Missing @Belief/@GoalParameter annotation.");

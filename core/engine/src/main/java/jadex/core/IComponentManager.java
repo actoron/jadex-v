@@ -1,5 +1,6 @@
 package jadex.core;
 
+import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.function.BiConsumer;
 

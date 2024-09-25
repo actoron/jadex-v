@@ -1,5 +1,6 @@
 package jadex.bt.state;
 
+import java.lang.System.Logger.Level;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +31,8 @@ public class NodeContext<T>
 	protected ITerminableFuture<Void> timeouttimer;
 
 	protected Map<String, Object> values;
+	
+	protected int nodeid;
 
 	public boolean isFinishedInBefore() 
 	{
@@ -50,7 +53,9 @@ public class NodeContext<T>
 	{
 		if(this.repeatdelaytimer!=null && !this.repeatdelaytimer.isDone())
 		{
-			System.out.println("repeat delay timer not aborted");
+			//System.out.println("repeat delay timer not aborted");
+	  		System.getLogger(this.getClass().getName()).log(Level.INFO, "repeat delay timer not aborted");
+
 			this.repeatdelaytimer.terminate();
 		}
 		this.repeatdelaytimer = repeatdelaytimer;
@@ -65,7 +70,9 @@ public class NodeContext<T>
 	{
 		if(this.timeouttimer!=null && !this.timeouttimer.isDone())
 		{
-			System.out.println("timeout timer not aborted");
+			//System.out.println("timeout timer not aborted");
+	  		System.getLogger(this.getClass().getName()).log(Level.INFO, "timeout timer not aborted");
+
 			this.timeouttimer.terminate();
 		}
 		this.timeouttimer = timeouttimer;
@@ -84,16 +91,20 @@ public class NodeContext<T>
 		{
 			// This can be ok, if the future is held outside and finished afterwards
 			//if(call!=null && !call.isDone())
-			//	System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! removing unfinished call: "+call); 
+			//	System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! removing unfinished call: "+call+" nodeid="+getNodeid()); 
 			call = null;
 		}
 		repeat = false;
 		timeout = 0;
 		repeatdelay = 0;
 		if(this.timeouttimer!=null && !this.timeouttimer.isDone())
-			System.out.println("timeout timer was not aborted!");
+			//System.out.println("timeout timer was not aborted!");
+  			System.getLogger(this.getClass().getName()).log(Level.INFO, "timeout timer was not aborted!");
+
 		if(this.repeatdelaytimer!=null && !this.repeatdelaytimer.isDone())
-			System.out.println("repeat delay timer was not aborted!");
+			//System.out.println("repeat delay timer was not aborted!");
+  			System.getLogger(this.getClass().getName()).log(Level.INFO, "repeat delay timer was not aborted!");
+
 		timeouttimer = null;
 		repeatdelaytimer = null;
 		if(!all)
@@ -142,6 +153,10 @@ public class NodeContext<T>
 
 	public NodeContext<T> setCall(Future<NodeState> call) 
 	{
+		if(call==null)
+			//System.out.println("setting call to null");
+  			System.getLogger(this.getClass().getName()).log(Level.INFO, "setting call to null");
+
 		this.call = call;
 		return this;
 	}		
@@ -193,4 +208,15 @@ public class NodeContext<T>
 	{
 		this.repeatdelay = repeatdelay;
 	}
+
+	public int getNodeid() 
+	{
+		return nodeid;
+	}
+
+	public void setNodeid(int nodeid) 
+	{
+		this.nodeid = nodeid;
+	}
+	
 }

@@ -1,5 +1,6 @@
 package jadex.bt.cleanerworld;
 
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -37,6 +38,7 @@ import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.logger.JadexLoggerFinder;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 import jadex.rules.eca.EventType;
@@ -69,6 +71,7 @@ public class BTCleanerAgent implements IBTProvider
 		
 	/** Day or night?. Use updaterate to re-check every second. */
 	protected Val<Boolean> daytime = new Val<Boolean>(() -> actsense.isDaytime(), 1000);
+	
 	protected Val<Double> chargestate = new Val<Double>(() -> actsense.getSelf().getChargestate(), 1000);
 	
 	/** The patrol points. */
@@ -155,6 +158,7 @@ public class BTCleanerAgent implements IBTProvider
 			System.out.println("Go to waste: "+agent.getId()+" "+waste);
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 			ITerminableFuture<Void> fut = actsense.moveTo(waste.getLocation());
+			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> {System.out.println("reached waste"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
 		}));
@@ -281,7 +285,7 @@ public class BTCleanerAgent implements IBTProvider
 		//patrolwalk.setTriggerCondition((node, execontext) -> !daytime.get(), new EventType[]{
 		//	new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		patrolwalk.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> !daytime.get())
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")}));
+			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime")}));
 		patrolwalk.addDecorator(new RepeatDecorator<IComponent>());
 					
 		// maintain battery loaded
@@ -293,7 +297,8 @@ public class BTCleanerAgent implements IBTProvider
 		//	new EventType(BTAgentFeature.PROPERTYCHANGED, "chargestate")});
 		loadbattery.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> getChargestate()>0.7));
 		loadbattery.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> getChargestate()<0.7)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "chargestate")}));
+			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "chargestate")}));
+			//.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "self", "chargestate")}));
 		
 		// || (nearStation() && chargestate<0.99)
 		//loadbattery.addAfterDecorator(new RetryDecorator<IComponent>(0));
@@ -309,7 +314,7 @@ public class BTCleanerAgent implements IBTProvider
 		//collectwaste.setTriggerCondition((node, execontext) -> wastes.size()>0 && (getSelf().getCarriedWaste()==null || daytime.get()), new EventType[]{
 		//	new EventType(BTAgentFeature.VALUEADDED, "wastes"), new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		collectwaste.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> wastes.size()>0 && (getSelf().getCarriedWaste()==null || daytime.get()))
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")}));
+			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime")}));
 		collectwaste.addDecorator(new RetryDecorator<IComponent>(0));
 		
 		// main control
@@ -319,7 +324,6 @@ public class BTCleanerAgent implements IBTProvider
 		sn.addChild(collectwaste); // at daytime, when waste
 		sn.addChild(patrolwalk); // at night
 		sn.addDecorator(new RepeatDecorator<IComponent>(0, 1000));
-		//sn.addAfterDecorator(new RepeatDecorator<IComponent>().setFunction((node, context) -> NodeState.RUNNING));
 		
 		return sn;
 	}
@@ -332,6 +336,7 @@ public class BTCleanerAgent implements IBTProvider
 	
 	public double getChargestate()
 	{
+		//return getSelf().getChargestate();
 		return chargestate.get();
 	}
 	
@@ -348,7 +353,6 @@ public class BTCleanerAgent implements IBTProvider
 		return dx*dx+dy*dy; // speed optimized
 	}
 
-	
 	@OnStart
 	private void start()
 	{
@@ -374,6 +378,8 @@ public class BTCleanerAgent implements IBTProvider
 	
 	public static void main(String[] args)
 	{
+		JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
+		
 		IComponent.create(new BTCleanerAgent());
 		EnvironmentGui.create();
 		IComponent.waitForLastComponentTerminated();

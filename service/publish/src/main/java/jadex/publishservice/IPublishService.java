@@ -1,5 +1,6 @@
 package jadex.publishservice;
 
+import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.publishservice.impl.PublishInfo;
@@ -8,7 +9,7 @@ import jadex.publishservice.impl.PublishInfo;
  *  Service for publishing services in other technologies such as web services.
  */
 //@Service(system=true)
-public interface IPublishService
+public interface IPublishService extends IComponentFeature
 {
 	/** The publish type web service. */
 	public static final String PUBLISH_WS = "ws";

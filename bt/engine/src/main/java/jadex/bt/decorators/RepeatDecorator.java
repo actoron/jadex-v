@@ -1,25 +1,28 @@
 package jadex.bt.decorators;
 
+import java.lang.System.Logger.Level;
+
 import jadex.bt.impl.Event;
 import jadex.bt.impl.ITimerCreator;
-import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.common.ITriFunction;
+import jadex.common.Tuple2;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.rules.eca.EventType;
 
-public class RepeatDecorator<T> extends Decorator<T> 
+public class RepeatDecorator<T> extends ConditionalDecorator<T> 
 {
-	protected ITriFunction<Node<T>, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition;
-    
     protected int max;
     
     protected long delay;
+    
+    protected long timeout;
     
     public RepeatDecorator() 
     {
@@ -31,19 +34,36 @@ public class RepeatDecorator<T> extends Decorator<T>
     	this(null, max, delay);
     }
     
-    public RepeatDecorator(ITriFunction<Node<T>, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition) 
+    public RepeatDecorator(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition) 
     {
     	this(condition, 0, 0);
     }
     
-    public RepeatDecorator(ITriFunction<Node<T>, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition, int max, long delay) 
+    public RepeatDecorator(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition, int max, long delay) 
     {
-    	this.condition = condition==null? (node, state, context) -> new Future<Boolean>(true): condition;
+    	this.condition = condition==null? (event, state, context) -> new Future<Boolean>(true): condition;
     	this.max = max;
     	this.delay = delay;
     }
+    
+    public long getTimeout() 
+    {
+		return timeout;
+	}
 
-    @Override
+	public RepeatDecorator<T> setTimeout(long timeout) 
+	{
+		this.timeout = timeout;
+		return this;
+	}
+
+	@Override
+	public IFuture<NodeState> beforeExecute(Event event, NodeState state, ExecutionContext<T> context) 
+	{
+		return null;
+	}
+	
+	@Override
     public IFuture<NodeState> afterExecute(Event event, NodeState state, ExecutionContext<T> execontext) 
     {
         Future<NodeState> ret = new Future<>();
@@ -51,15 +71,12 @@ public class RepeatDecorator<T> extends Decorator<T>
         NodeContext<T> context = node.getNodeContext(execontext);
         ITimerCreator<T> tc = execontext.getTimerCreator();
         
-        if(context.getCall()==null || context.getCall().isDone())
-        	System.out.println("after call finished");
-
         if(max == 0 || getAttempt(context) < max) 
         {
-            incAttempt(context);
-            condition.apply(node, state, execontext).then(rep -> 
-            {
-                if(rep) 
+        	incAttempt(context);
+        	condition.apply(event, state, execontext).then(rep -> 
+        	{
+        		if(rep) 
                 {
                 	context.setRepeat(true);
 
@@ -69,7 +86,7 @@ public class RepeatDecorator<T> extends Decorator<T>
                         if(delay > 0) 
                         {
                         	context.setRepeatDelay(delay);
-                            dfut = tc.createTimer(getNode(), execontext, delay);
+                            dfut = tc.createTimer(execontext, delay);
                             context.setRepeatDelayTimer(dfut);
                         } 
                         else 
@@ -80,7 +97,9 @@ public class RepeatDecorator<T> extends Decorator<T>
 
                         dfut.then(Void -> 
                         {
-                            System.out.println("repeat node: "+getNode());
+                        	System.getLogger(getClass().getName()).log(Level.INFO, "repeat node: "+getNode());
+                            //System.out.println("repeat node: "+getNode());
+                            
 	            			//reset(execontext); must not reset here, is done in execute on reexecution call
 	            			IFuture<NodeState> fut = getNode().execute(event, execontext);
 	            			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
@@ -95,7 +114,41 @@ public class RepeatDecorator<T> extends Decorator<T>
                 } 
                 else 
                 {
-                    ret.setResult(state); 
+                	if(getEvents()!=null)
+                	{
+	                	IFuture<Void> condfut = waitForCondition(e -> {
+	                		Future<Tuple2<Boolean, Object>> cret = new Future<>();
+	                		IFuture<Boolean> fut = condition.apply(new Event(e.getType().toString(), e.getContent()), node.getNodeContext(getExecutionContext()).getState(), getExecutionContext());
+	        				fut.then(triggered ->
+	        				{
+	        					cret.setResult(new Tuple2<>(triggered, null));
+	        				}).catchEx(ex -> 
+	        				{
+	        					cret.setResult(new Tuple2<>(false, null));
+	        				});
+	            			return cret;
+	                	}, getEvents(), getTimeout(), execontext);
+	                	
+	                	condfut.then(Void -> 
+                        {
+                        	System.getLogger(getClass().getName()).log(Level.INFO, "conditional repeat node: "+getNode());
+                            //System.out.println("repeat node: "+getNode());
+                            
+	            			//reset(execontext); must not reset here, is done in execute on reexecution call
+	            			IFuture<NodeState> fut = getNode().execute(event, execontext);
+	            			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
+	            				fut.delegateTo(ret);
+                        }).catchEx(e -> 
+                        {
+                            e.printStackTrace();
+                            getNode().reset(execontext, true);
+                            ret.setResultIfUndone(NodeState.FAILED);
+                        });
+                	}
+                	else
+                	{
+                		ret.setResult(state);
+                	}
                 }
             }).catchEx(ex2 -> ret.setResult(NodeState.FAILED));
         } 
@@ -105,12 +158,6 @@ public class RepeatDecorator<T> extends Decorator<T>
         }
 
         return ret;
-    }
-    
-    public void abort(NodeContext<T> context)
-    {
-    	String name = this+".attempt";
-    	context.removeValue(name);
     }
     
     protected int getAttempt(NodeContext<T> context)
@@ -131,4 +178,19 @@ public class RepeatDecorator<T> extends Decorator<T>
     	int at = getAttempt(context);
     	setAttempt(at+1, context);
     }
+    
+    /*public RepeatDecorator<T> observeCondition(EventType[] events)
+	{
+		super.observeCondition(events, (event, rule, context, condresult) -> // action
+		{
+			System.getLogger(getClass().getName()).log(Level.INFO, "repeat condition triggered: "+event);
+			//System.out.println("success condition triggered: "+event);
+			
+			getNode().succeed(getExecutionContext()); 
+			
+			return IFuture.DONE;
+		});
+		
+		return this;
+	}*/
 }

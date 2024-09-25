@@ -12,7 +12,7 @@ import jadex.future.TerminableFuture;
 public class TimerCreator<T> implements ITimerCreator<T>
 {
 	@Override
-	public ITerminableFuture<Void> createTimer(Node<T> node, ExecutionContext<T> context, long timeout)
+	public ITerminableFuture<Void> createTimer(ExecutionContext<T> context, long timeout)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
@@ -28,14 +28,14 @@ public class TimerCreator<T> implements ITimerCreator<T>
 
 		ret.setTerminationCommand(ex -> tt.cancel());
 		
-		getTimer(node.getNodeContext(context)).schedule(tt, timeout);
+		getTimer(context).schedule(tt, timeout);
 		
 		return ret;
 	}
 	
-	public Timer getTimer(NodeContext<T> context)
+	public Timer getTimer(ExecutionContext<T> context)
 	{
-		String name = this+".timer";
+		String name = "timer";
 		Object ret = context.getValue(name);
 		if(ret==null)
 		{

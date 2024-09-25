@@ -1,5 +1,7 @@
 package jadex.bt.decorators;
 
+import java.lang.System.Logger.Level;
+
 import jadex.bt.impl.Event;
 import jadex.bt.impl.ITimerCreator;
 import jadex.bt.nodes.Node;
@@ -31,18 +33,20 @@ public class TimeoutDecorator<T> extends Decorator<T>
 	    node.getNodeContext(execontext).setTimeout(timeout);
 	    ITimerCreator<T> tc = execontext.getTimerCreator();
 	    
-	    ITerminableFuture<Void> fut = context.getTimeout()>0? tc.createTimer(getNode(), execontext, context.getTimeout()): null;
+	    ITerminableFuture<Void> fut = context.getTimeout()>0? tc.createTimer(execontext, context.getTimeout()): null;
 		if(fut!=null)
 		{
 			//System.out.println("timeout timer created: "+context.getTimeout());
 			context.setTimeoutTimer(fut);
     		fut.then(Void ->
     		{
-    			System.out.println("timeout occurred: "+this);
+    			System.getLogger(getClass().getName()).log(Level.INFO, "timeout occurred: "+this);
+    			//System.out.println("timeout occurred: "+this);
     			getNode().abort(AbortMode.SELF, NodeState.FAILED, execontext);
     		}).catchEx(ex ->
     		{
-    			System.out.println("timer aborted: "+this);
+    			System.getLogger(getClass().getName()).log(Level.INFO, "timer aborted: "+this);
+    			//System.out.println("timer aborted: "+this);
     		});
 		}
 		
@@ -55,5 +59,10 @@ public class TimeoutDecorator<T> extends Decorator<T>
 		if(fut!=null)
 			fut.terminate();
 		return null; //new Future<NodeState>(state);
+	}
+	
+	public IFuture<NodeState> afterAbort(Event event, NodeState state, ExecutionContext<T> context)
+	{
+		return afterExecute(event, state, context);
 	}
 }

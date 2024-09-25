@@ -1,5 +1,7 @@
 package jadex.bt.nodes;
 
+import java.lang.System.Logger.Level;
+
 import jadex.bt.impl.Event;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
@@ -38,7 +40,9 @@ public class SelectorNode<T> extends CompositeNode<T>
     	 
     	if(getNodeContext(context).getIndex() < getChildCount()) 
     	{
-    		System.out.println("Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
+    		//System.out.println("Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
+      		System.getLogger(this.getClass().getName()).log(Level.INFO, "Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
+
     		IFuture<NodeState> child = getChild(getNodeContext(context).getIndex()).execute(event, context);
             
             if(child.isDone())

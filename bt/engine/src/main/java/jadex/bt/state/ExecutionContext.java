@@ -18,6 +18,8 @@ public class ExecutionContext<T>
 	
 	protected ITimerCreator<T> timercreator;
 	
+	protected Map<String, Object> values;
+	
 	public NodeContext<T> getNodeContext(Node<T> node)
 	{
 		return nodestates.get(node);
@@ -58,5 +60,23 @@ public class ExecutionContext<T>
 	{
 		this.timercreator = timercreator;
 		return this;
+	}
+	
+	public ExecutionContext<T> setValue(String name, Object value)
+	{
+		if(values==null)
+			values = new HashMap<String, Object>();
+		values.put(name, value);
+		return this;
+	}
+	
+	public Object getValue(String name)
+	{
+		return values==null? null: values.get(name);
+	}
+	
+	public Object removeValue(String name)
+	{
+		return values==null? null: values.remove(name);
 	}
 }

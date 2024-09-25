@@ -1,6 +1,7 @@
 package jadex.bt.impl;
 
 import java.beans.PropertyChangeEvent;
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -8,17 +9,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jadex.bt.IBTProvider;
 import jadex.bt.Val;
 import jadex.bt.actions.UserBaseAction;
 import jadex.bt.decorators.ConditionalDecorator;
-import jadex.bt.decorators.TriggerDecorator;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.AbortMode;
@@ -167,7 +167,8 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 						Callable<Object> dynamic = (Callable<Object>)valdyn.get(val);
 						if(updaterate!=null && dynamic!=null)
 						{
-							System.out.println("activating dynamic value: "+val);
+							System.getLogger(getClass().getName()).log(Level.INFO, "activating dynamic value: "+val);
+							//System.out.println("activating dynamic value: "+val);
 							IThrowingConsumer<IComponent> task[] = new IThrowingConsumer[1];
 							task[0] = agent ->
 							{
@@ -250,7 +251,8 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 						{
 							if(stepret[0]!=null && stepret[0].isDone())
 							{
-								System.out.println("action omitted: "+node);
+								System.getLogger(getClass().getName()).log(Level.INFO, "action omitted: "+node);
+								//System.out.println("action omitted: "+node);
 								Future<NodeState> donefut = Future.getFuture(getFutureReturnType());
 								stepret[0].delegateTo(donefut);
 								return donefut;
@@ -309,10 +311,15 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 			{
 				if(deco.getAction()==null || deco.getEvents()==null || deco.getEvents().length==0)
 				{
-					System.out.println("skipping condition: "+deco);
+					if(deco.getCondition()!=null)
+					{
+						System.getLogger(getClass().getName()).log(Level.INFO, "skipping condition for deco: "+deco);
+						//System.out.println("skipping condition for deco: "+deco);
+					}
 				}
 				else
 				{
+					//System.out.println("rulename: "+deco.toString()+"_"+node.getId());
 					rulesystem.getRulebase().addRule(new Rule<Void>(
 						deco.toString()+"_"+node.getId(), 
 						e -> // condition
@@ -344,7 +351,8 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 							}
 							else
 							{
-								System.out.println("Rule without condition: "+deco);
+								System.getLogger(getClass().getName()).log(Level.WARNING, "Rule without condition: "+deco);
+								//System.out.println("Rule without condition: "+deco);
 								ret.setResult(new Tuple2<>(false, null));
 							}
 							return ret;
@@ -358,7 +366,8 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 	
 	protected static void executeRulesystem()
 	{
-		System.out.println("executeRulesystem");
+		System.getLogger(BTAgentFeature.class.getName()).log(Level.INFO, "executeRulesystem");
+		//System.out.println("executeRulesystem");
 		BTAgentFeature btf = BTAgentFeature.get();
 		
 		//Set<Node<IComponent>> nodes = new HashSet<Node<IComponent>>();
@@ -368,7 +377,10 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 			IIntermediateFuture<RuleEvent> res = btf.getRuleSystem().processEvent();
 			FutureHelper.notifyStackedListeners();
 			if(!res.isDone())
-				System.err.println("No async actions allowed.");
+			{
+				System.getLogger(BTAgentFeature.class.getName()).log(Level.ERROR, "No async actions allowed.");
+				//System.err.println("No async actions allowed.");
+			}
 			//res.get().stream().forEach(re -> nodes.add((Node<IComponent>)re.getResult()));*/
 			
 			//IFuture<Void> fut = btf.getRuleSystem().processAllEvents();
@@ -410,7 +422,8 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 			
 			call.then(state -> 
 			{
-				System.out.println("final state: "+context+" "+state);
+				System.getLogger(this.getClass().getName()).log(Level.INFO, "final state: "+context+" "+state);
+				//System.out.println("final state: "+context+" "+state);
 				
 				// todo: support repeat mode of node
 				/*if(NodeState.FAILED.equals(state))
@@ -463,7 +476,8 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 				else if(nc.getCall()!=null && !nc.getCall().isDone() && nc.getState()==null)
 				{
 					found = true;
-					System.out.println("found parent with open call but state: "+parent+" "+nc.getState());
+					System.getLogger(this.getClass().getName()).log(Level.WARNING, "found parent with open call but state: "+parent+" "+nc.getState());
+					//System.out.println("found parent with open call but state: "+parent+" "+nc.getState());
 				}
 			}
 			else
@@ -488,19 +502,22 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 				NodeState state = context.getNodeContext(parent).getState();
 				if(NodeState.RUNNING==state || state==null)
 				{
-					System.out.println("resetting node and aborting its children: "+parent+" "+state);
+					System.getLogger(this.getClass().getName()).log(Level.INFO, "resetting node and aborting its children: "+parent+" "+state);
+					//System.out.println("resetting node and aborting its children: "+parent+" "+state);
 					parent.reset(context, false);
 					parent.abort(AbortMode.SUBTREE, NodeState.FAILED, context);
 					ret = true;
 				}
 				else
 				{
-					System.out.println("found active parent that is not running, should not happen: "+parent+" "+state);
+					System.getLogger(this.getClass().getName()).log(Level.WARNING, "found active parent that is not running, should not happen: "+parent+" "+state);
+					//System.out.println("found active parent that is not running, should not happen: "+parent+" "+state);
 				}
 			}
 			else
 			{
-				System.out.println("no active parent found for node: "+node);
+				System.getLogger(this.getClass().getName()).log(Level.INFO, "no active parent found for node: "+node);
+				//System.out.println("no active parent found for node: "+node);
 			}
 		}
 		
@@ -573,7 +590,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 	
 	protected void writeField(Object val, String fieldname, Object obj)
 	{
-		writeField(val, fieldname, obj, new EventType(PROPERTYCHANGED, fieldname), new EventType(VALUECHANGED, fieldname));
+		writeField(val, fieldname, obj, new EventType(VALUECHANGED, fieldname), new EventType(PROPERTYCHANGED, fieldname));
 	}
 	
 	/**
@@ -787,7 +804,14 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 					try
 					{
 						//publishToolBeliefEvent(mbel);
-						jadex.rules.eca.Event ev = new jadex.rules.eca.Event(etype, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
+						EventType propetype = etype;
+						String propname = event.getPropertyName();
+						if(propname!=null)
+						{
+							String[] combined = Stream.concat(Stream.of(etype.getTypes()), Stream.of(propname)).toArray(String[]::new);
+							propetype = new EventType(combined);
+						}
+						jadex.rules.eca.Event ev = new jadex.rules.eca.Event(propetype, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
 						rs.addEvent(ev);
 					}
 					catch(Exception e)
@@ -826,4 +850,5 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 		if(val!=null)
 			rs.observeObject(val, true, false, getEventAdder(etype, rs, eventadders));
 	}
+
 }

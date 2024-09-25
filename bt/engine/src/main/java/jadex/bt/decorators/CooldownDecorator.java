@@ -1,7 +1,8 @@
 package jadex.bt.decorators;
 
+import java.lang.System.Logger.Level;
+
 import jadex.bt.impl.Event;
-import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
@@ -24,7 +25,7 @@ public class CooldownDecorator<T> extends Decorator<T>
         long curtime = System.currentTimeMillis();
         long lasttime = getLastTime(context);
         
-        System.out.println("cooldown: "+lasttime+" "+curtime);
+        System.getLogger(getClass().getName()).log(Level.INFO, "cooldown: "+lasttime+" "+curtime);
         
         if(lasttime==0 || curtime - lasttime>= getCooldown()) 
         {

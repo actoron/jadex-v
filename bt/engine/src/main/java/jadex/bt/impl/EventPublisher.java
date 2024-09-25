@@ -1,6 +1,7 @@
 package jadex.bt.impl;
 
 import java.beans.PropertyChangeEvent;
+import java.lang.System.Logger.Level;
 
 import jadex.collection.IEventPublisher;
 import jadex.common.IResultCommand;
@@ -99,7 +100,10 @@ public class EventPublisher implements IEventPublisher
 				catch(Exception e)
 				{
 					if(!(e instanceof ComponentTerminatedException))
-						System.out.println("Ex in observe: "+e.getMessage());
+					{
+						//System.out.println("Ex in observe: "+e.getMessage());
+						System.getLogger(this.getClass().getName()).log(Level.ERROR, "Ex in observe: "+e.getMessage());
+					}
 					Object val = event.getSource();
 					getRuleSystem().unobserveObject(val, self);
 					ret.setResult(null);
