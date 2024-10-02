@@ -17,7 +17,7 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-		JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
+		//JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
 		
 		IComponent.create(new BuyerAgent(
 			new Order[]

@@ -38,6 +38,7 @@ public class Decorator<T> implements IDecorator<T>
 			@Override
 			public void accept(NodeState state) 
 			{
+				// finished already in before?
 				if(state != NodeState.RUNNING) 
 				{
 					//System.out.println("decorator exit: "+Decorator.this+" "+state);
@@ -46,6 +47,7 @@ public class Decorator<T> implements IDecorator<T>
 		            return;
 		        }
 				
+				// call chain
 				//System.out.println("decorator next: "+Decorator.this+" "+wrapped);
 				IFuture<NodeState> iret = wrapped.internalExecute(event, state, execontext);
 		        iret.then(istate -> 

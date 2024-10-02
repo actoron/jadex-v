@@ -6,20 +6,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
+import jadex.bt.INodeListener;
 import jadex.bt.decorators.Decorator;
 import jadex.bt.decorators.IDecorator;
 import jadex.bt.impl.Event;
-import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.common.SReflect;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.rules.eca.EventType;
 
 public abstract class Node<T> implements IDecorator<T>
 {
@@ -40,9 +37,15 @@ public abstract class Node<T> implements IDecorator<T>
 	}
 	
 	protected String name;
+	
 	protected int id = idgen.incrementAndGet();
+	
 	protected Node<T> parent;
+	
 	protected List<IDecorator<T>> decorators = new ArrayList<>();
+	
+	protected List<INodeListener<T>> listeners = new ArrayList<>();
+	
 	
 	public abstract IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context);
 	
@@ -167,11 +170,14 @@ public abstract class Node<T> implements IDecorator<T>
 				//System.out.println("node fini: "+state+" "+this+" "+ret);
 				System.getLogger(this.getClass().getName()).log(Level.INFO, "node fini: "+state+" "+this+" "+ret);
 				context.setState(state);
+				notifyFinished(state, execontext);
+				
 			}).catchEx(ex -> 
 			{
 				//System.out.println("node fini failed: "+ex+" "+this);
 				System.getLogger(this.getClass().getName()).log(Level.INFO, "node fini failed: "+ex+" "+this);
 				context.setState(NodeState.FAILED);
+				notifyFinished(NodeState.FAILED, execontext);
 			});
 		}
 		
@@ -281,7 +287,41 @@ public abstract class Node<T> implements IDecorator<T>
     {
     	return 0;
     }
+    
+    public void addNodeListener(INodeListener<T> listener) 
+    {
+        listeners.add(listener);
+    }
 
+    public void removeNodeListener(INodeListener<T> listener) 
+    {
+        listeners.remove(listener);
+    }
+    
+    protected void notifyFinished(NodeState state, ExecutionContext<T> context)
+    {
+    	if(listeners!=null && listeners.size()>0)
+    	{
+    		if(NodeState.SUCCEEDED==state)
+    			listeners.stream().forEach(l -> l.onSucceeded(this, context));
+    		else if(NodeState.FAILED==state)
+    			listeners.stream().forEach(l -> l.onFailed(this, context));
+    		//else
+    			//listeners.stream().forEach(l -> l.onStateChange(this, state, context));
+    	}
+    }
+    
+    protected void notifyChildChanged(Node<T> child, boolean added, ExecutionContext<T> context)
+    {
+    	if(listeners!=null && listeners.size()>0)
+    	{
+    		if(added)
+    			listeners.stream().forEach(l -> l.onChildAdded(this, child, context));
+    		else 
+    			listeners.stream().forEach(l -> l.onChildRemoved(this, child, context));
+    	}
+    }
+    
 	@Override
 	public int hashCode() 
 	{

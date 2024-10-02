@@ -158,8 +158,11 @@ public class GuiPanel extends JPanel
 	{
 		setLayout(new BorderLayout());
 		
+		
 		this.agent = agent;
 		final boolean buy = isBuyer(agent);
+		
+		agent.waitForTermination().then(found -> getFrame().dispose()).catchEx(ex -> getFrame().dispose());
 		
 		if(buy)
 		{
@@ -318,8 +321,16 @@ public class GuiPanel extends JPanel
 					@Override
 					public void run() 
 					{
-						refresh();
-						refreshDetails();
+						try
+						{
+							refresh();
+							refreshDetails();
+						}
+						catch(Exception e)
+						{
+							//System.out.println("gui timer stopped: "+agent.getId());
+							timer.cancel();
+						}
 					}
 				});
 			}
@@ -420,63 +431,90 @@ public class GuiPanel extends JPanel
 			public void actionPerformed(ActionEvent e)
 			{
 				IExecutionFeature	exe	= agent.scheduleStep(ia -> {return ia.getFeature(IExecutionFeature.class);}).get();
-						int row = table.getSelectedRow();
-						if(row >= 0 && row < orders.size())
+				int row = table.getSelectedRow();
+				if(row >= 0 && row < orders.size())
+				{
+					final Order order = (Order)orders.get(row);
+					edit_dialog.title.setText(order.getTitle());
+					edit_dialog.limit.setText(Integer.toString(order.getLimit()));
+					edit_dialog.start.setText(Integer.toString(order.getStartPrice()));
+					edit_dialog.deadline.setText(dformat.format(order.getDeadline()));
+
+					while(edit_dialog.requestInput(exe.getTime()))
+					{
+						try
 						{
-							final Order order = (Order)orders.get(row);
-							edit_dialog.title.setText(order.getTitle());
-							edit_dialog.limit.setText(Integer.toString(order.getLimit()));
-							edit_dialog.start.setText(Integer.toString(order.getStartPrice()));
-							edit_dialog.deadline.setText(dformat.format(order.getDeadline()));
-		
-							while(edit_dialog.requestInput(exe.getTime()))
+							String title = edit_dialog.title.getText();
+							int limit = Integer.parseInt(edit_dialog.limit.getText());
+							int start = Integer.parseInt(edit_dialog.start.getText());
+							Date deadline = dformat.parse(edit_dialog.deadline.getText());
+							order.setTitle(title);
+							order.setLimit(limit);
+							order.setStartPrice(start);
+							items.fireTableDataChanged();
+							
+							agent.scheduleStep(ia ->
 							{
-								try
+								IExecutionFeature iexe = ia.getFeature(IExecutionFeature.class);
+								order.setDeadline(deadline, iexe);
+								INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
+								Collection<Order> orders = ag.getOrders();
+								
+								for(Order o: orders)
 								{
-									String title = edit_dialog.title.getText();
-									int limit = Integer.parseInt(edit_dialog.limit.getText());
-									int start = Integer.parseInt(edit_dialog.start.getText());
-									Date deadline = dformat.parse(edit_dialog.deadline.getText());
-									order.setTitle(title);
-									order.setLimit(limit);
-									order.setStartPrice(start);
-									items.fireTableDataChanged();
-									
-									agent.scheduleStep(ia ->
+									if(o.equals(order))
 									{
-										IExecutionFeature iexe = ia.getFeature(IExecutionFeature.class);
-										order.setDeadline(deadline, iexe);
-										INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
-										Collection<Order> orders = ag.getOrders();
-										
-										for(Order o: orders)
-										{
-											if(o.equals(order))
-											{
-												o.setState(Order.FAILED);
-												//ag.getAgent().getFeature(IBDIAgentFeature.class).dropGoal(goal);
-											}
-										}
-										
-										ag.createOrder(order);
-									});
-									break;
+										o.setState(Order.FAILED);
+										//ag.getAgent().getFeature(IBDIAgentFeature.class).dropGoal(goal);
+									}
 								}
-								catch(NumberFormatException e1)
-								{
-									JOptionPane.showMessageDialog(GuiPanel.this, "Price limit must be integer.", "Input error", JOptionPane.ERROR_MESSAGE);
-								}
-								catch(ParseException e1)
-								{
-									JOptionPane.showMessageDialog(GuiPanel.this, "Wrong date format, use YYYY/MM/DD hh:mm.", "Input error", JOptionPane.ERROR_MESSAGE);
-								}
-							}
-						}				
+								
+								ag.createOrder(order);
+							});
+							break;
+						}
+						catch(NumberFormatException e1)
+						{
+							JOptionPane.showMessageDialog(GuiPanel.this, "Price limit must be integer.", "Input error", JOptionPane.ERROR_MESSAGE);
+						}
+						catch(ParseException e1)
+						{
+							JOptionPane.showMessageDialog(GuiPanel.this, "Wrong date format, use YYYY/MM/DD hh:mm.", "Input error", JOptionPane.ERROR_MESSAGE);
+						}
+					}
+				}				
 			}
 		});
 		
 		refresh();
 	}
+	
+	public static List<Integer> saveSelections(JTable table) 
+	{
+        List<Integer> selectedModelIndices = new ArrayList<>();
+        int[] selectedRows = table.getSelectedRows();
+
+        for (int row : selectedRows) 
+        {
+            int modelIndex = table.convertRowIndexToModel(row); 
+            selectedModelIndices.add(modelIndex);
+        }
+
+        return selectedModelIndices;
+    }
+	
+	public static void restoreSelections(JTable table, List<Integer> selectedModelIndices) 
+	{
+        table.clearSelection();
+        for (int modelIndex : selectedModelIndices) 
+        {
+            if (modelIndex < table.getModel().getRowCount()) 
+            {
+                int viewIndex = table.convertRowIndexToView(modelIndex); 
+                table.addRowSelectionInterval(viewIndex, viewIndex);
+            }
+        }
+    }
 
 //	/**
 //	 *  Helper method for dropping a goal.
@@ -511,23 +549,27 @@ public class GuiPanel extends JPanel
 	{
 		agent.scheduleStep(ia ->
 		{
-				INegotiationAgent ag = (INegotiationAgent)ia.getFeature(MicroAgentFeature.class).getSelf().getPojo();
+			INegotiationAgent ag = (INegotiationAgent)ia.getFeature(MicroAgentFeature.class).getSelf().getPojo();
 
-				final List<Order> aorders = ag.getOrders();
-				SwingUtilities.invokeLater(new Runnable()
+			final List<Order> aorders = ag.getOrders();
+			SwingUtilities.invokeLater(new Runnable()
+			{
+				public void run()
 				{
-					public void run()
+					List<Integer> sels = saveSelections(table);
+					
+					for(Order order: aorders)
 					{
-						for(Order order: aorders)
+						if(!orders.contains(order))
 						{
-							if(!orders.contains(order))
-							{
-								orders.add(order);
-							}
+							orders.add(order);
 						}
-						items.fireTableDataChanged();
 					}
-				});
+					items.fireTableDataChanged();
+					
+					restoreSelections(table, sels);
+				}
+			});
 		});
 	}
 	
@@ -536,40 +578,40 @@ public class GuiPanel extends JPanel
 	 */
 	public void refreshDetails()
 	{
-		int sel = table.getSelectedRow();
+		//if(sel==-1)
+		int	sel = table.getSelectedRow();
 		if(sel!=-1)
 		{
 			final Order order = (Order)orders.get(sel);
 			
 			agent.scheduleStep(ia ->
+			{
+				INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
+				
+				final List<NegotiationReport> reps = ag.getReports(order);
+				
+				Collections.sort(reps, new Comparator<NegotiationReport>()
 				{
-					INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
-					
-					final List<NegotiationReport> reps = ag.getReports(order);
-					
-					Collections.sort(reps, new Comparator<NegotiationReport>()
+					public int compare(NegotiationReport o1, NegotiationReport o2)
 					{
-						public int compare(NegotiationReport o1, NegotiationReport o2)
-						{
-							return o1.getTime()>o2.getTime()? 1: -1;
-						}
-					});
-					
-					SwingUtilities.invokeLater(new Runnable()
+						return o1.getTime()>o2.getTime()? 1: -1;
+					}
+				});
+				
+				SwingUtilities.invokeLater(new Runnable()
+				{
+					public void run()
 					{
-						public void run()
+						while(detailsdm.getRowCount()>0)
+							detailsdm.removeRow(0);
+						for(NegotiationReport rep: reps)
 						{
-							while(detailsdm.getRowCount()>0)
-								detailsdm.removeRow(0);
-							for(NegotiationReport rep: reps)
-							{
-								detailsdm.addRow(new Object[]{rep});
-								//System.out.println(""+i+res.get(i));
-							}
+							detailsdm.addRow(new Object[]{rep});
+							//System.out.println(""+i+res.get(i));
 						}
-					});
-				}
-			);
+					}
+				});
+			});
 		}
 	}
 
@@ -609,7 +651,7 @@ public class GuiPanel extends JPanel
 			// These orders are not added to the agent (see manager.agent.xml).
 			try
 			{
-				IExecutionFeature	exe	= agent.scheduleStep(ia -> {return ia.getFeature(IExecutionFeature.class);}).get();
+				IExecutionFeature exe = agent.scheduleStep(ia -> {return ia.getFeature(IExecutionFeature.class);}).get();
 				if(buy)
 				{
 					orders.addItem(new Order("All about agents", exe.getTime(), 100, 120, buy));

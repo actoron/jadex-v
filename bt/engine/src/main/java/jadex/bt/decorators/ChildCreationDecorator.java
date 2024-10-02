@@ -9,6 +9,7 @@ import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ITriFunction;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.rules.eca.EventType;
 
@@ -36,6 +37,12 @@ public class ChildCreationDecorator<T> extends ConditionalDecorator<T>
 		this.node = node;
 	}
 	
+	@Override
+	public IFuture<NodeState> beforeExecute(Event event, NodeState state, ExecutionContext<T> context) 
+	{
+		return null;
+	}
+	
 	public ChildCreationDecorator<T> setChildCreator(Function<Event, Node<T>> creator)
 	{
 		this.creator = creator;
@@ -53,6 +60,8 @@ public class ChildCreationDecorator<T> extends ConditionalDecorator<T>
 			Node<T> child = creator.apply(e);
 			
 			CompositeNode<T> node = (CompositeNode<T>)getNode();
+			// todo? should all dynamically added nodes be removed after final execution?
+			child.addDecorator(new RemoveDecorator<T>());
 			
 			node.addChild(child, e, getExecutionContext());
 			
@@ -60,13 +69,5 @@ public class ChildCreationDecorator<T> extends ConditionalDecorator<T>
 		});
 		
 		return this;
-	}
-	
-	@Override
-	public NodeState mapToNodeState(Boolean state)
-	{
-		NodeState ret = state!=null && state? NodeState.SUCCEEDED: NodeState.RUNNING; 
-		//System.out.println("map: "+state+":"+ret+" "+this);
-		return ret;
 	}
 }
