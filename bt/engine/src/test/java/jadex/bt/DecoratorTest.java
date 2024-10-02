@@ -58,7 +58,7 @@ public class DecoratorTest
 	    an.addDecorator(rd);
 
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator<Object>());
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 	    
