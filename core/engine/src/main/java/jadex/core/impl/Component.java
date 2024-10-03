@@ -28,7 +28,7 @@ public class Component implements IComponent
 {
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
-	protected Map<Class<Object>, FeatureProvider<Object>> providers;
+	protected Map<Class<Object>, ComponentFeatureProvider<Object>> providers;
 	
 	/** The feature instances of this component, stored by the feature type. */
 	protected Map<Class<Object>, Object> features;
@@ -69,11 +69,11 @@ public class Component implements IComponent
 		ApplicationContext appctx = ComponentManager.get().getApplicationContext();
 		this.appid = appctx!=null? appctx.id(): null;
 		
-		providers	= SFeatureProvider.getProvidersForComponent(getClass());
+		providers	= SComponentFeatureProvider.getProvidersForComponent(getClass());
 		
 		// Instantiate all features (except lazy ones).
 		// Use getProviderListForComponent as it uses a cached array list
-		SFeatureProvider.getProviderListForComponent(getClass()).forEach(provider ->
+		SComponentFeatureProvider.getProviderListForComponent(getClass()).forEach(provider ->
 		{
 			if(!provider.isLazyFeature())
 			{
@@ -151,7 +151,7 @@ public class Component implements IComponent
 		{
 			try
 			{
-				FeatureProvider<?>	provider	= providers.get(type);
+				ComponentFeatureProvider<?>	provider	= providers.get(type);
 				assert provider.isLazyFeature();
 				@SuppressWarnings("unchecked")
 				T ret = (T)provider.createFeatureInstance(this);
@@ -181,7 +181,7 @@ public class Component implements IComponent
 		{
 			ComponentManager.get().removeComponent(this.getId());
 			
-			List<FeatureProvider<Object>> provs = SFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
+			List<ComponentFeatureProvider<Object>> provs = SComponentFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
 			Optional<IComponentLifecycleManager> opt = provs.stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
 			if(opt.isPresent())
 			{
@@ -437,10 +437,10 @@ public class Component implements IComponent
 
 	public static <T extends Component> T createComponent(Class<T> type, Supplier<T> creator)
 	{
-		List<FeatureProvider<Object>>	providers	= SFeatureProvider.getProviderListForComponent(type);
+		List<ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProviderListForComponent(type);
 		for(int i=providers.size()-1; i>=0; i--)
 		{
-			FeatureProvider<Object>	provider	= providers.get(i);
+			ComponentFeatureProvider<Object>	provider	= providers.get(i);
 			if(provider instanceof IBootstrapping)
 			{
 				Supplier<T>	nextcreator	= creator;

@@ -1,7 +1,7 @@
 package jadex.messaging.impl;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.messaging.IMessageFeature;
 import jadex.messaging.ipc.IpcStreamHandler;
 import jadex.messaging.security.Security;
@@ -9,7 +9,7 @@ import jadex.messaging.security.Security;
 /**
  *  Provider class for the message component feature.
  */
-public class MessageFeatureProvider extends FeatureProvider<IMessageFeature> 
+public class MessageFeatureProvider extends ComponentFeatureProvider<IMessageFeature> 
 {
 	/**
 	 *  Create MessageFeatureProvider.

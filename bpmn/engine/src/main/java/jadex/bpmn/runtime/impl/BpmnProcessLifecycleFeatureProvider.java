@@ -10,12 +10,12 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
 
-public class BpmnProcessLifecycleFeatureProvider extends FeatureProvider<BpmnProcessLifecycleFeature>  implements IComponentLifecycleManager
+public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvider<BpmnProcessLifecycleFeature>  implements IComponentLifecycleManager
 {
 	@Override
 	public Class<BpmnProcessLifecycleFeature> getFeatureType()

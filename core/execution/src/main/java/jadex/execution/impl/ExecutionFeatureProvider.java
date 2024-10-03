@@ -13,16 +13,16 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.LambdaPojo;
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.SFeatureProvider;
+import jadex.core.impl.SComponentFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
+public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
 	static
 	{
@@ -157,7 +157,7 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 	@Override
 	public <T extends Component> T	bootstrap(Class<T> type, Supplier<T> creator)
 	{
-		Map<Class<Object>, FeatureProvider<Object>>	providers	= SFeatureProvider.getProvidersForComponent(type);
+		Map<Class<Object>, ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
 		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
 		Future<T>	ret	= new Future<>();

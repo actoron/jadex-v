@@ -1,10 +1,10 @@
 package jadex.featuretest.impl;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.featuretest.ITestFeature1;
 
-public class TestFeature1Provider extends FeatureProvider<ITestFeature1> implements ITestFeature1
+public class TestFeature1Provider extends ComponentFeatureProvider<ITestFeature1> implements ITestFeature1
 {
 	@Override
 	public Class<ITestFeature1> getFeatureType()
