@@ -16,6 +16,7 @@ import jadex.bt.booktrading.domain.NegotiationReport;
 import jadex.bt.booktrading.domain.Order;
 import jadex.bt.booktrading.gui.Gui;
 import jadex.bt.decorators.ChildCreationDecorator;
+import jadex.bt.decorators.RepeatDecorator;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
@@ -68,6 +69,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 	public Node<IComponent> createBehaviorTree()
 	{
 		ParallelNode<IComponent> sellbooks = new ParallelNode<>("sellbooks");
+		sellbooks.setKeepRunning(true);
 		sellbooks.addDecorator(new ChildCreationDecorator<IComponent>()
 			.setCondition((node, state, context) -> true)
 			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "mprops")})
@@ -76,6 +78,10 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 			.setCondition((node, state, context) -> true)
 			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "tasks")})
 			.setChildCreator((event) -> createExecuteTaskAction((ExecuteTask)event.value())));
+		// add a repeat decorator that keeps the node running for ever
+		// must add an event as rulebase checks and throws exception when rule without 
+		//sellbooks.addDecorator(new RepeatDecorator<IComponent>((e, s, c) -> new Future<Boolean>(false))
+		//	.setEvents(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "none")}));
 		return sellbooks;
 	}
 	
@@ -126,6 +132,11 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 				String report = "Made proposal: "+acceptable_price;
 				NegotiationReport nr = new NegotiationReport(order, report, getTime());
 				reports.add(nr);
+				ret.setResult(NodeState.SUCCEEDED);
+			}
+			else
+			{
+				ret.setResult(NodeState.FAILED);
 			}
 			
 			return ret;
@@ -139,6 +150,8 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 		ActionNode<IComponent> executetask = new ActionNode<>("executetask_"+cnt++);
 		executetask.setAction(new TerminableUserAction<IComponent>((e, agent) ->
 		{
+			System.out.println("execute task: "+task);
+			
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 			
 			// Search suitable open orders.
@@ -162,6 +175,8 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 			});
 			Order order = orders.get(0);
 			
+			System.out.println("found order: "+order);
+			
 			// Use most urgent order for preparing proposal.
 			if(order!=null)
 			{
@@ -175,7 +190,8 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 				
 				if(price>=acceptable_price)
 				{
-		//			getLogger().info("Execute order plan: "+price+" "+order);
+					//getLogger().info("Execute order plan: "+price+" "+order);
+					System.out.println("Execute order plan: "+price+" "+order);
 		
 					// Initiate payment and delivery.
 					// IGoal pay = createGoal("payment");
@@ -193,12 +209,20 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 					String report = "Sold for: "+price;
 					NegotiationReport nr = new NegotiationReport(order, report, getTime());
 					reports.add(nr);
+					// Store proposal data in plan parameters.
+					task.result().setResult(null);
+					ret.setResult(NodeState.SUCCEEDED);
 				}
 				else
 				{
 					ret.setResult(NodeState.FAILED);
 				}
 			}
+			else
+			{
+				ret.setResult(NodeState.FAILED);
+			}
+			
 			return ret;
 		}));
 		//executetask.addDecorator(new RepeatDecorator<IComponent>()

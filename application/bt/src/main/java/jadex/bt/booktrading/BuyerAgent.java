@@ -112,6 +112,7 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 				generateNegotiationReport(order, null, acceptable_price);
 				//throw new PlanFailureException();
 				ret.setResult(NodeState.FAILED);
+				return ret;
 			}
 
 			// Initiate a call-for-proposal.
@@ -147,6 +148,7 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 			// Do we have a winner?
 			if(proposals.length>0 && proposals[0].getSecondEntity().intValue()<=acceptable_price)
 			{
+				System.out.println("found a winner: "+proposals[0]+" "+agent.getId());
 				proposals[0].getFirstEntity().acceptProposal(order.getTitle(), proposals[0].getSecondEntity().intValue()).get();
 				
 				generateNegotiationReport(order, proposals, acceptable_price);
@@ -160,8 +162,8 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 			}
 			else
 			{
+				System.out.println("found no winner: "+agent.getId());
 				generateNegotiationReport(order, proposals, acceptable_price);
-				
 				ret.setResult(NodeState.FAILED);
 			}
 			
@@ -169,10 +171,10 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 			//System.out.println("result: "+cnp.getParameter("result").getValue());
 		}));
 		
-		
 		purchasebook.addDecorator(new FailureDecorator<IComponent>()
 			.setCondition((node, state, context) -> order.getState().equals(Order.FAILED))
 			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "orders", "state")}));
+		purchasebook.addDecorator(new RetryDecorator<IComponent>(5000));
 		
 		return purchasebook;
 	}

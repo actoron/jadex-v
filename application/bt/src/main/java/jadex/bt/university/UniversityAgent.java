@@ -1,19 +1,22 @@
 package jadex.bt.university;
 
+import java.lang.System.Logger.Level;
+
 import jadex.bt.IBTProvider;
-import jadex.bt.decorators.ConditionalDecorator;
-import jadex.bt.decorators.Decorator;
-import jadex.bt.decorators.TriggerDecorator;
+import jadex.bt.NodeListener;
 import jadex.bt.Val;
 import jadex.bt.actions.UserAction;
+import jadex.bt.decorators.ConditionalDecorator;
+import jadex.bt.decorators.TriggerDecorator;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
-import jadex.bt.nodes.SelectorNode;
-import jadex.bt.nodes.SequenceNode;
 import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.nodes.SelectorNode;
+import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.future.Future;
+import jadex.logger.JadexLoggerFinder;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 import jadex.rules.eca.EventType;
@@ -102,8 +105,22 @@ public class UniversityAgent implements IBTProvider
 		
 		SelectorNode<IComponent> sel = new SelectorNode<>("gotouni");
 		sel.addChild(train).addChild(tram).addChild(walk);
+		
+		sel.addNodeListener(new NodeListener<IComponent>()
+		{
+			@Override
+			public void onSucceeded(Node<IComponent> node, ExecutionContext<IComponent> context) 
+			{
+				System.out.println("Reached uni");
+			}
+			
+			public void onFailed(Node<IComponent> node, ExecutionContext<IComponent> context) 
+			{
+				System.out.println("Could not reach uni");
+			}
+		});
 
-		ActionNode<IComponent> finish = new ActionNode<>("finish");
+		/*ActionNode<IComponent> finish = new ActionNode<>("finish");
 		finish.setAction(new UserAction<IComponent>((e, agent) ->
 		{
 			System.out.println("Reached uni");
@@ -112,15 +129,11 @@ public class UniversityAgent implements IBTProvider
 		}));
 		
 		SequenceNode<IComponent> seq = new SequenceNode<>("main");
-		seq.addChild(sel).addChild(finish);
+		seq.addChild(sel).addChild(finish);*/
 		
-		return seq;
+		return sel;
 	}
 	
-	/** 
-	 *  The agent body is executed on startup.
-	 *  It creates and dispatches a come to university goal.
-	 */
 	@OnStart
 	public void body()
 	{
@@ -130,6 +143,8 @@ public class UniversityAgent implements IBTProvider
 	
 	public static void main(String[] args)
 	{
+		JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
+
 		// raining, waiting
 		IComponent.create(new UniversityAgent(false, false));
 		IComponent.waitForLastComponentTerminated();

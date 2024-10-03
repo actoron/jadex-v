@@ -14,7 +14,6 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
-import jadex.rules.eca.EventType;
 
 public class RepeatDecorator<T> extends ConditionalDecorator<T> 
 {
@@ -29,6 +28,11 @@ public class RepeatDecorator<T> extends ConditionalDecorator<T>
     	this(null, 0, 0);
     }
     
+    public RepeatDecorator(long delay) 
+    {
+    	this(null, 0, delay);
+    }
+    
     public RepeatDecorator(int max, long delay) 
     {
     	this(null, max, delay);
@@ -41,9 +45,14 @@ public class RepeatDecorator<T> extends ConditionalDecorator<T>
     
     public RepeatDecorator(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition, int max, long delay) 
     {
-    	this.condition = condition==null? (event, state, context) -> new Future<Boolean>(true): condition;
+    	this.condition = condition;//condition==null? (event, state, context) -> new Future<Boolean>(true): condition;
     	this.max = max;
     	this.delay = delay;
+    }
+    
+    public boolean isRepeatAllowed(Event event, NodeState state, ExecutionContext<T> context)
+    {
+    	return true;
     }
     
     public long getTimeout() 
@@ -71,86 +80,106 @@ public class RepeatDecorator<T> extends ConditionalDecorator<T>
         NodeContext<T> context = node.getNodeContext(execontext);
         ITimerCreator<T> tc = execontext.getTimerCreator();
         
+        Runnable repeat = new Runnable()
+        {
+        	@Override
+        	public void run() 
+        	{
+        		System.getLogger(getClass().getName()).log(Level.INFO, "repeat node: "+getNode());
+                //System.out.println("repeat node: "+getNode());
+                
+    			//reset(execontext); must not reset here, is done in execute on reexecution call
+    			IFuture<NodeState> fut = getNode().execute(event, execontext);
+    			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
+    				fut.delegateTo(ret);	
+        	}
+        };
+        
         if(max == 0 || getAttempt(context) < max) 
         {
         	incAttempt(context);
-        	condition.apply(event, state, execontext).then(rep -> 
+        	//condition.apply(event, state, execontext).then(rep -> 
+        	if(getCondition()==null)
         	{
-        		if(rep) 
-                {
-                	context.setRepeat(true);
-
-                    if(context.getAborted() != AbortMode.SELF) 
-                    {
-                        ITerminableFuture<Void> dfut = null;
-                        if(delay > 0) 
-                        {
-                        	context.setRepeatDelay(delay);
-                            dfut = tc.createTimer(execontext, delay);
-                            context.setRepeatDelayTimer(dfut);
-                        } 
-                        else 
-                        {
-                            dfut = new TerminableFuture<>();
-                            ((TerminableFuture<Void>)dfut).setResult(null);
-                        }
-
-                        dfut.then(Void -> 
-                        {
-                        	System.getLogger(getClass().getName()).log(Level.INFO, "repeat node: "+getNode());
-                            //System.out.println("repeat node: "+getNode());
-                            
-	            			//reset(execontext); must not reset here, is done in execute on reexecution call
-	            			IFuture<NodeState> fut = getNode().execute(event, execontext);
-	            			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
-	            				fut.delegateTo(ret);
-                        }).catchEx(e -> 
-                        {
-                            e.printStackTrace();
-                            getNode().reset(execontext, true);
-                            ret.setResultIfUndone(NodeState.FAILED);
-                        });
-                    }
-                } 
-                else 
-                {
-                	if(getEvents()!=null)
-                	{
-	                	IFuture<Void> condfut = waitForCondition(e -> {
-	                		Future<Tuple2<Boolean, Object>> cret = new Future<>();
-	                		IFuture<Boolean> fut = condition.apply(new Event(e.getType().toString(), e.getContent()), node.getNodeContext(getExecutionContext()).getState(), getExecutionContext());
-	        				fut.then(triggered ->
-	        				{
-	        					cret.setResult(new Tuple2<>(triggered, null));
-	        				}).catchEx(ex -> 
-	        				{
-	        					cret.setResult(new Tuple2<>(false, null));
-	        				});
-	            			return cret;
-	                	}, getEvents(), getTimeout(), execontext);
-	                	
-	                	condfut.then(Void -> 
-                        {
-                        	System.getLogger(getClass().getName()).log(Level.INFO, "conditional repeat node: "+getNode());
-                            //System.out.println("repeat node: "+getNode());
-                            
-	            			//reset(execontext); must not reset here, is done in execute on reexecution call
-	            			IFuture<NodeState> fut = getNode().execute(event, execontext);
-	            			if(fut!=ret && !ret.isDone()) // leads to duplicate result when both already done :-( HACK! todo: fix delegateTo
-	            				fut.delegateTo(ret);
-                        }).catchEx(e -> 
-                        {
-                            e.printStackTrace();
-                            getNode().reset(execontext, true);
-                            ret.setResultIfUndone(NodeState.FAILED);
-                        });
-                	}
-                	else
-                	{
-                		ret.setResult(state);
-                	}
-                }
-            }).catchEx(ex2 -> ret.setResult(NodeState.FAILED));
+        		if(isRepeatAllowed(event, state, execontext))
+        		{
+	            	context.setRepeat(true);
+	
+	                if(context.getAborted() != AbortMode.SELF) 
+	                {
+	                    ITerminableFuture<Void> dfut = null;
+	                    if(delay > 0) 
+	                    {
+	                    	context.setRepeatDelay(delay);
+	                        dfut = tc.createTimer(execontext, delay);
+	                        context.setRepeatDelayTimer(dfut);
+	                    } 
+	                    else 
+	                    {
+	                        dfut = new TerminableFuture<>();
+	                        ((TerminableFuture<Void>)dfut).setResult(null);
+	                    }
+	
+	                    dfut.then(Void -> 
+	                    {
+	                    	repeat.run();
+	                    }).catchEx(e -> 
+	                    {
+	                        //e.printStackTrace();
+	                        getNode().reset(execontext, true);
+	                        ret.setResultIfUndone(NodeState.FAILED);
+	                    });
+	                }
+        		}
+        		else
+        		{
+        			ret.setResult(state);
+        		}
+        	} 
+        	else // wait for condition
+            {
+        		if(getEvents()==null)
+        			System.out.println("condition without events: "+condition);
+        		System.out.println("repeat decorator is waiting for condition");
+        		
+        		IFuture<Boolean> cfut = getCondition().apply(event, node.getNodeContext(getExecutionContext()).getState(), getExecutionContext());
+				cfut.then(triggered ->
+				{
+					if(triggered)
+					{
+						repeat.run();
+					}
+					else
+					{
+						IFuture<Void> condfut = waitForCondition(e -> 
+		            	{
+		            		Future<Tuple2<Boolean, Object>> cret = new Future<>();
+		            		IFuture<Boolean> fut = getCondition().apply(new Event(e.getType().toString(), e.getContent()), node.getNodeContext(getExecutionContext()).getState(), getExecutionContext());
+		    				fut.then(triggered2 ->
+		    				{
+		    					cret.setResult(new Tuple2<>(triggered2, null));
+		    				}).catchEx(ex -> 
+		    				{
+		    					cret.setResult(new Tuple2<>(false, null));
+		    				});
+		        			return cret;
+		            	}, getEvents(), getTimeout(), execontext);
+		            	
+		            	condfut.then(Void -> 
+		                {
+		                	repeat.run();
+		                }).catchEx(e -> 
+		                {
+		                    e.printStackTrace();
+		                    getNode().reset(execontext, true);
+		                    ret.setResultIfUndone(NodeState.FAILED);
+		                });
+					}
+				}).catchEx(ex -> 
+				{
+					 ret.setResult(state); 
+				});
+            }
         } 
         else 
         {

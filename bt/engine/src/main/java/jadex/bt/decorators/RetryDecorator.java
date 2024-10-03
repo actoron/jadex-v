@@ -1,9 +1,9 @@
 package jadex.bt.decorators;
 
+import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node.NodeState;
-import jadex.future.Future;
+import jadex.bt.state.ExecutionContext;
 
-// todo: make this work with repeat condition!
 public class RetryDecorator<T> extends RepeatDecorator<T>
 {
     public RetryDecorator() 
@@ -11,13 +11,18 @@ public class RetryDecorator<T> extends RepeatDecorator<T>
     	this(0, 0);
     }
     
-    public RetryDecorator(int max) 
+    public RetryDecorator(long delay) 
     {
-    	this(max, 0);
+    	this(0, delay);
     }
     
     public RetryDecorator(int max, long delay) 
     {
-    	super((event, state, context) -> new Future<Boolean>(NodeState.FAILED==state), max, delay);
+    	super(max, delay);
+    }
+    
+    public boolean isRepeatAllowed(Event event, NodeState state, ExecutionContext<T> context)
+    {
+    	return NodeState.FAILED==state;
     }
 }

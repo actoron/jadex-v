@@ -3,7 +3,6 @@ package jadex.bt.decorators;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.impl.Event;
 import jadex.bt.impl.ITimerCreator;
-import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ICommand;
@@ -80,6 +79,18 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		this.action = action;
 	}
 	
+	public ConditionalDecorator<T> setEvents(EventType[] events) 
+	{
+		this.events = events;
+		return this;
+	}
+
+	public ConditionalDecorator<T> setAction(IAction<Void> action) 
+	{
+		this.action = action;
+		return this;
+	}
+
 	public ExecutionContext<T> getExecutionContext()
 	{
 		return (ExecutionContext)BTAgentFeature.get().getExecutionContext(); // todo: remove cast hack
@@ -131,26 +142,32 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		final Future<Void> ret = new Future<Void>();
 		
 		ITimerCreator<T> tc = execontext.getTimerCreator();
-		final ITerminableFuture<Void> timerfut = timeout>0? tc.createTimer(execontext, timeout): null;
+		final IFuture<Void> timerfut = timeout>0? tc.createTimer(execontext, timeout): null;
 		
 		final String rulename = getRuleName();
 		final ResumeCommand<Void> rescom = new ResumeCommand<Void>(ret, rulename);
-		
-		timerfut.then(Void -> rescom.execute(null));
 		
 		Rule<Void> rule = new Rule<Void>(rulename, cond!=null? cond: ICondition.TRUE_CONDITION, new IAction<Void>()
 		{
 			public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 			{
+				System.out.println("execute rule: "+cond);
 				rescom.execute(null);
 				return IFuture.DONE;
 			}
 		});
 		
 		// add temporary rule
-		for(EventType ev: events)
-			rule.addEvent(ev);
+		if(events!=null)
+		{
+			for(EventType ev: events)
+				rule.addEvent(ev);
+		}
+		System.out.println("adding rule: "+rule.getName());
 		BTAgentFeature.get().getRuleSystem().getRulebase().addRule(rule);
+		
+		if(timerfut!=null)
+			timerfut.then(Void -> rescom.execute(null));
 		
 		return ret;
 	}
@@ -176,6 +193,10 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		{
 			assert BTAgentFeature.get().getSelf().getFeature(IExecutionFeature.class).isComponentThread();
 
+			// Could happen when timer triggers after normal resume
+			if(waitfuture.isDone())
+				return;
+			
 //			System.out.println("exe: "+this+" "+BTAgentFeature.this.getId()+" "+this);
 
 			Exception ex = args instanceof Exception? (Exception)args: null;
