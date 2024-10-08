@@ -163,6 +163,14 @@ public class Environment
 	{
 		this.daytime = daytime;
 	}
+	
+	/**
+	 *  Toggle the daytime.
+	 */
+	public synchronized void toggleDaytime()
+	{
+		this.daytime = !daytime;
+	}
 
 	/**
 	 *  Add a piece of waste.

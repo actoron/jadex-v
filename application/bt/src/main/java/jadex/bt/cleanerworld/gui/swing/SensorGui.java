@@ -1,4 +1,4 @@
-package jadex.bt.cleanerworld.gui;
+package jadex.bt.cleanerworld.gui.swing;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
