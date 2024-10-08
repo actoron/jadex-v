@@ -1,13 +1,10 @@
 package jadex.bt.cleanerworld.gui.libgdx;
 
-import java.awt.Point;
-
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -15,17 +12,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -43,26 +30,28 @@ public class EnvGui extends ApplicationAdapter
     final Environment env = Environment.getInstance();
 
     protected SpriteBatch batch;
-    protected Texture background;
-    private OrthographicCamera camera;
-    private Viewport viewport;
+    protected OrthographicCamera camera;
+    protected Viewport viewport;
     
     protected ShapeRenderer shaperen;
+    protected BitmapFont font;
  
-    Texture wastetex;
-    Texture wastebintex; 
-    Texture wastebinfulltex; 
-    Texture stationtex;
-    Texture cleanertex;
-    Texture backgroundtex;
-    Texture uptex;
-    Texture downtex;
-    Texture daytex;
-    Texture nighttex;
+    protected Texture background;
+    protected Texture wastetex;
+    protected Texture wastebintex; 
+    protected Texture wastebinfulltex; 
+    protected Texture stationtex;
+    protected Texture cleanertex;
+    protected Texture backgroundtex;
+    protected Texture uptex;
+    protected Texture downtex;
+    protected Texture daytex;
+    protected Texture nighttex;
     
     @Override
     public void create() 
     {
+    	font = new BitmapFont();
         batch = new SpriteBatch();
         shaperen = new ShapeRenderer();
         background = new Texture(Gdx.files.internal("jadex/bt/cleanerworld/gui/images/background.png"));
@@ -134,7 +123,7 @@ public class EnvGui extends ApplicationAdapter
 
             // Optionally draw bin info (e.g. ID and capacity)
             String info = bin.getId() + " (" + bin.getWastes().length + "/" + bin.getCapacity() + ")";
-            BitmapFont font = new BitmapFont();  
+            //BitmapFont font = new BitmapFont();  
             //font.draw(batch, info, pos.x, pos.y - 20);  
             drawText(batch, font, info, pos.x, pos.y, bintex.getWidth(), 10);
             
@@ -184,7 +173,7 @@ public class EnvGui extends ApplicationAdapter
             batch.draw(stationtex, pos.x, pos.y);
             
             // Optionally draw station ID
-            BitmapFont font = new BitmapFont();
+            //BitmapFont font = new BitmapFont();
             //font.draw(batch, station.getId(), pos.x, pos.y - 20);
             //drawText(batch, font, station.getId(), (float)(pos.x+Math.random()*10), pos.y, stationtex.getWidth(), 10);
             drawText(batch, font, station.getId(), pos.x, pos.y, stationtex.getWidth(), 10);
@@ -221,7 +210,7 @@ public class EnvGui extends ApplicationAdapter
 		    batch.draw(cleanertex, pos.x, pos.y);
             String info = cleaner.getId() + "\nBattery: " + (int)(cleaner.getChargestate() * 100) + "%" +
             	"\nWaste: " + (cleaner.getCarriedWaste() != null ? "Yes" : "No");
-            BitmapFont font = new BitmapFont();
+            //BitmapFont font = new BitmapFont();
             drawText(batch, font, info, pos.x, pos.y, cleanertex.getWidth(), 10);
             //font.draw(batch, info, pos.x + 45, pos.y);
         }
