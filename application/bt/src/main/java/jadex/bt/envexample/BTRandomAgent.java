@@ -75,15 +75,15 @@ public class BTRandomAgent implements IBTProvider
 			{
 				if(!aborted[0])
 				{
-					Vector2 agentCenter = position.cpy().add(size/2, size/2);
+					Vector2 center = position.cpy().add(size/2, size/2);
 
-	                if(agentCenter.dst(target) < 0.01)
+	                if(center.dst(target) < 0.01)
 	                {
 	                    ret.setResultIfUndone(null);
 	                }
 	                else 
 	                {
-	                    Vector2 dir = target.cpy().sub(agentCenter).nor(); 
+	                    Vector2 dir = target.cpy().sub(center).nor(); 
 	                    position.add(dir.scl(0.001f)); 
 	                    
 	                    agent.getFeature(IExecutionFeature.class).waitForDelay(10)
@@ -129,7 +129,7 @@ public class BTRandomAgent implements IBTProvider
 	
 	public Vector2 getCenterPosition()
 	{
-		return position.cpy().add(size/2, size/2);
+		return position.cpy().add(size*0.5f, size*0.5f);
 	}
 	
 	public float getSize() 
