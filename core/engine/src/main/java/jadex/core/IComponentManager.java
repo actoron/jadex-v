@@ -28,6 +28,14 @@ public interface IComponentManager
 	}
 	
 	/**
+	 *  Get the feature instance for the given type.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return The feature or null if not found or available.
+	 */
+	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype);
+	
+	/**
 	 *  Sets the class loader used by components.
 	 *  @param classloader The class loader that components should use.
 	 */

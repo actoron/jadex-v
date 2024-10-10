@@ -1,5 +1,8 @@
 package jadex.core.impl;
 
+import java.util.Collections;
+import java.util.Set;
+
 import jadex.core.IComponentFeature;
 
 /**
@@ -36,5 +39,24 @@ public abstract class ComponentFeatureProvider<T> extends FeatureProvider<T>
 	public boolean replacesFeatureProvider(ComponentFeatureProvider<T> provider)
 	{
 		return false;
+	}
+	
+	/**
+	 *  Determines if the feature is created immediately
+	 *  on component startup (false) or later on first access (true).
+	 *  @return	Defaults to false.
+	 */
+	public boolean isLazyFeature()
+	{
+		return false;
+	}
+	
+	/**
+	 *  Get the predecessors, i.e. features that should be inited first.
+	 *  @return The predecessors.
+	 */
+	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
+	{
+		return Collections.emptySet();
 	}
 }

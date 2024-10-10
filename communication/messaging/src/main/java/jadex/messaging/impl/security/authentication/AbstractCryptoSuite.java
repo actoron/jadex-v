@@ -6,7 +6,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import jadex.core.IComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.messaging.ISecurityFeature;
 import jadex.messaging.security.ICryptoSuite;
 import jadex.messaging.security.Security;
 import jadex.messaging.security.SecurityInfo;
@@ -89,7 +91,8 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 	 */
 	protected void setupSecInfos(GlobalProcessIdentifier remoteid, List<String> authnets, String authenticatedhost)
 	{
-		Security sec = Security.get();
+		Security sec = (Security) IComponentManager.get().getFeature(ISecurityFeature.class);
+//		Security sec = Security.get();
 		secinf = new SecurityInfo();
 //		secinf.setPlatformAuthenticated(platformauth);
 //		if (authenticatedhost == null && platformauth)

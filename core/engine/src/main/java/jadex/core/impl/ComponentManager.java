@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,12 +19,15 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.logging.ConsoleHandler;
 
+import jadex.collection.RwMapWrapper;
+import jadex.common.IAutoLock;
 import jadex.common.SUtil;
 import jadex.core.ApplicationContext;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentListener;
 import jadex.core.IComponentManager;
+import jadex.core.IRuntimeFeature;
 
 /**
  *  Singleton class providing general information for supporting components.
@@ -84,6 +89,9 @@ public class ComponentManager implements IComponentManager
 	
 	/** The active state of loglibs. */
 	protected Map<String, Boolean> loglibsactive = new HashMap<String, Boolean>();
+	
+	/** Cache fore runtime features. */
+	protected RwMapWrapper<Class<IRuntimeFeature>, IRuntimeFeature> featurecache = new RwMapWrapper<Class<IRuntimeFeature>, IRuntimeFeature>(new HashMap<>());
 	
 	public record LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
 	{
@@ -179,6 +187,57 @@ public class ComponentManager implements IComponentManager
             }
         }
     }
+	
+	/**
+	 *  Get the feature instance for the given type.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return The feature or null if not found or available.
+	 */
+	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype)
+	{
+		IRuntimeFeature feature = featurecache.get(featuretype);
+		if (feature == null)
+		{
+			try (IAutoLock l = featurecache.writeLock())
+			{
+				feature = featurecache.get(featuretype);
+				if (feature == null)
+				{
+					RuntimeFeatureProvider<IRuntimeFeature> prov = null;
+					@SuppressWarnings("rawtypes")
+					Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
+					for (;it.hasNext();)
+					{
+						@SuppressWarnings("unchecked")
+						RuntimeFeatureProvider<IRuntimeFeature> next = it.next();
+						if (next.getFeatureType().equals(featuretype))
+						{
+							prov = next;
+							break;
+						}
+					}
+					if (prov != null)
+					{
+						Set<Class<? extends IRuntimeFeature>> preds = prov.getDependencies();
+						for (Class<?> pred : preds)
+						{
+							@SuppressWarnings("unchecked")
+							Class<IRuntimeFeature> cpred = (Class<IRuntimeFeature>) pred;
+							getFeature(cpred);
+						}
+						feature = prov.createFeatureInstance();
+						@SuppressWarnings("unchecked")
+						Class<IRuntimeFeature> basefeaturetype = (Class<IRuntimeFeature>) featuretype;
+						featurecache.put(basefeaturetype, feature);
+					}
+				}
+			}
+		}
+		@SuppressWarnings("unchecked")
+		T ret = (T) feature;
+		return ret;
+	}
 	
 	/**
 	 *  Returns the process identifier of the Java process.

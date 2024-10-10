@@ -41,7 +41,8 @@ import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.messaging.ISecurity;
+import jadex.messaging.IIpcFeature;
+import jadex.messaging.ISecurityFeature;
 import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
 import jadex.messaging.impl.security.authentication.AbstractX509PemSecret;
 import jadex.messaging.impl.security.authentication.BIKEX448ChaCha20Poly1305Suite;
@@ -57,7 +58,7 @@ import jadex.serialization.ISerializationServices;
  *  Security functionality for active component communication.
  *  Performs authentication and 
  */
-public class Security implements ISecurity
+public class Security implements ISecurityFeature
 {
 	
 	/**
@@ -75,7 +76,7 @@ public class Security implements ISecurity
 	/**
 	 *  Get the security instance.
 	 */
-	public static final Security get()
+	/*public static final Security get()
 	{
 		if(security==null)
 		{
@@ -85,7 +86,7 @@ public class Security implements ISecurity
 			}
 		}
 		return security;
-	}
+	}*/
 	
 	/** The IPC stream handler. */
 	protected IpcStreamHandler ipc;
@@ -165,12 +166,12 @@ public class Security implements ISecurity
 	/** The list of group names (used by all service identifiers). */
 	protected Set<String> groupnames = new HashSet<>();
 	
-	public Security(GlobalProcessIdentifier gpid, IpcStreamHandler ipc)
+	public Security(GlobalProcessIdentifier gpid, IIpcFeature ipc)
 	{
 		this.gpid = gpid;
-		this.ipc = ipc;
+		this.ipc = (IpcStreamHandler) ipc;
 		
-		ipc.setSecurityMessageHandler((msg) -> 
+		this.ipc.setSecurityMessageHandler((msg) -> 
 		{
 			handleMessage(msg);
 		});
@@ -555,9 +556,9 @@ public class Security implements ISecurity
 	}
 	
 	/**
-	 *  Get access to the stored virtual network configurations.
+	 *  Get access to the stored groups.
 	 * 
-	 *  @return The stored virtual network configurations.
+	 *  @return The stored groups.
 	 */
 	public Map<String, List<AbstractAuthenticationSecret>> getGroups()
 	{

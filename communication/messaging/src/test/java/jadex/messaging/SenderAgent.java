@@ -1,13 +1,7 @@
 package jadex.messaging;
 
-import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.execution.IExecutionFeature;
-import jadex.messaging.IMessageFeature;
-import jadex.messaging.IMessageHandler;
-import jadex.messaging.ISecurityInfo;
-import jadex.messaging.security.Security;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
@@ -29,7 +23,6 @@ public class SenderAgent
     @OnStart
     protected void start(IComponent agent)
     {
-    	Security.get();
         System.out.println("Sender agent started: "+agent.getId());
         
         IMessageFeature msgfeat = agent.getFeature(IMessageFeature.class);

@@ -3,8 +3,6 @@ package jadex.messaging.impl;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.messaging.IMessageFeature;
-import jadex.messaging.ipc.IpcStreamHandler;
-import jadex.messaging.security.Security;
 
 /**
  *  Provider class for the message component feature.
@@ -16,11 +14,6 @@ public class MessageFeatureProvider extends ComponentFeatureProvider<IMessageFea
 	 */
 	public MessageFeatureProvider()
 	{
-		// Start IPC.
-		IpcStreamHandler.get();
-		
-		// Start security.
-		Security.get();
 	}
 	
 	@Override
@@ -29,6 +22,7 @@ public class MessageFeatureProvider extends ComponentFeatureProvider<IMessageFea
 		return IMessageFeature.class;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public IMessageFeature createFeatureInstance(Component self)
 	{

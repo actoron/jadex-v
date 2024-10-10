@@ -13,23 +13,4 @@ public abstract class FeatureProvider<T>
 	 *  Get the type of the feature used for accessing.
 	 */
 	public abstract Class<T> getFeatureType();
-	
-	/**
-	 *  Determines if the feature is created immediately
-	 *  on component startup (false) or later on first access (true).
-	 *  @return	Defaults to false.
-	 */
-	public boolean isLazyFeature()
-	{
-		return false;
-	}
-	
-	/**
-	 *  Get the predecessors, i.e. features that should be inited first.
-	 *  @return The predecessors.
-	 */
-	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
-	{
-		return Collections.emptySet();
-	}
 }

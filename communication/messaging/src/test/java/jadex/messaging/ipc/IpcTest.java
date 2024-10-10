@@ -8,7 +8,7 @@ import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.Future;
-import jadex.messaging.ISecurity.DecodedMessage;
+import jadex.messaging.ISecurityFeature.DecodedMessage;
 import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.messaging.impl.security.authentication.PasswordSecret;
 import jadex.messaging.security.SSecurity;

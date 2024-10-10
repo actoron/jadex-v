@@ -25,7 +25,6 @@ public class ReceiverAgent
     @OnStart
     protected void start(IComponent agent)
     {
-    	Security.get();
         System.out.println("Receiver agent started: "+agent.getId());
         
         IMessageFeature msgfeat = agent.getFeature(IMessageFeature.class);
