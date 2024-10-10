@@ -20,8 +20,9 @@ import jadex.bt.cleanerworld.environment.IWaste;
 import jadex.bt.cleanerworld.environment.IWastebin;
 import jadex.bt.cleanerworld.environment.SensorActuator;
 import jadex.bt.cleanerworld.environment.impl.Location;
-import jadex.bt.cleanerworld.gui.EnvironmentGui;
-import jadex.bt.cleanerworld.gui.SensorGui;
+import jadex.bt.cleanerworld.gui.libgdx.EnvGui;
+import jadex.bt.cleanerworld.gui.swing.EnvironmentGui;
+import jadex.bt.cleanerworld.gui.swing.SensorGui;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.FailureDecorator;
 import jadex.bt.decorators.RepeatDecorator;
@@ -381,7 +382,8 @@ public class BTCleanerAgent implements IBTProvider
 		JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
 		
 		IComponent.create(new BTCleanerAgent());
-		EnvironmentGui.create();
+		//EnvironmentGui.create();
+		EnvGui.createEnv();
 		IComponent.waitForLastComponentTerminated();
 	}
 }

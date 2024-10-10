@@ -1,4 +1,4 @@
-package jadex.bt.cleanerworld.gui;
+package jadex.bt.cleanerworld.gui.swing;
 
 import java.awt.Color;
 import java.awt.Graphics;
