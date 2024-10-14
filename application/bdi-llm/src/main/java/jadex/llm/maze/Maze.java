@@ -6,6 +6,7 @@ public class Maze {
     // Nested class representing each block in the maze
     private class Block {
         int status; // 0: free, 1: wall, 2: food, 3: start, 4: end
+        boolean[] direction = new boolean[4]; // Up, down, left, right
 
         public Block(int status) {
             this.status = status;
@@ -186,7 +187,16 @@ public class Maze {
     }
 
     // Display the maze with enhanced visual clarity
-    public void displayMaze() {
+    public void displayMaze(int agentX, int agentY, String direction) {
+        // Arrow representation for directions: "up", "down", "left", "right"
+        char arrow = switch (direction.toLowerCase()) {
+            case "up" -> '↑';
+            case "down" -> '↓';
+            case "left" -> '←';
+            case "right" -> '→';
+            default -> throw new IllegalArgumentException("Invalid direction: " + direction);
+        };
+
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 if (maze[i][j].status == 1) {
@@ -205,36 +215,38 @@ public class Maze {
         }
     }
 
-    // Function to get the environment view in the specified direction as JSON
+    // Function to return a "world view" of the surrounding blocks and current block as JSON
     public String getEnvironmentView(int x, int y, String direction) {
         Map<String, Object> environment = new HashMap<>();
-        int[][] forwardOffsets = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // up, down, left, right
-        String[] dirNames = {"front", "left", "right", "back"};
-
-        // Determine the index based on the direction
-        int dirIndex = switch (direction.toLowerCase()) {
-            case "up" -> 0;
-            case "down" -> 1;
-            case "left" -> 2;
-            case "right" -> 3;
+        int[][] forwardOffsets = switch (direction.toLowerCase()) {
+            case "up" -> new int[][]{{-1, 0}, {0, -1}, {0, 1}, {1, 0}};  // front, left, right, back
+            case "down" -> new int[][]{{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
+            case "left" -> new int[][]{{0, -1}, {1, 0}, {-1, 0}, {0, 1}};
+            case "right" -> new int[][]{{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
             default -> throw new IllegalArgumentException("Invalid direction: " + direction);
         };
+
+        String[] dirNames = {"front", "left", "right", "back"};
 
         // Look in front, left, right, and back, considering walls
         for (int i = 0; i < 4; i++) {
             List<Integer> view = new ArrayList<>();
-            int viewDistance = (i == 0) ? 3 : 1; // 3 for front, 1 for others
+            int viewDistance = (i == 0) ? 3 : 1; // 3 positions in front, 1 in left, right, back
             for (int step = 1; step <= viewDistance; step++) {
-                int newX = x + forwardOffsets[(dirIndex + i) % 4][0] * step;
-                int newY = y + forwardOffsets[(dirIndex + i) % 4][1] * step;
+                // Calculate the new coordinates for the current direction
+                int newX = x + forwardOffsets[i][0] * step;
+                int newY = y + forwardOffsets[i][1] * step;
+
+                // Check if the new coordinates are within bounds and add the status of the block
                 if (newX >= 0 && newX < height && newY >= 0 && newY < width) {
                     view.add(maze[newX][newY].status);
-                    if (maze[newX][newY].status == 1) { // Stop at wall
+                    // If a wall is encountered, stop looking further
+                    if (maze[newX][newY].status == 1) {
                         break;
                     }
                 }
             }
-            environment.put(dirNames[i], view);
+            environment.put(dirNames[i], view); // Add the view for the current direction
         }
 
         // Convert environment map to JSON-like string
