@@ -17,5 +17,9 @@ public class MazeAgent {
         // Display the maze with the agent at the start position facing "up"
         System.out.println("Maze with Agent Facing Up:");
         maze.displayMaze(start[0], start[1], "up");
+
+        // Display the Manhattan distance from the start to the end
+        int distance = maze.calculateManhattanDistance(start[0], start[1]);
+        System.out.println("Manhattan Distance from Start to End: " + distance);
     }
 }

@@ -18,6 +18,7 @@ public class Maze {
     private int foodCount;
     private Random rand = new Random();
     private int startX, startY;
+    private int endX, endY;
 
     // Constructor initializes the maze and places start, food, and end
     public Maze(int height, int width, int foodCount) {
@@ -70,8 +71,9 @@ public class Maze {
 
     // Place the start, food, and end points, and carve paths between them
     private void placeStartFoodAndEnd() {
-        // Place the start point
+        // Place the start and end point
         placeStart();
+        placeEnd();
 
         // List to store food coordinates
         List<int[]> foodPositions = new ArrayList<>();
@@ -124,6 +126,20 @@ public class Maze {
                 maze[x][y].status = 3; // Start point
                 startX = x;
                 startY = y;
+                break;
+            }
+        }
+    }
+
+    // Place the end position
+    private void placeEnd() {
+        while (true) {
+            int x = rand.nextInt(height - 2) + 1;
+            int y = rand.nextInt(width - 2) + 1;
+            if (maze[x][y].status == 0) {
+                maze[x][y].status = 4;
+                endX = x;
+                endY = y;
                 break;
             }
         }
@@ -251,6 +267,11 @@ public class Maze {
 
         // Convert environment map to JSON-like string
         return environment.toString();
+    }
+
+    // Calculate Manhattan distance from current position to the end
+    public int calculateManhattanDistance(int x, int y) {
+        return Math.abs(x - endX) + Math.abs(y - endY);
     }
 
     // Method to get the start position
