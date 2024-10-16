@@ -6,7 +6,6 @@ public class Maze {
     // Nested class representing each block in the maze
     private class Block {
         int status; // 0: free, 1: wall, 2: food, 3: start, 4: end
-        boolean[] direction = new boolean[4]; // Up, down, left, right
 
         public Block(int status) {
             this.status = status;
@@ -73,7 +72,6 @@ public class Maze {
     private void placeStartFoodAndEnd() {
         // Place the start and end point
         placeStart();
-        placeEnd();
 
         // List to store food coordinates
         List<int[]> foodPositions = new ArrayList<>();
@@ -101,20 +99,8 @@ public class Maze {
             carvePath(currentFood[0], currentFood[1], nextFood[0], nextFood[1]);
         }
 
-        // Place the end point and carve a path from the last food to the end
-        int endX, endY;
-        while (true) {
-            endX = rand.nextInt(height - 2) + 1;
-            endY = rand.nextInt(width - 2) + 1;
-            if (maze[endX][endY].status == 0) {
-                maze[endX][endY].status = 4; // Set end point (4 for end)
-                break;
-            }
-        }
-
-        // Carve path from the last food block to the end point
-        int[] lastFood = foodPositions.get(foodPositions.size() - 1);
-        carvePath(lastFood[0], lastFood[1], endX, endY);
+        // Place a single end point after the last food
+        placeEnd(foodPositions.get(foodPositions.size() - 1));
     }
 
     // Place the start position at a random free space
@@ -131,15 +117,18 @@ public class Maze {
         }
     }
 
-    // Place the end position
-    private void placeEnd() {
+    // Place the end position at a random free space, placed after the last food
+    private void placeEnd(int[] lastFood) {
+        int foodX = lastFood[0];
+        int foodY = lastFood[1];
         while (true) {
             int x = rand.nextInt(height - 2) + 1;
             int y = rand.nextInt(width - 2) + 1;
             if (maze[x][y].status == 0) {
-                maze[x][y].status = 4;
+                maze[x][y].status = 4; // End point
                 endX = x;
                 endY = y;
+                carvePath(foodX, foodY, endX, endY); // Carve path from last food to end
                 break;
             }
         }
@@ -203,15 +192,7 @@ public class Maze {
     }
 
     // Display the maze with enhanced visual clarity
-    public void displayMaze(int agentX, int agentY, String direction) {
-        // Arrow representation for directions: "up", "down", "left", "right"
-        char arrow = switch (direction.toLowerCase()) {
-            case "up" -> '↑';
-            case "down" -> '↓';
-            case "left" -> '←';
-            case "right" -> '→';
-            default -> throw new IllegalArgumentException("Invalid direction: " + direction);
-        };
+    public void displayMaze() {
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
