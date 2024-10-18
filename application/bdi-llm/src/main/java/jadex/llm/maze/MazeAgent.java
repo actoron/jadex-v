@@ -1,25 +1,70 @@
 package jadex.llm.maze;
 
-import java.util.Arrays;
+import jadex.core.IComponent;
+import jadex.micro.annotation.Agent;
+import jadex.model.annotation.OnStart;
 
-public class MazeAgent {
-    public static void main(String[] args) {
+import java.awt.Point;
+import java.util.List;
+
+@Agent(type="bdip")
+public class MazeAgent
+{
+
+    @Agent
+    protected IComponent maze;
+
+    private final String chatUrl;
+    private final String apiKey;
+
+
+    /**Constructor*/
+    public MazeAgent(String chatUrl, String apiKey) {
+        this.chatUrl = chatUrl;
+        this.apiKey = apiKey;
+    }
+
+@OnStart
+public void body()
+{
+    System.out.println("Agent " +maze.getId()+ " started");
+}
+
+    public static void main(String[] args)
+    {
+        System.out.println("A: Maze main");
+
+        IComponent.create(new MazeAgent(
+                "https://api.openai.com/v1/chat/completions",
+                System.getenv("OPENAI_API_KEY")
+        ));
+
+
+
         Maze maze = new Maze(20, 20, 5);
 
-        // Example of getting the start position
-        int[] start = maze.getStart();
-        System.out.println("Start Position: " + Arrays.toString(start));
+        // Print start & end
+        Point start = maze.getStart();
+        Point end = maze.getEnd();
+        System.out.println("Start position: (" + start.x + ", " + start.y + ")");
+        System.out.println("End position: (" + end.x + ", " + end.y + ")");
+
+        List<Point> foodPositions = maze.getFood();
+        for (int i = 0; i < foodPositions.size(); i++) {
+            Point food = foodPositions.get(i);
+            System.out.println("Food position " + (i + 1) + ": (" + food.x + ", " + food.y + ")");
+        }
 
         // Test the environment view from the start position facing "up"
-        String envView = maze.getEnvironmentView(start[0], start[1], "right");
-        System.out.println("Environment View (Facing Up):\n" + envView);
+        String direction = "right";
+        String envView = maze.getEnvironmentView(start.x, start.y, direction);
+        System.out.println("Environment View (Facing "+ direction +"):\n" + envView);
 
         // Display the maze with the agent at the start position facing "up"
-        System.out.println("Maze with Agent Facing Up:");
         maze.displayMaze();
 
         // Display the Manhattan distance from the start to the end
-        int distance = maze.calculateManhattanDistance(start[0], start[1]);
+        int distance = maze.calculateManhattanDistance(start.x, start.y);
         System.out.println("Manhattan Distance from Start to End: " + distance);
     }
 }
