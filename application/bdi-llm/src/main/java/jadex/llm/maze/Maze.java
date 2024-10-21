@@ -307,4 +307,29 @@ public class Maze
     {
         return Math.abs(x - end.x) + Math.abs(y - end.y);
     }
+
+    //Point to String function
+    public String jadexPointToString(Point point)
+    {
+        return point.x + "," + point.y;
+    }
+
+    //String to Point function
+    public Point jadexStringToPoint(String pointString)
+    {
+        String[] pointStringValue = pointString.split(",");
+        return new Point(Integer.parseInt(pointStringValue[0]), Integer.parseInt(pointStringValue[1]));
+    }
+
+    //change env when agent reaches food
+    public void consumeFood(int x, int y)
+    {
+        if (maze[x][y].status == 2)
+        {
+            maze[x][y].status = 0;
+        } else
+        {
+            System.out.println("No food at position: " + x + ", " + y);
+        }
+    }
 }
