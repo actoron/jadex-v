@@ -9,6 +9,9 @@ import jadex.micro.annotation.Agent;
 import jadex.llm.maze.Maze;
 import jadex.model.annotation.OnStart;
 import jadex.bdi.runtime.Val;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 
 import java.awt.Point;
@@ -76,7 +79,7 @@ public class MazeAgent
         this.chatUrl = chatUrl;
         this.apiKey = apiKey;
         this.maze = maze;
-        this.beliefType = "Platzhalter"; // TODO: Add belief type
+        this.beliefType = "java.awt.Point";
         this.settingsPath = "application/bdi-llm/src/main/java/jadex/llm/maze/PlanSettings.json"; //TODO: Right path?
 
         System.out.println("A: " + chatUrl);
@@ -112,9 +115,16 @@ public class MazeAgent
         llmFeature.generateAndCompileCode();
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
-
+        JSONParser parser = new JSONParser();
         //TODO: Implement plan execution
         // Set the updated position string
+//        try {
+//            JSONObject maze = (JSONObject) parser.parse(goal.getUpdatedPositionString());
+//            JSONObject updatedPositionString = (JSONObject) plan.runCode(maze);
+//            goal.setUpdatedPositionString(updatedPositionString.toString());
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     /**
