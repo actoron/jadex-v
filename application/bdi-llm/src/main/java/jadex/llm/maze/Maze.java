@@ -3,6 +3,7 @@ package jadex.llm.maze;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import org.json.simple.JSONObject;
 
 /** Maze class w/ Console environment
  * - set border, walls, food, start & end
@@ -12,7 +13,7 @@ public class Maze
 {
     private class Block
     {
-        int status; // 0: free, 1: wall, 2: food, 3: start, 4: end
+        int status; // 0: free, 1: wall, 2: food, 3: start, 4: end, 5: agent
 
         public Block(int status)
         {
@@ -58,6 +59,11 @@ public class Maze
     public List<Point> getFood()
     {
         return foodPositions;
+    }
+
+    public void setAgent(Point position)
+    {
+        maze[position.x][position.y].status = 5;
     }
 
     // Initialize the maze with outer walls and free space inside
@@ -249,6 +255,9 @@ public class Maze
                 } else if (maze[i][j].status == 4)
                 {
                     System.out.print("E "); // End point
+                } else if (maze[i][j].status == 5)
+                {
+                    System.out.print("A "); // End point
                 } else
                 {
                     System.out.print("  "); // Free space
@@ -258,14 +267,12 @@ public class Maze
         }
     }
 
-    // Function to return a "world view" of the surrounding blocks and current block as JSON
-    public String getEnvironmentView(int x, int y, String direction)
-    {
-        Map<String, Object> environment = new HashMap<>();
-        int[][] forwardOffsets = switch (direction.toLowerCase())
-        {
-            case "up" -> new int[][]{{-1, 0}, {0, -1}, {0, 1}, {1, 0}};  // front, left, right, back
-            case "down" -> new int[][]{{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
+    // Function to return a "world view" of the surrounding blocks and current block as a JSON object
+    public JSONObject getEnvironmentView(int x, int y, String direction) {
+        JSONObject environment = new JSONObject();
+        int[][] forwardOffsets = switch (direction.toLowerCase()) {
+            case "front" -> new int[][]{{-1, 0}, {0, -1}, {0, 1}, {1, 0}};  // front, left, right, back
+            case "back" -> new int[][]{{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
             case "left" -> new int[][]{{0, -1}, {1, 0}, {-1, 0}, {0, 1}};
             case "right" -> new int[][]{{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
             default -> throw new IllegalArgumentException("Invalid direction: " + direction);
@@ -274,23 +281,19 @@ public class Maze
         String[] dirNames = {"front", "left", "right", "back"};
 
         // Look in front, left, right, and back, considering walls
-        for (int i = 0; i < 4; i++)
-        {
+        for (int i = 0; i < 4; i++) {
             List<Integer> view = new ArrayList<>();
             int viewDistance = (i == 0) ? 3 : 1;
-            for (int step = 1; step <= viewDistance; step++)
-            {
+            for (int step = 1; step <= viewDistance; step++) {
                 // Calculate the new coordinates for the current direction
                 int newX = x + forwardOffsets[i][0] * step;
                 int newY = y + forwardOffsets[i][1] * step;
 
                 // Check if the new coordinates are within bounds and add the status of the block
-                if (newX >= 0 && newX < height && newY >= 0 && newY < width)
-                {
+                if (newX >= 0 && newX < height && newY >= 0 && newY < width) {
                     view.add(maze[newX][newY].status);
                     // If a wall is encountered, stop looking further
-                    if (maze[newX][newY].status == 1)
-                    {
+                    if (maze[newX][newY].status == 1) {
                         break;
                     }
                 }
@@ -298,8 +301,8 @@ public class Maze
             environment.put(dirNames[i], view); // Add the view for the current direction
         }
 
-        // Convert environment map to JSON-like string
-        return environment.toString();
+        // Convert environment map to a JSON string using JSONObject
+        return environment;
     }
 
     // Calculate Manhattan distance from current position to the end

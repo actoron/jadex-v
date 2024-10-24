@@ -15,6 +15,11 @@ import org.json.simple.parser.ParseException;
 
 
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Agent(type="bdip")
 public class MazeAgent
@@ -79,8 +84,8 @@ public class MazeAgent
         this.chatUrl = chatUrl;
         this.apiKey = apiKey;
         this.maze = maze;
-        this.beliefType = "java.awt.Point";
-        this.settingsPath = "application/bdi-llm/src/main/java/jadex/llm/maze/PlanSettings.json"; //TODO: Right path?
+        this.beliefType = "java.util.ArrayList";
+        this.settingsPath = "application/bdi-llm/src/main/java/jadex/llm/maze/settings/PlanSettings.json";
 
         System.out.println("A: " + chatUrl);
         System.out.println("A: " + apiKey);
@@ -112,19 +117,53 @@ public class MazeAgent
                 settingsPath);
 
         llmFeature.connectToLLM("");
+
+        System.out.println(llmFeature.generatedJavaCode);
+
         llmFeature.generateAndCompileCode();
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
-        JSONParser parser = new JSONParser();
-        //TODO: Implement plan execution
-        // Set the updated position string
-//        try {
-//            JSONObject maze = (JSONObject) parser.parse(goal.getUpdatedPositionString());
-//            JSONObject updatedPositionString = (JSONObject) plan.runCode(maze);
-//            goal.setUpdatedPositionString(updatedPositionString.toString());
-//        } catch (ParseException e) {
-//            throw new RuntimeException(e);
-//        }
+
+        Random rand = new Random();
+        List<String> dirNames = Arrays.asList("front", "left", "right", "back");
+        String direction = dirNames.get(rand.nextInt(dirNames.size()));
+        Object brain = new Object();
+
+        System.out.println(goal.getUpdatedPositionString());
+
+        for (int i = 0; i < 50; i++) {
+
+            System.out.println("Step " + i);
+            ArrayList<Object> inputList = new ArrayList<Object>();
+
+            Point mazePosition = maze.jadexStringToPoint(goal.getUpdatedPositionString());
+            JSONObject envView = maze.getEnvironmentView(mazePosition.x, mazePosition.y, direction);
+
+            inputList.add(mazePosition);
+            inputList.add(envView);
+            inputList.add(brain);
+
+            maze.setAgent(mazePosition);
+
+            ArrayList<Object> outputList = (ArrayList<Object>) plan.runCode(inputList);
+
+            Point retMazePos = (Point) outputList.get(0);
+            direction = (String) outputList.get(1);
+            brain = outputList.get(2);
+
+            goal.setUpdatedPositionString(maze.jadexPointToString(retMazePos));
+
+            maze.displayMaze();
+            System.out.println(retMazePos);
+            System.out.println(direction);
+            System.out.println("###################################################################################");
+
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**
@@ -145,33 +184,5 @@ public class MazeAgent
                 maze)
         );
         IComponent.waitForLastComponentTerminated();
-
-
-
-        // Print start & end
-        Point start = maze.getStart();
-        Point end = maze.getEnd();
-        System.out.println("Start position: (" + start.x + ", " + start.y + ")");
-        System.out.println("End position: (" + end.x + ", " + end.y + ")");
-
-//        List<Point> foodPositions = maze.getFood();
-//        for (int i = 0; i < foodPositions.size(); i++) {
-//            Point food = foodPositions.get(i);
-//            System.out.println("Food position " + (i + 1) + ": (" + food.x + ", " + food.y + ")");
-//        }
-
-        // Test the environment view from the start position facing "up"
-        String direction = "right";
-        String envView = maze.getEnvironmentView(start.x, start.y, direction);
-        System.out.println("Environment View (Facing "+ direction +"):\n" + envView);
-
-        // Display the maze with the agent at the start position facing "up"
-        maze.displayMaze();
-
-        // Display the Manhattan distance from the start to the end
-        int distance = maze.calculateManhattanDistance(start.x, start.y);
-        System.out.println("Manhattan Distance from Start to End: " + distance);
-
-
     }
 }

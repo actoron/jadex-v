@@ -68,10 +68,9 @@ public class GlassesAgent
                     chatUrl,
                     apiKey,
                     beliefType,
-                    "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/GoalSettings.json");
+                    "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/GoalSettings.json");
 
             llmFeature.connectToLLM("");
-            llmFeature.generateAndCompileCode();
 
             IPlanBody plan = llmFeature.generateAndCompileCode();
             JSONParser parser = new JSONParser();
@@ -144,10 +143,9 @@ public class GlassesAgent
                 chatUrl,
                 apiKey,
                 beliefType,
-                "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/Plan1Settings.json");
+                "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/Plan1Settings.json");
 
         llmFeature.connectToLLM("");
-        llmFeature.generateAndCompileCode();
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
         JSONParser parser = new JSONParser();
@@ -169,10 +167,9 @@ public class GlassesAgent
                 chatUrl,
                 apiKey,
                 beliefType,
-                "bdi/llm/src/main/java/jadex/bdi/llm/impl/settings/Plan2Settings.json");
+                "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/Plan2Settings.json");
 
         llmFeature.connectToLLM("");
-        llmFeature.generateAndCompileCode();
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
         JSONParser parser = new JSONParser();
@@ -203,7 +200,7 @@ public class GlassesAgent
         IComponent.create(new GlassesAgent(
                 "https://api.openai.com/v1/chat/completions",
                 System.getenv("OPENAI_API_KEY"),
-                "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
+                "application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json")
         );
         IComponent.waitForLastComponentTerminated();
     }
