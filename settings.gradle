@@ -167,6 +167,7 @@ includeBuild('core/engine') {}
 includeBuild('core/featuretest') {}
 includeBuild('core/execution') {}
 includeBuild('core/simulation') {}
+//includeBuild('core/errorhandling') {}
 
 includeBuild('model/model') {}
 

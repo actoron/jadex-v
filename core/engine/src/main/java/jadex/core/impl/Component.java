@@ -18,6 +18,7 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IExternalAccess;
+import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 
@@ -404,7 +405,7 @@ public class Component implements IComponent
 		else
 		{
 			@SuppressWarnings("unchecked")
-			BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getExceptionHandler(exception, this);
+			BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getFeature(IErrorHandlingFeature.class).getExceptionHandler(exception, this);
 			handler.accept(exception, this);
 		}
 	}
