@@ -11,7 +11,6 @@ import java.util.Set;
 
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
-import jadex.core.impl.ComponentManager.LoggerCreator;
 
 /**
  *  Used to create logger.
@@ -23,11 +22,11 @@ public class JadexLoggerFinder extends LoggerFinder
 	
 	protected Set<String> systempackages = null;
 	
-	protected static java.lang.System.Logger.Level defsystemlevel = java.lang.System.Logger.Level.WARNING;
-	protected static java.lang.System.Logger.Level defapplevel = java.lang.System.Logger.Level.INFO;
 	
 	public JadexLoggerFinder()
 	{
+		System.out.println("logger finder init");
+		
 		Collection<IInternalLoggerProvider> iproviders = new ArrayList<IInternalLoggerProvider>(); 
 		ServiceLoader.load(IInternalLoggerProvider.class).forEach(prov ->
 		{
@@ -44,12 +43,14 @@ public class JadexLoggerFinder extends LoggerFinder
 		
 		if(iprov!=null || eprov!=null)
 		{
-			LoggerCreator sysc = IComponentManager.get().getLoggerCreators().stream().filter(c -> c.system() && c.filter()==null).findFirst().orElse(null);
+			ILoggingFeature logf = IComponentManager.get().getFeature(ILoggingFeature.class);
+			Collection<LoggerCreator> lcs = logf.getLoggerCreators();
 			
-			LoggerCreator appc = IComponentManager.get().getLoggerCreators().stream().filter(c -> !c.system() && c.filter()==null).findFirst().orElse(null);
+			LoggerCreator sysc = lcs.stream().filter(c -> c.system() && c.filter()==null).findFirst().orElse(null);
+			LoggerCreator appc = lcs.stream().filter(c -> !c.system() && c.filter()==null).findFirst().orElse(null);
 			
-			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? getDefaultSystemLoggingLevel(): null; 
-			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? getDefaultAppLogginglevel(): null; 
+			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? logf.getDefaultSystemLoggingLevel(): null; 
+			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? logf.getDefaultAppLogginglevel(): null; 
 			
 			//System.out.println("syslevel: "+syslevel);
 			//System.out.println("applevel: "+applevel);
@@ -65,14 +66,14 @@ public class JadexLoggerFinder extends LoggerFinder
 				false);
 			
 			if(sysc==null)
-				IComponentManager.get().addLoggerCreator(nsysc);
+				logf.addLoggerCreator(nsysc);
 			else
-				IComponentManager.get().updateLoggerCreator(sysc, nsysc);
+				logf.updateLoggerCreator(sysc, nsysc);
 			
 			if(appc==null)
-				IComponentManager.get().addLoggerCreator(nappc);
+				logf.addLoggerCreator(nappc);
 			else
-				IComponentManager.get().updateLoggerCreator(appc, nappc);
+				logf.updateLoggerCreator(appc, nappc);
 		}
 	}
 	
@@ -123,7 +124,7 @@ public class JadexLoggerFinder extends LoggerFinder
         
         if(logger==null)
         {
-	        Collection<LoggerCreator> confs = ComponentManager.get().getLoggerCreators();
+	        Collection<LoggerCreator> confs = ComponentManager.get().getFeature(ILoggingFeature.class).getLoggerCreators();
 	        LoggerCreator selected = null;
 	
 	        boolean isSystem = isSystemLogger(name);
@@ -202,25 +203,5 @@ public class JadexLoggerFinder extends LoggerFinder
 		}
 		
 		return systempackages.contains(name);
-	}
-	
-	public static void setDefaultSystemLoggingLevel(java.lang.System.Logger.Level level)
-	{
-		defsystemlevel = level;
-	}
-	
-	public static void setDefaultAppLoggingLevel(java.lang.System.Logger.Level level)
-	{
-		defapplevel = level;
-	}
-
-	public static java.lang.System.Logger.Level getDefaultSystemLoggingLevel() 
-	{
-		return defsystemlevel;
-	}
-
-	public static java.lang.System.Logger.Level getDefaultAppLogginglevel() 
-	{
-		return defapplevel;
 	}
 }

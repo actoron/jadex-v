@@ -15,7 +15,9 @@ import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.nodes.SelectorNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
+import jadex.logger.ILoggingFeature;
 import jadex.logger.JadexLoggerFinder;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -143,7 +145,7 @@ public class UniversityAgent implements IBTProvider
 	
 	public static void main(String[] args)
 	{
-		JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
+		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
 
 		// raining, waiting
 		IComponent.create(new UniversityAgent(false, false));

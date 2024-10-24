@@ -36,9 +36,11 @@ import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.nodes.SelectorNode;
 import jadex.bt.nodes.SequenceNode;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.logger.ILoggingFeature;
 import jadex.logger.JadexLoggerFinder;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -379,7 +381,7 @@ public class BTCleanerAgent implements IBTProvider
 	
 	public static void main(String[] args)
 	{
-		JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
+		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
 		
 		IComponent.create(new BTCleanerAgent());
 		//EnvironmentGui.create();

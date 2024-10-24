@@ -1,4 +1,4 @@
-package jadex.bt.envexample;
+package jadex.bt.envexample25d;
 
 import java.lang.System.Logger.Level;
 
@@ -147,7 +147,7 @@ public class BTRandomAgent implements IBTProvider
 	{
 		//JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
 		
-		int max = 5;
+		int max = 1;
 		for(int i=0; i<max; i++)
 			IComponent.create(new BTRandomAgent());
 		

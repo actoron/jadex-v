@@ -1,11 +1,8 @@
 package jadex.core;
 
-import java.lang.System.Logger.Level;
-import java.util.Collection;
 import java.util.function.BiConsumer;
 
 import jadex.core.impl.ComponentManager;
-import jadex.core.impl.ComponentManager.LoggerCreator;
 
 /**
  *  Interface providing configuration options and general information for supporting components.
@@ -99,32 +96,6 @@ public interface IComponentManager
 	 *  @param clazz The exception class.
 	 */
 	public void removeExceptionHandler(Object key, Class<? extends Exception> clazz);
-	
-	/**
-	 *  Add a logger creator.
-	 *  @param filter The filter if the creator matches.
-	 *  @param creator The creator.
-	 */
-	public void addLoggerCreator(LoggerCreator creator);
-	
-	/**
-	 *  Update a logger creator by exchanging it against the old version.
-	 *  @param ocreator The old creator.
-	 *  @param ncreator The new creator.
-	 */
-	public void updateLoggerCreator(LoggerCreator ocreator, LoggerCreator ncreator);
-	
-	/**
-	 *  Get all logger creators.
-	 *  @return The logger creators
-	 */
-	public Collection<LoggerCreator> getLoggerCreators();
-	
-	/**
-	 *  Remove a logger creator.
-	 *  @param creator The creator.
-	 */
-	public void removeLoggerCreator(LoggerCreator creator);
 	
 	/**
 	 *  Set an application context for the components.
