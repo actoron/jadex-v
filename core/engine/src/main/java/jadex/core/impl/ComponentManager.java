@@ -84,56 +84,13 @@ public class ComponentManager implements IComponentManager
 	//protected Map<Object, Map<Object, IExceptionHandler<? extends Exception>>> exceptionhandlers = new HashMap<>();	
 	protected Map<Object, Map<Object, HandlerInfo>> exceptionhandlers = new HashMap<>();	
 	
-	/** The logger configurators. */
-	protected List<LoggerCreator> loggercreators = new ArrayList<>();
-	
 	/** The active state of loglibs. */
-	protected Map<String, Boolean> loglibsactive = new HashMap<String, Boolean>();
+	//protected Map<String, Boolean> loglibsactive = new HashMap<String, Boolean>();
 	
 	/** Cache fore runtime features. */
 	protected RwMapWrapper<Class<IRuntimeFeature>, IRuntimeFeature> featurecache = new RwMapWrapper<Class<IRuntimeFeature>, IRuntimeFeature>(new HashMap<>());
 	
-	public record LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
-	{
-	    private static final ConcurrentHashMap<Function<String, Boolean>, Integer> ids = new ConcurrentHashMap<>();
-	    private static final AtomicInteger nextid = new AtomicInteger(1);
-
-	    public LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
-	    {
-	        this.name = name;
-	        this.filter = filter;
-	        this.icreator = icreator;
-	        this.ecreator = ecreator;
-	        this.system = system;
-	    }
-
-	    public LoggerCreator(Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
-	    {
-	        this(null, null, icreator, ecreator, system);
-	    }
-
-	    public LoggerCreator(Function<String, Logger> icreator, Function<String, Logger> ecreator) 
-	    {
-	        this(null, null, icreator, ecreator, false);
-	    }
-
-	    public String getLoggerName() 
-	    {
-	        String ret = name;
-	        if(ret == null) 
-	        {
-	            ret = system ? "system" : "application";
-	            if(filter != null) 
-	                ret += "_" + getFilterId(filter);
-	        }
-	        return ret;
-	    }
-
-	    private static int getFilterId(Function<String, Boolean> filter) 
-	    {
-	        return ids.computeIfAbsent(filter, key -> nextid.getAndIncrement());
-	    }
-	}
+	
 	
 	/**
 	 *  Create a new component manager.
@@ -164,7 +121,7 @@ public class ComponentManager implements IComponentManager
 		// remove default handler
 		//removeExceptionHandler(null, Exception.class);
 		
-		// Set the root logger to warining.
+		// Set the root logger to warning.
 		// Otherwise without logbase feature internal logs get printed
 		// With logbase feature the parent logger is ignored anyway.
 		configureRootLogger(java.util.logging.Level.WARNING);
@@ -355,15 +312,10 @@ public class ComponentManager implements IComponentManager
 		//System.out.println("size: "+components.size()+" "+cid);
 	}
 
-	static final Logger	logger	= System.getLogger(IComponent.class.getName());
-//	static
-//	{
-//		System.out.println("CM created logger "+logger);
-//	}
 	static Logger getLogger()
 	{
+		return System.getLogger(IComponent.class.getName());
 //		System.out.println("CM get logger "+logger);
-		return logger;
 	}
 	
 	/**
@@ -580,59 +532,7 @@ public class ComponentManager implements IComponentManager
 	{
 	};
 	
-	/**
-	 *  Add a logger configurator.
-	 *  @param filter The filter if the configurator matches.
-	 *  @param creator The creator.
-	 */
-	public synchronized void addLoggerCreator(LoggerCreator creator)
-	{
-		// remove existing fallback configurator
-		if(creator.filter()==null)
-			loggercreators.removeIf(lc -> lc.filter()==null && lc.system()==creator.system());
-		
-		loggercreators.add(creator);
-	}
 	
-	/**
-	 *  Update a logger creator by exchanging it against it old version.
-	 *  @param ocreator The old creator.
-	 *  @param ncreator The new creator.
-	 */
-	public synchronized void updateLoggerCreator(LoggerCreator ocreator, LoggerCreator ncreator)
-	{
-		if(ncreator==null)
-			throw new NullPointerException("new creator must not null");
-
-		/*if(ocreator!=null)
-			removeLoggerCreator(ocreator);
-		addLoggerCreator(ncreator);*/
-		
-		// remove existing fallback configurator
-		if(ocreator==null && ncreator.filter()==null)
-			loggercreators.removeIf(lc -> lc.filter()==null && lc.system()==ncreator.system());
-
-		loggercreators.remove(ocreator);
-		loggercreators.add(ncreator);
-	}
-	
-	/**
-	 *  Remove a logger creator.
-	 *  @param creator The creator.
-	 */
-	public synchronized void removeLoggerCreator(LoggerCreator creator)
-	{
-		loggercreators.remove(creator);
-	}
-	
-	/**
-	 *  Get all logger configurators.
-	 *  @return The logger configurators
-	 */
-	public synchronized Collection<LoggerCreator> getLoggerCreators()
-	{
-		return loggercreators;
-	}
 	
 	
 }
