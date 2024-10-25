@@ -33,6 +33,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:javaparser:'+v
 	implementation 'org.activecomponents.jadex:bytecode:'+v
 	implementation 'org.activecomponents.jadex:idgenerator:'+v
+	//implementation 'org.activecomponents.jadex:errorhandling:'+v
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'

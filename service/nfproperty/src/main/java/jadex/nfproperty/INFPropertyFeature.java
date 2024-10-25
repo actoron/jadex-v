@@ -4,6 +4,7 @@ import java.util.Map;
 
 import jadex.common.MethodInfo;
 import jadex.common.Tuple2;
+import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.TerminableIntermediateDelegationFuture;
@@ -13,7 +14,7 @@ import jadex.nfproperty.impl.search.ServiceRankingDelegationResultListener;
 import jadex.providedservice.IServiceIdentifier;
 
 
-public interface INFPropertyFeature 
+public interface INFPropertyFeature extends IComponentFeature
 {
 	/**
 	 *  Get the component property provider.

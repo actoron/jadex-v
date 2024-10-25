@@ -3,13 +3,13 @@ package jadex.nfproperty.impl;
 import java.util.Set;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.micro.MicroAgent;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 
-public class NFPropertyFeatureProvider extends FeatureProvider<INFPropertyFeature>
+public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPropertyFeature>
 {	
 	@Override
 	public Class<INFPropertyFeature> getFeatureType()

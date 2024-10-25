@@ -16,7 +16,7 @@ import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
@@ -26,7 +26,7 @@ import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.AgentResult;
 import jadex.micro.annotation.Result;
 
-public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature> implements IComponentLifecycleManager
+public class MicroAgentFeatureProvider extends ComponentFeatureProvider<MicroAgentFeature> implements IComponentLifecycleManager
 {
 	/*static
 	{

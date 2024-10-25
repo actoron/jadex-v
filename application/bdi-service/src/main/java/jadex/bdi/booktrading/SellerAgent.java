@@ -54,7 +54,6 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 	 *  The agent body.
 	 */
 	@OnStart
-	//@AgentBody
 	public void body()
 	{
 		IExecutionFeature	exe	= agent.getFeature(IExecutionFeature.class);
@@ -263,7 +262,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 //		if(suitableorders.length > 0)
 		if(order!=null)
 		{
-//				Order order = suitableorders[0];
+//			Order order = suitableorders[0];
 			
 			double time_span = order.getDeadline().getTime() - order.getStartTime();
 			double elapsed_time = getTime() - order.getStartTime();

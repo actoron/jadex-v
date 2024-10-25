@@ -10,8 +10,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bt.Node.NodeState;
+import jadex.bt.actions.UserAction;
+import jadex.bt.decorators.ConditionalDecorator;
+import jadex.bt.decorators.Decorator;
+import jadex.bt.decorators.RetryDecorator;
+import jadex.bt.decorators.TimeoutDecorator;
 import jadex.bt.impl.ComponentTimerCreator;
+import jadex.bt.impl.Event;
+import jadex.bt.impl.TimerCreator;
+import jadex.bt.nodes.ActionNode;
+import jadex.bt.nodes.Node;
+import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.state.ExecutionContext;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
@@ -48,7 +58,7 @@ public class DecoratorTest
 	    an.addDecorator(rd);
 
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator<Object>());
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 	    

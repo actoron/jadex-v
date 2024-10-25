@@ -13,7 +13,7 @@ import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
@@ -24,7 +24,7 @@ import jadex.micro.annotation.AgentResult;
 import jadex.micro.impl.MicroAgentFeature;
 import jadex.micro.impl.MicroAgentFeatureProvider;
 
-public class BDILifecycleAgentFeatureProvider extends FeatureProvider<MicroAgentFeature>  implements IComponentLifecycleManager
+public class BDILifecycleAgentFeatureProvider extends ComponentFeatureProvider<MicroAgentFeature>  implements IComponentLifecycleManager
 {
 	@Override
 	public Class<MicroAgentFeature> getFeatureType()
@@ -45,7 +45,7 @@ public class BDILifecycleAgentFeatureProvider extends FeatureProvider<MicroAgent
 	}
 	
 	@Override
-	public boolean replacesFeatureProvider(FeatureProvider<MicroAgentFeature> provider)
+	public boolean replacesFeatureProvider(ComponentFeatureProvider<MicroAgentFeature> provider)
 	{
 		return provider instanceof MicroAgentFeatureProvider;
 	}

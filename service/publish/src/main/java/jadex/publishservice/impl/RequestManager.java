@@ -34,6 +34,7 @@ import jadex.collection.MultiCollection;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
+import jadex.common.transformation.BasicTypeConverter;
 import jadex.common.transformation.IObjectStringConverter;
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.STransformation;
@@ -61,11 +62,11 @@ import jadex.publishservice.publish.PathManager;
 import jadex.publishservice.publish.annotation.ParametersMapper;
 import jadex.publishservice.publish.annotation.ResultMapper;
 import jadex.publishservice.publish.clone.CloneResponseProcessor;
+import jadex.publishservice.publish.json.PublishJsonSerializer;
 import jadex.publishservice.publish.mapper.DefaultParameterMapper;
 import jadex.publishservice.publish.mapper.IParameterMapper;
 import jadex.publishservice.publish.mapper.IParameterMapper2;
 import jadex.publishservice.publish.mapper.IValueMapper;
-import jadex.serialization.ISerializationServices;
 import jadex.serialization.serializers.JadexJsonSerializer;
 import jadex.transformation.jsonserializer.JsonTraverser;
 import jakarta.servlet.AsyncContext;
@@ -203,20 +204,20 @@ public class RequestManager
 	protected boolean loginsec;
 
 	/** The json processor. */
-	protected JadexJsonSerializer jsonser;
+	protected PublishJsonSerializer jsonser;
+	
+	/** The basic type converter. */
+	protected BasicTypeConverter basicconverter = new BasicTypeConverter();
 	
 	///** The binary processor. */
 	//protected JadexBinarySerializer binser;
-
-	/** The serialization services. */
-	protected ISerializationServices serser;
 	
 	protected static RequestManager instance;
 	
-	public static synchronized void createInstance(ISerializationServices serser)
+	public static synchronized void createInstance()
 	{
 		if(instance==null)
-			instance = new RequestManager(serser);
+			instance = new RequestManager();
 	}
 	
 	public static synchronized RequestManager getInstance()
@@ -224,11 +225,6 @@ public class RequestManager
 		if(instance==null)
 			throw new RuntimeException("request manager was not created");
 		return instance; 
-	}
-	
-	public ISerializationServices getSerializationServices()
-	{
-		return serser;
 	}
 	
 	public static class Resp
@@ -275,10 +271,8 @@ public class RequestManager
 		}
 	}
 	
-	public RequestManager(ISerializationServices serser)
+	public RequestManager()
 	{
-		this.serser = serser;
-		
 		conversationinfos = new LinkedHashMap<String, ConversationInfo>();
 		sseevents = new ArrayList<SSEEvent>();
 		sseinfos = new HashMap<String, RequestManager.SSEInfo>();
@@ -294,62 +288,15 @@ public class RequestManager
 		//ISerializationServices ss = getComponent().getFeature(IMjProvidedServiceFeature.class).getSerializationService();
 		//SerializationServices.getSerializationServices(self.getId());
 		
-		jsonser = (JadexJsonSerializer)serser.getSerializer(JadexJsonSerializer.SERIALIZER_ID);
+		jsonser = PublishJsonSerializer.get();
+		
 		//JsonResponseProcessor jrp = new JsonResponseProcessor();
 		//jsonser.addProcessor(jrp, jrp);
 		
-		// add response support
-		serser.getPreprocessors().add(new ITraverseProcessor() 
-		{
-			@Override
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors,
-				List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context) 
-			{
-				Response res = (Response)object;
-				//Object e = traverser.traverse(res.getEntity(), Map.class, conversionprocessors, processors, converter, mode, targetcl, context);
-				//Object h = traverser.traverse(res.getHeaders(), Map.class, conversionprocessors, processors, converter, mode, targetcl, context);
-				Resp ret = new Resp().setStatus(res.getStatus()).setEntity(res.getEntity()).setHeaders((Map)res.getHeaders());
-				return ret;
-			}
-			
-			@Override
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
-			{
-				return object instanceof Response;
-			}
-		});
+		//serser.getCloneProcessors().add(0, new CloneResponseProcessor());
+		//TODO: HACK! This is most definitely WRONG to do, make your own cloner, don't modify the global one.
+		Traverser.getDefaultProcessors().add(0, new CloneResponseProcessor());
 		
-		serser.getPostprocessors().add(new ITraverseProcessor() 
-		{
-			@Override
-			public Object process(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors,
-				List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, Object context) 
-			{
-				Resp resp = (Resp)object;
-				ResponseBuilder rb = Response.status(resp.getStatus()).entity(resp.getEntity());
-				for(Map.Entry<String, Object> entry: resp.getHeaders().entrySet())
-				{
-					if(entry.getValue() instanceof Collection)
-					{
-						for(Object v: (Collection)entry.getValue())
-						{
-							rb.header(entry.getKey(), (String)v);
-						}
-					}
-				}
-				Response ret = rb.build();
-				return ret;
-			}
-			
-			@Override
-			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
-			{
-				return object instanceof Resp;
-			}
-		});
-		
-		serser.getCloneProcessors().add(0, new CloneResponseProcessor());
-
 		//binser = (JadexBinarySerializer)serser.getSerializer(JadexBinarySerializer.SERIALIZER_ID);
 		//BinaryResponseProcessor brp = new BinaryResponseProcessor();
 		//binser.addProcessor(brp, brp);
@@ -375,7 +322,7 @@ public class RequestManager
 			{
 				// System.out.println("write response in json");
 				
-				byte[] data = jsonser.encode(val, getClassLoader(), serser.getPreprocessors().toArray(new ITraverseProcessor[0]), conv);
+				byte[] data = jsonser.encode(val, getClassLoader(), conv);
 				//byte[] data = JsonTraverser.objectToByteArray(val, component.getClassLoader(), null, false, false, null, null, null);
 				return new String(data, StandardCharsets.UTF_8);
 			}
@@ -388,7 +335,7 @@ public class RequestManager
 		{
 			public String convertObject(Object val, Object context)
 			{
-				byte[] data = jsonser.encode(val, getClassLoader(), serser.getPreprocessors().toArray(new ITraverseProcessor[0]), null);
+				byte[] data = jsonser.encode(val, getClassLoader(), null);
 				//byte[] data = JsonTraverser.objectToByteArray(val, component.getClassLoader(), null, true, true, null, null, null);
 				String ret = new String(data, StandardCharsets.UTF_8);
 				//System.out.println("rest json: "+ret);
@@ -2165,9 +2112,7 @@ public class RequestManager
 	{
 		Object ret = null;
 
-		ISerializationServices ser = getSerializationServices();//getComponent().getFeature(IMjProvidedServiceFeature.class).getSerializationService();
-		
-		IStringConverter conv = ser.getStringConverters().get(IStringConverter.TYPE_BASIC);
+		IStringConverter conv = PublishJsonSerializer.getBasicTypeSerializer();
 
 		if(val != null && SReflect.isSupertype(target, val.getClass()))
 		{

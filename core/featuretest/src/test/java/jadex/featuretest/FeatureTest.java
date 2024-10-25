@@ -8,6 +8,7 @@ import java.util.Iterator;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.annotation.Testable;
 
+import jadex.core.IComponentFeature;
 import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.featuretest.impl.TestFeature1NewProvider;
@@ -61,7 +62,7 @@ public class FeatureTest
 	{
 		for(Class<Object> type: feature_types)
 		{
-			Object	feature	= comp.getFeature(type);
+			Object	feature	= comp.getFeature((Class)type);
 			assertTrue(feature!=null, "Feature could not be loaded");
 			assertTrue(type.isAssignableFrom(feature.getClass()), "Feature type does not match: "+feature.getClass()+", "+type);
 		}
@@ -126,7 +127,7 @@ public class FeatureTest
 		// Force instantiation of lazy features, if any
 		for(Class<Object> type: feature_types)
 		{
-			comp.getFeature(type);
+			comp.getFeature((Class)type);
 		}
 		
 		// Check if actual ordering matches desired ordering

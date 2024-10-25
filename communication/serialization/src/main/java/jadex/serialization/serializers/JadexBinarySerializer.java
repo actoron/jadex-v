@@ -115,9 +115,11 @@ public class JadexBinarySerializer implements ISerializer
 	public JadexBinarySerializer()
 	{
 		writeprocs = Collections.synchronizedList(new ArrayList<ITraverseProcessor>());
+		writeprocs.add(new ComponentIdentifierCodec());
 		writeprocs.addAll(SBinarySerializer.ENCODER_HANDLERS);
 		
 		readprocs = Collections.synchronizedList(new ArrayList<IDecoderHandler>());
+		readprocs.add(new ComponentIdentifierCodec());
 		readprocs.addAll(SBinarySerializer.DECODER_HANDLERS);
 	}
 	
@@ -195,13 +197,14 @@ public class JadexBinarySerializer implements ISerializer
 	{
 		Object ret = SBinarySerializer.readObjectFromStream(is, postprocs!=null?Arrays.asList(postprocs):null, usercontext, classloader, null, null, readprocs);//CONFIG, readprocs);
 		
-		try
+		// Do not close, let caller close if necessary
+		/*try
 		{
 			is.close();
 		}
 		catch (IOException e)
 		{
-		}
+		}*/
 		
 		return ret;
 	}

@@ -167,6 +167,7 @@ includeBuild('core/engine') {}
 includeBuild('core/featuretest') {}
 includeBuild('core/execution') {}
 includeBuild('core/simulation') {}
+//includeBuild('core/errorhandling') {}
 
 includeBuild('model/model') {}
 
@@ -177,6 +178,7 @@ includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {}
 
 includeBuild('communication/serialization') {}
+includeBuild('communication/messaging') {}
 
 includeBuild('micro/engine'){name='micro'}
 includeBuild('micro/providedservice') {name='providedservicemicro'}

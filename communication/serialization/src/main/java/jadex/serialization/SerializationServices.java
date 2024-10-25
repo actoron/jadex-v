@@ -3,7 +3,6 @@ package jadex.serialization;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,9 +18,6 @@ import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.TransformProcessor;
 import jadex.common.transformation.traverser.Traverser;
-import jadex.common.transformation.traverser.Traverser.MODE;
-import jadex.core.ComponentIdentifier;
-import jadex.serialization.serializers.JadexBasicTypeSerializer;
 import jadex.serialization.serializers.JadexBinarySerializer;
 import jadex.serialization.serializers.JadexJsonSerializer;
 
@@ -83,9 +79,6 @@ public class SerializationServices implements ISerializationServices
 		defaultserializer = serial.getSerializerId();
 		
 		serial = new JadexJsonSerializer();
-		serializers[serial.getSerializerId()] = serial;
-		
-		serial = new JadexBasicTypeSerializer();
 		serializers[serial.getSerializerId()] = serial;
 	}
 	
@@ -190,7 +183,7 @@ public class SerializationServices implements ISerializationServices
 		// Preprocessor to copy the networknames cache object (used by security service and all service ids)
 		procs.add(new TransformProcessor());
 		
-		procs.add(new ITraverseProcessor()
+		/*procs.add(new ITraverseProcessor()
 		{
 			@Override
 			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
@@ -205,7 +198,7 @@ public class SerializationServices implements ISerializationServices
 			{
 				return object.toString();
 			}
-		});
+		});*/
 		
 		return procs;
 	}
@@ -218,7 +211,7 @@ public class SerializationServices implements ISerializationServices
 		// Equivalent pre- and postprocessors for binary mode.
 		List<ITraverseProcessor> procs = new ArrayList<ITraverseProcessor>();
 		
-		procs.add(new ITraverseProcessor()
+		/*procs.add(new ITraverseProcessor()
 		{
 			@Override
 			public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context) 
@@ -233,7 +226,7 @@ public class SerializationServices implements ISerializationServices
 			{
 				return ComponentIdentifier.fromString((String)object);
 			}
-		});
+		});*/
 		
 		return procs;
 	}

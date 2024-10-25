@@ -3,12 +3,12 @@ package jadex.featuretest.impl;
 import java.util.function.Supplier;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.featuretest.BootstrappingTest;
 import jadex.featuretest.ITestFeature2;
 
-public class TestFeature2Provider extends FeatureProvider<ITestFeature2> implements ITestFeature2, IBootstrapping
+public class TestFeature2Provider extends ComponentFeatureProvider<ITestFeature2> implements ITestFeature2, IBootstrapping
 {
 	@Override
 	public Class<ITestFeature2> getFeatureType()

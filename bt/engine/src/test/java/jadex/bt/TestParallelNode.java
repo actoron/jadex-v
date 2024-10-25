@@ -4,8 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bt.Node.AbortMode;
-import jadex.bt.Node.NodeState;
+import jadex.bt.actions.UserAction;
+import jadex.bt.impl.Event;
+import jadex.bt.nodes.ActionNode;
+import jadex.bt.nodes.CompositeNode;
+import jadex.bt.nodes.ParallelNode;
+import jadex.bt.nodes.Node.AbortMode;
+import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.state.ExecutionContext;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.TerminableFuture;

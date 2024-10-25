@@ -1,11 +1,11 @@
 package jadex.micro.impl;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
 
-public class MicroModelFeatureProvider extends FeatureProvider<IModelFeature>
+public class MicroModelFeatureProvider extends ComponentFeatureProvider<IModelFeature>
 {
 	@Override
 	public Class< ? extends Component> getRequiredComponentType()

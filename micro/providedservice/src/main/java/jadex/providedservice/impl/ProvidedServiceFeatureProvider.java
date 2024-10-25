@@ -1,11 +1,11 @@
 package jadex.providedservice.impl;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.micro.MicroAgent;
 import jadex.providedservice.IProvidedServiceFeature;
 
-public class ProvidedServiceFeatureProvider extends FeatureProvider<IProvidedServiceFeature> 
+public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IProvidedServiceFeature> 
 {
 	@Override
 	public Class<IProvidedServiceFeature> getFeatureType()

@@ -2,9 +2,9 @@ package jadex.bdi.runtime.impl;
 
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 
-public class BDIAgentFeatureProvider extends FeatureProvider<IBDIAgentFeature>
+public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentFeature>
 {
 	@Override
 	public IBDIAgentFeature createFeatureInstance(Component self)

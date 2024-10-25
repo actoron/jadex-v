@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,12 +19,16 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.logging.ConsoleHandler;
 
+import jadex.collection.RwMapWrapper;
+import jadex.common.IAutoLock;
 import jadex.common.SUtil;
 import jadex.core.ApplicationContext;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentListener;
 import jadex.core.IComponentManager;
+import jadex.core.IRuntimeFeature;
+import jadex.errorhandling.IErrorHandlingFeature;
 
 /**
  *  Singleton class providing general information for supporting components.
@@ -75,57 +81,14 @@ public class ComponentManager implements IComponentManager
 	/** The components. */
 	public final Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
 	
-	/** The exception handlers. */
-	//protected Map<Object, Map<Object, IExceptionHandler<? extends Exception>>> exceptionhandlers = new HashMap<>();	
-	protected Map<Object, Map<Object, HandlerInfo>> exceptionhandlers = new HashMap<>();	
-	
-	/** The logger configurators. */
-	protected List<LoggerCreator> loggercreators = new ArrayList<>();
 	
 	/** The active state of loglibs. */
-	protected Map<String, Boolean> loglibsactive = new HashMap<String, Boolean>();
+	//protected Map<String, Boolean> loglibsactive = new HashMap<String, Boolean>();
 	
-	public record LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
-	{
-	    private static final ConcurrentHashMap<Function<String, Boolean>, Integer> ids = new ConcurrentHashMap<>();
-	    private static final AtomicInteger nextid = new AtomicInteger(1);
-
-	    public LoggerCreator(String name, Function<String, Boolean> filter, Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
-	    {
-	        this.name = name;
-	        this.filter = filter;
-	        this.icreator = icreator;
-	        this.ecreator = ecreator;
-	        this.system = system;
-	    }
-
-	    public LoggerCreator(Function<String, Logger> icreator, Function<String, Logger> ecreator, boolean system) 
-	    {
-	        this(null, null, icreator, ecreator, system);
-	    }
-
-	    public LoggerCreator(Function<String, Logger> icreator, Function<String, Logger> ecreator) 
-	    {
-	        this(null, null, icreator, ecreator, false);
-	    }
-
-	    public String getLoggerName() 
-	    {
-	        String ret = name;
-	        if(ret == null) 
-	        {
-	            ret = system ? "system" : "application";
-	            if(filter != null) 
-	                ret += "_" + getFilterId(filter);
-	        }
-	        return ret;
-	    }
-
-	    private static int getFilterId(Function<String, Boolean> filter) 
-	    {
-	        return ids.computeIfAbsent(filter, key -> nextid.getAndIncrement());
-	    }
-	}
+	/** Cache fore runtime features. */
+	protected RwMapWrapper<Class<IRuntimeFeature>, IRuntimeFeature> featurecache = new RwMapWrapper<Class<IRuntimeFeature>, IRuntimeFeature>(new HashMap<>());
+	
+	
 	
 	/**
 	 *  Create a new component manager.
@@ -146,7 +109,7 @@ public class ComponentManager implements IComponentManager
 		}
 		
 		// Add default exception handler
-		addExceptionHandler(Exception.class, false, (ex, comp) ->
+		getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (ex, comp) ->
 		{
 			System.out.println("Exception in user code of component; component will be terminated: "+comp.getId());
 			ex.printStackTrace();
@@ -156,7 +119,7 @@ public class ComponentManager implements IComponentManager
 		// remove default handler
 		//removeExceptionHandler(null, Exception.class);
 		
-		// Set the root logger to warining.
+		// Set the root logger to warning.
 		// Otherwise without logbase feature internal logs get printed
 		// With logbase feature the parent logger is ignored anyway.
 		configureRootLogger(java.util.logging.Level.WARNING);
@@ -168,10 +131,10 @@ public class ComponentManager implements IComponentManager
 	 */
 	public static void configureRootLogger(java.util.logging.Level level) 
 	{
-        java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
-        rootLogger.setLevel(level);
+        java.util.logging.Logger logger = java.util.logging.Logger.getLogger("");
+        logger.setLevel(level);
 
-        for(var handler : rootLogger.getHandlers()) 
+        for(var handler : logger.getHandlers()) 
         {
             if(handler instanceof ConsoleHandler) 
             {
@@ -179,6 +142,57 @@ public class ComponentManager implements IComponentManager
             }
         }
     }
+	
+	/**
+	 *  Get the feature instance for the given type.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return The feature or null if not found or available.
+	 */
+	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype)
+	{
+		IRuntimeFeature feature = featurecache.get(featuretype);
+		if (feature == null)
+		{
+			try (IAutoLock l = featurecache.writeLock())
+			{
+				feature = featurecache.get(featuretype);
+				if (feature == null)
+				{
+					RuntimeFeatureProvider<IRuntimeFeature> prov = null;
+					@SuppressWarnings("rawtypes")
+					Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
+					for (;it.hasNext();)
+					{
+						@SuppressWarnings("unchecked")
+						RuntimeFeatureProvider<IRuntimeFeature> next = it.next();
+						if (next.getFeatureType().equals(featuretype))
+						{
+							prov = next;
+							break;
+						}
+					}
+					if (prov != null)
+					{
+						Set<Class<? extends IRuntimeFeature>> preds = prov.getDependencies();
+						for (Class<?> pred : preds)
+						{
+							@SuppressWarnings("unchecked")
+							Class<IRuntimeFeature> cpred = (Class<IRuntimeFeature>) pred;
+							getFeature(cpred);
+						}
+						feature = prov.createFeatureInstance();
+						@SuppressWarnings("unchecked")
+						Class<IRuntimeFeature> basefeaturetype = (Class<IRuntimeFeature>) featuretype;
+						featurecache.put(basefeaturetype, feature);
+					}
+				}
+			}
+		}
+		@SuppressWarnings("unchecked")
+		T ret = (T) feature;
+		return ret;
+	}
 	
 	/**
 	 *  Returns the process identifier of the Java process.
@@ -296,15 +310,10 @@ public class ComponentManager implements IComponentManager
 		//System.out.println("size: "+components.size()+" "+cid);
 	}
 
-	static final Logger	logger	= System.getLogger(IComponent.class.getName());
-//	static
-//	{
-//		System.out.println("CM created logger "+logger);
-//	}
 	static Logger getLogger()
 	{
+		return System.getLogger(IComponent.class.getName());
 //		System.out.println("CM get logger "+logger);
-		return logger;
 	}
 	
 	/**
@@ -388,190 +397,5 @@ public class ComponentManager implements IComponentManager
 			else if(IComponent.COMPONENT_LASTREMOVED.equals(type))
 				mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
 		}
-	}
-	
-	/**
-	 *  Add an exception handler.
-	 *  @param cid The component id.
-	 *  @param clazz The exception class to match.
-	 *  @param exactmatch How clazz should be interpreted.
-	 *  @param handler The handler.
-	 */
-	public synchronized void addExceptionHandler(ComponentIdentifier cid, Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
-	{
-		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
-		if(handlers==null)
-		{
-			handlers = new HashMap<>();
-			exceptionhandlers.put(clazz, handlers);
-		}
-		handlers.put(cid, new HandlerInfo(handler, exactmatch));
-	}
-	
-	/**
-	 *  Add an exception handler.
-	 *  @param type The component pojo type.
-	 *  @param clazz The exception class to match.
-	 *  @param exactmatch How clazz should be interpreted.
-	 *  @param handler The handler.
-	 */
-	public synchronized void addExceptionHandler(Class<?> type, Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
-	{
-		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
-		if(handlers==null)
-		{
-			handlers = new HashMap<>();
-			exceptionhandlers.put(clazz, handlers);
-		}
-		handlers.put(type, new HandlerInfo(handler, exactmatch));
-	}
-	
-	/**
-	 *  Add an exception handler for all.
-	 *  @param clazz The exception class to match.
-	 *  @param exactmatch How clazz should be interpreted.
-	 *  @param handler The handler.
-	 */
-	public synchronized void addExceptionHandler(Class<? extends Exception> clazz, boolean exactmatch, BiConsumer<? extends Exception, IComponent> handler)
-	{
-		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
-		if(handlers==null)
-		{
-			handlers = new HashMap<>();
-			exceptionhandlers.put(clazz, handlers);
-		}
-		handlers.put(null, new HandlerInfo(handler, exactmatch));
-	}
-	
-	/**
-	 *  Remove an exception handler.
-	 *  @param key The key.
-	 *  @param clazz The exception class.
-	 */
-	public synchronized void removeExceptionHandler(Object key, Class<? extends Exception> clazz)
-	{
-		Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
-		if(handlers!=null)
-		{
-			handlers.remove(key);
-			if(handlers.isEmpty())
-				exceptionhandlers.remove(clazz);
-		}
-	}
-	
-	public synchronized <E extends Exception> BiConsumer<? extends Exception, IComponent> getExceptionHandler(E exception, Component component)
-	{
-		BiConsumer<? extends Exception, IComponent> ret = null;
-		HandlerInfo info;
-		Class<?> clazz = exception.getClass();
-		boolean exact = true;
-		
-		while(ret==null)
-		{
-			// search by exception type
-			Map<Object, HandlerInfo> handlers = exceptionhandlers.get(clazz);
-			if(handlers!=null)
-			{
-				// try get individual handler by cid
-				info = handlers.get(component.getId());
-				if(info!=null && (!info.exact() || exact))
-					ret = info.handler(); 
-				if(ret==null)
-				{
-					// try getting by pojo type
-					info = component.getPojo()!=null? handlers.get(component.getPojo().getClass()): null;
-					if(info!=null && (!info.exact() || exact))
-						ret = info.handler(); 
-					if(ret==null)
-					{
-						// try getting by engine type
-						info = handlers.get(component.getClass());
-						if(info!=null && (!info.exact() || exact))
-							ret = info.handler(); 
-						if(ret==null)
-						{
-							// try getting generic handler
-							info = handlers.get(null);
-							if(info!=null && (!info.exact() || exact))
-								ret = info.handler(); 
-						}
-					}
-				}
-			}
-			
-			if(ret==null && clazz!=null)
-			{
-				clazz = clazz.getSuperclass();
-				exact = false;
-				if(clazz==null)
-					break;
-				if(Object.class.equals(clazz))
-					clazz = null;
-			}
-			else
-			{
-				break;
-			}
-		}
-		
-		return ret;
-	}
-	
-	protected record HandlerInfo(BiConsumer<? extends Exception, IComponent> handler, boolean exact) 
-	{
-	};
-	
-	/**
-	 *  Add a logger configurator.
-	 *  @param filter The filter if the configurator matches.
-	 *  @param creator The creator.
-	 */
-	public synchronized void addLoggerCreator(LoggerCreator creator)
-	{
-		// remove existing fallback configurator
-		if(creator.filter()==null)
-			loggercreators.removeIf(lc -> lc.filter()==null && lc.system()==creator.system());
-		
-		loggercreators.add(creator);
-	}
-	
-	/**
-	 *  Update a logger creator by exchanging it against it old version.
-	 *  @param ocreator The old creator.
-	 *  @param ncreator The new creator.
-	 */
-	public synchronized void updateLoggerCreator(LoggerCreator ocreator, LoggerCreator ncreator)
-	{
-		if(ncreator==null)
-			throw new NullPointerException("new creator must not null");
-
-		/*if(ocreator!=null)
-			removeLoggerCreator(ocreator);
-		addLoggerCreator(ncreator);*/
-		
-		// remove existing fallback configurator
-		if(ocreator==null && ncreator.filter()==null)
-			loggercreators.removeIf(lc -> lc.filter()==null && lc.system()==ncreator.system());
-
-		loggercreators.remove(ocreator);
-		loggercreators.add(ncreator);
-	}
-	
-	/**
-	 *  Remove a logger creator.
-	 *  @param creator The creator.
-	 */
-	public synchronized void removeLoggerCreator(LoggerCreator creator)
-	{
-		loggercreators.remove(creator);
-	}
-	
-	/**
-	 *  Get all logger configurators.
-	 *  @return The logger configurators
-	 */
-	public synchronized Collection<LoggerCreator> getLoggerCreators()
-	{
-		return loggercreators;
 	}
 }

@@ -23,7 +23,7 @@ import jadex.transformation.jsonserializer.JsonTraverser;
  *  
  *  Converts object -> byte[] and byte[] -> object.
  */
-public class JadexJsonSerializer implements ISerializer, IStringConverter
+public class JadexJsonSerializer implements ISerializer
 {
 	//-------- constants --------
 	
@@ -41,9 +41,6 @@ public class JadexJsonSerializer implements ISerializer, IStringConverter
 	/** The read processors. */
 	public List<ITraverseProcessor> readprocs;
 	
-	/** The basic string converter. */
-	protected IStringConverter converter;
-	
 	/**
 	 *  Create a new serializer.
 	 */
@@ -56,8 +53,6 @@ public class JadexJsonSerializer implements ISerializer, IStringConverter
 		readprocs = Collections.synchronizedList(new ArrayList<ITraverseProcessor>());
 		//readprocs.add(new jadex.platform.service.serialization.serializers.jsonread.JsonServiceProcessor());
 		readprocs.addAll(JsonTraverser.readprocs);
-		
-		converter = new JadexBasicTypeSerializer();
 	}
 	
 	//-------- methods --------
@@ -111,7 +106,7 @@ public class JadexJsonSerializer implements ISerializer, IStringConverter
 			writeid = conv.get("writeid") instanceof Boolean? (Boolean)conv.get("writeid"): true;
 		}
 		
-		byte[] ret = JsonTraverser.objectToByteArray(val, classloader, null, writeclass, writeid, null, preprocs!=null?Arrays.asList(preprocs):null, writeprocs, usercontext, converter);
+		byte[] ret = JsonTraverser.objectToByteArray(val, classloader, null, writeclass, writeid, null, preprocs!=null?Arrays.asList(preprocs):null, writeprocs, usercontext, null);
 		
 		if(DEBUG)
 			System.out.println("encode message: "+(new String(ret, SUtil.UTF8)));
@@ -127,7 +122,7 @@ public class JadexJsonSerializer implements ISerializer, IStringConverter
 	{
 		if(DEBUG)
 			System.out.println("decode message: "+(new String((byte[])bytes, SUtil.UTF8)));
-		return JsonTraverser.objectFromByteArray(bytes, classloader, rep, null, null, readprocs, postprocs!=null?Arrays.asList(postprocs):null, usercontext, converter);
+		return JsonTraverser.objectFromByteArray(bytes, classloader, rep, null, null, readprocs, postprocs!=null?Arrays.asList(postprocs):null, usercontext, null);
 	}
 	
 	/**
@@ -161,24 +156,6 @@ public class JadexJsonSerializer implements ISerializer, IStringConverter
 	}
 	
 	/**
-	 *  Convert a string to an object.
-	 *  @param val The string.
-	 *  @param type The target type.
-	 *  @param context The context.
-	 *  @return The object.
-	 */
-	public Object convertString(String val, Class<?> type, ClassLoader cl, Object context)
-	{
-		return JsonTraverser.objectFromString(val, cl, null, type, readprocs, null, context, converter);
-	}
-	
-	private static JadexBasicTypeSerializer bts = new JadexBasicTypeSerializer();
-	public Object convertBasicType(String val, Class<?> targettype, ClassLoader cl, Object context)
-	{
-		return bts.convertString(val, targettype, cl, context);
-	}
-	
-	/**
 	 *  Convert an object to a string.
 	 *  @param val The object.
 	 *  @param type The encoding type.
@@ -188,7 +165,7 @@ public class JadexJsonSerializer implements ISerializer, IStringConverter
 	public String convertObject(Object val, Class<?> type, ClassLoader cl, Object context)
 	{
 		// does not use type currently?!
-		String ret = JsonTraverser.objectToString(val, cl, true, true, null, null, writeprocs, context, converter);
+		String ret = JsonTraverser.objectToString(val, cl, true, true, null, null, writeprocs, context, null);
 		//if((""+val).indexOf("ChatEvent")!=-1)
 		//System.out.println("json: "+ret);
 		return ret;

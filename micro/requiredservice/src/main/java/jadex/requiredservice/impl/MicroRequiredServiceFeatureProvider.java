@@ -3,13 +3,13 @@ package jadex.requiredservice.impl;
 import java.util.Set;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.micro.MicroAgent;
 import jadex.micro.impl.MicroAgentFeatureProvider;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-public class MicroRequiredServiceFeatureProvider extends FeatureProvider<IRequiredServiceFeature> 
+public class MicroRequiredServiceFeatureProvider extends ComponentFeatureProvider<IRequiredServiceFeature> 
 {
 	@Override
 	public Class<IRequiredServiceFeature> getFeatureType()
@@ -39,7 +39,7 @@ public class MicroRequiredServiceFeatureProvider extends FeatureProvider<IRequir
 	}
 	
 	@Override
-	public boolean replacesFeatureProvider(FeatureProvider<IRequiredServiceFeature> provider) 
+	public boolean replacesFeatureProvider(ComponentFeatureProvider<IRequiredServiceFeature> provider) 
 	{
 		return provider instanceof RequiredServiceFeatureProvider;
 	}

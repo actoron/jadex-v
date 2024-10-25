@@ -5,10 +5,11 @@ import java.util.logging.ConsoleHandler;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager.LoggerCreator;
 import jadex.execution.IExecutionFeature;
 import jadex.logger.FluentdLogger;
+import jadex.logger.ILoggingFeature;
 import jadex.logger.JulLogger;
+import jadex.logger.LoggerCreator;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
@@ -35,7 +36,7 @@ public class UseFluentdAgent
 	{
 		// Configure Jadex system logger
 		// application
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(name ->
+		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(name ->
 		{
 			JulLogger ret = new JulLogger(name);
 			ConsoleHandler chandler = new ConsoleHandler();
@@ -48,7 +49,7 @@ public class UseFluentdAgent
 		}, true));
 		
 		// application
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(name ->
+		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(name ->
 		{
 			JulLogger ret = new JulLogger(name);
 			ConsoleHandler chandler = new ConsoleHandler();

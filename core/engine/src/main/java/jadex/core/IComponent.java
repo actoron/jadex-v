@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.SFeatureProvider;
+import jadex.core.impl.SComponentFeatureProvider;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -35,7 +35,7 @@ public interface IComponent
 	 *  Get the feature instance for the given type.
 	 *  Instantiates lazy features if needed.
 	 */
-	public <T> T getFeature(Class<T> type);
+	public <T extends IComponentFeature> T getFeature(Class<T> type);
 	
 	/**
 	 *  Get the external access.
@@ -146,7 +146,7 @@ public interface IComponent
 		Future<IExternalAccess> ret = new Future<>();
 		
 		boolean created = false;
-		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
+		for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
 		{
 			if(creator.isCreator(pojo))
 			{
@@ -335,7 +335,7 @@ public interface IComponent
 		}
 		else
 		{
-			for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
+			for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
 			{
 				if(creator.isCreator(pojo))
 				{

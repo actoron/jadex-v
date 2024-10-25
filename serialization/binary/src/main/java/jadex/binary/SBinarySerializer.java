@@ -46,16 +46,14 @@ public class SBinarySerializer
 		ENCODER_HANDLERS.add(new ArrayCodec());
 		ENCODER_HANDLERS.add(new ClassCodec());
 		ENCODER_HANDLERS.add(new CollectionCodec());
+		ENCODER_HANDLERS.add(new RecordCodec());
 		ENCODER_HANDLERS.add(new EnumerationCodec());
 		ENCODER_HANDLERS.add(new MultiCollectionCodec());
 		ENCODER_HANDLERS.add(new LRUCodec());
 		ENCODER_HANDLERS.add(new MapCodec());
-		//if(!SReflect.isAndroid())
-		{
-			ENCODER_HANDLERS.add(new ColorCodec());
-			ENCODER_HANDLERS.add(new ImageCodec());
-			ENCODER_HANDLERS.add(new RectangleCodec());
-		}
+		ENCODER_HANDLERS.add(new ColorCodec());
+		ENCODER_HANDLERS.add(new ImageCodec());
+		ENCODER_HANDLERS.add(new RectangleCodec());
 		ENCODER_HANDLERS.add(new URLCodec());
 		ENCODER_HANDLERS.add(new URICodec());
 		ENCODER_HANDLERS.add(new TupleCodec());

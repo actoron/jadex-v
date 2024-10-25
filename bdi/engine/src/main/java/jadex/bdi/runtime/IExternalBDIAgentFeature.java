@@ -1,11 +1,12 @@
 package jadex.bdi.runtime;
 
+import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
 
 /**
  *  External perspective for 
  */
-public interface IExternalBDIAgentFeature
+public interface IExternalBDIAgentFeature extends IComponentFeature
 {
 //	/**
 //	 *  Get the goals of a given type as pojos.

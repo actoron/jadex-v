@@ -3,9 +3,9 @@ package jadex.bpmn.runtime.impl;
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 
-public class BpmnProcessFeatureProvider extends FeatureProvider<IBpmnComponentFeature>
+public class BpmnProcessFeatureProvider extends ComponentFeatureProvider<IBpmnComponentFeature>
 {
 	@Override
 	public IBpmnComponentFeature createFeatureInstance(Component self)

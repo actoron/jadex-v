@@ -2,10 +2,10 @@ package jadex.bpmn.runtime.impl;
 
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.model.IModelFeature;
 
-public class BpmnProcessModelFeatureProvider extends FeatureProvider<IModelFeature>
+public class BpmnProcessModelFeatureProvider extends ComponentFeatureProvider<IModelFeature>
 {
 	@Override
 	public Class< ? extends Component> getRequiredComponentType()

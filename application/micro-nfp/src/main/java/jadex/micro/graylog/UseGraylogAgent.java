@@ -1,16 +1,15 @@
 package jadex.micro.graylog;
 
 import java.lang.System.Logger.Level;
-import java.util.logging.ConsoleHandler;
 
 import org.graylog2.logging.GelfHandler;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager.LoggerCreator;
 import jadex.execution.IExecutionFeature;
 import jadex.logger.GraylogLogger;
-import jadex.logger.JulLogger;
+import jadex.logger.ILoggingFeature;
+import jadex.logger.LoggerCreator;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
@@ -39,7 +38,7 @@ public class UseGraylogAgent
 		
 		// Configure Jadex system logger
 		// application
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(
+		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(
 		null
 		/*name ->
 		{
@@ -63,7 +62,7 @@ public class UseGraylogAgent
 		
 		// Configure Jadex application logger
 		// system
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(
+		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(
 		null
 		/*name ->
 		{

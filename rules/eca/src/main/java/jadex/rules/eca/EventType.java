@@ -9,6 +9,8 @@ public class EventType
 {
 	public static final String MATCHALL = "*";
 	
+	public static final String MATCHALLDEEP = "**";
+	
 	public static final String DELIMITER = ":";
 	
 	/** The event type elements. */
@@ -101,7 +103,7 @@ public class EventType
 		{
 			buf.append(types[i]);
 			if(i+1<types.length)
-				buf.append(" . ");
+				buf.append(" "+DELIMITER+" ");
 		}
 		return buf.toString();
 	}

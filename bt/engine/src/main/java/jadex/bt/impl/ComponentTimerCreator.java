@@ -1,10 +1,6 @@
 package jadex.bt.impl;
 
-import java.util.function.BiFunction;
-
-import jadex.bt.ExecutionContext;
-import jadex.bt.ITimerCreator;
-import jadex.bt.Node;
+import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingFunction;
@@ -16,7 +12,7 @@ import jadex.future.TerminableFuture;
 public class ComponentTimerCreator<T> implements ITimerCreator<T>
 {
 	@Override
-	public ITerminableFuture<Void> createTimer(Node<T> node, ExecutionContext<T> context, long timeout)
+	public ITerminableFuture<Void> createTimer(ExecutionContext<T> context, long timeout)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<>();
 		
