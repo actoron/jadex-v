@@ -152,10 +152,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			{
 				SUtil.rethrowAsUnchecked(e);
 			}
-			catch(Throwable t)
-			{
-				SUtil.rethrowAsUnchecked(t);
-			}
 		});
 	}
 	
