@@ -3,20 +3,13 @@ package jadex.core.impl;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.logging.ConsoleHandler;
 
 import jadex.collection.RwMapWrapper;
@@ -310,9 +303,13 @@ public class ComponentManager implements IComponentManager
 		//System.out.println("size: "+components.size()+" "+cid);
 	}
 
-	static Logger getLogger()
+	// Caching for small speedup (detected in PlainComponentBenchmark)
+	Logger	logger	= null;
+	Logger getLogger()
 	{
-		return System.getLogger(IComponent.class.getName());
+		if(logger==null)
+			logger	= System.getLogger(IComponent.class.getName());
+		return logger;
 //		System.out.println("CM get logger "+logger);
 	}
 	
