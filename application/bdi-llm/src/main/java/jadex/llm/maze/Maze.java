@@ -66,6 +66,11 @@ public class Maze
         maze[position.x][position.y].status = 5;
     }
 
+    public void removeAgent(Point position)
+    {
+        maze[position.x][position.y].status = 0;
+    }
+
     // Initialize the maze with outer walls and free space inside
     private void initializeMaze()
     {
