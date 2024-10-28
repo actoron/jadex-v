@@ -521,6 +521,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						
 						assert step!=null;
 						
+						// for debugging only
+						boolean aborted	= false;
+						
 						try
 						{
 //							if(step!=null)	// TODO: why can be null?
@@ -529,6 +532,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						catch(StepAborted d)
 						{
 							// ignore aborted steps.
+							aborted	= true;
 						}
 						
 						synchronized(ExecutionFeature.this)
@@ -540,7 +544,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							}
 							else if(steps.isEmpty())
 							{
-								if(threadcount.decrementAndGet()<0)
+								if(!aborted && threadcount.decrementAndGet()<0)
 								{
 									throw new IllegalStateException("Threadcount<0");
 								}
@@ -627,14 +631,18 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				}
 				finally
 				{
+					blocked=false;
+					this.future	= null;
+					
+					if(aborted)
+					{
+						throw new StepAborted(getComponent().getId());
+					}
+
 					if(threadcount.incrementAndGet()>1)
 					{
 						throw new IllegalStateException("Threadcount>1");
 					}
-					blocked=false;
-					this.future	= null;
-					if(aborted)
-						throw new StepAborted(getComponent().getId());
 				}
 			}
 			finally
