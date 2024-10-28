@@ -128,31 +128,38 @@ public class MazeAgent
         List<String> dirNames = Arrays.asList("front", "left", "right", "back");
         String direction = dirNames.get(rand.nextInt(dirNames.size()));
         Object brain = new Object();
+        Point lastPos = new Point(maze.jadexStringToPoint(goal.getUpdatedPositionString()));
 
         System.out.println(goal.getUpdatedPositionString());
 
         for (int i = 0; i < 50; i++) {
-
             System.out.println("Step " + i);
-            ArrayList<Object> inputList = new ArrayList<Object>();
 
+            // 1. get current position from goal in mazePos (agent)
             Point mazePosition = maze.jadexStringToPoint(goal.getUpdatedPositionString());
+            // 2. get current envView from position
             JSONObject envView = maze.getEnvironmentView(mazePosition.x, mazePosition.y, direction);
 
+            // put mazePos, envView & brain into ArrayList
+            ArrayList<Object> inputList = new ArrayList<Object>();
             inputList.add(mazePosition);
             inputList.add(envView);
             inputList.add(brain);
 
+            // TODO: visibleAgent
+            // set agent on mazePos
             maze.setAgent(mazePosition);
 
+            // chatty run on given List, return List and extract Objects
             ArrayList<Object> outputList = (ArrayList<Object>) plan.runCode(inputList);
-
             Point retMazePos = (Point) outputList.get(0);
             direction = (String) outputList.get(1);
             brain = outputList.get(2);
 
+            // set updated mazePos from chatty
             goal.setUpdatedPositionString(maze.jadexPointToString(retMazePos));
 
+            // display maze and wait one second
             maze.displayMaze();
             System.out.println(retMazePos);
             System.out.println(direction);
