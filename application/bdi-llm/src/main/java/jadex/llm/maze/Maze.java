@@ -13,11 +13,13 @@ public class Maze
 {
     private class Block
     {
-        int status; // 0: free, 1: wall, 2: food, 3: start, 4: end, 5: agent
+        int status; // 0: free, 1: wall, 2: food, 3: start, 4: end
+        boolean agent;
 
         public Block(int status)
         {
             this.status = status;
+            this.agent = false;
         }
     }
 
@@ -63,12 +65,12 @@ public class Maze
 
     public void setAgent(Point position)
     {
-        maze[position.x][position.y].status = 5;
+        maze[position.x][position.y].agent = true;
     }
 
     public void removeAgent(Point position)
     {
-        maze[position.x][position.y].status = 0;
+        maze[position.x][position.y].agent = false;
     }
 
     // Initialize the maze with outer walls and free space inside
@@ -248,24 +250,27 @@ public class Maze
         {
             for (int j = 0; j < width; j++)
             {
-                if (maze[i][j].status == 1)
+                if (!maze[i][j].agent)
                 {
-                    System.out.print("+ "); // Wall
-                } else if (maze[i][j].status == 2)
-                {
-                    System.out.print("F "); // Food
-                } else if (maze[i][j].status == 3)
-                {
-                    System.out.print("S "); // Start
-                } else if (maze[i][j].status == 4)
-                {
-                    System.out.print("E "); // End point
-                } else if (maze[i][j].status == 5)
-                {
-                    System.out.print("A "); // End point
+                    if (maze[i][j].status == 1)
+                    {
+                        System.out.print("+ "); // Wall
+                    } else if (maze[i][j].status == 2)
+                    {
+                        System.out.print("F "); // Food
+                    } else if (maze[i][j].status == 3)
+                    {
+                        System.out.print("S "); // Start
+                    } else if (maze[i][j].status == 4)
+                    {
+                        System.out.print("E "); // End point
+                    } else
+                    {
+                        System.out.print("  "); // Free space
+                    }
                 } else
                 {
-                    System.out.print("  "); // Free space
+                    System.out.print("A "); // Agent
                 }
             }
             System.out.println(); // Move to the next row

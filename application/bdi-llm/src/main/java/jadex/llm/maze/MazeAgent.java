@@ -128,7 +128,6 @@ public class MazeAgent
         List<String> dirNames = Arrays.asList("front", "left", "right", "back");
         String direction = dirNames.get(rand.nextInt(dirNames.size()));
         Object brain = new Object();
-        Point lastPos = new Point(maze.jadexStringToPoint(goal.getUpdatedPositionString()));
 
         System.out.println(goal.getUpdatedPositionString());
 
@@ -155,10 +154,10 @@ public class MazeAgent
             // set updated mazePos from chatty and return to console
             goal.setUpdatedPositionString(maze.jadexPointToString(retMazePos));
             maze.setAgent(retMazePos);
+            maze.removeAgent(mazePosition);
 
             // display maze, delete retMazePos from console output and wait one second
             maze.displayMaze();
-            maze.removeAgent(retMazePos);
             System.out.println(retMazePos);
             System.out.println(direction);
             System.out.println("###################################################################################");
