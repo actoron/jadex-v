@@ -153,6 +153,7 @@ public class MazeAgent
 
             // set updated mazePos from chatty and return to console
             goal.setUpdatedPositionString(maze.jadexPointToString(retMazePos));
+            System.out.println(mazePosition);
             maze.setAgent(retMazePos);
             maze.removeAgent(mazePosition);
 

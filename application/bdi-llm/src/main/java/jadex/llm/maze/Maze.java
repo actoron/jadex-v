@@ -250,7 +250,7 @@ public class Maze
         {
             for (int j = 0; j < width; j++)
             {
-                if (!maze[i][j].agent)
+                if (maze[i][j].agent == false)
                 {
                     if (maze[i][j].status == 1)
                     {
