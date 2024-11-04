@@ -18,6 +18,7 @@ import org.json.simple.parser.ParseException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 
@@ -68,7 +69,7 @@ public class GlassesAgent
                     chatUrl,
                     apiKey,
                     beliefType,
-                    "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/GoalSettings.json");
+                    "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/GoalSettings.json");
 
             llmFeature.connectToLLM("");
 
@@ -77,7 +78,12 @@ public class GlassesAgent
             JSONObject convDataSet = null;
             try {
                 convDataSet = (JSONObject) parser.parse(convDataSetString.get());
-                Boolean checkStatus  = (Boolean) plan.runCode(convDataSet);
+                ArrayList<Object> inputList = new ArrayList<Object>();
+                inputList.add(convDataSet);
+
+                ArrayList<Object> outputList = plan.runCode(inputList);
+                Boolean checkStatus  = (Boolean) outputList.get(0);
+
                 System.out.println("A: Goal check: " + checkStatus);
                 return checkStatus;
             } catch (ParseException e) {
@@ -101,7 +107,7 @@ public class GlassesAgent
         this.chatUrl = chatUrl;
         this.apiKey = apiKey;
 //        this.beliefType = datasetString.get().getClass().toString().replace("class ", "");
-        this.beliefType = "org.json.simple.JSONObject";
+        this.beliefType = "java.util.ArrayList";
         this.dataSetPath = dataSetPath;
 
         System.out.println("A: " + chatUrl);
@@ -143,7 +149,7 @@ public class GlassesAgent
                 chatUrl,
                 apiKey,
                 beliefType,
-                "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/Plan1Settings.json");
+                "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan1Settings.json");
 
         llmFeature.connectToLLM("");
 
@@ -151,7 +157,12 @@ public class GlassesAgent
         JSONParser parser = new JSONParser();
         try {
             JSONObject dataset = (JSONObject) parser.parse(goal.getConvDataSetString());
-            JSONObject convDataSet = (JSONObject) plan.runCode(dataset);
+            ArrayList<Object> inputList = new ArrayList<Object>();
+            inputList.add(dataset);
+
+            ArrayList<Object> outputList = plan.runCode(inputList);
+
+            JSONObject convDataSet = (JSONObject) outputList.get(0);
             goal.setConvDataSetString(convDataSet.toString());
         } catch (ParseException e) {
             throw new RuntimeException(e);
@@ -167,7 +178,7 @@ public class GlassesAgent
                 chatUrl,
                 apiKey,
                 beliefType,
-                "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/Plan2Settings.json");
+                "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan2Settings.json");
 
         llmFeature.connectToLLM("");
 
@@ -175,7 +186,12 @@ public class GlassesAgent
         JSONParser parser = new JSONParser();
         try {
             JSONObject dataset = (JSONObject) parser.parse(goal.getConvDataSetString());
-            JSONObject convDataSet = (JSONObject) plan.runCode(dataset);
+            ArrayList<Object> inputList = new ArrayList<Object>();
+            inputList.add(dataset);
+
+            ArrayList<Object> outputList = plan.runCode(inputList);
+
+            JSONObject convDataSet = (JSONObject) outputList.get(0);
             goal.setConvDataSetString(convDataSet.toString());
         } catch (ParseException e) {
             throw new RuntimeException(e);
@@ -200,7 +216,7 @@ public class GlassesAgent
         IComponent.create(new GlassesAgent(
                 "https://api.openai.com/v1/chat/completions",
                 System.getenv("OPENAI_API_KEY"),
-                "application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json")
+                "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
         );
         IComponent.waitForLastComponentTerminated();
     }

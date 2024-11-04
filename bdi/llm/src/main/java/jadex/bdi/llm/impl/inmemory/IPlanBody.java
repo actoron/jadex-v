@@ -1,6 +1,8 @@
 package jadex.bdi.llm.impl.inmemory;
 
+import java.util.ArrayList;
+
 public interface IPlanBody
 {
-    Object runCode(Object data);
+    ArrayList<Object> runCode(ArrayList<Object> data);
 }

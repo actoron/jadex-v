@@ -143,21 +143,22 @@ public class MazeAgent
             ArrayList<Object> inputList = new ArrayList<Object>();
             inputList.add(mazePosition);
             inputList.add(envView);
-            inputList.add(brain);
+//            inputList.add(brain);
 
             // chatty run on given List, return List and extract Objects
-            ArrayList<Object> outputList = (ArrayList<Object>) plan.runCode(inputList);
+            ArrayList<Object> outputList = plan.runCode(inputList);
             Point retMazePos = (Point) outputList.get(0);
             direction = (String) outputList.get(1);
-            brain = outputList.get(2);
+//            brain = outputList.get(2);
 
             // set updated mazePos from chatty and return to console
             goal.setUpdatedPositionString(maze.jadexPointToString(retMazePos));
             System.out.println(mazePosition);
+            System.out.println(envView);
             maze.setAgent(retMazePos);
-            maze.removeAgent(mazePosition);
+//            maze.removeAgent(mazePosition);
 
-            // display maze, delete retMazePos from console output and wait one second
+            // display maze, delete retMazePos from console output and wait oyne second
             maze.displayMaze();
             System.out.println(retMazePos);
             System.out.println(direction);
