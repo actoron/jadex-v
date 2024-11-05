@@ -345,9 +345,13 @@ public class ComponentManager implements IComponentManager
 		//System.out.println("size: "+components.size()+" "+cid);
 	}
 
-	static Logger getLogger()
+	// Caching for small speedup (detected in PlainComponentBenchmark)
+	Logger	logger	= null;
+	Logger getLogger()
 	{
-		return System.getLogger(IComponent.class.getName());
+		if(logger==null)
+			logger	= System.getLogger(IComponent.class.getName());
+		return logger;
 //		System.out.println("CM get logger "+logger);
 	}
 	
