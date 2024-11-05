@@ -1,6 +1,7 @@
 package jadex.nfproperty.ranking;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -61,8 +62,8 @@ public class NFPropertyTestAgent
 	
 	public static void main(String[] args) 
 	{
-		IComponent.create(new NFPropertyTestAgent()).get();
+		IComponentManager.get().create(new NFPropertyTestAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

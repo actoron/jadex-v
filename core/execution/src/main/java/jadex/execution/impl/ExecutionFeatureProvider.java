@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.common.SReflect;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
@@ -238,33 +239,33 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}
 	
 	@Override
-	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		IExternalAccess ret;
 		
 		if(pojo instanceof Runnable)
 		{
-			ret = LambdaAgent.create((Runnable)pojo, cid);
+			ret = LambdaAgent.create((Runnable)pojo, cid, app);
 		}
 		else if(pojo instanceof Callable)
 		{
-			ret = LambdaAgent.create((Callable<?>)pojo, cid).component();
+			ret = LambdaAgent.create((Callable<?>)pojo, cid, app).component();
 		}
 		else if(pojo instanceof IThrowingFunction)
 		{
 			@SuppressWarnings("unchecked")
 			IThrowingFunction<IComponent, ?>	itf	= (IThrowingFunction<IComponent, ?>)pojo;
-			ret = LambdaAgent.create(itf, cid).component();
+			ret = LambdaAgent.create(itf, cid, app).component();
 		}
 		else if(pojo instanceof IThrowingConsumer)
 		{
 			@SuppressWarnings("unchecked")
 			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
-			ret = LambdaAgent.create(itc, cid);
+			ret = LambdaAgent.create(itc, cid, app);
 		}
 		else if(pojo instanceof LambdaPojo)
 		{
-			ret = LambdaAgent.create((LambdaPojo<?>)pojo, cid);
+			ret = LambdaAgent.create((LambdaPojo<?>)pojo, cid, app);
 		}
 		else
 		{

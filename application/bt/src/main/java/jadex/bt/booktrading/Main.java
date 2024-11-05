@@ -1,11 +1,8 @@
 package jadex.bt.booktrading;
 
 
-import java.lang.System.Logger.Level;
-
 import jadex.bt.booktrading.domain.Order;
-import jadex.core.IComponent;
-import jadex.logger.JadexLoggerFinder;
+import jadex.core.IComponentManager;
 
 /**
  *  Main for starting the example programmatically.
@@ -19,7 +16,7 @@ public class Main
 	{
 		//JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
 		
-		IComponent.create(new BuyerAgent(
+		IComponentManager.get().create(new BuyerAgent(
 			new Order[]
 			{
 				new Order("All about agents", 60000, 100, 120, true),
@@ -28,7 +25,7 @@ public class Main
 				new Order("Agents in the real world", 60000, 30, 65, true)
 			}));
 
-		IComponent.create(new SellerAgent(
+		IComponentManager.get().create(new SellerAgent(
 			new Order[]
 			{
 				new Order("All about agents", 60000, 130, 110, false),

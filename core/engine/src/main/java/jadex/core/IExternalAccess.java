@@ -47,7 +47,7 @@ public interface IExternalAccess
 	 */
 	public default IFuture<Void> terminate()
 	{
-		return IComponent.terminate(getId());
+		return IComponentManager.get().terminate(getId());
 	}
 	
 	/**
@@ -56,7 +56,7 @@ public interface IExternalAccess
 	 */
 	public default IFuture<Boolean> waitForTermination()
 	{
-		return IComponent.waitForTermination(getId());
+		return IComponentManager.get().waitForTermination(getId());
 	}
 	
 	/**

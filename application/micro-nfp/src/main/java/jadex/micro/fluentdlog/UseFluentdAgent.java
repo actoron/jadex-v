@@ -65,8 +65,8 @@ public class UseFluentdAgent
 		// system
 		
 		for(int i=0; i<1; i++)
-			IComponent.create(new UseFluentdAgent()).get();
+			IComponentManager.get().create(new UseFluentdAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

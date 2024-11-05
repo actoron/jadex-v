@@ -1,6 +1,7 @@
 package jadex.micro.tutorial.a8;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.execution.IExecutionFeature;
@@ -45,6 +46,6 @@ public class LambdaExceptions
 			action.run();
 		});
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

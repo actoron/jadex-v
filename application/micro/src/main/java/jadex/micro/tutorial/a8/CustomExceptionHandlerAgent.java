@@ -1,6 +1,7 @@
 package jadex.micro.tutorial.a8;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.impl.ComponentManager;
 import jadex.errorhandling.IErrorHandlingFeature;
@@ -31,8 +32,8 @@ public class CustomExceptionHandlerAgent
 			}));
 		});
 		
-		IComponent.create(new CustomExceptionHandlerAgent());
+		IComponentManager.get().create(new CustomExceptionHandlerAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

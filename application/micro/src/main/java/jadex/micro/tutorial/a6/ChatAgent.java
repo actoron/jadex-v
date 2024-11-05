@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -139,10 +140,10 @@ public class ChatAgent implements IChatService, IChatGuiService
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		IComponent.create(new ChatAgent());
-		IComponent.create(new ChatAgent());
-		IComponent.create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

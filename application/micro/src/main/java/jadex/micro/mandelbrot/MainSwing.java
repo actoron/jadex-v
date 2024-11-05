@@ -1,6 +1,6 @@
 package jadex.micro.mandelbrot;
 
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.micro.mandelbrot.calculate.CalculateAgent;
 import jadex.micro.mandelbrot.display.DisplayAgent;
 import jadex.micro.mandelbrot.generate.GenerateAgent;
@@ -20,16 +20,16 @@ public class MainSwing
 	{
 		//SUtil.DEBUG = true;
 
-		IComponent.create(new IntermediateTaskDistributorAgent<PartDataChunk, AreaData>());
-		IComponent.create(new GenerateAgent());
-		IComponent.create(new DisplayAgent());
+		IComponentManager.get().create(new IntermediateTaskDistributorAgent<PartDataChunk, AreaData>());
+		IComponentManager.get().create(new GenerateAgent());
+		IComponentManager.get().create(new DisplayAgent());
 		
 		int cores = Runtime.getRuntime().availableProcessors();
 		System.out.println("creating calculators: "+(cores+1));
 		for(int i=0; i<=cores; i++)
-			IComponent.create(new CalculateAgent());
+			IComponentManager.get().create(new CalculateAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }
 

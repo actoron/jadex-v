@@ -12,11 +12,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jadex.common.SUtil;
-import jadex.core.ApplicationContext;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
+import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.FutureBarrier;
@@ -38,7 +39,7 @@ public class Component implements IComponent
 	protected ComponentIdentifier id;
 	
 	/** The app id. */
-	protected String appid;
+	protected Application app;
 	
 	/** The external access. */
 	protected IExternalAccess access;
@@ -52,7 +53,7 @@ public class Component implements IComponent
 	 */
 	public Component()
 	{
-		this(null);
+		this(null, null);
 	}
 	
 	/**
@@ -62,13 +63,21 @@ public class Component implements IComponent
 	 */
 	public Component(ComponentIdentifier id)
 	{
+		this(id, null);
+	}
+	
+	/**
+	 *  Create a new component and instantiate all features (except lazy features).
+	 *  @param id	The id to use or null for an auto-generated id.
+	 *  @throws IllegalArgumentException when the id already exists. 
+	 */
+	public Component(ComponentIdentifier id, Application app)
+	{
 		this.id = id==null? new ComponentIdentifier(): id;
+		this.app = app;
+		
 		//System.out.println(this.id.getLocalName());
 		ComponentManager.get().addComponent(this);
-		//Component.addComponent(this); // is this good here?! 
-		
-		ApplicationContext appctx = ComponentManager.get().getApplicationContext();
-		this.appid = appctx!=null? appctx.id(): null;
 		
 		providers	= SComponentFeatureProvider.getProvidersForComponent(getClass());
 		
@@ -100,7 +109,7 @@ public class Component implements IComponent
 	 */
 	public String getAppId()
 	{
-		return appid;
+		return app!=null? app.getId(): null;
 	}
 
 	/**
@@ -197,7 +206,7 @@ public class Component implements IComponent
 			FutureBarrier<Void> bar = new FutureBarrier<Void>();
 			for(ComponentIdentifier cid: cids)
 			{
-				bar.add(IComponent.terminate(cid));
+				bar.add(IComponentManager.get().terminate(cid));
 			}
 			return bar.waitFor();
 		}

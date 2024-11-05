@@ -10,6 +10,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.PlanFailureException;
 import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -92,7 +93,7 @@ public class HelloPureGoalAgent
 	 */
 	public static void main(String[] args) 
 	{
-		IComponent.create(new HelloPureGoalAgent());
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().create(new HelloPureGoalAgent());
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

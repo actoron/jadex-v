@@ -7,7 +7,7 @@ import jadex.model.annotation.OnStart;
 
 /**
  *  Interface for inline pojo creation, i.e.
- *  IComponent.create(new IMicroAgent(){...})
+ *  IComponentManager.get().create(new IMicroAgent(){...})
  */
 @Agent
 public interface IMicroAgent 

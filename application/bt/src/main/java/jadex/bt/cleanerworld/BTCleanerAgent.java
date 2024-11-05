@@ -383,9 +383,9 @@ public class BTCleanerAgent implements IBTProvider
 	{
 		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
 		
-		IComponent.create(new BTCleanerAgent());
+		IComponentManager.get().create(new BTCleanerAgent());
 		//EnvironmentGui.create();
 		EnvGui.createEnv();
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

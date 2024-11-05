@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnEnd;
@@ -77,6 +78,6 @@ public class ChatAgent implements IChatService
 		//MjMicroAgent.create(new ChatAgent());
 		//MjMicroAgent.create(new ChatAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }
