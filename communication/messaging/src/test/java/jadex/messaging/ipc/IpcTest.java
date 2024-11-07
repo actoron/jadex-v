@@ -28,7 +28,7 @@ public class IpcTest
 	 */
 	public IpcTest()
 	{
-		byte[] bytes = new byte[32];
+		byte[] bytes = new byte[16];
 		SUtil.FAST_RANDOM.nextBytes(bytes);
 		
 		ipcdir = Path.of(System.getProperty("java.io.tmpdir")).resolve("ipc_test_"+SUtil.hex(bytes));
