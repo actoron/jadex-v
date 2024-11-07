@@ -84,8 +84,8 @@ public class UseGraylogAgent
 	        return gl;
 		}, true));
 		
-		IComponent.create(new UseGraylogAgent()).get();
+		IComponentManager.get().create(new UseGraylogAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

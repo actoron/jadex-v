@@ -2,6 +2,7 @@ package jadex.core.impl;
 
 import java.util.Map;
 
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
@@ -19,7 +20,7 @@ public interface IComponentLifecycleManager
 	/**
 	 *  Create a component for a POJO
 	 */
-	public IExternalAccess	create(Object pojo, ComponentIdentifier cid);
+	public IExternalAccess	create(Object pojo, ComponentIdentifier cid, Application app);
 
 //	/**
 //	 *  Run a component with a POJO and fetch the results, if any.

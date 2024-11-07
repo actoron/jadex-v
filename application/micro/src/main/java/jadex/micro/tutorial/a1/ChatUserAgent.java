@@ -3,6 +3,7 @@ package jadex.micro.tutorial.a1;
 import java.util.Collection;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
@@ -52,6 +53,6 @@ public class ChatUserAgent
 		
 		MicroAgent.create(new ChatUserAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

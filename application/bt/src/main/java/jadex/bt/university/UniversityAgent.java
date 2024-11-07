@@ -148,7 +148,7 @@ public class UniversityAgent implements IBTProvider
 		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
 
 		// raining, waiting
-		IComponent.create(new UniversityAgent(false, false));
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().create(new UniversityAgent(false, false));
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

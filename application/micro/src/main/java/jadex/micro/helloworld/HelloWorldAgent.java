@@ -1,8 +1,8 @@
 package jadex.micro.helloworld;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnEnd;
@@ -57,7 +57,7 @@ public class HelloWorldAgent
 	 */
 	public static void main(String[] args)
 	{
-		IComponent.create(new HelloWorldAgent("007"));
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().create(new HelloWorldAgent("007"));
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

@@ -2,6 +2,7 @@ package jadex.execution;
 
 import java.util.concurrent.Callable;
 
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
@@ -76,7 +77,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static IExternalAccess create(Runnable body)
 	{
-		return create(body, null);
+		return create(body, null, null);
 	}
 	
 	/**
@@ -85,7 +86,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static IExternalAccess create(IThrowingConsumer<IComponent> body)
 	{
-		return create(body, null);
+		return create(body, null, null);
 	}
 	
 	/**
@@ -94,7 +95,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static <T> Result<T> create(Callable<T> body)
 	{
-		return create(body, null);
+		return create(body, null, null);
 	}
 	
 	/**
@@ -103,16 +104,16 @@ public class LambdaAgent //extends Component
 	 */
 	public static <T> Result<T> create(IThrowingFunction<IComponent, T> body)
 	{
-		return create(body, null);
+		return create(body, null, null);
 	}
 	
 	/**
 	 *  Create a fire-and-forget component.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static IExternalAccess create(Runnable body, ComponentIdentifier cid)
+	public static IExternalAccess create(Runnable body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(cid));
+		Component comp = Component.createComponent(Component.class, () -> new Component(cid, app));
 		comp.getExternalAccess().scheduleStep(() -> body);
 		/*{
 			body.run();
@@ -126,9 +127,9 @@ public class LambdaAgent //extends Component
 	 *  @param body	The code to be executed in the new component.
 	 */
 	//public static <T> IFuture<T> create(Callable<T> body, ComponentIdentifier cid)
-	public static <T> Result<T> create(Callable<T> body, ComponentIdentifier cid)
+	public static <T> Result<T> create(Callable<T> body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(cid));
+		Component comp = Component.createComponent(Component.class, () -> new Component(cid, app));
 		IFuture<T> res = comp.getExternalAccess().scheduleStep(body);
 		//res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
 		//comp.result = res;
@@ -139,9 +140,9 @@ public class LambdaAgent //extends Component
 	 *  Create a component and receive a result, when the body finishes.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static <T> Result<T> create(IThrowingFunction<IComponent, T> body, ComponentIdentifier cid)
+	public static <T> Result<T> create(IThrowingFunction<IComponent, T> body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(cid));
+		Component comp = Component.createComponent(Component.class, () -> new Component(cid, app));
 		IFuture<T> res = comp.getExternalAccess().scheduleStep(body);
 		//res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
 		//comp.result = res;
@@ -152,9 +153,9 @@ public class LambdaAgent //extends Component
 	 *  Create a component and receive a result, when the body finishes.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static <T> IExternalAccess create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid)
+	public static <T> IExternalAccess create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(cid));
+		Component comp = Component.createComponent(Component.class, () -> new Component(cid, app));
 		comp.getExternalAccess().scheduleStep(body);
 		return comp.getExternalAccess();
 	}
@@ -163,20 +164,20 @@ public class LambdaAgent //extends Component
 	 *  Create a component and receive a result, when the body finishes.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static <T> IExternalAccess create(LambdaPojo<T> pojo, ComponentIdentifier cid)
+	public static <T> IExternalAccess create(LambdaPojo<T> pojo, ComponentIdentifier cid, Application app)
 	{
 		IExternalAccess ret = null;
 		Object body = pojo.getBody();
 		if(body instanceof IThrowingFunction)
 		{
-			Result<T> res = create((IThrowingFunction)body, cid);
+			Result<T> res = create((IThrowingFunction)body, cid, app);
 			ret = res.component();
 			res.result().then(r -> 
 				pojo.addResult("result", r));
 		}
 		else if(body instanceof Callable)
 		{
-			Result<T> res = create((Callable)body, cid);
+			Result<T> res = create((Callable)body, cid, app);
 			ret = res.component();
 			res.result().then(r -> 
 				pojo.addResult("result", r));

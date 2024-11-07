@@ -1,1 +1,2 @@
 jadex.errorhandling.ErrorHandlingFeatureProvider
+jadex.core.impl.CreationFeatureProvider

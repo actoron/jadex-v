@@ -36,6 +36,7 @@ import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
@@ -118,7 +119,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 		this.rulesystem = new RuleSystem(self.getPojo(), true);
 		
 		// step listener not working for async steps
-		// now done after action node actions
+		// now done additionally after action node actions
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BTStepListener());
 
 		super.onStart();
@@ -424,6 +425,8 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 			{
 				System.getLogger(this.getClass().getName()).log(Level.INFO, "final state: "+context+" "+state);
 				//System.out.println("final state: "+context+" "+state);
+				
+				IComponentManager.get().terminate(getSelf().getId());
 				
 				// todo: support repeat mode of node
 				/*if(NodeState.FAILED.equals(state))

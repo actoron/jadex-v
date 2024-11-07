@@ -3,6 +3,7 @@ package jadex.bpmn.runtime;
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.io.BpmnModelLoader;
 import jadex.common.SUtil;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
@@ -16,10 +17,10 @@ public class BpmnProcess extends Component
 
 	public static IExternalAccess create(Object pojo)
 	{
-		return create(pojo, null);
+		return create(pojo, null, null);
 	}
 	
-	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public static IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		Component comp = null;
 		String	filename;
@@ -35,7 +36,7 @@ public class BpmnProcess extends Component
 			{
 				// this is executed before the features are inited
 				IModelInfo model = loadModel(ffilename);
-				return new BpmnProcess((Object)null, model, cid);
+				return new BpmnProcess((Object)null, model, cid, app);
 			});
 			
 		}
@@ -52,7 +53,7 @@ public class BpmnProcess extends Component
 			{
 				// this is executed before the features are inited
 				IModelInfo model = loadModel(ffilename);
-				return new BpmnProcess((RBpmnProcess)pojo, model, cid);
+				return new BpmnProcess((RBpmnProcess)pojo, model, cid, app);
 			});
 		}
 		
@@ -61,14 +62,14 @@ public class BpmnProcess extends Component
 	
 	protected RBpmnProcess pojo;
 	
-	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid)
+	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		this((Object)info, model, cid);
+		this((Object)info, model, cid, app);
 	}
 	
-	protected BpmnProcess(Object pojo, IModelInfo model, ComponentIdentifier cid)
+	protected BpmnProcess(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		super(cid);
+		super(cid, app);
 		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
 		this.pojo = (RBpmnProcess)(pojo!=null ? pojo : createPojo(model));
 	}

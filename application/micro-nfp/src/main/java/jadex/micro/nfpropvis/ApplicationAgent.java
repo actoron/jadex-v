@@ -1,10 +1,7 @@
 package jadex.micro.nfpropvis;
 
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Component;
-import jadex.micro.annotation.Configuration;
-import jadex.micro.annotation.Configurations;
 
 /**
  *  Application configurations with users and providers. 
@@ -30,15 +27,15 @@ public class ApplicationAgent
 {
 	public static void main(String[] args) 
 	{
-		IComponent.create(new UserAgent(true));
+		IComponentManager.get().create(new UserAgent(true));
 	
 		for(int i=0; i<10; i++)
-			IComponent.create(new UserAgent()).get();
+			IComponentManager.get().create(new UserAgent()).get();
 		
 		for(int i=0; i<5; i++)
-			IComponent.create(new ProviderAgent()).get();
+			IComponentManager.get().create(new ProviderAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 	
 }

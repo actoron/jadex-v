@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jadex.common.SReflect;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
@@ -22,10 +23,10 @@ public class MicroAgent	extends Component
 	
 	public static IExternalAccess create(Object pojo)
 	{
-		return create(pojo, null);
+		return create(pojo, null, null);
 	}
 	
-	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public static IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		Component comp = Component.createComponent(MicroAgent.class, () -> 
 		{
@@ -34,7 +35,7 @@ public class MicroAgent	extends Component
 			{
 				//System.out.println("loaded micro model: "+model);
 				
-				return new MicroAgent(pojo, model, cid);
+				return new MicroAgent(pojo, model, cid, app);
 			}).get();
 		});
 		
@@ -45,12 +46,12 @@ public class MicroAgent	extends Component
 	
 	public MicroAgent(Object pojo, IModelInfo model)
 	{
-		this(pojo, model, null);
+		this(pojo, model, null, null);
 	}
 	
-	public MicroAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
+	public MicroAgent(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		super(cid);
+		super(cid, app);
 		this.pojo	= pojo;
 		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
 		//this.model = model;

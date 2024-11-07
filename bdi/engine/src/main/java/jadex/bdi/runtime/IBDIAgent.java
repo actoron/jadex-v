@@ -1,6 +1,7 @@
 package jadex.bdi.runtime;
 
 import jadex.bdi.runtime.impl.BDIAgent;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;
 import jadex.execution.IExecutionFeature;
@@ -25,9 +26,9 @@ public interface IBDIAgent extends IExecutionFeature, IBDIAgentFeature
 	 *  Object needs to provide soem initialization fields.
 	 *  @see BDIBaseAgent
 	 */
-	public static IExternalAccess	create(Object pojo, ComponentIdentifier cid)
+	public static IExternalAccess	create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return BDIAgent.create(pojo, cid);
+		return BDIAgent.create(pojo, cid, app);
 	}
 
 	/**
@@ -41,9 +42,9 @@ public interface IBDIAgent extends IExecutionFeature, IBDIAgentFeature
 	/**
 	 *  Create a BDI agent from a class to be enhanced.
 	 */
-	public static IExternalAccess	create(String classname, ComponentIdentifier cid)
+	public static IExternalAccess	create(String classname, ComponentIdentifier cid, Application app)
 	{
-		return BDIAgent.create(classname, cid);
+		return BDIAgent.create(classname, cid, app);
 	}
 
 	/**
@@ -57,8 +58,8 @@ public interface IBDIAgent extends IExecutionFeature, IBDIAgentFeature
 	/**
 	 *  Create a BDI agent from a class to be enhanced and optional args.
 	 */
-	public static IExternalAccess	create(BDICreationInfo info, ComponentIdentifier cid)
+	public static IExternalAccess	create(BDICreationInfo info, ComponentIdentifier cid, Application app)
 	{
-		return BDIAgent.create(info, cid);
+		return BDIAgent.create(info, cid, app);
 	}
 }

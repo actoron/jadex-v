@@ -25,7 +25,7 @@ public class JadexLoggerFinder extends LoggerFinder
 	
 	public JadexLoggerFinder()
 	{
-		System.out.println("logger finder init");
+		//System.out.println("logger finder init");
 		
 		Collection<IInternalLoggerProvider> iproviders = new ArrayList<IInternalLoggerProvider>(); 
 		ServiceLoader.load(IInternalLoggerProvider.class).forEach(prov ->

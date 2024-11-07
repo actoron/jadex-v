@@ -2,6 +2,7 @@ package jadex.messaging;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
@@ -40,7 +41,7 @@ public class SenderAgent
 
     public static void main(String[] args) 
     {
-    	IComponent.create(new SenderAgent(args[0]));
-        IComponent.waitForLastComponentTerminated();
+    	IComponentManager.get().create(new SenderAgent(args[0]));
+        IComponentManager.get().waitForLastComponentTerminated();
     }
 }

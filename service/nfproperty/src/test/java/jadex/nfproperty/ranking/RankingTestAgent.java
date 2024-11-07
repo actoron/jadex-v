@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import jadex.common.Tuple2;
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
 import jadex.micro.annotation.Agent;
 
@@ -22,9 +22,9 @@ public class RankingTestAgent
 		int n=20;
 		
 		for(int i=0; i<n; i++)
-			IComponent.create(new ServiceSearchAgent(false)).get();
+			IComponentManager.get().create(new ServiceSearchAgent(false)).get();
 		
-		IExternalAccess exta = IComponent.create(new RankingTestAgent()).get();
+		IExternalAccess exta = IComponentManager.get().create(new RankingTestAgent()).get();
 		
 		Collection<Tuple2<ICoreDependentService, Double>> sers = ServiceSearchAgent.searchAndRank(exta).get();
 	

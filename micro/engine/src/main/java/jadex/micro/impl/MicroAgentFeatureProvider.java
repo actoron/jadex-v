@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.common.SReflect;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
@@ -113,9 +114,9 @@ public class MicroAgentFeatureProvider extends ComponentFeatureProvider<MicroAge
 	}
 	
 	@Override
-	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return MicroAgent.create(pojo, cid);
+		return MicroAgent.create(pojo, cid, app);
 	}
 	
 	/*@Override
