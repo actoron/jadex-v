@@ -12,9 +12,8 @@ import java.util.logging.Logger;
 
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.digests.Blake3Digest;
-import org.bouncycastle.crypto.engines.ChaChaEngine;
-import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
-import org.bouncycastle.crypto.macs.Poly1305;
+import org.bouncycastle.crypto.modes.ChaCha20Poly1305;
+import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.util.Pack;
 
@@ -59,7 +58,7 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	// -------------- Operational state -----------------
 	
 	/** The ChaCha20 key. */
-	protected int[] key = new int[8];
+	protected byte[] key = new byte[32];
 	
 	/** The current message ID. */
 	protected AtomicLong msgid = new AtomicLong(AbstractCryptoSuite.MSG_ID_START);
@@ -357,9 +356,9 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 		authsuite = null;
 		if (key != null)
 		{
-			byte[] raw = new byte[key.length << 2];
-			SSecurity.getSecureRandom().nextBytes(raw);
-			Pack.littleEndianToInt(raw, 0, key);
+			//byte[] raw = new byte[key.length << 2];
+			SSecurity.getSecureRandom().nextBytes(key);
+			//Pack.littleEndianToInt(raw, 0, key);
 		}
 		key = null;
 		nonceprefix = 0;
@@ -643,8 +642,23 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 *  @param msgid Current message ID.
 	 *  @return 
 	 */
-	protected static final byte[] chacha20Poly1305Enc(byte[] content, int[] key, int nonceprefix, long msgid)
+	protected static final byte[] chacha20Poly1305Enc(byte[] content, byte[] key, int nonceprefix, long msgid)
 	{
+		ChaCha20Poly1305 cipher = getChaChaCipher(content, key, nonceprefix, msgid);
+		
+		byte[] encmsg = new byte[cipher.getOutputSize(content.length) + 16];
+		/*SUtil.intIntoBytes((int)(msgid >>> 32), encmsg, 0);
+		SUtil.intIntoBytes((int) msgid, encmsg, 4);*/
+		Pack.longToLittleEndian(msgid, encmsg, 8);
+		int len = cipher.processBytes(content, 0, content.length, encmsg, 16);
+		try
+		{
+			cipher.doFinal(encmsg, len + 16);
+		} catch (Exception e) {}
+		
+		return encmsg;
+		
+		/*
 		int[] state = new int[16];
 		int blockcount = 0;
 		
@@ -698,7 +712,7 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 		poly1305.update(ret, 0, ret.length - 16);
 		poly1305.doFinal(ret, 16 + retlen);
 		
-		return ret;
+		return ret;*/
 	}
 	
 	/**
@@ -707,12 +721,26 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 *  @param content Clear text being encrypted.
 	 *  @param key Key used for encryption/authentication.
 	 *  @param nonceprefix Local nonce prefix used.
-	 *  @param msgid Current message ID.
 	 *  @return Clear text or null if authentication failed.
 	 */
-	protected static final byte[] chacha20Poly1305Dec(byte[] content, int[] key, int nonceprefix)
+	protected static final byte[] chacha20Poly1305Dec(byte[] content, byte[] key, int nonceprefix)
 	{
-		byte[] ret = null;
+		ChaCha20Poly1305 cipher = getChaChaCipher(content, key, nonceprefix, null);
+		
+		byte[] decmsg = new byte[cipher.getOutputSize(content.length) + 8];
+		int len = cipher.processBytes(content, 16, content.length - 16, decmsg, 8);
+		try
+		{
+			cipher.doFinal(decmsg, len + 8);
+		} catch (Exception e)
+		{
+			// Validation likely failed.
+			decmsg = null;
+		}
+		
+		return decmsg;
+		
+		/*byte[] ret = null;
 		
 		try
 		{
@@ -769,7 +797,27 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 		{
 		}
 		
-		return ret;
+		return ret;*/
+	}
+	
+	public static final ChaCha20Poly1305 getChaChaCipher(byte[] content, byte[] key, int nonceprefix, Long msgid)
+	{
+		boolean enc = true;
+		if (msgid == null)
+		{
+			msgid = Pack.littleEndianToLong(content, 8);
+			enc = false;
+		}
+		
+		byte[] nonce = new byte[12];
+		SUtil.intIntoBytes(nonceprefix, nonce, 0);
+		SUtil.intIntoBytes((int)(msgid.longValue() >>> 32), nonce, 4);
+		SUtil.intIntoBytes((int) msgid.longValue(), nonce, 8);
+		
+		ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
+		AEADParameters keyparam = new AEADParameters(new KeyParameter(key), 128, nonce, null);
+		cipher.init(enc, keyparam);
+		return cipher;
 	}
 	
 	/**
@@ -832,7 +880,7 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 *  
 	 *  @return The ChaCha key.
 	 */
-	protected abstract int[] createChaChaKey(byte[] encapsulatedsecret);
+	protected abstract byte[] createChaChaKey(byte[] encapsulatedsecret);
 	
 	/**
 	 *  Gets the shared ChaCha key.
