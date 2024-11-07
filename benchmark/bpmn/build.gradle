@@ -37,6 +37,8 @@ dependencies
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	// required for gradle 9!? https://docs.gradle.org/8.7/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
@@ -50,6 +52,10 @@ task benchmark(type : Test) {
   minHeapSize = "4g"
   maxHeapSize = "4g"
   enableAssertions = false
+  
+  // https://docs.gradle.org/8.10.2/userguide/upgrading_version_8.html#test_task_default_classpath
+  testClassesDirs = testing.suites.test.sources.output.classesDirs
+  classpath = testing.suites.test.sources.runtimeClasspath
 }
 
 processResources {
