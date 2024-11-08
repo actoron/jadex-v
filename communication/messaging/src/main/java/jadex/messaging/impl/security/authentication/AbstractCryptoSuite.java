@@ -78,6 +78,10 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 				ret = missingids.remove(msgid);
 			}
 		}
+		else
+		{
+			System.out.println("Invalid: " + lowid + " " + highid + " " + msgid);
+		}
 		
 		return ret;
 	}
