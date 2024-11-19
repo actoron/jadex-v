@@ -542,17 +542,17 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 								do_switch	= false;
 								hasnext	= false;
 							}
-							else if(steps.isEmpty())
+							else if(steps.isEmpty() && !terminated)
 							{
-								// decrement on aborted is needed but breaks puzzle!?
-								if(/*!aborted &&*/ threadcount.decrementAndGet()<0)
+								// decrement only if not terminated, otherwise blocking lambda fails
+								if(threadcount.decrementAndGet()<0)
 								{
 									throw new IllegalStateException("Threadcount<0");
 								}
 								
 								hasnext	= false;
 								executing	= false;
-								idle();
+								idle();	// only call idle when not terminated
 							}
 						}
 					}
