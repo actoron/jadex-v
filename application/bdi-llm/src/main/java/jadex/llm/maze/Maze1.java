@@ -2,6 +2,7 @@ package jadex.llm.maze;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class Maze1
 {
@@ -51,12 +52,14 @@ public class Maze1
                 neighbours.add(left);
             }
 
-            if(neighbours.size() > 0)
+            if(!neighbours.isEmpty())
             {
                 int rand = (int) Math.floor(Math.random() * neighbours.size());
+                System.out.println("Found unvisited neighbour: " + neighbours.get(rand).x + ", " + neighbours.get(rand).y);
                 return neighbours.get(rand);
             } else
             {
+                System.out.println("No neighbours found");
                 return null;
             }
         }
@@ -84,7 +87,7 @@ public class Maze1
         {
             return -1;
         }
-        return x * cols + y ;
+        return x + y * cols ;
     }
 
     private void initializeMaze()
@@ -157,19 +160,30 @@ public class Maze1
     }
 
     public static void main(String[] args) {
-        Maze1 maze1 = new Maze1(3, 5);
-        maze1.setCurrentCell(2,1);
-
-//        maze1.displayMaze();
+        Maze1 maze1 = new Maze1(10, 10);
+        maze1.setCurrentCell(4,4);
 
         Cell current = maze1.maze.get(maze1.index(maze1.currentX, maze1.currentY));
-        System.out.println(current.x + " " + current.y);
-        Cell next = current.checkNeighbours();
+        current.visited = true;
+        ArrayList<Cell> path = new ArrayList<>();
+        path.add(current);
 
-//        while (next != null) {
-//            next.visited = true;
-//            current = next;
-//            maze1.displayMaze();
-//        }
+        while(!path.isEmpty()){
+            current = path.get(path.size()-1);
+            System.out.println("Current cell: " + current.x + ", " + current.y);
+            Cell next = current.checkNeighbours();
+            if (next != null)
+            {
+                next.visited = true;
+//                current = next;
+                path.add(next);
+                System.out.println("Moving to next cell: " + next.x + ", " + next.y);
+            } else
+            {
+                System.out.println("Backtracking from cell: " + current.x + ", " + current.y);
+                path.remove(path.size() - 1);
+            }
+            maze1.displayMaze();
+        }
     }
 }
