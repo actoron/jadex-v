@@ -1,8 +1,6 @@
 package jadex.llm.maze;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 public class Maze1
 {
@@ -27,34 +25,44 @@ public class Maze1
         public Cell checkNeighbours()
         {
             ArrayList<Cell> neighbours = new ArrayList<>();
-            Cell top = maze.get(index(x, y - 1));
-            Cell right = maze.get(index(x + 1, y));
-            Cell bottom = maze.get(index(x, y + 1));
-            Cell left = maze.get(index(x - 1, y));
-
-            if (top != null && !top.visited)
+            if (y>0)
             {
-                neighbours.add(top);
+                Cell top = maze.get(index(x, y - 1));
+                if (top != null && !top.visited)
+                {
+                    neighbours.add(top);
+                }
             }
 
-            if (right != null && !right.visited)
+            if (x < cols - 1)
             {
-                neighbours.add(right);
+                Cell right = maze.get(index(x + 1, y));
+                if (right != null && !right.visited)
+                {
+                    neighbours.add(right);
+                }
             }
 
-            if (bottom != null && !bottom.visited)
+            if (y < rows - 1)
             {
-                neighbours.add(bottom);
+                Cell bottom = maze.get(index(x, y + 1));
+                if (bottom != null && !bottom.visited)
+                {
+                    neighbours.add(bottom);
+                }
             }
 
-            if (left != null && !left.visited)
-            {
-                neighbours.add(left);
+            if (x > 0) {
+                Cell left = maze.get(index(x - 1, y));
+                if (left != null && !left.visited) {
+                    neighbours.add(left);
+                }
             }
 
             if(!neighbours.isEmpty())
             {
                 int rand = (int) Math.floor(Math.random() * neighbours.size());
+                Cell chosen = neighbours.get(rand);
                 System.out.println("Found unvisited neighbour: " + neighbours.get(rand).x + ", " + neighbours.get(rand).y);
                 return neighbours.get(rand);
             } else
@@ -159,31 +167,44 @@ public class Maze1
         }
     }
 
-    public static void main(String[] args) {
-        Maze1 maze1 = new Maze1(10, 10);
-        maze1.setCurrentCell(4,4);
+    public void removeWall(Cell current, Cell next)
+    {
+
+    }
+
+    public static void main(String[] args)
+    {
+        Maze1 maze1 = new Maze1(5, 5);
+        maze1.setCurrentCell(2,2);
 
         Cell current = maze1.maze.get(maze1.index(maze1.currentX, maze1.currentY));
+        //Mark current cell as visited and put into ArrayList
         current.visited = true;
         ArrayList<Cell> path = new ArrayList<>();
         path.add(current);
 
-        while(!path.isEmpty()){
+        while(!path.isEmpty())
+        {
             current = path.get(path.size()-1);
             System.out.println("Current cell: " + current.x + ", " + current.y);
             Cell next = current.checkNeighbours();
             if (next != null)
             {
+                //Mark the next cell as visited and put into ArrayList
                 next.visited = true;
-//                current = next;
                 path.add(next);
                 System.out.println("Moving to next cell: " + next.x + ", " + next.y);
+                maze1.displayMaze();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             } else
             {
                 System.out.println("Backtracking from cell: " + current.x + ", " + current.y);
                 path.remove(path.size() - 1);
             }
-            maze1.displayMaze();
         }
     }
 }
