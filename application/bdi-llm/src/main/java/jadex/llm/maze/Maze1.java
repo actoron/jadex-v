@@ -63,15 +63,14 @@ public class Maze1
             {
                 int rand = (int) Math.floor(Math.random() * neighbours.size());
                 Cell chosen = neighbours.get(rand);
-                System.out.println("Found unvisited neighbour: " + neighbours.get(rand).x + ", " + neighbours.get(rand).y);
-                return neighbours.get(rand);
+//                System.out.println("Found unvisited neighbour: " + chosen.x + ", " + chosen.y);
+                return chosen;
             } else
             {
-                System.out.println("No neighbours found");
+//                System.out.println("No neighbours found");
                 return null;
             }
         }
-
     }
 
     private final int cols, rows;
@@ -106,7 +105,6 @@ public class Maze1
             {
                 Cell cell = new Cell(x, y);
                 maze.add(cell);
-
             }
         }
     }
@@ -146,7 +144,7 @@ public class Maze1
                 Cell cell = maze.get(index(x,y));
                 if (cell.visited)
                 {
-                    System.out.print(cell.walls[3] ? "| █ " : "  █ ");
+                    System.out.print(cell.walls[3] ? "|   " : "    ");
                 } else
                 {
                     System.out.print(cell.walls[3] ? "|   " : "    ");
@@ -169,12 +167,33 @@ public class Maze1
 
     public void removeWall(Cell current, Cell next)
     {
+        int xDiff = Math.subtractExact(current.x, next.x);
+        int yDiff = Math.subtractExact(current.y, next.y);
 
+        if (xDiff == 1)
+        {
+            current.walls[3] = false;
+            next.walls[1] = false;
+        } else if (xDiff == -1)
+        {
+            current.walls[1] = false;
+            next.walls[3] = false;
+        }
+
+        if (yDiff == 1)
+        {
+            current.walls[0] = false;
+            next.walls[2] = false;
+        } else if (yDiff == -1)
+        {
+            current.walls[2] = false;
+            next.walls[0] = false;
+        }
     }
 
     public static void main(String[] args)
     {
-        Maze1 maze1 = new Maze1(5, 5);
+        Maze1 maze1 = new Maze1(10, 10);
         maze1.setCurrentCell(2,2);
 
         Cell current = maze1.maze.get(maze1.index(maze1.currentX, maze1.currentY));
@@ -186,25 +205,27 @@ public class Maze1
         while(!path.isEmpty())
         {
             current = path.get(path.size()-1);
-            System.out.println("Current cell: " + current.x + ", " + current.y);
+//            System.out.println("Current cell: " + current.x + ", " + current.y);
             Cell next = current.checkNeighbours();
             if (next != null)
             {
                 //Mark the next cell as visited and put into ArrayList
                 next.visited = true;
                 path.add(next);
-                System.out.println("Moving to next cell: " + next.x + ", " + next.y);
-                maze1.displayMaze();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                //Remove wall between current & next
+                maze1.removeWall(current, next);
+//                System.out.println("Moving to next cell: " + next.x + ", " + next.y);
+//                try {
+//                    Thread.sleep(500);
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
             } else
             {
-                System.out.println("Backtracking from cell: " + current.x + ", " + current.y);
+//                System.out.println("Backtracking from cell: " + current.x + ", " + current.y);
                 path.remove(path.size() - 1);
             }
         }
+        maze1.displayMaze();
     }
 }
