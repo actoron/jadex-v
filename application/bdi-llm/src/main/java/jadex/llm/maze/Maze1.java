@@ -13,6 +13,7 @@ public class Maze1
         boolean[] walls = {true, true, true, true}; // top, right, bottom, left;
         boolean visited;
         boolean current;
+        boolean food;
 
         public Cell(int x, int y)
         {
@@ -20,6 +21,7 @@ public class Maze1
             this.y = y;
             this.visited = false;
             this.current = false;
+            this.food = false;
         }
 
         public Cell checkNeighbours()
@@ -189,6 +191,11 @@ public class Maze1
             current.walls[2] = false;
             next.walls[0] = false;
         }
+    }
+
+    public void setFood(int x, int y)
+    {
+
     }
 
     public static void main(String[] args)
