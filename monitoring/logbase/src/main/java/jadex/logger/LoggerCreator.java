@@ -40,8 +40,13 @@ public record LoggerCreator(String name, Function<String, Boolean> filter, Funct
         }
         return ret;
     }
+    
+    public boolean IsSystem() 
+    {
+		return system;
+	}
 
-    private static int getFilterId(Function<String, Boolean> filter) 
+	private static int getFilterId(Function<String, Boolean> filter) 
     {
         return ids.computeIfAbsent(filter, key -> nextid.getAndIncrement());
     }
