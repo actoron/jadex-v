@@ -1,6 +1,5 @@
 package jadex.execution.impl;
 
-import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,9 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 
-import jadex.common.IResultCommand;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
@@ -65,7 +62,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public void scheduleStep(Runnable r)
 	{
 		if(terminated)
-			throw new ComponentTerminatedException(self.getId());
+			throw new ComponentTerminatedException(getComponent().getId());
 		
 		boolean	startnew	= false;
 		synchronized(this)
@@ -92,7 +89,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		if(terminated)
 		{
-			ret.setException(new ComponentTerminatedException(self.getId()));
+			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
 		}
 		
@@ -166,7 +163,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		if(terminated)
 		{
-			ret.setException(new ComponentTerminatedException(self.getId()));
+			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
 		}
 		
@@ -220,7 +217,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		if(terminated)
 		{
-			ret.setException(new ComponentTerminatedException(self.getId()));
+			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
 		}
 		
@@ -267,7 +264,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		if(terminated)
 		{
-			ret.setException(new ComponentTerminatedException(self.getId()));
+			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
 		}
 		
@@ -349,7 +346,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		if(terminated)
 		{
-			ret.setException(new ComponentTerminatedException(self.getId()));
+			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
 		}
 		
@@ -359,7 +356,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			//	timer = new Timer();
 			//timer_entries++;
 			
-			TimerTaskInfo task = new TimerTaskInfo(self.getId(), ret);
+			TimerTaskInfo task = new TimerTaskInfo(getComponent().getId(), ret);
 			task.setTask(new TimerTask()
 			{
 				@Override
@@ -757,7 +754,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		terminated = true;
 		
-		//System.out.println("terminate start: "+self.getId()+" "+steps.size());
+		//System.out.println("terminate start: "+getComponent().getId()+" "+steps.size());
 		
 		// Terminate blocked threads
 		// Do first to unblock futures before setting results later
@@ -775,7 +772,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		
 		// Drop queued steps.
-		ComponentTerminatedException ex = new ComponentTerminatedException(self.getId());
+		ComponentTerminatedException ex = new ComponentTerminatedException(getComponent().getId());
 		for(Object step: steps)
 		{
 			if(step instanceof StepInfo)
@@ -794,7 +791,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			
 			for(TimerTaskInfo tti: ttis)
 			{
-				if(self.getId().equals(tti.getComponentId()))
+				if(getComponent().getId().equals(tti.getComponentId()))
 				{
 					todo.add(tti);
 					tti.getTask().cancel();
@@ -879,6 +876,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			// Print and otherwise ignore any other exceptions
 			RuntimeException ex = new RuntimeException("Exception in step", t);//.printStackTrace();
+			ex.printStackTrace();
 			self.handleException(ex);
 		}
 		
@@ -944,7 +942,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				endstep = res;
 				endfuture = fut;
 				ret = true;
-				//System.out.println("endstep: "+self.getId()+" "+this.hashCode());
+				//System.out.println("endstep: "+getComponent().getId()+" "+this.hashCode());
 			}
 			else
 			{

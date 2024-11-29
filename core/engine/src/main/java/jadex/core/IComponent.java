@@ -1,18 +1,5 @@
 package jadex.core;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
-
-import jadex.core.impl.ComponentManager;
-import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.SComponentFeatureProvider;
-import jadex.future.Future;
 import jadex.future.IFuture;
 
 /**

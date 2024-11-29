@@ -198,6 +198,7 @@ includeBuild('rules/eca') {}
 includeBuild('monitoring/logbase') {}
 includeBuild('monitoring/graylog') {}
 includeBuild('monitoring/fluentd') {}
+includeBuild('monitoring/opentelemetry') {}
 includeBuild('monitoring/log4j') {}
 
 includeBuild('application/micro'){name='application-micro'}

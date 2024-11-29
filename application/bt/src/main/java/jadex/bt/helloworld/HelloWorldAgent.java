@@ -13,6 +13,7 @@ import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.logger.ILoggingFeature;
+import jadex.logger.OpenTelemetryLogger;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnEnd;
 
@@ -26,6 +27,8 @@ public class HelloWorldAgent implements IBTProvider
 		{ 
 			Future<NodeState> ret = new Future<>();
 			System.out.println("Hello from behavior trees: "+agent.getId()+" "+agent.getAppId());
+			System.getLogger(""+HelloWorldAgent.class).log(Level.INFO, "Hello from behavior trees 1: "+agent.getId()+" "+agent.getAppId());
+			System.getLogger(""+HelloWorldAgent.class).log(Level.WARNING, "Hello from behavior trees 2: "+agent.getId()+" "+agent.getAppId());
 			agent.getFeature(IExecutionFeature.class).waitForDelay(2000).then(Void -> ret.setResult(NodeState.SUCCEEDED)).catchEx(ret);
 			return ret;//new Future<>(NodeState.SUCCEEDED);
 		}));
@@ -40,10 +43,19 @@ public class HelloWorldAgent implements IBTProvider
 	
 	public static void main(String[] args)
 	{
-		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.ALL);
+		//System.setProperty(FluentdLogger.HOST, "localhost");
+		//System.setProperty(FluentdLogger.PORT, "34224"); // default port for forward protocol is 24224
 		
 		//IComponentManager.get().create(new HelloWorldAgent()).get();
 		//IComponentManager.get().waitForLastComponentTerminated();
+		
+		System.setProperty(OpenTelemetryLogger.URL, "https://otel.actoron.com");
+		//System.setProperty(OpenTelemetryLogger.LOGLEVEL, "WARNING");
+		
+		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.ERROR);
+		//IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultAppLoggingLevel(Level.WARNING);
+		
+		//IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.ALL);
 
 		Application app1 = new Application("HelloWorld1");
 		app1.create(new HelloWorldAgent()).get();
