@@ -28,7 +28,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:logbase:'+v
-	implementation 'org.fluentd:fluent-logger:0.3.4'
+	//implementation 'org.fluentd:fluent-logger:0.3.4'
 	
 	implementation 'io.opentelemetry:opentelemetry-api:1.44.1';
 	implementation 'io.opentelemetry:opentelemetry-sdk:1.44.1';
