@@ -1,11 +1,15 @@
 package jadex.lambdaservice.mandelbrot;
 
+import org.junit.jupiter.api.Test;
+
 import jadex.future.Future;
 
 public class MandelbrotService
 {
-	public static void main(String[] args)
+	@Test
+	public void testSyntax()
 	{
+		// Just test if this compiles -> create() is currently nop
 		LambdaService.create((ICalculateService) (x,y,depth) ->
 		{
 			int	i;

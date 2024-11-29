@@ -96,7 +96,7 @@ public class BIKEX448ChaCha20Poly1305Suite extends AbstractChaCha20Poly1305Suite
 	 *  
 	 *  @return The ChaCha key.
 	 */
-	protected int[] createChaChaKey(byte[] encapsulatedsecret)
+	protected byte[] createChaChaKey(byte[] encapsulatedsecret)
 	{
 		BIKEKEMExtractor bkext = new BIKEKEMExtractor((BIKEPrivateKeyParameters) generatedkey.bikekey().getPrivate());
 		byte[] remotebikesecret = bkext.extractSecret(encapsulatedsecret);
@@ -130,7 +130,7 @@ public class BIKEX448ChaCha20Poly1305Suite extends AbstractChaCha20Poly1305Suite
 		x448agreement = null;
 		x448remotepublickey = null;
 		
-		return convertToChaChaKey(rawchacha);
+		return rawchacha; // convertToChaChaKey(rawchacha);
 	}
 	
 	public static void main(String[] args)
@@ -144,8 +144,8 @@ public class BIKEX448ChaCha20Poly1305Suite extends AbstractChaCha20Poly1305Suite
 		byte[] encsec1 = suite1.getEncapsulatedSecret();
 		byte[] encsec2 = suite2.getEncapsulatedSecret();
 		
-		int[] chacha1 = suite1.createChaChaKey(encsec2);
-		int[] chacha2 = suite2.createChaChaKey(encsec1);
+		byte[] chacha1 = suite1.createChaChaKey(encsec2);
+		byte[] chacha2 = suite2.createChaChaKey(encsec1);
 		
 		System.out.println(Arrays.toString(chacha1));
 		System.out.println(Arrays.toString(chacha2));

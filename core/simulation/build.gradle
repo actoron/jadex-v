@@ -29,8 +29,12 @@ dependencies
 	implementation 'org.activecomponents.jadex:future:'+v
 	testImplementation 'org.activecomponents.jadex:common:'+v
 	testImplementation testFixtures('org.activecomponents.jadex:execution:'+v)
+	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	
+	// Hack!? cf. https://stackoverflow.com/a/77605392
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test 

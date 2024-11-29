@@ -82,11 +82,18 @@ public class ReceiverAgent
         
         System.out.println("Receiver listening: " + agent.getId());
         
-        Process subproc = SUtil.runJvmSubprocess(SenderAgent.class, null, Arrays.asList(new String[] { agent.getId().toString() }), true);
-		
-        oneshot.get();
-        exchange.get();
-        subproc.destroy();
+        Process subproc	= null;
+        try
+        {
+	        subproc = SUtil.runJvmSubprocess(SenderAgent.class, null, Arrays.asList(new String[] { agent.getId().toString() }), true);
+			
+	        oneshot.get();
+	        exchange.get();
+        }
+        finally
+        {
+        	subproc.destroy();
+        }
         System.out.println("Messaging Test successful.");
         agent.terminate();
     }

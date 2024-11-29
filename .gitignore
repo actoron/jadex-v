@@ -32,3 +32,4 @@ startHelloWorld.sh
 /benchmark/thirdparty/MTPs-Main-Container.txt
 /benchmark/.pydevproject
 /benchmark/execution/.benchmark_ide
+/benchmark/.venv

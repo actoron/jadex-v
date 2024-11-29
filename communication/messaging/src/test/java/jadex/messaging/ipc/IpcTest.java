@@ -1,5 +1,6 @@
 package jadex.messaging.ipc;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,23 @@ import jadex.messaging.security.Security;
  */
 public class IpcTest
 {
+	/** Random IPC directory */
+	private Path ipcdir;
+	
+	/**
+	 *  Initializes the test.
+	 */
+	public IpcTest()
+	{
+		byte[] bytes = new byte[16];
+		SUtil.FAST_RANDOM.nextBytes(bytes);
+		
+		ipcdir = Path.of(System.getProperty("java.io.tmpdir")).resolve("ipc_test_"+SUtil.hex(bytes));
+		ipcdir.toFile().mkdir();
+		ipcdir.toFile().deleteOnExit();
+		System.out.println("IPC Test Path is " + ipcdir);
+	}
+	
 	/**
 	 * Self-Test.
 	 * 
@@ -114,6 +132,7 @@ public class IpcTest
 	private IpcStreamHandler getIpcStreamHandler(ComponentIdentifier cid)
 	{
 		IpcStreamHandler ipc = new IpcStreamHandler(cid.getGlobalProcessIdentifier());
+		ipc.setSocketDirectory(ipcdir);
 		ipc.open();
 		return ipc;
 	}
@@ -126,7 +145,7 @@ public class IpcTest
 	 */
 	private ComponentIdentifier getIpcComponentTestId(String compname)
 	{
-		long pid = 1000000000 + (Math.abs(SSecurity.getSecureRandom().nextInt()) % 1000000);
+		long pid = 1000000000 + (Math.abs(SSecurity.getSecureRandom().nextInt()) % 10000000);
 		ComponentIdentifier ret = new ComponentIdentifier(compname, new GlobalProcessIdentifier(pid, GlobalProcessIdentifier.SELF.host()));
 		return ret;
 	}

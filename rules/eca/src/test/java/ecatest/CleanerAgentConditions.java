@@ -1,5 +1,7 @@
 package ecatest;
 
+import org.junit.jupiter.api.Test;
+
 import jadex.rules.eca.RuleSystem;
 import jadex.rules.eca.annotations.Action;
 import jadex.rules.eca.annotations.Condition;
@@ -37,10 +39,8 @@ public class CleanerAgentConditions
 		System.out.println("loading");
 	}
 	
-	/**
-	 *  Main for testing.
-	 */
-	public static void main(String[] args)
+	@Test
+	public void someTest()
 	{
 		RuleSystem rs = new RuleSystem(null);
 		CleanerAgentConditions cac = new CleanerAgentConditions();
