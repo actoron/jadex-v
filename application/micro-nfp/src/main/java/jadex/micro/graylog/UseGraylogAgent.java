@@ -50,7 +50,7 @@ public class UseGraylogAgent
 		}*/
 		, name -> 
 		{
-			GraylogLogger ret = new GraylogLogger(name);
+			GraylogLogger ret = new GraylogLogger(name, false);
 			java.util.logging.Logger logger = ret.getLoggerImplementation();
 	        logger.setUseParentHandlers(false);
 	        GelfHandler handler = new GelfHandler();
@@ -74,7 +74,7 @@ public class UseGraylogAgent
 		}*/
 		, name -> 
 		{
-			GraylogLogger gl = new GraylogLogger(name);
+			GraylogLogger gl = new GraylogLogger(name, true);
 			java.util.logging.Logger logger = gl.getLoggerImplementation();
 	        logger.setUseParentHandlers(false);
 	        GelfHandler handler = new GelfHandler();
