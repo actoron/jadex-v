@@ -19,11 +19,12 @@ public class OpenTelemetryLogger implements Logger
     public OpenTelemetryLogger(String name, boolean system) 
     {
     	System.out.println("created otel logger: "+name);
+    	//Thread.dumpStack();
     	this.logger = java.util.logging.Logger.getLogger(name);
         this.system = system;
 
         logger.setUseParentHandlers(false);
-        logger.addHandler(new OpenTelemetryLogHandler());
+        logger.addHandler(new OpenTelemetryLogHandler(name));
         //logger.setLevel(level!=null? java.util.logging.Level.ALL);
     }
     

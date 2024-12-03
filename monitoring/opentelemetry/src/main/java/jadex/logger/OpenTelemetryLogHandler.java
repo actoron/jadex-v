@@ -3,6 +3,7 @@ package jadex.logger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -24,11 +25,26 @@ import jadex.core.impl.GlobalProcessIdentifier;
 
 public class OpenTelemetryLogHandler extends Handler 
 {
-    private final Logger logger;
+    //private final Logger logger;
 
-    public static OpenTelemetry otel;
+	private String loggername;
+	
+    private static OpenTelemetry otel = null;
     
-    static
+    private static OpenTelemetry getOrInitializeOpenTelemetry() 
+    {
+        if (otel == null) 
+        {
+            synchronized(OpenTelemetryLogHandler.class) 
+            {
+                if(otel == null) 
+                	otel = initializeOpenTelemetry();
+            }
+        }
+        return otel;
+    }
+    
+    private static OpenTelemetry initializeOpenTelemetry() 
     {
         String url = System.getenv(OpenTelemetryLogger.URL)!=null? System.getenv(OpenTelemetryLogger.URL): System.getProperty(OpenTelemetryLogger.URL);
         String key = System.getenv(OpenTelemetryLogger.KEY)!=null? System.getenv(OpenTelemetryLogger.KEY): System.getProperty(OpenTelemetryLogger.KEY);
@@ -48,14 +64,19 @@ public class OpenTelemetryLogHandler extends Handler
         
         OpenTelemetrySdkBuilder otelb = OpenTelemetrySdk.builder();
         otelb.setLoggerProvider(provider);
-        otel = otelb.buildAndRegisterGlobal();
-        
-       	System.out.println("otel init: "+url+" "+key);
+        System.out.println("otel init: "+url+" "+key);
+        return otelb.buildAndRegisterGlobal();
     }
     
-    public OpenTelemetryLogHandler() 
+    public OpenTelemetryLogHandler(String loggername) 
     {
-        this.logger = otel.getLogsBridge().get("java-util-logging");
+        //this.logger = getOrInitializeOpenTelemetry().getLogsBridge().get(loggername);
+    	this.loggername = loggername;
+    }
+    
+    public Logger getLogger(String loggername)
+    {
+    	return getOrInitializeOpenTelemetry().getLogsBridge().get(loggername);
     }
 
     @Override
@@ -69,7 +90,7 @@ public class OpenTelemetryLogHandler extends Handler
     	Instant instant = Instant.ofEpochMilli(record.getMillis());
     	String isotime = DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC).format(instant);
 
-        LogRecordBuilder builder = logger.logRecordBuilder()
+        LogRecordBuilder builder = getLogger(loggername).logRecordBuilder()
             .setBody(record.getMessage())
         	.setSeverity(mapJulLevelToOtelSeverity(record.getLevel())) 
            	.setSeverityText(record.getLevel().getName())
