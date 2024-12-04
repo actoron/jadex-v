@@ -15,12 +15,13 @@ public class OpenTelemetryLogger implements Logger
 	
     protected java.util.logging.Logger logger;
     protected final boolean system;
+    protected String name;
 
     public OpenTelemetryLogger(String name, boolean system) 
     {
     	System.out.println("created otel logger: "+name);
-    	//Thread.dumpStack();
-    	this.logger = java.util.logging.Logger.getLogger(name);
+    	this.name = name;
+    	this.logger = java.util.logging.Logger.getLogger(name+"_otel");
         this.system = system;
 
         logger.setUseParentHandlers(false);
@@ -41,7 +42,7 @@ public class OpenTelemetryLogger implements Logger
     @Override
     public String getName() 
     {
-        return logger.getName();
+        return name;//logger.getName();
     }
 
     @Override
