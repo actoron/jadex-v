@@ -1,21 +1,33 @@
 package jadex.benchmark;
 
 import java.io.IOException;
+import java.lang.System.Logger.Level;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.sdk.logs.SdkLoggerProvider;
 import jadex.common.SUtil;
+import jadex.core.IComponentManager;
+import jadex.core.impl.ComponentManager;
 
 public class BenchmarkHelper
 {
+	static
+	{
+		System.setProperty("OT_URL", "https://otel.actoron.com");
+	}
+	
 	protected static String	getCaller()
 	{
 		StackTraceElement[]	stels	= new Exception().fillInStackTrace().getStackTrace();
@@ -57,7 +69,7 @@ public class BenchmarkHelper
 				{
 					System.out.println("Per component: "+took);
 					System.out.println("runs: "+cnt);
-					addToDB(took);
+					addToDB(took, false);
 					best	= Math.min(best, took);
 					System.out.println();
 				}
@@ -66,7 +78,7 @@ public class BenchmarkHelper
 					teardown.run();
 			}
 			System.out.println("best: "+best);
-			return addToDB(best);
+			return addToDB(best, true);
 		}
 		catch(Exception e)
 		{
@@ -118,7 +130,7 @@ public class BenchmarkHelper
 					System.out.println("took: "+took);
 					System.out.println("runs: "+cnt*runs);
 					
-					addToDB(took);
+					addToDB(took, false);
 					best	= Math.min(best, took);
 					
 					System.out.println("Used memory: "+usedmem);
@@ -132,7 +144,7 @@ public class BenchmarkHelper
 				}
 			}
 			System.out.println("best: "+best);
-			return addToDB(best);
+			return addToDB(best, true);
 		}
 		catch(Exception e)
 		{
@@ -140,13 +152,16 @@ public class BenchmarkHelper
 		}
 	}
 
-	protected static double	addToDB(double value) throws IOException
+	/**
+	 *  Compare value to DB and (optionally) write new value.
+	 */
+	protected static double	addToDB(double value, boolean write) throws IOException
 	{
-		boolean	gradle	= System.getenv().toString().contains("gradle");
+		String	execenv	= System.getenv().toString().contains("gradle") ? "gradle" : "ide";
 		
 		double	pct	= 0;
 		String	caller	= getCaller();
-		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark_ide", caller+".json");
+		Path	db	= Path.of(".benchmark_"+execenv, caller+".json");
 		double	prev	= 0;
 		if(db.toFile().exists())
 		{
@@ -163,11 +178,49 @@ public class BenchmarkHelper
 			System.out.println("Change(%): "+pct);
 		}
 
-		JsonObject	obj	= new JsonObject();
-		obj.add("best", prev==0 ? value : Math.min(value, prev));
-		obj.add("last", value);
-		db.toFile().getParentFile().mkdirs();
-		Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
+		if(write)
+		{
+			// Write to file
+			JsonObject	obj	= new JsonObject();
+			obj.add("best", prev==0 ? value : Math.min(value, prev));
+			obj.add("last", value);
+			db.toFile().getParentFile().mkdirs();
+			Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
+			
+			// Write to log
+			// logfmt
+			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
+				  "benchmark=true"
+				+" benchmark_host="+((ComponentManager)IComponentManager.get()).host()
+				+" benchmark_execenv="+execenv
+				+" benchmark_name="+caller
+				+" benchmark_value="+value
+				+" benchmark_prev="+prev
+				+" benchmark_pct="+pct);
+			// JSON
+//			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
+//					  "{\"benchmark\": true"
+//					+", \"benchmark_host\": \""+((ComponentManager)IComponentManager.get()).host()+"\""
+//					+", \"benchmark_execenv\": \""+execenv+"\""
+//					+", \"benchmark_name\": \""+caller+"\""
+//					+", \"benchmark_value\": "+value
+//					+", \"benchmark_prev\": "+prev
+//					+", \"benchmark_pct\": "+pct
+//					+"}");
+			
+			// Hack!!! Force OpenTelemetry to push logs before exiting
+			try
+			{
+				Object	obfuscatedLoggerProvider	= GlobalOpenTelemetry.get().getLogsBridge();
+				Method	unobfuscate	= obfuscatedLoggerProvider.getClass().getMethod("unobfuscate");
+				unobfuscate.setAccessible(true);
+				((SdkLoggerProvider)unobfuscate.invoke(obfuscatedLoggerProvider)).forceFlush().join(10, TimeUnit.SECONDS);
+			}
+			catch(Exception e)
+			{
+				SUtil.throwUnchecked(e);
+			}
+		}
 		
 		return pct;
 	}

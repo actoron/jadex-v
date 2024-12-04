@@ -25,8 +25,12 @@ dependencies
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
-	implementation 'org.activecomponents.jadex:logbase:'+v
 	
+	implementation 'org.activecomponents.jadex:logbase:'+v
+	implementation 'org.activecomponents.jadex:opentelemetry:'+v
+	implementation 'io.opentelemetry:opentelemetry-api:1.44.1'
+	implementation 'io.opentelemetry:opentelemetry-sdk:1.44.1'
+		
 	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
