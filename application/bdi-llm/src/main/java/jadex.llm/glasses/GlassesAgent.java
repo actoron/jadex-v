@@ -3,9 +3,12 @@ package jadex.llm.glasses;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 import jadex.bdi.llm.impl.LlmFeature;
+import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.Val;
 import jadex.classreader.SClassReader;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
+import jadex.core.impl.ComponentManager;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnEnd;
@@ -213,11 +216,11 @@ public class GlassesAgent
     {
         System.out.println("A: GlassesAgent started");
 
-        IComponent.create(new GlassesAgent(
+        IComponentManager.get().create(new GlassesAgent(
                 "https://api.openai.com/v1/chat/completions",
                 System.getenv("OPENAI_API_KEY"),
                 "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
         );
-        IComponent.waitForLastComponentTerminated();
+        IComponentManager.get().waitForLastComponentTerminated();
     }
 }

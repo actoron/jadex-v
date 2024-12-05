@@ -186,6 +186,7 @@ includeBuild('micro/requiredservice') {name='requiredservicemicro'}
 includeBuild('micro/lib'){name='libmicro'}
 
 includeBuild('bdi/engine') {name='bdi'}
+includeBuild('bdi/llm') {}
 
 includeBuild('bpmn/engine') {name='bpmn'}
 includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
@@ -207,6 +208,7 @@ includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
 includeBuild('application/bpmn'){name='application-bpmn'}
 includeBuild('application/bt'){name='application-bt'}
+includeBuild('application/bdi-llm'){}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
 includeBuild('benchmark/execution'){name='benchmark-execution'}

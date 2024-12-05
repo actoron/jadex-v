@@ -1,6 +1,7 @@
 package jadex.llm.maze;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class Maze1
 {
@@ -193,15 +194,39 @@ public class Maze1
         }
     }
 
-    public void setFood(int x, int y)
+    //wip: set food in random cells
+    public void setFood()
     {
+        //based on size of maze set random Food
+        int rows = this.rows;
+        int cols = this.cols;
 
+        int foodCount = rows * cols / 10;
+        System.out.println("Food count: " + foodCount);
+
+        //set food in random cells
+        Random rand = new Random();
+        for (int i = 0; i < foodCount; i++)
+        {
+//            for (int y = 0; y < rows; y++)
+//            {
+//                for (int x = 0; x < cols; x++)
+//                {
+//                    Cell cell = maze.get(index(x,y));
+//                    if (rand.nextBoolean())
+//                    {
+//                        cell.food = true;
+//                    }
+//                }
+//            }
+        }
     }
 
     public static void main(String[] args)
     {
         Maze1 maze1 = new Maze1(10, 10);
         maze1.setCurrentCell(2,2);
+
 
         Cell current = maze1.maze.get(maze1.index(maze1.currentX, maze1.currentY));
         //Mark current cell as visited and put into ArrayList

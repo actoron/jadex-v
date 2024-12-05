@@ -18,7 +18,6 @@ public class LlmFeatureProvider extends FeatureProvider<ILlmFeature>
         return ILlmFeature.class;
     }
 
-    @Override
     public ILlmFeature createFeatureInstance(Component self) {
         return null;
     }
@@ -28,7 +27,6 @@ public class LlmFeatureProvider extends FeatureProvider<ILlmFeature>
         return new LlmFeature(chatgptUrl, chatgptKey, beliefType, settingsPath);
     }
 
-    @Override
     public Class <? extends Component> getRequiredComponentType()
     {
         return BDIAgent.class;

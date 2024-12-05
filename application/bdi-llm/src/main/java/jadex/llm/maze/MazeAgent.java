@@ -3,8 +3,10 @@ package jadex.llm.maze;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
+import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
 import jadex.llm.maze.Maze;
 import jadex.model.annotation.OnStart;
@@ -184,11 +186,11 @@ public class MazeAgent
         Maze maze = new Maze(20, 20, 5);
 
         // Create a new MazeAgent
-        IComponent.create(new MazeAgent(
+        IComponentManager.get().create(new MazeAgent(
                 "https://api.openai.com/v1/chat/completions",
                 System.getenv("OPENAI_API_KEY"),
                 maze)
         );
-        IComponent.waitForLastComponentTerminated();
+        IComponentManager.get().waitForLastComponentTerminated();
     }
 }
