@@ -20,6 +20,7 @@ import io.opentelemetry.sdk.logs.SdkLoggerProvider;
 import jadex.common.SUtil;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
+import jadex.logger.OpenTelemetryLogHandler;
 
 public class BenchmarkHelper
 {
@@ -209,17 +210,7 @@ public class BenchmarkHelper
 //					+"}");
 			
 			// Hack!!! Force OpenTelemetry to push logs before exiting
-			try
-			{
-				Object	obfuscatedLoggerProvider	= GlobalOpenTelemetry.get().getLogsBridge();
-				Method	unobfuscate	= obfuscatedLoggerProvider.getClass().getMethod("unobfuscate");
-				unobfuscate.setAccessible(true);
-				((SdkLoggerProvider)unobfuscate.invoke(obfuscatedLoggerProvider)).forceFlush().join(10, TimeUnit.SECONDS);
-			}
-			catch(Exception e)
-			{
-				SUtil.throwUnchecked(e);
-			}
+			OpenTelemetryLogHandler.forceFlush();
 		}
 		
 		return pct;

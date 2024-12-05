@@ -3,12 +3,11 @@ package jadex.logger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.logs.LogRecordBuilder;
@@ -18,6 +17,7 @@ import io.opentelemetry.exporter.otlp.logs.OtlpGrpcLogRecordExporter;
 import io.opentelemetry.exporter.otlp.logs.OtlpGrpcLogRecordExporterBuilder;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder;
+import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.logs.SdkLoggerProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
 import io.opentelemetry.sdk.resources.Resource;
@@ -29,9 +29,9 @@ public class OpenTelemetryLogHandler extends Handler
 
 	private String loggername;
 	
-    private static OpenTelemetry otel = null;
+    private static OpenTelemetrySdk otel = null;
     
-    private static OpenTelemetry getOrInitializeOpenTelemetry() 
+    private static OpenTelemetrySdk getOrInitializeOpenTelemetry() 
     {
         if (otel == null) 
         {
@@ -44,7 +44,7 @@ public class OpenTelemetryLogHandler extends Handler
         return otel;
     }
     
-    private static OpenTelemetry initializeOpenTelemetry() 
+    private static OpenTelemetrySdk initializeOpenTelemetry() 
     {
         String url = System.getenv(OpenTelemetryLogger.URL)!=null? System.getenv(OpenTelemetryLogger.URL): System.getProperty(OpenTelemetryLogger.URL);
         String key = System.getenv(OpenTelemetryLogger.KEY)!=null? System.getenv(OpenTelemetryLogger.KEY): System.getProperty(OpenTelemetryLogger.KEY);
@@ -132,10 +132,31 @@ public class OpenTelemetryLogHandler extends Handler
     @Override
     public void flush() 
     {
+    	forceFlush();
     }
     
-    @Override
+	@Override
     public void close() throws SecurityException 
     {
+    	// TODO close this logger!?
+//    	otel.close();
+    }
+
+	/**
+	 *  Flush all otel stuff.
+	 */
+	// Public to allow flushing from outside (e.g. at end of benchmark). hack!?
+    public static void forceFlush()
+	{
+    	if(otel!=null)
+    	{
+	    	// TODO: flush only this logegr!?
+	    	CompletableResultCode	c1	= otel.getSdkLoggerProvider().forceFlush();
+	    	CompletableResultCode	c2	= otel.getSdkMeterProvider().forceFlush();
+	    	CompletableResultCode	c3	= otel.getSdkTracerProvider().forceFlush();
+	    	c1.join(10, TimeUnit.SECONDS);
+	    	c2.join(10, TimeUnit.SECONDS);
+	    	c3.join(10, TimeUnit.SECONDS);
+    	}
     }
 }
