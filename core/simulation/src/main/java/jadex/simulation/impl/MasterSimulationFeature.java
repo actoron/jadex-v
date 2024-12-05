@@ -3,6 +3,7 @@ package jadex.simulation.impl;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+import jadex.core.ComponentTerminatedException;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -71,7 +72,13 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	@Override
 	public ITerminableFuture<Void> waitForDelay(long millis)
 	{
-		TerminableFuture<Void>	ret	= new TerminableFuture<>();
+		TerminableFuture<Void> ret = new TerminableFuture<>();
+		
+		if(terminated)
+		{
+			ret.setException(new ComponentTerminatedException(self.getId()));
+			return ret;
+		}
 		
 		synchronized(this)
 		{
@@ -246,7 +253,7 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 		public void run()
 		{
 			LOCAL.set(exe);
-			exe.doRun(step);
+			step.run();
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package jadex.micro.producerconsumer;
 
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.FutureBlockingQueue;
 
 /**
@@ -24,11 +24,11 @@ public class Main
 		FutureBlockingQueue<String> queue = new FutureBlockingQueue<>(10);
 		
 		for(int i=0; i<psize; i++)
-			IComponent.create(new ProducerAgent<String>(queue, 1000, () -> ""+Math.random()));
+			IComponentManager.get().create(new ProducerAgent<String>(queue, 1000, () -> ""+Math.random()));
 		
 		for(int i=0; i<csize; i++)
-			IComponent.create(new ConsumerAgent<String>(queue));
+			IComponentManager.get().create(new ConsumerAgent<String>(queue));
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

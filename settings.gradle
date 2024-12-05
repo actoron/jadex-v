@@ -85,7 +85,7 @@ def parseURLWithCredentials(urlstring) {
 
 	// URL without extra info (e.g. no password for security reasons)
 	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
-	//println 'url: ' + ret.url
+	println 'repouser and pass: url=' + urlstring+" user="+ret.user +" pw="+ret.password
 		
 	return ret;
 }
@@ -167,6 +167,7 @@ includeBuild('core/engine') {}
 includeBuild('core/featuretest') {}
 includeBuild('core/execution') {}
 includeBuild('core/simulation') {}
+//includeBuild('core/errorhandling') {}
 
 includeBuild('model/model') {}
 
@@ -177,6 +178,7 @@ includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {}
 
 includeBuild('communication/serialization') {}
+includeBuild('communication/messaging') {}
 
 includeBuild('micro/engine'){name='micro'}
 includeBuild('micro/providedservice') {name='providedservicemicro'}
@@ -184,17 +186,19 @@ includeBuild('micro/requiredservice') {name='requiredservicemicro'}
 includeBuild('micro/lib'){name='libmicro'}
 
 includeBuild('bdi/engine') {name='bdi'}
-includeBuild('bdi/llm') {}
 
 includeBuild('bpmn/engine') {name='bpmn'}
 includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
 includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
+
+includeBuild('bt/engine') {name='bt'}
 
 includeBuild('rules/eca') {}
 
 includeBuild('monitoring/logbase') {}
 includeBuild('monitoring/graylog') {}
 includeBuild('monitoring/fluentd') {}
+includeBuild('monitoring/opentelemetry') {}
 includeBuild('monitoring/log4j') {}
 
 includeBuild('application/micro'){name='application-micro'}
@@ -202,13 +206,13 @@ includeBuild('application/micro-nfp'){name='application-micro-nfp'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
 includeBuild('application/bpmn'){name='application-bpmn'}
-includeBuild('application/bdi-llm'){}
+includeBuild('application/bt'){name='application-bt'}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
 includeBuild('benchmark/execution'){name='benchmark-execution'}
 includeBuild('benchmark/bdi'){name='benchmark-bdi'}
 includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
 includeBuild('benchmark/micro'){name='benchmark-micro'}
-
-
+includeBuild('benchmark/thirdparty'){name='benchmark-thirdparty'}
+includeBuild('benchmark'){name='benchmark'}
 

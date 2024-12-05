@@ -1,6 +1,7 @@
 package jadex.micro.tutorial.a7;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.IService;
@@ -32,12 +33,12 @@ public class PingerAgent
 	
 	public static void main(String[] args) 
 	{
-		IComponent.create(new PingAgent());
-		IComponent.create(new PingAgent());
-		IComponent.create(new PingAgent());
+		IComponentManager.get().create(new PingAgent());
+		IComponentManager.get().create(new PingAgent());
+		IComponentManager.get().create(new PingAgent());
 		
-		IComponent.create(new PingerAgent());
+		IComponentManager.get().create(new PingerAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

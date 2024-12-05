@@ -1,6 +1,7 @@
 package jadex.micro.helloworld;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.MicroAgent;
 import jadex.micro.annotation.Agent;
@@ -59,7 +60,7 @@ public class HelloWorldAgent2
 		
 		MicroAgent.create(new HelloWorldAgent2("007"));
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 		
 		//System.out.println("last component terminated");
 	}

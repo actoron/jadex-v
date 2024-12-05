@@ -9,16 +9,30 @@ public class EventType
 {
 	public static final String MATCHALL = "*";
 	
+	public static final String MATCHALLDEEP = "**";
+	
+	public static final String DELIMITER = ":";
+	
 	/** The event type elements. */
 	protected String[] types;
 	
 	/**
 	 *  Create an event type from a string.
-	 */
+	 * /
 	public EventType(String... types)
 	{
 		this.types = types;
-	}
+	}*/
+	
+	public EventType(String... types) 
+	{
+        if(types != null) 
+        {
+            this.types = Arrays.stream(types)
+            	.flatMap(type -> Arrays.stream(type.split("\\"+DELIMITER)))
+                .toArray(String[]::new);
+        }
+    }
 	
 	/**
 	 *  Create an event type.
@@ -89,7 +103,7 @@ public class EventType
 		{
 			buf.append(types[i]);
 			if(i+1<types.length)
-				buf.append(" . ");
+				buf.append(" "+DELIMITER+" ");
 		}
 		return buf.toString();
 	}

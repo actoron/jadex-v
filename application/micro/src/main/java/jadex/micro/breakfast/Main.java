@@ -1,6 +1,7 @@
 package jadex.micro.breakfast;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.ResultProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
@@ -17,7 +18,7 @@ public class Main
 	{
 		long start = System.currentTimeMillis();
 		
-		IFuture<String> eggs = IComponent.run(agent ->
+		IFuture<String> eggs = IComponentManager.get().run(agent ->
 		{
 			// boil eggs
 			agent.getFeature(IExecutionFeature.class).waitForDelay(5000).get();
@@ -25,7 +26,7 @@ public class Main
 			return "Eggs ready";
 		});
 		
-		IFuture<String> coffee = IComponent.run(new CoffeeMaker());
+		IFuture<String> coffee = IComponentManager.get().run(new CoffeeMaker());
 		
 		/*eggs.then(res -> 
 			System.out.println("bar: "+res)
@@ -43,7 +44,7 @@ public class Main
 		
 		System.out.println("breakfast ready: "+((end-start)/1000.0));
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 
 	@Agent

@@ -2,12 +2,9 @@ package jadex.bpmn.tutorial;
 
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
-import jadex.common.SUtil;
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
-import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
-import jadex.micro.IMicroAgent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 //import jadex.requiredservice.annotation.OnService;
@@ -38,7 +35,7 @@ public class S1Main
 			agent.terminate();
 		});
 		
-		/*IComponent.create(new IMicroAgent()
+		/*IComponentManager.get().create(new IMicroAgent()
 		{
 			//public void onStart(IComponent agent)
 			//{
@@ -56,7 +53,7 @@ public class S1Main
 			}
 		}).get();*/
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 		
 		System.out.println("S1 finished");
 	}

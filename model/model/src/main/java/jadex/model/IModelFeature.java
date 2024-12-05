@@ -2,9 +2,10 @@ package jadex.model;
 
 import jadex.common.IParameterGuesser;
 import jadex.common.IValueFetcher;
+import jadex.core.IComponentFeature;
 import jadex.model.modelinfo.IModelInfo;
 
-public interface IModelFeature
+public interface IModelFeature extends IComponentFeature
 {
 	/**
 	 *  The feature can add objects for field or method injections

@@ -44,7 +44,8 @@ public class PublishServiceJettyFeature extends PublishServiceFeature
 	 */
 	public IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo info)
 	{
-		return ServerManager.getInstance().publishService(serviceid, info, self);
+		ServerManager.getInstance().publishService(serviceid, info, self);
+		return IFuture.DONE;
 	}
 	
 	/**

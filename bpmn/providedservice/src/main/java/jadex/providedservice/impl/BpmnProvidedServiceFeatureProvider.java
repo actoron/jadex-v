@@ -5,12 +5,12 @@ import java.util.Set;
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
 import jadex.providedservice.IProvidedServiceFeature;
 
-public class BpmnProvidedServiceFeatureProvider extends FeatureProvider<IProvidedServiceFeature> 
+public class BpmnProvidedServiceFeatureProvider extends ComponentFeatureProvider<IProvidedServiceFeature> 
 {
 	@Override
 	public Class<IProvidedServiceFeature> getFeatureType()

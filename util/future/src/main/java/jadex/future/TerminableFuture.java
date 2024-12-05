@@ -65,6 +65,8 @@ public class TerminableFuture<E> extends Future<E> implements ITerminableFuture<
 		{
 			if(terminate!=null)
 				terminate.terminated(reason);
+			else
+				System.out.println("Terminable future without termination command: "+reason);
 		}
 	}
 	

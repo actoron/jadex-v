@@ -5,6 +5,7 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -46,8 +47,8 @@ public class HelloPureAgent
 	 */
 	public static void main(String[] args) 
 	{
-		IComponent.create(new HelloPureAgent()).get();
+		IComponentManager.get().create(new HelloPureAgent()).get();
 		System.out.println("after create");
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

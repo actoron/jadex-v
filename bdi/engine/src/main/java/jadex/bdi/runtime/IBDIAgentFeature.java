@@ -2,8 +2,6 @@ package jadex.bdi.runtime;
 
 import java.util.Collection;
 
-import jadex.bdi.runtime.impl.BDIAgentFeature;
-
 /**
  *  Public methods for working with BDI agents.
  */

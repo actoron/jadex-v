@@ -30,11 +30,15 @@ dependencies
 	implementation 'org.activecomponents.jadex:benchmark-core:'+v
 	implementation 'org.activecomponents.jadex:model:'+v
 	implementation 'org.activecomponents.jadex:micro:'+v
+	
+	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	// required for gradle 9!? https://docs.gradle.org/8.7/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
@@ -48,4 +52,8 @@ task benchmark(type : Test) {
   minHeapSize = "4g"
   maxHeapSize = "4g"
   enableAssertions = false
+  
+  // https://docs.gradle.org/8.10.2/userguide/upgrading_version_8.html#test_task_default_classpath
+  testClassesDirs = testing.suites.test.sources.output.classesDirs
+  classpath = testing.suites.test.sources.runtimeClasspath
 }

@@ -11,9 +11,6 @@ import jadex.rules.eca.EventType;
  */
 public class ListWrapper<T> extends jadex.collection.ListWrapper<T> 
 {
-	/** The event publisher. */
-	protected IEventPublisher publisher;
-
 	/**
 	 *  Create a new list wrapper.
 	 */
@@ -51,29 +48,5 @@ public class ListWrapper<T> extends jadex.collection.ListWrapper<T>
 	public boolean isInitWrite()
 	{
 		return publisher instanceof InitEventPublisher;
-	}
-	
-	/**
-	 *  An entry was added to the collection.
-	 */
-	public void entryAdded(T value, int index)
-	{
-		publisher.entryAdded(value, index);
-	}
-	
-	/**
-	 *  An entry was removed from the collection.
-	 */
-	public void entryRemoved(T value, int index)
-	{
-		publisher.entryRemoved(value, index);
-	}
-	
-	/**
-	 *  An entry was changed in the collection.
-	 */
-	public void entryChanged(T oldvalue, T newvalue, int index)
-	{
-		publisher.entryChanged(oldvalue, newvalue, index);
 	}
 }

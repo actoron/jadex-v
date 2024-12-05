@@ -1,5 +1,6 @@
 package jadex.core.impl;
 
+import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -11,10 +12,14 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jadex.common.SUtil;
-import jadex.core.ApplicationContext;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
+import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
+import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 
@@ -25,7 +30,7 @@ public class Component implements IComponent
 {
 	/** The providers for this component type, stored by the feature type they provide.
 	 *  Is also used at runtime to instantiate lazy features.*/
-	protected Map<Class<Object>, FeatureProvider<Object>> providers;
+	protected Map<Class<Object>, ComponentFeatureProvider<Object>> providers;
 	
 	/** The feature instances of this component, stored by the feature type. */
 	protected Map<Class<Object>, Object> features;
@@ -34,7 +39,7 @@ public class Component implements IComponent
 	protected ComponentIdentifier id;
 	
 	/** The app id. */
-	protected String appid;
+	protected Application app;
 	
 	/** The external access. */
 	protected IExternalAccess access;
@@ -48,7 +53,7 @@ public class Component implements IComponent
 	 */
 	public Component()
 	{
-		this(null);
+		this(null, null);
 	}
 	
 	/**
@@ -58,19 +63,27 @@ public class Component implements IComponent
 	 */
 	public Component(ComponentIdentifier id)
 	{
+		this(id, null);
+	}
+	
+	/**
+	 *  Create a new component and instantiate all features (except lazy features).
+	 *  @param id	The id to use or null for an auto-generated id.
+	 *  @throws IllegalArgumentException when the id already exists. 
+	 */
+	public Component(ComponentIdentifier id, Application app)
+	{
 		this.id = id==null? new ComponentIdentifier(): id;
+		this.app = app;
+		
 		//System.out.println(this.id.getLocalName());
 		ComponentManager.get().addComponent(this);
-		//Component.addComponent(this); // is this good here?! 
 		
-		ApplicationContext appctx = ComponentManager.get().getApplicationContext();
-		this.appid = appctx!=null? appctx.id(): null;
-		
-		providers	= SFeatureProvider.getProvidersForComponent(getClass());
+		providers	= SComponentFeatureProvider.getProvidersForComponent(getClass());
 		
 		// Instantiate all features (except lazy ones).
 		// Use getProviderListForComponent as it uses a cached array list
-		SFeatureProvider.getProviderListForComponent(getClass()).forEach(provider ->
+		SComponentFeatureProvider.getProviderListForComponent(getClass()).forEach(provider ->
 		{
 			if(!provider.isLazyFeature())
 			{
@@ -96,7 +109,7 @@ public class Component implements IComponent
 	 */
 	public String getAppId()
 	{
-		return appid;
+		return app!=null? app.getId(): null;
 	}
 
 	/**
@@ -136,7 +149,7 @@ public class Component implements IComponent
 	 *  Get the feature instance for the given type.
 	 *  Instantiates lazy features if needed.
 	 */
-	public <T> T getFeature(Class<T> type)
+	public <T extends IComponentFeature> T getFeature(Class<T> type)
 	{
 		if(features!=null && features.containsKey(type))
 		{
@@ -148,13 +161,13 @@ public class Component implements IComponent
 		{
 			try
 			{
-				FeatureProvider<?>	provider	= providers.get(type);
+				ComponentFeatureProvider<?>	provider	= providers.get(type);
 				assert provider.isLazyFeature();
 				@SuppressWarnings("unchecked")
 				T ret = (T)provider.createFeatureInstance(this);
-				@SuppressWarnings("unchecked")
-				Class<Object> otype	= (Class<Object>)type;
-				putFeature(otype, ret);
+				//@SuppressWarnings("unchecked")
+				//Class<Object> otype	= (Class<Object>)type;
+				putFeature(type, ret);
 				//features.put(otype, ret);
 				return ret;
 			}
@@ -178,7 +191,7 @@ public class Component implements IComponent
 		{
 			ComponentManager.get().removeComponent(this.getId());
 			
-			List<FeatureProvider<Object>> provs = SFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
+			List<ComponentFeatureProvider<Object>> provs = SComponentFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
 			Optional<IComponentLifecycleManager> opt = provs.stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
 			if(opt.isPresent())
 			{
@@ -193,7 +206,7 @@ public class Component implements IComponent
 			FutureBarrier<Void> bar = new FutureBarrier<Void>();
 			for(ComponentIdentifier cid: cids)
 			{
-				bar.add(IComponent.terminate(cid));
+				bar.add(IComponentManager.get().terminate(cid));
 			}
 			return bar.waitFor();
 		}
@@ -210,12 +223,12 @@ public class Component implements IComponent
 		return null;
 	}
 	
-	protected void putFeature(Class<Object> type, Object feature)
+	protected void putFeature(Class<?> type, Object feature)
 	{
 //		System.out.println("putFeature: "+type+" "+feature);
 		if(features==null)
 			features = new LinkedHashMap<>(providers.size(), 1);
-		features.put(type, feature);
+		features.put((Class)type, feature);
 	}
 	
 	/*public Map<String, Object> getResults(Object pojo)
@@ -394,9 +407,16 @@ public class Component implements IComponent
 	
 	public void handleException(Exception exception)
 	{
-		@SuppressWarnings("unchecked")
-		BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getExceptionHandler(exception, this);
-		handler.accept(exception, this);
+		if(exception instanceof ComponentTerminatedException && this.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
+		{
+			System.getLogger(this.getClass().getName()).log(Level.INFO, "Component terminated exception: "+exception);
+		}
+		else
+		{
+			@SuppressWarnings("unchecked")
+			BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getFeature(IErrorHandlingFeature.class).getExceptionHandler(exception, this);
+			handler.accept(exception, this);
+		}
 	}
 	
 	/**
@@ -427,10 +447,10 @@ public class Component implements IComponent
 
 	public static <T extends Component> T createComponent(Class<T> type, Supplier<T> creator)
 	{
-		List<FeatureProvider<Object>>	providers	= SFeatureProvider.getProviderListForComponent(type);
+		List<ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProviderListForComponent(type);
 		for(int i=providers.size()-1; i>=0; i--)
 		{
-			FeatureProvider<Object>	provider	= providers.get(i);
+			ComponentFeatureProvider<Object>	provider	= providers.get(i);
 			if(provider instanceof IBootstrapping)
 			{
 				Supplier<T>	nextcreator	= creator;

@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.impl.ExecutionFeature;
@@ -14,7 +15,7 @@ import jadex.future.ITerminableFuture;
  *  The execution feature controls how and when components execute their steps,
  *  e.g., single-threaded vs parallel steps, real-time vs. simulation time.
  */
-public interface IExecutionFeature
+public interface IExecutionFeature extends IComponentFeature
 {
 //	/** Constant for unset step level. */
 //	public static final int STEP_PRIORITY_UNSET = -1;

@@ -11,12 +11,13 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.common.SReflect;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
@@ -26,7 +27,7 @@ import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.AgentResult;
 import jadex.micro.annotation.Result;
 
-public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature> implements IComponentLifecycleManager
+public class MicroAgentFeatureProvider extends ComponentFeatureProvider<MicroAgentFeature> implements IComponentLifecycleManager
 {
 	/*static
 	{
@@ -92,7 +93,7 @@ public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature
 		return ret;
 	}
 	
-	protected static <T extends Annotation> T findAnnotation(Class<?> clazz, Class<T> anclazz, ClassLoader cl)
+	public static <T extends Annotation> T findAnnotation(Class<?> clazz, Class<T> anclazz, ClassLoader cl)
 	{
 		T ret = null;
 		
@@ -113,9 +114,9 @@ public class MicroAgentFeatureProvider extends FeatureProvider<MicroAgentFeature
 	}
 	
 	@Override
-	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return MicroAgent.create(pojo, cid);
+		return MicroAgent.create(pojo, cid, app);
 	}
 	
 	/*@Override

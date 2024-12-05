@@ -4,11 +4,11 @@ import java.util.Set;
 
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-public class BpmnRequiredServiceFeatureProvider extends FeatureProvider<IRequiredServiceFeature> 
+public class BpmnRequiredServiceFeatureProvider extends ComponentFeatureProvider<IRequiredServiceFeature> 
 {
 	@Override
 	public Class<IRequiredServiceFeature> getFeatureType()
@@ -38,7 +38,7 @@ public class BpmnRequiredServiceFeatureProvider extends FeatureProvider<IRequire
 	}
 	
 	@Override
-	public boolean replacesFeatureProvider(FeatureProvider<IRequiredServiceFeature> provider) 
+	public boolean replacesFeatureProvider(ComponentFeatureProvider<IRequiredServiceFeature> provider) 
 	{
 		return provider instanceof RequiredServiceFeatureProvider;
 	}

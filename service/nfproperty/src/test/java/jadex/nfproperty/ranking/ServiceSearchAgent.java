@@ -1,10 +1,10 @@
 package jadex.nfproperty.ranking;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -223,11 +223,11 @@ public class ServiceSearchAgent
 	{
 		int n = 20;
 		for(int i=0; i<n; i++)
-			IComponent.create(new ServiceSearchAgent(true)).get();
-			//IComponent.create(new NFPropertyTestAgent()).get();
+			IComponentManager.get().create(new ServiceSearchAgent(true)).get();
+			//IComponentManager.get().create(new NFPropertyTestAgent()).get();
 		
-		//IComponent.create(new ServiceSearchAgent()).get();
+		//IComponentManager.get().create(new ServiceSearchAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

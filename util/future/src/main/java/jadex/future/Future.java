@@ -1293,6 +1293,8 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	{
 		if(source==null)
 			throw new IllegalArgumentException("Source must not null");
+		if(source==this)
+			throw new RuntimeException("Source and target identical");
 		
 		source.addResultListener(new DelegationResultListener<>(this));
 	}

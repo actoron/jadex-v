@@ -7,11 +7,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
+import com.eclipsesource.json.WriterConfig;
+
 import jadex.common.SUtil;
 
 public class BenchmarkHelper
 {
-	public static String	getCaller()
+	protected static String	getCaller()
 	{
 		StackTraceElement[]	stels	= new Exception().fillInStackTrace().getStackTrace();
 		for(StackTraceElement stel: stels)
@@ -25,7 +30,7 @@ public class BenchmarkHelper
 	
 	public static double	benchmarkMemory(Callable<Runnable> startup)
 	{
-		int	runs	= 1000;
+		int	msecs	= 500;
 		int retries	= 10;
 		long	best	= Long.MAX_VALUE;
 		try
@@ -38,21 +43,29 @@ public class BenchmarkHelper
 				long	start	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at start: "+start);
 				
-				for(int i=0; i<runs; i++)
+				long	mstart	= System.currentTimeMillis();
+				long	cnt;
+				for(cnt=0; mstart+msecs>System.currentTimeMillis(); cnt++)
 					teardowns.add(startup.call());
 				
 				System.gc();
 				long	end	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at end: "+end);
 				
-				long took	= (end-start)/runs;
-				addToDB(took);
-				best	= Math.min(best, took);
-				System.out.println("Per component: "+took);
+				long took	= (end-start)/cnt;
+				if(r>0 && took>0)	// Skip first for accuracy
+				{
+					System.out.println("Per component: "+took);
+					System.out.println("runs: "+cnt);
+					addToDB(took);
+					best	= Math.min(best, took);
+					System.out.println();
+				}
 				
 				for(Runnable teardown: teardowns)
 					teardown.run();
 			}
+			System.out.println("best: "+best);
 			return addToDB(best);
 		}
 		catch(Exception e)
@@ -69,11 +82,16 @@ public class BenchmarkHelper
 		int	warmups	= 100; 	// How many warm-ups to run
 		int	runs	= 10;	// How many runs for measurement 
 		long	best	= Long.MAX_VALUE;
+		long	basemem = 0;
 		try
 		{
 			for(int j=0; j<retries; j++)
 			{
-				Thread.sleep(cooldown);
+				// skip first cooldown and ignore first result
+				if(j>0)
+				{
+					Thread.sleep(cooldown);
+				}
 				long	mstart	= System.currentTimeMillis();
 				long	cnt;
 				long	took	= 0;
@@ -89,13 +107,31 @@ public class BenchmarkHelper
 					took	+= (end-start)/runs;
 
 				}
-				took	/= cnt;
-				System.out.println("took: "+took);
-				System.out.println("runs: "+cnt);
+				
+				System.gc();
+				long	usedmem	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
-				addToDB(took);
-				best	= Math.min(best, took);
+				// skip first cooldown and ignore first result
+				if(j>0)
+				{
+					took	/= cnt;
+					System.out.println("took: "+took);
+					System.out.println("runs: "+cnt*runs);
+					
+					addToDB(took);
+					best	= Math.min(best, took);
+					
+					System.out.println("Used memory: "+usedmem);
+					double pct	= (usedmem - basemem)*100.0/basemem;
+					System.out.println("Mem change(%): "+pct);
+					System.out.println();
+				}
+				else
+				{
+					basemem	= usedmem;
+				}
 			}
+			System.out.println("best: "+best);
 			return addToDB(best);
 		}
 		catch(Exception e)
@@ -110,22 +146,29 @@ public class BenchmarkHelper
 		
 		double	pct	= 0;
 		String	caller	= getCaller();
-		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark", caller+".json");
+		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark_ide", caller+".json");
+		double	prev	= 0;
 		if(db.toFile().exists())
 		{
-			double	prev	= Double.valueOf(Files.readString(db));
-			pct	= (value - prev)*100.0/prev;
-			System.out.println("Change(%): "+pct);				
-			if(value<prev)
+			JsonValue	val	= Json.parse(Files.readString(db));
+			if(val.isNumber())	// Legacy support -> can be removed at some point
 			{
-				Files.writeString(db, String.valueOf(value));
+				prev	= val.asDouble();
 			}
+			else
+			{
+				prev	= ((JsonObject)val).get("best").asDouble();
+			}
+			pct	= (value - prev)*100.0/prev;
+			System.out.println("Change(%): "+pct);
 		}
-		else
-		{
-			db.toFile().getParentFile().mkdirs();
-			Files.writeString(db, String.valueOf(value));
-		}
+
+		JsonObject	obj	= new JsonObject();
+		obj.add("best", prev==0 ? value : Math.min(value, prev));
+		obj.add("last", value);
+		db.toFile().getParentFile().mkdirs();
+		Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
+		
 		return pct;
 	}
 }

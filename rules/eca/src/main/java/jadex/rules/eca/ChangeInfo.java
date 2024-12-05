@@ -1,7 +1,7 @@
 package jadex.rules.eca;
 
 /**
- * 
+ *  Info about a value change.
  */
 public class ChangeInfo<T>
 {

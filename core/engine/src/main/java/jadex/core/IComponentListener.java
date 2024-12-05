@@ -13,4 +13,8 @@ public interface IComponentListener
 	public default void lastComponentRemoved(ComponentIdentifier cid)
 	{
 	}
+	
+	public default void lastComponentRemoved(ComponentIdentifier cid, String appid)
+	{
+	}
 }

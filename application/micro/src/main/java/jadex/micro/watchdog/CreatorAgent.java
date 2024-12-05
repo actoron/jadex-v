@@ -1,6 +1,7 @@
 package jadex.micro.watchdog;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -17,7 +18,7 @@ public class CreatorAgent
 			System.out.println("creator waiting for: "+delay);
 			agent.getFeature(IExecutionFeature.class).waitForDelay(delay).get();
 			
-			IComponent.create(new WatchdogAgent());
+			IComponentManager.get().create(new WatchdogAgent());
 		}
 	}
 }

@@ -1,0 +1,2 @@
+jadex.messaging.impl.SecurityFeatureProvider
+jadex.messaging.impl.IpcFeatureProvider

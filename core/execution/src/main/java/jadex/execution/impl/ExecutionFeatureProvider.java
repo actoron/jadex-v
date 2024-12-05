@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import jadex.common.SReflect;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
@@ -12,16 +14,16 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.LambdaPojo;
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.SFeatureProvider;
+import jadex.core.impl.SComponentFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
+public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
 	static
 	{
@@ -156,33 +158,74 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 	@Override
 	public <T extends Component> T	bootstrap(Class<T> type, Supplier<T> creator)
 	{
-		Map<Class<Object>, FeatureProvider<Object>>	providers	= SFeatureProvider.getProvidersForComponent(type);
+		Map<Class<Object>, ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
 		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
 		Future<T>	ret	= new Future<>();
-		exe.scheduleStep(() -> 
+
+		// Fast Lambda Agent -> optimized lifecycle
+		if(SReflect.isSupertype(FastLambda.class, type))
 		{
-			T self = creator.get();
-			for(Object feature:	self.getFeatures())
+			exe.scheduleStep(() -> 
 			{
-				if(feature instanceof ILifecycle)
+				@SuppressWarnings("unchecked")
+				FastLambda<Object> self = (FastLambda<Object>)creator.get();
+				startFeatures(self);
+				
+				// run body and termination in same step as init
+				try
 				{
-					exe.scheduleStep(() ->
-					{
-						ILifecycle lfeature = (ILifecycle)feature;
-						//System.out.println("starting: "+lfeature);
-						lfeature.onStart();
-						return null;
-					}).get();
+					/*ILifecycle lfeature = (ILifecycle)feature;
+					System.out.println("starting: "+lfeature);
+					lfeature.onStart();*/
+					
+					Object	result	= self.body.apply(self);
+					if(self.result!=null)
+						self.result.setResult(result);
 				}
-				/*else
+				catch(Exception e)
 				{
-					System.out.println("feature without lifecycle: "+feature);
-				}*/
+					self.handleException(e);
+				}
+				if(self.terminate)
+				{
+					exe.scheduleStep((Runnable)() -> self.terminate());
+				}
+				
+				@SuppressWarnings("unchecked")
+				T t	= (T)self;
+				ret.setResult(t);
+			});
+		}
+		
+		// Normal component
+		else
+		{
+			exe.scheduleStep(() -> 
+			{
+				T self = creator.get();
+				startFeatures(self);
+				ret.setResult(self);
+			});
+		}
+		
+		return ret.get();			
+	}
+	
+	/**
+	 *  Start all features, i.e. thos that implement ILifecycle.
+	 */
+	protected <T extends Component> void startFeatures(T self)
+	{
+		for(Object feature:	self.getFeatures())
+		{
+			if(feature instanceof ILifecycle)
+			{
+				ILifecycle lfeature = (ILifecycle)feature;
+				//System.out.println("starting: "+lfeature);
+				lfeature.onStart();
 			}
-			ret.setResult(self);
-		});
-		return ret.get();
+		}
 	}
 	
 	
@@ -196,20 +239,38 @@ public class ExecutionFeatureProvider extends FeatureProvider<IExecutionFeature>
 	}
 	
 	@Override
-	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		IExternalAccess ret;
 		
 		if(pojo instanceof Runnable)
-			ret = LambdaAgent.create((Runnable)pojo, cid);
+		{
+			ret = LambdaAgent.create((Runnable)pojo, cid, app);
+		}
 		else if(pojo instanceof Callable)
-			ret = LambdaAgent.create((Callable<?>)pojo, cid).component();
+		{
+			ret = LambdaAgent.create((Callable<?>)pojo, cid, app).component();
+		}
 		else if(pojo instanceof IThrowingFunction)
-			ret = LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid).component();
+		{
+			@SuppressWarnings("unchecked")
+			IThrowingFunction<IComponent, ?>	itf	= (IThrowingFunction<IComponent, ?>)pojo;
+			ret = LambdaAgent.create(itf, cid, app).component();
+		}
+		else if(pojo instanceof IThrowingConsumer)
+		{
+			@SuppressWarnings("unchecked")
+			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+			ret = LambdaAgent.create(itc, cid, app);
+		}
 		else if(pojo instanceof LambdaPojo)
-			ret = LambdaAgent.create((LambdaPojo<?>)pojo, cid);
+		{
+			ret = LambdaAgent.create((LambdaPojo<?>)pojo, cid, app);
+		}
 		else
+		{
 			throw new RuntimeException("Cannot create lambda agent from: "+cid);
+		}
 	
 		return ret;
 	}

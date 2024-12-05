@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -43,8 +44,8 @@ public class NoLoggingAgent
 		java.lang.System.Logger l = System.getLogger(NoLoggingAgent.class.getName());
 		System.out.println(l.hashCode());
 		
-		IComponent.create(new NoLoggingAgent()).get();
+		IComponentManager.get().create(new NoLoggingAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

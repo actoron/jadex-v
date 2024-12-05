@@ -3,9 +3,10 @@ package jadex.providedservice;
 import java.lang.reflect.Method;
 
 import jadex.common.MethodInfo;
+import jadex.core.IComponentFeature;
 import jadex.providedservice.impl.service.ServiceInvocationContext;
 
-public interface IProvidedServiceFeature 
+public interface IProvidedServiceFeature extends IComponentFeature
 {
 	/**
 	 *  Get provided (declared) service.

@@ -3,11 +3,11 @@ package jadex.requiredservice.impl;
 import java.util.Set;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.FeatureProvider;
+import jadex.core.impl.ComponentFeatureProvider;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-public class RequiredServiceFeatureProvider extends FeatureProvider<IRequiredServiceFeature> 
+public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRequiredServiceFeature> 
 {
 	@Override
 	public Class<IRequiredServiceFeature> getFeatureType()

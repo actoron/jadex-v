@@ -57,20 +57,20 @@ repositories {
 
 dependencies
 {
-	implementation 'org.activecomponents.jadex:json:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:binary:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:traverser:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:serialization:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:idgenerator:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:common:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:collection:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:classreader:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:future:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:core:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:model:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:execution:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:micro:5.0-alpha3'
-	implementation 'org.activecomponents.jadex:application-micro:5.0-alpha3'
+	implementation 'org.activecomponents.jadex:json:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:binary:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:traverser:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:serialization:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:idgenerator:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:common:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:collection:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:classreader:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:future:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:core:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:model:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:execution:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:micro:5.0-alpha6'
+	implementation 'org.activecomponents.jadex:application-micro:5.0-alpha6'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 
@@ -89,18 +89,18 @@ required service features (with additional support for the engines we would like
 So in case we want micro agents with services we additionally include the following:
 
 ```gradle
-    implementation 'org.activecomponents.jadex:providedservice:5.0-alpha3'
-    implementation 'org.activecomponents.jadex:providedservicemicro:5.0-alpha3'
-    implementation 'org.activecomponents.jadex:requiredservice:5.0-alpha3'
-    implementation 'org.activecomponents.jadex:requiredservicemicro:5.0-alpha3'
+    implementation 'org.activecomponents.jadex:providedservice:5.0-alpha6'
+    implementation 'org.activecomponents.jadex:providedservicemicro:5.0-alpha6'
+    implementation 'org.activecomponents.jadex:requiredservice:5.0-alpha6'
+    implementation 'org.activecomponents.jadex:requiredservicemicro:5.0-alpha6'
 ```
 
 If we additionally want to publish services of active components as REST web services we need also the 
 publication feature and a suitable web server implementation such as Jetty:
 
 ```gradle
-    implementation 'org.activecomponents.jadex:publishservice:5.0-alpha3'
-    implementation 'org.activecomponents.jadex:publishservicejetty:5.0-alpha3'
+    implementation 'org.activecomponents.jadex:publishservice:5.0-alpha6'
+    implementation 'org.activecomponents.jadex:publishservicejetty:5.0-alpha6'
 ```
 
 ### Integrated Development Environments (IDEs)

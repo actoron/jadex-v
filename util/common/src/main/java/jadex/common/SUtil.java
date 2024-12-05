@@ -75,6 +75,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -481,7 +482,17 @@ public class SUtil
 					}
 					catch(NoSuchMethodException e)
 					{
-						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+						// LinkedTransferQueue is fastest? https://stackoverflow.com/a/3012547
+						// but some BDI tests hang when using LTQ, wtf!?
+//						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10));
+//						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new LinkedTransferQueue<Runnable>());
+						executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 3, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), r -> {
+							{
+								Thread t = new Thread(r);
+								t.setDaemon(true);
+								return t;
+							}
+						});
 						virtual	= false;
 					}
 					catch(Exception e)
@@ -3509,6 +3520,61 @@ public class SUtil
 			&& ((AccessiblePrintStream)System.err).out instanceof ListenableStream)
 		{
 			((ListenableStream)((AccessiblePrintStream)System.err).out).removeLineListener(listener);
+		}
+	}
+	
+	/**
+	 *  Runs a new JVM as a subprocess with a similar configuration as the parent JVM.
+	 *  
+	 *  @param clazz Class to run.
+	 *  @return The started process.
+	 *  
+	 *  @throws IOException 
+	 *  @throws InterruptedException
+	 */
+	public static Process runJvmSubprocess(Class<?> clazz)
+	{
+		return runJvmSubprocess(clazz, null, null, false);
+	}
+	
+	/**
+	 *  Runs a new JVM as a subprocess with a similar configuration as the parent JVM.
+	 *  
+	 *  @param clazz Class to run.
+	 *  @param jvmargs Arguments for the JVM.
+	 *  @param args Command-line arguments.
+	 *  @param inheritio If true, attach the subproces IO to main process IO.
+	 *  @return The started process.
+	 *  
+	 *  @throws IOException 
+	 *  @throws InterruptedException
+	 */
+	public static Process runJvmSubprocess(Class<?> clazz, List<String> jvmargs, List<String> args, boolean inheritio)
+	{
+		try
+		{
+			String jexec = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+			String classpath = System.getProperty("java.class.path");
+			String classname = clazz.getName();
+			
+			List<String> command = new ArrayList<>();
+			command.add(jexec);
+			if (jvmargs != null)
+				command.addAll(jvmargs);
+			command.add("-cp");
+			command.add(classpath);
+			command.add(classname);
+			if (args != null)
+				command.addAll(args);
+			
+			ProcessBuilder builder = new ProcessBuilder(command);
+			if (inheritio)
+				return builder.inheritIO().start();
+			return builder.start();
+		}
+		catch (Exception e)
+		{
+			throw throwUnchecked(e);
 		}
 	}
 	

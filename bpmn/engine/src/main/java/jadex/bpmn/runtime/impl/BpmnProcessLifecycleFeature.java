@@ -1,10 +1,11 @@
 package jadex.bpmn.runtime.impl;
 
 import jadex.bpmn.runtime.BpmnProcess;
+import jadex.core.IComponentFeature;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 
-public class BpmnProcessLifecycleFeature implements ILifecycle
+public class BpmnProcessLifecycleFeature implements ILifecycle, IComponentFeature
 {
 	public static BpmnProcessLifecycleFeature get()
 	{

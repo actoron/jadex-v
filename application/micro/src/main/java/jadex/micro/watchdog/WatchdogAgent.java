@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -91,13 +92,13 @@ public class WatchdogAgent	implements IWatchdogService
 	
 	public static void main(String[] args) 
 	{
-		IComponent.create(new WatchdogAgent());
-		IComponent.create(new WatchdogAgent());
-		IComponent.create(new WatchdogAgent());
+		IComponentManager.get().create(new WatchdogAgent());
+		IComponentManager.get().create(new WatchdogAgent());
+		IComponentManager.get().create(new WatchdogAgent());
 		
-		IComponent.create(new CreatorAgent());
-		IComponent.create(new TerminatorAgent());
+		IComponentManager.get().create(new CreatorAgent());
+		IComponentManager.get().create(new TerminatorAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

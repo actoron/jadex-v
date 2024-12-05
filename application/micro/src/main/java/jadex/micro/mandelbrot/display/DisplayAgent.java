@@ -12,6 +12,7 @@ import javax.swing.JTextPane;
 
 import jadex.common.SGUI;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
@@ -85,7 +86,7 @@ public class DisplayAgent
 		{
 			public void windowClosing(WindowEvent e)
 			{
-				IComponent.terminate(access.getId());
+				IComponentManager.get().terminate(access.getId());
 			}
 		});
 		

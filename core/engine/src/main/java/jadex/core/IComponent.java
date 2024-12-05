@@ -1,17 +1,5 @@
 package jadex.core;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
-
-import jadex.core.impl.ComponentManager;
-import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.SFeatureProvider;
-import jadex.future.Future;
 import jadex.future.IFuture;
 
 /**
@@ -35,7 +23,7 @@ public interface IComponent
 	 *  Get the feature instance for the given type.
 	 *  Instantiates lazy features if needed.
 	 */
-	public <T> T getFeature(Class<T> type);
+	public <T extends IComponentFeature> T getFeature(Class<T> type);
 	
 	/**
 	 *  Get the external access.
@@ -74,43 +62,7 @@ public interface IComponent
 	
 //	public static final SMjFeatureProvider dummy = new SMjFeatureProvider();
 	
-	public static final String COMPONENT_ADDED = "component_added";
-	public static final String COMPONENT_REMOVED = "component_removed";
-	public static final String COMPONENT_LASTREMOVED = "component_lastremoved";
-
-	public static void addComponentListener(IComponentListener listener, String... types)
-	{
-		synchronized(ComponentManager.get().listeners)
-		{	
-			for(String type: types)
-			{
-				Set<IComponentListener> ls = ComponentManager.get().listeners.get(type);
-				if(ls==null)
-				{
-					ls = new HashSet<IComponentListener>();
-					ComponentManager.get().listeners.put(type, ls);
-				}
-				ls.add(listener);
-			}
-		}
-	}
 	
-	public static void removeComponentListener(IComponentListener listener, String... types)
-	{
-		synchronized(ComponentManager.get().listeners)
-		{
-			for(String type: types)
-			{
-				Set<IComponentListener> ls = ComponentManager.get().listeners.get(type);
-				if(ls!=null)
-				{
-					ls.remove(listener);
-					if(ls.isEmpty())
-						ComponentManager.get().listeners.remove(type);
-				}
-			}
-		}
-	}
 	
 	// todo: remove
 	/*public static IFuture<IExternalAccess> create(Runnable pojo)
@@ -136,21 +88,26 @@ public interface IComponent
 		return create((Object)pojo, cid);
 	}*/
 	
-	public static IFuture<IExternalAccess> create(Object pojo)
+	/*public static IFuture<IExternalAccess> create(Object pojo)
 	{
 		return create(pojo, null);
-	}
+	}*/
 	
-	public static IFuture<IExternalAccess> create(Object pojo, ComponentIdentifier cid)
+	/*public static IFuture<IExternalAccess> create(Object pojo, Application app)
+	{
+		return create(pojo, null, app);
+	}*/
+	
+	/*public static IFuture<IExternalAccess> create(Object pojo, ComponentIdentifier cid, Application app)
 	{		
 		Future<IExternalAccess> ret = new Future<>();
 		
 		boolean created = false;
-		for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
+		for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
 		{
 			if(creator.isCreator(pojo))
 			{
-				ret.setResult(creator.create(pojo, cid));
+				ret.setResult(creator.create(pojo, cid, app));
 				created = true;
 				break;
 			}
@@ -159,10 +116,10 @@ public interface IComponent
 			ret.setException(new RuntimeException("Could not create component: "+pojo));
 		
 		return ret;
-	}
+	}*/
 	
 	// todo: return pojo as result (has results)
-	public static IFuture<Void> terminate(ComponentIdentifier cid)
+	/*public static IFuture<Void> terminate(ComponentIdentifier cid)
 	{
 		IFuture<Void> ret;
 		
@@ -201,9 +158,9 @@ public interface IComponent
 		}
 		
 		return ret;
-	}
+	}*/
 	
-	public static void waitForLastComponentTerminated() 
+	/*public static void waitForLastComponentTerminated() 
 	{
 		// Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads.
 		ReentrantLock lock	= new ReentrantLock();
@@ -212,13 +169,14 @@ public interface IComponent
 	    try 
 	    { 
 	    	lock.lock();
-		    synchronized(ComponentManager.get().components) 
+		    //synchronized(ComponentManager.get().components)
+		    ComponentManager.get().runWithComponentsLock(() ->
 		    {
 		        if(ComponentManager.get().getNumberOfComponents() == 0) 
 		        {
 		            return;
 		        }
-		        IComponent.addComponentListener(new IComponentListener() 
+		        IComponentManager.get().addComponentListener(new IComponentListener() 
 		        {
 		            @Override
 		            public void lastComponentRemoved(ComponentIdentifier cid) 
@@ -226,6 +184,7 @@ public interface IComponent
 		        	    try 
 		        	    { 
 		        	    	lock.lock();
+		        	    	IComponentManager.get().removeComponentListener(this, IComponentManager.COMPONENT_LASTREMOVED);
 		                    wait.signal();
 		                }
 		        	    finally
@@ -233,8 +192,8 @@ public interface IComponent
 		        			lock.unlock();
 		        		}
 		            }
-		        }, IComponent.COMPONENT_LASTREMOVED);
-		    }
+		        }, IComponentManager.COMPONENT_LASTREMOVED);
+		    });
 		    
 	    	try 
 		    {
@@ -249,54 +208,58 @@ public interface IComponent
 	    {
 			lock.unlock();
 		}
-	}
+	}*/
 	
 	/**
 	 *  Wait for termination.
 	 *  @param cid The component id;
 	 *  @return True on termination; false on component not found.
-	 */
+	 * /
 	public static IFuture<Boolean> waitForTermination(ComponentIdentifier cid)
 	{
 		Future<Boolean> ret = new Future<>();
-		boolean found = false;
-		synchronized(ComponentManager.get().components)
+		boolean[] found = new boolean[1];
+		//synchronized(ComponentManager.get().components)
+		ComponentManager.get().runWithComponentsLock(() ->
 		{
 			if(ComponentManager.get().getComponent(cid)!=null)
 			{
-				found = true;
-				IComponent.addComponentListener(new IComponentListener() 
+				found[0] = true;
+				IComponentManager.get().addComponentListener(new IComponentListener() 
 				{
 					@Override
 					public void componentRemoved(ComponentIdentifier ccid) 
 					{
 						if(cid.equals(ccid))
+						{
+							IComponentManager.get().removeComponentListener(this, IComponentManager.COMPONENT_REMOVED);
 							ret.setResult(true);
+						}
 					}
-				}, IComponent.COMPONENT_REMOVED);
+				}, IComponentManager.COMPONENT_REMOVED);
 			}
-		}
-		if(!found)
+		});
+		if(!found[0])
 			ret.setResult(false);
 		return ret;
-	}
+	}*/
 	
-	public static <T> IFuture<T> run(IThrowingFunction<IComponent, T> body)
+	/*public static <T> IFuture<T> run(IThrowingFunction<IComponent, T> body)
 	{
 		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
 		return run(pojo);
-	}
+	}*/
 	
-	public static <T> IFuture<T> run(Callable<T> body)
+	/*public static <T> IFuture<T> run(Callable<T> body)
 	{
 		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
 		return run(pojo);
-	}
+	}*/
 	
-	public static <T> IFuture<T> run(Object pojo)
+	/*public static <T> IFuture<T> run(Object pojo)
 	{
 		Future<T> ret = new Future<>();
-		IExternalAccess comp = IComponent.create(pojo).get();
+		IExternalAccess comp = IComponentManager.get().create(pojo).get();
 		// all pojos of type IResultProvider will be terminate component after result is received
 		if(pojo instanceof IResultProvider)
 		{
@@ -316,9 +279,9 @@ public interface IComponent
 		});
 		
 		return ret;
-	}
+	}*/
 	
-	public static Map<String, Object> getResults(Object pojo)
+	/*public static Map<String, Object> getResults(Object pojo)
 	{
 		Map<String, Object> ret = new HashMap<>();
 		boolean done = false;
@@ -331,7 +294,7 @@ public interface IComponent
 		}
 		else
 		{
-			for(IComponentLifecycleManager creator: SFeatureProvider.getLifecycleProviders())
+			for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
 			{
 				if(creator.isCreator(pojo))
 				{
@@ -345,7 +308,7 @@ public interface IComponent
 			throw new RuntimeException("Could not get results: "+pojo);
 		
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Get the external access.

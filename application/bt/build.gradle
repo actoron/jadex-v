@@ -1,0 +1,70 @@
+plugins 
+{
+    id 'java-library'
+}
+
+description = 'BT agent examples'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
+repositories
+{
+    mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:libmicro:'+v
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:classreader:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+    implementation 'org.activecomponents.jadex:core:'+v
+    implementation 'org.activecomponents.jadex:model:'+v
+    implementation 'org.activecomponents.jadex:execution:'+v
+    implementation 'org.activecomponents.jadex:micro:'+v
+    implementation 'org.activecomponents.jadex:bt:'+v
+    implementation 'org.activecomponents.jadex:eca:'+v
+    implementation 'org.activecomponents.jadex:logbase:'+v 
+    implementation 'org.activecomponents.jadex:providedservice:'+v
+    implementation 'org.activecomponents.jadex:providedservicemicro:'+v
+    implementation 'org.activecomponents.jadex:requiredservice:'+v
+    implementation 'org.activecomponents.jadex:requiredservicemicro:'+v
+    implementation 'org.activecomponents.jadex:publishservice:'+v
+    implementation 'org.activecomponents.jadex:publishservicejetty:'+v
+    //implementation 'org.activecomponents.jadex:simulation:'+v
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	
+	//implementation 'org.activecomponents.jadex:fluentd:'+v 
+	implementation 'org.activecomponents.jadex:opentelemetry:'+v 
+	
+	// libgdx for game ui
+	implementation 'com.badlogicgames.gdx:gdx:1.12.1'
+    implementation 'com.badlogicgames.gdx:gdx-backend-lwjgl3:1.12.1'
+    implementation 'com.badlogicgames.gdx:gdx-platform:1.12.1:natives-desktop'
+}
+
+processResources {
+    from ('src/main/java') {
+        include '**/*.png'
+        include '**/*.html'
+        include '**/*.js'
+        include '**/*.css'
+        include '**/*.ttf'
+    }
+}
+
+/*task runHelloWorld(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'jadex.micro.helloworld.HelloWorldAgent'
+}*/
+

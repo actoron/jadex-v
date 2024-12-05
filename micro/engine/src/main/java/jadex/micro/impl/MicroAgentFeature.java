@@ -15,6 +15,7 @@ import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.SimpleParameterGuesser;
+import jadex.core.IComponentFeature;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
@@ -28,7 +29,7 @@ import jadex.model.IModelFeature;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 
-public class MicroAgentFeature	implements ILifecycle
+public class MicroAgentFeature	implements ILifecycle, IComponentFeature
 {
 	public static MicroAgentFeature get()
 	{

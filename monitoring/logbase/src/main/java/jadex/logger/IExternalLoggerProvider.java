@@ -4,5 +4,5 @@ import java.lang.System.Logger;
 
 public interface IExternalLoggerProvider extends ILoggerProvider
 {
-	public Logger getLogger(String name);
+	public Logger getLogger(String name, boolean system);
 }

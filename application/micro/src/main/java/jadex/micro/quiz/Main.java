@@ -1,6 +1,6 @@
 package jadex.micro.quiz;
 
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 
 /**
  *  Main for starting the application.
@@ -12,11 +12,11 @@ public class Main
 	 */
 	public static void main(String[] args)
 	{
-		IComponent.create(new QuizMasterAgent());
+		IComponentManager.get().create(new QuizMasterAgent());
 		
-		IComponent.create(new QuizClientAgent());
+		IComponentManager.get().create(new QuizClientAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 		
 		/**IExternalAccess platform = Starter.createPlatform(PlatformConfigurationHandler.getDefaultNoGui()).get();
 		platform.createComponent(new CreationInfo()
