@@ -4,7 +4,7 @@ plugins
 	id 'eclipse'
 }
 
-description = 'Component centralized logging support'
+description = 'Open Telemetry logging support'
 
 group = 'org.activecomponents.jadex'
 
@@ -25,7 +25,6 @@ dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:core:'+v
-	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:logbase:'+v
 	//implementation 'org.fluentd:fluent-logger:0.3.4'
@@ -34,8 +33,6 @@ dependencies
 	implementation 'io.opentelemetry:opentelemetry-sdk:1.44.1';
 	implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.44.1';
 	
-	testImplementation 'org.activecomponents.jadex:common:'+v
-	testImplementation testFixtures('org.activecomponents.jadex:execution:'+v)
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }
