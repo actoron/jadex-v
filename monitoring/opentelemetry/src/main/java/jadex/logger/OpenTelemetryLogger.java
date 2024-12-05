@@ -26,7 +26,9 @@ public class OpenTelemetryLogger implements Logger
 
         logger.setUseParentHandlers(false);
         logger.addHandler(new OpenTelemetryLogHandler(name));
-        //logger.setLevel(level!=null? java.util.logging.Level.ALL);
+        
+        // Hack!!! Should get level from Jadex?
+        logger.setLevel(system ? java.util.logging.Level.WARNING: java.util.logging.Level.INFO);
     }
     
     public String getLoggerType()
