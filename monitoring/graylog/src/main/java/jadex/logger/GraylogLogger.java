@@ -11,10 +11,11 @@ public class GraylogLogger implements java.lang.System.Logger
 {
     protected final java.util.logging.Logger logger;
 
-    public GraylogLogger(String name, boolean system) 
+    public GraylogLogger(String name, Level level, boolean system) 
     {
     	System.out.println("created graylog logger: "+name);
         logger = java.util.logging.Logger.getLogger(name);
+        logger.setLevel(JulLogger.convertToJulLevel(level));
     }
     
     public Logger getLoggerImplementation() 

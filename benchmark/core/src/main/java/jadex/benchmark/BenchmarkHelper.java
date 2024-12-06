@@ -2,21 +2,17 @@ package jadex.benchmark;
 
 import java.io.IOException;
 import java.lang.System.Logger.Level;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.sdk.logs.SdkLoggerProvider;
 import jadex.common.SUtil;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;

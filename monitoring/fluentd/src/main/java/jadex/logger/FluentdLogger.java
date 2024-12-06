@@ -20,10 +20,12 @@ public class FluentdLogger implements Logger
 	
     protected FluentLogger logger;
     protected final boolean system;
+    protected final Level	level;
 
-    public FluentdLogger(String name, boolean system) 
+    public FluentdLogger(String name, Level level, boolean system) 
     {
         this.system = system;
+        this.level	= level;
 
         String host = System.getenv(HOST)!=null? System.getenv(HOST): System.getProperty(HOST);
         String portstr = System.getenv(PORT)!=null? System.getenv(PORT): System.getProperty(PORT);
@@ -77,8 +79,7 @@ public class FluentdLogger implements Logger
     @Override
     public boolean isLoggable(Level level) 
     {
-        // Assuming that FluentdLogger always logs all levels
-        return true;
+        return level.compareTo(this.level)>=0;
     }
 
     @Override
