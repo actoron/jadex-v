@@ -32,6 +32,6 @@ public class ReasoningBDIBenchmark
 			pojo.completed.get();
 			agent.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 }
