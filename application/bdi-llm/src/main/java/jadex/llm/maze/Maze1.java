@@ -1,7 +1,8 @@
 package jadex.llm.maze;
 
 import java.util.ArrayList;
-import java.util.Random;
+
+import static java.lang.Math.subtractExact;
 
 public class Maze1
 {
@@ -13,7 +14,6 @@ public class Maze1
         boolean[] walls = {true, true, true, true}; // top, right, bottom, left;
         boolean visited;
         boolean current;
-        boolean food;
 
         public Cell(int x, int y)
         {
@@ -21,7 +21,6 @@ public class Maze1
             this.y = y;
             this.visited = false;
             this.current = false;
-            this.food = false;
         }
 
         public Cell checkNeighbours()
@@ -77,6 +76,7 @@ public class Maze1
     private final Cell[][] maze;
     private int currentX = 0;
     private int currentY = 0;
+    private ArrayList<Cell> leafCells = new ArrayList<>();
 
     /** Constructor */
     public Maze1(int cols, int rows, int startX, int startY)
@@ -87,6 +87,7 @@ public class Maze1
 
         initializeMaze();
         setInitialCell(startX, startY);
+//        setEnd();
 
         //algorithm to generate maze
         Cell current = currentCell();
@@ -94,10 +95,12 @@ public class Maze1
         current.visited = true;
         ArrayList<Cell> path = new ArrayList<>();
         path.add(current);
+        int count = 1;
 
         while(!path.isEmpty())
         {
             current = path.get(path.size()-1);
+            System.out.println("Current cell: " + current.x + ", " + current.y);
             Cell next = current.checkNeighbours();
             if (next != null)
             {
@@ -106,12 +109,19 @@ public class Maze1
                 path.add(next);
                 //Remove wall between current & next
                 removeWall(current, next);
+                //count +1
+                count++;
+
             } else
             {
                 path.remove(path.size() - 1);
+                if(path.size() < count) {
+                    leafCells.add(current);
+                    System.out.println("Leaf cell: " + current.x + ", " + current.y);
+                    count = path.size();
+                }
             }
         }
-
     }
 
     private void initializeMaze()
@@ -189,8 +199,8 @@ public class Maze1
 
     public void removeWall(Cell current, Cell next)
     {
-        int xDiff = Math.subtractExact(current.x, next.x);
-        int yDiff = Math.subtractExact(current.y, next.y);
+        int xDiff = subtractExact(current.x, next.x);
+        int yDiff = subtractExact(current.y, next.y);
 
         if (xDiff == 1)
         {
@@ -213,10 +223,19 @@ public class Maze1
         }
     }
 
+//    public void setEnd()
+//    {
+//        Random rand = new Random();
+//        int EndX = rand.nextInt(cols);
+//        int EndY = rand.nextInt(rows);
+//        System.out.printf("End: %d, %d\n", EndX, EndY);
+//    }
+
+
     public static void main(String[] args)
     {
-        int rows = 10;
-        int cols = 10;
+        int rows = 7;
+        int cols = 7;
         int startX = 2;
         int startY = 2;
         Maze1 maze1 = new Maze1(cols, rows, startX, startY);
