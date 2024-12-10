@@ -3,20 +3,13 @@ package jadex.llm.maze;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
-import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
-import jadex.llm.maze.Maze;
 import jadex.model.annotation.OnStart;
-import jadex.bdi.runtime.Val;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
-
-import java.awt.Point;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,9 +53,9 @@ public class MazeAgent
         public boolean checkTarget() {
             System.out.println("-->Test Goal");
 
-            Point mazeEndPoint = maze.getEnd();
+            Maze.Cell mazeEnd = maze.getEndCell();
             // Check if the agent has reached the end position
-            if (mazeEndPoint.equals(maze.jadexStringToPoint(updatedPositionString.get()))) {
+            if (mazeEnd.equals(maze.jadexStringToCell(updatedPositionString.get()))) {
                 System.out.println("A: Agent reached the end position");
                 return true;
             } else {
@@ -70,9 +63,9 @@ public class MazeAgent
             }
         }
 
-        public void setUpdatedPositionString(String point)
+        public void setUpdatedPositionString(String cell)
         {
-            updatedPositionString.set(point);
+            updatedPositionString.set(cell);
         }
 
         public String getUpdatedPositionString()
@@ -100,11 +93,11 @@ public class MazeAgent
     {
         System.out.println("A: Agent " +agent.getId()+ " active");
 
-        Point mazeStartPoint = maze.getStart();
-        System.out.println("Start position: (" + mazeStartPoint.x + ", " + mazeStartPoint.y + ")");
+        Maze.Cell mazeStart = maze.getStartCell();
+        System.out.println("Start position: (" + mazeStart.x + ", " + mazeStart.y + ")");
 
         // Temp Jadexhandler for Belief<String>
-        mazeBeliefPositionString.set(maze.jadexPointToString(mazeStartPoint));
+        mazeBeliefPositionString.set(maze.jadexCellToString(mazeStart));
     }
 
     @Plan(trigger=@Trigger(goals=AgentGoal.class))
@@ -126,9 +119,6 @@ public class MazeAgent
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
 
-        Random rand = new Random();
-        List<String> dirNames = Arrays.asList("front", "left", "right", "back");
-        String direction = dirNames.get(rand.nextInt(dirNames.size()));
         Object brain = new Object();
 
         System.out.println(goal.getUpdatedPositionString());
@@ -137,33 +127,27 @@ public class MazeAgent
             System.out.println("Step " + i);
 
             // 1. get current position from goal in mazePos (agent)
-            Point mazePosition = maze.jadexStringToPoint(goal.getUpdatedPositionString());
-            // 2. get current envView from position
-            JSONObject envView = maze.getEnvironmentView(mazePosition.x, mazePosition.y, direction);
+            Maze.Cell mazePosition = maze.jadexStringToCell(goal.getUpdatedPositionString());
 
             // put mazePos, envView & brain into ArrayList
             ArrayList<Object> inputList = new ArrayList<Object>();
             inputList.add(mazePosition);
-            inputList.add(envView);
 //            inputList.add(brain);
 
             // chatty run on given List, return List and extract Objects
             ArrayList<Object> outputList = plan.runCode(inputList);
-            Point retMazePos = (Point) outputList.get(0);
-            direction = (String) outputList.get(1);
+            Maze.Cell retMazePos = (Maze.Cell) outputList.get(0);
 //            brain = outputList.get(2);
 
             // set updated mazePos from chatty and return to console
-            goal.setUpdatedPositionString(maze.jadexPointToString(retMazePos));
+            goal.setUpdatedPositionString(maze.jadexCellToString(retMazePos));
             System.out.println(mazePosition);
-            System.out.println(envView);
             maze.setAgent(retMazePos);
 //            maze.removeAgent(mazePosition);
 
             // display maze, delete retMazePos from console output and wait oyne second
             maze.displayMaze();
             System.out.println(retMazePos);
-            System.out.println(direction);
             System.out.println("###################################################################################");
 
             try {
@@ -183,7 +167,7 @@ public class MazeAgent
         System.out.println("A: Maze main");
 
         // Create a new maze
-        Maze maze = new Maze(20, 20, 5);
+        Maze maze = new Maze(20, 20, 5, 5);
 
         // Create a new MazeAgent
         IComponentManager.get().create(new MazeAgent(

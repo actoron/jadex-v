@@ -1,69 +1,250 @@
 package jadex.llm.maze;
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
-import org.json.simple.JSONObject;
+import java.util.ArrayList;
 
-/** Maze class w/ Console environment
- * - set border, walls, food, start & end
- * - agent can look around, 3 Pos in front (or next wall), 1 Pos in left, right, back
- * - Manhattan distance for calculate the distance between actual position and end*/
+import static java.lang.Math.subtractExact;
+
 public class Maze
 {
-    private class Block
+
+    /** Every cell has x,y coordinates */
+    class Cell
     {
-        int status; // 0: free, 1: wall, 2: food, 3: start, 4: end
+        int x;
+        int y;
+        boolean[] walls = {true, true, true, true}; // top, right, bottom, left;
+        boolean visited;
+        boolean current;
         boolean agent;
 
-        public Block(int status)
+        public Cell(int x, int y)
         {
-            this.status = status;
-            this.agent = false;
+            this.x = x;
+            this.y = y;
+            this.visited = false;
+            this.current = false;
+        }
+
+        public Cell checkNeighbours()
+        {
+            ArrayList<Cell> neighbours = new ArrayList<>();
+            if (y > 0)
+            {
+                Cell top = maze[x][y - 1];
+                if (top != null && !top.visited)
+                {
+                    neighbours.add(top);
+                }
+            }
+
+            if (x < cols - 1)
+            {
+                Cell right = maze[x + 1][y];
+                if (right != null && !right.visited)
+                {
+                    neighbours.add(right);
+                }
+            }
+
+            if (y < rows - 1)
+            {
+                Cell bottom = maze[x][y + 1];
+                if (bottom != null && !bottom.visited)
+                {
+                    neighbours.add(bottom);
+                }
+            }
+
+            if (x > 0) {
+                Cell left = maze[x - 1][y];
+                if (left != null && !left.visited) {
+                    neighbours.add(left);
+                }
+            }
+
+            if(!neighbours.isEmpty())
+            {
+                int rand = (int) Math.floor(Math.random() * neighbours.size());
+                Cell chosen = neighbours.get(rand);
+                return chosen;
+            } else
+            {
+                return null;
+            }
         }
     }
 
-    private Block[][] maze;
-    private int height, width;
-    private int foodCount;
-    private Random rand = new Random();
-
-    private Point start;
-    private Point end;
-
-    private List<Point> foodPositions;
+    private final int cols, rows;
+    private final Cell[][] maze;
+    private int currentX = 0;
+    private int currentY = 0;
+    private ArrayList<Cell> leafCells = new ArrayList<>();
+    private final int startX;
+    private final int startY;
 
     /** Constructor */
-    public Maze(int height, int width, int foodCount)
+    public Maze(int cols, int rows, int startX, int startY)
     {
-        this.height = height;
-        this.width = width;
-        this.foodCount = foodCount;
-        maze = new Block[height][width];
-        foodPositions = new ArrayList<>();
+        this.cols = cols;
+        this.rows = rows;
+        this.maze = new Cell[rows][cols];
+        this.startX = startX;
+        this.startY = startY;
 
         initializeMaze();
-        placeStartFoodAndEnd();
-        generateWalls();
+        setInitialCell(startX, startY);
+
+        //algorithm to generate maze
+        Cell current = currentCell();
+        //Mark current cell as visited and put into ArrayList
+        current.visited = true;
+        ArrayList<Cell> path = new ArrayList<>();
+        path.add(current);
+
+        boolean leaf = false;
+        while(!path.isEmpty())
+        {
+            current = path.get(path.size()-1);
+//            System.out.println("Current cell: " + current.x + ", " + current.y);
+            Cell next = current.checkNeighbours();
+            if (next != null)
+            {
+                //Mark the next cell as visited and put into ArrayList
+                next.visited = true;
+                path.add(next);
+                //Remove wall between current & next
+                removeWall(current, next);
+                //track if found first leafCell
+                leaf = false;
+            } else
+            {
+                path.remove(path.size() - 1);
+                //only add first cell where backtracking starts
+                if (!leaf) {
+                    leafCells.add(current);
+//                    System.out.println("Leaf cell: " + current.x + ", " + current.y);
+                    leaf = true;
+                }
+            }
+        }
+        getEndCell();
     }
 
-    /** Getter */
-    public Point getStart()
+    private void initializeMaze()
     {
-        return start;
+        for (int x = 0; x < cols; x++)
+        {
+            for (int y = 0; y < rows; y++)
+            {
+                maze[x][y] = new Cell(x, y);
+            }
+        }
     }
 
-    public Point getEnd()
+    public void setInitialCell(int x, int y)
     {
-        return end;
+        if (x >= 0 && x < cols && y >= 0 && y < rows) {
+            currentX = x;
+            currentY = y;
+            visitedCell(currentX, currentY);
+        } else {
+            System.out.println("Invalid current cell position.");
+        }
     }
 
-    public List<Point> getFood()
+    public void visitedCell(int x, int y)
     {
-        return foodPositions;
+        Cell cell = maze[x][y];
+        if(!cell.visited)
+        {
+            cell.visited = true;
+        }
     }
 
-    public void setAgent(Point position)
+    public Cell currentCell()
+    {
+        return maze[currentX][currentY];
+    }
+
+    public void displayMaze()
+    {
+        //Iterate over each row (y) first for print in console
+        for (int y = 0; y < rows; y++) {
+            //print top walls
+            for (int x = 0; x < cols; x++) {
+                Cell cell = maze[x][y];
+                System.out.print(cell.walls[0] ? "+ - " : "+   ");
+            }
+            System.out.println("+");
+
+            //print left/right walls
+            for (int x = 0; x < cols; x++) {
+                Cell cell = maze[x][y];
+                if (cell.visited)
+                {
+                    System.out.print(cell.walls[3] ? "|   " : "    ");
+                } else
+                {
+                    System.out.print(cell.walls[3] ? "|   " : "    ");
+                }
+            }
+
+            //print right wall of last cell
+            System.out.println("|");
+
+            if (y == rows - 1) {
+                //print bottom walls
+                for (int x = 0; x < cols; x++) {
+                    Cell cell = maze[x][y];
+                    System.out.print(cell.walls[2] ? "+ - " : "+   ");
+                }
+                System.out.println("+");
+            }
+        }
+    }
+
+    public void removeWall(Cell current, Cell next)
+    {
+        int xDiff = subtractExact(current.x, next.x);
+        int yDiff = subtractExact(current.y, next.y);
+
+        if (xDiff == 1)
+        {
+            current.walls[3] = false;
+            next.walls[1] = false;
+        } else if (xDiff == -1)
+        {
+            current.walls[1] = false;
+            next.walls[3] = false;
+        }
+
+        if (yDiff == 1)
+        {
+            current.walls[0] = false;
+            next.walls[2] = false;
+        } else if (yDiff == -1)
+        {
+            current.walls[2] = false;
+            next.walls[0] = false;
+        }
+    }
+
+    public Cell getEndCell()
+    {
+        //get endCell from leafCells
+        Cell endCell = leafCells.get(leafCells.size()-1);
+        System.out.println("End cell: " + endCell.x + ", " + endCell.y);
+        return endCell;
+    }
+
+    public Cell getStartCell()
+    {
+        Cell startCell = maze[startX][startY];
+        return startCell;
+    }
+
+    public void setAgent(Cell position)
     {
         maze[position.x][position.y].agent = true;
     }
@@ -73,276 +254,28 @@ public class Maze
         maze[position.x][position.y].agent = false;
     }
 
-    // Initialize the maze with outer walls and free space inside
-    private void initializeMaze()
-    {
-        for (int i = 0; i < height; i++)
-        {
-            for (int j = 0; j < width; j++)
-            {
-                if (i == 0 || i == height - 1 || j == 0 || j == width - 1)
-                {
-                    maze[i][j] = new Block(1); // Outer walls
-                } else
-                {
-                    maze[i][j] = new Block(0); // Free space
-                }
-            }
-        }
-    }
-
-    // Carve a path between two points by clearing blocks
-    private void carvePath(Point start, Point end)
-    {
-        int startX = start.x;
-        int startY = start.y;
-        int endX = end.x;
-        int endY = end.y;
-
-        // Greedily carve a path by alternating between horizontal and vertical moves
-        while (startX != endX || startY != endY)
-        {
-            if (startX < endX)
-            {
-                startX++;
-            } else if (startX > endX)
-            {
-                startX--;
-            } else if (startY < endY)
-            {
-                startY++;
-            } else if (startY > endY)
-            {
-                startY--;
-            }
-
-            //clear path without overwriting set items
-            if (maze[startX][startY].status == 0)
-            {
-                maze[startX][startY].status = 0;
-            }
-        }
-    }
-
-    // Place the start, food, and end points, and carve paths between them
-    private void placeStartFoodAndEnd() {
-        placeStart();
-
-        int foodPlaced = 0;
-        while (foodPlaced < foodCount) {
-            int x = rand.nextInt(height - 2) + 1;
-            int y = rand.nextInt(width - 2) + 1;
-            if (maze[x][y].status == 0) {
-                maze[x][y].status = 2;
-                foodPositions.add(new Point(x, y));
-                foodPlaced++;
-            }
-        }
-
-        Point firstFood = foodPositions.get(0);
-        carvePath(start, firstFood);
-
-        for (int i = 0; i < foodPositions.size() - 1; i++) {
-            Point currentFood = foodPositions.get(i);
-            Point nextFood = foodPositions.get(i + 1);
-            carvePath(currentFood, nextFood);
-        }
-
-        placeEnd(foodPositions.get(foodPositions.size() - 1));
-    }
-
-    // Place the start position at a random free space
-    private void placeStart()
-    {
-        while (true)
-        {
-            int x = rand.nextInt(height - 2) + 1;
-            int y = rand.nextInt(width - 2) + 1;
-            if (maze[x][y].status == 0) {
-                maze[x][y].status = 3; // Start point
-                start = new Point(x, y);
-                break;
-            }
-        }
-    }
-
-    // Place the end position at a random free space, placed after the last food
-    private void placeEnd(Point lastFood)
-    {
-        while (true)
-        {
-            int x = rand.nextInt(height - 2) + 1;
-            int y = rand.nextInt(width - 2) + 1;
-            if (maze[x][y].status == 0)
-            {
-                maze[x][y].status = 4;
-                end = new Point(x, y);
-                carvePath(lastFood, end);
-                break;
-            }
-        }
-    }
-
-    // Generate random walls, ensure accessibility from all items
-    private void generateWalls()
-    {
-        for (int i = 1; i < height - 1; i++)
-        {
-            for (int j = 1; j < width - 1; j++)
-            {
-                if (maze[i][j].status == 0 && rand.nextInt(4) == 0)
-                { // 25% chance to place a wall
-                    maze[i][j].status = 1;
-                }
-            }
-        }
-        ensureAccessibility();
-    }
-
-    // Simple Breadth-First-Seaarch (BFS) all items are reachable from the start
-    private void ensureAccessibility()
-    {
-        boolean[][] visited = new boolean[height][width];
-        Queue<int[]> queue = new LinkedList<>();
-        queue.add(new int[]{start.x, start.y});
-        visited[start.x][start.y] = true;
-
-        while (!queue.isEmpty())
-        {
-            int[] current = queue.poll();
-            int x = current[0];
-            int y = current[1];
-
-            // Try all 4 directions
-            int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-            for (int[] d : directions)
-            {
-                int newX = x + d[0];
-                int newY = y + d[1];
-                if (newX >= 0 && newX < height && newY >= 0 && newY < width && !visited[newX][newY])
-                {
-                    if (maze[newX][newY].status != 1)
-                    { // Not a wall
-                        queue.add(new int[]{newX, newY});
-                        visited[newX][newY] = true;
-                    }
-                }
-            }
-        }
-
-        // Fix unreachable items
-        for (int i = 1; i < height - 1; i++)
-        {
-            for (int j = 1; j < width - 1; j++)
-            {
-                if ((maze[i][j].status == 2 || maze[i][j].status == 4) && !visited[i][j])
-                {
-                    maze[i][j].status = 0;
-                }
-            }
-        }
-    }
-
-    // Display maze
-    public void displayMaze()
-    {
-        for (int i = 0; i < height; i++)
-        {
-            for (int j = 0; j < width; j++)
-            {
-                if (maze[i][j].agent == false)
-                {
-                    if (maze[i][j].status == 1)
-                    {
-                        System.out.print("+ "); // Wall
-                    } else if (maze[i][j].status == 2)
-                    {
-                        System.out.print("F "); // Food
-                    } else if (maze[i][j].status == 3)
-                    {
-                        System.out.print("S "); // Start
-                    } else if (maze[i][j].status == 4)
-                    {
-                        System.out.print("E "); // End point
-                    } else
-                    {
-                        System.out.print("  "); // Free space
-                    }
-                } else
-                {
-                    System.out.print("A "); // Agent
-                }
-            }
-            System.out.println(); // Move to the next row
-        }
-    }
-
-    // Function to return a "world view" of the surrounding blocks and current block as a JSON object
-    public JSONObject getEnvironmentView(int x, int y, String direction) {
-        JSONObject environment = new JSONObject();
-        int[][] forwardOffsets = switch (direction.toLowerCase()) {
-            case "front" -> new int[][]{{-1, 0}, {0, -1}, {0, 1}, {1, 0}};  // front, left, right, back
-            case "back" -> new int[][]{{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
-            case "left" -> new int[][]{{0, -1}, {1, 0}, {-1, 0}, {0, 1}};
-            case "right" -> new int[][]{{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
-            default -> throw new IllegalArgumentException("Invalid direction: " + direction);
-        };
-
-        String[] dirNames = {"front", "left", "right", "back"};
-
-        // Look in front, left, right, and back, considering walls
-        for (int i = 0; i < 4; i++) {
-            List<Integer> view = new ArrayList<>();
-            int viewDistance = (i == 0) ? 3 : 1;
-            for (int step = 1; step <= viewDistance; step++) {
-                // Calculate the new coordinates for the current direction
-                int newX = x + forwardOffsets[i][0] * step;
-                int newY = y + forwardOffsets[i][1] * step;
-
-                // Check if the new coordinates are within bounds and add the status of the block
-                if (newX >= 0 && newX < height && newY >= 0 && newY < width) {
-                    view.add(maze[newX][newY].status);
-                    // If a wall is encountered, stop looking further
-                    if (maze[newX][newY].status == 1) {
-                        break;
-                    }
-                }
-            }
-            environment.put(dirNames[i], view); // Add the view for the current direction
-        }
-
-        // Convert environment map to a JSON string using JSONObject
-        return environment;
-    }
-
-    // Calculate Manhattan distance from current position to the end
-    public int calculateManhattanDistance(int x, int y)
-    {
-        return Math.abs(x - end.x) + Math.abs(y - end.y);
-    }
-
     //Point to String function
-    public String jadexPointToString(Point point)
+    public String jadexCellToString(Cell cell)
     {
-        return point.x + "," + point.y;
+        return cell.x + "," + cell.y;
     }
 
     //String to Point function
-    public Point jadexStringToPoint(String pointString)
+    public Cell jadexStringToCell(String cellString)
     {
-        String[] pointStringValue = pointString.split(",");
-        return new Point(Integer.parseInt(pointStringValue[0]), Integer.parseInt(pointStringValue[1]));
+        String[] cellStringValue = cellString.split(",");
+        return new Cell(Integer.parseInt(cellStringValue[0]), Integer.parseInt(cellStringValue[1]));
     }
 
-    //change env when agent reaches food
-    public void consumeFood(int x, int y)
-    {
-        if (maze[x][y].status == 2)
-        {
-            maze[x][y].status = 0;
-        } else
-        {
-            System.out.println("No food at position: " + x + ", " + y);
-        }
-    }
+
+//    public static void main(String[] args)
+//    {
+//        int rows = 7;
+//        int cols = 7;
+//        int startX = 2;
+//        int startY = 2;
+//        Maze maze1 = new Maze(cols, rows, startX, startY);
+//
+//        maze1.displayMaze();
+//    }
 }
