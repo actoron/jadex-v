@@ -9,11 +9,7 @@ import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @Agent(type="bdip")
@@ -167,7 +163,7 @@ public class MazeAgent
         System.out.println("A: Maze main");
 
         // Create a new maze
-        Maze maze = new Maze(20, 20, 5, 5);
+        Maze maze = new Maze(10, 10, 5, 5);
 
         // Create a new MazeAgent
         IComponentManager.get().create(new MazeAgent(

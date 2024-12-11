@@ -270,8 +270,8 @@ public class Maze
 
 //    public static void main(String[] args)
 //    {
-//        int rows = 7;
-//        int cols = 7;
+//        int rows = 10;
+//        int cols = 10;
 //        int startX = 2;
 //        int startY = 2;
 //        Maze maze1 = new Maze(cols, rows, startX, startY);
