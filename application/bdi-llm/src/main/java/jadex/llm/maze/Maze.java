@@ -9,7 +9,7 @@ public class Maze
 {
 
     /** Every cell has x,y coordinates */
-    class Cell
+    public class Cell
     {
         int x;
         int y;
@@ -72,6 +72,14 @@ public class Maze
             {
                 return null;
             }
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
         }
     }
 

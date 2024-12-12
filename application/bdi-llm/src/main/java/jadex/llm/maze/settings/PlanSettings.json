@@ -3,11 +3,11 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal. You are not allowed to generate comments where the user should implement his code."
+      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal. You are not allowed to generate comments where the user should implement code."
     },
     {
       "role": "user",
-      "content": "Create a java class named Plan which implements IPlanBody with a method called runCode. The Class Maze is allready implemented. The function get a $Belief$ of Objects. Create a variable outputList of type $Belief$ of Objects. The program function is part of an algorithm, that is used to solve a maze. Inside the maze is a start and end position. The goal is to reach the end position. The function is running inside a for loop. Each loop is one step you can perform. The first Object in the List is a Maze.Cell with name mazePosition, it contains x and y-coordinates. In the maze you have walls that are represented trough a boolean. If the Wall is false you can go to the next Cell."
+      "content": "Create a java class named Plan which implements IPlanBody with a method called runCode. Import jadex.llm.maze; the Class Maze is already implemented. The function get a $Belief$ of Objects. Create a variable outputList of type $Belief$ of Objects. The program function is part of an algorithm, that is used to solve a maze. Inside the maze is a start and end position. The goal is to reach the end position. The function is running inside a for loop. Each loop is one step you can perform. The first Object in the List is a Maze.Cell with name mazePosition, it contains only x and y coordinates and you can get these with getX and getY. In the maze you have walls ont the top, right, bottom and left that are represented trough a boolean. If the Wall is false you can go to the next Cell if not you have to look for another wall. Add updated Position as Maze.Cell to the outputList and return."
     }
   ],
   "temperature": 0.3,
