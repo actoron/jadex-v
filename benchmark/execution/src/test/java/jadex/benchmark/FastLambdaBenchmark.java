@@ -26,7 +26,7 @@ public class FastLambdaBenchmark
 			FastLambda<ComponentIdentifier> comp = Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, null, false));
 			return () -> comp.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 	
 	@Test

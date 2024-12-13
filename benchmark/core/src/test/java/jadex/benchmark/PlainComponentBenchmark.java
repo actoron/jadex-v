@@ -16,7 +16,7 @@ public class PlainComponentBenchmark
 			Component	comp	= Component.createComponent(Component.class, () -> new Component());
 			return () -> comp.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 	
 	@Test
