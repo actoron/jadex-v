@@ -1,7 +1,13 @@
 package jadex.llm.maze;
 
+import jadex.common.FastThreadedRandom;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Random;
 
 import static java.lang.Math.subtractExact;
 
@@ -13,20 +19,58 @@ public class Maze
     {
         int x;
         int y;
-        boolean[] walls = {true, true, true, true}; // top, right, bottom, left;
+        boolean[] walls;
         boolean visited;
         boolean current;
-        boolean agent;
+        int status;
 
-        public Cell(int x, int y)
+        /**Constructor for maze generation*/
+        private Cell(int x, int y)
         {
             this.x = x;
             this.y = y;
+            this.walls = new boolean[] {true, true, true, true}; // top, right, bottom, left
             this.visited = false;
             this.current = false;
+            this.status = -1;
         }
 
-        public Cell checkNeighbours()
+        /**Constructor for Cell reconstruction*/
+        private Cell(String jsonStringCell)
+        {
+            JSONObject json = new JSONObject();
+            try {
+                json = (JSONObject) new JSONParser().parse(jsonStringCell);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            this.x = (int) json.get("x");
+            this.y = (int) json.get("y");
+            this.walls = new boolean[] {(boolean) json.get("top"),
+                                        (boolean) json.get("right"),
+                                        (boolean) json.get("bottom"),
+                                        (boolean) json.get("left")};
+            this.visited = (boolean) json.get("visited");
+            this.current = (boolean) json.get("current");
+            this.status = (int) json.get("status");
+        }
+
+        /** Converts this Cell object to a JSON string for later reconstruction*/
+        public String toJSONString() {
+            JSONObject json = new JSONObject();
+            json.put("x", x);
+            json.put("y", y);
+            json.put("top", walls[0]);
+            json.put("right", walls[1]);
+            json.put("bottom", walls[2]);
+            json.put("left", walls[3]);
+            json.put("visited", visited);
+            json.put("current", current);
+            json.put("status", status);
+            return json.toString();
+        }
+
+        private Cell checkNeighbours()
         {
             ArrayList<Cell> neighbours = new ArrayList<>();
             if (y > 0)
@@ -73,14 +117,6 @@ public class Maze
                 return null;
             }
         }
-
-        public int getX() {
-            return x;
-        }
-
-        public int getY() {
-            return y;
-        }
     }
 
     private final int cols, rows;
@@ -90,15 +126,16 @@ public class Maze
     private ArrayList<Cell> leafCells = new ArrayList<>();
     private final int startX;
     private final int startY;
+    private Cell endCell;
 
     /** Constructor */
     public Maze(int cols, int rows, int startX, int startY)
     {
         this.cols = cols;
         this.rows = rows;
-        this.maze = new Cell[rows][cols];
         this.startX = startX;
         this.startY = startY;
+        this.maze = new Cell[cols][rows];
 
         initializeMaze();
         setInitialCell(startX, startY);
@@ -136,21 +173,30 @@ public class Maze
                 }
             }
         }
-        getEndCell();
+
+        Random random = new Random();
+        int randomIndex = random.nextInt(leafCells.size()); // Generate a random index
+        this.endCell = leafCells.get(randomIndex);         // Pick a random cell
+        //set endCell status
+        maze[endCell.x][endCell.y].status = 1;
     }
 
     private void initializeMaze()
     {
         for (int x = 0; x < cols; x++)
         {
-            for (int y = 0; y < rows; y++)
-            {
+            for (int y = 0; y < rows; y++) {
                 maze[x][y] = new Cell(x, y);
+
+                //set start cell
+                if (x == startX && y == startY) {
+                    maze[x][y].status = 0;
+                }
             }
         }
     }
 
-    public void setInitialCell(int x, int y)
+    private void setInitialCell(int x, int y)
     {
         if (x >= 0 && x < cols && y >= 0 && y < rows) {
             currentX = x;
@@ -161,7 +207,7 @@ public class Maze
         }
     }
 
-    public void visitedCell(int x, int y)
+    private void visitedCell(int x, int y)
     {
         Cell cell = maze[x][y];
         if(!cell.visited)
@@ -170,7 +216,7 @@ public class Maze
         }
     }
 
-    public Cell currentCell()
+    private Cell currentCell()
     {
         return maze[currentX][currentY];
     }
@@ -189,9 +235,20 @@ public class Maze
             //print left/right walls
             for (int x = 0; x < cols; x++) {
                 Cell cell = maze[x][y];
-                if (cell.visited)
+//                if (cell.visited)
+//                {
+//                    System.out.print(cell.walls[3] ? "|   " : "    ");
+//                } else
+//                {
+//                    System.out.print(cell.walls[3] ? "|   " : "    ");
+//                }
+
+                if (cell.status == 0)
                 {
-                    System.out.print(cell.walls[3] ? "|   " : "    ");
+                    System.out.print(cell.walls[3] ? "| S " : "  S ");
+                } else if (cell.status == 1)
+                {
+                    System.out.print(cell.walls[3] ? "| E " : "  E ");
                 } else
                 {
                     System.out.print(cell.walls[3] ? "|   " : "    ");
@@ -212,7 +269,7 @@ public class Maze
         }
     }
 
-    public void removeWall(Cell current, Cell next)
+    private void removeWall(Cell current, Cell next)
     {
         int xDiff = subtractExact(current.x, next.x);
         int yDiff = subtractExact(current.y, next.y);
@@ -238,44 +295,22 @@ public class Maze
         }
     }
 
-    public Cell getEndCell()
+    public int[] getEndPosition()
     {
-        //get endCell from leafCells
-        Cell endCell = leafCells.get(leafCells.size()-1);
-        System.out.println("End cell: " + endCell.x + ", " + endCell.y);
-        return endCell;
+        return new int[]{endCell.x, endCell.y};
     }
 
-    public Cell getStartCell()
+    public String getCurrentPosition()
     {
-        Cell startCell = maze[startX][startY];
-        return startCell;
+        return currentCell().toJSONString();
     }
 
-    public void setAgent(Cell position)
+    public String getCell(int x, int y)
     {
-        maze[position.x][position.y].agent = true;
+        return maze[x][y].toJSONString();
     }
 
-    public void removeAgent(Point position)
-    {
-        maze[position.x][position.y].agent = false;
-    }
-
-    //Point to String function
-    public String jadexCellToString(Cell cell)
-    {
-        return cell.x + "," + cell.y;
-    }
-
-    //String to Point function
-    public Cell jadexStringToCell(String cellString)
-    {
-        String[] cellStringValue = cellString.split(",");
-        return new Cell(Integer.parseInt(cellStringValue[0]), Integer.parseInt(cellStringValue[1]));
-    }
-
-
+    //for testing
 //    public static void main(String[] args)
 //    {
 //        int rows = 10;
@@ -283,7 +318,7 @@ public class Maze
 //        int startX = 2;
 //        int startY = 2;
 //        Maze maze1 = new Maze(cols, rows, startX, startY);
-//
+//        System.out.println(maze1.getCurrentPosition());
 //        maze1.displayMaze();
 //    }
 }

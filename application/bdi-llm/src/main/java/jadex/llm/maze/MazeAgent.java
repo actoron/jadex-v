@@ -8,6 +8,9 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -31,27 +34,38 @@ public class MazeAgent
     @Goal
     public class AgentGoal {
         @GoalParameter
-        protected Val<String> updatedPositionString;
+        protected Val<String> updatedCellJSONString;
 
         @GoalCreationCondition(beliefs = "mazeBeliefPositionString")
-        public AgentGoal(String updatedPositionString) {
-            this.updatedPositionString = new Val<>(updatedPositionString);
+        public AgentGoal(String updatedCellJSONString) {
+            this.updatedCellJSONString = new Val<>(updatedCellJSONString);
             System.out.println("A: Goal created");
         }
 
         @GoalFinished
         public void goalFinished() {
             System.out.println("A: Goal finished");
-            System.out.printf("Data: " + updatedPositionString.get());
+            System.out.printf("Data: " + updatedCellJSONString.get());
         }
 
-        @GoalTargetCondition(parameters = "updatedPositionString")
+        @GoalTargetCondition(parameters = "updatedCellJSONString")
         public boolean checkTarget() {
             System.out.println("-->Test Goal");
 
-            Maze.Cell mazeEnd = maze.getEndCell();
+            int mazeEndX = maze.getEndPosition()[0];
+            int mazeEndY = maze.getEndPosition()[1];
+
+            JSONObject json = new JSONObject();
+            try {
+                json = (JSONObject) new JSONParser().parse(updatedCellJSONString.get());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            int currentX = (int) json.get("x");
+            int currentY = (int) json.get("y");
+
             // Check if the agent has reached the end position
-            if (mazeEnd.equals(maze.jadexStringToCell(updatedPositionString.get()))) {
+            if (mazeEndX == currentX && mazeEndY == currentY) {
                 System.out.println("A: Agent reached the end position");
                 return true;
             } else {
@@ -59,14 +73,14 @@ public class MazeAgent
             }
         }
 
-        public void setUpdatedPositionString(String cell)
+        public void setUpdatedCellJSONString(String cell)
         {
-            updatedPositionString.set(cell);
+            updatedCellJSONString.set(cell);
         }
 
-        public String getUpdatedPositionString()
+        public String getUpdatedCellJSONString()
         {
-            return updatedPositionString.get();
+            return updatedCellJSONString.get();
         }
     }
 
@@ -89,11 +103,10 @@ public class MazeAgent
     {
         System.out.println("A: Agent " +agent.getId()+ " active");
 
-        Maze.Cell mazeStart = maze.getStartCell();
-        System.out.println("Start position: (" + mazeStart.x + ", " + mazeStart.y + ")");
-
         // Temp Jadexhandler for Belief<String>
-        mazeBeliefPositionString.set(maze.jadexCellToString(mazeStart));
+        mazeBeliefPositionString.set(maze.getCurrentPosition());
+
+        System.out.println("StartCell: " + mazeBeliefPositionString.get());
     }
 
     @Plan(trigger=@Trigger(goals=AgentGoal.class))
@@ -115,35 +128,37 @@ public class MazeAgent
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
 
-        Object brain = new Object();
-
-        System.out.println(goal.getUpdatedPositionString());
+        System.out.println(goal.getUpdatedCellJSONString());
 
         for (int i = 0; i < 50; i++) {
             System.out.println("Step " + i);
 
             // 1. get current position from goal in mazePos (agent)
-            Maze.Cell mazePosition = maze.jadexStringToCell(goal.getUpdatedPositionString());
+            String CellJSONString = goal.getUpdatedCellJSONString();
 
             // put mazePos, envView & brain into ArrayList
             ArrayList<Object> inputList = new ArrayList<Object>();
-            inputList.add(mazePosition);
-//            inputList.add(brain);
+            inputList.add(CellJSONString);
 
             // chatty run on given List, return List and extract Objects
             ArrayList<Object> outputList = plan.runCode(inputList);
-            Maze.Cell retMazePos = (Maze.Cell) outputList.get(0);
-//            brain = outputList.get(2);
+            String returnedCellJSONString = (String) outputList.get(0);
+
+            JSONObject json = new JSONObject();
+            try {
+                json = (JSONObject) new JSONParser().parse(returnedCellJSONString);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            int returnedX = (int) json.get("x");
+            int returnedY = (int) json.get("y");
 
             // set updated mazePos from chatty and return to console
-            goal.setUpdatedPositionString(maze.jadexCellToString(retMazePos));
-            System.out.println(mazePosition);
-            maze.setAgent(retMazePos);
-//            maze.removeAgent(mazePosition);
+            goal.setUpdatedCellJSONString(maze.getCell(returnedX, returnedY));
+            System.out.println(goal.getUpdatedCellJSONString());
 
             // display maze, delete retMazePos from console output and wait oyne second
             maze.displayMaze();
-            System.out.println(retMazePos);
             System.out.println("###################################################################################");
 
             try {
@@ -163,7 +178,8 @@ public class MazeAgent
         System.out.println("A: Maze main");
 
         // Create a new maze
-        Maze maze = new Maze(10, 10, 5, 5);
+        Maze maze = new Maze(100, 10, 5, 5);
+        maze.displayMaze();
 
         // Create a new MazeAgent
         IComponentManager.get().create(new MazeAgent(
@@ -171,6 +187,7 @@ public class MazeAgent
                 System.getenv("OPENAI_API_KEY"),
                 maze)
         );
+
         IComponentManager.get().waitForLastComponentTerminated();
     }
 }
