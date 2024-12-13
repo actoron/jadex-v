@@ -17,12 +17,13 @@ import jadex.common.SUtil;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
 import jadex.logger.OpenTelemetryLogHandler;
+import jadex.logger.OpenTelemetryLogger;
 
 public class BenchmarkHelper
 {
 	static
 	{
-		System.setProperty("OT_URL", "https://otel.actoron.com");
+		System.setProperty(OpenTelemetryLogger.URL, "https://otel.actoron.com");
 	}
 	
 	protected static String	getCaller()
@@ -160,6 +161,9 @@ public class BenchmarkHelper
 		String	caller	= getCaller();
 		Path	db	= Path.of(".benchmark_"+execenv, caller+".json");
 		double	prev	= 0;
+		long	prev_date	= 0;
+		long	new_date	= System.currentTimeMillis();
+		
 		if(db.toFile().exists())
 		{
 			JsonValue	val	= Json.parse(Files.readString(db));
@@ -170,6 +174,19 @@ public class BenchmarkHelper
 			else
 			{
 				prev	= ((JsonObject)val).get("best").asDouble();
+				
+				// Use current date as best date if new value is lower or equal
+				if(value<=prev)
+				{
+					prev_date	= new_date;
+				}
+				
+				// Keep old best date
+				else
+				{
+					JsonValue	dateval	= ((JsonObject)val).get("best_date");
+					prev_date	= dateval!=null ? dateval.asLong(): 0;
+				}
 			}
 			pct	= (value - prev)*100.0/prev;
 			System.out.println("Change(%): "+pct);
@@ -180,7 +197,9 @@ public class BenchmarkHelper
 			// Write to file
 			JsonObject	obj	= new JsonObject();
 			obj.add("best", prev==0 ? value : Math.min(value, prev));
+			obj.add("best_date", prev_date);
 			obj.add("last", value);
+			obj.add("last_date", new_date);
 			db.toFile().getParentFile().mkdirs();
 			Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
 			
