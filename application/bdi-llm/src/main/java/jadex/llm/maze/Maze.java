@@ -1,9 +1,7 @@
 package jadex.llm.maze;
 
-import jadex.common.FastThreadedRandom;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -23,6 +21,7 @@ public class Maze
         boolean visited;
         boolean current;
         int status;
+        boolean agent;
 
         /**Constructor for maze generation*/
         private Cell(int x, int y)
@@ -33,26 +32,25 @@ public class Maze
             this.visited = false;
             this.current = false;
             this.status = -1;
+            this.agent = false;
         }
 
         /**Constructor for Cell reconstruction*/
         private Cell(String jsonStringCell)
         {
-            JSONObject json = new JSONObject();
-            try {
-                json = (JSONObject) new JSONParser().parse(jsonStringCell);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            this.x = (int) json.get("x");
-            this.y = (int) json.get("y");
-            this.walls = new boolean[] {(boolean) json.get("top"),
-                                        (boolean) json.get("right"),
-                                        (boolean) json.get("bottom"),
-                                        (boolean) json.get("left")};
-            this.visited = (boolean) json.get("visited");
-            this.current = (boolean) json.get("current");
-            this.status = (int) json.get("status");
+            JSONTokener jt = new JSONTokener(jsonStringCell);
+            JSONObject json = new JSONObject(jt);
+
+            this.x = json.getInt("x");
+            this.y = json.getInt("y");
+            this.walls = new boolean[] {json.getBoolean("top"),
+                                        json.getBoolean("right"),
+                                        json.getBoolean("bottom"),
+                                        json.getBoolean("left")};
+            this.visited = json.getBoolean("visited");
+            this.current = json.getBoolean("current");
+            this.status = json.getInt("status");
+            this.agent = json.getBoolean("agent");
         }
 
         /** Converts this Cell object to a JSON string for later reconstruction*/
@@ -67,6 +65,7 @@ public class Maze
             json.put("visited", visited);
             json.put("current", current);
             json.put("status", status);
+            json.put("agent", agent);
             return json.toString();
         }
 
@@ -235,24 +234,31 @@ public class Maze
             //print left/right walls
             for (int x = 0; x < cols; x++) {
                 Cell cell = maze[x][y];
-//                if (cell.visited)
-//                {
-//                    System.out.print(cell.walls[3] ? "|   " : "    ");
-//                } else
-//                {
-//                    System.out.print(cell.walls[3] ? "|   " : "    ");
-//                }
 
-                if (cell.status == 0)
-                {
-                    System.out.print(cell.walls[3] ? "| S " : "  S ");
-                } else if (cell.status == 1)
-                {
-                    System.out.print(cell.walls[3] ? "| E " : "  E ");
-                } else
-                {
-                    System.out.print(cell.walls[3] ? "|   " : "    ");
+                if (cell.agent) {
+                    if (cell.status == 0)
+                    {
+                        System.out.print(cell.walls[3] ? "| S " : "  S ");
+                    } else if (cell.status == 1)
+                    {
+                        System.out.print(cell.walls[3] ? "| E " : "  E ");
+                    } else
+                    {
+                        System.out.print(cell.walls[3] ? "| A " : "  A ");
+                    }
+                } else {
+                    if (cell.status == 0)
+                    {
+                        System.out.print(cell.walls[3] ? "| S " : "  S ");
+                    } else if (cell.status == 1)
+                    {
+                        System.out.print(cell.walls[3] ? "| E " : "  E ");
+                    } else
+                    {
+                        System.out.print(cell.walls[3] ? "|   " : "    ");
+                    }
                 }
+
             }
 
             //print right wall of last cell
@@ -308,6 +314,11 @@ public class Maze
     public String getCell(int x, int y)
     {
         return maze[x][y].toJSONString();
+    }
+
+    public void setAgentPosition(int x, int y, boolean agentStatus)
+    {
+        maze[x][y].agent = agentStatus;
     }
 
     //for testing

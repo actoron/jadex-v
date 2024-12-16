@@ -19,6 +19,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import org.graalvm.polyglot.*;
 
 /**
  * This class is responsible for connecting to the LLM and generating the Java code.
@@ -138,40 +139,40 @@ public class LlmFeature implements ILlmFeature {
             }
         }
 
-        if (!chatgptSettings.containsKey("temperature"))
-        {
-            System.out.println("Warning: Settings.json does not contain component 'temperature'.");
-            System.out.println("Warning: Setting 'temperature' to 0.3");
-            chatgptSettings.put("temperature", 0.3);
-        }
-
-        if (!chatgptSettings.containsKey("max_tokens"))
-        {
-            System.out.println("Warning: Settings.json does not contain component 'max_tokens'.");
-            System.out.println("Warning: Setting 'max_tokens' to 300");
-            chatgptSettings.put("max_tokens", 300);
-        }
-
-        if (!chatgptSettings.containsKey("top_p"))
-        {
-            System.out.println("Warning: Settings.json does not contain component 'top_p'.");
-            System.out.println("Warning: Setting 'top_p' to 1.0");
-            chatgptSettings.put("top_p", 1.0);
-        }
-
-        if (!chatgptSettings.containsKey("frequency_penalty"))
-        {
-            System.out.println("Warning: Settings.json does not contain component 'frequency_penalty'.");
-            System.out.println("Warning: Setting 'frequency_penalty' to 0.0");
-            chatgptSettings.put("frequency_penalty", 0.0);
-        }
-
-        if (!chatgptSettings.containsKey("presence_penalty"))
-        {
-            System.out.println("Warning: Settings.json does not contain component 'presence_penalty'.");
-            System.out.println("Warning: Setting 'presence_penalty' to 0.0");
-            chatgptSettings.put("presence_penalty", 0.0);
-        }
+//        if (!chatgptSettings.containsKey("temperature"))
+//        {
+//            System.out.println("Warning: Settings.json does not contain component 'temperature'.");
+//            System.out.println("Warning: Setting 'temperature' to 0.3");
+//            chatgptSettings.put("temperature", 0.3);
+//        }
+//
+//        if (!chatgptSettings.containsKey("max_tokens"))
+//        {
+//            System.out.println("Warning: Settings.json does not contain component 'max_tokens'.");
+//            System.out.println("Warning: Setting 'max_tokens' to 300");
+//            chatgptSettings.put("max_tokens", 300);
+//        }
+//
+//        if (!chatgptSettings.containsKey("top_p"))
+//        {
+//            System.out.println("Warning: Settings.json does not contain component 'top_p'.");
+//            System.out.println("Warning: Setting 'top_p' to 1.0");
+//            chatgptSettings.put("top_p", 1.0);
+//        }
+//
+//        if (!chatgptSettings.containsKey("frequency_penalty"))
+//        {
+//            System.out.println("Warning: Settings.json does not contain component 'frequency_penalty'.");
+//            System.out.println("Warning: Setting 'frequency_penalty' to 0.0");
+//            chatgptSettings.put("frequency_penalty", 0.0);
+//        }
+//
+//        if (!chatgptSettings.containsKey("presence_penalty"))
+//        {
+//            System.out.println("Warning: Settings.json does not contain component 'presence_penalty'.");
+//            System.out.println("Warning: Setting 'presence_penalty' to 0.0");
+//            chatgptSettings.put("presence_penalty", 0.0);
+//        }
     }
 
     /**
@@ -251,15 +252,15 @@ public class LlmFeature implements ILlmFeature {
 
         // clean up responseMessage
         // remove leading and trailing quotation marks from responseMessage
-        responseMessage = responseMessage.replaceFirst("```java", "");
+        responseMessage = responseMessage.replaceFirst("```javascript", "");
         responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
         responseMessage = new StringBuilder(responseMessage).reverse().toString();
 
         // add package to javacode
-        responseMessage =
-                "package jadex.bdi.llm.impl;\n" +
-                "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
-                responseMessage;
+//        responseMessage =
+//                "package jadex.bdi.llm.impl;\n" +
+//                "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
+//                responseMessage;
 
         this.generatedJavaCode = responseMessage;
     }
@@ -313,6 +314,32 @@ public class LlmFeature implements ILlmFeature {
         return instanceOfClass;
     }
 
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> inputList)
+    {
+        try {
+            // Create a GraalVM context for JavaScript
+            try (Context context = Context.create()) {
+                // Bind the inputList to the JavaScript context
+                context.getBindings("js").putMember("inputList", inputList);
 
+                generatedJavaCode = "function runCode(inputList) {\n" +
+                        "var greeting='hello world';" +
+                        "print(greeting);" +
+                        "greeting;" +
+                        "return outputList;" +
+                        "}";
+
+                // Execute the JavaScript code and get the result
+                Object result = context.eval("js", generatedJavaCode);
+
+                // Assuming result is an ArrayList<Object>
+                return (ArrayList<Object>) result;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
 

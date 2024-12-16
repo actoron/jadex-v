@@ -2,6 +2,8 @@ package jadex.bdi.llm;
 
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 
+import java.util.ArrayList;
+
 public interface ILlmFeature
 {
     /**
@@ -20,4 +22,10 @@ public interface ILlmFeature
      *
      */
     public IPlanBody generateAndCompileCode();
+
+    /**
+     * Generates a plan using the LLM-generated code and executes using JavaScript code.
+     *
+     */
+    public ArrayList<Object> runCode(ArrayList<Object> inputList);
 }

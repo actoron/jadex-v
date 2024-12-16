@@ -8,11 +8,11 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Agent(type="bdip")
@@ -55,14 +55,11 @@ public class MazeAgent
             int mazeEndX = maze.getEndPosition()[0];
             int mazeEndY = maze.getEndPosition()[1];
 
-            JSONObject json = new JSONObject();
-            try {
-                json = (JSONObject) new JSONParser().parse(updatedCellJSONString.get());
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            int currentX = (int) json.get("x");
-            int currentY = (int) json.get("y");
+            JSONTokener jt = new JSONTokener(updatedCellJSONString.get());
+            JSONObject json = new JSONObject(jt);
+
+            int currentX = json.getInt("x");
+            int currentY = json.getInt("y");
 
             // Check if the agent has reached the end position
             if (mazeEndX == currentX && mazeEndY == currentY) {
@@ -124,9 +121,7 @@ public class MazeAgent
 
         System.out.println(llmFeature.generatedJavaCode);
 
-        llmFeature.generateAndCompileCode();
-
-        IPlanBody plan = llmFeature.generateAndCompileCode();
+        //IPlanBody plan = llmFeature.generateAndCompileCode();
 
         System.out.println(goal.getUpdatedCellJSONString());
 
@@ -141,24 +136,20 @@ public class MazeAgent
             inputList.add(CellJSONString);
 
             // chatty run on given List, return List and extract Objects
-            ArrayList<Object> outputList = plan.runCode(inputList);
-            String returnedCellJSONString = (String) outputList.get(0);
+            // ArrayList<Object> outputList = plan.runCode(inputList);
+            ArrayList<Object> outputList = llmFeature.runCode(inputList);
+            Integer[] newPositions = (Integer[]) outputList.get(0);
 
-            JSONObject json = new JSONObject();
-            try {
-                json = (JSONObject) new JSONParser().parse(returnedCellJSONString);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            int returnedX = (int) json.get("x");
-            int returnedY = (int) json.get("y");
+            System.out.println("newPositions: " + newPositions[0] + ", " + newPositions[1]);
 
             // set updated mazePos from chatty and return to console
-            goal.setUpdatedCellJSONString(maze.getCell(returnedX, returnedY));
+            goal.setUpdatedCellJSONString(maze.getCell(newPositions[0], newPositions[1]));
             System.out.println(goal.getUpdatedCellJSONString());
 
-            // display maze, delete retMazePos from console output and wait oyne second
+            // display maze
+            maze.setAgentPosition(newPositions[0], newPositions[1], true);
             maze.displayMaze();
+            maze.setAgentPosition(newPositions[0], newPositions[1], false);
             System.out.println("###################################################################################");
 
             try {
@@ -178,7 +169,7 @@ public class MazeAgent
         System.out.println("A: Maze main");
 
         // Create a new maze
-        Maze maze = new Maze(100, 10, 5, 5);
+        Maze maze = new Maze(10, 10, 5, 5);
         maze.displayMaze();
 
         // Create a new MazeAgent
