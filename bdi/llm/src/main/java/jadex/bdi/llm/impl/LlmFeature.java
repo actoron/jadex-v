@@ -17,7 +17,12 @@ import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.channels.ScatteringByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import org.graalvm.polyglot.*;
 
@@ -317,29 +322,83 @@ public class LlmFeature implements ILlmFeature {
     @Override
     public ArrayList<Object> runCode(ArrayList<Object> inputList)
     {
-        try {
-            // Create a GraalVM context for JavaScript
-            try (Context context = Context.create()) {
-                // Bind the inputList to the JavaScript context
-                context.getBindings("js").putMember("inputList", inputList);
+        Engine engine = Engine.newBuilder().option("engine.WarnInterpreterOnly", "false").build();
+        Context context = Context.newBuilder("js").allowAllAccess(true).engine(engine).build();
 
-                generatedJavaCode = "function runCode(inputList) {\n" +
-                        "var greeting='hello world';" +
-                        "print(greeting);" +
-                        "greeting;" +
-                        "return outputList;" +
-                        "}";
+        System.out.println("Debug: Evaluating JavaScript code...");
 
-                // Execute the JavaScript code and get the result
-                Object result = context.eval("js", generatedJavaCode);
+        String jsCode = "class Code {\n" +
+                "    runCode(inputlist) {\n" +
+                "        // Initialize the output list\n" +
+                "        let outputList = new java.util.ArrayList();\n" +
+                "\n" +
+                "        // Parse the starting cell data\n" +
+                "        let cellData = JSON.parse(inputlist.get(0)); // The first object in the input list as JSON\n" +
+                "        let x = cellData.x;\n" +
+                "        let y = cellData.y;\n" +
+                "\n" +
+                "        // Create a newPositions array with final x and y and add it to outputList\n" +
+                "        let newPositions = new java.util.ArrayList();\n" +
+                "        newPositions.add(x);\n" +
+                "        newPositions.add(y);\n" +
+                "        outputList.add(newPositions);\n" +
+                "\n" +
+                "        // Print the new positions\n" +
+                "        console.log(newPositions);\n" +
+                "\n" +
+                "        // Return outputList\n" +
+                "        return outputList;\n" +
+                "    }}";
 
-                // Assuming result is an ArrayList<Object>
-                return (ArrayList<Object>) result;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+        context.eval("js", jsCode);
+
+        Value globalObject = context.getBindings("js");
+        System.out.println("Global object: " + globalObject);
+        Value code = globalObject.getMember("Code");
+        if(code.hasMember("runCode"))
+        {
+            System.out.println("Member exists: " + code.getMember("runCode"));
+        } else
+        {
+            System.out.println("member not exist");
         }
+
+        if (code != null && code.hasMember("runCode"))
+        {
+            Value runCode = code.getMember("runCode");
+            System.out.println("runCode: " + runCode);
+            Value result = runCode.execute(inputList);
+            System.out.println("Result: " + result);
+            ArrayList<Object> outputList = result.as(ArrayList.class);
+
+            return new ArrayList<> (outputList);
+        } else
+        {
+            throw new IllegalStateException("Function runCode not found in generated code.");
+        }
+
+//        try {
+//            // Create a GraalVM context for JavaScript
+//            try (Context context = Context.create()) {
+//                // Bind the inputList to the JavaScript context
+//                context.getBindings("js").putMember("inputList", inputList);
+//
+//                generatedJavaCode = "class runCode {\n" +
+//                "static runCode(inputList) {\n" +
+//                        "print('hello world');" +
+//                        "return outputList;\n" +
+//                        "}}";
+//
+//                // Execute the JavaScript code and get the result
+//                Object result = context.eval("js", generatedJavaCode);
+//
+//                // Assuming result is an ArrayList<Object>
+//                return (ArrayList<Object>) result;
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return null;
+//        }
     }
 }
 

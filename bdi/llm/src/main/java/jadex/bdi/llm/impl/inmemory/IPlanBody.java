@@ -4,5 +4,5 @@ import java.util.ArrayList;
 
 public interface IPlanBody
 {
-    ArrayList<Object> runCode(ArrayList<Object> data);
+    ArrayList<Object> runCode(Object... data);
 }
