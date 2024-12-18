@@ -11,6 +11,7 @@ import jadex.model.annotation.OnStart;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -137,7 +138,8 @@ public class MazeAgent
 
             // chatty run on given List, return List and extract Objects
             // ArrayList<Object> outputList = plan.runCode(inputList);
-            ArrayList<Object> outputList = llmFeature.runCode(inputList);
+            ArrayList<Object> outputList = null;
+            outputList = llmFeature.runCode(inputList);
             Integer[] newPositions = (Integer[]) outputList.get(0);
 
             System.out.println("newPositions: " + newPositions[0] + ", " + newPositions[1]);

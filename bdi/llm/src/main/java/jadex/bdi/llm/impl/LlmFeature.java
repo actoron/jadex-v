@@ -11,6 +11,10 @@ import org.json.simple.parser.JSONParser;
 import org.apache.commons.io.FileUtils;
 import org.json.simple.parser.ParseException;
 
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import javax.tools.*;
 import java.io.*;
 import java.net.*;
@@ -319,63 +323,114 @@ public class LlmFeature implements ILlmFeature {
         return instanceOfClass;
     }
 
+
     @Override
-    public ArrayList<Object> runCode(ArrayList<Object> inputList)
-    {
-        Engine engine = Engine.newBuilder().option("engine.WarnInterpreterOnly", "false").build();
-        Context context = Context.newBuilder("js").allowAllAccess(true).engine(engine).build();
-
-        System.out.println("Debug: Evaluating JavaScript code...");
-
-        String jsCode = "class Code {\n" +
-                "    runCode(inputlist) {\n" +
-                "        // Initialize the output list\n" +
-                "        let outputList = new java.util.ArrayList();\n" +
-                "\n" +
-                "        // Parse the starting cell data\n" +
-                "        let cellData = JSON.parse(inputlist.get(0)); // The first object in the input list as JSON\n" +
-                "        let x = cellData.x;\n" +
-                "        let y = cellData.y;\n" +
-                "\n" +
-                "        // Create a newPositions array with final x and y and add it to outputList\n" +
-                "        let newPositions = new java.util.ArrayList();\n" +
-                "        newPositions.add(x);\n" +
-                "        newPositions.add(y);\n" +
-                "        outputList.add(newPositions);\n" +
-                "\n" +
-                "        // Print the new positions\n" +
-                "        console.log(newPositions);\n" +
-                "\n" +
-                "        // Return outputList\n" +
-                "        return outputList;\n" +
-                "    }}";
-
-        context.eval("js", jsCode);
-
-        Value globalObject = context.getBindings("js");
-        System.out.println("Global object: " + globalObject);
-        Value code = globalObject.getMember("Code");
-        if(code.hasMember("runCode"))
-        {
-            System.out.println("Member exists: " + code.getMember("runCode"));
-        } else
-        {
-            System.out.println("member not exist");
+    public ArrayList<Object> runCode(Object... inputList) {
+        //Nashorn JavaScript engine
+        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+        if (engine == null) {
+            throw new IllegalStateException("Nashorn JavaScript engine not found.");
+        }
+        try {
+            Object map = engine.eval("function runCode(inputList) {\n" +
+                    "    var outputList = java.util.ArrayList();\n" +
+                    "\n" +
+                    "    for (var i = 0; i < inputList.size(); i++) {\n" +
+                    "        var currentCell = JSON.parse(inputList.get(i));\n" +
+                    "\n" +
+                    "        var x = currentCell.x;\n" +
+                    "        var y = currentCell.y;\n" +
+                    "\n" +
+                    "        // Check if the current cell has status 1\n" +
+                    "        if (currentCell.status === 1) {\n" +
+                    "            var newPositions = java.util.ArrayList();\n" +
+                    "            newPositions.add(x);\n" +
+                    "            newPositions.add(y);\n" +
+                    "            outputList.add(newPositions);\n" +
+                    "            console.log(newPositions);\n" +
+                    "            return outputList;\n" +
+                    "        }\n" +
+                    "\n" +
+                    "        // Move to the next cell based on free paths\n" +
+                    "        if (!currentCell.top) {\n" +
+                    "            y -= 1; // Move up\n" +
+                    "        } else if (!currentCell.right) {\n" +
+                    "            x += 1; // Move right\n" +
+                    "        } else if (!currentCell.bottom) {\n" +
+                    "            y += 1; // Move down\n" +
+                    "        } else if (!currentCell.left) {\n" +
+                    "            x -= 1; // Move left\n" +
+                    "        }\n" +
+                    "\n" +
+                    "        // Update positions\n" +
+                    "        var newPositions = java.util.ArrayList();\n" +
+                    "        newPositions.add(x);\n" +
+                    "        newPositions.add(y);\n" +
+                    "        outputList.add(newPositions);\n" +
+                    "        console.log(newPositions);\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    return outputList;\n" +
+                    "}");
+        } catch (ScriptException e) {
+            throw new RuntimeException(e);
         }
 
-        if (code != null && code.hasMember("runCode"))
-        {
-            Value runCode = code.getMember("runCode");
-            System.out.println("runCode: " + runCode);
-            Value result = runCode.execute(inputList);
-            System.out.println("Result: " + result);
-            ArrayList<Object> outputList = result.as(ArrayList.class);
-
-            return new ArrayList<> (outputList);
-        } else
-        {
-            throw new IllegalStateException("Function runCode not found in generated code.");
-        }
+        //GraalVM JavaScript engine
+//        Engine engine = Engine.newBuilder().option("engine.WarnInterpreterOnly", "false").build();
+//        Context context = Context.newBuilder("js").allowAllAccess(true).engine(engine).build();
+//
+//        System.out.println("Debug: Evaluating JavaScript code...");
+//
+//        String jsCode = "class Code {\n" +
+//                "    runCode(inputlist) {\n" +
+//                "        // Initialize the output list\n" +
+//                "        let outputList = new java.util.ArrayList();\n" +
+//                "\n" +
+//                "        // Parse the starting cell data\n" +
+//                "        let cellData = JSON.parse(inputlist.get(0)); // The first object in the input list as JSON\n" +
+//                "        let x = cellData.x;\n" +
+//                "        let y = cellData.y;\n" +
+//                "\n" +
+//                "        // Create a newPositions array with final x and y and add it to outputList\n" +
+//                "        let newPositions = new java.util.ArrayList();\n" +
+//                "        newPositions.add(x);\n" +
+//                "        newPositions.add(y);\n" +
+//                "        outputList.add(newPositions);\n" +
+//                "\n" +
+//                "        // Print the new positions\n" +
+//                "        console.log(newPositions);\n" +
+//                "\n" +
+//                "        // Return outputList\n" +
+//                "        return outputList;\n" +
+//                "    }}";
+//
+//        context.eval("js", jsCode);
+//
+//        Value globalObject = context.getBindings("js");
+//        System.out.println("Global object: " + globalObject);
+//        Value code = globalObject.getMember("Code");
+//        if(code.hasMember("runCode"))
+//        {
+//            System.out.println("Member exists: " + code.getMember("runCode"));
+//        } else
+//        {
+//            System.out.println("member not exist");
+//        }
+//
+//        if (code != null && code.hasMember("runCode"))
+//        {
+//            Value runCode = code.getMember("runCode");
+//            System.out.println("runCode: " + runCode);
+//            Value result = runCode.execute(inputList);
+//            System.out.println("Result: " + result);
+//            ArrayList<Object> outputList = result.as(ArrayList.class);
+//
+//            return new ArrayList<> (outputList);
+//        } else
+//        {
+//            throw new IllegalStateException("Function runCode not found in generated code.");
+//        }
 
 //        try {
 //            // Create a GraalVM context for JavaScript
@@ -399,6 +454,7 @@ public class LlmFeature implements ILlmFeature {
 //            e.printStackTrace();
 //            return null;
 //        }
+        return null;
     }
 }
 
