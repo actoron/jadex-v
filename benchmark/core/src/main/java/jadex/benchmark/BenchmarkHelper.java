@@ -21,6 +21,8 @@ import jadex.logger.OpenTelemetryLogger;
 
 public class BenchmarkHelper
 {
+	static final String	EXEC_ENV	= SUtil.isGradle() ? "gradle" : "ide";
+
 	static
 	{
 		System.setProperty(OpenTelemetryLogger.URL, "https://otel.actoron.com");
@@ -155,11 +157,9 @@ public class BenchmarkHelper
 	 */
 	protected static double	addToDB(double value, boolean write) throws IOException
 	{
-		String	execenv	= System.getenv().toString().contains("gradle") ? "gradle" : "ide";
-		
 		double	pct	= 0;
 		String	caller	= getCaller();
-		Path	db	= Path.of(".benchmark_"+execenv, caller+".json");
+		Path	db	= Path.of(".benchmark_"+EXEC_ENV, caller+".json");
 		double	prev	= 0;
 		long	prev_date	= 0;
 		long	new_date	= System.currentTimeMillis();
@@ -208,7 +208,7 @@ public class BenchmarkHelper
 			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
 				  "benchmark=true"
 				+" benchmark_host="+((ComponentManager)IComponentManager.get()).host()
-				+" benchmark_execenv="+execenv
+				+" benchmark_execenv="+EXEC_ENV
 				+" benchmark_name="+caller
 				+" benchmark_value="+value
 				+" benchmark_prev="+prev

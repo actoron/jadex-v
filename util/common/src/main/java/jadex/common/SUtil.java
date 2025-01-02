@@ -6414,6 +6414,15 @@ public class SUtil
 	}
 	
 	/**
+	 *  Tests if running from gradle (e.g. tests).
+	 */
+	public static final boolean isGradle()
+	{
+		// Actually tests for gradle wrappper as executor
+		return "gradlew".equals(System.getenv("APP_BASE_NAME"));
+	}
+	
+	/**
 	 *  Replace the last occurrence of a substring.
 	 *  @param string The string
 	 *  @param toreplace The substring to replace.
