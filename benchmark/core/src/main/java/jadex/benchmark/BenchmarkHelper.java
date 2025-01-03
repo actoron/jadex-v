@@ -14,8 +14,6 @@ import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
 import jadex.common.SUtil;
-import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager;
 import jadex.logger.OpenTelemetryLogHandler;
 import jadex.logger.OpenTelemetryLogger;
 
@@ -206,10 +204,10 @@ public class BenchmarkHelper
 			// Write to log
 			// logfmt
 			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
-				  "benchmark=true"
-				+" benchmark_host="+((ComponentManager)IComponentManager.get()).host()
-				+" benchmark_execenv="+EXEC_ENV
-				+" benchmark_name="+caller
+//				  "benchmark=true"
+//				+" benchmark_host="+((ComponentManager)IComponentManager.get()).host()
+//				+" benchmark_execenv="+EXEC_ENV
+				  "benchmark_name="+caller
 				+" benchmark_value="+value
 				+" benchmark_prev="+prev
 				+" benchmark_pct="+pct);

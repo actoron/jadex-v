@@ -297,7 +297,7 @@ public class ComponentManager implements IComponentManager
 	{
 		String	ret	= first!=null && first.getPojo()!=null ? first.getPojo().getClass().getName() : null;
 		// Strip lambda  address(!?)
-		if(ret.indexOf('/')!=-1)
+		if(ret!=null && ret.indexOf('/')!=-1)
 		{
 			ret	= ret.substring(0, ret.indexOf('/'));
 		}
