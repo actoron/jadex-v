@@ -286,6 +286,24 @@ public class ComponentManager implements IComponentManager
 		SUtil.DEBUG = debug;
 	}*/
 	
+	// Hack. remember first component for fetching informative name.
+	IComponent	first	= null;
+	
+	/**
+	 *  Get the pojo class name of the first started pojo component.
+	 *  @return null if no pojo has been started yet. 
+	 */
+	public String	getFirstPojoClassName()
+	{
+		String	ret	= first!=null && first.getPojo()!=null ? first.getPojo().getClass().getName() : null;
+		// Strip lambda  address(!?)
+		if(ret.indexOf('/')!=-1)
+		{
+			ret	= ret.substring(0, ret.indexOf('/'));
+		}
+		return ret;
+	}
+	
 	/**
 	 *  Add a component.
 	 *  @param comp The component.
@@ -303,6 +321,13 @@ public class ComponentManager implements IComponentManager
 				ComponentManager.get().printComponents();
 				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
 			}
+			
+			// Hack. remember first component for fetching informative name.
+			if(first==null)
+			{
+				first	= comp;
+			}
+			
 			components.put(comp.getId(), comp);
 			if(comp.getAppId()!=null)
 				incrementComponentCount(comp.getAppId());

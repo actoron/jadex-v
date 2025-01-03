@@ -27,4 +27,10 @@ public class FastLambda<T>	extends Component
 		this.terminate	= terminate;
 		this.result	= result;
 	}
+	
+	@Override
+	public Object getPojo()
+	{
+		return body;
+	}
 }

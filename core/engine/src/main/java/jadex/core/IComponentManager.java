@@ -25,6 +25,12 @@ public interface IComponentManager extends IComponentFactory
 	}
 	
 	/**
+	 *  Get the pojo class name of the first started component.
+	 *  @return null if no component has been started yet or if the first component has no pojo. 
+	 */
+	public String	getFirstPojoClassName();
+
+	/**
 	 *  Get the feature instance for the given type.
 	 *  
 	 *  @param featuretype Requested runtime feature type.
