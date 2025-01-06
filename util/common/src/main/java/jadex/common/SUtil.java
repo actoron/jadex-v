@@ -6418,10 +6418,10 @@ public class SUtil
 	 */
 	public static final boolean isGradle()
 	{
-		// Tests for gradle wrappper as executor
+		// Tests for gradle wrappper as executor (works only on windows, wtf)
 		return "gradlew".equals(System.getenv("APP_BASE_NAME"))
-		// Test for gradle in CI pipeline
-			|| System.getenv("GRADLE_VERSION")!=null; 
+		// Test for gradle wrapper un linux
+			|| System.getenv("_")!=null && System.getenv("_").contains("gradle"); 
 	}
 	
 	/**
