@@ -122,7 +122,7 @@ public class MazeAgent
 
         System.out.println(llmFeature.generatedJavaCode);
 
-        //IPlanBody plan = llmFeature.generateAndCompileCode();
+        IPlanBody plan = llmFeature.generateAndCompileCode();
 
         System.out.println(goal.getUpdatedCellJSONString());
 
@@ -137,9 +137,7 @@ public class MazeAgent
             inputList.add(CellJSONString);
 
             // chatty run on given List, return List and extract Objects
-            // ArrayList<Object> outputList = plan.runCode(inputList);
-            ArrayList<Object> outputList = null;
-            outputList = llmFeature.runCode(inputList);
+            ArrayList<Object> outputList = plan.runCode(inputList);
             Integer[] newPositions = (Integer[]) outputList.get(0);
 
             System.out.println("newPositions: " + newPositions[0] + ", " + newPositions[1]);

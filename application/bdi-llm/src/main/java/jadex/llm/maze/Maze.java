@@ -3,7 +3,6 @@ package jadex.llm.maze;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
 
