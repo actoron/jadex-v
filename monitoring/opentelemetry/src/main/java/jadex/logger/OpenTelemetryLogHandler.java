@@ -71,8 +71,8 @@ public class OpenTelemetryLogHandler extends Handler
         attrs.put(AttributeKey.stringKey("service.name"),  GlobalProcessIdentifier.SELF.host().toString());
         attrs.put(AttributeKey.booleanKey("runtime.benchmark"), System.getProperty("user.dir").contains("benchmark"));
         attrs.put(AttributeKey.booleanKey("runtime.gradle"),  SUtil.isGradle());
-        attrs.put(AttributeKey.stringKey("runtime.env"), ""+System.getenv());
-        attrs.put(AttributeKey.stringKey("runtime.props"), ""+System.getProperties());
+//        attrs.put(AttributeKey.stringKey("runtime.env"), ""+System.getenv());
+//        attrs.put(AttributeKey.stringKey("runtime.props"), ""+System.getProperties());
 
         attrs.put(AttributeKey.stringKey("application.name"), IComponentManager.get().getFirstPojoClassName());
 
