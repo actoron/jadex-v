@@ -1,4 +1,4 @@
-image: gradle:latest
+image: eclipse-temurin:21-jdk-alpine
 
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
