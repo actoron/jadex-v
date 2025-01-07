@@ -44,7 +44,7 @@ benchmark:
       - '**/build'
       - .gradle
   rules:
-    - if: $CI_COMMIT_REF_SLUG=~main
+    - if: $CI_COMMIT_REF_SLUG=~"main"
 
 deployZip:
   stage: deploy
@@ -57,7 +57,7 @@ deployZip:
       - '**/build'
       - .gradle
   rules:
-    - if: $CI_COMMIT_REF_SLUG=~main
+    - if: $CI_COMMIT_REF_SLUG=~"main"
 
 deployCentral:
   stage: deploy
@@ -70,5 +70,5 @@ deployCentral:
       - '**/build'
       - .gradle
   rules:
-    - if: $CI_COMMIT_REF_SLUG=~main
+    - if: $CI_COMMIT_REF_SLUG=~"main"
 
