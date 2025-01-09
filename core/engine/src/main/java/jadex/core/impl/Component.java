@@ -104,6 +104,14 @@ public class Component implements IComponent
 	}
 	
 	/**
+	 *  Get the application.
+	 */
+	public Application getApplication()
+	{
+		return app;
+	}
+
+	/**
 	 *  Get the app id.
 	 *  return The app id.
 	 */

@@ -74,8 +74,6 @@ public class OpenTelemetryLogHandler extends Handler
 //        attrs.put(AttributeKey.stringKey("runtime.env"), ""+System.getenv());
 //        attrs.put(AttributeKey.stringKey("runtime.props"), ""+System.getProperties());
 
-        attrs.put(AttributeKey.stringKey("application.name"), IComponentManager.get().getFirstPojoClassName());
-
         SdkLoggerProvider provider = SdkLoggerProvider.builder().addLogRecordProcessor(processor)
         	.setResource(Resource.create(attrs.build())).build();
         
@@ -116,6 +114,7 @@ public class OpenTelemetryLogHandler extends Handler
         	//.setAttribute(AttributeKey.stringKey("logger.host"), GlobalProcessIdentifier.SELF.host().toString())
             //.setAttribute(AttributeKey.stringKey("thread.name"), Thread.currentThread().getName())
             //.setAttribute(AttributeKey.stringKey("service.name"), "my_java_service")
+            .setAttribute(AttributeKey.stringKey("application.name"), ""+IComponentManager.get().getInferredApplicationName())
             .setAttribute(AttributeKey.stringKey("service.instance.id"), GlobalProcessIdentifier.SELF.toString())
             .setTimestamp(record.getMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)
             .setAttribute(AttributeKey.stringKey("iso.timestamp"), isotime);

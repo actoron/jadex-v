@@ -14,6 +14,11 @@ public interface IComponent
 	public ComponentIdentifier getId();
 	
 	/**
+	 *  Get the application.
+	 */
+	public Application getApplication();
+	
+	/**
 	 *  Get the app id.
 	 *  return The app id.
 	 */

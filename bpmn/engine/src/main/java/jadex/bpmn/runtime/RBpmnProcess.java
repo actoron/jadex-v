@@ -83,7 +83,7 @@ public class RBpmnProcess extends ResultProvider
 	 */
 	public Map<String, Object> getArguments()
 	{
-		return args==null? Collections.EMPTY_MAP: new HashMap<>(args); 
+		return args==null? Collections.emptyMap(): new HashMap<>(args); 
 	}
 	
 	/**
@@ -134,5 +134,13 @@ public class RBpmnProcess extends ResultProvider
 	public Map<String, Object> getResults()
 	{
 		return new HashMap<>(results); 
+	}
+
+	/**
+	 *  Get a string representation.
+	 */
+	public String	toString()
+	{
+		return "RBpmnProcess("+filename+")";
 	}
 }
