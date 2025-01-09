@@ -3,12 +3,8 @@ package jadex.llm.glasses;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 import jadex.bdi.llm.impl.LlmFeature;
-import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.Val;
-import jadex.classreader.SClassReader;
-import jadex.core.IComponent;
-import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager;
+import jadex.core.*;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
 import jadex.model.annotation.OnEnd;
@@ -22,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.FileUtils;
 
@@ -29,7 +26,7 @@ import org.apache.commons.io.FileUtils;
 
 @Agent(type="bdip")
 @Description("This agent uses ChatGPT to create the plan step.")
-public class GlassesAgent
+public class GlassesAgent extends ResultProvider
 {
     /** The Glasses agent class. */
     @Agent
@@ -40,6 +37,8 @@ public class GlassesAgent
 //    private JSONObject dataset;
     private final String dataSetPath;
     private final String beliefType;
+
+    private long time;
 
     @Belief
     private Val<String> datasetString;
@@ -60,7 +59,11 @@ public class GlassesAgent
         @GoalFinished
         public void goalFinished() {
             System.out.println("A: Goal finished");
-            System.out.printf("Data: " + convDataSetString.get());
+            System.out.println("Data: " + convDataSetString.get());
+            //timetracking from connect to llm to goal finished
+            time = System.currentTimeMillis() - time;
+            System.out.println("Time: " + time);
+            agent.terminate();
         }
 
         @GoalTargetCondition(parameters="convDataSetString")
@@ -109,15 +112,10 @@ public class GlassesAgent
     {
         this.chatUrl = chatUrl;
         this.apiKey = apiKey;
-//        this.beliefType = datasetString.get().getClass().toString().replace("class ", "");
         this.beliefType = "java.util.ArrayList";
         this.dataSetPath = dataSetPath;
 
-        System.out.println("A: " + chatUrl);
-        System.out.println("A: " + apiKey);
-
         System.out.println("A: GlassesAgent class loaded");
-//        System.out.println("Klasse:" + SClassReader.scanForClassFileInfos(GlassesAgent));
     }
 
     @OnStart
@@ -144,16 +142,17 @@ public class GlassesAgent
     }
 
     @Plan(trigger=@Trigger(goals=AgentGoal.class))
-    protected void generatePlan1(AgentGoal goal)
-    {
+    protected void generatePlan1(AgentGoal goal) {
         /** Initialize the LlmFeature */
         System.out.println("--->Test Plan 1");
+
         LlmFeature llmFeature = new LlmFeature(
                 chatUrl,
                 apiKey,
                 beliefType,
                 "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan1Settings.json");
 
+        time = System.currentTimeMillis();
         llmFeature.connectToLLM("");
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
@@ -163,9 +162,13 @@ public class GlassesAgent
             ArrayList<Object> inputList = new ArrayList<Object>();
             inputList.add(dataset);
 
+//            long executionStartTime = System.nanoTime();
             ArrayList<Object> outputList = plan.runCode(inputList);
+//            long executionEndTime = System.nanoTime() - executionStartTime;
+//            System.out.println("Execution Time: " + executionEndTime);
 
             JSONObject convDataSet = (JSONObject) outputList.get(0);
+            System.out.println("A: Plan 1 finished");
             goal.setConvDataSetString(convDataSet.toString());
         } catch (ParseException e) {
             throw new RuntimeException(e);
@@ -183,7 +186,10 @@ public class GlassesAgent
                 beliefType,
                 "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan2Settings.json");
 
+//        long generationStartTime = System.nanoTime();
         llmFeature.connectToLLM("");
+//        long generationEndTime = System.nanoTime() - generationStartTime;
+//        System.out.println("Generation Time: " + generationEndTime);
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
         JSONParser parser = new JSONParser();
@@ -192,7 +198,11 @@ public class GlassesAgent
             ArrayList<Object> inputList = new ArrayList<Object>();
             inputList.add(dataset);
 
+//            long executionStartTime = System.nanoTime();
             ArrayList<Object> outputList = plan.runCode(inputList);
+//            long executionEndTime = System.nanoTime() - executionStartTime;
+//            System.out.println("Execution Time: " + executionEndTime);
+//            addResult("executionEndTime2", executionEndTime);
 
             JSONObject convDataSet = (JSONObject) outputList.get(0);
             goal.setConvDataSetString(convDataSet.toString());
@@ -207,20 +217,40 @@ public class GlassesAgent
         System.out.println("A: Agent "+agent.getId()+ " terminated");
     }
 
-
     /**
      *  Start Glasses Agent.
      * @throws InterruptedException
      */
     public static void main(String[] args)
     {
-        System.out.println("A: GlassesAgent started");
+        int max = 2;
+        for(int i = 0; i < max; i++)
+        {
+            System.out.println("A: GlassesAgent started iteration " + i);
+            GlassesAgent currentAgent = new GlassesAgent(
+                    "https://api.openai.com/v1/chat/completions",
+                    System.getenv("OPENAI_API_KEY"),
+                    "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
 
-        IComponentManager.get().create(new GlassesAgent(
-                "https://api.openai.com/v1/chat/completions",
-                System.getenv("OPENAI_API_KEY"),
-                "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")
-        );
-        IComponentManager.get().waitForLastComponentTerminated();
+            System.out.println("CREATE AGENT");
+            IExternalAccess exta = IComponentManager.get().create(currentAgent).get();
+            System.out.println("CREATED AGENT");
+            Semaphore s = new Semaphore(0);
+            exta.waitForTermination().then(o -> {
+                System.out.println("TERMINATED AGENT");
+                s.release();
+            });
+            System.out.println("try acquire");
+            try {
+                s.acquire();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println("acquired");
+
+//            exta.waitForTermination().get();
+            //System.out.println("FINISHED AGENT");
+
+        }
     }
 }
