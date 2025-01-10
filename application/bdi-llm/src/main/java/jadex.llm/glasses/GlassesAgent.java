@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.FileUtils;
@@ -39,6 +40,7 @@ public class GlassesAgent extends ResultProvider
     private final String beliefType;
 
     private long time;
+    private final Map<String, Object> timeMeasure;
 
     @Belief
     private Val<String> datasetString;
@@ -116,6 +118,7 @@ public class GlassesAgent extends ResultProvider
         this.dataSetPath = dataSetPath;
 
         System.out.println("A: GlassesAgent class loaded");
+        timeMeasure = Map.of();
     }
 
     @OnStart
@@ -152,6 +155,8 @@ public class GlassesAgent extends ResultProvider
                 beliefType,
                 "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan1Settings.json");
 
+        System.out.println(datasetString);
+        System.out.println("time start");
         time = System.currentTimeMillis();
         llmFeature.connectToLLM("");
 
@@ -162,10 +167,7 @@ public class GlassesAgent extends ResultProvider
             ArrayList<Object> inputList = new ArrayList<Object>();
             inputList.add(dataset);
 
-//            long executionStartTime = System.nanoTime();
             ArrayList<Object> outputList = plan.runCode(inputList);
-//            long executionEndTime = System.nanoTime() - executionStartTime;
-//            System.out.println("Execution Time: " + executionEndTime);
 
             JSONObject convDataSet = (JSONObject) outputList.get(0);
             System.out.println("A: Plan 1 finished");
@@ -186,10 +188,8 @@ public class GlassesAgent extends ResultProvider
                 beliefType,
                 "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan2Settings.json");
 
-//        long generationStartTime = System.nanoTime();
+        time = System.currentTimeMillis();
         llmFeature.connectToLLM("");
-//        long generationEndTime = System.nanoTime() - generationStartTime;
-//        System.out.println("Generation Time: " + generationEndTime);
 
         IPlanBody plan = llmFeature.generateAndCompileCode();
         JSONParser parser = new JSONParser();
@@ -198,11 +198,7 @@ public class GlassesAgent extends ResultProvider
             ArrayList<Object> inputList = new ArrayList<Object>();
             inputList.add(dataset);
 
-//            long executionStartTime = System.nanoTime();
             ArrayList<Object> outputList = plan.runCode(inputList);
-//            long executionEndTime = System.nanoTime() - executionStartTime;
-//            System.out.println("Execution Time: " + executionEndTime);
-//            addResult("executionEndTime2", executionEndTime);
 
             JSONObject convDataSet = (JSONObject) outputList.get(0);
             goal.setConvDataSetString(convDataSet.toString());
@@ -223,7 +219,7 @@ public class GlassesAgent extends ResultProvider
      */
     public static void main(String[] args)
     {
-        int max = 2;
+        int max = 5;
         for(int i = 0; i < max; i++)
         {
             System.out.println("A: GlassesAgent started iteration " + i);
