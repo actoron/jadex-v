@@ -1,0 +1,18 @@
+{
+  "model": "gpt-4o-mini",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal. You are not allowed to generate comments where the user should implement his code."
+    },
+    {
+      "role": "user",
+      "content": "Create a Java class named `Plan` that implements the interface `IPlanBody`. This class should have only one method, `runCode`, which accepts a Java `Object` as its parameter. Here are the requirements and structure for `runCode`:\n\n1. **Casting:** Cast the incoming `Object` to a `$Belief$` type, which contains a list of three specific objects:\n   - **First**: A `java.awt.Point` representing `mazePosition`, storing the agent's `x` and `y` coordinates.\n   - **Second**: An `org.json.simple.JSONObject` called `envView`, which has 4 directional keys: `\"left\"`, `\"back\"`, `\"front\"`, and `\"right\"`. Each key’s value is a list of integers up to a length of 3, representing view distance.\n   - **Third**: An `Object` labeled `brain`, which can be used to store memory for navigation.\n\n2. **Maze Information Encoding in `envView`:**\n   - Integers within each direction encode environmental features:\n     - `0 = Empty`\n     - `1 = Wall`\n     - `2 = Food`\n     - `3 = Start`\n     - `4 = End`\n   - Do not move over positions marked by `1`.\n\n3. **Navigation Logic:** Implement logic within a `for-loop` to:\n   - Check each direction in `envView` for potential moves.\n   - Plan each step while avoiding walls (`1`).\n   - Use `brain` if needed to record previous moves or decisions.\n\n4. **Goal:** The ultimate objective is to navigate and find the `End` (encoded as `4`). \n\n5. **Output Requirements:** Create an output list (`$Belief$`), containing:\n   - The updated `mazePosition` (as a `java.awt.Point`),\n   - The chosen `direction` (as a `String`),\n   - The current state of `brain` for memory.\n\n6. **Return:** Return this updated output list from `runCode`."
+    }
+  ],
+  "temperature": 0.3,
+  "max_tokens": 1000,
+  "top_p": 1.0,
+  "frequency_penalty": 0.0,
+  "presence_penalty": 0.0
+}

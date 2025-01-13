@@ -44,5 +44,5 @@ processResources {
 
 task runGlasses(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'jadex.llm.glasses.GlassesAgent'
+    mainClass = 'jadex.llm.glasses.Runner'
 }

@@ -1,0 +1,1588 @@
+iteration,agentId,goalStatus,attemptsPlan,attemptsGoal,generationTime,executionTime,planCode,goalCode,planResults
+0,FavorableFinnigan@66702@fbw14793,true,0,0,4475,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Input must contain a JSONObject at index 0.");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        if (!jsonObject.containsKey("Glasses") || !(jsonObject.get("Glasses") instanceof JSONArray)) {
+            throw new IllegalArgumentException("JSONObject must contain a 'Glasses' key with a JSONArray.");
+        }
+
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        Collections.sort(glassesArray, new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                if (!(o1 instanceof JSONObject) || !(o2 instanceof JSONObject)) {
+                    throw new IllegalArgumentException("Elements in the 'Glasses' array must be JSONObjects.");
+                }
+                JSONObject obj1 = (JSONObject) o1;
+                JSONObject obj2 = (JSONObject) o2;
+
+                String shape1 = obj1.get("shape") != null ? obj1.get("shape").toString() : "";
+                String shape2 = obj2.get("shape") != null ? obj2.get("shape").toString() : "";
+
+                return shape1.compareTo(shape2);
+            }
+        });
+
+        // Updating the original JSONObject with the sorted list
+        jsonObject.put("Glasses", glassesArray);
+        input.set(0, jsonObject);
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        if (input != null && !input.isEmpty() && input.get(0) instanceof JSONObject) {
+            JSONObject jsonObject = (JSONObject) input.get(0);
+            JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+            ArrayList<String> shapes = new ArrayList<>();
+            for (Object obj : glassesArray) {
+                if (obj instanceof JSONObject) {
+                    JSONObject glass = (JSONObject) obj;
+                    String shape = (String) glass.get("shape");
+                    shapes.add(shape);
+                }
+            }
+
+            ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+            Collections.sort(sortedShapes);
+
+            boolean isSorted = shapes.equals(sortedShapes);
+            result.add(0, isSorted);
+        } else {
+            result.add(0, false);
+        }
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+1,AffectionateAsterix@66702@fbw14793,true,0,0,4220,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+public class Plan implements IPlanBody {
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Invalid input data");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesList == null) {
+            throw new IllegalArgumentException("Key 'Glasses' not found or not a JSONArray");
+        }
+
+        glassesList.sort(Comparator.comparing(o -> ((JSONObject) o).get("shape").toString()));
+
+        input.set(0, jsonObject);
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input == null || input.size() == 0 || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+2,BeaveredBoathouse@66702@fbw14793,true,0,0,5357,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Input should contain a JSONObject at index 0");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            throw new IllegalArgumentException("JSONObject must contain a key 'Glasses' with a JSONArray");
+        }
+
+        // Sort the JSONArray by the 'shape' key
+        Collections.sort(glassesArray, new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                if (o1 instanceof JSONObject && o2 instanceof JSONObject) {
+                    String shape1 = (String) ((JSONObject) o1).get("shape");
+                    String shape2 = (String) ((JSONObject) o2).get("shape");
+                    return shape1.compareToIgnoreCase(shape2);
+                }
+                return 0;
+            }
+        });
+
+        // Replace the 'Glasses' JSONArray in the JSONObject with the sorted version
+        jsonObject.put("Glasses", glassesArray);
+
+        // Update the input ArrayList at index 0 with the updated JSONObject
+        input.set(0, jsonObject);
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+        
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+        
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+3,DivineDreamglow@66702@fbw14793,true,0,0,3338,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Input must contain a JSONObject at index 0.");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        if (!jsonObject.containsKey("Glasses") || !(jsonObject.get("Glasses") instanceof JSONArray)) {
+            throw new IllegalArgumentException("JSONObject must contain a 'Glasses' JSONArray.");
+        }
+
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        // Sort the JSONArray by 'shape' key
+        glassesArray.sort(Comparator.comparing(o -> ((JSONObject) o).get("shape").toString()));
+
+        // Replace the sorted array in the JSONObject
+        jsonObject.put("Glasses", glassesArray);
+        input.set(0, jsonObject);
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> inputList) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (inputList.isEmpty() || !(inputList.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) inputList.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object glass : glassesArray) {
+            if (glass instanceof JSONObject) {
+                JSONObject glassObject = (JSONObject) glass;
+                String shape = (String) glassObject.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+4,AlacritousAstrolynx@66702@fbw14793,true,0,0,5564,1,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> data) {
+        // Extract the JSONObject from the ArrayList
+        if (data == null || data.isEmpty() || !(data.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Invalid data or missing JSONObject at index 0.");
+        }
+        
+        JSONObject jsonObject = (JSONObject) data.get(0);
+        
+        // Extract the JSONArray of glasses
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+        if (glassesList == null) {
+            throw new IllegalArgumentException("Glasses list is missing in the JSONObject.");
+        }
+        
+        // Sort the JSONArray by the key 'shape'
+        glassesList.sort(new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                if (!(o1 instanceof JSONObject) || !(o2 instanceof JSONObject)) {
+                    throw new IllegalArgumentException("Elements in Glasses list are not JSONObject.");
+                }
+                JSONObject glass1 = (JSONObject) o1;
+                JSONObject glass2 = (JSONObject) o2;
+                
+                String shape1 = (String) glass1.get("shape");
+                String shape2 = (String) glass2.get("shape");
+                
+                if (shape1 == null || shape2 == null) {
+                    throw new IllegalArgumentException("Shape key is missing in one or more objects.");
+                }
+                
+                return shape1.compareTo(shape2);
+            }
+        });
+        
+        // Update the JSON object with the sorted list
+        jsonObject.put("Glasses", glassesList);
+        
+        // Ensure the updated JSON object is the first item in the original ArrayList
+        data.set(0, jsonObject);
+
+        return data;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+        
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+5,BasqueBeatrix@66702@fbw14793,true,0,0,3817,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            return input; // Return input if it's not the expected format
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        if (!jsonObject.containsKey("Glasses")) {
+            return input; // Return input if "Glasses" key is not present
+        }
+
+        Object glassesObj = jsonObject.get("Glasses");
+        if (!(glassesObj instanceof JSONArray)) {
+            return input; // Return input if "Glasses" is not a JSONArray
+        }
+
+        JSONArray glassesArray = (JSONArray) glassesObj;
+
+        // Sort the JSONArray by the key 'shape'
+        glassesArray.sort(Comparator.comparing(obj -> ((JSONObject) obj).get("shape").toString()));
+
+        // Update the JSONObject with the sorted array
+        jsonObject.put("Glasses", glassesArray);
+        input.set(0, jsonObject); // Update the input list
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+        
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+        
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object glass : glassesArray) {
+            if (glass instanceof JSONObject) {
+                JSONObject glassObject = (JSONObject) glass;
+                String shape = (String) glassObject.get("shape");
+                shapes.add(shape);
+            }
+        }
+        
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+        
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+6,AccommodatingAstara@66702@fbw14793,true,0,0,3612,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        // Retrieve the JSONObject at index 0
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        
+        // Extract the JSONArray 'Glasses'
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+        
+        // Sort the JSONArray by 'shape' parameter
+        Collections.sort(glassesArray, new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                JSONObject obj1 = (JSONObject) o1;
+                JSONObject obj2 = (JSONObject) o2;
+                String shape1 = (String) obj1.get("shape");
+                String shape2 = (String) obj2.get("shape");
+                return shape1.compareTo(shape2);
+            }
+        });
+        
+        // Replace the sorted JSONArray back into the JSONObject
+        jsonObject.put("Glasses", glassesArray);
+
+        // Replace the sorted JSONObject into the ArrayList at index 0
+        input.set(0, jsonObject);
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+7,BewhiskeredBuff@66702@fbw14793,true,0,0,3354,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            return input;
+        }
+        
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+        
+        if (glassesList != null) {
+            glassesList.sort((o1, o2) -> {
+                JSONObject obj1 = (JSONObject) o1;
+                JSONObject obj2 = (JSONObject) o2;
+
+                String shape1 = (String) obj1.get("shape");
+                String shape2 = (String) obj2.get("shape");
+
+                if (shape1 == null) shape1 = "";
+                if (shape2 == null) shape2 = "";
+
+                return shape1.compareTo(shape2);
+            });
+        }
+
+        jsonObject.put("Glasses", glassesList);
+        input.set(0, jsonObject);
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> inputList) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (inputList.isEmpty() || !(inputList.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) inputList.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+8,DespondentDeltaquadrant@66702@fbw14793,true,null,0,null,null,null,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> inputList) {
+        ArrayList<Object> resultList = new ArrayList<>();
+        
+        if (inputList != null && !inputList.isEmpty() && inputList.get(0) instanceof JSONObject) {
+            JSONObject jsonObject = (JSONObject) inputList.get(0);
+            JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+            
+            if (glassesArray != null) {
+                ArrayList<JSONObject> glassesList = new ArrayList<>();
+                for (Object obj : glassesArray) {
+                    if (obj instanceof JSONObject) {
+                        glassesList.add((JSONObject) obj);
+                    }
+                }
+
+                // Sort glassesList by the 'shape' key
+                Collections.sort(glassesList, new Comparator<JSONObject>() {
+                    @Override
+                    public int compare(JSONObject o1, JSONObject o2) {
+                        String shape1 = (String) o1.get("shape");
+                        String shape2 = (String) o2.get("shape");
+                        return shape1.compareTo(shape2);
+                    }
+                });
+
+                // Check if the list is sorted
+                boolean isSorted = true;
+                for (int i = 1; i < glassesList.size(); i++) {
+                    String previousShape = (String) glassesList.get(i - 1).get("shape");
+                    String currentShape = (String) glassesList.get(i).get("shape");
+                    if (previousShape.compareTo(currentShape) > 0) {
+                        isSorted = false;
+                        break;
+                    }
+                }
+
+                resultList.add(isSorted);
+            }
+        }
+        
+        return resultList;
+    }
+}
+,null
+9,BrayingBelladrix@66702@fbw14793,true,0,0,6489,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+    
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesList == null) {
+            throw new IllegalArgumentException("JSON does not contain 'Glasses' key");
+        }
+
+        glassesList.sort(new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                if (o1 instanceof JSONObject && o2 instanceof JSONObject) {
+                    String shape1 = (String) ((JSONObject) o1).get("shape");
+                    String shape2 = (String) ((JSONObject) o2).get("shape");
+                    return shape1.compareTo(shape2);
+                }
+                return 0;
+            }
+        });
+
+        input.set(0, jsonObject);
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+10,ForcelessFlashspear@66702@fbw14793,true,0,0,3383,1,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+
+        Object firstElement = input.get(0);
+        if (firstElement instanceof JSONObject) {
+            JSONObject jsonObject = (JSONObject) firstElement;
+
+            Object glassesList = jsonObject.get("Glasses");
+            if (glassesList instanceof JSONArray) {
+                JSONArray glassesArray = (JSONArray) glassesList;
+
+                // Sorting the JSONArray by the key "shape"
+                ArrayList<JSONObject> tempList = new ArrayList<>();
+                for (Object obj : glassesArray) {
+                    if (obj instanceof JSONObject) {
+                        tempList.add((JSONObject) obj);
+                    }
+                }
+
+                tempList.sort(Comparator.comparing(o -> (String) o.get("shape")));
+
+                // Updated JSONArray
+                JSONArray sortedArray = new JSONArray();
+                sortedArray.addAll(tempList);
+                jsonObject.put("Glasses", sortedArray);
+
+                input.set(0, jsonObject);
+            }
+        }
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+11,BountifulBlueberry@66702@fbw14793,true,0,0,4018,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Input must have a JSONObject at index 0");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesList != null) {
+            Collections.sort(glassesList, new Comparator<Object>() {
+                @Override
+                public int compare(Object o1, Object o2) {
+                    if (o1 instanceof JSONObject && o2 instanceof JSONObject) {
+                        String shape1 = (String) ((JSONObject) o1).get("shape");
+                        String shape2 = (String) ((JSONObject) o2).get("shape");
+                        return shape1.compareTo(shape2);
+                    }
+                    return 0;
+                }
+            });
+        }
+
+        jsonObject.put("Glasses", glassesList);
+        input.set(0, jsonObject);
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> inputList) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (inputList == null || inputList.isEmpty() || !(inputList.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) inputList.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+12,AssortedArgentus@66702@fbw14793,true,0,0,5789,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Input must be a non-empty ArrayList containing a JSONObject at index 0.");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        if (!jsonObject.containsKey("Glasses") || !(jsonObject.get("Glasses") instanceof JSONArray)) {
+            throw new IllegalArgumentException("JSONObject must contain a 'Glasses' key with a JSONArray value.");
+        }
+
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        // Sort the array based on the 'shape' key
+        Collections.sort(glassesArray, new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                if (!(o1 instanceof JSONObject) || !(o2 instanceof JSONObject)) {
+                    return 0;
+                }
+                String shape1 = (String) ((JSONObject) o1).get("shape");
+                String shape2 = (String) ((JSONObject) o2).get("shape");
+                return shape1.compareTo(shape2);
+            }
+        });
+
+        // Replace the sorted JSONArray in the JSONObject
+        jsonObject.put("Glasses", glassesArray);
+        input.set(0, jsonObject);
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> inputList) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (inputList.isEmpty() || !(inputList.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) inputList.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+13,FractiousFluffernap@66702@fbw14793,true,0,0,3417,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            return input;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        if (!jsonObject.containsKey("Glasses") || !(jsonObject.get("Glasses") instanceof JSONArray)) {
+            return input;
+        }
+
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+        glassesList.sort(new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                if (o1 instanceof JSONObject && o2 instanceof JSONObject) {
+                    String shape1 = (String) ((JSONObject) o1).get("shape");
+                    String shape2 = (String) ((JSONObject) o2).get("shape");
+                    if (shape1 != null && shape2 != null) {
+                        return shape1.compareTo(shape2);
+                    }
+                }
+                return 0;
+            }
+        });
+
+        input.set(0, jsonObject); // Update the sorted JSON object back into the input list
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        if (input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+14,AdhesiveAblivox@66702@fbw14793,true,0,0,5338,1,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        // Retrieve the JSONObject at index 0
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Input must contain a JSONObject at index 0.");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+
+        // Retrieve the 'Glasses' array from the JSONObject
+        if (!jsonObject.containsKey("Glasses") || !(jsonObject.get("Glasses") instanceof JSONArray)) {
+            throw new IllegalArgumentException("JSONObject must contain a 'Glasses' JSONArray.");
+        }
+
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+
+        // Sort the JSONArray based on the key 'shape'
+        glassesList.sort(new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                if (o1 instanceof JSONObject && o2 instanceof JSONObject) {
+                    JSONObject glass1 = (JSONObject) o1;
+                    JSONObject glass2 = (JSONObject) o2;
+
+                    String shape1 = glass1.get("shape") != null ? glass1.get("shape").toString() : "";
+                    String shape2 = glass2.get("shape") != null ? glass2.get("shape").toString() : "";
+
+                    return shape1.compareTo(shape2);
+                }
+                return 0;
+            }
+        });
+
+        // Update the original JSONObject with the sorted JSONArray
+        jsonObject.put("Glasses", glassesList);
+
+        // Update the input ArrayList with the sorted JSONObject
+        input.set(0, jsonObject);
+
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input == null || input.size() == 0 || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+15,AmusingAnubis@66702@fbw14793,true,0,0,4888,1,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Invalid input format");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesList == null) {
+            throw new IllegalArgumentException("The 'Glasses' list is missing in the JSONObject");
+        }
+
+        // Sort the JSONArray based on the key 'shape'
+        Collections.sort(glassesList, new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                if (o1 instanceof JSONObject && o2 instanceof JSONObject) {
+                    String shape1 = (String) ((JSONObject) o1).get("shape");
+                    String shape2 = (String) ((JSONObject) o2).get("shape");
+                    
+                    if (shape1 == null) shape1 = "";
+                    if (shape2 == null) shape2 = "";
+                    
+                    return shape1.compareTo(shape2);
+                }
+                return 0;
+            }
+        });
+
+        // Replace the sorted list in the JSONObject
+        jsonObject.put("Glasses", glassesList);
+
+        // Return the modified list in the ArrayList
+        ArrayList<Object> result = new ArrayList<>(input);
+        result.set(0, jsonObject);
+        return result;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> inputList) {
+        ArrayList<Object> resultList = new ArrayList<>();
+        
+        if (inputList.isEmpty() || !(inputList.get(0) instanceof JSONObject)) {
+            resultList.add(false);
+            return resultList;
+        }
+
+        JSONObject jsonObject = (JSONObject) inputList.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            resultList.add(false);
+            return resultList;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+
+        boolean isSorted = shapes.equals(sortedShapes);
+        resultList.add(isSorted);
+        return resultList;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+16,AustralianAden@66702@fbw14793,true,0,0,4212,1,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            throw new IllegalArgumentException("Input must contain a JSONObject at index 0");
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesList = (JSONArray) jsonObject.get("Glasses");
+        
+        if (glassesList == null) {
+            throw new IllegalArgumentException("JSONObject must contain a 'Glasses' key with a JSONArray value");
+        }
+
+        // Sorting the JSONArray by the key "shape"
+        glassesList.sort((o1, o2) -> {
+            if (o1 instanceof JSONObject && o2 instanceof JSONObject) {
+                String shape1 = (String) ((JSONObject) o1).get("shape");
+                String shape2 = (String) ((JSONObject) o2).get("shape");
+                if (shape1 != null && shape2 != null) {
+                    return shape1.compareTo(shape2);
+                }
+            }
+            return 0;
+        });
+
+        // Updating the JSONObject with the sorted list
+        jsonObject.put("Glasses", glassesList);
+
+        // Returning the updated ArrayList
+        ArrayList<Object> output = new ArrayList<>();
+        output.add(jsonObject);
+        return output;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+        
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+        
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+        
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        Collections.sort(sortedShapes);
+        
+        boolean isSorted = shapes.equals(sortedShapes);
+        result.add(isSorted);
+        
+        return result;
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+17,AppropriateAlvaris@66702@fbw14793,true,0,0,3356,1,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        // Extract the JSONObject at index 0
+        JSONObject jsonObject = (JSONObject) input.get(0);
+
+        // Get the JSONArray of 'Glasses' from the JSONObject
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        // Sort the JSONArray based on the 'shape' key
+        Collections.sort(glassesArray, new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                JSONObject glass1 = (JSONObject) o1;
+                JSONObject glass2 = (JSONObject) o2;
+                String shape1 = (String) glass1.get("shape");
+                String shape2 = (String) glass2.get("shape");
+                return shape1.compareTo(shape2);
+            }
+        });
+
+        // Place the sorted JSONArray back in the JSONObject
+        jsonObject.put("Glasses", glassesArray);
+
+        // Replace the original index 0 with the updated JSONObject
+        input.set(0, jsonObject);
+
+        // Return the updated ArrayList
+        return input;
+    }
+}
+,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import java.util.ArrayList;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        ArrayList<Object> result = new ArrayList<>();
+        
+        if (input.isEmpty() || !(input.get(0) instanceof JSONObject)) {
+            result.add(false);
+            return result;
+        }
+
+        JSONObject jsonObject = (JSONObject) input.get(0);
+        JSONArray glassesArray = (JSONArray) jsonObject.get("Glasses");
+
+        if (glassesArray == null) {
+            result.add(false);
+            return result;
+        }
+
+        ArrayList<String> shapes = new ArrayList<>();
+        for (Object obj : glassesArray) {
+            if (obj instanceof JSONObject) {
+                JSONObject glass = (JSONObject) obj;
+                String shape = (String) glass.get("shape");
+                shapes.add(shape);
+            }
+        }
+
+        boolean isSorted = isSortedByShape(shapes);
+        result.add(isSorted);
+        return result;
+    }
+
+    private boolean isSortedByShape(ArrayList<String> shapes) {
+        ArrayList<String> sortedShapes = new ArrayList<>(shapes);
+        sortedShapes.sort(Comparator.naturalOrder());
+        return shapes.equals(sortedShapes);
+    }
+}
+,{"Glasses":[{"colour":"red","shape":"Oval","material":"metal","id":2,"brand":"Brand1"},{"colour":"yellow","shape":"Oval","material":"no","id":3,"brand":"Brand1"},{"colour":"black","shape":"Oval","material":"metal","id":6,"brand":"Brand3"},{"colour":"yellow","shape":"Oval","material":"metal","id":10,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"metal","id":1,"brand":"Brand2"},{"colour":"yellow","shape":"Round","material":"metal","id":7,"brand":"Brand3"},{"colour":"yellow","shape":"Round","material":"plastic","id":8,"brand":"Brand2"},{"colour":"red","shape":"Round","material":"plastic","id":9,"brand":"Brand3"},{"colour":"red","shape":"Square","material":"no","id":4,"brand":"Brand2"},{"colour":"red","shape":"Square","material":"plastic","id":5,"brand":"Brand3"}]}
+18,AgelessAeloria@66702@fbw14793,true,0,0,4769,0,package jadex.bdi.llm.impl;
+import jadex.bdi.llm.impl.inmemory.IPlanBody;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+
+public class Plan implements IPlanBody {
+
+    @Override
+    public ArrayList<Object> runCode(ArrayList<Object> input) {
+        if (input == null || input.isEmpty() || !(input.get(0) instanceof JSONObje

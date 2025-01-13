@@ -1,5 +1,5 @@
 {
-  "model": "gpt-4o-mini",
+  "model": "gpt-4o-2024-11-20",
   "messages": [
     {
       "role": "system",
@@ -9,10 +9,5 @@
       "role": "user",
       "content": "Create a java class named Plan with implements IPlanBody with a method called runCode. The Plan function get an $Belief$. The ArrayList of Objects with a JSONObject (org.json.simple.JSONObject) at index 0. The JSONObject contains a List of 'Glasses' with different parameters. Return an ArrayList of Objects that return a Boolean at index 0. The Boolean Object is true if the different Objects on the list are sorted by the String 'shape' which is the key."
     }
-  ],
-  "temperature": 0.3,
-  "max_tokens": 1000,
-  "top_p": 1.0,
-  "frequency_penalty": 0.0,
-  "presence_penalty": 0.0
+  ]
 }

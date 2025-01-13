@@ -26,7 +26,7 @@ import java.util.*;
 public class LlmFeature implements ILlmFeature {
     private String apiKey;
     private final URI chatUrl;
-    private final JSONObject chatgptSettings;
+    private final JSONObject llmSettings;
     /**
      * The generated Java code.
      */
@@ -34,9 +34,9 @@ public class LlmFeature implements ILlmFeature {
 
     /**
      * Constructor
-     * Check if chatgpt url is valid
+     * Check if url is valid
      * Check if api key is valid
-     * Check if Settings.json is valid (existing + readable) + have chatgptSettings
+     * Check if Settings.json is valid (existing + readable) + have llmSettings
      * Replace $Belief$ in Settings.json with beliefType
      *
      * @param chatUrlString chatgpt api url
@@ -63,19 +63,14 @@ public class LlmFeature implements ILlmFeature {
         } else
         {
             apiKey = apiKeyString;
-            System.out.println("F: API key is valid.");
         }
 
         // check if PlanSettings.json is valid (given + readable) + have chatgptSettings
-        System.out.println("F: " + settingsPath);
         File settingsFile = new File(settingsPath);
         if (!settingsFile.exists() || !settingsFile.canRead())
         {
             System.err.println("Settings.json not found or not readable.");
             System.exit(1);
-        } else
-        {
-            System.out.println("F: Settings.json is valid.");
         }
 
         // check if PlanSettings.json has chatgptSettings
@@ -92,86 +87,51 @@ public class LlmFeature implements ILlmFeature {
 
         try {
             JSONParser parser = new JSONParser();
-            chatgptSettings = (JSONObject) parser.parse(settingsFileString);
+            llmSettings = (JSONObject) parser.parse(settingsFileString);
         } catch (ParseException e)
         {
             throw new RuntimeException(e);
         }
-        if (!chatgptSettings.containsKey("model"))
+        if (!llmSettings.containsKey("model"))
         {
             System.err.println("Settings.json does not contain component 'model'.");
             System.exit(1);
         }
 
         JSONArray messages = null;
-        if (!chatgptSettings.containsKey("messages"))
-        {
-            System.err.println("Settings.json does not contain component 'messages'.");
-            System.exit(1);
-        } else
-        {
-            messages = (JSONArray) chatgptSettings.get("messages");
-            Stack<String> roles = new Stack<>();
-            roles.push("user");
-            roles.push("system");
-
-            for (Object message : messages)
-            {
-                JSONObject messageObject = (JSONObject) message;
-                if (!messageObject.containsKey("role") || !messageObject.containsKey("content"))
-                {
-                    System.err.println("Settings.json does not contain component 'role' or 'content'.");
-                    System.exit(1);
-                } else
-                {
-                    String role = (String) messageObject.get("role");
-                    if (roles.contains(role))
-                    {
-                        roles.removeElement(role);
-                    }
-                }
-            }
-            if (!roles.isEmpty())
-            {
-                System.err.println("Settings.json does not contain all roles." + roles);
+        if (this.apiKey.equals("ollama")) {
+            if (!llmSettings.containsKey("prompt")) {
+                System.err.println("Settings.json does not contain component 'prompt'.");
                 System.exit(1);
             }
-        }
+        } else {
+            if (!llmSettings.containsKey("messages")) {
+                System.err.println("Settings.json does not contain component 'messages'.");
+                System.exit(1);
+            } else {
+                messages = (JSONArray) llmSettings.get("messages");
+                Stack<String> roles = new Stack<>();
+                roles.push("user");
+                roles.push("system");
 
-//        if (!chatgptSettings.containsKey("temperature"))
-//        {
-//            System.out.println("Warning: Settings.json does not contain component 'temperature'.");
-//            System.out.println("Warning: Setting 'temperature' to 0.3");
-//            chatgptSettings.put("temperature", 0.3);
-//        }
-//
-//        if (!chatgptSettings.containsKey("max_tokens"))
-//        {
-//            System.out.println("Warning: Settings.json does not contain component 'max_tokens'.");
-//            System.out.println("Warning: Setting 'max_tokens' to 300");
-//            chatgptSettings.put("max_tokens", 300);
-//        }
-//
-//        if (!chatgptSettings.containsKey("top_p"))
-//        {
-//            System.out.println("Warning: Settings.json does not contain component 'top_p'.");
-//            System.out.println("Warning: Setting 'top_p' to 1.0");
-//            chatgptSettings.put("top_p", 1.0);
-//        }
-//
-//        if (!chatgptSettings.containsKey("frequency_penalty"))
-//        {
-//            System.out.println("Warning: Settings.json does not contain component 'frequency_penalty'.");
-//            System.out.println("Warning: Setting 'frequency_penalty' to 0.0");
-//            chatgptSettings.put("frequency_penalty", 0.0);
-//        }
-//
-//        if (!chatgptSettings.containsKey("presence_penalty"))
-//        {
-//            System.out.println("Warning: Settings.json does not contain component 'presence_penalty'.");
-//            System.out.println("Warning: Setting 'presence_penalty' to 0.0");
-//            chatgptSettings.put("presence_penalty", 0.0);
-//        }
+                for (Object message : messages) {
+                    JSONObject messageObject = (JSONObject) message;
+                    if (!messageObject.containsKey("role") || !messageObject.containsKey("content")) {
+                        System.err.println("Settings.json does not contain component 'role' or 'content'.");
+                        System.exit(1);
+                    } else {
+                        String role = (String) messageObject.get("role");
+                        if (roles.contains(role)) {
+                            roles.removeElement(role);
+                        }
+                    }
+                }
+                if (!roles.isEmpty()) {
+                    System.err.println("Settings.json does not contain all roles." + roles);
+                    System.exit(1);
+                }
+            }
+        }
     }
 
     /**
@@ -179,89 +139,139 @@ public class LlmFeature implements ILlmFeature {
      * cleans up the response which is the java code
      * save the java code in generatedJavaCode
      *
-     * @param ChatGptRequestExtension
+     * @param ChatRequestExtension
      */
     @Override
-    public void connectToLLM(String ChatGptRequestExtension)
+    public void connectToLLM(String ChatRequestExtension)
     {
-        // update chatgptSettings with ChatGptRequest
-        JSONArray messages = (JSONArray) chatgptSettings.get("messages");
+        // ############################################################################################################
+        // Request processing for ollama
+        // ############################################################################################################
+        if (this.apiKey.equals("ollama")) {
+            JSONObject message = (JSONObject) llmSettings;
+            String content = (String) message.get("prompt") + " " + ChatRequestExtension;
+            message.put("prompt", content);
 
-        for (Object message : messages)
-        {
-            JSONObject messageObject = (JSONObject) message;
-            if (messageObject.get("role").equals("user"))
-            {
-                String content = (String) messageObject.get("content") + " " + ChatGptRequestExtension;
-                messageObject.put("content", content);
-            }
-        }
-        chatgptSettings.put("messages", messages);
+            // send request to LLM
+            HttpClient client = HttpClient.newHttpClient();
 
-        // send request to LLM
-        HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(chatUrl)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(llmSettings.toString()))
+                    .build();
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(chatUrl)
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + apiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(chatgptSettings.toString()))
-                .build();
+            // get response from LLM
+            String responseMessage = null;
+            try {
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        // get response from LLM
-        String responseMessage = null;
-        try
-        {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("Response status code: " + response.statusCode());
+                if (response.statusCode() == 200) {
+                    // parse response JSON
+                    try {
+                        JSONParser parser = new JSONParser();
+                        JSONObject responseObject = (JSONObject) parser.parse(response.body());
+                        // get response message
+                        responseMessage = (String) responseObject.get("response");
 
-            if (response.statusCode() == 200)
-            {
-                // parse response JSON
-                try
-                {
-                    JSONParser parser = new JSONParser();
-                    JSONObject responseObject = (JSONObject) parser.parse(response.body());
-                    JSONArray choicesArray = (JSONArray) responseObject.get("choices");
-
-                    // get response message
-                    for (Object choice : choicesArray)
-                    {
-                        JSONObject choiceObject = (JSONObject) choice;
-                        long index = (long) choiceObject.get("index");
-                        // get first message
-                        if (index == 0)
-                        {
-                            JSONObject messageObject = (JSONObject) choiceObject.get("message");
-                            responseMessage = (String) messageObject.get("content");
-                        }
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (ParseException e)
-                {
-                    throw new RuntimeException(e);
+                } else {
+                    throw new Exception("F: LLM returned status code " + response.statusCode());
                 }
-            } else
-            {
-                throw new Exception("F: LLM returned status code " + response.statusCode());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-        } catch (Exception e)
-        {
-            throw new RuntimeException(e);
+            // clean up responseMessage
+            // remove leading and trailing quotation marks from responseMessage
+            responseMessage = responseMessage.replaceFirst("```java", "");
+            responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
+            responseMessage = new StringBuilder(responseMessage).reverse().toString();
+
+            // add package to javacode
+            responseMessage =
+                    "package jadex.bdi.llm.impl;\n" +
+                            "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
+                            responseMessage;
+
+            System.out.println(responseMessage);
+
+            this.generatedJavaCode = responseMessage;
         }
 
-        // clean up responseMessage
-        // remove leading and trailing quotation marks from responseMessage
-        responseMessage = responseMessage.replaceFirst("```java", "");
-        responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
-        responseMessage = new StringBuilder(responseMessage).reverse().toString();
+        // ############################################################################################################
+        // Request processing for chatgpt
+        // ############################################################################################################
+        else {
+            // update chatgptSettings with ChatGptRequest
+            JSONArray messages = (JSONArray) llmSettings.get("messages");
 
-        // add package to javacode
-        responseMessage =
-                "package jadex.bdi.llm.impl;\n" +
-                "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
-                responseMessage;
+            for (Object message : messages) {
+                JSONObject messageObject = (JSONObject) message;
+                if (messageObject.get("role").equals("user")) {
+                    String content = (String) messageObject.get("content") + " " + ChatRequestExtension;
+                    messageObject.put("content", content);
+                }
+            }
+            llmSettings.put("messages", messages);
 
-        this.generatedJavaCode = responseMessage;
+            // send request to LLM
+            HttpClient client = HttpClient.newHttpClient();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(chatUrl)
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(llmSettings.toString()))
+                    .build();
+
+            // get response from LLM
+            String responseMessage = null;
+            try {
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() == 200) {
+                    // parse response JSON
+                    try {
+                        JSONParser parser = new JSONParser();
+                        JSONObject responseObject = (JSONObject) parser.parse(response.body());
+                        JSONArray choicesArray = (JSONArray) responseObject.get("choices");
+
+                        // get response message
+                        for (Object choice : choicesArray) {
+                            JSONObject choiceObject = (JSONObject) choice;
+                            long index = (long) choiceObject.get("index");
+                            // get first message
+                            if (index == 0) {
+                                JSONObject messageObject = (JSONObject) choiceObject.get("message");
+                                responseMessage = (String) messageObject.get("content");
+                            }
+                        }
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    throw new Exception("F: LLM returned status code " + response.statusCode());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            // clean up responseMessage
+            // remove leading and trailing quotation marks from responseMessage
+            responseMessage = responseMessage.replaceFirst("```java", "");
+            responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
+            responseMessage = new StringBuilder(responseMessage).reverse().toString();
+
+            // add package to javacode
+            responseMessage =
+                    "package jadex.bdi.llm.impl;\n" +
+                            "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
+                            responseMessage;
+
+            this.generatedJavaCode = responseMessage;
+        }
     }
     /**
      * Generate an IPlanBody InMemoryClass and compiles the code at runtime
@@ -286,8 +296,8 @@ public class LlmFeature implements ILlmFeature {
 
         if (!result)
         {
-            diagnostics.getDiagnostics()
-                    .forEach(d -> System.out.println(d));
+//            diagnostics.getDiagnostics().forEach(d -> System.out.println(d));
+            throw new RuntimeException("Compilation failed.");
         } else
         {
             ClassLoader classLoader = manager.getClassLoader(null);

@@ -1,0 +1,5 @@
+{
+  "model": "llama3.3",
+  "prompt": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal. Create a java class named Plan which implements IPlanBody with a method called runCode. The function get a $Belief$ of Objects. The $Belief$ contains a JSONObject (org.json.simple.JSONObject) at index 0. The JSONObject is a List of 'Glasses' with different parameters. Sort the different Objects inside the List by the key 'shape'. The value of the key colour is of type string. Return the sorted List at index 0 in the $Belief$ of Objects.",
+  "stream": false
+}
