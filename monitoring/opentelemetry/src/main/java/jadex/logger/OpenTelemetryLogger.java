@@ -21,7 +21,7 @@ public class OpenTelemetryLogger implements Logger
     {
     	System.out.println("created otel logger: "+name);
     	this.name = name;
-    	this.logger = java.util.logging.Logger.getLogger(name+"_otel");
+    	this.logger = java.util.logging.Logger.getLogger(name+"_otel"); // otherwise the real internal jul logger is used and reconfigured :-( 
         this.system = system;
 
         logger.setUseParentHandlers(false);
