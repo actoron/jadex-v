@@ -25,6 +25,12 @@ public interface IComponentManager extends IComponentFactory
 	}
 	
 	/**
+	 *  Get the component/pojo toString() of the first started component.
+	 *  @return null if no component has been started yet. 
+	 */
+	public String	getInferredApplicationName();
+
+	/**
 	 *  Get the feature instance for the given type.
 	 *  
 	 *  @param featuretype Requested runtime feature type.

@@ -1,6 +1,7 @@
 package jadex.benchmark;
 
 import java.io.IOException;
+import java.lang.System.Logger.Level;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -13,9 +14,18 @@ import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
 import jadex.common.SUtil;
+import jadex.logger.OpenTelemetryLogHandler;
+import jadex.logger.OpenTelemetryLogger;
 
 public class BenchmarkHelper
 {
+	static final String	EXEC_ENV	= SUtil.isGradle() ? "gradle" : "ide";
+
+	static
+	{
+		System.setProperty(OpenTelemetryLogger.URL, "https://otel.actoron.com");
+	}
+	
 	protected static String	getCaller()
 	{
 		StackTraceElement[]	stels	= new Exception().fillInStackTrace().getStackTrace();
@@ -57,7 +67,7 @@ public class BenchmarkHelper
 				{
 					System.out.println("Per component: "+took);
 					System.out.println("runs: "+cnt);
-					addToDB(took);
+					addToDB(took, false);
 					best	= Math.min(best, took);
 					System.out.println();
 				}
@@ -66,7 +76,7 @@ public class BenchmarkHelper
 					teardown.run();
 			}
 			System.out.println("best: "+best);
-			return addToDB(best);
+			return addToDB(best, true);
 		}
 		catch(Exception e)
 		{
@@ -118,7 +128,7 @@ public class BenchmarkHelper
 					System.out.println("took: "+took);
 					System.out.println("runs: "+cnt*runs);
 					
-					addToDB(took);
+					addToDB(took, false);
 					best	= Math.min(best, took);
 					
 					System.out.println("Used memory: "+usedmem);
@@ -132,7 +142,7 @@ public class BenchmarkHelper
 				}
 			}
 			System.out.println("best: "+best);
-			return addToDB(best);
+			return addToDB(best, true);
 		}
 		catch(Exception e)
 		{
@@ -140,14 +150,18 @@ public class BenchmarkHelper
 		}
 	}
 
-	protected static double	addToDB(double value) throws IOException
+	/**
+	 *  Compare value to DB and (optionally) write new value.
+	 */
+	protected static double	addToDB(double value, boolean write) throws IOException
 	{
-		boolean	gradle	= System.getenv().toString().contains("gradle");
-		
 		double	pct	= 0;
 		String	caller	= getCaller();
-		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark_ide", caller+".json");
+		Path	db	= Path.of(".benchmark_"+EXEC_ENV, caller+".json");
 		double	prev	= 0;
+		long	prev_date	= 0;
+		long	new_date	= System.currentTimeMillis();
+		
 		if(db.toFile().exists())
 		{
 			JsonValue	val	= Json.parse(Files.readString(db));
@@ -158,16 +172,59 @@ public class BenchmarkHelper
 			else
 			{
 				prev	= ((JsonObject)val).get("best").asDouble();
+				
+				// Use current date as best date if new value is lower or equal
+				if(value<=prev)
+				{
+					prev_date	= new_date;
+				}
+				
+				// Keep old best date
+				else
+				{
+					JsonValue	dateval	= ((JsonObject)val).get("best_date");
+					prev_date	= dateval!=null ? dateval.asLong(): 0;
+				}
 			}
 			pct	= (value - prev)*100.0/prev;
 			System.out.println("Change(%): "+pct);
 		}
 
-		JsonObject	obj	= new JsonObject();
-		obj.add("best", prev==0 ? value : Math.min(value, prev));
-		obj.add("last", value);
-		db.toFile().getParentFile().mkdirs();
-		Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
+		if(write)
+		{
+			// Write to file
+			JsonObject	obj	= new JsonObject();
+			obj.add("best", prev==0 ? value : Math.min(value, prev));
+			obj.add("best_date", prev_date);
+			obj.add("last", value);
+			obj.add("last_date", new_date);
+			db.toFile().getParentFile().mkdirs();
+			Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
+			
+			// Write to log
+			// logfmt
+			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
+//				  "benchmark=true"
+//				+" benchmark_host="+((ComponentManager)IComponentManager.get()).host()
+//				+" benchmark_execenv="+EXEC_ENV
+				  "benchmark_name="+caller
+				+" benchmark_value="+value
+				+" benchmark_prev="+prev
+				+" benchmark_pct="+pct);
+			// JSON
+//			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
+//					  "{\"benchmark\": true"
+//					+", \"benchmark_host\": \""+((ComponentManager)IComponentManager.get()).host()+"\""
+//					+", \"benchmark_execenv\": \""+execenv+"\""
+//					+", \"benchmark_name\": \""+caller+"\""
+//					+", \"benchmark_value\": "+value
+//					+", \"benchmark_prev\": "+prev
+//					+", \"benchmark_pct\": "+pct
+//					+"}");
+			
+			// Hack!!! Force OpenTelemetry to push logs before exiting
+			OpenTelemetryLogHandler.forceFlush();
+		}
 		
 		return pct;
 	}

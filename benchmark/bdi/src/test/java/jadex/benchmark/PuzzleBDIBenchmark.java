@@ -1,5 +1,7 @@
 package jadex.benchmark;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.puzzle.BenchmarkAgent;
@@ -15,12 +17,13 @@ public class PuzzleBDIBenchmark
 	@Test
 	public void	benchmarkTime()
 	{
-		BenchmarkHelper.benchmarkTime(() ->
+		double	pct	= BenchmarkHelper.benchmarkTime(() ->
 		{
 			BenchmarkAgent	agent	= new BenchmarkAgent(false);
 			IExternalAccess	exta	= IBDIAgent.create(agent);
 			exta.waitForTermination().get();
 		});
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 
 	public static void main(String[] args)

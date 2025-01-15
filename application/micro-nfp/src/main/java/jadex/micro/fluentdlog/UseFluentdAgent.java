@@ -34,8 +34,8 @@ public class UseFluentdAgent
 	
 	public static void main(String[] args) 
 	{
-		// Configure Jadex system logger
-		// application
+		// Configure Jadex logger
+		// system
 		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(name ->
 		{
 			JulLogger ret = new JulLogger(name);
@@ -45,7 +45,7 @@ public class UseFluentdAgent
 			return ret;
 		}, name -> 
 		{
-			return new FluentdLogger(name, true); // only necessary when multiple unordered external loggers are in cp
+			return new FluentdLogger(name, Level.OFF, true); // only necessary when multiple unordered external loggers are in cp
 		}, true));
 		
 		// application
@@ -58,7 +58,7 @@ public class UseFluentdAgent
 			return ret;
 		}, name -> 
 		{
-			return new FluentdLogger(name, false);  // only necessary when multiple unordered external loggers are in cp
+			return new FluentdLogger(name, Level.ALL, false);  // only necessary when multiple unordered external loggers are in cp
 		}, false));
 		
 		// Configure Jadex application logger

@@ -57,12 +57,12 @@ public class JadexLoggerFinder extends LoggerFinder
 			
 			LoggerCreator nsysc = new LoggerCreator( 
 				sysc!=null && sysc.icreator()!=null? sysc.icreator(): iprov!=null? name -> iprov.getLogger(name, syslevel): null, 
-				sysc!=null && sysc.ecreator()!=null? sysc.ecreator(): eprov!=null? name -> eprov.getLogger(name, true): null, 
+				sysc!=null && sysc.ecreator()!=null? sysc.ecreator(): eprov!=null? name -> eprov.getLogger(name, syslevel, true): null, 
 				true);
 			
 			LoggerCreator nappc = new LoggerCreator(
 				appc!=null && appc.icreator()!=null? appc.icreator(): iprov!=null? name -> iprov.getLogger(name, applevel): null, 
-				appc!=null && appc.ecreator()!=null? appc.ecreator(): eprov!=null? name -> eprov.getLogger(name, false): null, 
+				appc!=null && appc.ecreator()!=null? appc.ecreator(): eprov!=null? name -> eprov.getLogger(name, applevel, false): null, 
 				false);
 			
 			if(sysc==null)

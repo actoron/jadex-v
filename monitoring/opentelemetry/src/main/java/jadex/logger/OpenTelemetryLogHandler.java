@@ -3,14 +3,14 @@ package jadex.logger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.logs.LogRecordBuilder;
 import io.opentelemetry.api.logs.Logger;
 import io.opentelemetry.api.logs.Severity;
@@ -18,9 +18,12 @@ import io.opentelemetry.exporter.otlp.logs.OtlpGrpcLogRecordExporter;
 import io.opentelemetry.exporter.otlp.logs.OtlpGrpcLogRecordExporterBuilder;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder;
+import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.logs.SdkLoggerProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
 import io.opentelemetry.sdk.resources.Resource;
+import jadex.common.SUtil;
+import jadex.core.IComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 
 public class OpenTelemetryLogHandler extends Handler 
@@ -29,9 +32,9 @@ public class OpenTelemetryLogHandler extends Handler
 
 	private String loggername;
 	
-    private static OpenTelemetry otel = null;
+    private static OpenTelemetrySdk otel = null;
     
-    private static OpenTelemetry getOrInitializeOpenTelemetry() 
+    private static OpenTelemetrySdk getOrInitializeOpenTelemetry() 
     {
         if (otel == null) 
         {
@@ -44,7 +47,7 @@ public class OpenTelemetryLogHandler extends Handler
         return otel;
     }
     
-    private static OpenTelemetry initializeOpenTelemetry() 
+    private static OpenTelemetrySdk initializeOpenTelemetry() 
     {
         String url = System.getenv(OpenTelemetryLogger.URL)!=null? System.getenv(OpenTelemetryLogger.URL): System.getProperty(OpenTelemetryLogger.URL);
         String key = System.getenv(OpenTelemetryLogger.KEY)!=null? System.getenv(OpenTelemetryLogger.KEY): System.getProperty(OpenTelemetryLogger.KEY);
@@ -59,8 +62,20 @@ public class OpenTelemetryLogHandler extends Handler
         
         BatchLogRecordProcessor processor = BatchLogRecordProcessor.builder(exporter).build();
         
+        // Ressource attributes
+        AttributesBuilder	attrs	= Attributes.builder();
+        
+        // should only use attributes as index labels that do not change for same application
+        // cf. Loki label best practices https://grafana.com/docs/loki/latest/get-started/labels/bp-labels/
+        //attrs.put(AttributeKey.stringKey("service.name"),  GlobalProcessIdentifier.SELF.toString());
+        attrs.put(AttributeKey.stringKey("service.name"),  GlobalProcessIdentifier.SELF.host().toString());
+        attrs.put(AttributeKey.booleanKey("runtime.benchmark"), System.getProperty("user.dir").contains("benchmark"));
+        attrs.put(AttributeKey.booleanKey("runtime.gradle"),  SUtil.isGradle());
+//        attrs.put(AttributeKey.stringKey("runtime.env"), ""+System.getenv());
+//        attrs.put(AttributeKey.stringKey("runtime.props"), ""+System.getProperties());
+
         SdkLoggerProvider provider = SdkLoggerProvider.builder().addLogRecordProcessor(processor)
-        	.setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"),  GlobalProcessIdentifier.SELF.toString()))).build();
+        	.setResource(Resource.create(attrs.build())).build();
         
         OpenTelemetrySdkBuilder otelb = OpenTelemetrySdk.builder();
         otelb.setLoggerProvider(provider);
@@ -95,9 +110,12 @@ public class OpenTelemetryLogHandler extends Handler
         	.setSeverity(mapJulLevelToOtelSeverity(record.getLevel())) 
            	.setSeverityText(record.getLevel().getName())
         	.setAttribute(AttributeKey.stringKey("logger.name"), record.getLoggerName())
+        	// scope/log attributes can't be used as index labels, grrr.
+        	//.setAttribute(AttributeKey.stringKey("logger.host"), GlobalProcessIdentifier.SELF.host().toString())
             //.setAttribute(AttributeKey.stringKey("thread.name"), Thread.currentThread().getName())
             //.setAttribute(AttributeKey.stringKey("service.name"), "my_java_service")
-            .setAttribute(AttributeKey.stringKey("service.instance.id"), record.getLoggerName())
+            .setAttribute(AttributeKey.stringKey("application.name"), ""+IComponentManager.get().getInferredApplicationName())
+            .setAttribute(AttributeKey.stringKey("service.instance.id"), GlobalProcessIdentifier.SELF.toString())
             .setTimestamp(record.getMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)
             .setAttribute(AttributeKey.stringKey("iso.timestamp"), isotime);
         
@@ -132,10 +150,31 @@ public class OpenTelemetryLogHandler extends Handler
     @Override
     public void flush() 
     {
+    	forceFlush();
     }
     
-    @Override
+	@Override
     public void close() throws SecurityException 
     {
+    	// TODO close this logger!?
+//    	otel.close();
+    }
+
+	/**
+	 *  Flush all otel stuff.
+	 */
+	// Public to allow flushing from outside (e.g. at end of benchmark). hack!?
+    public static void forceFlush()
+	{
+    	if(otel!=null)
+    	{
+	    	// TODO: flush only this logegr!?
+	    	CompletableResultCode	c1	= otel.getSdkLoggerProvider().forceFlush();
+	    	CompletableResultCode	c2	= otel.getSdkMeterProvider().forceFlush();
+	    	CompletableResultCode	c3	= otel.getSdkTracerProvider().forceFlush();
+	    	c1.join(10, TimeUnit.SECONDS);
+	    	c2.join(10, TimeUnit.SECONDS);
+	    	c3.join(10, TimeUnit.SECONDS);
+    	}
     }
 }

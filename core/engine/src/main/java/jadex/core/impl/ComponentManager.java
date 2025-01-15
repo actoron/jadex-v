@@ -286,6 +286,72 @@ public class ComponentManager implements IComponentManager
 		SUtil.DEBUG = debug;
 	}*/
 	
+	// Hack. remember first component for fetching informative name.
+	IComponent	first	= null;
+	
+	/**
+	 *  Get the component/pojo toString()/classname of the first started component.
+	 *  @return null if no component has been started yet. 
+	 */
+	public String	getInferredApplicationName()
+	{
+		String	ret	= null;
+		IComponent	comp	= first;
+		
+		// Hack!!! find current component, if any
+		try
+		{
+			Class<?>	cexe	= Class.forName("jadex.execution.impl.ExecutionFeature");
+			Object	threadlocal	= cexe.getField("LOCAL").get(null);
+			Object	exefeature	= ThreadLocal.class.getMethod("get").invoke(threadlocal);
+			if(exefeature!=null)
+			{
+				comp	= (IComponent)cexe.getMethod("getComponent").invoke(exefeature);
+			}
+		}
+		catch(Exception e)
+		{
+		}
+		
+		// Has application
+		if(comp!=null && comp.getApplication()!=null)
+		{
+			ret	= comp.getApplication().getName();
+		}
+		
+		// Has pojo
+		else if(comp!=null && comp.getPojo()!=null)
+		{
+			try
+			{
+				// Check for overridden toString() (raises exception if not found)
+				comp.getPojo().getClass().getDeclaredMethod("toString");
+				ret	= comp.getPojo().toString();
+			}
+			catch(Exception e)
+			{
+				// If no toString() use class name
+				ret	= comp.getPojo().getClass().getName();
+				// Strip lambda  address(!?)
+				if(ret!=null && ret.indexOf('/')!=-1)
+				{
+					ret	= ret.substring(0, ret.indexOf('/'));
+				}
+			}			
+		}
+		
+		// Has component w/o pojo
+		else if (comp!=null)
+		{
+			// TODO: can we derive a more useful app name?
+			// E.g. plain component benchmark
+			// Non-fast lambdas
+			ret	= comp.getClass().getName();
+		}
+		
+		return ret;
+	}
+	
 	/**
 	 *  Add a component.
 	 *  @param comp The component.
@@ -303,6 +369,13 @@ public class ComponentManager implements IComponentManager
 				ComponentManager.get().printComponents();
 				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
 			}
+			
+			// Hack. remember first component for fetching informative name.
+			if(first==null)
+			{
+				first	= comp;
+			}
+			
 			components.put(comp.getId(), comp);
 			if(comp.getAppId()!=null)
 				incrementComponentCount(comp.getAppId());

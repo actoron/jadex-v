@@ -19,7 +19,7 @@ public class SimpleBDIBenchmark
 			pojo.inited.get();
 			return () -> agent.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 	
 	@Test
@@ -32,6 +32,6 @@ public class SimpleBDIBenchmark
 			pojo.inited.get();
 			agent.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 }

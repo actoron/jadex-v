@@ -23,8 +23,7 @@ alarmclock_settings.ser
 jadex-deploy-vars.sh
 startHelloWorld.sh
 /jadex-deploy-vars.bat
-**/.benchmark
-**/.benchmark_gradle
+**/.benchmark*
 /.pydevproject
 /benchmark/benchmark_execution.png
 /benchmark/benchmark_memory.png
