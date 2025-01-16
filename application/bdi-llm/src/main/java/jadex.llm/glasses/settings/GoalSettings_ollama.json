@@ -1,5 +1,5 @@
 {
-  "model": "llama3.3",
+  "model": "codellama",
   "prompt": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal. Create a java class named Plan with implements IPlanBody with a method called runCode. The Plan function get an $Belief$. The ArrayList of Objects with a JSONObject (org.json.simple.JSONObject) at index 0. The JSONObject contains a List of 'Glasses' with different parameters. Return an ArrayList of Objects that return a Boolean at index 0. The Boolean Object is true if the different Objects on the list are sorted by the String 'shape' which is the key.",
   "stream": false
 }

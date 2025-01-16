@@ -32,6 +32,8 @@ dependencies
     implementation group: 'org.json', name: 'json', version: '20240303'+v
     implementation group: 'commons-io', name: 'commons-io', version: '2.16.1' +v
     implementation group: 'org.openjdk.nashorn', name: 'nashorn-core', version: '15.4' +v
+    implementation group: 'com.google.guava', name: 'guava', version: '33.4.0-jre' +v
+
 
 
 }

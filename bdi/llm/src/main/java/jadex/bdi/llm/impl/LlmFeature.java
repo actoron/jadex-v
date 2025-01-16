@@ -134,6 +134,11 @@ public class LlmFeature implements ILlmFeature {
         }
     }
 
+    public String getLlmSettings()
+    {
+        return llmSettings.toString();
+    }
+
     /**
      * Connect to LLM, send request and get response
      * cleans up the response which is the java code

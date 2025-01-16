@@ -27,7 +27,7 @@ public class Runner {
         String timestamp = LocalDateTime.now().format(formatter);
 
         // Define the folder path (change "baseDirectory" to a desired path if needed)
-        Path currentResultsFolder = Paths.get(resultsDirectory + "results_" + timestamp);
+        Path currentResultsFolder = Paths.get(resultsDirectory + "results_ChatGPT_" + timestamp);
         Path generatedPlanCodeFolder = Paths.get(currentResultsFolder + "/generatedPlanCode");
         Path generatedGoalCodeFolder = Paths.get(currentResultsFolder + "/generatedGoalCode");
         Path planResultsFolder = Paths.get(currentResultsFolder + "/planResults");
@@ -40,7 +40,7 @@ public class Runner {
 
         // Create the results file with the header row
         PrintWriter csvWriter = new PrintWriter(currentResultsFolder + "/results.csv");
-        csvWriter.print("iteration,agentId,goalStatus,attemptsPlan,attemptsGoal,generationTime,executionTime,planCode,goalCode,planResults\n");
+        csvWriter.print("iteration,agentId,staticGoalCheck,chattyGoalCheck,attemptsGoal,attemptsPlan,generationTime,executionTime\n");
         csvWriter.close();
 
         for(int i = 0; i < agentIterations; i++)
@@ -50,16 +50,16 @@ public class Runner {
                 System.out.println("A: GlassesAgent started iteration " + i);
 
                 // chatgpt agent
-//                GlassesAgent currentAgent = new GlassesAgent(
-//                        "https://api.openai.com/v1/chat/completions",
-//                        System.getenv("OPENAI_API_KEY"),
-//                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
+                GlassesAgent currentAgent = new GlassesAgent(
+                        "https://api.openai.com/v1/chat/completions",
+                        System.getenv("OPENAI_API_KEY"),
+                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
 
                 //ollama agent
-                GlassesAgent currentAgent = new GlassesAgent(
-                        "http://localhost:50510/api/generate",
-                        "ollama",
-                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
+//                GlassesAgent currentAgent = new GlassesAgent(
+//                        "http://localhost:50510/api/generate",
+//                        "ollama",
+//                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
 
                 IComponentManager.get().create(currentAgent);
                 IComponentManager.get().waitForLastComponentTerminated();
@@ -68,9 +68,10 @@ public class Runner {
                 // Write data row
                 String agentResultsSting = i + "," +
                         agentResults.get("agentId") + "," +
-                        agentResults.get("goalResults") + "," +
-                        agentResults.get("genPlanAttempts1") + "," +
+                        agentResults.get("staticGoalCheck") + "," +
+                        agentResults.get("chattyGoalCheck") + "," +
                         agentResults.get("genGoalAttempts1") + "," +
+                        agentResults.get("genPlanAttempts1") + "," +
                         agentResults.get("genTime1") + "," +
                         agentResults.get("execTime1");
 
@@ -90,6 +91,16 @@ public class Runner {
                 out = new PrintWriter(planResultsFolder + "/planResults_" + i + ".json");
                 out.println(agentResults.get("planResults1"));
                 out.close();
+
+                out = new PrintWriter(currentResultsFolder + "/planSettings.json");
+                out.println(agentResults.get("planSettings"));
+                out.close();
+
+                out = new PrintWriter(currentResultsFolder + "/goalSettings.json");
+                out.println(agentResults.get("goalSettings"));
+                out.close();
+
+
 
             } catch (Exception e) {
                 System.out.println("A: Agent failed");
