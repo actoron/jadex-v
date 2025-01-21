@@ -38,11 +38,16 @@ benchmark:
   # needs: ["build"]
   allow_failure: true
   cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - '**/build'
-      - .gradle
+    - key: "$CI_COMMIT_REF_NAME"
+      policy: pull
+      paths:
+        - '**/build'
+        - .gradle
+    
+    # cache benchmark values to check against previous vals (pct)
+    - key: benchmarks-$CI_COMMIT_REF_SLUG
+      paths:
+        - benchmark/*/.benchmark_gradle
   rules:
     - if: $CI_COMMIT_REF_SLUG=~"main"
 
