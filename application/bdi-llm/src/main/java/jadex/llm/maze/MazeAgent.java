@@ -122,7 +122,7 @@ public class MazeAgent
 
         System.out.println(llmFeature.generatedJavaCode);
 
-        IPlanBody plan = llmFeature.generateAndCompileCode();
+        IPlanBody plan = llmFeature.generateAndCompileCode(false);
 
         System.out.println(goal.getUpdatedCellJSONString());
 

@@ -24,6 +24,8 @@ import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 
+import static jadex.common.SUtil.sleep;
+
 
 @Agent(type = "bdip")
 @Description("This agent uses ChatGPT to create the plan step.")
@@ -113,32 +115,30 @@ public class GlassesAgent
 
             if (this.goalPlan == null)
             {
-                //TODO: Look into this
-                System.out.println("~~GoalPlan: " + this.goalPlan);
                 int attempt = 0;
                 while (attempt < 3)
                 {
-                    System.out.println("~~GoalPlanWhile: " + this.goalPlan);
-                    System.out.println("~~Nümero: " + attempt);
+                    llmFeature.connectToLLM("");
+                    System.out.println("~~Attempt: " + attempt);
+                    System.out.println("~~GoalCode: " + llmFeature.generatedJavaCode);
                     try
                     {
-                        llmFeature.connectToLLM("");
-                        System.out.println("~~GenJavaCodeBeforeCompiling: " + llmFeature.generatedJavaCode);
-                        this.goalPlan = llmFeature.generateAndCompileCode();
-                        System.out.println("~~GenJavaCode: " + llmFeature.generatedJavaCode);
-                        agentResults.put("generatedGoalCode1", llmFeature.generatedJavaCode);
-                        agentResults.put("goalSettings", llmFeature.getLlmSettings());
+                        this.goalPlan = llmFeature.generateAndCompileCode(true);
 
                         if (this.goalPlan != null)
                         {
-                            System.out.println("~~GoalPlan generated");
+                            System.out.println("~~Code generated");
                             break; // Exit the loop if a valid plan is generated
                         }
                     } catch (Exception e)
                     {
+                        System.out.println("~~Exception: " + e);
+                        System.out.println("RETRY");
                         attempt++;
                     }
                 }
+                agentResults.put("generatedGoalCode1", llmFeature.generatedJavaCode);
+                agentResults.put("goalSettings", llmFeature.getLlmSettings());
                 agentResults.put("genGoalAttempts1", String.valueOf(attempt));
             }
 
@@ -237,27 +237,30 @@ public class GlassesAgent
         int attempt = 0;
         while (attempt < 3)
         {
+            long genStart = System.currentTimeMillis();
+            llmFeature.connectToLLM("");
+            System.out.println("~~Attempt: " + attempt);
+            System.out.println("~~GoalCode: " + llmFeature.generatedJavaCode);
+            long genTime = System.currentTimeMillis() - genStart;
+            agentResults.put("genTime1", String.valueOf(genTime));
             try
             {
-                long genStart = System.currentTimeMillis();
-                llmFeature.connectToLLM("");
-                System.out.println("~~PlanCode: " + llmFeature.generatedJavaCode);
-                long genTime = System.currentTimeMillis() - genStart;
-                agentResults.put("genTime1", String.valueOf(genTime));
-                plan = llmFeature.generateAndCompileCode();
-                agentResults.put("generatedPlanCode1", llmFeature.generatedJavaCode);
-                agentResults.put("planSettings", llmFeature.getLlmSettings());
-
+                plan = llmFeature.generateAndCompileCode(true);
 
                 if (plan != null)
                 {
+                    System.out.println("~~Code generated");
                     break; // Exit the loop if a valid plan is generated
                 }
             } catch (Exception e)
             {
+                System.out.println("~~Exception: " + e);
+                System.out.println("RETRY");
                 attempt++;
             }
         }
+        agentResults.put("generatedPlanCode1", llmFeature.generatedJavaCode);
+        agentResults.put("planSettings", llmFeature.getLlmSettings());
         agentResults.put("genPlanAttempts1", String.valueOf(attempt));
 
         JSONParser parser = new JSONParser();

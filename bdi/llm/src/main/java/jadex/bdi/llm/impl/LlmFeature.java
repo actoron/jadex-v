@@ -290,7 +290,7 @@ public class LlmFeature implements ILlmFeature {
      * @return IPlanBody
      */
     @Override
-    public IPlanBody generateAndCompileCode()
+    public IPlanBody generateAndCompileCode(Boolean debug)
     {
         final String classname = "jadex.bdi.llm.impl.Plan";
 
@@ -307,7 +307,10 @@ public class LlmFeature implements ILlmFeature {
 
         if (!result)
         {
-//            diagnostics.getDiagnostics().forEach(d -> System.out.println(d));
+            if(debug)
+            {
+                diagnostics.getDiagnostics().forEach(d -> System.out.println(d));
+            }
             throw new RuntimeException("Compilation failed.");
         } else
         {

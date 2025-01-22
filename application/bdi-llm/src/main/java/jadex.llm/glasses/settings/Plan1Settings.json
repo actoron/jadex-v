@@ -3,11 +3,11 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal."
+      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal. Don't write comments. Provide the imports if needed."
     },
     {
       "role": "user",
-      "content": "Create a java class named Plan which implements IPlanBody with a method called runCode. The function get a $Belief$ of Objects. The $Belief$ contains a JSONObject (org.json.simple.JSONObject) at index 0. The JSONObject is a List of 'Glasses' with different parameters. Sort the different Objects inside the List by the key 'shape'. The value of the key colour is of type string. Return the sorted List at index 0 in the $Belief$ of Objects."
+      "content": "Create a java class named Plan which implements IPlanBody with only one method called runCode. The function receives a $Belief$ of Objects and returns a $Belief$ of Objects. At index 0 the function receives a JSONObject (org.json.simple.JSONObject). The JSONObject contains a JSONArray (org.json.simple.JSONArray) of 'Glasses' with different parameters. Sort the different Objects inside the List by the key 'shape'. The value of the key shape is of type string. Return the sorted List at index 0 in the $Belief$ of Objects."
     }
   ]
 }

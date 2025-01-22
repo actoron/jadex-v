@@ -18,7 +18,7 @@ public class Runner {
      * @param args
      */
     public static void main(String[] args) throws IOException {
-        int agentIterations = 1;
+        int agentIterations = 50;
         String resultsDirectory = "/home/schuther/Coding/results/";
 
         // Format for date and time

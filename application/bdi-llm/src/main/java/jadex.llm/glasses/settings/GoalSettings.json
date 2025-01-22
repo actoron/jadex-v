@@ -3,11 +3,11 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal."
+      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal. Don't write comments. Provide the imports if needed."
     },
     {
       "role": "user",
-      "content": "Create a java class named Plan with implements IPlanBody with a method called runCode. The Plan function get an $Belief$. The ArrayList of Objects with a JSONObject (org.json.simple.JSONObject) at index 0. The JSONObject contains a List of 'Glasses' with different parameters. Return an ArrayList of Objects that return a Boolean at index 0. The Boolean Object is true if the different Objects on the list are sorted by the String 'shape' which is the key."
+      "content": "Create a java class named Plan which implements IPlanBody with only one method called runCode. The function receives a $Belief$ of Objects and returns a $Belief$ of Objects. At index 0 the function receives a JSONObject (org.json.simple.JSONObject). The JSONObject contains a JSONArray (org.json.simple.JSONArray) of 'Glasses' with different parameters. Check if the JSONObject is sorted by the key 'shape' which is a String. Return at index 0 a boolean 'true' if list is sorted or 'false' if the list is unsorted. The value of the key can exist multiple times."
     }
   ]
 }

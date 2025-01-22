@@ -22,5 +22,5 @@ public interface ILlmFeature
      * Generates a plan using the LLM-generated code and executes it in-memory.
      *
      */
-    public IPlanBody generateAndCompileCode();
+    public IPlanBody generateAndCompileCode(Boolean debug);
 }
