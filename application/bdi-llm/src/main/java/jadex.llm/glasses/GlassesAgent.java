@@ -49,11 +49,12 @@ public class GlassesAgent
     {
         @GoalParameter
         protected Val<String> convDataSetString; // Val<String> convDataSet;
-        private IPlanBody goalPlan = null;
+        protected IPlanBody goalPlan = null;
 
         @GoalCreationCondition(beliefs = "datasetString")
         public AgentGoal(String convDataSetString)
         {
+            //Constructor Agent
             this.convDataSetString = new Val<>(convDataSetString);
             System.out.println("A: Goal created");
         }
@@ -102,29 +103,35 @@ public class GlassesAgent
             agentResults.put("staticGoalCheck", String.valueOf(goalCheck));
 
             //############################################################################################################
-            //Chatty GoalCheck
+            //LLM GoalCheck
             //############################################################################################################
             LlmFeature llmFeature = new LlmFeature(
                     chatUrl,
                     apiKey,
                     beliefType,
-                    "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/GoalSettings.json");
+                    "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/GoalSettings_ollama.json");
 
             if (this.goalPlan == null)
             {
-
+                //TODO: Look into this
+                System.out.println("~~GoalPlan: " + this.goalPlan);
                 int attempt = 0;
                 while (attempt < 3)
                 {
+                    System.out.println("~~GoalPlanWhile: " + this.goalPlan);
+                    System.out.println("~~Nümero: " + attempt);
                     try
                     {
                         llmFeature.connectToLLM("");
+                        System.out.println("~~GenJavaCodeBeforeCompiling: " + llmFeature.generatedJavaCode);
                         this.goalPlan = llmFeature.generateAndCompileCode();
+                        System.out.println("~~GenJavaCode: " + llmFeature.generatedJavaCode);
                         agentResults.put("generatedGoalCode1", llmFeature.generatedJavaCode);
                         agentResults.put("goalSettings", llmFeature.getLlmSettings());
 
                         if (this.goalPlan != null)
                         {
+                            System.out.println("~~GoalPlan generated");
                             break; // Exit the loop if a valid plan is generated
                         }
                     } catch (Exception e)
@@ -144,7 +151,7 @@ public class GlassesAgent
                 ArrayList<Object> outputList = this.goalPlan.runCode(inputList);
                 Boolean checkStatus = (Boolean) outputList.get(0);
 
-                System.out.println("A: Chatty Goal check: " + checkStatus);
+                System.out.println("A: LLM Goal check: " + checkStatus);
 
                 agentResults.put("chattyGoalCheck", String.valueOf(checkStatus));
             } catch (ParseException e)
@@ -224,7 +231,7 @@ public class GlassesAgent
                 chatUrl,
                 apiKey,
                 beliefType,
-                "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan1Settings.json");
+                "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan1Settings_ollama.json");
 
         IPlanBody plan = null;
         int attempt = 0;
@@ -234,6 +241,7 @@ public class GlassesAgent
             {
                 long genStart = System.currentTimeMillis();
                 llmFeature.connectToLLM("");
+                System.out.println("~~PlanCode: " + llmFeature.generatedJavaCode);
                 long genTime = System.currentTimeMillis() - genStart;
                 agentResults.put("genTime1", String.valueOf(genTime));
                 plan = llmFeature.generateAndCompileCode();

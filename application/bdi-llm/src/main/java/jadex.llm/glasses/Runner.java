@@ -18,7 +18,7 @@ public class Runner {
      * @param args
      */
     public static void main(String[] args) throws IOException {
-        int agentIterations = 2;
+        int agentIterations = 1;
         String resultsDirectory = "/home/schuther/Coding/results/";
 
         // Format for date and time
@@ -50,16 +50,16 @@ public class Runner {
                 System.out.println("A: GlassesAgent started iteration " + i);
 
                 // chatgpt agent
-                GlassesAgent currentAgent = new GlassesAgent(
-                        "https://api.openai.com/v1/chat/completions",
-                        System.getenv("OPENAI_API_KEY"),
-                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
+//                GlassesAgent currentAgent = new GlassesAgent(
+//                        "https://api.openai.com/v1/chat/completions",
+//                        System.getenv("OPENAI_API_KEY"),
+//                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
 
                 //ollama agent
-//                GlassesAgent currentAgent = new GlassesAgent(
-//                        "http://localhost:50510/api/generate",
-//                        "ollama",
-//                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
+                GlassesAgent currentAgent = new GlassesAgent(
+                        "http://localhost:50510/api/chat",
+                        "ollama",
+                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
 
                 IComponentManager.get().create(currentAgent);
                 IComponentManager.get().waitForLastComponentTerminated();
@@ -93,7 +93,7 @@ public class Runner {
                 out.close();
 
                 out = new PrintWriter(currentResultsFolder + "/planSettings.json");
-                out.println(agentResults.get("planSettings"));
+                out.println(agentResults.get("planSettings1"));
                 out.close();
 
                 out = new PrintWriter(currentResultsFolder + "/goalSettings.json");

@@ -100,8 +100,8 @@ public class LlmFeature implements ILlmFeature {
 
         JSONArray messages = null;
         if (this.apiKey.equals("ollama")) {
-            if (!llmSettings.containsKey("prompt")) {
-                System.err.println("Settings.json does not contain component 'prompt'.");
+            if (!llmSettings.containsKey("messages")) {
+                System.err.println("Settings.json does not contain component 'messages'.");
                 System.exit(1);
             }
         } else {
@@ -153,9 +153,16 @@ public class LlmFeature implements ILlmFeature {
         // Request processing for ollama
         // ############################################################################################################
         if (this.apiKey.equals("ollama")) {
-            JSONObject message = (JSONObject) llmSettings;
-            String content = (String) message.get("prompt") + " " + ChatRequestExtension;
-            message.put("prompt", content);
+            JSONArray messages = (JSONArray) llmSettings.get("messages");
+
+            for (Object message : messages) {
+                JSONObject messageObject = (JSONObject) message;
+                if (messageObject.get("role").equals("user")) {
+                    String content = (String) messageObject.get("content") + " " + ChatRequestExtension;
+                    messageObject.put("content", content);
+                }
+            }
+            llmSettings.put("messages", messages);
 
             // send request to LLM
             HttpClient client = HttpClient.newHttpClient();
@@ -177,7 +184,8 @@ public class LlmFeature implements ILlmFeature {
                         JSONParser parser = new JSONParser();
                         JSONObject responseObject = (JSONObject) parser.parse(response.body());
                         // get response message
-                        responseMessage = (String) responseObject.get("response");
+                        JSONObject responseMessageObject = (JSONObject) responseObject.get("message");
+                        responseMessage = (String) responseMessageObject.get("content");
 
                     } catch (ParseException e) {
                         throw new RuntimeException(e);
@@ -199,8 +207,6 @@ public class LlmFeature implements ILlmFeature {
                     "package jadex.bdi.llm.impl;\n" +
                             "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
                             responseMessage;
-
-            System.out.println(responseMessage);
 
             this.generatedJavaCode = responseMessage;
         }

@@ -1,5 +1,14 @@
 {
-  "model": "codellama",
-  "prompt": "Create a Java class Plan that implements the interface IPlanBody. Implement a method runCode with the following behavior: Accepts a Belief object as input. Retrieves a JSONObject (from org.json.simple.JSONObject) at index 0 of the Belief object.The JSONObject contains a list of objects called 'Glasses'. Each 'Glass' has parameters, including a String key shape. Sort the 'Glasses' in the list by the value of their shape key. Update the Belief object so the sorted list is stored back at index 0. Return the updated Belief.",
+  "model": "llama3.2",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an expert Java code generator. Provide only the code block with a complete method implementation based on the provided goal. Don't write comments."
+    },
+    {
+      "role": "user",
+      "content": "Create a java class named Plan which implements IPlanBody with only one method called runCode. The function receives a List of Objects representing a $Belief$. The $Belief$ contains a JSONObject (org.json.simple.JSONObject) at index 0. The JSONObject is a List of 'Glasses' with different parameters. Sort the different Objects inside the List by the key 'shape'. The value of the key shape is of type string. Return the sorted List at index 0 in the $Belief$ of Objects."
+    }
+  ],
   "stream": false
 }
