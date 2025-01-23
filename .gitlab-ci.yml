@@ -48,6 +48,8 @@ benchmark:
     - key: benchmarks-$CI_COMMIT_REF_SLUG
       paths:
         - benchmark/*/.benchmark_gradle
+      # also store benchmark data on failed job
+      when: 'always'
   rules:
     - if: $CI_COMMIT_REF_SLUG=~"main"
 
