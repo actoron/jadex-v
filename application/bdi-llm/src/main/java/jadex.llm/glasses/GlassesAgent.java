@@ -1,6 +1,5 @@
 package jadex.llm.glasses;
 
-import com.google.common.collect.Comparators;
 import com.google.common.collect.Ordering;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
@@ -23,8 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
-
-import static jadex.common.SUtil.sleep;
 
 
 @Agent(type = "bdip")
