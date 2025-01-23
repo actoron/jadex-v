@@ -65,8 +65,7 @@ purge_benchmarks:
     - key: benchmarks-$CI_COMMIT_REF_SLUG
       paths:
         - benchmark/*/.benchmark_gradle
-  rules:
-    - when: manual
+  when: manual
 
 deployZip:
   stage: deploy
