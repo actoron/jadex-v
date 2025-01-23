@@ -560,7 +560,18 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 				{
 					Val<?>	bel	= (Val< ? >)oldval;
 					oldval	= valvalue.get(bel);
-					valvalue.set(bel, val);
+					
+					// Init event for normal belief
+					if(val instanceof Val)
+					{
+						val	= oldval;
+					}
+					
+					// Init event for updaterate belief
+					else
+					{
+						valvalue.set(bel, val);
+					}
 					
 				}
 				else
