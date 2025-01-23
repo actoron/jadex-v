@@ -549,13 +549,24 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		}
 		// Only store event for non-update-rate beliefs (update rate beliefs get set later)
 //		else if(mbel.getUpdaterate()<=0)
-		else if(mbel.getUpdateRate()==null)
+		else // if(mbel.getUpdateRate()==null)
 		{
 			// In init set field immediately but throw events later, when agent is available.
 			
 			try
 			{
-				Object oldval = setFieldValue(obj, fieldname, val);
+				Object oldval	= getFieldValue(obj, fieldname, null, false);
+				if(oldval instanceof Val)
+				{
+					Val<?>	bel	= (Val< ? >)oldval;
+					oldval	= valvalue.get(bel);
+					valvalue.set(bel, val);
+					
+				}
+				else
+				{
+					setFieldValue(obj, fieldname, val);
+				}
 				// rule engine not turned on so no unobserve necessary
 //				unobserveObject(agent, obj, etype, rs);
 				addInitWrite(IExecutionFeature.get().getComponent(), new InitWriteBelief(mbel.getName(), val, oldval));

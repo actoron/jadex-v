@@ -2,6 +2,7 @@ package jadex.bdi.belief;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.beans.PropertyChangeListener;
@@ -247,6 +248,7 @@ public class BeliefTest
 			thirdfut.setResult(pojo.updatebelief.get());
 		});
 		
+		assertNotNull(firstfut.get(TestHelper.TIMEOUT));
 		assertEquals(firstfut.get(TestHelper.TIMEOUT), secondfut.get(TestHelper.TIMEOUT));
 		assertNotEquals(firstfut.get(TestHelper.TIMEOUT), thirdfut.get(2000));
 		changedfut.get(TestHelper.TIMEOUT);	// Check if event was generated
