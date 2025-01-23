@@ -42,7 +42,7 @@ public class BenchmarkHelper
 	{
 		int	msecs	= 500;
 		int retries	= 10;
-		long	best	= Long.MAX_VALUE;
+		List<Long>	vals	= new ArrayList<>();
 		try
 		{
 			for(int r=0; r<retries; r++)
@@ -68,15 +68,18 @@ public class BenchmarkHelper
 					System.out.println("Per component: "+took);
 					System.out.println("runs: "+cnt);
 					addToDB(took, false);
-					best	= Math.min(best, took);
+					vals.add(took);
 					System.out.println();
 				}
 				
 				for(Runnable teardown: teardowns)
 					teardown.run();
 			}
-			System.out.println("best: "+best);
-			return addToDB(best, true);
+			vals.sort((a,b) -> (int)(a-b));
+			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
+			System.out.println("vals: "+vals);
+			System.out.println("avg [0..3): "+value);
+			return addToDB(value, true);
 		}
 		catch(Exception e)
 		{
@@ -91,7 +94,7 @@ public class BenchmarkHelper
 		long msecs	= 1000;	// How long to run the benchmark
 		int	warmups	= 100; 	// How many warm-ups to run
 		int	runs	= 10;	// How many runs for measurement 
-		long	best	= Long.MAX_VALUE;
+		List<Long>	vals	= new ArrayList<>();
 		long	basemem = 0;
 		try
 		{
@@ -129,7 +132,7 @@ public class BenchmarkHelper
 					System.out.println("runs: "+cnt*runs);
 					
 					addToDB(took, false);
-					best	= Math.min(best, took);
+					vals.add(took);
 					
 					System.out.println("Used memory: "+usedmem);
 					double pct	= (usedmem - basemem)*100.0/basemem;
@@ -141,8 +144,11 @@ public class BenchmarkHelper
 					basemem	= usedmem;
 				}
 			}
-			System.out.println("best: "+best);
-			return addToDB(best, true);
+			vals.sort((a,b) -> (int)(a-b));
+			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
+			System.out.println("vals: "+vals);
+			System.out.println("avg [0..3): "+value);
+			return addToDB(value, true);
 		}
 		catch(Exception e)
 		{

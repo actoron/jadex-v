@@ -51,6 +51,23 @@ benchmark:
   rules:
     - if: $CI_COMMIT_REF_SLUG=~"main"
 
+purge_benchmarks:
+  stage: benchmark
+  script: ./gradlew benchmark:purge
+  cache:
+    - key: "$CI_COMMIT_REF_NAME"
+      policy: pull
+      paths:
+        - '**/build'
+        - .gradle
+    
+    # cache benchmark values to check against previous vals (pct)
+    - key: benchmarks-$CI_COMMIT_REF_SLUG
+      paths:
+        - benchmark/*/.benchmark_gradle
+  rules:
+    - when: manual
+
 deployZip:
   stage: deploy
   script:
