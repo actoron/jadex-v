@@ -15,7 +15,7 @@ public class ExecutableComponentBenchmark
 	void	benchmarkTime()
 	{
 //		double	pct	= BenchmarkHelper.benchmarkTime(() -> Component.createComponent(Component.class, () -> new Component()).terminate().get());
-		double	pct	= BenchmarkHelper.benchmarkTime(() -> new Component().terminate().get());
+		double	pct	= BenchmarkHelper.benchmarkTime(() -> new Component(this).terminate().get());
 		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 	
@@ -24,7 +24,7 @@ public class ExecutableComponentBenchmark
 	{
 		double	pct	= BenchmarkHelper.benchmarkMemory(() ->
 		{
-			Component	comp	= Component.createComponent(Component.class, () -> new Component());
+			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 //			Component	comp	= new Component();
 			return () -> comp.terminate().get();			
 		});

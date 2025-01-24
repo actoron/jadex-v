@@ -344,8 +344,6 @@ public class ComponentManager implements IComponentManager
 		else if (comp!=null)
 		{
 			// TODO: can we derive a more useful app name?
-			// E.g. plain component benchmark
-			// Non-fast lambdas
 			ret	= comp.getClass().getName();
 		}
 		

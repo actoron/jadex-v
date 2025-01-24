@@ -35,10 +35,13 @@ public class Component implements IComponent
 	/** The feature instances of this component, stored by the feature type. */
 	protected Map<Class<Object>, Object> features;
 	
+	/** The pojo, if any.*/
+	protected Object	pojo;
+	
 	/** The id. */
 	protected ComponentIdentifier id;
 	
-	/** The app id. */
+	/** The app id, if any. */
 	protected Application app;
 	
 	/** The external access. */
@@ -49,11 +52,12 @@ public class Component implements IComponent
 		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
-	 *  Uses an auto-generated componment identifier.
+	 *  Uses an auto-generated component identifier.
+	 *  @param pojo	The pojo, if any.
 	 */
-	public Component()
+	public Component(Object pojo)
 	{
-		this(null, null);
+		this(pojo, null, null);
 	}
 	
 	/**
@@ -61,9 +65,9 @@ public class Component implements IComponent
 	 *  @param id	The id to use or null for an auto-generated id.
 	 *  @throws IllegalArgumentException when the id already exists. 
 	 */
-	public Component(ComponentIdentifier id)
+	public Component(Object pojo, ComponentIdentifier id)
 	{
-		this(id, null);
+		this(pojo, id, null);
 	}
 	
 	/**
@@ -71,8 +75,9 @@ public class Component implements IComponent
 	 *  @param id	The id to use or null for an auto-generated id.
 	 *  @throws IllegalArgumentException when the id already exists. 
 	 */
-	public Component(ComponentIdentifier id, Application app)
+	public Component(Object pojo, ComponentIdentifier id, Application app)
 	{
+		this.pojo	= pojo;
 		this.id = id==null? new ComponentIdentifier(): id;
 		this.app = app;
 		
@@ -228,7 +233,7 @@ public class Component implements IComponent
 	 */
 	public Object getPojo()
 	{
-		return null;
+		return pojo;
 	}
 	
 	protected void putFeature(Class<?> type, Object feature)

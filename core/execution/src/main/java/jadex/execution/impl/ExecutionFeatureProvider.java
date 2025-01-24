@@ -179,7 +179,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					System.out.println("starting: "+lfeature);
 					lfeature.onStart();*/
 					
-					Object	result	= self.body.apply(self);
+					Object	result	= self.getPojo().apply(self);
 					if(self.result!=null)
 						self.result.setResult(result);
 				}

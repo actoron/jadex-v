@@ -113,7 +113,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static IExternalAccess create(Runnable body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(cid, app));
+		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		comp.getExternalAccess().scheduleStep(() -> body);
 		/*{
 			body.run();
@@ -129,7 +129,7 @@ public class LambdaAgent //extends Component
 	//public static <T> IFuture<T> create(Callable<T> body, ComponentIdentifier cid)
 	public static <T> Result<T> create(Callable<T> body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(cid, app));
+		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getExternalAccess().scheduleStep(body);
 		//res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
 		//comp.result = res;
@@ -142,7 +142,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static <T> Result<T> create(IThrowingFunction<IComponent, T> body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(cid, app));
+		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getExternalAccess().scheduleStep(body);
 		//res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
 		//comp.result = res;
@@ -155,7 +155,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static <T> IExternalAccess create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(cid, app));
+		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		comp.getExternalAccess().scheduleStep(body);
 		return comp.getExternalAccess();
 	}

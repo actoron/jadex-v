@@ -27,7 +27,7 @@ public abstract class AbstractExecutionFeatureTest
 	{
 		// Test calling from outside thread
 		assertThrows(IllegalCallerException.class, () -> IExecutionFeature.get());
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		assertThrows(IllegalCallerException.class, () -> IExecutionFeature.get());
 		
 		// Test calling from inside thread
@@ -42,7 +42,7 @@ public abstract class AbstractExecutionFeatureTest
 		// Test inside creation
 		Future<IComponent>	fut	= new Future<>();
 		IComponent	comp	= Component.createComponent(Component.class,
-			() -> new Component(null)
+			() -> new Component(this)
 		{
 			{
 				fut.setResult(IExecutionFeature.get().getComponent());
@@ -56,7 +56,7 @@ public abstract class AbstractExecutionFeatureTest
 		assertEquals(comp, result.get(TIMEOUT));
 				
 		// Test after extra component creation
-		Component	comp2	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp2	= Component.createComponent(Component.class, () -> new Component(this));
 		result	= comp.getExternalAccess().scheduleStep(
 				() -> IExecutionFeature.get().getComponent());
 		IFuture<IComponent> result2	= comp2.getExternalAccess().scheduleStep(
@@ -66,7 +66,7 @@ public abstract class AbstractExecutionFeatureTest
 		
 		// Test after creation inside component
 		Component	comp3	= comp.getExternalAccess().scheduleStep(
-			() -> Component.createComponent(Component.class, () -> new Component(null))).get(TIMEOUT);
+			() -> Component.createComponent(Component.class, () -> new Component(this))).get(TIMEOUT);
 		result	= comp.getExternalAccess().scheduleStep(
 				() -> IExecutionFeature.get().getComponent());
 		IFuture<IComponent> result3	= comp3.getExternalAccess().scheduleStep(
@@ -76,7 +76,7 @@ public abstract class AbstractExecutionFeatureTest
 		
 		// Test plain creation (w/o bootstrap) inside component
 		Component	comp4	= comp.getExternalAccess().scheduleStep(
-		() -> new Component(null){}).get(TIMEOUT);
+		() -> new Component(this){}).get(TIMEOUT);
 		result	= comp.getExternalAccess().scheduleStep(
 				() -> IExecutionFeature.get().getComponent());
 		IFuture<IComponent> result4	= comp4.getExternalAccess().scheduleStep(
@@ -88,7 +88,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testFireAndForgetStep()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		// Test executing a simple fire-and-forget step (Runnable implementation).
 		Future<Boolean>	result	= new Future<>();
 		Runnable	step	= () -> result.setResult(true);
@@ -99,7 +99,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testResultStep()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		// Test executing a simple result step (Supplier implementation).
 		IFuture<Boolean>	result	= comp.getExternalAccess().scheduleStep(() -> true);
 		assertTrue(result.get(TIMEOUT), "Wrong step result.");
@@ -108,7 +108,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testExceptionStep()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		// Test executing a simple result step (Supplier implementation).
 		IFuture<Boolean>	result	= comp.getExternalAccess().scheduleStep(() -> {
 			throw new IllegalCallerException("ex");
@@ -119,7 +119,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testErrorStep()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		// Test executing a simple result step (Supplier implementation).
 		IFuture<Boolean>	result	= comp.getExternalAccess().scheduleStep(() -> {
 			throw new InternalError("err");
@@ -130,7 +130,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testBlockingStep()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		Future<Boolean>	blocker	= new Future<>();
 		IFuture<Boolean>	result	= comp.getExternalAccess().scheduleStep(() -> {
 			return blocker.get();
@@ -144,7 +144,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testTwoBlockingSteps()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		// Test that two steps can wait for same result.
 		Future<Boolean>	blocker	= new Future<>();
 		IFuture<Boolean>	result1	= comp.getExternalAccess().scheduleStep(() -> blocker.get());
@@ -168,7 +168,7 @@ public abstract class AbstractExecutionFeatureTest
 			// Test before component creation
 			bootstrap0.setResult(ExecutionFeature.LOCAL.get().isComponentThread());
 			
-			return new Component(null)
+			return new Component(this)
 			{
 				{
 					// Test during component creation
@@ -186,7 +186,7 @@ public abstract class AbstractExecutionFeatureTest
 		assertTrue(instep.get(TIMEOUT));
 		
 		// Test across two components
-		Component	comp2	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp2	= Component.createComponent(Component.class, () -> new Component(this));
 		IFuture<Boolean>	othercomp	= comp2.getExternalAccess().scheduleStep(()
 				-> comp.getFeature(IExecutionFeature.class).isComponentThread());
 		assertFalse(othercomp.get(TIMEOUT));
@@ -206,7 +206,7 @@ public abstract class AbstractExecutionFeatureTest
 			// Test before component creation
 			bootstrap0.setResult(IExecutionFeature.isAnyComponentThread());
 			
-			return new Component(null)
+			return new Component(this)
 			{
 				{
 					// Test during component creation
@@ -229,7 +229,7 @@ public abstract class AbstractExecutionFeatureTest
 		// Test that component creation is scheduled on different thread.
 		Thread outer	= Thread.currentThread();
 		Thread[] inner	= new Thread[2];
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null)
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this)
 		{
 			{
 				inner[0]	= Thread.currentThread();
@@ -241,7 +241,7 @@ public abstract class AbstractExecutionFeatureTest
 		comp.getExternalAccess().scheduleStep(() ->
 		{
 			inner[0]	= Thread.currentThread();
-			Component.createComponent(Component.class, () -> new Component(null)
+			Component.createComponent(Component.class, () -> new Component(this)
 			{
 				{
 					inner[1]	= Thread.currentThread();
@@ -257,7 +257,7 @@ public abstract class AbstractExecutionFeatureTest
 	/*@Test
 	public void	testThreadReuse()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		Thread[]	current	= new Thread[1];
 		@SuppressWarnings("unchecked")
 		IFuture<Boolean>[]	steps	= new IFuture[Runtime.getRuntime().availableProcessors()];
@@ -288,7 +288,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testStepOrdering()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		AtomicInteger	num	= new AtomicInteger(0);
 		@SuppressWarnings("unchecked")
 		IFuture<Boolean>[]	steps	= new IFuture[Runtime.getRuntime().availableProcessors()];
@@ -307,7 +307,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testDoubleExecution()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		AtomicInteger	numthreads	= new AtomicInteger(0);
 		Future<Void>	blocker	= new Future<>();
 		@SuppressWarnings("unchecked")
@@ -356,7 +356,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testWaitForDelay()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		IFuture<Boolean>	test	= comp.getExternalAccess().scheduleStep(() ->
 		{
 			long	wait	= 50;
@@ -371,7 +371,7 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testExternalWaitForDelay()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 		long	wait	= 50;
 		long before	= comp.getExternalAccess().scheduleStep(
 			() -> IExecutionFeature.get().getTime()).get(TIMEOUT);

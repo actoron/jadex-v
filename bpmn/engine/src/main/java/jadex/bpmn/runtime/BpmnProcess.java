@@ -60,8 +60,6 @@ public class BpmnProcess extends Component
 		return comp.getExternalAccess();
 	}
 	
-	protected RBpmnProcess pojo;
-	
 	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
 		this((Object)info, model, cid, app);
@@ -69,14 +67,13 @@ public class BpmnProcess extends Component
 	
 	protected BpmnProcess(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		super(cid, app);
+		super((RBpmnProcess)(pojo!=null ? pojo : createPojo(model)), cid, app);
 		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
-		this.pojo = (RBpmnProcess)(pojo!=null ? pojo : createPojo(model));
 	}
 	
 	public RBpmnProcess getPojo() 
 	{
-		return pojo;
+		return (RBpmnProcess)super.getPojo();
 	}
 	
 	protected static Object	createPojo(IModelInfo model)
