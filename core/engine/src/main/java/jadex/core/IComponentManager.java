@@ -29,6 +29,12 @@ public interface IComponentManager extends IComponentFactory
 	 *  @return null if no component has been started yet. 
 	 */
 	public String	getInferredApplicationName();
+	
+	/**
+	 * Get the current component.
+	 * @return	null, if not running inside a component.
+	 */
+	public IComponent getCurrentComponent();
 
 	/**
 	 *  Get the feature instance for the given type.

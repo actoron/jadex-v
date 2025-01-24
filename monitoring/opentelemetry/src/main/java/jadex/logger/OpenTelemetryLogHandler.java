@@ -23,6 +23,7 @@ import io.opentelemetry.sdk.logs.SdkLoggerProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
 import io.opentelemetry.sdk.resources.Resource;
 import jadex.common.SUtil;
+import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 
@@ -104,6 +105,7 @@ public class OpenTelemetryLogHandler extends Handler
     	
     	Instant instant = Instant.ofEpochMilli(record.getMillis());
     	String isotime = DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC).format(instant);
+    	IComponent	comp	= IComponentManager.get().getCurrentComponent();
 
         LogRecordBuilder builder = getLogger(loggername).logRecordBuilder()
             .setBody(record.getMessage())
@@ -114,6 +116,7 @@ public class OpenTelemetryLogHandler extends Handler
         	//.setAttribute(AttributeKey.stringKey("logger.host"), GlobalProcessIdentifier.SELF.host().toString())
             //.setAttribute(AttributeKey.stringKey("thread.name"), Thread.currentThread().getName())
             //.setAttribute(AttributeKey.stringKey("service.name"), "my_java_service")
+            .setAttribute(AttributeKey.stringKey("component.id"), comp!=null ? comp.getId().toString() : "")
             .setAttribute(AttributeKey.stringKey("application.name"), ""+IComponentManager.get().getInferredApplicationName())
             .setAttribute(AttributeKey.stringKey("service.instance.id"), GlobalProcessIdentifier.SELF.toString())
             .setTimestamp(record.getMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)

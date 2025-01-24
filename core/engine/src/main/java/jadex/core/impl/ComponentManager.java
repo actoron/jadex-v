@@ -296,22 +296,8 @@ public class ComponentManager implements IComponentManager
 	public String	getInferredApplicationName()
 	{
 		String	ret	= null;
-		IComponent	comp	= first;
-		
-		// Hack!!! find current component, if any
-		try
-		{
-			Class<?>	cexe	= Class.forName("jadex.execution.impl.ExecutionFeature");
-			Object	threadlocal	= cexe.getField("LOCAL").get(null);
-			Object	exefeature	= ThreadLocal.class.getMethod("get").invoke(threadlocal);
-			if(exefeature!=null)
-			{
-				comp	= (IComponent)cexe.getMethod("getComponent").invoke(exefeature);
-			}
-		}
-		catch(Exception e)
-		{
-		}
+		IComponent	comp	= getCurrentComponent();
+		comp	= comp!=null ? comp : first;
 		
 		// Has application
 		if(comp!=null && comp.getApplication()!=null)
@@ -347,6 +333,30 @@ public class ComponentManager implements IComponentManager
 			ret	= comp.getClass().getName();
 		}
 		
+		return ret;
+	}
+	
+	/**
+	 * Get the current component.
+	 * @return	null, if not running inside a component.
+	 */
+	public IComponent getCurrentComponent()
+	{
+		IComponent ret	= null;
+		// Hack!!! find current component, if any
+		try
+		{
+			Class<?>	cexe	= Class.forName("jadex.execution.impl.ExecutionFeature");
+			Object	threadlocal	= cexe.getField("LOCAL").get(null);
+			Object	exefeature	= ThreadLocal.class.getMethod("get").invoke(threadlocal);
+			if(exefeature!=null)
+			{
+				ret	= (IComponent)cexe.getMethod("getComponent").invoke(exefeature);
+			}
+		}
+		catch(Exception e)
+		{
+		}
 		return ret;
 	}
 	
