@@ -52,6 +52,7 @@ benchmark:
       when: 'always'
   rules:
     - if: $CI_COMMIT_REF_SLUG=~"main"
+  tags: [benchmark]
 
 purge_benchmarks:
   stage: benchmark
@@ -68,7 +69,8 @@ purge_benchmarks:
       paths:
         - benchmark/*/.benchmark_gradle
   when: manual
-
+  tags: [benchmark]
+  
 deployZip:
   stage: deploy
   script:
