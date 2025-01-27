@@ -7,7 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-class Glasses
+class OpticanData
 {
     private int customerId;
     private String firstName;
@@ -23,7 +23,7 @@ class Glasses
     private int frameHeight;
     private String colour;
 
-    public Glasses(int customerId, String firstName, String lastName, String street, int houseNumber, int postalCode, String city, String dayOfBirth, int articleNumber, String brand, int frameWidth, int frameHeight, String colour)
+    public OpticanData(int customerId, String firstName, String lastName, String street, int houseNumber, int postalCode, String city, String dayOfBirth, int articleNumber, String brand, int frameWidth, int frameHeight, String colour)
     {
         this.customerId = customerId;
         this.firstName = firstName;
@@ -59,9 +59,9 @@ class Glasses
         return json;
     }
 
-    public static List<Glasses> generateOpticanDB()
+    public static ArrayList<OpticanData> generateOpticanDB()
     {
-        ArrayList<Glasses> customerList = new ArrayList<>();
+        ArrayList<OpticanData> customerList = new ArrayList<>();
         Set<Integer> articleNumbers = new HashSet<>();
         Set<Integer> customerIds = new HashSet<>();
 
@@ -91,7 +91,7 @@ class Glasses
                 articleNumber = 100000 + random.nextInt(900000);
             } while (!articleNumbers.add(articleNumber));
 
-            Glasses glasses = new Glasses(
+            OpticanData glasses = new OpticanData(
                     customerId,
                     firstNames[random.nextInt(firstNames.length)],
                     lastNames[random.nextInt(lastNames.length)],
@@ -112,22 +112,22 @@ class Glasses
         return customerList;
     }
 
-//    public static void saveDataToJson()
-//    {
-//        String path = "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset1.json";
-//        JSONArray jsonArray = new JSONArray();
+    public static void saveDataToJson(JSONArray customerList)
+    {
+        String path = "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset1.json";
+        JSONObject jsonObject = new JSONObject();
 //
-//        for (Glasses glasses : customerList) {
-//            jsonArray.add(glasses.toJSONObject());
+//        for (OpticanData glasses : customerList) {
+//            jsonObject(glasses);
 //        }
-//
-//        try (FileWriter file = new FileWriter(path)) {
-//            file.write(jsonArray.toString());
-//            System.out.println("Dataset.json file created successfully!");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+
+        try (FileWriter file = new FileWriter(path)) {
+            file.write(jsonObject.toString());
+            System.out.println("Dataset.json file created successfully!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
 
 

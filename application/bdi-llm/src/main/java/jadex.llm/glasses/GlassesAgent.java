@@ -33,7 +33,7 @@ public class GlassesAgent
     private final String dataSetPath;
     private final String beliefType;
     /**
-     * The Glasses agent class.
+     * The OpticanData agent class.
      */
     @Agent
     protected IComponent agent;
@@ -79,7 +79,7 @@ public class GlassesAgent
             {
                 JSONObject resultDataSet = (JSONObject) parser.parse(convDataSetString.get());
                 // check if resultDataSet is sorted by shape
-                JSONArray glasses = (JSONArray) resultDataSet.get("Glasses");
+                JSONArray glasses = (JSONArray) resultDataSet.get("OpticanData");
                 // get key shape from all glasses
                 // check if shapes are sorted
                 ArrayList<String> shapes = new ArrayList<String>();
