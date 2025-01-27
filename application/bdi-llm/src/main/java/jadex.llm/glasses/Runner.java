@@ -12,14 +12,30 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-public class Runner {
+public class Runner
+{
+    private static final int agentIterations = 50;
+    private static final String datasetPath = "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json";
+    private static final String resultsDirectory = "/home/schuther/Coding/results/";
+    //Ollama
+    private static final String chatUrl = "http://localhost:50510/api/chat";
+    private static final String apiKey = "ollama";
+    //GPT
+//    private final String chatUrl = "https://api.openai.com/v1/chat/completions";
+//    private final String apiKey =  System.getenv("OPENAI_API_KEY");
+
+
     /**
      * Main method to run the GlassesAgent.
      * @param args
      */
     public static void main(String[] args) throws IOException {
-        int agentIterations = 50;
-        String resultsDirectory = "/home/schuther/Coding/results/";
+
+        if (Files.exists(Paths.get(datasetPath)))
+        {
+//            OpticiansDataGenerator dataGenerator = new OpticiansDataGenerator(10000);
+//            dataGenerator.saveToJson(datasetPath);
+        }
 
         // Format for date and time
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
@@ -27,7 +43,7 @@ public class Runner {
         String timestamp = LocalDateTime.now().format(formatter);
 
         // Define the folder path (change "baseDirectory" to a desired path if needed)
-        Path currentResultsFolder = Paths.get(resultsDirectory + "results_ChatGPT_" + timestamp);
+        Path currentResultsFolder = Paths.get(resultsDirectory + "results_" + timestamp);
         Path generatedPlanCodeFolder = Paths.get(currentResultsFolder + "/generatedPlanCode");
         Path generatedGoalCodeFolder = Paths.get(currentResultsFolder + "/generatedGoalCode");
         Path planResultsFolder = Paths.get(currentResultsFolder + "/planResults");
@@ -49,17 +65,11 @@ public class Runner {
             try {
                 System.out.println("A: GlassesAgent started iteration " + i);
 
-                // chatgpt agent
-//                GlassesAgent currentAgent = new GlassesAgent(
-//                        "https://api.openai.com/v1/chat/completions",
-//                        System.getenv("OPENAI_API_KEY"),
-//                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
-
-                //ollama agent
+                //agent
                 GlassesAgent currentAgent = new GlassesAgent(
-                        "http://localhost:50510/api/chat",
-                        "ollama",
-                        "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
+                        chatUrl,
+                        apiKey,
+                        datasetPath);
 
                 IComponentManager.get().create(currentAgent);
                 IComponentManager.get().waitForLastComponentTerminated();

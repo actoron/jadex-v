@@ -33,8 +33,7 @@ dependencies
     implementation group: 'commons-io', name: 'commons-io', version: '2.16.1' +v
     implementation group: 'org.openjdk.nashorn', name: 'nashorn-core', version: '15.4' +v
     implementation group: 'com.google.guava', name: 'guava', version: '33.4.0-jre' +v
-
-
+    implementation group: 'com.github.javafaker', name: 'javafaker', version:'1.0.2' +v
 
 }
 
@@ -47,4 +46,9 @@ processResources {
 task runGlasses(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'jadex.llm.glasses.Runner'
+}
+
+task runOpticiansDataGenerator(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'jadex.llm.glasses.OpticiansDataGenerator'
 }

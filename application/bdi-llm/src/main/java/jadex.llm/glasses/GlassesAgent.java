@@ -33,7 +33,7 @@ public class GlassesAgent
     private final String dataSetPath;
     private final String beliefType;
     /**
-     * The OpticanData agent class.
+     * The OpticiansDataGenerator agent class.
      */
     @Agent
     protected IComponent agent;
@@ -79,7 +79,7 @@ public class GlassesAgent
             {
                 JSONObject resultDataSet = (JSONObject) parser.parse(convDataSetString.get());
                 // check if resultDataSet is sorted by shape
-                JSONArray glasses = (JSONArray) resultDataSet.get("OpticanData");
+                JSONArray glasses = (JSONArray) resultDataSet.get("OpticiansDataGenerator");
                 // get key shape from all glasses
                 // check if shapes are sorted
                 ArrayList<String> shapes = new ArrayList<String>();
@@ -257,7 +257,7 @@ public class GlassesAgent
             }
         }
         agentResults.put("generatedPlanCode1", llmFeature.generatedJavaCode);
-        agentResults.put("planSettings", llmFeature.getLlmSettings());
+        agentResults.put("planSettings1", llmFeature.getLlmSettings());
         agentResults.put("genPlanAttempts1", String.valueOf(attempt));
 
         JSONParser parser = new JSONParser();
@@ -278,6 +278,7 @@ public class GlassesAgent
             goal.setConvDataSetString(convDataSet.toString());
         } catch (Exception e)
         {
+            System.out.println("~~Exception: " + e);
             agentResults.put("planResults1", String.valueOf(e));
         }
     }
