@@ -407,6 +407,12 @@ public class Component implements IComponent
 					{
 						return Component.this.getAppId();
 					}
+					
+					@Override
+					public Object getLocalPojo()
+					{
+						throw new UnsupportedOperationException();
+					}
 				};
 			}
 		}
