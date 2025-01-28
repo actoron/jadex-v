@@ -108,7 +108,7 @@ public class GlassesAgent
                     chatUrl,
                     apiKey,
                     beliefType,
-                    "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/GoalSettings_ollama.json");
+                    "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/GoalSettings_ollama.json");
 
             if (this.goalPlan == null)
             {
@@ -228,7 +228,7 @@ public class GlassesAgent
                 chatUrl,
                 apiKey,
                 beliefType,
-                "application/bdi-llm/src/main/java/jadex.llm/glasses/settings/Plan1Settings_ollama.json");
+                "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/Plan1Settings_ollama.json");
 
         IPlanBody plan = null;
         int attempt = 0;

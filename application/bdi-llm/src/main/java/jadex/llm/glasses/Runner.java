@@ -15,7 +15,7 @@ import java.util.Map;
 public class Runner
 {
     private static final int agentIterations = 50;
-    private static final String datasetPath = "application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json";
+    private static final String datasetPath = "application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json";
     private static final String resultsDirectory = "/home/schuther/Coding/results/";
     //Ollama
     private static final String chatUrl = "http://localhost:50510/api/chat";
@@ -29,7 +29,8 @@ public class Runner
      * Main method to run the GlassesAgent.
      * @param args
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException
+    {
 
         if (Files.exists(Paths.get(datasetPath)))
         {

@@ -16,8 +16,11 @@ import java.time.LocalDateTime;
 
 public class OpticiansDataGenerator
 {
-    private JSONObject dataset = new JSONObject();
+    private final JSONObject dataset = new JSONObject();
 
+    /**
+     * Constructor
+     */
     public OpticiansDataGenerator(int datasetLength)
     {
         LocalDateTime now = LocalDateTime.now();
@@ -41,7 +44,7 @@ public class OpticiansDataGenerator
                 "Artistic"};
         String[] faceShapes = {"Round", "Oval", "Square", "Heart", "Diamond", "Rectangle", "Triangle"};
 
-        JSONArray opticansData = new JSONArray();
+        JSONArray opticiansData = new JSONArray();
 
         for (int i = 0; i < datasetLength; i++)
         {
@@ -59,11 +62,11 @@ public class OpticiansDataGenerator
             json.put("price", faker.commerce().price());
 
             // Add the JSON object to the JSONArray
-            opticansData.add(json);
+            opticiansData.add(json);
         }
         // Add the JSONArray to the parent JSONObject
         dataset.put("GenerationDate",formattedNow);
-        dataset.put("OpticansData", opticansData);
+        dataset.put("OpticiansData", opticiansData);
     }
 
     public void saveToJson(String savePath) {
@@ -81,10 +84,10 @@ public class OpticiansDataGenerator
     }
 
     public static void main(String[] args) throws IOException {
-        if (Files.exists(Paths.get("application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json")))
+        if (Files.exists(Paths.get("application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json")))
         {
             OpticiansDataGenerator dataGenerator = new OpticiansDataGenerator(10000);
-            dataGenerator.saveToJson("application/bdi-llm/src/main/java/jadex.llm/glasses/Dataset.json");
+            dataGenerator.saveToJson("application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json");
         }
     }
 }
