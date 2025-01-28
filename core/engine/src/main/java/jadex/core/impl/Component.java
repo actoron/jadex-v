@@ -50,6 +50,9 @@ public class Component implements IComponent
 	/** The external access supplier. */
 	protected static Function<Component, IExternalAccess> accessfactory;
 		
+	/** The is the external access executable, i.e. is scheduleStep allowed?. */
+	protected static boolean executable;
+		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
 	 *  Uses an auto-generated component identifier.
@@ -446,10 +449,20 @@ public class Component implements IComponent
 	/**
 	 *  Set the external access factory.
 	 *  @param factory The factory.
+	 *  @param executable	Is scheduleStep() allowed on external access?
 	 */
-	public static void setExternalAccessFactory(Function<Component, IExternalAccess> factory)
+	public static void setExternalAccessFactory(Function<Component, IExternalAccess> factory, boolean executable)
 	{
 		accessfactory = factory;
+		Component.executable	= executable;
+	}
+	
+	/**
+	 *  Is scheduleStep() allowed on external access?
+	 */
+	public static boolean	isExecutable()
+	{
+		return executable;
 	}
 	
 	// TODO move to model feature?

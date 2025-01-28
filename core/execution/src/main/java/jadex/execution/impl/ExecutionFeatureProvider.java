@@ -79,12 +79,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				
 				@Override
-				public boolean isExecutable()
-				{
-					return true;
-				}
-				
-				@Override
 				public <T> IFuture<T> scheduleStep(Callable<T> step) 
 				{
 					return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
@@ -120,7 +114,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
 				}
 			};
-		});
+		}, true);
 	}
 	
 	@Override
