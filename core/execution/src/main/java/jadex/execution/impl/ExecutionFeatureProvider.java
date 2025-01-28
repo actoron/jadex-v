@@ -1,11 +1,13 @@
 package jadex.execution.impl;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.common.SReflect;
+import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -18,10 +20,14 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
+import jadex.execution.IComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.matcher.ElementMatchers;
 
 public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
@@ -77,6 +83,63 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				{
 					return comp.getAppId();
 				}
+				
+				@Override
+				public Object getLocalPojo()
+				{
+					try
+					{
+						Object pojo = comp.getPojo();
+						
+						/*Object proxy = new ByteBuddy()
+			                .subclass(pojo.getClass())  
+			                .name(pojo.getClass().getName()+"Proxy")
+			                //.method(ElementMatchers.isAnnotatedWith(IComponentMethod.class)) 
+			                .method(ElementMatchers.named("getName")) 
+			                .intercept(MethodDelegation.to(new MyInterceptor()))
+			                //.intercept(MethodDelegation.to(this.getClass().getMethod("intercept", Method.class, Object[].class)))
+			                .make()
+			                .load(pojo.getClass().getClassLoader())
+			                .getLoaded()
+			                .getConstructor()
+			                .newInstance();*/
+						
+						Object proxy = new ByteBuddy()
+							.subclass(pojo.getClass())
+							.method(ElementMatchers.isAnnotatedWith(IComponentMethod.class)) 
+							.intercept(InvocationHandlerAdapter.of(new MyInterceptor(pojo, this)))
+							.make()
+							.load(pojo.getClass().getClassLoader())
+			                .getLoaded()
+			                .getConstructor()
+			                .newInstance();
+						
+						return proxy;
+					}
+					catch(Exception e)
+					{
+						SUtil.rethrowAsUnchecked(e);
+					}
+					return null;
+				}
+				
+				public static Object intercept(Method method, Object[] args) throws Throwable 
+				{
+			        System.out.println("Intercepted method: " + method.getName());
+			        // Hier können wir "before" Logik ausführen (z. B. Logging, Vorab-Validierungen, etc.)
+			        
+			        // Beispiel-Logik vor der Ausführung der Methode
+			        System.out.println("Before executing: " + method.getName());
+
+			        // Aufruf der eigentlichen Methode
+			        Object result = method.invoke(args[0], args);
+
+			        // Beispiel-Logik nach der Ausführung der Methode
+			        System.out.println("After executing: " + method.getName());
+			        
+			        // Rückgabe des Ergebnisses der ausgeführten Methode
+			        return result;
+			    }
 				
 				@Override
 				public boolean isExecutable()

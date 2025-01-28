@@ -187,6 +187,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 		}
 		catch(Exception e)
 		{
+			e.printStackTrace();
 			throw SUtil.throwUnchecked(e);
 		}
 	}
@@ -789,6 +790,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 										Callable<?>	c	= (Callable<?>)BDIAgentFeature.valdyn.get(val);
 										Object	value	= c.call();
 										BDIAgentFeature.writeField(value, mbel.getField().getName(), mbel, fcapa, MicroAgentFeature.get().getSelf());
+										//System.out.println("inited update rate belief: "+mbel.getField().getName()+" "+rcapa.getAgent().getId().getLocalName());
 									}
 									else
 									{
