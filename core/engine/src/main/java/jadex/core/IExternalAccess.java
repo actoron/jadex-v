@@ -117,4 +117,11 @@ public interface IExternalAccess
 	{
 		throw new UnsupportedOperationException("Missing execution feature");
 	}
+	
+	/**
+	 *  Get the local pojo. Allows for calling pojo methods.
+	 *  @return The pojo.
+	 */
+	public Object getLocalPojo();
+	
 }
