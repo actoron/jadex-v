@@ -14,15 +14,18 @@ import java.util.Map;
 
 public class Runner
 {
-    private static final int agentIterations = 50;
+    private static final int agentIterations = 100;
     private static final String datasetPath = "application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json";
     private static final String resultsDirectory = "/home/schuther/Coding/results/";
     //Ollama
-    private static final String chatUrl = "http://localhost:50510/api/chat";
-    private static final String apiKey = "ollama";
+//    private static final String chatUrl = "http://localhost:50510/api/chat";
+//    private static final String apiKey = "ollama";
     //GPT
-//    private final String chatUrl = "https://api.openai.com/v1/chat/completions";
-//    private final String apiKey =  System.getenv("OPENAI_API_KEY");
+    private static final String chatUrl = "https://api.openai.com/v1/chat/completions";
+    private static final String apiKey =  System.getenv("OPENAI_API_KEY");
+    //Huggingface
+//    private static final String chatUrl = "https://api-inference.huggingface.co/models/codellama/CodeLlama-34b-Instruct-hf/v1/chat/completions";
+//    private static final String apiKey =  System.getenv("HF_API_KEY");
 
 
     /**
@@ -32,10 +35,10 @@ public class Runner
     public static void main(String[] args) throws IOException
     {
 
-        if (Files.exists(Paths.get(datasetPath)))
+        if (Files.notExists(Paths.get(datasetPath)))
         {
-//            OpticiansDataGenerator dataGenerator = new OpticiansDataGenerator(10000);
-//            dataGenerator.saveToJson(datasetPath);
+            OpticiansDataGenerator dataGenerator = new OpticiansDataGenerator(10000);
+            dataGenerator.saveToJson(datasetPath);
         }
 
         // Format for date and time

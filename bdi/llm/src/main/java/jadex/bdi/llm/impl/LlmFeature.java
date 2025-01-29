@@ -150,140 +150,115 @@ public class LlmFeature implements ILlmFeature {
     public void connectToLLM(String ChatRequestExtension)
     {
         // ############################################################################################################
-        // Request processing for ollama
+        // Request processing for all LLMs
         // ############################################################################################################
-        if (this.apiKey.equals("ollama")) {
-            JSONArray messages = (JSONArray) llmSettings.get("messages");
+        JSONArray messages = (JSONArray) llmSettings.get("messages");
 
-            for (Object message : messages) {
-                JSONObject messageObject = (JSONObject) message;
-                if (messageObject.get("role").equals("user")) {
-                    String content = (String) messageObject.get("content") + " " + ChatRequestExtension;
-                    messageObject.put("content", content);
-                }
+        for (Object message : messages)
+        {
+            JSONObject messageObject = (JSONObject) message;
+            if (messageObject.get("role").equals("user"))
+            {
+                String content = messageObject.get("content") + " " + ChatRequestExtension;
+                messageObject.put("content", content);
             }
-            llmSettings.put("messages", messages);
+        }
+        llmSettings.put("messages", messages);
 
-            // send request to LLM
-            HttpClient client = HttpClient.newHttpClient();
+        // send request to LLM
+        HttpClient client = HttpClient.newHttpClient();
 
-            HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest request;
+        if (this.apiKey.equals("ollama"))
+        {
+            request = HttpRequest.newBuilder()
                     .uri(chatUrl)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(llmSettings.toString()))
                     .build();
-
-            // get response from LLM
-            String responseMessage = null;
-            try {
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() == 200) {
-                    // parse response JSON
-                    try {
-                        JSONParser parser = new JSONParser();
-                        JSONObject responseObject = (JSONObject) parser.parse(response.body());
-                        // get response message
-                        JSONObject responseMessageObject = (JSONObject) responseObject.get("message");
-                        responseMessage = (String) responseMessageObject.get("content");
-
-                    } catch (ParseException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    throw new Exception("F: LLM returned status code " + response.statusCode());
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            // clean up responseMessage
-            // remove leading and trailing quotation marks from responseMessage
-            responseMessage = responseMessage.replaceFirst("```java", "");
-            responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
-            responseMessage = new StringBuilder(responseMessage).reverse().toString();
-
-            // add package to javacode
-            responseMessage =
-                    "package jadex.bdi.llm.impl;\n" +
-                            "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
-                            responseMessage;
-
-            this.generatedJavaCode = responseMessage;
-        }
-
-        // ############################################################################################################
-        // Request processing for chatgpt
-        // ############################################################################################################
-        else {
-            // update chatgptSettings with ChatGptRequest
-            JSONArray messages = (JSONArray) llmSettings.get("messages");
-
-            for (Object message : messages) {
-                JSONObject messageObject = (JSONObject) message;
-                if (messageObject.get("role").equals("user")) {
-                    String content = (String) messageObject.get("content") + " " + ChatRequestExtension;
-                    messageObject.put("content", content);
-                }
-            }
-            llmSettings.put("messages", messages);
-
-            // send request to LLM
-            HttpClient client = HttpClient.newHttpClient();
-
-            HttpRequest request = HttpRequest.newBuilder()
+        } else
+        {
+            request = HttpRequest.newBuilder()
                     .uri(chatUrl)
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer " + apiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(llmSettings.toString()))
                     .build();
+        }
 
-            // get response from LLM
-            String responseMessage = null;
-            try {
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        // get response from LLM
+        String responseMessage = null;
+        try
+        {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-                if (response.statusCode() == 200) {
-                    // parse response JSON
-                    try {
-                        JSONParser parser = new JSONParser();
-                        JSONObject responseObject = (JSONObject) parser.parse(response.body());
+            if (response.statusCode() == 200)
+            {
+                // parse response JSON
+                try
+                {
+                    JSONParser parser = new JSONParser();
+                    JSONObject responseObject = (JSONObject) parser.parse(response.body());
+                    // get response message
+                    if (this.apiKey.equals("ollama"))
+                    {
+                        JSONObject responseMessageObject = (JSONObject) responseObject.get("message");
+                        responseMessage = (String) responseMessageObject.get("content");
+                    } else
+                    {
                         JSONArray choicesArray = (JSONArray) responseObject.get("choices");
 
                         // get response message
-                        for (Object choice : choicesArray) {
+                        for (Object choice : choicesArray)
+                        {
                             JSONObject choiceObject = (JSONObject) choice;
                             long index = (long) choiceObject.get("index");
                             // get first message
-                            if (index == 0) {
+                            if (index == 0)
+                            {
                                 JSONObject messageObject = (JSONObject) choiceObject.get("message");
                                 responseMessage = (String) messageObject.get("content");
+                                break;
                             }
                         }
-                    } catch (ParseException e) {
-                        throw new RuntimeException(e);
                     }
-                } else {
-                    throw new Exception("F: LLM returned status code " + response.statusCode());
+
+                    // clean up responseMessage
+                    // remove leading and trailing quotation marks from responseMessage
+                    //responseMessage Chatty, ollama, huggingface
+                    responseMessage = responseMessage.replaceFirst("```java", "");
+                    responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
+                    responseMessage = new StringBuilder(responseMessage).reverse().toString();
+
+                    //responseMessage Huggingface CodeLlama
+//                    responseMessage = responseMessage.replaceFirst( " ```", "");
+//                    int index = responseMessage.indexOf("```");
+//                    if (index != -1) {
+//                        responseMessage = responseMessage.substring(0, index).trim();
+//                    }
+
+                    // add package to javacode
+                    responseMessage =
+                            "package jadex.bdi.llm.impl;\n" +
+                                    "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
+                                    responseMessage;
+
+                    this.generatedJavaCode = responseMessage;
+
+                } catch (ParseException e)
+                {
+                    throw new RuntimeException(e);
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            } else
+            {
+                throw new Exception("F: LLM returned status code " + response.statusCode());
             }
-
-            // clean up responseMessage
-            // remove leading and trailing quotation marks from responseMessage
-            responseMessage = responseMessage.replaceFirst("```java", "");
-            responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
-            responseMessage = new StringBuilder(responseMessage).reverse().toString();
-
-            // add package to javacode
-            responseMessage =
-                    "package jadex.bdi.llm.impl;\n" +
-                            "import jadex.bdi.llm.impl.inmemory.IPlanBody;\n" +
-                            responseMessage;
-
-            this.generatedJavaCode = responseMessage;
+        } catch (Exception e)
+        {
+            throw new RuntimeException(e);
         }
     }
+
     /**
      * Generate an IPlanBody InMemoryClass and compiles the code at runtime
      *

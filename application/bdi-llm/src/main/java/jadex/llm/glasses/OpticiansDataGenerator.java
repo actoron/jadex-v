@@ -7,8 +7,6 @@ import org.json.simple.JSONObject;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -81,13 +79,5 @@ public class OpticiansDataGenerator
 
     public String toJSONString() {
         return dataset.toJSONString();
-    }
-
-    public static void main(String[] args) throws IOException {
-        if (Files.exists(Paths.get("application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json")))
-        {
-            OpticiansDataGenerator dataGenerator = new OpticiansDataGenerator(10000);
-            dataGenerator.saveToJson("application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json");
-        }
     }
 }

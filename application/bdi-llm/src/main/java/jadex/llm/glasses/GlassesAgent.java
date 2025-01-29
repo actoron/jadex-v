@@ -79,7 +79,7 @@ public class GlassesAgent
             {
                 JSONObject resultDataSet = (JSONObject) parser.parse(convDataSetString.get());
                 // check if resultDataSet is sorted by shape
-                JSONArray glasses = (JSONArray) resultDataSet.get("OpticiansDataGenerator");
+                JSONArray glasses = (JSONArray) resultDataSet.get("OpticiansData");
                 // get key shape from all glasses
                 // check if shapes are sorted
                 ArrayList<String> shapes = new ArrayList<String>();
@@ -108,7 +108,7 @@ public class GlassesAgent
                     chatUrl,
                     apiKey,
                     beliefType,
-                    "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/GoalSettings_ollama.json");
+                    "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/GoalSettings.json");
 
             if (this.goalPlan == null)
             {
@@ -145,7 +145,9 @@ public class GlassesAgent
                 ArrayList<Object> inputList = new ArrayList<Object>();
                 inputList.add(convDataSet);
 
+                System.out.println("A: MARKER");
                 ArrayList<Object> outputList = this.goalPlan.runCode(inputList);
+
                 Boolean checkStatus = (Boolean) outputList.get(0);
 
                 System.out.println("A: LLM Goal check: " + checkStatus);
@@ -228,7 +230,7 @@ public class GlassesAgent
                 chatUrl,
                 apiKey,
                 beliefType,
-                "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/Plan1Settings_ollama.json");
+                "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/Plan1Settings.json");
 
         IPlanBody plan = null;
         int attempt = 0;
