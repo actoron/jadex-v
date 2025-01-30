@@ -10,7 +10,7 @@ import jadex.bt.cleanerworld.environment.IWastebin;
 /**
  *  (Knowledge about) a waste bin.
  */
-public class Wastebin extends LocationObject	implements IWastebin
+public class Wastebin extends LocationObject implements IWastebin
 {
 	/** The instance counter. */
 	private static int instancecnt = 0;

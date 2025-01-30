@@ -2,11 +2,13 @@ package jadex.bpmn.runtime;
 
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.io.BpmnModelLoader;
+import jadex.bpmn.runtime.impl.BpmnValueProvider;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
+import jadex.core.impl.ValueProvider;
 import jadex.model.IModelFeature;
 import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
@@ -60,8 +62,6 @@ public class BpmnProcess extends Component
 		return comp.getExternalAccess();
 	}
 	
-	protected RBpmnProcess pojo;
-	
 	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
 		this((Object)info, model, cid, app);
@@ -69,14 +69,13 @@ public class BpmnProcess extends Component
 	
 	protected BpmnProcess(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		super(cid, app);
+		super((RBpmnProcess)(pojo!=null ? pojo : createPojo(model)), cid, app);
 		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
-		this.pojo = (RBpmnProcess)(pojo!=null ? pojo : createPojo(model));
 	}
 	
 	public RBpmnProcess getPojo() 
 	{
-		return pojo;
+		return (RBpmnProcess)super.getPojo();
 	}
 	
 	protected static Object	createPojo(IModelInfo model)
@@ -118,5 +117,13 @@ public class BpmnProcess extends Component
 		{
 			throw SUtil.throwUnchecked(e);
 		}
+	}
+	
+	@Override
+	public ValueProvider getValueProvider() 
+	{
+		if(valueprovider==null)
+			valueprovider = new BpmnValueProvider(this);
+		return valueprovider;
 	}
 }

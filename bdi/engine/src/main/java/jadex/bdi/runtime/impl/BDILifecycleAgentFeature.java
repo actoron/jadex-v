@@ -1641,7 +1641,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 							{
 								UnparsedExpression uexp = mcond.getExpression();
 								Boolean ret = (Boolean)SJavaParser.parseExpression(uexp, IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader())
-										.getValue(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher());
+									.getValue(IExecutionFeature.get().getComponent().getValueProvider().getFetcher());
 								return new Future<Tuple2<Boolean, Object>>(ret!=null && ret.booleanValue()? TRUE: FALSE);
 							}
 						}}), createplan);

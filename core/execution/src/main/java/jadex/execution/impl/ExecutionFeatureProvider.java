@@ -1,16 +1,27 @@
 package jadex.execution.impl;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import jadex.common.IParameterGuesser;
+import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
+import jadex.common.SimpleParameterGuesser;
+import jadex.common.transformation.traverser.ITraverseProcessor;
+import jadex.common.transformation.traverser.SCloner;
+import jadex.common.transformation.traverser.Traverser;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
+import jadex.core.ICallable;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
@@ -20,11 +31,16 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
-import jadex.execution.IComponentMethod;
+import jadex.core.impl.ValueProvider;
+import jadex.execution.AgentMethod;
+import jadex.execution.Copy;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
+import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IntermediateFuture;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -72,6 +88,8 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			return new IExternalAccess() 
 			{
+				protected Object pojo;
+				
 				@Override
 				public ComponentIdentifier getId()
 				{
@@ -85,29 +103,114 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				
 				@Override
-				public Object getLocalPojo()
+				public <T> T getLocalPojo(Class<T> type)
+				{
+					if(pojo==null)
+					{
+						synchronized(this)
+						{
+							if(pojo==null)
+							{
+								pojo = createPojo();
+							}
+						}
+					}
+					return (T)pojo;
+				}
+				
+				
+				
+				protected Object createPojo()
 				{
 					try
 					{
 						Object pojo = comp.getPojo();
 						
-						/*Object proxy = new ByteBuddy()
-			                .subclass(pojo.getClass())  
-			                .name(pojo.getClass().getName()+"Proxy")
-			                //.method(ElementMatchers.isAnnotatedWith(IComponentMethod.class)) 
-			                .method(ElementMatchers.named("getName")) 
-			                .intercept(MethodDelegation.to(new MyInterceptor()))
-			                //.intercept(MethodDelegation.to(this.getClass().getMethod("intercept", Method.class, Object[].class)))
-			                .make()
-			                .load(pojo.getClass().getClassLoader())
-			                .getLoaded()
-			                .getConstructor()
-			                .newInstance();*/
-						
 						Object proxy = new ByteBuddy()
 							.subclass(pojo.getClass())
-							.method(ElementMatchers.isAnnotatedWith(IComponentMethod.class)) 
-							.intercept(InvocationHandlerAdapter.of(new MyInterceptor(pojo, this)))
+							.method(ElementMatchers.isAnnotatedWith(AgentMethod.class)) 
+							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
+							{
+								Future<Object> ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader());
+							    
+								List<Object> myargs = new ArrayList<Object>(); 
+								Class<?>[] ptypes = method.getParameterTypes();
+								java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
+								List<ITraverseProcessor> procs = Traverser.getDefaultProcessors();
+								//;new ArrayList<>(ISerializationServices.get().getCloneProcessors());
+								
+								for(int p = 0; p < ptypes.length; p++)
+								{
+									for(int a = 0; a < pannos[p].length; a++)
+									{
+										if(hasCopyAnnotation(pannos[p]))
+											myargs.add(SCloner.clone(args[p], procs));
+										else
+											myargs.add(args[p]);
+									}
+								}
+								
+								//final Object[] myargs = copyargs.toArray();
+								
+						        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
+						        {
+						        	//System.out.println("already on agent: "+getId());
+						        	return invokeMethod(comp, pojo, myargs, method);
+						        	//return method.invoke(pojo, myargs);
+						        }
+						        else
+						        {
+						        	//System.out.println("scheduled on agent: "+getId());
+						        	if(ret instanceof IIntermediateFuture)
+						        	{
+							        	((IIntermediateFuture)scheduleAsyncStep(new ICallable<>()
+							            {
+							        		public IFuture<Object> call() throws Exception
+							        		{
+							        			return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
+							        			//return (IFuture<Object>)method.invoke(pojo, myargs);
+							        		}
+							        		
+							        		public Class<? extends IFuture<?>> getFutureReturnType() 
+						        		    {
+						        		    	return (Class<? extends IFuture<?>>)ret.getClass();
+						        		    }
+							            }))
+							        	.next(val ->
+							            {
+							            	if(hasCopyAnnotation(method.getAnnotatedReturnType().getAnnotations()))
+							            	{
+												val = SCloner.clone(val, procs);
+												//System.out.println("cloned val: "+val);
+							            	}
+											((IntermediateFuture)ret).addIntermediateResult(val);
+							            	
+							            })
+							        	.finished(Void -> ((IntermediateFuture)ret).setFinished())
+							        	.catchEx(ret);
+						        	}
+						        	else
+						        	{
+						        		scheduleAsyncStep(() ->
+							            {
+							            	//return (IFuture<Object>)method.invoke(pojo, myargs);
+							            	return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
+							            })
+						        		.then(val ->
+							            {
+							            	if(hasCopyAnnotation(method.getAnnotatedReturnType().getAnnotations()))
+							            	{
+												Object val2 = SCloner.clone(val, procs);
+												System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
+												val = val2;
+							            	}
+											ret.setResult(val);
+							            }).catchEx(ret);
+						        	}
+						        }
+						        
+						        return ret;
+							}))
 							.make()
 							.load(pojo.getClass().getClassLoader())
 			                .getLoaded()
@@ -123,28 +226,46 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					return null;
 				}
 				
-				public static Object intercept(Method method, Object[] args) throws Throwable 
+				/*protected ValueProvider getValueProvider()
 				{
-			        System.out.println("Intercepted method: " + method.getName());
-			        // Hier können wir "before" Logik ausführen (z. B. Logging, Vorab-Validierungen, etc.)
-			        
-			        // Beispiel-Logik vor der Ausführung der Methode
-			        System.out.println("Before executing: " + method.getName());
-
-			        // Aufruf der eigentlichen Methode
-			        Object result = method.invoke(args[0], args);
-
-			        // Beispiel-Logik nach der Ausführung der Methode
-			        System.out.println("After executing: " + method.getName());
-			        
-			        // Rückgabe des Ergebnisses der ausgeführten Methode
-			        return result;
-			    }
+					if(valpro==null)
+						valpro = new ValueProvider(comp);
+					return valpro;
+				}*/
 				
-				@Override
-				public boolean isExecutable()
+				protected Object invokeMethod(Component component, Object pojo, List<Object> args, Method method)
 				{
-					return true;
+					// Try to guess parameters from given args or component internals.
+					IParameterGuesser guesser = new SimpleParameterGuesser(component.getValueProvider().getParameterGuesser(), args);
+					Object[] iargs = new Object[method.getParameterTypes().length];
+					for(int i=0; i<method.getParameterTypes().length; i++)
+					{
+						iargs[i] = guesser.guessParameter(method.getParameterTypes()[i], false);
+					}
+					
+					try
+					{
+						// It is now allowed to use protected/private component methods
+						SAccess.setAccessible(method, true);
+						return method.invoke(pojo, iargs);
+					}
+					catch(Exception e)
+					{
+						SUtil.rethrowAsUnchecked(e);
+					}
+					return null;
+				}
+				
+				protected boolean hasCopyAnnotation(Annotation[] pannos)
+				{
+					for(int a = 0; a < pannos.length; a++)
+					{
+						if(pannos[a] instanceof Copy)
+						{
+							return true;
+						}
+					}
+					return false;
 				}
 				
 				@Override
@@ -183,7 +304,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
 				}
 			};
-		});
+		}, true);
 	}
 	
 	@Override
@@ -242,7 +363,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					System.out.println("starting: "+lfeature);
 					lfeature.onStart();*/
 					
-					Object	result	= self.body.apply(self);
+					Object	result	= self.getPojo().apply(self);
 					if(self.result!=null)
 						self.result.setResult(result);
 				}

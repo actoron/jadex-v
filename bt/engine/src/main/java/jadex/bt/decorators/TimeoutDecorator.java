@@ -3,13 +3,11 @@ package jadex.bt.decorators;
 import java.lang.System.Logger.Level;
 
 import jadex.bt.impl.Event;
-import jadex.bt.impl.ITimerCreator;
-import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
-import jadex.future.Future;
+import jadex.execution.ITimerCreator;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 
@@ -31,7 +29,7 @@ public class TimeoutDecorator<T> extends Decorator<T>
 	{
 		NodeContext<T> context = node.getNodeContext(execontext);
 	    node.getNodeContext(execontext).setTimeout(timeout);
-	    ITimerCreator<T> tc = execontext.getTimerCreator();
+	    ITimerCreator tc = execontext.getTimerCreator();
 	    
 	    ITerminableFuture<Void> fut = context.getTimeout()>0? tc.createTimer(execontext, context.getTimeout()): null;
 		if(fut!=null)

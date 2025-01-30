@@ -12,29 +12,29 @@ import jadex.model.IParameterGuesserProvider;
 import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
-public class BpmnProcessModelFeature implements IModelFeature, IInternalModelFeature, IParameterGuesserProvider, IValueFetcher
+public class BpmnProcessModelFeature implements IModelFeature, IInternalModelFeature//, IParameterGuesserProvider, IValueFetcher
 {
 	protected BpmnProcess self;
 	protected IModelInfo model;
-	protected IParameterGuesser guesser;
+	//protected IParameterGuesser guesser;
 	
 	public BpmnProcessModelFeature(BpmnProcess self)
 	{
 		this.self	= self;
 	}
 
-	@Override
+	/*@Override
 	public IParameterGuesser getParameterGuesser()
 	{
 		if(guesser==null)
 			guesser	= new SimpleParameterGuesser(new SimpleParameterGuesser(Collections.singleton(self)), Collections.singleton(self.getPojo()));
 			//guesser	= new SimpleParameterGuesser(super.getParameterGuesser(), Collections.singleton(pojoagent));
 		return guesser;
-	}
+	}*/
 	
 	/**
 	 *  Add $pojoagent to fetcher.
-	 */
+	 * /
 	public Object fetchValue(String name)
 	{
 		RBpmnProcess proc = (RBpmnProcess)self.getPojo();
@@ -63,12 +63,12 @@ public class BpmnProcessModelFeature implements IModelFeature, IInternalModelFea
 		/*else if(Starter.hasPlatformValue(getComponent().getId(), name))
 		{
 			return Starter.getPlatformValue(getComponent().getId(), name);
-		}*/
+		}* /
 		else
 		{
 			throw new RuntimeException("Value not found: "+name);
 		}
-	}
+	}*/
 
 	@Override
 	public IModelInfo getModel()
@@ -82,11 +82,11 @@ public class BpmnProcessModelFeature implements IModelFeature, IInternalModelFea
 		this.model = model;
 	}
 
-	@Override
+	/*@Override
 	public IValueFetcher getFetcher()
 	{
 		return this;
-	}
+	}*/
 }
 
 

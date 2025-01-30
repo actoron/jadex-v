@@ -13,7 +13,7 @@ public class PlainComponentBenchmark
 	{
 		double	pct	= BenchmarkHelper.benchmarkMemory(() ->
 		{
-			Component	comp	= Component.createComponent(Component.class, () -> new Component());
+			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 			return () -> comp.terminate().get();
 		});
 		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
@@ -24,7 +24,7 @@ public class PlainComponentBenchmark
 	{
 		double	pct	= BenchmarkHelper.benchmarkTime(() ->
 		{
-			Component.createComponent(Component.class, () -> new Component()).terminate().get();
+			Component.createComponent(Component.class, () -> new Component(this)).terminate().get();
 		});
 		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}

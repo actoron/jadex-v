@@ -20,6 +20,7 @@ import java.util.function.Supplier;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
+import jadex.core.ICallable;
 import jadex.core.IComponent;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
@@ -213,7 +214,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
 	{
-		Future<T> ret = new Future<>();// createStepFuture(step); // todo?!
+		Future<T> ret = createStepFuture(step);
 		
 		if(terminated)
 		{
@@ -297,6 +298,36 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				ret.setException(new RuntimeException("Error in step", t));
 			}
 		}, ret));
+		
+		return ret;
+	}
+	
+	/**
+	 *  Create intermediate of direct future.
+	 */
+	protected <T> Future<T> createStepFuture(Callable<?> step)
+	{
+		Future<T> ret;
+		try
+		{
+			if(step instanceof ICallable)
+			{
+				Class<?> clazz = ((ICallable)step).getFutureReturnType();
+		
+				if(IFuture.class.equals(clazz))
+					ret = new Future<T>();
+				else
+					ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
+			}
+			else
+			{
+				ret = new Future<T>();
+			}
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
 		
 		return ret;
 	}

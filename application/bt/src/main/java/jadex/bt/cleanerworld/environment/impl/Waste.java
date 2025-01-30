@@ -44,7 +44,8 @@ public class Waste	extends LocationObject	implements IWaste
 	 *  Get a string representation of this Waste.
 	 *  @return The string representation.
 	 */
-	public String toString() {
+	public String toString() 
+	{
 		return "Waste(" + "id="+getId() + ", location="+getLocation() + ")";
 	}
 	

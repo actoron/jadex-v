@@ -324,7 +324,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 							UnparsedExpression uexp = uexps.get(mother.getName());
 							if(uexp!=null && uexp.getValue()!=null && uexp.getValue().length()>0)
 							{
-								SimpleValueFetcher fet = new SimpleValueFetcher(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher());
+								SimpleValueFetcher fet = new SimpleValueFetcher(IExecutionFeature.get().getComponent().getValueProvider().getFetcher());
 								fet.setValue(goal.getFetcherName(), goal);
 								fet.setValue("$ref", other);
 								

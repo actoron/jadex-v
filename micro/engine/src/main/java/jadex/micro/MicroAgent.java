@@ -42,8 +42,6 @@ public class MicroAgent	extends Component
 		return comp.getExternalAccess();
 	}
 	
-	protected Object pojo;
-	
 	public MicroAgent(Object pojo, IModelInfo model)
 	{
 		this(pojo, model, null, null);
@@ -51,8 +49,7 @@ public class MicroAgent	extends Component
 	
 	public MicroAgent(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		super(cid, app);
-		this.pojo	= pojo;
+		super(pojo, cid, app);
 		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
 		//this.model = model;
 		
@@ -61,11 +58,6 @@ public class MicroAgent	extends Component
 		//	System.out.println(execid+" "+cid);
 	}
 	
-	public Object getPojo() 
-	{
-		return pojo;
-	}
-
 	public IModelInfo getModel() 
 	{
 		return this.getFeature(IModelFeature.class).getModel();

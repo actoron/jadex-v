@@ -34,7 +34,7 @@ public class EventIntermediateErrorActivityHandler extends DefaultActivityHandle
 			if (thread.getPropertyValue(MBpmnModel.PROPERTY_EVENT_ERROR, activity) instanceof UnparsedExpression)
 			{
 				UnparsedExpression excexp = (UnparsedExpression) thread.getPropertyValue(MBpmnModel.PROPERTY_EVENT_ERROR, activity);
-				IValueFetcher fetcher = new ProcessThreadValueFetcher(thread, false, instance.getFeature(IModelFeature.class).getFetcher());
+				IValueFetcher fetcher = new ProcessThreadValueFetcher(thread, false, instance.getValueProvider().getFetcher());
 				ex = (Exception) ((IParsedExpression) excexp.getParsed()).getValue(fetcher);
 			}
 			else if (thread.getPropertyValue(MBpmnModel.PROPERTY_EVENT_ERROR, activity) instanceof Exception)

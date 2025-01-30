@@ -34,15 +34,6 @@ public interface IExternalAccess
 	}
 	
 	/**
-	 *  Check if this component allows the execution of steps.
-	 *  Otherwise scheduleStep(...) methods with throw UnsupportedOperationException
-	 */
-	public default boolean	isExecutable()
-	{
-		return false;
-	}
-	
-	/**
 	 *  Terminate the component.
 	 */
 	public default IFuture<Void> terminate()
@@ -122,6 +113,6 @@ public interface IExternalAccess
 	 *  Get the local pojo. Allows for calling pojo methods.
 	 *  @return The pojo.
 	 */
-	public Object getLocalPojo();
+	public <T> T getLocalPojo(Class<T> type);
 	
 }

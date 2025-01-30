@@ -48,14 +48,14 @@ public class FeatureTest
 	public void	testComponentLoading()
 	{
 		// Dummy component for feature loading.
-		doTestLoading(new Component(null), COMPONENT_FEATURE_TYPES);
+		doTestLoading(new Component(this), COMPONENT_FEATURE_TYPES);
 	}
 	
 	@Test
 	public void	testAgentLoading()
 	{
 		// Dummy agent component for feature loading.
-		doTestLoading(new MicroAgent(null, null){}, AGENT_FEATURE_TYPES);
+		doTestLoading(new MicroAgent(this, null){}, AGENT_FEATURE_TYPES);
 	}
 	
 	protected void	doTestLoading(Component comp, Class<Object>[] feature_types)
@@ -72,7 +72,7 @@ public class FeatureTest
 	public void testLazyFeature()
 	{
 		// Dummy component for feature loading.
-		Component	comp	= new Component(null);
+		Component	comp	= new Component(this);
 
 		// Lazy feature should not be found
 		for(Object feature: comp.getFeatures())
@@ -88,7 +88,7 @@ public class FeatureTest
 	public void	testComponentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
-		Component	comp	= new Component(null);
+		Component	comp	= new Component(this);
 		
 		// IMjTestFeature1 feature should be replaced
 		assertTrue(comp.getFeature(ITestFeature1.class) instanceof TestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(ITestFeature1.class));
@@ -112,7 +112,7 @@ public class FeatureTest
 	public void testComponentOrdering()
 	{
 		// Dummy component for feature loading.
-		doTestOrdering(new Component(null), COMPONENT_FEATURE_TYPES);
+		doTestOrdering(new Component(this), COMPONENT_FEATURE_TYPES);
 	}
 		
 	@Test

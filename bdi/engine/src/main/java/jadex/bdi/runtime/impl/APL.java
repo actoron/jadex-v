@@ -860,7 +860,7 @@ public class APL
 						if(bindingparams==null)
 							bindingparams = new HashMap<String, Object>();
 						IParsedExpression exp = SJavaParser.parseExpression(bo, IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader());
-						IValueFetcher	fet	= IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher();
+						IValueFetcher	fet	= IExecutionFeature.get().getComponent().getValueProvider().getFetcher();
 						if(element!=null)
 						{
 							SimpleValueFetcher	fetcher	= new SimpleValueFetcher(fet);

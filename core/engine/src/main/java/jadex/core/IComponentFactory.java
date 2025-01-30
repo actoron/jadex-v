@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
@@ -135,7 +136,7 @@ public interface IComponentFactory
 			{
 				IExternalAccess	exta = comp.getExternalAccess();
 				//ComponentManager.get().removeComponent(cid); // done in Component
-				if(exta.isExecutable())
+				if(Component.isExecutable())
 				{
 					ret	= exta.scheduleStep(icomp ->
 					{
@@ -146,8 +147,7 @@ public interface IComponentFactory
 				else
 				{
 					// Hack!!! Concurrency issue?
-					comp.terminate();
-					ret	= IFuture.DONE;
+					ret	= comp.terminate();
 				}
 			}
 			else

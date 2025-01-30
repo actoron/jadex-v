@@ -1,18 +1,16 @@
-package jadex.bt.impl;
+package jadex.execution.impl;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-import jadex.bt.nodes.Node;
-import jadex.bt.state.ExecutionContext;
-import jadex.bt.state.NodeContext;
+import jadex.execution.ITimerCreator;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 
-public class TimerCreator<T> implements ITimerCreator<T>
+public class TimerCreator implements ITimerCreator
 {
 	@Override
-	public ITerminableFuture<Void> createTimer(ExecutionContext<T> context, long timeout)
+	public ITerminableFuture<Void> createTimer(ITimerContext context, long timeout)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
@@ -33,16 +31,13 @@ public class TimerCreator<T> implements ITimerCreator<T>
 		return ret;
 	}
 	
-	public Timer getTimer(ExecutionContext<T> context)
+	public Timer getTimer(ITimerContext context)
 	{
-		String name = "timer";
-		Object ret = context.getValue(name);
-		if(ret==null)
-		{
-			Timer timer = new Timer(true);
-			context.setValue(name, timer);
-			ret = timer;
-		}
-		return (Timer)ret;
+		Timer timer = context.getStoredResource("timer", Timer.class);
+        if (timer == null) {
+            timer = new Timer(true); 
+            context.storeResource("timer", timer);
+        }
+        return timer;
 	}
 }

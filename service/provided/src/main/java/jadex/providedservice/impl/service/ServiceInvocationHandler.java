@@ -10,6 +10,7 @@ import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.impl.Component;
+import jadex.execution.FutureReturnType;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
@@ -17,7 +18,6 @@ import jadex.future.FutureHelper;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.annotation.FutureReturnType;
 import jadex.providedservice.annotation.Raw;
 import jadex.providedservice.impl.service.interceptors.ResolveInterceptor;
 
@@ -221,7 +221,8 @@ public class ServiceInvocationHandler extends AbstractServiceInvocationHandler i
 			
 			if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 			{
-				final Future<Object> fret = createReturnFuture(method, args, comp.getClassLoader());
+				final Future<Object> fret = FutureFunctionality.createReturnFuture(method, args, comp.getClassLoader());
+				ret = fret;
 				
 				sic.invoke(service, method, myargs).addResultListener(new ExceptionDelegationResultListener<Void, Object>(fret)
 				{
@@ -603,52 +604,8 @@ public class ServiceInvocationHandler extends AbstractServiceInvocationHandler i
 //		return (IServiceIdentifier)pojosids.get(pojo);
 //	}
 	
-	public static Future<Object> createReturnFuture(Method method, Object[] args, ClassLoader cl)
-	{
-		return createReturnFuture(method, args!=null? SUtil.arrayToList(args): null, cl);
-	}
 	
-	public static Future<Object> createReturnFuture(Method method, List<Object> args, ClassLoader cl)
-	{
-		Future<Object> ret = null;
-		
-		if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
-		{
-			Class<?> rettype = null;
-			Annotation[][] anss = method.getParameterAnnotations();
-			for(int i=0; i<anss.length; i++)
-			{
-				Annotation[] ans = anss[i];
-				for(Annotation an: ans)
-				{
-					if(an instanceof FutureReturnType)
-					{
-						Object t = args.get(i);
-						if(t instanceof Class)
-							rettype = (Class<?>)t;
-						else if(t instanceof ClassInfo)
-							rettype = ((ClassInfo)t).getType(cl);
-						if(rettype!=null)
-							break;
-					}
-				}
-			}
-			/*if("invokeMethod".equals(method.getName()))
-			{
-				ClassInfo rtype = (ClassInfo)myargs.get(3);
-				if(rtype!=null)
-					rettype = rtype.getType(comp.getClassLoader());
-			}*/
-			
-			if(rettype==null)
-				rettype = method.getReturnType();
-			
-			ret = (Future<Object>)FutureFunctionality.getDelegationFuture(rettype, 
-				new FutureFunctionality());
-		}
-		
-		return ret;
-	}
+
 }
 
 

@@ -112,7 +112,11 @@ public class MicroRequiredServiceFeature extends RequiredServiceFeature
 				final ServiceInjectionInfo[] infos = serinfos.get(sernames[i]); //model.getServiceInjections(sernames[i]);
 				final CounterResultListener<Void> lis2 = new CounterResultListener<Void>(infos.length, lis);
 
-				String sername = (String)SJavaParser.evaluateExpressionPotentially(sernames[i], component.getFeature(IModelFeature.class).getModel().getAllImports(), component.getFeature(IModelFeature.class).getFetcher(), component.getClassLoader());
+				String sername = (String)SJavaParser.evaluateExpressionPotentially(sernames[i], 
+					component.getFeature(IModelFeature.class).getModel().getAllImports(), 
+					//component.getFeature(IModelFeature.class).getFetcher(), 
+					component.getValueProvider().getFetcher(), 
+					component.getClassLoader());
 						
 				//if(sername!=null && sername.indexOf("calc")!=-1)
 				//	System.out.println("calc");
@@ -632,7 +636,8 @@ public class MicroRequiredServiceFeature extends RequiredServiceFeature
 		
 		IParameterGuesser guesser = null;
 		if(component.getFeature(IModelFeature.class)!=null)
-			guesser = component.getFeature(IModelFeature.class).getParameterGuesser();
+			guesser = component.getValueProvider().getParameterGuesser();
+			//guesser = component.getFeature(IModelFeature.class).getParameterGuesser();
 		
 		boolean invoke = fillMethodParameter(m, args, result, guesser);
 		

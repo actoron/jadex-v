@@ -1,22 +1,22 @@
-package jadex.bt.impl;
+package jadex.execution.impl;
 
-import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.ITimerCreator;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 
-public class ComponentTimerCreator<T> implements ITimerCreator<T>
+public class ComponentTimerCreator implements ITimerCreator
 {
 	@Override
-	public ITerminableFuture<Void> createTimer(ExecutionContext<T> context, long timeout)
+	public ITerminableFuture<Void> createTimer(ITimerContext context, long timeout)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<>();
 		
-		IExternalAccess access;
+		/*IExternalAccess access;
 		Object usercontext = context.getUserContext();
 		if(usercontext instanceof IExternalAccess)
 			access = (IExternalAccess)usercontext;
@@ -24,6 +24,10 @@ public class ComponentTimerCreator<T> implements ITimerCreator<T>
 			access = ((IComponent)usercontext).getExternalAccess();
 		else
 			throw new RuntimeException("ComponentTimeoutDecorator needs component or external access in usercontext");
+		*/
+		
+		IExternalAccess access = context.getResource(IExternalAccess.class);
+
 		
 		//ITerminableFuture<Void> fut = (ITerminableFuture<Void>)access.scheduleAsyncStep(a -> a.getFeature(IExecutionFeature.class).waitForDelay(getTimeout()));
 		
@@ -53,3 +57,4 @@ public class ComponentTimerCreator<T> implements ITimerCreator<T>
 	}
 
 }
+

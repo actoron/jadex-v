@@ -442,7 +442,7 @@ public class ServerManager
 		String[] vars = findVariables(id);
 		for(String var: vars)
 		{
-			String val = ""+component.getFeature(IModelFeature.class).getFetcher().fetchValue(var);
+			String val = ""+component.getValueProvider().getFetcher().fetchValue(var);
 			id = id.replace("${"+var+"}", val);
 		}
 		

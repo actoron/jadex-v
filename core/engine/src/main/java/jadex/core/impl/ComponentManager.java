@@ -2,6 +2,9 @@ package jadex.core.impl;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -296,22 +299,8 @@ public class ComponentManager implements IComponentManager
 	public String	getInferredApplicationName()
 	{
 		String	ret	= null;
-		IComponent	comp	= first;
-		
-		// Hack!!! find current component, if any
-		try
-		{
-			Class<?>	cexe	= Class.forName("jadex.execution.impl.ExecutionFeature");
-			Object	threadlocal	= cexe.getField("LOCAL").get(null);
-			Object	exefeature	= ThreadLocal.class.getMethod("get").invoke(threadlocal);
-			if(exefeature!=null)
-			{
-				comp	= (IComponent)cexe.getMethod("getComponent").invoke(exefeature);
-			}
-		}
-		catch(Exception e)
-		{
-		}
+		IComponent	comp	= getCurrentComponent();
+		comp	= comp!=null ? comp : first;
 		
 		// Has application
 		if(comp!=null && comp.getApplication()!=null)
@@ -344,11 +333,54 @@ public class ComponentManager implements IComponentManager
 		else if (comp!=null)
 		{
 			// TODO: can we derive a more useful app name?
-			// E.g. plain component benchmark
-			// Non-fast lambdas
 			ret	= comp.getClass().getName();
 		}
 		
+		return ret;
+	}
+	
+	static boolean	HANDLES_INITED	= false;
+	static ThreadLocal<Object>	LOCAL;
+	static MethodHandle	GET_COMPONENT;
+	
+	/**
+	 * Get the current component.
+	 * @return	null, if not running inside a component.
+	 */
+	public IComponent getCurrentComponent()
+	{
+		IComponent ret	= null;
+		
+		// Hack!!! use reflection to find current component via execution feature, if any
+		if(!HANDLES_INITED)
+		{
+			try
+			{
+				Class<?>	cexe	= Class.forName("jadex.execution.impl.ExecutionFeature");
+				Field	flocal	= cexe.getField("LOCAL");
+				MethodHandle	getlocal	= MethodHandles.lookup().unreflectGetter(flocal);
+				LOCAL	= (ThreadLocal<Object>)getlocal.invoke();
+				GET_COMPONENT	= MethodHandles.lookup().unreflect(cexe.getMethod("getComponent"));
+				HANDLES_INITED	= true;
+			}
+			catch(Throwable e)
+			{
+				// If no exe feature in classpath -> fail and never try again.
+			}
+		}
+		
+		if(LOCAL!=null)
+		{
+			try
+			{
+				Object	exefeature	= LOCAL.get();
+				ret	= exefeature!=null ? (IComponent)GET_COMPONENT.invoke(exefeature) : null;
+			}
+			catch(Throwable e)
+			{
+			}
+		}
+
 		return ret;
 	}
 	
