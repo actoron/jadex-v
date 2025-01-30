@@ -35,7 +35,17 @@ test:
 benchmark:
   stage: benchmark
   #script: ./benchmark.sh
-  script: ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+  script:
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
   # needs: ["build"]
   allow_failure: true
   cache:
