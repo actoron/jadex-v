@@ -15,9 +15,7 @@ import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.Decorator;
 import jadex.bt.decorators.RetryDecorator;
 import jadex.bt.decorators.TimeoutDecorator;
-import jadex.bt.impl.ComponentTimerCreator;
 import jadex.bt.impl.Event;
-import jadex.bt.impl.TimerCreator;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
@@ -29,6 +27,8 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
+import jadex.execution.impl.ComponentTimerCreator;
+import jadex.execution.impl.TimerCreator;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.TerminableFuture;
@@ -58,7 +58,7 @@ public class DecoratorTest
 	    an.addDecorator(rd);
 
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator<Object>());
+	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 	    
@@ -93,7 +93,7 @@ public class DecoratorTest
 	    long start = System.currentTimeMillis();
 	    
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator<Object>());
+	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 	    
@@ -161,7 +161,7 @@ public class DecoratorTest
 		TimeoutDecorator<IComponent> td = new TimeoutDecorator<>(1000);
 		an.addDecorator(td);
 		
-		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator<IComponent>());
+		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    new Thread(() -> 
         {
@@ -202,7 +202,7 @@ public class DecoratorTest
 		TimeoutDecorator<IComponent> td = new TimeoutDecorator<>(500);
 		an.addDecorator(td);
 		
-		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator<IComponent>());
+		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    fut.setResult(null); // time elapsed
 	    
@@ -232,7 +232,7 @@ public class DecoratorTest
 		TimeoutDecorator<IExternalAccess> td = new TimeoutDecorator<>(1000);
 		an.addDecorator(td);
 		
-		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator<IExternalAccess>());
+		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator());
 		context.setUserContext(comp);
 
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
@@ -263,7 +263,7 @@ public class DecoratorTest
 		TimeoutDecorator<IExternalAccess> td = new TimeoutDecorator<>(500);
 		an.addDecorator(td);
 		
-		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator<IExternalAccess>());
+		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator());
 		context.setUserContext(comp);
 		
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);

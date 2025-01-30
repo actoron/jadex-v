@@ -199,7 +199,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 				else
 				{*/
 					final ProvidedServiceInfo finfo = info;
-					createServiceImplementation(info, self.getFeature(IModelFeature.class).getFetcher())
+					createServiceImplementation(info, self.getValueProvider().getFetcher())
 						.then(ser ->
 					{
 						// Implementation may null to disable service in some configurations.
@@ -214,7 +214,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 								{
 									if(ins[i].getValue()!=null && ins[i].getValue().length()>0)
 									{
-										ics[i] = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(ins[i].getValue(), self.getFeature(IModelFeature.class).getModel().getAllImports(), self.getFeature(IModelFeature.class).getFetcher(), self.getClassLoader());
+										ics[i] = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(ins[i].getValue(), self.getFeature(IModelFeature.class).getModel().getAllImports(), self.getValueProvider().getFetcher(), self.getClassLoader());
 									}
 									else
 									{
@@ -650,7 +650,8 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 	{
 		final Future<Void> ret = new Future<Void>();
 		//System.out.println("Starting service: "+is.getServiceId()+" "+self.getFeature(IMjExecutionFeature.class).isComponentThread());
-		is.setComponentAccess(self).addResultListener(new DelegationResultListener<Void>(ret)
+		IFuture<Void> fut = is.setComponentAccess(self);
+		fut.addResultListener(new DelegationResultListener<Void>(ret)
 		{
 			public void customResultAvailable(Void result)
 			{
@@ -1147,7 +1148,8 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 		{
 			try
 			{
-				Object ptag = SJavaParser.evaluateExpression(tag, mf.getModel().getAllImports(), mf.getFetcher(), ComponentManager.get().getClassLoader());
+				// todo: hack, remove cast!
+				Object ptag = SJavaParser.evaluateExpression(tag, mf.getModel().getAllImports(), component.getValueProvider().getFetcher(), ComponentManager.get().getClassLoader());
 				ret.add(""+ptag);
 			}
 			catch(Exception e)
@@ -1431,7 +1433,7 @@ public abstract class ProvidedServiceFeature implements ILifecycle, IProvidedSer
 						{
 							try
 							{
-								Object val	= ia.getFeature(IModelFeature.class).getParameterGuesser().guessParameter(fields[i].getType(), false);
+								Object val	= ia.getValueProvider().getParameterGuesser().guessParameter(fields[i].getType(), false);
 								SAccess.setAccessible(fields[i], true);
 								fields[i].set(service, val);
 							}

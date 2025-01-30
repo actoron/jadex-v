@@ -1,5 +1,6 @@
 package jadex.core;
 
+import jadex.core.impl.ValueProvider;
 import jadex.future.IFuture;
 
 /**
@@ -53,6 +54,12 @@ public interface IComponent
 	 *  @return The pojo.
 	 */
 	public Object getPojo();
+	
+	/**
+	 *  Get the value provider (for fetcher and parameter guesser).
+	 *  @return The value provider.
+	 */
+	public ValueProvider getValueProvider();
 	
 	/**
 	 *  Wait for termination.

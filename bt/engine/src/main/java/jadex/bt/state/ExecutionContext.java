@@ -3,12 +3,15 @@ package jadex.bt.state;
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bt.impl.ITimerCreator;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
+import jadex.core.IComponent;
+import jadex.core.IExternalAccess;
+import jadex.execution.ITimerCreator;
+import jadex.execution.impl.ITimerContext;
 import jadex.future.IFuture;
 
-public class ExecutionContext<T> 
+public class ExecutionContext<T> implements ITimerContext
 {	
 	protected Map<Node<T>, NodeContext<T>> nodestates = new HashMap<Node<T>, NodeContext<T>>();
 
@@ -16,7 +19,7 @@ public class ExecutionContext<T>
 	
 	protected IFuture<NodeState> rootcall;
 	
-	protected ITimerCreator<T> timercreator;
+	protected ITimerCreator timercreator;
 	
 	protected Map<String, Object> values;
 	
@@ -51,12 +54,12 @@ public class ExecutionContext<T>
 		this.rootcall = rootcall;
 	}
 
-	public ITimerCreator<T> getTimerCreator() 
+	public ITimerCreator getTimerCreator() 
 	{
 		return timercreator;
 	}
 
-	public ExecutionContext<T> setTimerCreator(ITimerCreator<T> timercreator) 
+	public ExecutionContext<T> setTimerCreator(ITimerCreator timercreator) 
 	{
 		this.timercreator = timercreator;
 		return this;
@@ -79,4 +82,41 @@ public class ExecutionContext<T>
 	{
 		return values==null? null: values.remove(name);
 	}
+	
+	@Override
+    public <T> T getResource(Class<T> type) 
+	{
+        if (type == IExternalAccess.class) 
+        {
+            Object userContext = getUserContext();
+            if (userContext instanceof IExternalAccess) 
+            {
+                return type.cast(userContext);
+            } 
+            else if (userContext instanceof IComponent) 
+            {
+                return type.cast(((IComponent) userContext).getExternalAccess());
+            } 
+            else 
+            {
+                throw new IllegalArgumentException("Unsupported resource type: " + type.getName());
+            }
+        }
+        throw new IllegalArgumentException("Unknown resource type: " + type.getName());
+    }
+
+    @Override
+    public <T> void storeResource(String key, T resource) 
+    {
+        setValue(key, resource);
+    }
+
+    @Override
+    public <T> T getStoredResource(String key, Class<T> type) 
+    {
+        Object value = getValue(key);
+        if (value == null) 
+            return null;
+        return type.cast(value);
+    }
 }

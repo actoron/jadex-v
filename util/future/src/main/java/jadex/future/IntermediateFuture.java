@@ -1272,4 +1272,21 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 			}
 		}, 0), false);
 	}
+	
+	/**
+	 *  Print an exception.
+	 */
+	public IIntermediateFuture<E> printOnEx()
+	{
+		this.addResultListener(new IntermediateDefaultResultListener<E>()
+		{
+			@Override
+			public void exceptionOccurred(Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		});
+		
+		return this;
+	}
 }

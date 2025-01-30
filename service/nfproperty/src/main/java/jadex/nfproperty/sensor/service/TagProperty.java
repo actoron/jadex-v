@@ -14,12 +14,12 @@ import jadex.common.transformation.traverser.BeanProperty;
 import jadex.common.transformation.traverser.IBeanIntrospector;
 import jadex.core.IComponent;
 import jadex.core.IExternalAccess;
+import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
-import jadex.model.modelinfo.IModelInfo;
 import jadex.nfproperty.impl.AbstractNFProperty;
 import jadex.nfproperty.impl.NFPropertyMetaInfo;
 import jadex.providedservice.IService;
@@ -136,7 +136,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 						try
 						{
 							IModelFeature mf = component.getFeature(IModelFeature.class);
-							Object c = SJavaParser.evaluateExpression(cond, mf.getModel().getAllImports(), mf.getFetcher(), ComponentManager.get().getClassLoader());
+							Object c = SJavaParser.evaluateExpression(cond, mf.getModel().getAllImports(), component.getValueProvider().getFetcher(), ComponentManager.get().getClassLoader());
 							if(c instanceof Boolean && ((Boolean)c).booleanValue())
 								vals.add(val);
 						}

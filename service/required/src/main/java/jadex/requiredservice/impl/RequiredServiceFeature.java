@@ -1537,7 +1537,7 @@ public class RequiredServiceFeature	implements ILifecycle, IRequiredServiceFeatu
 				{
 					IServiceInvocationInterceptor interceptor = (IServiceInvocationInterceptor)SJavaParser.evaluateExpression(
 //						interceptors[i].getValue(), ea.getModel().getAllImports(), ia.getFetcher(), ea.getModel().getClassLoader());
-						interceptors[i].getValue(), ia.getFeature(IModelFeature.class).getModel().getAllImports(), ia.getFeature(IModelFeature.class).getFetcher(), ia.getClassLoader());
+						interceptors[i].getValue(), ia.getFeature(IModelFeature.class).getModel().getAllImports(), ia.getValueProvider().getFetcher(), ia.getClassLoader());
 					handler.addServiceInterceptor(interceptor);
 				}
 			}

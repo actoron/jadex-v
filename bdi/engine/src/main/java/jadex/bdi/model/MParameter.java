@@ -629,7 +629,7 @@ public class MParameter extends MElement
 		long ret = -1;
 		if(updaterate!=null) 
 			ret = ((Number)SJavaParser.parseExpression(updaterate, IInternalBDIAgentFeature.get().getBDIModel().getModelInfo().getAllImports(), IInternalBDIAgentFeature.get().getClassLoader())
-				.getValue(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher())).longValue();
+				.getValue(IExecutionFeature.get().getComponent().getValueProvider().getFetcher())).longValue();
 		return ret;
 	}
 	

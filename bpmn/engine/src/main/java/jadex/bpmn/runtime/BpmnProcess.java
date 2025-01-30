@@ -2,11 +2,13 @@ package jadex.bpmn.runtime;
 
 import jadex.bpmn.model.MBpmnModel;
 import jadex.bpmn.model.io.BpmnModelLoader;
+import jadex.bpmn.runtime.impl.BpmnValueProvider;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IExternalAccess;
 import jadex.core.impl.Component;
+import jadex.core.impl.ValueProvider;
 import jadex.model.IModelFeature;
 import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
@@ -115,5 +117,13 @@ public class BpmnProcess extends Component
 		{
 			throw SUtil.throwUnchecked(e);
 		}
+	}
+	
+	@Override
+	public ValueProvider getValueProvider() 
+	{
+		if(valueprovider==null)
+			valueprovider = new BpmnValueProvider(this);
+		return valueprovider;
 	}
 }

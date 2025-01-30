@@ -36,7 +36,7 @@ public class Component implements IComponent
 	protected Map<Class<Object>, Object> features;
 	
 	/** The pojo, if any.*/
-	protected Object	pojo;
+	protected Object pojo;
 	
 	/** The id. */
 	protected ComponentIdentifier id;
@@ -46,6 +46,9 @@ public class Component implements IComponent
 	
 	/** The external access. */
 	protected IExternalAccess access;
+	
+	/** The value provider. */
+	protected ValueProvider valueprovider;
 	
 	/** The external access supplier. */
 	protected static Function<Component, IExternalAccess> accessfactory;
@@ -247,6 +250,13 @@ public class Component implements IComponent
 		features.put((Class)type, feature);
 	}
 	
+	public ValueProvider getValueProvider()
+	{
+		if(valueprovider==null)
+			valueprovider = new ValueProvider(this);
+		return valueprovider;
+	}
+	
 	/*public Map<String, Object> getResults(Object pojo)
 	{
 		return Collections.EMPTY_MAP;
@@ -414,6 +424,12 @@ public class Component implements IComponent
 					public String getAppId() 
 					{
 						return Component.this.getAppId();
+					}
+					
+					@Override
+					public <T> T getLocalPojo(Class<T> type)
+					{
+						throw new UnsupportedOperationException();
 					}
 				};
 			}

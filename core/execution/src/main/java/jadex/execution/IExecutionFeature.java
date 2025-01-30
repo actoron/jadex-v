@@ -7,6 +7,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
+import jadex.core.impl.ValueProvider;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
