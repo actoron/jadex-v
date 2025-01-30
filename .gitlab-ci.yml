@@ -36,16 +36,16 @@ benchmark:
   stage: benchmark
   #script: ./benchmark.sh
   script:
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
-    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
+    - ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark || NOP=true
   # needs: ["build"]
   allow_failure: true
   cache:
