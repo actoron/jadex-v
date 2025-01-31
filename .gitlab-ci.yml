@@ -34,8 +34,48 @@ test:
 
 benchmark:
   stage: benchmark
-  #script: ./benchmark.sh
-  script: ./gradlew benchmark-bdi:cleanBenchmark benchmark-bdi:benchmark
+  script:
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+    - ./benchmark.sh || true
+  timeout: 6h
   # needs: ["build"]
   allow_failure: true
   cache:
