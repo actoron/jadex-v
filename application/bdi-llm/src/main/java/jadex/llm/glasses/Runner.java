@@ -14,19 +14,19 @@ import java.util.Map;
 
 public class Runner
 {
-    private static final int agentIterations = 100;
+    private static final int agentIterations = 1;
     private static final String datasetPath = "application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json";
     private static final String resultsDirectory = "/home/schuther/Coding/results/";
     //Ollama
 //    private static final String chatUrl = "http://localhost:50510/api/chat";
 //    private static final String apiKey = "ollama";
     //GPT
-    private static final String chatUrl = "https://api.openai.com/v1/chat/completions";
-    private static final String apiKey =  System.getenv("OPENAI_API_KEY");
+//    private static final String chatUrl = "https://api.openai.com/v1/chat/completions";
+//    private static final String apiKey =  System.getenv("OPENAI_API_KEY");
     //Huggingface
-//    private static final String chatUrl = "https://api-inference.huggingface.co/models/codellama/CodeLlama-34b-Instruct-hf/v1/chat/completions";
-//    private static final String apiKey =  System.getenv("HF_API_KEY");
-
+    private static final String chatUrl = "https://api-inference.huggingface.co/models/codellama/CodeLlama-34b-Instruct-hf/v1/chat/completions";
+//    private static final String chatUrl = "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B/v1/chat/completions";
+    private static final String apiKey =  System.getenv("HF_API_KEY");
 
     /**
      * Main method to run the GlassesAgent.

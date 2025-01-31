@@ -1,5 +1,5 @@
 {
-  "model": "gpt-4o-2024-08-06",
+  "model": "codellama/CodeLlama-34b-Instruct-hf",
   "messages": [
     {
       "role": "system",
@@ -10,5 +10,8 @@
       "content": "Create a java class named Plan which implements IPlanBody with only one method called runCode. The function receives a $Belief$ of Objects and returns a $Belief$ of Objects. At index 0 the function receives a JSONObject (org.json.simple.JSONObject). The JSONObject contains a JSONArray (org.json.simple.JSONArray) of 'OpticiansData' with different parameters. Check if the JSONObject is sorted by the key 'shape' which is a String. Return at index 0 a boolean 'true' if list is sorted or 'false' if the list is unsorted. The value of the key can exist multiple times."
     }
   ],
-  "temperature": 0.5
+  "stream": false,
+  "options": {
+    "temperature": 0.5
+  }
 }

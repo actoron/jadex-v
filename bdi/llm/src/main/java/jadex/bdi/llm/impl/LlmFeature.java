@@ -226,16 +226,17 @@ public class LlmFeature implements ILlmFeature {
                     // clean up responseMessage
                     // remove leading and trailing quotation marks from responseMessage
                     //responseMessage Chatty, ollama, huggingface
-                    responseMessage = responseMessage.replaceFirst("```java", "");
-                    responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
-                    responseMessage = new StringBuilder(responseMessage).reverse().toString();
+//                    responseMessage = responseMessage.substring(responseMessage.indexOf("```java") + 7).trim();
+//                    responseMessage = responseMessage.replaceFirst("```java", "");
+//                    responseMessage = new StringBuilder(responseMessage).reverse().toString().replaceFirst("```", "");
+//                    responseMessage = new StringBuilder(responseMessage).reverse().toString();
 
                     //responseMessage Huggingface CodeLlama
-//                    responseMessage = responseMessage.replaceFirst( " ```", "");
-//                    int index = responseMessage.indexOf("```");
-//                    if (index != -1) {
-//                        responseMessage = responseMessage.substring(0, index).trim();
-//                    }
+                    responseMessage = responseMessage.replaceFirst( " ```", "");
+                    int index = responseMessage.indexOf("```");
+                    if (index != -1) {
+                        responseMessage = responseMessage.substring(0, index).trim();
+                    }
 
                     // add package to javacode
                     responseMessage =
