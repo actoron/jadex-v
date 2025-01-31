@@ -3,20 +3,18 @@ package jadex.bdi.llm;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 
 import javax.script.ScriptException;
+import java.net.URI;
 import java.util.ArrayList;
 
 public interface ILlmFeature
 {
     /**
-     * Establishes a connection to the LLM.
-     * <p>
-     * This method uses the LlmConnector class to connect to a language model.
-     * The API key for accessing the language model must be saved in the
-     * environment variable "OPENAI_API_KEY".
+     * Connects to the LLM system.
      *
-     * @param ChatGptRequestExtension The requestextension to be or not sent to the LLM.
+     * @param systemPrompt The system prompt.
+     * @param userPrompt The user prompt.
      */
-    public void connectToLLM(String ChatGptRequestExtension);
+    public void connectToLLM(String systemPrompt, String userPrompt);
 
     /**
      * Generates a plan using the LLM-generated code and executes it in-memory.

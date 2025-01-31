@@ -1,0 +1,15 @@
+{
+  "model": "llama3.3",
+  "messages": [
+    {
+      "role": "system"
+    },
+    {
+      "role": "user"
+    }
+  ],
+  "stream": false,
+  "options": {
+    "temperature": 0.5
+  }
+}

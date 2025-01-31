@@ -1,0 +1,12 @@
+{
+  "model": "gpt-4o-2024-08-06",
+  "messages": [
+    {
+      "role": "system"
+    },
+    {
+      "role": "user"
+    }
+  ],
+  "temperature": 0.5
+}

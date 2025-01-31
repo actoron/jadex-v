@@ -8,10 +8,16 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
+import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.json.simple.parser.JSONParser;
 
 import javax.script.ScriptException;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +34,9 @@ public class MazeAgent
     private Maze maze;
     private final String settingsPath;
     private final String beliefType;
+
+    protected String promptPlanSystem;
+    protected String promptPlanUser;
 
     @Belief
     private Val<String> mazeBeliefPositionString;
@@ -105,6 +114,23 @@ public class MazeAgent
         mazeBeliefPositionString.set(maze.getCurrentPosition());
 
         System.out.println("StartCell: " + mazeBeliefPositionString.get());
+
+        // read prompt file and set goal and plan
+        Path promptPath = Paths.get(Paths.get("").toAbsolutePath().toString(), "Prompt.json");
+        String promptFileString = null;
+        try
+        {
+            JSONParser parser = new JSONParser();
+            promptFileString = FileUtils.readFileToString(new File(promptPath.toString()), StandardCharsets.UTF_8);
+            org.json.simple.JSONObject promptJsonObject = (org.json.simple.JSONObject) parser.parse(promptFileString);
+
+            org.json.simple.JSONObject Plan = (org.json.simple.JSONObject) promptJsonObject.get("plan");
+            promptPlanSystem = (String) Plan.get("system");
+            promptPlanUser = (String) Plan.get("user");
+        } catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 
     @Plan(trigger=@Trigger(goals=AgentGoal.class))
@@ -112,13 +138,9 @@ public class MazeAgent
     {
         /** Initialize the LlmFeature */
         System.out.println("--->Test Plan 1");
-        LlmFeature llmFeature = new LlmFeature(
-                chatUrl,
-                apiKey,
-                beliefType,
-                settingsPath);
+        LlmFeature llmFeature = new LlmFeature(LlmFeature.OPENAI_URI, beliefType,null);
 
-        llmFeature.connectToLLM("");
+        llmFeature.connectToLLM(promptPlanSystem, promptPlanUser);
 
         System.out.println(llmFeature.generatedJavaCode);
 

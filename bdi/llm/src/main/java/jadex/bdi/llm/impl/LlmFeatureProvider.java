@@ -5,6 +5,8 @@ import jadex.bdi.runtime.impl.BDIAgent;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 
+import java.net.URI;
+
 public class LlmFeatureProvider extends FeatureProvider<ILlmFeature>
 {
     public LlmFeatureProvider()
@@ -22,9 +24,9 @@ public class LlmFeatureProvider extends FeatureProvider<ILlmFeature>
         return null;
     }
 
-    public ILlmFeature createFeatureInstance(String chatgptUrl, String chatgptKey, String beliefType, String settingsPath)
+    public ILlmFeature createFeatureInstance(URI apiAddress, String beliefType, String model)
     {
-        return new LlmFeature(chatgptUrl, chatgptKey, beliefType, settingsPath);
+        return new LlmFeature(apiAddress, beliefType, model);
     }
 
     public Class <? extends Component> getRequiredComponentType()

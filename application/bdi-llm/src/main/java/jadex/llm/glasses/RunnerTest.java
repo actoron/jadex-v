@@ -12,21 +12,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-public class Runner
+public class RunnerTest
 {
-    private static final int agentIterations = 1;
-    private static final String datasetPath = "application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json";
+    private static final int agentIterations     = 1;
+    private static final int api                 = GlassesAgents.API_OPENAI;
+    private static final String model            = "";
+    private static final String datasetPath      = "application/bdi-llm/src/main/java/jadex/llm/glasses/Dataset.json";
     private static final String resultsDirectory = "/home/schuther/Coding/results/";
-    //Ollama
-//    private static final String chatUrl = "http://localhost:50510/api/chat";
-//    private static final String apiKey = "ollama";
-    //GPT
-//    private static final String chatUrl = "https://api.openai.com/v1/chat/completions";
-//    private static final String apiKey =  System.getenv("OPENAI_API_KEY");
-    //Huggingface
-    private static final String chatUrl = "https://api-inference.huggingface.co/models/codellama/CodeLlama-34b-Instruct-hf/v1/chat/completions";
-//    private static final String chatUrl = "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B/v1/chat/completions";
-    private static final String apiKey =  System.getenv("HF_API_KEY");
 
     /**
      * Main method to run the GlassesAgent.
@@ -34,7 +26,6 @@ public class Runner
      */
     public static void main(String[] args) throws IOException
     {
-
         if (Files.notExists(Paths.get(datasetPath)))
         {
             OpticiansDataGenerator dataGenerator = new OpticiansDataGenerator(10000);
@@ -70,10 +61,7 @@ public class Runner
                 System.out.println("A: GlassesAgent started iteration " + i);
 
                 //agent
-                GlassesAgent currentAgent = new GlassesAgent(
-                        chatUrl,
-                        apiKey,
-                        datasetPath);
+                GlassesAgents currentAgent = new GlassesAgents(api, model, datasetPath);
 
                 IComponentManager.get().create(currentAgent);
                 IComponentManager.get().waitForLastComponentTerminated();

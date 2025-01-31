@@ -1,0 +1,15 @@
+{
+  "model": "codellama/CodeLlama-34b-Instruct-hf",
+  "messages": [
+    {
+      "role": "system"
+    },
+    {
+      "role": "user"
+    }
+  ],
+  "stream": false,
+  "options": {
+    "temperature": 0.5
+  }
+}

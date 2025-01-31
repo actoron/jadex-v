@@ -17,8 +17,9 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
@@ -26,12 +27,23 @@ import org.apache.commons.io.FileUtils;
 
 @Agent(type = "bdip")
 @Description("This agent uses ChatGPT to create the plan step.")
-public class GlassesAgent
+public class GlassesAgents
 {
-    private final String chatUrl;
-    private final String apiKey;
-    private final String dataSetPath;
-    private final String beliefType;
+    public static final int API_OLLAMA = 0;
+    public static final int API_OPENAI = 1;
+    public static final int API_HUGGINGFACE = 2;
+
+    protected final String beliefType;
+
+    protected final int api;
+    protected final String model;
+    protected final String dataSetPath;
+
+    protected String promptPlanSystem;
+    protected String promptPlanUser;
+    protected String promptGoalSystem;
+    protected String promptGoalUser;
+
     /**
      * The OpticiansDataGenerator agent class.
      */
@@ -104,18 +116,25 @@ public class GlassesAgent
             //############################################################################################################
             //LLM GoalCheck
             //############################################################################################################
-            LlmFeature llmFeature = new LlmFeature(
-                    chatUrl,
-                    apiKey,
-                    beliefType,
-                    "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/GoalSettings.json");
+
+            LlmFeature llmFeature = null;
+            if (api == API_OLLAMA)
+            {
+                llmFeature = new LlmFeature(LlmFeature.OLLAMA_URI, beliefType, model);
+            } else if (api == API_OPENAI)
+            {
+                llmFeature = new LlmFeature(LlmFeature.OPENAI_URI, beliefType, model);
+            } else if (api == API_HUGGINGFACE)
+            {
+                llmFeature = new LlmFeature(LlmFeature.HUGGINGFACE_URI, beliefType, model);
+            }
 
             if (this.goalPlan == null)
             {
                 int attempt = 0;
                 while (attempt < 3)
                 {
-                    llmFeature.connectToLLM("");
+                    llmFeature.connectToLLM(promptGoalSystem, promptGoalUser);
                     System.out.println("~~Attempt: " + attempt);
                     System.out.println("~~GoalCode: " + llmFeature.generatedJavaCode);
                     try
@@ -145,7 +164,6 @@ public class GlassesAgent
                 ArrayList<Object> inputList = new ArrayList<Object>();
                 inputList.add(convDataSet);
 
-                System.out.println("A: MARKER");
                 ArrayList<Object> outputList = this.goalPlan.runCode(inputList);
 
                 Boolean checkStatus = (Boolean) outputList.get(0);
@@ -177,12 +195,36 @@ public class GlassesAgent
     /**
      * Constructor
      */
-    public GlassesAgent(String chatUrl, String apiKey, String dataSetPath)
+    public GlassesAgents(int api, String model, String dataSetPath)
     {
-        this.chatUrl = chatUrl;
-        this.apiKey = apiKey;
         this.beliefType = "java.util.ArrayList";
+
+        this.api = api;
+        this.model = model;
         this.dataSetPath = dataSetPath;
+
+        // read prompt file and set goal and plan
+        Path promptPath = Paths.get(Paths.get("application/bdi-llm/src/main/java/jadex/llm/glasses/").toAbsolutePath().toString(), "Prompt.json");
+        System.out.println("Prompt Path: " + promptPath.toString());
+        String promptFileString = null;
+        try
+        {
+            JSONParser parser = new JSONParser();
+            promptFileString = FileUtils.readFileToString(new File(promptPath.toString()), StandardCharsets.UTF_8);
+            JSONObject promptJsonObject = (JSONObject) parser.parse(promptFileString);
+
+            JSONObject Plan = (JSONObject) promptJsonObject.get("plan");
+            promptPlanSystem = (String) Plan.get("system");
+            promptPlanUser = (String) Plan.get("user");
+
+            JSONObject Goal = (JSONObject) promptJsonObject.get("goal");
+            promptGoalSystem = (String) Goal.get("system");
+            promptGoalUser = (String) Goal.get("user");
+
+        } catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
 
         System.out.println("A: GlassesAgent class loaded");
     }
@@ -197,19 +239,11 @@ public class GlassesAgent
         String dataSetFileString = null;
         try
         {
-            dataSetFileString = FileUtils.readFileToString(new File(dataSetPath), StandardCharsets.UTF_8);
-        } catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }
-
-        try
-        {
             JSONParser parser = new JSONParser();
+            dataSetFileString = FileUtils.readFileToString(new File(dataSetPath), StandardCharsets.UTF_8);
             JSONObject dataset = (JSONObject) parser.parse(dataSetFileString);
             datasetString.set(dataset.toString());
-
-        } catch (ParseException e)
+        } catch (Exception e)
         {
             throw new RuntimeException(e);
         }
@@ -226,18 +260,24 @@ public class GlassesAgent
         /** Initialize the LlmFeature */
         System.out.println("--->Test Plan 1");
 
-        LlmFeature llmFeature = new LlmFeature(
-                chatUrl,
-                apiKey,
-                beliefType,
-                "application/bdi-llm/src/main/java/jadex/llm/glasses/settings/Plan1Settings.json");
+        LlmFeature llmFeature = null;
+        if (this.api == API_OLLAMA)
+        {
+            llmFeature = new LlmFeature(LlmFeature.OLLAMA_URI, beliefType, model);
+        } else if (this.api == API_OPENAI)
+        {
+            llmFeature = new LlmFeature(LlmFeature.OPENAI_URI, beliefType, model);
+        } else if (this.api == API_HUGGINGFACE)
+        {
+            llmFeature = new LlmFeature(LlmFeature.HUGGINGFACE_URI, beliefType, model);
+        }
 
         IPlanBody plan = null;
         int attempt = 0;
         while (attempt < 3)
         {
             long genStart = System.currentTimeMillis();
-            llmFeature.connectToLLM("");
+            llmFeature.connectToLLM(promptPlanSystem, promptPlanUser);
             System.out.println("~~Attempt: " + attempt);
             System.out.println("~~GoalCode: " + llmFeature.generatedJavaCode);
             long genTime = System.currentTimeMillis() - genStart;
