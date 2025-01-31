@@ -93,7 +93,7 @@ public class BenchmarkHelper
 		long cooldown	= 10000;	// How long to sleep before runs
 		long msecs	= 2000;	// How long to run the benchmark
 		int	warmups	= 100; 	// How many warm-ups to run
-		int	runs	= 10;	// How many runs for measurement 
+		int	runs	= 1000;	// How many runs for measurement 
 		List<Long>	vals	= new ArrayList<>();
 		long	basemem = 0;
 		try
