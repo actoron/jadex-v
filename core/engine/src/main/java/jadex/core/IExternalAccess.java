@@ -113,6 +113,6 @@ public interface IExternalAccess
 	 *  Get the local pojo. Allows for calling pojo methods.
 	 *  @return The pojo.
 	 */
-	public <T> T getLocalPojo(Class<T> type);
+	public <T> T getPojo(Class<T> type);
 	
 }

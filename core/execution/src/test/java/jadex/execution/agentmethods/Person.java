@@ -1,4 +1,4 @@
-package jadex.micro.agentmethods;
+package jadex.execution.agentmethods;
 
 public class Person
 {
@@ -40,5 +40,10 @@ public class Person
 	public String toString() 
 	{
 		return "Person [name=" + name + ", age=" + age + ", hashcode=" + hashCode() + "]";
+	}
+	
+	public static void main(String[] args) 
+	{
+		System.out.println("hello");
 	}
 }
