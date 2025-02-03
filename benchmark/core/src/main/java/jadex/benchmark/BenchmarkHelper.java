@@ -165,35 +165,33 @@ public class BenchmarkHelper
 		String	caller	= getCaller();
 		Path	db	= Path.of(".benchmark_"+EXEC_ENV, caller+".json");
 		double	prev	= 0;
-		long	prev_date	= 0;
+		double	last	= 0;
 		long	new_date	= System.currentTimeMillis();
+		long	prev_date	= new_date;
 		
 		if(db.toFile().exists())
 		{
 			JsonValue	val	= Json.parse(Files.readString(db));
-			if(val.isNumber())	// Legacy support -> can be removed at some point
-			{
-				prev	= val.asDouble();
-			}
-			else
-			{
-				prev	= ((JsonObject)val).get("best").asDouble();
-				
-				// Use current date as best date if new value is lower or equal
-				if(value<=prev)
-				{
-					prev_date	= new_date;
-				}
-				
-				// Keep old best date
-				else
-				{
-					JsonValue	dateval	= ((JsonObject)val).get("best_date");
-					prev_date	= dateval!=null ? dateval.asLong(): 0;
-				}
-			}
+			prev	= ((JsonObject)val).get("best").asDouble();
+			last	= ((JsonObject)val).get("last").asDouble();
+			
 			pct	= (value - prev)*100.0/prev;
 			System.out.println("Change(%): "+pct);
+			
+			// Write new value if two better values in a row
+			if(last<=prev && value<=prev)
+			{
+				// Use only second best value to avoid outliers
+				prev	= Math.max(last, value);
+			}
+			
+			// Keep old best date
+			else
+			{
+				JsonValue	dateval	= ((JsonObject)val).get("best_date");
+				prev_date	= dateval!=null ? dateval.asLong(): 0;
+			}
+			
 		}
 
 		if(write)
