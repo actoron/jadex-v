@@ -427,7 +427,7 @@ public class Component implements IComponent
 					}
 					
 					@Override
-					public <T> T getLocalPojo(Class<T> type)
+					public <T> T getPojo(Class<T> type)
 					{
 						throw new UnsupportedOperationException();
 					}
@@ -500,5 +500,11 @@ public class Component implements IComponent
 			}
 		}
 		return creator.get();
+	}
+
+	@Override
+	public String toString() 
+	{
+		return "Component [id=" + id + "]";
 	}
 }

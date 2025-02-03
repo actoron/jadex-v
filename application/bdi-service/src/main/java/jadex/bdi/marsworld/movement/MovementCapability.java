@@ -161,7 +161,7 @@ public class MovementCapability
 	 */
 	public Homebase getHomebase()
 	{
-		//System.out.println("homebase: "+getEnvironment().getSpaceObjectsByType(Homebase.class));
+		System.out.println("homebase: "+getEnvironment().getSpaceObjectsByType(Homebase.class));
 		return getEnvironment().getSpaceObjectsByType(Homebase.class).toArray(new Homebase[0])[0];
 	}
 	

@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE_USE})
-public @interface Copy
+public @interface NoCopy
 {
 }

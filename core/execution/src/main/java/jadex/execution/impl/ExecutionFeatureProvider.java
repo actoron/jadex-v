@@ -33,7 +33,7 @@ import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
 import jadex.core.impl.ValueProvider;
 import jadex.execution.AgentMethod;
-import jadex.execution.Copy;
+import jadex.execution.NoCopy;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.execution.future.FutureFunctionality;
@@ -103,7 +103,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				
 				@Override
-				public <T> T getLocalPojo(Class<T> type)
+				public <T> T getPojo(Class<T> type)
 				{
 					if(pojo==null)
 					{
@@ -117,8 +117,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					return (T)pojo;
 				}
-				
-				
 				
 				protected Object createPojo()
 				{
@@ -143,10 +141,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								{
 									for(int a = 0; a < pannos[p].length; a++)
 									{
-										if(hasCopyAnnotation(pannos[p]))
-											myargs.add(SCloner.clone(args[p], procs));
-										else
+										if(hasAnnotation(pannos[p], NoCopy.class))
 											myargs.add(args[p]);
+										else
+											myargs.add(SCloner.clone(args[p], procs));
 									}
 								}
 								
@@ -155,8 +153,38 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
 						        {
 						        	//System.out.println("already on agent: "+getId());
-						        	return invokeMethod(comp, pojo, myargs, method);
-						        	//return method.invoke(pojo, myargs);
+						        	if(ret instanceof IIntermediateFuture)
+						        	{
+						        		((IIntermediateFuture)invokeMethod(comp, pojo, myargs, method)).next(val ->
+							            {
+							            	if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
+							            	{
+												val = SCloner.clone(val, procs);
+												//System.out.println("cloned val: "+val);
+							            	}
+											((IntermediateFuture)ret).addIntermediateResult(val);
+							            	
+							            })
+							        	.finished(Void -> ((IntermediateFuture)ret).setFinished())
+							        	.catchEx(ret);
+						        	}
+						        	else if(ret instanceof IFuture)
+						        	{
+						        		((IFuture)invokeMethod(comp, pojo, myargs, method)).then(val ->
+							            {
+							            	if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
+							            	{
+												Object val2 = SCloner.clone(val, procs);
+												//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
+												val = val2;
+							            	}
+											ret.setResult(val);
+							            }).catchEx(ret);
+						        	}
+						        	else
+						        	{
+						        		invokeMethod(comp, pojo, myargs, method);
+						        	}
 						        }
 						        else
 						        {
@@ -178,7 +206,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							            }))
 							        	.next(val ->
 							            {
-							            	if(hasCopyAnnotation(method.getAnnotatedReturnType().getAnnotations()))
+							            	if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
 							            	{
 												val = SCloner.clone(val, procs);
 												//System.out.println("cloned val: "+val);
@@ -189,7 +217,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							        	.finished(Void -> ((IntermediateFuture)ret).setFinished())
 							        	.catchEx(ret);
 						        	}
-						        	else
+						        	else if(ret instanceof IFuture)
 						        	{
 						        		scheduleAsyncStep(() ->
 							            {
@@ -198,14 +226,18 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							            })
 						        		.then(val ->
 							            {
-							            	if(hasCopyAnnotation(method.getAnnotatedReturnType().getAnnotations()))
+							            	if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
 							            	{
 												Object val2 = SCloner.clone(val, procs);
-												System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
+												//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
 												val = val2;
 							            	}
 											ret.setResult(val);
 							            }).catchEx(ret);
+						        	}
+						        	else
+						        	{
+						        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method));
 						        	}
 						        }
 						        
@@ -225,13 +257,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					return null;
 				}
-				
-				/*protected ValueProvider getValueProvider()
-				{
-					if(valpro==null)
-						valpro = new ValueProvider(comp);
-					return valpro;
-				}*/
 				
 				protected Object invokeMethod(Component component, Object pojo, List<Object> args, Method method)
 				{
@@ -256,16 +281,16 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					return null;
 				}
 				
-				protected boolean hasCopyAnnotation(Annotation[] pannos)
+				protected boolean hasAnnotation(Annotation[] pannos, Class<? extends Annotation> anntype) 
 				{
-					for(int a = 0; a < pannos.length; a++)
-					{
-						if(pannos[a] instanceof Copy)
-						{
-							return true;
-						}
-					}
-					return false;
+				    for (Annotation anno : pannos) 
+				    {
+				        if (anno.annotationType().equals(anntype)) 
+				        {
+				            return true;
+				        }
+				    }
+				    return false;
 				}
 				
 				@Override
