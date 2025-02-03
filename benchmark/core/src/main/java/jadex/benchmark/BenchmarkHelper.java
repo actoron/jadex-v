@@ -164,32 +164,32 @@ public class BenchmarkHelper
 		double	pct	= 0;
 		String	caller	= getCaller();
 		Path	db	= Path.of(".benchmark_"+EXEC_ENV, caller+".json");
-		double	prev	= 0;
+		double	best	= 0;
 		double	last	= 0;
 		long	new_date	= System.currentTimeMillis();
-		long	prev_date	= new_date;
+		long	best_date	= new_date;
 		
 		if(db.toFile().exists())
 		{
 			JsonValue	val	= Json.parse(Files.readString(db));
-			prev	= ((JsonObject)val).get("best").asDouble();
+			best	= ((JsonObject)val).get("best").asDouble();
 			last	= ((JsonObject)val).get("last").asDouble();
 			
-			pct	= (value - prev)*100.0/prev;
+			pct	= (value - best)*100.0/best;
 			System.out.println("Change(%): "+pct);
 			
 			// Write new value if two better values in a row
-			if(last<=prev && value<=prev)
+			if(last<=best && value<=best)
 			{
 				// Use only second best value to avoid outliers
-				prev	= Math.max(last, value);
+				best	= Math.max(last, value);
 			}
 			
 			// Keep old best date
 			else
 			{
 				JsonValue	dateval	= ((JsonObject)val).get("best_date");
-				prev_date	= dateval!=null ? dateval.asLong(): 0;
+				best_date	= dateval!=null ? dateval.asLong(): 0;
 			}
 			
 		}
@@ -198,8 +198,8 @@ public class BenchmarkHelper
 		{
 			// Write to file
 			JsonObject	obj	= new JsonObject();
-			obj.add("best", prev==0 ? value : Math.min(value, prev));
-			obj.add("best_date", prev_date);
+			obj.add("best", best==0 ? value : best);
+			obj.add("best_date", best_date);
 			obj.add("last", value);
 			obj.add("last_date", new_date);
 			db.toFile().getParentFile().mkdirs();
@@ -213,7 +213,7 @@ public class BenchmarkHelper
 //				+" benchmark_execenv="+EXEC_ENV
 				  "benchmark_name="+caller
 				+" benchmark_value="+value
-				+" benchmark_prev="+prev
+				+" benchmark_prev="+best
 				+" benchmark_pct="+pct);
 			// JSON
 //			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
