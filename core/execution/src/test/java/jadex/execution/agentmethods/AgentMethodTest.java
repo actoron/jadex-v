@@ -2,6 +2,7 @@ package jadex.execution.agentmethods;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
+import jadex.core.InvalidComponentAccessException;
 import jadex.execution.AgentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.NoCopy;
@@ -96,10 +98,22 @@ public class AgentMethodTest
 		}).printOnEx();
 	}
 	
+	@Test
+	public void	testNonAgentMethod()
+	{
+		IExternalAccess agent = IComponentManager.get().create(new MyPojo()).get();
+		MyPojo pojo = agent.getPojo(MyPojo.class);
+		
+		assertThrows(InvalidComponentAccessException.class, () -> 
+		{
+            pojo.getData().get();
+        });
+		
+		agent.terminate();
+	}
+	
 	/*public static void main(String[] args) 
 	{
-		
-			
 		MyPojo pojo = agent.getPojo(MyPojo.class);
 		
 		//System.out.println(pojo.getClass());
@@ -201,6 +215,11 @@ public class AgentMethodTest
 			}
 			ret.setFinished();
 			return ret;
+		}
+		
+		public IFuture<String> getData()
+		{
+			return new Future<>("some data");
 		}
 	}
 }

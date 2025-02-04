@@ -1,6 +1,7 @@
 package jadex.execution.impl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,17 +26,17 @@ import jadex.core.IComponentManager;
 import jadex.core.IExternalAccess;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
+import jadex.core.InvalidComponentAccessException;
 import jadex.core.LambdaPojo;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
-import jadex.core.impl.ValueProvider;
 import jadex.execution.AgentMethod;
-import jadex.execution.NoCopy;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
+import jadex.execution.NoCopy;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -126,6 +127,15 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						
 						Object proxy = new ByteBuddy()
 							.subclass(pojo.getClass())
+							.method(ElementMatchers.not(ElementMatchers.isAnnotatedWith(AgentMethod.class)))
+				            .intercept(InvocationHandlerAdapter.of(new InvocationHandler() 
+				            {
+				            	@Override
+				            	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable 
+				                {
+				            		throw new InvalidComponentAccessException(comp.getId());
+				                }
+				            }))
 							.method(ElementMatchers.isAnnotatedWith(AgentMethod.class)) 
 							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 							{
