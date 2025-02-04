@@ -75,7 +75,7 @@ benchmark:
     - ./benchmark.sh || true
     - ./benchmark.sh || true
     - ./benchmark.sh || true
-  timeout: 6h
+  timeout: 48h
   # needs: ["build"]
   allow_failure: true
   cache:

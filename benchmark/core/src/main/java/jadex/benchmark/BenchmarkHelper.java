@@ -164,44 +164,42 @@ public class BenchmarkHelper
 		double	pct	= 0;
 		String	caller	= getCaller();
 		Path	db	= Path.of(".benchmark_"+EXEC_ENV, caller+".json");
-		double	prev	= 0;
-		long	prev_date	= 0;
+		double	best	= 0;
+		double	last	= 0;
 		long	new_date	= System.currentTimeMillis();
+		long	best_date	= new_date;
 		
 		if(db.toFile().exists())
 		{
 			JsonValue	val	= Json.parse(Files.readString(db));
-			if(val.isNumber())	// Legacy support -> can be removed at some point
+			best	= ((JsonObject)val).get("best").asDouble();
+			last	= ((JsonObject)val).get("last").asDouble();
+			
+			pct	= (value - best)*100.0/best;
+			System.out.println("Change(%): "+pct);
+			
+			// Write new value if two better values in a row
+			if(last<=best && value<=best)
 			{
-				prev	= val.asDouble();
+				// Use only second best value to avoid outliers
+				best	= Math.max(last, value);
 			}
+			
+			// Keep old best date
 			else
 			{
-				prev	= ((JsonObject)val).get("best").asDouble();
-				
-				// Use current date as best date if new value is lower or equal
-				if(value<=prev)
-				{
-					prev_date	= new_date;
-				}
-				
-				// Keep old best date
-				else
-				{
-					JsonValue	dateval	= ((JsonObject)val).get("best_date");
-					prev_date	= dateval!=null ? dateval.asLong(): 0;
-				}
+				JsonValue	dateval	= ((JsonObject)val).get("best_date");
+				best_date	= dateval!=null ? dateval.asLong(): 0;
 			}
-			pct	= (value - prev)*100.0/prev;
-			System.out.println("Change(%): "+pct);
+			
 		}
 
 		if(write)
 		{
 			// Write to file
 			JsonObject	obj	= new JsonObject();
-			obj.add("best", prev==0 ? value : Math.min(value, prev));
-			obj.add("best_date", prev_date);
+			obj.add("best", best==0 ? value : best);
+			obj.add("best_date", best_date);
 			obj.add("last", value);
 			obj.add("last_date", new_date);
 			db.toFile().getParentFile().mkdirs();
@@ -215,7 +213,7 @@ public class BenchmarkHelper
 //				+" benchmark_execenv="+EXEC_ENV
 				  "benchmark_name="+caller
 				+" benchmark_value="+value
-				+" benchmark_prev="+prev
+				+" benchmark_prev="+best
 				+" benchmark_pct="+pct);
 			// JSON
 //			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
