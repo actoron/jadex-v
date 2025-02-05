@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +134,14 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				            	@Override
 				            	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable 
 				                {
-				            		throw new InvalidComponentAccessException(comp.getId());
+				            		if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
+				            		{   
+				            			return invokeMethod(comp, pojo, Arrays.asList(args), method);
+				            		}
+				            		else
+				            		{
+				            			throw new InvalidComponentAccessException(comp.getId());
+				            		}
 				                }
 				            }))
 							.method(ElementMatchers.isAnnotatedWith(AgentMethod.class)) 
