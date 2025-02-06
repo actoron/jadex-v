@@ -18,7 +18,7 @@ import jadex.common.IFilter;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.AgentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.ITimerCreator;
@@ -691,7 +691,7 @@ public class Environment
 		dummy.setPosition(new Vector2Double(0.5, 0.5));
 		env.addSpaceObject(dummy);
 		
-		IExternalAccess access = IComponentManager.get().create(new HelloEnv(id)).get();
+		IComponentHandle access = IComponentManager.get().create(new HelloEnv(id)).get();
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
