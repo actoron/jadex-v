@@ -105,7 +105,7 @@ public class EnvGui extends ApplicationAdapter
         batch.draw(backgroundtex, 0, 0, w, h);
                
         // Render carries
-        for(Carry carry: env.getSpaceObjectsByType(Carry.class))
+        for(Carry carry: env.getSpaceObjectsByType(Carry.class).get())
         {
         	Vector2 pos = convert(carry.getPosition());
 
@@ -124,7 +124,7 @@ public class EnvGui extends ApplicationAdapter
         }
         
         // Render producers
-        for(Producer pro: env.getSpaceObjectsByType(Producer.class))
+        for(Producer pro: env.getSpaceObjectsByType(Producer.class).get())
         {
         	Vector2 pos = convert(pro.getPosition());
 
@@ -143,7 +143,7 @@ public class EnvGui extends ApplicationAdapter
         }
         
         // Render sentries
-        for(Sentry sentry: env.getSpaceObjectsByType(Sentry.class))
+        for(Sentry sentry: env.getSpaceObjectsByType(Sentry.class).get())
         {
         	Vector2 pos = convert(sentry.getPosition());
 
@@ -162,7 +162,7 @@ public class EnvGui extends ApplicationAdapter
         }
         
         // Render targets
-        for(Target target: env.getSpaceObjectsByType(Target.class))
+        for(Target target: env.getSpaceObjectsByType(Target.class).get())
         {
         	Vector2 pos = convert(target.getPosition());
 
@@ -178,7 +178,7 @@ public class EnvGui extends ApplicationAdapter
 		    //font.draw(batch, "halloooo", wpos.x, wpos.y);
         }
         
-        Homebase base = env.getSpaceObjectsByType(Homebase.class).iterator().next();
+        Homebase base = env.getSpaceObjectsByType(Homebase.class).get().iterator().next();
         Vector2 pos = convert(base.getPosition());
     	Vector2 wpos = mapEnvToWorld(pos);
     	Vector2 wdim = mapEnvToWorld(new Vector2((float)base.getWidth(), (float)base.getHeight()));

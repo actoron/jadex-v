@@ -10,6 +10,11 @@ import jadex.future.TerminableFuture;
 
 public class MarsworldEnvironment extends Environment 
 {
+	public MarsworldEnvironment() 
+	{
+		this(null, 10);
+	}
+	
 	public MarsworldEnvironment(int sps) 
 	{
 		this(null, sps);
@@ -24,7 +29,7 @@ public class MarsworldEnvironment extends Environment
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
-		addTask(new Task(ret, delta ->
+		addTask(new EnvironmentTask(this, ret, delta ->
 		{
 			return performLoad(carry, target, delta, true, 0l);
 		}));
@@ -36,7 +41,7 @@ public class MarsworldEnvironment extends Environment
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
-		addTask(new Task(ret, delta ->
+		addTask(new EnvironmentTask(this, ret, delta ->
 		{
 			return performLoad(carry, target, delta, false, 0l);
 		}));
@@ -112,7 +117,7 @@ public class MarsworldEnvironment extends Environment
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
 		long TIME = 1000;
-		addTask(new Task(ret, delta ->
+		addTask(new EnvironmentTask(this, ret, delta ->
 		{
 			return performAnalyzeTarget(sentry, target, delta, TIME);
 		}));
@@ -148,7 +153,7 @@ public class MarsworldEnvironment extends Environment
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
-		addTask(new Task(ret, delta ->
+		addTask(new EnvironmentTask(this, ret, delta ->
 		{
 			return performRotate(obj, target, delta);
 		}));
@@ -215,7 +220,7 @@ public class MarsworldEnvironment extends Environment
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
-		addTask(new Task(ret, delta ->
+		addTask(new EnvironmentTask(this, ret, delta ->
 		{
 			return performProduce(producer, target, delta, 100); // todo!
 		}));

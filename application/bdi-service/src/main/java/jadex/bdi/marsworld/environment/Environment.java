@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jadex.bdi.marsworld.math.IVector1;
@@ -17,12 +16,13 @@ import jadex.bdi.marsworld.math.Vector2Double;
 import jadex.common.IFilter;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.execution.AgentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.ITimerCreator;
 import jadex.execution.impl.ITimerContext;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
@@ -57,7 +57,7 @@ public class Environment
 	
 	protected Map<String, List<SpaceObject>> spaceobjectsbytype;
 	
-	protected List<Task> tasks;
+	protected List<EnvironmentTask> tasks;
 	
 	protected Map<SubscriptionIntermediateFuture<? extends EnvironmentEvent>, ObserverInfo> observers;
 
@@ -66,17 +66,25 @@ public class Environment
 	
 	public static String add(Environment env)
 	{
-		if(env.getId()!=null && environments.get(env.getId())!=null)
+		String id = env.getId().get();
+		if(id!=null && environments.get(id)!=null)
 			System.out.println("replacing environment: "+env.getId());
-		if(env.getId()==null)
-			env.setId(""+envcnt.getAndIncrement());
-		environments.put(env.getId(), env);
-		return env.getId();
+		if(id==null)
+			env.setId(""+envcnt.getAndIncrement()).get();
+		id = env.getId().get();
+		//System.out.println("add "+env.hashCode()+" "+id);
+		environments.put(id, env);
+		return id;
 	}
 	
 	public static Environment get(String id)
 	{
 		return environments.get(id);
+	}
+	
+	public Environment() 
+	{
+		this(null, 30);
 	}
 	
 	public Environment(int sps) 
@@ -105,21 +113,19 @@ public class Environment
 		this.spaceobjects = new HashMap<String, SpaceObject>();
 		this.spaceobjectsbytype = new HashMap<String, List<SpaceObject>>();
 		this.kdtree = new KdTree();
-		this.tasks = new ArrayList<Task>();
+		this.tasks = new ArrayList<EnvironmentTask>();
 		this.observers = new HashMap<>();
-		
-		addTask(new Task(null, Void ->
-		{
-			kdtree.rebuild();
-			return false;
-		}));
-		
-		
 	}
 	
 	@OnStart
 	protected void start()
 	{
+		addTask(new EnvironmentTask(this, null, Void ->
+		{
+			kdtree.rebuild();
+			return false;
+		}));
+		
 		performStep(0);
 		
 		/*if(timercontext==null)
@@ -131,9 +137,9 @@ public class Environment
 	//-------- The agent methods --------
 	
 	@AgentMethod
-	public IFuture<Void> addSpaceObject(SpaceObject so)
+	public IFuture<SpaceObject> addSpaceObject(SpaceObject obj)
 	{
-		SpaceObject obj = so.copy(); // Clone the object
+		//SpaceObject obj = so.copy(); // Clone the object
 		
 		obj.setId(""+objcnt.getAndIncrement()); // Set the id - env controls object ids
 
@@ -152,7 +158,7 @@ public class Environment
 		}
 		typeobjects.add(obj);
 		
-		return IFuture.DONE;
+		return new Future<>(obj);
 	}
 	
 	@AgentMethod
@@ -164,7 +170,7 @@ public class Environment
 			observers.remove(ret);
 		});
 		
-		observers.put(ret, new ObserverInfo(ret, getSpaceObject(obj.getId())));
+		observers.put(ret, new ObserverInfo(ret, internalGetSpaceObject(obj.getId())));
 		
 		return ret;
 	}
@@ -180,9 +186,9 @@ public class Environment
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
-		addTask(new Task(ret, delta ->
+		addTask(new EnvironmentTask(this, ret, delta ->
 		{
-			return performMove(getSpaceObject(obj.getId()), destination, speed, delta, tolerance);
+			return performMove(internalGetSpaceObject(obj.getId()), destination, speed, delta, tolerance);
 		}));
 		
 		return ret;
@@ -219,9 +225,9 @@ public class Environment
 	 * @return The space objects of the desired type (cloned).
 	 */
 	@AgentMethod
-	public <T extends SpaceObject> Set<T> getSpaceObjectsByType(Class<T> type)
+	public <T extends SpaceObject> IFuture<Set<T>> getSpaceObjectsByType(Class<T> type)
 	{
-		return (Set<T>)getSpaceObjectsByType(SReflect.getUnqualifiedClassName(type));
+		return (IFuture)getSpaceObjectsByType(SReflect.getUnqualifiedClassName(type));
 	}
 	
 	/**
@@ -230,10 +236,10 @@ public class Environment
 	 * @return The space objects of the desired type (cloned).
 	 */
 	@AgentMethod
-	public Set<SpaceObject> getSpaceObjectsByType(String type) 
+	public IFuture<Set<SpaceObject>> getSpaceObjectsByType(String type) 
 	{
 	    List<SpaceObject> ret = spaceobjectsbytype.get(type);
-	    return ret == null ? Set.of() : ret.stream().map(SpaceObject::copy).collect(Collectors.toSet());
+	    return new Future<>(ret == null ? Set.of() : ret.stream().map(SpaceObject::copy).collect(Collectors.toSet()));
 	}
 	
 	/**
@@ -241,9 +247,9 @@ public class Environment
 	 *  @return All space objects.
 	 */
 	@AgentMethod
-	public Object[] getSpaceObjects()
+	public IFuture<Object[]> getSpaceObjects()
 	{
-		return spaceobjects.values().toArray();
+		return new Future<>(spaceobjects.values().toArray());
 	}
 	
 	/**
@@ -252,11 +258,14 @@ public class Environment
 	 *  @return The space object.
 	 */
 	@AgentMethod
-	public SpaceObject getSpaceObject(String id)
+	public IFuture<SpaceObject> getSpaceObject(String id)
 	{
-		SpaceObject ret = spaceobjects.get(id);
-		if(ret==null)
-			throw new RuntimeException("Space object not found: "+id);
+		Future<SpaceObject> ret = new Future<>();
+		SpaceObject so = spaceobjects.get(id);
+		if(so==null)
+			ret.setException(new RuntimeException("Space object not found: "+id));
+		else
+			ret.setResult(so);
 		return ret;
 	}
 	
@@ -267,25 +276,26 @@ public class Environment
 	}
 
 	@AgentMethod
-	public void setAreasize(IVector2 areasize) 
+	public IFuture<Void> setAreasize(IVector2 areasize) 
 	{
 		this.areasize = areasize;
+		return IFuture.DONE;
 	}
 	
 	@AgentMethod
-	public long getStepDelay()
+	public IFuture<Long> getStepDelay()
 	{
-		return 1000/sps;
+		return new Future<Long>((long)(1000/sps));
 	}
 	
 	@AgentMethod
-	public IVector2 getRandomPosition()
+	public IFuture<IVector2> getRandomPosition()
 	{
 		return getRandomPosition(Vector2Double.ZERO);
 	}
 	
 	@AgentMethod
-	public IVector2 getRandomPosition(IVector2 distance)
+	public IFuture<IVector2> getRandomPosition(IVector2 distance)
 	{
 		if(distance == null)
 			distance = Vector2Double.ZERO;
@@ -295,7 +305,7 @@ public class Environment
 		position.randomY(distance.getY(), position.getY());
 		
 //		System.out.println("position: "+position);
-		return position;
+		return new Future<>(position);
 	}
 	
 	/**
@@ -303,17 +313,48 @@ public class Environment
 	 *  @return The id.
 	 */
 	@AgentMethod
-	public String getId() 
+	public IFuture<String> getId() 
 	{
-		return id;
+		//System.out.println("hash getId: "+this.hashCode()+" "+id);
+		return new Future<>(id);
+	}
+	
+	// Called from Environment.add
+	@AgentMethod
+	public IFuture<Void> setId(String id) 
+	{
+		//System.out.println("hash setId: "+this.hashCode()+" "+id);
+		this.id = id;
+		return IFuture.DONE;
 	}
 	
 	//-------- internal methods --------
 	
+	protected long internalGetStepDelay()
+	{
+		return 1000/sps;
+	}
+	
+	/**
+	 *  Get a space object by id.
+	 *  @param id
+	 *  @return The space object.
+	 */
+	@AgentMethod
+	public SpaceObject internalGetSpaceObject(String id)
+	{
+		SpaceObject so = spaceobjects.get(id);
+		if(id==null)
+			throw new NullPointerException("Id must not null");
+		if(so==null)
+			throw new RuntimeException("Space object not found: "+id);
+		return so;
+	}
+	
 	protected void performStep(long lasttime)
 	{
 		long time = System.currentTimeMillis();
-		long delta = lasttime!=0? time-lasttime: getStepDelay();
+		long delta = lasttime!=0? time-lasttime: internalGetStepDelay();
 		
 		//System.out.println("step: "+delta);
 		
@@ -321,7 +362,7 @@ public class Environment
 		
 		notifyObservers();
 		
-		agent.getFeature(IExecutionFeature.class).waitForDelay(getStepDelay())
+		agent.getFeature(IExecutionFeature.class).waitForDelay(internalGetStepDelay())
 		.then(v -> performStep(time))
 		.catchEx(ex -> ex.printStackTrace());
 		
@@ -332,7 +373,7 @@ public class Environment
 	
 	protected void performTasks(long delta)
 	{
-		for(Task task: tasks.toArray(new Task[tasks.size()]))
+		for(EnvironmentTask task: tasks.toArray(new EnvironmentTask[tasks.size()]))
 		{
 			try
 			{
@@ -383,21 +424,16 @@ public class Environment
 	{
 		return 0.1;
 	}
-	
-	protected void setId(String id) 
-	{
-		this.id = id;
-	}
 
-	protected void addTask(Task task)
+	protected void addTask(EnvironmentTask task)
 	{
 		task.setId(""+objcnt.getAndIncrement());
 		tasks.add(task);
 	}
 	
-	protected void removeTask(Task task)
+	protected void removeTask(EnvironmentTask task)
 	{
-		for(Task t: tasks.toArray(new Task[tasks.size()]))
+		for(EnvironmentTask t: tasks.toArray(new EnvironmentTask[tasks.size()]))
 		{
 			if(t.getId().equals(task.getId()))
 				tasks.remove(t);
@@ -448,7 +484,7 @@ public class Environment
 	 */
 	protected void setPosition(SpaceObject obj, IVector2 pos)
 	{
-		obj = getSpaceObject(id);
+		obj = internalGetSpaceObject(id);
 		IVector2 newpos = adjustPosition(pos);
 		obj.setPosition(newpos);
 	}
@@ -516,114 +552,6 @@ public class Environment
 		}
 		
 		return ret;
-	}
-
-	class Task
-	{
-		protected String id;
-		
-		protected TerminableFuture<Void> future;
-		
-		protected Function<Long, Boolean> task;
-		
-		public Task(TerminableFuture<Void> future, Function<Long, Boolean> task) 
-		{
-			this.future = future;
-			this.task = task;
-			
-			if(future!=null)
-			{
-				future.setTerminationCommand(ex ->
-				{
-					removeTask(this);
-				});
-			}
-		}
-		
-		public String getId() 
-		{
-			return id;
-		}
-
-		public void setId(String id) 
-		{
-			this.id = id;
-		}
-
-		public TerminableFuture<Void> getFuture() 
-		{
-			return future;
-		}
-
-		public Function<Long, Boolean> getTask() 
-		{
-			return task;
-		}
-
-		@Override
-		public int hashCode() 
-		{
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getEnclosingInstance().hashCode();
-			result = prime * result + Objects.hash(id);
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) 
-		{
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			Task other = (Task) obj;
-			if (!getEnclosingInstance().equals(other.getEnclosingInstance()))
-				return false;
-			return Objects.equals(id, other.id);
-		}
-
-		private Environment getEnclosingInstance() 
-		{
-			return Environment.this;
-		}
-	}
-	
-	protected static class ObserverInfo
-	{
-		protected SubscriptionIntermediateFuture<? extends EnvironmentEvent> observer;
-		
-		protected SpaceObject obj;
-		
-		protected Set<SpaceObject> lastvision;
-
-		public ObserverInfo(SubscriptionIntermediateFuture<? extends EnvironmentEvent> observer, SpaceObject obj) 
-		{
-			this.observer = observer;
-			this.obj = obj;
-		}
-
-		public SubscriptionIntermediateFuture<? extends EnvironmentEvent> getObserver() 
-		{
-			return observer;
-		}
-
-		public SpaceObject getSpaceObject() 
-		{
-			return obj;
-		}
-
-		public Set<SpaceObject> getLastVision() 
-		{
-			return lastvision;
-		}
-
-		public void setLastVision(Set<SpaceObject> lastvision) 
-		{
-			this.lastvision = lastvision;
-		}
 	}
 
 	@Override

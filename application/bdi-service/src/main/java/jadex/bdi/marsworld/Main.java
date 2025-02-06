@@ -24,17 +24,17 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-		MarsworldEnvironment env = new MarsworldEnvironment(5);
+		MarsworldEnvironment env = IComponentManager.get().create(new MarsworldEnvironment(5)).get().getPojoHandle(MarsworldEnvironment.class);
 		String id = Environment.add(env);
+		//System.out.println("hash2: "+env.hashCode());
 		
-		env.addSpaceObject(new Homebase(new Vector2Double(0.3, 0.3), System.currentTimeMillis()+90000));
-		
-		env.addSpaceObject(new Target(new Vector2Double(0.1, 0.2), 0));
-		env.addSpaceObject(new Target(new Vector2Double(0.05, 0.7), 200));
-		env.addSpaceObject(new Target(new Vector2Double(0.5, 0.6), 0));
-		env.addSpaceObject(new Target(new Vector2Double(0.8, 0.1), 50));
-		env.addSpaceObject(new Target(new Vector2Double(0.7, 0.4), 100));
-		env.addSpaceObject(new Target(new Vector2Double(0.8, 0.8), 25));
+		env.addSpaceObject(new Homebase(new Vector2Double(0.3, 0.3), System.currentTimeMillis()+90000)).get();
+		env.addSpaceObject(new Target(new Vector2Double(0.1, 0.2), 0)).get();
+		env.addSpaceObject(new Target(new Vector2Double(0.05, 0.7), 200)).get();
+		env.addSpaceObject(new Target(new Vector2Double(0.5, 0.6), 0)).get();
+		env.addSpaceObject(new Target(new Vector2Double(0.8, 0.1), 50)).get();
+		env.addSpaceObject(new Target(new Vector2Double(0.7, 0.4), 100)).get();
+		env.addSpaceObject(new Target(new Vector2Double(0.8, 0.8), 25)).get();
 		
 		int ccnt = 3;
 		int pcnt = 2;

@@ -27,7 +27,7 @@ public class AgentMethodTest
 	public void	testVoidMethod()
 	{
 		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
-		MyPojo pojo = agent.getPojo(MyPojo.class);
+		MyPojo pojo = agent.getPojoHandle(MyPojo.class);
 		
 		assertDoesNotThrow(() -> 
 		{
@@ -41,7 +41,7 @@ public class AgentMethodTest
 	public void	testCloneResult()
 	{
 		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
-		MyPojo pojo = agent.getPojo(MyPojo.class);
+		MyPojo pojo = agent.getPojoHandle(MyPojo.class);
 		
 		assertDoesNotThrow(() -> 
 		{
@@ -57,7 +57,7 @@ public class AgentMethodTest
 	public void	testCloneParameter()
 	{
 		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
-		MyPojo pojo = agent.getPojo(MyPojo.class);
+		MyPojo pojo = agent.getPojoHandle(MyPojo.class);
 		
 		assertDoesNotThrow(() -> 
 		{
@@ -73,7 +73,7 @@ public class AgentMethodTest
 	public void	testSubscription()
 	{
 		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
-		MyPojo pojo = agent.getPojo(MyPojo.class);
+		MyPojo pojo = agent.getPojoHandle(MyPojo.class);
 		
 		Future<Void> fin = new Future<Void>();
 		
@@ -102,7 +102,7 @@ public class AgentMethodTest
 	public void	testNonAgentMethod()
 	{
 		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
-		MyPojo pojo = agent.getPojo(MyPojo.class);
+		MyPojo pojo = agent.getPojoHandle(MyPojo.class);
 		
 		assertThrows(InvalidComponentAccessException.class, () -> 
 		{

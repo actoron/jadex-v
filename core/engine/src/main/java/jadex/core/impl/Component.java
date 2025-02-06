@@ -427,7 +427,7 @@ public class Component implements IComponent
 					}
 					
 					@Override
-					public <T> T getPojo(Class<T> type)
+					public <T> T getPojoHandle(Class<T> type)
 					{
 						throw new UnsupportedOperationException();
 					}

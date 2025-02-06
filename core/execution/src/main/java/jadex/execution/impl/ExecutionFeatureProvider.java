@@ -6,8 +6,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
@@ -23,8 +25,8 @@ import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
@@ -90,6 +92,15 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			return new IComponentHandle() 
 			{
+				public static Set<String> ALLOWED_METHODS = new HashSet<>();
+				
+				static
+				{
+					ALLOWED_METHODS.add("toString");
+					ALLOWED_METHODS.add("hashCode");
+					ALLOWED_METHODS.add("equals");
+				}
+				
 				protected Object pojo;
 				
 				@Override
@@ -105,7 +116,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				
 				@Override
-				public <T> T getPojo(Class<T> type)
+				public <T> T getPojoHandle(Class<T> type)
 				{
 					if(pojo==null)
 					{
@@ -136,7 +147,11 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				                {
 				            		if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
 				            		{   
-				            			return invokeMethod(comp, pojo, Arrays.asList(args), method);
+				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
+				            		}
+				            		else if(ALLOWED_METHODS.contains(method.getName()))
+				            		{
+				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
 				            		}
 				            		else
 				            		{
@@ -157,13 +172,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								
 								for(int p = 0; p < ptypes.length; p++)
 								{
-									for(int a = 0; a < pannos[p].length; a++)
-									{
-										if(hasAnnotation(pannos[p], NoCopy.class))
-											myargs.add(args[p]);
-										else
-											myargs.add(SCloner.clone(args[p], procs));
-									}
+									if(hasAnnotation(pannos[p], NoCopy.class))
+										myargs.add(args[p]);
+									else
+										myargs.add(SCloner.clone(args[p], procs));
 								}
 								
 								//final Object[] myargs = copyargs.toArray();
@@ -199,9 +211,14 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 											ret.setResult(val);
 							            }).catchEx(ret);
 						        	}
-						        	else
+						        	else if(method.getReturnType().equals(void.class))
 						        	{
 						        		invokeMethod(comp, pojo, myargs, method);
+						        	}
+						        	else
+						        	{
+						        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
+						        		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
 						        	}
 						        }
 						        else
@@ -253,9 +270,14 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 											ret.setResult(val);
 							            }).catchEx(ret);
 						        	}
-						        	else
+						        	else if(method.getReturnType().equals(void.class))
 						        	{
 						        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method));
+						        	}
+						        	else 
+						        	{
+						        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
+						          		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
 						        	}
 						        }
 						        
@@ -266,6 +288,8 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			                .getLoaded()
 			                .getConstructor()
 			                .newInstance();
+						
+						//System.out.println("proxy hashCode: "+proxy.hashCode());
 						
 						return proxy;
 					}

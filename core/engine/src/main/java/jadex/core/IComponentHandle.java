@@ -113,6 +113,6 @@ public interface IComponentHandle
 	 *  Get the local pojo. Allows for calling pojo methods.
 	 *  @return The pojo.
 	 */
-	public <T> T getPojo(Class<T> type);
+	public <T> T getPojoHandle(Class<T> type);
 	
 }

@@ -54,7 +54,7 @@ public class RandomWalkPlan
 		}
 		else
 		{*/
-			dest	= capa.getEnvironment().getRandomPosition(Vector2Int.ZERO);
+			dest	= capa.getEnvironment().getRandomPosition(Vector2Int.ZERO).get();
 		//}
 		Move moveto = capa.new Move(dest);
 		rplan.dispatchSubgoal(moveto).get();

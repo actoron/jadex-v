@@ -2,7 +2,6 @@ package jadex.bdi.marsworld;
 
 import java.util.Set;
 
-import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
 import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Environment;
@@ -44,7 +43,7 @@ public abstract class BaseAgent
 	public void body()
 	{
 		self = createSpaceObject();
-		movecapa.getEnvironment().addSpaceObject(self);
+		self = (BaseObject)movecapa.getEnvironment().addSpaceObject(self).get();
 		movecapa.getEnvironment().observeObject(self).next(e ->
 		{
 			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
