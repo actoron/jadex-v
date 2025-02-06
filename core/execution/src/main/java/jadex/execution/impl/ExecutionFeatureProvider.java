@@ -24,7 +24,7 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
@@ -88,7 +88,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		// Init the component with schedule step functionality (hack?!)
 		Component.setExternalAccessFactory(comp ->
 		{
-			return new IExternalAccess() 
+			return new IComponentHandle() 
 			{
 				protected Object pojo;
 				
@@ -466,9 +466,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}
 	
 	@Override
-	public IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
+	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		IExternalAccess ret;
+		IComponentHandle ret;
 		
 		if(pojo instanceof Runnable)
 		{

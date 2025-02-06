@@ -37,7 +37,7 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.transformation.annotations.Classname;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -89,7 +89,7 @@ public class UserInteractionTask implements ITask
 			}
 		}));*/
 		
-		final IExternalAccess	exta	= instance.getExternalAccess();
+		final IComponentHandle	exta	= instance.getComponentHandle();
 		MActivity	task	= context.getModelElement();
 		final String	taskname	= task.getName();
 

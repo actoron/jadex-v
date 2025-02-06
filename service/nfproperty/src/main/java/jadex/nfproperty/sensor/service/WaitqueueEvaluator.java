@@ -1,7 +1,7 @@
 package jadex.nfproperty.sensor.service;
 
 import jadex.common.MethodInfo;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.nfproperty.impl.search.BasicEvaluator;
 
 /**
@@ -16,7 +16,7 @@ public class WaitqueueEvaluator extends BasicEvaluator<Integer>
 	/**
 	 *  Create a new evaluator.
 	 */
-	public WaitqueueEvaluator(IExternalAccess component, MethodInfo mi) throws Exception
+	public WaitqueueEvaluator(IComponentHandle component, MethodInfo mi) throws Exception
 	{
 		this(component, mi, 10);
 	}
@@ -24,7 +24,7 @@ public class WaitqueueEvaluator extends BasicEvaluator<Integer>
 	/**
 	 *  Create a new evaluator.
 	 */
-	public WaitqueueEvaluator(IExternalAccess component, MethodInfo mi, int max) throws Exception
+	public WaitqueueEvaluator(IComponentHandle component, MethodInfo mi, int max) throws Exception
 	{
 		super(component, WaitqueueProperty.NAME, mi);
 		this.max = max;

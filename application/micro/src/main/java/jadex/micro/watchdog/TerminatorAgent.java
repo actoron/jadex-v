@@ -6,7 +6,7 @@ import java.util.List;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -44,7 +44,7 @@ public class TerminatorAgent
 				IService service = (IService)killlist.get(idx);
 				ComponentIdentifier victim = service.getServiceId().getProviderId();
 				
-				IExternalAccess access = agent.getExternalAccess(victim);
+				IComponentHandle access = agent.getComponentHandle(victim);
 				access.scheduleStep(agent ->
 				{
 					System.out.println("killing: "+victim);

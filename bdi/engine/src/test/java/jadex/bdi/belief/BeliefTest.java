@@ -23,7 +23,7 @@ import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.impl.IInternalBDIAgentFeature;
 import jadex.common.Tuple2;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -96,7 +96,7 @@ public class BeliefTest
 	public void testValBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	fut	= new Future<>();
 		
 		exta.scheduleStep(() ->
@@ -112,7 +112,7 @@ public class BeliefTest
 	public void testBeanBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	fut	= new Future<>();
 		
 		exta.scheduleStep(() ->
@@ -128,7 +128,7 @@ public class BeliefTest
 	public void testListBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();
@@ -153,7 +153,7 @@ public class BeliefTest
 	public void testSetBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();
 		
@@ -174,7 +174,7 @@ public class BeliefTest
 	public void testMapBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();
@@ -199,7 +199,7 @@ public class BeliefTest
 	public void testDynamicBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<Integer>	firstfut	= new Future<>();
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<Integer>	secondfut	= new Future<>();
@@ -232,7 +232,7 @@ public class BeliefTest
 	public void testUpdaterateBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<Long>	firstfut	= new Future<>();
 		Future<Long>	secondfut	= new Future<>();
 		Future<IEvent>	changedfut	= new Future<>();

@@ -2,7 +2,7 @@ package jadex.nfproperty.impl;
 
 
 import jadex.common.MethodInfo;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.IFuture;
 import jadex.providedservice.IServiceIdentifier;
 
@@ -16,7 +16,7 @@ public class NFPropertyRef<T, U> extends AbstractNFProperty<T, U>
 //	protected INFPropertyProvider source;
 	
 	/** The component of the ref. */
-	protected IExternalAccess comp;
+	protected IComponentHandle comp;
 	
 	/** The service identifier. */
 	protected IServiceIdentifier sid;
@@ -28,7 +28,7 @@ public class NFPropertyRef<T, U> extends AbstractNFProperty<T, U>
 	 *  Create a new property ref.
 	 */
 //	public NFPropertyRef(INFPropertyProvider source, IExternalAccess comp, NFPropertyMetaInfo mi)
-	public NFPropertyRef(IExternalAccess comp, NFPropertyMetaInfo mi, IServiceIdentifier sid, MethodInfo method)
+	public NFPropertyRef(IComponentHandle comp, NFPropertyMetaInfo mi, IServiceIdentifier sid, MethodInfo method)
 	{
 //		super(new NFPropertyMetaInfo(CPULoadProperty.CPULOAD, double.class, null, true, -1, Target.Root));
 		super(mi);

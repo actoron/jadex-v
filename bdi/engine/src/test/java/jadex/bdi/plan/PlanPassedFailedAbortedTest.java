@@ -17,7 +17,7 @@ import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.IPlan;
 import jadex.bdi.runtime.PlanFailureException;
 import jadex.bdi.runtime.Val;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.micro.annotation.Agent;
 
@@ -84,7 +84,7 @@ public class PlanPassedFailedAbortedTest
 	void testPlanPassed()
 	{
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.bel.set("pass"));
 		assertEquals("passed", pojo.fut.get(TestHelper.TIMEOUT));
 	}
@@ -93,7 +93,7 @@ public class PlanPassedFailedAbortedTest
 	void testPlanFailed()
 	{
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.bel.set("fail"));
 		assertEquals("failed", pojo.fut.get(TestHelper.TIMEOUT));
 	}
@@ -102,7 +102,7 @@ public class PlanPassedFailedAbortedTest
 	void testPlanAborted()
 	{
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.bel.set("abort"));
 		assertEquals("aborted", pojo.fut.get(TestHelper.TIMEOUT));
 	}

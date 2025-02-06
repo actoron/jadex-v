@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.runtime.IBDIAgent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 
 public class ReasoningBDIBenchmark
 {
@@ -15,7 +15,7 @@ public class ReasoningBDIBenchmark
 		double pct	= BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			ReasoningBDIBenchmarkAgent	pojo	= new ReasoningBDIBenchmarkAgent();
-			IExternalAccess	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IBDIAgent.create(pojo);
 			pojo.completed.get();
 			return () -> agent.terminate().get();
 		});
@@ -28,7 +28,7 @@ public class ReasoningBDIBenchmark
 		double pct	= BenchmarkHelper.benchmarkTime(() -> 
 		{
 			ReasoningBDIBenchmarkAgent	pojo	= new ReasoningBDIBenchmarkAgent();
-			IExternalAccess	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IBDIAgent.create(pojo);
 			pojo.completed.get();
 			agent.terminate().get();
 		});

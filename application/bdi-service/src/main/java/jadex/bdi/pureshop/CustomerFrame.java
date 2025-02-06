@@ -20,7 +20,7 @@ public class CustomerFrame extends JFrame
 	 */
 	public CustomerFrame(IComponent agent, ICapability capa)
 	{
-		super(agent.getExternalAccess().getId().getLocalName());
+		super(agent.getComponentHandle().getId().getLocalName());
 		
 		add(new CustomerPanel(agent, capa));
 		pack();
@@ -31,7 +31,7 @@ public class CustomerFrame extends JFrame
 			public void windowClosing(WindowEvent e)
 			{
 //				agent.killComponent();
-				agent.getExternalAccess().scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.terminate());
+				agent.getComponentHandle().scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.terminate());
 			}
 		});
 		

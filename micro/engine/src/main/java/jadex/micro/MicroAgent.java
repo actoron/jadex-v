@@ -7,7 +7,7 @@ import java.util.Map;
 import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
@@ -21,12 +21,12 @@ public class MicroAgent	extends Component
 {
 	protected static MicroModelLoader loader = new MicroModelLoader();
 	
-	public static IExternalAccess create(Object pojo)
+	public static IComponentHandle create(Object pojo)
 	{
 		return create(pojo, null, null);
 	}
 	
-	public static IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
+	public static IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		Component comp = Component.createComponent(MicroAgent.class, () -> 
 		{
@@ -39,7 +39,7 @@ public class MicroAgent	extends Component
 			}).get();
 		});
 		
-		return comp.getExternalAccess();
+		return comp.getComponentHandle();
 	}
 	
 	public MicroAgent(Object pojo, IModelInfo model)

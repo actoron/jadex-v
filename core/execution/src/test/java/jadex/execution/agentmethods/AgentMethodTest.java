@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.InvalidComponentAccessException;
 import jadex.execution.AgentMethod;
 import jadex.execution.IExecutionFeature;
@@ -26,7 +26,7 @@ public class AgentMethodTest
 	@Test
 	public void	testVoidMethod()
 	{
-		IExternalAccess agent = IComponentManager.get().create(new MyPojo()).get();
+		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
 		MyPojo pojo = agent.getPojo(MyPojo.class);
 		
 		assertDoesNotThrow(() -> 
@@ -40,7 +40,7 @@ public class AgentMethodTest
 	@Test
 	public void	testCloneResult()
 	{
-		IExternalAccess agent = IComponentManager.get().create(new MyPojo()).get();
+		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
 		MyPojo pojo = agent.getPojo(MyPojo.class);
 		
 		assertDoesNotThrow(() -> 
@@ -56,7 +56,7 @@ public class AgentMethodTest
 	@Test
 	public void	testCloneParameter()
 	{
-		IExternalAccess agent = IComponentManager.get().create(new MyPojo()).get();
+		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
 		MyPojo pojo = agent.getPojo(MyPojo.class);
 		
 		assertDoesNotThrow(() -> 
@@ -72,7 +72,7 @@ public class AgentMethodTest
 	@Test
 	public void	testSubscription()
 	{
-		IExternalAccess agent = IComponentManager.get().create(new MyPojo()).get();
+		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
 		MyPojo pojo = agent.getPojo(MyPojo.class);
 		
 		Future<Void> fin = new Future<Void>();
@@ -101,7 +101,7 @@ public class AgentMethodTest
 	@Test
 	public void	testNonAgentMethod()
 	{
-		IExternalAccess agent = IComponentManager.get().create(new MyPojo()).get();
+		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
 		MyPojo pojo = agent.getPojo(MyPojo.class);
 		
 		assertThrows(InvalidComponentAccessException.class, () -> 

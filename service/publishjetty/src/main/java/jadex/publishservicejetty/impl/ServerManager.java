@@ -97,7 +97,7 @@ public class ServerManager
 	            {
 	            	if(service==null)
 	            	{
-	            		service = component.getExternalAccess().scheduleStep((IComponent agent) ->
+	            		service = component.getComponentHandle().scheduleStep((IComponent agent) ->
 	            		{
 	            			return agent.getFeature(IRequiredServiceFeature.class).searchService(new ServiceQuery<>((Class<IService>)null).setServiceIdentifier(serviceid)).get();
 	            		}).get();

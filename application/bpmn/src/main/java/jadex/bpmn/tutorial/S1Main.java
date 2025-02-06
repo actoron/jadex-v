@@ -3,7 +3,7 @@ package jadex.bpmn.tutorial;
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.LambdaAgent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -22,7 +22,7 @@ public class S1Main
 		// todo: bpmn should not terminate after first call when it is a service component
 		// in Jadex 4 we had keepalive flag at starting
 		// Bpmn end check must be improved
-		IExternalAccess s1 = BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S1_ProvidedServices.bpmn"));
+		IComponentHandle s1 = BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S1_ProvidedServices.bpmn"));
 		
 		LambdaAgent.create(agent ->
 		{

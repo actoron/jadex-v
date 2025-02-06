@@ -106,7 +106,7 @@ public class CustomerPanel extends JPanel
 		    	try
 		    	{
 			    	searchbut.setEnabled(false);
-					Collection<Object> coll = agent.getExternalAccess().scheduleStep(ia ->
+					Collection<Object> coll = agent.getComponentHandle().scheduleStep(ia ->
 					{
 						if(remote.isSelected())
 						{
@@ -126,7 +126,7 @@ public class CustomerPanel extends JPanel
 						for(Iterator<Object> it=coll.iterator(); it.hasNext(); )
 						{
 							IShopService	shop	= (IShopService)it.next();
-							String	name	= agent.getExternalAccess().scheduleStep(() -> shop.getName()).get();
+							String	name	= agent.getComponentHandle().scheduleStep(() -> shop.getName()).get();
 							shops.put(name, shop);
 							((DefaultComboBoxModel)shopscombo.getModel()).addElement(name);
 						}
@@ -149,7 +149,7 @@ public class CustomerPanel extends JPanel
 
 		final JTextField money = new JTextField(5);
 		
-		agent.getExternalAccess().scheduleStep(() ->
+		agent.getComponentHandle().scheduleStep(() ->
 		{
 				CustomerCapability cust = (CustomerCapability)capa.getPojoCapability();
 				final double mon = cust.money.get();
@@ -163,7 +163,7 @@ public class CustomerPanel extends JPanel
 		});
 		money.setEditable(false);
 		
-		agent.getExternalAccess().scheduleStep(() ->
+		agent.getComponentHandle().scheduleStep(() ->
 		{
 				capa.addBeliefListener("money", new BeliefAdapter<Object>()
 				{
@@ -215,7 +215,7 @@ public class CustomerPanel extends JPanel
 		invtable.setPreferredScrollableViewportSize(new Dimension(600, 120));
 		invpanel.add(BorderLayout.CENTER, new JScrollPane(invtable));
 
-		agent.getExternalAccess().scheduleStep(() ->
+		agent.getComponentHandle().scheduleStep(() ->
 		{
 				try
 				{
@@ -282,7 +282,7 @@ public class CustomerPanel extends JPanel
 					final String name = (String)shopmodel.getValueAt(sel, 0);
 					final Double price = (Double)shopmodel.getValueAt(sel, 1);
 					final IShopService shop = (IShopService)shops.get(shopscombo.getSelectedItem());
-					agent.getExternalAccess().scheduleStep(ia ->
+					agent.getComponentHandle().scheduleStep(ia ->
 					{
 							BuyItem	big	= new BuyItem(name, shop, price.doubleValue());
 							IFuture<BuyItem> ret = ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(big);
@@ -376,7 +376,7 @@ public class CustomerPanel extends JPanel
 	{
 		if(shop!=null)
 		{
-			agent.getExternalAccess().scheduleStep(() ->shop.getCatalog())
+			agent.getComponentHandle().scheduleStep(() ->shop.getCatalog())
 				.addResultListener(new IResultListener()
 			{
 				public void resultAvailable(Object result)

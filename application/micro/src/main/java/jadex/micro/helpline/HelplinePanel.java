@@ -32,7 +32,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
 import jadex.common.SGUI;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.CollectionResultListener;
 import jadex.future.DefaultResultListener;
 import jadex.future.IFuture;
@@ -50,14 +50,14 @@ public class HelplinePanel extends JPanel
 	//-------- attributes --------
 	
 	/** The external access of the agent. */
-	protected IExternalAccess agent;
+	protected IComponentHandle agent;
 	
 	//-------- constructors --------
 	
 	/**
 	 *  Create a new gui.
 	 */
-	public HelplinePanel(final IExternalAccess agent)
+	public HelplinePanel(final IComponentHandle agent)
 	{
 		this.agent = agent;
 		this.setLayout(new BorderLayout());
@@ -441,7 +441,7 @@ public class HelplinePanel extends JPanel
 	/**
 	 *  Create a customer gui frame.
 	 */
-	public static void createHelplineGui(final IExternalAccess agent)
+	public static void createHelplineGui(final IComponentHandle agent)
 	{
 		final JFrame f = new JFrame();
 		f.add(new HelplinePanel(agent));

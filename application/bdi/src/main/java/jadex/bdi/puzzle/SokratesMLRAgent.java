@@ -109,7 +109,7 @@ public class SokratesMLRAgent
 	@OnStart
 	public void body(IExecutionFeature exe, IBDIAgentFeature plan)
 	{
-		SwingUtilities.invokeLater(() -> new BoardGui(exe.getComponent().getExternalAccess(), board));
+		SwingUtilities.invokeLater(() -> new BoardGui(exe.getComponent().getComponentHandle(), board));
 		
 		System.out.println("Now puzzling:");
 		long	start	= exe.getTime();

@@ -5,7 +5,7 @@ import java.util.Map;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 
 /**
  *  Managing POJOs by creating/running/terminating corresponding components.
@@ -20,7 +20,7 @@ public interface IComponentLifecycleManager
 	/**
 	 *  Create a component for a POJO
 	 */
-	public IExternalAccess	create(Object pojo, ComponentIdentifier cid, Application app);
+	public IComponentHandle	create(Object pojo, ComponentIdentifier cid, Application app);
 
 //	/**
 //	 *  Run a component with a POJO and fetch the results, if any.
