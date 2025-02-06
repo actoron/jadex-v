@@ -35,47 +35,8 @@ test:
 benchmark:
   stage: benchmark
   script:
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-    - ./benchmark.sh || true
-  timeout: 48h
+    - ./benchmark.sh
+  #timeout: 48h
   # needs: ["build"]
   allow_failure: true
   cache:
