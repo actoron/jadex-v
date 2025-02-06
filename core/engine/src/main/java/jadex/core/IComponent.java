@@ -32,17 +32,17 @@ public interface IComponent
 	public <T extends IComponentFeature> T getFeature(Class<T> type);
 	
 	/**
-	 *  Get the external access.
-	 *  @return The external access.
+	 *  Get the component handle.
+	 *  @return The handle.
 	 */
-	public IExternalAccess getExternalAccess();
+	public IComponentHandle getComponentHandle();
 	
 	/**
-	 *  Get the external access.
+	 *  Get the component handle.
 	 *  @param The id of the component.
-	 *  @return The external access.
+	 *  @return The handle.
 	 */
-	public IExternalAccess getExternalAccess(ComponentIdentifier cid);
+	public IComponentHandle getComponentHandle(ComponentIdentifier cid);
 	
 	/**
 	 *  Terminate the component.

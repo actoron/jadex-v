@@ -1,7 +1,7 @@
 package jadex.execution.impl;
 
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.ITimerCreator;
@@ -26,7 +26,7 @@ public class ComponentTimerCreator implements ITimerCreator
 			throw new RuntimeException("ComponentTimeoutDecorator needs component or external access in usercontext");
 		*/
 		
-		IExternalAccess access = context.getResource(IExternalAccess.class);
+		IComponentHandle access = context.getResource(IComponentHandle.class);
 
 		
 		//ITerminableFuture<Void> fut = (ITerminableFuture<Void>)access.scheduleAsyncStep(a -> a.getFeature(IExecutionFeature.class).waitForDelay(getTimeout()));

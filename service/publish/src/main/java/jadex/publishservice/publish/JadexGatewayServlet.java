@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +27,7 @@ public class JadexGatewayServlet extends HttpServlet
 	public static final String JADEX_PLATFORM_REFCOUNT = "jadex_platform_refcount";
 	
 	/** The Jadex platform. */
-	protected IExternalAccess platform;
+	protected IComponentHandle platform;
 
 	/** The request handler. */
 	protected IRequestHandlerService handler;

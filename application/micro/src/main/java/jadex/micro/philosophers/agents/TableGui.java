@@ -2,16 +2,16 @@ package jadex.micro.philosophers.agents;
 
 import java.util.function.Function;
 
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.micro.philosophers.AbstractTableGui;
 import jadex.micro.philosophers.PhilosopherState;
 import jadex.providedservice.IProvidedServiceFeature;
 
 public class TableGui extends AbstractTableGui
 {
-	protected IExternalAccess ta;
+	protected IComponentHandle ta;
 	
-	public TableGui(int n, IExternalAccess ta)
+	public TableGui(int n, IComponentHandle ta)
 	{
 		super(n);
 		this.ta = ta;
@@ -31,7 +31,7 @@ public class TableGui extends AbstractTableGui
 		        eatCounts[i] = (Integer) executeOnPhilo(i, ser -> ser.getEatCnt());
 		        
 		        final int fi = i;
-		        IExternalAccess p = (IExternalAccess) executeOnTable(ser -> ser.getStickOwner(fi).get());
+		        IComponentHandle p = (IComponentHandle) executeOnTable(ser -> ser.getStickOwner(fi).get());
 		        stickOwners[i] = p != null ? (Integer) executeOnPhilo(p, ser -> ser.getNo().get()) : null;
 		    }
 	    }
@@ -74,7 +74,7 @@ public class TableGui extends AbstractTableGui
 		return ta.scheduleStep(agent ->
 		{
 			ITableService tas = agent.getFeature(IProvidedServiceFeature.class).getProvidedService(ITableService.class);
-			IExternalAccess pa = tas.getPhilosopher(no).get();
+			IComponentHandle pa = tas.getPhilosopher(no).get();
 			if(pa==null)
 				return null;
 			return pa.scheduleStep(pagent ->
@@ -86,7 +86,7 @@ public class TableGui extends AbstractTableGui
 		}).get();
 	}
 	
-	protected Object executeOnPhilo(IExternalAccess philo, Function<IPhilosopherService, Object> cmd)
+	protected Object executeOnPhilo(IComponentHandle philo, Function<IPhilosopherService, Object> cmd)
 	{
 		if(philo==null)
 			return null;

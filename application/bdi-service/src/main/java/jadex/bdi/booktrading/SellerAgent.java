@@ -73,7 +73,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 		{
 			try
 			{
-				gui.setResult(new Gui(agent.getExternalAccess()));
+				gui.setResult(new Gui(agent.getComponentHandle()));
 			}
 			catch(ComponentTerminatedException cte)
 			{

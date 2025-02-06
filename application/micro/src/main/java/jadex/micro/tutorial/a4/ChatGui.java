@@ -17,7 +17,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.MicroAgent;
@@ -37,7 +37,7 @@ public class ChatGui extends JFrame
 	/**
 	 *  Create the user interface
 	 */
-	public ChatGui(final IExternalAccess access)
+	public ChatGui(final IComponentHandle access)
 	{
 		super(""+access.getId());
 		this.setLayout(new BorderLayout());
@@ -101,7 +101,7 @@ public class ChatGui extends JFrame
 		});
 	}
 
-	public void sendMessage(IExternalAccess access, String text)
+	public void sendMessage(IComponentHandle access, String text)
 	{
 		access.scheduleStep((IThrowingConsumer<IComponent>)agent ->
 		{

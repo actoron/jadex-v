@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 
 /**
@@ -29,7 +29,7 @@ public class BpmnProcessBenchmark
 				ret.setResultIfUndone((ComponentIdentifier)res.value());
 			}).catchEx(ret);
 			
-			IExternalAccess	agent	= BpmnProcess.create(pojo);
+			IComponentHandle	agent	= BpmnProcess.create(pojo);
 			ret.get();
 			return () -> agent.terminate().get();
 		});
@@ -49,7 +49,7 @@ public class BpmnProcessBenchmark
 				ret.setResultIfUndone((ComponentIdentifier)res.value());
 			}).catchEx(ret);
 			
-			IExternalAccess	agent	= BpmnProcess.create(pojo);
+			IComponentHandle	agent	= BpmnProcess.create(pojo);
 			ret.get();
 			agent.terminate().get();
 		});

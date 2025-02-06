@@ -1,8 +1,10 @@
 package jadex.execution.impl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,20 +24,20 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
+import jadex.core.InvalidComponentAccessException;
 import jadex.core.LambdaPojo;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
-import jadex.core.impl.ValueProvider;
 import jadex.execution.AgentMethod;
-import jadex.execution.NoCopy;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
+import jadex.execution.NoCopy;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -86,7 +88,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		// Init the component with schedule step functionality (hack?!)
 		Component.setExternalAccessFactory(comp ->
 		{
-			return new IExternalAccess() 
+			return new IComponentHandle() 
 			{
 				protected Object pojo;
 				
@@ -126,6 +128,22 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						
 						Object proxy = new ByteBuddy()
 							.subclass(pojo.getClass())
+							.method(ElementMatchers.not(ElementMatchers.isAnnotatedWith(AgentMethod.class)))
+				            .intercept(InvocationHandlerAdapter.of(new InvocationHandler() 
+				            {
+				            	@Override
+				            	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable 
+				                {
+				            		if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
+				            		{   
+				            			return invokeMethod(comp, pojo, Arrays.asList(args), method);
+				            		}
+				            		else
+				            		{
+				            			throw new InvalidComponentAccessException(comp.getId());
+				            		}
+				                }
+				            }))
 							.method(ElementMatchers.isAnnotatedWith(AgentMethod.class)) 
 							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 							{
@@ -448,9 +466,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}
 	
 	@Override
-	public IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
+	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		IExternalAccess ret;
+		IComponentHandle ret;
 		
 		if(pojo instanceof Runnable)
 		{

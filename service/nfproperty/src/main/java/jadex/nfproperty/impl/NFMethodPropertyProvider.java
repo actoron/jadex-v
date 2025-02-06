@@ -8,7 +8,7 @@ import java.util.Set;
 import jadex.common.MethodInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.CounterResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;

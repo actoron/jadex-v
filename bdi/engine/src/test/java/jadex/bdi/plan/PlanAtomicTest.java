@@ -17,7 +17,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.IPlan;
 import jadex.bdi.runtime.Val;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.micro.annotation.Agent;
 
@@ -68,7 +68,7 @@ public class PlanAtomicTest
 	void testAtomicPlan()
 	{
 		PlanAtomicTestAgent	pojo	= new PlanAtomicTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.trigger.add("go"));
 		assertEquals("not aborted", pojo.atomicfut.get(TestHelper.TIMEOUT));
 		assertEquals("aborted", pojo.contextfut.get(TestHelper.TIMEOUT));

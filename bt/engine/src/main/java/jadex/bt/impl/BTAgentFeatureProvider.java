@@ -10,7 +10,7 @@ import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.ComponentFeatureProvider;
@@ -58,7 +58,7 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<MicroAgentF
 	}
 	
 	@Override
-	public IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
+	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return BTAgent.create(pojo, cid, app);
 	}

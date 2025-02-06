@@ -19,7 +19,7 @@ import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.SimpleParameterGuesser;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -65,10 +65,10 @@ public class PojoTaskWrapper implements ITask
 					SAccess.setAccessible(f, true);
 					f.set(pojotask, ia);						
 				}
-				else if(SReflect.isSupertype(f.getType(), IExternalAccess.class))
+				else if(SReflect.isSupertype(f.getType(), IComponentHandle.class))
 				{
 					SAccess.setAccessible(f, true);
-					f.set(pojotask, ia.getExternalAccess());
+					f.set(pojotask, ia.getComponentHandle());
 				}
 			}
 			catch(Exception e)

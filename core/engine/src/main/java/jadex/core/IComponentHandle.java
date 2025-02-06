@@ -9,7 +9,7 @@ import jadex.future.IFuture;
 /**
  *  Interface for component access from non-component thread, e.g. UI thread.
  */
-public interface IExternalAccess 
+public interface IComponentHandle 
 {
 	/**
 	 *  Get the id.
@@ -28,9 +28,9 @@ public interface IExternalAccess
 	 *  @param The id of the component.
 	 *  @return The external access.
 	 */
-	public default IExternalAccess getExternalAccess(ComponentIdentifier cid)
+	public default IComponentHandle getExternalAccess(ComponentIdentifier cid)
 	{
-		return ComponentManager.get().getComponent(cid).getExternalAccess();
+		return ComponentManager.get().getComponent(cid).getComponentHandle();
 	}
 	
 	/**

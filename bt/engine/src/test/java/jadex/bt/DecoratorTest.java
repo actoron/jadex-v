@@ -22,7 +22,7 @@ import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
@@ -142,10 +142,10 @@ public class DecoratorTest
 		IExecutionFeature exe = mock(IExecutionFeature.class);
 		IComponent comp = mock(IComponent.class);
 		when(comp.getFeature(IExecutionFeature.class)).thenReturn(exe);
-		IExternalAccess access = mock(IExternalAccess.class);
+		IComponentHandle access = mock(IComponentHandle.class);
 		when(access.scheduleAsyncStep(any(IThrowingFunction.class))).thenReturn(fut);
 		when(exe.waitForDelay(1000)).thenReturn(fut);
-		when(comp.getExternalAccess()).thenReturn(access);
+		when(comp.getComponentHandle()).thenReturn(access);
 		
 		Node<IComponent> an = new ActionNode<>(new UserAction<>((event, context) -> 
 		{
@@ -183,10 +183,10 @@ public class DecoratorTest
 		IExecutionFeature exe = mock(IExecutionFeature.class);
 		IComponent comp = mock(IComponent.class);
 		when(comp.getFeature(IExecutionFeature.class)).thenReturn(exe);
-		IExternalAccess access = mock(IExternalAccess.class);
+		IComponentHandle access = mock(IComponentHandle.class);
 		when(access.scheduleAsyncStep(any(IThrowingFunction.class))).thenReturn(fut);
 		when(exe.waitForDelay(1000)).thenReturn(fut);
-		when(comp.getExternalAccess()).thenReturn(access);
+		when(comp.getComponentHandle()).thenReturn(access);
 		
 		Node<IComponent> an = new ActionNode<>(new UserAction<>((event, context) -> 
 		{
@@ -216,9 +216,9 @@ public class DecoratorTest
 	@Test
 	public void testRealComponentTimeoutDecoratorWithoutTimeout()
 	{
-		IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
+		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 		
-		Node<IExternalAccess> an = new ActionNode<>(new UserAction<>((event, compo) -> 
+		Node<IComponentHandle> an = new ActionNode<>(new UserAction<>((event, compo) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -229,10 +229,10 @@ public class DecoratorTest
 		    return ret;
 		}));
 		
-		TimeoutDecorator<IExternalAccess> td = new TimeoutDecorator<>(1000);
+		TimeoutDecorator<IComponentHandle> td = new TimeoutDecorator<>(1000);
 		an.addDecorator(td);
 		
-		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator());
+		ExecutionContext<IComponentHandle> context = new ExecutionContext<IComponentHandle>().setTimerCreator(new ComponentTimerCreator());
 		context.setUserContext(comp);
 
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
@@ -247,9 +247,9 @@ public class DecoratorTest
 	@Test
 	public void testRealComponentTimeoutDecoratorWithTimeout()
 	{
-		IExternalAccess comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
+		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 		
-		Node<IExternalAccess> an = new ActionNode<>(new UserAction<>((event, IComponent) -> 
+		Node<IComponentHandle> an = new ActionNode<>(new UserAction<>((event, IComponent) -> 
 		{
 		    Future<NodeState> ret = new Future<>();
 		    new Thread(() -> 
@@ -260,10 +260,10 @@ public class DecoratorTest
 		    return ret;
 		}));
 		
-		TimeoutDecorator<IExternalAccess> td = new TimeoutDecorator<>(500);
+		TimeoutDecorator<IComponentHandle> td = new TimeoutDecorator<>(500);
 		an.addDecorator(td);
 		
-		ExecutionContext<IExternalAccess> context = new ExecutionContext<IExternalAccess>().setTimerCreator(new ComponentTimerCreator());
+		ExecutionContext<IComponentHandle> context = new ExecutionContext<IComponentHandle>().setTimerCreator(new ComponentTimerCreator());
 		context.setUserContext(comp);
 		
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);

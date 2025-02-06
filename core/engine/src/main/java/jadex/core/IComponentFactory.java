@@ -20,7 +20,7 @@ public interface IComponentFactory
 	 *  @param pojo The pojo.
 	 *  @return The external access of the running component.
 	 */
-	public default IFuture<IExternalAccess> create(Object pojo)
+	public default IFuture<IComponentHandle> create(Object pojo)
 	{
 		return create(pojo, null);
 	}
@@ -31,7 +31,7 @@ public interface IComponentFactory
 	 *  @param cid The component id.
 	 *  @return The external access of the running component.
 	 */
-	public default IFuture<IExternalAccess> create(Object pojo, ComponentIdentifier cid)
+	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
 	{		
 		return create(pojo, null, null);
 	}
@@ -43,9 +43,9 @@ public interface IComponentFactory
 	 *  @param app The application context.
 	 *  @return The external access of the running component.
 	 */
-	public default IFuture<IExternalAccess> create(Object pojo, ComponentIdentifier cid, Application app)
+	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{		
-		Future<IExternalAccess> ret = new Future<>();
+		Future<IComponentHandle> ret = new Future<>();
 		
 		boolean created = false;
 		for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
@@ -96,7 +96,7 @@ public interface IComponentFactory
 	public default <T> IFuture<T> run(Object pojo)
 	{
 		Future<T> ret = new Future<>();
-		IExternalAccess comp = create(pojo).get();
+		IComponentHandle comp = create(pojo).get();
 		// all pojos of type IResultProvider will be terminate component after result is received
 		if(pojo instanceof IResultProvider)
 		{
@@ -134,7 +134,7 @@ public interface IComponentFactory
 			IComponent comp = ComponentManager.get().getComponent(cid);
 			if(comp!=null)
 			{
-				IExternalAccess	exta = comp.getExternalAccess();
+				IComponentHandle	exta = comp.getComponentHandle();
 				//ComponentManager.get().removeComponent(cid); // done in Component
 				if(Component.isExecutable())
 				{

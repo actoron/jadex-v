@@ -13,7 +13,7 @@ import javax.swing.JTextPane;
 import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
 import jadex.micro.mandelbrot.generate.IGenerateService;
@@ -58,11 +58,11 @@ public class DisplayAgent
 	@OnStart
 	public void agentCreated()
 	{
-		DisplayAgent.this.panel	= new DisplayPanel(agent.getExternalAccess());
+		DisplayAgent.this.panel	= new DisplayPanel(agent.getComponentHandle());
 
 //		addService(new DisplayService(this));
 				
-		final IExternalAccess access = agent.getExternalAccess();
+		final IComponentHandle access = agent.getComponentHandle();
 		final JFrame frame = new JFrame(agent.getId().getLocalName());
 		JScrollPane	scroll	= new JScrollPane(panel);
 

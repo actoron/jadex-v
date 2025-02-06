@@ -211,7 +211,7 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 		{
 			try
 			{
-				gui.setResult(new Gui(agent.getExternalAccess()));
+				gui.setResult(new Gui(agent.getComponentHandle()));
 			}
 			catch(ComponentTerminatedException cte)
 			{

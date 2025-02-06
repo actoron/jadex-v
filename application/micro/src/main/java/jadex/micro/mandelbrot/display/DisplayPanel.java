@@ -30,7 +30,7 @@ import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.IntermediateEmptyResultListener;
 import jadex.micro.mandelbrot.generate.IGenerateService;
@@ -59,7 +59,7 @@ public class DisplayPanel extends JComponent
 	//-------- attributes --------
 	
 	/** The service provider. */
-	protected IExternalAccess agent;
+	protected IComponentHandle agent;
 	
 	/** The colors for drawing. */
 	protected Color[] colors;
@@ -103,7 +103,7 @@ public class DisplayPanel extends JComponent
 	/**
 	 *  Create a new display panel.
 	 */
-	public DisplayPanel(final IExternalAccess agent)
+	public DisplayPanel(final IComponentHandle agent)
 	{
 		this.agent	= agent;
 		this.displayid = ""+UUID.randomUUID();

@@ -6,7 +6,7 @@ import java.util.Map;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.ITimerCreator;
 import jadex.execution.impl.ITimerContext;
 import jadex.future.IFuture;
@@ -86,16 +86,16 @@ public class ExecutionContext<T> implements ITimerContext
 	@Override
     public <T> T getResource(Class<T> type) 
 	{
-        if (type == IExternalAccess.class) 
+        if (type == IComponentHandle.class) 
         {
             Object userContext = getUserContext();
-            if (userContext instanceof IExternalAccess) 
+            if (userContext instanceof IComponentHandle) 
             {
                 return type.cast(userContext);
             } 
             else if (userContext instanceof IComponent) 
             {
-                return type.cast(((IComponent) userContext).getExternalAccess());
+                return type.cast(((IComponent) userContext).getComponentHandle());
             } 
             else 
             {

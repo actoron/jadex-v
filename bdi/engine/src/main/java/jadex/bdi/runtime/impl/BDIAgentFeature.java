@@ -1913,7 +1913,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		vals.add(capa);
 		vals.add(new CapabilityPojoWrapper(capa, capaname));
 		vals.add(component);
-		vals.add(component.getExternalAccess());
+		vals.add(component.getComponentHandle());
 		
 		// add agent features
 		vals.addAll(component.getFeatures());

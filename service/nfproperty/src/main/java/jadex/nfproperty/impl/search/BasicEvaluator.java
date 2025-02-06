@@ -1,7 +1,7 @@
 package jadex.nfproperty.impl.search;
 
 import jadex.common.MethodInfo;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -16,7 +16,7 @@ import jadex.providedservice.IServiceIdentifier;
 public abstract class BasicEvaluator<T> implements IServiceEvaluator
 {
 	/** The component. */
-	protected IExternalAccess component;
+	protected IComponentHandle component;
 	
 	/** The property name. */
 	protected String propertyname;
@@ -34,7 +34,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 	 *  Create a new evaluator.
 	 *  @param propertyname The property name.
 	 */
-	public BasicEvaluator(IExternalAccess component, String propertyname)
+	public BasicEvaluator(IComponentHandle component, String propertyname)
 	{
 		this(component, propertyname, null, null, false);
 	}
@@ -43,7 +43,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 	 *  Create a new evaluator.
 	 *  @param propertyname The property name.
 	 */
-	public BasicEvaluator(IExternalAccess component, String propertyname, Object unit)
+	public BasicEvaluator(IComponentHandle component, String propertyname, Object unit)
 	{
 		this(component, propertyname, null, unit, false);
 	}
@@ -52,7 +52,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 	 *  Create a new evaluator.
 	 *  @param propertyname The property name.
 	 */
-	public BasicEvaluator(IExternalAccess component, String propertyname, MethodInfo mi)
+	public BasicEvaluator(IComponentHandle component, String propertyname, MethodInfo mi)
 	{
 		this(component, propertyname, mi, null, false);
 	}
@@ -63,7 +63,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 	 *  @param methodinfo The method.
 	 *  @param unit The unit.
 	 */
-	public BasicEvaluator(IExternalAccess component, String propertyname, MethodInfo methodinfo, Object unit, boolean required)
+	public BasicEvaluator(IComponentHandle component, String propertyname, MethodInfo methodinfo, Object unit, boolean required)
 	{
 		this.component = component;
 		this.propertyname = propertyname;
@@ -149,7 +149,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 		else
 		{
 			
-			IExternalAccess exta = component.getExternalAccess(sid.getProviderId());
+			IComponentHandle exta = component.getExternalAccess(sid.getProviderId());
 			exta.scheduleStep(agent ->
 			{
 				if(methodinfo!=null)

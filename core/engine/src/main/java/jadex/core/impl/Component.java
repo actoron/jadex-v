@@ -18,7 +18,7 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -45,13 +45,13 @@ public class Component implements IComponent
 	protected Application app;
 	
 	/** The external access. */
-	protected IExternalAccess access;
+	protected IComponentHandle access;
 	
 	/** The value provider. */
 	protected ValueProvider valueprovider;
 	
 	/** The external access supplier. */
-	protected static Function<Component, IExternalAccess> accessfactory;
+	protected static Function<Component, IComponentHandle> accessfactory;
 		
 	/** The is the external access executable, i.e. is scheduleStep allowed?. */
 	protected static boolean executable;
@@ -402,7 +402,7 @@ public class Component implements IComponent
 	 *  Get the external access.
 	 *  @return The external access.
 	 */
-	public IExternalAccess getExternalAccess()
+	public IComponentHandle getComponentHandle()
 	{
 		if(access==null)
 		{
@@ -412,7 +412,7 @@ public class Component implements IComponent
 			}
 			else
 			{
-				access = new IExternalAccess() 
+				access = new IComponentHandle() 
 				{
 					@Override
 					public ComponentIdentifier getId() 
@@ -452,14 +452,14 @@ public class Component implements IComponent
 	}
 	
 	/**
-	 *  Get the external access.
+	 *  Get the component handle.
 	 *  @param cid The component id.
-	 *  @return The external access.
+	 *  @return The handle.
 	 */
-	public IExternalAccess getExternalAccess(ComponentIdentifier cid)
+	public IComponentHandle getComponentHandle(ComponentIdentifier cid)
 	{
 		//return IComponent.getExternalComponentAccess(cid);
-		return ComponentManager.get().getComponent(cid).getExternalAccess();
+		return ComponentManager.get().getComponent(cid).getComponentHandle();
 	}
 	
 	/**
@@ -467,7 +467,7 @@ public class Component implements IComponent
 	 *  @param factory The factory.
 	 *  @param executable	Is scheduleStep() allowed on external access?
 	 */
-	public static void setExternalAccessFactory(Function<Component, IExternalAccess> factory, boolean executable)
+	public static void setExternalAccessFactory(Function<Component, IComponentHandle> factory, boolean executable)
 	{
 		accessfactory = factory;
 		Component.executable	= executable;

@@ -47,7 +47,7 @@ import javax.swing.table.DefaultTableModel;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IBeliefListener;
 import jadex.common.SGUI;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.impl.MicroAgentFeature;
 import jadex.rules.eca.ChangeInfo;
@@ -64,7 +64,7 @@ public class GuiPanel extends JPanel
 	private String itemlabel;
 //	private String goalname;
 	private String addorderlabel;
-	private IExternalAccess agent;
+	private IComponentHandle agent;
 	private List<Order> orders = new ArrayList<>();
 	private JTable table;
 	private DefaultTableModel detailsdm; 
@@ -151,7 +151,7 @@ public class GuiPanel extends JPanel
 	/**
 	 *  Shows the gui, and updates it when beliefs change.
 	 */
-	public GuiPanel(final IExternalAccess agent)//, final boolean buy)
+	public GuiPanel(final IComponentHandle agent)//, final boolean buy)
 	{
 		setLayout(new BorderLayout());
 		
@@ -718,7 +718,7 @@ public class GuiPanel extends JPanel
 	/**
 	 *  Test if agent is a buyer.
 	 */
-	public static boolean isBuyer(IExternalAccess agent)
+	public static boolean isBuyer(IComponentHandle agent)
 	{
 		return agent.scheduleStep(ia ->
 		{

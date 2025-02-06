@@ -7,7 +7,7 @@ import java.util.Set;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.CounterResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -70,7 +70,7 @@ public class NFPropertyProvider implements INFPropertyProvider
 		if(getParentId()!=null)
 		{
 //			IComponentManagementService cms = getInternalAccess().getFeature(IRequiredServicesFeature.class).getLocalService(new ServiceQuery<>(IComponentManagementService.class));
-			IExternalAccess com = getComponent().getExternalAccess(getParentId());
+			IComponentHandle com = getComponent().getComponentHandle(getParentId());
 			IFuture<String[]> result = com.scheduleAsyncStep(agent ->
 			{
 				return agent.getFeature(INFPropertyFeature.class).getNFAllPropertyNames();
@@ -170,7 +170,7 @@ public class NFPropertyProvider implements INFPropertyProvider
 		{
 			if(getParentId()!=null)
 			{
-				IExternalAccess com = getComponent().getExternalAccess(getParentId());
+				IComponentHandle com = getComponent().getComponentHandle(getParentId());
 				IFuture<INFPropertyMetaInfo> result = com.scheduleAsyncStep(agent ->
 				{
 					return agent.getFeature(INFPropertyFeature.class).getNFPropertyMetaInfo(name);
@@ -213,7 +213,7 @@ public class NFPropertyProvider implements INFPropertyProvider
 		{
 			if(getParentId()!=null)
 			{
-				IExternalAccess com = getComponent().getExternalAccess(getParentId());
+				IComponentHandle com = getComponent().getComponentHandle(getParentId());
 				IFuture<T> result = com.scheduleAsyncStep(agent ->
 				{
 					IFuture<T> res = agent.getFeature(INFPropertyFeature.class).getNFPropertyValue(name);
@@ -259,7 +259,7 @@ public class NFPropertyProvider implements INFPropertyProvider
 		{
 			if(getParentId()!=null)
 			{
-				IExternalAccess com = getComponent().getExternalAccess(getParentId());
+				IComponentHandle com = getComponent().getComponentHandle(getParentId());
 				IFuture<T> result = com.scheduleAsyncStep(agent ->
 				{
 					IFuture<T> res = agent.getFeature(INFPropertyFeature.class).getNFPropertyValue(name, unit);
@@ -303,7 +303,7 @@ public class NFPropertyProvider implements INFPropertyProvider
 		{
 			if(getParentId()!=null)
 			{
-				IExternalAccess com = getComponent().getExternalAccess(getParentId());
+				IComponentHandle com = getComponent().getComponentHandle(getParentId());
 				IFuture<String> result = com.scheduleAsyncStep(agent ->
 				{
 					IFuture<String> res = agent.getFeature(INFPropertyFeature.class).getNFPropertyPrettyPrintValue(name);

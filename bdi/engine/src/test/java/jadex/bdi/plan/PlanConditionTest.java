@@ -18,7 +18,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.bdi.runtime.IPlan;
 import jadex.bdi.runtime.Val;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.micro.annotation.Agent;
 
@@ -101,7 +101,7 @@ public class PlanConditionTest
 		// First plan
 		{
 			PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
-			IExternalAccess	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IBDIAgent.create(pojo);
 			agent.scheduleStep(() -> pojo.trigger.add("go"));
 			assertEquals(PlanConditionTestAgent.PrePlan1.class.getName(), pojo.prefut.get(TestHelper.TIMEOUT));
 		}
@@ -109,7 +109,7 @@ public class PlanConditionTest
 		// Second plan
 		{
 			PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
-			IExternalAccess	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IBDIAgent.create(pojo);
 			agent.scheduleStep(() ->
 			{
 				pojo.bel.set(false);
@@ -123,7 +123,7 @@ public class PlanConditionTest
 	void testPlanContextcondition()
 	{
 		PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.trigger.add("go"));
 		assertEquals("aborted", pojo.contextfut.get(TestHelper.TIMEOUT));
 	}
