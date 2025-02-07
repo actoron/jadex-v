@@ -69,7 +69,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		boolean	startnew	= false;
 		synchronized(ExecutionFeature.this)
 		{
-			System.out.println("insert step: "+r);
+			//System.out.println("insert step: "+r);
 			steps.offer(r);
 			if(!executing)
 			{

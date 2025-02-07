@@ -484,7 +484,8 @@ public class Environment
 	 */
 	protected void setPosition(SpaceObject obj, IVector2 pos)
 	{
-		obj = internalGetSpaceObject(id);
+		//obj = internalGetSpaceObject(id); 
+		obj = internalGetSpaceObject(obj.getId());
 		IVector2 newpos = adjustPosition(pos);
 		obj.setPosition(newpos);
 	}

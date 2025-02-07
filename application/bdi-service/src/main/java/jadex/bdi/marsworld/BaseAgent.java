@@ -78,7 +78,7 @@ public abstract class BaseAgent
 	public BaseObject getSpaceObject(boolean renew)
 	{
 		if(renew)
-			self = (BaseObject)env.getSpaceObject(self.getId());
+			self = (BaseObject)env.getSpaceObject(self.getId()).get();
 		return self;
 	}
 	

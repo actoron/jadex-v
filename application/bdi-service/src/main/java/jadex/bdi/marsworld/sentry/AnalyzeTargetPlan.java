@@ -60,7 +60,7 @@ public class AnalyzeTargetPlan
 			
 			env.analyzeTarget(myself, target).get();
 			
-//			System.out.println("Analyzed target: "+getAgentName()+", "+ore+" ore found.");
+			//System.out.println("Analyzed target: "+getAgentName()+", "+ore+" ore found.");
 			if(target.getOre()>0)
 				callProducerAgent(target);
 		}
