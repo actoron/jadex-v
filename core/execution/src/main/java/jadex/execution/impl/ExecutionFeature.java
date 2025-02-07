@@ -39,7 +39,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
 	
-	protected Queue<Runnable> steps = new ArrayDeque<>(4);
+	private Queue<Runnable> steps = new ArrayDeque<>(4);
 	protected volatile boolean executing;
 	protected volatile boolean do_switch;
 	protected boolean terminated;
@@ -66,8 +66,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			throw new ComponentTerminatedException(getComponent().getId());
 		
 		boolean	startnew	= false;
-		synchronized(this)
+		synchronized(ExecutionFeature.this)
 		{
+			System.out.println("insert step: "+r);
 			steps.offer(r);
 			if(!executing)
 			{
@@ -792,7 +793,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		// Do first to unblock futures before setting results later
 		// Use copy as threads remove themselves from set on exit. 
 		ComponentSuspendable[]	mythreads	= null;
-		synchronized(this)
+		synchronized(ExecutionFeature.this)
 		{
 			if(threads!=null)
 				mythreads = threads.toArray(ComponentSuspendable[]::new);
@@ -805,12 +806,16 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		// Drop queued steps.
 		ComponentTerminatedException ex = new ComponentTerminatedException(getComponent().getId());
-		for(Object step: steps)
+		synchronized(ExecutionFeature.this) 
 		{
-			if(step instanceof StepInfo)
+			for(Object step: steps)
 			{
-				((StepInfo)step).getFuture().setExceptionIfUndone(ex);
+				if(step instanceof StepInfo)
+				{
+					((StepInfo)step).getFuture().setExceptionIfUndone(ex);
+				}
 			}
+			steps.clear();
 		}
 		
 		// Drop queued timer tasks.
@@ -818,7 +823,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		TimerTaskInfo[] ttis;
 		synchronized(ExecutionFeature.class)
 		{
-			steps.clear();
 			ttis = entries==null? new TimerTaskInfo[0]: entries.toArray(TimerTaskInfo[]::new);
 			
 			for(TimerTaskInfo tti: ttis)
