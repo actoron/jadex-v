@@ -50,6 +50,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	
 	// Debug Heisenbug
 	AtomicInteger	threadcount	= new AtomicInteger();
+	boolean	failed	= false;
 	
 	@Override
 	public IComponent getComponent()
@@ -560,6 +561,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						catch(StepAborted d)
 						{
 							// ignore aborted steps.
+							
+							// for debugging only
 							aborted	= d;
 						}
 						
@@ -573,9 +576,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							else if(steps.isEmpty() && !terminated)
 							{
 								// decrement only if not terminated, otherwise blocking lambda fails
-								if(threadcount.decrementAndGet()<0)
+								if(!failed && threadcount.decrementAndGet()<0)
 								{
-									throw new IllegalStateException("Threadcount<0", aborted);
+									failed	= true;
+									throw aborted!=null ? new IllegalStateException("Threadcount<0", aborted) : new IllegalStateException("Threadcount<0");
 								}
 								
 								hasnext	= false;
@@ -623,8 +627,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			
 			synchronized(ExecutionFeature.this)
 			{
-				if(threadcount.decrementAndGet()<0)
+				if(!failed && threadcount.decrementAndGet()<0)
 				{
+					failed	= true;
 					throw new IllegalStateException("Threadcount<0");
 				}
 				
@@ -668,8 +673,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						throw new StepAborted(getComponent().getId());
 					}
 
-					if(threadcount.incrementAndGet()>1)
+					if(!failed && threadcount.incrementAndGet()>1)
 					{
+						failed	= true;
 						throw new IllegalStateException("Threadcount>1");
 					}
 				}
@@ -693,8 +699,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					{
 						lock.lock();
 						do_switch	= true;
-						if(threadcount.decrementAndGet()<0)
+						if(!failed && threadcount.decrementAndGet()<0)
 						{
+							failed	= true;
 							throw new IllegalStateException("Threadcount<0");
 						}
 						wait.signal();
@@ -951,8 +958,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		if(runner==null)
 			runner	= new ThreadRunner();
-		if(threadcount.incrementAndGet()>1)
+		if(!failed && threadcount.incrementAndGet()>1)
 		{
+			failed	= true;
 			throw new IllegalStateException("Threadcount>1");
 		}
 		SUtil.getExecutor().execute(runner);
