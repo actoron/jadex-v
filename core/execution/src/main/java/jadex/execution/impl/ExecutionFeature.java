@@ -534,65 +534,68 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			ISuspendable.SUSPENDABLE.set(sus);
 			LOCAL.set(ExecutionFeature.this);
-//			ScopedValue.where(ISuspendable.SUSPENDABLE, sus).run(()->
-//			{
-//				ScopedValue.where(LOCAL, MjExecutionFeature.this).run(()->
-//				{
-					boolean hasnext	= true;
-					while(hasnext && !terminated)
-					{
-						Runnable	step;
-						synchronized(ExecutionFeature.this)
-						{
-							step	= steps.poll();
-						}
-						
-						assert step!=null;
-						
-//						// for debugging only
-//						boolean aborted	= false;
-						
-						try
-						{
-//							if(step!=null)	// TODO: why can be null?
-								doRun(step);
-						}
-						catch(StepAborted d)
-						{
-							// ignore aborted steps.
-//							aborted	= true;
-						}
-						
-						synchronized(ExecutionFeature.this)
-						{
-							if(do_switch)
-							{
-								do_switch	= false;
-								hasnext	= false;
-							}
-							else if(steps.isEmpty() && !terminated)
-							{
-								// decrement only if not terminated, otherwise blocking lambda fails
-								if(threadcount.decrementAndGet()<0)
-								{
-									throw new IllegalStateException("Threadcount<0");
-								}
-								
-								hasnext	= false;
-								executing	= false;
-								idle();	// only call idle when not terminated
-							}
-						}
-					}
-					// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
+			
+			try
+			{
+				boolean hasnext	= true;
+				while(hasnext && !terminated)
+				{
+					Runnable	step;
 					synchronized(ExecutionFeature.this)
 					{
-						threads.remove(sus);
+						step	= steps.poll();
 					}
-//				});
-//			});
-			ISuspendable.SUSPENDABLE.remove();
-			LOCAL.remove();
+					
+					assert step!=null;
+					
+//						// for debugging only
+//						boolean aborted	= false;
+					
+					try
+					{
+//							if(step!=null)	// TODO: why can be null?
+							doRun(step);
+					}
+					catch(StepAborted d)
+					{
+						// ignore aborted steps.
+//							aborted	= true;
+					}
+					
+					synchronized(ExecutionFeature.this)
+					{
+						if(do_switch)
+						{
+							do_switch	= false;
+							hasnext	= false;
+						}
+						else if(steps.isEmpty() && !terminated)
+						{
+							hasnext	= false;
+							executing	= false;
+							idle();	// only call idle when not terminated
+							
+							// decrement only if not terminated, otherwise blocking lambda fails
+							if(threadcount.decrementAndGet()<0)
+							{
+								throw new IllegalStateException("Threadcount<0");
+							}
+						}
+					}
+				}
+			}
+			
+			// Cleanup
+			finally
+			{
+				// synchronized because multiple threads could exit in parallel (e.g. after unblocking a future)
+				synchronized(ExecutionFeature.this)
+				{
+					threads.remove(sus);
+				}
+				ISuspendable.SUSPENDABLE.remove();
+				LOCAL.remove();
+			}
 		}
 	}
 	
@@ -663,15 +666,16 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					blocked=false;
 					this.future	= null;
 					
-					if(threadcount.incrementAndGet()>1)
-					{
-						throw new IllegalStateException("Threadcount>1");
-					}
-					
+					// aborted when execution feature is terminated
 					if(aborted)
 					{
 						throw new StepAborted(getComponent().getId());
 					}
+					
+					if(threadcount.incrementAndGet()>1)
+					{
+						throw new IllegalStateException("Threadcount>1");
+					}					
 				}
 			}
 			finally
@@ -805,12 +809,16 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		// Drop queued steps.
 		ComponentTerminatedException ex = new ComponentTerminatedException(getComponent().getId());
-		for(Object step: steps)
+		synchronized(this)
 		{
-			if(step instanceof StepInfo)
+			for(Object step: steps)
 			{
-				((StepInfo)step).getFuture().setExceptionIfUndone(ex);
+				if(step instanceof StepInfo)
+				{
+					((StepInfo)step).getFuture().setExceptionIfUndone(ex);
+				}
 			}
+			steps.clear();
 		}
 		
 		// Drop queued timer tasks.
@@ -818,7 +826,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		TimerTaskInfo[] ttis;
 		synchronized(ExecutionFeature.class)
 		{
-			steps.clear();
 			ttis = entries==null? new TimerTaskInfo[0]: entries.toArray(TimerTaskInfo[]::new);
 			
 			for(TimerTaskInfo tti: ttis)
