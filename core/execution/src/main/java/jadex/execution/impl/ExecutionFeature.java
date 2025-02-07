@@ -663,14 +663,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					blocked=false;
 					this.future	= null;
 					
-					if(aborted)
-					{
-						throw new StepAborted(getComponent().getId());
-					}
-
 					if(threadcount.incrementAndGet()>1)
 					{
 						throw new IllegalStateException("Threadcount>1");
+					}
+					
+					if(aborted)
+					{
+						throw new StepAborted(getComponent().getId());
 					}
 				}
 			}
