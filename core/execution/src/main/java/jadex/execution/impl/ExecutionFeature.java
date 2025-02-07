@@ -575,8 +575,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							}
 							else if(steps.isEmpty() && !terminated)
 							{
-								// decrement only if not terminated, otherwise blocking lambda fails
-								if(!failed && threadcount.decrementAndGet()<0)
+								// decrement only if not resume step (otherwise decremented already)
+								if(!(aborted instanceof ResumeStepAborted) && !failed && threadcount.decrementAndGet()<0)
 								{
 									failed	= true;
 									throw aborted!=null ? new IllegalStateException("Threadcount<0", aborted) : new IllegalStateException("Threadcount<0");
@@ -707,7 +707,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						wait.signal();
 						
 						// Abort this step to skip afterStep() call, because other thread is already running now.
-						throw new StepAborted(null);//getComponent().getId()); // Use null because code is used in bootstrapping before getComponent() is available
+						throw new ResumeStepAborted();
 					}
 					finally
 					{
@@ -751,6 +751,16 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		public ReentrantLock getLock()
 		{
 			return lock;
+		}
+	}
+	
+	@SuppressWarnings("serial")
+	protected static class	ResumeStepAborted	extends StepAborted
+	{
+		public ResumeStepAborted()
+		{
+			// Use null because code is used in bootstrapping before getComponent() is available
+			super(null);
 		}
 	}
 	
