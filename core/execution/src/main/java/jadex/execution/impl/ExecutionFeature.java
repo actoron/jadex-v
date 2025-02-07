@@ -39,7 +39,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
 	
-	private Queue<Runnable> steps = new ArrayDeque<>(4);
+	private Queue<Runnable> steps = new ArrayDeque<Runnable>();
 	protected volatile boolean executing;
 	protected volatile boolean do_switch;
 	protected boolean terminated;
@@ -545,7 +545,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						Runnable	step;
 						synchronized(ExecutionFeature.this)
 						{
-							step	= steps.poll();
+							int presize = steps.size();
+							step = steps.poll();
+							if(step==null)
+								System.out.println("step is null: "+steps.size()+" "+presize+" "+terminated);
 						}
 						
 						assert step!=null;
@@ -897,6 +900,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		try
 		{
+			if(step==null)
+				System.out.println("nullstep");
 			step.run();
 		}
 		catch(StepAborted t)
