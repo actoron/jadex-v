@@ -41,7 +41,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	
 	private Queue<Runnable> steps = new ArrayDeque<Runnable>();
 	protected volatile boolean executing;
-	protected volatile boolean do_switch;
+	protected volatile int	do_switch;
 	protected boolean terminated;
 	protected ThreadRunner runner = null;
 	protected Component	self = null;
@@ -572,15 +572,18 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						
 						synchronized(ExecutionFeature.this)
 						{
-							if(do_switch)
+							// Stop this thread, because another thread is still executing
+							if(do_switch>0)
 							{
-								do_switch	= false;
+								do_switch--;
 								hasnext	= false;
 							}
+							
+							// Stop this thread, because there are no more steps -> set executing=false
 							else if(steps.isEmpty() && !terminated)
 							{
 								// decrement only if not resume step (otherwise decremented already)
-								if(!(aborted instanceof ResumeStepAborted) && !failed && threadcount.decrementAndGet()<0)
+								if(!failed && threadcount.decrementAndGet()<0)
 								{
 									failed	= true;
 									throw aborted!=null ? new IllegalStateException("Threadcount<0", aborted) : new IllegalStateException("Threadcount<0");
@@ -702,7 +705,13 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					try
 					{
 						lock.lock();
-						do_switch	= true;
+						synchronized(ExecutionFeature.this)
+						{
+							// Force this thread (or another) to end execution
+							// Can be two resume() of different threads before any threads end,
+							// thus a counter is needed.
+							do_switch++;
+						}
 						if(!failed && threadcount.decrementAndGet()<0)
 						{
 							failed	= true;
@@ -711,7 +720,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						wait.signal();
 						
 						// Abort this step to skip afterStep() call, because other thread is already running now.
-						throw new ResumeStepAborted();
+						// Use null because code is used in bootstrapping before getComponent() is available
+						throw new StepAborted(null);
 					}
 					finally
 					{
@@ -755,16 +765,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		public ReentrantLock getLock()
 		{
 			return lock;
-		}
-	}
-	
-	@SuppressWarnings("serial")
-	protected static class	ResumeStepAborted	extends StepAborted
-	{
-		public ResumeStepAborted()
-		{
-			// Use null because code is used in bootstrapping before getComponent() is available
-			super(null);
 		}
 	}
 	
