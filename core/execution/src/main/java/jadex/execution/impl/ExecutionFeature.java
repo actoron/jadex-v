@@ -550,7 +550,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						assert step!=null;
 						
 //						// for debugging only
-						boolean aborted	= false;
+						StepAborted aborted	= null;
 						
 						try
 						{
@@ -560,7 +560,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						catch(StepAborted d)
 						{
 							// ignore aborted steps.
-							aborted	= true;
+							aborted	= d;
 						}
 						
 						synchronized(ExecutionFeature.this)
@@ -575,7 +575,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 								// decrement only if not terminated, otherwise blocking lambda fails
 								if(threadcount.decrementAndGet()<0)
 								{
-									throw new IllegalStateException("Threadcount<0: "+aborted);
+									throw new IllegalStateException("Threadcount<0", aborted);
 								}
 								
 								hasnext	= false;
