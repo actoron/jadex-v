@@ -1,6 +1,7 @@
 package jadex.benchmark;
 
 import java.io.IOException;
+import java.lang.System.Logger.Level;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -13,9 +14,18 @@ import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
 import jadex.common.SUtil;
+import jadex.logger.OpenTelemetryLogHandler;
+import jadex.logger.OpenTelemetryLogger;
 
 public class BenchmarkHelper
 {
+	static final String	EXEC_ENV	= SUtil.isGradle() ? "gradle" : "ide";
+
+	static
+	{
+		System.setProperty(OpenTelemetryLogger.URL, "https://otel.actoron.com");
+	}
+	
 	protected static String	getCaller()
 	{
 		StackTraceElement[]	stels	= new Exception().fillInStackTrace().getStackTrace();
@@ -32,7 +42,7 @@ public class BenchmarkHelper
 	{
 		int	msecs	= 500;
 		int retries	= 10;
-		long	best	= Long.MAX_VALUE;
+		List<Long>	vals	= new ArrayList<>();
 		try
 		{
 			for(int r=0; r<retries; r++)
@@ -57,16 +67,19 @@ public class BenchmarkHelper
 				{
 					System.out.println("Per component: "+took);
 					System.out.println("runs: "+cnt);
-					addToDB(took);
-					best	= Math.min(best, took);
+					addToDB(took, false);
+					vals.add(took);
 					System.out.println();
 				}
 				
 				for(Runnable teardown: teardowns)
 					teardown.run();
 			}
-			System.out.println("best: "+best);
-			return addToDB(best);
+			vals.sort((a,b) -> (int)(a-b));
+			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
+			System.out.println("vals: "+vals);
+			System.out.println("avg [0..3): "+value);
+			return addToDB(value, true);
 		}
 		catch(Exception e)
 		{
@@ -78,10 +91,10 @@ public class BenchmarkHelper
 	{
 		int	retries	= 10;	// how often to repeat everything 
 		long cooldown	= 10000;	// How long to sleep before runs
-		long msecs	= 1000;	// How long to run the benchmark
+		long msecs	= 2000;	// How long to run the benchmark
 		int	warmups	= 100; 	// How many warm-ups to run
-		int	runs	= 10;	// How many runs for measurement 
-		long	best	= Long.MAX_VALUE;
+		int	runs	= 1000;	// How many runs for measurement 
+		List<Long>	vals	= new ArrayList<>();
 		long	basemem = 0;
 		try
 		{
@@ -118,8 +131,8 @@ public class BenchmarkHelper
 					System.out.println("took: "+took);
 					System.out.println("runs: "+cnt*runs);
 					
-					addToDB(took);
-					best	= Math.min(best, took);
+					addToDB(took, false);
+					vals.add(took);
 					
 					System.out.println("Used memory: "+usedmem);
 					double pct	= (usedmem - basemem)*100.0/basemem;
@@ -131,8 +144,11 @@ public class BenchmarkHelper
 					basemem	= usedmem;
 				}
 			}
-			System.out.println("best: "+best);
-			return addToDB(best);
+			vals.sort((a,b) -> (int)(a-b));
+			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
+			System.out.println("vals: "+vals);
+			System.out.println("avg [0..3): "+value);
+			return addToDB(value, true);
 		}
 		catch(Exception e)
 		{
@@ -140,34 +156,79 @@ public class BenchmarkHelper
 		}
 	}
 
-	protected static double	addToDB(double value) throws IOException
+	/**
+	 *  Compare value to DB and (optionally) write new value.
+	 */
+	protected static double	addToDB(double value, boolean write) throws IOException
 	{
-		boolean	gradle	= System.getenv().toString().contains("gradle");
-		
 		double	pct	= 0;
 		String	caller	= getCaller();
-		Path	db	= Path.of(gradle?".benchmark_gradle": ".benchmark_ide", caller+".json");
-		double	prev	= 0;
+		Path	db	= Path.of(".benchmark_"+EXEC_ENV, caller+".json");
+		double	best	= 0;
+		double	last	= 0;
+		long	new_date	= System.currentTimeMillis();
+		long	best_date	= new_date;
+		
 		if(db.toFile().exists())
 		{
 			JsonValue	val	= Json.parse(Files.readString(db));
-			if(val.isNumber())	// Legacy support -> can be removed at some point
+			best	= ((JsonObject)val).get("best").asDouble();
+			last	= ((JsonObject)val).get("last").asDouble();
+			
+			pct	= (value - best)*100.0/best;
+			System.out.println("Change(%): "+pct);
+			
+			// Write new value if two better values in a row
+			if(last<=best && value<=best)
 			{
-				prev	= val.asDouble();
+				// Use only second best value to avoid outliers
+				best	= Math.max(last, value);
 			}
+			
+			// Keep old best date
 			else
 			{
-				prev	= ((JsonObject)val).get("best").asDouble();
+				JsonValue	dateval	= ((JsonObject)val).get("best_date");
+				best_date	= dateval!=null ? dateval.asLong(): 0;
 			}
-			pct	= (value - prev)*100.0/prev;
-			System.out.println("Change(%): "+pct);
+			
 		}
 
-		JsonObject	obj	= new JsonObject();
-		obj.add("best", prev==0 ? value : Math.min(value, prev));
-		obj.add("last", value);
-		db.toFile().getParentFile().mkdirs();
-		Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
+		if(write)
+		{
+			// Write to file
+			JsonObject	obj	= new JsonObject();
+			obj.add("best", best==0 ? value : best);
+			obj.add("best_date", best_date);
+			obj.add("last", value);
+			obj.add("last_date", new_date);
+			db.toFile().getParentFile().mkdirs();
+			Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
+			
+			// Write to log
+			// logfmt
+			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
+//				  "benchmark=true"
+//				+" benchmark_host="+((ComponentManager)IComponentManager.get()).host()
+//				+" benchmark_execenv="+EXEC_ENV
+				  "benchmark_name="+caller
+				+" benchmark_value="+value
+				+" benchmark_prev="+best
+				+" benchmark_pct="+pct);
+			// JSON
+//			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
+//					  "{\"benchmark\": true"
+//					+", \"benchmark_host\": \""+((ComponentManager)IComponentManager.get()).host()+"\""
+//					+", \"benchmark_execenv\": \""+execenv+"\""
+//					+", \"benchmark_name\": \""+caller+"\""
+//					+", \"benchmark_value\": "+value
+//					+", \"benchmark_prev\": "+prev
+//					+", \"benchmark_pct\": "+pct
+//					+"}");
+			
+			// Hack!!! Force OpenTelemetry to push logs before exiting
+			OpenTelemetryLogHandler.forceFlush();
+		}
 		
 		return pct;
 	}

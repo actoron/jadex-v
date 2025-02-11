@@ -19,7 +19,7 @@ import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IGoal;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
 import jadex.future.Future;
 import jadex.micro.annotation.Agent;
@@ -85,7 +85,7 @@ public class PlanTriggerTest
 	void testFactAdded()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> pojo.bel.add(0, "new fact"));
 		checkEventInfo(pojo.added, "bel", "factadded", null, "new fact", 0);
 	}
@@ -94,7 +94,7 @@ public class PlanTriggerTest
 	void testFactChanged()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> 
 		{
 			pojo.bel.add("old fact");
@@ -107,7 +107,7 @@ public class PlanTriggerTest
 	void testFactRemoved()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep(() -> 
 		{
 			pojo.bel.add("new fact");
@@ -120,7 +120,7 @@ public class PlanTriggerTest
 	void testGoal()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
 		checkGoalInfo(pojo.goal, PlanTriggerTestAgent.MyGoal.class);
 	}
@@ -129,7 +129,7 @@ public class PlanTriggerTest
 	void testGoalFinished()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IExternalAccess	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IBDIAgent.create(pojo);
 		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
 		checkGoalEventInfo(pojo.goalfinished, PlanTriggerTestAgent.MyGoal.class.getName(), "goaldropped", PlanTriggerTestAgent.MyGoal.class);
 	}

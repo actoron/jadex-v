@@ -11,9 +11,11 @@ import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.logger.ILoggingFeature;
 import jadex.logger.JadexLoggerFinder;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnEnd;
@@ -145,14 +147,14 @@ public class BTRandomAgent implements IBTProvider
 
 	public static void main(String[] args)
 	{
-		//JadexLoggerFinder.setDefaultSystemLoggingLevel(Level.INFO);
+		//IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
 		
-		int max = 1;
+		int max = 5;
 		for(int i=0; i<max; i++)
-			IComponent.create(new BTRandomAgent());
+			IComponentManager.get().create(new BTRandomAgent());
 		
 		EnvGui.createEnv();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

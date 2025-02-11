@@ -1,14 +1,12 @@
 package jadex.bpmn.runtime.task;
 
-import java.util.Map;
-
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
 import jadex.bpmn.model.task.annotation.Task;
 import jadex.bpmn.model.task.annotation.TaskParameter;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.execution.IExecutionFeature;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
@@ -51,7 +49,7 @@ public class DestroyComponentTask implements ITask
 		}
 		
 		//IFuture<Map<String, Object>> tmp = instance.getExternalAccess(cid).killComponent();
-		IFuture<Void> tmp = IComponent.terminate(cid);
+		IFuture<Void> tmp = IComponentManager.get().terminate(cid);
 		//IFuture<Map<String, Object>> tmp = instance.getExternalAccess(cid).killComponent();
 		if(wait || resultlistener!=null)
 		{

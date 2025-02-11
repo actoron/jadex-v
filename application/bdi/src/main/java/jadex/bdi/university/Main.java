@@ -3,6 +3,7 @@ package jadex.bdi.university;
 import jadex.bdi.runtime.BDICreationInfo;
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 
 /**
  *  Main for starting the example programmatically.
@@ -22,6 +23,6 @@ public class Main
 			.addArgument("raining", true)
 			.addArgument("waiting", false));
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

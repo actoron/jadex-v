@@ -6,9 +6,10 @@ import java.util.Set;
 
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -51,9 +52,9 @@ public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvide
 	}
 	
 	@Override
-	public IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return BpmnProcess.create(pojo, cid);
+		return BpmnProcess.create(pojo, cid, app);
 	}
 
 	@Override

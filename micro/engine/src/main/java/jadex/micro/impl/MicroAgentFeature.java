@@ -392,7 +392,8 @@ public class MicroAgentFeature	implements ILifecycle, IComponentFeature
 				//Object agent = component.getFeature(IPojoComponentFeature.class).getPojoAgent();
 				if(convert!=null)
 				{
-					SimpleValueFetcher fetcher = new SimpleValueFetcher(component.getFeature(IModelFeature.class).getFetcher());
+					//SimpleValueFetcher fetcher = new SimpleValueFetcher(component.getFeature(IModelFeature.class).getFetcher());
+					SimpleValueFetcher fetcher = new SimpleValueFetcher(component.getValueProvider().getFetcher());
 					fetcher.setValue("$value", val);
 					val = SJavaParser.evaluateExpression(convert, component.getModel().getAllImports(), fetcher, component.getClass().getClassLoader());
 				}
@@ -431,11 +432,12 @@ public class MicroAgentFeature	implements ILifecycle, IComponentFeature
 				largs.addAll(component.getFeatures());
 				
 				// Try to guess parameters from given args or component internals.
-				IParameterGuesser guesser = new SimpleParameterGuesser(component.getFeature(IModelFeature.class).getParameterGuesser(), largs);
-				Object[]	iargs	= new Object[method.getParameterTypes().length];
+				//IParameterGuesser guesser = new SimpleParameterGuesser(component.getFeature(IModelFeature.class).getParameterGuesser(), largs);
+				IParameterGuesser guesser = new SimpleParameterGuesser(component.getValueProvider().getParameterGuesser(), largs);
+				Object[] iargs = new Object[method.getParameterTypes().length];
 				for(int i=0; i<method.getParameterTypes().length; i++)
 				{
-					iargs[i]	= guesser.guessParameter(method.getParameterTypes()[i], false);
+					iargs[i] = guesser.guessParameter(method.getParameterTypes()[i], false);
 				}
 				
 				try

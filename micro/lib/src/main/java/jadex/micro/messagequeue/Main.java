@@ -1,6 +1,6 @@
 package jadex.micro.messagequeue;
 
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 
 /**
  *  Main for starting the example programmatically.
@@ -12,11 +12,11 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-		IComponent.create(new MessageQueueAgent());
+		IComponentManager.get().create(new MessageQueueAgent());
 		
-		IComponent.create(new UserAgent());
-		IComponent.create(new UserAgent());
+		IComponentManager.get().create(new UserAgent());
+		IComponentManager.get().create(new UserAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

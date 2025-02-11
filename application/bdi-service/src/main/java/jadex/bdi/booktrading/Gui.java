@@ -7,7 +7,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 
 import jadex.common.SGUI;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 
 /**
  *  The gui allows to add and delete buy or sell orders and shows open and
@@ -21,7 +21,7 @@ public class Gui extends JFrame
 	/**
 	 *  Shows the gui, and updates it when beliefs change.
 	 */
-	public Gui(final IExternalAccess agent)//, final boolean buy)
+	public Gui(final IComponentHandle agent)//, final boolean buy)
 	{
 		super((GuiPanel.isBuyer(agent)? "Buyer: ": "Seller: ")+agent.getId().getLocalName());
 		

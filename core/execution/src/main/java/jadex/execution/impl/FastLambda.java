@@ -11,9 +11,6 @@ import jadex.future.Future;
  */
 public class FastLambda<T>	extends Component
 {
-	/** The body to run. */
-	protected IThrowingFunction<IComponent, T>	body;
-	
 	/** The result, if any. */
 	protected Future<T>	result;
 	
@@ -23,8 +20,16 @@ public class FastLambda<T>	extends Component
 	
 	public FastLambda(IThrowingFunction<IComponent, T> body, Future<T> result, boolean terminate)
 	{
-		this.body	= body;
+		super(body);
 		this.terminate	= terminate;
 		this.result	= result;
+	}
+	
+	@Override
+	public IThrowingFunction<IComponent, T> getPojo()
+	{
+		@SuppressWarnings("unchecked")
+		IThrowingFunction<IComponent, T>	ret	= (IThrowingFunction<IComponent, T>)super.getPojo();
+		return ret;
 	}
 }

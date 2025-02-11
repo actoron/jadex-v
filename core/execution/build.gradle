@@ -28,14 +28,19 @@ dependencies
 	api 'org.activecomponents.jadex:core:'+v
 	
 	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:traverser:'+v
 	
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
-
 	testFixturesImplementation 'org.activecomponents.jadex:core:'+v
 	testFixturesImplementation 'org.activecomponents.jadex:future:'+v
 	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
+	implementation 'net.bytebuddy:byte-buddy:1.16.1'
+	
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	
+	// Hack!? cf. https://stackoverflow.com/a/77605392
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test 

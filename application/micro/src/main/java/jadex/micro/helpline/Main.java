@@ -1,6 +1,6 @@
 package jadex.micro.helpline;
 
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 
 /**
  *  Main for starting the example programmatically.
@@ -18,7 +18,7 @@ public class Main
 		// todo: how to use component clock?!
 		long cur = System.currentTimeMillis();
 		
-		IComponent.create(new HelplineAgent(
+		IComponentManager.get().create(new HelplineAgent(
 			new InformationEntry[]
 			{
 				new InformationEntry("Lennie Lost", "First aid given at Hummel square.", cur-2*60*60*1000),
@@ -26,6 +26,6 @@ public class Main
 				new InformationEntry("Lennie Lost", "Savely reached Mainville Hospital.", cur)
 			}));
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

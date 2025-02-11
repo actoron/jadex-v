@@ -1,7 +1,7 @@
 package jadex.nfproperty.impl;
 
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.IFuture;
 
 /**
@@ -10,7 +10,7 @@ import jadex.future.IFuture;
 public abstract class NFRootProperty<T, U> extends SimpleValueNFProperty<T, U>
 {
 	/** The root access. */
-	protected IExternalAccess root;
+	protected IComponentHandle root;
 	
 	/** The flag if the property has been injected to the root component. */
 	protected boolean injected;

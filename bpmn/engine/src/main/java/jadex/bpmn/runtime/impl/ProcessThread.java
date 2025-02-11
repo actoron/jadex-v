@@ -654,7 +654,7 @@ public class ProcessThread	implements ITaskContext
 		UnparsedExpression	upex	= activity.getPropertyValue(name);
 		try
 		{
-			return upex!=null ? ((IParsedExpression)upex.getParsed()).getValue(new ProcessThreadValueFetcher(this, true, instance.getFeature(IModelFeature.class).getFetcher())) : null;
+			return upex!=null ? ((IParsedExpression)upex.getParsed()).getValue(new ProcessThreadValueFetcher(this, true, instance.getValueProvider().getFetcher())) : null;
 		}
 		catch(RuntimeException e)
 		{
@@ -831,7 +831,7 @@ public class ProcessThread	implements ITaskContext
 					IndexMap<String, Tuple2<UnparsedExpression, UnparsedExpression>> mappings = getLastEdge().getParameterMappings();
 					if(mappings!=null)
 					{
-						IValueFetcher fetcher = new ProcessThreadValueFetcher(this, false, instance.getFeature(IModelFeature.class).getFetcher());
+						IValueFetcher fetcher = new ProcessThreadValueFetcher(this, false, instance.getValueProvider().getFetcher());
 						for(Iterator<String> it=mappings.keySet().iterator(); it.hasNext(); )
 						{
 							boolean	found	= false;
@@ -971,7 +971,7 @@ public class ProcessThread	implements ITaskContext
 			
 			Set<String> before = data!=null? new HashSet<String>(data.keySet()): Collections.EMPTY_SET;
 			before.remove(THREAD_PARAMETER_SERVICE_RESULT);	// Hack!!! Keep future available locally for thread.
-			IValueFetcher fetcher = new ProcessThreadValueFetcher(this, true, instance.getFeature(IModelFeature.class).getFetcher());
+			IValueFetcher fetcher = new ProcessThreadValueFetcher(this, true, instance.getValueProvider().getFetcher());
 			IndexMap<String, MParameter> params = getActivity().getParameters();
 			if(params!=null)
 			{
@@ -1113,7 +1113,7 @@ public class ProcessThread	implements ITaskContext
 					{
 						if(de.getParameterMapping()!=null)
 						{
-							SimpleValueFetcher sf = new SimpleValueFetcher(instance.getFeature(IModelFeature.class).getFetcher());
+							SimpleValueFetcher sf = new SimpleValueFetcher(instance.getValueProvider().getFetcher());
 							sf.setValue("$value", value);
 							sf.setValue(pname, value);
 							IValueFetcher fetcher = new ProcessThreadValueFetcher(this, true, sf);

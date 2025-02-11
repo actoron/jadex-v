@@ -39,9 +39,6 @@ public class Environment
 	/** The charging stations. */
 	private List<Chargingstation> chargingstations;
 
-	/** The pheromones. */
-	private List<Pheromone> pheromones;
-
 	//-------- constructors --------
 
 	/**
@@ -54,7 +51,6 @@ public class Environment
 		this.wastes = new ArrayList<Waste>();
 		this.wastebins = new ArrayList<Wastebin>();
 		this.chargingstations = new ArrayList<Chargingstation>();
-		this.pheromones = new ArrayList<Pheromone>();
 
 		// Add some things to our world.
 		
@@ -210,15 +206,6 @@ public class Environment
 	}
 
 	/**
-	 *  Add a pheromone.
-	 *  @param pheromone The new pheromone.
-	 */
-	public synchronized void addPheromone(Pheromone pheromone)
-	{
-		pheromones.add(pheromone.clone());
-	}
-
-	/**
 	 *  Get all wastes.
 	 *  @return All wastes.
 	 */
@@ -263,25 +250,9 @@ public class Environment
 	}
 
 	/**
-	 *  Get all pheromones.
-	 *  @return All pheromones.
-	 */
-	public synchronized Pheromone[] getPheromones()
-	{
-		// Remove evaporated pheromones
-		Iterator<Pheromone> phi=pheromones.iterator();
-		while(phi.hasNext() && phi.next().getStrength()==0.0)
-		{
-			phi.remove();
-		}
-		
-		return cloneList(pheromones, Pheromone.class);
-	}
-
-	/**
 	 *  Update a cleaner.
 	 */
-	public synchronized void	updateCleaner(Cleaner cleaner)
+	public synchronized void updateCleaner(Cleaner cleaner)
 	{
 		cleaners.put(cleaner.getId(), cleaner.clone());
 	}
@@ -289,7 +260,7 @@ public class Environment
 	/**
 	 *  Let a cleaner pick up waste.
 	 */
-	public synchronized void	pickupWaste(Cleaner cleaner, Waste waste)
+	public synchronized void pickupWaste(Cleaner cleaner, Waste waste)
 	{
 		Cleaner	mycleaner	= cleaners.get(cleaner.getId());
 		
@@ -326,7 +297,7 @@ public class Environment
 	/**
 	 *  Drop a piece of waste.
 	 */
-	public synchronized void	dropWasteInWastebin(Cleaner cleaner, Waste waste, Wastebin wastebin)
+	public synchronized void dropWasteInWastebin(Cleaner cleaner, Waste waste, Wastebin wastebin)
 	{
 		Cleaner	mycleaner	= cleaners.get(cleaner.getId());
 		

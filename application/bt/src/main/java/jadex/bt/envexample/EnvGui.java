@@ -54,7 +54,6 @@ public class EnvGui extends ApplicationAdapter
         
         Vector2 scale = mapPixelToWorld(new Vector2(1, 1));
         font.getData().setScale(scale.x, scale.y);
-
     }
 
     @Override
@@ -63,6 +62,7 @@ public class EnvGui extends ApplicationAdapter
         viewport.update(width, height);
     }
     
+    @Override
     public void render() 
     {
         // Clear the screen with a neutral color

@@ -97,7 +97,7 @@ public class ServerManager
 	            {
 	            	if(service==null)
 	            	{
-	            		service = component.getExternalAccess().scheduleStep((IComponent agent) ->
+	            		service = component.getComponentHandle().scheduleStep((IComponent agent) ->
 	            		{
 	            			return agent.getFeature(IRequiredServiceFeature.class).searchService(new ServiceQuery<>((Class<IService>)null).setServiceIdentifier(serviceid)).get();
 	            		}).get();
@@ -442,7 +442,7 @@ public class ServerManager
 		String[] vars = findVariables(id);
 		for(String var: vars)
 		{
-			String val = ""+component.getFeature(IModelFeature.class).getFetcher().fetchValue(var);
+			String val = ""+component.getValueProvider().getFetcher().fetchValue(var);
 			id = id.replace("${"+var+"}", val);
 		}
 		

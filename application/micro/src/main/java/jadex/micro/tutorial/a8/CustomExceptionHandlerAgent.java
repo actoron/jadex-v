@@ -1,8 +1,10 @@
 package jadex.micro.tutorial.a8;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.impl.ComponentManager;
+import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -18,7 +20,7 @@ public class CustomExceptionHandlerAgent
 	
 	public static void main(String[] args) throws InterruptedException 
 	{
-		ComponentManager.get().addExceptionHandler(RuntimeException.class, true, (ex, comp) ->
+		ComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(RuntimeException.class, true, (ex, comp) ->
 		{
 			System.out.println("custom exception handler ignoring: "+ex);
 			
@@ -30,8 +32,8 @@ public class CustomExceptionHandlerAgent
 			}));
 		});
 		
-		IComponent.create(new CustomExceptionHandlerAgent());
+		IComponentManager.get().create(new CustomExceptionHandlerAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

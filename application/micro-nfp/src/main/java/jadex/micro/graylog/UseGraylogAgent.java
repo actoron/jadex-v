@@ -1,16 +1,15 @@
 package jadex.micro.graylog;
 
 import java.lang.System.Logger.Level;
-import java.util.logging.ConsoleHandler;
 
 import org.graylog2.logging.GelfHandler;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager.LoggerCreator;
 import jadex.execution.IExecutionFeature;
 import jadex.logger.GraylogLogger;
-import jadex.logger.JulLogger;
+import jadex.logger.ILoggingFeature;
+import jadex.logger.LoggerCreator;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
@@ -37,9 +36,9 @@ public class UseGraylogAgent
 	{
 		 // only necessary when multiple unordered external loggers are in cp or config is not default
 		
-		// Configure Jadex system logger
+		// Configure Jadex logger
 		// application
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(
+		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(
 		null
 		/*name ->
 		{
@@ -51,7 +50,7 @@ public class UseGraylogAgent
 		}*/
 		, name -> 
 		{
-			GraylogLogger ret = new GraylogLogger(name);
+			GraylogLogger ret = new GraylogLogger(name, Level.ALL, false);
 			java.util.logging.Logger logger = ret.getLoggerImplementation();
 	        logger.setUseParentHandlers(false);
 	        GelfHandler handler = new GelfHandler();
@@ -63,7 +62,7 @@ public class UseGraylogAgent
 		
 		// Configure Jadex application logger
 		// system
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(
+		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(
 		null
 		/*name ->
 		{
@@ -75,7 +74,7 @@ public class UseGraylogAgent
 		}*/
 		, name -> 
 		{
-			GraylogLogger gl = new GraylogLogger(name);
+			GraylogLogger gl = new GraylogLogger(name, Level.OFF, true);
 			java.util.logging.Logger logger = gl.getLoggerImplementation();
 	        logger.setUseParentHandlers(false);
 	        GelfHandler handler = new GelfHandler();
@@ -85,8 +84,8 @@ public class UseGraylogAgent
 	        return gl;
 		}, true));
 		
-		IComponent.create(new UseGraylogAgent()).get();
+		IComponentManager.get().create(new UseGraylogAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

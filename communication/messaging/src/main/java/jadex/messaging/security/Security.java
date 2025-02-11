@@ -401,43 +401,71 @@ public class Security implements ISecurityFeature
 				if (hstate != null)
 				{
 					//final byte[] fmessage = message;
-					hstate.getResultFuture().addResultListener(new IResultListener<ICryptoSuite>()
+					cs = hstate.getResultFuture().get();
+					cleartext = cs.decryptAndAuth(message);
+					if(cleartext != null)
 					{
-						public void resultAvailable(ICryptoSuite result)
+						ret.setResult(new DecodedMessage(cs.getSecurityInfos(), cleartext));
+					}
+					else
+					{
+						//TODO: Implement reencryption
+						throw new UnsupportedOperationException("Failed to decrypt message to " + sender + ", reencryption request currently unimplemented");
+						/*requestReencryption(sender, message).addResultListener(new IResultListener<byte[]>()
 						{
-							byte[] cleartext = result.decryptAndAuth(message);
-							if(cleartext != null)
+							public void resultAvailable(byte[] result)
 							{
-								ret.setResult(new DecodedMessage(result.getSecurityInfos(), cleartext));
-							}
-							else
+								ICryptoSuite cs = currentcryptosuites.get(sender);
+								if (cs != null)
+									ret.setResult(new DecodedMessage(cs.getSecurityInfos(), result));
+								else
+									ret.setException(new SecurityException("Could not establish secure communication with (case 1): " + sender + "  " + message));
+							};
+							
+							public void exceptionOccurred(Exception exception)
 							{
-								//TODO: Implement reencryption
-								throw new UnsupportedOperationException("Failed to decrypt message to " + sender + ", reencryption request currently unimplemented");
-								/*requestReencryption(sender, message).addResultListener(new IResultListener<byte[]>()
-								{
-									public void resultAvailable(byte[] result)
-									{
-										ICryptoSuite cs = currentcryptosuites.get(sender);
-										if (cs != null)
-											ret.setResult(new DecodedMessage(cs.getSecurityInfos(), result));
-										else
-											ret.setException(new SecurityException("Could not establish secure communication with (case 1): " + sender + "  " + message));
-									};
-									
-									public void exceptionOccurred(Exception exception)
-									{
-										ret.setException(exception);
-									}
-								});*/
+								ret.setException(exception);
 							}
-						}
-						
-						public void exceptionOccurred(Exception exception)
-						{
-							ret.setException(exception);
-						}
-					});
+						});*/
+					}
+					
+//					hstate.getResultFuture().addResultListener(new IResultListener<ICryptoSuite>()
+//					{
+//						public void resultAvailable(ICryptoSuite result)
+//						{
+//							byte[] cleartext = result.decryptAndAuth(message);
+//							if(cleartext != null)
+//							{
+//								ret.setResult(new DecodedMessage(result.getSecurityInfos(), cleartext));
+//							}
+//							else
+//							{
+//								//TODO: Implement reencryption
+//								throw new UnsupportedOperationException("Failed to decrypt message to " + sender + ", reencryption request currently unimplemented");
+//								/*requestReencryption(sender, message).addResultListener(new IResultListener<byte[]>()
+//								{
+//									public void resultAvailable(byte[] result)
+//									{
+//										ICryptoSuite cs = currentcryptosuites.get(sender);
+//										if (cs != null)
+//											ret.setResult(new DecodedMessage(cs.getSecurityInfos(), result));
+//										else
+//											ret.setException(new SecurityException("Could not establish secure communication with (case 1): " + sender + "  " + message));
+//									};
+//									
+//									public void exceptionOccurred(Exception exception)
+//									{
+//										ret.setException(exception);
+//									}
+//								});*/
+//							}
+//						}
+//						
+//						public void exceptionOccurred(Exception exception)
+//						{
+//							ret.setException(exception);
+//						}
+//					});
 				}
 				else
 				{
@@ -1460,7 +1488,7 @@ public class Security implements ISecurityFeature
 					catch (Exception e)
 					{
 						e.printStackTrace();
-						state.getResultFuture().setException(e);
+						state.getResultFuture().setExceptionIfUndone(e);
 						//System.out.println("Removing Handshake " + secmsg.getSender().getRoot().toString()+" "+e);
 						initializingcryptosuites.remove(secmsg.getSender());
 					}

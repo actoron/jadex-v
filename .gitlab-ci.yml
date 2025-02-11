@@ -1,4 +1,4 @@
-image: gradle:latest
+image: eclipse-temurin:21-jdk-alpine
 
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
@@ -34,16 +34,45 @@ test:
 
 benchmark:
   stage: benchmark
-  script: ./benchmark.sh
+  script:
+    - ./benchmark.sh
+  #timeout: 48h
   # needs: ["build"]
   allow_failure: true
   cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - '**/build'
-      - .gradle
+    - key: "$CI_COMMIT_REF_NAME"
+      policy: pull
+      paths:
+        - '**/build'
+        - .gradle
+    
+    # cache benchmark values to check against previous vals (pct)
+    - key: benchmarks-$CI_COMMIT_REF_SLUG
+      paths:
+        - benchmark/*/.benchmark_gradle
+      # also store benchmark data on failed job
+      when: 'always'
+  rules:
+    - if: $CI_COMMIT_REF_SLUG=~"main"
+  tags: [benchmark]
 
+purge_benchmarks:
+  stage: benchmark
+  script: ./gradlew benchmark:purge
+  cache:
+    - key: "$CI_COMMIT_REF_NAME"
+      policy: pull
+      paths:
+        - '**/build'
+        - .gradle
+    
+    # cache benchmark values to check against previous vals (pct)
+    - key: benchmarks-$CI_COMMIT_REF_SLUG
+      paths:
+        - benchmark/*/.benchmark_gradle
+  when: manual
+  tags: [benchmark]
+  
 deployZip:
   stage: deploy
   script:
@@ -54,6 +83,8 @@ deployZip:
     paths:
       - '**/build'
       - .gradle
+  rules:
+    - if: $CI_COMMIT_REF_SLUG=~"main"
 
 deployCentral:
   stage: deploy
@@ -65,4 +96,6 @@ deployCentral:
     paths:
       - '**/build'
       - .gradle
+  rules:
+    - if: $CI_COMMIT_REF_SLUG=~"main"
 

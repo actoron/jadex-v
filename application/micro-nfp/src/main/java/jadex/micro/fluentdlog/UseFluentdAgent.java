@@ -5,10 +5,11 @@ import java.util.logging.ConsoleHandler;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager.LoggerCreator;
 import jadex.execution.IExecutionFeature;
 import jadex.logger.FluentdLogger;
+import jadex.logger.ILoggingFeature;
 import jadex.logger.JulLogger;
+import jadex.logger.LoggerCreator;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
@@ -33,9 +34,9 @@ public class UseFluentdAgent
 	
 	public static void main(String[] args) 
 	{
-		// Configure Jadex system logger
-		// application
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(name ->
+		// Configure Jadex logger
+		// system
+		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(name ->
 		{
 			JulLogger ret = new JulLogger(name);
 			ConsoleHandler chandler = new ConsoleHandler();
@@ -44,11 +45,11 @@ public class UseFluentdAgent
 			return ret;
 		}, name -> 
 		{
-			return new FluentdLogger(name, true); // only necessary when multiple unordered external loggers are in cp
+			return new FluentdLogger(name, Level.OFF, true); // only necessary when multiple unordered external loggers are in cp
 		}, true));
 		
 		// application
-		IComponentManager.get().addLoggerCreator(new LoggerCreator(name ->
+		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(name ->
 		{
 			JulLogger ret = new JulLogger(name);
 			ConsoleHandler chandler = new ConsoleHandler();
@@ -57,15 +58,15 @@ public class UseFluentdAgent
 			return ret;
 		}, name -> 
 		{
-			return new FluentdLogger(name, false);  // only necessary when multiple unordered external loggers are in cp
+			return new FluentdLogger(name, Level.ALL, false);  // only necessary when multiple unordered external loggers are in cp
 		}, false));
 		
 		// Configure Jadex application logger
 		// system
 		
 		for(int i=0; i<1; i++)
-			IComponent.create(new UseFluentdAgent()).get();
+			IComponentManager.get().create(new UseFluentdAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

@@ -29,7 +29,7 @@ public class EventEndErrorActivityHandler extends DefaultActivityHandler
 		else if(thread.getPropertyValue("exception", activity) instanceof UnparsedExpression)
 		{
 			UnparsedExpression excexp = (UnparsedExpression) thread.getPropertyValue("exception", activity);
-			IValueFetcher fetcher	= new ProcessThreadValueFetcher(thread, false, instance.getFeature(IModelFeature.class).getFetcher());
+			IValueFetcher fetcher	= new ProcessThreadValueFetcher(thread, false, instance.getValueProvider().getFetcher());
 			ex = (Exception) ((IParsedExpression) excexp.getParsed()).getValue(fetcher);
 		}
 		

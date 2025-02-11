@@ -1,6 +1,7 @@
 package jadex.micro.helloworld;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -20,7 +21,7 @@ public class HelloMicro
 	public static void main(String[] args) 
 	{
 		for(int i=0; i<100000; i++)
-			IComponent.create(new HelloMicro());
-		IComponent.waitForLastComponentTerminated();
+			IComponentManager.get().create(new HelloMicro());
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

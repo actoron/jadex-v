@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jadex.common.SGUI;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.SubscriptionIntermediateFuture;
@@ -185,8 +186,8 @@ public class GobbleAgent implements IGobbleGuiService
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		IComponent.create(new GobbleAgent()).get();
+		IComponentManager.get().create(new GobbleAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

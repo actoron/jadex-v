@@ -25,7 +25,7 @@ import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
@@ -407,7 +407,9 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 							if(value!=null && act.hasProperty(MActivity.RESULTTYPE))
 							{
 								trig = (String)act.getPropertyValueString(MActivity.RESULTTYPE);
-								String typename = (String)SJavaParser.parseExpression(act.getPropertyValue(MActivity.RESULTTYPE), thread.getInstance().getFeature(IModelFeature.class).getModel().getAllImports(), null).getValue(thread.getInstance().getFeature(IModelFeature.class).getFetcher());
+								String typename = (String)SJavaParser.parseExpression(act.getPropertyValue(MActivity.RESULTTYPE), 
+									thread.getInstance().getFeature(IModelFeature.class).getModel().getAllImports(), null)
+									.getValue(thread.getInstance().getValueProvider().getFetcher());
 								Class<?> type = new ClassInfo(typename).getType(thread.getInstance().getClass().getClassLoader());
 								if(SReflect.isSupertype(type, value.getClass()))
 								{
@@ -519,7 +521,7 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 					if(param.getInitialValue()!=null)
 					{
 						if(fetcher==null)
-							fetcher	= new ProcessThreadValueFetcher(thread, false, thread.getInstance().getFeature(IModelFeature.class).getFetcher());
+							fetcher	= new ProcessThreadValueFetcher(thread, false, thread.getInstance().getValueProvider().getFetcher());
 						try
 						{
 							thread.setParameterValue(param.getName(), ((IParsedExpression)param.getInitialValue().getParsed()).getValue(fetcher));

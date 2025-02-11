@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.LambdaAgent;
 import jadex.future.Future;
 
@@ -19,14 +19,14 @@ public class BlockingLambdaAgentBenchmark
 		double pct	= BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<Void>	ret	= new Future<>();
-			IExternalAccess	agent	= LambdaAgent.create(comp ->
+			IComponentHandle	agent	= LambdaAgent.create(comp ->
 			{
-				comp.getExternalAccess().scheduleStep(() -> ret.setResult(null));
+				comp.getComponentHandle().scheduleStep(() -> ret.setResult(null));
 				new Future<Void>().get();
 			});
 			ret.get();
 			agent.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 }

@@ -1,19 +1,20 @@
 package jadex.bt.impl;
 
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.micro.MicroAgent;
 import jadex.model.modelinfo.IModelInfo;
 
 public class BTAgent extends MicroAgent
 {
-	public static IExternalAccess create(Object pojo)
+	public static IComponentHandle create(Object pojo)
 	{
-		return create(pojo, null);
+		return create(pojo, null, null);
 	}
 	
-	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public static IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		Component comp = Component.createComponent(BTAgent.class, () -> 
 		{
@@ -22,20 +23,20 @@ public class BTAgent extends MicroAgent
 			{
 				//System.out.println("loaded micro model: "+model);
 				
-				return new BTAgent(pojo, model, cid);
+				return new BTAgent(pojo, model, cid, app);
 			}).get();
 		});
 		
-		return comp.getExternalAccess();
+		return comp.getComponentHandle();
 	}
 	
 	public BTAgent(Object pojo, IModelInfo model)
 	{
-		this(pojo, model, null);
+		this(pojo, model, null, null);
 	}
 	
-	public BTAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
+	public BTAgent(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		super(pojo, model, cid);
+		super(pojo, model, cid, app);
 	}
 }

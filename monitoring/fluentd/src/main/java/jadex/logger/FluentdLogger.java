@@ -1,11 +1,13 @@
 package jadex.logger;
 
+import java.io.IOException;
 import java.lang.System.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.fluentd.logger.FluentLogger;
+import org.fluentd.logger.errorhandler.ErrorHandler;
 
 
 /**
@@ -13,19 +15,54 @@ import org.fluentd.logger.FluentLogger;
  */
 public class FluentdLogger implements Logger 
 {
-    protected final FluentLogger logger;
+	public static String HOST = "FLUENT_HOST";
+	public static String PORT = "FLUENT_PORT";
+	
+    protected FluentLogger logger;
     protected final boolean system;
+    protected final Level	level;
 
-    public FluentdLogger(String name, boolean system) 
+    public FluentdLogger(String name, Level level, boolean system) 
     {
-    	System.out.println("created fluent logger: "+name+" "+system);
-    	this.system = system;
-        logger = FluentLogger.getLogger(getLoggerType());
+        this.system = system;
+        this.level	= level;
+
+        String host = System.getenv(HOST)!=null? System.getenv(HOST): System.getProperty(HOST);
+        String portstr = System.getenv(PORT)!=null? System.getenv(PORT): System.getProperty(PORT);
+
+        try 
+        {
+            if(host != null && portstr != null) 
+            {
+                int port = Integer.parseInt(portstr);
+                logger = FluentLogger.getLogger(name, host, port);
+                System.out.println("Fluentd Logger configured: Host=" + host + ", Port=" + port);
+            } 
+            else 
+            {
+                logger = FluentLogger.getLogger(name);
+                System.out.println("Fluentd Logger with standard values");
+            }
+        } 
+        catch (NumberFormatException e) 
+        {
+            System.err.println("Invalid port value: " + portstr + ". Using standard values.");
+            logger = FluentLogger.getLogger(name);
+        }
+        
+        logger.setErrorHandler(new ErrorHandler() 
+        {
+        	@Override
+        	public void handleNetworkError(IOException ex) 
+        	{
+        		ex.printStackTrace();
+        	}
+		});
     }
     
     public String getLoggerType()
     {
-    	return system? "jadex_log": "application_log";
+    	return system? "jadex_logs": "application_logs";
     }
 
     public FluentLogger getLoggerImplementation() 
@@ -42,8 +79,7 @@ public class FluentdLogger implements Logger
     @Override
     public boolean isLoggable(Level level) 
     {
-        // Assuming that FluentdLogger always logs all levels
-        return true;
+        return level.compareTo(this.level)>=0;
     }
 
     @Override
@@ -54,8 +90,8 @@ public class FluentdLogger implements Logger
         data.put("message", msg);
         data.put("name", getName());
         //data.put("time", System.currentTimeMillis());
-        logger.log(getName(), data);
-        //System.out.println("logged: "+getLoggerType());
+        logger.log(getLoggerType(), data);
+        System.out.println("logged: "+getLoggerType()+" "+data);
     }
 
     @Override
@@ -74,7 +110,6 @@ public class FluentdLogger implements Logger
         data.put("exception", thrown.toString());
         data.put("name", getName());
         //data.put("time", System.currentTimeMillis());
-        logger.log(getName(), data);
-        //System.out.println("logged: "+getLoggerType());
+        logger.log(getLoggerType(), data);
     }
 }

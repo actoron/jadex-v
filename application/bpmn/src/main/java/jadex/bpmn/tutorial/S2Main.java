@@ -3,7 +3,7 @@ package jadex.bpmn.tutorial;
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.common.SUtil;
-import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 
 /**
  *  Main for starting the example programmatically.
@@ -23,7 +23,7 @@ public class S2Main
 		BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S2_RequiredServices2.bpmn"));
 		//BpmnProcess.create(new RBpmnProcess("jadex/bpmn/tutorial/S2_RequiredServices.bpmn"));
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 		
 		System.out.println("process terminated");
 	}

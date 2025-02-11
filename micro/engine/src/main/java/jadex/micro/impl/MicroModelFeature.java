@@ -20,29 +20,29 @@ import jadex.model.IParameterGuesserProvider;
 import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
-public class MicroModelFeature implements IModelFeature, IInternalModelFeature, IParameterGuesserProvider, IValueFetcher
+public class MicroModelFeature implements IModelFeature, IInternalModelFeature//, IParameterGuesserProvider, IValueFetcher
 {
 	protected MicroAgent self;
 	protected IModelInfo model;
-	protected IParameterGuesser guesser;
+	//protected IParameterGuesser guesser;
 	
 	public MicroModelFeature(MicroAgent self)
 	{
 		this.self	= self;
 	}
 
-	@Override
+	/*@Override
 	public IParameterGuesser getParameterGuesser()
 	{
 		if(guesser==null)
 			guesser	= new SimpleParameterGuesser(new SimpleParameterGuesser(Collections.singleton(self)), Collections.singleton(self.getPojo()));
 			//guesser	= new SimpleParameterGuesser(super.getParameterGuesser(), Collections.singleton(pojoagent));
 		return guesser;
-	}
+	}*/
 	
 	/**
 	 *  Add $pojoagent to fetcher.
-	 */
+	 * /
 	public Object fetchValue(String name)
 	{
 		if("$agent".equals(name) || "$component".equals(name))
@@ -146,7 +146,7 @@ public class MicroModelFeature implements IModelFeature, IInternalModelFeature, 
 				throw new RuntimeException("Value not found: "+name);
 			}
 		}
-	}
+	}*/
 
 	@Override
 	public IModelInfo getModel()
@@ -160,10 +160,10 @@ public class MicroModelFeature implements IModelFeature, IInternalModelFeature, 
 		this.model = model;
 	}
 
-	@Override
+	/*@Override
 	public IValueFetcher getFetcher()
 	{
 		return this;
-	}
+	}*/
 
 }

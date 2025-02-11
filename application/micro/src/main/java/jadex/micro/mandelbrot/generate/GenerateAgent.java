@@ -113,7 +113,7 @@ public class GenerateAgent implements IGenerateGui
 		//System.out.println("Found display service: "+cs);
 		this.displayservice = ds;
 		
-		this.panel = (GeneratePanel)GeneratePanel.createGui(agent.getExternalAccess());
+		this.panel = (GeneratePanel)GeneratePanel.createGui(agent.getComponentHandle());
 		
 		//if(calcservices.size()>0)
 			//agent.getLocalService(IGenerateService.class).calcDefaultImage();

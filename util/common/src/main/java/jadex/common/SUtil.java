@@ -6414,6 +6414,22 @@ public class SUtil
 	}
 	
 	/**
+	 *  Tests if running from gradle (e.g. tests).
+	 */
+	public static final boolean isGradle()
+	{
+			// Tests for gradle wrappper as executor (works only on windows, wtf)
+		return "gradlew".equals(System.getenv("APP_BASE_NAME"))
+				
+			// Test for gradle wrapper on linux (doesn't work on alpine!?)
+			|| System.getenv("_")!=null && System.getenv("_").contains("gradle") 
+			
+			// Test for gradle wrapper in openjdk (works for others too?)
+			|| System.getProperty("sun.java.command")!=null && System.getProperty("sun.java.command")
+				.toLowerCase().contains("gradle"); 
+	}
+	
+	/**
 	 *  Replace the last occurrence of a substring.
 	 *  @param string The string
 	 *  @param toreplace The substring to replace.

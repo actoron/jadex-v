@@ -25,8 +25,19 @@ dependencies
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.activecomponents.jadex:collection:'+v
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	
+	// Hack!? cf. https://stackoverflow.com/a/77605392
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
+test 
+{
+	useJUnitPlatform()
+}
+
 
 processResources 
 {

@@ -8,7 +8,8 @@ import java.util.Collection;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentManager;
+import jadex.core.IComponentHandle;
 import jadex.micro.annotation.Agent;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
@@ -44,7 +45,7 @@ public class TagsTest
 	@Test
 	public void testHasTags()
 	{
-		IExternalAccess exta = IComponent.create(new TagsAgent(4711)).get();
+		IComponentHandle exta = IComponentManager.get().create(new TagsAgent(4711)).get();
 	
 		Collection<String> res = exta.scheduleStep(agent ->
 		{
@@ -64,7 +65,7 @@ public class TagsTest
 	@Test
 	public void testArgumentTags()
 	{
-		IExternalAccess exta = IComponent.create(new TagsAgent(4711)).get();
+		IComponentHandle exta = IComponentManager.get().create(new TagsAgent(4711)).get();
 	
 		Collection<String> res = exta.scheduleStep(agent ->
 		{
@@ -84,8 +85,8 @@ public class TagsTest
 	
 	/*public static void main(String[] args) 
 	{
-		IComponent.create(new TagsAgent(4711)).get();
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().create(new TagsAgent(4711)).get();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}*/
 	
 }

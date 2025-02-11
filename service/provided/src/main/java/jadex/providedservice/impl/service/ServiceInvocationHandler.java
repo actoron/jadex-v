@@ -10,6 +10,7 @@ import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.impl.Component;
+import jadex.execution.FutureReturnType;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
@@ -17,7 +18,6 @@ import jadex.future.FutureHelper;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.annotation.FutureReturnType;
 import jadex.providedservice.annotation.Raw;
 import jadex.providedservice.impl.service.interceptors.ResolveInterceptor;
 
@@ -217,64 +217,13 @@ public class ServiceInvocationHandler extends AbstractServiceInvocationHandler i
 		else
 		{
 			final ServiceInvocationContext sic = new ServiceInvocationContext(proxy, method, getInterceptors(), getServiceIdentifier());//, cause);
-//			sicon = sic;
-			
-//			if(method.getName().indexOf("getExternalAccess")!=-1 && sic.getLastServiceCall()==null)
-//				System.out.println("call method ex");
-			
 			List<Object> myargs = args!=null? SUtil.arrayToList(args): null;
 			
 			if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 			{
-				Class<?> rettype = null;
-				Annotation[][] anss = method.getParameterAnnotations();
-				for(int i=0; i<anss.length; i++)
-				{
-					Annotation[] ans = anss[i];
-					for(Annotation an: ans)
-					{
-						if(an instanceof FutureReturnType)
-						{
-							Object t = myargs.get(i);
-							if(t instanceof Class)
-								rettype = (Class<?>)t;
-							else if(t instanceof ClassInfo)
-								rettype = ((ClassInfo)t).getType(comp.getClassLoader());
-							if(rettype!=null)
-								break;
-						}
-					}
-				}
-				/*if("invokeMethod".equals(method.getName()))
-				{
-					ClassInfo rtype = (ClassInfo)myargs.get(3);
-					if(rtype!=null)
-						rettype = rtype.getType(comp.getClassLoader());
-				}*/
+				final Future<Object> fret = FutureFunctionality.createReturnFuture(method, args, comp.getClassLoader());
+				ret = fret;
 				
-				if(rettype==null)
-					rettype = method.getReturnType();
-				
-				@SuppressWarnings("unchecked")
-				final Future<Object> fret = (Future<Object>)FutureFunctionality.getDelegationFuture(rettype, 
-					new FutureFunctionality());
-					//new FutureFunctionality(logger));
-//					new ServiceCallFutureFunctionality(logger, sic.getLastServiceCall(), method.getName()));
-				ret	= fret;
-//				System.out.println("fret: "+fret+" "+method);
-//				fret.addResultListener(new IResultListener()
-//				{
-//					public void resultAvailable(Object result)
-//					{
-//						System.out.println("fret res: "+result);
-//					}
-//					public void exceptionOccurred(Exception exception)
-//					{
-//						System.out.println("fret ex: "+exception);
-//					}
-//				});
-//				if(method.getName().indexOf("addEntry")!=-1)
-//					System.out.println("connect: ");
 				sic.invoke(service, method, myargs).addResultListener(new ExceptionDelegationResultListener<Void, Object>(fret)
 				{
 					public void customResultAvailable(Void result)
@@ -654,6 +603,9 @@ public class ServiceInvocationHandler extends AbstractServiceInvocationHandler i
 //	{
 //		return (IServiceIdentifier)pojosids.get(pojo);
 //	}
+	
+	
+
 }
 
 

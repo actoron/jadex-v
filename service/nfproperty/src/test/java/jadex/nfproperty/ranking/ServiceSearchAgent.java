@@ -1,11 +1,11 @@
 package jadex.nfproperty.ranking;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentManager;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
@@ -58,7 +58,7 @@ public class ServiceSearchAgent
 		//final Future<Void> done = new Future<Void>();
 		
 		if(search)
-			searchAndRank(agent.getExternalAccess());
+			searchAndRank(agent.getComponentHandle());
 		
 		/*res.next(val ->
 		{
@@ -150,7 +150,7 @@ public class ServiceSearchAgent
 		//return done;
 	}
 	
-	public static IFuture<Collection<Tuple2<ICoreDependentService, Double>>> searchAndRank(IExternalAccess exta)
+	public static IFuture<Collection<Tuple2<ICoreDependentService, Double>>> searchAndRank(IComponentHandle exta)
 	{
 		Future<Collection<Tuple2<ICoreDependentService, Double>>> ret = new Future<>();
 		
@@ -223,11 +223,11 @@ public class ServiceSearchAgent
 	{
 		int n = 20;
 		for(int i=0; i<n; i++)
-			IComponent.create(new ServiceSearchAgent(true)).get();
-			//IComponent.create(new NFPropertyTestAgent()).get();
+			IComponentManager.get().create(new ServiceSearchAgent(true)).get();
+			//IComponentManager.get().create(new NFPropertyTestAgent()).get();
 		
-		//IComponent.create(new ServiceSearchAgent()).get();
+		//IComponentManager.get().create(new ServiceSearchAgent()).get();
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

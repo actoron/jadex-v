@@ -86,6 +86,8 @@ public abstract class Test
 			{
 //			while(true)
 //			{
+				//testObject();
+				
 				testMultiCollection();
 
 				testByte();
@@ -293,6 +295,11 @@ public abstract class Test
 						+wocs+", "+rocs+" \n"
 						+SUtil.arrayToString(written)+", "+new String((byte[])written));
 				}
+				else if(ro==wo)
+				{
+					throw new RuntimeException("Indentical: "+wo+", "+ro+"\n"
+						+wo.getClass()+" \n"+ro.getClass()+" \n"+written);
+				}
 				else
 				{
 					throw new RuntimeException("Not equal: "+wo+", "+ro+"\n"
@@ -358,6 +365,16 @@ public abstract class Test
 		double data = 1E6*1.00001;
 		
 		doWriteAndRead(data);
+	}
+	
+	/**
+	 * 
+	 */
+	public void testObject() throws Exception
+	{
+		Object obj = new Object();
+		
+		doWriteAndRead(obj);
 	}
 	
 	/**

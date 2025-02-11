@@ -10,7 +10,7 @@ import java.util.Set;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
@@ -63,7 +63,7 @@ public class MessageFeature implements IMessageFeature
 			if (GlobalProcessIdentifier.SELF.equals(receiver.getGlobalProcessIdentifier()))
 			{
 				// Local message
-				IExternalAccess exta = ComponentManager.get().getComponent(receiver).getExternalAccess();
+				IComponentHandle exta = ComponentManager.get().getComponent(receiver).getComponentHandle();
 				exta.scheduleStep((comp) ->
 				{
 					((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, message);
@@ -195,7 +195,7 @@ public class MessageFeature implements IMessageFeature
 		if (GlobalProcessIdentifier.SELF.equals(receiver.getGlobalProcessIdentifier()))
 		{
 			// Local message
-			IExternalAccess exta = ComponentManager.get().getComponent(receiver).getExternalAccess();
+			IComponentHandle exta = ComponentManager.get().getComponent(receiver).getComponentHandle();
 			exta.scheduleStep((comp) ->
 			{
 				((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, tex);

@@ -41,7 +41,7 @@ import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.common.SGUI;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
 import jadex.future.IFuture;
 import jadex.micro.impl.MicroAgentFeature;
@@ -57,7 +57,7 @@ public class BlocksworldGui	extends JFrame
 	/**
 	 *  Create the blocksworld gui.
 	 */
-	public BlocksworldGui(final IExternalAccess agent)
+	public BlocksworldGui(final IComponentHandle agent)
 	{
 		super();
 		initGui(agent);
@@ -67,7 +67,7 @@ public class BlocksworldGui	extends JFrame
 	 *  Init the gui.
 	 *  Method runs on AWT thread.
 	 */
-	protected void	initGui(final IExternalAccess agent)
+	protected void	initGui(final IComponentHandle agent)
 	{
 		// HACK!! ensure that agent is inited
 //		try

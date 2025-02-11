@@ -167,6 +167,7 @@ includeBuild('core/engine') {}
 includeBuild('core/featuretest') {}
 includeBuild('core/execution') {}
 includeBuild('core/simulation') {}
+//includeBuild('core/errorhandling') {}
 
 includeBuild('model/model') {}
 
@@ -197,6 +198,7 @@ includeBuild('rules/eca') {}
 includeBuild('monitoring/logbase') {}
 includeBuild('monitoring/graylog') {}
 includeBuild('monitoring/fluentd') {}
+includeBuild('monitoring/opentelemetry') {}
 includeBuild('monitoring/log4j') {}
 
 includeBuild('application/micro'){name='application-micro'}
@@ -211,6 +213,7 @@ includeBuild('benchmark/execution'){name='benchmark-execution'}
 includeBuild('benchmark/bdi'){name='benchmark-bdi'}
 includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
 includeBuild('benchmark/micro'){name='benchmark-micro'}
+includeBuild('benchmark/bt'){name='benchmark-bt'}
 includeBuild('benchmark/thirdparty'){name='benchmark-thirdparty'}
 includeBuild('benchmark'){name='benchmark'}
 

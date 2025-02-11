@@ -4,8 +4,9 @@ import jadex.bdi.model.BDIModel;
 import jadex.bdi.model.BDIModelLoader;
 import jadex.bdi.runtime.BDICreationInfo;
 import jadex.common.SUtil;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.micro.MicroAgent;
 import jadex.model.modelinfo.IModelInfo;
@@ -14,12 +15,12 @@ public class BDIAgent extends MicroAgent
 {
 	public static BDIModelLoader loader = new BDIModelLoader();
 	
-	public static IExternalAccess create(Object pojo)
+	public static IComponentHandle create(Object pojo)
 	{
-		return create(pojo, null);
+		return create(pojo, null, null);
 	}
 	
-	public static IExternalAccess create(Object pojo, ComponentIdentifier cid)
+	public static IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		String	classname;
 		BDIAgent agent = null;
@@ -30,7 +31,7 @@ public class BDIAgent extends MicroAgent
 				classname	= classname.substring(4);
 			String	fclassname	= classname ;
 			agent = Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent((Object)null, loadModel(fclassname, null), cid));
+				() -> new BDIAgent((Object)null, loadModel(fclassname, null), cid, app));
 		}
 		else if(pojo instanceof BDICreationInfo)
 		{
@@ -39,29 +40,29 @@ public class BDIAgent extends MicroAgent
 				classname	= classname.substring(4);
 			String	fclassname	= classname ;
 			agent = Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname, null), cid));
+				() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname, null), cid, app));
 		}
 		else
 		{
 			agent = Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName(), pojo), cid));
+				() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName(), pojo), cid, app));
 		}
 		
-		return agent.getExternalAccess();
+		return agent.getComponentHandle();
 	}
 	
 	/** Optional creation info, i.e. arguments. */
 	protected BDICreationInfo	info;
 	
-	protected BDIAgent(BDICreationInfo info, IModelInfo model, ComponentIdentifier cid)
+	protected BDIAgent(BDICreationInfo info, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		this((Object)null, model, cid);
+		this((Object)null, model, cid, app);
 		this.info	= info;
 	}
 	
-	protected BDIAgent(Object pojo, IModelInfo model, ComponentIdentifier cid)
+	protected BDIAgent(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
-		super(pojo!=null ? pojo : createPojo(model), model, cid);
+		super(pojo!=null ? pojo : createPojo(model), model, cid, app);
 	}
 	
 	protected static Object	createPojo(IModelInfo model)

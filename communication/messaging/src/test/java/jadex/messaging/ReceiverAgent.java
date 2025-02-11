@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 
 import jadex.common.SUtil;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
-import jadex.messaging.security.Security;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 
@@ -82,11 +82,18 @@ public class ReceiverAgent
         
         System.out.println("Receiver listening: " + agent.getId());
         
-        Process subproc = SUtil.runJvmSubprocess(SenderAgent.class, null, Arrays.asList(new String[] { agent.getId().toString() }), true);
-		
-        oneshot.get();
-        exchange.get();
-        subproc.destroy();
+        Process subproc	= null;
+        try
+        {
+	        subproc = SUtil.runJvmSubprocess(SenderAgent.class, null, Arrays.asList(new String[] { agent.getId().toString() }), true);
+			
+	        oneshot.get();
+	        exchange.get();
+        }
+        finally
+        {
+        	subproc.destroy();
+        }
         System.out.println("Messaging Test successful.");
         agent.terminate();
     }
@@ -99,8 +106,8 @@ public class ReceiverAgent
     @Test
 	public void testAgentMessaging() throws Exception
 	{
-    	IComponent.create(this).get();
-    	IComponent.waitForLastComponentTerminated();
+    	IComponentManager.get().create(this).get();
+    	IComponentManager.get().waitForLastComponentTerminated();
 	}
 
     /**
@@ -109,7 +116,7 @@ public class ReceiverAgent
      */
     public static void main(String[] args) 
     {
-    	IComponent.create(new ReceiverAgent()).get();
-        IComponent.waitForLastComponentTerminated();
+    	IComponentManager.get().create(new ReceiverAgent()).get();
+        IComponentManager.get().waitForLastComponentTerminated();
     }
 }

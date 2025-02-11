@@ -8,7 +8,8 @@ import org.junit.jupiter.api.Test;
 
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentManager;
+import jadex.core.IComponentHandle;
 import jadex.micro.annotation.Agent;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.sensor.service.ExecutionTimeProperty;
@@ -32,9 +33,9 @@ public class NFMethodPropTestAgent
 	@Test
 	public void waitTimes()
 	{
-		IExternalAccess prov = IComponent.create(new ProviderAgent()).get();
+		IComponentHandle prov = IComponentManager.get().create(new ProviderAgent()).get();
 		
-		IExternalAccess exta = IComponent.create(new NFMethodPropTestAgent()).get();
+		IComponentHandle exta = IComponentManager.get().create(new NFMethodPropTestAgent()).get();
 	
 		double[] res = exta.scheduleStep(agent ->
 		{
@@ -75,9 +76,9 @@ public class NFMethodPropTestAgent
 	
 	/*public static void main(String[] args) 
 	{
-		IExternalAccess prov = IComponent.create(new ProviderAgent()).get();
-		IExternalAccess tester = IComponent.create(new NFMethodPropTestAgent()).get();
-		IComponent.waitForLastComponentTerminated();
+		IExternalAccess prov = IComponentManager.get().create(new ProviderAgent()).get();
+		IExternalAccess tester = IComponentManager.get().create(new NFMethodPropTestAgent()).get();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}*/
 }
 

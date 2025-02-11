@@ -217,7 +217,7 @@ public class BlocksworldAgent
 			{
 				public void run()
 				{
-					new BlocksworldGui(agent.getExternalAccess());
+					new BlocksworldGui(agent.getComponentHandle());
 				}
 			});
 		}

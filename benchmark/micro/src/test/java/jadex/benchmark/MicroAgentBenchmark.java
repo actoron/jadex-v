@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.micro.MicroAgent;
 import jadex.model.annotation.OnStart;
@@ -21,7 +21,7 @@ public class MicroAgentBenchmark
 		double pct	= BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<Void>	ret	= new Future<>();
-			IExternalAccess	agent	= MicroAgent.create(new Object()
+			IComponentHandle	agent	= MicroAgent.create(new Object()
 			{
 				@OnStart
 				public void	start()
@@ -32,7 +32,7 @@ public class MicroAgentBenchmark
 			ret.get();
 			agent.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 
 	@Test
@@ -41,7 +41,7 @@ public class MicroAgentBenchmark
 		double pct	= BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			Future<Void>	ret	= new Future<>();
-			IExternalAccess	agent	= MicroAgent.create(new Object()
+			IComponentHandle	agent	= MicroAgent.create(new Object()
 			{
 				@OnStart
 				public void	start()
@@ -52,7 +52,7 @@ public class MicroAgentBenchmark
 			ret.get();
 			return () -> agent.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
+		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 
 }

@@ -2,12 +2,12 @@ package jadex.bt.decorators;
 
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.impl.Event;
-import jadex.bt.impl.ITimerCreator;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ICommand;
 import jadex.common.ITriFunction;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.ITimerCreator;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -141,7 +141,7 @@ public class ConditionalDecorator<T> extends Decorator<T>
 	{
 		final Future<Void> ret = new Future<Void>();
 		
-		ITimerCreator<T> tc = execontext.getTimerCreator();
+		ITimerCreator tc = execontext.getTimerCreator();
 		final IFuture<Void> timerfut = timeout>0? tc.createTimer(execontext, timeout): null;
 		
 		final String rulename = getRuleName();
