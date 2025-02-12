@@ -1,5 +1,6 @@
 package jadex.core;
 
+import java.lang.System.Logger;
 import jadex.core.impl.ValueProvider;
 import jadex.future.IFuture;
 
@@ -39,7 +40,7 @@ public interface IComponent
 	
 	/**
 	 *  Get the component handle.
-	 *  @param The id of the component.
+	 *  @param cid The id of the component.
 	 *  @return The handle.
 	 */
 	public IComponentHandle getComponentHandle(ComponentIdentifier cid);
@@ -54,6 +55,13 @@ public interface IComponent
 	 *  @return The pojo.
 	 */
 	public Object getPojo();
+
+	/**
+	 *  Returns the appropriate logging access for the component.
+	 *
+	 *  @return The component logger.
+	 */
+	public Logger getLogger();
 	
 	/**
 	 *  Get the value provider (for fetcher and parameter guesser).
