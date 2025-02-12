@@ -451,8 +451,8 @@ public class ComponentManager implements IComponentManager
 	}
 
 	// Caching for small speedup (detected in PlainComponentBenchmark)
-	Logger	logger	= null;
-	Logger getLogger()
+	private Logger logger	= null;
+	private Logger getLogger()
 	{
 		if(logger==null)
 			logger	= System.getLogger(IComponent.class.getName());
