@@ -55,6 +55,14 @@ public interface IComponentManager extends IComponentFactory
 	 *  @return The class loader that components should use.
 	 */
 	public ClassLoader getClassLoader();
+
+	/**
+	 *  Convenience method that returns access to the logging subsystem used by Jadex.
+	 *
+	 *  @param requestingClass The class on whose behalf logging access is requested.
+	 *  @return A logger.
+	 */
+	public System.Logger getLogger(Class<?> requestingClass);
 	
 	/**
 	 *  Are component ids numbers or strings.
