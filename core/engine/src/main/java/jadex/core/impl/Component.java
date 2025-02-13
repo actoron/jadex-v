@@ -1,5 +1,6 @@
 package jadex.core.impl;
 
+import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +47,9 @@ public class Component implements IComponent
 	
 	/** The external access. */
 	protected IComponentHandle access;
+
+	/** Cache for the component logger. */
+	protected Logger logger;
 	
 	/** The value provider. */
 	protected ValueProvider valueprovider;
@@ -240,6 +244,18 @@ public class Component implements IComponent
 	public Object getPojo()
 	{
 		return pojo;
+	}
+
+	/**
+	 *  Returns the appropriate logging access for the component.
+	 *
+	 *  @return The component logger.
+	 */
+	public Logger getLogger()
+	{
+		if (logger == null)
+			logger = System.getLogger(pojo != null ? pojo.getClass().getName() : getId().getLocalName());
+		return logger;
 	}
 	
 	protected void putFeature(Class<?> type, Object feature)

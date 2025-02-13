@@ -278,7 +278,6 @@ public class Security implements ISecurityFeature
 	 *  Encrypts and signs the message for a receiver.
 	 *  
 	 *  @param receiver The receiver.
-	 *  @param content The content
 	 *  @return Encrypted/signed message.
 	 */
 	public byte[] encryptAndSign(GlobalProcessIdentifier receiver, byte[] message)
@@ -348,7 +347,6 @@ public class Security implements ISecurityFeature
 	 *  Decrypt and authenticates the message from a sender.
 	 *  
 	 *  @param sender The sender.
-	 *  @param content The content.
 	 *  @return Decrypted/authenticated message or null on invalid message.
 	 */
 	public DecodedMessage decryptAndAuth(GlobalProcessIdentifier sender, byte[] message)
@@ -545,7 +543,7 @@ public class Security implements ISecurityFeature
 	 *  Adds a new group.
 	 * 
 	 *  @param groupname The group name.
-	 *  @param secret The secret.
+	 *  @param asecret The secret.
 	 */
 	public void addGroup(String groupname, AbstractAuthenticationSecret asecret)
 	{
@@ -661,7 +659,7 @@ public class Security implements ISecurityFeature
 	/** 
 	 *  Remvoes an authority for authenticating platform names.
 	 *  
-	 *  @param secret The secret, only X.509 secrets allowed.
+	 *  @param pemcertificate The secret, only X.509 secrets allowed.
 	 */
 	public void removeNameAuthority(String pemcertificate)
 	{
@@ -675,8 +673,7 @@ public class Security implements ISecurityFeature
 	
 	/** 
 	 *  Gets an authority for authenticating host names.
-	 *  
-	 *  @param secret The secret, only X.509 secrets allowed.
+	 *
 	 *  @return Null, when done.
 	 */
 	public Set<String> getNameAuthorities()
@@ -692,8 +689,7 @@ public class Security implements ISecurityFeature
 	
 	/** 
 	 *  Gets an authority for authenticating host names.
-	 *  
-	 *  @param secret The secret, only X.509 secrets allowed.
+	 *
 	 *  @return Null, when done.
 	 */
 	public Set<X509CertificateHolder> getNameAuthorityCerts()
@@ -925,7 +921,6 @@ public class Security implements ISecurityFeature
 	/**
 	 *  Sets the roles of a security info object.
 	 *  @param secinf Security info.
-	 *  @param defroles Default roles that should be added.
 	 */
 	public void setSecInfoMappedRoles(SecurityInfo secinf)
 	{
@@ -1114,7 +1109,6 @@ public class Security implements ISecurityFeature
 	 * 
 	 *  @param name Name of the suite.
 	 *  @param convid Conversation ID of handshake.
-	 *  @param remoteversion The remote Jadex version.
 	 *  @param initializer True, if suite should represent the initializer.
 	 *  @return The suite, null if not found.
 	 */
@@ -1234,7 +1228,7 @@ public class Security implements ISecurityFeature
 	
 	/**
 	 *  Init handshake with other platform.
-	 *  @param gpid The global process id.
+	 *  @param remotegpid The global process id.
 	 */
 	protected void initializeHandshake(GlobalProcessIdentifier remotegpid)
 	{
@@ -1274,8 +1268,7 @@ public class Security implements ISecurityFeature
 	
 	/**
 	 *  Handle security handshake message.
-	 *  @param sender The sender.
-	 *  @param msg The message.
+	 *  @param message The message.
 	 */
 	public void handleMessage(byte[] message)
 	{

@@ -451,13 +451,24 @@ public class ComponentManager implements IComponentManager
 	}
 
 	// Caching for small speedup (detected in PlainComponentBenchmark)
-	Logger	logger	= null;
-	Logger getLogger()
+	private Logger logger	= null;
+	private Logger getLogger()
 	{
 		if(logger==null)
 			logger	= System.getLogger(IComponent.class.getName());
 		return logger;
 //		System.out.println("CM get logger "+logger);
+	}
+
+	/**
+	 *  Convenience method that returns access to the logging subsystem used by Jadex.
+	 *
+	 *  @param requestingClass The class on whose behalf logging access is requested.
+	 *  @return A logger.
+	 */
+	public Logger getLogger(Class<?> requestingClass)
+	{
+		return System.getLogger(requestingClass.getName());
 	}
 	
 	/**
