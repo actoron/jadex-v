@@ -533,17 +533,17 @@ public class BDIClassReader extends MicroClassReader
 			
 			for(String bel: trigger.factadded())
 			{
-				tr.addFactAdded(bel);
+				tr.addFactAdded(cleanString(bel));
 			}
 			
 			for(String bel: trigger.factremoved())
 			{
-				tr.addFactRemoved(bel);
+				tr.addFactRemoved(cleanString(bel));
 			}
 			
 			for(String bel: trigger.factchanged())
 			{
-				tr.addFactChanged(bel);
+				tr.addFactChanged(cleanString(bel));
 			}
 			
 			MServiceCall sc = getServiceCall(bdimodel, st);
@@ -554,6 +554,11 @@ public class BDIClassReader extends MicroClassReader
 		}
 		
 		return tr;
+	}
+	
+	protected String cleanString(String name)
+	{
+		return name.replace(".", "/");
 	}
 	
 	/**

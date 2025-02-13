@@ -90,9 +90,23 @@ public class BaseObject extends SpaceObject
 	
 	public BaseObject copy()
 	{
-		BaseObject ret = new BaseObject(this.getPosition(), this.getName(), this.getSpeed(), this.getVision(), this.getRotation(), 
+		BaseObject ret = new BaseObject(this.getPosition(), this.getName(), 
+			this.getSpeed(), this.getVision(), this.getRotation(), 
 			this.getWidth(), this.getHeight());
 		ret.setId(this.getId());
 		return ret;
+	}
+	
+	public void updateFrom(SpaceObject source)
+	{
+		super.updateFrom(source);
+		BaseObject bo = (BaseObject)source;
+		setHeight(bo.getHeight());
+		setWidth(bo.getWidth());
+		setName(bo.getName());
+		setRotation(bo.getRotation());
+		setSpeed(bo.getSpeed());
+		setVision(bo.getVision());
+		//System.out.println("updated: "+this);
 	}
 }

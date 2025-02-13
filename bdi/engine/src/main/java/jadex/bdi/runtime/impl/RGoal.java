@@ -164,7 +164,8 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	 */
 	public void doSetLifecycleState(GoalLifecycleState lifecyclestate)
 	{
-//		System.out.println("lfclstate: "+getId()+", "+lifecyclestate);
+		//System.out.println("lifecyle state: "+getId()+", "+lifecyclestate);
+		
 		this.lifecyclestate = lifecyclestate;
 //		if(GoalLifecycleState.ADOPTED.equals(lifecyclestate))
 //		{
@@ -195,7 +196,8 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	 */
 	public void doSetProcessingState(GoalProcessingState processingstate)
 	{
-//		System.out.println("procstate: "+getId()+", "+processingstate);
+		//System.out.println("proc state: "+getId()+", "+processingstate);
+		
 		this.processingstate = processingstate;
 //		publishToolGoalEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION);
 	}
@@ -329,6 +331,9 @@ public class RGoal extends RFinishableElement implements IGoal, IInternalPlan
 	{
 		if(lifecyclestate.equals(getLifecycleState()))
 			return;
+		
+		//if(getId().indexOf("AnalyzeTarget")!=-1)// && GoalLifecycleState.SUSPENDED.equals(lifecyclestate))
+		//	System.out.println("life state: "+this+" "+lifecyclestate);
 		
 		//System.out.println(ia.getId()+" setLifecycleState: "+this+", "+lifecyclestate);
 		

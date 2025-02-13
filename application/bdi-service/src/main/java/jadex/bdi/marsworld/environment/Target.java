@@ -91,6 +91,27 @@ public class Target extends SpaceObject
 		ret.setId(this.getId());
 		ret.setOre(this.getOre());
 		ret.setCapacity(this.getCapacity());
+		ret.setStatus(this.getStatus());
 		return ret;
 	}
+	
+	public void updateFrom(SpaceObject source)
+	{
+		super.updateFrom(source);
+		Target t = (Target)source;
+		setHeight(t.getHeight());
+		setWidth(t.getWidth());
+		setOre(t.getOre());
+		setCapacity(t.getCapacity());
+		setStatus(t.getStatus());
+		//System.out.println("updated target: "+this);
+	}
+
+	@Override
+	public String toString() 
+	{
+		return "Target [capacity=" + capacity + ", ore=" + ore + ", status=" + status + ", position=" + position
+				+ ", id=" + id + "]";
+	}
+	
 }

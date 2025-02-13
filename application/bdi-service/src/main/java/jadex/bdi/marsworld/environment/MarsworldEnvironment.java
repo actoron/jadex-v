@@ -1,8 +1,16 @@
 package jadex.bdi.marsworld.environment;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import jadex.bdi.marsworld.environment.Carry.Status;
+import jadex.bdi.marsworld.environment.EnvironmentTask.TaskData;
 import jadex.bdi.marsworld.math.IVector2;
 import jadex.bdi.marsworld.math.Vector2Double;
+import jadex.execution.AgentMethod;
+import jadex.execution.NoCopy;
 import jadex.execution.impl.TimerContext;
 import jadex.execution.impl.TimerCreator;
 import jadex.future.ITerminableFuture;
@@ -25,49 +33,110 @@ public class MarsworldEnvironment extends Environment
 		super(id, sps, new TimerCreator(), new TimerContext());
 	}
 	
-	public ITerminableFuture<Void> load(Carry carry, Target target)
+	public <T> T getData(String name, TaskData data, Class<T> type)
+	{
+		return data==null || data.data()==null? null: (T)data.data().get(name);
+	}
+	
+	@AgentMethod
+	public ITerminableFuture<Void> load(@NoCopy Carry car, @NoCopy Target target)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
-		addTask(new EnvironmentTask(this, ret, delta ->
+		Carry carry = getSpaceObject(car);
+		
+		addTask(new EnvironmentTask(carry, this, ret, data ->
 		{
-			return performLoad(carry, target, delta, true, 0l);
+			Long time = getData("time", data, Long.class);
+			return performLoad(carry, getSpaceObject(target), data.delta(), true, time!=null? time: 0l);
 		}));
 		
 		return ret;
 	}
 	
-	public ITerminableFuture<Void> unload(Carry carry, Target target)
+	@AgentMethod
+	public ITerminableFuture<Void> unload(@NoCopy Carry car, @NoCopy Homebase target)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
-		addTask(new EnvironmentTask(this, ret, delta ->
+		Carry carry = getSpaceObject(car);
+		
+		addTask(new EnvironmentTask(carry, this, ret, data ->
 		{
-			return performLoad(carry, target, delta, false, 0l);
+			Long time = getData("time", data, Long.class);
+			return performLoad(carry, getSpaceObject(target), data.delta(), false, time!=null? time: 0l);
 		}));
 		
 		return ret;
 	}
 	
-	protected boolean performLoad(Carry obj, Target target, long deltatime, boolean load, long time)
+	@AgentMethod
+	public ITerminableFuture<Void> analyzeTarget(@NoCopy Sentry sen, @NoCopy Target target)
+	{
+		TerminableFuture<Void> ret = new TerminableFuture<Void>();
+		
+		Sentry sentry = getSpaceObject(sen);
+		
+		long TIME = 3000;
+		addTask(new EnvironmentTask(sentry, this, ret, data ->
+		{
+			Long time = getData("time", data, Long.class);
+			return performAnalyzeTarget(sentry, getSpaceObject(target), data.delta(), time!=null? time: TIME);
+		}));
+		
+		return ret;
+	}
+	
+	@AgentMethod
+	public ITerminableFuture<Void> rotate(@NoCopy BaseObject obj, IVector2 target)
+	{
+		TerminableFuture<Void> ret = new TerminableFuture<Void>();
+		
+		BaseObject object = getSpaceObject(obj);
+		
+		addTask(new EnvironmentTask(object, this, ret, data ->
+		{
+			return performRotate(object, target, data.delta());
+		}));
+		
+		return ret;
+	}
+	
+	@AgentMethod
+	public ITerminableFuture<Void> produce(@NoCopy Producer prod, @NoCopy Target target)
+	{
+		TerminableFuture<Void> ret = new TerminableFuture<Void>();
+		
+		Producer producer = getSpaceObject(prod);
+		
+		addTask(new EnvironmentTask(producer, this, ret, data ->
+		{
+			Long time = getData("time", data, Long.class);
+			return performProduce(producer, getSpaceObject(target), data.delta(), time!=null? time: 0l); 
+		}));
+		
+		return ret;
+	}
+	
+	protected TaskData performLoad(Carry carry, SpaceObject target, long deltatime, boolean load, long time)
 	{
 		long TIME = 25;
 		//Target target = (ISpaceObject)getProperty(PROPERTY_TARGET);
 		//boolean load = ((Boolean)getProperty(PROPERTY_LOAD)).booleanValue();
 		
-		IVector2 loc = obj.getPosition();
+		IVector2 loc = carry.getPosition();
 		IVector2 tloc = target.getPosition();
 		double r = 0.05;
 		
 		//if(SVector.getDistance(loc, tloc)>r)
 		if(loc.getDistance(tloc).getAsDouble()>r)
-			throw new RuntimeException("Not at location: "+obj+", "+target);
+			throw new RuntimeException("Not at location: "+carry+", "+target);
 		
 		//String targetcapprop = load ? ProduceOreTask.PROPERTY_CAPACITY : AnalyzeTargetTask.PROPERTY_ORE;
 		
-		int ore = obj.getOre();
-		int mycap = obj.getCapacity();
-		int capacity = load? target.getCapacity(): target.getOre();
+		int ore = carry.getOre();
+		int mycap = carry.getCapacity();
+		int capacity = load? ((Target)target).getCapacity(): ((Homebase)target).getOre();
 		//int	ore	= ((Number)obj.getProperty(AnalyzeTargetTask.PROPERTY_ORE)).intValue();
 		//int	mycap	= ((Number)obj.getProperty(ProduceOreTask.PROPERTY_CAPACITY)).intValue();
 		//int	capacity = ((Number)target.getProperty(targetcapprop)).intValue();
@@ -75,57 +144,55 @@ public class MarsworldEnvironment extends Environment
 		boolean	finished;
 		if(load)
 		{
-			obj.setStatus(Status.Loading);
+			carry.setStatus(Status.Loading);
 			//obj.setProperty("status", "loading");
 			long units = Math.min(mycap-ore, Math.min(capacity, (time + deltatime)/TIME));
 			ore	+= units;
 			capacity -= units;
 			finished = ore==mycap || capacity==0;
 			if(finished)
-				obj.setStatus(Status.Driving);
+				carry.setStatus(Status.Driving);
 				//obj.setProperty("status", "drive");
+			
+			System.out.println("loading: "+capacity+" "+ore+" "+finished);
 		}
 		else
 		{
 			//obj.setProperty("status", "unloading");
-			obj.setStatus(Status.Unloading);
+			carry.setStatus(Status.Unloading);
 			long units = Math.min(ore, (time + deltatime)/TIME);
 			ore	-= units;
 			capacity += units;
 			finished = ore==0;
 			if(finished)
-				obj.setStatus(Status.Driving);
+				carry.setStatus(Status.Driving);
 				//obj.setProperty("status", "drive");
 		}
 		time = (time + deltatime)%TIME;
 		//obj.setProperty(AnalyzeTargetTask.PROPERTY_ORE, Integer.valueOf(ore));
-		obj.setOre(ore);
+		carry.setOre(ore);
 		if(load)
-			target.setCapacity(capacity);
+			((Target)target).setCapacity(capacity);
 		else
-			target.setOre(capacity);
+			((Homebase)target).setOre(capacity);
 		//target.setProperty(targetcapprop, Integer.valueOf(capacity));
 		
 		//if(finished)
 		//	setFinished(space, obj, true); // Todo amount of unloaded ore?
 		
-		return finished;
-	}
-	
-	public ITerminableFuture<Void> analyzeTarget(Sentry sentry, Target target)
-	{
-		TerminableFuture<Void> ret = new TerminableFuture<Void>();
-		
-		long TIME = 1000;
-		addTask(new EnvironmentTask(this, ret, delta ->
+		Map<String, Object> vals = new HashMap<>();
+		vals.put("time", time);
+		Set<SpaceObject> changed = null;
+		if(finished)
 		{
-			return performAnalyzeTarget(sentry, target, delta, TIME);
-		}));
-		
-		return ret;
+			changed = new HashSet<SpaceObject>();
+			changed.add(target);
+			changed.add(carry);
+		}
+		return new TaskData(finished, changed);
 	}
 	
-	protected boolean performAnalyzeTarget(Sentry sentry, Target target, long deltatime, long time)
+	protected TaskData performAnalyzeTarget(Sentry sentry, Target target, long deltatime, long time)
 	{
 		IVector2 loc = sentry.getPosition();
 		IVector2 tloc = target.getPosition();
@@ -146,22 +213,22 @@ public class MarsworldEnvironment extends Environment
 			finished = true;
 		}
 		
-		return finished;
-	}
-	
-	public ITerminableFuture<Void> rotate(BaseObject obj, IVector2 target)
-	{
-		TerminableFuture<Void> ret = new TerminableFuture<Void>();
+		//System.out.println("analyse time: "+time);
 		
-		addTask(new EnvironmentTask(this, ret, delta ->
+		Map<String, Object> vals = new HashMap<String, Object>();
+		vals.put("time", time);
+		
+		Set<SpaceObject> changed = null;
+		if(finished)
 		{
-			return performRotate(obj, target, delta);
-		}));
+			changed = new HashSet<SpaceObject>();
+			changed.add(target);
+		}
 		
-		return ret;
+		return new TaskData(finished, vals, changed);
 	}
 	
-	public boolean performRotate(BaseObject obj, IVector2 destination, long deltatime)
+	protected TaskData performRotate(BaseObject obj, IVector2 destination, long deltatime)
 	{
 		double	speed	= obj.getSpeed();
 		
@@ -213,25 +280,20 @@ public class MarsworldEnvironment extends Environment
 			}
 		}
 
-		return finished;
-	}
-	
-	public ITerminableFuture<Void> produce(Producer producer, Target target)
-	{
-		TerminableFuture<Void> ret = new TerminableFuture<Void>();
-		
-		addTask(new EnvironmentTask(this, ret, delta ->
+		Set<SpaceObject> changed = null;
+		if(finished)
 		{
-			return performProduce(producer, target, delta, 100); // todo!
-		}));
+			changed = new HashSet<SpaceObject>();
+			changed.add(obj);
+		}
 		
-		return ret;
+		return new TaskData(finished, changed);
 	}
 	
 	/**
 	 *  Produce ore and increase the capacity of the target.
 	 */
-	public boolean performProduce(Producer producer, Target target, long deltatime, long time)
+	protected TaskData performProduce(Producer producer, Target target, long deltatime, long time)
 	{
 		boolean finished = false;
 		int	TIME = 100;
@@ -251,6 +313,8 @@ public class MarsworldEnvironment extends Environment
 		time = (time + deltatime)%TIME;
 		target.setOre(ore);
 		target.setCapacity(capacity);
+		
+		System.out.println("target ore:"+ore+" capacity:"+capacity);
 
 		if(ore!=0)
 			producer.setStatus(Producer.Status.Producing);
@@ -263,6 +327,17 @@ public class MarsworldEnvironment extends Environment
 			//obj.setProperty("status", "drive");
 		}
 		
-		return finished;
+		Map<String, Object> vals = new HashMap<String, Object>();
+		vals.put("time", time);
+		
+		Set<SpaceObject> changed = null;
+		if(finished)
+		{
+			changed = new HashSet<SpaceObject>();
+			changed.add(target);
+			changed.add(producer);
+		}
+		
+		return new TaskData(finished, vals, changed);
 	}
 }

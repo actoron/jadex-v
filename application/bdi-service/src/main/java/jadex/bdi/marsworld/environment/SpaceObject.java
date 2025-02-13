@@ -78,4 +78,10 @@ public class SpaceObject
 		ret.setId(this.getId());
 		return ret;
 	}
+	
+	public void updateFrom(SpaceObject source)
+	{
+		this.position = source.getPosition();
+		this.id = source.getId();
+	}
 }

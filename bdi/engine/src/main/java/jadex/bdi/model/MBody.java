@@ -7,6 +7,7 @@ import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanContextCondition;
 import jadex.bdi.annotation.PlanFailed;
+import jadex.bdi.annotation.PlanFinished;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.PlanPrecondition;
 import jadex.common.ClassInfo;
@@ -51,6 +52,9 @@ public class MBody
 
 	/** The aborted method cached for speed. */
 	protected volatile MethodInfo abortedmethod;
+	
+	/** The finished method cached for speed. */
+	protected volatile MethodInfo finishedmethod;
 	
 	/** The precondition method cached for speed. */
 	protected volatile MethodInfo preconditionmethod;
@@ -236,6 +240,31 @@ public class MBody
 		}
 		
 		return MI_NOTFOUND.equals(passedmethod)? null: passedmethod;
+	}
+	
+	/**
+	 * 
+	 */
+	public MethodInfo getFinishedMethod(ClassLoader cl)
+	{
+		if(clazz!=null)
+		{
+			if(finishedmethod==null && !MI_NOTFOUND.equals(finishedmethod))
+			{
+				synchronized(this)
+				{
+					if(finishedmethod==null && !MI_NOTFOUND.equals(finishedmethod))
+					{
+						Class<?> body = clazz.getType(cl);
+						finishedmethod = getMethod(body, PlanFinished.class, cl);
+						if(finishedmethod==null)
+							finishedmethod = MI_NOTFOUND;
+					}
+				}
+			}
+		}
+		
+		return MI_NOTFOUND.equals(finishedmethod)? null: finishedmethod;
 	}
 	
 	/**

@@ -2,8 +2,10 @@ package jadex.bdi.marsworld.movement;
 
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAPI;
+import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanCapability;
+import jadex.bdi.annotation.PlanFinished;
 import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.BaseAgent;
 import jadex.bdi.marsworld.environment.BaseObject;
@@ -12,6 +14,7 @@ import jadex.bdi.marsworld.math.IVector2;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
 
 /**
  *  The move to a location plan.
@@ -30,6 +33,8 @@ public class MoveToLocationPlan
 	@PlanReason
 	protected IDestinationGoal goal;
 	
+	protected ITerminableFuture<Void> task;
+	
 	/**
 	 *  The plan body.
 	 */
@@ -40,23 +45,31 @@ public class MoveToLocationPlan
 		MarsworldEnvironment env = (MarsworldEnvironment)capa.getEnvironment();
 		IVector2 dest = goal.getDestination();
 
-		System.out.println("MoveToLocation start: "+capa.getMyself()+" "+dest);
+		//System.out.println("MoveToLocation start: "+capa.getMyself()+" "+dest);
 		
 		//env.rotate(myself, dest).get();
 		
-		env.move(myself, dest, myself.getSpeed()).get();
+		task = env.move(myself, dest, myself.getSpeed());
+		task.get();
+		task = null;
 		
-		System.out.println("MoveToLocation end: "+capa.getMyself()+" "+((BaseAgent)agent.getPojo()).getSpaceObject(true));
-
+		//System.out.println("MoveToLocation end: "+capa.getMyself()+" "+((BaseAgent)agent.getPojo()).getSpaceObject(true));
 		
 		return IFuture.DONE;
 	}
 	
-//	@PlanAborted
-//	public void aborted()
-//	{
-//		System.out.println("aborted: "+this);
-//	}
+	@PlanFinished
+	public void finished()
+	{
+		//System.out.println("fini: "+this);
+		//capa.updateSelf(); // update the position in myself
+		
+		if(task!=null)
+		{
+			//System.out.println("terminate task: "+task);
+			task.terminate();
+		}
+	}
 //	
 //	@PlanFailed
 //	public void failed(Exception e)
@@ -65,10 +78,5 @@ public class MoveToLocationPlan
 //			e.printStackTrace();
 //		System.out.println("failed: "+this);
 //	}
-//	
-//	@PlanPassed
-//	public void passed()
-//	{
-//		System.out.println("passed: "+this);
-//	}
+
 }

@@ -1,6 +1,8 @@
 package jadex.bdi.marsworld.environment;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import jadex.future.TerminableFuture;
@@ -9,14 +11,56 @@ public class EnvironmentTask
 {
 	protected String id;
 	
+	protected SpaceObject owner;
+	
 	protected TerminableFuture<Void> future;
 	
-	protected Function<Long, Boolean> task;
+	protected Function<TaskData, TaskData> task;
+	
+	protected TaskData taskdata;
 	
 	protected Environment env;
 	
-	public EnvironmentTask(Environment env, TerminableFuture<Void> future, Function<Long, Boolean> task) 
+	
+	public record TaskData(boolean finsihed, long delta, Map<String, Object> data, Set<SpaceObject> changed) 
 	{
+		public static TaskData TRUE = new TaskData(true); 
+		public static TaskData FALSE = new TaskData(false); 
+		
+		public TaskData(boolean finished)
+		{
+			this(finished, 0, null, null);
+		}
+		
+		public TaskData(boolean finished, Set<SpaceObject> changed)
+		{
+			this(finished, 0, null, changed);
+		}
+		
+		public TaskData(long delta)
+		{
+			this(false, delta, null, null);
+		}
+		
+		public TaskData(boolean finished, Map<String, Object> data)
+		{
+			this(finished, 0, data, null);
+		}
+		
+		public TaskData(boolean finished, Map<String, Object> data, Set<SpaceObject> changed)
+		{
+			this(finished, 0, data, changed);
+		}
+		
+		public TaskData(long delta, Map<String, Object> data)
+		{
+			this(false, delta, data, null);
+		}
+	}
+	
+	public EnvironmentTask(SpaceObject owner, Environment env, TerminableFuture<Void> future, Function<TaskData, TaskData> task) 
+	{
+		this.owner = owner;
 		this.env = env;
 		this.future = future;
 		this.task = task;
@@ -25,6 +69,7 @@ public class EnvironmentTask
 		{
 			future.setTerminationCommand(ex ->
 			{
+				//System.out.println("env removing task: "+this+" "+ex);
 				env.removeTask(this);
 			});
 		}
@@ -39,15 +84,30 @@ public class EnvironmentTask
 	{
 		this.id = id;
 	}
+	
+	public SpaceObject getOwner() 
+	{
+		return owner;
+	}
 
 	public TerminableFuture<Void> getFuture() 
 	{
 		return future;
 	}
 
-	public Function<Long, Boolean> getTask() 
+	public Function<TaskData, TaskData> getTask() 
 	{
 		return task;
+	}
+	
+	public TaskData getTaskData() 
+	{
+		return taskdata;
+	}
+
+	public void setTaskData(TaskData taskdata) 
+	{
+		this.taskdata = taskdata;
 	}
 
 	@Override
@@ -73,6 +133,12 @@ public class EnvironmentTask
 		if (!getEnclosingInstance().equals(other.getEnclosingInstance()))
 			return false;
 		return Objects.equals(id, other.id);
+	}
+	
+	@Override
+	public String toString() 
+	{
+		return "EnvironmentTask [id=" + id + "]";
 	}
 
 	private Environment getEnclosingInstance() 

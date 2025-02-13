@@ -23,6 +23,7 @@ import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.Producer;
 import jadex.bdi.marsworld.environment.Sentry;
 import jadex.bdi.marsworld.environment.Target;
+import jadex.bdi.marsworld.environment.Target.Status;
 import jadex.bdi.marsworld.math.IVector2;
 
 
@@ -173,8 +174,11 @@ public class EnvGui extends ApplicationAdapter
             batch.draw(targettex, wpos.x - wdim.x / 2, wpos.y - wdim.y / 2, wdim.x, wdim.y); 
         	
 		    //batch.draw(robottex, wpos.x, wpos.y, wdim.x, wdim.y);
-		    //font.setColor(Color.BLACK);
-		    //drawText(batch, font, target.getName(), mapEnvToWorld(pos), wdim.x, 0);
+		    font.setColor(Color.BLACK);
+		    String txt = ""+target.getStatus();
+		    if(target.getStatus()==Status.Analyzed)
+		    	txt = "ore: "+target.getOre()+" capa: "+target.getCapacity();   
+		    drawText(batch, font, txt, mapEnvToWorld(pos), wdim.x, wdim.y);
 		    //font.draw(batch, "halloooo", wpos.x, wpos.y);
         }
         

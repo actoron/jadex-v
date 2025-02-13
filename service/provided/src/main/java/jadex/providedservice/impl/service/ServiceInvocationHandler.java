@@ -10,8 +10,8 @@ import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.impl.Component;
-import jadex.execution.FutureReturnType;
 import jadex.execution.future.FutureFunctionality;
+import jadex.execution.future.FutureReturnType;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.FutureHelper;
@@ -221,7 +221,7 @@ public class ServiceInvocationHandler extends AbstractServiceInvocationHandler i
 			
 			if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 			{
-				final Future<Object> fret = FutureFunctionality.createReturnFuture(method, args, comp.getClassLoader());
+				final Future<Object> fret = FutureFunctionality.createReturnFuture(method, args, comp.getClassLoader(), null);
 				ret = fret;
 				
 				sic.invoke(service, method, myargs).addResultListener(new ExceptionDelegationResultListener<Void, Object>(fret)

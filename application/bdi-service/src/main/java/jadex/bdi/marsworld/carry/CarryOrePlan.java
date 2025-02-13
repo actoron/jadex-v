@@ -4,6 +4,7 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanCapability;
+import jadex.bdi.annotation.PlanFinished;
 import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.carry.CarryAgent.CarryOre;
 import jadex.bdi.marsworld.environment.Carry;
@@ -12,6 +13,7 @@ import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.movement.MovementCapability.Move;
 import jadex.bdi.runtime.IPlan;
+import jadex.future.ITerminableFuture;
 
 /**
  *  Inform the sentry agent about a new target.
@@ -30,6 +32,8 @@ public class CarryOrePlan
 	@PlanReason
 	protected CarryOre goal;
 	
+	protected ITerminableFuture<Void> task;
+	
 	/**
 	 *  The plan body.
 	 */
@@ -40,6 +44,8 @@ public class CarryOrePlan
 		boolean	finished = false;
 		MovementCapability capa = carry.getMoveCapa();
 		
+		Carry myself = (Carry)capa.getMyself();
+		
 		while(!finished)
 		{
 			MarsworldEnvironment env = (MarsworldEnvironment)capa.getEnvironment();
@@ -49,44 +55,41 @@ public class CarryOrePlan
 			rplan.dispatchSubgoal(move).get();
 	
 			// Load ore at the target.
-			Carry myself = (Carry)capa.getMyself();
+			System.out.println("load start");
+			task = env.load(myself, target);
+			task.get();
+			System.out.println("load end");
+			System.out.println("myself: "+myself.getPosition());
 			
-			env.load(myself, target).get();
-			
-			env.unload(myself, target).get();
-			
-			/*Future<Void> fut = new Future<Void>();
-			DelegationResultListener<Void> lis = new DelegationResultListener<Void>(fut, true);
-//			myself.addTask(new LoadOreTask(target, true, res));
-			Map props = new HashMap();
-			props.put(LoadOreTask.PROPERTY_TARGET, target);
-			props.put(LoadOreTask.PROPERTY_LOAD, Boolean.TRUE);
-			props.put(AbstractTask.PROPERTY_CONDITION, new PlanFinishedTaskCondition(rplan));
-			Object	taskid	= env.createObjectTask(LoadOreTask.PROPERTY_TYPENAME, props, myself.getId());
-			env.addTaskListener(taskid, myself.getId(), lis);
-			fut.get();*/
-			
-			/*System.out.println("Loaded ore at target: "+getAgentName()+", "+ore+" ore loaded.");
-			// Todo: use return value to determine finished state?
-			finished = ((Number)target.getProperty(ProduceOreTask.PROPERTY_CAPACITY)).intValue()==0;
-			if(((Number)myself.getProperty(AnalyzeTargetTask.PROPERTY_ORE)).intValue()==0)
-				break;
-	
 			// Move to the homebase.
-			move = capa.new Move(capa.getHomebasePosition());
+			move = capa.new Move(capa.getHomebase().getPosition());
 			rplan.dispatchSubgoal(move).get();
+			System.out.println("myself: "+myself.getPosition());
 			
-			// Unload ore at the homebase.
-			fut = new Future<Void>();
-			lis = new DelegationResultListener<Void>(fut, true);
-			props = new HashMap();
-			props.put(LoadOreTask.PROPERTY_TARGET, capa.getHomebase());
-			props.put(LoadOreTask.PROPERTY_LOAD, Boolean.FALSE);
-			props.put(AbstractTask.PROPERTY_CONDITION, new PlanFinishedTaskCondition(rplan));
-			taskid	= env.createObjectTask(LoadOreTask.PROPERTY_TYPENAME, props, myself.getId());
-			env.addTaskListener(taskid, myself.getId(), lis);
-			fut.get();
-//			System.out.println("Unloaded ore at homebase: "+getAgentName()+", "+ore+" ore unloaded.");*/
+			// Unload ore at homebase
+			System.out.println("unload start");
+			task = env.unload(myself, capa.getHomebase());
+			task.get();
+			task = null;
+			System.out.println("unload end");
+			
+			finished = target.getCapacity()==0;
+			//if(finished)
+			//	System.out.println("carry ore plan finished: "+carry.getAgent().getId());
+		}
+	}
+	
+	@PlanFinished
+	protected void finished()
+	{
+		//carry.getMoveCapa().updateSelf();
+		//carry.getMoveCapa().updateTarget(goal.getTarget());
+		
+		//System.out.println("plan finished: "+this);
+		if(task!=null)
+		{
+			System.out.println("aborting env task");
+			task.terminate();
 		}
 	}
 }

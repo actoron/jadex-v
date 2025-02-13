@@ -1,5 +1,7 @@
 package jadex.bdi.marsworld.sentry;
 
+import javax.swing.SwingUtilities;
+
 import jadex.bdi.annotation.Body;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
@@ -16,10 +18,13 @@ import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.math.IVector2;
 import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.producer.IProduceService;
+import jadex.bdi.marsworld.ui.GoalViewer;
 import jadex.bdi.runtime.ChangeEvent;
 import jadex.common.SUtil;
+import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
+import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.ProvidedService;
 import jadex.providedservice.annotation.ProvidedServices;
 import jadex.providedservice.annotation.Service;
@@ -41,16 +46,24 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 		super(envid);
 	}
 	
+	@OnStart
+	public void start(IComponent agent)
+	{
+		super.body();
+		SwingUtilities.invokeLater(() -> new GoalViewer(agent.getComponentHandle()).setVisible(true));
+	}
+	
 	public IFuture<Void> announceNewTarget(Target target)
 	{
 		System.out.println("Sentry was informed about new target: "+target);
 		movecapa.addTarget(target);
+		//System.out.println("sentry has targets: "+movecapa.getMyTargets());
 		return IFuture.DONE;
 	}
 	
 	protected BaseObject createSpaceObject()
 	{
-		return new Sentry(getAgent().getId().getLocalName(), getMoveCapa().getHomebasePosition());
+		return new Sentry(getAgent().getId().getLocalName(), getMoveCapa().getHomebase().getPosition());
 	}
 
 	@Goal(unique=true, deliberation=@Deliberation(inhibits=MovementCapability.WalkAround.class, cardinalityone=true))
@@ -69,7 +82,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 //		@GoalCreationCondition(events="movecapa.mytargets")
 		public AnalyzeTarget(SentryAgent outer, Target target)
 		{
-			System.out.println("new analyze target goal: "+target);
+			//System.out.println("new analyze target goal: "+target);
 //			if(target==null)
 //				System.out.println("target nulls");
 			this.outer = outer;
@@ -117,7 +130,12 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 				}
 			}
 			
-			return nearest!=null && nearest.equals(target);
+			boolean ret = nearest!=null && nearest.equals(target);
+			
+			//if(!ret)
+			//	System.out.println("nearest: "+nearest+" "+nearest.equals(target)+" "+outer.getMoveCapa().getMyTargets());
+			
+			return ret;
 			
 			// (select one Target $target from $beliefbase.my_targets
 			// order by $beliefbase.my_location.getDistance($target.getLocation()))
@@ -127,9 +145,15 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 		@GoalDropCondition(beliefs="movecapa.missionend")
 		public boolean checkDrop()
 		{
-//			System.out.println("dropping: "+this+" "+outer.getMoveCapa().isMissionend());
+			//System.out.println("check ndropping: "+this+" "+outer.getMoveCapa().isMissionend());
 			return outer.getMoveCapa().isMissionend();
 		}
+		
+		/*@GoalFinished
+		public void finished()
+		{
+			System.out.println("goal finished: "+this+" "+this.getOuter().getAgent().getId());
+		}*/
 
 		/**
 		 *  Get the target.

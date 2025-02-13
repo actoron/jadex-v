@@ -1,4 +1,4 @@
-package jadex.execution;
+package jadex.execution.future;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

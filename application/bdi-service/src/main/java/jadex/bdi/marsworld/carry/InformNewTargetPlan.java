@@ -7,8 +7,8 @@ import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanCapability;
 import jadex.bdi.annotation.PlanReason;
-import jadex.bdi.marsworld.ITargetAnnouncementService;
-import jadex.bdi.marsworld.environment.SpaceObject;
+import jadex.bdi.marsworld.environment.Target;
+import jadex.bdi.marsworld.sentry.ITargetAnnouncementService;
 import jadex.bdi.runtime.IPlan;
 import jadex.future.IFuture;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -26,7 +26,7 @@ public class InformNewTargetPlan
 	protected IPlan rplan;
 	
 	@PlanReason
-	protected SpaceObject target;
+	protected Target target;
 	
 	//-------- methods --------
 
@@ -36,19 +36,17 @@ public class InformNewTargetPlan
 	@PlanBody
 	public void body()
 	{
-		try
-		{
-			IFuture<Collection<ITargetAnnouncementService>> fut = carry.getAgent().getFeature(IRequiredServiceFeature.class).getServices("targetser");
-			Collection<ITargetAnnouncementService> ansers = fut.get();
-			
-			for(ITargetAnnouncementService anser: ansers)
-			{
-				anser.announceNewTarget(target);
-			}
-		}
-		catch(Exception e)
-		{
+		System.out.println("inform new target: "+carry.getAgent().getId()+" "+target);
+		
+		IFuture<Collection<ITargetAnnouncementService>> fut = carry.getAgent().getFeature(IRequiredServiceFeature.class).getServices("targetser");
+		Collection<ITargetAnnouncementService> ansers = fut.get();
+		
+		if(ansers.size()==0)
 			System.out.println("No target announcement services found");
+		
+		for(ITargetAnnouncementService anser: ansers)
+		{
+			anser.announceNewTarget(target);
 		}
 		
 //		System.out.println("Informing sentries: "+getScope().getAgentName());

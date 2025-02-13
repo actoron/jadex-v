@@ -12,7 +12,6 @@ import jadex.common.ICommand;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.execution.FutureReturnType;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -324,12 +323,12 @@ public class FutureFunctionality
 		return ret;
 	}
 	
-	public static Future<Object> createReturnFuture(Method method, Object[] args, ClassLoader cl)
+	public static Future<Object> createReturnFuture(Method method, Object[] args, ClassLoader cl, FutureFunctionality func)
 	{
-		return createReturnFuture(method, args!=null? SUtil.arrayToList(args): null, cl);
+		return createReturnFuture(method, args!=null? SUtil.arrayToList(args): null, cl, func);
 	}
 	
-	public static Future<Object> createReturnFuture(Method method, List<Object> args, ClassLoader cl)
+	public static Future<Object> createReturnFuture(Method method, List<Object> args, ClassLoader cl, FutureFunctionality func)
 	{
 		Future<Object> ret = null;
 		
@@ -365,7 +364,7 @@ public class FutureFunctionality
 				rettype = method.getReturnType();
 			
 			ret = (Future<Object>)FutureFunctionality.getDelegationFuture(rettype, 
-				new FutureFunctionality());
+				func==null? new FutureFunctionality(): func);
 		}
 		
 		return ret;

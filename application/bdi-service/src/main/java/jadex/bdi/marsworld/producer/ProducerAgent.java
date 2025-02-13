@@ -8,12 +8,12 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.marsworld.BaseAgent;
-import jadex.bdi.marsworld.ITargetAnnouncementService;
 import jadex.bdi.marsworld.carry.ICarryService;
 import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Producer;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability.WalkAround;
+import jadex.bdi.marsworld.sentry.ITargetAnnouncementService;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
@@ -27,8 +27,8 @@ import jadex.requiredservice.annotation.RequiredServices;
 @Service
 @ProvidedServices(@ProvidedService(type=IProduceService.class))
 @RequiredServices({
-	@RequiredService(name="targetser", type=ITargetAnnouncementService.class), // multiple=true
-	@RequiredService(name="carryser", type=ICarryService.class) // multiple=true
+	@RequiredService(name="targetser", type=ITargetAnnouncementService.class), 
+	@RequiredService(name="carryser", type=ICarryService.class) 
 })
 @Plans({
 	@Plan(trigger=@Trigger(goals=ProducerAgent.ProduceOre.class), body=@Body(ProduceOrePlan.class)),
@@ -86,6 +86,6 @@ public class ProducerAgent extends BaseAgent implements IProduceService
 	
 	protected BaseObject createSpaceObject()
 	{
-		return new Producer(getAgent().getId().getLocalName(), getMoveCapa().getHomebasePosition());
+		return new Producer(getAgent().getId().getLocalName(), getMoveCapa().getHomebase().getPosition());
 	}
 }

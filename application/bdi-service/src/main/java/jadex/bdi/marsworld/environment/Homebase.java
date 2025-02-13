@@ -75,4 +75,15 @@ public class Homebase extends SpaceObject
 		ret.setOre(this.getOre());
 		return ret;
 	}
+	
+	public void updateFrom(SpaceObject source)
+	{
+		super.updateFrom(source);
+		Homebase h = (Homebase)source;
+		setHeight(h.getHeight());
+		setWidth(h.getWidth());
+		setOre(h.getOre());
+		setMissionTime(h.getMissionTime());
+		//System.out.println("updated target: "+this);
+	}
 }

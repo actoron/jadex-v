@@ -40,4 +40,11 @@ public class Producer extends BaseObject
 		return ret;
 	}
 	
+	public void updateFrom(SpaceObject source)
+	{
+		super.updateFrom(source);
+		Producer p = (Producer)source;
+		setStatus(p.getStatus());
+	}
+	
 }

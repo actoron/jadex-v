@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,8 +42,6 @@ import jadex.execution.NoCopy;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.IIntermediateFuture;
-import jadex.future.IntermediateFuture;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -162,8 +159,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							.method(ElementMatchers.isAnnotatedWith(AgentMethod.class)) 
 							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 							{
-								Future<Object> ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader());
-							    
 								List<Object> myargs = new ArrayList<Object>(); 
 								Class<?>[] ptypes = method.getParameterTypes();
 								java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
@@ -178,38 +173,42 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 										myargs.add(SCloner.clone(args[p], procs));
 								}
 								
+								FutureFunctionality func = new FutureFunctionality()
+								{
+									public Object handleResult(Object val) throws Exception
+									{
+										if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
+						            	{
+											Object val2 = SCloner.clone(val, procs);
+											//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
+											val = val2;
+						            	}
+										
+										return val;
+									}
+									
+									public Object handleIntermediateResult(Object val) throws Exception
+									{
+										if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
+						            	{
+											val = SCloner.clone(val, procs);
+											//System.out.println("cloned val: "+val);
+						            	}
+										return val;
+									}
+								};
+								
+								Future<Object> ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
+								
 								//final Object[] myargs = copyargs.toArray();
 								
 						        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
 						        {
 						        	//System.out.println("already on agent: "+getId());
-						        	if(ret instanceof IIntermediateFuture)
+						        	if(ret instanceof IFuture)
 						        	{
-						        		((IIntermediateFuture)invokeMethod(comp, pojo, myargs, method)).next(val ->
-							            {
-							            	if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-							            	{
-												val = SCloner.clone(val, procs);
-												//System.out.println("cloned val: "+val);
-							            	}
-											((IntermediateFuture)ret).addIntermediateResult(val);
-							            	
-							            })
-							        	.finished(Void -> ((IntermediateFuture)ret).setFinished())
-							        	.catchEx(ret);
-						        	}
-						        	else if(ret instanceof IFuture)
-						        	{
-						        		((IFuture)invokeMethod(comp, pojo, myargs, method)).then(val ->
-							            {
-							            	if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-							            	{
-												Object val2 = SCloner.clone(val, procs);
-												//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
-												val = val2;
-							            	}
-											ret.setResult(val);
-							            }).catchEx(ret);
+						        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method);
+						        		fut.delegateTo(ret);
 						        	}
 						        	else if(method.getReturnType().equals(void.class))
 						        	{
@@ -223,53 +222,23 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						        }
 						        else
 						        {
+						        	if(ret instanceof IFuture)
+						        	{
+							        	IFuture fut = scheduleAsyncStep(new ICallable<IFuture<Object>>() 
+						        		{
+						        			public Class<? extends IFuture<?>> getFutureReturnType() 
+						        			{
+						        				return (Class<? extends IFuture<?>>)ret.getClass();
+						        			}
+						        			
+						        			public IFuture<Object> call() throws Exception
+						        			{
+						        				return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
+						        			}
+										});
+							        	fut.delegateTo(ret);
+						        	}
 						        	//System.out.println("scheduled on agent: "+getId());
-						        	if(ret instanceof IIntermediateFuture)
-						        	{
-							        	((IIntermediateFuture)scheduleAsyncStep(new ICallable<>()
-							            {
-							        		public IFuture<Object> call() throws Exception
-							        		{
-							        			return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
-							        			//return (IFuture<Object>)method.invoke(pojo, myargs);
-							        		}
-							        		
-							        		public Class<? extends IFuture<?>> getFutureReturnType() 
-						        		    {
-						        		    	return (Class<? extends IFuture<?>>)ret.getClass();
-						        		    }
-							            }))
-							        	.next(val ->
-							            {
-							            	if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-							            	{
-												val = SCloner.clone(val, procs);
-												//System.out.println("cloned val: "+val);
-							            	}
-											((IntermediateFuture)ret).addIntermediateResult(val);
-							            	
-							            })
-							        	.finished(Void -> ((IntermediateFuture)ret).setFinished())
-							        	.catchEx(ret);
-						        	}
-						        	else if(ret instanceof IFuture)
-						        	{
-						        		scheduleAsyncStep(() ->
-							            {
-							            	//return (IFuture<Object>)method.invoke(pojo, myargs);
-							            	return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
-							            })
-						        		.then(val ->
-							            {
-							            	if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-							            	{
-												Object val2 = SCloner.clone(val, procs);
-												//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
-												val = val2;
-							            	}
-											ret.setResult(val);
-							            }).catchEx(ret);
-						        	}
 						        	else if(method.getReturnType().equals(void.class))
 						        	{
 						        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method));

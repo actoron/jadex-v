@@ -7,6 +7,7 @@ import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Environment;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.SpaceObject;
+import jadex.bdi.marsworld.environment.SpaceObjectsEvent;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.environment.VisionEvent;
 import jadex.bdi.marsworld.movement.MovementCapability;
@@ -56,7 +57,23 @@ public abstract class BaseAgent
 						if(obj instanceof Target)
 						{
 							getMoveCapa().addTarget((Target)obj);
-							System.out.println("New target seen: "+agent.getId().getLocalName()+", "+obj);
+							//System.out.println("New target seen: "+agent.getId().getLocalName()+", "+obj);
+						}
+					}
+				}
+				else if(e instanceof SpaceObjectsEvent)
+				{
+					Set<SpaceObject> changed = ((SpaceObjectsEvent)e).getObjects();
+					//System.out.println("update space objects: "+agent.getId()+" "+changed);
+					for(SpaceObject obj: changed)
+					{
+						if(obj.equals(movecapa.getMyself()))
+						{
+							self.updateFrom(obj);
+						}
+						else if(obj instanceof Target)
+						{
+							movecapa.updateTarget((Target)obj);
 						}
 					}
 				}
@@ -75,12 +92,12 @@ public abstract class BaseAgent
 		return self;
 	}
 	
-	public BaseObject getSpaceObject(boolean renew)
+	/*public BaseObject getSpaceObject(boolean renew)
 	{
 		if(renew)
 			self = (BaseObject)env.getSpaceObject(self.getId()).get();
 		return self;
-	}
+	}*/
 	
 	public MarsworldEnvironment getEnvironment()
 	{
