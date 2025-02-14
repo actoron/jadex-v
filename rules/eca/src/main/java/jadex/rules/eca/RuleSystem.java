@@ -132,6 +132,9 @@ public class RuleSystem
 				
 			List<IRule<?>> rules = rulebase.getRules(event.getType());
 			
+			if(event.getType().getType(1).indexOf("mytargets")!=-1)
+				System.out.println("rules: "+rules);
+				
 			if(rules!=null)
 			{
 				IRule<?>[] rs = rules.toArray(new IRule<?>[rules.size()]);

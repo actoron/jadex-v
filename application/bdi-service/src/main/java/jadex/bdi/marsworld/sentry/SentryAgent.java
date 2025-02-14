@@ -20,6 +20,8 @@ import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.producer.IProduceService;
 import jadex.bdi.marsworld.ui.GoalViewer;
 import jadex.bdi.runtime.ChangeEvent;
+import jadex.bdi.runtime.IBDIAgentFeature;
+import jadex.bdi.runtime.IGoal;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
@@ -55,7 +57,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 	
 	public IFuture<Void> announceNewTarget(Target target)
 	{
-		System.out.println("Sentry was informed about new target: "+target);
+		//System.out.println("Sentry was informed about new target: "+target);
 		movecapa.addTarget(target);
 		//System.out.println("sentry has targets: "+movecapa.getMyTargets());
 		return IFuture.DONE;
@@ -132,8 +134,29 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 			
 			boolean ret = nearest!=null && nearest.equals(target);
 			
-			//if(!ret)
-			//	System.out.println("nearest: "+nearest+" "+nearest.equals(target)+" "+outer.getMoveCapa().getMyTargets());
+			if(!ret)
+			{
+				boolean found = false;
+				for(IGoal g: outer.getAgent().getFeature(IBDIAgentFeature.class).getGoals())
+				{
+					if(g.getPojo() instanceof AnalyzeTarget)
+					{
+						if(((AnalyzeTarget)g.getPojo()).getTarget().equals(nearest))
+						{
+							found = true;
+							break;
+						}
+						/*else
+						{
+							System.out.println("analyze goal: "+((AnalyzeTarget)g.getPojo()).getTarget());
+						}*/
+					}
+				}
+				if(!found)
+					System.out.println("nearest has no goal: "+nearest+" "+nearest.equals(target)+" "+outer.getMoveCapa().getMyTargets());
+			}
+			
+			System.out.println("context cond for: "+target+" "+ret+" nearest: "+nearest);
 			
 			return ret;
 			

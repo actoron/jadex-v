@@ -2654,6 +2654,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		{
 			boolean res = !capa.getGoals(mgoal).isEmpty();
 //				return res? ICondition.TRUE: ICondition.FALSE;
+			System.out.println("no goals of type: "+mgoal+" "+capa.getAgent().getFeature(IBDIAgentFeature.class).getGoals());
 			return new Future<Tuple2<Boolean,Object>>(res? ICondition.TRUE: ICondition.FALSE);
 		}
 	}

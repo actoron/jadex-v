@@ -20,6 +20,12 @@ repositories
     mavenCentral()
 }
 
+processResources {
+    from ('src/main/java') {
+        include '**/*.png'
+    }
+}
+
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'

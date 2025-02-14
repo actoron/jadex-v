@@ -46,7 +46,7 @@ public class AnalyzeTargetPlan
 	@PlanBody
 	public void body()
 	{
-		System.out.println("analyze target plan start: "+sentry.getAgent().getId());
+		//System.out.println("analyze target plan start: "+sentry.getAgent().getId());
 		
 		MovementCapability capa = sentry.getMoveCapa();
 		MarsworldEnvironment env = (MarsworldEnvironment)capa.getEnvironment();
@@ -80,7 +80,7 @@ public class AnalyzeTargetPlan
 			// Fails for one agent, when two agents try to analyze the same target at once.
 		}
 		
-		System.out.println("analyze target plan end: "+sentry.getAgent().getId());
+		System.out.println("analyzed target: "+target+" "+sentry.getAgent().getId());
 	}
 
 	/**

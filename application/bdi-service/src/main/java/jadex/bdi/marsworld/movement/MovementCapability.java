@@ -219,10 +219,10 @@ public class MovementCapability
 			System.out.println("added target: "+agent.getId()+" "+target);
 			mytargets.add(target);
 		}
-		else
+		/*else
 		{
 			System.out.println("target known: "+agent.getId()+" "+target);//+" "+mytargets);
-		}
+		}*/
 	}
 	
 	public void updateTarget(Target target)

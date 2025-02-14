@@ -76,9 +76,8 @@ public class Homebase extends SpaceObject
 		return ret;
 	}
 	
-	public void updateFrom(SpaceObject source)
+	public void onUpdateFrom(SpaceObject source)
 	{
-		super.updateFrom(source);
 		Homebase h = (Homebase)source;
 		setHeight(h.getHeight());
 		setWidth(h.getWidth());

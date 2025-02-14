@@ -95,16 +95,16 @@ public class Target extends SpaceObject
 		return ret;
 	}
 	
-	public void updateFrom(SpaceObject source)
+	public void onUpdateFrom(SpaceObject source)
 	{
-		super.updateFrom(source);
 		Target t = (Target)source;
 		setHeight(t.getHeight());
 		setWidth(t.getWidth());
 		setOre(t.getOre());
 		setCapacity(t.getCapacity());
 		setStatus(t.getStatus());
-		//System.out.println("updated target: "+this);
+		
+		System.out.println("updated target: "+this);
 	}
 
 	@Override

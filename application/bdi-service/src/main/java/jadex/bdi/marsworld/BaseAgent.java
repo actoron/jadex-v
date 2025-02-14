@@ -2,6 +2,7 @@ package jadex.bdi.marsworld;
 
 import java.util.Set;
 
+import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
 import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Environment;
@@ -23,6 +24,7 @@ public abstract class BaseAgent
 	@Agent 
 	protected IComponent agent;
 	
+	@Belief
 	protected BaseObject self;
 	
 	protected MarsworldEnvironment env;

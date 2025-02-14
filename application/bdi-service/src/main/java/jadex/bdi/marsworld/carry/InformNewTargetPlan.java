@@ -36,7 +36,7 @@ public class InformNewTargetPlan
 	@PlanBody
 	public void body()
 	{
-		System.out.println("inform new target: "+carry.getAgent().getId()+" "+target);
+		//System.out.println("inform new target: "+carry.getAgent().getId()+" "+target);
 		
 		IFuture<Collection<ITargetAnnouncementService>> fut = carry.getAgent().getFeature(IRequiredServiceFeature.class).getServices("targetser");
 		Collection<ITargetAnnouncementService> ansers = fut.get();

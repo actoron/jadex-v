@@ -71,9 +71,8 @@ public class Carry extends BaseObject
 		return ret;
 	}
 	
-	public void updateFrom(SpaceObject source)
+	public void onUpdateFrom(SpaceObject source)
 	{
-		super.updateFrom(source);
 		Carry c = (Carry)source;
 		setOre(c.getOre());
 		setCapacity(c.getCapacity());

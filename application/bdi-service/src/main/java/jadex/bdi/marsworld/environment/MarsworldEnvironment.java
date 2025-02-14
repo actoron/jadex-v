@@ -189,7 +189,7 @@ public class MarsworldEnvironment extends Environment
 			changed.add(target);
 			changed.add(carry);
 		}
-		return new TaskData(finished, changed);
+		return new TaskData(finished, vals, changed);
 	}
 	
 	protected TaskData performAnalyzeTarget(Sentry sentry, Target target, long deltatime, long time)

@@ -97,9 +97,8 @@ public class BaseObject extends SpaceObject
 		return ret;
 	}
 	
-	public void updateFrom(SpaceObject source)
+	public void onUpdateFrom(SpaceObject source)
 	{
-		super.updateFrom(source);
 		BaseObject bo = (BaseObject)source;
 		setHeight(bo.getHeight());
 		setWidth(bo.getWidth());

@@ -175,9 +175,9 @@ public class EnvGui extends ApplicationAdapter
         	
 		    //batch.draw(robottex, wpos.x, wpos.y, wdim.x, wdim.y);
 		    font.setColor(Color.BLACK);
-		    String txt = ""+target.getStatus();
+		    String txt = ""+target.getStatus()+" "+target.getPosition();
 		    if(target.getStatus()==Status.Analyzed)
-		    	txt = "ore: "+target.getOre()+" capa: "+target.getCapacity();   
+		    	txt += "ore: "+target.getOre()+" capa: "+target.getCapacity();   
 		    drawText(batch, font, txt, mapEnvToWorld(pos), wdim.x, wdim.y);
 		    //font.draw(batch, "halloooo", wpos.x, wpos.y);
         }
