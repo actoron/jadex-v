@@ -9,7 +9,7 @@ import jadex.bdi.marsworld.math.Vector2Double;
 import jadex.bdi.marsworld.producer.ProducerAgent;
 import jadex.bdi.marsworld.sentry.SentryAgent;
 import jadex.bdi.marsworld.ui.EnvGui;
-import jadex.bdi.marsworld.ui.GoalViewer;
+import jadex.bdi.marsworld.ui.BDIViewer;
 import jadex.core.IComponentManager;
 
 /**
@@ -38,8 +38,12 @@ public class Main
 		env.addSpaceObject(new Target(new Vector2Double(0.8, 0.8), 25)).get();
 		
 		int ccnt = 1;
-		int pcnt = 0;
+		int pcnt = 1;
 		int scnt = 1;
+		
+		/*int ccnt = 3;
+		int pcnt = 2;
+		int scnt = 2;*/
 		
 		for(int i=0; i<ccnt; i++)
 			IComponentManager.get().create(new CarryAgent(id)).get();

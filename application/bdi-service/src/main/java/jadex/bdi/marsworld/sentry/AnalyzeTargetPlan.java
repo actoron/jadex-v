@@ -80,7 +80,7 @@ public class AnalyzeTargetPlan
 			// Fails for one agent, when two agents try to analyze the same target at once.
 		}
 		
-		System.out.println("analyzed target: "+target+" "+sentry.getAgent().getId());
+		//System.out.println("analyzed target: "+target+" "+sentry.getAgent().getId());
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class AnalyzeTargetPlan
 	 */
 	private void callProducerAgent(Target target)
 	{
-		System.out.println("Calling some Production Agent...");
+		//System.out.println("Calling some Production Agent...");
 
 		IFuture<Collection<IProduceService>> fut = sentry.getAgent().getFeature(IRequiredServiceFeature.class).getServices("produceser");
 		Collection<IProduceService> ansers = fut.get();
@@ -110,7 +110,7 @@ public class AnalyzeTargetPlan
 		//System.out.println("plan finished: "+this);
 		if(task!=null)
 		{
-			System.out.println("aborting env task");
+			//System.out.println("aborting env task");
 			task.terminate();
 		}
 	}

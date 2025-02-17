@@ -79,6 +79,9 @@ public class ProducerAgent extends BaseAgent implements IProduceService
 	 */
 	public IFuture<Void> doProduce(Target target)
 	{
+		// It is important to add the target to the capability as the targets are updated
+		// from the environment
+		movecapa.addTarget(target);
 //		System.out.println("producer received produce command: "+target);
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new ProduceOre(target));
 		return IFuture.DONE;

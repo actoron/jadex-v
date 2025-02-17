@@ -154,7 +154,7 @@ public class MarsworldEnvironment extends Environment
 				carry.setStatus(Status.Driving);
 				//obj.setProperty("status", "drive");
 			
-			System.out.println("loading: "+capacity+" "+ore+" "+finished);
+			//System.out.println("loading: "+capacity+" "+ore+" "+finished);
 		}
 		else
 		{
@@ -314,7 +314,7 @@ public class MarsworldEnvironment extends Environment
 		target.setOre(ore);
 		target.setCapacity(capacity);
 		
-		System.out.println("target ore:"+ore+" capacity:"+capacity);
+		//System.out.println("target ore:"+ore+" capacity:"+capacity);
 
 		if(ore!=0)
 			producer.setStatus(Producer.Status.Producing);

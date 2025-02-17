@@ -21,7 +21,7 @@ public class Target extends SpaceObject
 	
 	public Target(IVector2 position, int ore)
 	{
-		this(position, ore, 0.1, 0.1);
+		this(position, ore, 0.025, 0.05);
 	}
 	
 	public Target(IVector2 position, int ore, double width, double height)
@@ -104,7 +104,7 @@ public class Target extends SpaceObject
 		setCapacity(t.getCapacity());
 		setStatus(t.getStatus());
 		
-		System.out.println("updated target: "+this);
+		//System.out.println("updated target: "+this);
 	}
 
 	@Override

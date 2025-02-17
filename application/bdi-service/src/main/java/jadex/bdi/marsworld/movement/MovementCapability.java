@@ -216,7 +216,7 @@ public class MovementCapability
 	{
 		if(!mytargets.contains(target))
 		{
-			System.out.println("added target: "+agent.getId()+" "+target);
+			//System.out.println("added target: "+agent.getId()+" "+target);
 			mytargets.add(target);
 		}
 		/*else
