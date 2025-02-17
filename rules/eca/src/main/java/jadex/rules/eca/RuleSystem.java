@@ -15,6 +15,7 @@ import java.util.Map;
 
 import jadex.common.IResultCommand;
 import jadex.common.SAccess;
+import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -263,13 +264,14 @@ public class RuleSystem
 					
 					public void exceptionOccurred(Exception exception)
 					{
-						ret.setResult(null);
+						System.out.println("Rule failed: "+rules[i]+", "+event+"\n"+SUtil.getExceptionStacktrace(exception));
+						processRules(rules, i+1, event, res).addResultListener(new DelegationResultListener<Void>(ret));
 					}
 				});
 			}
 			else
 			{
-				ret.setResult(null);
+				processRules(rules, i+1, event, res).addResultListener(new DelegationResultListener<Void>(ret));
 			}
 		}
 		else
