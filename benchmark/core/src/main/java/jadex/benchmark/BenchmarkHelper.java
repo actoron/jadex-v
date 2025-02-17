@@ -257,7 +257,8 @@ public class BenchmarkHelper
 				  "benchmark_name="+caller
 				+" benchmark_value="+value
 				+" benchmark_prev="+best
-				+" benchmark_pct="+pct);
+				+" benchmark_pct="+pct
+				+" benchmark_limit="+limit);
 			// JSON
 //			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
 //					  "{\"benchmark\": true"
