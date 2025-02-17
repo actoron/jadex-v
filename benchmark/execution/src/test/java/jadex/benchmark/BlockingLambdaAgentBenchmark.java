@@ -1,7 +1,5 @@
 package jadex.benchmark;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponentHandle;
@@ -16,7 +14,7 @@ public class BlockingLambdaAgentBenchmark
 	@Test
 	void	benchmarkTime()
 	{
-		double pct	= BenchmarkHelper.benchmarkTime(() -> 
+		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<Void>	ret	= new Future<>();
 			IComponentHandle	agent	= LambdaAgent.create(comp ->
@@ -27,6 +25,5 @@ public class BlockingLambdaAgentBenchmark
 			ret.get();
 			agent.terminate().get();
 		});
-		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 }

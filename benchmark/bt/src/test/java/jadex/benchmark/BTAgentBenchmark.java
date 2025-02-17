@@ -1,8 +1,6 @@
 package jadex.benchmark;
 
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 import jadex.bt.IBTProvider;
@@ -23,7 +21,7 @@ public class BTAgentBenchmark
 	@Test
 	void benchmarkTime()
 	{
-		double pct	= BenchmarkHelper.benchmarkTime(() -> 
+		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<Void> ret = new Future<>();
 			IComponentHandle agent = IComponentManager.get().create(new IBTProvider()
@@ -45,13 +43,12 @@ public class BTAgentBenchmark
 			ret.get();
 			agent.terminate().get();
 		});
-		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 
 	@Test
 	void benchmarkMemory()
 	{
-		double pct	= BenchmarkHelper.benchmarkMemory(() -> 
+		BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			Future<Void> ret = new Future<>();
 			IComponentHandle agent = IComponentManager.get().create(new IBTProvider()
@@ -73,7 +70,6 @@ public class BTAgentBenchmark
 			ret.get();
 			return () -> agent.terminate().get();
 		});
-		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 
 }

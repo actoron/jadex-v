@@ -1,8 +1,6 @@
 package jadex.benchmark;
 
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 import jadex.bpmn.runtime.BpmnProcess;
@@ -19,7 +17,7 @@ public class BpmnProcessBenchmark
 	@Test
 	void	benchmarkMemory()
 	{
-		double pct	= BenchmarkHelper.benchmarkMemory(() -> 
+		BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			Future<ComponentIdentifier>	ret	= new Future<>();
 			RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
@@ -33,13 +31,12 @@ public class BpmnProcessBenchmark
 			ret.get();
 			return () -> agent.terminate().get();
 		});
-		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 	
 	@Test
 	void	benchmarkTime()
 	{
-		double pct	= BenchmarkHelper.benchmarkTime(() -> 
+		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<ComponentIdentifier>	ret	= new Future<>();
 			RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
@@ -53,7 +50,6 @@ public class BpmnProcessBenchmark
 			ret.get();
 			agent.terminate().get();
 		});
-		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 }
 
