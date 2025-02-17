@@ -39,7 +39,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
 	
-	private Queue<Runnable> steps = new ArrayDeque<Runnable>();
+	private Queue<Runnable> steps = new ArrayDeque<Runnable>(4);
 	protected volatile boolean executing;
 	protected volatile int	do_switch;
 	protected boolean terminated;
