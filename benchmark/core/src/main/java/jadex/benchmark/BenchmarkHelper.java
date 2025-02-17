@@ -103,10 +103,15 @@ public class BenchmarkHelper
 					teardown.run();
 			}
 			vals.sort((a,b) -> (int)(a-b));
-			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
-			System.out.println("vals: "+vals);
-			System.out.println("avg [0..3): "+value);
-			addToDB(value, limit, true);
+			
+//			// Use average of best three values
+//			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
+//			System.out.println("vals: "+vals);
+//			System.out.println("avg [0..3): "+value);
+//			addToDB(value, limit, true);
+			
+			// Use only best value
+			addToDB(vals.get(0), limit, true);
 		}
 		catch(Exception e)
 		{
@@ -188,10 +193,15 @@ public class BenchmarkHelper
 				}
 			}
 			vals.sort((a,b) -> (int)(a-b));
-			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
-			System.out.println("vals: "+vals);
-			System.out.println("avg [0..3): "+value);
-			addToDB(value, limit, true);
+			
+//			// Use average of best three values
+//			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
+//			System.out.println("vals: "+vals);
+//			System.out.println("avg [0..3): "+value);
+//			addToDB(value, limit, true);
+			
+			// Use only best value
+			addToDB(vals.get(0), limit, true);
 		}
 		catch(Exception e)
 		{
@@ -208,7 +218,7 @@ public class BenchmarkHelper
 		String	caller	= getCaller();
 		Path	db	= Path.of(".benchmark_"+EXEC_ENV, caller+".json");
 		double	best	= 0;
-		double	last	= 0;
+//		double	last	= 0;
 		long	new_date	= System.currentTimeMillis();
 		long	best_date	= new_date;
 		
@@ -216,16 +226,21 @@ public class BenchmarkHelper
 		{
 			JsonValue	val	= Json.parse(Files.readString(db));
 			best	= ((JsonObject)val).get("best").asDouble();
-			last	= ((JsonObject)val).get("last").asDouble();
+//			last	= ((JsonObject)val).get("last").asDouble();
 			
 			pct	= (value - best)*100.0/best;
 			System.out.println("Change(%): "+pct);
 			
-			// Write new value if two better values in a row
-			if(last<=best && value<=best)
+//			// Write new value if two better values in a row
+//			if(last<=best && value<=best)
+//			{
+//				// Use only second best value to avoid outliers
+//				best	= Math.max(last, value);
+//			}
+			// Write new value when better or equal than old (e.g. update best_date also when same value)
+			if(value<=best)
 			{
-				// Use only second best value to avoid outliers
-				best	= Math.max(last, value);
+				best	= value;
 			}
 			
 			// Keep old best date
