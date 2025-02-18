@@ -9,9 +9,9 @@ public class Target extends SpaceObject
 		Unknown, Analyzing, Analyzed
 	}
 	
-	protected int capacity;
+	protected int ore; // produced ore
 	
-	protected int ore;
+	protected int detectedOre;
 	
 	protected Status status;
 	
@@ -27,20 +27,20 @@ public class Target extends SpaceObject
 	public Target(IVector2 position, int ore, double width, double height)
 	{
 		super(position);
-		this.ore = ore;
+		this.detectedOre = ore;
 		this.width = width;
 		this.height = height;
 		this.status = Status.Unknown;
 	}
 
-	public int getCapacity() 
+	public int getDetectedOre() 
 	{
-		return capacity;
+		return detectedOre;
 	}
 
-	public void setCapacity(int capacity) 
+	public void setDetectedOre(int detectedOre) 
 	{
-		this.capacity = capacity;
+		this.detectedOre = detectedOre;
 	}
 
 	public int getOre() 
@@ -90,7 +90,7 @@ public class Target extends SpaceObject
 		ret.setWidth(this.getWidth());
 		ret.setId(this.getId());
 		ret.setOre(this.getOre());
-		ret.setCapacity(this.getCapacity());
+		ret.setDetectedOre(this.getDetectedOre());
 		ret.setStatus(this.getStatus());
 		return ret;
 	}
@@ -101,7 +101,7 @@ public class Target extends SpaceObject
 		setHeight(t.getHeight());
 		setWidth(t.getWidth());
 		setOre(t.getOre());
-		setCapacity(t.getCapacity());
+		setDetectedOre(t.getDetectedOre());
 		setStatus(t.getStatus());
 		
 		//System.out.println("updated target: "+this);
@@ -110,7 +110,7 @@ public class Target extends SpaceObject
 	@Override
 	public String toString() 
 	{
-		return "Target [capacity=" + capacity + ", ore=" + ore + ", status=" + status + ", position=" + position
+		return "Target [capacity=" + detectedOre + ", ore=" + ore + ", status=" + status + ", position=" + position
 				+ ", id=" + id + "]";
 	}
 	

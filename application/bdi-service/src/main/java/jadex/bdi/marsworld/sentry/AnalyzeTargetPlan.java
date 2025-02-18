@@ -71,7 +71,7 @@ public class AnalyzeTargetPlan
 			//sentry.getMoveCapa().updateTarget(target);
 			
 			//System.out.println("Analyzed target: "+sentry.getAgent().getId()+", "+target.getOre()+" ore found.");
-			if(target.getOre()>0)
+			if(target.getDetectedOre()>0)
 				callProducerAgent(target);
 		}
 		catch(Exception e)

@@ -73,7 +73,7 @@ public class CarryOrePlan
 			task = null;
 			//System.out.println("unload end");
 			
-			finished = target.getCapacity()==0;
+			finished = target.getOre()==0;
 			//if(finished)
 			//	System.out.println("carry ore plan finished: "+carry.getAgent().getId());
 		}

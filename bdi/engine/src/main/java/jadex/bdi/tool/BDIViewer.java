@@ -1,4 +1,4 @@
-package jadex.bdi.marsworld.ui;
+package jadex.bdi.tool;
 
 import java.awt.BorderLayout;
 import java.awt.Component;

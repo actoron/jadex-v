@@ -1,4 +1,4 @@
-package jadex.bdi.marsworld.ui;
+package jadex.bdi.tool;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -46,9 +46,9 @@ public class ObjectTreeModel implements TreeModel
 	/** The image icons. */
 	protected static final UIDefaults icons = new UIDefaults(new Object[]
 	{
-		"javaobject", SGUI.makeIcon(ObjectTreeModel.class, "/jadex/bdi/marsworld/ui/images/bean.png"),
-		"javaattribute", SGUI.makeIcon(ObjectTreeModel.class, "/jadex/bdi/marsworld/ui/images/attribute.png"),
-		"javavalue", SGUI.makeIcon(ObjectTreeModel.class, "/jadex/bdi/marsworld/ui/images/value.png")
+		"javaobject", SGUI.makeIcon(ObjectTreeModel.class, "/jadex/bdi/tool/images/bean.png"),
+		"javaattribute", SGUI.makeIcon(ObjectTreeModel.class, "/jadex/bdi/tool/images/attribute.png"),
+		"javavalue", SGUI.makeIcon(ObjectTreeModel.class, "/jadex/bdi/tool/images/value.png")
 	});
 	
 //	/** The list of timers to update the object inspector tree nodes .*/

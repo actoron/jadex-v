@@ -9,7 +9,7 @@ import jadex.bdi.marsworld.math.Vector2Double;
 import jadex.bdi.marsworld.producer.ProducerAgent;
 import jadex.bdi.marsworld.sentry.SentryAgent;
 import jadex.bdi.marsworld.ui.EnvGui;
-import jadex.bdi.marsworld.ui.BDIViewer;
+import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponentManager;
 
 /**

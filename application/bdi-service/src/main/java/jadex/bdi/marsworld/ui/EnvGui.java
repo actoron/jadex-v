@@ -184,7 +184,7 @@ public class EnvGui extends ApplicationAdapter
 		    font.setColor(Color.BLACK);
 		    String txt = ""+target.getStatus()+" "+target.getPosition();
 		    if(target.getStatus()==Status.Analyzed)
-		    	txt += " ore: "+target.getOre()+" capa: "+target.getCapacity();   
+		    	txt += " detected ore: "+target.getDetectedOre()+" produced ore: "+target.getOre();   
 		    drawText(batch, font, txt, mapEnvToWorld(pos), wdim.x, wdim.y/2);
 		    //font.draw(batch, "halloooo", wpos.x, wpos.y);
         }
