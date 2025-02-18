@@ -1,6 +1,7 @@
 package jadex.bdi.marsworld.environment;
 
-import jadex.bdi.marsworld.math.IVector2;
+import jadex.environment.SpaceObject;
+import jadex.math.IVector2;
 
 public class Homebase extends SpaceObject
 {
@@ -84,5 +85,12 @@ public class Homebase extends SpaceObject
 		setOre(h.getOre());
 		setMissionTime(h.getMissionTime());
 		//System.out.println("updated target: "+this);
+	}
+	
+	public String getRemainingTime()
+	{
+		long rt = getMissionTime()-System.currentTimeMillis();
+		if(rt<0) rt=0;
+		return ""+rt/1000+"s";
 	}
 }

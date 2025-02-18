@@ -1,4 +1,4 @@
-package jadex.bdi.marsworld.ui;
+package jadex.bdi.tool;
 
 import java.awt.BorderLayout;
 
@@ -10,7 +10,7 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 
-import jadex.bdi.marsworld.ui.ObjectTreeModel.ObjectTreeCellRenderer;
+import jadex.bdi.tool.ObjectTreeModel.ObjectTreeCellRenderer;
 
 /**
  *  Panel for inspecting Java objects.

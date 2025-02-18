@@ -6,15 +6,19 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.bdi.marsworld.environment.Carry.Status;
-import jadex.bdi.marsworld.environment.EnvironmentTask.TaskData;
-import jadex.bdi.marsworld.math.IVector2;
-import jadex.bdi.marsworld.math.Vector2Double;
+import jadex.environment.BaseObject;
+import jadex.environment.Environment;
+import jadex.environment.EnvironmentTask;
+import jadex.environment.SpaceObject;
+import jadex.environment.EnvironmentTask.TaskData;
 import jadex.execution.AgentMethod;
 import jadex.execution.NoCopy;
 import jadex.execution.impl.TimerContext;
 import jadex.execution.impl.TimerCreator;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 
 public class MarsworldEnvironment extends Environment 
 {
@@ -134,9 +138,9 @@ public class MarsworldEnvironment extends Environment
 		
 		//String targetcapprop = load ? ProduceOreTask.PROPERTY_CAPACITY : AnalyzeTargetTask.PROPERTY_ORE;
 		
-		int ore = carry.getOre();
+		int core = carry.getOre();
 		int mycap = carry.getCapacity();
-		int capacity = load? ((Target)target).getCapacity(): ((Homebase)target).getOre();
+		int tore = load? ((Target)target).getOre(): ((Homebase)target).getOre();
 		//int	ore	= ((Number)obj.getProperty(AnalyzeTargetTask.PROPERTY_ORE)).intValue();
 		//int	mycap	= ((Number)obj.getProperty(ProduceOreTask.PROPERTY_CAPACITY)).intValue();
 		//int	capacity = ((Number)target.getProperty(targetcapprop)).intValue();
@@ -146,35 +150,35 @@ public class MarsworldEnvironment extends Environment
 		{
 			carry.setStatus(Status.Loading);
 			//obj.setProperty("status", "loading");
-			long units = Math.min(mycap-ore, Math.min(capacity, (time + deltatime)/TIME));
-			ore	+= units;
-			capacity -= units;
-			finished = ore==mycap || capacity==0;
+			long units = Math.min(mycap-core, Math.min(tore, (time + deltatime)/TIME));
+			core += units;
+			tore -= units;
+			finished = core==mycap || tore==0;
 			if(finished)
 				carry.setStatus(Status.Driving);
 				//obj.setProperty("status", "drive");
 			
-			System.out.println("loading: "+capacity+" "+ore+" "+finished);
+			//System.out.println("loading: "+capacity+" "+ore+" "+finished);
 		}
 		else
 		{
 			//obj.setProperty("status", "unloading");
 			carry.setStatus(Status.Unloading);
-			long units = Math.min(ore, (time + deltatime)/TIME);
-			ore	-= units;
-			capacity += units;
-			finished = ore==0;
+			long units = Math.min(core, (time + deltatime)/TIME);
+			core -= units;
+			tore += units;
+			finished = core==0;
 			if(finished)
 				carry.setStatus(Status.Driving);
 				//obj.setProperty("status", "drive");
 		}
 		time = (time + deltatime)%TIME;
 		//obj.setProperty(AnalyzeTargetTask.PROPERTY_ORE, Integer.valueOf(ore));
-		carry.setOre(ore);
+		carry.setOre(core);
 		if(load)
-			((Target)target).setCapacity(capacity);
+			((Target)target).setOre(tore);
 		else
-			((Homebase)target).setOre(capacity);
+			((Homebase)target).setOre(tore);
 		//target.setProperty(targetcapprop, Integer.valueOf(capacity));
 		
 		//if(finished)
@@ -305,22 +309,22 @@ public class MarsworldEnvironment extends Environment
 			throw new RuntimeException("Not at location: "+producer+", "+target);
 	
 		int	ore	= target.getOre();
-		int	capacity = target.getCapacity();
+		int	detectedOre = target.getDetectedOre();
 	
-		long amount = Math.min(ore, (time + deltatime)/TIME);
-		capacity += amount;
-		ore	-= amount;
+		long amount = Math.min(detectedOre, (time + deltatime)/TIME);
+		ore += amount;
+		detectedOre	-= amount;
 		time = (time + deltatime)%TIME;
 		target.setOre(ore);
-		target.setCapacity(capacity);
+		target.setDetectedOre(detectedOre);
 		
-		System.out.println("target ore:"+ore+" capacity:"+capacity);
+		//System.out.println("target detected ore:"+detectedOre+" ore:"+ore);
 
-		if(ore!=0)
+		if(detectedOre!=0)
 			producer.setStatus(Producer.Status.Producing);
 			//obj.setProperty("status", "ore");
 	
-		if(ore==0)
+		if(detectedOre==0)
 		{	
 			finished = true;
 			producer.setStatus(Producer.Status.Driving);

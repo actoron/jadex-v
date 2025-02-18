@@ -1,4 +1,4 @@
-package jadex.bdi.marsworld.environment;
+package jadex.environment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,8 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import jadex.bdi.marsworld.math.IVector2;
 import jadex.common.IFilter;
+import jadex.math.IVector2;
 
 /**
  * Node for the k-dimensional-tree.

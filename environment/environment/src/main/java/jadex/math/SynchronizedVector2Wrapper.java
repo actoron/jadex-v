@@ -1,4 +1,4 @@
-package jadex.bdi.marsworld.math;
+package jadex.math;
 
 import java.math.BigDecimal;
 

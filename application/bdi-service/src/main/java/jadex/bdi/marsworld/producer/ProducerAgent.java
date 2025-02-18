@@ -9,12 +9,12 @@ import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.marsworld.BaseAgent;
 import jadex.bdi.marsworld.carry.ICarryService;
-import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Producer;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability.WalkAround;
 import jadex.bdi.marsworld.sentry.ITargetAnnouncementService;
 import jadex.bdi.runtime.IBDIAgentFeature;
+import jadex.environment.BaseObject;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
 import jadex.providedservice.annotation.ProvidedService;
@@ -79,6 +79,9 @@ public class ProducerAgent extends BaseAgent implements IProduceService
 	 */
 	public IFuture<Void> doProduce(Target target)
 	{
+		// It is important to add the target to the capability as the targets are updated
+		// from the environment
+		movecapa.addTarget(target);
 //		System.out.println("producer received produce command: "+target);
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new ProduceOre(target));
 		return IFuture.DONE;

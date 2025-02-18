@@ -12,19 +12,19 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.marsworld.BaseAgent;
-import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Sentry;
 import jadex.bdi.marsworld.environment.Target;
-import jadex.bdi.marsworld.math.IVector2;
 import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.producer.IProduceService;
-import jadex.bdi.marsworld.ui.GoalViewer;
 import jadex.bdi.runtime.ChangeEvent;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IGoal;
+import jadex.bdi.tool.BDIViewer;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
+import jadex.environment.BaseObject;
 import jadex.future.IFuture;
+import jadex.math.IVector2;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 import jadex.providedservice.annotation.ProvidedService;
@@ -52,7 +52,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 	public void start(IComponent agent)
 	{
 		super.body();
-		SwingUtilities.invokeLater(() -> new GoalViewer(agent.getComponentHandle()).setVisible(true));
+		SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
 	}
 	
 	public IFuture<Void> announceNewTarget(Target target)
@@ -152,11 +152,11 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 						}*/
 					}
 				}
-				if(!found)
-					System.out.println("nearest has no goal: "+nearest+" "+nearest.equals(target)+" "+outer.getMoveCapa().getMyTargets());
+				//if(!found)
+				//	System.out.println("nearest has no goal: "+nearest+" "+nearest.equals(target)+" "+outer.getMoveCapa().getMyTargets());
 			}
 			
-			System.out.println("context cond for: "+target+" "+ret+" nearest: "+nearest);
+			//System.out.println("context cond for: "+target+" "+ret+" nearest: "+nearest);
 			
 			return ret;
 			

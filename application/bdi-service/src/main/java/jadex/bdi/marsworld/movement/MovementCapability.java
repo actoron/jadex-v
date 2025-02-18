@@ -14,15 +14,15 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.marsworld.BaseAgent;
-import jadex.bdi.marsworld.environment.BaseObject;
-import jadex.bdi.marsworld.environment.Environment;
 import jadex.bdi.marsworld.environment.Homebase;
-import jadex.bdi.marsworld.environment.SpaceObject;
 import jadex.bdi.marsworld.environment.Target;
-import jadex.bdi.marsworld.math.IVector2;
 import jadex.bdi.runtime.ICapability;
 import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
+import jadex.environment.BaseObject;
+import jadex.environment.Environment;
+import jadex.environment.SpaceObject;
+import jadex.math.IVector2;
 import jadex.micro.annotation.Agent;
 
 /**
@@ -216,7 +216,7 @@ public class MovementCapability
 	{
 		if(!mytargets.contains(target))
 		{
-			System.out.println("added target: "+agent.getId()+" "+target);
+			//System.out.println("added target: "+agent.getId()+" "+target);
 			mytargets.add(target);
 		}
 		/*else

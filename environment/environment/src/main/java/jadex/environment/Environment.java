@@ -1,4 +1,4 @@
-package jadex.bdi.marsworld.environment;
+package jadex.environment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,16 +10,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import jadex.bdi.marsworld.environment.EnvironmentTask.TaskData;
-import jadex.bdi.marsworld.math.IVector1;
-import jadex.bdi.marsworld.math.IVector2;
-import jadex.bdi.marsworld.math.Vector1Double;
-import jadex.bdi.marsworld.math.Vector2Double;
 import jadex.common.IFilter;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.environment.EnvironmentTask.TaskData;
 import jadex.execution.AgentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.ITimerCreator;
@@ -31,6 +27,10 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminableFuture;
+import jadex.math.IVector1;
+import jadex.math.IVector2;
+import jadex.math.Vector1Double;
+import jadex.math.Vector2Double;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 

@@ -8,13 +8,13 @@ import jadex.bdi.annotation.PlanCapability;
 import jadex.bdi.annotation.PlanFinished;
 import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.BaseAgent;
-import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
-import jadex.bdi.marsworld.math.IVector2;
 import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
+import jadex.environment.BaseObject;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
+import jadex.math.IVector2;
 
 /**
  *  The move to a location plan.

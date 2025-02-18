@@ -63,7 +63,7 @@ public class ProduceOrePlan
 		task = null;
 		//producer.getMoveCapa().updateTarget(target);
 		
-		System.out.println("Produced ore at target: "+producer.getAgent().getId()+", "+target.getCapacity()+" ore produced.");
+		//System.out.println("Produced ore at target: "+producer.getAgent().getId()+", "+target.getCapacity()+" ore produced.");
 		
 		callCarryAgent(target);
 	}
@@ -99,7 +99,7 @@ public class ProduceOrePlan
 		//System.out.println("plan finished: "+this);
 		if(task!=null)
 		{
-			System.out.println("aborting env task");
+			//System.out.println("aborting env task");
 			task.terminate();
 		}
 	}

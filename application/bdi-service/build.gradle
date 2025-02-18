@@ -42,6 +42,7 @@ dependencies
     implementation 'org.activecomponents.jadex:requiredservicemicro:'+v
     implementation 'org.activecomponents.jadex:eca:'+v
     implementation 'org.activecomponents.jadex:traverser:'+v
+    implementation 'org.activecomponents.jadex:environment:'+v
     
     // libgdx for game ui
 	implementation 'com.badlogicgames.gdx:gdx:1.12.1'

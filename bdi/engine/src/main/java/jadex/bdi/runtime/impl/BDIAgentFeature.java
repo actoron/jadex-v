@@ -33,8 +33,9 @@ import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IBeliefListener;
 import jadex.bdi.runtime.ICapability;
 import jadex.bdi.runtime.IGoal;
-import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.IGoal.GoalLifecycleState;
+import jadex.bdi.runtime.IPlan;
+import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.impl.APL.CandidateInfoMPlan;
 import jadex.bdi.runtime.impl.APL.CandidateInfoPojoPlan;
 import jadex.bdi.runtime.impl.APL.MPlanInfo;
@@ -1727,6 +1728,15 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	}
 	
 	/**
+	 *  Get the current plans as api representation.
+	 *  @return All currently instantiated plans.
+	 */
+	public Collection<IPlan> getPlans()
+	{
+		return (Collection)getCapability().getPlans();
+	}
+	
+	/**
 	 *  Get the goal api representation for a pojo goal.
 	 *  @param goal The pojo goal.
 	 *  @return The api goal.
@@ -1889,7 +1899,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 *  Get parameter values for injection into method and constructor calls.
 	 *  @return A valid assignment or null if no assignment could be found.
 	 */
-	public static Object[]	getInjectionValues(Class<?>[] ptypes, Annotation[][] anns, MElement melement, ChangeEvent event, RPlan rplan, RProcessableElement rpe, Collection<Object> vs)
+	public static Object[] getInjectionValues(Class<?>[] ptypes, Annotation[][] anns, MElement melement, ChangeEvent event, RPlan rplan, RProcessableElement rpe, Collection<Object> vs)
 	{
 		Collection<Object> vals = new LinkedHashSet<Object>();
 		if(vs!=null)
@@ -2082,7 +2092,16 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			
 			if(!done)
 			{
-				ret[i]	= g.guessParameter(ptypes[i], false);
+				try
+				{
+					ret[i]	= g.guessParameter(ptypes[i], false);
+				}
+				catch(Exception e)
+				{
+					// could not fetch value
+					// if the exception is not catched it can hinder
+					// agent method execution such as in marsworld Sentry checkCreate
+				}
 			}
 		}
 		
@@ -2654,7 +2673,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		{
 			boolean res = !capa.getGoals(mgoal).isEmpty();
 //				return res? ICondition.TRUE: ICondition.FALSE;
-//			System.out.println("goals of type: "+mgoal+" "+res+" "+capa.getAgent().getFeature(IBDIAgentFeature.class).getGoals());
+			//System.out.println("goals of type: "+mgoal+" "+res+" "+capa.getAgent().getFeature(IBDIAgentFeature.class).getGoals());
 			return new Future<Tuple2<Boolean,Object>>(res? ICondition.TRUE: ICondition.FALSE);
 		}
 	}

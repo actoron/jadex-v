@@ -55,25 +55,25 @@ public class CarryOrePlan
 			rplan.dispatchSubgoal(move).get();
 	
 			// Load ore at the target.
-			System.out.println("load start");
+			//System.out.println("load start");
 			task = env.load(myself, target);
 			task.get();
-			System.out.println("load end");
-			System.out.println("myself: "+myself.getPosition());
+			//System.out.println("load end");
+			//System.out.println("myself: "+myself.getPosition());
 			
 			// Move to the homebase.
 			move = capa.new Move(capa.getHomebase().getPosition());
 			rplan.dispatchSubgoal(move).get();
-			System.out.println("myself: "+myself.getPosition());
+			//System.out.println("myself: "+myself.getPosition());
 			
 			// Unload ore at homebase
-			System.out.println("unload start");
+			//System.out.println("unload start");
 			task = env.unload(myself, capa.getHomebase());
 			task.get();
 			task = null;
-			System.out.println("unload end");
+			//System.out.println("unload end");
 			
-			finished = target.getCapacity()==0;
+			finished = target.getOre()==0;
 			//if(finished)
 			//	System.out.println("carry ore plan finished: "+carry.getAgent().getId());
 		}
@@ -88,7 +88,7 @@ public class CarryOrePlan
 		//System.out.println("plan finished: "+this);
 		if(task!=null)
 		{
-			System.out.println("aborting env task");
+			//System.out.println("aborting env task");
 			task.terminate();
 		}
 	}
