@@ -24,4 +24,15 @@ public class PlainComponentBenchmark
 			Component.createComponent(Component.class, () -> new Component(this)).terminate().get();
 		});
 	}
+
+//	@Test
+//	void	benchmarkGetLoggerTime()
+//	{
+//		Component	comp	= new Component(this);
+//		BenchmarkHelper.benchmarkTime(() ->
+//		{
+//			if(comp.getLogger().isLoggable(java.lang.System.Logger.Level.DEBUG))
+//				comp.getLogger().log(java.lang.System.Logger.Level.DEBUG, "test");
+//		});
+//	}
 }
