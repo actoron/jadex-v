@@ -37,13 +37,13 @@ public class Main
 		env.addSpaceObject(new Target(new Vector2Double(0.8, 0.8), 25)).get();
 		
 		// Start minimal scenario
-		startScenario(envid, 1, 1, 1);
+		//startScenario(envid, 1, 1, 1);
 		
 		// Start small scenaio
 		startScenario(envid, 1, 2, 3);
 		
 		// Start large scenario
-		startScenario(envid, 2, 5, 10);
+		//startScenario(envid, 2, 5, 10);
 
 		EnvGui.createEnvGui(envid);
 		

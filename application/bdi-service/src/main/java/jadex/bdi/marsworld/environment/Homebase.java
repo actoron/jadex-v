@@ -86,4 +86,11 @@ public class Homebase extends SpaceObject
 		setMissionTime(h.getMissionTime());
 		//System.out.println("updated target: "+this);
 	}
+	
+	public String getRemainingTime()
+	{
+		long rt = getMissionTime()-System.currentTimeMillis();
+		if(rt<0) rt=0;
+		return ""+rt/1000+"s";
+	}
 }

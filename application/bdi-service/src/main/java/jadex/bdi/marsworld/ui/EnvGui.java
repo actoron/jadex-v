@@ -65,17 +65,17 @@ public class EnvGui extends ApplicationAdapter
  
         batch = new SpriteBatch();
         shaperen = new ShapeRenderer();
-        backgroundtex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/mars.png"));
+        backgroundtex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/mars.png"));
         backgroundtex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
-        carrytex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/carry.png"));
+        carrytex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/carry.png"));
         carrytex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
-        producertex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/producer.png"));
+        producertex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/producer.png"));
         producertex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
-        sentrytex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/sentry.png"));
+        sentrytex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/sentry.png"));
         sentrytex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
-        targettex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/flag.png"));
+        targettex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/flag.png"));
         targettex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
-        homebasetex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/target.png"));
+        homebasetex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/target.png"));
         homebasetex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
 
         camera = new OrthographicCamera();
@@ -195,7 +195,7 @@ public class EnvGui extends ApplicationAdapter
     	Vector2 wdim = mapEnvToWorld(new Vector2((float)base.getWidth(), (float)base.getHeight()));
         batch.draw(homebasetex, wpos.x - wdim.x / 2, wpos.y - wdim.y / 2, wdim.x, wdim.y); 
         font.setColor(Color.BLACK);
-	    drawText(batch, font, "Ore: "+base.getOre(), mapEnvToWorld(pos), wdim.x, wdim.y/2);
+	    drawText(batch, font, "Time: "+base.getRemainingTime()+" Ore: "+base.getOre(), mapEnvToWorld(pos), wdim.x, wdim.y/2);
         
         batch.end();
     }

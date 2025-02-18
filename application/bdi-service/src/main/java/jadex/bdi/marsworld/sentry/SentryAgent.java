@@ -152,8 +152,8 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 						}*/
 					}
 				}
-				if(!found)
-					System.out.println("nearest has no goal: "+nearest+" "+nearest.equals(target)+" "+outer.getMoveCapa().getMyTargets());
+				//if(!found)
+				//	System.out.println("nearest has no goal: "+nearest+" "+nearest.equals(target)+" "+outer.getMoveCapa().getMyTargets());
 			}
 			
 			//System.out.println("context cond for: "+target+" "+ret+" nearest: "+nearest);

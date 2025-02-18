@@ -34,6 +34,10 @@ public class BDIViewer extends JFrame
     private final IComponentHandle agent;
     private final JTable goalTable, planTable, beliefTable;
     private final DefaultTableModel goalModel, planModel, beliefModel;
+    
+    record BeliefValue(Object value, String preview) 
+    {
+    }
 
     public BDIViewer(IComponentHandle agent) 
     {
@@ -162,19 +166,24 @@ public class BDIViewer extends JFrame
 
     private void refreshBeliefsTable(DefaultTableModel model, MBelief[] beliefs) 
     {
-    	 model.setRowCount(0);
-         for (MBelief belief: beliefs) 
-         {
-             Object[] row = new Object[]
-             {
-                 belief.getName(),
-                 belief.getType(this.getClass().getClassLoader()),
-                 belief.isDynamic(),
-                 belief.getUpdateRate(),
-                 agent.scheduleStep((IThrowingFunction<IComponent, Object>)a -> belief.getValue()).get()
-             };
-             model.addRow(row);
-         }
+        model.setRowCount(0);
+        for (MBelief belief : beliefs) 
+        {
+            Object beliefValue = agent.scheduleStep((IThrowingFunction<IComponent, Object>) a -> 
+            {
+            	Object val= belief.getValue();
+            	return new BeliefValue(val, val.toString());
+            }).get();
+
+            model.addRow(new Object[]
+            {
+                belief.getName(),
+                belief.getType(this.getClass().getClassLoader()),
+                belief.isDynamic(),
+                belief.getUpdateRate(),
+                beliefValue
+            });
+        }
     }
 
     public static String getShortedText(String text) 
@@ -202,6 +211,9 @@ public class BDIViewer extends JFrame
             	setText(getShortedText(value.toString()));
             else if(value instanceof UnparsedExpression)
             	setText(((UnparsedExpression)value).getValue());
+            else if(value instanceof BeliefValue)
+            	setText(((BeliefValue)value).preview());
+            
             return this;
         }
     }
