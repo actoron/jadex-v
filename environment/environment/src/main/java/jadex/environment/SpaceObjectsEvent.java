@@ -1,4 +1,4 @@
-package jadex.bdi.marsworld.environment;
+package jadex.environment;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -1,50 +1,55 @@
-package jadex.bdi.marsworld.math;
+package jadex.math;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
-/** Implementation of a cartesian 2-vector using double components.
+/** Implementation of a cartesian 3-vector using double components.
  */
-public class Vector2Double implements IVector2, Cloneable
+public class Vector3Double implements IVector3, Cloneable
 {
 	/** Zero vector.
 	 */
-	public static final IVector2 ZERO = new Vector2Double(0.0);
+	public static final IVector3 ZERO = new Vector3Double(0.0);
 	
 	private double x_;
 	private double y_;
+	private double z_;
 
 	/** Creates a new Vector2Double with the value (0,0).
 	 */
-	public Vector2Double()
+	public Vector3Double()
 	{
 		x_ = 0;
 		y_ = 0;
+		z_ = 0;
 	}
 
-	/** Creates a new Vector2 with the same value as the input vector.
+	/** Creates a new Vector3 with the same value as the input vector.
 	 */
-	public Vector2Double(IVector2 vector)
+	public Vector3Double(IVector3 vector)
 	{
 		x_ = vector.getXAsDouble();
 		y_ = vector.getYAsDouble();
+		z_ = vector.getYAsDouble();
 	}
 
 	/** Creates a new Vector2 using the scalar to assign the
 	 *  value (scalar,scalar).
 	 */
-	public Vector2Double(double scalar)
+	public Vector3Double(double scalar)
 	{
 		x_ = scalar;
 		y_ = scalar;
+		z_ = scalar;
 	}
 
 	/** Creates a new Vector2 with the given value.
 	 */
-	public Vector2Double(double x, double y)
+	public Vector3Double(double x, double y, double z)
 	{
 		x_ = x;
 		y_ = y;
+		z_ = z;
 	}
 	
 	/** Assigns this vector the values of another vector.
@@ -52,82 +57,94 @@ public class Vector2Double implements IVector2, Cloneable
 	 *  @param vector the other vector
 	 *  @return a reference to the called vector (NOT a copy)
 	 */
-	public IVector2 assign(IVector2 vector)
+	public IVector3 assign(IVector3 vector)
 	{
 		x_ = vector.getXAsDouble();
 		y_ = vector.getYAsDouble();
+		z_ = vector.getZAsDouble();
 		return this;
 	}
 	
-	public IVector2 add(double scalar)
+	public IVector3 add(double scalar)
 	{
 		x_ += scalar;
 		y_ += scalar;
+		z_ += scalar;
 		return this;
 	}
 
-	public IVector2 add(IVector1 scalar)
+	public IVector3 add(IVector1 scalar)
 	{
 		x_ += scalar.getAsDouble();
 		y_ += scalar.getAsDouble();
+		z_ += scalar.getAsDouble();
 		return this;
 	}
 
-	public IVector2 add(IVector2 vector)
+	public IVector3 add(IVector3 vector)
 	{
 		x_ += vector.getXAsDouble();
 		y_ += vector.getYAsDouble();
+		z_ += vector.getZAsDouble();
 		return this;
 	}
 	
-	public IVector2 subtract(double scalar)
+	public IVector3 subtract(double scalar)
 	{
 		x_ -= scalar;
 		y_ -= scalar;
+		z_ -= scalar;
 		return this;
 	}
 
-	public IVector2 subtract(IVector1 scalar)
+	public IVector3 subtract(IVector1 scalar)
 	{
 		x_ -= scalar.getAsDouble();
 		y_ -= scalar.getAsDouble();
+		z_ -= scalar.getAsDouble();
 		return this;
 	}
 
-	public IVector2 subtract(IVector2 vector)
+	public IVector3 subtract(IVector3 vector)
 	{
 		x_ -= vector.getXAsDouble();
 		y_ -= vector.getYAsDouble();
+		z_ -= vector.getZAsDouble();
 		return this;
 	}
 	
-	public IVector2 mod(IVector2 modulus)
+	public IVector3 mod(IVector3 modulus)
 	{
 		double mx = modulus.getXAsDouble();
 		double my = modulus.getYAsDouble();
+		double mz = modulus.getZAsDouble();
 		x_ = (x_ + mx) % mx;
 		y_ = (y_ + my) % my;
+		z_ = (z_ + mz) % mz;
 		return this;
 	}
 	
-	public IVector2 multiply(double scalar)
+	public IVector3 multiply(double scalar)
 	{
 		x_ *= scalar;
 		y_ *= scalar;
+		z_ *= scalar;
 		return this;
 	}
 
-	public IVector2 multiply(IVector1 scalar)
+	public IVector3 multiply(IVector1 scalar)
 	{
 		x_ *= scalar.getAsDouble();
 		y_ *= scalar.getAsDouble();
+		z_ *= scalar.getAsDouble();
 		return this;
 	}
 
-	public IVector2 multiply(IVector2 vector)
+	public IVector3 multiply(IVector3 vector)
 	{
 		x_ *= vector.getXAsDouble();
 		y_ *= vector.getYAsDouble();
+		z_ *= vector.getZAsDouble();
 		return this;
 	}
 	
@@ -136,40 +153,50 @@ public class Vector2Double implements IVector2, Cloneable
 	 *  @param vector vector
 	 *  @return a reference to the called vector (NOT a copy)
 	 */
-	public IVector2 divide(IVector2 vector)
+	public IVector3 divide(IVector3 vector)
 	{
 		x_ /= vector.getXAsDouble();
 		y_ /= vector.getYAsDouble();
+		z_ /= vector.getZAsDouble();
 		return this;
 	}
 	
-	public IVector2 zero()
+	public IVector3 zero()
 	{
 		x_ = 0.0;
 		y_ = 0.0;
+		z_ = 0.0;
 		return this;
 	}
 
-	public IVector2 negateX()
+	public IVector3 negateX()
 	{
 		x_ = -x_;
 		return this;
 	}
 
-	public IVector2 negateY()
+	public IVector3 negateY()
 	{
-		y_ = -y_;
-		return this;
-	}
-
-	public IVector2 negate()
-	{
-		x_ = -x_;
 		y_ = -y_;
 		return this;
 	}
 	
-	public IVector2 randomX(IVector1 lower, IVector1 upper)
+	public IVector3 negateZ()
+	{
+		z_ = -z_;
+		return this;
+	}
+	
+
+	public IVector3 negate()
+	{
+		x_ = -x_;
+		y_ = -y_;
+		z_ = -z_;
+		return this;
+	}
+	
+	public IVector3 randomX(IVector1 lower, IVector1 upper)
 	{
 		double l = lower.getAsDouble();
 		double u = upper.getAsDouble();
@@ -180,7 +207,7 @@ public class Vector2Double implements IVector2, Cloneable
 		return this;
 	}
 	
-	public IVector2 randomY(IVector1 lower, IVector1 upper)
+	public IVector3 randomY(IVector1 lower, IVector1 upper)
 	{
 		double l = lower.getAsDouble();
 		double u = upper.getAsDouble();
@@ -191,72 +218,49 @@ public class Vector2Double implements IVector2, Cloneable
 		return this;
 	}
 	
-	public IVector2 normalize()
+	public IVector3 randomZ(IVector1 lower, IVector1 upper)
 	{
-		double length = Math.sqrt((x_ * x_) + (y_ * y_));
+		double l = lower.getAsDouble();
+		double u = upper.getAsDouble();
+		double r = Math.random();
+		r *= (u - l);
+		r += l;
+		z_ = r;
+		return this;
+	}
+	
+	public IVector3 normalize()
+	{
+		double length = Math.sqrt((x_ * x_) + (y_ * y_) + (z_ * z_));
 		if (length != 0.0)
 		{
 			x_ /= length;
 			y_ /= length;
+			z_ /= length;
 		}
 		return this;
 	}
 	
-	/**
-	 *  Redirects the vector to a new direction,
-	 *  maintaining the magnitude.
-	 *  
-	 *  @param angle The new direction.
-	 *  @return The vector.
-	 */
-	public IVector2 redirect(double angle)
-	{
-		double length = Math.sqrt((x_ * x_) + (y_ * y_));
-		x_ = Math.cos(angle) * length;
-		y_ = Math.sin(angle) * length;
-		
-		return this;
-	}
+
 
 	public IVector1 getLength()
 	{
-		return new Vector1Double(Math.sqrt((x_ * x_) + (y_ * y_)));
-	}
-	
-	/** Returns the squared length (magnitude) of the vector.
-	 *
-	 *  @return squared vector length
-	 */
-	public IVector1 getSquaredLength()
-	{
-		return new Vector1Double((x_ * x_) + (y_ * y_));
-	}
-	
-	public IVector1 getDirection()
-	{
-		return new Vector1Double(Math.atan2(y_, x_));
-	}
-	
-	public float getDirectionAsFloat()
-	{
-		return (float) Math.atan2(y_, x_);
+		return new Vector1Double(Math.sqrt((x_ * x_) + (y_ * y_)+ (z_ * z_)));
 	}
 
-	public double getDirectionAsDouble()
+	public IVector2 getDirection()
 	{
-		return Math.atan2(y_, x_);
-	}
-	
-	public IVector1 getMean()
-	{
-		return new Vector1Double((x_ + y_) / 2);
+		// todo:
+		throw new UnsupportedOperationException();
+		//return new Vector1Double(Math.atan2(y_, x_));
 	}
 
-	public IVector1 getDistance(IVector2 vector)
+	public IVector1 getDistance(IVector3 vector)
 	{
 		double dx = x_ - vector.getXAsDouble();
 		double dy = y_ - vector.getYAsDouble();
-		return new Vector1Double(Math.sqrt((dx * dx) + (dy * dy)));
+		double dz = z_ - vector.getZAsDouble();
+		return new Vector1Double(Math.sqrt((dx * dx) + (dy * dy) + (dz * dz)));
 	}
 
 	public IVector1 getX()
@@ -269,6 +273,11 @@ public class Vector2Double implements IVector2, Cloneable
 		return new Vector1Double(y_);
 	}
 	
+	public IVector1 getZ()
+	{
+		return new Vector1Double(z_);
+	}
+	
 	public void setX(IVector1 x)
 	{
 		this.x_	= x.getAsDouble(); 
@@ -279,6 +288,11 @@ public class Vector2Double implements IVector2, Cloneable
 		this.y_	= y.getAsDouble(); 
 	}
 
+	public void setZ(IVector1 z)
+	{
+		this.z_	= z.getAsDouble(); 
+	}
+	
 	/** Returns the x-component of the vector as integer.
 	 *
 	 *  @return x-component as integer
@@ -295,6 +309,15 @@ public class Vector2Double implements IVector2, Cloneable
 	public int getYAsInteger()
 	{
 		return (int) y_;
+	}
+	
+	/** Returns the component of the vector as integer.
+	 *
+	 *  @return y-component as float
+	 */
+	public int getZAsInteger()
+	{
+		return (int) z_;
 	}
 	
 	/** Returns the x-component of the vector as long.
@@ -315,6 +338,15 @@ public class Vector2Double implements IVector2, Cloneable
 		return (long) y_;
 	}
 	
+	/** Returns the component of the vector as float.
+	 *
+	 *  @return y-component as float
+	 */
+	public long getZAsLong()
+	{
+		return (long) z_;
+	}
+	
 	public float getXAsFloat()
 	{
 		return (float) x_;
@@ -324,6 +356,12 @@ public class Vector2Double implements IVector2, Cloneable
 	{
 		return (float) y_;
 	}
+	
+	public float getZAsFloat()
+	{
+		return (float) z_;
+	}
+
 
 	public double getXAsDouble()
 	{
@@ -333,6 +371,11 @@ public class Vector2Double implements IVector2, Cloneable
 	public double getYAsDouble()
 	{
 		return y_;
+	}
+	
+	public double getZAsDouble()
+	{
+		return z_;
 	}
 
 	public BigDecimal getXAsBigDecimal()
@@ -344,10 +387,15 @@ public class Vector2Double implements IVector2, Cloneable
 	{
 		return new BigDecimal(y_);
 	}
-
-	public IVector2 copy()
+	
+	public BigDecimal getZAsBigDecimal()
 	{
-		return new Vector2Double(x_, y_);
+		return new BigDecimal(z_);
+	}
+
+	public IVector3 copy()
+	{
+		return new Vector3Double(x_, y_, z_);
 	}
 
 	public Object clone() throws CloneNotSupportedException
@@ -357,19 +405,20 @@ public class Vector2Double implements IVector2, Cloneable
 
 	public boolean equals(Object obj)
 	{
-		if (obj instanceof IVector2)
+		if (obj instanceof IVector3)
 		{
-			return equals((IVector2) obj);
+			return equals((IVector3) obj);
 		}
 
 		return false;
 	}
 
-	public boolean equals(IVector2 vector)
+	public boolean equals(IVector3 vector)
 	{
 		// Perform null check, to respect equals(Object) contract
 		return (Double.doubleToLongBits(x_) == Double.doubleToLongBits(vector.getXAsDouble())) &&
-			   (Double.doubleToLongBits(y_) == Double.doubleToLongBits(vector.getYAsDouble()));
+			   (Double.doubleToLongBits(y_) == Double.doubleToLongBits(vector.getYAsDouble())) &&
+			   (Double.doubleToLongBits(z_) == Double.doubleToLongBits(vector.getZAsDouble()));
 	}
 	
 	/** 
@@ -378,14 +427,7 @@ public class Vector2Double implements IVector2, Cloneable
 	 */
 	public int hashCode()
 	{
-		return (int)x_*31 + (int)y_;
-	}
-	
-	
-	public Vector3Double getVector3DoubleValueNoHight()
-	{
-		return new Vector3Double(x_, 0,  y_);
-		
+		return (int)x_*31 + (int)y_*15 + (int)z_;
 	}
 	
 	public String toString()
@@ -400,7 +442,7 @@ public class Vector2Double implements IVector2, Cloneable
 		{
 			buffer.append(Double.toString(x_));
 		}
-		buffer.append(", ");
+		buffer.append(",");
 		if ((y_ < 10000) || (y_ > 0.001))
 		{
 			buffer.append(format.format(y_));
@@ -409,50 +451,33 @@ public class Vector2Double implements IVector2, Cloneable
 		{
 			buffer.append(Double.toString(y_));
 		}
+		buffer.append(",");
+		if ((z_ < 10000) || (z_ > 0.001))
+		{
+			buffer.append(format.format(z_));
+		}
+		else
+		{
+			buffer.append(Double.toString(z_));
+		}
 		return buffer.toString();
 	}
 
 	/**
-	 *  Get a vector for two doubles.
-	 *  @param a The first value.
-	 *  @param b The second value.
+	 *  Get a vector for three doubles.
+	 *  @param x The first value.
+	 *  @param y The second value.
+	*  @param z The second value
 	 *  @return The vector (null if at least one of args is null).
 	 */
-	public static IVector2 getVector2(Double a, Double b)
+	public static IVector3 getVector3(Double x, Double y, Double z)
 	{
-		IVector2 ret = null;
-		if(a!=null && b!=null)
-			ret = a.doubleValue()==0 && b.doubleValue()==0? ZERO: new Vector2Double(a.doubleValue(), b.doubleValue());
-		else if (a!=null || b !=null)
-			ret = new Vector2Double(a == null? 0.0:a.doubleValue(), b == null? 0.0:b.doubleValue());
+		IVector3 ret = null;
+		if(x!=null && y!=null && z!=null)
+			ret = x.doubleValue()==0 && y.doubleValue()==0 && z.doubleValue()==0? ZERO: new Vector3Double(x.doubleValue(), y.doubleValue(), z.doubleValue());
+		else if (x!=null || y !=null|| z !=null)
+			ret = new Vector3Double(x == null? 0.0:x.doubleValue(), y == null? 0.0:y.doubleValue(),z == null? 0.0:z.doubleValue());
 		return ret;
-	}
-
-
-
-	public double getInnerProductAsDouble(IVector2 vector) {
-		
-		double bx = vector.getXAsDouble();
-		double by = vector.getYAsDouble();
-		
-		return (x_*bx)+(y_*by);
-	}
-
-	public IVector1 getDirection(IVector2 vector) {
-		
-		return null;
-	}
-
-	public double getDirectionAsDouble(IVector2 vector) {
-		double qa = Math.sqrt(x_*x_ + y_*y_);
-		double qb = Math.sqrt(vector.getXAsDouble()*vector.getXAsDouble() + vector.getYAsDouble()*vector.getYAsDouble());
-		
-		return Math.cos(getInnerProductAsDouble(vector)/(qa*qb));
-	}
-
-	public float getDirectionAsFloat(IVector2 vector) {
-		// TODO Auto-generated method stub
-		return 0;
 	}
 }
 

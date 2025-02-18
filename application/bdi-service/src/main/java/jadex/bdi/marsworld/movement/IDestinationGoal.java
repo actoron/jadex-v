@@ -1,6 +1,6 @@
 package jadex.bdi.marsworld.movement;
 
-import jadex.bdi.marsworld.math.IVector2;
+import jadex.math.IVector2;
 
 public interface IDestinationGoal
 {

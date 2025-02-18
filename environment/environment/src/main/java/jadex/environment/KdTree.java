@@ -1,12 +1,12 @@
-package jadex.bdi.marsworld.environment;
+package jadex.environment;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import jadex.bdi.marsworld.math.IVector2;
 import jadex.common.IFilter;
+import jadex.math.IVector2;
 
 /**
  * Implementation of a 2D variant of a k-dimensional-tree for spatial separation and searches.

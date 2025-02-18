@@ -6,15 +6,19 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.bdi.marsworld.environment.Carry.Status;
-import jadex.bdi.marsworld.environment.EnvironmentTask.TaskData;
-import jadex.bdi.marsworld.math.IVector2;
-import jadex.bdi.marsworld.math.Vector2Double;
+import jadex.environment.BaseObject;
+import jadex.environment.Environment;
+import jadex.environment.EnvironmentTask;
+import jadex.environment.SpaceObject;
+import jadex.environment.EnvironmentTask.TaskData;
 import jadex.execution.AgentMethod;
 import jadex.execution.NoCopy;
 import jadex.execution.impl.TimerContext;
 import jadex.execution.impl.TimerCreator;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 
 public class MarsworldEnvironment extends Environment 
 {

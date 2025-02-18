@@ -18,14 +18,14 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import jadex.bdi.marsworld.environment.Carry;
-import jadex.bdi.marsworld.environment.Environment;
 import jadex.bdi.marsworld.environment.Homebase;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.Producer;
 import jadex.bdi.marsworld.environment.Sentry;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.environment.Target.Status;
-import jadex.bdi.marsworld.math.IVector2;
+import jadex.environment.Environment;
+import jadex.math.IVector2;
 
 
 public class EnvGui extends ApplicationAdapter 

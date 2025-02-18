@@ -1,4 +1,4 @@
-package jadex.bdi.marsworld.environment;
+package jadex.environment;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -12,10 +12,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jadex.bdi.marsworld.math.IVector2;
-import jadex.bdi.marsworld.math.Vector2Double;
 import jadex.common.SReflect;
-import jadex.common.SUtil;
+import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 
 public class SpaceObject 
 {
