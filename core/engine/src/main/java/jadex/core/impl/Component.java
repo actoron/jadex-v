@@ -29,10 +29,6 @@ import jadex.future.IFuture;
  */
 public class Component implements IComponent
 {
-	/** The providers for this component type, stored by the feature type they provide.
-	 *  Is also used at runtime to instantiate lazy features.*/
-	protected Map<Class<Object>, ComponentFeatureProvider<Object>> providers;
-	
 	/** The feature instances of this component, stored by the feature type. */
 	protected Map<Class<Object>, Object> features;
 	
@@ -94,19 +90,22 @@ public class Component implements IComponent
 		//System.out.println(this.id.getLocalName());
 		ComponentManager.get().addComponent(this);
 		
-		providers	= SComponentFeatureProvider.getProvidersForComponent(getClass());
-		
 		// Instantiate all features (except lazy ones).
 		// Use getProviderListForComponent as it uses a cached array list
-		SComponentFeatureProvider.getProviderListForComponent(getClass()).forEach(provider ->
+		List<ComponentFeatureProvider<Object>>	providers
+			= SComponentFeatureProvider.getProviderListForComponent(getClass());
+		if(!providers.isEmpty())
 		{
-			if(!provider.isLazyFeature())
+			features = new LinkedHashMap<>(providers.size(), 1);
+			for(ComponentFeatureProvider<Object> provider: providers)
 			{
-				Object	feature	= provider.createFeatureInstance(this);
-				putFeature(provider.getFeatureType(), feature);
-				//features.put(provider.getFeatureType(), feature);
+				if(!provider.isLazyFeature())
+				{
+					Object	feature	= provider.createFeatureInstance(this);
+					features.put(provider.getFeatureType(), feature);
+				}
 			}
-		});
+		}
 	}
 	
 	/**
@@ -180,28 +179,34 @@ public class Component implements IComponent
 			T	ret	= (T)features.get(type);
 			return ret;
 		}
-		else if(providers.containsKey(type))
-		{
-			try
-			{
-				ComponentFeatureProvider<?>	provider	= providers.get(type);
-				assert provider.isLazyFeature();
-				@SuppressWarnings("unchecked")
-				T ret = (T)provider.createFeatureInstance(this);
-				//@SuppressWarnings("unchecked")
-				//Class<Object> otype	= (Class<Object>)type;
-				putFeature(type, ret);
-				//features.put(otype, ret);
-				return ret;
-			}
-			catch(Throwable t)
-			{
-				throw SUtil.throwUnchecked(t);
-			}
-		}
 		else
 		{
-			throw new RuntimeException("No such feature: "+type);
+			Map<Class<Object>, ComponentFeatureProvider<Object>>	providers
+				= SComponentFeatureProvider.getProvidersForComponent(getClass());
+			if(providers.containsKey(type))
+			{
+				try
+				{
+					ComponentFeatureProvider<?>	provider	= providers.get(type);
+					assert provider.isLazyFeature();
+					@SuppressWarnings("unchecked")
+					T ret = (T)provider.createFeatureInstance(this);
+					@SuppressWarnings("rawtypes")
+					Class rtype	= type;
+					@SuppressWarnings("unchecked")
+					Class<Object> otype	= (Class<Object>)rtype;
+					features.put(otype, ret);
+					return ret;
+				}
+				catch(Throwable t)
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+			}
+			else
+			{
+				throw new RuntimeException("No such feature: "+type);
+			}
 		}
 	}
 	
@@ -256,14 +261,6 @@ public class Component implements IComponent
 		if (logger == null)
 			logger = System.getLogger(pojo != null ? pojo.getClass().getName() : getId().getLocalName());
 		return logger;
-	}
-	
-	protected void putFeature(Class<?> type, Object feature)
-	{
-//		System.out.println("putFeature: "+type+" "+feature);
-		if(features==null)
-			features = new LinkedHashMap<>(providers.size(), 1);
-		features.put((Class)type, feature);
 	}
 	
 	public ValueProvider getValueProvider()
