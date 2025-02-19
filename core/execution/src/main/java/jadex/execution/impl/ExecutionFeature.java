@@ -825,13 +825,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		
 		// Drop queued steps.
-		ComponentTerminatedException ex = new ComponentTerminatedException(getComponent().getId());
+		ComponentTerminatedException ex = null;
 		synchronized(ExecutionFeature.this) 
 		{
 			for(Object step: steps)
 			{
 				if(step instanceof StepInfo)
 				{
+					if(ex==null)
+						ex	= new ComponentTerminatedException(getComponent().getId());
 					((StepInfo)step).getFuture().setExceptionIfUndone(ex);
 				}
 			}
@@ -857,6 +859,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		for(TimerTaskInfo tti: todo)
 		{
+			if(ex==null)
+				ex	= new ComponentTerminatedException(getComponent().getId());
 			tti.getFuture().setExceptionIfUndone(ex);
 		}
 		
