@@ -1,7 +1,6 @@
 package jadex.bpmn.helloworld;
 
 import jadex.bpmn.runtime.RBpmnProcess;
-import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 
 /**

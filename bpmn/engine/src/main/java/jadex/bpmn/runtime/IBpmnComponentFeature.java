@@ -1,10 +1,10 @@
 package jadex.bpmn.runtime;
 
-import jadex.bpmn.runtime.impl.IInternalBpmnComponentFeature;
+import jadex.core.IComponentFeature;
 
 /**
- * 
+ *  Marker interface without user accessible methods.
  */
-public interface IBpmnComponentFeature extends IInternalBpmnComponentFeature
+public interface IBpmnComponentFeature extends IComponentFeature
 {
 }
