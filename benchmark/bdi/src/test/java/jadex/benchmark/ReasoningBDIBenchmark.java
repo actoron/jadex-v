@@ -30,4 +30,15 @@ public class ReasoningBDIBenchmark
 			agent.terminate().get();
 		});
 	}
+
+	public static void main(String[] args)
+	{
+		for(;;)
+		{
+			ReasoningBDIBenchmarkAgent	pojo	= new ReasoningBDIBenchmarkAgent();
+			IComponentHandle	agent	= IBDIAgent.create(pojo);
+			pojo.completed.get();
+			agent.terminate().get();
+		}
+	}
 }

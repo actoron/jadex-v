@@ -6,6 +6,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.future.DelegationResultListener;
@@ -1893,7 +1895,10 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	{
 		return getInjectionValues(ptypes, anns, melement, event, rplan, rpe, null);
 	}
-		
+	
+	// Unfinished implementation
+	static boolean	newinjectionvalues	= false;
+	
 	// todo: support parameter names via annotation in guesser (guesser with meta information)
 	/**
 	 *  Get parameter values for injection into method and constructor calls.
@@ -1901,6 +1906,39 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	 */
 	public static Object[] getInjectionValues(Class<?>[] ptypes, Annotation[][] anns, MElement melement, ChangeEvent event, RPlan rplan, RProcessableElement rpe, Collection<Object> vs)
 	{
+		if(newinjectionvalues)
+		{
+			Object[]	ret	= new Object[ptypes.length];
+			
+			for(int i=0; i<ret.length; i++)
+			{
+				// Minimal implementation for puzzle and reasoning benchmark for now
+				if(IComponent.class.equals(ptypes[i]))
+				{
+					ret[i]	= IComponentManager.get().getCurrentComponent();
+				}
+				else if(rplan!=null && SReflect.isSupertype(ptypes[i], rplan.getClass()))
+				{
+					ret[i]	= rplan;
+				}
+				else if(rplan!=null && rplan.getReason()!=null && SReflect.isSupertype(ptypes[i], rplan.getReason().getClass()))
+				{
+					ret[i]	= rplan.getReason();
+				}
+				else if(rplan!=null && rplan.getReason() instanceof RProcessableElement
+					&& ((RProcessableElement)rplan.getReason()).getPojo()!=null && SReflect.isSupertype(ptypes[i], ((RProcessableElement)rplan.getReason()).getPojo().getClass()))
+				{
+					ret[i]	= ((RProcessableElement)rplan.getReason()).getPojo();
+				}
+				else
+				{
+					throw new UnsupportedOperationException(Arrays.asList(ptypes).toString());
+				}
+			}
+			
+			return ret;
+		}
+		
 		Collection<Object> vals = new LinkedHashSet<Object>();
 		if(vs!=null)
 			vals.addAll(vs);
