@@ -9,6 +9,7 @@ public class PlainComponentBenchmark
 	@Test
 	void	benchmarkMemory()
 	{
+//		IComponentManager.get().setComponentIdNumberMode(true);
 		BenchmarkHelper.benchmarkMemory(() ->
 		{
 			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
@@ -19,6 +20,7 @@ public class PlainComponentBenchmark
 	@Test
 	void	benchmarkTime()
 	{
+//		IComponentManager.get().setComponentIdNumberMode(true);
 		BenchmarkHelper.benchmarkTime(() ->
 		{
 			Component.createComponent(Component.class, () -> new Component(this)).terminate().get();
