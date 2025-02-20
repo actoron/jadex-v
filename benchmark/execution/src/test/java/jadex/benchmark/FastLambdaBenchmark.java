@@ -34,4 +34,12 @@ public class FastLambdaBenchmark
 			LambdaAgent.run(comp ->{return comp.getId();}).get();
 		});
 	}
+
+	public static void main(String[] args)
+	{
+		for(;;)
+		{
+			LambdaAgent.run(comp ->{return comp.getId();}).get();
+		}
+	}
 }
