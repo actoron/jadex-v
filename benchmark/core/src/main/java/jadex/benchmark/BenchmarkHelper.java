@@ -68,6 +68,7 @@ public class BenchmarkHelper
 	public static void	benchmarkMemory(Callable<Runnable> startup, double limit)
 	{
 		int	msecs	= 500;
+		int	sleep	= 500;
 		int retries	= 10;
 		List<Long>	vals	= new ArrayList<>();
 		try
@@ -77,6 +78,8 @@ public class BenchmarkHelper
 				List<Runnable>	teardowns	= new ArrayList<>();
 				
 				System.gc();
+				Thread.sleep(sleep);
+				System.gc();
 				long	start	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at start: "+start);
 				
@@ -85,6 +88,8 @@ public class BenchmarkHelper
 				for(cnt=0; mstart+msecs>System.currentTimeMillis(); cnt++)
 					teardowns.add(startup.call());
 				
+				System.gc();
+				Thread.sleep(sleep);
 				System.gc();
 				long	end	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at end: "+end);
