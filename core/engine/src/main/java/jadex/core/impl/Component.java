@@ -1,5 +1,6 @@
 package jadex.core.impl;
 
+import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,7 +19,7 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -28,32 +29,41 @@ import jadex.future.IFuture;
  */
 public class Component implements IComponent
 {
-	/** The providers for this component type, stored by the feature type they provide.
-	 *  Is also used at runtime to instantiate lazy features.*/
-	protected Map<Class<Object>, ComponentFeatureProvider<Object>> providers;
-	
 	/** The feature instances of this component, stored by the feature type. */
 	protected Map<Class<Object>, Object> features;
+	
+	/** The pojo, if any.*/
+	protected Object pojo;
 	
 	/** The id. */
 	protected ComponentIdentifier id;
 	
-	/** The app id. */
+	/** The app id, if any. */
 	protected Application app;
 	
 	/** The external access. */
-	protected IExternalAccess access;
+	protected IComponentHandle access;
+
+	/** Cache for the component logger. */
+	protected Logger logger;
+	
+	/** The value provider. */
+	protected ValueProvider valueprovider;
 	
 	/** The external access supplier. */
-	protected static Function<Component, IExternalAccess> accessfactory;
+	protected static Function<Component, IComponentHandle> accessfactory;
+		
+	/** The is the external access executable, i.e. is scheduleStep allowed?. */
+	protected static boolean executable;
 		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
-	 *  Uses an auto-generated componment identifier.
+	 *  Uses an auto-generated component identifier.
+	 *  @param pojo	The pojo, if any.
 	 */
-	public Component()
+	public Component(Object pojo)
 	{
-		this(null, null);
+		this(pojo, null, null);
 	}
 	
 	/**
@@ -61,9 +71,9 @@ public class Component implements IComponent
 	 *  @param id	The id to use or null for an auto-generated id.
 	 *  @throws IllegalArgumentException when the id already exists. 
 	 */
-	public Component(ComponentIdentifier id)
+	public Component(Object pojo, ComponentIdentifier id)
 	{
-		this(id, null);
+		this(pojo, id, null);
 	}
 	
 	/**
@@ -71,27 +81,31 @@ public class Component implements IComponent
 	 *  @param id	The id to use or null for an auto-generated id.
 	 *  @throws IllegalArgumentException when the id already exists. 
 	 */
-	public Component(ComponentIdentifier id, Application app)
+	public Component(Object pojo, ComponentIdentifier id, Application app)
 	{
+		this.pojo	= pojo;
 		this.id = id==null? new ComponentIdentifier(): id;
 		this.app = app;
 		
 		//System.out.println(this.id.getLocalName());
 		ComponentManager.get().addComponent(this);
 		
-		providers	= SComponentFeatureProvider.getProvidersForComponent(getClass());
-		
 		// Instantiate all features (except lazy ones).
 		// Use getProviderListForComponent as it uses a cached array list
-		SComponentFeatureProvider.getProviderListForComponent(getClass()).forEach(provider ->
+		List<ComponentFeatureProvider<Object>>	providers
+			= SComponentFeatureProvider.getProviderListForComponent(getClass());
+		if(!providers.isEmpty())
 		{
-			if(!provider.isLazyFeature())
+			features = new LinkedHashMap<>(providers.size(), 1);
+			for(ComponentFeatureProvider<Object> provider: providers)
 			{
-				Object	feature	= provider.createFeatureInstance(this);
-				putFeature(provider.getFeatureType(), feature);
-				//features.put(provider.getFeatureType(), feature);
+				if(!provider.isLazyFeature())
+				{
+					Object	feature	= provider.createFeatureInstance(this);
+					features.put(provider.getFeatureType(), feature);
+				}
 			}
-		});
+		}
 	}
 	
 	/**
@@ -103,6 +117,14 @@ public class Component implements IComponent
 		return id;
 	}
 	
+	/**
+	 *  Get the application.
+	 */
+	public Application getApplication()
+	{
+		return app;
+	}
+
 	/**
 	 *  Get the app id.
 	 *  return The app id.
@@ -157,28 +179,34 @@ public class Component implements IComponent
 			T	ret	= (T)features.get(type);
 			return ret;
 		}
-		else if(providers.containsKey(type))
-		{
-			try
-			{
-				ComponentFeatureProvider<?>	provider	= providers.get(type);
-				assert provider.isLazyFeature();
-				@SuppressWarnings("unchecked")
-				T ret = (T)provider.createFeatureInstance(this);
-				//@SuppressWarnings("unchecked")
-				//Class<Object> otype	= (Class<Object>)type;
-				putFeature(type, ret);
-				//features.put(otype, ret);
-				return ret;
-			}
-			catch(Throwable t)
-			{
-				throw SUtil.throwUnchecked(t);
-			}
-		}
 		else
 		{
-			throw new RuntimeException("No such feature: "+type);
+			Map<Class<Object>, ComponentFeatureProvider<Object>>	providers
+				= SComponentFeatureProvider.getProvidersForComponent(getClass());
+			if(providers.containsKey(type))
+			{
+				try
+				{
+					ComponentFeatureProvider<?>	provider	= providers.get(type);
+					assert provider.isLazyFeature();
+					@SuppressWarnings("unchecked")
+					T ret = (T)provider.createFeatureInstance(this);
+					@SuppressWarnings("rawtypes")
+					Class rtype	= type;
+					@SuppressWarnings("unchecked")
+					Class<Object> otype	= (Class<Object>)rtype;
+					features.put(otype, ret);
+					return ret;
+				}
+				catch(Throwable t)
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+			}
+			else
+			{
+				throw new RuntimeException("No such feature: "+type);
+			}
 		}
 	}
 	
@@ -220,15 +248,26 @@ public class Component implements IComponent
 	 */
 	public Object getPojo()
 	{
-		return null;
+		return pojo;
+	}
+
+	/**
+	 *  Returns the appropriate logging access for the component.
+	 *
+	 *  @return The component logger.
+	 */
+	public Logger getLogger()
+	{
+		if (logger == null)
+			logger = System.getLogger(pojo != null ? pojo.getClass().getName() : getId().getLocalName());
+		return logger;
 	}
 	
-	protected void putFeature(Class<?> type, Object feature)
+	public ValueProvider getValueProvider()
 	{
-//		System.out.println("putFeature: "+type+" "+feature);
-		if(features==null)
-			features = new LinkedHashMap<>(providers.size(), 1);
-		features.put((Class)type, feature);
+		if(valueprovider==null)
+			valueprovider = new ValueProvider(this);
+		return valueprovider;
 	}
 	
 	/*public Map<String, Object> getResults(Object pojo)
@@ -376,7 +415,7 @@ public class Component implements IComponent
 	 *  Get the external access.
 	 *  @return The external access.
 	 */
-	public IExternalAccess getExternalAccess()
+	public IComponentHandle getComponentHandle()
 	{
 		if(access==null)
 		{
@@ -386,7 +425,7 @@ public class Component implements IComponent
 			}
 			else
 			{
-				access = new IExternalAccess() 
+				access = new IComponentHandle() 
 				{
 					@Override
 					public ComponentIdentifier getId() 
@@ -398,6 +437,12 @@ public class Component implements IComponent
 					public String getAppId() 
 					{
 						return Component.this.getAppId();
+					}
+					
+					@Override
+					public <T> T getPojoHandle(Class<T> type)
+					{
+						throw new UnsupportedOperationException();
 					}
 				};
 			}
@@ -420,23 +465,33 @@ public class Component implements IComponent
 	}
 	
 	/**
-	 *  Get the external access.
+	 *  Get the component handle.
 	 *  @param cid The component id.
-	 *  @return The external access.
+	 *  @return The handle.
 	 */
-	public IExternalAccess getExternalAccess(ComponentIdentifier cid)
+	public IComponentHandle getComponentHandle(ComponentIdentifier cid)
 	{
 		//return IComponent.getExternalComponentAccess(cid);
-		return ComponentManager.get().getComponent(cid).getExternalAccess();
+		return ComponentManager.get().getComponent(cid).getComponentHandle();
 	}
 	
 	/**
 	 *  Set the external access factory.
 	 *  @param factory The factory.
+	 *  @param executable	Is scheduleStep() allowed on external access?
 	 */
-	public static void setExternalAccessFactory(Function<Component, IExternalAccess> factory)
+	public static void setExternalAccessFactory(Function<Component, IComponentHandle> factory, boolean executable)
 	{
 		accessfactory = factory;
+		Component.executable	= executable;
+	}
+	
+	/**
+	 *  Is scheduleStep() allowed on external access?
+	 */
+	public static boolean	isExecutable()
+	{
+		return executable;
 	}
 	
 	// TODO move to model feature?
@@ -458,5 +513,11 @@ public class Component implements IComponent
 			}
 		}
 		return creator.get();
+	}
+
+	@Override
+	public String toString() 
+	{
+		return "Component [id=" + id + "]";
 	}
 }

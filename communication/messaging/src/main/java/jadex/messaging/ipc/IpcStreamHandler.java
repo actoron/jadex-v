@@ -22,7 +22,7 @@ import jadex.common.IAutoLock;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.IIpcFeature;
@@ -86,7 +86,7 @@ public class IpcStreamHandler implements IIpcFeature
 	/** Handler dealing with received messages. */
 	private Consumer<ReceivedMessage> rcbmsghandler = (rmsg) ->
 	{
-		IExternalAccess exta = ComponentManager.get().getComponent(rmsg.receiver()).getExternalAccess();
+		IComponentHandle exta = ComponentManager.get().getComponent(rmsg.receiver()).getComponentHandle();
 		exta.scheduleStep((comp) -> 
 		{
 			((MessageFeature) comp.getFeature(IMessageFeature.class)).externalMessageArrived(rmsg.origin(), rmsg.message);

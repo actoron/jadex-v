@@ -32,7 +32,7 @@ public class ChatAgent implements IChatService
 	{
 		System.out.println("agent started: "+agent.getId());
 		
-		this.gui = new ChatGui(agent.getExternalAccess());
+		this.gui = new ChatGui(agent.getComponentHandle());
 	}
 	
 	@OnEnd

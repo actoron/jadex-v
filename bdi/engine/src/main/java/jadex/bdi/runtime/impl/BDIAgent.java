@@ -6,7 +6,7 @@ import jadex.bdi.runtime.BDICreationInfo;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.micro.MicroAgent;
 import jadex.model.modelinfo.IModelInfo;
@@ -15,12 +15,12 @@ public class BDIAgent extends MicroAgent
 {
 	public static BDIModelLoader loader = new BDIModelLoader();
 	
-	public static IExternalAccess create(Object pojo)
+	public static IComponentHandle create(Object pojo)
 	{
 		return create(pojo, null, null);
 	}
 	
-	public static IExternalAccess create(Object pojo, ComponentIdentifier cid, Application app)
+	public static IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		String	classname;
 		BDIAgent agent = null;
@@ -48,7 +48,7 @@ public class BDIAgent extends MicroAgent
 				() -> new BDIAgent(pojo, loadModel(pojo.getClass().getName(), pojo), cid, app));
 		}
 		
-		return agent.getExternalAccess();
+		return agent.getComponentHandle();
 	}
 	
 	/** Optional creation info, i.e. arguments. */

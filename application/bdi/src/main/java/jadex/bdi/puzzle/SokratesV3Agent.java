@@ -113,7 +113,7 @@ public class SokratesV3Agent
 		{
 			public void run()
 			{
-				new BoardGui(agent.getExternalAccess(), board);
+				new BoardGui(agent.getComponentHandle(), board);
 			}
 		});
 	}

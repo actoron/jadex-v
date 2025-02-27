@@ -29,7 +29,7 @@ public class ComponentIdentifier
 	public ComponentIdentifier()
 	{
 		this.localname = ComponentManager.get().isComponentIdNumberMode()? ""+ID_COUNTER.getAndIncrement(): gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
-		gpid = new GlobalProcessIdentifier();
+		gpid = GlobalProcessIdentifier.SELF;
 	}
 	
 	/**
@@ -40,7 +40,7 @@ public class ComponentIdentifier
 	public ComponentIdentifier(String localname)
 	{
 		this.localname = localname;
-		gpid = new GlobalProcessIdentifier();
+		gpid = GlobalProcessIdentifier.SELF;
 	}
 	
 	/**

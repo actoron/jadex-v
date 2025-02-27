@@ -23,7 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.providedservice.IProvidedServiceFeature;
 
 public abstract class AbstractTableGui

@@ -55,7 +55,7 @@ public class Application implements IComponentFactory
 	 *  @param cid The component id.
 	 *  @return The external access of the running component.
 	 */
-	public IFuture<IExternalAccess> create(Object pojo, ComponentIdentifier cid)
+	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
 	{		
 		return create(pojo, null, this);
 	}

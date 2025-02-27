@@ -47,6 +47,11 @@ public class TerminableDelegationFuture<E> extends Future<E> implements ITermina
 		handler.setTerminationSource(src);
 	}
 	
+	public ITerminableFuture<E> getTerminationSource()
+	{
+		return handler.getTerminationSource();
+	}
+	
 	/**
 	 *  Terminate the future.
 	 *  The exception will be set to FutureTerminatedException.

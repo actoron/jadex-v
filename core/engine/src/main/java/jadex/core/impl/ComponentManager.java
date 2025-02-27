@@ -2,6 +2,9 @@ package jadex.core.impl;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -286,6 +289,101 @@ public class ComponentManager implements IComponentManager
 		SUtil.DEBUG = debug;
 	}*/
 	
+	// Hack. remember first component for fetching informative name.
+	IComponent	first	= null;
+	
+	/**
+	 *  Get the component/pojo toString()/classname of the first started component.
+	 *  @return null if no component has been started yet. 
+	 */
+	public String	getInferredApplicationName()
+	{
+		String	ret	= null;
+		IComponent	comp	= getCurrentComponent();
+		comp	= comp!=null ? comp : first;
+		
+		// Has application
+		if(comp!=null && comp.getApplication()!=null)
+		{
+			ret	= comp.getApplication().getName();
+		}
+		
+		// Has pojo
+		else if(comp!=null && comp.getPojo()!=null)
+		{
+			try
+			{
+				// Check for overridden toString() (raises exception if not found)
+				comp.getPojo().getClass().getDeclaredMethod("toString");
+				ret	= comp.getPojo().toString();
+			}
+			catch(Exception e)
+			{
+				// If no toString() use class name
+				ret	= comp.getPojo().getClass().getName();
+				// Strip lambda  address(!?)
+				if(ret!=null && ret.indexOf('/')!=-1)
+				{
+					ret	= ret.substring(0, ret.indexOf('/'));
+				}
+			}			
+		}
+		
+		// Has component w/o pojo
+		else if (comp!=null)
+		{
+			// TODO: can we derive a more useful app name?
+			ret	= comp.getClass().getName();
+		}
+		
+		return ret;
+	}
+	
+	static boolean	HANDLES_INITED	= false;
+	static ThreadLocal<Object>	LOCAL;
+	static MethodHandle	GET_COMPONENT;
+	
+	/**
+	 * Get the current component.
+	 * @return	null, if not running inside a component.
+	 */
+	public IComponent getCurrentComponent()
+	{
+		IComponent ret	= null;
+		
+		// Hack!!! use reflection to find current component via execution feature, if any
+		if(!HANDLES_INITED)
+		{
+			try
+			{
+				Class<?>	cexe	= Class.forName("jadex.execution.impl.ExecutionFeature");
+				Field	flocal	= cexe.getField("LOCAL");
+				MethodHandle	getlocal	= MethodHandles.lookup().unreflectGetter(flocal);
+				LOCAL	= (ThreadLocal<Object>)getlocal.invoke();
+				GET_COMPONENT	= MethodHandles.lookup().unreflect(cexe.getMethod("getComponent"));
+				HANDLES_INITED	= true;
+			}
+			catch(Throwable e)
+			{
+				// If no exe feature in classpath -> fail and never try again.
+			}
+		}
+		
+		if(LOCAL!=null)
+		{
+			try
+			{
+				Object	exefeature	= LOCAL.get();
+				ret	= exefeature!=null ? (IComponent)GET_COMPONENT.invoke(exefeature) : null;
+			}
+			catch(Throwable e)
+			{
+			}
+		}
+
+		return ret;
+	}
+	
 	/**
 	 *  Add a component.
 	 *  @param comp The component.
@@ -303,6 +401,13 @@ public class ComponentManager implements IComponentManager
 				ComponentManager.get().printComponents();
 				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
 			}
+			
+			// Hack. remember first component for fetching informative name.
+			if(first==null)
+			{
+				first	= comp;
+			}
+			
 			components.put(comp.getId(), comp);
 			if(comp.getAppId()!=null)
 				incrementComponentCount(comp.getAppId());
@@ -346,13 +451,24 @@ public class ComponentManager implements IComponentManager
 	}
 
 	// Caching for small speedup (detected in PlainComponentBenchmark)
-	Logger	logger	= null;
-	Logger getLogger()
+	private Logger logger	= null;
+	private Logger getLogger()
 	{
 		if(logger==null)
 			logger	= System.getLogger(IComponent.class.getName());
 		return logger;
 //		System.out.println("CM get logger "+logger);
+	}
+
+	/**
+	 *  Convenience method that returns access to the logging subsystem used by Jadex.
+	 *
+	 *  @param requestingClass The class on whose behalf logging access is requested.
+	 *  @return A logger.
+	 */
+	public Logger getLogger(Class<?> requestingClass)
+	{
+		return System.getLogger(requestingClass.getName());
 	}
 	
 	/**

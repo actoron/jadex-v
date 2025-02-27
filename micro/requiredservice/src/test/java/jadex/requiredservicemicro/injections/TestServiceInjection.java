@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
@@ -68,7 +68,7 @@ public class TestServiceInjection
 	@Test
 	public void testInjections()
 	{
-		IExternalAccess exta = IComponentManager.get().create(new InjectionAgent()).get();
+		IComponentHandle exta = IComponentManager.get().create(new InjectionAgent()).get();
 	
 		int cnt = exta.scheduleStep(agent ->
 		{

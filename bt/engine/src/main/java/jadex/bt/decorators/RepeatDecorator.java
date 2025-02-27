@@ -3,13 +3,13 @@ package jadex.bt.decorators;
 import java.lang.System.Logger.Level;
 
 import jadex.bt.impl.Event;
-import jadex.bt.impl.ITimerCreator;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.common.ITriFunction;
 import jadex.common.Tuple2;
+import jadex.execution.ITimerCreator;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -78,7 +78,7 @@ public class RepeatDecorator<T> extends ConditionalDecorator<T>
         Future<NodeState> ret = new Future<>();
 
         NodeContext<T> context = node.getNodeContext(execontext);
-        ITimerCreator<T> tc = execontext.getTimerCreator();
+        ITimerCreator tc = execontext.getTimerCreator();
         
         Runnable repeat = new Runnable()
         {

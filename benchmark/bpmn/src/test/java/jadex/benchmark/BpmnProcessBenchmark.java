@@ -1,14 +1,12 @@
 package jadex.benchmark;
 
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 
 /**
@@ -19,7 +17,7 @@ public class BpmnProcessBenchmark
 	@Test
 	void	benchmarkMemory()
 	{
-		double pct	= BenchmarkHelper.benchmarkMemory(() -> 
+		BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			Future<ComponentIdentifier>	ret	= new Future<>();
 			RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
@@ -29,17 +27,16 @@ public class BpmnProcessBenchmark
 				ret.setResultIfUndone((ComponentIdentifier)res.value());
 			}).catchEx(ret);
 			
-			IExternalAccess	agent	= BpmnProcess.create(pojo);
+			IComponentHandle	agent	= BpmnProcess.create(pojo);
 			ret.get();
 			return () -> agent.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
 	
 	@Test
 	void	benchmarkTime()
 	{
-		double pct	= BenchmarkHelper.benchmarkTime(() -> 
+		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<ComponentIdentifier>	ret	= new Future<>();
 			RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
@@ -49,11 +46,10 @@ public class BpmnProcessBenchmark
 				ret.setResultIfUndone((ComponentIdentifier)res.value());
 			}).catchEx(ret);
 			
-			IExternalAccess	agent	= BpmnProcess.create(pojo);
+			IComponentHandle	agent	= BpmnProcess.create(pojo);
 			ret.get();
 			agent.terminate().get();
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
 }
 

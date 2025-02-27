@@ -29,7 +29,7 @@ public class GatewayORActivityHandler	extends AbstractGatewayActivityHandler	 im
 		List<MSequenceEdge>	outgoing	= activity.getOutgoingSequenceEdges();
 		
 		List<ProcessThread> threads = new ArrayList<ProcessThread>();
-		IValueFetcher fetcher = new ProcessThreadValueFetcher(thread, false, instance.getFeature(IModelFeature.class).getFetcher());
+		IValueFetcher fetcher = new ProcessThreadValueFetcher(thread, false, instance.getValueProvider().getFetcher());
 		for(int i=0; i<outgoing.size(); i++)
 		{
 			MSequenceEdge edge = (MSequenceEdge)outgoing.get(i);

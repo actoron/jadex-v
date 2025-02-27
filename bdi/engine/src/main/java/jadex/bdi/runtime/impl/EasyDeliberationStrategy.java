@@ -102,8 +102,8 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	public IFuture<Void> goalIsActive(RGoal goal)
 	{
-//		if(goal.getId().indexOf("analyse")!=-1)
-//			System.out.println("addinh: "+goal);
+		//if(goal.getId().toLowerCase().indexOf("analyze")!=-1)
+		//	System.out.println("addinh: "+goal+" "+goal.getAgent().getId().getLocalName());
 		MDeliberation delib = goal.getMGoal().getDeliberation();
 		if(delib!=null)
 		{
@@ -209,6 +209,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		}
 		else
 		{
+			//System.out.println("inhibit goal: "+goal+" "+goal.getAgent().getId().getLocalName());
 			if(IGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState()))
 				goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
 		}
@@ -246,7 +247,10 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	{
 		// Only reactivate when not dropping/dropped
 		if(!GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()) && !GoalLifecycleState.DROPPING.equals(goal.getLifecycleState()))
+		{
+			//System.out.println("activate goal: "+goal+" "+goal.getAgent().getId().getLocalName());
 			goal.setLifecycleState(RGoal.GoalLifecycleState.ACTIVE);
+		}
 	}
 	
 	/**
@@ -324,7 +328,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 							UnparsedExpression uexp = uexps.get(mother.getName());
 							if(uexp!=null && uexp.getValue()!=null && uexp.getValue().length()>0)
 							{
-								SimpleValueFetcher fet = new SimpleValueFetcher(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher());
+								SimpleValueFetcher fet = new SimpleValueFetcher(IExecutionFeature.get().getComponent().getValueProvider().getFetcher());
 								fet.setValue(goal.getFetcherName(), goal);
 								fet.setValue("$ref", other);
 								

@@ -162,7 +162,7 @@ public abstract class AbstractPlanBody implements IPlanBody
 	/**
 	 *  Invoke a plan part.
 	 */
-	protected Object	internalInvokePart(int part)
+	protected Object internalInvokePart(int part)
 	{		
 		try
 		{
@@ -181,18 +181,21 @@ public abstract class AbstractPlanBody implements IPlanBody
 //				System.out.println("passed of: "+rplan);
 				rplan.setLifecycleState(RPlan.PlanLifecycleState.PASSING);
 				res = invokePassed(guessParameters(getPassedParameterTypes()));
+				invokeFinished(guessParameters(getFinishedParameterTypes()));
 			}
 			else if(part==2)
 			{
 //				System.out.println("failed of: "+rplan);
 				rplan.setLifecycleState(RPlan.PlanLifecycleState.FAILING);
 				res = invokeFailed(guessParameters(getFailedParameterTypes()));
+				invokeFinished(guessParameters(getFinishedParameterTypes()));
 			}
 			else if(part==3)
 			{
 //				System.out.println("aborted of: "+rplan);
 				rplan.setLifecycleState(RPlan.PlanLifecycleState.ABORTING);
 				res = invokeAborted(guessParameters(getAbortedParameterTypes()));
+				invokeFinished(guessParameters(getFinishedParameterTypes()));
 			}
 			
 			if(res instanceof IFuture)
@@ -258,6 +261,11 @@ public abstract class AbstractPlanBody implements IPlanBody
 	public abstract Object invokeAborted(Object[] params);
 	
 	/**
+	 *  Invoke the plan finished method.
+	 */
+	public abstract Object invokeFinished(Object[] params);
+	
+	/**
 	 *  Get the body parameters.
 	 */
 	public abstract Class<?>[] getBodyParameterTypes();
@@ -276,6 +284,11 @@ public abstract class AbstractPlanBody implements IPlanBody
 	 *  Get the aborted parameters.
 	 */
 	public abstract Class<?>[] getAbortedParameterTypes();
+	
+	/**
+	 *  Get the finished parameters.
+	 */
+	public abstract Class<?>[] getFinishedParameterTypes();
 
 	/**
 	 *  Method that tries to guess the parameters for the method call.

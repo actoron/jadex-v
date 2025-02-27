@@ -43,14 +43,21 @@ public class Val<T>
 	 */
 	public T get()
 	{
+		T ret = null;
 		try
 		{
-			return dynamic!=null && !updaterate? dynamic.call(): value;
+			ret = dynamic!=null && !updaterate? dynamic.call(): value;
 		}
 		catch(Exception e)
 		{
+			//e.printStackTrace();
 			throw SUtil.throwUnchecked(e);
 		}
+		
+		//if(ret==null)
+		//System.out.println("val get: "+ret);
+	
+		return ret;
 	}
 
 	/**

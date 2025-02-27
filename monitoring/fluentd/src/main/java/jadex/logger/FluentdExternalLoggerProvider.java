@@ -1,11 +1,12 @@
 package jadex.logger;
 
 import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 
 public class FluentdExternalLoggerProvider implements IExternalLoggerProvider
 {
-	public Logger getLogger(String name, boolean system)
+	public Logger getLogger(String name, Level level, boolean system)
 	{
-		return new FluentdLogger(name, system);
+		return new FluentdLogger(name, level, system);
 	}
 }

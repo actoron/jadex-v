@@ -56,7 +56,7 @@ public class ExecuteProcessThread implements IThrowingConsumer<IComponent> //ICo
 		if(!isValid())
 			return;
 		
-		IBpmnComponentFeature bcf = (IBpmnComponentFeature)thread.getInstance().getFeature(IBpmnComponentFeature.class);
+		IInternalBpmnComponentFeature bcf = (IInternalBpmnComponentFeature)thread.getInstance().getFeature(IBpmnComponentFeature.class);
 
 		// Update parameters based on edge inscriptions and initial values.
 		thread.updateParametersBeforeStep(thread.getInstance());

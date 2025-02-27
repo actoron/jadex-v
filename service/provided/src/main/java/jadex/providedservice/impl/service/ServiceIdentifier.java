@@ -363,7 +363,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 			ret	= new HashSet<String>();
 			for(String role: roles)
 			{
-				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IModelFeature.class).getModel().getAllImports(), provider.getFeature(IModelFeature.class).getFetcher(), provider.getClassLoader()));
+				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IModelFeature.class).getModel().getAllImports(), provider.getValueProvider().getFetcher(), provider.getClassLoader()));
 			}
 		}
 		return ret;

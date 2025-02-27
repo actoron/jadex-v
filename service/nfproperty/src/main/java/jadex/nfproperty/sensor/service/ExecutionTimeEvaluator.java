@@ -1,7 +1,7 @@
 package jadex.nfproperty.sensor.service;
 
 import jadex.common.MethodInfo;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.nfproperty.impl.search.BasicEvaluator;
 
 /**
@@ -13,7 +13,7 @@ public class ExecutionTimeEvaluator extends BasicEvaluator<Long>
 	/**
 	 *  Create a new evaluator.
 	 */
-	public ExecutionTimeEvaluator(IExternalAccess component, MethodInfo mi) throws Exception
+	public ExecutionTimeEvaluator(IComponentHandle component, MethodInfo mi) throws Exception
 	{
 		super(component, ExecutionTimeProperty.NAME, mi);
 	}
@@ -21,7 +21,7 @@ public class ExecutionTimeEvaluator extends BasicEvaluator<Long>
 	/**
 	 *  Create a new evaluator.
 	 */
-	public ExecutionTimeEvaluator(IExternalAccess component, MethodInfo mi, boolean required) throws Exception
+	public ExecutionTimeEvaluator(IComponentHandle component, MethodInfo mi, boolean required) throws Exception
 	{
 		super(component, ExecutionTimeProperty.NAME, mi, null, required);
 	}

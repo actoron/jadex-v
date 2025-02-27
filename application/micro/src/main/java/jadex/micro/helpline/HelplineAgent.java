@@ -8,7 +8,7 @@ import javax.swing.SwingUtilities;
 
 import jadex.collection.MultiCollection;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
@@ -75,7 +75,7 @@ public class HelplineAgent
 		{
 			public void run()
 			{
-				HelplinePanel.createHelplineGui((IExternalAccess)agent.getExternalAccess());
+				HelplinePanel.createHelplineGui((IComponentHandle)agent.getComponentHandle());
 			}
 		});
 		return IFuture.DONE;

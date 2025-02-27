@@ -25,6 +25,18 @@ public interface IComponentManager extends IComponentFactory
 	}
 	
 	/**
+	 *  Get the component/pojo toString() of the first started component.
+	 *  @return null if no component has been started yet. 
+	 */
+	public String	getInferredApplicationName();
+	
+	/**
+	 * Get the current component.
+	 * @return	null, if not running inside a component.
+	 */
+	public IComponent getCurrentComponent();
+
+	/**
 	 *  Get the feature instance for the given type.
 	 *  
 	 *  @param featuretype Requested runtime feature type.
@@ -43,6 +55,14 @@ public interface IComponentManager extends IComponentFactory
 	 *  @return The class loader that components should use.
 	 */
 	public ClassLoader getClassLoader();
+
+	/**
+	 *  Convenience method that returns access to the logging subsystem used by Jadex.
+	 *
+	 *  @param requestingClass The class on whose behalf logging access is requested.
+	 *  @return A logger.
+	 */
+	public System.Logger getLogger(Class<?> requestingClass);
 	
 	/**
 	 *  Are component ids numbers or strings.

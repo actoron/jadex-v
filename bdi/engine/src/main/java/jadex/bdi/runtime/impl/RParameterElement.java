@@ -387,7 +387,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 		{
 			UnparsedExpression uexp = inival!=null ? inival : getModelElement()!=null ? ((MParameter)getModelElement()).getDefaultValue() : null;
 			return uexp!=null ? SJavaParser.parseExpression(uexp, getAgent().getFeature(IModelFeature.class).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
-				wrapFetcher(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher())) : null;
+				wrapFetcher(IExecutionFeature.get().getComponent().getValueProvider().getFetcher())) : null;
 		}
 		
 		/**
@@ -495,7 +495,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 				if(inivals.size()==1)
 				{
 					Object	tmpvalue	= SJavaParser.parseExpression(inivals.get(0), getAgent().getFeature(IModelFeature.class).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
-						wrapFetcher(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher()));
+						wrapFetcher(IExecutionFeature.get().getComponent().getValueProvider().getFetcher()));
 					if(tmpvalue!=null && getClazz()!=null && SReflect.isSupertype(getClazz(), tmpvalue.getClass()))
 					{
 						tmpvalues.add(tmpvalue);
@@ -513,7 +513,7 @@ public abstract class RParameterElement extends RElement implements IParameterEl
 					for(UnparsedExpression uexp: inivals)
 					{
 						tmpvalues.add(SJavaParser.parseExpression(uexp, ((MicroAgent)getAgent()).getModel().getAllImports(), ((MicroAgent)getAgent()).getClassLoader()).getValue(
-							wrapFetcher(IExecutionFeature.get().getComponent().getFeature(IModelFeature.class).getFetcher())));
+							wrapFetcher(IExecutionFeature.get().getComponent().getValueProvider().getFetcher())));
 					}
 				}
 			}

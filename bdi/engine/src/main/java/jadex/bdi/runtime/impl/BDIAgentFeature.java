@@ -6,6 +6,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,8 +34,9 @@ import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IBeliefListener;
 import jadex.bdi.runtime.ICapability;
 import jadex.bdi.runtime.IGoal;
-import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.IGoal.GoalLifecycleState;
+import jadex.bdi.runtime.IPlan;
+import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.impl.APL.CandidateInfoMPlan;
 import jadex.bdi.runtime.impl.APL.CandidateInfoPojoPlan;
 import jadex.bdi.runtime.impl.APL.MPlanInfo;
@@ -51,6 +53,7 @@ import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.future.DelegationResultListener;
@@ -549,13 +552,35 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		}
 		// Only store event for non-update-rate beliefs (update rate beliefs get set later)
 //		else if(mbel.getUpdaterate()<=0)
-		else if(mbel.getUpdateRate()==null)
+		else // if(mbel.getUpdateRate()==null)
 		{
 			// In init set field immediately but throw events later, when agent is available.
 			
 			try
 			{
-				Object oldval = setFieldValue(obj, fieldname, val);
+				Object oldval	= getFieldValue(obj, fieldname, null, false);
+				if(oldval instanceof Val)
+				{
+					Val<?>	bel	= (Val< ? >)oldval;
+					oldval	= valvalue.get(bel);
+					
+					// Init event for normal belief
+					if(val instanceof Val)
+					{
+						val	= oldval;
+					}
+					
+					// Init event for updaterate belief
+					else
+					{
+						valvalue.set(bel, val);
+					}
+					
+				}
+				else
+				{
+					setFieldValue(obj, fieldname, val);
+				}
 				// rule engine not turned on so no unobserve necessary
 //				unobserveObject(agent, obj, etype, rs);
 				addInitWrite(IExecutionFeature.get().getComponent(), new InitWriteBelief(mbel.getName(), val, oldval));
@@ -1705,6 +1730,15 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	}
 	
 	/**
+	 *  Get the current plans as api representation.
+	 *  @return All currently instantiated plans.
+	 */
+	public Collection<IPlan> getPlans()
+	{
+		return (Collection)getCapability().getPlans();
+	}
+	
+	/**
 	 *  Get the goal api representation for a pojo goal.
 	 *  @param goal The pojo goal.
 	 *  @return The api goal.
@@ -1861,14 +1895,50 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 	{
 		return getInjectionValues(ptypes, anns, melement, event, rplan, rpe, null);
 	}
-		
+	
+	// Unfinished implementation
+	static boolean	newinjectionvalues	= false;
+	
 	// todo: support parameter names via annotation in guesser (guesser with meta information)
 	/**
 	 *  Get parameter values for injection into method and constructor calls.
 	 *  @return A valid assignment or null if no assignment could be found.
 	 */
-	public static Object[]	getInjectionValues(Class<?>[] ptypes, Annotation[][] anns, MElement melement, ChangeEvent event, RPlan rplan, RProcessableElement rpe, Collection<Object> vs)
+	public static Object[] getInjectionValues(Class<?>[] ptypes, Annotation[][] anns, MElement melement, ChangeEvent event, RPlan rplan, RProcessableElement rpe, Collection<Object> vs)
 	{
+		if(newinjectionvalues)
+		{
+			Object[]	ret	= new Object[ptypes.length];
+			
+			for(int i=0; i<ret.length; i++)
+			{
+				// Minimal implementation for puzzle and reasoning benchmark for now
+				if(IComponent.class.equals(ptypes[i]))
+				{
+					ret[i]	= IComponentManager.get().getCurrentComponent();
+				}
+				else if(rplan!=null && SReflect.isSupertype(ptypes[i], rplan.getClass()))
+				{
+					ret[i]	= rplan;
+				}
+				else if(rplan!=null && rplan.getReason()!=null && SReflect.isSupertype(ptypes[i], rplan.getReason().getClass()))
+				{
+					ret[i]	= rplan.getReason();
+				}
+				else if(rplan!=null && rplan.getReason() instanceof RProcessableElement
+					&& ((RProcessableElement)rplan.getReason()).getPojo()!=null && SReflect.isSupertype(ptypes[i], ((RProcessableElement)rplan.getReason()).getPojo().getClass()))
+				{
+					ret[i]	= ((RProcessableElement)rplan.getReason()).getPojo();
+				}
+				else
+				{
+					throw new UnsupportedOperationException(Arrays.asList(ptypes).toString());
+				}
+			}
+			
+			return ret;
+		}
+		
 		Collection<Object> vals = new LinkedHashSet<Object>();
 		if(vs!=null)
 			vals.addAll(vs);
@@ -1891,7 +1961,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		vals.add(capa);
 		vals.add(new CapabilityPojoWrapper(capa, capaname));
 		vals.add(component);
-		vals.add(component.getExternalAccess());
+		vals.add(component.getComponentHandle());
 		
 		// add agent features
 		vals.addAll(component.getFeatures());
@@ -2060,7 +2130,16 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 			
 			if(!done)
 			{
-				ret[i]	= g.guessParameter(ptypes[i], false);
+				try
+				{
+					ret[i]	= g.guessParameter(ptypes[i], false);
+				}
+				catch(Exception e)
+				{
+					// could not fetch value
+					// if the exception is not catched it can hinder
+					// agent method execution such as in marsworld Sentry checkCreate
+				}
 			}
 		}
 		
@@ -2632,6 +2711,7 @@ public class BDIAgentFeature	implements IBDIAgentFeature, IInternalBDIAgentFeatu
 		{
 			boolean res = !capa.getGoals(mgoal).isEmpty();
 //				return res? ICondition.TRUE: ICondition.FALSE;
+			//System.out.println("goals of type: "+mgoal+" "+res+" "+capa.getAgent().getFeature(IBDIAgentFeature.class).getGoals());
 			return new Future<Tuple2<Boolean,Object>>(res? ICondition.TRUE: ICondition.FALSE);
 		}
 	}

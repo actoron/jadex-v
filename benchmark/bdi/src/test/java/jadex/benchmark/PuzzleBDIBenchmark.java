@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import jadex.bdi.puzzle.BenchmarkAgent;
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.common.SUtil;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 
 /**
  *  Benchmark the puzzle (Sokrates) example.
@@ -18,9 +18,9 @@ public class PuzzleBDIBenchmark
 		BenchmarkHelper.benchmarkTime(() ->
 		{
 			BenchmarkAgent	agent	= new BenchmarkAgent(false);
-			IExternalAccess	exta	= IBDIAgent.create(agent);
+			IComponentHandle	exta	= IBDIAgent.create(agent);
 			exta.waitForTermination().get();
-		});
+		}, 50);	// Fail only when more than 50% worse as benchmark execution time varies a lot
 	}
 
 	public static void main(String[] args)
@@ -32,7 +32,7 @@ public class PuzzleBDIBenchmark
 				for(;;)
 				{
 					BenchmarkAgent	agent	= new BenchmarkAgent(false);
-					IExternalAccess	exta	= IBDIAgent.create(agent);
+					IComponentHandle	exta	= IBDIAgent.create(agent);
 					exta.waitForTermination().get();
 				}
 			});

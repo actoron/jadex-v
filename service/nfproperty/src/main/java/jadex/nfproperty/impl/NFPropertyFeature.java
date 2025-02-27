@@ -14,7 +14,7 @@ import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.UnparsedExpression;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
@@ -556,7 +556,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<String[]> ret = new Future<String[]>();
 
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String[]>>)agent ->
 			{
@@ -565,7 +565,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 				return nfp!=null? nfp.getProvidedServicePropertyProvider(sid).getNFPropertyNames(): new Future<String[]>(SUtil.EMPTY_STRING_ARRAY);
 			}).delegateTo(ret);
 			
-			/*component.getExternalAccessAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
+			/*component.getComponentHandleAsync(sid.getProviderId()).addResultListener(new ExceptionDelegationResultListener<IExternalAccess, String[]>(ret)
 			{
 				public void customResultAvailable(IExternalAccess result)
 				{
@@ -599,7 +599,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<String[]> ret = new Future<String[]>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String[]>>)agent ->
 			{
@@ -635,7 +635,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<Map<String, INFPropertyMetaInfo>> ret = new Future<Map<String, INFPropertyMetaInfo>>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Map<String, INFPropertyMetaInfo>>>)agent ->
 			{
@@ -669,7 +669,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<INFPropertyMetaInfo> ret = new Future<INFPropertyMetaInfo>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<INFPropertyMetaInfo>>)agent ->
 			{
@@ -697,7 +697,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<T> ret = new Future<T>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<T>>)agent ->
 			{
@@ -725,7 +725,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		else
 		{
 			final Future<T> ret = new Future<T>();
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<T>>)agent ->
 			{
@@ -754,7 +754,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<String> ret = new Future<String>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String>>)agent ->
 			{
@@ -780,7 +780,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<Void> ret = new Future<Void>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
@@ -806,7 +806,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<Void> ret = new Future<Void>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
@@ -831,7 +831,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<Void> ret = new Future<Void>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
@@ -859,7 +859,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> ret = new Future<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>();
 
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>>>)agent ->
 			{
@@ -886,7 +886,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<String[]> ret = new Future<String[]>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String[]>>)agent ->
 			{
@@ -913,7 +913,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<String[]> ret = new Future<String[]>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String[]>>)agent ->
 			{
@@ -939,7 +939,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<Map<String, INFPropertyMetaInfo>> ret = new Future<Map<String, INFPropertyMetaInfo>>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Map<String, INFPropertyMetaInfo>>>)agent ->
 			{
@@ -967,7 +967,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<INFPropertyMetaInfo> ret = new Future<INFPropertyMetaInfo>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<INFPropertyMetaInfo>>)agent ->
 			{
@@ -996,7 +996,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<T> ret = new Future<T>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<T>>)agent ->
 			{
@@ -1027,7 +1027,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<T> ret = new Future<T>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<T>>)agent ->
 			{
@@ -1050,7 +1050,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<String> ret = new Future<String>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<String>>)agent ->
 			{
@@ -1077,7 +1077,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		{
 			final Future<Void> ret = new Future<Void>();
 			
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{
@@ -1103,7 +1103,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 		else
 		{
 			final Future<Void> ret = new Future<Void>();
-			IExternalAccess ex = getComponent().getExternalAccess(sid.getProviderId());
+			IComponentHandle ex = getComponent().getComponentHandle(sid.getProviderId());
 			
 			ex.scheduleAsyncStep((IThrowingFunction<IComponent, IFuture<Void>>)agent ->
 			{

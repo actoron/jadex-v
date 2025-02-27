@@ -10,7 +10,6 @@ import jadex.bt.cleanerworld.environment.impl.Cleaner;
 import jadex.bt.cleanerworld.environment.impl.Environment;
 import jadex.bt.cleanerworld.environment.impl.Location;
 import jadex.bt.cleanerworld.environment.impl.LocationObject;
-import jadex.bt.cleanerworld.environment.impl.Pheromone;
 import jadex.bt.cleanerworld.environment.impl.Waste;
 import jadex.bt.cleanerworld.environment.impl.Wastebin;
 import jadex.execution.IExecutionFeature;
@@ -38,7 +37,7 @@ public class SensorActuator
 	private Location target;
 	
 	/** The known other cleaners. */
-	private Set<ICleaner>	cleaners	= new LinkedHashSet<>();
+	private Set<ICleaner> cleaners = new LinkedHashSet<>();
 	
 	/** The known waste pieces. */
 	private Set<IWaste>	wastes	= new LinkedHashSet<>();
@@ -78,7 +77,7 @@ public class SensorActuator
 	 *  Get the known other cleaners.
 	 *  @return a Set of Cleaner objects. 
 	 */
-	public Set<ICleaner>	getCleaners()
+	public Set<ICleaner> getCleaners()
 	{
 		lazyInit();
 		return cleaners;
@@ -88,7 +87,7 @@ public class SensorActuator
 	 *  Get the known waste pieces.
 	 *  @return a Set of Waste objects. 
 	 */
-	public Set<IWaste>	getWastes()
+	public Set<IWaste> getWastes()
 	{
 		lazyInit();
 		return wastes;
@@ -98,7 +97,7 @@ public class SensorActuator
 	 *  Get the known charging stations.
 	 *  @return a Set of Chargingstation objects. 
 	 */
-	public Set<IChargingstation>	getChargingstations()
+	public Set<IChargingstation> getChargingstations()
 	{
 		lazyInit();
 		return chargingstations;
@@ -108,7 +107,7 @@ public class SensorActuator
 	 *  Get the known waste pieces.
 	 *  @return a Set of Waste objects. 
 	 */
-	public Set<IWastebin>	getWastebins()
+	public Set<IWastebin> getWastebins()
 	{
 		lazyInit();
 		return wastebins;
@@ -121,8 +120,8 @@ public class SensorActuator
 	public void	manageWastesIn(Set<IWaste> wastes)
 	{
 		lazyInit();
-		wastes.addAll(this.wastes);
-		this.wastes	= wastes;
+		wastes.addAll(this.wastes); // add already known waste the new managed set
+		this.wastes	= wastes; // use that set
 	}
 		
 	/**
@@ -170,7 +169,7 @@ public class SensorActuator
 		return moveTo(location.getX(), location.getY());
 	}
 	
-	long	lasttime;
+	long lasttime;
 	
 	/**
 	 *  Move to the given location.

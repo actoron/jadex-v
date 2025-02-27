@@ -6,7 +6,7 @@ import java.util.Queue;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
@@ -24,10 +24,10 @@ public class TableAgent implements ITableService
 	protected Queue<Future<Void>>[] sticks;
 	
 	/** The current owners of the sticks (who has stick 1, 2, ...). */
-	protected IExternalAccess[] owners;
+	protected IComponentHandle[] owners;
 	
 	/** The philosopher that sit at the table. */
-	protected IExternalAccess[] philosophers;
+	protected IComponentHandle[] philosophers;
 	
 	/** Wait for times or click events. */
 	protected boolean waitforclicks;
@@ -36,8 +36,8 @@ public class TableAgent implements ITableService
 	{
 		this.waitforclicks = waitforclicks;
 	    sticks = new Queue[seats];
-	    owners = new IExternalAccess[seats];
-	    philosophers = new IExternalAccess[seats];
+	    owners = new IComponentHandle[seats];
+	    philosophers = new IComponentHandle[seats];
 	    
 	    for (int i = 0; i < seats; i++) 
 	    {
@@ -55,12 +55,12 @@ public class TableAgent implements ITableService
 	public void addPhilosopher(int no)
 	{
 		ComponentIdentifier cid = ServiceCall.getCurrentInvocation().getCaller();
-		philosophers[no] = agent.getExternalAccess(cid);
+		philosophers[no] = agent.getComponentHandle(cid);
 	}
 	
-	public IFuture<IExternalAccess> getPhilosopher(int no)
+	public IFuture<IComponentHandle> getPhilosopher(int no)
 	{
-		return new Future<IExternalAccess>(philosophers[no]);
+		return new Future<IComponentHandle>(philosophers[no]);
 	}
 	
 	public IFuture<Void> getLeftStick(int no)
@@ -84,7 +84,7 @@ public class TableAgent implements ITableService
 		
 		Future<Void> ret = new Future<Void>();
 		
-		IExternalAccess caller = getCurrentPhilosopher();
+		IComponentHandle caller = getCurrentPhilosopher();
 		
 		if(getStickOwner(no).get()!=null)
 		{
@@ -122,15 +122,15 @@ public class TableAgent implements ITableService
 		}
 	}
 	
-	public IExternalAccess getCurrentPhilosopher()
+	public IComponentHandle getCurrentPhilosopher()
 	{
 		ComponentIdentifier cid = ServiceCall.getCurrentInvocation().getCaller();
-		return agent.getExternalAccess(cid);
+		return agent.getComponentHandle(cid);
 	}
 	
-	public IFuture<IExternalAccess> getStickOwner(int no)
+	public IFuture<IComponentHandle> getStickOwner(int no)
 	{
-		return new Future<IExternalAccess>(owners[no]);
+		return new Future<IComponentHandle>(owners[no]);
 	}
 	
 	public IFuture<Boolean> isWaitForClicks()
@@ -145,7 +145,7 @@ public class TableAgent implements ITableService
 	
 	public void notifyAllPhilosophers()
 	{
-		for(IExternalAccess p: philosophers)
+		for(IComponentHandle p: philosophers)
 		{
 			p.scheduleStep(agent ->
 			{

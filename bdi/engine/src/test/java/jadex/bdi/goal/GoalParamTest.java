@@ -22,7 +22,7 @@ import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.Val;
 import jadex.bdi.runtime.impl.IInternalBDIAgentFeature;
 import jadex.common.Tuple2;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.annotation.Agent;
@@ -98,7 +98,7 @@ public class GoalParamTest
 	public void testValParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	fut	= new Future<>();
 		
 		exta.scheduleStep(agent ->
@@ -116,7 +116,7 @@ public class GoalParamTest
 	public void testBeanParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	fut	= new Future<>();
 		
 		exta.scheduleStep(agent ->
@@ -134,7 +134,7 @@ public class GoalParamTest
 	public void testListParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();
@@ -161,7 +161,7 @@ public class GoalParamTest
 	public void testSetParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();
 		
@@ -184,7 +184,7 @@ public class GoalParamTest
 	public void testMapParam()
 	{
 		GoalParamTestAgent	pojo	= new GoalParamTestAgent();
-		IExternalAccess	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IBDIAgent.create(pojo);
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();

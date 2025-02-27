@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 
 import jadex.common.SUtil;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
@@ -28,7 +28,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	protected IComponent component;
 	
 	/** The external access. */
-	protected IExternalAccess access; // todo!!!
+	protected IComponentHandle access; // todo!!!
 	
 	/** The undone flag. */
 	protected boolean undone;
@@ -57,7 +57,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	 *  @param listener The listener.
 	 *  @param adapter The adapter.
 	 */
-	public ComponentResultListener(IResultListener<E> listener, IExternalAccess access)
+	public ComponentResultListener(IResultListener<E> listener, IComponentHandle access)
 	{
 		if(listener==null)
 			throw new NullPointerException("Listener must not be null.");
@@ -172,7 +172,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	 *  Execute a listener notification on the component using either an external access or the internal one
 	 *  and robustly use the rescue thread for the notification, when the component is terminated.
 	 */
-	public static IFuture<Void>	scheduleForward(IExternalAccess access, IComponent component, Runnable notification)
+	public static IFuture<Void>	scheduleForward(IComponentHandle access, IComponent component, Runnable notification)
 	{
 		assert access!=null || component!=null;
 	

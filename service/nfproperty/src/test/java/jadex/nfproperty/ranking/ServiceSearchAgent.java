@@ -5,7 +5,7 @@ import java.util.Collection;
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
@@ -58,7 +58,7 @@ public class ServiceSearchAgent
 		//final Future<Void> done = new Future<Void>();
 		
 		if(search)
-			searchAndRank(agent.getExternalAccess());
+			searchAndRank(agent.getComponentHandle());
 		
 		/*res.next(val ->
 		{
@@ -150,7 +150,7 @@ public class ServiceSearchAgent
 		//return done;
 	}
 	
-	public static IFuture<Collection<Tuple2<ICoreDependentService, Double>>> searchAndRank(IExternalAccess exta)
+	public static IFuture<Collection<Tuple2<ICoreDependentService, Double>>> searchAndRank(IComponentHandle exta)
 	{
 		Future<Collection<Tuple2<ICoreDependentService, Double>>> ret = new Future<>();
 		

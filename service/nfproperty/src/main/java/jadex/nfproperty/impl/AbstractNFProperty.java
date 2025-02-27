@@ -153,7 +153,8 @@ public abstract class AbstractNFProperty<T, U> implements INFProperty<T, U>
 								{
 									//Object val = SJavaParser.evaluateExpression(entry.getValue(), comp.getModel().getAllImports(), comp.getFetcher(), comp.getClassLoader());
 									IModelFeature mf = comp.getFeature(IModelFeature.class);
-									Object val = SJavaParser.evaluateExpression(entry.getValue(), mf!=null? mf.getModel().getAllImports(): null, mf!=null? mf.getFetcher(): null, comp.getClassLoader());
+									Object val = SJavaParser.evaluateExpression(entry.getValue(), mf!=null? mf.getModel().getAllImports(): null, mf!=null? 
+										comp.getValueProvider().getFetcher(): null, comp.getClassLoader());
 									ps.put(entry.getName(), val);
 								}
 								catch(Exception ex3)

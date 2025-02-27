@@ -10,7 +10,7 @@ import javax.swing.SwingUtilities;
 
 import jadex.common.SGUI;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
 
 /**
@@ -29,7 +29,7 @@ public class BoardGui extends JFrame
 	/**
 	 *  Create a new board gui.
 	 */
-	public BoardGui(IExternalAccess agent, final IBoard board)
+	public BoardGui(IComponentHandle agent, final IBoard board)
 	{
 		this(agent, board, false);
 	}
@@ -37,7 +37,7 @@ public class BoardGui extends JFrame
 	/**
 	 *  Create a new board gui.
 	 */
-	public BoardGui(final IExternalAccess agent, final IBoard board, boolean controls)
+	public BoardGui(final IComponentHandle agent, final IBoard board, boolean controls)
 	{
 		this.board = board;
 		final BoardPanel bp = new BoardPanel(board);

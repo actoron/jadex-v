@@ -36,7 +36,7 @@ public class UseGraylogAgent
 	{
 		 // only necessary when multiple unordered external loggers are in cp or config is not default
 		
-		// Configure Jadex system logger
+		// Configure Jadex logger
 		// application
 		IComponentManager.get().getFeature(ILoggingFeature.class).addLoggerCreator(new LoggerCreator(
 		null
@@ -50,7 +50,7 @@ public class UseGraylogAgent
 		}*/
 		, name -> 
 		{
-			GraylogLogger ret = new GraylogLogger(name, false);
+			GraylogLogger ret = new GraylogLogger(name, Level.ALL, false);
 			java.util.logging.Logger logger = ret.getLoggerImplementation();
 	        logger.setUseParentHandlers(false);
 	        GelfHandler handler = new GelfHandler();
@@ -74,7 +74,7 @@ public class UseGraylogAgent
 		}*/
 		, name -> 
 		{
-			GraylogLogger gl = new GraylogLogger(name, true);
+			GraylogLogger gl = new GraylogLogger(name, Level.OFF, true);
 			java.util.logging.Logger logger = gl.getLoggerImplementation();
 	        logger.setUseParentHandlers(false);
 	        GelfHandler handler = new GelfHandler();

@@ -1,5 +1,7 @@
 package jadex.core;
 
+import java.lang.System.Logger;
+import jadex.core.impl.ValueProvider;
 import jadex.future.IFuture;
 
 /**
@@ -14,6 +16,11 @@ public interface IComponent
 	public ComponentIdentifier getId();
 	
 	/**
+	 *  Get the application.
+	 */
+	public Application getApplication();
+	
+	/**
 	 *  Get the app id.
 	 *  return The app id.
 	 */
@@ -26,17 +33,17 @@ public interface IComponent
 	public <T extends IComponentFeature> T getFeature(Class<T> type);
 	
 	/**
-	 *  Get the external access.
-	 *  @return The external access.
+	 *  Get the component handle.
+	 *  @return The handle.
 	 */
-	public IExternalAccess getExternalAccess();
+	public IComponentHandle getComponentHandle();
 	
 	/**
-	 *  Get the external access.
-	 *  @param The id of the component.
-	 *  @return The external access.
+	 *  Get the component handle.
+	 *  @param cid The id of the component.
+	 *  @return The handle.
 	 */
-	public IExternalAccess getExternalAccess(ComponentIdentifier cid);
+	public IComponentHandle getComponentHandle(ComponentIdentifier cid);
 	
 	/**
 	 *  Terminate the component.
@@ -48,6 +55,19 @@ public interface IComponent
 	 *  @return The pojo.
 	 */
 	public Object getPojo();
+
+	/**
+	 *  Returns the appropriate logging access for the component.
+	 *
+	 *  @return The component logger.
+	 */
+	public Logger getLogger();
+	
+	/**
+	 *  Get the value provider (for fetcher and parameter guesser).
+	 *  @return The value provider.
+	 */
+	public ValueProvider getValueProvider();
 	
 	/**
 	 *  Wait for termination.

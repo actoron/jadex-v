@@ -1,7 +1,5 @@
 package jadex.benchmark;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 import jadex.core.impl.Component;
@@ -14,20 +12,18 @@ public class ExecutableComponentBenchmark
 	@Test
 	void	benchmarkTime()
 	{
-//		double	pct	= BenchmarkHelper.benchmarkTime(() -> Component.createComponent(Component.class, () -> new Component()).terminate().get());
-		double	pct	= BenchmarkHelper.benchmarkTime(() -> new Component().terminate().get());
-		assertTrue(pct<20);	// Fail when more than 20% worse
+//		BenchmarkHelper.benchmarkTime(() -> Component.createComponent(Component.class, () -> new Component()).terminate().get());
+		BenchmarkHelper.benchmarkTime(() -> new Component(this).terminate().get());
 	}
 	
 	@Test
 	void	benchmarkMemory()
 	{
-		double	pct	= BenchmarkHelper.benchmarkMemory(() ->
+		BenchmarkHelper.benchmarkMemory(() ->
 		{
-			Component	comp	= Component.createComponent(Component.class, () -> new Component());
+			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
 //			Component	comp	= new Component();
 			return () -> comp.terminate().get();			
 		});
-		assertTrue(pct<20);	// Fail when more than 20% worse
 	}
 }

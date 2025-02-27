@@ -874,7 +874,7 @@ public class RequestManager
 					// Get provider of service and check access
 					IComponent comp = ComponentManager.get().getComponent(service.getServiceId().getProviderId());
 					
-					comp.getExternalAccess().scheduleStep(agent ->
+					comp.getComponentHandle().scheduleStep(agent ->
 					{
 						// Inject caller meta info
 						Map<String, String> callerinfos = extractCallerValues(request);

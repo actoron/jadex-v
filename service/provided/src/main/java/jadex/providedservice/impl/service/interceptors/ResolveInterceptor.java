@@ -327,7 +327,7 @@ public class ResolveInterceptor extends AbstractApplicableInterceptor
 					domainsic.setMethod(found);
 					domainsic.setObject(obj);
 					// Guess parameters for allowing injected value in pojo methods
-					IParameterGuesser guesser = ia.getFeature(IModelFeature.class).getParameterGuesser();
+					IParameterGuesser guesser = ia.getValueProvider().getParameterGuesser();
 					List<Object> args = new ArrayList<Object>();
 					for(int i=0; i<found.getParameterTypes().length; i++)
 					{

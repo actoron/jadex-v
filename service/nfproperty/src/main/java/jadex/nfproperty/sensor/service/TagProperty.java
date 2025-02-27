@@ -13,13 +13,13 @@ import jadex.common.transformation.BeanIntrospectorFactory;
 import jadex.common.transformation.traverser.BeanProperty;
 import jadex.common.transformation.traverser.IBeanIntrospector;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
+import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
-import jadex.model.modelinfo.IModelInfo;
 import jadex.nfproperty.impl.AbstractNFProperty;
 import jadex.nfproperty.impl.NFPropertyMetaInfo;
 import jadex.providedservice.IService;
@@ -97,7 +97,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 			if(params.containsKey(NAME))
 			{
 				Object vals = params.get(NAME);
-				tags = createRuntimeTags(vals, component.getExternalAccess());
+				tags = createRuntimeTags(vals, component.getComponentHandle());
 				found = true;
 			}
 			
@@ -136,7 +136,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 						try
 						{
 							IModelFeature mf = component.getFeature(IModelFeature.class);
-							Object c = SJavaParser.evaluateExpression(cond, mf.getModel().getAllImports(), mf.getFetcher(), ComponentManager.get().getClassLoader());
+							Object c = SJavaParser.evaluateExpression(cond, mf.getModel().getAllImports(), component.getValueProvider().getFetcher(), ComponentManager.get().getClassLoader());
 							if(c instanceof Boolean && ((Boolean)c).booleanValue())
 								vals.add(val);
 						}
@@ -151,7 +151,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 					}
 				}
 				
-				Collection<String> ts = createRuntimeTags(vals, component.getExternalAccess());
+				Collection<String> ts = createRuntimeTags(vals, component.getComponentHandle());
 				if(tags==null)
 					tags = ts;
 				else
@@ -170,7 +170,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 			if(props.containsKey(NAME))
 			{
 				BeanProperty prop = props.get(NAME);
-				Collection<String> tags = createRuntimeTags(prop.getPropertyValue(component.getPojo()), component.getExternalAccess());
+				Collection<String> tags = createRuntimeTags(prop.getPropertyValue(component.getPojo()), component.getComponentHandle());
 				ret.setResult(tags);
 				found = true;
 			}
@@ -223,7 +223,7 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 	/**
 	 *  Create a collection of tags and replace the variable values.
 	 */
-	public static Collection<String> createRuntimeTags(Object vals, IExternalAccess component)
+	public static Collection<String> createRuntimeTags(Object vals, IComponentHandle component)
 	{
 		Collection<String> tags = convertToCollection(vals);
 		Iterator<String> it = tags.iterator();

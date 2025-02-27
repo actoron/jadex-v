@@ -1,7 +1,7 @@
 package jadex.micro.philosophers.agents;
 
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 
 public class Main
 {
@@ -15,7 +15,7 @@ public class Main
 			IComponentManager.get().create(new PhilosophAgent(no)).get();
 		}
 		
-		IExternalAccess ta = IComponentManager.get().create(new TableAgent(n, true)).get();
+		IComponentHandle ta = IComponentManager.get().create(new TableAgent(n, true)).get();
 		TableGui gui = new TableGui(n, ta);
 	}
 }

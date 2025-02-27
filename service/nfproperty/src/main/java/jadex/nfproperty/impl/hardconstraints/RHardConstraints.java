@@ -6,7 +6,7 @@ import java.util.List;
 
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.CollectionResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -23,7 +23,7 @@ import jadex.providedservice.ServiceScope;
 public class RHardConstraints
 {
 	/** The component. */
-	protected IExternalAccess component;
+	protected IComponentHandle component;
 	
 	/** Hard constraint model */
 	protected Collection<MHardConstraint> constraintmodel;
@@ -39,7 +39,7 @@ public class RHardConstraints
 	 * 
 	 *  @param mhc The declared model hard constraints.
 	 */
-	public RHardConstraints(IExternalAccess component, Collection<MHardConstraint> constraintmodel)
+	public RHardConstraints(IComponentHandle component, Collection<MHardConstraint> constraintmodel)
 	{
 		this.component = component;
 		this.constraintmodel = constraintmodel;

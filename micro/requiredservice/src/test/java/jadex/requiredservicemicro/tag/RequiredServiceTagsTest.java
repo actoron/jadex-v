@@ -8,7 +8,7 @@ import java.util.Collection;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponentManager;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.micro.annotation.Agent;
 import jadex.providedservice.IService;
 import jadex.providedservice.ServiceScope;
@@ -40,7 +40,7 @@ public class RequiredServiceTagsTest
 	public void findServiceWithoutTag()
 	{
 		IComponentManager.get().create(new ProviderAgent()).get();
-		IExternalAccess exta = IComponentManager.get().create(new TestAgent()).get();
+		IComponentHandle exta = IComponentManager.get().create(new TestAgent()).get();
 	
 		IService res = exta.scheduleStep(agent ->
 		{
@@ -58,7 +58,7 @@ public class RequiredServiceTagsTest
 	public void findServiceWithTag()
 	{
 		IComponentManager.get().create(new ProviderAgent()).get();
-		IExternalAccess exta = IComponentManager.get().create(new TestAgent()).get();
+		IComponentHandle exta = IComponentManager.get().create(new TestAgent()).get();
 	
 		IService res = exta.scheduleStep(agent ->
 		{
@@ -76,7 +76,7 @@ public class RequiredServiceTagsTest
 	public void notFindServiceWithWrongTag()
 	{
 		IComponentManager.get().create(new ProviderAgent()).get();
-		IExternalAccess exta = IComponentManager.get().create(new TestAgent()).get();
+		IComponentHandle exta = IComponentManager.get().create(new TestAgent()).get();
 	
 		IService res = exta.scheduleStep(agent ->
 		{
@@ -103,7 +103,7 @@ public class RequiredServiceTagsTest
 	public void notFindWithSetServiceTags()
 	{
 		IComponentManager.get().create(new ProviderAgent()).get();
-		IExternalAccess exta = IComponentManager.get().create(new TestAgent()).get();
+		IComponentHandle exta = IComponentManager.get().create(new TestAgent()).get();
 	
 		Collection<ITestService> res = exta.scheduleStep(agent ->
 		{
@@ -121,7 +121,7 @@ public class RequiredServiceTagsTest
 	public void findWithSetServiceTags()
 	{
 		IComponentManager.get().create(new ProviderAgent()).get();
-		IExternalAccess exta = IComponentManager.get().create(new TestAgent()).get();
+		IComponentHandle exta = IComponentManager.get().create(new TestAgent()).get();
 	
 		ITestService res = exta.scheduleStep(agent ->
 		{
@@ -139,7 +139,7 @@ public class RequiredServiceTagsTest
 	public void findWithSetServiceTagNull()
 	{
 		IComponentManager.get().create(new ProviderAgent()).get();
-		IExternalAccess exta = IComponentManager.get().create(new TestAgent()).get();
+		IComponentHandle exta = IComponentManager.get().create(new TestAgent()).get();
 	
 		ITestService res = exta.scheduleStep(agent ->
 		{

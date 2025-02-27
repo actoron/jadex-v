@@ -1,6 +1,6 @@
 package jadex.micro.philosophers.agents;
 
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.IFuture;
 import jadex.providedservice.annotation.Service;
 
@@ -9,9 +9,9 @@ public interface ITableService
 {
 	public void addPhilosopher(int no);
 	
-	public IFuture<IExternalAccess> getPhilosopher(int no);
+	public IFuture<IComponentHandle> getPhilosopher(int no);
 	
-	public IFuture<IExternalAccess> getStickOwner(int no);
+	public IFuture<IComponentHandle> getStickOwner(int no);
 	
 	public void notifyAllPhilosophers();
 	

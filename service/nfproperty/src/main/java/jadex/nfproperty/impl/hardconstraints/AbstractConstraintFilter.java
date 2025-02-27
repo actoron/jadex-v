@@ -1,6 +1,6 @@
 package jadex.nfproperty.impl.hardconstraints;
 
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
@@ -14,7 +14,7 @@ import jadex.providedservice.IService;
 public abstract class AbstractConstraintFilter<T> implements IAsyncFilter<T>
 {
 	/** The component. */
-	protected IExternalAccess component;
+	protected IComponentHandle component;
 	
 	/** Name of the property being kept constant. */
 	protected String propname;
@@ -32,7 +32,7 @@ public abstract class AbstractConstraintFilter<T> implements IAsyncFilter<T>
 	/**
 	 *  Creates a constant value filter.
 	 */
-	public AbstractConstraintFilter(IExternalAccess component, String propname, Object value)
+	public AbstractConstraintFilter(IComponentHandle component, String propname, Object value)
 	{
 		this.component = component;
 		this.propname = propname;

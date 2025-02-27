@@ -10,6 +10,7 @@ import jadex.bpmn.model.MSubProcess;
 import jadex.bpmn.runtime.IActivityHandler;
 import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.bpmn.runtime.IStepHandler;
+import jadex.bpmn.runtime.impl.IInternalBpmnComponentFeature;
 import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
@@ -103,7 +104,7 @@ public class DefaultStepHandler implements IStepHandler
 					}
 					else if(outgoing!=null && outgoing.size()>1)
 					{
-						IBpmnComponentFeature bcf = (IBpmnComponentFeature)instance.getFeature(IBpmnComponentFeature.class);
+						IInternalBpmnComponentFeature bcf = (IInternalBpmnComponentFeature)instance.getFeature(IBpmnComponentFeature.class);
 						IActivityHandler par = bcf.getActivityHandler(MBpmnModel.GATEWAY_PARALLEL);
 						par.execute(activity, instance, thread);
 						return;

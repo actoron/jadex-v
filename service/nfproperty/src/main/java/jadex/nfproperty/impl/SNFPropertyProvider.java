@@ -3,7 +3,7 @@ package jadex.nfproperty.impl;
 import java.util.Map;
 
 import jadex.common.MethodInfo;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.IFuture;
 import jadex.nfproperty.INFProperty;
 import jadex.nfproperty.INFPropertyMetaInfo;
@@ -18,7 +18,7 @@ public class SNFPropertyProvider
 	 *  Returns the declared names of all non-functional properties of this service.
 	 *  @return The names of the non-functional properties of this service.
 	 */
-	public static IFuture<String[]> getNFPropertyNames(IExternalAccess component)
+	public static IFuture<String[]> getNFPropertyNames(IComponentHandle component)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -50,7 +50,7 @@ public class SNFPropertyProvider
 	 *  Returns the names of all non-functional properties of this service.
 	 *  @return The names of the non-functional properties of this service.
 	 */
-	public static IFuture<String[]> getNFAllPropertyNames(IExternalAccess component)
+	public static IFuture<String[]> getNFAllPropertyNames(IComponentHandle component)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -70,7 +70,7 @@ public class SNFPropertyProvider
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of this service.
 	 */
-	public static IFuture<Map<String, INFPropertyMetaInfo>> getNFPropertyMetaInfos(IExternalAccess component)
+	public static IFuture<Map<String, INFPropertyMetaInfo>> getNFPropertyMetaInfos(IComponentHandle component)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -90,7 +90,7 @@ public class SNFPropertyProvider
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of this service.
 	 */
-	public static IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(IExternalAccess component, final String name)
+	public static IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(IComponentHandle component, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -111,7 +111,7 @@ public class SNFPropertyProvider
 	 *  @param type Type of the property value.
 	 *  @return The current value of a non-functional property of this service.
 	 */
-	public static <T> IFuture<T> getNFPropertyValue(IExternalAccess component, final String name)
+	public static <T> IFuture<T> getNFPropertyValue(IComponentHandle component, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -134,7 +134,7 @@ public class SNFPropertyProvider
 	 *  @return The current value of a non-functional property of this service.
 	 */
 //	public <T, U> IFuture<T> getNFPropertyValue(String name, Class<U> unit);
-	public static <T, U> IFuture<T> getNFPropertyValue(IExternalAccess component, final String name, final U unit)
+	public static <T, U> IFuture<T> getNFPropertyValue(IComponentHandle component, final String name, final U unit)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -153,7 +153,7 @@ public class SNFPropertyProvider
 	 *  Add a non-functional property.
 	 *  @param nfprop The property.
 	 */
-	public static IFuture<Void> addNFProperty(IExternalAccess component, final INFProperty<?, ?> nfprop)
+	public static IFuture<Void> addNFProperty(IComponentHandle component, final INFProperty<?, ?> nfprop)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -172,7 +172,7 @@ public class SNFPropertyProvider
 	 *  Remove a non-functional property.
 	 *  @param The name.
 	 */
-	public static IFuture<Void> removeNFProperty(IExternalAccess component, final String name)
+	public static IFuture<Void> removeNFProperty(IComponentHandle component, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -190,7 +190,7 @@ public class SNFPropertyProvider
 	/**
 	 *  Shutdown the provider.
 	 */
-	public static IFuture<Void> shutdownNFPropertyProvider(IExternalAccess component)
+	public static IFuture<Void> shutdownNFPropertyProvider(IComponentHandle component)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -211,7 +211,7 @@ public class SNFPropertyProvider
 	 *  Returns the declared names of all non-functional properties of this service.
 	 *  @return The names of the non-functional properties of this service.
 	 */
-	public static IFuture<String[]> getNFPropertyNames(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<String[]> getNFPropertyNames(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -240,7 +240,7 @@ public class SNFPropertyProvider
 	 *  Returns the names of all non-functional properties of this service.
 	 *  @return The names of the non-functional properties of this service.
 	 */
-	public static IFuture<String[]> getNFAllPropertyNames(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<String[]> getNFAllPropertyNames(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -270,7 +270,7 @@ public class SNFPropertyProvider
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of this service.
 	 */
-	public static IFuture<Map<String, INFPropertyMetaInfo>> getNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<Map<String, INFPropertyMetaInfo>> getNFPropertyMetaInfos(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -312,7 +312,7 @@ public class SNFPropertyProvider
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of this service.
 	 */
-	public static IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(IExternalAccess component, final IServiceIdentifier sid, final String name)
+	public static IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(IComponentHandle component, final IServiceIdentifier sid, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -343,7 +343,7 @@ public class SNFPropertyProvider
 	 *  @param type Type of the property value.
 	 *  @return The current value of a non-functional property of this service.
 	 */
-	public static <T> IFuture<T> getNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final String name)
+	public static <T> IFuture<T> getNFPropertyValue(IComponentHandle component, final IServiceIdentifier sid, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -376,7 +376,7 @@ public class SNFPropertyProvider
 	 *  @return The current value of a non-functional property of this service.
 	 */
 //	public <T, U> IFuture<T> getNFPropertyValue(String name, Class<U> unit);
-	public static <T, U> IFuture<T> getNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final String name, final U unit)
+	public static <T, U> IFuture<T> getNFPropertyValue(IComponentHandle component, final IServiceIdentifier sid, final String name, final U unit)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -405,7 +405,7 @@ public class SNFPropertyProvider
 	 *  Add a non-functional property.
 	 *  @param nfprop The property.
 	 */
-	public static IFuture<Void> addNFProperty(IExternalAccess component, final IServiceIdentifier sid, final INFProperty<?, ?> nfprop)
+	public static IFuture<Void> addNFProperty(IComponentHandle component, final IServiceIdentifier sid, final INFProperty<?, ?> nfprop)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -434,7 +434,7 @@ public class SNFPropertyProvider
 	 *  Remove a non-functional property.
 	 *  @param The name.
 	 */
-	public static IFuture<Void> removeNFProperty(IExternalAccess component, final IServiceIdentifier sid, final String name)
+	public static IFuture<Void> removeNFProperty(IComponentHandle component, final IServiceIdentifier sid, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -462,7 +462,7 @@ public class SNFPropertyProvider
 	/**
 	 *  Shutdown the provider.
 	 */
-	public static IFuture<Void> shutdownNFPropertyProvider(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<Void> shutdownNFPropertyProvider(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -493,7 +493,7 @@ public class SNFPropertyProvider
 	 *  Returns meta information about a non-functional properties of all methods.
 	 *  @return The meta information about a non-functional properties.
 	 */
-	public static IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> getMethodNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> getMethodNFPropertyMetaInfos(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -523,7 +523,7 @@ public class SNFPropertyProvider
 	 *  @param method The method targeted by this operation.
 	 *  @return The names of the non-functional properties of the specified method.
 	 */
-	public static IFuture<String[]> getMethodNFPropertyNames(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
+	public static IFuture<String[]> getMethodNFPropertyNames(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -553,7 +553,7 @@ public class SNFPropertyProvider
 	 *  This includes the properties of all parent components.
 	 *  @return The names of the non-functional properties of this method.
 	 */
-	public static IFuture<String[]> getMethodNFAllPropertyNames(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
+	public static IFuture<String[]> getMethodNFAllPropertyNames(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -582,7 +582,7 @@ public class SNFPropertyProvider
 	 *  Returns meta information about a non-functional properties of a method.
 	 *  @return The meta information about a non-functional properties.
 	 */
-	public static IFuture<Map<String, INFPropertyMetaInfo>> getMethodNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
+	public static IFuture<Map<String, INFPropertyMetaInfo>> getMethodNFPropertyMetaInfos(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -613,7 +613,7 @@ public class SNFPropertyProvider
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of the specified method.
 	 */
-	public static IFuture<INFPropertyMetaInfo> getMethodNFPropertyMetaInfo(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
+	public static IFuture<INFPropertyMetaInfo> getMethodNFPropertyMetaInfo(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -645,7 +645,7 @@ public class SNFPropertyProvider
 	 *  @param type Type of the property value.
 	 *  @return The current value of a non-functional property of the specified method.
 	 */
-	public static <T> IFuture<T> getMethodNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
+	public static <T> IFuture<T> getMethodNFPropertyValue(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -692,7 +692,7 @@ public class SNFPropertyProvider
 	 *  @return The current value of a non-functional property of the specified method.
 	 */
 //	public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
-	public static <T, U> IFuture<T> getMethodNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
+	public static <T, U> IFuture<T> getMethodNFPropertyValue(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -722,7 +722,7 @@ public class SNFPropertyProvider
 	 *  @param method The method targeted by this operation.
 	 *  @param nfprop The property.
 	 */
-	public static IFuture<Void> addMethodNFProperty(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final INFProperty<?, ?> nfprop)
+	public static IFuture<Void> addMethodNFProperty(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final INFProperty<?, ?> nfprop)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -752,7 +752,7 @@ public class SNFPropertyProvider
 	 *  @param method The method targeted by this operation.
 	 *  @param The name.
 	 */
-	public static IFuture<Void> removeMethodNFProperty(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
+	public static IFuture<Void> removeMethodNFProperty(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -783,7 +783,7 @@ public class SNFPropertyProvider
 	 *  Returns the declared names of all non-functional properties of this service.
 	 *  @return The names of the non-functional properties of this service.
 	 */
-	public static IFuture<String[]> getRequiredNFPropertyNames(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<String[]> getRequiredNFPropertyNames(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -802,7 +802,7 @@ public class SNFPropertyProvider
 	 *  Returns the names of all non-functional properties of this service.
 	 *  @return The names of the non-functional properties of this service.
 	 */
-	public static IFuture<String[]> getRequiredNFAllPropertyNames(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<String[]> getRequiredNFAllPropertyNames(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -822,7 +822,7 @@ public class SNFPropertyProvider
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of this service.
 	 */
-	public static IFuture<Map<String, INFPropertyMetaInfo>> getRequiredNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<Map<String, INFPropertyMetaInfo>> getRequiredNFPropertyMetaInfos(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -842,7 +842,7 @@ public class SNFPropertyProvider
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of this service.
 	 */
-	public static IFuture<INFPropertyMetaInfo> getRequiredNFPropertyMetaInfo(IExternalAccess component, final IServiceIdentifier sid, final String name)
+	public static IFuture<INFPropertyMetaInfo> getRequiredNFPropertyMetaInfo(IComponentHandle component, final IServiceIdentifier sid, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -863,7 +863,7 @@ public class SNFPropertyProvider
 	 *  @param type Type of the property value.
 	 *  @return The current value of a non-functional property of this service.
 	 */
-	public static <T> IFuture<T> getRequiredNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final String name)
+	public static <T> IFuture<T> getRequiredNFPropertyValue(IComponentHandle component, final IServiceIdentifier sid, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -886,7 +886,7 @@ public class SNFPropertyProvider
 	 *  @return The current value of a non-functional property of this service.
 	 */
 //	public <T, U> IFuture<T> getNFPropertyValue(String name, Class<U> unit);
-	public static <T, U> IFuture<T> getRequiredNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final String name, final U unit)
+	public static <T, U> IFuture<T> getRequiredNFPropertyValue(IComponentHandle component, final IServiceIdentifier sid, final String name, final U unit)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -905,7 +905,7 @@ public class SNFPropertyProvider
 	 *  Add a non-functional property.
 	 *  @param nfprop The property.
 	 */
-	public static IFuture<Void> addRequiredNFProperty(IExternalAccess component, final IServiceIdentifier sid, final INFProperty<?, ?> nfprop)
+	public static IFuture<Void> addRequiredNFProperty(IComponentHandle component, final IServiceIdentifier sid, final INFProperty<?, ?> nfprop)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -924,7 +924,7 @@ public class SNFPropertyProvider
 	 *  Remove a non-functional property.
 	 *  @param The name.
 	 */
-	public static IFuture<Void> removeRequiredNFProperty(IExternalAccess component, final IServiceIdentifier sid, final String name)
+	public static IFuture<Void> removeRequiredNFProperty(IComponentHandle component, final IServiceIdentifier sid, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -942,7 +942,7 @@ public class SNFPropertyProvider
 	/**
 	 *  Shutdown the provider.
 	 */
-	public static IFuture<Void> shutdownRequiredNFPropertyProvider(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<Void> shutdownRequiredNFPropertyProvider(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -961,7 +961,7 @@ public class SNFPropertyProvider
 	 *  Returns meta information about a non-functional properties of all methods.
 	 *  @return The meta information about a non-functional properties.
 	 */
-	public static IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> getRequiredMethodNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid)
+	public static IFuture<Map<MethodInfo, Map<String, INFPropertyMetaInfo>>> getRequiredMethodNFPropertyMetaInfos(IComponentHandle component, final IServiceIdentifier sid)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -981,7 +981,7 @@ public class SNFPropertyProvider
 	 *  @param method The method targeted by this operation.
 	 *  @return The names of the non-functional properties of the specified method.
 	 */
-	public static IFuture<String[]> getRequiredMethodNFPropertyNames(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
+	public static IFuture<String[]> getRequiredMethodNFPropertyNames(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -1001,7 +1001,7 @@ public class SNFPropertyProvider
 	 *  This includes the properties of all parent components.
 	 *  @return The names of the non-functional properties of this method.
 	 */
-	public static IFuture<String[]> getRequiredMethodNFAllPropertyNames(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
+	public static IFuture<String[]> getRequiredMethodNFAllPropertyNames(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -1020,7 +1020,7 @@ public class SNFPropertyProvider
 	 *  Returns meta information about a non-functional properties of a method.
 	 *  @return The meta information about a non-functional properties.
 	 */
-	public static IFuture<Map<String, INFPropertyMetaInfo>> getRequiredMethodNFPropertyMetaInfos(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method)
+	public static IFuture<Map<String, INFPropertyMetaInfo>> getRequiredMethodNFPropertyMetaInfos(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -1041,7 +1041,7 @@ public class SNFPropertyProvider
 	 *  @param name Name of the property.
 	 *  @return The meta information about a non-functional property of the specified method.
 	 */
-	public static IFuture<INFPropertyMetaInfo> getRequiredMethodNFPropertyMetaInfo(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
+	public static IFuture<INFPropertyMetaInfo> getRequiredMethodNFPropertyMetaInfo(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -1063,7 +1063,7 @@ public class SNFPropertyProvider
 	 *  @param type Type of the property value.
 	 *  @return The current value of a non-functional property of the specified method.
 	 */
-	public static <T> IFuture<T> getRequiredMethodNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
+	public static <T> IFuture<T> getRequiredMethodNFPropertyValue(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -1087,7 +1087,7 @@ public class SNFPropertyProvider
 	 *  @return The current value of a non-functional property of the specified method.
 	 */
 //	public <T, U> IFuture<T> getNFPropertyValue(Method method, String name, Class<U> unit);
-	public static <T, U> IFuture<T> getRequiredMethodNFPropertyValue(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
+	public static <T, U> IFuture<T> getRequiredMethodNFPropertyValue(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final String name, final U unit)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -1107,7 +1107,7 @@ public class SNFPropertyProvider
 	 *  @param method The method targeted by this operation.
 	 *  @param nfprop The property.
 	 */
-	public static IFuture<Void> addRequiredMethodNFProperty(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final INFProperty<?, ?> nfprop)
+	public static IFuture<Void> addRequiredMethodNFProperty(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final INFProperty<?, ?> nfprop)
 	{
 		throw new UnsupportedOperationException();
 		
@@ -1127,7 +1127,7 @@ public class SNFPropertyProvider
 	 *  @param method The method targeted by this operation.
 	 *  @param The name.
 	 */
-	public static IFuture<Void> removeRequiredMethodNFProperty(IExternalAccess component, final IServiceIdentifier sid, final MethodInfo method, final String name)
+	public static IFuture<Void> removeRequiredMethodNFProperty(IComponentHandle component, final IServiceIdentifier sid, final MethodInfo method, final String name)
 	{
 		throw new UnsupportedOperationException();
 		

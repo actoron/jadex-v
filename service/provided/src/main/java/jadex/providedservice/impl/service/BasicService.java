@@ -779,7 +779,7 @@ public class BasicService implements IInternalService //extends NFMethodProperty
 		ComponentIdentifier cid = sid.getProviderId();
 		//System.out.println("isUnrestricted 1: "+cid);
 		
-		return component.getExternalAccess(cid).scheduleStep((IComponent agent) -> 
+		return component.getComponentHandle(cid).scheduleStep((IComponent agent) -> 
 		{
 			//System.out.println("isUnrestricted 2: "+cid);
 			Security sec = getSecurityLevel((Component)agent, null, null, null, method, sid);

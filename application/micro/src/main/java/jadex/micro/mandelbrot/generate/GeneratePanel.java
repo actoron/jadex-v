@@ -18,7 +18,7 @@ import javax.swing.SwingUtilities;
 
 import jadex.common.ClassInfo;
 import jadex.common.SGUI;
-import jadex.core.IExternalAccess;
+import jadex.core.IComponentHandle;
 import jadex.future.DefaultResultListener;
 import jadex.micro.mandelbrot.display.IDisplayService;
 import jadex.micro.mandelbrot.model.AbstractFractalAlgorithm;
@@ -47,7 +47,7 @@ public class GeneratePanel extends JPanel
 	/**
 	 *  Create a new panel.
 	 */
-	public GeneratePanel(final IExternalAccess agent) 
+	public GeneratePanel(final IComponentHandle agent) 
 	{
 		agent.scheduleStep(ag ->
 		{
@@ -59,7 +59,7 @@ public class GeneratePanel extends JPanel
 		});
 	}
 	
-	protected void init(final IExternalAccess agent)
+	protected void init(final IComponentHandle agent)
 	{
 		this.setLayout(new BorderLayout());
 		this.pp	= new PropertiesPanel("Generate Options");
@@ -211,7 +211,7 @@ public class GeneratePanel extends JPanel
 	/**
 	 *  Create a gui.
 	 */
-	public static GeneratePanel	createGui(final IExternalAccess agent)
+	public static GeneratePanel	createGui(final IComponentHandle agent)
 	{
 		final JFrame f = new JFrame();
 		GeneratePanel gp = new GeneratePanel(agent);

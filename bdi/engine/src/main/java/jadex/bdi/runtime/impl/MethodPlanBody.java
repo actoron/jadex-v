@@ -82,6 +82,11 @@ public class MethodPlanBody extends AbstractPlanBody
 	{
 		return null;
 	}
+	
+	public Object invokeFinished(Object[] params)
+	{
+		return null;
+	}
 
 	/**
 	 *  Get the body parameter types.
@@ -102,6 +107,11 @@ public class MethodPlanBody extends AbstractPlanBody
 	}
 
 	public Class<?>[] getAbortedParameterTypes()
+	{
+		return null;
+	}
+	
+	public Class<?>[] getFinishedParameterTypes()
 	{
 		return null;
 	}

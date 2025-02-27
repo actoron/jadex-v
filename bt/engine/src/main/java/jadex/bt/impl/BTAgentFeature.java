@@ -41,6 +41,7 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.future.FutureFunctionality;
+import jadex.execution.impl.ComponentTimerCreator;
 import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
@@ -403,7 +404,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 	{
 		ExecutionContext<IComponent> ret = new ExecutionContext<IComponent>();
 		ret.setUserContext(self);
-		ret.setTimerCreator(new ComponentTimerCreator<IComponent>());
+		ret.setTimerCreator(new ComponentTimerCreator());
 		return ret;
 	}
 	
