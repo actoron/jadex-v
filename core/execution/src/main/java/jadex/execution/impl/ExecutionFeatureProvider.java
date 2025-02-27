@@ -24,6 +24,7 @@ import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
@@ -378,7 +379,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	@Override
 	public <T extends Component> T	bootstrap(Class<T> type, Supplier<T> creator)
 	{
-		Map<Class<Object>, ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
+		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
 		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
 		Future<T>	ret	= new Future<>();
