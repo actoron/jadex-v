@@ -67,6 +67,12 @@ public class BenchmarkHelper
 	 */
 	public static void	benchmarkMemory(Callable<Runnable> startup, double limit)
 	{
+		if(System.getenv("JADEX_BENCHMARK_MEMORY_SKIP")!=null)
+		{
+			System.out.println("Skipping memory benchmark: "+getCaller());
+			return;
+		}
+		
 		int	msecs	= 500;
 		int	sleep	= 500;
 		int retries	= 10;
@@ -142,6 +148,12 @@ public class BenchmarkHelper
 	 */
 	public static void	benchmarkTime(Runnable code, double limit)
 	{
+		if(System.getenv("JADEX_BENCHMARK_TIME_SKIP")!=null)
+		{
+			System.out.println("Skipping time benchmark: "+getCaller());
+			return;
+		}
+		
 		int	retries	= 10;	// how often to repeat everything 
 		long cooldown	= 10000;	// How long to sleep before runs
 		long msecs	= 2000;	// How long to run the benchmark
