@@ -430,6 +430,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			});
 		}
 		
+		// Future.get() is much faster when the future is already finished
+		// -> allow other thread to complete future before continuing
+		Thread.yield();
 		return ret.get();			
 	}
 	
