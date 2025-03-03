@@ -3,6 +3,7 @@ package jadex.injection.impl;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -11,10 +12,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
+import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
+import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 
@@ -48,7 +54,9 @@ public class InjectionModel
 	{
 		if(onstart==null)
 		{
-			onstart	= unifyHandles(getInvocationHandles(clazz, OnStart.class));
+			List<Consumer<IComponent>>	handles	= getInjectionHandles(clazz);
+			handles.addAll(getInvocationHandles(clazz, OnStart.class));
+			onstart	= unifyHandles(handles);
 		}
 		
 		return onstart;
@@ -72,6 +80,20 @@ public class InjectionModel
 	/** The model cache. */
 	protected static Map<Class<?>, InjectionModel>	cache	= new LinkedHashMap<>();
 	
+	/** The supported parameter/field injections (i.e class -> value). */
+	protected static Map<Function<Class<?>, Boolean>, BiFunction<IComponent, Class<?>, Object>>	injections	= new LinkedHashMap<>();
+	
+	static
+	{
+		injections.put(clazz -> IComponent.class.equals(clazz), (self, clazz) -> self);
+		injections.put(clazz -> SReflect.isSupertype(IComponentFeature.class, clazz), (self, clazz) ->
+		{
+			@SuppressWarnings("unchecked")
+			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)clazz;
+			return self.getFeature((Class<IComponentFeature>)feature);
+		});
+	}
+	
 	/**
 	 *  Get the model for a pojo class.
 	 */
@@ -88,37 +110,137 @@ public class InjectionModel
 	}
 	
 	
-	protected static List<Consumer<IComponent>>	getInvocationHandles(Class<?> clazz, Class<? extends Annotation> annotation) throws Error
+	protected static List<Consumer<IComponent>>	getInjectionHandles(Class<?> clazz)
+	{
+		List<Consumer<IComponent>>	handles	= new ArrayList<Consumer<IComponent>>();
+		List<Field> fields = findFields(clazz, Inject.class);
+		
+		for(Field field: fields)
+		{
+			try
+			{
+				field.setAccessible(true);
+				MethodHandle	handle	= MethodHandles.lookup().unreflectSetter(field);
+				
+				BiFunction<IComponent, Class<?>, Object>	injection	= null;
+				for(Function<Class<?>, Boolean> check: injections.keySet())
+				{
+					if(check.apply(field.getType()))
+					{
+						injection	= injections.get(check);
+					}
+				}
+						
+				if(injection!=null)
+				{
+					final BiFunction<IComponent, Class<?>, Object>	finjection	= injection;
+					handles.add(self -> {
+						try
+						{
+							Object[]	args	= new Object[]{self.getPojo(), finjection.apply(self, field.getType())};
+							handle.invokeWithArguments(args);
+						}
+						catch(Throwable e)
+						{
+							// Rethrow user exception
+							SUtil.throwUnchecked(e);
+						}
+					});					
+				}
+				else
+				{
+					throw new UnsupportedOperationException("Cannot inject "+field);
+				}
+			}
+			catch(Exception e)
+			{
+				SUtil.throwUnchecked(e);
+			}
+		}
+		
+		return handles;
+	}
+	
+	protected static List<Consumer<IComponent>>	getInvocationHandles(Class<?> clazz, Class<? extends Annotation> annotation)
 	{
 		List<Consumer<IComponent>>	handles	= new ArrayList<Consumer<IComponent>>();
 		
-		List<Method> methods = findMethods(clazz, annotation);			
+		List<Method> methods = findMethods(clazz, annotation);
 		for(Method method: methods)
 		{
 			try
 			{
 				method.setAccessible(true);
 				MethodHandle	handle	= MethodHandles.lookup().unreflect(method);
-				handles.add(self -> {
-					try
+				
+				// Find parameters
+				if(method.getParameters().length!=0)
+				{
+					List<BiFunction<IComponent, Class<?>, Object>>	param_injections	= new ArrayList<>();
+					Class<?>[]	ptypes	= method.getParameterTypes();
+					for(Class<?> param: ptypes)
 					{
-						handle.invoke(self.getPojo());
-					}
-					catch(Throwable e)
-					{
-						// Rethrow user exception
-						SUtil.throwUnchecked(e);
-					}
-				});
+						BiFunction<IComponent, Class<?>, Object>	injection	= null;
+						for(Function<Class<?>, Boolean> check: injections.keySet())
+						{
+							if(check.apply(param))
+							{
+								injection	= injections.get(check);
+							}
+						}
+						
+						if(injection!=null)
+						{
+							param_injections.add(injection);
+						}
+						else
+						{
+							throw new UnsupportedOperationException("Cannot inject "+param.getSimpleName()+" in "+method);
+						}
+
+						handles.add(self -> {
+							try
+							{
+								Object[]	args	= new Object[param_injections.size()+1];
+								args[0]	= self.getPojo();
+								for(int i=1; i<args.length; i++)
+								{
+									args[i]	= param_injections.get(i-1).apply(self, ptypes[i-1]);
+								}
+								
+								handle.invokeWithArguments(args);
+							}
+							catch(Throwable e)
+							{
+								// Rethrow user exception
+								SUtil.throwUnchecked(e);
+							}
+						});					
+					}					
+				}
+				else
+				{
+					handles.add(self -> {
+						try
+						{
+							handle.invoke(self.getPojo());
+						}
+						catch(Throwable e)
+						{
+							// Rethrow user exception
+							SUtil.throwUnchecked(e);
+						}
+					});					
+				}				
 			}
 			catch(Exception e)
 			{
-				// Should not happen?
 				SUtil.throwUnchecked(e);
 			}
 		}
 		
-		return handles;
+		// Go backwards through list to execute superclass methods first
+		return handles.reversed();
 	}
 
 
@@ -143,8 +265,7 @@ public class InjectionModel
 		{
 			ret	= self ->
 			{
-				// Go backwards through list to execute superclass methods first
-				for(int i=handles.size()-1; i>=0; i--)
+				for(int i=0; i<handles.size(); i++)
 					handles.get(i).accept(self);
 			};
 		}
@@ -152,6 +273,28 @@ public class InjectionModel
 		return ret;
 	}
 
+	protected static List<Field> findFields(Class<?> clazz, Class<? extends Annotation> annotation)
+	{
+		List<Field>	allfields	= new ArrayList<>();
+		Class<?> myclazz	= clazz;
+		while(myclazz!=null)
+		{
+			for(Field field: myclazz.getDeclaredFields())
+			{
+				if(field.isAnnotationPresent(annotation))
+				{
+					if((field.getModifiers() & Modifier.STATIC)!=0)
+					{
+						throw new RuntimeException("Fields with @"+annotation.getSimpleName()+" must not be static: "+field);
+					}
+					allfields.add(field);
+				}
+			}
+			myclazz	= myclazz.getSuperclass();
+		}
+		return allfields;
+	}
+	
 	protected static List<Method> findMethods(Class<?> clazz, Class<? extends Annotation> annotation)
 	{
 		List<Method>	allmethods	= new ArrayList<>();
