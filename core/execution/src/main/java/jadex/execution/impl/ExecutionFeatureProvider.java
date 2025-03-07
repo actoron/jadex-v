@@ -35,7 +35,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
-import jadex.execution.AgentMethod;
+import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.execution.NoCopy;
@@ -136,7 +136,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						
 						Object proxy = new ByteBuddy()
 							.subclass(pojo.getClass())
-							.method(ElementMatchers.not(ElementMatchers.isAnnotatedWith(AgentMethod.class)))
+							.method(ElementMatchers.not(ElementMatchers.isAnnotatedWith(ComponentMethod.class)))
 				            .intercept(InvocationHandlerAdapter.of(new InvocationHandler() 
 				            {
 				            	@Override
@@ -156,7 +156,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				            		}
 				                }
 				            }))
-							.method(ElementMatchers.isAnnotatedWith(AgentMethod.class)) 
+							.method(ElementMatchers.isAnnotatedWith(ComponentMethod.class)) 
 							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 							{
 								List<Object> myargs = new ArrayList<Object>(); 
