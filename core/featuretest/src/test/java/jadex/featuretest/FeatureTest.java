@@ -131,7 +131,7 @@ public class FeatureTest
 		}
 		
 		// Check if actual ordering matches desired ordering
-		Iterator<Object>	it	= comp.getFeatures().iterator();
+		Iterator<IComponentFeature>	it	= comp.getFeatures().iterator();
 		for(Class<Object> featuretype: feature_types)
 		{
 			assertTrue(it.hasNext(), "Feature missing: "+featuretype);

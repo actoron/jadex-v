@@ -24,6 +24,7 @@ import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
@@ -378,7 +379,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	@Override
 	public <T extends Component> T	bootstrap(Class<T> type, Supplier<T> creator)
 	{
-		Map<Class<Object>, ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
+		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
 		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
 		Future<T>	ret	= new Future<>();
@@ -388,33 +389,40 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			exe.scheduleStep(() -> 
 			{
-				@SuppressWarnings("unchecked")
-				FastLambda<Object> self = (FastLambda<Object>)creator.get();
-				startFeatures(self);
-				
-				// run body and termination in same step as init
 				try
 				{
-					/*ILifecycle lfeature = (ILifecycle)feature;
-					System.out.println("starting: "+lfeature);
-					lfeature.onStart();*/
+					@SuppressWarnings("unchecked")
+					FastLambda<Object> self = (FastLambda<Object>)creator.get();
+					startFeatures(self);
 					
-					Object	result	= self.getPojo().apply(self);
-					if(self.result!=null)
-						self.result.setResult(result);
+					// run body and termination in same step as init
+					try
+					{
+						/*ILifecycle lfeature = (ILifecycle)feature;
+						System.out.println("starting: "+lfeature);
+						lfeature.onStart();*/
+						
+						Object	result	= self.getPojo().apply(self);
+						if(self.result!=null)
+							self.result.setResult(result);
+					}
+					catch(Exception e)
+					{
+						self.handleException(e);
+					}
+					if(self.terminate)
+					{
+						exe.scheduleStep((Runnable)() -> self.terminate());
+					}
+					
+					@SuppressWarnings("unchecked")
+					T t	= (T)self;
+					ret.setResult(t);
 				}
 				catch(Exception e)
 				{
-					self.handleException(e);
+					ret.setException(e);
 				}
-				if(self.terminate)
-				{
-					exe.scheduleStep((Runnable)() -> self.terminate());
-				}
-				
-				@SuppressWarnings("unchecked")
-				T t	= (T)self;
-				ret.setResult(t);
 			});
 		}
 		
@@ -423,9 +431,16 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			exe.scheduleStep(() -> 
 			{
-				T self = creator.get();
-				startFeatures(self);
-				ret.setResult(self);
+				try
+				{
+					T self = creator.get();
+					startFeatures(self);
+					ret.setResult(self);
+				}
+				catch(Exception e)
+				{
+					ret.setException(e);
+				}
 			});
 		}
 		
@@ -453,8 +468,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	public boolean isCreator(Object obj) 
 	{
 		return Runnable.class.isAssignableFrom(obj.getClass())
-			|| Supplier.class.isAssignableFrom(obj.getClass())
+			|| Callable.class.isAssignableFrom(obj.getClass())
 			|| IThrowingFunction.class.isAssignableFrom(obj.getClass())
+			|| IThrowingConsumer.class.isAssignableFrom(obj.getClass())
 			|| LambdaPojo.class.isAssignableFrom(obj.getClass());
 	}
 	

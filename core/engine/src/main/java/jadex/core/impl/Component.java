@@ -30,7 +30,7 @@ import jadex.future.IFuture;
 public class Component implements IComponent
 {
 	/** The feature instances of this component, stored by the feature type. */
-	protected Map<Class<Object>, Object> features;
+	protected Map<Class<IComponentFeature>, IComponentFeature> features;
 	
 	/** The pojo, if any.*/
 	protected Object pojo;
@@ -92,16 +92,16 @@ public class Component implements IComponent
 		
 		// Instantiate all features (except lazy ones).
 		// Use getProviderListForComponent as it uses a cached array list
-		List<ComponentFeatureProvider<Object>>	providers
+		List<ComponentFeatureProvider<IComponentFeature>>	providers
 			= SComponentFeatureProvider.getProviderListForComponent(getClass());
 		if(!providers.isEmpty())
 		{
 			features = new LinkedHashMap<>(providers.size(), 1);
-			for(ComponentFeatureProvider<Object> provider: providers)
+			for(ComponentFeatureProvider<IComponentFeature> provider: providers)
 			{
 				if(!provider.isLazyFeature())
 				{
-					Object	feature	= provider.createFeatureInstance(this);
+					IComponentFeature	feature	= provider.createFeatureInstance(this);
 					features.put(provider.getFeatureType(), feature);
 				}
 			}
@@ -138,9 +138,9 @@ public class Component implements IComponent
 	 *  Get the internal set of currently instantiated features.
 	 *  Does not include lazy, which have not yet been accessed.  
 	 */
-	public Collection<Object>	getFeatures()
+	public Collection<IComponentFeature>	getFeatures()
 	{
-		return features!=null ? (Collection<Object>)features.values() : Collections.emptySet();
+		return features!=null ? (Collection<IComponentFeature>)features.values() : Collections.emptySet();
 	}
 	
 	/**
@@ -181,7 +181,7 @@ public class Component implements IComponent
 		}
 		else
 		{
-			Map<Class<Object>, ComponentFeatureProvider<Object>>	providers
+			Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers
 				= SComponentFeatureProvider.getProvidersForComponent(getClass());
 			if(providers.containsKey(type))
 			{
@@ -194,7 +194,7 @@ public class Component implements IComponent
 					@SuppressWarnings("rawtypes")
 					Class rtype	= type;
 					@SuppressWarnings("unchecked")
-					Class<Object> otype	= (Class<Object>)rtype;
+					Class<IComponentFeature> otype	= (Class<IComponentFeature>)rtype;
 					features.put(otype, ret);
 					return ret;
 				}
@@ -219,7 +219,7 @@ public class Component implements IComponent
 		{
 			ComponentManager.get().removeComponent(this.getId());
 			
-			List<ComponentFeatureProvider<Object>> provs = SComponentFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
+			List<ComponentFeatureProvider<IComponentFeature>> provs = SComponentFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
 			Optional<IComponentLifecycleManager> opt = provs.stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
 			if(opt.isPresent())
 			{
@@ -502,10 +502,10 @@ public class Component implements IComponent
 
 	public static <T extends Component> T createComponent(Class<T> type, Supplier<T> creator)
 	{
-		List<ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProviderListForComponent(type);
+		List<ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProviderListForComponent(type);
 		for(int i=providers.size()-1; i>=0; i--)
 		{
-			ComponentFeatureProvider<Object>	provider	= providers.get(i);
+			ComponentFeatureProvider<IComponentFeature>	provider	= providers.get(i);
 			if(provider instanceof IBootstrapping)
 			{
 				Supplier<T>	nextcreator	= creator;

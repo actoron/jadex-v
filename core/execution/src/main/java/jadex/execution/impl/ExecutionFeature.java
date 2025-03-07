@@ -22,6 +22,7 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
@@ -794,7 +795,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		executeEndStep();
 		
-		Collection<Object>	cfeatures	= self.getFeatures();
+		Collection<IComponentFeature>	cfeatures	= self.getFeatures();
 		Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
 		for(int i=features.length-1; i>=0; i--)
 		{
