@@ -389,33 +389,40 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			exe.scheduleStep(() -> 
 			{
-				@SuppressWarnings("unchecked")
-				FastLambda<Object> self = (FastLambda<Object>)creator.get();
-				startFeatures(self);
-				
-				// run body and termination in same step as init
 				try
 				{
-					/*ILifecycle lfeature = (ILifecycle)feature;
-					System.out.println("starting: "+lfeature);
-					lfeature.onStart();*/
+					@SuppressWarnings("unchecked")
+					FastLambda<Object> self = (FastLambda<Object>)creator.get();
+					startFeatures(self);
 					
-					Object	result	= self.getPojo().apply(self);
-					if(self.result!=null)
-						self.result.setResult(result);
+					// run body and termination in same step as init
+					try
+					{
+						/*ILifecycle lfeature = (ILifecycle)feature;
+						System.out.println("starting: "+lfeature);
+						lfeature.onStart();*/
+						
+						Object	result	= self.getPojo().apply(self);
+						if(self.result!=null)
+							self.result.setResult(result);
+					}
+					catch(Exception e)
+					{
+						self.handleException(e);
+					}
+					if(self.terminate)
+					{
+						exe.scheduleStep((Runnable)() -> self.terminate());
+					}
+					
+					@SuppressWarnings("unchecked")
+					T t	= (T)self;
+					ret.setResult(t);
 				}
 				catch(Exception e)
 				{
-					self.handleException(e);
+					ret.setException(e);
 				}
-				if(self.terminate)
-				{
-					exe.scheduleStep((Runnable)() -> self.terminate());
-				}
-				
-				@SuppressWarnings("unchecked")
-				T t	= (T)self;
-				ret.setResult(t);
 			});
 		}
 		
@@ -424,9 +431,16 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			exe.scheduleStep(() -> 
 			{
-				T self = creator.get();
-				startFeatures(self);
-				ret.setResult(self);
+				try
+				{
+					T self = creator.get();
+					startFeatures(self);
+					ret.setResult(self);
+				}
+				catch(Exception e)
+				{
+					ret.setException(e);
+				}
 			});
 		}
 		
