@@ -1,5 +1,6 @@
 package jadex.bdi.runtime.impl;
 
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -566,7 +567,9 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 				
 				public void exceptionOccurred(Exception exception)
 				{
-					System.err.println("Goal failed: "+exception);
+					if(!(exception instanceof GoalDroppedException))
+						rcapa.getAgent().getLogger().log(Level.WARNING, "Goal failed: "+exception);
+						//System.err.println("Goal failed: "+exception);
 				}
 			};
 			

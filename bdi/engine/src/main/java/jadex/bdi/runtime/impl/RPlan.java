@@ -1712,14 +1712,14 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 				
 				if(donotify)
 				{
-					if(!abort)//sus==null)
-					{
+					/*if(!abort)//sus==null)
+					{*/
 						Exception ex	= args!=null && args.exception()!=null ? args.exception().get() : null;
 						if(ex!=null)
 						{
 							if(waitfuture instanceof ITerminableFuture)
 							{
-//								System.out.println("notify1: "+getId());
+								System.out.println("notify1: "+getId());
 								((ITerminableFuture<?>)waitfuture).terminate(ex);
 							}
 							else
@@ -1737,15 +1737,15 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 							{
 								o = ((ChangeEvent)o).getValue();
 							}
-//							System.out.println("notify3: "+getId());
+							System.out.println("notify3: "+getId());
 							waitfuture.setResultIfUndone(isvoid? null: (T)o);
 						}
-					}
+					/*}
 					else
 					{
-//						System.out.println("notify4: "+getId());
+						System.out.println("notify4: "+getId());
 						waitfuture.abortGet(sus);
-					}
+					}*/
 				}
 			}
 		}

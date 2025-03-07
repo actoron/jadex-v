@@ -39,9 +39,6 @@ public class Environment
 	/** The charging stations. */
 	private List<Chargingstation> chargingstations;
 
-	/** The pheromones. */
-	private List<Pheromone> pheromones;
-
 	//-------- constructors --------
 
 	/**
@@ -54,7 +51,6 @@ public class Environment
 		this.wastes = new ArrayList<Waste>();
 		this.wastebins = new ArrayList<Wastebin>();
 		this.chargingstations = new ArrayList<Chargingstation>();
-		this.pheromones = new ArrayList<Pheromone>();
 
 		// Add some things to our world.
 		addWaste(new Waste(new Location(0.1, 0.5)));
@@ -199,15 +195,6 @@ public class Environment
 	}
 
 	/**
-	 *  Add a pheromone.
-	 *  @param pheromone The new pheromone.
-	 */
-	public synchronized void addPheromone(Pheromone pheromone)
-	{
-		pheromones.add(pheromone.clone());
-	}
-
-	/**
 	 *  Get all wastes.
 	 *  @return All wastes.
 	 */
@@ -249,22 +236,6 @@ public class Environment
 	public synchronized Cleaner getCleaner(String id)
 	{
 		return cleaners.get(id);
-	}
-
-	/**
-	 *  Get all pheromones.
-	 *  @return All pheromones.
-	 */
-	public synchronized Pheromone[] getPheromones()
-	{
-		// Remove evaporated pheromones
-		Iterator<Pheromone> phi=pheromones.iterator();
-		while(phi.hasNext() && phi.next().getStrength()==0.0)
-		{
-			phi.remove();
-		}
-		
-		return cloneList(pheromones, Pheromone.class);
 	}
 
 	/**
