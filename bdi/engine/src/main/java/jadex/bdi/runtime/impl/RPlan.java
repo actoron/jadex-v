@@ -1719,7 +1719,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 						{
 							if(waitfuture instanceof ITerminableFuture)
 							{
-								System.out.println("notify1: "+getId());
+								//System.out.println("notify1: "+getId());
 								((ITerminableFuture<?>)waitfuture).terminate(ex);
 							}
 							else
@@ -1737,7 +1737,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 							{
 								o = ((ChangeEvent)o).getValue();
 							}
-							System.out.println("notify3: "+getId());
+							//System.out.println("notify3: "+getId());
 							waitfuture.setResultIfUndone(isvoid? null: (T)o);
 						}
 					/*}

@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import jadex.common.IFilter;
 import jadex.math.IVector2;
@@ -72,34 +73,42 @@ public class KdNode
 		this.maxLeafNodeSize = maxLeafNodeSize;
 		this.maxMedianSamples = maxMedianSamples;
 		
-		if (input != null)
+		if (input != null) 
 		{
-			if (input.size() <= maxLeafNodeSize)
-				content = input;
-			else
-			{
-				hyperplane = estimateMedian(input, random, fetcher);
-				
-				int halfSize = input.size() >> 1;
-				List<SpaceObject> leftList = new ArrayList<SpaceObject>(halfSize);
-				List<SpaceObject> rightList = new ArrayList<SpaceObject>(halfSize);
-				
-				for (SpaceObject obj : input)
-				{
-					if (fetcher.getValue(getPosition(obj)) < hyperplane)
-						leftList.add(obj);
-					else
-						rightList.add(obj);
-				}
-				
-				if (leftList.size() > 0 && rightList.size() > 0)
-				{
-					left = new KdNode(leftList, random, fetcher.nextFetcher(), maxLeafNodeSize, maxMedianSamples);
-					right = new KdNode(rightList, random, fetcher.nextFetcher(), maxLeafNodeSize, maxMedianSamples);
-				}
-				else
-					content = input;
-			}
+		    input = input.stream().filter(obj -> getPosition(obj) != null).collect(Collectors.toList());
+
+		    if (input.size() <= maxLeafNodeSize) 
+		    {
+		        content = input;
+		    } 
+		    else 
+		    {
+		        hyperplane = estimateMedian(input, random, fetcher);
+
+		        int halfSize = input.size() >> 1;
+		        List<SpaceObject> leftList = new ArrayList<>(halfSize);
+		        List<SpaceObject> rightList = new ArrayList<>(halfSize);
+
+		        for (SpaceObject obj : input) {
+		            IVector2 pos = getPosition(obj);
+		            if (pos == null) continue; // Sicherheitsprüfung
+
+		            if (fetcher.getValue(pos) < hyperplane)
+		                leftList.add(obj);
+		            else
+		                rightList.add(obj);
+		        }
+
+		        if (!leftList.isEmpty() && !rightList.isEmpty()) 
+		        {
+		            left = new KdNode(leftList, random, fetcher.nextFetcher(), maxLeafNodeSize, maxMedianSamples);
+		            right = new KdNode(rightList, random, fetcher.nextFetcher(), maxLeafNodeSize, maxMedianSamples);
+		        } 
+		        else 
+		        {
+		            content = input;
+		        }
+		    }
 		}
 	}
 	
@@ -117,9 +126,15 @@ public class KdNode
 		{
 			ret = new LinkedList<SpaceObject>();
 			for (SpaceObject obj : content)
+			{
+				if (getPosition(obj) == null) continue;
+				
 				if (getDistance(obj, point).getSquaredLength().getAsDouble() < radiusSquared)
+				{
 					if (filter == null || filter.filter(obj))
 						ret.add(obj);
+				}
+			}
 		}
 		else if (left != null)
 		{
@@ -167,6 +182,8 @@ public class KdNode
 			double lengthSquared = Double.MAX_VALUE;
 			for (SpaceObject obj : content)
 			{
+				if (getPosition(obj) == null) continue;
+				
 				IVector2 dist = getDistance(obj, point);
 				double sqLength = dist.getSquaredLength().getAsDouble();
 				if (sqLength < lengthSquared)
@@ -342,9 +359,9 @@ public class KdNode
 		}
 	}
 	
-	protected static final IVector2 getPosition(SpaceObject obj)
+	protected static final IVector2 getPosition(SpaceObject obj) 
 	{
-		return (IVector2) obj.getPosition();
+	    return (obj == null) ? null : (IVector2) obj.getPosition();
 	}
 	
 	protected static final IVector2 getDistance(SpaceObject obj, IVector2 point)
