@@ -537,7 +537,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	/**
 	 *  Abort a blocking get call.
 	 *  @param caller The caller
-	 */
+	 * /
 	public void abortGet(ISuspendable caller)
 	{
 //		System.out.println("abort get1");
@@ -566,7 +566,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				}
 			}
 		}
-	}
+	}*/
 
     /**
      *  Schedule a notification for selected listeners.
