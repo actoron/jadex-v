@@ -218,14 +218,17 @@ public class Component implements IComponent
 		{
 			ComponentManager.get().removeComponent(this.getId());
 			
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(getClass());
-			if(creator!=null)
+			if(getPojo()!=null)
 			{
-				creator.terminate(this);
-			}
-			else
-			{
-				throw new RuntimeException("Cannot terminate component of type: "+getClass());
+				IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(getPojo().getClass());
+				if(creator!=null)
+				{
+					creator.terminate(this);
+				}
+				else
+				{
+					throw new RuntimeException("Cannot terminate component of type: "+getClass());
+				}
 			}
 				
 			return IFuture.DONE;
