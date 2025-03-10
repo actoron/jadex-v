@@ -481,7 +481,7 @@ public class CleanerAgent
 		@GoalCreationCondition(factadded="wastes")
 		public AchieveCleanupWaste(Waste waste)
 		{
-			System.out.println("achieve cleanup: "+waste);
+			//System.out.println("achieve cleanup: "+waste);
 			this.waste	= waste;
 		}
 		
@@ -541,7 +541,7 @@ public class CleanerAgent
 	@Plan(trigger=@Trigger(goals=AchieveCleanupWaste.class))
 	private void cleanupWaste(IPlan plan, AchieveCleanupWaste goal)
 	{
-		System.out.println("Starting cleanupWaste() plan");
+		//System.out.println("Starting cleanupWaste() plan");
 		Waste waste = goal.getWaste();
 		
 		// Move to waste and pick it up, if not yet done
@@ -592,7 +592,7 @@ public class CleanerAgent
 	private void performPatrolPlan()
 	{
 		// Follow a simple path around the four corners of the museum and back to the first corner.
-		System.out.println("Starting performPatrolPlan()");
+		//System.out.println("Starting performPatrolPlan()");
 		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1)).get();
 		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.9)).get();
 		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.9)).get();
@@ -607,7 +607,7 @@ public class CleanerAgent
 	private void performPatrolPlan2()
 	{
 		// Follow another path around the middle of the museum.
-		System.out.println("Starting performPatrolPlan2()");
+		//System.out.println("Starting performPatrolPlan2()");
 		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
 		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();
 		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7)).get();
@@ -622,7 +622,7 @@ public class CleanerAgent
 	private void performPatrolPlan3()
 	{
 		// Follow a zig-zag path in the museum.
-		System.out.println("Starting performPatrolPlan3()");
+		//System.out.println("Starting performPatrolPlan3()");
 		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
 		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7)).get();
 		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();

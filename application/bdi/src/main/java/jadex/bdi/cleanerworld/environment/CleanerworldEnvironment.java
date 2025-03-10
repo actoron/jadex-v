@@ -54,6 +54,12 @@ public class CleanerworldEnvironment extends Environment
 	}
 	
 	@ComponentMethod
+	public void toggleDaytime() 
+	{
+		this.daytime = !daytime;
+	}
+	
+	@ComponentMethod
 	public IFuture<Set<Wastebin>> getWastebins()
 	{
 		//System.out.println(getSpaceObjectsByType(Wastebin.class).get());
