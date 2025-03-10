@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 
 import jadex.benchmark.BenchmarkHelper;
 import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
@@ -25,7 +27,7 @@ public class InjectionTest
 		Future<Void>	start	= new Future<>();
 		Future<Void>	stop	= new Future<>();
 		
-		IComponent	agent	= Component.createComponent(Component.class, () -> new Component(new Object()
+		IComponentHandle	comp	= IComponentManager.get().create(new Object()
 		{
 			@OnStart
 			public void	start()
@@ -38,15 +40,14 @@ public class InjectionTest
 			{
 				stop.setResult(null);
 			}
-
-		}));
+		}).get();
 		
 		// Check if start() is executed
 		start.get(TIMEOUT);
 		
 		// Check if stop is correctly executed
 		assertFalse(stop.isDone(), "stop() should not yet be executed.");
-		agent.getComponentHandle().terminate().get();
+		comp.terminate().get();
 		assertTrue(stop.isDone(), "stop() should have been executed.");
 	}
 	
@@ -118,16 +119,16 @@ public class InjectionTest
 		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<Void>	ret	= new Future<>();
-			IComponent	agent	= Component.createComponent(Component.class, () -> new Component(new Object()
+			IComponentHandle	comp	= IComponentManager.get().create(new Object()
 			{
 				@OnStart
 				public void	start()
 				{
 					ret.setResult(null);
 				}
-			}));
+			}).get();
 			ret.get();
-			agent.terminate().get();
+			comp.terminate().get();
 		});
 	}
 }

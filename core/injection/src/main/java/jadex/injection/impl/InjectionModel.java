@@ -86,6 +86,7 @@ public class InjectionModel
 	static
 	{
 		injections.put(clazz -> IComponent.class.equals(clazz), (self, clazz) -> self);
+		
 		injections.put(clazz -> SReflect.isSupertype(IComponentFeature.class, clazz), (self, clazz) ->
 		{
 			@SuppressWarnings("unchecked")

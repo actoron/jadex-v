@@ -47,18 +47,23 @@ public interface IComponentFactory
 	{		
 		Future<IComponentHandle> ret = new Future<>();
 		
-		boolean created = false;
-		for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
+		if(pojo==null)
 		{
-			if(creator.isCreator(pojo))
+			// Plain component for null pojo
+			ret.setResult(Component.createComponent(Component.class, () -> new Component(pojo,cid,app)).getComponentHandle());
+		}
+		else
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
 			{
 				ret.setResult(creator.create(pojo, cid, app));
-				created = true;
-				break;
+			}
+			else
+			{
+				ret.setException(new RuntimeException("Could not create component: "+pojo));
 			}
 		}
-		if(!created)
-			ret.setException(new RuntimeException("Could not create component: "+pojo));
 		
 		return ret;
 	}
@@ -97,7 +102,7 @@ public interface IComponentFactory
 	{
 		Future<T> ret = new Future<>();
 		IComponentHandle comp = create(pojo).get();
-		// all pojos of type IResultProvider will be terminate component after result is received
+		// all pojos of type IResultProvider will terminate component after result is received
 		if(pojo instanceof IResultProvider)
 		{
 			((IResultProvider)pojo).subscribeToResults().next(r -> 
@@ -110,7 +115,11 @@ public interface IComponentFactory
 		{
 			Map<String, Object> res = getResults(pojo);
 			if(res.size()==1)
-				ret.setResult((T)res.values().iterator().next());
+			{
+				@SuppressWarnings("unchecked")
+				T	result	= (T)res.values().iterator().next();
+				ret.setResult(result);
+			}
 			else
 				ret.setException(new RuntimeException("no result found: "+res));
 		});
@@ -178,16 +187,13 @@ public interface IComponentFactory
 			ret = new HashMap<String, Object>(rp.getResultMap());
 			done = true;
 		}
-		else
+		else if(pojo!=null)
 		{
-			for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
 			{
-				if(creator.isCreator(pojo))
-				{
-					ret = creator.getResults(pojo);
-					done = true;
-					break;
-				}
+				ret = creator.getResults(pojo);
+				done = true;
 			}
 		}
 		if(!done)
