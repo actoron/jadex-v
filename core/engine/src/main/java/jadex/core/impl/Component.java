@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -18,8 +17,8 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -219,14 +218,16 @@ public class Component implements IComponent
 		{
 			ComponentManager.get().removeComponent(this.getId());
 			
-			List<ComponentFeatureProvider<IComponentFeature>> provs = SComponentFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
-			Optional<IComponentLifecycleManager> opt = provs.stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
-			if(opt.isPresent())
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(getClass());
+			if(creator!=null)
 			{
-				IComponentLifecycleManager lm = opt.get();
-				lm.terminate(this);
+				creator.terminate(this);
 			}
-			
+			else
+			{
+				throw new RuntimeException("Cannot terminate component of type: "+getClass());
+			}
+				
 			return IFuture.DONE;
 		}
 		else

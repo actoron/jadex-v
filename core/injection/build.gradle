@@ -27,7 +27,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
 	
-	implementation 'org.activecomponents.jadex:future:'+v
+	testImplementation 'org.activecomponents.jadex:future:'+v
 	testImplementation 'org.activecomponents.jadex:benchmark-core:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
