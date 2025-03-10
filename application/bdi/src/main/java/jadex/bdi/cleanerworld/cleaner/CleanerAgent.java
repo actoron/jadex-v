@@ -17,6 +17,7 @@ import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalResult;
+import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
@@ -29,9 +30,12 @@ import jadex.bdi.cleanerworld.ui.SensorGui;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.bdi.runtime.IPlan;
 import jadex.bdi.runtime.Val;
+import jadex.bdi.runtime.impl.ICandidateInfo;
 import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.environment.Environment;
+import jadex.environment.PerceptionProcessor;
+import jadex.environment.PerceptionProcessor.PerceptionState;
 import jadex.environment.SpaceObject;
 import jadex.environment.SpaceObjectsEvent;
 import jadex.environment.VisionEvent;
@@ -130,9 +134,37 @@ public class CleanerAgent
 		Cleaner s = new Cleaner(new Vector2Double(Math.random()*0.4+0.3, Math.random()*0.4+0.3), getAgent().getId().getLocalName(), 0.1, 0.1, 0.8);  
 		s = (Cleaner)getEnvironment().addSpaceObject((SpaceObject)s).get();
 		bdifeature.setBeliefValue("self", s);
-		//self.set(s);
 		
+		PerceptionProcessor pp = new PerceptionProcessor();
+		pp.registerHandler(Waste.class, obj -> findAndUpdateOrAdd(obj, wastes), PerceptionState.SEEN, PerceptionState.CHANGED);
+		pp.registerHandler(Wastebin.class, obj -> findAndUpdateOrAdd(obj, wastebins), PerceptionState.SEEN, PerceptionState.CHANGED);
+		pp.registerHandler(Chargingstation.class, obj -> findAndUpdateOrAdd(obj, stations), PerceptionState.SEEN, PerceptionState.CHANGED);
+		pp.registerHandler(Cleaner.class, obj -> 
+		{
+			if(obj.equals(getSelf()))
+				getSelf().updateFrom(obj);
+			else
+				findAndUpdateOrAdd(obj, others);
+		}
+		, PerceptionState.SEEN, PerceptionState.CHANGED);
+		pp.registerHandler(Waste.class, obj -> wastes.remove(obj), PerceptionState.DISAPPEARED);
+		pp.registerHandler(Wastebin.class, obj -> wastebins.remove(obj), PerceptionState.DISAPPEARED);
+		pp.registerHandler(Chargingstation.class, obj -> stations.remove(obj), PerceptionState.DISAPPEARED);
+		pp.registerHandler(Cleaner.class, obj -> others.remove(obj), PerceptionState.DISAPPEARED);
+		pp.registerHandler(Waste.class, obj -> {if(obj.getPosition()==null) wastes.remove(obj);}, PerceptionState.UNSEEN);
+		pp.registerHandler(Wastebin.class, obj -> {if(obj.getPosition()==null) wastebins.remove(obj);}, PerceptionState.UNSEEN);
+		pp.registerHandler(Chargingstation.class, obj -> {if(obj.getPosition()==null) stations.remove(obj);}, PerceptionState.UNSEEN);
+		pp.registerHandler(Cleaner.class, obj -> {if(obj.getPosition()==null) others.remove(obj);}, PerceptionState.UNSEEN);
+
 		getEnvironment().observeObject((Cleaner)getSelf()).next(e ->
+		{
+			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
+			{
+				pp.handleEvent(e);
+			});
+		});
+		
+		/*getEnvironment().observeObject((Cleaner)getSelf()).next(e ->
 		{
 			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
 			{
@@ -140,6 +172,7 @@ public class CleanerAgent
 				{
 					Set<SpaceObject> seen = ((VisionEvent)e).getVision().getSeen();
 					Set<SpaceObject> disap = ((VisionEvent)e).getVision().getDisappeared();
+					Set<SpaceObject> unseen = ((VisionEvent)e).getVision().getUnseen();
 					
 					for(SpaceObject obj: seen)
 					{
@@ -182,6 +215,30 @@ public class CleanerAgent
 							others.remove(obj);
 						}
 					}
+					for(SpaceObject obj: unseen)
+					{
+						// special case of objects with pos = null
+						if(obj.getPosition()==null)
+						{
+							if(obj instanceof Waste)
+							{
+								wastes.remove(obj);
+								//System.out.println("Waste removed: "+agent.getId().getLocalName()+", "+obj);
+							}
+							else if(obj instanceof Wastebin)
+							{
+								wastebins.remove(obj);
+							}
+							else if(obj instanceof Chargingstation)
+							{
+								stations.remove(obj);
+							}
+							else if(obj instanceof Cleaner)
+							{
+								others.remove(obj);
+							}
+						}
+					}
 				}
 				else if(e instanceof SpaceObjectsEvent)
 				{
@@ -218,7 +275,7 @@ public class CleanerAgent
 					}
 				}
 			});
-		});
+		});*/
 		
 		// Tell the sensor to update the belief sets
 		/*actsense.manageWastesIn(wastes);
@@ -348,6 +405,12 @@ public class CleanerAgent
 		{
 			return !daytime.get();
 		}
+		
+		@GoalSelectCandidate
+		ICandidateInfo	chooseMove(IBDIAgentFeature bdi, List<ICandidateInfo> cands)
+		{
+			return cands.get((int)(Math.random()*cands.size()));
+		}
 	}
 	
 	//-------- look for waste --------
@@ -362,14 +425,12 @@ public class CleanerAgent
 		/**
 		 *  Monitor day time and restart moving when night is gone.
 		 */
-		@GoalContextCondition
+		@GoalContextCondition(beliefs="daytime")
 		private boolean context()
 		{
 			return daytime.get();
 		}
 	}
-	
-	
 	
 	@Goal(excludemode=ExcludeMode.Never)
 	private class QueryWastebin
@@ -436,10 +497,10 @@ public class CleanerAgent
 		
 		// Goal should only be pursued when carrying no waste
 		// or when goal is resumed after recharging and carried waste is of this goal.
-		@GoalContextCondition
+		@GoalContextCondition(beliefs={"daytime", "self"})
 		boolean isPossible()
 		{
-			return self.getCarriedWaste()==null || self.getCarriedWaste().equals(waste);
+			return daytime.get() && (self.getCarriedWaste()==null || waste.equals(self.getCarriedWaste()));
 		}
 		
 		@Override
@@ -532,11 +593,11 @@ public class CleanerAgent
 	{
 		// Follow a simple path around the four corners of the museum and back to the first corner.
 		System.out.println("Starting performPatrolPlan()");
-		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1));
-		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.9));
-		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.9));
-		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.1));
-		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1));
+		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.9)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.9)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.1)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1)).get();
 	}
 
 	/**
@@ -547,11 +608,11 @@ public class CleanerAgent
 	{
 		// Follow another path around the middle of the museum.
 		System.out.println("Starting performPatrolPlan2()");
-		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3));
-		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7));
-		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7));
-		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3));
-		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3));
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
 	}
 	
 	/**
@@ -562,11 +623,11 @@ public class CleanerAgent
 	{
 		// Follow a zig-zag path in the museum.
 		System.out.println("Starting performPatrolPlan3()");
-		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3));
-		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7));
-		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7));
-		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3));
-		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3));
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
 	}
 
 	@ComponentMethod

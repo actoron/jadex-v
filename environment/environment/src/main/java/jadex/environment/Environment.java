@@ -444,14 +444,14 @@ public class Environment
 					else
 					{
 						so = spaceobjects.get(so.getId());
-						if(so.getPosition()==null)
+						/*if(so.getPosition()==null)
 						{
 							vision.addDisappeared(so);
 						}
 						else
-						{
+						{*/
 							vision.addUnseen(so);
-						}
+						//}
 					}
 				}
 				
@@ -575,8 +575,8 @@ public class Environment
 		//obj = getSpaceObject(obj);
 		IVector2 newpos = adjustPosition(pos);
 		obj.setPosition(newpos);
-		if(pos==null)
-			System.out.println("pos set to null: "+obj);
+		//if(pos==null)
+		//	System.out.println("pos set to null: "+obj);
 	}
 	
 	/**
