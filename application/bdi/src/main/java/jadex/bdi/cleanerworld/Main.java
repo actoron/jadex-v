@@ -5,6 +5,7 @@ import jadex.bdi.cleanerworld.environment.Chargingstation;
 import jadex.bdi.cleanerworld.environment.CleanerworldEnvironment;
 import jadex.bdi.cleanerworld.environment.Waste;
 import jadex.bdi.cleanerworld.environment.Wastebin;
+import jadex.bdi.cleanerworld.ui.EnvGui;
 import jadex.bdi.cleanerworld.ui.EnvironmentGui;
 import jadex.bdi.runtime.IBDIAgent;
 import jadex.core.IComponentManager;
@@ -36,7 +37,9 @@ public class Main
 		env.addSpaceObject(new Chargingstation(new Vector2Double(0.775, 0.775)));
 		env.addSpaceObject(new Chargingstation(new Vector2Double(0.15, 0.4)));
 		
-		EnvironmentGui.create(envid);
+		//EnvironmentGui.create(envid);
+		
+		EnvGui.createEnv(envid);
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
