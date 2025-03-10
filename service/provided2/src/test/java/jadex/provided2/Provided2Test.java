@@ -72,7 +72,7 @@ public class Provided2Test
 		Future<Void>	servicestart	= new Future<>();
 		Future<Void>	serviceend	= new Future<>();
 		
-		IComponentHandle	comp = IComponentManager.get().create(new IMyService()
+		IComponentHandle	comp = IComponentManager.get().create(new Object()
 		{
 			@SuppressWarnings("unused")
 			IMyService	myservice	= new IMyService()
