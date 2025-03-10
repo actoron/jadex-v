@@ -31,6 +31,7 @@ dependencies
     implementation 'org.activecomponents.jadex:execution:' + v
     implementation 'org.activecomponents.jadex:micro:' + v
     implementation 'org.activecomponents.jadex:bdi:' + v
+    implementation 'org.activecomponents.jadex:environment:'+v
 }
 
 processResources {

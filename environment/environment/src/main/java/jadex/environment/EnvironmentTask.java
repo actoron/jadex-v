@@ -1,5 +1,6 @@
 package jadex.environment;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -13,6 +14,8 @@ public class EnvironmentTask
 	
 	protected SpaceObject owner;
 	
+	protected String type;
+	
 	protected TerminableFuture<Void> future;
 	
 	protected Function<TaskData, TaskData> task;
@@ -20,6 +23,8 @@ public class EnvironmentTask
 	protected TaskData taskdata;
 	
 	protected Environment env;
+	
+	protected Map<String, Object> infos;
 	
 	
 	public record TaskData(boolean finsihed, long delta, Map<String, Object> data, Set<SpaceObject> changed) 
@@ -58,9 +63,10 @@ public class EnvironmentTask
 		}
 	}
 	
-	public EnvironmentTask(SpaceObject owner, Environment env, TerminableFuture<Void> future, Function<TaskData, TaskData> task) 
+	public EnvironmentTask(SpaceObject owner, String type, Environment env, TerminableFuture<Void> future, Function<TaskData, TaskData> task) 
 	{
 		this.owner = owner;
+		this.type = type;
 		this.env = env;
 		this.future = future;
 		this.task = task;
@@ -89,6 +95,16 @@ public class EnvironmentTask
 	{
 		return owner;
 	}
+	
+	public String getType() 
+	{
+		return type;
+	}
+
+	public void setType(String type) 
+	{
+		this.type = type;
+	}
 
 	public TerminableFuture<Void> getFuture() 
 	{
@@ -108,6 +124,28 @@ public class EnvironmentTask
 	public void setTaskData(TaskData taskdata) 
 	{
 		this.taskdata = taskdata;
+	}
+	
+	public Map<String, Object> getInfos() 
+	{
+		return infos;
+	}
+
+	public void setInfos(Map<String, Object> infos) 
+	{
+		this.infos = infos;
+	}
+	
+	public void addInfo(String name, Object val)
+	{
+		if(infos==null)
+			infos = new HashMap<String, Object>();
+		infos.put(name, val);
+	}
+	
+	public Object getInfo(String name)
+	{
+		return infos==null? null: infos.get(name);
 	}
 
 	@Override

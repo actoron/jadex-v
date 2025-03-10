@@ -4,12 +4,12 @@ import java.util.Set;
 
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
+import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.core.IComponent;
-import jadex.environment.BaseObject;
 import jadex.environment.Environment;
 import jadex.environment.SpaceObject;
 import jadex.environment.SpaceObjectsEvent;
@@ -53,7 +53,7 @@ public abstract class BaseAgent
 			{
 				if(e instanceof VisionEvent)
 				{
-					Set<SpaceObject> seen = ((VisionEvent)e).getSeen();
+					Set<SpaceObject> seen = ((VisionEvent)e).getVision().getSeen();
 					for(SpaceObject obj: seen)
 					{
 						if(obj instanceof Target)

@@ -1,5 +1,6 @@
-package jadex.environment;
+package jadex.bdi.marsworld.environment;
 
+import jadex.environment.SpaceObject;
 import jadex.math.IVector2;
 
 public class BaseObject extends SpaceObject

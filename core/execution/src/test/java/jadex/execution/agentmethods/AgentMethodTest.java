@@ -13,7 +13,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
 import jadex.core.InvalidComponentAccessException;
-import jadex.execution.AgentMethod;
+import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.NoCopy;
 import jadex.future.Future;
@@ -165,46 +165,46 @@ public class AgentMethodTest
 			return IComponentManager.get().getCurrentComponent();
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<String> sayHello()
 		{
 			//return new Future<>("Hello: "+agent[0].getId());
 			return new Future<>("Hello: "+getAgent().getId());
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public void setName(String name)
 		{
 			System.out.println("setName: "+name);
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<String> getName()
 		{
 			System.out.println("getName called: "+getAgent().getFeature(IExecutionFeature.class).isComponentThread());
 			return new Future<>("my name is: "+getAgent().getId());
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<Object> getObject1(@NoCopy Object obj)
 		{
 			return new Future<>(obj);
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<Integer> getObject2(Object obj)
 		{
 			return new Future<>(obj.hashCode());
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<Void> processPerson(Person p)
 		{
 			System.out.println("processObject: "+p);
 			return Future.DONE;
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public @NoCopy ISubscriptionIntermediateFuture<Person> generatePersons()
 		{
 			SubscriptionIntermediateFuture<Person> ret = new SubscriptionIntermediateFuture<>();

@@ -1,7 +1,5 @@
 package jadex.environment;
 
-import java.util.Set;
-
 import jadex.future.SubscriptionIntermediateFuture;
 
 public class ObserverInfo 
@@ -10,7 +8,7 @@ public class ObserverInfo
 	
 	protected SpaceObject obj;
 	
-	protected Set<SpaceObject> lastvision;
+	protected Vision lastvision;
 
 	public ObserverInfo(SubscriptionIntermediateFuture<? extends EnvironmentEvent> observer, SpaceObject obj) 
 	{
@@ -28,12 +26,12 @@ public class ObserverInfo
 		return obj;
 	}
 
-	public Set<SpaceObject> getLastVision() 
+	public Vision getLastVision() 
 	{
 		return lastvision;
 	}
 
-	public void setLastVision(Set<SpaceObject> lastvision) 
+	public void setLastVision(Vision lastvision) 
 	{
 		this.lastvision = lastvision;
 	}

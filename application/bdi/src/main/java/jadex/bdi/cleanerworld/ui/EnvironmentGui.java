@@ -1,4 +1,4 @@
-package jadex.quickstart.cleanerworld.gui;
+package jadex.bdi.cleanerworld.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -19,6 +19,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Set;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -36,14 +37,15 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import jadex.bdi.cleanerworld.environment.Chargingstation;
+import jadex.bdi.cleanerworld.environment.Cleaner;
+import jadex.bdi.cleanerworld.environment.CleanerworldEnvironment;
+import jadex.bdi.cleanerworld.environment.Waste;
+import jadex.bdi.cleanerworld.environment.Wastebin;
 import jadex.common.SGUI;
-import jadex.quickstart.cleanerworld.environment.ILocation;
-import jadex.quickstart.cleanerworld.environment.impl.Chargingstation;
-import jadex.quickstart.cleanerworld.environment.impl.Cleaner;
-import jadex.quickstart.cleanerworld.environment.impl.Environment;
-import jadex.quickstart.cleanerworld.environment.impl.Location;
-import jadex.quickstart.cleanerworld.environment.impl.Waste;
-import jadex.quickstart.cleanerworld.environment.impl.Wastebin;
+import jadex.environment.Environment;
+import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 
 
 /**
@@ -60,42 +62,44 @@ public class EnvironmentGui	extends JFrame
 	/** The image icons. */
 	private static UIDefaults	icons	= new UIDefaults(new Object[]
 	{
-		"waste",	SGUI.makeIcon(EnvironmentGui.class, "/jadex/quickstart/cleanerworld/gui/images/waste.png"),
-		"wastebin",	SGUI.makeIcon(EnvironmentGui.class, "/jadex/quickstart/cleanerworld/gui/images/wastebin.png"),
-		"wastebin_full", SGUI.makeIcon(EnvironmentGui.class, "/jadex/quickstart/cleanerworld/gui/images/wastebin_full.png"),
-		"chargingstation", SGUI.makeIcon(EnvironmentGui.class, "/jadex/quickstart/cleanerworld/gui/images/chargingstation.png"),
-		"cleaner", SGUI.makeIcon(EnvironmentGui.class, "/jadex/quickstart/cleanerworld/gui/images/cleaner.png"),
-		"background", SGUI.makeIcon(EnvironmentGui.class, "/jadex/quickstart/cleanerworld/gui/images/background.png"),
-		"background_night", SGUI.makeIcon(EnvironmentGui.class, "/jadex/quickstart/cleanerworld/gui/images/background_night.png")
+		"waste",	SGUI.makeIcon(EnvironmentGui.class, "/jadex/bdi/cleanerworld/ui/images/waste.png"),
+		"wastebin",	SGUI.makeIcon(EnvironmentGui.class, "/jadex/bdi/cleanerworld/ui/images/wastebin.png"),
+		"wastebin_full", SGUI.makeIcon(EnvironmentGui.class, "/jadex/bdi/cleanerworld/ui/images/wastebin_full.png"),
+		"chargingstation", SGUI.makeIcon(EnvironmentGui.class, "/jadex/bdi/cleanerworld/ui/images/chargingstation.png"),
+		"cleaner", SGUI.makeIcon(EnvironmentGui.class, "/jadex/bdi/cleanerworld/ui/images/cleaner.png"),
+		"background", SGUI.makeIcon(EnvironmentGui.class, "/jadex/bdi/cleanerworld/ui/images/background.png"),
+		"background_night", SGUI.makeIcon(EnvironmentGui.class, "/jadex/bdi/cleanerworld/ui/images/background_night.png")
 	});
 	
 	//-------- attributes --------
 	
 	/** The repaint timer. */
-	private Timer	timer;
+	private Timer timer;
+	
+	private CleanerworldEnvironment env;
 
 	//-------- constructors --------
 
 	/**
 	 *  Create a new gui.
 	 */
-	public EnvironmentGui()
+	public EnvironmentGui(String envid)
 	{
 		super("Welcome to Cleaner World");
 							
-		final Environment env = Environment.getInstance();
+		this.env = (CleanerworldEnvironment)Environment.get(envid);
 				
 		// Option panel.
 		JPanel	options	= new JPanel(new GridBagLayout());
 		options.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Environment Control"));
-		final JCheckBox	daytime	= new JCheckBox("", env.getDaytime());
+		final JCheckBox	daytime	= new JCheckBox("", env.isDaytime().get());
 		daytime.setHorizontalTextPosition(SwingConstants.LEFT);
-		final JLabel wastecnt = new JLabel(""+env.getWastes().length);
+		final JLabel wastecnt = new JLabel(""+env.getWastes().get().size());
 
 		final JComboBox<String> wastebinchoice = new JComboBox<String>();
-		Wastebin[] wastebins = env.getWastebins();
-		for(int i=0; i<wastebins.length; i++)
-			wastebinchoice.addItem(wastebins[i].getId());
+		Set<Wastebin> wastebins = env.getWastebins().get();
+		for(Wastebin wb: wastebins)
+			wastebinchoice.addItem(wb.getId());
 		final JComboBox< ? > fillstate = new JComboBox<String>(new String[]{"empty", "full"});
 		JButton setfillstate = new JButton("Set fill-state");
 
@@ -149,7 +153,7 @@ public class EnvironmentGui	extends JFrame
 			protected void	paintComponent(Graphics g)
 			{
 				// Get world state from environment object.
-				boolean	daytime	= env.getDaytime();
+				boolean	daytime	= env.isDaytime().get();
 
 				// Paint background (dependent on daytime).
 				Rectangle	bounds	= getBounds();
@@ -170,59 +174,61 @@ public class EnvironmentGui	extends JFrame
 				}
 				
 				// Paint charge stations.
-				Chargingstation[] stations = env.getChargingstations();
-				for(int i=0; i<stations.length; i++)
+				Set<Chargingstation> stations = env.getChargingStations().get();
+				for(Chargingstation station: stations)
 				{
-					Point p	= onScreenLocation(stations[i].getLocation(), bounds);
-					chargingstation.setText(stations[i].getId());
+					Point p	= onScreenLocation(station.getLocation(), bounds);
+					chargingstation.setText(station.getId());
 					chargingstation.setForeground(daytime ? Color.black : Color.white);
 					render(g, chargingstation, p);
 				}
 
 				// Paint waste bins.
-				Wastebin[] wastebins = env.getWastebins();
-				for(int i=0; i<wastebins.length; i++)
+				Set<Wastebin> wastebins = env.getWastebins().get();
+				for(Wastebin wb: wastebins)
 				{
-					Point p	= onScreenLocation(wastebins[i].getLocation(), bounds);
+					Point p	= onScreenLocation(wb.getLocation(), bounds);
 					JLabel	renderer	= wastebin;
-					if(wastebins[i].isFull())
+					if(wb.isFull())
 						renderer	= wastebin_full;
-					renderer.setText(wastebins[i].getId()+" ("+wastebins[i].getWastes().length+"/"+wastebins[i].getCapacity()+")");
+					renderer.setText(wb.getId()+" ("+wb.getWastes().length+"/"+wb.getCapacity()+")");
 					renderer.setForeground(daytime ? Color.black : Color.white);
 					render(g, renderer, p);
 				}
 
 				// Paint waste.
-				Waste[] wastes = env.getWastes();
-				for(int i=0; i<wastes.length; i++)
+				Set<Waste> wastes = env.getWastes().get();
+				for(Waste was: wastes)
 				{
-					Point p	= onScreenLocation(wastes[i].getLocation(), bounds);
+					if(was.getLocation()==null)
+						continue;
+					Point p	= onScreenLocation(was.getLocation(), bounds);
 					waste.setForeground(daytime ? Color.black : Color.white);
 					render(g, waste, p);
 				}
 
 				// Paint the cleaner visions.
-				Cleaner[] cleaners = env.getCleaners();
+				Set<Cleaner> cleaners = env.getSpaceObjectsByType(Cleaner.class).get();
 
 				//System.out.println("cls: "+env.hashCode()+" "+cleaners.length);
-				for(int i=0; i<cleaners.length; i++)
+				for(Cleaner cleaner: cleaners)
 				{
-					int colorcode	= Math.abs(cleaners[i].getId().toString().hashCode()%8);
-					Point	p	= onScreenLocation(cleaners[i].getLocation(), bounds);
-					w	= (int)(cleaners[i].getVisionRange()*bounds.width);
-					h	= (int)(cleaners[i].getVisionRange()*bounds.height);
+					int colorcode	= Math.abs(cleaner.getId().toString().hashCode()%8);
+					Point	p	= onScreenLocation(cleaner.getLocation(), bounds);
+					w	= (int)(cleaner.getVisionRange()*bounds.width);
+					h	= (int)(cleaner.getVisionRange()*bounds.height);
 					g.setColor(new Color((colorcode&1)!=0?255:100, (colorcode&2)!=0?255:100, (colorcode&4)!=0?255:100, 192));	// Vision range
 					g.fillOval(p.x-w, p.y-h, w*2, h*2);
 				}
 
 				// Paint the cleaner agents.
-				for(int i=0; i<cleaners.length; i++)
+				for(Cleaner cl: cleaners)
 				{
-					Point	p	= onScreenLocation(cleaners[i].getLocation(), bounds);
+					Point	p	= onScreenLocation(cl.getLocation(), bounds);
 					cleaner.setText("<html>"
-						+ cleaners[i].getId()+"<br>"
-						+ "battery: " + (int)(cleaners[i].getChargestate()*100.0) + "%<br>"
-						+ "waste: " + (cleaners[i].getCarriedWaste()!=null ? "yes" : "no")+"</html>");
+						+ cl.getId()+"<br>"
+						+ "battery: " + (int)(cl.getChargestate()*100.0) + "%<br>"
+						+ "waste: " + (cl.getCarriedWaste()!=null ? "yes" : "no")+"</html>");
 					cleaner.setForeground(daytime ? Color.black	: Color.white);
 					render(g, cleaner, new Point(p.x+45, p.y));	// Hack!!!
 				}
@@ -248,7 +254,7 @@ public class EnvironmentGui	extends JFrame
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				Wastebin wb = env.getWastebin((String)wastebinchoice.getSelectedItem());
+				Wastebin wb = env.getWastebin((String)wastebinchoice.getSelectedItem()).get();
 
 				if(fillstate.getSelectedItem().equals("empty"))
 					wb.empty();
@@ -313,21 +319,21 @@ public class EnvironmentGui	extends JFrame
 			{
 				Point	p	= me.getPoint();
 				Rectangle	bounds	= map.getBounds();
-				final Location	mouseloc = new Location((double)p.x/(double)bounds.width,
+				final IVector2	mouseloc = new Vector2Double((double)p.x/(double)bounds.width,
 					1.0-(double)p.y/(double)bounds.height);
 				final double tol = 7/(double)bounds.height;
 
-				final Environment env = Environment.getInstance();
-				
-				Waste[] wastes = env.getWastes();
+				Set<Waste> wastes = env.getWastes().get();
 				Waste nearest = null;
 				double dist = 0;
-				for(int i=0; i<wastes.length; i++)
+				for(Waste waste: wastes)
 				{
-					if(nearest==null || wastes[i].getLocation().getDistance(mouseloc)<dist)
+					if(waste.getLocation()==null)
+						continue;
+					if(nearest==null || waste.getLocation().getDistance(mouseloc).getAsDouble()<dist)
 					{
-						nearest = wastes[i];
-						dist = wastes[i].getLocation().getDistance(mouseloc);
+						nearest = waste;
+						dist = waste.getLocation().getDistance(mouseloc).getAsDouble();
 					}
 				}
 				Waste waste = null;
@@ -339,7 +345,6 @@ public class EnvironmentGui	extends JFrame
 				{
 					env.removeWaste(waste);
 				}
-
 				// If position is clean add a new waste
 				else
 				{
@@ -364,14 +369,15 @@ public class EnvironmentGui	extends JFrame
 				map.repaint();
 				
 				// update settings when environment changes
-				if(daytime.isSelected()!=env.getDaytime())
+				if(daytime.isSelected()!=env.isDaytime().get())
 				{
-					daytime.setSelected(env.getDaytime());
+					daytime.setSelected(env.isDaytime().get());
 				}
 				
-				if(!(""+env.getWastes().length).equals(wastecnt.getText()))
+				int size = env.getWastes().get().size();
+				if(!(""+size).equals(wastecnt.getText()))
 				{
-					wastecnt.setText(""+env.getWastes().length);
+					wastecnt.setText(""+size);
 				}
 				
 //				Set<String>	wbsadd	= new LinkedHashSet<>();
@@ -433,10 +439,10 @@ public class EnvironmentGui	extends JFrame
 	/**
 	 *  Get the on screen location for a location in  the world.
 	 */
-	private Point	onScreenLocation(ILocation loc, Rectangle bounds)
+	private Point	onScreenLocation(IVector2 loc, Rectangle bounds)
 	{
-		return new Point((int)(bounds.width*loc.getX()),
-			(int)(bounds.height*(1.0-loc.getY())));
+		return new Point((int)(bounds.width*loc.getXAsDouble()),
+			(int)(bounds.height*(1.0-loc.getYAsDouble())));
 	}
 
 	/**
@@ -456,14 +462,14 @@ public class EnvironmentGui	extends JFrame
 	}
 
 	/** Open world view window on Swing Thread. */
-	public static void create()
+	public static void create(String envid)
 	{
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				new EnvironmentGui().setVisible(true);
+				new EnvironmentGui(envid).setVisible(true);
 			}
 		});
 	}

@@ -1,33 +1,32 @@
 package jadex.environment;
 
-import java.util.Set;
-
 public class VisionEvent extends EnvironmentEvent
 {
-	protected Set<SpaceObject> seen;
+	protected Vision vision;
 
 	public VisionEvent() 
 	{
 	}
 	
-	public VisionEvent(Set<SpaceObject> seen) 
+	public VisionEvent(Vision vision) 
 	{
-		this.seen = seen;
+	    this.vision = vision;
 	}
 
-	public Set<SpaceObject> getSeen() 
+	public Vision getVision() 
 	{
-		return seen;
+		return vision;
 	}
 
-	public void setSeen(Set<SpaceObject> seen) 
+	public void setVision(Vision vision) 
 	{
-		this.seen = seen;
+		this.vision = vision;
 	}
 
 	@Override
 	public String toString() 
 	{
-		return "VisionEvent [seen=" + seen + "]";
+		return "VisionEvent [vision=" + vision + "]";
 	}
+	
 }
