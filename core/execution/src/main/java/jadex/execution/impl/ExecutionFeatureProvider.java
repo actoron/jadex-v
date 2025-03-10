@@ -50,41 +50,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
 	static
-	{
-		/*MjComponent.addComponentCreator(new IComponentLifecycleManager() 
-		{
-			@Override
-			public boolean isCreator(Object obj) 
-			{
-				return Runnable.class.isAssignableFrom(obj.getClass())
-					|| Supplier.class.isAssignableFrom(obj.getClass())
-					|| IThrowingFunction.class.isAssignableFrom(obj.getClass());
-			}
-			
-			@Override
-			public void create(Object pojo, ComponentIdentifier cid)
-			{
-				if(pojo instanceof Runnable)
-					LambdaAgent.create((Runnable)pojo, cid);
-				else if(pojo instanceof Callable)
-					LambdaAgent.create((Callable<?>)pojo, cid);
-				else if(pojo instanceof IThrowingFunction)
-					LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid);
-			}
-			
-			@Override
-			public boolean isTerminator(IComponent component) 
-			{
-				return component.getClass().equals(MjComponent.class);
-			}
-				
-			@Override
-			public void terminate(IComponent component) 
-			{
-				((IMjInternalExecutionFeature)component.getFeature(IMjExecutionFeature.class)).terminate();
-			}
-		});*/
-		
+	{		
 		// Init the component with schedule step functionality (hack?!)
 		Component.setExternalAccessFactory(comp ->
 		{
@@ -465,13 +431,14 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	
 	
 	@Override
-	public boolean isCreator(Object obj) 
+	public int	isCreator(Class<?> pojoclazz)
 	{
-		return Runnable.class.isAssignableFrom(obj.getClass())
-			|| Callable.class.isAssignableFrom(obj.getClass())
-			|| IThrowingFunction.class.isAssignableFrom(obj.getClass())
-			|| IThrowingConsumer.class.isAssignableFrom(obj.getClass())
-			|| LambdaPojo.class.isAssignableFrom(obj.getClass());
+		return Runnable.class.isAssignableFrom(pojoclazz)
+			|| Callable.class.isAssignableFrom(pojoclazz)
+			|| IThrowingFunction.class.isAssignableFrom(pojoclazz)
+			|| IThrowingConsumer.class.isAssignableFrom(pojoclazz)
+			|| LambdaPojo.class.isAssignableFrom(pojoclazz)
+			? 1 : -1;
 	}
 	
 	@Override

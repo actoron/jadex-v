@@ -143,6 +143,38 @@ public class SComponentFeatureProvider
 		return LIFECYCLE_PROVIDERS;
 	}
 	
+	protected static Map<Class<?>, IComponentLifecycleManager>	CREATORS	= new LinkedHashMap<>();
+	
+	public static synchronized IComponentLifecycleManager	getCreator(Class<?> clazz)
+	{
+		if(!CREATORS.containsKey(clazz))
+		{
+			int	prio	= -1;
+			IComponentLifecycleManager	ret	= null;
+			for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
+			{
+				int	newprio	= creator.isCreator(clazz);
+				if(newprio>=0)
+				{
+					if(newprio==prio)
+					{
+						throw new RuntimeException("Conflicting creators with priority "+prio+": "+ret+", "+creator);
+					}
+					else if(newprio>prio)
+					{
+						prio	= newprio;
+						ret	= creator;
+					}
+				}
+			}
+			
+			// Add result (may be null if no creator found)
+			CREATORS.put(clazz, ret);
+		}
+		
+		return CREATORS.get(clazz);
+	}
+	
 	/**
 	 *  Build an ordered list of component features.
 	 *  @param provs A list of component feature lists.

@@ -23,11 +23,4 @@ public class TestFeature1NewProvider extends ComponentFeatureProvider<ITestFeatu
 	{
 		return provider.getClass().equals(TestFeature1Provider.class);
 	}
-	
-	@Override
-	public String toString()
-	{
-		// TODO Auto-generated method stub
-		return super.toString();
-	}
 }

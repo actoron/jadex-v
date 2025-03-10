@@ -110,7 +110,9 @@ public class DependencyResolver<T>
 			ret.add(node);
 			
 			NodeInfo<T> nia = getNodeInfo(node);
-			for(T dep: (T[])nia.getOtherDeps().toArray(new Object[0]))
+			@SuppressWarnings("unchecked")
+			T[]	deps	= (T[])nia.getOtherDeps().toArray(new Object[0]);
+			for(T dep: deps)
 			{
 				removeDependency(dep, node);
 			}
@@ -155,7 +157,9 @@ public class DependencyResolver<T>
 			for(T node: level)
 			{
 				NodeInfo<T> nia = getNodeInfo(node);
-				for(T dep: (T[])nia.getOtherDeps().toArray(new Object[0]))
+				@SuppressWarnings("unchecked")
+				T[]	deps	= (T[])nia.getOtherDeps().toArray(new Object[0]);
+				for(T dep: deps)
 				{
 					removeDependency(dep, node);
 				}

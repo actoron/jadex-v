@@ -14,8 +14,10 @@ public interface IComponentLifecycleManager
 {
 	/**
 	 *  Check if a POJO can be handled.
+	 *  
+	 *  @return Priority: -1: cannot create, 0: fallback, 1: normal kernel, 2: extension of normal kernel, 3:...
 	 */
-	public boolean	isCreator(Object pojo);
+	public int	isCreator(Class<?> pojoclazz);
 
 	/**
 	 *  Create a component for a POJO
