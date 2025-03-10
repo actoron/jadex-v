@@ -173,6 +173,7 @@ includeBuild('core/injection'){name='injection'}
 includeBuild('model/model') {}
 
 includeBuild('service/provided') {}
+includeBuild('service/provided2') {}
 includeBuild('service/required') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}

@@ -1,0 +1,50 @@
+plugins 
+{
+	id 'java-library'    
+}
+
+description = 'Micro agent execution'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:core:'+v
+	implementation 'org.activecomponents.jadex:execution:'+v
+	implementation 'org.activecomponents.jadex:injection:'+v
+
+	testImplementation 'org.activecomponents.jadex:future:'+v
+	testImplementation 'org.activecomponents.jadex:benchmark-core:'+v
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+
+test 
+{
+	useJUnitPlatform()
+}
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}
