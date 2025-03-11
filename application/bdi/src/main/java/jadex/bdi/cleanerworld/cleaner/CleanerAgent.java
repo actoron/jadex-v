@@ -136,26 +136,18 @@ public class CleanerAgent
 		bdifeature.setBeliefValue("self", s);
 		
 		PerceptionProcessor pp = new PerceptionProcessor();
-		pp.registerHandler(Waste.class, obj -> findAndUpdateOrAdd(obj, wastes), PerceptionState.SEEN, PerceptionState.CHANGED);
-		pp.registerHandler(Wastebin.class, obj -> findAndUpdateOrAdd(obj, wastebins), PerceptionState.SEEN, PerceptionState.CHANGED);
-		pp.registerHandler(Chargingstation.class, obj -> findAndUpdateOrAdd(obj, stations), PerceptionState.SEEN, PerceptionState.CHANGED);
-		pp.registerHandler(Cleaner.class, obj -> 
+		
+		pp.manage(Waste.class, wastes);
+		pp.manage(Wastebin.class, wastebins);
+		pp.manage(Chargingstation.class, stations);
+		pp.manage(Cleaner.class, others, obj -> 
 		{
 			if(obj.equals(getSelf()))
 				getSelf().updateFrom(obj);
 			else
-				findAndUpdateOrAdd(obj, others);
-		}
-		, PerceptionState.SEEN, PerceptionState.CHANGED);
-		pp.registerHandler(Waste.class, obj -> wastes.remove(obj), PerceptionState.DISAPPEARED);
-		pp.registerHandler(Wastebin.class, obj -> wastebins.remove(obj), PerceptionState.DISAPPEARED);
-		pp.registerHandler(Chargingstation.class, obj -> stations.remove(obj), PerceptionState.DISAPPEARED);
-		pp.registerHandler(Cleaner.class, obj -> others.remove(obj), PerceptionState.DISAPPEARED);
-		pp.registerHandler(Waste.class, obj -> {if(obj.getPosition()==null) wastes.remove(obj);}, PerceptionState.UNSEEN);
-		pp.registerHandler(Wastebin.class, obj -> {if(obj.getPosition()==null) wastebins.remove(obj);}, PerceptionState.UNSEEN);
-		pp.registerHandler(Chargingstation.class, obj -> {if(obj.getPosition()==null) stations.remove(obj);}, PerceptionState.UNSEEN);
-		pp.registerHandler(Cleaner.class, obj -> {if(obj.getPosition()==null) others.remove(obj);}, PerceptionState.UNSEEN);
-
+				pp.findAndUpdateOrAdd(obj, others);
+		}, obj -> others.remove(obj), obj -> {if(obj.getPosition()==null) others.remove(obj);});
+		
 		getEnvironment().observeObject((Cleaner)getSelf()).next(e ->
 		{
 			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
@@ -163,125 +155,6 @@ public class CleanerAgent
 				pp.handleEvent(e);
 			});
 		});
-		
-		/*getEnvironment().observeObject((Cleaner)getSelf()).next(e ->
-		{
-			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
-			{
-				if(e instanceof VisionEvent)
-				{
-					Set<SpaceObject> seen = ((VisionEvent)e).getVision().getSeen();
-					Set<SpaceObject> disap = ((VisionEvent)e).getVision().getDisappeared();
-					Set<SpaceObject> unseen = ((VisionEvent)e).getVision().getUnseen();
-					
-					for(SpaceObject obj: seen)
-					{
-						//System.out.println("New object seen: "+agent.getId().getLocalName() +", "+obj);
-						
-						if(obj instanceof Waste)
-						{
-							findAndUpdateOrAdd(obj, wastes);
-						}
-						else if(obj instanceof Wastebin)
-						{
-							findAndUpdateOrAdd(obj, wastebins);
-						}
-						else if(obj instanceof Chargingstation)
-						{
-							findAndUpdateOrAdd(obj, stations);
-						}
-						else if(obj instanceof Cleaner)
-						{
-							findAndUpdateOrAdd(obj, others);
-						}
-					}
-					for(SpaceObject obj: disap)
-					{
-						if(obj instanceof Waste)
-						{
-							wastes.remove(obj);
-							//System.out.println("Waste removed: "+agent.getId().getLocalName()+", "+obj);
-						}
-						else if(obj instanceof Wastebin)
-						{
-							wastebins.remove(obj);
-						}
-						else if(obj instanceof Chargingstation)
-						{
-							stations.remove(obj);
-						}
-						else if(obj instanceof Cleaner)
-						{
-							others.remove(obj);
-						}
-					}
-					for(SpaceObject obj: unseen)
-					{
-						// special case of objects with pos = null
-						if(obj.getPosition()==null)
-						{
-							if(obj instanceof Waste)
-							{
-								wastes.remove(obj);
-								//System.out.println("Waste removed: "+agent.getId().getLocalName()+", "+obj);
-							}
-							else if(obj instanceof Wastebin)
-							{
-								wastebins.remove(obj);
-							}
-							else if(obj instanceof Chargingstation)
-							{
-								stations.remove(obj);
-							}
-							else if(obj instanceof Cleaner)
-							{
-								others.remove(obj);
-							}
-						}
-					}
-				}
-				else if(e instanceof SpaceObjectsEvent)
-				{
-					Set<SpaceObject> changed = ((SpaceObjectsEvent)e).getObjects();
-					
-					//System.out.println("update space objects: "+agent.getId()+" "+changed);
-					
-					for(SpaceObject obj: changed)
-					{
-						if(obj instanceof Waste)
-						{
-							findAndUpdateOrAdd(obj, wastes);
-							//System.out.println("New target seen: "+agent.getId().getLocalName()+", "+obj);
-						}
-						else if(obj instanceof Wastebin)
-						{
-							findAndUpdateOrAdd(obj, wastebins);
-						}
-						else if(obj instanceof Chargingstation)
-						{
-							findAndUpdateOrAdd(obj, stations);
-						}
-						else if(obj instanceof Cleaner)
-						{
-							if(obj.equals(getSelf()))
-							{
-								getSelf().updateFrom(obj);
-							}
-							else
-							{
-								findAndUpdateOrAdd(obj, others);
-							}
-						}
-					}
-				}
-			});
-		});*/
-		
-		// Tell the sensor to update the belief sets
-		/*actsense.manageWastesIn(wastes);
-		actsense.manageWastebinsIn(wastebins);
-		actsense.manageChargingstationsIn(stations);
-		actsense.manageCleanersIn(others);*/
 		
 		// Open a window showing the agent's perceptions
 		if(sensorgui)
@@ -292,26 +165,7 @@ public class CleanerAgent
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MaintainBatteryLoaded());
 	}
 	
-	private void findAndUpdateOrAdd(SpaceObject obj, Collection<?> coll)
-	{
-		Collection<SpaceObject> sos = (Collection<SpaceObject>)coll;
-		boolean found = false;
-		    
-	    for (SpaceObject item : sos) 
-	    {
-	        if (item.equals(obj)) 
-	        {
-	        	item.updateFrom(obj);
-	            //spaceObjects.remove(item);
-	            //spaceObjects.add(obj);
-	            found = true;
-	            break; 
-	        }
-	    }
-	    
-	    if (!found) 
-	        sos.add(obj);
-	}
+	
 	
 	/**
 	 *  Goal for keeping the battery loaded.

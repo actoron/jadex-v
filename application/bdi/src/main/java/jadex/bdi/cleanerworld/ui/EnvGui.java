@@ -277,6 +277,8 @@ public class EnvGui extends ApplicationAdapter
     		double dist = 0;
     		for(Waste waste: wastes)
     		{
+    			if(waste.getLocation()==null)
+    				continue;
     			if(nearest==null || waste.getLocation().getDistance(mouseloc).getAsDouble()<dist)
     			{
     				nearest = waste;
