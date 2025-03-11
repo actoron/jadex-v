@@ -386,6 +386,8 @@ public class BTCleanerAgent implements IBTProvider
 		IComponentManager.get().create(new BTCleanerAgent());
 		//EnvironmentGui.create();
 		EnvGui.createEnv();
+		
+		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

@@ -14,6 +14,7 @@ import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 
 public class CleanerworldEnvironment extends Environment 
 {
@@ -39,6 +40,20 @@ public class CleanerworldEnvironment extends Environment
 	public <T> T getData(String name, TaskData data, Class<T> type)
 	{
 		return data==null || data.data()==null? null: (T)data.data().get(name);
+	}
+	
+	@ComponentMethod
+	public IFuture<Void> createWorld()
+	{
+		addSpaceObject(new Waste(new Vector2Double(0.1, 0.5))).get();
+		addSpaceObject(new Waste(new Vector2Double(0.2, 0.5))).get();
+		addSpaceObject(new Waste(new Vector2Double(0.3, 0.5))).get();
+		addSpaceObject(new Waste(new Vector2Double(0.9, 0.9))).get();
+		addSpaceObject(new Wastebin(new Vector2Double(0.2, 0.2), 20)).get();
+		addSpaceObject(new Wastebin(new Vector2Double(0.8, 0.1), 20)).get();
+		addSpaceObject(new Chargingstation(new Vector2Double(0.775, 0.775))).get();
+		addSpaceObject(new Chargingstation(new Vector2Double(0.15, 0.4))).get();
+		return IFuture.DONE;
 	}
 	
 	@ComponentMethod

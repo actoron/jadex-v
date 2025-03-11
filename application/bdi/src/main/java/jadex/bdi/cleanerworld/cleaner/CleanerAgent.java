@@ -1,7 +1,7 @@
 package jadex.bdi.cleanerworld.cleaner;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,10 +35,7 @@ import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.environment.Environment;
 import jadex.environment.PerceptionProcessor;
-import jadex.environment.PerceptionProcessor.PerceptionState;
 import jadex.environment.SpaceObject;
-import jadex.environment.SpaceObjectsEvent;
-import jadex.environment.VisionEvent;
 import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
@@ -115,7 +112,6 @@ public class CleanerAgent
 	private Cleaner getSelf()
 	{
 		return (Cleaner)self;
-		//return (Cleaner)self.get();
 	}
 	
 	//-------- simple example behavior --------
@@ -127,7 +123,7 @@ public class CleanerAgent
 	@OnStart
 	private void exampleBehavior(IBDIAgentFeature bdifeature)
 	{
-		System.out.println("RUNNING ON START");
+		//System.out.println("RUNNING ON START");
 		
 		SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
 		
@@ -164,8 +160,6 @@ public class CleanerAgent
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PerformPatrol());
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MaintainBatteryLoaded());
 	}
-	
-	
 	
 	/**
 	 *  Goal for keeping the battery loaded.
@@ -204,26 +198,8 @@ public class CleanerAgent
 		@GoalTargetCondition(beliefs="stations")
 		public boolean checkTarget()
 		{
-			station = getNearestChargingStation();
+			station = findClosestElement(stations, getSelf().getLocation());
 			return station!=null;
-		}
-		
-		protected Chargingstation getNearestChargingStation()
-		{
-			Chargingstation ret = null;
-			for(Chargingstation cg: stations)
-			{
-				if(ret==null)
-				{
-					ret = cg;
-				}
-				else if(getSelf().getLocation().getDistance(cg.getLocation()).getAsDouble()
-					<getSelf().getLocation().getDistance(ret.getLocation()).getAsDouble())
-				{
-					ret = cg;
-				}
-			}
-			return ret;
 		}
 		
 		/**
@@ -295,21 +271,7 @@ public class CleanerAgent
 		@GoalTargetCondition(beliefs="wastebins")
 		public boolean checkTarget()
 		{
-			for(Wastebin wb: wastebins)
-			{
-				if(!wb.isFull())
-				{
-					if(wastebin==null)
-					{
-						wastebin = wb;
-					}
-					else if(getSelf().getLocation().getDistance(wb.getLocation()).getAsDouble()
-						<getSelf().getLocation().getDistance(wastebin.getLocation()).getAsDouble())
-					{
-						wastebin = wb;
-					}
-				}
-			}
+			wastebin = findClosestElement(wastebins, getSelf().getLocation());
 			return wastebin!=null;
 		}
 
@@ -482,6 +444,19 @@ public class CleanerAgent
 		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();
 		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3)).get();
 		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
+	}
+	
+	public static <T extends SpaceObject> T findClosestElement(Set<T> elements, IVector2 loc) 
+	{
+		return elements.stream().min(Comparator.comparingDouble(p -> distance(p.getPosition(), loc))).orElse(null);
+	}
+	
+	public static double distance(IVector2 p1, IVector2 p2) 
+	{
+		double dx = p1.getX().getAsDouble()-p2.getX().getAsDouble();
+		double dy = p1.getY().getAsDouble()-p2.getY().getAsDouble();
+        //return Math.sqrt(dx*dx + dy*dy);
+		return dx*dx+dy*dy; // speed optimized
 	}
 
 	@ComponentMethod
