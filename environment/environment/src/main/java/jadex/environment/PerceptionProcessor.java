@@ -71,7 +71,9 @@ public class PerceptionProcessor
     	manage(clazz, coll, 
     		obj -> findAndUpdateOrAdd(obj, coll), 
     		obj -> coll.remove(obj),
-    		obj -> {if(obj.getPosition()==null) coll.remove(obj);}
+    		obj -> {if(obj.getPosition()==null) {coll.remove(obj); 
+    			//System.out.println("removing: "+obj+" from "+coll);
+    		}}
     	);
     	
     	//registerHandler(clazz, obj -> findAndUpdateOrAdd(obj, coll), PerceptionState.SEEN, PerceptionState.CHANGED);

@@ -176,7 +176,7 @@ public class Environment
 	@ComponentMethod
 	public ITerminableFuture<Void> move(@NoCopy SpaceObject obj, IVector2 destination, double speed)
 	{
-		return move(obj, destination, speed, 0.05);
+		return move(obj, destination, speed, 0.01);
 	}
 	
 	@ComponentMethod
@@ -289,6 +289,12 @@ public class Environment
 	public IFuture<Long> getStepDelay()
 	{
 		return new Future<Long>((long)(1000/sps));
+	}
+	
+	@ComponentMethod
+	public IFuture<Integer> getStepsPerSecond()
+	{
+		return new Future<Integer>(sps);
 	}
 	
 	@ComponentMethod

@@ -39,7 +39,7 @@ public class TriggerDecorator<T> extends ConditionalDecorator<T>
 		super.observeCondition(events, (event, rule, context, condresult) -> // action
 		{
 			System.getLogger(getClass().getName()).log(Level.INFO, "trigger condition triggered: "+event);
-			//System.out.println("trigger condition triggered: "+event);
+			System.out.println("trigger condition triggered: "+event);
 			
 			// Execution in next step is too late, as parent then executes next child before
 			/*getSelf().getFeature(IExecutionFeature.class).scheduleStep(agent ->

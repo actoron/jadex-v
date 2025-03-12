@@ -75,10 +75,19 @@ public class RepeatDecorator<T> extends ConditionalDecorator<T>
 	@Override
     public IFuture<NodeState> afterExecute(Event event, NodeState state, ExecutionContext<T> execontext) 
     {
+		//System.out.println("afterExecute: "+this+" "+state);
+		
         Future<NodeState> ret = new Future<>();
 
         NodeContext<T> context = node.getNodeContext(execontext);
         ITimerCreator tc = execontext.getTimerCreator();
+        
+        if(context.isFinishedInBefore())
+	    {
+	        System.out.println("RepeatDecorator: Execution aborted in beforeExecute. Stopping repeat.");
+	        ret.setResult(state); 
+	        return ret; 
+	    }
         
         Runnable repeat = new Runnable()
         {

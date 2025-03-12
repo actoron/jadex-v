@@ -81,10 +81,6 @@ public class CleanerAgent
 	@Belief(updaterate=1000)
 	private Val<Boolean> daytime = new Val(() -> getEnvironment().isDaytime().get());
 	
-	/** The patrol points. */
-	@Belief
-	protected List<IVector2> patrolpoints = new ArrayList<>();
-	
 	@AgentArgument
 	private boolean	sensorgui	= true;
 	
