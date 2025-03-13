@@ -124,12 +124,11 @@ public class RuleSystem
 		{
 			IEvent event = pcman.removeEvent(0);
 			
-			if(event.getType().toString().indexOf("stations")!=-1)
-				System.out.println("station event:"+event);
+			//if(event.getType().toString().indexOf("stations")!=-1)
+			//	System.out.println("station event:"+event);
 			
-			if(event.getType().toString().indexOf("self")!=-1)
-				System.out.println("self event:"+event);
-
+			//if(event.getType().toString().indexOf("self")!=-1)
+			//	System.out.println("self event:"+event);
 			
 			//if(event.getType().toString().indexOf("wastes")!=-1)
 			//	System.out.println("sdgfsdgf");
