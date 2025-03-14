@@ -3,6 +3,7 @@ package jadex.provided2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,6 +45,20 @@ public class Provided2Test
 	public interface INoCopyService
 	{
 		public @NoCopy IFuture<Object>	noCopy(@NoCopy Object o);
+	}
+	
+	@Service
+	@FunctionalInterface
+	public interface ICopyParameterService
+	{
+		public @NoCopy IFuture<Object>	copyParameter(Object o);
+	}
+	
+	@Service
+	@FunctionalInterface
+	public interface ICopyResultService
+	{
+		public IFuture<Object>	copyResult(@NoCopy Object o);
 	}
 	
 	//-------- test methods --------
@@ -142,14 +157,7 @@ public class Provided2Test
 				new Future<>(IComponentManager.get().getCurrentComponent().getId())
 		).get();
 		
-		// Find service in registry
-		ServiceQuery<IMyLambdaService>	query	= new ServiceQuery<>(IMyLambdaService.class).setOwner(handle.getId()).setNetworkNames();
-		IServiceIdentifier	sid	= ServiceRegistry.getRegistry().searchService(query);
-		assertNotNull(sid);
-		
-		// Get service proxy
-		IMyLambdaService	service	= (IMyLambdaService)ServiceRegistry.getRegistry().getLocalService(sid);
-		assertNotNull(service);
+		IMyLambdaService service = searchService(handle, IMyLambdaService.class);
 		
 		// Test cast to IService
 		assertNotNull(((IService)service).getServiceId());
@@ -185,14 +193,7 @@ public class Provided2Test
 			(INoCopyService)obj -> new Future<>(obj)
 		).get();
 		
-		// Find service in registry
-		ServiceQuery<INoCopyService>	query	= new ServiceQuery<>(INoCopyService.class).setOwner(handle.getId()).setNetworkNames();
-		IServiceIdentifier	sid	= ServiceRegistry.getRegistry().searchService(query);
-		assertNotNull(sid);
-		
-		// Get service proxy
-		INoCopyService	service	= (INoCopyService)ServiceRegistry.getRegistry().getLocalService(sid);
-		assertNotNull(service);
+		INoCopyService service = searchService(handle, INoCopyService.class);
 		
 		// Call service from other component
 		Object	obj1	= new Object();
@@ -211,5 +212,77 @@ public class Provided2Test
 		
 		// Check if object is not copied
 		assertSame(obj1, obj2fut.get(TIMEOUT));
+	}
+
+	@Test
+	public void	testCopyParameter()
+	{
+		// Create service component
+		IComponentHandle	handle	= IComponentManager.get().create(
+			(ICopyParameterService)obj -> new Future<>(obj)
+		).get();
+		
+		ICopyParameterService service = searchService(handle, ICopyParameterService.class);
+		
+		// Call service from other component
+		Object	obj1	= new Object();
+		Future<Object>	obj2fut	= new Future<>();
+		IComponentManager.get().create(new Object()
+		{
+			@OnStart
+			void callService()
+			{
+				service.copyParameter(obj1).then(obj2 -> 
+				{
+					obj2fut.setResult(obj2);
+				});
+			}
+		}).get(TIMEOUT);
+		
+		// Check if object is not copied
+		assertNotSame(obj1, obj2fut.get(TIMEOUT));
+	}
+
+	@Test
+	public void	testCopyResult()
+	{
+		// Create service component
+		IComponentHandle	handle	= IComponentManager.get().create(
+			(ICopyResultService)obj -> new Future<>(obj)
+		).get();
+		
+		ICopyResultService service = searchService(handle, ICopyResultService.class);
+		
+		// Call service from other component
+		Object	obj1	= new Object();
+		Future<Object>	obj2fut	= new Future<>();
+		IComponentManager.get().create(new Object()
+		{
+			@OnStart
+			void callService()
+			{
+				service.copyResult(obj1).then(obj2 -> 
+				{
+					obj2fut.setResult(obj2);
+				});
+			}
+		}).get(TIMEOUT);
+		
+		// Check if object is not copied
+		assertNotSame(obj1, obj2fut.get(TIMEOUT));
+	}
+
+	protected <T> T searchService(IComponentHandle handle, Class<T> type)
+	{
+		// Find service in registry
+		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setNetworkNames();
+		IServiceIdentifier	sid	= ServiceRegistry.getRegistry().searchService(query);
+		assertNotNull(sid);
+		
+		// Get service proxy
+		@SuppressWarnings("unchecked")
+		T	service	= (T)ServiceRegistry.getRegistry().getLocalService(sid);
+		assertNotNull(service);
+		return service;
 	}
 }
