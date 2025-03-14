@@ -12,16 +12,12 @@ import jadex.bt.IBTProvider;
 import jadex.bt.Val;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.actions.UserAction;
-import jadex.bt.cleanerworld.environment.IChargingstation;
-import jadex.bt.cleanerworld.environment.ICleaner;
-import jadex.bt.cleanerworld.environment.ILocation;
-import jadex.bt.cleanerworld.environment.ILocationObject;
-import jadex.bt.cleanerworld.environment.IWaste;
-import jadex.bt.cleanerworld.environment.IWastebin;
-import jadex.bt.cleanerworld.environment.SensorActuator;
-import jadex.bt.cleanerworld.environment.impl.Location;
+import jadex.bt.cleanerworld.environment.Chargingstation;
+import jadex.bt.cleanerworld.environment.Cleaner;
+import jadex.bt.cleanerworld.environment.CleanerworldEnvironment;
+import jadex.bt.cleanerworld.environment.Waste;
+import jadex.bt.cleanerworld.environment.Wastebin;
 import jadex.bt.cleanerworld.gui.libgdx.EnvGui;
-import jadex.bt.cleanerworld.gui.swing.EnvironmentGui;
 import jadex.bt.cleanerworld.gui.swing.SensorGui;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.FailureDecorator;
@@ -37,11 +33,18 @@ import jadex.bt.nodes.SelectorNode;
 import jadex.bt.nodes.SequenceNode;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.environment.Environment;
+import jadex.environment.PerceptionProcessor;
+import jadex.environment.SpaceObject;
+import jadex.execution.ComponentMethod;
+import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 import jadex.logger.ILoggingFeature;
-import jadex.logger.JadexLoggerFinder;
+import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
 import jadex.rules.eca.EventType;
@@ -49,39 +52,59 @@ import jadex.rules.eca.EventType;
 @Agent(type="bt")
 public class BTCleanerAgent implements IBTProvider
 {
+	/** The environment. */
+	protected CleanerworldEnvironment env;
+	
 	/** The bdi agent. */
 	@Agent
 	protected IComponent agent;
 	
-	/** The connector for the environment. */
-	protected SensorActuator actsense = new SensorActuator();
-	
 	/** Set of the known wastes. Managed by SensorActuator object. */
-	protected Set<IWaste> wastes = new LinkedHashSet<>();
+	protected Set<Waste> wastes = new LinkedHashSet<>();
 	
 	/** Set of the known waste bins. Managed by SensorActuator object. */
-	protected Set<IWastebin> wastebins = new LinkedHashSet<>();
+	protected Set<Wastebin> wastebins = new LinkedHashSet<>();
 	
 	/** Set of the known charging stations. Managed by SensorActuator object. */
-	protected Set<IChargingstation> stations = new LinkedHashSet<>();
+	protected Set<Chargingstation> stations = new LinkedHashSet<>();
 	
 	/** Set of the known other cleaners. Managed by SensorActuator object. */
-	protected Set<ICleaner> others = new LinkedHashSet<>();
+	protected Set<Cleaner> others = new LinkedHashSet<>();
 	
 	/** Knowledge about myself. Managed by SensorActuator object. */
-	protected Val<ICleaner> self = new Val<>(actsense.getSelf());
-	//protected ICleaner self = actsense.getSelf();
+	protected Val<Cleaner> self = null;
 		
 	/** Day or night?. Use updaterate to re-check every second. */
-	protected Val<Boolean> daytime = new Val<Boolean>(() -> actsense.isDaytime(), 1000);
+	protected Val<Boolean> daytime = new Val<Boolean>(() -> getEnvironment().isDaytime().get(), 1000);
 	
-	protected Val<Double> chargestate = new Val<Double>(() -> actsense.getSelf().getChargestate(), 1000);
+	//protected Val<Double> chargestate = new Val<Double>(() -> ((Cleaner)getEnvironment().getSpaceObject(getSelf().getId()).get()).getChargestate(), 1000);
 	
 	/** The patrol points. */
-	protected List<ILocation> patrolpoints = new ArrayList<ILocation>();
+	protected List<IVector2> patrolpoints = new ArrayList<IVector2>();
 	
 	public BTCleanerAgent()
 	{
+	}
+	
+	public BTCleanerAgent(String envid)
+	{
+		this.env = (CleanerworldEnvironment)Environment.get(envid);
+	}
+	
+	private CleanerworldEnvironment getEnvironment()
+	{
+		return env;
+	}
+	
+	private IComponent getAgent()
+	{
+		return agent;
+	}
+	
+	public Cleaner getSelf()
+	{
+		//return self;
+		return self.get();
 	}
 	
 	public Node<IComponent> createBehaviorTree()
@@ -95,11 +118,12 @@ public class BTCleanerAgent implements IBTProvider
 			
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 
-			IChargingstation station = (IChargingstation)findClosestElement(stations, getSelf().getLocation());
+			Chargingstation station = (Chargingstation)findClosestElement(stations, getSelf().getLocation());
 			if(station==null)
 			{
-				ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
-				ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
+				//ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
+				ITerminableFuture<Void> fut = getEnvironment().move((Cleaner)getSelf(), new Vector2Double(Math.random(), Math.random()));
+				ret.setTerminationCommand(ex -> {System.out.println("terminate on moveTo"); fut.terminate();});
 				fut.then(Void -> ret.setResultIfUndone(NodeState.FAILED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			}
 			else
@@ -124,10 +148,11 @@ public class BTCleanerAgent implements IBTProvider
 		ActionNode<IComponent> gotostation = new ActionNode<>("movetostation");
 		gotostation.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{
-			IChargingstation station = (IChargingstation)findClosestElement(stations, getSelf().getLocation());
+			Chargingstation station = (Chargingstation)findClosestElement(stations, getSelf().getLocation());
 			System.out.println("Go to station: "+agent.getId()+" "+station+" "+stations.size());
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
-			ITerminableFuture<Void> fut = actsense.moveTo(station.getLocation());
+			//ITerminableFuture<Void> fut = actsense.moveTo(station.getLocation());
+			ITerminableFuture<Void> fut = getEnvironment().move((Cleaner)getSelf(), station.getLocation());
 			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
@@ -138,13 +163,17 @@ public class BTCleanerAgent implements IBTProvider
 		loadatstation.setAction(new UserAction<IComponent>((e, agent) -> 
 		{
 			Future<NodeState> ret = new Future<>();
-			IChargingstation station = (IChargingstation)findClosestElement(stations, getSelf().getLocation());
-			System.out.println("Load at station: "+agent.getId()+" "+actsense.getSelf().getCarriedWaste()+" "+station);
+			Chargingstation station = (Chargingstation)findClosestElement(stations, getSelf().getLocation());
+			System.out.println("Load at station: "+agent.getId()+" "+getSelf().getCarriedWaste()+" "+station);
 			try
 			{
 				// todo: make abortable?!
-				actsense.recharge(station, 0.99).then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED))
+				//actsense.recharge(station, 0.99).then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED))
+				//	.catchEx(ex -> ret.setResult(NodeState.FAILED));
+				getEnvironment().loadBattery((Cleaner)getSelf(), station)
+					.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED))
 					.catchEx(ex -> ret.setResult(NodeState.FAILED));
+				
 			}
 			catch(Exception ex)
 			{
@@ -157,10 +186,11 @@ public class BTCleanerAgent implements IBTProvider
 		ActionNode<IComponent> gotowaste = new ActionNode<>("gotowaste");
 		gotowaste.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{
-			IWaste waste = (IWaste)findClosestElement(wastes, getSelf().getLocation());
+			Waste waste = (Waste)findClosestElement(wastes, getSelf().getLocation());
 			System.out.println("Go to waste: "+agent.getId()+" "+waste);
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
-			ITerminableFuture<Void> fut = actsense.moveTo(waste.getLocation());
+			//ITerminableFuture<Void> fut = actsense.moveTo(waste.getLocation());
+			ITerminableFuture<Void> fut = getEnvironment().move((Cleaner)getSelf(), waste.getLocation());
 			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> {System.out.println("reached waste"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
@@ -172,14 +202,16 @@ public class BTCleanerAgent implements IBTProvider
 		pickupwaste.setAction(new UserAction<IComponent>((e, agent) -> 
 		{
 			Future<NodeState> ret = new Future<>();
-			IWaste waste = (IWaste)findClosestElement(wastes, getSelf().getLocation());
+			Waste waste = (Waste)findClosestElement(wastes, getSelf().getLocation());
 			
 			System.out.println("Pickup waste: "+agent.getId()+" "+waste);
 			
 			try
 			{
 				// todo: make async
-				actsense.pickUpWaste(waste);
+				//actsense.pickUpWaste(waste);
+				ITerminableFuture<Void> fut = getEnvironment().pickupWaste((Cleaner)getSelf(), waste);
+				fut.get();
 				System.out.println("picked up waste");
 				ret.setResultIfUndone(NodeState.SUCCEEDED);
 			}
@@ -200,10 +232,11 @@ public class BTCleanerAgent implements IBTProvider
 			
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 
-			IWastebin wastebin = (IWastebin)findClosestElement(wastebins, getSelf().getLocation());
+			Wastebin wastebin = (Wastebin)findClosestElement(wastebins, getSelf().getLocation());
 			if(wastebin==null)
 			{
-				ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
+				//ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
+				ITerminableFuture<Void> fut = getEnvironment().move((Cleaner)getSelf(), new Vector2Double(Math.random(), Math.random()));
 				ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
 				fut.then(Void -> ret.setResultIfUndone(NodeState.FAILED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			}
@@ -225,10 +258,11 @@ public class BTCleanerAgent implements IBTProvider
 		ActionNode<IComponent> movetowastebin = new ActionNode<>("movetowastebin");
 		movetowastebin.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{
-			IWastebin wastebin = (IWastebin)findClosestElement(wastebins, getSelf().getLocation());
+			Wastebin wastebin = (Wastebin)findClosestElement(wastebins, getSelf().getLocation());
 			System.out.println("Go to wastebin: "+agent.getId()+" "+wastebin);
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
-			ITerminableFuture<Void> fut = actsense.moveTo(wastebin.getLocation());
+			//ITerminableFuture<Void> fut = actsense.moveTo(wastebin.getLocation());
+			ITerminableFuture<Void> fut = getEnvironment().move((Cleaner)getSelf(),wastebin.getLocation());
 			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
@@ -239,12 +273,14 @@ public class BTCleanerAgent implements IBTProvider
 		dropwaste.setAction(new UserAction<IComponent>((e, agent) -> 
 		{
 			Future<NodeState> ret = new Future<>();
-			IWastebin wastebin = (IWastebin)findClosestElement(wastebins, getSelf().getLocation());
-			System.out.println("Drop waste: "+agent.getId()+" "+actsense.getSelf().getCarriedWaste()+" "+wastebin);
+			Wastebin wastebin = (Wastebin)findClosestElement(wastebins, getSelf().getLocation());
+			System.out.println("Drop waste: "+agent.getId()+" "+getSelf().getCarriedWaste()+" "+wastebin);
 			try
 			{
 				// todo: make async
-				actsense.dropWasteInWastebin(actsense.getSelf().getCarriedWaste(), wastebin);
+				//actsense.dropWasteInWastebin(actsense.getSelf().getCarriedWaste(), wastebin);
+				ITerminableFuture<Void> fut = getEnvironment().dropWasteInWastebin((Cleaner)getSelf(), getSelf().getCarriedWaste(), wastebin);
+
 				ret.setResultIfUndone(NodeState.SUCCEEDED);
 			}
 			catch(Exception ex)
@@ -259,7 +295,8 @@ public class BTCleanerAgent implements IBTProvider
 		randomwalk.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Random walk: "+agent.getId());
-			ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
+			//ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
+			ITerminableFuture<Void> fut = getEnvironment().move((Cleaner)getSelf(), new Vector2Double(Math.random(), Math.random()));
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
@@ -270,15 +307,16 @@ public class BTCleanerAgent implements IBTProvider
 		randomwalk.addDecorator(new RepeatDecorator<IComponent>());
 		
 		// patrol walk
-		Iterator<ILocation>[] locs = new Iterator[1];
+		Iterator<IVector2>[] locs = new Iterator[1];
 		ActionNode<IComponent> patrolwalk = new ActionNode<>("patrolwalk");
 		patrolwalk.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{ 
 			if(locs[0]==null || !locs[0].hasNext())
 				locs[0] = patrolpoints.iterator();
-			ILocation loc = locs[0].next();
+			IVector2 loc = locs[0].next();
 			System.out.println("Patrol walk: "+agent.getId()+" "+loc);
-			ITerminableFuture<Void> fut = actsense.moveTo(loc);
+			//ITerminableFuture<Void> fut = actsense.moveTo(loc);
+			ITerminableFuture<Void> fut = getEnvironment().move((Cleaner)getSelf(), loc);
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
@@ -288,6 +326,8 @@ public class BTCleanerAgent implements IBTProvider
 		//patrolwalk.setTriggerCondition((node, execontext) -> !daytime.get(), new EventType[]{
 		//	new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		patrolwalk.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> !daytime.get())
+			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime")}));
+		patrolwalk.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> daytime.get())
 			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime")}));
 		patrolwalk.addDecorator(new RepeatDecorator<IComponent>());
 					
@@ -300,7 +340,8 @@ public class BTCleanerAgent implements IBTProvider
 		//	new EventType(BTAgentFeature.PROPERTYCHANGED, "chargestate")});
 		loadbattery.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> getChargestate()>0.7));
 		loadbattery.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> getChargestate()<0.7)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "chargestate")}));
+			//.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "chargestate")}));
+			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "self")}));
 			//.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "self", "chargestate")}));
 		
 		// || (nearStation() && chargestate<0.99)
@@ -317,7 +358,7 @@ public class BTCleanerAgent implements IBTProvider
 		//collectwaste.setTriggerCondition((node, execontext) -> wastes.size()>0 && (getSelf().getCarriedWaste()==null || daytime.get()), new EventType[]{
 		//	new EventType(BTAgentFeature.VALUEADDED, "wastes"), new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		collectwaste.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> wastes.size()>0 && (getSelf().getCarriedWaste()==null || daytime.get()))
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime")}));
+			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime"), new EventType(BTAgentFeature.VALUEADDED, "wastes")}));
 		collectwaste.addDecorator(new RetryDecorator<IComponent>(0));
 		
 		// main control
@@ -331,27 +372,24 @@ public class BTCleanerAgent implements IBTProvider
 		return sn;
 	}
 	
-	public ICleaner getSelf()
-	{
-		//return self;
-		return self.get();
-	}
-	
 	public double getChargestate()
 	{
-		//return getSelf().getChargestate();
-		return chargestate.get();
+		return getSelf().getChargestate();
+		//return chargestate.get();
 	}
 	
-	public static ILocationObject findClosestElement(Set<? extends ILocationObject> elements, ILocation loc) 
+	public static <T extends SpaceObject> T findClosestElement(Set<T> elements, IVector2 loc) 
 	{
-		return elements.stream().min(Comparator.comparingDouble(p -> distance(p.getLocation(), loc))).orElse(null);
+		return elements.stream()
+			.filter(p -> p.getPosition() != null)
+			.min(Comparator.comparingDouble(p -> distance(p.getPosition(), loc)))
+			.orElse(null);
 	}
 	
-	public static double distance(ILocation p1, ILocation p2) 
+	public static double distance(IVector2 p1, IVector2 p2) 
 	{
-		double dx = p1.getX()-p2.getX();
-		double dy = p1.getY()-p2.getY();
+		double dx = p1.getX().getAsDouble()-p2.getX().getAsDouble();
+		double dy = p1.getY().getAsDouble()-p2.getY().getAsDouble();
         //return Math.sqrt(dx*dx + dy*dy);
 		return dx*dx+dy*dy; // speed optimized
 	}
@@ -359,33 +397,103 @@ public class BTCleanerAgent implements IBTProvider
 	@OnStart
 	private void start()
 	{
-		actsense.manageWastesIn(wastes);
-		actsense.manageWastebinsIn(wastebins);
-		actsense.manageChargingstationsIn(stations);
-		actsense.manageCleanersIn(others);
+		Cleaner s = new Cleaner(new Vector2Double(Math.random()*0.4+0.3, Math.random()*0.4+0.3), getAgent().getId().getLocalName(), 0.1, 0.1, 0.8);  
+		s = (Cleaner)getEnvironment().addSpaceObject((SpaceObject)s).get();
+		self = new Val<>(s);
 		
-		patrolpoints.add(new Location(0.1, 0.1));
-		patrolpoints.add(new Location(0.1, 0.9));
-		patrolpoints.add(new Location(0.3, 0.9));
-		patrolpoints.add(new Location(0.3, 0.1));
-		patrolpoints.add(new Location(0.5, 0.1));
-		patrolpoints.add(new Location(0.5, 0.9));
-		patrolpoints.add(new Location(0.7, 0.9));
-		patrolpoints.add(new Location(0.7, 0.1));
-		patrolpoints.add(new Location(0.9, 0.1));
-		patrolpoints.add(new Location(0.9, 0.9));
+		PerceptionProcessor pp = new PerceptionProcessor();
+		
+		pp.manage(Waste.class, wastes);
+		pp.manage(Wastebin.class, wastebins);
+		pp.manage(Chargingstation.class, stations);
+		pp.manage(Cleaner.class, others, obj -> 
+		{
+			if(obj.equals(getSelf()))
+				getSelf().updateFrom(obj);
+			else
+				pp.findAndUpdateOrAdd(obj, others);
+		}, obj -> others.remove(obj), obj -> {if(obj.getPosition()==null) others.remove(obj);});
+		
+		getEnvironment().observeObject((Cleaner)getSelf()).next(e ->
+		{
+			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
+			{
+				pp.handleEvent(e);
+			});
+		});
 		
 		// Open a window showing the agent's perceptions
-		new SensorGui(actsense).setVisible(true);
+		new SensorGui(agent.getComponentHandle()).setVisible(true);
+		
+		patrolpoints.add(new Vector2Double(0.1, 0.1));
+		patrolpoints.add(new Vector2Double(0.1, 0.9));
+		patrolpoints.add(new Vector2Double(0.3, 0.9));
+		patrolpoints.add(new Vector2Double(0.3, 0.1));
+		patrolpoints.add(new Vector2Double(0.5, 0.1));
+		patrolpoints.add(new Vector2Double(0.5, 0.9));
+		patrolpoints.add(new Vector2Double(0.7, 0.9));
+		patrolpoints.add(new Vector2Double(0.7, 0.1));
+		patrolpoints.add(new Vector2Double(0.9, 0.1));
+		patrolpoints.add(new Vector2Double(0.9, 0.9));
+	}
+	
+	@ComponentMethod
+	public IFuture<Set<Waste>> getWastes() 
+	{
+		return new Future<>(wastes);
+	}
+
+	@ComponentMethod
+	public IFuture<Set<Wastebin>> getWastebins() 
+	{
+		return new Future<>(wastebins);
+	}
+
+	@ComponentMethod
+	public IFuture<Set<Chargingstation>> getStations() 
+	{
+		return new Future<>(stations);
+	}
+
+	@ComponentMethod
+	public IFuture<Set<Cleaner>> getCleaners() 
+	{
+		return new Future<>(others);
+	}
+	
+	@ComponentMethod
+	public IFuture<Cleaner> getCleaner() 
+	{	
+		return new Future<>(getSelf());
+	}
+
+	@ComponentMethod
+	public IFuture<Boolean> isDaytime() 
+	{
+		return new Future<>(daytime.get());
+	}	
+	
+	@ComponentMethod
+	public IFuture<IVector2> getTarget() 
+	{
+		return getEnvironment().getTarget(getSelf());
 	}
 	
 	public static void main(String[] args)
 	{
 		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
 		
-		IComponentManager.get().create(new BTCleanerAgent());
-		//EnvironmentGui.create();
-		EnvGui.createEnv();
+		int fps = 30; // steps / frames per second
+		
+		CleanerworldEnvironment env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
+		env.createWorld().get();
+		String envid = Environment.add(env);
+		
+		IComponentManager.get().create(new BTCleanerAgent(envid));
+		
+		//EnvironmentGui.create(envid); // old Swing ui
+		EnvGui.create(envid, env.getStepsPerSecond().get()); // new libgdx ui
+		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

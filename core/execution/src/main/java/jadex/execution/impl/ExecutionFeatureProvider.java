@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import jadex.common.ICommand;
 import jadex.common.IParameterGuesser;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
@@ -126,6 +127,8 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							.method(ElementMatchers.isAnnotatedWith(ComponentMethod.class)) 
 							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 							{
+								IComponent caller = IComponentManager.get().getCurrentComponent();
+								
 								List<Object> myargs = new ArrayList<Object>(); 
 								Class<?>[] ptypes = method.getParameterTypes();
 								java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
@@ -142,6 +145,24 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								
 								FutureFunctionality func = new FutureFunctionality()
 								{
+									@Override
+									public <T> void scheduleForward(final ICommand<T> com, final T args)
+									{
+										// Don't reschedule if already on correct thread.
+										if(caller==null || caller.getFeature(IExecutionFeature.class).isComponentThread())
+										{
+											com.execute(args);
+										}
+										else
+										{
+											//System.out.println("todo: scheduleDecoupledStep");
+											caller.getFeature(IExecutionFeature.class).scheduleStep(agent ->
+											{
+												com.execute(args);
+											});
+										}
+									}
+									
 									public Object handleResult(Object val) throws Exception
 									{
 										if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))

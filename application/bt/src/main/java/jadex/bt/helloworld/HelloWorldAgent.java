@@ -13,7 +13,7 @@ import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.logger.ILoggingFeature;
-import jadex.logger.OpenTelemetryLogger;
+//import jadex.logger.OpenTelemetryLogger;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnEnd;
 
@@ -49,7 +49,8 @@ public class HelloWorldAgent implements IBTProvider
 		//IComponentManager.get().create(new HelloWorldAgent()).get();
 		//IComponentManager.get().waitForLastComponentTerminated();
 		
-		System.setProperty(OpenTelemetryLogger.URL, "https://otel.actoron.com");
+		//System.setProperty(OpenTelemetryLogger.URL, "https://otel.actoron.com");
+		
 		//System.setProperty(OpenTelemetryLogger.LOGLEVEL, "WARNING");
 		
 		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.ERROR);

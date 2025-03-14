@@ -11,9 +11,10 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import jadex.bt.cleanerworld.BTCleanerAgent;
 import jadex.common.SGUI;
+import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
-import jadex.bt.cleanerworld.environment.SensorActuator;
 
 
 /**
@@ -35,16 +36,15 @@ public class SensorGui
 	/**
 	 *  Creates a GUI that updates itself when beliefs change.
 	 */
-	public SensorGui(SensorActuator sensor)
+	public SensorGui(IComponentHandle handle)
 	{
-		String	id	= sensor.getSelf().getId();
-		IExecutionFeature lifecycle	= IExecutionFeature.get();
+		String id = handle.getPojoHandle(BTCleanerAgent.class).getCleaner().get().getId();
 		
 		// Open window on swing thread
 		SwingUtilities.invokeLater(()->
 		{
 			this.frame	= new JFrame(id);
-			final JPanel map = new SensorPanel(sensor);
+			final JPanel map = new SensorPanel(handle);
 
 			frame.getContentPane().add(BorderLayout.CENTER, map);
 			frame.setSize(300, 300);

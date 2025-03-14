@@ -1,4 +1,4 @@
-package jadex.bdi.cleanerworld.environment;
+package jadex.bt.cleanerworld.environment;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -277,6 +277,8 @@ public class EnvGui extends ApplicationAdapter
     		double dist = 0;
     		for(Waste waste: wastes)
     		{
+    			if(waste.getLocation()==null)
+    				continue;
     			if(nearest==null || waste.getLocation().getDistance(mouseloc).getAsDouble()<dist)
     			{
     				nearest = waste;
@@ -334,12 +336,12 @@ public class EnvGui extends ApplicationAdapter
         background.dispose();
     }
 
-    public static void createEnv(String envid) 
+    public static void create(String envid, int fps) 
     {
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("Cleaner World");
         config.setWindowedMode(800, 600);
-        config.setForegroundFPS(10);
+        config.setForegroundFPS(fps);
         new Lwjgl3Application(new EnvGui(envid), config);
     }
 }

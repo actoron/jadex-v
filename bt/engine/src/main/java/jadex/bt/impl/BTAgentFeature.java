@@ -100,6 +100,9 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 
 	public static BTAgentFeature get()
 	{
+		Object o = IExecutionFeature.get().getComponent().getFeature(MicroAgentFeature.class);
+		//if(!(o instanceof BTAgentFeature))
+		//	System.out.println("sdgjhfjhsdgfjh");
 		return (BTAgentFeature)IExecutionFeature.get().getComponent().getFeature(MicroAgentFeature.class);
 	}
 
@@ -165,7 +168,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 						//valpojo.set(val, pojo);
 						//valname.set(val, field.getName());
 					
-						Long updaterate = (Long)valupd.get(val);
+						/*Long updaterate = (Long)valupd.get(val);
 						Callable<Object> dynamic = (Callable<Object>)valdyn.get(val);
 						if(updaterate!=null && dynamic!=null)
 						{
@@ -194,7 +197,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 							//IExecutionFeature.get().waitForDelay(updaterate)
 							//	.then(Void -> IExecutionFeature.get().scheduleStep(task[0]))
 							//	.printOnEx();
-						}
+						}*/
 					}
 					catch(Exception e)
 					{
@@ -645,7 +648,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 			}
 			
 			// observe new value for property changes
-			observeValue(rs, val, ev2, eventadders);
+			observeValue(rs, val, ev2, ev1, eventadders);
 			
 			// initiate a step to reevaluate the conditions
 			//TODO???
@@ -792,7 +795,7 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 	/**
 	 * 
 	 */
-	protected static synchronized IResultCommand<IFuture<Void>, PropertyChangeEvent> getEventAdder(final EventType etype, 
+	protected static synchronized IResultCommand<IFuture<Void>, PropertyChangeEvent> getEventAdder(final EventType etype, final EventType etypeobj,
 		final RuleSystem rs, Map<EventType, IResultCommand<IFuture<Void>, PropertyChangeEvent>> eventadders)
 	{
 		IResultCommand<IFuture<Void>, PropertyChangeEvent> ret = eventadders.get(etype);
@@ -808,14 +811,18 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 					try
 					{
 						//publishToolBeliefEvent(mbel);
-						EventType propetype = etype;
+						EventType proptype = etype;
 						String propname = event.getPropertyName();
-						if(propname!=null)
+						if("general".equals(propname))
+						{
+							proptype = etypeobj;
+						}
+						else if(propname!=null)
 						{
 							String[] combined = Stream.concat(Stream.of(etype.getTypes()), Stream.of(propname)).toArray(String[]::new);
-							propetype = new EventType(combined);
+							proptype = new EventType(combined);
 						}
-						jadex.rules.eca.Event ev = new jadex.rules.eca.Event(propetype, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
+						jadex.rules.eca.Event ev = new jadex.rules.eca.Event(proptype, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
 						rs.addEvent(ev);
 					}
 					catch(Exception e)
@@ -847,12 +854,12 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 	/**
 	 *  Observe a value.
 	 */
-	public static void observeValue(final RuleSystem rs, final Object val, final EventType etype, Map<EventType, IResultCommand<IFuture<Void>, PropertyChangeEvent>> eventadders)
+	public static void observeValue(final RuleSystem rs, final Object val, final EventType etype, final EventType etypeobj, Map<EventType, IResultCommand<IFuture<Void>, PropertyChangeEvent>> eventadders)
 	{
 		//assert IExecutionFeature.get().isComponentThread();
 
 		if(val!=null)
-			rs.observeObject(val, true, false, getEventAdder(etype, rs, eventadders));
+			rs.observeObject(val, true, false, getEventAdder(etype, etypeobj, rs, eventadders));
 	}
 
 }

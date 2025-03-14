@@ -105,7 +105,8 @@ public class Decorator<T> implements IDecorator<T>
 		{
 	        bret.then(bstate -> 
 	        {
-	           doafter.accept(bstate);
+	        	//System.out.println("before dec state: "+this+" "+bstate);
+	        	doafter.accept(bstate);
 	        }).catchEx(ret::setExceptionIfUndone);
 		}
 		

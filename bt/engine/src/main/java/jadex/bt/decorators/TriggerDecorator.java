@@ -51,7 +51,8 @@ public class TriggerDecorator<T> extends ConditionalDecorator<T>
 			
 			if(NodeState.RUNNING==ncontext.getState())
 			{
-				System.out.println("node already active, ignoring: "+getNode());
+				//System.out.println("node already active, ignoring: "+getNode());
+				System.getLogger(""+this.getClass()).log(Level.INFO, "node already active, ignoring: "+getNode());
 				return IFuture.DONE;
 			}
 			
@@ -62,7 +63,8 @@ public class TriggerDecorator<T> extends ConditionalDecorator<T>
 			{
 				IExecutionFeature.get().scheduleStep(agent ->
 				{
-					System.out.println("triggered complete tree reexecution");
+					//System.out.println("triggered complete tree reexecution");
+					System.getLogger(""+this.getClass()).log(Level.INFO, "triggered complete tree reexecution: "+getNode());
 					// todo: remove hack
 					BTAgentFeature.get().executeBehaviorTree((Node<IComponent>)getNode(), new Event(event.getType().toString(), event));
 				});

@@ -1,9 +1,9 @@
 package jadex.environment;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public class PerceptionProcessor 
@@ -65,4 +65,47 @@ public class PerceptionProcessor
         }
         return o -> {};
     }
+    
+    public <T extends SpaceObject> void manage(Class<T> clazz, Collection<T> coll)
+    {
+    	manage(clazz, coll, 
+    		obj -> findAndUpdateOrAdd(obj, coll), 
+    		obj -> coll.remove(obj),
+    		obj -> {if(obj.getPosition()==null) {coll.remove(obj); 
+    			//System.out.println("removing: "+obj+" from "+coll);
+    		}}
+    	);
+    	
+    	//registerHandler(clazz, obj -> findAndUpdateOrAdd(obj, coll), PerceptionState.SEEN, PerceptionState.CHANGED);
+        //registerHandler(clazz, obj -> coll.remove(obj), PerceptionState.DISAPPEARED);
+        //registerHandler(clazz, obj -> {if(obj.getPosition()==null) coll.remove(obj);}, PerceptionState.UNSEEN);
+    }
+    
+    public <T extends SpaceObject> void manage(Class<T> clazz, Collection<T> coll, Consumer<T> seenhandler, Consumer<T> dishandler, Consumer<T> unseenhandler)
+    {
+    	registerHandler(clazz, seenhandler, PerceptionState.SEEN, PerceptionState.CHANGED);
+        registerHandler(clazz, dishandler, PerceptionState.DISAPPEARED);
+        registerHandler(clazz, unseenhandler, PerceptionState.UNSEEN);
+    }
+    
+    public static void findAndUpdateOrAdd(SpaceObject obj, Collection<?> coll)
+	{
+		Collection<SpaceObject> sos = (Collection<SpaceObject>)coll;
+		boolean found = false;
+		    
+	    for (SpaceObject item : sos) 
+	    {
+	        if (item.equals(obj)) 
+	        {
+	        	item.updateFrom(obj);
+	            //spaceObjects.remove(item);
+	            //spaceObjects.add(obj);
+	            found = true;
+	            break; 
+	        }
+	    }
+	    
+	    if (!found) 
+	        sos.add(obj);
+	}
 }
