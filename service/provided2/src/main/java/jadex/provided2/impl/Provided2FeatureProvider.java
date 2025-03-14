@@ -84,7 +84,7 @@ public class Provided2FeatureProvider extends ComponentFeatureProvider<IProvided
 					ret.add((comp, pojo, context) ->
 					{
 						Provided2Feature	feature	= (Provided2Feature)comp.getFeature(IProvided2Feature.class);
-						feature.addService(services, pojo);
+						feature.addService(pojo, null, services);
 					});
 				}
 				
@@ -101,13 +101,14 @@ public class Provided2FeatureProvider extends ComponentFeatureProvider<IProvided
 							try
 							{
 								f.setAccessible(true);
+								String	name	= f.getName();
 								MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
 								ret.add((comp, pojo, context) ->
 								{
 									try
 									{
 										Provided2Feature	feature	= (Provided2Feature)comp.getFeature(IProvided2Feature.class);
-										feature.addService(fservices, fhandle.invoke(pojo));
+										feature.addService(fhandle.invoke(pojo), name, fservices);
 									}
 									catch(Throwable e)
 									{

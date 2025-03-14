@@ -1,17 +1,22 @@
 package jadex.provided2;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.core.IComponent;
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.provided2.annotation.Service;
+import jadex.provided2.impl.search.ServiceQuery;
+import jadex.provided2.impl.search.ServiceRegistry;
 
 /**
  *  Test automatic provided service registration.
@@ -29,7 +34,7 @@ public class Provided2Test
 	@FunctionalInterface
 	public interface IMyLambdaService
 	{
-		public String	myMethod(IComponent comp);
+		public IFuture<ComponentIdentifier>	myMethod();
 	}
 	
 	//-------- test methods --------
@@ -122,6 +127,44 @@ public class Provided2Test
 	@Test
 	public void	testLambdaService()
 	{
-		IComponentManager.get().create((IMyLambdaService)comp -> comp.getId().toString()).get();
+		// Create service component
+		IComponentHandle	handle	= IComponentManager.get().create(
+			(IMyLambdaService)() ->
+				new Future<>(IComponentManager.get().getCurrentComponent().getId())
+		).get();
+		
+		// Find service in registry
+		ServiceQuery<IMyLambdaService>	query	= new ServiceQuery<>(IMyLambdaService.class).setOwner(handle.getId()).setNetworkNames();
+		IServiceIdentifier	sid	= ServiceRegistry.getRegistry().searchService(query);
+		assertNotNull(sid);
+		
+		// Get service proxy
+		IMyLambdaService	service	= (IMyLambdaService)ServiceRegistry.getRegistry().getLocalService(sid);
+		assertNotNull(service);
+		
+		// IService
+		((IService)service).getServiceId();
+		
+		// Call service from other component
+		Future<ComponentIdentifier>	cidfut	= new Future<>();
+		Future<ComponentIdentifier>	retfut	= new Future<>();
+		IComponentHandle	handle2	= IComponentManager.get().create(new Object()
+		{
+			@OnStart
+			void callService()
+			{
+				service.myMethod().then(cid -> 
+				{
+					cidfut.setResult(cid);
+					retfut.setResult(IComponentManager.get().getCurrentComponent().getId());
+				});
+			}
+		}).get(TIMEOUT);
+		
+		// Check if service cid is returned
+		assertEquals(handle.getId(), cidfut.get(TIMEOUT));
+
+		// Check if return call is scheduled on caller thread
+		assertEquals(handle2.getId(), retfut.get(TIMEOUT));
 	}
 }
