@@ -259,7 +259,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	/**
 	 *  Copy a value, if necessary.
 	 */
-	protected Object doCopy(final boolean copy, final IFilter deffilter, final Object value)
+	protected Object doCopy(final boolean copy, final IFilter<Object> deffilter, final Object value)
 	{
 		Object	res	= value;
 		if(value!=null)
@@ -274,7 +274,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 				// Copy result if
 				// - copy flag is true (use custom filter)
 				// - and result is not a reference object (default filter)
-				IFilter	filter	= copy ? new IFilter()
+				IFilter<Object>	filter	= copy ? new IFilter<Object>()
 				{
 					public boolean filter(Object obj)
 					{

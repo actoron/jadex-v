@@ -2,6 +2,7 @@ package jadex.execution.agentmethods;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
@@ -9,9 +10,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.InvalidComponentAccessException;
 import jadex.core.annotation.NoCopy;
 import jadex.execution.ComponentMethod;
@@ -48,6 +50,21 @@ public class AgentMethodTest
 			Object obj = new Object();
             Object ret = pojo.getObject1(obj).get();
             assertNotSame(obj, ret);
+		});
+		
+		agent.terminate();
+	}
+	
+	@Test
+	public void	testNoCopyType()
+	{
+		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
+		MyPojo pojo = agent.getPojoHandle(MyPojo.class);
+		
+		assertDoesNotThrow(() -> 
+		{
+            Object ret = pojo.noCopyCid(agent.getId()).get();
+            assertSame(agent.getId(), ret);
 		});
 		
 		agent.terminate();
@@ -183,6 +200,12 @@ public class AgentMethodTest
 		{
 			System.out.println("getName called: "+getAgent().getFeature(IExecutionFeature.class).isComponentThread());
 			return new Future<>("my name is: "+getAgent().getId());
+		}
+		
+		@ComponentMethod
+		public IFuture<ComponentIdentifier> noCopyCid(ComponentIdentifier cid)
+		{
+			return new Future<>(cid);
 		}
 		
 		@ComponentMethod
