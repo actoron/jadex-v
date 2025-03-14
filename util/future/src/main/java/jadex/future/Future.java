@@ -230,10 +230,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		if(!isDone())
 			FutureHelper.notifyStackedListeners();	// Avoid self-blocking
 		
-		// Future.get() is much faster when the future is already finished
-		// -> allow other threads to complete future before continuing
-		if(!isDone())
-			Thread.yield();
+//		// Future.get() is much faster when the future is already finished
+//		// -> allow other threads to complete future before continuing
+//		if(!isDone())
+//			Thread.yield();
 		
     	synchronized(this)
     	{
