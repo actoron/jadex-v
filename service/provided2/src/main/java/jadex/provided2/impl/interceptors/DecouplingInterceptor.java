@@ -1,5 +1,6 @@
 package jadex.provided2.impl.interceptors;
 
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -123,6 +124,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 //				System.out.println("sdfsdfsdf");
 			
 			Method method = sic.getMethod();
+			AnnotatedType[]	params	= method.getAnnotatedParameterTypes();
 //			boolean[] refs = getReferenceInfo(method, !copy, true);
 			
 			Object[] args = sic.getArgumentArray();
@@ -136,7 +138,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 		    		// Does not work, yet as service object might have wrong interface
 		    		// (e.g. service interface instead of listener interface --> settings properties provider)
 //					if(!refs[i] && !getSerializationServices().isLocalReference(args[i]))
-					if(!isNoCopy(args[i]))
+					if(!isNoCopy(args[i]) && !params[i].isAnnotationPresent(NoCopy.class))
 					{
 			    		// Pass arg as reference if
 			    		// - refs[i] flag is true (use custom filter)
@@ -388,7 +390,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 				
 //				Reference ref = method.getAnnotation(Reference.class);
 //				final boolean copy = DecouplingInterceptor.this.copy && !sic.isRemoteCall() && !getSerializationServices().isRemoteObject(sic.getProxy()) && (ref!=null? !ref.local(): true);
-				final boolean copy = DecouplingInterceptor.this.copy && !sic.isRemoteCall();
+				final boolean copy = DecouplingInterceptor.this.copy && !sic.isRemoteCall() && !method.getAnnotatedReturnType().isAnnotationPresent(NoCopy.class);
 				final IFilter	deffilter = new IFilter()
 				{
 					public boolean filter(Object object)

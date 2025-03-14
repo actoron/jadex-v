@@ -3,6 +3,7 @@ package jadex.provided2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.annotation.NoCopy;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.OnEnd;
@@ -35,6 +37,13 @@ public class Provided2Test
 	public interface IMyLambdaService
 	{
 		public IFuture<ComponentIdentifier>	myMethod();
+	}
+	
+	@Service
+	@FunctionalInterface
+	public interface INoCopyService
+	{
+		public @NoCopy IFuture<Object>	noCopy(@NoCopy Object o);
 	}
 	
 	//-------- test methods --------
@@ -142,8 +151,8 @@ public class Provided2Test
 		IMyLambdaService	service	= (IMyLambdaService)ServiceRegistry.getRegistry().getLocalService(sid);
 		assertNotNull(service);
 		
-		// IService
-		((IService)service).getServiceId();
+		// Test cast to IService
+		assertNotNull(((IService)service).getServiceId());
 		
 		// Call service from other component
 		Future<ComponentIdentifier>	cidfut	= new Future<>();
@@ -166,5 +175,41 @@ public class Provided2Test
 
 		// Check if return call is scheduled on caller thread
 		assertEquals(handle2.getId(), retfut.get(TIMEOUT));
+	}
+
+	@Test
+	public void	testNoCopyService()
+	{
+		// Create service component
+		IComponentHandle	handle	= IComponentManager.get().create(
+			(INoCopyService)obj -> new Future<>(obj)
+		).get();
+		
+		// Find service in registry
+		ServiceQuery<INoCopyService>	query	= new ServiceQuery<>(INoCopyService.class).setOwner(handle.getId()).setNetworkNames();
+		IServiceIdentifier	sid	= ServiceRegistry.getRegistry().searchService(query);
+		assertNotNull(sid);
+		
+		// Get service proxy
+		INoCopyService	service	= (INoCopyService)ServiceRegistry.getRegistry().getLocalService(sid);
+		assertNotNull(service);
+		
+		// Call service from other component
+		Object	obj1	= new Object();
+		Future<Object>	obj2fut	= new Future<>();
+		IComponentManager.get().create(new Object()
+		{
+			@OnStart
+			void callService()
+			{
+				service.noCopy(obj1).then(obj2 -> 
+				{
+					obj2fut.setResult(obj2);
+				});
+			}
+		}).get(TIMEOUT);
+		
+		// Check if object is not copied
+		assertSame(obj1, obj2fut.get(TIMEOUT));
 	}
 }
