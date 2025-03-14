@@ -224,16 +224,16 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	 */
 	public E get(long timeout, boolean realtime)
 	{
-		// Future.get() is much faster when the future is already finished
-		// -> allow other threads to complete future before continuing
-		if(!isDone())
-			Thread.yield();
-		
     	boolean suspend = false;
 		ISuspendable caller = null;
 		
 		if(!isDone())
 			FutureHelper.notifyStackedListeners();	// Avoid self-blocking
+		
+		// Future.get() is much faster when the future is already finished
+		// -> allow other threads to complete future before continuing
+		if(!isDone())
+			Thread.yield();
 		
     	synchronized(this)
     	{
