@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.bdi.marsworld.environment.Carry.Status;
+import jadex.core.annotation.NoCopy;
 import jadex.environment.Environment;
 import jadex.environment.EnvironmentTask;
 import jadex.environment.SpaceObject;
 import jadex.environment.EnvironmentTask.TaskData;
 import jadex.execution.ComponentMethod;
-import jadex.execution.NoCopy;
 import jadex.execution.impl.TimerContext;
 import jadex.execution.impl.TimerCreator;
 import jadex.future.ITerminableFuture;

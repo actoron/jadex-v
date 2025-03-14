@@ -3,12 +3,12 @@ package jadex.bt.cleanerworld.environment;
 import java.util.HashSet;
 import java.util.Set;
 
+import jadex.core.annotation.NoCopy;
 import jadex.environment.Environment;
 import jadex.environment.EnvironmentTask;
 import jadex.environment.EnvironmentTask.TaskData;
 import jadex.environment.SpaceObject;
 import jadex.execution.ComponentMethod;
-import jadex.execution.NoCopy;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
