@@ -26,7 +26,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:traverser:'+v
-	implementation 'org.activecomponents.jadex:serialization:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:injection:'+v

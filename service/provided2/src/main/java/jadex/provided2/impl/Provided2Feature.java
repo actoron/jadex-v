@@ -57,14 +57,13 @@ public class Provided2Feature implements IProvided2Feature
 			name	= name!=null ? name : type.getSimpleName();  
 			IService	service	= createProvidedServiceProxy(pojo, name, type);
 			ServiceRegistry.getRegistry().addLocalService(service);
-
 		}
 	}
 
 	/**
 	 *  Create a standard service proxy for a provided service.
 	 */
-	public IService	createProvidedServiceProxy(Object service, String name, Class<?> type)
+	protected IService	createProvidedServiceProxy(Object service, String name, Class<?> type)
 	{
 		// Create proxy with handler
 		IServiceIdentifier	sid	= new ServiceIdentifier(self, service.getClass(), name, null, false, null);
