@@ -72,6 +72,9 @@ public class Provided2Feature implements IProvided2Feature, ILifecycle
 		// May be added already due to first field service found and then service interface found again as extra object.
 		if(!services.containsKey(pojo))
 		{
+			// Need to add it here to avoid recursive adddExtraObject for pojo
+			services.put(pojo, null);
+			
 			// If service pojo is not the component pojo -> handle injection in service pojo as well
 			if(pojo!=self.getPojo())
 			{
