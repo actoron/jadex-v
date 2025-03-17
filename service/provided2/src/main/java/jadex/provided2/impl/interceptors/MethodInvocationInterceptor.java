@@ -93,6 +93,9 @@ public class MethodInvocationInterceptor extends AbstractApplicableInterceptor
 //			if(sic.getMethod().getName().indexOf("method")!=-1)
 //				System.out.println("setting to c: "+sic.getLastServiceCall()+" "+ServiceCall.getCurrentInvocation());
 			
+			// If service interface is non-public -> need to make method accessible anyways
+			sic.getMethod().setAccessible(true);
+			
 			Object res = sic.getMethod().invoke(sic.getObject(), sic.getArgumentArray());
 
 			// Restore after call
