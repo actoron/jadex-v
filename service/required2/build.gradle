@@ -23,6 +23,7 @@ repositories
 dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:injection:'+v
 	implementation 'org.activecomponents.jadex:providedservice2:'+v
