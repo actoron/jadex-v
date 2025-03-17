@@ -175,6 +175,7 @@ includeBuild('model/model') {}
 includeBuild('service/provided') {}
 includeBuild('service/provided2') {}
 includeBuild('service/required') {}
+includeBuild('service/required2') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {}
