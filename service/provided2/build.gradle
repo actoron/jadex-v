@@ -3,7 +3,7 @@ plugins
 	id 'java-library'    
 }
 
-description = 'Micro agent execution'
+description = 'Provided services'
 
 group = 'org.activecomponents.jadex'
 
@@ -31,7 +31,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:injection:'+v
 
 	testImplementation 'org.activecomponents.jadex:future:'+v
-	testImplementation 'org.activecomponents.jadex:benchmark-core:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
