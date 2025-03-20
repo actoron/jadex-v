@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -84,13 +85,19 @@ public class Provided2Test
 			}
 		}).get(TIMEOUT);
 		
+		// Check correct setup calls
 		assertTrue(start.isDone());
 		assertFalse(end.isDone());
 		
-		// TODO: test service registration
+		// Test that service can be found
+		assertNotNull(searchService(comp, IMyService.class));
 		
+		// Check correct terminate calls
 		comp.terminate().get(TIMEOUT);
 		assertTrue(end.isDone());
+		
+		// Test that service is no longer found
+		assertNull(searchSid0(comp, IMyService.class));		
 	}
 
 	@Test
@@ -136,16 +143,22 @@ public class Provided2Test
 			}
 		}).get(TIMEOUT);
 		
+		// Check correct setup calls
 		assertTrue(servicestart.isDone());
 		assertTrue(compstart.isDone());
 		assertFalse(serviceend.isDone());
 		assertFalse(compend.isDone());
 		
-		// TODO: test service registration
+		// Test that service can be found
+		assertNotNull(searchService(comp, IMyService.class));
 		
+		// Check correct terminate calls
 		comp.terminate().get(TIMEOUT);
 		assertTrue(serviceend.isDone());
 		assertTrue(compend.isDone());
+
+		// Test that service is no longer found
+		assertNull(searchSid0(comp, IMyService.class));		
 	}
 
 	@Test
@@ -284,5 +297,12 @@ public class Provided2Test
 		T	service	= (T)ServiceRegistry.getRegistry().getLocalService(sid);
 		assertNotNull(service);
 		return service;
+	}
+
+	protected <T> IServiceIdentifier searchSid0(IComponentHandle handle, Class<T> type)
+	{
+		// Find service in registry
+		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setNetworkNames();
+		return ServiceRegistry.getRegistry().searchService(query);
 	}
 }

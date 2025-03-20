@@ -37,8 +37,8 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	{
 		model.getFieldInjections().handleInjection(self, self.getPojo(), null);
 		model.getExtraOnStart().handleInjection(self, self.getPojo(), null);
-		model.getOnStart().handleInjection(self, self.getPojo(), null);
-		
+		model.getOnStart().handleInjection(self, self.getPojo(), null);		
+		model.getMethodInjections().handleInjection(self, self.getPojo(), null);
 	}
 
 	@Override
@@ -74,5 +74,6 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		model.getFieldInjections().handleInjection(self, pojo, null);
 		model.getExtraOnStart().handleInjection(self, pojo, null);
 		model.getOnStart().handleInjection(self, pojo, null);
+		model.getMethodInjections().handleInjection(self, pojo, null);
 	}
 }

@@ -40,6 +40,9 @@ public class InjectionModel
 	/** Extra code to run on component start. */
 	protected IInjectionHandle	extra;
 	
+	/** Method injections after component start. */
+	protected IInjectionHandle	methods;
+	
 	/** Code to run on component end. */
 	protected IInjectionHandle	onend;
 	
@@ -73,7 +76,7 @@ public class InjectionModel
 	{
 		if(onstart==null)
 		{
-			onstart	= unifyHandles(getInvocationHandles(clazz, OnStart.class));
+			onstart	= unifyHandles(getMethodInvocations(clazz, OnStart.class));
 		}
 		
 		return onstart;
@@ -93,13 +96,26 @@ public class InjectionModel
 	}
 
 	/**
+	 * Get method injections to run after component start.
+	 */
+	public IInjectionHandle getMethodInjections()
+	{
+		if(methods==null)
+		{
+			methods	= unifyHandles(getMethodInjections(clazz));
+		}
+		
+		return methods;
+	}
+
+	/**
 	 * Get the code to run on component end.
 	 */
 	public IInjectionHandle getOnEnd()
 	{
 		if(onend==null)
 		{
-			onend	= unifyHandles(getInvocationHandles(clazz, OnEnd.class));
+			onend	= unifyHandles(getMethodInvocations(clazz, OnEnd.class));
 		}
 		
 		return onend;
@@ -109,21 +125,6 @@ public class InjectionModel
 	
 	/** The model cache. */
 	protected static Map<Class<?>, InjectionModel>	cache	= new LinkedHashMap<>();
-	
-	/** The supported parameter/field injections (i.e class -> value). */
-	protected static Map<Function<Class<?>, Boolean>, IValueFetcher>	fetchers	= new LinkedHashMap<>();
-	
-	static
-	{
-		fetchers.put(clazz -> IComponent.class.equals(clazz), (self, pojo, type, context) -> self);
-		
-		fetchers.put(clazz -> SReflect.isSupertype(IComponentFeature.class, clazz), (self, pojo, type, context) ->
-		{
-			@SuppressWarnings("unchecked")
-			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)type;
-			return self.getFeature((Class<IComponentFeature>)feature);
-		});
-	}
 	
 	/**
 	 *  Get the model for a pojo class.
@@ -151,15 +152,16 @@ public class InjectionModel
 			try
 			{
 				IValueFetcher	fetcher	= null;
-				for(Function<Class<?>, Boolean> check: fetchers.keySet())
+				for(Function<Class<?>, IValueFetcher> check: fetchers)
 				{
-					if(check.apply(field.getType()))
+					IValueFetcher	test	= check.apply(field.getType());
+					if(test!=null)
 					{
 						if(fetcher!=null)
 						{
-							throw new RuntimeException("Conflicting field injections: "+fetcher+", "+fetchers.get(check));
+							throw new RuntimeException("Conflicting field injections: "+fetcher+", "+test);
 						}
-						fetcher	= fetchers.get(check);
+						fetcher	= test;
 					}
 				}
 						
@@ -171,7 +173,7 @@ public class InjectionModel
 					handles.add((self, pojo, context) -> {
 						try
 						{
-							Object[]	args	= new Object[]{pojo, ffetcher.getValue(self, pojo, field.getType(), context)};
+							Object[]	args	= new Object[]{pojo, ffetcher.getValue(self, pojo, context)};
 							handle.invokeWithArguments(args);
 						}
 						catch(Throwable e)
@@ -195,95 +197,62 @@ public class InjectionModel
 		return handles;
 	}
 	
-	protected static List<IInjectionHandle>	getInvocationHandles(Class<?> clazz, Class<? extends Annotation> annotation)
+	/**
+	 *  Get method handles for methods annotated with Inject.
+	 *  Used as extension point.
+	 */
+	protected static List<IInjectionHandle>	getMethodInjections(Class<?> clazz)
+	{
+		List<IInjectionHandle>	ret	= new ArrayList<>();
+		for(Method method: InjectionModel.findMethods(clazz, Inject.class))
+		{
+			IInjectionHandle injection	= null;
+			for(Function<Method, IInjectionHandle> check: minjections)
+			{
+				IInjectionHandle	test	= check.apply(method);
+				if(test!=null)
+				{
+					if(injection!=null)
+					{
+						throw new RuntimeException("Conflicting method injections: "+injection+", "+test);
+					}
+				}
+				injection	= test;
+			}
+			
+			if(injection!=null)
+			{
+				ret.add(injection);	
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Cannot inject "+method);
+			}
+
+		}
+		return ret;
+	}
+	
+	/**
+	 *  Get all invocation handles for methods with given annotation.
+	 */
+	protected static List<IInjectionHandle>	getMethodInvocations(Class<?> clazz, Class<? extends Annotation> annotation)
 	{
 		List<IInjectionHandle>	handles	= new ArrayList<>();
 		
 		List<Method> methods = findMethods(clazz, annotation);
 		for(Method method: methods)
 		{
-			try
-			{
-				method.setAccessible(true);
-				MethodHandle	handle	= MethodHandles.lookup().unreflect(method);
-				
-				// Find parameters
-				if(method.getParameters().length!=0)
-				{
-					List<IValueFetcher>	param_injections	= new ArrayList<>();
-					Class<?>[]	ptypes	= method.getParameterTypes();
-					for(Class<?> param: ptypes)
-					{
-						IValueFetcher	fetcher	= null;
-						for(Function<Class<?>, Boolean> check: fetchers.keySet())
-						{
-							if(check.apply(param))
-							{
-								if(fetcher!=null)
-								{
-									throw new RuntimeException("Conflicting field injections: "+fetcher+", "+fetchers.get(check));
-								}
-								fetcher	= fetchers.get(check);
-							}
-						}
-						
-						if(fetcher!=null)
-						{
-							param_injections.add(fetcher);
-						}
-						else
-						{
-							throw new UnsupportedOperationException("Cannot inject "+param.getSimpleName()+" in "+method);
-						}
-
-						handles.add((self, pojo, context) ->
-						{
-							try
-							{
-								Object[]	args	= new Object[param_injections.size()+1];
-								args[0]	= pojo;
-								for(int i=1; i<args.length; i++)
-								{
-									args[i]	= param_injections.get(i-1).getValue(self, pojo, ptypes[i-1], context);
-								}
-								
-								handle.invokeWithArguments(args);
-							}
-							catch(Throwable e)
-							{
-								// Rethrow user exception
-								SUtil.throwUnchecked(e);
-							}
-						});					
-					}					
-				}
-				else
-				{
-					handles.add((self, pojo, context) ->
-					{
-						try
-						{
-							handle.invoke(pojo);
-						}
-						catch(Throwable e)
-						{
-							// Rethrow user exception
-							SUtil.throwUnchecked(e);
-						}
-					});					
-				}				
-			}
-			catch(Exception e)
-			{
-				SUtil.throwUnchecked(e);
-			}
+			handles.add(createMethodInvocation(method, null));
 		}
 		
-		// Go backwards through list to execute superclass methods first
-		return handles.reversed();
+		return handles;
 	}
 
-
+	/**
+	 *  Combine potentially multiple handles to one.
+	 * 	@param handles A potentially empty list of handles or null.
+	 */
 	protected static IInjectionHandle	unifyHandles(List<IInjectionHandle> handles)
 	{
 		IInjectionHandle ret;
@@ -313,7 +282,7 @@ public class InjectionModel
 		return ret;
 	}
 
-	protected static List<Field> findFields(Class<?> clazz, Class<? extends Annotation> annotation)
+	public static List<Field> findFields(Class<?> clazz, Class<? extends Annotation> annotation)
 	{
 		List<Field>	allfields	= new ArrayList<>();
 		Class<?> myclazz	= clazz;
@@ -335,7 +304,7 @@ public class InjectionModel
 		return allfields;
 	}
 	
-	protected static List<Method> findMethods(Class<?> clazz, Class<? extends Annotation> annotation)
+	public static List<Method> findMethods(Class<?> clazz, Class<? extends Annotation> annotation)
 	{
 		List<Method>	allmethods	= new ArrayList<>();
 		Class<?> myclazz	= clazz;
@@ -372,6 +341,7 @@ public class InjectionModel
 				if(!method_ids.contains(method_id))
 				{
 					methods.add(m);
+					method_ids.add(method_id);
 				}
 			}
 			catch(Exception e)
@@ -383,11 +353,132 @@ public class InjectionModel
 		return methods;
 	}
 	
+	/**
+	 *  Create a handle for a method invocation.
+	 *  
+	 */
+	public static IInjectionHandle	createMethodInvocation(Method method, List<IValueFetcher> preparams)
+	{
+		try
+		{
+			IInjectionHandle	ret;
+			
+			method.setAccessible(true);
+			MethodHandle	handle	= MethodHandles.lookup().unreflect(method);
+			
+			// Find parameters
+			Class<?>[]	ptypes	= method.getParameterTypes();
+			if(ptypes.length!=0)
+			{
+				List<IValueFetcher>	param_injections	= new ArrayList<>();
+				for(int i=0; i<ptypes.length; i++)
+				{
+					// Check, if fetcher is provided from outside
+					IValueFetcher	fetcher	= preparams!=null && i<preparams.size()
+						? preparams.get(i) : null;
+					
+					if(fetcher==null)
+					{
+						for(Function<Class<?>, IValueFetcher> check: fetchers)
+						{
+							IValueFetcher	test	= check.apply(ptypes[i]);
+							if(test!=null)
+							{
+								if(fetcher!=null)
+								{
+									throw new RuntimeException("Conflicting field injections: "+fetcher+", "+test);
+								}
+								fetcher	= test;
+							}
+						}
+					}
+					
+					if(fetcher!=null)
+					{
+						param_injections.add(fetcher);
+					}
+					else
+					{
+						throw new UnsupportedOperationException("Cannot inject "+ptypes[i].getSimpleName()+" in "+method);
+					}
+				}
+
+				ret	= (self, pojo, context) ->
+				{
+					try
+					{
+						Object[]	args	= new Object[param_injections.size()+1];
+						args[0]	= pojo;
+						for(int j=1; j<args.length; j++)
+						{
+							args[j]	= param_injections.get(j-1).getValue(self, pojo, context);
+						}
+						
+						handle.invokeWithArguments(args);
+					}
+					catch(Throwable e)
+					{
+						// Rethrow user exception
+						SUtil.throwUnchecked(e);
+					}
+				};			
+			}
+			else
+			{
+				ret	= (self, pojo, context) ->
+				{
+					try
+					{
+						handle.invoke(pojo);
+					}
+					catch(Throwable e)
+					{
+						// Rethrow user exception
+						SUtil.throwUnchecked(e);
+					}
+				};
+			}
+			
+			return ret;
+		}
+		catch(Exception e)
+		{
+			throw SUtil.throwUnchecked(e);
+		}
+	}
+	
 	//-------- extension points --------
 	
-	/** Other features can add their handles that get executed after field injection and before @OnStart methods. */
-	public static List<Function<Class<?>, List<IInjectionHandle>>>	extra_onstart	= Collections.synchronizedList(new ArrayList<>());
+	/** The supported parameter/field injections (i.e class -> value). */
+	protected static List<Function<Class<?>, IValueFetcher>>	fetchers	= new ArrayList<>();
 	
+	static
+	{
+		addValueFetcher(clazz -> IComponent.class.equals(clazz) ? ((self, pojo, context) -> self) : null);
+		
+		addValueFetcher(clazz -> SReflect.isSupertype(IComponentFeature.class, clazz) ? ((self, pojo, context) ->
+		{
+			@SuppressWarnings("unchecked")
+			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)clazz;
+			return self.getFeature((Class<IComponentFeature>)feature);
+		}): null);
+	}
+
+	/**
+	 *  Add a parameter/field injection (i.e field/parameter type -> value fetcher).
+	 */
+	public static void	addValueFetcher(Function<Class<?>,  IValueFetcher> fetcher)
+	{
+		fetchers.add(fetcher);
+	}
+	
+	
+	/** Other features can add their handles that get executed after field injection and before @OnStart methods. */
+	protected static List<Function<Class<?>, List<IInjectionHandle>>>	extra_onstart	= Collections.synchronizedList(new ArrayList<>());
+	
+	/**
+	 * Other features can add their handles that get executed after field injection and before @OnStart methods.
+	 */
 	protected List<IInjectionHandle>	getExtraOnstartHandles(Class<?> pojoclazz)
 	{
 		List<IInjectionHandle>	ret	= new ArrayList<>();
@@ -397,4 +488,25 @@ public class InjectionModel
 		}
 		return ret;
 	}
+
+	/**
+	 * Other features can add their handles that get executed after field injection and before @OnStart methods.
+	 */
+	public static void	addExtraOnStart(Function<Class<?>, List<IInjectionHandle>> extra)
+	{
+		extra_onstart.add(extra);
+	}
+	
+	
+	/** The supported method injections (i.e method -> injection handle). */
+	protected static List<Function<Method, IInjectionHandle>>	minjections	= new ArrayList<>();
+
+	/**
+	 *  Add a method injections (i.e method -> injection handle).
+	 */
+	public static void	addMethodInjection(Function<Method, IInjectionHandle> minjection)
+	{
+		minjections.add(minjection);
+	}
+
 }

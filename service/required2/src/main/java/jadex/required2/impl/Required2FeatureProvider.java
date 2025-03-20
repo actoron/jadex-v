@@ -1,7 +1,16 @@
 package jadex.required2.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.injection.impl.IInjectionHandle;
+import jadex.injection.impl.IValueFetcher;
+import jadex.injection.impl.InjectionModel;
+import jadex.provided2.annotation.Service;
+import jadex.provided2.impl.search.ServiceQuery;
 import jadex.required2.IRequired2Feature;
 
 /**
@@ -21,69 +30,62 @@ public class Required2FeatureProvider extends ComponentFeatureProvider<IRequired
 		return new Required2Feature(self);
 	}
 	
-//	//-------- augment injection feature with new setup code --------
-//	
-//	static
-//	{
-//		InjectionModel.extra_onstart.add(new Function<Class<?>, List<IInjectionHandle>>()
-//		{
-//			@Override
-//			public List<IInjectionHandle> apply(Class<?> pojoclazz)
-//			{
-//				List<IInjectionHandle>	ret	= new ArrayList<>();
-//				
-//				// find interfaces with service annotation on pojo
-//				Set<Class<?>> services = findServiceInterfaces(pojoclazz);
-//				if(!services.isEmpty())
-//				{
-//					ret.add((comp, pojo, context) ->
-//					{
-//						Required2Feature	feature	= (Required2Feature)comp.getFeature(IRequired2Feature.class);
-//						feature.addService(pojo, null, services);
-//					});
-//				}
-//				
-//				
-//				// find fields with service type.
-//				Class<?> clazz	= pojoclazz;
-//				while(clazz!=null)
-//				{
-//					for(Field f: clazz.getDeclaredFields())
-//					{
-//						Set<Class<?>> fservices = findServiceInterfaces(f.getType());
-//						if(!fservices.isEmpty())
-//						{
-//							try
-//							{
-//								f.setAccessible(true);
-//								String	name	= f.getName();
-//								MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
-//								ret.add((comp, pojo, context) ->
-//								{
-//									try
-//									{
-//										Required2Feature	feature	= (Required2Feature)comp.getFeature(IRequired2Feature.class);
-//										feature.addService(fhandle.invoke(pojo), name, fservices);
-//									}
-//									catch(Throwable e)
-//									{
-//										SUtil.throwUnchecked(e);
-//									}
-//								});
-//							}
-//							catch(IllegalAccessException e)
-//							{
-//								SUtil.throwUnchecked(e);
-//							}
-//						}
-//					}
-//					
-//					clazz	= clazz.getSuperclass();
-//				}
-//
-//				
-//				return ret;
-//			}
-//		});
-//	}
+	//-------- augment injection feature with field injection --------
+	
+	static
+	{
+		InjectionModel.addValueFetcher(
+			type -> type.isAnnotationPresent(Service.class) ? 
+				((self, pojo, context) -> self.getFeature(IRequired2Feature.class).getLocalService(new ServiceQuery<>(type))): null);
+		
+		InjectionModel.addMethodInjection(method ->
+		{
+			IInjectionHandle	ret	= null;
+			
+			Class<?>[]	ptypes	= method.getParameterTypes();
+			Class<?>	service	= null;
+			int	index	= -1;
+			for(int i=0; i<ptypes.length; i++)
+			{
+				if(ptypes[i].isAnnotationPresent(Service.class))
+				{
+					if(service!=null)
+					{
+						throw new UnsupportedOperationException("Only one service can be injected per method: "+method);
+					}
+					service	= ptypes[i];
+					index	= i;
+				}
+			}
+			
+			if(service!=null)
+			{
+				List<IValueFetcher>	preparams	= new ArrayList<>();
+				for(int i=0; i<=index; i++)
+				{
+					if(i<index)
+					{
+						preparams.add(null);
+					}
+					else
+					{
+						preparams.add((self, pojo, context) -> context);
+					}
+				}
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, preparams);
+				
+				Class<?>	fservice	= service;
+				ret	= (self, pojo, context) ->
+				{
+					ISubscriptionIntermediateFuture<?> query	= self.getFeature(IRequired2Feature.class).addQuery(new ServiceQuery<>(fservice));
+					query.next(result ->
+					{
+						invocation.handleInjection(self, pojo, result);
+					});
+				};
+			}
+			
+			return ret;		
+		});
+	}
 }

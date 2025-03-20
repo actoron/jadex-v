@@ -13,6 +13,7 @@ import java.util.function.Function;
 import jadex.common.SUtil;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
+import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
 import jadex.provided2.IProvided2Feature;
@@ -70,7 +71,7 @@ public class Provided2FeatureProvider extends ComponentFeatureProvider<IProvided
 	
 	static
 	{
-		InjectionModel.extra_onstart.add(new Function<Class<?>, List<IInjectionHandle>>()
+		InjectionModel.addExtraOnStart(new Function<Class<?>, List<IInjectionHandle>>()
 		{
 			@Override
 			public List<IInjectionHandle> apply(Class<?> pojoclazz)
@@ -95,30 +96,34 @@ public class Provided2FeatureProvider extends ComponentFeatureProvider<IProvided
 				{
 					for(Field f: clazz.getDeclaredFields())
 					{
-						Set<Class<?>> fservices = findServiceInterfaces(f.getType());
-						if(!fservices.isEmpty())
+						// Do not provide service if field is injected (i.e. required service).
+						if(!f.isAnnotationPresent(Inject.class))
 						{
-							try
+							Set<Class<?>> fservices = findServiceInterfaces(f.getType());
+							if(!fservices.isEmpty())
 							{
-								f.setAccessible(true);
-								String	name	= f.getName();
-								MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
-								ret.add((comp, pojo, context) ->
+								try
 								{
-									try
+									f.setAccessible(true);
+									String	name	= f.getName();
+									MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
+									ret.add((comp, pojo, context) ->
 									{
-										Provided2Feature	feature	= (Provided2Feature)comp.getFeature(IProvided2Feature.class);
-										feature.addService(fhandle.invoke(pojo), name, fservices);
-									}
-									catch(Throwable e)
-									{
-										SUtil.throwUnchecked(e);
-									}
-								});
-							}
-							catch(IllegalAccessException e)
-							{
-								SUtil.throwUnchecked(e);
+										try
+										{
+											Provided2Feature	feature	= (Provided2Feature)comp.getFeature(IProvided2Feature.class);
+											feature.addService(fhandle.invoke(pojo), name, fservices);
+										}
+										catch(Throwable e)
+										{
+											SUtil.throwUnchecked(e);
+										}
+									});
+								}
+								catch(IllegalAccessException e)
+								{
+									SUtil.throwUnchecked(e);
+								}
 							}
 						}
 					}

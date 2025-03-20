@@ -1,13 +1,21 @@
 package jadex.required2.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import jadex.core.IComponent;
+import jadex.execution.future.ComponentFutureFunctionality;
+import jadex.execution.future.FutureFunctionality;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.IntermediateFuture;
+import jadex.future.TerminableIntermediateFuture;
 import jadex.provided2.IServiceIdentifier;
+import jadex.provided2.impl.search.IServiceRegistry;
 import jadex.provided2.impl.search.ServiceQuery;
 import jadex.provided2.impl.search.ServiceQuery.Multiplicity;
 import jadex.provided2.impl.search.ServiceRegistry;
@@ -33,6 +41,12 @@ public class Required2Feature implements IRequired2Feature
 	//-------- IRequired2Feature interface --------
 
 	@Override
+	public <T> T getLocalService(Class<T> type)
+	{
+		return getLocalService(new ServiceQuery<>(type));
+	}
+	
+	@Override
 	public <T> T getLocalService(ServiceQuery<T> query)
 	{
 		enhanceQuery(query, false);
@@ -47,27 +61,144 @@ public class Required2Feature implements IRequired2Feature
 	}
 
 	@Override
+	public <T> Collection<T> getLocalServices(Class<T> type)
+	{
+		return getLocalServices(new ServiceQuery<>(type));
+	}
+	
+	@Override
 	public <T> Collection<T> getLocalServices(ServiceQuery<T> query)
 	{
-		throw new UnsupportedOperationException();
+		enhanceQuery(query, false);
+		Collection<IServiceIdentifier>	sids	= ServiceRegistry.getRegistry().searchServices(query);
+		List<T>	ret	= new ArrayList<>();
+		for(IServiceIdentifier sid: sids)
+		{
+			@SuppressWarnings("unchecked")
+			T	service	= (T)ServiceRegistry.getRegistry().getLocalService(sid);
+			ret.add(service);
+		}
+		return ret;
+	}
+
+	@Override
+	public <T> IFuture<T> searchService(Class<T> type)
+	{
+		return searchService(new ServiceQuery<>(type));
 	}
 
 	@Override
 	public <T> IFuture<T> searchService(ServiceQuery<T> query)
 	{
-		throw new UnsupportedOperationException();
+		Future<T>	ret	= new Future<>();
+		
+		enhanceQuery(query, false);
+		IServiceIdentifier	sid	= ServiceRegistry.getRegistry().searchService(query);
+		if(sid==null)
+		{
+			// TODO: remote search
+			ret.setException(new ServiceNotFoundException(query));
+		}
+		else
+		{
+			@SuppressWarnings("unchecked")
+			T	service	= (T)ServiceRegistry.getRegistry().getLocalService(sid);
+			ret.setResult(service);
+		}
+		
+		return ret;
 	}
 
+	@Override
+	public <T> ITerminableIntermediateFuture<T> searchServices(Class<T> type)
+	{
+		return searchServices(new ServiceQuery<>(type));
+	}
+	
 	@Override
 	public <T> ITerminableIntermediateFuture<T> searchServices(ServiceQuery<T> query)
 	{
-		throw new UnsupportedOperationException();
+		TerminableIntermediateFuture<T>	ret	= new TerminableIntermediateFuture<>();
+		
+		enhanceQuery(query, false);
+		Collection<IServiceIdentifier>	sids	= ServiceRegistry.getRegistry().searchServices(query);
+		for(IServiceIdentifier sid: sids)
+		{
+			@SuppressWarnings("unchecked")
+			T	service	= (T)ServiceRegistry.getRegistry().getLocalService(sid);
+			ret.addIntermediateResult(service);
+		}
+		
+		// TODO: remote search
+		
+		ret.setFinished();
+		
+		return ret;
 	}
 
 	@Override
+	public <T> ISubscriptionIntermediateFuture<T> addQuery(Class<T> type)
+	{
+		return addQuery(new ServiceQuery<>(type));
+	}
+	
+	@Override
 	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query)
 	{
-		throw new UnsupportedOperationException();
+		enhanceQuery(query, true);
+		
+		// TODO: query remote
+		
+		// Query local registry
+		IServiceRegistry registry = ServiceRegistry.getRegistry();
+		ISubscriptionIntermediateFuture<Object> localresults = (ISubscriptionIntermediateFuture<Object>)registry.addQuery(query);
+		
+		final int[] resultcnt = new int[1];
+		@SuppressWarnings("rawtypes")
+		ISubscriptionIntermediateFuture[] ret = new ISubscriptionIntermediateFuture[1]; 
+		@SuppressWarnings({"unchecked", "rawtypes"})
+		ISubscriptionIntermediateFuture<T> ret0	= (ISubscriptionIntermediateFuture)FutureFunctionality
+			// Component functionality as local registry pushes results on arbitrary thread.
+			.getDelegationFuture(localresults, new ComponentFutureFunctionality(self)
+		{
+			@Override
+			public Object handleIntermediateResult(Object result) throws Exception
+			{
+				// check multiplicity constraints
+				resultcnt[0]++;
+				int max = query.getMultiplicity().getTo();
+				
+				if(max<0 || resultcnt[0]<=max)
+				{
+					return processResult(result);
+				}
+				else
+				{
+					return DROP_INTERMEDIATE_RESULT;
+				}
+
+			}
+			
+			@Override
+			public void handleAfterIntermediateResult(Object result) throws Exception
+			{
+				if(DROP_INTERMEDIATE_RESULT.equals(result))
+					return;
+				
+				int max = query.getMultiplicity().getTo();
+				// if next result is not allowed any more
+				if(max>0 && resultcnt[0]+1>max)
+				{
+					((IntermediateFuture)ret[0]).setFinishedIfUndone();
+					Exception reason = new RuntimeException("Max number of values received: "+max);
+					localresults.terminate(reason);
+				}
+			}
+		});
+		
+		ret[0]	= ret0;
+		
+		return ret0;
 	}
 
 	//-------- helper methods --------
@@ -114,9 +245,28 @@ public class Required2Feature implements IRequired2Feature
 	 *  Check if a query is potentially remote.
 	 *  @return True, if scope is set to a remote scope (e.g. global or network).
 	 */
-	public boolean isRemote(ServiceQuery<?> query)
+	protected static boolean isRemote(ServiceQuery<?> query)
 	{
 		//return query.getSearchStart()!=null && query.getSearchStart().getRoot()!=getComponent().getId().getRoot() || 
 		return !query.getScope().isLocal();
+	}
+
+	/**
+	 * 
+	 * @param result
+	 * @param info
+	 * @return
+	 */
+	protected Object processResult(Object result)
+	{
+		if(result instanceof IServiceIdentifier)
+		{
+			// TODO: remote services
+			return ServiceRegistry.getRegistry().getLocalService((IServiceIdentifier)result);
+		}
+		else
+		{
+			throw new UnsupportedOperationException(result.getClass().getName());
+		}
 	}
 }
