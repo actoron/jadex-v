@@ -51,9 +51,12 @@ public class Provided2Feature implements IProvided2Feature, ILifecycle
 	 */
 	public void	onEnd()
 	{
-		for(IService service: services.values())
+		if(services!=null)
 		{
-			ServiceRegistry.getRegistry().removeService(service.getServiceId());
+			for(IService service: services.values())
+			{
+				ServiceRegistry.getRegistry().removeService(service.getServiceId());
+			}
 		}
 	}
 
