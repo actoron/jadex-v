@@ -215,39 +215,43 @@ public interface IComponentFactory
 	    try 
 	    { 
 	    	lock.lock();
+	    	boolean[]	dowait	= new boolean[1];
 		    //synchronized(ComponentManager.get().components) 
 		    ComponentManager.get().runWithComponentsLock(() ->
 		    {
-		        if(ComponentManager.get().getNumberOfComponents() == 0) 
+		        if(ComponentManager.get().getNumberOfComponents() != 0) 
 		        {
-		            return;
+		        	dowait[0]	= true;
+			        IComponentManager.get().addComponentListener(new IComponentListener() 
+			        {
+			            @Override
+			            public void lastComponentRemoved(ComponentIdentifier cid) 
+			            {
+			        	    try 
+			        	    { 
+			        	    	lock.lock();
+			        	    	IComponentManager.get().removeComponentListener(this, IComponentManager.COMPONENT_LASTREMOVED);
+			                    wait.signal();
+			                }
+			        	    finally
+			        	    {
+			        			lock.unlock();
+			        		}
+			            }
+			        }, IComponentManager.COMPONENT_LASTREMOVED);
 		        }
-		        IComponentManager.get().addComponentListener(new IComponentListener() 
-		        {
-		            @Override
-		            public void lastComponentRemoved(ComponentIdentifier cid) 
-		            {
-		        	    try 
-		        	    { 
-		        	    	lock.lock();
-		        	    	IComponentManager.get().removeComponentListener(this, IComponentManager.COMPONENT_LASTREMOVED);
-		                    wait.signal();
-		                }
-		        	    finally
-		        	    {
-		        			lock.unlock();
-		        		}
-		            }
-		        }, IComponentManager.COMPONENT_LASTREMOVED);
 		    });
 		    
-	    	try 
+		    if(dowait[0])
 		    {
-		    	wait.await();
-		    } 
-		    catch(InterruptedException e) 
-		    {
-		        e.printStackTrace();
+		    	try 
+			    {
+			    	wait.await();
+			    } 
+			    catch(InterruptedException e) 
+			    {
+			        e.printStackTrace();
+			    }
 		    }
 	    }
 	    finally
