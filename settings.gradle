@@ -207,6 +207,7 @@ includeBuild('monitoring/log4j') {}
 includeBuild('environment/environment'){name='environment'}
 
 includeBuild('application/micro'){name='application-micro'}
+includeBuild('application/micro2'){name='application-micro2'}
 includeBuild('application/micro-nfp'){name='application-micro-nfp'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}

@@ -86,8 +86,12 @@ public class Provided2Test
 		}).get(TIMEOUT);
 		
 		// Check correct setup calls
-		assertTrue(start.isDone());
-		assertFalse(end.isDone());
+		comp.scheduleStep(() ->
+		{
+			assertTrue(start.isDone());
+			assertFalse(end.isDone());
+			return null;
+		}).get(TIMEOUT);
 		
 		// Test that service can be found
 		assertNotNull(searchService(comp, IMyService.class));
@@ -144,10 +148,14 @@ public class Provided2Test
 		}).get(TIMEOUT);
 		
 		// Check correct setup calls
-		assertTrue(servicestart.isDone());
-		assertTrue(compstart.isDone());
-		assertFalse(serviceend.isDone());
-		assertFalse(compend.isDone());
+		comp.scheduleStep(() ->
+		{
+			assertTrue(servicestart.isDone());
+			assertTrue(compstart.isDone());
+			assertFalse(serviceend.isDone());
+			assertFalse(compend.isDone());
+			return null;
+		}).get(TIMEOUT);
 		
 		// Test that service can be found
 		assertNotNull(searchService(comp, IMyService.class));

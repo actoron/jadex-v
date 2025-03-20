@@ -28,6 +28,8 @@ import jadex.injection.annotation.OnStart;
  */
 public class InjectionModel
 {
+	static IInjectionHandle	NOP	= (self, pojos, context) -> {};
+	
 	 /** The pojo classes as a hierachy of component pojo plus subobjects, if any.
 	  *  The model is for the last pojo in the list. */
 	protected List<Class<?>>	classes;
@@ -67,7 +69,7 @@ public class InjectionModel
 			fields	= unifyHandles(getFieldInjections(classes));
 		}
 		
-		return fields;
+		return fields==NOP ? null : fields;
 	}
 	
 	/**
@@ -80,7 +82,7 @@ public class InjectionModel
 			onstart	= unifyHandles(getMethodInvocations(classes, OnStart.class));
 		}
 		
-		return onstart;
+		return onstart==NOP ? null : onstart;
 	}
 
 	/**
@@ -93,7 +95,7 @@ public class InjectionModel
 			extra	= unifyHandles(getExtraOnstartHandles(classes.get(classes.size()-1)));
 		}
 		
-		return extra;
+		return extra==NOP ? null : extra;
 	}
 
 	/**
@@ -106,7 +108,7 @@ public class InjectionModel
 			methods	= unifyHandles(getMethodInjections(classes));
 		}
 		
-		return methods;
+		return methods==NOP ? null : methods;
 	}
 
 	/**
@@ -119,7 +121,7 @@ public class InjectionModel
 			onend	= unifyHandles(getMethodInvocations(classes, OnEnd.class));
 		}
 		
-		return onend;
+		return onend==NOP ? null : onend;
 	}
 	
 	//-------- static part --------
@@ -266,7 +268,7 @@ public class InjectionModel
 		// No handles
 		if(handles.isEmpty())
 		{
-			ret	= (self, pojo, context) -> {};// nop
+			ret	= NOP;
 		}
 		
 		// Single handle
@@ -278,10 +280,10 @@ public class InjectionModel
 		// Multiple handles
 		else
 		{
-			ret	= (self, pojo, context) ->
+			ret	= (self, pojos, context) ->
 			{
 				for(int i=0; i<handles.size(); i++)
-					handles.get(i).handleInjection(self, pojo, context);
+					handles.get(i).handleInjection(self, pojos, context);
 			};
 		}
 		

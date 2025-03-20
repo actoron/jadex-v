@@ -13,6 +13,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -316,19 +317,20 @@ public class Required2Test
 	@Test
 	public void	testParameterNotFound()
 	{
-		// Check that exception is thrown
-		assertThrows(ServiceNotFoundException.class,
-			() -> IComponentManager.get().create(new Object()
-			{
-				@OnStart
-				void start(IHelloService myservice) {}
-			}).get(TIMEOUT));
+		// Check that exception occurs in OnStart step.
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+		{
+			@OnStart
+			void start(IHelloService myservice) {}
+		}).get(TIMEOUT);
+		
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
 	public void	testMethodInjection()
 	{
-		IComponentHandle	provider	= null;
+		IComponentHandle	provider[]	= new IComponentHandle[1];
 		IComponentHandle	provider2	= null;
 		try
 		{
@@ -346,13 +348,19 @@ public class Required2Test
 			
 			assertTrue(services.isEmpty());
 			
-			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			// TODO: why step necessary!?
+			caller.scheduleStep(() ->
+			{
+				provider[0]	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+				return null;
+			}).get(TIMEOUT);
+			
 			// Schedule check to make sure it is executed after result add.
 			caller.scheduleStep(() ->
 			{
 				assertEquals(1, services.size());
 				return null;
-			}).get(TIMEOUT);
+			}).get();
 			
 			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
 			// Schedule check to make sure it is executed after result add.
@@ -364,9 +372,9 @@ public class Required2Test
 		}
 		finally
 		{
-			if(provider!=null)
+			if(provider[0]!=null)
 			{
-				provider.terminate().get(TIMEOUT);
+				provider[0].terminate().get(TIMEOUT);
 			}
 			if(provider2!=null)
 			{

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 import jadex.injection.IInjectionFeature;
 
@@ -36,10 +37,27 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	@Override
 	public void onStart()
 	{
-		model.getFieldInjections().handleInjection(self, Collections.singletonList(self.getPojo()), null);
-		model.getExtraOnStart().handleInjection(self, Collections.singletonList(self.getPojo()), null);
-		model.getOnStart().handleInjection(self, Collections.singletonList(self.getPojo()), null);		
-		model.getMethodInjections().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+		if(model.getFieldInjections()!=null)
+		{
+			model.getFieldInjections().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+		}
+
+		if(model.getExtraOnStart()!=null)
+		{
+			model.getExtraOnStart().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+		}
+
+		if(model.getOnStart()!=null)
+		{
+			self.getFeature(IExecutionFeature.class).scheduleStep(()->
+				model.getOnStart().handleInjection(self, Collections.singletonList(self.getPojo()), null));
+		}
+		
+		if(model.getMethodInjections()!=null)
+		{
+			self.getFeature(IExecutionFeature.class).scheduleStep(()->
+				model.getMethodInjections().handleInjection(self, Collections.singletonList(self.getPojo()), null));
+		}
 	}
 
 	@Override
@@ -50,11 +68,17 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			for(List<Object> pojos: extras)
 			{
 				InjectionModel	model	= InjectionModel.get(pojos);
-				model.getOnEnd().handleInjection(self, pojos, null);				
+				if(model.getOnEnd()!=null)
+				{	
+					model.getOnEnd().handleInjection(self, pojos, null);
+				}
 			}
 		}
 		
-		model.getOnEnd().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+		if(model.getOnEnd()!=null)
+		{	
+			model.getOnEnd().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+		}
 	}
 	
 	//-------- internal methods (to be used by other features) --------
@@ -75,9 +99,27 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		extras.add(pojos);
 		
 		InjectionModel	model	= InjectionModel.get(pojos);
-		model.getFieldInjections().handleInjection(self, pojos, null);
-		model.getExtraOnStart().handleInjection(self, pojos, null);
-		model.getOnStart().handleInjection(self, pojos, null);
-		model.getMethodInjections().handleInjection(self, pojos, null);
+
+		if(model.getFieldInjections()!=null)
+		{
+			model.getFieldInjections().handleInjection(self, pojos, null);
+		}
+
+		if(model.getExtraOnStart()!=null)
+		{
+			model.getExtraOnStart().handleInjection(self, pojos, null);
+		}
+
+		if(model.getOnStart()!=null)
+		{
+			self.getFeature(IExecutionFeature.class).scheduleStep(()->
+				model.getOnStart().handleInjection(self, pojos, null));
+		}
+		
+		if(model.getMethodInjections()!=null)
+		{
+			self.getFeature(IExecutionFeature.class).scheduleStep(()->
+				model.getMethodInjections().handleInjection(self, pojos, null));
+		}
 	}
 }

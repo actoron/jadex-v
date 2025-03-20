@@ -151,7 +151,12 @@ public class InjectionTest
 		}
 		
 		IComponentHandle	handle	= IComponentManager.get().create(new Subclass()).get();
-		assertEquals("[s1, s2]", invocations.toString());
+		// schedule check as onStart runs on extra step.
+		handle.scheduleStep(() ->
+		{
+			assertEquals("[s1, s2]", invocations.toString());
+			return null;
+		}).get(TIMEOUT);
 		
 		handle.terminate().get();
 		assertEquals("[s1, s2, e1]", invocations.toString());
