@@ -7,5 +7,9 @@ import jadex.core.IComponentFeature;
  */
 public interface IProvided2Feature extends IComponentFeature
 {
-
+	/**
+	 *  Get a locally provided service.
+	 *  @return	The first provided service matching the type.
+	 */
+	public <T> T getProvidedService(Class<T> type);
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.impl.ILifecycle;
@@ -36,6 +37,24 @@ public class Provided2Feature implements IProvided2Feature, ILifecycle
 	public Provided2Feature(IComponent self)
 	{
 		this.self	= self;
+	}
+	
+	@Override
+	public <T> T getProvidedService(Class<T> type)
+	{
+		if(services!=null)
+		{
+			for(IService service: services.values())
+			{
+				if(SReflect.isSupertype(type, service.getClass()))
+				{
+					@SuppressWarnings("unchecked")
+					T	ret	= (T)service;
+					return ret;
+				}
+			}
+		}
+		return null;
 	}
 	
 	//-------- ILifecycle methods --------
