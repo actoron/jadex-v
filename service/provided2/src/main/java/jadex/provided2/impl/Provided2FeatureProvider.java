@@ -112,7 +112,12 @@ public class Provided2FeatureProvider extends ComponentFeatureProvider<IProvided
 										try
 										{
 											Provided2Feature	feature	= (Provided2Feature)comp.getFeature(IProvided2Feature.class);
-											feature.addService(fhandle.invoke(pojos.get(pojos.size()-1)), name, fservices);
+											Object	servicepojo	= fhandle.invoke(pojos.get(pojos.size()-1));
+											if(servicepojo==null)
+											{
+												throw new RuntimeException("No value for provided service: "+f);
+											}
+											feature.addService(servicepojo, name, fservices);
 										}
 										catch(Throwable e)
 										{
