@@ -1,6 +1,7 @@
 package jadex.injection.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jadex.core.IComponent;
@@ -18,8 +19,8 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	/** The model caching all invocation stuff. */
 	protected InjectionModel	model;
 	
-	/** Managed extra objects (e.g. services implemented as sepoarate class). */
-	protected List<Object>	extras;
+	/** Managed extra objects (e.g. services implemented as separate class). */
+	protected List<List<Object>>	extras;
 	
 	/**
 	 *  Create the injection feature.
@@ -27,7 +28,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	public InjectionFeature(IComponent self)
 	{
 		this.self	= self;
-		this.model	= InjectionModel.get(self.getPojo()!=null ? self.getPojo().getClass() : Object.class);
+		this.model	= InjectionModel.get(Collections.singletonList(self.getPojo()));
 	}
 	
 	//-------- lifecycle methods --------
@@ -35,10 +36,10 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	@Override
 	public void onStart()
 	{
-		model.getFieldInjections().handleInjection(self, self.getPojo(), null);
-		model.getExtraOnStart().handleInjection(self, self.getPojo(), null);
-		model.getOnStart().handleInjection(self, self.getPojo(), null);		
-		model.getMethodInjections().handleInjection(self, self.getPojo(), null);
+		model.getFieldInjections().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+		model.getExtraOnStart().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+		model.getOnStart().handleInjection(self, Collections.singletonList(self.getPojo()), null);		
+		model.getMethodInjections().handleInjection(self, Collections.singletonList(self.getPojo()), null);
 	}
 
 	@Override
@@ -46,34 +47,37 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	{
 		if(extras!=null)
 		{
-			for(Object pojo: extras)
+			for(List<Object> pojos: extras)
 			{
-				InjectionModel	model	= InjectionModel.get(pojo.getClass());
-				model.getOnEnd().handleInjection(self, pojo, null);				
+				InjectionModel	model	= InjectionModel.get(pojos);
+				model.getOnEnd().handleInjection(self, pojos, null);				
 			}
 		}
 		
-		model.getOnEnd().handleInjection(self, self.getPojo(), null);
+		model.getOnEnd().handleInjection(self, Collections.singletonList(self.getPojo()), null);
 	}
 	
 	//-------- internal methods (to be used by other features) --------
 	
 	/**
 	 *  Add an extra pojo to be managed.
-	 *  E.g. inject fields, call OnStart/End methods.
+	 *  E.g. inject fields in service impl, call OnStart/End methods.
+	 *  
+	 *  @param pojos	The actual pojo objects as a hierachy of component pojo plus subobjects.
+	 *  				The injection is for the last pojo in the list.
 	 */
-	public void	addExtraObject(Object pojo)
+	public void	addExtraObject(List<Object> pojos)
 	{
 		if(extras==null)
 		{
-			extras	= new ArrayList<Object>(4);
+			extras	= new ArrayList<List<Object>>(4);
 		}
-		extras.add(pojo);
+		extras.add(pojos);
 		
-		InjectionModel	model	= InjectionModel.get(pojo.getClass());
-		model.getFieldInjections().handleInjection(self, pojo, null);
-		model.getExtraOnStart().handleInjection(self, pojo, null);
-		model.getOnStart().handleInjection(self, pojo, null);
-		model.getMethodInjections().handleInjection(self, pojo, null);
+		InjectionModel	model	= InjectionModel.get(pojos);
+		model.getFieldInjections().handleInjection(self, pojos, null);
+		model.getExtraOnStart().handleInjection(self, pojos, null);
+		model.getOnStart().handleInjection(self, pojos, null);
+		model.getMethodInjections().handleInjection(self, pojos, null);
 	}
 }

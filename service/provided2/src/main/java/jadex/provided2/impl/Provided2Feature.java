@@ -1,7 +1,9 @@
 package jadex.provided2.impl;
 
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -81,7 +83,8 @@ public class Provided2Feature implements IProvided2Feature, ILifecycle
 			// If service pojo is not the component pojo -> handle injection in service pojo as well
 			if(pojo!=self.getPojo())
 			{
-				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojo);
+				List<Object>	pojos	= Arrays.asList(new Object[]{self.getPojo(), pojo});	// TODO: recursive sub-services
+				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos);
 			}
 			
 			Class<?>	type	= interfaces.iterator().next();	// Todo multiple types?

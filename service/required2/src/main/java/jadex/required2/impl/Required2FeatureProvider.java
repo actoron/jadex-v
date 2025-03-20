@@ -35,10 +35,10 @@ public class Required2FeatureProvider extends ComponentFeatureProvider<IRequired
 	static
 	{
 		InjectionModel.addValueFetcher(
-			type -> type.isAnnotationPresent(Service.class) ? 
-				((self, pojo, context) -> self.getFeature(IRequired2Feature.class).getLocalService(new ServiceQuery<>(type))): null);
+			(pojotypes, valuetype) -> valuetype.isAnnotationPresent(Service.class) ? 
+				((self, pojos, context) -> self.getFeature(IRequired2Feature.class).getLocalService(new ServiceQuery<>(valuetype))): null);
 		
-		InjectionModel.addMethodInjection(method ->
+		InjectionModel.addMethodInjection((classes, method) ->
 		{
 			IInjectionHandle	ret	= null;
 			
@@ -69,18 +69,18 @@ public class Required2FeatureProvider extends ComponentFeatureProvider<IRequired
 					}
 					else
 					{
-						preparams.add((self, pojo, context) -> context);
+						preparams.add((self, pojos, context) -> context);
 					}
 				}
-				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, preparams);
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, classes, preparams);
 				
 				Class<?>	fservice	= service;
-				ret	= (self, pojo, context) ->
+				ret	= (self, pojos, context) ->
 				{
 					ISubscriptionIntermediateFuture<?> query	= self.getFeature(IRequired2Feature.class).addQuery(new ServiceQuery<>(fservice));
 					query.next(result ->
 					{
-						invocation.handleInjection(self, pojo, result);
+						invocation.handleInjection(self, pojos, result);
 					});
 				};
 			}

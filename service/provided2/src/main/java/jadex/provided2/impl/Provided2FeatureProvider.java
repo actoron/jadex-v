@@ -82,10 +82,10 @@ public class Provided2FeatureProvider extends ComponentFeatureProvider<IProvided
 				Set<Class<?>> services = findServiceInterfaces(pojoclazz);
 				if(!services.isEmpty())
 				{
-					ret.add((comp, pojo, context) ->
+					ret.add((comp, pojos, context) ->
 					{
 						Provided2Feature	feature	= (Provided2Feature)comp.getFeature(IProvided2Feature.class);
-						feature.addService(pojo, null, services);
+						feature.addService(pojos.get(pojos.size()-1), null, services);
 					});
 				}
 				
@@ -107,12 +107,12 @@ public class Provided2FeatureProvider extends ComponentFeatureProvider<IProvided
 									f.setAccessible(true);
 									String	name	= f.getName();
 									MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
-									ret.add((comp, pojo, context) ->
+									ret.add((comp, pojos, context) ->
 									{
 										try
 										{
 											Provided2Feature	feature	= (Provided2Feature)comp.getFeature(IProvided2Feature.class);
-											feature.addService(fhandle.invoke(pojo), name, fservices);
+											feature.addService(fhandle.invoke(pojos.get(pojos.size()-1)), name, fservices);
 										}
 										catch(Throwable e)
 										{

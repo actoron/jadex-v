@@ -1,5 +1,7 @@
 package jadex.injection.impl;
 
+import java.util.List;
+
 import jadex.core.IComponent;
 
 /**
@@ -10,8 +12,9 @@ public interface IValueFetcher
 	/**
 	 *  Handle the value extraction at runtime.
 	 *  @param self	The component.
-	 *  @param pojo	The actual pojo object (might be the component pojo or a subobject, e.g. service impl).
+	 *  @param pojos	The actual pojo objects as a hierachy of component pojo plus subobjects, if any.
+	 *  				The injection is for the last pojo in the list.
 	 *  @param context	E.g. BDI goal/plan...
 	 */
-	public Object	getValue(IComponent self, Object pojo, Object context);
+	public Object	getValue(IComponent self, List<Object> pojos, Object context);
 }
