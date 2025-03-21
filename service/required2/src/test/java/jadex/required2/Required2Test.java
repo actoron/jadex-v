@@ -384,7 +384,7 @@ public class Required2Test
 	}
 
 	@Test
-	public void	testBrokenInjection()
+	public void	testBrokenMethodInjection()
 	{
 		assertThrows(UnsupportedOperationException.class, () -> IComponentManager.get().create(new Object()
 		{
@@ -392,6 +392,16 @@ public class Required2Test
 			void addService(IHelloService hello1, IHelloService hello2)
 			{
 			}
+		}).get(TIMEOUT));			
+	}
+
+	@Test
+	public void	testBrokenFieldInjection()
+	{
+		assertThrows(RuntimeException.class, () -> IComponentManager.get().create(new Object()
+		{
+			@SuppressWarnings("unused")
+			IHelloService hello2;
 		}).get(TIMEOUT));			
 	}
 }
