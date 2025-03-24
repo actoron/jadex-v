@@ -21,27 +21,26 @@ import javax.swing.SwingUtilities;
 import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.annotation.Agent;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 import jadex.micro.mandelbrot.ui.PropertiesPanel;
 import jadex.micro.quiz.TimerPanel.Colorizer;
 import jadex.micro.quiz.model.NewQuizEvent;
 import jadex.micro.quiz.model.Question;
 import jadex.micro.quiz.model.QuestionEvent;
 import jadex.micro.quiz.model.ResultEvent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
-import jadex.requiredservice.annotation.OnService;
 
 /**
  *  The quiz client agent.
  */
-@Agent
 public class QuizClientAgent
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** The quiz service. */
+	@Inject	// TODO: no auto provide of fields
 	protected IQuizService quizservice;
 	
 	/** The gui. */
@@ -57,7 +56,7 @@ public class QuizClientAgent
 		gui = new QuizGui();
 	}
 	
-	@OnService
+	@Inject
 	protected void subscribeAtService(IQuizService qs)
 	{
 		System.out.println("Client found quiz service: "+qs);

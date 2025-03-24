@@ -1,15 +1,12 @@
 package jadex.micro.producerconsumer;
 
-import java.util.Queue;
 import java.util.function.Supplier;
 
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBlockingQueue;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
-@Agent
 public class ProducerAgent<R> 
 {
 	protected FutureBlockingQueue<R> queue;

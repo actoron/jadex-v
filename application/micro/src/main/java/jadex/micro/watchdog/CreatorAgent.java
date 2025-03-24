@@ -3,10 +3,8 @@ package jadex.micro.watchdog;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
-@Agent
 public class CreatorAgent 
 {
 	@OnStart

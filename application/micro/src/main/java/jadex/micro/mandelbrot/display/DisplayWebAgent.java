@@ -2,37 +2,32 @@ package jadex.micro.mandelbrot.display;
 
 import jadex.common.SGUI;
 import jadex.core.IComponent;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Description;
-import jadex.micro.mandelbrot.generate.IGenerateService;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
-import jadex.requiredservice.annotation.RequiredService;
-import jadex.requiredservice.annotation.RequiredServices;
 
 /**
  *  Agent offering a display service.
  */
-@Description("Agent offering a web display service.")
-@ProvidedServices({
-	@ProvidedService(type=IDisplayService.class, implementation=@Implementation(DisplayService.class))
-})
-@RequiredServices({
-	@RequiredService(name="generateservice", type=IGenerateService.class),
-})
+//@Description("Agent offering a web display service.")
+//@ProvidedServices({
+//	@ProvidedService(type=IDisplayService.class, implementation=@Implementation(DisplayService.class))
+//})
+//@RequiredServices({
+//	@RequiredService(name="generateservice", type=IGenerateService.class),
+//})
 @Publish(publishid="http://localhost:${port}/${app}/mandelbrotdisplay", publishtarget = IDisplayService.class)
-@Agent
 public class DisplayWebAgent
 {
 	//-------- attributes --------
 	
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
+	
+	/** The service. */
+	IDisplayService	disp	= new DisplayService();
 		
 	protected String app;
 	

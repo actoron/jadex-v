@@ -10,19 +10,16 @@ import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.SubscriptionIntermediateFuture;
-import jadex.micro.annotation.Agent;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.micro.gobble.Board.Move;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
 
-@Agent
-@Service
 @Publish(publishid="http://localhost:8081/${cid}/gobbleapi", publishtarget = IGobbleGuiService.class)
 public class GobbleAgent implements IGobbleGuiService
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	protected Board board;

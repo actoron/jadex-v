@@ -1,39 +1,36 @@
 package jadex.micro.mandelbrot.calculate;
 
 import jadex.core.IComponent;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Description;
+import jadex.injection.annotation.Inject;
 import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
 import jadex.micro.taskdistributor.ITaskDistributor.Task;
 import jadex.providedservice.IProvidedServiceFeature;
-import jadex.providedservice.ServiceScope;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
-import jadex.requiredservice.annotation.OnService;
 
 /**
  *  Calculate agent allows calculating the colors of an area using a calculate service.
  */
-@Description("Agent offering a calculate service.")
-@ProvidedServices(@ProvidedService(type=ICalculateService.class, scope=ServiceScope.GLOBAL, implementation=@Implementation(CalculateService.class)))
-@Agent//(synchronous=Boolean3.FALSE)
+//@Description("Agent offering a calculate service.")
+//@ProvidedServices(@ProvidedService(type=ICalculateService.class, scope=ServiceScope.GLOBAL, implementation=@Implementation(CalculateService.class)))
+//@Agent//(synchronous=Boolean3.FALSE)
 public class CalculateAgent
 {
 	//-------- attributes --------
 
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
+	
+	/** The service. */
+	ICalculateService	calc	= new CalculateService();
 	
 	/** Id of the current job. */
 	protected Object taskid;
 	
 	//-------- methods --------
 	
-	@OnService
+	@Inject
 	public void onService(IIntermediateTaskDistributor<PartDataChunk, AreaData> distri)
 	{
 		while(true)

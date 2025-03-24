@@ -51,7 +51,7 @@ public class GeneratePanel extends JPanel
 	{
 		agent.scheduleStep(ag ->
 		{
-			IDisplayService ds = ag.getFeature(IRequiredServiceFeature.class).getService(IDisplayService.class).get();
+			IDisplayService ds = ag.getFeature(IRequiredServiceFeature.class).searchService(IDisplayService.class).get();
 			List<Class<IFractalAlgorithm>> algos = ds.getAlgorithms().get();
 			this.algos = AbstractFractalAlgorithm.createAlgorithms(algos);
 		
@@ -112,7 +112,7 @@ public class GeneratePanel extends JPanel
 					agent.scheduleStep(ia ->
 					{
 //						SServiceProvider.getDeclaredService(agent.getServiceProvider(), IGenerateService.class)
-						ia.getFeature(IRequiredServiceFeature.class).getService("generateservice")
+						ia.getFeature(IRequiredServiceFeature.class).searchService(IGenerateService.class)
 //								.addResultListener(ia.createResultListener(new DefaultResultListener()
 							.addResultListener(new DefaultResultListener()
 						{

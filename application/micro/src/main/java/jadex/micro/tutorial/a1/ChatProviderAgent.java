@@ -1,23 +1,21 @@
 package jadex.micro.tutorial.a1;
 
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
+import jadex.core.IComponent;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Chat micro agent provides a basic chat service as separate class. 
  */
-@Agent
-@ProvidedServices(@ProvidedService(type=IChatService.class, 
-	implementation=@Implementation(ChatService.class)))
 public class ChatProviderAgent
 {
 	/** The underlying micro agent. */
-	@Agent
-	protected MicroAgent agent;
+	@Inject
+	protected IComponent agent;
+	
+	/** The chat service. */
+	protected IChatService	chat	= new ChatService();
 	
 	@OnStart
 	protected void onStart()
@@ -30,6 +28,6 @@ public class ChatProviderAgent
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MicroAgent.create(new ChatProviderAgent());
+		IComponentManager.get().create(new ChatProviderAgent());
 	}
 }
