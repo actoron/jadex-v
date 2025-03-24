@@ -29,7 +29,7 @@ public class S1Main
 			//agent.getFeature(IExecutionFeature.class).waitForDelay(1000).get();
 			IRequiredServiceFeature rsf = agent.getFeature(IRequiredServiceFeature.class);
 			//IAService aser = rsf.getLocalService(IAService.class);
-			IAService aser = rsf.searchService(new ServiceQuery<IAService>(IAService.class), 10000).get();
+			IAService aser = rsf.searchService(new ServiceQuery<IAService>(IAService.class)).get();
 			String ret = aser.appendHello("hohoho").get();
 			System.out.println("terminating: "+agent.getId());
 			agent.terminate();
