@@ -26,14 +26,13 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminableFuture;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.math.IVector1;
 import jadex.math.IVector2;
 import jadex.math.Vector1Double;
 import jadex.math.Vector2Double;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 
-@Agent
 public class Environment 
 {
 	protected static Map<String, Environment> environments = new HashMap<String, Environment>();
@@ -59,7 +58,7 @@ public class Environment
 	
 	protected Map<SubscriptionIntermediateFuture<? extends EnvironmentEvent>, ObserverInfo> observers;
 
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	public static String add(Environment env)
@@ -669,7 +668,6 @@ public class Environment
 		return Objects.equals(id, other.id);
 	}
 	
-	@Agent
 	public static class HelloEnv
 	{
 		protected String envid;
@@ -715,7 +713,8 @@ public class Environment
 		dummy.setPosition(new Vector2Double(0.5, 0.5));
 		env.addSpaceObject(dummy);
 		
-		IComponentHandle access = IComponentManager.get().create(new HelloEnv(id)).get();
+		IComponentManager.get().create(env).get();
+		IComponentManager.get().create(new HelloEnv(id)).get();
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

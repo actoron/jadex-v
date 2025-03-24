@@ -197,7 +197,7 @@ includeBuild('monitoring/fluentd') {}
 includeBuild('monitoring/opentelemetry') {}
 includeBuild('monitoring/log4j') {}
 
-//includeBuild('environment/environment'){name='environment'}
+includeBuild('environment/environment'){name='environment'}
 
 includeBuild('application/micro'){name='application-micro'}
 //includeBuild('application/micro-nfp'){name='application-micro-nfp'}
@@ -206,12 +206,12 @@ includeBuild('application/micro'){name='application-micro'}
 //includeBuild('application/bpmn'){name='application-bpmn'}
 //includeBuild('application/bt'){name='application-bt'}
 
-//includeBuild('benchmark/core'){name='benchmark-core'}
-//includeBuild('benchmark/execution'){name='benchmark-execution'}
+includeBuild('benchmark/core'){name='benchmark-core'}
+includeBuild('benchmark/execution'){name='benchmark-execution'}
 //includeBuild('benchmark/bdi'){name='benchmark-bdi'}
 //includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
-//includeBuild('benchmark/micro'){name='benchmark-micro'}
+includeBuild('benchmark/micro'){name='benchmark-micro'}
 //includeBuild('benchmark/bt'){name='benchmark-bt'}
-//includeBuild('benchmark/thirdparty'){name='benchmark-thirdparty'}
-//includeBuild('benchmark'){name='benchmark'}
+includeBuild('benchmark/thirdparty'){name='benchmark-thirdparty'}
+includeBuild('benchmark'){name='benchmark'}
 
