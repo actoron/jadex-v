@@ -52,8 +52,6 @@ import jadex.bt.booktrading.domain.Order;
 import jadex.common.SGUI;
 import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.impl.MicroAgentFeature;
-import jadex.rules.eca.ChangeInfo;
 
 /**
  *  The gui allows to add and delete buy or sell orders and shows open and
@@ -549,7 +547,7 @@ public class GuiPanel extends JPanel
 	{
 		agent.scheduleStep(ia ->
 		{
-			INegotiationAgent ag = (INegotiationAgent)ia.getFeature(MicroAgentFeature.class).getSelf().getPojo();
+			INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
 
 			final List<Order> aorders = ag.getOrders();
 			SwingUtilities.invokeLater(new Runnable()

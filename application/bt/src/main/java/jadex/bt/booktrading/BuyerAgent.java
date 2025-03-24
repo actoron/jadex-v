@@ -5,33 +5,23 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
 
-import org.w3c.dom.events.Event;
-
 import jadex.bt.IBTProvider;
 import jadex.bt.actions.TerminableUserAction;
-import jadex.bt.actions.UserAction;
 import jadex.bt.booktrading.domain.IBuyBookService;
 import jadex.bt.booktrading.domain.INegotiationAgent;
 import jadex.bt.booktrading.domain.NegotiationReport;
 import jadex.bt.booktrading.domain.Order;
 import jadex.bt.booktrading.gui.Gui;
 import jadex.bt.decorators.ChildCreationDecorator;
-import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.FailureDecorator;
-import jadex.bt.decorators.RepeatDecorator;
 import jadex.bt.decorators.RetryDecorator;
-import jadex.bt.decorators.SuccessDecorator;
-import jadex.bt.decorators.TriggerDecorator;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
-import jadex.bt.nodes.SelectorNode;
-import jadex.bt.nodes.SequenceNode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.nodes.ParallelNode;
 import jadex.common.Tuple2;
@@ -42,18 +32,16 @@ import jadex.future.CollectionResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IResultListener;
-import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.rules.eca.EventType;
 
-@Agent(type="bt")
 public class BuyerAgent implements INegotiationAgent, IBTProvider
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	protected List<NegotiationReport> reports = new ArrayList<NegotiationReport>();
@@ -101,7 +89,7 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 				+ order.getStartPrice();
 
 			// Find available seller agents.
-			Collection<IBuyBookService>	services = agent.getFeature(IRequiredServiceFeature.class).getServices(IBuyBookService.class).get();
+			Collection<IBuyBookService>	services = agent.getFeature(IRequiredServiceFeature.class).searchServices(IBuyBookService.class).get();
 			if(services.isEmpty())
 			{
 //				System.out.println("No seller found, purchase failed.");

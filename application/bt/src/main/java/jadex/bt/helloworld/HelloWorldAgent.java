@@ -12,12 +12,9 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
+import jadex.injection.annotation.OnEnd;
 import jadex.logger.ILoggingFeature;
-//import jadex.logger.OpenTelemetryLogger;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
 
-@Agent(type="bt")
 public class HelloWorldAgent implements IBTProvider
 {
 	public Node<IComponent> createBehaviorTree()

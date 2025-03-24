@@ -42,21 +42,20 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.logger.ILoggingFeature;
 import jadex.math.IVector2;
 import jadex.math.Vector2Double;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 import jadex.rules.eca.EventType;
 
-@Agent(type="bt")
 public class BTCleanerAgent implements IBTProvider
 {
 	/** The environment. */
 	protected CleanerworldEnvironment env;
 	
 	/** The bdi agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** Set of the known wastes. Managed by SensorActuator object. */

@@ -1,7 +1,5 @@
 package jadex.bt.envexample;
 
-import java.lang.System.Logger.Level;
-
 import com.badlogic.gdx.math.Vector2;
 
 import jadex.bt.IBTProvider;
@@ -15,16 +13,13 @@ import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
-import jadex.logger.ILoggingFeature;
-import jadex.logger.JadexLoggerFinder;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 
-@Agent(type="bt")
 public class BTRandomAgent implements IBTProvider
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	protected float size = 0.05f;
