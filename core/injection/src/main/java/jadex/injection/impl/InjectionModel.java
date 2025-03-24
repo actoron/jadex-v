@@ -162,7 +162,7 @@ public class InjectionModel
 				IValueFetcher	fetcher	= null;
 				for(IValueFetcherCreator check: fetchers)
 				{
-					IValueFetcher	test	= check.getValueFetcher(classes, field.getType());
+					IValueFetcher	test	= check.getValueFetcher(classes, field.getGenericType());
 					if(test!=null)
 					{
 						if(fetcher!=null)
@@ -471,7 +471,7 @@ public class InjectionModel
 			IValueFetcher	ret	= null;
 			for(int i=0; i<comptypes.size(); i++)
 			{
-				if(SReflect.isSupertype(valuetype, comptypes.get(i)))
+				if((valuetype instanceof Class) && SReflect.isSupertype((Class<?>)valuetype, comptypes.get(i)))
 				{
 					if(ret!=null)
 					{
@@ -486,7 +486,8 @@ public class InjectionModel
 		});
 		
 		// Inject features
-		addValueFetcher((comptypes, valuetype) -> SReflect.isSupertype(IComponentFeature.class, valuetype) ? ((self, pojo, context) ->
+		addValueFetcher((comptypes, valuetype) ->
+			(valuetype instanceof Class) && SReflect.isSupertype(IComponentFeature.class, (Class<?>)valuetype) ? ((self, pojo, context) ->
 		{
 			@SuppressWarnings("unchecked")
 			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)valuetype;

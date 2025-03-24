@@ -402,6 +402,6 @@ public class Required2Test
 		{
 			@SuppressWarnings("unused")
 			IHelloService hello2;
-		}).get(TIMEOUT));			
+		}).get(TIMEOUT));	
 	}
 }

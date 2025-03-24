@@ -1,8 +1,12 @@
 package jadex.required2.impl;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import jadex.common.SReflect;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -34,10 +38,37 @@ public class Required2FeatureProvider extends ComponentFeatureProvider<IRequired
 	
 	static
 	{
+		// Single service field.
 		InjectionModel.addValueFetcher(
-			(pojotypes, valuetype) -> valuetype.isAnnotationPresent(Service.class) ? 
-				((self, pojos, context) -> self.getFeature(IRequired2Feature.class).getLocalService(new ServiceQuery<>(valuetype))): null);
+			(pojotypes, valuetype) -> (valuetype instanceof Class) && ((Class<?>)valuetype).isAnnotationPresent(Service.class) ? 
+				((self, pojos, context) -> self.getFeature(IRequired2Feature.class).getLocalService(new ServiceQuery<>((Class<?>)valuetype))): null);
 		
+		// Multi service field (Set etc.)
+		InjectionModel.addValueFetcher(
+			(pojotypes, valuetype) ->
+		{
+			IValueFetcher	ret	= null;
+			
+			if(((Type)valuetype) instanceof ParameterizedType)
+			{
+				ParameterizedType	generic	= (ParameterizedType)((Type)valuetype);
+				if((generic.getRawType() instanceof Class<?>) && SReflect.isSupertype(Collection.class, (Class<?>)generic.getRawType())
+					&& generic.getActualTypeArguments().length==1)
+				{
+					Type	typeparam	= generic.getActualTypeArguments()[0];
+					if(typeparam instanceof Class<?> && ((Class<?>)typeparam).isAnnotationPresent(Service.class))
+					{
+						System.out.println("services injection: "+generic.getRawType()+" of "+typeparam);
+						ret	= ((self, pojos, context) ->
+							self.getFeature(IRequired2Feature.class).getLocalServices(new ServiceQuery<>((Class<?>)typeparam)));
+					}
+				}
+			}
+			return ret;
+			
+		});
+		
+		// Single service method parameter.
 		InjectionModel.addMethodInjection((classes, method) ->
 		{
 			IInjectionHandle	ret	= null;

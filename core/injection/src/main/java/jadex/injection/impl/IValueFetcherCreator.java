@@ -1,5 +1,6 @@
 package jadex.injection.impl;
 
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -13,9 +14,9 @@ public interface IValueFetcherCreator
 	 *  
 	 *  @param pojotypes	The type of the component pojo and potential subobject pojos.
 	 *  					The fetcher is for the last pojo in the list.
-	 *  @param value_type	The type of the value to be injected.
+	 *  @param valuetype	The type of the value to be injected.
 	 *  
 	 *  @return A value fetcher or null, when this creator doesn't match.
 	 */
-	public IValueFetcher	getValueFetcher(List<Class<?>> pojotypes, Class<?> valuetype);
+	public IValueFetcher	getValueFetcher(List<Class<?>> pojotypes, Type valuetype);
 }
