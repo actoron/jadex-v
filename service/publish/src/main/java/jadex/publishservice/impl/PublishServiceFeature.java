@@ -1,31 +1,33 @@
 package jadex.publishservice.impl;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
 
 import jadex.common.SReflect;
+import jadex.common.SUtil;
 import jadex.core.IComponent;
-import jadex.core.IComponentFeature;
 import jadex.core.impl.Component;
-import jadex.execution.impl.ILifecycle;
 import jadex.future.IFuture;
-import jadex.micro.MicroAgent;
-import jadex.model.IModelFeature;
-import jadex.model.impl.AbstractModelLoader;
-import jadex.model.modelinfo.ModelInfo;
-import jadex.providedservice.IProvidedServiceFeature;
+import jadex.injection.impl.IInjectionHandle;
+import jadex.injection.impl.InjectionModel;
 import jadex.providedservice.IService;
-import jadex.providedservice.IServiceIdentifier;
 import jadex.publishservice.IPublishService;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.impl.RequestManager.MappingInfo;
 import jadex.publishservice.publish.PathManager;
+import jadex.publishservice.publish.annotation.Publish;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public abstract class PublishServiceFeature implements ILifecycle, IPublishServiceFeature, IComponentFeature//, IParameterGuesser
-{	
+public abstract class PublishServiceFeature implements IPublishServiceFeature//, IParameterGuesser
+{
 	/** The component. */
 	protected Component self;
 	
@@ -33,78 +35,6 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 	{
 		this.self	= self;
 		RequestManager.createInstance();
-	}
-	
-	public void	onStart()
-	{
-		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
-		
-		PublishServiceModel mymodel = (PublishServiceModel)model.getFeatureModel(IPublishServiceFeature.class);
-		if(mymodel==null)
-		{
-			mymodel = (PublishServiceModel)PublishServiceLoader.readFeatureModel(((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			PublishServiceModel fmymodel = mymodel;
-			AbstractModelLoader loader = AbstractModelLoader.getLoader(self.getClass());
-			loader.updateCachedModel(() ->
-			{
-				model.putFeatureModel(IPublishServiceFeature.class, fmymodel);
-			});
-		}
-		
-		// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
-		// how could this be done? with listeners on other feature?!
-		for(PublishInfo pi: mymodel.getPublishInfos())
-		{
-			IServiceIdentifier sid = findService(pi.getPublishTarget());
-			publishService(sid, pi).get();
-		}
-	}
-	
-	public void	onEnd()
-	{
-	}
-	
-	/**
-	 *  Find a provided service per its provided service name or type.
-	 *  @param target The service name or type.
-	 *  @return The service id of the service.
-	 */
-	protected IServiceIdentifier findService(String target)
-	{
-		IServiceIdentifier ret = null;
-		IService ser = null;
-		
-		if(target==null || target.length()==0)
-		{
-			Object[] sers = getComponent().getFeature(IProvidedServiceFeature.class).getProvidedServices(null);
-			if(sers.length==1)
-			{
-				ser = (IService)sers[0];
-			}
-			else if(sers.length>1)
-			{
-				System.out.println("More than one service of ");
-			}
-		}
-		else
-		{
-			Class<?> type = SReflect.findClass0(target, null, getClassLoader());
-			if(type==null)
-			{
-				ser = getComponent().getFeature(IProvidedServiceFeature.class).getProvidedService(target);
-			}
-			else
-			{
-				ser = (IService)getComponent().getFeature(IProvidedServiceFeature.class).getProvidedService(type);
-			}
-		}
-		
-		if(ser!=null)
-			ret = ser.getServiceId();
-		else
-			System.out.println("provided service not found: "+target);
-		
-		return ret;
 	}
 	
 	public IComponent getComponent()
@@ -149,11 +79,93 @@ public abstract class PublishServiceFeature implements ILifecycle, IPublishServi
 	 * @param service The original service.
 	 * @param pid The publish id (e.g. url or name).
 	 */
-	public abstract IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo info);
+	public abstract IFuture<Void> publishService(IService service, PublishInfo info);
 
 	/**
 	 * Get or start an api to the http server.
 	 */
 	public abstract Object getHttpServer(URI uri, PublishInfo info);
-
+	
+	//-------- injection model extension --------
+	
+	static
+	{
+		InjectionModel.addExtraOnStart(new Function<Class<?>, List<IInjectionHandle>>()
+		{
+			@Override
+			public List<IInjectionHandle> apply(Class<?> pojoclazz)
+			{
+				List<IInjectionHandle>	ret	= new ArrayList<>();
+				
+				// Find class with publish annotation.
+				Class<?>	test	= pojoclazz;
+				while(test!=null)
+				{
+					if(test.isAnnotationPresent(Publish.class))
+					{
+						PublishInfo pi = getPublishInfo(test.getAnnotation(Publish.class));
+						ret.add((comp, pojos, context) ->
+						{
+							IPublishServiceFeature	feature	= comp.getFeature(IPublishServiceFeature.class);
+							// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
+							// how could this be done? with listeners on other feature?!
+							feature.publishService((IService)pojos.get(pojos.size()-1), pi).get();
+						});
+					}
+					
+					test	= test.getSuperclass();
+				}
+				
+				// Find fields with publish annotation.
+				for(Field f: InjectionModel.findFields(pojoclazz, Publish.class))
+				{
+					try
+					{
+						PublishInfo pi = getPublishInfo(f.getAnnotation(Publish.class));
+	
+						f.setAccessible(true);
+						MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
+						ret.add((comp, pojos, context) ->
+						{
+							try
+							{
+								IPublishServiceFeature	feature	= comp.getFeature(IPublishServiceFeature.class);
+								Object	servicepojo	= fhandle.invoke(pojos.get(pojos.size()-1));
+								if(servicepojo==null)
+								{
+									throw new RuntimeException("No value for provided service: "+f);
+								}
+								// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
+								// how could this be done? with listeners on other feature?!
+								feature.publishService((IService)servicepojo, pi).get();
+							}
+							catch(Throwable e)
+							{
+								SUtil.throwUnchecked(e);
+							}
+						});
+					}
+					catch(Exception e)
+					{
+						SUtil.throwUnchecked(e);
+					}
+				}
+				return ret;
+			}
+		});
+	}
+	
+	/**
+	 *  Convert annotation to info object.
+	 */
+	// TODO: Just use annotation?
+	protected static PublishInfo getPublishInfo(Publish p)
+	{
+		String pt = p.publishtagetname().length()>0? p.publishtagetname(): null;
+		if(pt==null && !p.publishtarget().equals(Object.class))
+			pt = SReflect.getClassName(p.publishtarget());
+		
+		PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), pt, Object.class.equals(p.mapping())? null: p.mapping());
+		return pi;
+	}
 }

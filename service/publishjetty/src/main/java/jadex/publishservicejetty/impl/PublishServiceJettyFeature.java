@@ -5,13 +5,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jadex.core.impl.Component;
+import jadex.execution.impl.ILifecycle;
 import jadex.future.IFuture;
+import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.publishservice.IPublishService;
 import jadex.publishservice.impl.PublishInfo;
 import jadex.publishservice.impl.PublishServiceFeature;
 
-public class PublishServiceJettyFeature extends PublishServiceFeature
+public class PublishServiceJettyFeature extends PublishServiceFeature implements ILifecycle
 {
 	protected Set<Integer> ports;
 	
@@ -23,14 +25,10 @@ public class PublishServiceJettyFeature extends PublishServiceFeature
     
     public void	onStart()
     {
-    	super.onStart();
-    	//System.out.println("Jetty started");
     }
     
     public void	onEnd()
     {
-    	super.onEnd();
-    	
     	// Terminate all servers created by this component
     	ServerManager.getInstance().terminateServers(ports);
     }
@@ -42,9 +40,9 @@ public class PublishServiceJettyFeature extends PublishServiceFeature
 	 * @param service The original service.
 	 * @param pid The publish id (e.g. url or name).
 	 */
-	public IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo info)
+	public IFuture<Void> publishService(IService service, PublishInfo info)
 	{
-		ServerManager.getInstance().publishService(serviceid, info, self);
+		ServerManager.getInstance().publishService(service, info, self);
 		return IFuture.DONE;
 	}
 	

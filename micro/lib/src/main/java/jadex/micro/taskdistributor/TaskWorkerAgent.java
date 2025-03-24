@@ -1,17 +1,15 @@
 package jadex.micro.taskdistributor;
 
 import jadex.core.IComponent;
-import jadex.micro.annotation.Agent;
+import jadex.injection.annotation.Inject;
 import jadex.micro.taskdistributor.ITaskDistributor.Task;
-import jadex.requiredservice.annotation.OnService;
 
-@Agent
 public class TaskWorkerAgent  
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
-	@OnService
+	@Inject
 	public void onService(ITaskDistributor<String, String> distri)
 	{
 		while(true)

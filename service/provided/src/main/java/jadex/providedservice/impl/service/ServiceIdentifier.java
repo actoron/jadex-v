@@ -2,7 +2,6 @@ package jadex.providedservice.impl.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -10,12 +9,8 @@ import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.impl.Component;
-import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.annotation.Security;
 import jadex.providedservice.annotation.Service;
 
 
@@ -278,96 +273,60 @@ public class ServiceIdentifier implements IServiceIdentifier
 	{
 		this.tags = tags;
 	}
-
-	/**
-	 *  Test if the service is a system service.
-	 *  Checks wether the system property is set in properties annotation.
-	 *  @param iftype The interface type. 
-	 */
-	public static boolean isSystemService(Class<?> iftype)
-	{
-		// Hack cast
-		//Class<?> itype = psi.getType().getType();
-		boolean ret = false;
-		if(iftype!=null)
-		{
-			Service ser = iftype.getAnnotation(Service.class);
-			if(ser!=null && ser.system())
-			{
-				ret = true;
-			}
-			
-//			Properties[] props = iftype.getAnnotationsByType(Properties.class);
-//			for(Properties ps: props)
+	
+//	/**
+//	 *  Method to provide the security level.
+//	 */
+//	public static Security getSecurityLevel(Class<?> ctype)
+//	{
+//		return ctype!=null ? ctype.getAnnotation(Security.class) : null;
+//	}
+//	
+//	/**
+//	 *  Is the service unrestricted.
+//	 *  @param access The access.
+//	 *  @param ctype The service interface.
+//	 *  @return True, if is unrestricted.
+//	 */
+//	public static boolean isUnrestricted(Component access, ClassInfo ctype)
+//	{
+//		Set<String>	roles	= getRoles(getSecurityLevel(ctype.getType(access.getClassLoader(), access.getFeature(IModelFeature.class).getModel().getAllImports())), access);
+//		return roles!=null && roles.contains(Security.UNRESTRICTED);
+//	}
+//	
+//	/**
+//	 *  Is the service unrestricted.
+//	 *  @param access The access.
+//	 *  @param ctype The service interface.
+//	 *  @return True, if is unrestricted.
+//	 */
+//	public static boolean isUnrestricted(Component access, Class<?> ctype)
+//	{
+//		Set<String>	roles	= getRoles(getSecurityLevel(ctype), access);
+//		return roles!=null && roles.contains(Security.UNRESTRICTED);
+//	}
+//	
+//	/**
+//	 *  Get the roles from an annotation.
+//	 *  @param sec	The security annotation or null.
+//	 *  @param provider	The component that owns the service.
+//	 *  @return The roles, if any or null, if none given or sec==null.
+//	 */
+//	public static Set<String>	getRoles(Security sec, Component provider)
+//	{
+//		Set<String>	ret	= null;
+//		String[]	roles	= sec!=null ? sec.roles() : null;
+//		if(roles!=null && roles.length>0)
+//		{
+//			// Evaluate, if a role is given as expression.
+//			ret	= new HashSet<String>();
+//			for(String role: roles)
 //			{
-//				for(NameValue nv: ps.value())
-//				{
-//					if(nv.name().equals("system"))
-//					{
-//						Boolean res = (Boolean)SJavaParser.evaluateExpression(nv.value(), null);
-//						if(res!=null)
-//							ret = res.booleanValue();
-//						break;
-//					}
-//				}
+//				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IModelFeature.class).getModel().getAllImports(), provider.getValueProvider().getFetcher(), provider.getClassLoader()));
 //			}
-		}
-		return ret;
-	}
-	
-	/**
-	 *  Method to provide the security level.
-	 */
-	public static Security getSecurityLevel(Class<?> ctype)
-	{
-		return ctype!=null ? ctype.getAnnotation(Security.class) : null;
-	}
-	
-	/**
-	 *  Is the service unrestricted.
-	 *  @param access The access.
-	 *  @param ctype The service interface.
-	 *  @return True, if is unrestricted.
-	 */
-	public static boolean isUnrestricted(Component access, ClassInfo ctype)
-	{
-		Set<String>	roles	= getRoles(getSecurityLevel(ctype.getType(access.getClassLoader(), access.getFeature(IModelFeature.class).getModel().getAllImports())), access);
-		return roles!=null && roles.contains(Security.UNRESTRICTED);
-	}
-	
-	/**
-	 *  Is the service unrestricted.
-	 *  @param access The access.
-	 *  @param ctype The service interface.
-	 *  @return True, if is unrestricted.
-	 */
-	public static boolean isUnrestricted(Component access, Class<?> ctype)
-	{
-		Set<String>	roles	= getRoles(getSecurityLevel(ctype), access);
-		return roles!=null && roles.contains(Security.UNRESTRICTED);
-	}
-	
-	/**
-	 *  Get the roles from an annotation.
-	 *  @param sec	The security annotation or null.
-	 *  @param provider	The component that owns the service.
-	 *  @return The roles, if any or null, if none given or sec==null.
-	 */
-	public static Set<String>	getRoles(Security sec, Component provider)
-	{
-		Set<String>	ret	= null;
-		String[]	roles	= sec!=null ? sec.roles() : null;
-		if(roles!=null && roles.length>0)
-		{
-			// Evaluate, if a role is given as expression.
-			ret	= new HashSet<String>();
-			for(String role: roles)
-			{
-				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IModelFeature.class).getModel().getAllImports(), provider.getValueProvider().getFetcher(), provider.getClassLoader()));
-			}
-		}
-		return ret;
-	}
+//		}
+//		return ret;
+//	}
 
 	/**
 	 *  Get the hashcode.

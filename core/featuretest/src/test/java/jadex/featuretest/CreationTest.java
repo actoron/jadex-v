@@ -10,8 +10,8 @@ import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
+import jadex.featuretest.impl.TestFeature2NewProvider.SubComponent;
 import jadex.future.Future;
-import jadex.micro.MicroAgent;
 
 public class CreationTest
 {
@@ -30,7 +30,7 @@ public class CreationTest
 	{
 		IComponentHandle	handle	= IComponentManager.get().create(17.4).get(TIMEOUT);
 		Future<Class<?>>	type	= (Future<Class<?>>)handle.scheduleStep((IThrowingFunction<IComponent, Class<?>>)comp -> comp.getClass());
-		assertSame(MicroAgent.class, type.get(TIMEOUT));
+		assertSame(SubComponent.class, type.get(TIMEOUT));
 	}
 
 	@Test

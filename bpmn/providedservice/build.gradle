@@ -31,7 +31,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:model:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
-	implementation 'org.activecomponents.jadex:micro:'+v
+	implementation 'org.activecomponents.jadex:injection:'+v
 	implementation 'org.activecomponents.jadex:serialization:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation 'org.activecomponents.jadex:bpmn:'+v
