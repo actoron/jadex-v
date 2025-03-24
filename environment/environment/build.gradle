@@ -27,7 +27,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:collection:' + v
 	implementation 'org.activecomponents.jadex:future:' + v
     implementation 'org.activecomponents.jadex:core:' + v
-    implementation 'org.activecomponents.jadex:model:' + v
     implementation 'org.activecomponents.jadex:execution:' + v
     implementation 'org.activecomponents.jadex:injection:' + v
 }
