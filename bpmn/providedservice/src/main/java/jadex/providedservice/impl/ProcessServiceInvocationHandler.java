@@ -22,7 +22,6 @@ import jadex.future.Future;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 
 // todo
 

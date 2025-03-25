@@ -10,9 +10,6 @@ import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.impl.service.ProvidedServiceFeature;
-import jadex.providedservice.impl.service.ProvidedServiceImplementation;
-import jadex.providedservice.impl.service.ProvidedServiceInfo;
-import jadex.providedservice.impl.service.ProvidedServiceModel;
 
 public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 {	
@@ -56,7 +53,7 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 //				fetcher.setValue("$servicename", info.getName());
 //				fetcher.setValue("$servicetype", info.getType().getType(component.getClassLoader(), component.getModel().getAllImports()));
 //				System.out.println("sertype: "+fetcher.fetchValue("$servicetype")+" "+info.getName());
-				ser = SJavaParser.getParsedValue(impl, getComponent().getFeature(IModelFeature.class).getModel().getAllImports(), fetcher, getComponent().getClass().getClassLoader());
+				ser = SJavaParser.getParsedValue(impl, self.getFeature(IModelFeature.class).getModel().getAllImports(), fetcher, self.getClass().getClassLoader());
 //				System.out.println("added: "+ser+" "+model.getName());
 				ret.setResult(ser);
 			}
@@ -68,11 +65,11 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 		}
 		else if(impl!=null && impl.getClazz()!=null)
 		{
-			if(impl.getClazz().getType(getComponent().getClass().getClassLoader(), getComponent().getFeature(IModelFeature.class).getModel().getAllImports())!=null)
+			if(impl.getClazz().getType(self.getClass().getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports())!=null)
 			{
 				try
 				{
-					ser = impl.getClazz().getType(getComponent().getClass().getClassLoader(), getComponent().getFeature(IModelFeature.class).getModel().getAllImports()).newInstance();
+					ser = impl.getClazz().getType(self.getClass().getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports()).newInstance();
 					ret.setResult(ser);
 				}
 				catch(Exception e)
@@ -84,14 +81,14 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 			{
 				try
 				{
-					Class<?> c = Class.forName("jadex.extension.rs.publish.JettyRestPublishService", false, getComponent().getClass().getClassLoader());
+					Class<?> c = Class.forName("jadex.extension.rs.publish.JettyRestPublishService", false, self.getClass().getClassLoader());
 					System.out.println("foundd: "+c);
 				}
 				catch(Exception e)
 				{
 					e.printStackTrace();
 				}
-				ret.setException(new RuntimeException("Could not load service implementation class: "+impl.getClazz()+" "+getComponent().getClass().getClassLoader()));
+				ret.setException(new RuntimeException("Could not load service implementation class: "+impl.getClazz()+" "+self.getClass().getClassLoader()));
 			}
 		}
 		else
