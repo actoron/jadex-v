@@ -3,6 +3,7 @@ package jadex.requiredservice;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,6 +25,7 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
+import jadex.requiredservice.annotation.InjectService;
 
 /**
  *  Test automatic provided service registration.
@@ -277,6 +279,43 @@ public class RequiredServiceTest
 	}
 
 	@Test
+	public void	testSubannoFieldInjection()
+	{
+		// Start service
+		IComponentHandle	provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+		
+		try
+		{
+			// Check that service is injected into field
+			Future<IHelloService>	fut	= new Future<>();
+			IComponentManager.get().create(new Object()
+			{
+				@InjectService
+				IHelloService	myservice;
+				
+				@OnStart
+				void start()
+				{
+					fut.setResult(myservice);
+				}
+			});
+			assertNotNull(fut.get(TIMEOUT));
+		}
+		finally
+		{
+			provider.terminate().get(TIMEOUT);
+		}
+		
+		// Test that previous field service is not provided.
+		assertThrows(ServiceNotFoundException.class,
+			() -> IComponentManager.get().create(new Object()
+			{
+				@InjectService
+				IHelloService myservice;
+			}).get(TIMEOUT));
+	}
+
+	@Test
 	public void	testParameterInjection()
 	{
 		// Start service
@@ -396,12 +435,21 @@ public class RequiredServiceTest
 	}
 
 	@Test
-	public void	testBrokenFieldInjection()
+	public void	testPlainField()
 	{
-		assertThrows(RuntimeException.class, () -> IComponentManager.get().create(new Object()
+		// Test that nothing happens to a field with service type but no annos.
+		Future<IHelloService>	fut	= new Future<>();
+		IComponentManager.get().create(new Object()
 		{
-			@SuppressWarnings("unused")
 			IHelloService hello2;
-		}).get(TIMEOUT));	
+			
+			@OnStart
+			void start()
+			{
+				fut.setResult(hello2);
+			}
+		}).get(TIMEOUT);
+		
+		assertNull(fut.get(TIMEOUT));
 	}
 }

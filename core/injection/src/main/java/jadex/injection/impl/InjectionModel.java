@@ -7,6 +7,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -153,52 +154,66 @@ public class InjectionModel
 	protected static List<IInjectionHandle>	getFieldInjections(List<Class<?>> classes)
 	{
 		List<IInjectionHandle>	handles	= new ArrayList<>();
-		List<Field> fields = findFields(classes.get(classes.size()-1), Inject.class);
+		List<Field>	allfields	= new ArrayList<Field>();
 		
-		for(Field field: fields)
+		synchronized(fetchers)
 		{
-			try
+			for(Class<? extends Annotation> anno: fetchers.keySet())
 			{
-				IValueFetcher	fetcher	= null;
-				for(IValueFetcherCreator check: fetchers)
+				List<Field> fields = findFields(classes.get(classes.size()-1), anno);
+				
+				for(Field field: fields)
 				{
-					IValueFetcher	test	= check.getValueFetcher(classes, field.getGenericType());
-					if(test!=null)
+					if(allfields.contains(field))
 					{
+						throw new RuntimeException("Multiple Inject annotations on field: "+field);
+					}
+					allfields.add(field);
+					
+					try
+					{
+						IValueFetcher	fetcher	= null;
+						for(IValueFetcherCreator check: fetchers.get(anno))
+						{
+							IValueFetcher	test	= check.getValueFetcher(classes, field.getGenericType());
+							if(test!=null)
+							{
+								if(fetcher!=null)
+								{
+									throw new RuntimeException("Conflicting field injections: "+fetcher+", "+test);
+								}
+								fetcher	= test;
+							}
+						}
+								
 						if(fetcher!=null)
 						{
-							throw new RuntimeException("Conflicting field injections: "+fetcher+", "+test);
+							field.setAccessible(true);
+							MethodHandle	handle	= MethodHandles.lookup().unreflectSetter(field);
+							final IValueFetcher	ffetcher	= fetcher;
+							handles.add((self, pojos, context) -> {
+								try
+								{
+									Object[]	args	= new Object[]{pojos.get(pojos.size()-1), ffetcher.getValue(self, pojos, context)};
+									handle.invokeWithArguments(args);
+								}
+								catch(Throwable e)
+								{
+									// Rethrow user exception
+									SUtil.throwUnchecked(e);
+								}
+							});			
 						}
-						fetcher	= test;
+						else
+						{
+							throw new UnsupportedOperationException("Cannot inject "+field);
+						}
+					}
+					catch(Exception e)
+					{
+						SUtil.throwUnchecked(e);
 					}
 				}
-						
-				if(fetcher!=null)
-				{
-					field.setAccessible(true);
-					MethodHandle	handle	= MethodHandles.lookup().unreflectSetter(field);
-					final IValueFetcher	ffetcher	= fetcher;
-					handles.add((self, pojos, context) -> {
-						try
-						{
-							Object[]	args	= new Object[]{pojos.get(pojos.size()-1), ffetcher.getValue(self, pojos, context)};
-							handle.invokeWithArguments(args);
-						}
-						catch(Throwable e)
-						{
-							// Rethrow user exception
-							SUtil.throwUnchecked(e);
-						}
-					});			
-				}
-				else
-				{
-					throw new UnsupportedOperationException("Cannot inject "+field);
-				}
-			}
-			catch(Exception e)
-			{
-				SUtil.throwUnchecked(e);
 			}
 		}
 		
@@ -387,16 +402,31 @@ public class InjectionModel
 					
 					if(fetcher==null)
 					{
-						for(IValueFetcherCreator check: fetchers)
+						Set<IValueFetcherCreator>	tried	= new HashSet<IValueFetcherCreator>();
+						synchronized(fetchers)
 						{
-							IValueFetcher	test	= check.getValueFetcher(classes, ptypes[i]);
-							if(test!=null)
+							for(Class<? extends Annotation> anno: fetchers.keySet())
 							{
-								if(fetcher!=null)
+								for(IValueFetcherCreator check: fetchers.get(anno))
 								{
-									throw new RuntimeException("Conflicting field injections: "+fetcher+", "+test);
+									if(tried.contains(check))
+									{
+										// Hack!!! Skip duplicate if same creator is added for different annotations.
+										// TODO: check Inject annotations on parameters
+										continue;
+									}
+									tried.add(check);
+									
+									IValueFetcher	test	= check.getValueFetcher(classes, ptypes[i]);
+									if(test!=null)
+									{
+										if(fetcher!=null)
+										{
+											throw new RuntimeException("Conflicting parameter injections: "+fetcher+", "+test);
+										}
+										fetcher	= test;
+									}
 								}
-								fetcher	= test;
 							}
 						}
 					}
@@ -458,12 +488,14 @@ public class InjectionModel
 	//-------- extension points --------
 	
 	/** The supported parameter/field injections (i.e class -> value). */
-	protected static List<IValueFetcherCreator>	fetchers	= new ArrayList<>();
+	protected static Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fetchers	= new LinkedHashMap<>();
 	
 	static
 	{
 		// Inject IComponent
-		addValueFetcher((comptypes, valuetype) -> IComponent.class.equals(valuetype) ? ((self, pojo, context) -> self) : null);
+		addValueFetcher(
+			(comptypes, valuetype) -> IComponent.class.equals(valuetype) ? ((self, pojo, context) -> self) : null,
+			Inject.class);
 		
 		// Inject any pojo from hierarchy of subobjects.
 		addValueFetcher((comptypes, valuetype) -> 
@@ -483,7 +515,7 @@ public class InjectionModel
 			}
 			
 			return ret;
-		});
+		}, Inject.class);
 		
 		// Inject features
 		addValueFetcher((comptypes, valuetype) ->
@@ -492,15 +524,34 @@ public class InjectionModel
 			@SuppressWarnings("unchecked")
 			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)valuetype;
 			return self.getFeature((Class<IComponentFeature>)feature);
-		}): null);
+		}): null, Inject.class);
 	}
 
 	/**
 	 *  Add a parameter/field injection (i.e field/parameter type -> value fetcher).
 	 */
-	public static void	addValueFetcher(IValueFetcherCreator fetcher)
+	@SafeVarargs
+	public static void	addValueFetcher(IValueFetcherCreator fetcher, Class<? extends Annotation>... annos)
 	{
-		fetchers.add(fetcher);
+		if(annos.length==0)
+		{
+			// Catch common programming mistake.
+			throw new IllegalArgumentException("Missing annotation type(s).");
+		}
+		
+		synchronized(fetchers)
+		{
+			for(Class<? extends Annotation> anno: annos)
+			{
+				List<IValueFetcherCreator>	list	= fetchers.get(anno);
+				if(list==null)
+				{
+					list	= new ArrayList<>(1);
+					fetchers.put(anno, list);
+				}
+				list.add(fetcher);
+			}
+		}
 	}
 	
 	

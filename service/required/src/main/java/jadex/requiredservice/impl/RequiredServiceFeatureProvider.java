@@ -10,12 +10,14 @@ import jadex.common.SReflect;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.IValueFetcher;
 import jadex.injection.impl.InjectionModel;
 import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.annotation.InjectService;
 
 /**
  *  Provided services feature provider.
@@ -41,7 +43,8 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 		// Single service field.
 		InjectionModel.addValueFetcher(
 			(pojotypes, valuetype) -> (valuetype instanceof Class) && ((Class<?>)valuetype).isAnnotationPresent(Service.class) ? 
-				((self, pojos, context) -> self.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>((Class<?>)valuetype))): null);
+				((self, pojos, context) -> self.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>((Class<?>)valuetype))): null,
+			Inject.class, InjectService.class);
 		
 		// Multi service field (Set etc.)
 		InjectionModel.addValueFetcher(
@@ -66,7 +69,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 			}
 			return ret;
 			
-		});
+		}, Inject.class, InjectService.class);
 		
 		// Single service method parameter.
 		InjectionModel.addMethodInjection((classes, method) ->
