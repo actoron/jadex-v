@@ -11,23 +11,20 @@ import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  *  The watchdog agent pings other watchdogs and issues an action,
  *  when a watchdog becomes unavailable.
  */
-@Service
-@Agent
 public class WatchdogAgent	implements IWatchdogService
 {
 	//-------- attributes --------
 	
 	/** The micro agent class. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** The found watchdogs. */
@@ -61,7 +58,7 @@ public class WatchdogAgent	implements IWatchdogService
 
 		for(int i=0; ; i++)
 		{			
-			Collection<IWatchdogService> services = agent.getFeature(IRequiredServiceFeature.class).getServices(IWatchdogService.class).get();
+			Collection<IWatchdogService> services = agent.getFeature(IRequiredServiceFeature.class).searchServices(IWatchdogService.class).get();
 			watchdogs.addAll(services);
 			
 			System.out.println("ping round: "+i);

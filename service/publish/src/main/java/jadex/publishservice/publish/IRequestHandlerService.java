@@ -1,7 +1,7 @@
 package jadex.publishservice.publish;
 
+import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
-import jadex.providedservice.annotation.Reference;
 import jadex.providedservice.annotation.Service;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,5 +18,5 @@ public interface IRequestHandlerService
 	 *  @param response The response.
 	 *  @param args Container specific args.
 	 */
-	public IFuture<Void> handleRequest(@Reference HttpServletRequest request, @Reference HttpServletResponse response, @Reference Object args);
+	public IFuture<Void> handleRequest(@NoCopy HttpServletRequest request, @NoCopy HttpServletResponse response, @NoCopy Object args);
 }

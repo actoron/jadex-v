@@ -1,8 +1,8 @@
 package jadex.providedservice.impl.service.interceptors;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 
-import jadex.bytecode.ProxyFactory;
 import jadex.common.ErrorException;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
@@ -52,9 +52,9 @@ public class MethodInvocationInterceptor extends AbstractApplicableInterceptor
 			boolean switchcall = true;
 			
 			// is not sufficient as could also be basicinvocationhandler of provided proxy
-			if(ProxyFactory.isProxyClass(sic.getObject().getClass()))
+			if(Proxy.isProxyClass(sic.getObject().getClass()))
 			{
-				Object handler = ProxyFactory.getInvocationHandler(sic.getObject());
+				Object handler = Proxy.getInvocationHandler(sic.getObject());
 				if(handler instanceof ISwitchCall)
 				{
 					switchcall = ((ISwitchCall)handler).isSwitchCall();
@@ -66,12 +66,12 @@ public class MethodInvocationInterceptor extends AbstractApplicableInterceptor
 			}
 			
 			// Roll invocations meta infos before call
-			long start = 0;
+//			long start = 0;
 			if(switchcall)
 			{
 //				if(sic.getMethod().getName().indexOf("test")!=-1)
 //					System.out.println("setting to a: "+sic.getServiceCall());
-				start = System.currentTimeMillis();
+//				start = System.currentTimeMillis();
 				
 				// Set the saved service calls in the thread locals for the callee
 				CallAccess.setCurrentInvocation(sic.getNextServiceCall()); // next becomes current
@@ -82,7 +82,7 @@ public class MethodInvocationInterceptor extends AbstractApplicableInterceptor
 			else
 			{
 				// Remember context for rmi command (extracts and stores it until return command arrives and non-func can be set)
-				if(ProxyFactory.getInvocationHandler(sic.getObject()).getClass().getName().indexOf("RemoteMethodInvocationHandler")!=-1)
+				if(Proxy.getInvocationHandler(sic.getObject()).getClass().getName().indexOf("RemoteMethodInvocationHandler")!=-1)
 					ServiceInvocationContext.SICS.set(sic);
 				
 				// Set the saved service calls in the thread locals for the callee
@@ -93,6 +93,9 @@ public class MethodInvocationInterceptor extends AbstractApplicableInterceptor
 //			if(sic.getMethod().getName().indexOf("method")!=-1)
 //				System.out.println("setting to c: "+sic.getLastServiceCall()+" "+ServiceCall.getCurrentInvocation());
 			
+			// If service interface is non-public -> need to make method accessible anyways
+			sic.getMethod().setAccessible(true);
+			
 			Object res = sic.getMethod().invoke(sic.getObject(), sic.getArgumentArray());
 
 			// Restore after call
@@ -100,39 +103,39 @@ public class MethodInvocationInterceptor extends AbstractApplicableInterceptor
 //				System.out.println("setting to c: "+sic.getLastServiceCall()+" "+ServiceCall.getCurrentInvocation());
 			if(switchcall)
 			{
-				if(ServiceCall.getCurrentInvocation()!=null)
-				{
-					final ServiceCall sc = ServiceCall.getCurrentInvocation();
-					// Problem with subscription futures: if is first listener it will fetch the initial events :-(
-					// todo: use addQuietListener for those
-					/*if(res instanceof IFuture && !(res instanceof ISubscriptionIntermediateFuture))
-					{
-						final long fstart = start;
-						((IFuture<Object>)res).addResultListener(new DelegationResultListener<Object>(null)
-						{
-							public void customResultAvailable(Object result)
-							{
-								long dur = System.currentTimeMillis()-fstart;
-								//sc.setProperty("__duration", Long.valueOf(dur));
-							}
-							
-							public void exceptionOccurred(Exception exception)
-							{
-								// do nothing
-							}
-							
-							public void commandAvailable(Object command)
-							{
-								// do nothing and avoid printouts
-							}
-						});
-					}
-					else
-					{
-						//long dur = System.currentTimeMillis()-start;
-						//sc.setProperty("__duration", Long.valueOf(dur));
-					}*/
-				}
+//				if(ServiceCall.getCurrentInvocation()!=null)
+//				{
+//					final ServiceCall sc = ServiceCall.getCurrentInvocation();
+//					// Problem with subscription futures: if is first listener it will fetch the initial events :-(
+//					// todo: use addQuietListener for those
+//					/*if(res instanceof IFuture && !(res instanceof ISubscriptionIntermediateFuture))
+//					{
+//						final long fstart = start;
+//						((IFuture<Object>)res).addResultListener(new DelegationResultListener<Object>(null)
+//						{
+//							public void customResultAvailable(Object result)
+//							{
+//								long dur = System.currentTimeMillis()-fstart;
+//								//sc.setProperty("__duration", Long.valueOf(dur));
+//							}
+//							
+//							public void exceptionOccurred(Exception exception)
+//							{
+//								// do nothing
+//							}
+//							
+//							public void commandAvailable(Object command)
+//							{
+//								// do nothing and avoid printouts
+//							}
+//						});
+//					}
+//					else
+//					{
+//						//long dur = System.currentTimeMillis()-start;
+//						//sc.setProperty("__duration", Long.valueOf(dur));
+//					}*/
+//				}
 				
 				// Set the invocations
 				CallAccess.setLastInvocation(ServiceCall.getCurrentInvocation()); // last will be current 

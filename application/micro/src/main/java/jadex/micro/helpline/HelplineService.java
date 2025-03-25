@@ -2,19 +2,17 @@ package jadex.micro.helpline;
 
 import jadex.future.IIntermediateFuture;
 import jadex.future.IntermediateFuture;
-import jadex.providedservice.annotation.Service;
-import jadex.providedservice.annotation.ServiceComponent;
+import jadex.injection.annotation.Inject;
 
 /**
  *  Helpline service implementation.
  */
-@Service
 public class HelplineService implements IHelpline
 {
 	//-------- attributes --------
 	
 	/** The agent. */
-	@ServiceComponent
+	@Inject
 	protected HelplineAgent agent;
 	
 	//-------- methods --------

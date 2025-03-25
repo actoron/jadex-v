@@ -25,6 +25,7 @@ import jadex.collection.MultiCollection;
 /**
  *  A directory-like representation of a jar file.
  */
+@SuppressWarnings("serial")
 public class JarAsDirectory	extends File
 {
 	//-------- attributes --------

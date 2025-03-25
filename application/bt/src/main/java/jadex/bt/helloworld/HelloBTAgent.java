@@ -9,9 +9,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
-import jadex.micro.annotation.Agent;
 
-@Agent(type="bt")
 public class HelloBTAgent implements IBTProvider 
 { 
     public Node<IComponent> createBehaviorTree() 	

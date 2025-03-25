@@ -19,7 +19,6 @@ import javax.swing.SwingUtilities;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
-import jadex.execution.IExecutionFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**

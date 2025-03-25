@@ -9,12 +9,8 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
-import jadex.micro.annotation.Agent;
 import jadex.micro.taskdistributor.ITaskDistributor.Task;
-import jadex.providedservice.annotation.Service;
 
-@Agent
-@Service
 public class IntermediateTaskDistributorAgent<R, T> implements IIntermediateTaskDistributor<R, T>
 {
 	protected Queue<TaskFuture<T, R>> tasks = new LinkedList<TaskFuture<T, R>>();

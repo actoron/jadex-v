@@ -170,29 +170,22 @@ includeBuild('core/simulation') {}
 includeBuild('core/injection'){name='injection'}
 //includeBuild('core/errorhandling') {}
 
-includeBuild('model/model') {}
-
 includeBuild('service/provided') {}
-includeBuild('service/provided2') {}
 includeBuild('service/required') {}
-includeBuild('service/required2') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
-includeBuild('service/nfproperty') {}
+//includeBuild('service/nfproperty') {}
 
 includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
 
-includeBuild('micro/engine'){name='micro'}
-includeBuild('micro/providedservice') {name='providedservicemicro'}
-includeBuild('micro/requiredservice') {name='requiredservicemicro'}
 includeBuild('micro/lib'){name='libmicro'}
 
-includeBuild('bdi/engine') {name='bdi'}
+//includeBuild('bdi/engine') {name='bdi'}
 
-includeBuild('bpmn/engine') {name='bpmn'}
-includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
-includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
+//includeBuild('bpmn/engine') {name='bpmn'}
+//includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
+//includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 
 includeBuild('bt/engine') {name='bt'}
 
@@ -207,19 +200,18 @@ includeBuild('monitoring/log4j') {}
 includeBuild('environment/environment'){name='environment'}
 
 includeBuild('application/micro'){name='application-micro'}
-//includeBuild('application/micro2'){name='application-micro2'}
-includeBuild('application/micro-nfp'){name='application-micro-nfp'}
-includeBuild('application/bdi'){name='application-bdi'}
-includeBuild('application/bdi-service'){name='application-bdi-service'}
-includeBuild('application/bpmn'){name='application-bpmn'}
+//includeBuild('application/micro-nfp'){name='application-micro-nfp'}
+//includeBuild('application/bdi'){name='application-bdi'}
+//includeBuild('application/bdi-service'){name='application-bdi-service'}
+//includeBuild('application/bpmn'){name='application-bpmn'}
 includeBuild('application/bt'){name='application-bt'}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
 includeBuild('benchmark/execution'){name='benchmark-execution'}
-includeBuild('benchmark/bdi'){name='benchmark-bdi'}
-includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
+//includeBuild('benchmark/bdi'){name='benchmark-bdi'}
+//includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
 includeBuild('benchmark/micro'){name='benchmark-micro'}
-includeBuild('benchmark/bt'){name='benchmark-bt'}
+//includeBuild('benchmark/bt'){name='benchmark-bt'}
 includeBuild('benchmark/thirdparty'){name='benchmark-thirdparty'}
 includeBuild('benchmark'){name='benchmark'}
 

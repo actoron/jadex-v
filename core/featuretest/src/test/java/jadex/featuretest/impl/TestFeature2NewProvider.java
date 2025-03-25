@@ -15,10 +15,17 @@ import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.featuretest.BootstrappingTest;
 import jadex.featuretest.ITestFeature2;
-import jadex.micro.MicroAgent;
 
 public class TestFeature2NewProvider extends ComponentFeatureProvider<ITestFeature2> implements ITestFeature2, IBootstrapping, IComponentLifecycleManager
 {
+	public static class SubComponent	extends Component
+	{
+		public SubComponent(Object pojo)
+		{
+			super(pojo);
+		}
+	}
+	
 	@Override
 	public Class<ITestFeature2> getFeatureType()
 	{
@@ -34,7 +41,7 @@ public class TestFeature2NewProvider extends ComponentFeatureProvider<ITestFeatu
 	@Override
 	public Class< ? extends Component> getRequiredComponentType()
 	{
-		return MicroAgent.class;
+		return SubComponent.class;
 	}
 	
 	@Override
@@ -63,7 +70,7 @@ public class TestFeature2NewProvider extends ComponentFeatureProvider<ITestFeatu
 	@Override
 	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return MicroAgent.create(pojo, cid, app);
+		return 	Component.createComponent(SubComponent.class, () -> new SubComponent(pojo)).getComponentHandle();
 	}
 
 	@Override

@@ -4,7 +4,6 @@ import java.util.Set;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
-import jadex.micro.MicroAgent;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -21,12 +20,6 @@ public class PublishServiceFeatureProvider extends ComponentFeatureProvider<IPub
 	public IPublishServiceFeature createFeatureInstance(Component self)
 	{
 		return new PublishServiceJettyFeature(self);
-	}
-	
-	@Override
-	public Class<? extends Component> getRequiredComponentType() 
-	{
-		return MicroAgent.class;
 	}
 	
 	/**

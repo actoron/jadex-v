@@ -9,11 +9,10 @@ import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
 import jadex.future.IntermediateFuture;
+import jadex.injection.annotation.Inject;
 import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.annotation.ServiceComponent;
-import jadex.providedservice.annotation.Timeout;
 
 /**
  *  Calculate service implementation.
@@ -24,10 +23,10 @@ public class CalculateService implements ICalculateService
 	//-------- attributes --------
 	
 	/** The agent. */
-	@ServiceComponent
+	@Inject
 	protected CalculateAgent agent;
 	
-	@ServiceComponent
+	@Inject
 	protected IComponent ag;
 	
 	//-------- methods --------
@@ -37,7 +36,7 @@ public class CalculateService implements ICalculateService
 	 *  @param data	The area to be calculated.
 	 *  @return	A future containing the calculated area.
 	 */
-	@Timeout(30000)
+//	@Timeout(30000)
 	public IIntermediateFuture<PartDataChunk> calculateArea(AreaData data)
 	{
 		IntermediateFuture<PartDataChunk> ret = new IntermediateFuture<PartDataChunk>();

@@ -193,8 +193,8 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			indexer.addValue(service);
 			
 			// If services belongs to excluded component cache them
-			ComponentIdentifier cid = service.getProviderId();
-			/*if(excludedservices!=null && excludedservices.containsKey(cid))
+			/*ComponentIdentifier cid = service.getProviderId();
+			if(excludedservices!=null && excludedservices.containsKey(cid))
 			{
 				if(excludedservices==null)
 					excludedservices = new HashMap<>();
@@ -208,9 +208,9 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			}
 			else
 			{*/
-				// Downgrade to read lock.
-				lock = rwlock.readLock();
-				lock.lock();
+//				// Downgrade to read lock.
+//				lock = rwlock.readLock();
+//				lock.lock();
 				rwlock.writeLock().unlock();
 				
 				checkQueries(service, ServiceEvent.SERVICE_ADDED);
@@ -218,8 +218,8 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 		}
 		finally
 		{
-			if(lock != null)
-				lock.unlock();
+//			if(lock != null)
+//				lock.unlock();
 		}
 	}
 	
@@ -530,10 +530,10 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	 *  Add a service query to the registry.
 	 *  @param query ServiceQuery.
 	 */
-	@SuppressWarnings({ "rawtypes" })
-	public <T> ISubscriptionIntermediateFuture<T> addQuery(final ServiceQuery<T> query)
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public <T> ISubscriptionIntermediateFuture<Object> addQuery(ServiceQuery<T> query)
 	{
-		final SubscriptionIntermediateFuture<T> fut = new SubscriptionIntermediateFuture<>();
+		final SubscriptionIntermediateFuture<Object> fut = new SubscriptionIntermediateFuture<>();
 		if(query.getOwner()==null)
 		{
 			fut.setException(new IllegalArgumentException("Query owner must not null: "+query));
@@ -555,7 +555,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			Set<IServiceIdentifier> sers = null;
 			try
 			{
-				ret = new ServiceQueryInfo<T>((ServiceQuery<T>) query, fut);
+				ret = new ServiceQueryInfo<T>((ServiceQuery<T>) query, (SubscriptionIntermediateFuture)fut);
 				queries.addValue((ServiceQueryInfo)ret);
 				
 				// We need the write lock during read for consistency
@@ -797,18 +797,18 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 		return ret;
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	protected void dispatchQueryEvent(ServiceQueryInfo<?> queryinfo, IServiceIdentifier ser, int eventtype)
 	{
 		ServiceQuery<?> query = queryinfo.getQuery();
 		if(query.isEventMode())
 		{
 			ServiceEvent event = new ServiceEvent(ser, eventtype);
-			((TerminableIntermediateFuture<ServiceEvent>)queryinfo.getFuture()).addIntermediateResultIfUndone(event);
+			((TerminableIntermediateFuture)queryinfo.getFuture()).addIntermediateResultIfUndone(event);
 		}
 		else if(ServiceEvent.SERVICE_ADDED==eventtype)
 		{
-			((TerminableIntermediateFuture<IServiceIdentifier>)queryinfo.getFuture()).addIntermediateResultIfUndone(ser);
+			((TerminableIntermediateFuture)queryinfo.getFuture()).addIntermediateResultIfUndone(ser);
 		}
 	}
 	

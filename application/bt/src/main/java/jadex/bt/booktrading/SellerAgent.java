@@ -16,7 +16,6 @@ import jadex.bt.booktrading.domain.NegotiationReport;
 import jadex.bt.booktrading.domain.Order;
 import jadex.bt.booktrading.gui.Gui;
 import jadex.bt.decorators.ChildCreationDecorator;
-import jadex.bt.decorators.RepeatDecorator;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
@@ -28,14 +27,11 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.TerminableFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 import jadex.rules.eca.EventType;
 
-@Agent(type="bt")
-@Service
 public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvider
 {
 	public record MakeProposal(String cfp, Future<Integer> proposal)
@@ -46,7 +42,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 	{
 	}
 	
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	protected List<NegotiationReport> reports = new ArrayList<NegotiationReport>();

@@ -17,17 +17,15 @@ import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.logger.ILoggingFeature;
-import jadex.logger.JadexLoggerFinder;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 import jadex.rules.eca.EventType;
 
-@Agent(type="bt")
 public class UniversityAgent implements IBTProvider
 {
 	/** The bdi agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** Belief if it is currently raining. Set through an agent argument. */

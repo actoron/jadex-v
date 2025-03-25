@@ -7,11 +7,7 @@ import java.util.Queue;
 
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.providedservice.annotation.Service;
 
-@Agent
-@Service
 public class TaskDistributorAgent<R, T> implements ITaskDistributor<R, T>
 {
 	protected Queue<TaskFuture<T, R>> tasks = new LinkedList<TaskFuture<T, R>>();

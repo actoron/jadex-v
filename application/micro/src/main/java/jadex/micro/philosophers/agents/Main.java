@@ -1,7 +1,7 @@
 package jadex.micro.philosophers.agents;
 
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 
 public class Main
 {
@@ -9,13 +9,14 @@ public class Main
 	{
 		int n=7;
 		
+		IComponentHandle ta = IComponentManager.get().create(new TableAgent(n, true)).get();
+
 		for(int i=0; i<n; i++)
 		{
 			final int no = i;
 			IComponentManager.get().create(new PhilosophAgent(no)).get();
 		}
 		
-		IComponentHandle ta = IComponentManager.get().create(new TableAgent(n, true)).get();
 		TableGui gui = new TableGui(n, ta);
 	}
 }

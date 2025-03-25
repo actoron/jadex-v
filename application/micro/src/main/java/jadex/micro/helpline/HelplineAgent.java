@@ -11,33 +11,29 @@ import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Description;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.ServiceScope;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
-import jadex.requiredservice.annotation.RequiredService;
-import jadex.requiredservice.annotation.RequiredServices;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Helpline micro agent. 
  */
-@Description("This agent offers a helpline for getting information about missing persons.")
-@RequiredServices({
-	@RequiredService(name="remotehelplineservices", type=IHelpline.class, scope=ServiceScope.GLOBAL), //multiple=true,
-	@RequiredService(name="localhelplineservices", type=IHelpline.class, scope=ServiceScope.VM) //multiple=true,
-})
-@ProvidedServices(@ProvidedService(type=IHelpline.class, implementation=@Implementation(HelplineService.class), scope=ServiceScope.GLOBAL))
-@Agent
+//@Description("This agent offers a helpline for getting information about missing persons.")
+//@RequiredServices({
+//	@RequiredService(name="remotehelplineservices", type=IHelpline.class, scope=ServiceScope.GLOBAL), //multiple=true,
+//	@RequiredService(name="localhelplineservices", type=IHelpline.class, scope=ServiceScope.VM) //multiple=true,
+//})
+//@ProvidedServices(@ProvidedService(type=IHelpline.class, implementation=@Implementation(HelplineService.class), scope=ServiceScope.GLOBAL))
+//@Agent
 public class HelplineAgent
 {
 	//-------- attributes --------
 	
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
+	
+	/** The provided service. */
+	protected IHelpline	helpline	= new HelplineService();
 	
 	/** The map of information. */
 	protected MultiCollection<String, InformationEntry> infos;
@@ -99,7 +95,7 @@ public class HelplineAgent
 	public Collection<InformationEntry> getInformation(String name)
 	{
 		Collection<InformationEntry> ret	= infos.get(name); 
-		return ret!=null ? ret : Collections.EMPTY_LIST;
+		return ret!=null ? ret : Collections.emptyList();
 	}
 
 	/**

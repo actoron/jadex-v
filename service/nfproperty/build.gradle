@@ -31,10 +31,8 @@ dependencies
 	implementation 'org.activecomponents.jadex:javaparser:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
-	implementation 'org.activecomponents.jadex:model:'+v
-	implementation 'org.activecomponents.jadex:micro:'+v //hack
+	implementation 'org.activecomponents.jadex:injection:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
-	implementation 'org.activecomponents.jadex:providedservicemicro:'+v //hack
 	implementation 'org.activecomponents.jadex:requiredservice:'+v
 	
 	//testImplementation 'org.activecomponents.jadex:providedservicemicro:'+v

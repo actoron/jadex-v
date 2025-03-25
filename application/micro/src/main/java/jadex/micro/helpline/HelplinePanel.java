@@ -236,8 +236,9 @@ public class HelplinePanel extends JPanel
 //			(agent.getServiceProvider(), IHelpline.class, remote, true)
 		agent.scheduleStep(ia ->
 		{
-			ITerminableIntermediateFuture<IHelpline> fut = ia.getFeature(IRequiredServiceFeature.class).getServices(
-				remote ? "remotehelplineservices" : "localhelplineservices");
+//			ITerminableIntermediateFuture<IHelpline> fut = ia.getFeature(IRequiredServiceFeature.class).getServices(
+//					remote ? "remotehelplineservices" : "localhelplineservices");
+			ITerminableIntermediateFuture<IHelpline> fut = ia.getFeature(IRequiredServiceFeature.class).searchServices(IHelpline.class);
 			
 			List<IHelpline> col = new ArrayList<IHelpline>();
 			fut.next(result ->
@@ -365,13 +366,13 @@ public class HelplinePanel extends JPanel
 		agent.scheduleStep(ia ->
 		{
 			IIntermediateFuture<IHelpline> fut;
-			if(remote)
+//			if(remote)
+//			{
+//				fut	= ia.getFeature(IRequiredServiceFeature.class).getServices("remotehelplineservices");
+//			}
+//			else
 			{
-				fut	= ia.getFeature(IRequiredServiceFeature.class).getServices("remotehelplineservices");
-			}
-			else
-			{
-				fut	= ia.getFeature(IRequiredServiceFeature.class).getServices("localhelplineservices");
+				fut	= ia.getFeature(IRequiredServiceFeature.class).searchServices(IHelpline.class);
 			}
 			
 			fut.addResultListener(new IResultListener()

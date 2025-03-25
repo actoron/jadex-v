@@ -21,13 +21,13 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminationCommand;
+import jadex.injection.annotation.Inject;
 import jadex.micro.mandelbrot.model.AbstractFractalAlgorithm;
 import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.mandelbrot.model.ProgressData;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.annotation.ServiceComponent;
 
 /**
  *  The service allows displaying results in the frame
@@ -39,7 +39,7 @@ public class DisplayService implements IDisplayService
 	//-------- attributes --------
 	
 	/** The agent. */
-	@ServiceComponent
+	@Inject
 	protected IComponent agent;
 	
 	/** The display subscribers. */

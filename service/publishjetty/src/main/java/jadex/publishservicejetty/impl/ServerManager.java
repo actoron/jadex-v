@@ -27,15 +27,12 @@ import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.model.IModelFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.publishservice.impl.PublishInfo;
 import jadex.publishservice.impl.RequestManager;
 import jadex.publishservice.impl.RequestManager.MappingInfo;
 import jadex.publishservice.publish.PathManager;
-import jadex.requiredservice.IRequiredServiceFeature;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -71,11 +68,11 @@ public class ServerManager
      *  @param pid The publish id (e.g. url or name).
      */
     //public synchronized IFuture<Void> publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
-    public synchronized void publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
+    public synchronized void publishService(final IService service, final PublishInfo info, IComponent component)
     {
     	//Future<Void> ret = new Future<>();
     	
-        PathManager<MappingInfo> pm = RequestManager.getInstance().evaluateMapping(serviceid, info, this.getClass().getClassLoader());
+        PathManager<MappingInfo> pm = RequestManager.getInstance().evaluateMapping(service.getServiceId(), info, this.getClass().getClassLoader());
                
 		try
 	    {
@@ -90,18 +87,9 @@ public class ServerManager
 	
 	        ContextHandler ch = new ContextHandler()
 	        {
-	        	protected IService service = null;
-	        	
 	            public void doHandle(String target, Request baseRequest, final HttpServletRequest request, final HttpServletResponse response)
 	                throws IOException, ServletException
 	            {
-	            	if(service==null)
-	            	{
-	            		service = component.getComponentHandle().scheduleStep((IComponent agent) ->
-	            		{
-	            			return agent.getFeature(IRequiredServiceFeature.class).searchService(new ServiceQuery<>((Class<IService>)null).setServiceIdentifier(serviceid)).get();
-	            		}).get();
-	            	}
 	            	//service = getComponent().getExternalAccess().searchService(new ServiceQuery<>((Class<IService>)null).setServiceIdentifier(serviceid)).get();
 	            	
 	                // Hack to enable multi-part
@@ -119,12 +107,12 @@ public class ServerManager
 	        };
 	        ch.setContextPath(uri.getPath());
 	        collhandler.prependHandler(ch);
-	        addUnpublishInfo(serviceid, server, ch);
+	        addUnpublishInfo(service.getServiceId(), server, ch);
 	        //unpublishinfos.put(serviceid, new Tuple2<Server,ContextHandler>(server, ch));
 	        ch.start(); // must be started explicitly :-(((
 	        System.out.println("added handler: "+uri.getPath());
 	
-	        addSidServer(serviceid, server);
+	        addSidServer(service.getServiceId(), server);
 	    }
 	    catch(Exception e)
 	    {

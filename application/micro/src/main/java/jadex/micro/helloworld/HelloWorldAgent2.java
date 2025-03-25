@@ -3,21 +3,19 @@ package jadex.micro.helloworld;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  The micro version of the hello world agent.
  */
-@Agent(type="micro")
 public class HelloWorldAgent2
 {
 	//-------- attributes --------
 	
 	/** The micro agent class. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** The welcome text. */
@@ -58,7 +56,7 @@ public class HelloWorldAgent2
 	{
 		//ComponentManager.get().setComponentIdNumberMode(true);
 		
-		MicroAgent.create(new HelloWorldAgent2("007"));
+		IComponentManager.get().create(new HelloWorldAgent2("007"));
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 		

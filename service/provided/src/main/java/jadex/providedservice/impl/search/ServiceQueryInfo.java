@@ -11,12 +11,12 @@ public class ServiceQueryInfo<T>
 	protected ServiceQuery<T> query;
 	
 	/** The futures. */
-	protected TerminableIntermediateFuture<T> future;
+	protected TerminableIntermediateFuture<Object> future;
 
 	/**
 	 *  Create a new query info.
 	 */
-	public ServiceQueryInfo(ServiceQuery<T> query, TerminableIntermediateFuture<T> future)
+	public ServiceQueryInfo(ServiceQuery<T> query, TerminableIntermediateFuture<Object> future)
 	{
 		this.query = query;
 		this.future = future;
@@ -32,29 +32,11 @@ public class ServiceQueryInfo<T>
 	}
 
 	/**
-	 *  Set the query.
-	 *  @param query The query to set
-	 */
-	public void setQuery(ServiceQuery<T> query)
-	{
-		this.query = query;
-	}
-
-	/**
 	 *  Get the future.
 	 *  @return The future
 	 */
-	public TerminableIntermediateFuture<T> getFuture()
+	public TerminableIntermediateFuture<Object> getFuture()
 	{
 		return future;
-	}
-
-	/**
-	 *  Set the future.
-	 *  @param future The future to set
-	 */
-	public void setFuture(TerminableIntermediateFuture<T> future)
-	{
-		this.future = future;
 	}
 }

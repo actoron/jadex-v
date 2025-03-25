@@ -5,11 +5,9 @@ import java.util.Date;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Chat micro agent provides a basic chat service. 
@@ -17,12 +15,10 @@ import jadex.providedservice.annotation.Service;
  *  This example shows how a simple chat user interface can be provided via swing.
  *  The ui interacts with the agent via the external access (as all external threads).
  */
-@Agent
-@Service
 public class ChatAgent implements IChatService
 {
 	/** The underlying micro agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	protected ChatGui gui;
@@ -57,9 +53,9 @@ public class ChatAgent implements IChatService
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MicroAgent.create(new ChatAgent());
-		MicroAgent.create(new ChatAgent());
-		MicroAgent.create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

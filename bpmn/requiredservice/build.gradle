@@ -28,7 +28,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:javaparser:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
-	implementation 'org.activecomponents.jadex:model:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:bpmn:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
