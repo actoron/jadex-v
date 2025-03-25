@@ -6,12 +6,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jadex.common.NameValue;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 public interface IComponentFactory
 {
@@ -102,14 +104,16 @@ public interface IComponentFactory
 	{
 		Future<T> ret = new Future<>();
 		IComponentHandle comp = create(pojo).get();
-		// all pojos of type IResultProvider will terminate component after result is received
+		// all run components that push notify on results will automatically get terminated after first result.
 		if(pojo instanceof IResultProvider)
 		{
-			((IResultProvider)pojo).subscribeToResults().next(r -> 
+			subscribeToResults(pojo)
+				.next(r -> 
 			{
 				//System.out.println("received: "+r);	
 				comp.terminate();
 			});
+//			.catchEx(e -> {})	// NOP on unsupported operation exception
 		}
 		comp.waitForTermination().then(Void -> 
 		{
@@ -193,6 +197,32 @@ public interface IComponentFactory
 			if(creator!=null)
 			{
 				ret = creator.getResults(pojo);
+				done = true;
+			}
+		}
+		if(!done)
+			throw new RuntimeException("Could not get results: "+pojo);
+		
+		return ret;
+	}
+	
+	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults(Object pojo)
+	{
+		ISubscriptionIntermediateFuture<NameValue>	ret	= null;
+		boolean done = false;
+		
+		if(pojo instanceof IResultProvider)
+		{
+			IResultProvider rp = (IResultProvider)pojo;
+			ret = rp.subscribeToResults();
+			done = true;
+		}
+		else if(pojo!=null)
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
+			{
+				ret = creator.subscribeToResults(pojo);
 				done = true;
 			}
 		}
