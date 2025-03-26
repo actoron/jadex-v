@@ -55,286 +55,293 @@ import net.bytebuddy.matcher.ElementMatchers;
 
 public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
+	@NoCopy
+	public static class ExecutableComponentHandle implements IComponentHandle
+	{
+		private final Component comp;
+		public static Set<String> ALLOWED_METHODS = new HashSet<>();
+		static
+		{
+			ALLOWED_METHODS.add("toString");
+			ALLOWED_METHODS.add("hashCode");
+			ALLOWED_METHODS.add("equals");
+		}
+		protected Object pojo;
+
+		public ExecutableComponentHandle(Component comp)
+		{
+			this.comp = comp;
+		}
+
+		@Override
+		public ComponentIdentifier getId()
+		{
+			return comp.getId();
+		}
+
+		@Override
+		public String getAppId()
+		{
+			return comp.getAppId();
+		}
+
+		@Override
+		public <T> T getPojoHandle(Class<T> type)
+		{
+			if(pojo==null)
+			{
+				synchronized(this)
+				{
+					if(pojo==null)
+					{
+						pojo = createPojo();
+					}
+				}
+			}
+			return (T)pojo;
+		}
+
+		protected Object createPojo()
+		{
+			try
+			{
+				Object pojo = comp.getPojo();
+				
+				Object proxy = new ByteBuddy()
+					.subclass(pojo.getClass())
+					.method(ElementMatchers.not(ElementMatchers.isAnnotatedWith(ComponentMethod.class)))
+		            .intercept(InvocationHandlerAdapter.of(new InvocationHandler() 
+		            {
+		            	@Override
+		            	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable 
+		                {
+		            		if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
+		            		{   
+		            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
+		            		}
+		            		else if(ALLOWED_METHODS.contains(method.getName()))
+		            		{
+		            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
+		            		}
+		            		else
+		            		{
+		            			throw new InvalidComponentAccessException(comp.getId());
+		            		}
+		                }
+		            }))
+					.method(ElementMatchers.isAnnotatedWith(ComponentMethod.class)) 
+					.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
+					{
+						IComponent caller = IComponentManager.get().getCurrentComponent();
+						
+						List<Object> myargs = new ArrayList<Object>(); 
+						Class<?>[] ptypes = method.getParameterTypes();
+						java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
+
+						for(int p = 0; p < ptypes.length; p++)
+						{
+							if(isNoCopy(args[p]) || hasAnnotation(pannos[p], NoCopy.class))
+							{
+								myargs.add(args[p]);
+							}
+							else
+							{
+								myargs.add(SCloner.clone(args[p], procs));
+							}
+						}
+						
+						FutureFunctionality func = new FutureFunctionality()
+						{
+							@Override
+							public <T> void scheduleForward(final ICommand<T> com, final T args)
+							{
+								// Don't reschedule if already on correct thread.
+								if(caller==null || caller.getFeature(IExecutionFeature.class).isComponentThread())
+								{
+									com.execute(args);
+								}
+								else
+								{
+									//System.out.println("todo: scheduleDecoupledStep");
+									caller.getFeature(IExecutionFeature.class).scheduleStep(agent ->
+									{
+										com.execute(args);
+									});
+								}
+							}
+							
+							public Object handleResult(Object val) throws Exception
+							{
+								if(!isNoCopy(val) && !hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
+				            	{
+									Object val2 = SCloner.clone(val, procs);
+									//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
+									val = val2;
+				            	}
+								
+								return val;
+							}
+							
+							public Object handleIntermediateResult(Object val) throws Exception
+							{
+								if(!isNoCopy(val) && !hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
+				            	{
+									val = SCloner.clone(val, procs);
+									//System.out.println("cloned val: "+val);
+				            	}
+								return val;
+							}
+						};
+						
+						Future<Object> ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
+						
+						//final Object[] myargs = copyargs.toArray();
+						
+				        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
+				        {
+				        	//System.out.println("already on agent: "+getId());
+				        	if(ret instanceof IFuture)
+				        	{
+				        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method);
+				        		fut.delegateTo(ret);
+				        	}
+				        	else if(method.getReturnType().equals(void.class))
+				        	{
+				        		invokeMethod(comp, pojo, myargs, method);
+				        	}
+				        	else
+				        	{
+				        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
+				        		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
+				        	}
+				        }
+				        else
+				        {
+				        	if(ret instanceof IFuture)
+				        	{
+					        	IFuture fut = scheduleAsyncStep(new ICallable<IFuture<Object>>() 
+				        		{
+				        			public Class<? extends IFuture<?>> getFutureReturnType() 
+				        			{
+				        				return (Class<? extends IFuture<?>>)ret.getClass();
+				        			}
+				        			
+				        			public IFuture<Object> call() throws Exception
+				        			{
+				        				return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
+				        			}
+								});
+					        	fut.delegateTo(ret);
+				        	}
+				        	//System.out.println("scheduled on agent: "+getId());
+				        	else if(method.getReturnType().equals(void.class))
+				        	{
+				        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method));
+				        	}
+				        	else 
+				        	{
+				        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
+				          		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
+				        	}
+				        }
+				        
+				        return ret;
+					}))
+					.make()
+					.load(pojo.getClass().getClassLoader())
+		            .getLoaded()
+		            .getConstructor()
+		            .newInstance();
+				
+				//System.out.println("proxy hashCode: "+proxy.hashCode());
+				
+				return proxy;
+			}
+			catch(Exception e)
+			{
+				SUtil.rethrowAsUnchecked(e);
+			}
+			return null;
+		}
+
+		protected Object invokeMethod(Component component, Object pojo, List<Object> args, Method method)
+		{
+			// Try to guess parameters from given args or component internals.
+			IParameterGuesser guesser = new SimpleParameterGuesser(component.getValueProvider().getParameterGuesser(), args);
+			Object[] iargs = new Object[method.getParameterTypes().length];
+			for(int i=0; i<method.getParameterTypes().length; i++)
+			{
+				iargs[i] = guesser.guessParameter(method.getParameterTypes()[i], false);
+			}
+			
+			try
+			{
+				// It is now allowed to use protected/private component methods
+				SAccess.setAccessible(method, true);
+				return method.invoke(pojo, iargs);
+			}
+			catch(Exception e)
+			{
+				SUtil.rethrowAsUnchecked(e);
+			}
+			return null;
+		}
+
+		protected boolean hasAnnotation(Annotation[] pannos, Class<? extends Annotation> anntype) 
+		{
+		    for (Annotation anno : pannos) 
+		    {
+		        if (anno.annotationType().equals(anntype)) 
+		        {
+		            return true;
+		        }
+		    }
+		    return false;
+		}
+
+		@Override
+		public <T> IFuture<T> scheduleStep(Callable<T> step) 
+		{
+			return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
+		}
+
+		@Override
+		public void scheduleStep(Runnable step) 
+		{
+			comp.getFeature(IExecutionFeature.class).scheduleStep(step);
+		}
+
+		@Override
+		public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
+		{
+			return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
+		}
+
+		@Override
+		public void scheduleStep(IThrowingConsumer<IComponent> step)
+		{
+			comp.getFeature(IExecutionFeature.class).scheduleStep(step);
+		}
+
+		@Override
+		public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
+		{
+			return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
+		}
+
+		@Override
+		public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
+		{
+			return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
+		}
+	}
+
 	static
 	{		
 		// Init the component with schedule step functionality (hack?!)
 		Component.setExternalAccessFactory(comp ->
 		{
-			return new IComponentHandle() 
-			{
-				public static Set<String> ALLOWED_METHODS = new HashSet<>();
-				
-				static
-				{
-					ALLOWED_METHODS.add("toString");
-					ALLOWED_METHODS.add("hashCode");
-					ALLOWED_METHODS.add("equals");
-				}
-				
-				protected Object pojo;
-				
-				@Override
-				public ComponentIdentifier getId()
-				{
-					return comp.getId();
-				}
-				
-				@Override
-				public String getAppId()
-				{
-					return comp.getAppId();
-				}
-				
-				@Override
-				public <T> T getPojoHandle(Class<T> type)
-				{
-					if(pojo==null)
-					{
-						synchronized(this)
-						{
-							if(pojo==null)
-							{
-								pojo = createPojo();
-							}
-						}
-					}
-					return (T)pojo;
-				}
-				
-				protected Object createPojo()
-				{
-					try
-					{
-						Object pojo = comp.getPojo();
-						
-						Object proxy = new ByteBuddy()
-							.subclass(pojo.getClass())
-							.method(ElementMatchers.not(ElementMatchers.isAnnotatedWith(ComponentMethod.class)))
-				            .intercept(InvocationHandlerAdapter.of(new InvocationHandler() 
-				            {
-				            	@Override
-				            	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable 
-				                {
-				            		if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
-				            		{   
-				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
-				            		}
-				            		else if(ALLOWED_METHODS.contains(method.getName()))
-				            		{
-				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
-				            		}
-				            		else
-				            		{
-				            			throw new InvalidComponentAccessException(comp.getId());
-				            		}
-				                }
-				            }))
-							.method(ElementMatchers.isAnnotatedWith(ComponentMethod.class)) 
-							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
-							{
-								IComponent caller = IComponentManager.get().getCurrentComponent();
-								
-								List<Object> myargs = new ArrayList<Object>(); 
-								Class<?>[] ptypes = method.getParameterTypes();
-								java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
-
-								for(int p = 0; p < ptypes.length; p++)
-								{
-									if(isNoCopy(args[p]) || hasAnnotation(pannos[p], NoCopy.class))
-									{
-										myargs.add(args[p]);
-									}
-									else
-									{
-										myargs.add(SCloner.clone(args[p], procs));
-									}
-								}
-								
-								FutureFunctionality func = new FutureFunctionality()
-								{
-									@Override
-									public <T> void scheduleForward(final ICommand<T> com, final T args)
-									{
-										// Don't reschedule if already on correct thread.
-										if(caller==null || caller.getFeature(IExecutionFeature.class).isComponentThread())
-										{
-											com.execute(args);
-										}
-										else
-										{
-											//System.out.println("todo: scheduleDecoupledStep");
-											caller.getFeature(IExecutionFeature.class).scheduleStep(agent ->
-											{
-												com.execute(args);
-											});
-										}
-									}
-									
-									public Object handleResult(Object val) throws Exception
-									{
-										if(!isNoCopy(val) && !hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-						            	{
-											Object val2 = SCloner.clone(val, procs);
-											//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
-											val = val2;
-						            	}
-										
-										return val;
-									}
-									
-									public Object handleIntermediateResult(Object val) throws Exception
-									{
-										if(!isNoCopy(val) && !hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-						            	{
-											val = SCloner.clone(val, procs);
-											//System.out.println("cloned val: "+val);
-						            	}
-										return val;
-									}
-								};
-								
-								Future<Object> ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
-								
-								//final Object[] myargs = copyargs.toArray();
-								
-						        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
-						        {
-						        	//System.out.println("already on agent: "+getId());
-						        	if(ret instanceof IFuture)
-						        	{
-						        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method);
-						        		fut.delegateTo(ret);
-						        	}
-						        	else if(method.getReturnType().equals(void.class))
-						        	{
-						        		invokeMethod(comp, pojo, myargs, method);
-						        	}
-						        	else
-						        	{
-						        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
-						        		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
-						        	}
-						        }
-						        else
-						        {
-						        	if(ret instanceof IFuture)
-						        	{
-							        	IFuture fut = scheduleAsyncStep(new ICallable<IFuture<Object>>() 
-						        		{
-						        			public Class<? extends IFuture<?>> getFutureReturnType() 
-						        			{
-						        				return (Class<? extends IFuture<?>>)ret.getClass();
-						        			}
-						        			
-						        			public IFuture<Object> call() throws Exception
-						        			{
-						        				return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
-						        			}
-										});
-							        	fut.delegateTo(ret);
-						        	}
-						        	//System.out.println("scheduled on agent: "+getId());
-						        	else if(method.getReturnType().equals(void.class))
-						        	{
-						        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method));
-						        	}
-						        	else 
-						        	{
-						        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
-						          		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
-						        	}
-						        }
-						        
-						        return ret;
-							}))
-							.make()
-							.load(pojo.getClass().getClassLoader())
-			                .getLoaded()
-			                .getConstructor()
-			                .newInstance();
-						
-						//System.out.println("proxy hashCode: "+proxy.hashCode());
-						
-						return proxy;
-					}
-					catch(Exception e)
-					{
-						SUtil.rethrowAsUnchecked(e);
-					}
-					return null;
-				}
-				
-				protected Object invokeMethod(Component component, Object pojo, List<Object> args, Method method)
-				{
-					// Try to guess parameters from given args or component internals.
-					IParameterGuesser guesser = new SimpleParameterGuesser(component.getValueProvider().getParameterGuesser(), args);
-					Object[] iargs = new Object[method.getParameterTypes().length];
-					for(int i=0; i<method.getParameterTypes().length; i++)
-					{
-						iargs[i] = guesser.guessParameter(method.getParameterTypes()[i], false);
-					}
-					
-					try
-					{
-						// It is now allowed to use protected/private component methods
-						SAccess.setAccessible(method, true);
-						return method.invoke(pojo, iargs);
-					}
-					catch(Exception e)
-					{
-						SUtil.rethrowAsUnchecked(e);
-					}
-					return null;
-				}
-				
-				protected boolean hasAnnotation(Annotation[] pannos, Class<? extends Annotation> anntype) 
-				{
-				    for (Annotation anno : pannos) 
-				    {
-				        if (anno.annotationType().equals(anntype)) 
-				        {
-				            return true;
-				        }
-				    }
-				    return false;
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleStep(Callable<T> step) 
-				{
-					return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-				}
-				
-				@Override
-				public void scheduleStep(Runnable step) 
-				{
-					comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
-				{
-					return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-				}
-				
-				@Override
-				public void scheduleStep(IThrowingConsumer<IComponent> step)
-				{
-					comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
-				{
-					return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
-				{
-					return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
-				}
-			};
+			return new ExecutableComponentHandle(comp);
 		}, true);
 	}
 	

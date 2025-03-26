@@ -113,6 +113,9 @@ public interface IComponentHandle
 	 *  Get the local pojo. Allows for calling pojo methods.
 	 *  @return The pojo.
 	 */
-	public <T> T getPojoHandle(Class<T> type);
+	public default <T> T getPojoHandle(Class<T> type)
+	{
+		throw new UnsupportedOperationException("Missing execution feature");
+	}
 	
 }

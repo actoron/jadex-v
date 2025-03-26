@@ -19,6 +19,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -438,26 +439,7 @@ public class Component implements IComponent
 			}
 			else
 			{
-				access = new IComponentHandle() 
-				{
-					@Override
-					public ComponentIdentifier getId() 
-					{
-						return Component.this.getId();
-					}
-					
-					@Override
-					public String getAppId() 
-					{
-						return Component.this.getAppId();
-					}
-					
-					@Override
-					public <T> T getPojoHandle(Class<T> type)
-					{
-						throw new UnsupportedOperationException();
-					}
-				};
+				access = new BasicComponentHandle();
 			}
 		}
 		return access;
@@ -532,5 +514,21 @@ public class Component implements IComponent
 	public String toString() 
 	{
 		return "Component [id=" + id + "]";
+	}
+	
+	@NoCopy
+	public class BasicComponentHandle implements IComponentHandle
+	{
+		@Override
+		public ComponentIdentifier getId() 
+		{
+			return Component.this.getId();
+		}
+
+		@Override
+		public String getAppId() 
+		{
+			return Component.this.getAppId();
+		}
 	}
 }
