@@ -2,10 +2,10 @@ package jadex.micro.breakfast;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.ResultProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
+import jadex.injection.IInjectionFeature;
 import jadex.injection.annotation.OnStart;
 
 /**
@@ -47,7 +47,7 @@ public class Main
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 
-	public static class CoffeeMaker extends ResultProvider
+	/*public static class CoffeeMaker extends ResultProvider
 	{
 		@OnStart
 		public void start(IComponent agent)
@@ -55,6 +55,17 @@ public class Main
 			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
 			System.out.println("Coffee ready");
 			addResult("result", "Coffee ready");
+		}
+	}*/
+	
+	public static class CoffeeMaker
+	{
+		@OnStart
+		public void start(IComponent agent, IInjectionFeature injection)
+		{
+			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
+			System.out.println("Coffee ready");
+			injection.addResult("result", "Coffee ready");
 		}
 	}
 	

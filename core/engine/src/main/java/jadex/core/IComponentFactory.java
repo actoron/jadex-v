@@ -120,7 +120,7 @@ public interface IComponentFactory
 		subscribeToResults(comp)
 			.next(r -> 
 			{
-				System.out.println("received: "+r);	
+//				System.out.println("received: "+r);	
 				comp.terminate();
 			});
 //			.catchEx(e -> {})	// NOP on unsupported operation exception

@@ -51,15 +51,15 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 
-//	@Override
-//	public Map<String, Object> getResults(IComponent component)
-//	{
-//		throw new UnsupportedOperationException("TODO");
-//	}
-//	
-//	@Override
-//	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
-//	{
-//		throw new UnsupportedOperationException("TODO");
-//	}
+	@Override
+	public Map<String, Object> getResults(IComponent component)
+	{
+		return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).getResults();
+	}
+	
+	@Override
+	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
+	{
+		return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).subscribeToResults();
+	}
 }

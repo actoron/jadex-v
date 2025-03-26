@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
@@ -22,6 +23,7 @@ import jadex.core.IComponentFeature;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
+import jadex.injection.annotation.ProvideResult;
 
 /**
  *  The injection model caches all injection/invocation-related stuff.
@@ -29,6 +31,8 @@ import jadex.injection.annotation.OnStart;
 public class InjectionModel
 {
 	static IInjectionHandle	NOP	= (self, pojos, context) -> {};
+	
+	static IValueFetcher	NULL	= (self, pojos, context) -> null;
 	
 	 /** The pojo classes as a hierachy of component pojo plus subobjects, if any.
 	  *  The model is for the last pojo in the list. */
@@ -40,7 +44,7 @@ public class InjectionModel
 	/** Code to run on component start. */
 	protected IInjectionHandle	onstart;
 	
-	/** Extra code to run on component start. */
+	/** Extra code to run on component start (before OnStart). */
 	protected IInjectionHandle	extra;
 	
 	/** Method injections after component start. */
@@ -48,6 +52,9 @@ public class InjectionModel
 	
 	/** Code to run on component end. */
 	protected IInjectionHandle	onend;
+	
+	/** Code to fetch component results. */
+	protected IValueFetcher	results;
 	
 	/**
 	 *  Create injection model for given stack of pojo classes.
@@ -124,6 +131,66 @@ public class InjectionModel
 		return onend==NOP ? null : onend;
 	}
 	
+	/**
+	 *  Get the fetcher to retrieve current component results.
+	 */
+	public IValueFetcher getResultsFetcher()
+	{
+		if(results==null)
+		{
+			List<IValueFetcher>	fetchers	= null;
+			for(Field field: findFields(classes.get(classes.size()-1), ProvideResult.class))
+			{
+				if(fetchers==null)
+				{
+					fetchers	= new ArrayList<>(4);
+				}
+				try
+				{
+					field.setAccessible(true);
+					String	name	= field.getName();
+					MethodHandle	get	= MethodHandles.lookup().unreflectGetter(field);
+					fetchers.add((comp, pojos, context) ->
+					{
+						try
+						{
+							Object	value	= get.invoke(pojos.get(pojos.size()-1));
+							return new NameValue(name, value);
+						}
+						catch(Throwable t)
+						{
+							throw SUtil.throwUnchecked(t);
+						}
+					});
+				}
+				catch(Exception e)
+				{
+					SUtil.throwUnchecked(e);
+				}
+			}
+			
+			if(fetchers==null)
+			{
+				results	= NULL;
+			}
+			else
+			{
+				List<IValueFetcher>	ffetchers	= fetchers;
+				results	= (comp, pojos, context) ->
+				{
+					Map<String, Object>	ret	= new LinkedHashMap<>();
+					for(IValueFetcher fetcher: ffetchers)
+					{
+						NameValue	result	= (NameValue) fetcher.getValue(comp, pojos, context);
+						ret.put(result.name(), result.value());
+					}
+					return ret;
+				};
+			}
+		}
+		return results==NULL ? null : results;
+	}
+
 	//-------- static part --------
 	
 	/** The model cache. */
@@ -589,5 +656,4 @@ public class InjectionModel
 	{
 		minjections.add(minjection);
 	}
-
 }
