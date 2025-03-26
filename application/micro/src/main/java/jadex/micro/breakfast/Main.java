@@ -5,8 +5,8 @@ import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
-import jadex.injection.IInjectionFeature;
 import jadex.injection.annotation.OnStart;
+import jadex.injection.annotation.ProvideResult;
 
 /**
  *  Example shows how concurrent functional programming is possible with actors.
@@ -58,7 +58,7 @@ public class Main
 		}
 	}*/
 	
-	public static class CoffeeMaker
+	/*public static class CoffeeMaker
 	{
 		@OnStart
 		public void start(IComponent agent, IInjectionFeature injection)
@@ -67,11 +67,11 @@ public class Main
 			System.out.println("Coffee ready");
 			injection.addResult("result", "Coffee ready");
 		}
-	}
+	}*/
 	
-	/*public static class CoffeeMaker 
+	public static class CoffeeMaker 
 	{
-		@ProvideResult	// TODO
+		@ProvideResult
 		protected String result;
 		
 		@OnStart
@@ -82,7 +82,7 @@ public class Main
 			result = "Coffee ready";
 			agent.terminate();
 		}
-	}*/
+	}
 	
 	/*public static class CoffeeMaker implements IResultProvider
 	{

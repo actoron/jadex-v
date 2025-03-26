@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
@@ -138,36 +137,7 @@ public class InjectionModel
 	{
 		if(results==null)
 		{
-			List<IValueFetcher>	fetchers	= null;
-			for(Field field: findFields(classes.get(classes.size()-1), ProvideResult.class))
-			{
-				if(fetchers==null)
-				{
-					fetchers	= new ArrayList<>(4);
-				}
-				try
-				{
-					field.setAccessible(true);
-					String	name	= field.getName();
-					MethodHandle	get	= MethodHandles.lookup().unreflectGetter(field);
-					fetchers.add((comp, pojos, context) ->
-					{
-						try
-						{
-							Object	value	= get.invoke(pojos.get(pojos.size()-1));
-							return new NameValue(name, value);
-						}
-						catch(Throwable t)
-						{
-							throw SUtil.throwUnchecked(t);
-						}
-					});
-				}
-				catch(Exception e)
-				{
-					SUtil.throwUnchecked(e);
-				}
-			}
+			List<IValueFetcher>	fetchers = getFieldGetters(classes, ProvideResult.class);
 			
 			if(fetchers==null)
 			{
@@ -181,8 +151,8 @@ public class InjectionModel
 					Map<String, Object>	ret	= new LinkedHashMap<>();
 					for(IValueFetcher fetcher: ffetchers)
 					{
-						NameValue	result	= (NameValue) fetcher.getValue(comp, pojos, context);
-						ret.put(result.name(), result.value());
+						FieldValue	result	= (FieldValue) fetcher.getValue(comp, pojos, context);
+						ret.put(result.field().getName(), result.value());
 					}
 					return ret;
 				};
@@ -370,6 +340,47 @@ public class InjectionModel
 		
 		return ret;
 	}
+	
+	public record FieldValue(Field field, Object value) {}
+	
+	/**
+	 *  Get value fetchers, that fetch the value of an annotated field.
+	 *  The fetchers provide the result as FieldValue record.
+	 */
+	public static List<IValueFetcher> getFieldGetters(List<Class<?>> classes, Class<? extends Annotation> anno)
+	{
+		List<IValueFetcher>	fetchers	= null;
+		for(Field field: findFields(classes.get(classes.size()-1), anno))
+		{
+			if(fetchers==null)
+			{
+				fetchers	= new ArrayList<>(4);
+			}
+			try
+			{
+				field.setAccessible(true);
+				MethodHandle	get	= MethodHandles.lookup().unreflectGetter(field);
+				fetchers.add((comp, pojos, context) ->
+				{
+					try
+					{
+						Object	value	= get.invoke(pojos.get(pojos.size()-1));
+						return new FieldValue(field, value);
+					}
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				});
+			}
+			catch(Exception e)
+			{
+				SUtil.throwUnchecked(e);
+			}
+		}
+		return fetchers;
+	}
+
 
 	public static List<Field> findFields(Class<?> clazz, Class<? extends Annotation> annotation)
 	{
