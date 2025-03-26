@@ -65,16 +65,14 @@ public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvide
 		return all;
 	}
 	
-	public Map<String, Object> getResults(Object pojo)
+	@Override
+	public Map<String, Object> getResults(IComponent comp)
 	{
 		Map<String, Object> ret = Collections.emptyMap();
-		if(pojo!=null)
+		if(comp.getPojo() instanceof RBpmnProcess)
 		{
-			if(pojo instanceof RBpmnProcess)
-			{
-				RBpmnProcess p = (RBpmnProcess)pojo;
-				ret = p.getResults();
-			}
+			RBpmnProcess p = (RBpmnProcess)comp.getPojo();
+			ret = p.getResults();
 		}
 		return ret;
 	}

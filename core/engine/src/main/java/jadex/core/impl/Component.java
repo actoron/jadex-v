@@ -54,6 +54,9 @@ public class Component implements IComponent
 		
 	/** The is the external access executable, i.e. is scheduleStep allowed?. */
 	protected static boolean executable;
+	
+	/** Identify the global runner, which is not added to component manager. */
+	protected static final String	GLOBALRUNNER_ID	= "__globalrunner__";
 		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
@@ -87,7 +90,10 @@ public class Component implements IComponent
 		this.app = app;
 		
 		//System.out.println(this.id.getLocalName());
-		ComponentManager.get().addComponent(this);
+		if(!GLOBALRUNNER_ID.equals(this.id.getLocalName()))
+		{
+			ComponentManager.get().addComponent(this);
+		}
 		
 		// Instantiate all features (except lazy ones).
 		// Use getProviderListForComponent as it uses a cached array list
@@ -216,7 +222,10 @@ public class Component implements IComponent
 	{
 		if(cids.length==0)
 		{
-			ComponentManager.get().removeComponent(this.getId());
+			if(!GLOBALRUNNER_ID.equals(id.getLocalName()))
+			{
+				ComponentManager.get().removeComponent(this.getId());
+			}
 			
 			if(getPojo()!=null)
 			{

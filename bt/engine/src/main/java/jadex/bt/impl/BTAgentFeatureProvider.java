@@ -74,7 +74,8 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 		return all;
 	}
 	
-	public Map<String, Object> getResults(Object pojo)
+	@Override
+	public Map<String, Object> getResults(IComponent comp)
 	{
 		Map<String, Object> ret = new HashMap<String, Object>();
 		// TODO: add results to injection feature

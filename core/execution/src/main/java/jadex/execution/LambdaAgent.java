@@ -6,10 +6,11 @@ import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
+import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
-import jadex.core.LambdaPojo;
 import jadex.core.impl.Component;
+import jadex.execution.impl.ExecutionFeatureProvider;
 import jadex.execution.impl.FastLambda;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -20,56 +21,6 @@ import jadex.future.IFuture;
 public class LambdaAgent //extends Component
 {
 	public record Result<T>(IComponentHandle component, IFuture<T> result){};
-	
-	/*public static class LambdaPojo<T> 
-	{
-		protected Object body;
-		protected IFuture<?> result;
-		
-		public LambdaPojo(Callable<T> body, IFuture<?> result)
-		{
-			this.body = body;
-			this.result = result;
-		}
-		
-		public LambdaPojo(IThrowingFunction<T, ?> body, IFuture<?> result)
-		{
-			this.body = body;
-			this.result = result;
-		}
-
-		public Object getBody() 
-		{
-			return body;
-		}
-
-		public IFuture<?> getResult() 
-		{
-			return result;
-		}
-	};*/
-	
-	//public IFuture<?> result;
-	
-	/*public LambdaAgent()
-	{
-		super(null);
-	}*/
-	
-	/*public LambdaAgent(ComponentIdentifier id)
-	{
-		super(id);
-	}*/
-	
-	/*public Map<String, Object> getResults(Object pojo)
-	{
-		Map<String, Object> ret = new HashMap<String, Object>();
-		if(result!=null && result.isDone())
-		{
-			ret.put("result", result.get());
-		}
-		return ret;
-	}*/
 	
 	/**
 	 *  Create a fire-and-forget component.
@@ -114,11 +65,8 @@ public class LambdaAgent //extends Component
 	public static IComponentHandle create(Runnable body, ComponentIdentifier cid, Application app)
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		addResultHandle(comp, null);
 		comp.getComponentHandle().scheduleStep(() -> body);
-		/*{
-			body.run();
-			comp.terminate();
-		});*/
 		return comp.getComponentHandle();
 	}
 	
@@ -131,8 +79,7 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		//res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
-		//comp.result = res;
+		addResultHandle(comp, res);
 		return new Result<T>(comp.getComponentHandle(), res);
 	}
 	
@@ -144,8 +91,7 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		//res.then(r -> comp.terminate()).catchEx(ex -> comp.terminate());
-		//comp.result = res;
+		addResultHandle(comp, res);
 		return new Result<T>(comp.getComponentHandle(), res);
 	}
 	
@@ -156,46 +102,9 @@ public class LambdaAgent //extends Component
 	public static <T> IComponentHandle create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		addResultHandle(comp, null);
 		comp.getComponentHandle().scheduleStep(body);
 		return comp.getComponentHandle();
-	}
-	
-	/**
-	 *  Create a component and receive a result, when the body finishes.
-	 *  @param body	The code to be executed in the new component.
-	 */
-	public static <T> IComponentHandle create(LambdaPojo<T> pojo, ComponentIdentifier cid, Application app)
-	{
-		IComponentHandle ret = null;
-		Object body = pojo.getBody();
-		if(body instanceof IThrowingFunction)
-		{
-			Result<T> res = create((IThrowingFunction)body, cid, app);
-			ret = res.component();
-			res.result().then(r -> 
-				pojo.addResult("result", r));
-		}
-		else if(body instanceof Callable)
-		{
-			Result<T> res = create((Callable)body, cid, app);
-			ret = res.component();
-			res.result().then(r -> 
-				pojo.addResult("result", r));
-		}
-		/*else if(body instanceof IThrowingConsumer)
-		{
-			create((IThrowingConsumer)body, cid);
-		}
-		else if(body instanceof Runnable)
-		{
-			create((Runnable)body, cid);
-		}*/
-		else
-		{
-			throw new RuntimeException("Body type unknown: "+body);
-		}
-		
-		return ret;
 	}
 	
 	//-------- Fast Lambda methods --------
@@ -206,4 +115,24 @@ public class LambdaAgent //extends Component
 		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
 		return ret;
 	}
+	
+	//-------- result handling --------
+
+	private static <T> void addResultHandle(Component comp, IFuture<T> result)
+	{
+		Object	pojo	= comp.getPojo();
+		if(pojo instanceof IResultProvider)
+		{
+			if(result!=null)
+			{
+				throw new UnsupportedOperationException("Implementing IResultProvider not supported on callable/function: "+pojo);
+			}
+			ExecutionFeatureProvider.addResultHandler(comp.getId(), (IResultProvider)pojo);
+		}
+		else if(result!=null)
+		{
+			result.then(res -> ExecutionFeatureProvider.addResult(comp.getId(), "result", res));
+		}
+	}
+
 }

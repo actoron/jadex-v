@@ -45,11 +45,4 @@ public class TestFeature1Provider extends ComponentFeatureProvider<ITestFeature1
 	{
 		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
-
-	@Override
-	public Map<String, Object> getResults(Object pojo)
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

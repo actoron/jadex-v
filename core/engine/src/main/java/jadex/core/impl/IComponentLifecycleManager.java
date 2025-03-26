@@ -8,6 +8,7 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 
 /**
  *  Managing POJOs by creating/running/terminating corresponding components.
@@ -42,14 +43,17 @@ public interface IComponentLifecycleManager
 	/**
 	 *  Fetch the result(s) of the POJO.
 	 */
-	public Map<String, Object> getResults(Object pojo);
+	public default Map<String, Object> getResults(IComponent component)
+	{
+		throw new UnsupportedOperationException();
+	}
 	
 	/**
 	 *  Listen to results of the pojo.
 	 *  @throws UnsupportedOperationException when subscription is not supported
 	 */
-	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults(Object pojo)
+	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
 	{
-		throw new UnsupportedOperationException();
+		return new SubscriptionIntermediateFuture<NameValue>(new UnsupportedOperationException());
 	}
 }

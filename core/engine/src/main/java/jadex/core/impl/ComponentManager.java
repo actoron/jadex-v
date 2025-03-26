@@ -547,25 +547,44 @@ public class ComponentManager implements IComponentManager
 	
 	public void notifyEventListener(String type, ComponentIdentifier cid, String appid)
 	{
-		Set<IComponentListener> mylisteners = null;
-		
-		synchronized(listeners)
+		Runnable	notify	= () ->
 		{
-			Set<IComponentListener> ls = listeners.get(type);
-			if(ls!=null)
-				mylisteners = new HashSet<IComponentListener>(ls);
+			Set<IComponentListener> mylisteners = null;
+			
+			synchronized(listeners)
+			{
+				Set<IComponentListener> ls = listeners.get(type);
+				if(ls!=null)
+					mylisteners = new HashSet<IComponentListener>(ls);
+			}
+			
+			if(mylisteners!=null)
+			{
+				if(COMPONENT_ADDED.equals(type))
+					mylisteners.stream().forEach(lis -> lis.componentAdded(cid));
+				else if(COMPONENT_REMOVED.equals(type))
+					mylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
+				else if(COMPONENT_LASTREMOVED.equals(type))
+					mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
+				else if(COMPONENT_LASTREMOVEDAPP.equals(type))
+					mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid, appid));
+			}
+		};
+		
+		if(Component.isExecutable())
+		{
+			getGlobalRunner().getComponentHandle().scheduleStep(notify);
 		}
-		
-		if(mylisteners!=null)
+		else
 		{
-			if(COMPONENT_ADDED.equals(type))
-				mylisteners.stream().forEach(lis -> lis.componentAdded(cid));
-			else if(COMPONENT_REMOVED.equals(type))
-				mylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
-			else if(COMPONENT_LASTREMOVED.equals(type))
-				mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
-			else if(COMPONENT_LASTREMOVEDAPP.equals(type))
-				mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid, appid));
+			try
+			{
+				notify.run();
+			}
+			catch(Exception e)
+			{
+				getLogger(Object.class).log(Level.INFO, "Exception in event notification: "+SUtil.getExceptionStacktrace(e));
+			}
 		}
 	}
 	
@@ -609,5 +628,30 @@ public class ComponentManager implements IComponentManager
 		{
 			run.run();
 		}
+	}
+	
+	protected volatile IComponent	globalrunner;
+	/**
+	 *  Get or create a component to run global steps on, e.g. component listener notifications.
+	 */
+	public IComponent	getGlobalRunner()
+	{
+		if(globalrunner==null)
+		{
+			synchronized(this)
+			{
+				if(globalrunner==null)
+				{
+					globalrunner	= new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
+					{
+						public void handleException(Exception exception)
+						{
+							globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
+						}
+					};
+				}
+			}
+		}
+		return globalrunner;
 	}
 }

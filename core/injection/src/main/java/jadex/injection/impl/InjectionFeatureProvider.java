@@ -2,6 +2,7 @@ package jadex.injection.impl;
 
 import java.util.Map;
 
+import jadex.common.NameValue;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -11,6 +12,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
+import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
 
 /**
@@ -49,9 +51,15 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 
-	@Override
-	public Map<String, Object> getResults(Object pojo)
-	{
-		throw new UnsupportedOperationException("TODO");
-	}
+//	@Override
+//	public Map<String, Object> getResults(IComponent component)
+//	{
+//		throw new UnsupportedOperationException("TODO");
+//	}
+//	
+//	@Override
+//	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
+//	{
+//		throw new UnsupportedOperationException("TODO");
+//	}
 }

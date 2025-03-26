@@ -4,17 +4,18 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.common.ICommand;
 import jadex.common.IFilter;
 import jadex.common.IParameterGuesser;
+import jadex.common.NameValue;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
@@ -30,10 +31,11 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
-import jadex.core.LambdaPojo;
+import jadex.core.ResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
@@ -46,6 +48,7 @@ import jadex.execution.LambdaAgent;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -489,7 +492,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			|| Callable.class.isAssignableFrom(pojoclazz)
 			|| IThrowingFunction.class.isAssignableFrom(pojoclazz)
 			|| IThrowingConsumer.class.isAssignableFrom(pojoclazz)
-			|| LambdaPojo.class.isAssignableFrom(pojoclazz)
 			? 1 : -1;
 	}
 	
@@ -518,10 +520,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
 			ret = LambdaAgent.create(itc, cid, app);
 		}
-		else if(pojo instanceof LambdaPojo)
-		{
-			ret = LambdaAgent.create((LambdaPojo<?>)pojo, cid, app);
-		}
 		else
 		{
 			throw new RuntimeException("Cannot create lambda agent from: "+cid);
@@ -530,26 +528,65 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		return ret;
 	}
 	
-	/*@Override
-	public boolean isTerminator(IComponent component) 
-	{
-		return component.getClass().equals(MjComponent.class);
-	}*/
-		
 	@Override
 	public void terminate(IComponent component) 
 	{
 		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 	
-	public Map<String, Object> getResults(Object pojo)
+	protected static Map<ComponentIdentifier, IResultProvider>	results	= new WeakHashMap<>();
+	
+	@Override
+	public Map<String, Object> getResults(IComponent comp)
 	{
-		Map<String, Object> ret = new HashMap<String, Object>();
-		if(pojo instanceof LambdaPojo)
+		IResultProvider	rp;
+		synchronized(results)
 		{
-			LambdaPojo<?> lp = (LambdaPojo<?>)pojo;
-			ret.put("result", lp.getResult());
+			rp = results.get(comp.getId());
 		}
-		return ret;
+		return rp==null ? null : rp.getResultMap();
+	}
+	
+	@Override
+	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	{
+		IResultProvider	rp;
+		synchronized(results)
+		{
+			rp = results.get(comp.getId());
+			if(rp==null)
+			{
+				rp	= new ResultProvider();
+				results.put(comp.getId(), rp);
+			}
+		}
+		return rp.subscribeToResults();
+	}
+
+	public static void	addResult(ComponentIdentifier id, String name, Object value)
+	{
+		IResultProvider	rp;
+		synchronized(results)
+		{
+			rp = results.get(id);
+			if(rp==null)
+			{
+				rp	= new ResultProvider();
+				results.put(id, rp);
+			}
+		}
+		rp.addResult(name, value);
+	}
+
+	public static void addResultHandler(ComponentIdentifier id, IResultProvider provider)
+	{
+		synchronized(results)
+		{
+			if(results.containsKey(id))
+			{
+				throw new IllegalStateException("Result provider already added: "+results.get(id)+", "+provider);
+			}
+			results.put(id, provider);
+		}
 	}
 }

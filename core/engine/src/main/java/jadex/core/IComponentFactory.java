@@ -73,27 +73,37 @@ public interface IComponentFactory
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
-	 *  @param body The function.
+	 *  @param pojo The function.
 	 *  @return The execution result.
 	 */
-	public default <T> IFuture<T> run(IThrowingFunction<IComponent, T> body)
+	public default <T> IFuture<T> run(IThrowingFunction<IComponent, T> pojo)
 	{
-		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
-		return run(pojo);
+		return run((Object)pojo);
 	}
 	
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
-	 *  @param body The callable.
+	 *  @param pojo The callable.
 	 *  @return The execution result.
 	 */
-	public default <T> IFuture<T> run(Callable<T> body)
+	public default <T> IFuture<T> run(Callable<T> pojo)
 	{
-		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
-		return run(pojo);
+		return run((Object)pojo);
 	}
+
 	
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The callable.
+	 *  @return The execution result.
+	 */
+	public default <T> IFuture<T> run(IResultProvider pojo)
+	{
+		return run((Object)pojo);
+	}
+
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
@@ -103,29 +113,31 @@ public interface IComponentFactory
 	public default <T> IFuture<T> run(Object pojo)
 	{
 		Future<T> ret = new Future<>();
-		IComponentHandle comp = create(pojo).get();
+		IComponentHandle handle = create(pojo).get();
+		IComponent	comp	= ComponentManager.get().getComponent(handle.getId());
+		
 		// all run components that push notify on results will automatically get terminated after first result.
-		if(pojo instanceof IResultProvider)
-		{
-			subscribeToResults(pojo)
-				.next(r -> 
+		subscribeToResults(comp)
+			.next(r -> 
 			{
-				//System.out.println("received: "+r);	
+				System.out.println("received: "+r);	
 				comp.terminate();
 			});
 //			.catchEx(e -> {})	// NOP on unsupported operation exception
-		}
-		comp.waitForTermination().then(Void -> 
+
+		handle.waitForTermination().then(Void -> 
 		{
-			Map<String, Object> res = getResults(pojo);
-			if(res.size()==1)
+			Map<String, Object> res = getResults(comp);
+			if(res!=null && res.size()==1)
 			{
 				@SuppressWarnings("unchecked")
 				T	result	= (T)res.values().iterator().next();
 				ret.setResult(result);
 			}
 			else
-				ret.setException(new RuntimeException("no result found: "+res));
+			{
+				ret.setException(new RuntimeException("no single result found: "+res));
+			}
 		});
 		
 		return ret;
@@ -180,54 +192,54 @@ public interface IComponentFactory
 	 *  Extract the results from a pojo.
 	 *  @return The result map.
 	 */
-	public default Map<String, Object> getResults(Object pojo)
+	public default Map<String, Object> getResults(IComponent component)
 	{
 		Map<String, Object> ret = new HashMap<>();
 		boolean done = false;
 		
-		if(pojo instanceof IResultProvider)
+		if(component.getPojo() instanceof IResultProvider)
 		{
-			IResultProvider rp = (IResultProvider)pojo;
+			IResultProvider rp = (IResultProvider)component.getPojo();
 			ret = new HashMap<String, Object>(rp.getResultMap());
 			done = true;
 		}
-		else if(pojo!=null)
+		else if(component.getPojo()!=null)
 		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
 			if(creator!=null)
 			{
-				ret = creator.getResults(pojo);
+				ret = creator.getResults(component);
 				done = true;
 			}
 		}
 		if(!done)
-			throw new RuntimeException("Could not get results: "+pojo);
+			throw new UnsupportedOperationException("Could not get results: "+component.getPojo());
 		
 		return ret;
 	}
 	
-	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults(Object pojo)
+	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
 	{
 		ISubscriptionIntermediateFuture<NameValue>	ret	= null;
 		boolean done = false;
 		
-		if(pojo instanceof IResultProvider)
+		if(component.getPojo() instanceof IResultProvider)
 		{
-			IResultProvider rp = (IResultProvider)pojo;
+			IResultProvider rp = (IResultProvider)component.getPojo();
 			ret = rp.subscribeToResults();
 			done = true;
 		}
-		else if(pojo!=null)
+		else if(component.getPojo()!=null)
 		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
 			if(creator!=null)
 			{
-				ret = creator.subscribeToResults(pojo);
+				ret = creator.subscribeToResults(component);
 				done = true;
 			}
 		}
 		if(!done)
-			throw new RuntimeException("Could not get results: "+pojo);
+			throw new UnsupportedOperationException("Could not get results: "+component.getPojo());
 		
 		return ret;
 	}
