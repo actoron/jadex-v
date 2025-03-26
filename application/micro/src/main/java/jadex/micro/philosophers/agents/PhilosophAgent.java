@@ -17,8 +17,6 @@ public class PhilosophAgent implements IPhilosopherService
 	protected PhilosopherState state;
 	protected Random r = new Random();
 	protected int no;
-	// TODO: no provide
-	@Inject
 	protected ITableService t;
 	protected int eatcnt;
 	protected Future<Void> wait;
