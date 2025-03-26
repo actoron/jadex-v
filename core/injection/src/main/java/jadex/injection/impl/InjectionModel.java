@@ -137,7 +137,8 @@ public class InjectionModel
 	{
 		if(results==null)
 		{
-			List<IValueFetcher>	fetchers = getFieldGetters(classes, ProvideResult.class);
+			// TODO: also @Provide!???
+			List<FieldFetcher>	fetchers = getFieldGetters(classes, ProvideResult.class);
 			
 			if(fetchers==null)
 			{
@@ -145,14 +146,13 @@ public class InjectionModel
 			}
 			else
 			{
-				List<IValueFetcher>	ffetchers	= fetchers;
+				List<FieldFetcher>	ffetchers	= fetchers;
 				results	= (comp, pojos, context) ->
 				{
 					Map<String, Object>	ret	= new LinkedHashMap<>();
-					for(IValueFetcher fetcher: ffetchers)
+					for(FieldFetcher fetcher: ffetchers)
 					{
-						FieldValue	result	= (FieldValue) fetcher.getValue(comp, pojos, context);
-						ret.put(result.field().getName(), result.value());
+						ret.put(fetcher.field().getName(), fetcher.fetcher().getValue(comp, pojos, context));
 					}
 					return ret;
 				};
@@ -341,15 +341,15 @@ public class InjectionModel
 		return ret;
 	}
 	
-	public record FieldValue(Field field, Object value) {}
+	public record FieldFetcher(Field field, IValueFetcher fetcher) {}
 	
 	/**
 	 *  Get value fetchers, that fetch the value of an annotated field.
 	 *  The fetchers provide the result as FieldValue record.
 	 */
-	public static List<IValueFetcher> getFieldGetters(List<Class<?>> classes, Class<? extends Annotation> anno)
+	public static List<FieldFetcher> getFieldGetters(List<Class<?>> classes, Class<? extends Annotation> anno)
 	{
-		List<IValueFetcher>	fetchers	= null;
+		List<FieldFetcher>	fetchers	= null;
 		for(Field field: findFields(classes.get(classes.size()-1), anno))
 		{
 			if(fetchers==null)
@@ -360,18 +360,17 @@ public class InjectionModel
 			{
 				field.setAccessible(true);
 				MethodHandle	get	= MethodHandles.lookup().unreflectGetter(field);
-				fetchers.add((comp, pojos, context) ->
+				fetchers.add(new FieldFetcher(field, (comp, pojos, context) ->
 				{
 					try
 					{
-						Object	value	= get.invoke(pojos.get(pojos.size()-1));
-						return new FieldValue(field, value);
+						return get.invoke(pojos.get(pojos.size()-1));
 					}
 					catch(Throwable t)
 					{
 						throw SUtil.throwUnchecked(t);
 					}
-				});
+				}));
 			}
 			catch(Exception e)
 			{

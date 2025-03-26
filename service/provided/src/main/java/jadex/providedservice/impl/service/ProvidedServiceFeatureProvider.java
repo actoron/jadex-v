@@ -1,22 +1,20 @@
 package jadex.providedservice.impl.service;
 
 import java.lang.annotation.Annotation;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import jadex.common.SUtil;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.injection.annotation.Provide;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
+import jadex.injection.impl.InjectionModel.FieldFetcher;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.annotation.Service;
@@ -97,40 +95,26 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				Class<? extends Annotation>[] annos	= new Class[]{Provide.class, ProvideService.class};
 				for(Class<? extends Annotation> anno: annos)
 				{
-					for(Field f: InjectionModel.findFields(pojoclazz, anno))
+					List<FieldFetcher>	fetchers	= InjectionModel.getFieldGetters(Collections.singletonList(pojoclazz), anno);
+					if(fetchers!=null)
 					{
-						Set<Class<?>> fservices = findServiceInterfaces(f.getType());
-						if(!fservices.isEmpty())
+						for(FieldFetcher fetcher: fetchers)
 						{
-							try
+							Set<Class<?>> fservices = findServiceInterfaces(fetcher.field().getType());
+							// TODO: Service settings 
+//							fetcher.field().getAnnotation(ProvideService.class);
+							ret.add((comp, pojos, context) ->
 							{
-								f.setAccessible(true);
-								String	name	= f.getName();
-								MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
-								ret.add((comp, pojos, context) ->
+								Object value	= fetcher.fetcher().getValue(comp, pojos, context);
+								if(value==null)
 								{
-									try
-									{
-										ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
-										Object	servicepojo	= fhandle.invoke(pojos.get(pojos.size()-1));
-										if(servicepojo==null)
-										{
-											throw new RuntimeException("No value for provided service: "+f);
-										}
-										feature.addService(servicepojo, name, fservices);
-									}
-									catch(Throwable e)
-									{
-										SUtil.throwUnchecked(e);
-									}
-								});
-							}
-							catch(IllegalAccessException e)
-							{
-								SUtil.throwUnchecked(e);
-							}
+									throw new RuntimeException("No value for provided service: "+fetcher.field());
+								}
+								ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
+								feature.addService(value, fetcher.field().getName(), fservices);
+							});
 						}
-					}
+					}					
 				}
 
 				
