@@ -1,5 +1,7 @@
 package jadex.execution;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
 import jadex.core.Application;
@@ -79,8 +81,15 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		addResultHandle(comp, res);
-		return new Result<T>(comp.getComponentHandle(), res);
+		try
+		{
+			addResultHandle(comp, res, body.getClass().getMethod("call").getAnnotatedReturnType().getAnnotations());
+			return new Result<T>(comp.getComponentHandle(), res);
+		}
+		catch(Exception e)
+		{
+			return new Result<T>(comp.getComponentHandle(), new Future<T>(e));
+		}
 	}
 	
 	/**
@@ -91,8 +100,32 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		addResultHandle(comp, res);
-		return new Result<T>(comp.getComponentHandle(), res);
+		try
+		{
+			// Can be also explicitly declared with component type or just implicit (lambda) as object type
+			Method	m	= null;
+			try
+			{
+				m	= body.getClass().getMethod("apply", IComponent.class);
+			}
+			catch(Exception e)
+			{
+				try
+				{
+					m	= body.getClass().getMethod("apply", Object.class);
+				}
+				catch(Exception e2)
+				{
+				}
+			}
+			
+			addResultHandle(comp, res, m!=null ? m.getAnnotatedReturnType().getAnnotations() : null);
+			return new Result<T>(comp.getComponentHandle(), res);
+		}
+		catch(Exception e)
+		{
+			return new Result<T>(comp.getComponentHandle(), new Future<T>(e));
+		}
 	}
 	
 	/**
@@ -118,7 +151,7 @@ public class LambdaAgent //extends Component
 	
 	//-------- result handling --------
 
-	private static <T> void addResultHandle(Component comp, IFuture<T> result)
+	private static <T> void addResultHandle(Component comp, IFuture<T> result, Annotation... annos)
 	{
 		Object	pojo	= comp.getPojo();
 		if(pojo instanceof IResultProvider)
@@ -131,8 +164,8 @@ public class LambdaAgent //extends Component
 		}
 		else if(result!=null)
 		{
-			result.then(res -> ExecutionFeatureProvider.addResult(comp.getId(), "result", res));
+			// Copy result on add
+			result.then(res -> ExecutionFeatureProvider.addResult(comp.getId(), "result", ExecutionFeatureProvider.copyVal(res, annos)));
 		}
 	}
-
 }

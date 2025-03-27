@@ -1,4 +1,4 @@
-package jadex.execution.impl;
+package jadex.execution;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
-import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 

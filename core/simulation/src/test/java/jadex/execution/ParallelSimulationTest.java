@@ -1,4 +1,4 @@
-package jadex.execution.impl;
+package jadex.execution;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import jadex.common.TimeoutException;
 import jadex.core.impl.Component;
-import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.simulation.ISimulationFeature;
 import jadex.simulation.impl.MasterSimulationFeature;

@@ -1,4 +1,4 @@
-package jadex.execution.impl;
+package jadex.execution;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.impl.Component;
-import jadex.execution.IExecutionFeature;
 import jadex.simulation.ISimulationFeature;
 import jadex.simulation.impl.SlaveSimulationFeature;
 

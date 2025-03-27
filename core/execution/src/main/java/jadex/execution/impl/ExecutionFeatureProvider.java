@@ -152,14 +152,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 
 						for(int p = 0; p < ptypes.length; p++)
 						{
-							if(isNoCopy(args[p]) || hasAnnotation(pannos[p], NoCopy.class))
-							{
-								myargs.add(args[p]);
-							}
-							else
-							{
-								myargs.add(SCloner.clone(args[p], procs));
-							}
+							myargs.add(copyVal(args[p], pannos[p]));
 						}
 						
 						FutureFunctionality func = new FutureFunctionality()
@@ -184,24 +177,12 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							
 							public Object handleResult(Object val) throws Exception
 							{
-								if(!isNoCopy(val) && !hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-				            	{
-									Object val2 = SCloner.clone(val, procs);
-									//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
-									val = val2;
-				            	}
-								
-								return val;
+								return copyVal(val, method.getAnnotatedReturnType().getAnnotations());
 							}
 							
 							public Object handleIntermediateResult(Object val) throws Exception
 							{
-								if(!isNoCopy(val) && !hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-				            	{
-									val = SCloner.clone(val, procs);
-									//System.out.println("cloned val: "+val);
-				            	}
-								return val;
+								return copyVal(val, method.getAnnotatedReturnType().getAnnotations());
 							}
 						};
 						
@@ -299,18 +280,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			return null;
 		}
 
-		protected boolean hasAnnotation(Annotation[] pannos, Class<? extends Annotation> anntype) 
-		{
-		    for (Annotation anno : pannos) 
-		    {
-		        if (anno.annotationType().equals(anntype)) 
-		        {
-		            return true;
-		        }
-		    }
-		    return false;
-		}
-
 		@Override
 		public <T> IFuture<T> scheduleStep(Callable<T> step) 
 		{
@@ -355,33 +324,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			return new ExecutableComponentHandle(comp);
 		}, true);
-	}
-	
-	/**
-	 *  Helper to skip NoCopy objects while cloning. 
-	 */
-	protected static IFilter<Object>	filter = new IFilter<Object>()
-	{
-		public boolean filter(Object object)
-		{
-			return isNoCopy(object);
-		}
-	};
-	
-	/**
-	 *  Helper to skip NoCopy objects while cloning. 
-	 */
-	protected static List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
-	{
-		procs.add(procs.size()-1, new FilterProcessor(filter));
-	}
-	
-	/**
-	 *  Helper method to check if a value doesn't need copying in component methods
-	 */
-	protected static boolean isNoCopy(Object val)
-	{
-		return val==null || val.getClass().isAnnotationPresent(NoCopy.class);
 	}
 
 	@Override
@@ -607,5 +549,49 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			}
 			results.put(id, provider);
 		}
+	}
+
+	/**
+	 *  Helper to skip NoCopy objects while cloning. 
+	 */
+	protected static List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
+	{
+		procs.add(procs.size()-1, new FilterProcessor(new IFilter<Object>()
+		{
+			public boolean filter(Object object)
+			{
+				return isNoCopy(object);
+			}
+		}));
+	}
+	
+	/**
+	 *  Helper method to check if a value doesn't need copying in component methods
+	 */
+	public static Object copyVal(Object val, Annotation... annos)
+	{
+		return isNoCopy(val, annos) ? val : SCloner.clone(val, procs);
+	}
+	
+	/**
+	 *  Helper method to check if a value doesn't need copying in component methods
+	 */
+	public static boolean isNoCopy(Object val, Annotation... annos)
+	{
+		if(val==null || val.getClass().isAnnotationPresent(NoCopy.class))
+		{
+			return true;
+		}
+		else
+		{
+			for(Annotation anno: annos)
+			{
+				if(anno instanceof NoCopy)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

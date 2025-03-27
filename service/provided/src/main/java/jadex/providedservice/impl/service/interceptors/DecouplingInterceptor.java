@@ -18,15 +18,11 @@ import jadex.common.ICommand;
 import jadex.common.IFilter;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
-import jadex.common.transformation.traverser.FilterProcessor;
-import jadex.common.transformation.traverser.ITraverseProcessor;
-import jadex.common.transformation.traverser.SCloner;
-import jadex.common.transformation.traverser.Traverser;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.annotation.NoCopy;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.future.FutureFunctionality;
+import jadex.execution.impl.ExecutionFeatureProvider;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -55,18 +51,9 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 
 	//-------- attributes --------
 	
-	///** The external access. */
-	//protected IExternalAccess ea;	
-		
 	/** The internal access. */
 	protected IComponent ia;	
 		
-	/** Is the interceptor for a required service proxy? */
-	protected boolean required;
-	
-	/** The argument copy allowed flag. */
-	protected boolean copy;
-	
 	/** The clone filter (facade for marshal). */
 	protected IFilter filter;
 	
@@ -75,13 +62,9 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	/**
 	 *  Create a new invocation handler.
 	 */
-	public DecouplingInterceptor(IComponent ia, boolean copy, boolean required)
+	public DecouplingInterceptor(IComponent ia)
 	{
 		this.ia = ia;
-		//this.ea	= ia.getExternalAccess();
-		this.copy = copy;
-		this.required	= required;
-//		System.out.println("copy: "+copy);
 	}
 	
 	//-------- methods --------
@@ -103,22 +86,10 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 				throw new RuntimeException("Cannot invoke required service of other component '"+ea.getId()+"' from component '"+caller+"'. Service method: "+sic.getMethod());
 		}*/
 		
-		// Fetch marshal service first time.	
-		if(filter==null)
-		{
-			filter = new IFilter<Object>()
-			{
-				public boolean filter(Object object)
-				{
-					return isNoCopy(object);
-				}
-			};
-		}
-
 		// Perform argument copy
 		
 		// In case of remote call parameters are copied as part of marshalling.
-		if(copy && !sic.isRemoteCall())
+		if(!sic.isRemoteCall())
 		{
 //			if(sic.getMethod().getName().indexOf("Stream")!=-1)
 //				System.out.println("sdfsdfsdf");
@@ -133,35 +104,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 			{
 				for(int i=0; i<args.length; i++)
 				{
-		    		// Hack!!! Should copy in any case to apply processors
-		    		// (e.g. for proxy replacement of service references).
-		    		// Does not work, yet as service object might have wrong interface
-		    		// (e.g. service interface instead of listener interface --> settings properties provider)
-//					if(!refs[i] && !getSerializationServices().isLocalReference(args[i]))
-					if(!isNoCopy(args[i]) && !params[i].isAnnotationPresent(NoCopy.class))
-					{
-			    		// Pass arg as reference if
-			    		// - refs[i] flag is true (use custom filter)
-			    		// - or result is a reference object (default filter)
-						final Object arg	= args[i];
-//			    		IFilter	filter	= refs[i] ? new IFilter()
-//						{
-//							public boolean filter(Object obj)
-//							{
-//								return obj==arg ? true : DecouplingInterceptor.this.filter.filter(obj);
-//							}
-//						} : this.filter;
-						
-						List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
-						procs.add(procs.size()-2, new FilterProcessor(filter));
-						copyargs.add(SCloner.clone(args[i], procs));
-//						copyargs.add(Traverser.traverseObject(args[i], null, procs, null, true, null));
-//						copyargs.add(Traverser.traverseObject(args[i], marshal.getCloneProcessors(), filter));
-					}
-					else
-					{
-						copyargs.add(args[i]);
-					}
+					copyargs.add(ExecutionFeatureProvider.copyVal(args[i], params[i].getAnnotations()));
 				}
 //				System.out.println("call: "+method.getName()+" "+notcopied+" "+SUtil.arrayToString(method.getParameterTypes()));//+" "+SUtil.arrayToString(args));
 				sic.setArguments(copyargs);
@@ -259,41 +202,6 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 	}
 	
 	/**
-	 *  Copy a value, if necessary.
-	 */
-	protected Object doCopy(final boolean copy, final IFilter<Object> deffilter, final Object value)
-	{
-		Object	res	= value;
-		if(value!=null)
-		{
-			// Hack!!! Should copy in any case to apply processors
-			// (e.g. for proxy replacement of service references).
-			// Does not work, yet as service object might have wrong interface
-			// (e.g. service interface instead of listener interface --> settings properties provider)
-			if(copy && !isNoCopy(value))
-			{
-//			System.out.println("copy result: "+result);
-				// Copy result if
-				// - copy flag is true (use custom filter)
-				// - and result is not a reference object (default filter)
-				IFilter<Object>	filter	= copy ? new IFilter<Object>()
-				{
-					public boolean filter(Object obj)
-					{
-						return obj==value ? false : deffilter.filter(obj);
-					}
-				} : deffilter;
-				List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
-				procs.add(procs.size()-1, new FilterProcessor(filter));
-				res = SCloner.clone(value, procs);
-//				res = Traverser.traverseObject(value, null, procs, null, true, null);
-//				res = Traverser.deepCloneObject(value, marshal.getCloneProcessors(), filter);
-			}
-		}
-		return res;
-	}
-
-	/**
 	 *  Get the sub interceptors for special cases.
 	 */
 	public static Map<Method, IServiceInvocationInterceptor> getInterceptors()
@@ -381,23 +289,6 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 			if(res instanceof IFuture)
 			{
 				Method method = sic.getMethod();
-				
-//				if(method.getName().equals("getRegisteredClients"))
-//				{
-//					System.err.println("Copy return value of getRegisteredClients call: "+res+", "+IComponentIdentifier.LOCAL.get());
-//					Thread.dumpStack();
-//				}
-				
-//				Reference ref = method.getAnnotation(Reference.class);
-//				final boolean copy = DecouplingInterceptor.this.copy && !sic.isRemoteCall() && !getSerializationServices().isRemoteObject(sic.getProxy()) && (ref!=null? !ref.local(): true);
-				final boolean copy = DecouplingInterceptor.this.copy && !sic.isRemoteCall() && !method.getAnnotatedReturnType().isAnnotationPresent(NoCopy.class);
-				final IFilter	deffilter = new IFilter()
-				{
-					public boolean filter(Object object)
-					{
-						return isNoCopy(object);
-					}
-				};
 
 				// For local call: fetch timeout to decide if undone. ignored for remote.
 				//final long timeout = !sic.isRemoteCall() ? sic.getNextServiceCall().getTimeout() : Timeout.NONE;
@@ -423,7 +314,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 						
 						if(ex!=null)
 							throw ex;
-						return doCopy(copy, deffilter, result);
+						return sic.isRemoteCall() ? result : ExecutionFeatureProvider.copyVal(result, method.getAnnotatedReturnType().getAnnotations());
 					}
 					
 					@Override
@@ -438,7 +329,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 					{
 						if(ex!=null)
 							throw ex;
-						return doCopy(copy, deffilter, result);
+						return sic.isRemoteCall() ? result : ExecutionFeatureProvider.copyVal(result, method.getAnnotatedReturnType().getAnnotations());
 					}
 					
 					@Override
@@ -737,11 +628,6 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 		{
 			return "invokeMethod("+sic.getMethod()+", "+sic.getArguments()+")";
 		}
-	}
-	
-	protected static boolean isNoCopy(Object object)
-	{
-		return object==null || object.getClass().isAnnotationPresent(NoCopy.class);
 	}
 	
 //	/**
