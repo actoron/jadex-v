@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.annotation.NoCopy;
@@ -19,6 +20,7 @@ import jadex.future.IFuture;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.annotation.Provide;
+import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceRegistry;
@@ -175,8 +177,50 @@ public class ProvidedServiceTest
 	{
 		IComponentHandle	comp = IComponentManager.get().create(new Object()
 		{
-			@Provide
+			@ProvideService
 			IMyService	myservice	= new IMyService(){};
+		}).get(TIMEOUT);
+		
+		
+		// Test that service can be found
+		assertNotNull(searchService(comp, IMyService.class));
+		
+		// Test that service is no longer found
+		comp.terminate().get(TIMEOUT);
+		assertNull(searchSid0(comp, IMyService.class));		
+	}
+
+	@Test
+	public void	testMethodService()
+	{
+		IComponentHandle	comp = IComponentManager.get().create(new Object()
+		{
+			@Provide
+			IMyService	createService(IComponent comp)
+			{
+				return new IMyService(){};
+			}
+		}).get(TIMEOUT);
+		
+		
+		// Test that service can be found
+		assertNotNull(searchService(comp, IMyService.class));
+		
+		// Test that service is no longer found
+		comp.terminate().get(TIMEOUT);
+		assertNull(searchSid0(comp, IMyService.class));		
+	}
+
+	@Test
+	public void	testSubannoMethodService()
+	{
+		IComponentHandle	comp = IComponentManager.get().create(new Object()
+		{
+			@ProvideService
+			IMyService	createService(IComponent comp)
+			{
+				return new IMyService(){};
+			}
 		}).get(TIMEOUT);
 		
 		
@@ -311,6 +355,8 @@ public class ProvidedServiceTest
 		// Check if object is not copied
 		assertNotSame(obj1, obj2fut.get(TIMEOUT));
 	}
+	
+	//-------- helper methods --------
 
 	protected <T> T searchService(IComponentHandle handle, Class<T> type)
 	{
