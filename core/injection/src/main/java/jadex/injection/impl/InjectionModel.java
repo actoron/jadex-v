@@ -145,13 +145,25 @@ public class InjectionModel
 			}
 			else
 			{
-				List<Getter>	ffetchers	= fetchers;
+				// Find names for getters
+				Map<String, IInjectionHandle>	ffetchers	= new LinkedHashMap<>();
+				for(Getter fetcher: fetchers)
+				{
+					String name	= fetcher.annotation() instanceof ProvideResult && ! "".equals(((ProvideResult)fetcher.annotation()).value())
+						? ((ProvideResult)fetcher.annotation()).value()
+						: fetcher.member() instanceof Method && fetcher.member().getName().startsWith("get")
+							? fetcher.member().getName().substring(3).toLowerCase()
+							: fetcher.member().getName();
+					ffetchers.put(name, fetcher.fetcher());
+				}
+				
+				// New handle to apply all getters
 				results	= (comp, pojos, context) ->
 				{
 					Map<String, Object>	ret	= new LinkedHashMap<>();
-					for(Getter fetcher: ffetchers)
+					for(String name: ffetchers.keySet())
 					{
-						ret.put(fetcher.member().getName(), fetcher.fetcher().apply(comp, pojos, context));
+						ret.put(name, ffetchers.get(name).apply(comp, pojos, context));
 					}
 					return ret;
 				};

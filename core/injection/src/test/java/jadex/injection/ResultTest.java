@@ -97,6 +97,9 @@ public class ResultTest
 			@ProvideResult
 			String	field	= "fieldvalue";
 			
+			@ProvideResult("thefield")
+			String	field2	= "fieldvalue2";
+			
 			@ProvideResult
 			String	method(IComponent comp)
 			{
@@ -112,6 +115,19 @@ public class ResultTest
 				
 				return "methodvalue";
 			}
+
+			@ProvideResult("themethod")
+			String	method2()
+			{
+				return "methodvalue2";
+			}
+			
+			// Test magic name replacement (getXxx -> xxx)
+			@ProvideResult()
+			String	getMyMethod()
+			{
+				return "methodvalue3";
+			}
 		}).get(TIMEOUT);
 		
 		@SuppressWarnings("serial")
@@ -119,7 +135,10 @@ public class ResultTest
 		{
 			{
 				this.put("field", "fieldvalue");
+				this.put("thefield", "fieldvalue2");
 				this.put("method", "methodvalue");
+				this.put("themethod", "methodvalue2");
+				this.put("mymethod", "methodvalue3");
 			}
 		};
 		assertEquals(expected, handle.getResults().get(TIMEOUT));

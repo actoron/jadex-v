@@ -14,4 +14,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ProvideResult
 {
+	/**
+	 *  Use this name instead of the field/method name (default).
+	 */
+	String value() default "";
 }
