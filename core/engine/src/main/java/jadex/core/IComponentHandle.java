@@ -1,10 +1,15 @@
 package jadex.core;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import jadex.common.NameValue;
+import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
+import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Interface for component access from non-component thread, e.g. UI thread.
@@ -118,4 +123,14 @@ public interface IComponentHandle
 		throw new UnsupportedOperationException("Missing execution feature");
 	}
 	
+	/**
+	 *  Fetch the result(s) of the Component.
+	 */
+	public IFuture<Map<String, Object>> getResults();
+	
+	/**
+	 *  Listen to results of the component.
+	 *  @throws UnsupportedOperationException when subscription is not supported
+	 */
+	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults();
 }

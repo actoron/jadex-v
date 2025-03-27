@@ -64,20 +64,37 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	@Override
 	public void scheduleStep(Runnable r)
 	{
-		if(terminated)
-			throw new ComponentTerminatedException(getComponent().getId());
-		
 		boolean	startnew	= false;
+		boolean	setex	= false;
 		synchronized(ExecutionFeature.this)
 		{
-			//System.out.println("insert step: "+r);
-			steps.offer(r);
-			if(!executing)
+			if(terminated)
 			{
-				startnew	= true;
-				executing	= true;
-				busy();
+				if(r instanceof StepInfo)
+				{
+					setex	= true;
+				}
+				else
+				{
+					throw new ComponentTerminatedException(getComponent().getId());
+				}
 			}
+			else
+			{
+				//System.out.println("insert step: "+r);
+				steps.offer(r);
+				if(!executing)
+				{
+					startnew	= true;
+					executing	= true;
+					busy();
+				}
+			}
+		}
+		
+		if(setex)
+		{
+			((StepInfo)r).getFuture().setException(new ComponentTerminatedException(getComponent().getId()));
 		}
 		
 		if(startnew)
@@ -313,19 +330,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		Future<T> ret;
 		try
 		{
-			if(step instanceof ICallable)
-			{
-				Class<?> clazz = ((ICallable)step).getFutureReturnType();
-		
-				if(IFuture.class.equals(clazz))
-					ret = new Future<T>();
-				else
-					ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
-			}
-			else
-			{
+			Class<?> clazz = step instanceof ICallable
+				? ((ICallable)step).getFutureReturnType()
+				: step.getClass().getMethod("call").getReturnType();
+			
+			if(IFuture.class.equals(clazz))
 				ret = new Future<T>();
-			}
+			else
+				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
 		}
 		catch(Exception e)
 		{

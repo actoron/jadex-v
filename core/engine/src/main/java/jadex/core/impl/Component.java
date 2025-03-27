@@ -4,13 +4,16 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import jadex.common.NameValue;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
@@ -19,10 +22,14 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.IResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
+import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 
 /**
  *  Base class for Jadex components, which provides access to component features.
@@ -516,6 +523,147 @@ public class Component implements IComponent
 		return "Component [id=" + id + "]";
 	}
 	
+	/**
+	 *  Fetch the result(s) of the Component.
+	 *  Schedules to the component, if not terminated.
+	 */
+	public static IFuture<Map<String, Object>> getResults(IComponent comp)
+	{
+		Future<Map<String, Object>>	ret	= new Future<>();
+		
+		if(isExecutable())
+		{
+			comp.getComponentHandle().scheduleStep(() -> doGetResults(comp))
+				.then(results -> ret.setResult(results))
+				.catchEx(e ->
+				{
+					if(e instanceof ComponentTerminatedException)
+					{
+						// When terminated, don't schedule.
+						ret.setResult(Component.doGetResults(comp));
+					}
+					else
+					{
+						ret.setException(e);
+					}
+				});
+		}
+		else
+		{
+			ret.setResult(Component.doGetResults(comp));
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  Listen to results of the component.
+	 *  Schedules to the component, if not terminated.
+	 *  @throws UnsupportedOperationException when subscription is not supported
+	 */
+	public static ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	{
+		if(isExecutable())
+		{
+			SubscriptionIntermediateFuture<NameValue>	ret	= new SubscriptionIntermediateFuture<>();
+			
+			@SuppressWarnings("rawtypes")
+			Callable	call	= new Callable<ISubscriptionIntermediateFuture<NameValue>>()
+			{
+				public ISubscriptionIntermediateFuture<NameValue>	call()
+				{
+					return doSubscribeToResults(comp);
+				}
+			};
+
+			@SuppressWarnings("unchecked")
+			ISubscriptionIntermediateFuture<NameValue>	fut	= (ISubscriptionIntermediateFuture<NameValue>)
+				comp.getComponentHandle().scheduleAsyncStep(call);
+			fut.next(res -> ret.addIntermediateResult(res))
+				.catchEx(e ->
+				{
+					if(e instanceof ComponentTerminatedException)
+					{
+						// -> ignore (no more results available)
+					}
+					else
+					{
+						ret.setException(e);
+					}
+				});
+			
+			return ret;
+		}
+		else
+		{
+			return Component.doSubscribeToResults(comp);
+		}
+	}
+	
+	/**
+	 *  Listen to results of the pojo.
+	 *  To be called on component thread, if any.
+	 *  @throws UnsupportedOperationException when subscription is not supported
+	 */
+	public static ISubscriptionIntermediateFuture<NameValue> doSubscribeToResults(IComponent component)
+	{
+		ISubscriptionIntermediateFuture<NameValue>	ret	= null;
+		boolean done = false;
+		
+		if(component.getPojo() instanceof IResultProvider)
+		{
+			IResultProvider rp = (IResultProvider)component.getPojo();
+			ret = rp.subscribeToResults();
+			done = true;
+		}
+		else if(component.getPojo()!=null)
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
+			if(creator!=null)
+			{
+				ret = creator.subscribeToResults(component);
+				done = true;
+			}
+		}
+		if(!done)
+		{
+			ret	= new SubscriptionIntermediateFuture<>(new UnsupportedOperationException("Could not get results: "+component.getPojo()));
+		}
+		
+		return ret;
+	}
+
+	/**
+	 *  Extract the results from a pojo.
+	 *  To be called on component thread, if any.
+	 *  @return The result map.
+	 */
+	public static Map<String, Object> doGetResults(IComponent component)
+	{
+		Map<String, Object> ret = new HashMap<>();
+		boolean done = false;
+		
+		if(component.getPojo() instanceof IResultProvider)
+		{
+			IResultProvider rp = (IResultProvider)component.getPojo();
+			ret = new HashMap<String, Object>(rp.getResultMap());
+			done = true;
+		}
+		else if(component.getPojo()!=null)
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
+			if(creator!=null)
+			{
+				ret = creator.getResults(component);
+				done = true;
+			}
+		}
+		if(!done)
+			throw new UnsupportedOperationException("Could not get results: "+component.getPojo());
+		
+		return ret;
+	}
+
 	@NoCopy
 	public class BasicComponentHandle implements IComponentHandle
 	{
@@ -529,6 +677,18 @@ public class Component implements IComponent
 		public String getAppId() 
 		{
 			return Component.this.getAppId();
+		}
+
+		@Override
+		public IFuture<Map<String, Object>> getResults()
+		{
+			return Component.getResults(Component.this);
+		}
+
+		@Override
+		public ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+		{
+			return Component.subscribeToResults(Component.this);
 		}
 	}
 }

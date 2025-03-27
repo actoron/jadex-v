@@ -84,7 +84,19 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			return comp.getAppId();
 		}
+		
+		@Override
+		public IFuture<Map<String, Object>> getResults()
+		{
+			return Component.getResults(comp);
+		}
 
+		@Override
+		public ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+		{
+			return Component.subscribeToResults(comp);
+		}
+		
 		@Override
 		public <T> T getPojoHandle(Class<T> type)
 		{

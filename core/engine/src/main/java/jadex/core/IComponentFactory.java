@@ -1,19 +1,15 @@
 package jadex.core;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jadex.common.NameValue;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
 
 public interface IComponentFactory
 {
@@ -114,30 +110,32 @@ public interface IComponentFactory
 	{
 		Future<T> ret = new Future<>();
 		IComponentHandle handle = create(pojo).get();
-		IComponent	comp	= ComponentManager.get().getComponent(handle.getId());
 		
 		// all run components that push notify on results will automatically get terminated after first result.
-		subscribeToResults(comp)
+		handle.subscribeToResults()
 			.next(r -> 
 			{
 //				System.out.println("received: "+r);	
-				comp.terminate();
+				handle.terminate();
 			});
 //			.catchEx(e -> {})	// NOP on unsupported operation exception
 
 		handle.waitForTermination().then(Void -> 
 		{
-			Map<String, Object> res = getResults(comp);
-			if(res!=null && res.size()==1)
+			handle.getResults().then(res->
 			{
-				@SuppressWarnings("unchecked")
-				T	result	= (T)res.values().iterator().next();
-				ret.setResult(result);
-			}
-			else
-			{
-				ret.setException(new RuntimeException("no single result found: "+res));
-			}
+				if(res!=null && res.size()==1)
+				{
+					@SuppressWarnings("unchecked")
+					T	result	= (T)res.values().iterator().next();
+					ret.setResult(result);
+				}
+				else
+				{
+					ret.setException(new RuntimeException("no single result found: "+res));
+				}
+			})
+			.catchEx(e -> ret.setException(e));
 		});
 		
 		return ret;
@@ -184,62 +182,6 @@ public interface IComponentFactory
 		{
 			ret	= new Future<>(e);
 		}
-		
-		return ret;
-	}
-	
-	/**
-	 *  Extract the results from a pojo.
-	 *  @return The result map.
-	 */
-	public default Map<String, Object> getResults(IComponent component)
-	{
-		Map<String, Object> ret = new HashMap<>();
-		boolean done = false;
-		
-		if(component.getPojo() instanceof IResultProvider)
-		{
-			IResultProvider rp = (IResultProvider)component.getPojo();
-			ret = new HashMap<String, Object>(rp.getResultMap());
-			done = true;
-		}
-		else if(component.getPojo()!=null)
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
-			if(creator!=null)
-			{
-				ret = creator.getResults(component);
-				done = true;
-			}
-		}
-		if(!done)
-			throw new UnsupportedOperationException("Could not get results: "+component.getPojo());
-		
-		return ret;
-	}
-	
-	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
-	{
-		ISubscriptionIntermediateFuture<NameValue>	ret	= null;
-		boolean done = false;
-		
-		if(component.getPojo() instanceof IResultProvider)
-		{
-			IResultProvider rp = (IResultProvider)component.getPojo();
-			ret = rp.subscribeToResults();
-			done = true;
-		}
-		else if(component.getPojo()!=null)
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
-			if(creator!=null)
-			{
-				ret = creator.subscribeToResults(component);
-				done = true;
-			}
-		}
-		if(!done)
-			throw new UnsupportedOperationException("Could not get results: "+component.getPojo());
 		
 		return ret;
 	}
