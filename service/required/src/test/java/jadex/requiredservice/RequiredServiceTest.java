@@ -360,10 +360,13 @@ public class RequiredServiceTest
 		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 		{
 			@OnStart
-			void start(IHelloService myservice) {}
+			void start(IHelloService myservice)
+			{
+				System.out.println("myservice: "+myservice);
+			}
 		}).get(TIMEOUT);
 		
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get());
 	}
 
 	@Test

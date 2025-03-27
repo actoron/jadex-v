@@ -110,6 +110,7 @@ public abstract class PublishServiceFeature implements IPublishServiceFeature//,
 							// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
 							// how could this be done? with listeners on other feature?!
 							feature.publishService((IService)pojos.get(pojos.size()-1), pi).get();
+							return null;
 						});
 					}
 					
@@ -138,10 +139,11 @@ public abstract class PublishServiceFeature implements IPublishServiceFeature//,
 								// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
 								// how could this be done? with listeners on other feature?!
 								feature.publishService((IService)servicepojo, pi).get();
+								return null;
 							}
 							catch(Throwable e)
 							{
-								SUtil.throwUnchecked(e);
+								throw SUtil.throwUnchecked(e);
 							}
 						});
 					}

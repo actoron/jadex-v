@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -29,9 +30,7 @@ import jadex.injection.annotation.ProvideResult;
  */
 public class InjectionModel
 {
-	static IInjectionHandle	NOP	= (self, pojos, context) -> {};
-	
-	static IValueFetcher	NULL	= (self, pojos, context) -> null;
+	static IInjectionHandle	NULL	= (self, pojos, context) -> null;
 	
 	 /** The pojo classes as a hierachy of component pojo plus subobjects, if any.
 	  *  The model is for the last pojo in the list. */
@@ -53,7 +52,7 @@ public class InjectionModel
 	protected IInjectionHandle	onend;
 	
 	/** Code to fetch component results. */
-	protected IValueFetcher	results;
+	protected IInjectionHandle	results;
 	
 	/**
 	 *  Create injection model for given stack of pojo classes.
@@ -75,7 +74,7 @@ public class InjectionModel
 			fields	= unifyHandles(getFieldInjections(classes));
 		}
 		
-		return fields==NOP ? null : fields;
+		return fields==NULL ? null : fields;
 	}
 	
 	/**
@@ -88,7 +87,7 @@ public class InjectionModel
 			onstart	= unifyHandles(getMethodInvocations(classes, OnStart.class));
 		}
 		
-		return onstart==NOP ? null : onstart;
+		return onstart==NULL ? null : onstart;
 	}
 
 	/**
@@ -101,7 +100,7 @@ public class InjectionModel
 			extra	= unifyHandles(getExtraOnstartHandles(classes.get(classes.size()-1)));
 		}
 		
-		return extra==NOP ? null : extra;
+		return extra==NULL ? null : extra;
 	}
 
 	/**
@@ -114,7 +113,7 @@ public class InjectionModel
 			methods	= unifyHandles(getMethodInjections(classes));
 		}
 		
-		return methods==NOP ? null : methods;
+		return methods==NULL ? null : methods;
 	}
 
 	/**
@@ -127,18 +126,18 @@ public class InjectionModel
 			onend	= unifyHandles(getMethodInvocations(classes, OnEnd.class));
 		}
 		
-		return onend==NOP ? null : onend;
+		return onend==NULL ? null : onend;
 	}
 	
 	/**
 	 *  Get the fetcher to retrieve current component results.
 	 */
-	public IValueFetcher getResultsFetcher()
+	public IInjectionHandle getResultsFetcher()
 	{
 		if(results==null)
 		{
 			// TODO: also @Provide!???
-			List<FieldFetcher>	fetchers = getFieldGetters(classes, ProvideResult.class);
+			List<Getter>	fetchers = getGetters(classes, ProvideResult.class);
 			
 			if(fetchers==null)
 			{
@@ -146,13 +145,13 @@ public class InjectionModel
 			}
 			else
 			{
-				List<FieldFetcher>	ffetchers	= fetchers;
+				List<Getter>	ffetchers	= fetchers;
 				results	= (comp, pojos, context) ->
 				{
 					Map<String, Object>	ret	= new LinkedHashMap<>();
-					for(FieldFetcher fetcher: ffetchers)
+					for(Getter fetcher: ffetchers)
 					{
-						ret.put(fetcher.field().getName(), fetcher.fetcher().getValue(comp, pojos, context));
+						ret.put(fetcher.member().getName(), fetcher.fetcher().apply(comp, pojos, context));
 					}
 					return ret;
 				};
@@ -208,10 +207,10 @@ public class InjectionModel
 					
 					try
 					{
-						IValueFetcher	fetcher	= null;
+						IInjectionHandle	fetcher	= null;
 						for(IValueFetcherCreator check: fetchers.get(anno))
 						{
-							IValueFetcher	test	= check.getValueFetcher(classes, field.getGenericType());
+							IInjectionHandle	test	= check.getValueFetcher(classes, field.getGenericType());
 							if(test!=null)
 							{
 								if(fetcher!=null)
@@ -226,17 +225,17 @@ public class InjectionModel
 						{
 							field.setAccessible(true);
 							MethodHandle	handle	= MethodHandles.lookup().unreflectSetter(field);
-							final IValueFetcher	ffetcher	= fetcher;
+							final IInjectionHandle	ffetcher	= fetcher;
 							handles.add((self, pojos, context) -> {
 								try
 								{
-									Object[]	args	= new Object[]{pojos.get(pojos.size()-1), ffetcher.getValue(self, pojos, context)};
-									handle.invokeWithArguments(args);
+									Object[]	args	= new Object[]{pojos.get(pojos.size()-1), ffetcher.apply(self, pojos, context)};
+									return handle.invokeWithArguments(args);
 								}
 								catch(Throwable e)
 								{
 									// Rethrow user exception
-									SUtil.throwUnchecked(e);
+									throw SUtil.throwUnchecked(e);
 								}
 							});			
 						}
@@ -310,7 +309,8 @@ public class InjectionModel
 
 	/**
 	 *  Combine potentially multiple handles to one.
-	 * 	@param handles A potentially empty list of handles or null.
+	 *  Only useful when the return value does not matter.
+	 * 	@param handles A potentially empty list of handles or NULL.
 	 */
 	protected static IInjectionHandle	unifyHandles(List<IInjectionHandle> handles)
 	{
@@ -319,7 +319,7 @@ public class InjectionModel
 		// No handles
 		if(handles.isEmpty())
 		{
-			ret	= NOP;
+			ret	= NULL;
 		}
 		
 		// Single handle
@@ -334,22 +334,26 @@ public class InjectionModel
 			ret	= (self, pojos, context) ->
 			{
 				for(int i=0; i<handles.size(); i++)
-					handles.get(i).handleInjection(self, pojos, context);
+					handles.get(i).apply(self, pojos, context);
+				return null;
 			};
 		}
 		
 		return ret;
 	}
 	
-	public record FieldFetcher(Field field, IValueFetcher fetcher) {}
+	/**
+	 *  Generic object to get a value from a field or method.
+	 */
+	public record Getter(Member member, Annotation annotation, IInjectionHandle fetcher) {}
 	
 	/**
 	 *  Get value fetchers, that fetch the value of an annotated field.
 	 *  The fetchers provide the result as FieldValue record.
 	 */
-	public static List<FieldFetcher> getFieldGetters(List<Class<?>> classes, Class<? extends Annotation> anno)
+	public static List<Getter> getGetters(List<Class<?>> classes, Class<? extends Annotation> anno)
 	{
-		List<FieldFetcher>	fetchers	= null;
+		List<Getter>	fetchers	= null;
 		for(Field field: findFields(classes.get(classes.size()-1), anno))
 		{
 			if(fetchers==null)
@@ -360,7 +364,7 @@ public class InjectionModel
 			{
 				field.setAccessible(true);
 				MethodHandle	get	= MethodHandles.lookup().unreflectGetter(field);
-				fetchers.add(new FieldFetcher(field, (comp, pojos, context) ->
+				fetchers.add(new Getter(field, field.getAnnotation(anno), (comp, pojos, context) ->
 				{
 					try
 					{
@@ -377,6 +381,18 @@ public class InjectionModel
 				SUtil.throwUnchecked(e);
 			}
 		}
+
+		for(Method method: findMethods(classes.get(classes.size()-1), anno))
+		{
+			if(fetchers==null)
+			{
+				fetchers	= new ArrayList<>(4);
+			}
+			
+			fetchers.add(new Getter(method, method.getAnnotation(anno),
+				createMethodInvocation(method, classes, null)));
+		}
+
 		return fetchers;
 	}
 
@@ -456,7 +472,7 @@ public class InjectionModel
 	 *  Create a handle for a method invocation.
 	 *  
 	 */
-	public static IInjectionHandle	createMethodInvocation(Method method, List<Class<?>> classes, List<IValueFetcher> preparams)
+	public static IInjectionHandle	createMethodInvocation(Method method, List<Class<?>> classes, List<IInjectionHandle> preparams)
 	{
 		try
 		{
@@ -469,11 +485,11 @@ public class InjectionModel
 			Class<?>[]	ptypes	= method.getParameterTypes();
 			if(ptypes.length!=0)
 			{
-				List<IValueFetcher>	param_injections	= new ArrayList<>();
+				List<IInjectionHandle>	param_injections	= new ArrayList<>();
 				for(int i=0; i<ptypes.length; i++)
 				{
 					// Check, if fetcher is provided from outside
-					IValueFetcher	fetcher	= preparams!=null && i<preparams.size()
+					IInjectionHandle	fetcher	= preparams!=null && i<preparams.size()
 						? preparams.get(i) : null;
 					
 					if(fetcher==null)
@@ -493,7 +509,7 @@ public class InjectionModel
 									}
 									tried.add(check);
 									
-									IValueFetcher	test	= check.getValueFetcher(classes, ptypes[i]);
+									IInjectionHandle	test	= check.getValueFetcher(classes, ptypes[i]);
 									if(test!=null)
 									{
 										if(fetcher!=null)
@@ -525,15 +541,15 @@ public class InjectionModel
 						args[0]	= pojos.get(pojos.size()-1);
 						for(int j=1; j<args.length; j++)
 						{
-							args[j]	= param_injections.get(j-1).getValue(self, pojos, context);
+							args[j]	= param_injections.get(j-1).apply(self, pojos, context);
 						}
 						
-						handle.invokeWithArguments(args);
+						return handle.invokeWithArguments(args);
 					}
 					catch(Throwable e)
 					{
 						// Rethrow user exception
-						SUtil.throwUnchecked(e);
+						throw SUtil.throwUnchecked(e);
 					}
 				};			
 			}
@@ -543,12 +559,12 @@ public class InjectionModel
 				{
 					try
 					{
-						handle.invoke(pojos.get(pojos.size()-1));
+						return handle.invoke(pojos.get(pojos.size()-1));
 					}
 					catch(Throwable e)
 					{
 						// Rethrow user exception
-						SUtil.throwUnchecked(e);
+						throw SUtil.throwUnchecked(e);
 					}
 				};
 			}
@@ -576,7 +592,7 @@ public class InjectionModel
 		// Inject any pojo from hierarchy of subobjects.
 		addValueFetcher((comptypes, valuetype) -> 
 		{
-			IValueFetcher	ret	= null;
+			IInjectionHandle	ret	= null;
 			for(int i=0; i<comptypes.size(); i++)
 			{
 				if((valuetype instanceof Class) && SReflect.isSupertype((Class<?>)valuetype, comptypes.get(i)))

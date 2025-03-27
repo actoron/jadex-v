@@ -18,5 +18,5 @@ public interface IValueFetcherCreator
 	 *  
 	 *  @return A value fetcher or null, when this creator doesn't match.
 	 */
-	public IValueFetcher	getValueFetcher(List<Class<?>> pojotypes, Type valuetype);
+	public IInjectionHandle	getValueFetcher(List<Class<?>> pojotypes, Type valuetype);
 }

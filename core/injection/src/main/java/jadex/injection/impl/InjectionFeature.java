@@ -45,24 +45,24 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	{
 		if(model.getFieldInjections()!=null)
 		{
-			model.getFieldInjections().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+			model.getFieldInjections().apply(self, Collections.singletonList(self.getPojo()), null);
 		}
 
 		if(model.getExtraOnStart()!=null)
 		{
-			model.getExtraOnStart().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+			model.getExtraOnStart().apply(self, Collections.singletonList(self.getPojo()), null);
 		}
 
 		if(model.getOnStart()!=null)
 		{
-			self.getFeature(IExecutionFeature.class).scheduleStep(()->
-				model.getOnStart().handleInjection(self, Collections.singletonList(self.getPojo()), null));
+			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getOnStart().apply(self, Collections.singletonList(self.getPojo()), null));
 		}
 		
 		if(model.getMethodInjections()!=null)
 		{
-			self.getFeature(IExecutionFeature.class).scheduleStep(()->
-				model.getMethodInjections().handleInjection(self, Collections.singletonList(self.getPojo()), null));
+			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null));
 		}
 	}
 
@@ -76,14 +76,14 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 				InjectionModel	model	= InjectionModel.get(pojos);
 				if(model.getOnEnd()!=null)
 				{	
-					model.getOnEnd().handleInjection(self, pojos, null);
+					model.getOnEnd().apply(self, pojos, null);
 				}
 			}
 		}
 		
 		if(model.getOnEnd()!=null)
 		{	
-			model.getOnEnd().handleInjection(self, Collections.singletonList(self.getPojo()), null);
+			model.getOnEnd().apply(self, Collections.singletonList(self.getPojo()), null);
 		}
 		
 		// Notify on end -> conflict with terminate() in IComponentFactory.run(Object)
@@ -130,7 +130,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 				if(model.getResultsFetcher()!=null)
 				{
 					@SuppressWarnings("unchecked")
-					Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().getValue(self, pojos, null);
+					Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, pojos, null);
 					if(ret==null)
 					{
 						ret	= results;
@@ -146,7 +146,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		if(model.getResultsFetcher()!=null)
 		{
 			@SuppressWarnings("unchecked")
-			Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().getValue(self, Collections.singletonList(self.getPojo()), null);
+			Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, Collections.singletonList(self.getPojo()), null);
 			if(ret==null)
 			{
 				ret	= results;
@@ -205,24 +205,24 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 
 		if(model.getFieldInjections()!=null)
 		{
-			model.getFieldInjections().handleInjection(self, pojos, null);
+			model.getFieldInjections().apply(self, pojos, null);
 		}
 
 		if(model.getExtraOnStart()!=null)
 		{
-			model.getExtraOnStart().handleInjection(self, pojos, null);
+			model.getExtraOnStart().apply(self, pojos, null);
 		}
 
 		if(model.getOnStart()!=null)
 		{
-			self.getFeature(IExecutionFeature.class).scheduleStep(()->
-				model.getOnStart().handleInjection(self, pojos, null));
+			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getOnStart().apply(self, pojos, null));
 		}
 		
 		if(model.getMethodInjections()!=null)
 		{
-			self.getFeature(IExecutionFeature.class).scheduleStep(()->
-				model.getMethodInjections().handleInjection(self, pojos, null));
+			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getMethodInjections().apply(self, pojos, null));
 		}
 	}
 }

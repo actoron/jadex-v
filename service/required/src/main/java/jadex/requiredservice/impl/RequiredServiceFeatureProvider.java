@@ -12,7 +12,6 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
-import jadex.injection.impl.IValueFetcher;
 import jadex.injection.impl.InjectionModel;
 import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
@@ -50,7 +49,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 		InjectionModel.addValueFetcher(
 			(pojotypes, valuetype) ->
 		{
-			IValueFetcher	ret	= null;
+			IInjectionHandle	ret	= null;
 			
 			if(((Type)valuetype) instanceof ParameterizedType)
 			{
@@ -94,7 +93,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 			
 			if(service!=null)
 			{
-				List<IValueFetcher>	preparams	= new ArrayList<>();
+				List<IInjectionHandle>	preparams	= new ArrayList<>();
 				for(int i=0; i<=index; i++)
 				{
 					if(i<index)
@@ -114,8 +113,9 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 					ISubscriptionIntermediateFuture<?> query	= self.getFeature(IRequiredServiceFeature.class).addQuery(new ServiceQuery<>(fservice));
 					query.next(result ->
 					{
-						invocation.handleInjection(self, pojos, result);
+						invocation.apply(self, pojos, result);
 					});
+					return null;
 				};
 			}
 			
