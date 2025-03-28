@@ -12,12 +12,10 @@ import jadex.future.IntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.PartDataChunk;
-import jadex.providedservice.annotation.Service;
 
 /**
  *  Calculate service implementation.
  */
-@Service
 public class CalculateService implements ICalculateService
 {
 	//-------- attributes --------

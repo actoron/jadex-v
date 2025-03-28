@@ -23,7 +23,6 @@ import jadex.micro.mandelbrot.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
 import jadex.providedservice.IService;
-import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
@@ -31,7 +30,6 @@ import jadex.requiredservice.ServiceNotFoundException;
 /**
  *  Generate service implementation. 
  */
-@Service
 public class GenerateService implements IGenerateService
 {
 	//-------- constants --------

@@ -27,13 +27,11 @@ import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.mandelbrot.model.ProgressData;
-import jadex.providedservice.annotation.Service;
 
 /**
  *  The service allows displaying results in the frame
  *  managed by the service providing agent.
  */
-@Service
 public class DisplayService implements IDisplayService
 {
 	//-------- attributes --------
