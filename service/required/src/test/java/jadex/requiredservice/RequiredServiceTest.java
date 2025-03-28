@@ -426,6 +426,62 @@ public class RequiredServiceTest
 	}
 
 	@Test
+	public void	testSubannoMethodInjection()
+	{
+		IComponentHandle	provider[]	= new IComponentHandle[1];
+		IComponentHandle	provider2	= null;
+		try
+		{
+			// helper objects
+			List<IHelloService>	services	= new ArrayList<>();
+			IComponentHandle	caller	= IComponentManager.get().create(new Object()
+			{
+				@InjectService
+				void addService(IComponent comp, IHelloService hello)
+				{
+					assertNotNull(comp);
+					services.add(hello);
+				}
+			}).get(TIMEOUT);
+			
+			assertTrue(services.isEmpty());
+			
+			// TODO: why step necessary!?
+			caller.scheduleStep(() ->
+			{
+				provider[0]	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+				return null;
+			}).get(TIMEOUT);
+			
+			// Schedule check to make sure it is executed after result add.
+			caller.scheduleStep(() ->
+			{
+				assertEquals(1, services.size());
+				return null;
+			}).get();
+			
+			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			// Schedule check to make sure it is executed after result add.
+			caller.scheduleStep(() ->
+			{
+				assertEquals(2, services.size());
+				return null;
+			}).get(TIMEOUT);
+		}
+		finally
+		{
+			if(provider[0]!=null)
+			{
+				provider[0].terminate().get(TIMEOUT);
+			}
+			if(provider2!=null)
+			{
+				provider2.terminate().get(TIMEOUT);
+			}
+		}
+	}
+
+	@Test
 	public void	testBrokenMethodInjection()
 	{
 		assertThrows(UnsupportedOperationException.class, () -> IComponentManager.get().create(new Object()

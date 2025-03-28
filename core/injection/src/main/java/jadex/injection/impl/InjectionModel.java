@@ -280,31 +280,36 @@ public class InjectionModel
 	protected static List<IInjectionHandle>	getMethodInjections(List<Class<?>> classes)
 	{
 		List<IInjectionHandle>	ret	= new ArrayList<>();
-		for(Method method: InjectionModel.findMethods(classes.get(classes.size()-1), Inject.class))
+		synchronized(minjections)
 		{
-			IInjectionHandle injection	= null;
-			for(IMethodInjectionCreator check: minjections)
+			for(Class<? extends Annotation> anno: minjections.keySet())
 			{
-				IInjectionHandle	test	= check.getInjectionHandle(classes, method);
-				if(test!=null)
+				for(Method method: InjectionModel.findMethods(classes.get(classes.size()-1), anno))
 				{
+					IInjectionHandle injection	= null;
+					for(IMethodInjectionCreator check: minjections.get(anno))
+					{
+						IInjectionHandle	test	= check.getInjectionHandle(classes, method);
+						if(test!=null)
+						{
+							if(injection!=null)
+							{
+								throw new RuntimeException("Conflicting method injections: "+injection+", "+test);
+							}
+						}
+						injection	= test;
+					}
+					
 					if(injection!=null)
 					{
-						throw new RuntimeException("Conflicting method injections: "+injection+", "+test);
+						ret.add(injection);	
+					}
+					else
+					{
+						throw new UnsupportedOperationException("Cannot inject "+method);
 					}
 				}
-				injection	= test;
 			}
-			
-			if(injection!=null)
-			{
-				ret.add(injection);	
-			}
-			else
-			{
-				throw new UnsupportedOperationException("Cannot inject "+method);
-			}
-
 		}
 		return ret;
 	}
@@ -691,13 +696,32 @@ public class InjectionModel
 	
 	
 	/** The supported method injections (i.e method -> injection handle). */
-	protected static List<IMethodInjectionCreator>	minjections	= new ArrayList<>();
+	protected static Map<Class<? extends Annotation>, List<IMethodInjectionCreator>>	minjections	= new LinkedHashMap<>();
 
 	/**
-	 *  Add a method injections (i.e method -> injection handle).
+	 *  Add a method injections (i.e annotation -> method -> injection handle).
 	 */
-	public static void	addMethodInjection(IMethodInjectionCreator minjection)
+	@SafeVarargs
+	public static void	addMethodInjection(IMethodInjectionCreator minjection, Class<? extends Annotation>... annos)
 	{
-		minjections.add(minjection);
+		if(annos.length==0)
+		{
+			// Catch common programming mistake.
+			throw new IllegalArgumentException("Missing annotation type(s).");
+		}
+		
+		synchronized(minjections)
+		{
+			for(Class<? extends Annotation> anno: annos)
+			{
+				List<IMethodInjectionCreator>	list	= minjections.get(anno);
+				if(list==null)
+				{
+					list	= new ArrayList<>(1);
+					minjections.put(anno, list);
+				}
+				list.add(minjection);
+			}
+		}
 	}
 }

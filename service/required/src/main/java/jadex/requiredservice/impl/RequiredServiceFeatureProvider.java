@@ -39,13 +39,13 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 	
 	static
 	{
-		// Single service field.
+		// Single service field / parameter.
 		InjectionModel.addValueFetcher(
 			(pojotypes, valuetype) -> (valuetype instanceof Class) && ((Class<?>)valuetype).isAnnotationPresent(Service.class) ? 
 				((self, pojos, context) -> self.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>((Class<?>)valuetype))): null,
 			Inject.class, InjectService.class);
 		
-		// Multi service field (Set etc.)
+		// Multi service field / parameter (Set etc.)
 		InjectionModel.addValueFetcher(
 			(pojotypes, valuetype) ->
 		{
@@ -120,6 +120,6 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 			}
 			
 			return ret;		
-		});
+		}, Inject.class, InjectService.class);
 	}
 }
