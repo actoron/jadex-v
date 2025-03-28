@@ -16,6 +16,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
+import jadex.injection.annotation.Provide;
 import jadex.micro.mandelbrot.ui.ColorChooserPanel;
 
 /**
@@ -39,7 +40,8 @@ public class DisplayAgent
 	protected IComponent agent;
 	
 	/** The service. */
-	IDisplayService	disp	= new DisplayService();
+	@Provide
+	protected IDisplayService	disp	= new DisplayService();
 	
 	/** The GUI. */
 	protected DisplayPanel panel;

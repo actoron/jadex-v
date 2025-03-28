@@ -2,6 +2,7 @@ package jadex.micro.mandelbrot.calculate;
 
 import jadex.core.IComponent;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.Provide;
 import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
@@ -23,7 +24,8 @@ public class CalculateAgent
 	protected IComponent agent;
 	
 	/** The service. */
-	ICalculateService	calc	= new CalculateService();
+	@Provide
+	protected ICalculateService	calc	= new CalculateService();
 	
 	/** Id of the current job. */
 	protected Object taskid;

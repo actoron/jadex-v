@@ -8,6 +8,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.Provide;
 import jadex.micro.mandelbrot.display.IDisplayService;
 import jadex.micro.mandelbrot.model.AreaData;
 	
@@ -28,7 +29,8 @@ public class GenerateAgent implements IGenerateGui
 	protected IComponent agent;
 	
 	/** The service. */
-	IGenerateService	gen	= new GenerateService();
+	@Provide
+	protected IGenerateService	gen	= new GenerateService();
 	
 	/** The generate panel. */
 	protected GeneratePanel panel;
