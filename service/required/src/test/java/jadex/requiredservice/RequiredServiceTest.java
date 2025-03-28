@@ -9,7 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -288,6 +291,112 @@ public class RequiredServiceTest
 			{
 				@InjectService(mode=Mode.QUERY)
 				IHelloService	myservice;
+			}).get(TIMEOUT));
+	}
+
+	@Test
+	public void	testBrokenCollectionInjection()
+	{
+		// Check that unsupported field injection with query is detected
+		assertThrows(UnsupportedOperationException.class, () ->
+			IComponentManager.get().create(new Object()
+			{
+				@InjectService
+				LinkedList<IHelloService>	myservice;
+			}).get(TIMEOUT));
+	}
+
+	@Test
+	public void	testListInjection()
+	{
+		// Check that query results are added to collection field.		
+		IComponentHandle	provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);		
+		try
+		{
+			Future<List<IHelloService>>	fut	= new Future<>();
+			IComponentManager.get().create(new Object()
+			{
+				@InjectService
+				List<IHelloService>	myservice;
+				
+				@OnStart
+				void start()
+				{
+					fut.setResult(myservice);
+				}
+			}).get(TIMEOUT);
+			
+			assertNotNull(fut.get(TIMEOUT));
+			assertEquals(1, fut.get(TIMEOUT).size());
+		}
+		finally
+		{
+			provider.terminate().get(TIMEOUT);
+		}
+	}
+
+	@Test
+	public void	testSetInjection()
+	{
+		// Check that query results are added to collection field.		
+		IComponentHandle	provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);		
+		try
+		{
+			Future<Set<IHelloService>>	fut	= new Future<>();
+			IComponentManager.get().create(new Object()
+			{
+				@InjectService
+				HashSet<IHelloService>	myservice;
+				
+				@OnStart
+				void start()
+				{
+					fut.setResult(myservice);
+				}
+			}).get(TIMEOUT);
+			
+			assertNotNull(fut.get(TIMEOUT));
+			assertEquals(1, fut.get(TIMEOUT).size());
+		}
+		finally
+		{
+			provider.terminate().get(TIMEOUT);
+		}
+	}
+	
+	@Test
+	public void	testQueryInjection()
+	{
+		// Check that query results are added to collection field.
+		List<IHelloService>	list	= new LinkedList<IHelloService>();
+		IComponentManager.get().create(new Object()
+		{
+			@InjectService(mode=Mode.QUERY)
+			List<IHelloService>	myservice	= list;
+		}).get(TIMEOUT);
+		
+		assertEquals(0, list.size());
+		
+		IComponentHandle	provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);		
+		try
+		{
+			assertEquals(1, list.size());
+		}
+		finally
+		{
+			provider.terminate().get(TIMEOUT);
+		}
+	}
+
+	@Test
+	public void	testBrokenQueryInjection()
+	{
+		// Check that missing initial value is detected
+		assertThrows(UnsupportedOperationException.class, () ->
+			IComponentManager.get().create(new Object()
+			{
+				@InjectService(mode=Mode.QUERY)
+				List<IHelloService>	myservice;
 			}).get(TIMEOUT));
 	}
 

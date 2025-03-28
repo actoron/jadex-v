@@ -10,6 +10,8 @@ import jadex.core.IComponentManager;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
+import jadex.requiredservice.annotation.InjectService;
+import jadex.requiredservice.annotation.InjectService.Mode;
 
 /**
  *  Chat micro agent provides a basic chat service. 
@@ -25,7 +27,7 @@ public class ChatAgent implements IChatService
 	
 	protected ChatGui gui;
 	
-	@Inject // TODO configure as query!?
+	@InjectService(mode=Mode.QUERY)
 	protected Set<IChatService> chatservices = new HashSet<IChatService>();
 	
 	@OnStart

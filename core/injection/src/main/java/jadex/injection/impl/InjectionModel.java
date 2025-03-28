@@ -243,13 +243,15 @@ public class InjectionModel
 						if(fetcher!=null)
 						{
 							field.setAccessible(true);
-							MethodHandle	handle	= MethodHandles.lookup().unreflectSetter(field);
+							MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(field);
+							MethodHandle	setter	= MethodHandles.lookup().unreflectSetter(field);
 							final IInjectionHandle	ffetcher	= fetcher;
 							handles.add((self, pojos, context) -> {
 								try
 								{
-									Object[]	args	= new Object[]{pojos.get(pojos.size()-1), ffetcher.apply(self, pojos, context)};
-									return handle.invokeWithArguments(args);
+									Object	oldval	= getter.invoke(pojos.get(pojos.size()-1));
+									Object[]	args	= new Object[]{pojos.get(pojos.size()-1), ffetcher.apply(self, pojos, oldval)};
+									return setter.invokeWithArguments(args);
 								}
 								catch(Throwable e)
 								{
@@ -645,6 +647,7 @@ public class InjectionModel
 
 	/**
 	 *  Add a parameter/field injection (i.e field/parameter type -> value fetcher).
+	 *  In case of field injection, the context is the old field value.
 	 */
 	@SafeVarargs
 	public static void	addValueFetcher(IValueFetcherCreator fetcher, Class<? extends Annotation>... annos)

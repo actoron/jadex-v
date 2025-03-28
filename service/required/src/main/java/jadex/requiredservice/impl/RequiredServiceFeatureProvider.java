@@ -4,7 +4,9 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import jadex.common.SReflect;
 import jadex.core.impl.Component;
@@ -56,7 +58,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 			return ret;
 		}, InjectService.class, Inject.class);
 		
-		// Multi service field / parameter (Set etc.)
+		// Multi service field / parameter (Subtypes of Collection)
 		InjectionModel.addValueFetcher(
 			(pojotypes, valuetype, anno) ->
 		{
@@ -71,12 +73,47 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 					Type	typeparam	= generic.getActualTypeArguments()[0];
 					if(typeparam instanceof Class<?> && ((Class<?>)typeparam).isAnnotationPresent(Service.class))
 					{
-						System.out.println("services injection: "+generic.getRawType()+" of "+typeparam);
-//						if(anno instanceof InjectService && )
-//						if()
+						// Query into existing collection.
+						if(anno instanceof InjectService && ((InjectService)anno).mode().equals(Mode.QUERY))
+						{
+							// Inject query results into existing collection.
+							ret	= ((self, pojos, context) ->
+							{
+								@SuppressWarnings("unchecked")
+								Collection<Object>	coll	= (Collection<Object>) context;
+								if(coll==null)
+								{
+									throw new UnsupportedOperationException("Query injections only allowed for field with initial value: "+pojos.get(pojos.size()-1)+", "+valuetype+", "+anno);
+								}
+								
+								self.getFeature(IRequiredServiceFeature.class).addQuery(new ServiceQuery<>((Class<?>)typeparam))
+									.next(result -> coll.add(result));
+								// Don't change field value, i.e. return original value.
+								return context;
+							});
+						}
 						
-						ret	= ((self, pojos, context) ->
-							self.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>((Class<?>)typeparam)));
+						// Set search result (ArrayList) as direct field value.
+						else if(SReflect.isSupertype((Class<?>) generic.getRawType(), ArrayList.class))
+						{
+							ret	= ((self, pojos, context) ->
+								self.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>((Class<?>)typeparam)));
+						}
+						
+						// Copy search result into LinkedHashSet
+						else if(SReflect.isSupertype((Class<?>) generic.getRawType(), LinkedHashSet.class))
+						{
+							ret	= ((self, pojos, context) ->
+							{
+								Set<Object>	set	= new LinkedHashSet<>();
+								set.addAll(self.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>((Class<?>)typeparam)));
+								return set;
+							});
+						}
+						else
+						{
+							throw new UnsupportedOperationException("Only Collection, [Array]List and [[Linked]Hash]Set supported for collection injection: "+generic.getRawType());
+						}
 					}
 				}
 			}
