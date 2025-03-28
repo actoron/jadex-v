@@ -18,8 +18,10 @@ import java.util.function.Function;
 
 import jadex.common.SReflect;
 import jadex.common.SUtil;
+import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
+import jadex.execution.impl.ExecutionFeatureProvider;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
@@ -146,7 +148,7 @@ public class InjectionModel
 			else
 			{
 				// Find names for getters
-				Map<String, IInjectionHandle>	ffetchers	= new LinkedHashMap<>();
+				Map<String, Tuple2<IInjectionHandle, Annotation[]>>	ffetchers	= new LinkedHashMap<>();
 				for(Getter fetcher: fetchers)
 				{
 					String name	= fetcher.annotation() instanceof ProvideResult && ! "".equals(((ProvideResult)fetcher.annotation()).value())
@@ -154,7 +156,11 @@ public class InjectionModel
 						: fetcher.member() instanceof Method && fetcher.member().getName().startsWith("get")
 							? fetcher.member().getName().substring(3).toLowerCase()
 							: fetcher.member().getName();
-					ffetchers.put(name, fetcher.fetcher());
+					Annotation[]	annos	= fetcher.member() instanceof Method
+						? (Annotation[])SUtil.joinArrays(((Method)fetcher.member()).getAnnotations(),
+							((Method)fetcher.member()).getAnnotatedReturnType().getAnnotations())
+						: ((Field)fetcher.member()).getAnnotations();
+					ffetchers.put(name, new Tuple2<>(fetcher.fetcher(), annos));
 				}
 				
 				// New handle to apply all getters
@@ -163,7 +169,7 @@ public class InjectionModel
 					Map<String, Object>	ret	= new LinkedHashMap<>();
 					for(String name: ffetchers.keySet())
 					{
-						ret.put(name, ffetchers.get(name).apply(comp, pojos, context));
+						ret.put(name, ExecutionFeatureProvider.copyVal(ffetchers.get(name).getFirstEntity().apply(comp, pojos, context), ffetchers.get(name).getSecondEntity()));
 					}
 					return ret;
 				};

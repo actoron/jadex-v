@@ -1,9 +1,13 @@
 package jadex.injection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -12,6 +16,7 @@ import jadex.common.NameValue;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.OnEnd;
@@ -23,7 +28,7 @@ import jadex.injection.annotation.ProvideResult;
  */
 public class ResultTest
 {
-	public static final long	TIMEOUT	= 10000;
+	public static final long	TIMEOUT	= -1;
 	
 	/**
 	 *  Test manually adding result.
@@ -180,5 +185,69 @@ public class ResultTest
 		
 		res	= sub.getNextIntermediateResult(TIMEOUT);
 		assertEquals(new NameValue("end", "endvalue"), res);
+	}
+	
+	/**
+	 *  Test if results are copied.
+	 */
+	@Test
+	public void	testCopyGetResults()
+	{
+		List<String>	value	= Collections.singletonList("hello");
+		
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+		{
+			@ProvideResult
+			List<String>	field	= value;
+			
+			@ProvideResult
+			List<String>	method()
+			{
+				return value;
+			}
+		}).get(TIMEOUT);
+		
+		assertEquals(value, handle.getResults().get(TIMEOUT).get("field"));
+		assertNotSame(value, handle.getResults().get(TIMEOUT).get("field"));
+		assertEquals(value, handle.getResults().get(TIMEOUT).get("method"));
+		assertNotSame(value, handle.getResults().get(TIMEOUT).get("method"));
+	}
+
+	/**
+	 *  Test if annotated results are not copied.
+	 */
+	@Test
+	public void	testNoCopyGetResults()
+	{
+		List<String>	value	= Collections.singletonList("hello");
+		
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+		{
+			@ProvideResult
+			@NoCopy
+			List<String>	field	= value;
+			
+			// Method annotation
+			@ProvideResult
+			@NoCopy
+			List<String>	method1()
+			{
+				return value;
+			}
+			
+			// Return type annotation
+			@ProvideResult
+			protected	@NoCopy	List<String>	method2()
+			{
+				return value;
+			}
+		}).get(TIMEOUT);
+		
+		assertEquals(value, handle.getResults().get(TIMEOUT).get("field"));
+		assertSame(value, handle.getResults().get(TIMEOUT).get("field"));
+		assertEquals(value, handle.getResults().get(TIMEOUT).get("method1"));
+		assertSame(value, handle.getResults().get(TIMEOUT).get("method1"));
+		assertEquals(value, handle.getResults().get(TIMEOUT).get("method2"));
+		assertSame(value, handle.getResults().get(TIMEOUT).get("method2"));
 	}
 }
