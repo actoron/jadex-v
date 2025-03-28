@@ -17,6 +17,7 @@ import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.annotation.InjectService;
+import jadex.requiredservice.annotation.InjectService.Mode;
 
 /**
  *  Provided services feature provider.
@@ -41,13 +42,23 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 	{
 		// Single service field / parameter.
 		InjectionModel.addValueFetcher(
-			(pojotypes, valuetype) -> (valuetype instanceof Class) && ((Class<?>)valuetype).isAnnotationPresent(Service.class) ? 
-				((self, pojos, context) -> self.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>((Class<?>)valuetype))): null,
-			Inject.class, InjectService.class);
+			(pojotypes, valuetype, anno) -> 
+		{
+			IInjectionHandle	ret	= null;
+			if(valuetype instanceof Class && ((Class<?>)valuetype).isAnnotationPresent(Service.class))
+			{
+				if(anno instanceof InjectService && ((InjectService)anno).mode()==Mode.QUERY)
+				{
+					throw new UnsupportedOperationException("Mode query not supportet for skalar fields/parameter: "+pojotypes.get(pojotypes.size()-1)+", "+valuetype+", "+anno);
+				}					
+				ret	= (self, pojos, context) -> self.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>((Class<?>)valuetype));
+			}
+			return ret;
+		}, InjectService.class, Inject.class);
 		
 		// Multi service field / parameter (Set etc.)
 		InjectionModel.addValueFetcher(
-			(pojotypes, valuetype) ->
+			(pojotypes, valuetype, anno) ->
 		{
 			IInjectionHandle	ret	= null;
 			
@@ -61,6 +72,9 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 					if(typeparam instanceof Class<?> && ((Class<?>)typeparam).isAnnotationPresent(Service.class))
 					{
 						System.out.println("services injection: "+generic.getRawType()+" of "+typeparam);
+//						if(anno instanceof InjectService && )
+//						if()
+						
 						ret	= ((self, pojos, context) ->
 							self.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>((Class<?>)typeparam)));
 					}
@@ -68,7 +82,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 			}
 			return ret;
 			
-		}, Inject.class, InjectService.class);
+		}, InjectService.class, Inject.class);
 		
 		// Single service method parameter.
 		InjectionModel.addMethodInjection((classes, method) ->

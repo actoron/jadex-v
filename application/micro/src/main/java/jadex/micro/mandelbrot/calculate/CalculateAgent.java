@@ -2,12 +2,12 @@ package jadex.micro.mandelbrot.calculate;
 
 import jadex.core.IComponent;
 import jadex.injection.annotation.Inject;
-import jadex.injection.annotation.Provide;
 import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
 import jadex.micro.taskdistributor.ITaskDistributor.Task;
 import jadex.providedservice.IProvidedServiceFeature;
+import jadex.providedservice.annotation.ProvideService;
 
 /**
  *  Calculate agent allows calculating the colors of an area using a calculate service.
@@ -24,7 +24,7 @@ public class CalculateAgent
 	protected IComponent agent;
 	
 	/** The service. */
-	@Provide
+	@ProvideService
 	protected ICalculateService	calc	= new CalculateService();
 	
 	/** Id of the current job. */

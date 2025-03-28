@@ -1,6 +1,5 @@
 package jadex.providedservice.impl.service;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -13,7 +12,6 @@ import java.util.function.Function;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
-import jadex.injection.annotation.Provide;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
 import jadex.injection.impl.InjectionModel.Getter;
@@ -94,33 +92,28 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				
 				
 				// find fields with provided service anno.
-				@SuppressWarnings("unchecked")
-				Class<? extends Annotation>[] annos	= new Class[]{Provide.class, ProvideService.class};
-				for(Class<? extends Annotation> anno: annos)
+				List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class);
+				if(getters!=null)
 				{
-					List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), anno);
-					if(getters!=null)
+					for(Getter getter: getters)
 					{
-						for(Getter getter: getters)
+						Set<Class<?>> fservices = findServiceInterfaces(
+							getter.member() instanceof Method
+								? ((Method)getter.member()).getReturnType()
+								: ((Field)getter.member()).getType());
+						// TODO: Service settings 
+//						if(getter.annotation() instanceof ProvideService)
+						ret.add((comp, pojos, context) ->
 						{
-							Set<Class<?>> fservices = findServiceInterfaces(
-								getter.member() instanceof Method
-									? ((Method)getter.member()).getReturnType()
-									: ((Field)getter.member()).getType());
-							// TODO: Service settings 
-//							if(getter.annotation() instanceof ProvideService)
-							ret.add((comp, pojos, context) ->
+							Object value	= getter.fetcher().apply(comp, pojos, context);
+							if(value==null)
 							{
-								Object value	= getter.fetcher().apply(comp, pojos, context);
-								if(value==null)
-								{
-									throw new RuntimeException("No value for provided service: "+getter.member());
-								}
-								ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
-								feature.addService(value, getter.member().getName(), fservices);
-								return null;
-							});
-						}
+								throw new RuntimeException("No value for provided service: "+getter.member());
+							}
+							ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
+							feature.addService(value, getter.member().getName(), fservices);
+							return null;
+						});
 					}
 				}
 

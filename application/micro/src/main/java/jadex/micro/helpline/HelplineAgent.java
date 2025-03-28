@@ -13,7 +13,7 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
-import jadex.injection.annotation.Provide;
+import jadex.providedservice.annotation.ProvideService;
 
 /**
  *  Helpline micro agent. 
@@ -34,7 +34,7 @@ public class HelplineAgent
 	protected IComponent agent;
 	
 	/** The provided service. */
-	@Provide
+	@ProvideService
 	protected IHelpline	helpline	= new HelplineService();
 	
 	/** The map of information. */

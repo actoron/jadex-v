@@ -4,7 +4,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
-import jadex.injection.annotation.Provide;
+import jadex.providedservice.annotation.ProvideService;
 
 /**
  *  Chat micro agent provides a basic chat service as separate class. 
@@ -16,7 +16,7 @@ public class ChatProviderAgent
 	protected IComponent agent;
 	
 	/** The chat service. */
-	@Provide
+	@ProvideService
 	protected IChatService	chat	= new ChatService();
 	
 	@OnStart

@@ -7,6 +7,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -228,7 +229,7 @@ public class InjectionModel
 						IInjectionHandle	fetcher	= null;
 						for(IValueFetcherCreator check: fetchers.get(anno))
 						{
-							IInjectionHandle	test	= check.getValueFetcher(classes, field.getGenericType());
+							IInjectionHandle	test	= check.getValueFetcher(classes, field.getGenericType(), field.getAnnotation(anno));
 							if(test!=null)
 							{
 								if(fetcher!=null)
@@ -505,6 +506,7 @@ public class InjectionModel
 			MethodHandle	handle	= MethodHandles.lookup().unreflect(method);
 			
 			// Find parameters
+			Parameter[]	params	= method.getParameters();
 			Class<?>[]	ptypes	= method.getParameterTypes();
 			if(ptypes.length!=0)
 			{
@@ -527,12 +529,11 @@ public class InjectionModel
 									if(tried.contains(check))
 									{
 										// Hack!!! Skip duplicate if same creator is added for different annotations.
-										// TODO: check Inject annotations on parameters
 										continue;
 									}
 									tried.add(check);
 									
-									IInjectionHandle	test	= check.getValueFetcher(classes, ptypes[i]);
+									IInjectionHandle	test	= check.getValueFetcher(classes, ptypes[i], params[i].isAnnotationPresent(anno) ? params[i].getAnnotation(anno) : null);
 									if(test!=null)
 									{
 										if(fetcher!=null)
@@ -609,11 +610,11 @@ public class InjectionModel
 	{
 		// Inject IComponent
 		addValueFetcher(
-			(comptypes, valuetype) -> IComponent.class.equals(valuetype) ? ((self, pojo, context) -> self) : null,
+			(comptypes, valuetype, anno) -> IComponent.class.equals(valuetype) ? ((self, pojo, context) -> self) : null,
 			Inject.class);
 		
 		// Inject any pojo from hierarchy of subobjects.
-		addValueFetcher((comptypes, valuetype) -> 
+		addValueFetcher((comptypes, valuetype, anno) -> 
 		{
 			IInjectionHandle	ret	= null;
 			for(int i=0; i<comptypes.size(); i++)
@@ -633,7 +634,7 @@ public class InjectionModel
 		}, Inject.class);
 		
 		// Inject features
-		addValueFetcher((comptypes, valuetype) ->
+		addValueFetcher((comptypes, valuetype, anno) ->
 			(valuetype instanceof Class) && SReflect.isSupertype(IComponentFeature.class, (Class<?>)valuetype) ? ((self, pojo, context) ->
 		{
 			@SuppressWarnings("unchecked")

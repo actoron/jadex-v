@@ -26,6 +26,7 @@ import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
 import jadex.requiredservice.annotation.InjectService;
+import jadex.requiredservice.annotation.InjectService.Mode;
 
 /**
  *  Test automatic provided service registration.
@@ -275,6 +276,18 @@ public class RequiredServiceTest
 			{
 				@Inject
 				IHelloService myservice;
+			}).get(TIMEOUT));
+	}
+	
+	@Test
+	public void	testBrokenFieldInjection()
+	{
+		// Check that unsupported field injection with query is detected
+		assertThrows(UnsupportedOperationException.class, () ->
+			IComponentManager.get().create(new Object()
+			{
+				@InjectService(mode=Mode.QUERY)
+				IHelloService	myservice;
 			}).get(TIMEOUT));
 	}
 

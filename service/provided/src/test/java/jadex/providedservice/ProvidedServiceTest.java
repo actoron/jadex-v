@@ -19,7 +19,6 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
-import jadex.injection.annotation.Provide;
 import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
@@ -117,7 +116,7 @@ public class ProvidedServiceTest
 		
 		IComponentHandle	comp = IComponentManager.get().create(new Object()
 		{
-			@Provide
+			@ProvideService
 			IMyService	myservice	= new IMyService()
 			{
 				@OnStart
@@ -171,48 +170,9 @@ public class ProvidedServiceTest
 		// Test that service is no longer found
 		assertNull(searchSid0(comp, IMyService.class));		
 	}
-
-	@Test
-	public void	testSubannoFieldService()
-	{
-		IComponentHandle	comp = IComponentManager.get().create(new Object()
-		{
-			@ProvideService
-			IMyService	myservice	= new IMyService(){};
-		}).get(TIMEOUT);
-		
-		
-		// Test that service can be found
-		assertNotNull(searchService(comp, IMyService.class));
-		
-		// Test that service is no longer found
-		comp.terminate().get(TIMEOUT);
-		assertNull(searchSid0(comp, IMyService.class));		
-	}
-
+	
 	@Test
 	public void	testMethodService()
-	{
-		IComponentHandle	comp = IComponentManager.get().create(new Object()
-		{
-			@Provide
-			IMyService	createService(IComponent comp)
-			{
-				return new IMyService(){};
-			}
-		}).get(TIMEOUT);
-		
-		
-		// Test that service can be found
-		assertNotNull(searchService(comp, IMyService.class));
-		
-		// Test that service is no longer found
-		comp.terminate().get(TIMEOUT);
-		assertNull(searchSid0(comp, IMyService.class));		
-	}
-
-	@Test
-	public void	testSubannoMethodService()
 	{
 		IComponentHandle	comp = IComponentManager.get().create(new Object()
 		{
