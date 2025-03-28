@@ -40,7 +40,6 @@ public class QuizClientAgent
 	protected IComponent agent;
 	
 	/** The quiz service. */
-	@Inject	// TODO: no auto provide of fields
 	protected IQuizService quizservice;
 	
 	/** The gui. */
