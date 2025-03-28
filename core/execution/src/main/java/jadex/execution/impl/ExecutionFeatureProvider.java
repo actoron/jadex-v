@@ -39,6 +39,7 @@ import jadex.core.ResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
+import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
@@ -160,8 +161,16 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							@Override
 							public <T> void scheduleForward(final ICommand<T> com, final T args)
 							{
+								if(caller==null)
+								{
+									ComponentManager.get().getGlobalRunner().getFeature(IExecutionFeature.class)
+										.scheduleStep(agent ->
+									{
+										com.execute(args);
+									});
+								}
 								// Don't reschedule if already on correct thread.
-								if(caller==null || caller.getFeature(IExecutionFeature.class).isComponentThread())
+								else if(caller.getFeature(IExecutionFeature.class).isComponentThread())
 								{
 									com.execute(args);
 								}
