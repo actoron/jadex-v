@@ -6,8 +6,6 @@ import java.util.Date;
 import jadex.core.IComponent;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
-import jadex.micro.tutorial.a1.ChatService;
-import jadex.micro.tutorial.a1.IChatService;
 
 /**
  *  Chat micro agent provides a basic chat service. 
@@ -19,9 +17,6 @@ public class ChatProviderAgent implements IChatService
 	/** The underlying micro agent. */
 	@Inject
 	protected IComponent agent;
-	
-	/** The chat service. */
-	protected IChatService	chat	= new ChatService();
 	
 	@OnStart
 	protected void onStart()
