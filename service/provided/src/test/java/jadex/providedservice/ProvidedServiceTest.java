@@ -423,7 +423,7 @@ public class ProvidedServiceTest
 	
 	//-------- helper methods --------
 
-	protected <T> T searchService(IComponentHandle handle, Class<T> type)
+	protected static <T> T searchService(IComponentHandle handle, Class<T> type)
 	{
 		// Find service in registry
 		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setNetworkNames();
@@ -437,7 +437,7 @@ public class ProvidedServiceTest
 		return service;
 	}
 
-	protected <T> IServiceIdentifier searchSid0(IComponentHandle handle, Class<T> type)
+	protected static <T> IServiceIdentifier searchSid0(IComponentHandle handle, Class<T> type)
 	{
 		// Find service in registry
 		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setNetworkNames();

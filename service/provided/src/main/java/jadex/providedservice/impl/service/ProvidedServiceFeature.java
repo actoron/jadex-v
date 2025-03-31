@@ -1,18 +1,22 @@
 package jadex.providedservice.impl.service;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.impl.ILifecycle;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.InjectionFeature;
+import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
@@ -20,6 +24,7 @@ import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
 import jadex.providedservice.impl.service.interceptors.DecouplingReturnInterceptor;
+import jadex.providedservice.impl.service.interceptors.MethodCallListenerInterceptor;
 import jadex.providedservice.impl.service.interceptors.MethodInvocationInterceptor;
 
 /**
@@ -30,7 +35,11 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	/** The component. */
 	protected IComponent	self;
 	
+	/** Map pojo to provided services of pojo. */
 	protected Map<Object, List<IService>>	services;
+	
+	/** The map of provided service infos. (sid -> method listener) */
+	protected Map<IServiceIdentifier, MethodListenerHandler> servicelisteners;
 	
 	/**
 	 *  Create the injection feature.
@@ -39,6 +48,8 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	{
 		this.self	= self;
 	}
+	
+	//-------- IProvidedServiceFeature interface --------
 	
 	@Override
 	public <T> T getProvidedService(Class<T> type)
@@ -89,6 +100,75 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 		}
 	}
 
+	//-------- impl methods used by other features --------
+	
+	/**
+	 *  Add a method invocation handler.
+	 */
+	public void addMethodInvocationListener(IServiceIdentifier sid, MethodInfo mi, IMethodInvocationListener listener)
+	{
+//		System.out.println("added lis: "+sid+" "+mi+" "+hashCode());
+		
+		if(servicelisteners==null)
+			servicelisteners = new HashMap<IServiceIdentifier, MethodListenerHandler>();
+		MethodListenerHandler handler = servicelisteners.get(sid);
+		if(handler==null)
+		{
+			handler = new MethodListenerHandler();
+			servicelisteners.put(sid, handler);
+		}
+		handler.addMethodListener(mi, listener);
+	}
+	
+	/**
+	 *  Remove a method invocation handler.
+	 */
+	public void removeMethodInvocationListener(IServiceIdentifier sid, MethodInfo mi, IMethodInvocationListener listener)
+	{
+		if(servicelisteners!=null)
+		{
+			MethodListenerHandler handler = servicelisteners.get(sid);
+			if(handler!=null)
+			{
+				handler.removeMethodListener(mi, listener);
+			}
+		}
+	}
+	
+	/**
+	 *  Notify listeners that a service method has been called.
+	 */
+	public void notifyMethodListeners(IService service, boolean start, final Method method, final Object[] args, Object callid)
+	{
+		if(servicelisteners!=null)
+		{
+			MethodListenerHandler handler = servicelisteners.get(service.getServiceId());
+			if(handler!=null)
+			{
+//				MethodInfo mi = new MethodInfo(method);
+				handler.notifyMethodListeners(start, service, method, args, callid);
+			}
+		}
+	}
+	
+	/**
+	 *  Test if service and method has listeners.
+	 */
+	public boolean hasMethodListeners(IServiceIdentifier sid, MethodInfo mi)
+	{
+		boolean ret = false;
+		if(servicelisteners!=null)
+		{
+			MethodListenerHandler handler = servicelisteners.get(sid);
+			if(handler!=null)
+			{
+				ret = handler.hasMethodListeners(sid, mi);
+			}
+		}
+		
+		return ret;
+	}
+	
 	//-------- internal methods --------
 
 	/**
@@ -139,6 +219,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 		
 		// Add interceptors to handler
 		handler.addFirstServiceInterceptor(new MethodInvocationInterceptor());
+		handler.addFirstServiceInterceptor(new MethodCallListenerInterceptor(self, ret));
 		handler.addFirstServiceInterceptor(new DecouplingInterceptor(self));
 		handler.addFirstServiceInterceptor(new DecouplingReturnInterceptor());
 		
