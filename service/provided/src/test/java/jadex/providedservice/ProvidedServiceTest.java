@@ -16,6 +16,8 @@ import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.annotation.NoCopy;
+import jadex.core.impl.ComponentManager;
+import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.OnEnd;
@@ -272,13 +274,32 @@ public class ProvidedServiceTest
 		// Create service component
 		IComponentHandle	handle	= IComponentManager.get().create(
 			(IMyLambdaService)() ->
-				new Future<>(IComponentManager.get().getCurrentComponent().getId())
+			{
+				// Hack!!! wait so the service call future is not finished before .then() is called.
+				IComponentManager.get().getCurrentComponent().getFeature(IExecutionFeature.class)
+					.waitForDelay(100).get(TIMEOUT);
+				Thread.yield();
+				return new Future<>(IComponentManager.get().getCurrentComponent().getId());
+			}
 		).get();
 		
 		IMyLambdaService service = searchService(handle, IMyLambdaService.class);
 		
 		// Test cast to IService
 		assertNotNull(((IService)service).getServiceId());
+		
+		// Call service from non-component thread
+		Future<ComponentIdentifier>	cidfut0	= new Future<>();
+		Future<ComponentIdentifier>	retfut0	= new Future<>();
+		service.myMethod().then(cid -> 
+		{
+			cidfut0.setResult(cid);
+			retfut0.setResult(IComponentManager.get().getCurrentComponent().getId());
+		});
+		// Check if service cid is returned
+		assertEquals(handle.getId(), cidfut0.get(TIMEOUT));
+		// Check if return call is scheduled on global runner thread
+		assertEquals(ComponentManager.get().getGlobalRunner().getId(), retfut0.get(TIMEOUT));
 		
 		// Call service from other component
 		Future<ComponentIdentifier>	cidfut	= new Future<>();
@@ -295,10 +316,8 @@ public class ProvidedServiceTest
 				});
 			}
 		}).get(TIMEOUT);
-		
 		// Check if service cid is returned
 		assertEquals(handle.getId(), cidfut.get(TIMEOUT));
-
 		// Check if return call is scheduled on caller thread
 		assertEquals(handle2.getId(), retfut.get(TIMEOUT));
 		

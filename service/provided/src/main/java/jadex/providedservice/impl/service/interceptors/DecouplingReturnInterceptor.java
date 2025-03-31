@@ -2,6 +2,8 @@ package jadex.providedservice.impl.service.interceptors;
 
 import jadex.common.ICommand;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
+import jadex.core.impl.ComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.DelegationResultListener;
@@ -25,16 +27,10 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 	{
 		Future<Void> fut	= new Future<Void>();
 		
-		final IComponent caller = IExecutionFeature.get().getComponent();
-		/*final IRequiredServicesFeature	feat	= caller!=null ? caller.getFeature0(IRequiredServicesFeature.class) : null;
-		if(feat instanceof IInternalServiceMonitoringFeature && ((IInternalServiceMonitoringFeature)feat).isMonitoring())
-		{
-			if(!ServiceIdentifier.isSystemService(sic.getServiceIdentifier().getServiceType().getType(caller.getClassLoader())))
-			{
-				((IInternalServiceMonitoringFeature)feat).postServiceEvent(
-					new ServiceCallEvent(ServiceCallEvent.Type.CALL, sic.getServiceIdentifier(), new MethodInfo(sic.getMethod()), sic.getCaller(), sic.getArguments()));
-			}
-		}*/
+		// Schedule back to global runner, when not called from any component.
+		final IComponent caller = IComponentManager.get().getCurrentComponent()!=null
+			? IComponentManager.get().getCurrentComponent()
+			: ComponentManager.get().getGlobalRunner();
 				
 		sic.invoke().addResultListener(new DelegationResultListener<Void>(fut)
 		{

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.ThreadLocalTransferHelper;
 
@@ -44,8 +45,6 @@ public class ServiceCall
 	
 	/** The service call properties. */
 	public Map<String, Object> properties;
-	
-	protected ExecutionFeature lastmod;
 	
 	//-------- constructors --------
 	
@@ -116,15 +115,17 @@ public class ServiceCall
 		ServiceCall ret = NEXT.get();
 		if(ret==null)
 		{
-			ret = new ServiceCall(ExecutionFeature.LOCAL.get().getComponent().getId(), props);
+			// Set id to global runner if called from non-component thread
+			ComponentIdentifier	id	= ExecutionFeature.LOCAL.get()!=null
+				? ExecutionFeature.LOCAL.get().getComponent().getId()
+				: ComponentManager.get().getGlobalRunner().getId();
+			ret = new ServiceCall(id, props);
 			
 			
 			NEXT.set(ret);
 		}
 		else if(props!=null)
 		{
-			
-			ret.lastmod	= ExecutionFeature.LOCAL.get();
 			ret.properties.putAll(props);
 		}
 		return ret;

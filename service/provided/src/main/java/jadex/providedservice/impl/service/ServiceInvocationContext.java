@@ -109,8 +109,8 @@ public class ServiceInvocationContext
 		this.used = new ArrayList<Integer>();
 		this.interceptors = interceptors;
 		
-		if(ExecutionFeature.LOCAL.get()==null)
-			throw new RuntimeException("Service methods must be called from component context. Otherwise use scheduleStep() before invocation.");
+//		if(ExecutionFeature.LOCAL.get()==null)
+//			throw new RuntimeException("Service methods must be called from component context. Otherwise use scheduleStep() before invocation.");
 		
 		this.caller = ServiceCall.getOrCreateNextInvocation().getCaller();
 		
@@ -147,8 +147,7 @@ public class ServiceInvocationContext
 						+"\nlocal: "+ExecutionFeature.LOCAL.get()
 						+"\ncurrentcall: "+currentcall
 //						+"\ncause: "+currentcall.getCause()
-						+"\nmethod: "+method
-						+"\n: lastmod"+currentcall.lastmod, e);
+						+"\nmethod: "+method, e);
 				}
 //				props.remove(ServiceCall.CAUSE); // remove cause as it has to be adapted
 			}
