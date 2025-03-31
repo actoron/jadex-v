@@ -369,7 +369,7 @@ public class RequiredServiceTest
 	{
 		// Check that query results are added to collection field.
 		List<IHelloService>	list	= new LinkedList<IHelloService>();
-		IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 		{
 			@InjectService(mode=Mode.QUERY)
 			List<IHelloService>	myservice	= list;
@@ -377,7 +377,15 @@ public class RequiredServiceTest
 		
 		assertEquals(0, list.size());
 		
-		IComponentHandle	provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);		
+		IComponentHandle	provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+		// Schedule check to make sure it is executed after result add.
+		handle.scheduleStep(() ->
+		{
+			assertEquals(1, list.size());
+			return null;
+		}).get(TIMEOUT);
+		
+
 		try
 		{
 			assertEquals(1, list.size());
@@ -488,7 +496,7 @@ public class RequiredServiceTest
 			}
 		}).get(TIMEOUT);
 		
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get());
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
@@ -524,7 +532,7 @@ public class RequiredServiceTest
 			{
 				assertEquals(1, services.size());
 				return null;
-			}).get();
+			}).get(TIMEOUT);
 			
 			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
 			// Schedule check to make sure it is executed after result add.

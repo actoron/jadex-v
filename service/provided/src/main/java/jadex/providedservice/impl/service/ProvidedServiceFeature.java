@@ -1,11 +1,11 @@
 package jadex.providedservice.impl.service;
 
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import jadex.common.SReflect;
 import jadex.core.IComponent;
@@ -16,6 +16,7 @@ import jadex.injection.impl.InjectionFeature;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
 import jadex.providedservice.impl.service.interceptors.DecouplingReturnInterceptor;
@@ -29,7 +30,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	/** The component. */
 	protected IComponent	self;
 	
-	protected Map<Object, IService>	services;
+	protected Map<Object, List<IService>>	services;
 	
 	/**
 	 *  Create the injection feature.
@@ -44,13 +45,16 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	{
 		if(services!=null)
 		{
-			for(IService service: services.values())
+			for(List<IService> lservices: services.values())
 			{
-				if(SReflect.isSupertype(type, service.getClass()))
+				for(IService service: lservices)
 				{
-					@SuppressWarnings("unchecked")
-					T	ret	= (T)service;
-					return ret;
+					if(SReflect.isSupertype(type, service.getClass()))
+					{
+						@SuppressWarnings("unchecked")
+						T	ret	= (T)service;
+						return ret;
+					}
 				}
 			}
 		}
@@ -74,9 +78,13 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	{
 		if(services!=null)
 		{
-			for(IService service: services.values())
+			for(List<IService> lservices: services.values())
 			{
-				ServiceRegistry.getRegistry().removeService(service.getServiceId());
+				for(IService service: lservices)
+				{
+//					System.out.println("remove: "+service);
+					ServiceRegistry.getRegistry().removeService(service.getServiceId());
+				}
 			}
 		}
 	}
@@ -86,7 +94,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	/**
 	 *  Register a service.
 	 */
-	protected void	addService(Object pojo,  String name, Set<Class<?>> interfaces)
+	protected void	addService(Object pojo, String name, Map<Class<?>, ProvideService> interfaces)
 	{
 		if(services==null)
 		{
@@ -97,7 +105,8 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 		if(!services.containsKey(pojo))
 		{
 			// Need to add it here to avoid recursive adddExtraObject for pojo
-			services.put(pojo, null);
+			List<IService>	lservices	= new ArrayList<>(1);
+			services.put(pojo, lservices);
 			
 			// If service pojo is not the component pojo -> handle injection in service pojo as well
 			if(pojo!=self.getPojo())
@@ -106,11 +115,15 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos);
 			}
 			
-			Class<?>	type	= interfaces.iterator().next();	// Todo multiple types?
-			name	= name!=null ? name : type.getSimpleName();  
-			IService	service	= createProvidedServiceProxy(pojo, name, type);
-			ServiceRegistry.getRegistry().addLocalService(service);
-			services.put(pojo, service);
+			// Provide all implemented service interfaces.
+			for(Class<?> type: interfaces.keySet())
+			{
+				// TODO: name given (i.e. field/method) and multiple interfaces
+				String	thename	= name!=null ? name : type.getSimpleName();  
+				IService	service	= createProvidedServiceProxy(pojo, thename, type);
+				ServiceRegistry.getRegistry().addLocalService(service);
+				lservices.add(service);
+			}
 		}
 	}
 
@@ -120,7 +133,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	protected IService	createProvidedServiceProxy(Object service, String name, Class<?> type)
 	{
 		// Create proxy with handler
-		IServiceIdentifier	sid	= new ServiceIdentifier(self, service.getClass(), name, null, false, null);
+		IServiceIdentifier	sid	= new ServiceIdentifier(self, type, name, null, false, null);
 		ServiceInvocationHandler handler	= new ServiceInvocationHandler(sid, service);		
 		IService	ret	= (IService)Proxy.newProxyInstance(IComponentManager.get().getClassLoader(), new Class[]{IService.class, type}, handler);
 		

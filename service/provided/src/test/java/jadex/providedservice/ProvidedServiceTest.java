@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,7 @@ public class ProvidedServiceTest
 {
 	public static final long	TIMEOUT	= 10000;
 	
-	//-------- test interfaces --------
+	//-------- test interfaces/classes --------
 	
 	@Service
 	public interface IMyService {}
@@ -63,6 +64,22 @@ public class ProvidedServiceTest
 	{
 		public IFuture<Object>	copyResult(@NoCopy Object o);
 	}
+	
+	@ProvideService
+	public class AnnoImpl	implements IMyService {}
+	
+	@ProvideService
+	public class MultiImpl	implements IMyService, IMyLambdaService
+	{
+		@Override
+		public IFuture<ComponentIdentifier> myMethod()
+		{
+			return new Future<>(new UnsupportedOperationException());
+		}
+	}
+	
+	@ProvideService
+	public class BrokenAnnoImpl	{}
 	
 	//-------- test methods --------
 	
@@ -172,6 +189,29 @@ public class ProvidedServiceTest
 	}
 	
 	@Test
+	public void	testBrokenFieldService()
+	{
+		assertThrows(RuntimeException.class, () ->IComponentManager.get().create(new Object()
+		{
+			@ProvideService
+			Object	myservice	= new IMyService(){};
+		}).get(TIMEOUT));
+	}
+
+	@Test
+	public void	testBrokenMethodService()
+	{
+		assertThrows(RuntimeException.class, () ->IComponentManager.get().create(new Object()
+		{
+			@ProvideService
+			Object	createService(IComponent comp)
+			{
+				return new IMyService(){};
+			}
+		}).get(TIMEOUT));
+	}
+
+	@Test
 	public void	testMethodService()
 	{
 		IComponentHandle	comp = IComponentManager.get().create(new Object()
@@ -183,6 +223,18 @@ public class ProvidedServiceTest
 			}
 		}).get(TIMEOUT);
 		
+		// Test that service can be found
+		assertNotNull(searchService(comp, IMyService.class));
+		
+		// Test that service is no longer found
+		comp.terminate().get(TIMEOUT);
+		assertNull(searchSid0(comp, IMyService.class));		
+	}
+
+	@Test
+	public void	testClassService()
+	{
+		IComponentHandle	comp = IComponentManager.get().create(new AnnoImpl()).get(TIMEOUT);
 		
 		// Test that service can be found
 		assertNotNull(searchService(comp, IMyService.class));
@@ -190,6 +242,28 @@ public class ProvidedServiceTest
 		// Test that service is no longer found
 		comp.terminate().get(TIMEOUT);
 		assertNull(searchSid0(comp, IMyService.class));		
+	}
+
+	@Test
+	public void	testMultiService()
+	{
+		IComponentHandle	comp = IComponentManager.get().create(new MultiImpl()).get(TIMEOUT);
+		
+		// Test that services can be found
+		assertNotNull(searchService(comp, IMyService.class));
+		assertNotNull(searchService(comp, IMyLambdaService.class));
+		
+		// Test that services are no longer found
+		comp.terminate().get(TIMEOUT);
+		assertNull(searchSid0(comp, IMyService.class));		
+		assertNull(searchSid0(comp, IMyLambdaService.class));		
+	}
+
+	@Test
+	public void	testBrokenClassService()
+	{
+		assertThrows(RuntimeException.class, () ->
+			IComponentManager.get().create(new BrokenAnnoImpl()).get(TIMEOUT));
 	}
 
 	@Test
@@ -227,6 +301,9 @@ public class ProvidedServiceTest
 
 		// Check if return call is scheduled on caller thread
 		assertEquals(handle2.getId(), retfut.get(TIMEOUT));
+		
+		// cleanup
+		handle.terminate().get(TIMEOUT);
 	}
 
 	@Test
@@ -256,6 +333,9 @@ public class ProvidedServiceTest
 		
 		// Check if object is not copied
 		assertSame(obj1, obj2fut.get(TIMEOUT));
+		
+		// cleanup
+		handle.terminate().get(TIMEOUT);
 	}
 
 	@Test
@@ -285,6 +365,9 @@ public class ProvidedServiceTest
 		
 		// Check if object is not copied
 		assertNotSame(obj1, obj2fut.get(TIMEOUT));
+		
+		// cleanup
+		handle.terminate().get(TIMEOUT);
 	}
 
 	@Test
@@ -314,6 +397,9 @@ public class ProvidedServiceTest
 		
 		// Check if object is not copied
 		assertNotSame(obj1, obj2fut.get(TIMEOUT));
+		
+		// cleanup
+		handle.terminate().get(TIMEOUT);
 	}
 	
 	//-------- helper methods --------
@@ -336,6 +422,8 @@ public class ProvidedServiceTest
 	{
 		// Find service in registry
 		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setNetworkNames();
-		return ServiceRegistry.getRegistry().searchService(query);
+		IServiceIdentifier	ret	= ServiceRegistry.getRegistry().searchService(query);
+//		System.out.println("search: "+handle.getId()+", "+type+", "+ret);
+		return ret;
 	}
 }

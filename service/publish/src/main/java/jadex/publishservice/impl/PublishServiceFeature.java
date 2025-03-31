@@ -16,6 +16,7 @@ import jadex.core.impl.Component;
 import jadex.future.IFuture;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
+import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.publishservice.IPublishService;
 import jadex.publishservice.IPublishServiceFeature;
@@ -103,13 +104,17 @@ public abstract class PublishServiceFeature implements IPublishServiceFeature//,
 				{
 					if(test.isAnnotationPresent(Publish.class))
 					{
-						PublishInfo pi = getPublishInfo(test.getAnnotation(Publish.class));
+						Publish	publish	= test.getAnnotation(Publish.class);
+						PublishInfo pi = getPublishInfo(publish);
 						ret.add((comp, pojos, context) ->
 						{
+							IProvidedServiceFeature	prov	= comp.getFeature(IProvidedServiceFeature.class);
+							Object	service	= prov.getProvidedService(publish.publishtarget());
+							
 							IPublishServiceFeature	feature	= comp.getFeature(IPublishServiceFeature.class);
-							// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
+							// do we want to chain the publication on serviceStart and serviceEnd of each service?!
 							// how could this be done? with listeners on other feature?!
-							feature.publishService((IService)pojos.get(pojos.size()-1), pi).get();
+							feature.publishService((IService)service, pi).get();
 							return null;
 						});
 					}
@@ -136,7 +141,7 @@ public abstract class PublishServiceFeature implements IPublishServiceFeature//,
 								{
 									throw new RuntimeException("No value for provided service: "+f);
 								}
-								// do we want to chain the publication on serviceStart and serviceEnd of eacht service?!
+								// do we want to chain the publication on serviceStart and serviceEnd of each service?!
 								// how could this be done? with listeners on other feature?!
 								feature.publishService((IService)servicepojo, pi).get();
 								return null;

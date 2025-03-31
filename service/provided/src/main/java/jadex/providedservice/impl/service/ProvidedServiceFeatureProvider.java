@@ -5,8 +5,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -24,7 +26,68 @@ import jadex.providedservice.annotation.Service;
  */
 public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IProvidedServiceFeature>
 {
-	protected static Set<Class< ? >> findServiceInterfaces(Class< ? > pojoclazz)
+	/**
+	 *  Get the direct service types of a pojo class
+	 *  or field/method (return) type.
+	 *  
+	 *  In case of pojo class, also return ProvideService annotations if any.
+	 */
+	protected static Map<Class<?>, ProvideService> findServiceInterfaces(Class< ? > pojoclazz)
+	{
+		Map<Class<?>, ProvideService>	services	= new LinkedHashMap<>();
+		
+		// When provided service is from field or method
+		// -> static type might be interface already.
+		if(pojoclazz.isInterface() && pojoclazz.isAnnotationPresent(Service.class))
+		{
+			services.put(pojoclazz, null);
+		}
+		
+		// When type is impl type (e.g. provided service on class)
+		// -> search for directly implemented service interfaces in class hierarchy.
+		else
+		{
+			Class<?>	clazz	= pojoclazz;
+			while(clazz!=null)
+			{
+				// TODO: multiple provided service annos, when multiple service interfaces
+				ProvideService	anno	= null;
+				if(clazz.isAnnotationPresent(ProvideService.class))
+				{
+					anno	= clazz.getAnnotation(ProvideService.class);
+				}
+				
+				for(Class<?> interfaze: clazz.getInterfaces())
+				{
+					if(interfaze.isAnnotationPresent(Service.class))
+					{
+//						// TODO: specify type on anno, when multiple service interfaces
+//						if(!anno.getType().equals(interfaze))
+//						{
+//							services.put(interfaze, null);
+//						}
+//						else
+						services.put(interfaze, anno);
+					}
+				}
+				
+				if(anno!=null && !services.values().contains(anno))
+				{
+					throw new RuntimeException("No service interface for @ProvideService: "+clazz+", "+anno);
+				}
+				clazz	= clazz.getSuperclass();
+			}
+		}
+		
+		return services;
+	}
+	
+	/**
+	 *  Find super interfaces for a service interface,
+	 *  i.e., when an implemented interface of a service interface
+	 *  is also annotated with Service anno.
+	 */
+	protected static Set<Class< ? >> findSuperInterfaces(Class< ? > pojoclazz)
 	{
 		Set<Class<?>>	services	= new LinkedHashSet<>();
 		
@@ -79,9 +142,11 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				List<IInjectionHandle>	ret	= new ArrayList<>();
 				
 				// find interfaces with service annotation on pojo
-				Set<Class<?>> services = findServiceInterfaces(pojoclazz);
+				Map<Class<?>, ProvideService> services = findServiceInterfaces(pojoclazz);
 				if(!services.isEmpty())
 				{
+					// TODO: Service settings 
+//					if(getter.annotation() instanceof ProvideService)
 					ret.add((comp, pojos, context) ->
 					{
 						ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
@@ -91,16 +156,22 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				}
 				
 				
-				// find fields with provided service anno.
+				// find fields/methods with provided service anno.
 				List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class);
 				if(getters!=null)
 				{
 					for(Getter getter: getters)
 					{
-						Set<Class<?>> fservices = findServiceInterfaces(
+						Map<Class<?>, ProvideService> fservices = findServiceInterfaces(
 							getter.member() instanceof Method
 								? ((Method)getter.member()).getReturnType()
 								: ((Field)getter.member()).getType());
+						
+						if(fservices.isEmpty())
+						{
+							throw new RuntimeException("No service interfaces found on: "+getter.member());
+						}
+						
 						// TODO: Service settings 
 //						if(getter.annotation() instanceof ProvideService)
 						ret.add((comp, pojos, context) ->

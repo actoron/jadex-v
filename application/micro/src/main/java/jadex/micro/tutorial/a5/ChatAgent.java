@@ -1,5 +1,7 @@
 package jadex.micro.tutorial.a5;
 
+import java.awt.Desktop;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -11,6 +13,8 @@ import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.publishservice.publish.annotation.Publish;
+import jadex.requiredservice.annotation.InjectService;
+import jadex.requiredservice.annotation.InjectService.Mode;
 
 /**
  *  Chat micro agent provides a basic chat service and publishes it as rest web service.
@@ -25,7 +29,7 @@ public class ChatAgent implements IChatService
 	@Inject
 	protected IComponent agent;
 	
-	@Inject
+	@InjectService(mode=Mode.QUERY)
 	protected Set<IChatService> chatservices = new HashSet<IChatService>();
 	
 	/**
@@ -45,7 +49,7 @@ public class ChatAgent implements IChatService
 	{
 		System.out.println("agent started: "+agent.getId());
 		
-		//this.gui = new ChatGui(agent.getExternalAccess());
+		openInBrowser("http://localhost:8081/chat");
 	}
 	
 	@OnEnd
@@ -62,6 +66,23 @@ public class ChatAgent implements IChatService
 	public Set<IChatService> getChatServices()
 	{
 		return chatservices;
+	}
+	
+	/**
+	 *  Open the url in the browser.
+	 *  @param url The url.
+	 */
+	protected void openInBrowser(String url)
+	{
+		try 
+		{
+			URI uri = new URI(url);
+			Desktop.getDesktop().browse(uri);
+		}	
+		catch(Exception e) 
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	/**

@@ -18,6 +18,8 @@ import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
+import jadex.requiredservice.annotation.InjectService;
+import jadex.requiredservice.annotation.InjectService.Mode;
 
 /**
  *  Chat micro agent provides a basic chat service and publishes it as rest web service.
@@ -37,7 +39,7 @@ public class ChatAgent implements IChatService, IChatGuiService
 	@Inject
 	protected IComponent agent;
 	
-	@Inject
+	@InjectService(mode=Mode.QUERY)
 	protected Set<IChatService> chatservices = new HashSet<IChatService>();
 	
 	protected Set<SubscriptionIntermediateFuture<String>> subscribers = new HashSet<SubscriptionIntermediateFuture<String>>();
