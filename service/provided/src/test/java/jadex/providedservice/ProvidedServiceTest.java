@@ -461,13 +461,6 @@ public class ProvidedServiceTest
 			@Inject
 			IServiceIdentifier sid;
 		}).get(TIMEOUT));
-		// Cleanup
-		// TODO: remove services on failed component start
-		handle	= IComponentManager.get().create(null).get(TIMEOUT);
-		IMyService	service	= searchService(handle, IMyService.class);
-		ServiceRegistry.getRegistry().removeService(((IService)service).getServiceId());
-		IMyLambdaService	lservice	= searchService(handle, IMyLambdaService.class);
-		ServiceRegistry.getRegistry().removeService(((IService)lservice).getServiceId());
 	}
 	
 	//-------- helper methods --------

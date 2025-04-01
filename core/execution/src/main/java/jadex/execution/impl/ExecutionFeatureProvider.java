@@ -380,10 +380,12 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			exe.scheduleStep(() -> 
 			{
+				FastLambda<Object> self	= null;
 				try
 				{
 					@SuppressWarnings("unchecked")
-					FastLambda<Object> self = (FastLambda<Object>)creator.get();
+					FastLambda<Object> fself	= (FastLambda<Object>)creator.get();
+					self	= fself;
 					startFeatures(self);
 					
 					// run body and termination in same step as init
@@ -403,7 +405,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					if(self.terminate)
 					{
-						exe.scheduleStep((Runnable)() -> self.terminate());
+						exe.scheduleStep((Runnable)() -> fself.terminate());
 					}
 					
 					@SuppressWarnings("unchecked")
@@ -413,6 +415,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				catch(Exception e)
 				{
 					ret.setException(e);
+					if(self!=null)
+					{
+						self.terminate();
+					}
 				}
 			});
 		}
@@ -422,15 +428,20 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			exe.scheduleStep(() -> 
 			{
+				T self	= null;
 				try
 				{
-					T self = creator.get();
+					self = creator.get();
 					startFeatures(self);
 					ret.setResult(self);
 				}
 				catch(Exception e)
 				{
 					ret.setException(e);
+					if(self!=null)
+					{
+						self.terminate();
+					}
 				}
 			});
 		}
