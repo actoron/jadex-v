@@ -20,6 +20,7 @@ import jadex.core.impl.ComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.providedservice.annotation.ProvideService;
@@ -419,6 +420,54 @@ public class ProvidedServiceTest
 		
 		// cleanup
 		handle.terminate().get(TIMEOUT);
+	}
+	
+	@Test
+	public void	testSidInjection()
+	{
+		// Test method injection.
+		Future<IServiceIdentifier>	fut	= new Future<>();
+		IComponentHandle	handle	= IComponentManager.get().create(new IMyService()
+		{
+			@OnStart
+			void start(IServiceIdentifier sid)
+			{
+				fut.setResult(sid);
+			}
+		}).get(TIMEOUT);
+		assertNotNull(fut.get(TIMEOUT));
+		// cleanup
+		handle.terminate().get(TIMEOUT);
+		
+		// Test field injection.
+		handle	= IComponentManager.get().create(new IMyService()
+		{
+			@Inject
+			IServiceIdentifier sid;
+		}).get(TIMEOUT);
+		// cleanup
+		handle.terminate().get(TIMEOUT);
+		
+		// Test broken no service injection.
+		assertThrows(RuntimeException.class, () -> IComponentManager.get().create(new Object()
+		{
+			@Inject
+			IServiceIdentifier sid;
+		}).get(TIMEOUT));
+
+		// Test broken multi service injection.
+		assertThrows(RuntimeException.class, () -> IComponentManager.get().create(new MultiImpl()
+		{
+			@Inject
+			IServiceIdentifier sid;
+		}).get(TIMEOUT));
+		// Cleanup
+		// TODO: remove services on failed component start
+		handle	= IComponentManager.get().create(null).get(TIMEOUT);
+		IMyService	service	= searchService(handle, IMyService.class);
+		ServiceRegistry.getRegistry().removeService(((IService)service).getServiceId());
+		IMyLambdaService	lservice	= searchService(handle, IMyLambdaService.class);
+		ServiceRegistry.getRegistry().removeService(((IService)lservice).getServiceId());
 	}
 	
 	//-------- helper methods --------

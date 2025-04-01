@@ -14,10 +14,13 @@ import java.util.function.Function;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
+import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
 import jadex.injection.impl.InjectionModel.Getter;
 import jadex.providedservice.IProvidedServiceFeature;
+import jadex.providedservice.IService;
+import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.annotation.Service;
 
@@ -134,6 +137,34 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 	
 	static
 	{
+		InjectionModel.addValueFetcher((pojotypes, valuetype, annotation) ->
+		{
+			IInjectionHandle	ret	= null;
+			if(IServiceIdentifier.class.equals(valuetype))
+			{
+				// find interfaces with service annotation on pojo
+				Map<Class<?>, ProvideService> services = findServiceInterfaces(pojotypes.get(pojotypes.size()-1));
+				if(services.size()==1)
+				{
+					ret	= (comp, pojos, context) ->
+					{
+						ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
+						Object	service	= feature.getProvidedService(services.keySet().iterator().next());
+						return ((IService)service).getServiceId();
+					};
+				}
+				else if(!services.isEmpty())
+				{
+					throw new RuntimeException("Cannot inject IServiceIdentifier for multi-type service: "+pojotypes.get(pojotypes.size()-1));
+				}
+				else
+				{
+					throw new RuntimeException("Cannot inject IServiceIdentifier in non-service pojo: "+pojotypes.get(pojotypes.size()-1));
+				}
+			}
+			return ret;
+		}, Inject.class);
+		
 		InjectionModel.addExtraOnStart(new Function<Class<?>, List<IInjectionHandle>>()
 		{
 			@Override

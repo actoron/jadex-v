@@ -43,14 +43,14 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	@Override
 	public void onStart()
 	{
-		if(model.getFieldInjections()!=null)
-		{
-			model.getFieldInjections().apply(self, Collections.singletonList(self.getPojo()), null);
-		}
-
 		if(model.getExtraOnStart()!=null)
 		{
 			model.getExtraOnStart().apply(self, Collections.singletonList(self.getPojo()), null);
+		}
+
+		if(model.getFieldInjections()!=null)
+		{
+			model.getFieldInjections().apply(self, Collections.singletonList(self.getPojo()), null);
 		}
 
 		if(model.getOnStart()!=null)
@@ -203,14 +203,14 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		
 		InjectionModel	model	= InjectionModel.get(pojos);
 
-		if(model.getFieldInjections()!=null)
-		{
-			model.getFieldInjections().apply(self, pojos, null);
-		}
-
 		if(model.getExtraOnStart()!=null)
 		{
 			model.getExtraOnStart().apply(self, pojos, null);
+		}
+
+		if(model.getFieldInjections()!=null)
+		{
+			model.getFieldInjections().apply(self, pojos, null);
 		}
 
 		if(model.getOnStart()!=null)
