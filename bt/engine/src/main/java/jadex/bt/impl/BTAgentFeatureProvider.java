@@ -1,11 +1,11 @@
 package jadex.bt.impl;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import jadex.bt.IBTAgentFeature;
 import jadex.bt.IBTProvider;
+import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
@@ -16,6 +16,8 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.injection.impl.InjectionFeatureProvider;
 
 public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFeature> implements IComponentLifecycleManager
 {
@@ -77,31 +79,14 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 	@Override
 	public Map<String, Object> getResults(IComponent comp)
 	{
-		Map<String, Object> ret = new HashMap<String, Object>();
-		// TODO: add results to injection feature
-//		if(pojo!=null)
-//		{
-//			Class<?> pcl = pojo.getClass();
-//			Field[] fls = SReflect.getAllFields(pcl);
-//			
-//			for(int i=0; i<fls.length; i++)
-//			{
-//				if(MicroClassReader.isAnnotationPresent(fls[i], AgentResult.class, ComponentManager.get().getClassLoader()))
-//				{
-//					try
-//					{
-//						AgentResult r = MicroClassReader.getAnnotation(fls[i], AgentResult.class, ComponentManager.get().getClassLoader());
-//						fls[i].setAccessible(true);
-//						Object val = fls[i].get(pojo);
-//						ret.put(fls[i].getName(), val);
-//					}
-//					catch(Exception e)
-//					{
-//						e.printStackTrace();
-//					}
-//				}
-//			}
-//		}
-		return ret;
+		// Hack!? delegate result handling to injection feature.
+		return new InjectionFeatureProvider().getResults(comp);
+	}
+	
+	@Override
+	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	{
+		// Hack!? delegate result handling to injection feature.
+		return new InjectionFeatureProvider().subscribeToResults(comp);
 	}
 }
