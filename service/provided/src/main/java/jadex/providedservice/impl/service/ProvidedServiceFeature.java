@@ -185,8 +185,17 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 		if(!services.containsKey(pojo))
 		{
 			// Need to add it here to avoid recursive adddExtraObject for pojo
-			List<IService>	lservices	= new ArrayList<>(1);
+			List<IService>	lservices	= new ArrayList<>(interfaces.size());
 			services.put(pojo, lservices);
+			
+			// Create proxies for all implemented service interfaces.
+			for(Class<?> type: interfaces.keySet())
+			{
+				// TODO: name given (i.e. field/method) and multiple interfaces
+				String	thename	= name!=null ? name : type.getSimpleName();  
+				IService	service	= createProvidedServiceProxy(pojo, thename, type);
+				lservices.add(service);
+			}
 			
 			// If service pojo is not the component pojo -> handle injection in service pojo as well
 			if(pojo!=self.getPojo())
@@ -195,14 +204,10 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos);
 			}
 			
-			// Provide all implemented service interfaces.
-			for(Class<?> type: interfaces.keySet())
+			// Finally make the services publicly available
+			for(IService service: lservices)
 			{
-				// TODO: name given (i.e. field/method) and multiple interfaces
-				String	thename	= name!=null ? name : type.getSimpleName();  
-				IService	service	= createProvidedServiceProxy(pojo, thename, type);
 				ServiceRegistry.getRegistry().addLocalService(service);
-				lservices.add(service);
 			}
 		}
 	}
