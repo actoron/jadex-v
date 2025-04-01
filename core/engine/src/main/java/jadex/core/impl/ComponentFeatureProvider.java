@@ -11,6 +11,14 @@ import jadex.core.IComponentFeature;
 public abstract class ComponentFeatureProvider<T extends IComponentFeature> extends FeatureProvider<T>
 {
 	/**
+	 *  Do optional one-time configuration/setup code (e.g. registering stuff in injection model).
+	 *  Called on VM start on all feature providers in order determined by predecessors.
+	 */
+	public void	init()
+	{
+	}
+	
+	/**
 	 *  If the feature does not apply to all kinds of components,
 	 *  you can provide a specific subtype and then this feature
 	 *  is only added to components of this type (e.g. BDI features

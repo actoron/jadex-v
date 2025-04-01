@@ -17,13 +17,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
-import jadex.core.IComponent;
-import jadex.core.IComponentFeature;
 import jadex.execution.impl.ExecutionFeatureProvider;
-import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.annotation.ProvideResult;
@@ -608,43 +604,6 @@ public class InjectionModel
 	/** The supported parameter/field injections (i.e class -> value). */
 	protected static Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fetchers	= new LinkedHashMap<>();
 	
-	static
-	{
-		// Inject IComponent
-		addValueFetcher(
-			(comptypes, valuetype, anno) -> IComponent.class.equals(valuetype) ? ((self, pojo, context) -> self) : null,
-			Inject.class);
-		
-		// Inject any pojo from hierarchy of subobjects.
-		addValueFetcher((comptypes, valuetype, anno) -> 
-		{
-			IInjectionHandle	ret	= null;
-			for(int i=0; i<comptypes.size(); i++)
-			{
-				if((valuetype instanceof Class) && SReflect.isSupertype((Class<?>)valuetype, comptypes.get(i)))
-				{
-					if(ret!=null)
-					{
-						throw new RuntimeException("Conflicting value injections: "+valuetype+", "+comptypes);
-					}
-					int	index	= i;
-					ret	= (self, pojos, context) -> pojos.get(index);
-				}
-			}
-			
-			return ret;
-		}, Inject.class);
-		
-		// Inject features
-		addValueFetcher((comptypes, valuetype, anno) ->
-			(valuetype instanceof Class) && SReflect.isSupertype(IComponentFeature.class, (Class<?>)valuetype) ? ((self, pojo, context) ->
-		{
-			@SuppressWarnings("unchecked")
-			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)valuetype;
-			return self.getFeature((Class<IComponentFeature>)feature);
-		}): null, Inject.class);
-	}
-
 	/**
 	 *  Add a parameter/field injection (i.e field/parameter type -> value fetcher).
 	 *  In case of field injection, the context is the old field value.

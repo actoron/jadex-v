@@ -38,9 +38,10 @@ public class SComponentFeatureProvider
 		// Classpath order undefined (differs betweenn gradle/eclipse
 		// -> order feature providers alphabetically by fully qualified class name 
 		all.sort((o1, o2) -> o1.getClass().getName().compareTo(o2.getClass().getName()));
-		ALL_PROVIDERS = all;
+		ALL_PROVIDERS = orderComponentFeatures(all);
 		
-		//all.forEach(System.out::println);
+		ALL_PROVIDERS.forEach(ComponentFeatureProvider::init);
+//		ALL_PROVIDERS.forEach(System.out::println);
 	}
 			
 	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 
@@ -114,7 +115,7 @@ public class SComponentFeatureProvider
 				}
 			}
 			
-			ret = orderComponentFeatures(ret.values()).stream().collect(
+			ret = ret.values().stream().collect(
 			Collectors.toMap(
 				ComponentFeatureProvider::getFeatureType, 
 				element -> element, 
@@ -180,7 +181,7 @@ public class SComponentFeatureProvider
 	 *  @param provs A list of component feature lists.
 	 *  @return An ordered list of component features.
 	 */
-	public static Collection<ComponentFeatureProvider<IComponentFeature>> orderComponentFeatures(Collection<ComponentFeatureProvider<IComponentFeature>> provs)
+	public static List<ComponentFeatureProvider<IComponentFeature>> orderComponentFeatures(Collection<ComponentFeatureProvider<IComponentFeature>> provs)
 	{
 		DependencyResolver<ComponentFeatureProvider<IComponentFeature>> dr = new DependencyResolver<ComponentFeatureProvider<IComponentFeature>>();
 
@@ -211,8 +212,8 @@ public class SComponentFeatureProvider
 		{
 //			IComponentFeatureFactory last = null;
 			// Only use the last feature of a given type (allows overriding features)
-			if(provsmap.get(prov.getFeatureType())==prov)
-			{
+//			if(provsmap.get(prov.getFeatureType())==prov)
+//			{
 				dr.addNode(prov);
 				
 				// If overridden old position is used as dependency!
@@ -258,7 +259,7 @@ public class SComponentFeatureProvider
 						System.out.println("Declared dependency not found, ignoring: "+pre+" "+prov.getFeatureType());
 					}
 				}
-			}
+//			}
 			// Save original dependency of the feature
 //			else if(!odeps.containsKey(fac.getType()))
 //			{
@@ -266,7 +267,7 @@ public class SComponentFeatureProvider
 //			}
 		}
 
-		Collection<ComponentFeatureProvider<IComponentFeature>> ret = dr.resolveDependencies(true);
+		List<ComponentFeatureProvider<IComponentFeature>> ret = dr.resolveDependencies(true);
 		//System.out.println("ordered features: "+ret);
 		return ret;
 	}

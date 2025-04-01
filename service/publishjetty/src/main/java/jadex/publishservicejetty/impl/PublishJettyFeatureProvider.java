@@ -3,12 +3,12 @@ package jadex.publishservicejetty.impl;
 import java.util.Set;
 
 import jadex.core.impl.Component;
-import jadex.core.impl.ComponentFeatureProvider;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.publishservice.IPublishServiceFeature;
+import jadex.publishservice.impl.PublishServiceFeatureProvider;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-public class PublishServiceFeatureProvider extends ComponentFeatureProvider<IPublishServiceFeature> 
+public class PublishJettyFeatureProvider extends PublishServiceFeatureProvider
 {
 	@Override
 	public Class<IPublishServiceFeature> getFeatureType()

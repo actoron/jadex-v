@@ -2,9 +2,11 @@ package jadex.nfproperty.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import jadex.common.MethodInfo;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.injection.impl.IInjectionHandle;
@@ -13,6 +15,10 @@ import jadex.nfproperty.INFProperty;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.impl.modelinfo.NFPropertyInfo;
+import jadex.providedservice.IProvidedServiceFeature;
+import jadex.providedservice.IService;
+import jadex.providedservice.annotation.ProvideService;
+import jadex.providedservice.impl.service.ProvidedServiceFeatureProvider;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 
@@ -36,12 +42,13 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 	 */
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
-		return Set.of(IRequiredServiceFeature.class);
+		return Set.of(IProvidedServiceFeature.class, IRequiredServiceFeature.class);
 	}
 
 	//-------- injection model extension --------
 	
-	static
+	@Override
+	public void init()
 	{
 		InjectionModel.addExtraOnStart(new Function<Class<?>, List<IInjectionHandle>>()
 		{
@@ -63,7 +70,6 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 						{
 							ret.add((comp, pojos, context) ->
 							{
-								
 								Class<?> clazz = nfprop.getClazz().getType(pojos.get(pojos.size()-1).getClass().getClassLoader());
 								INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, comp, null, null, nfprop.getParameters());
 								// TODO: wait for future
@@ -75,42 +81,66 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 					
 					test	= test.getSuperclass();
 				}
-//				
-//				// Find fields with publish annotation.
-//				for(Field f: InjectionModel.findFields(pojoclazz, Publish.class))
+				
+				// find interfaces with service annotation on pojo
+				Map<Class<?>, ProvideService> services = ProvidedServiceFeatureProvider.findServiceInterfaces(pojoclazz);
+				if(!services.isEmpty())
+				{
+					for(Class<?> service: services.keySet())
+					{
+						Map<MethodInfo, List<NFPropertyInfo>> nfps = NFPropertyLoader.createProvidedNFProperties(pojoclazz, getClass());
+						nfps.entrySet().forEach(entry ->
+						{
+							ret.add((comp, pojos, context) ->
+							{
+								IService	ser	= (IService)comp.getFeature(IProvidedServiceFeature.class).getProvidedService(service);
+								// TODO: wait for future
+								((NFPropertyFeature)comp.getFeature(INFPropertyFeature.class)).addNFMethodProperties(entry.getValue(), ser, entry.getKey());
+								return null;
+							});
+						});
+						
+//						List<NFPropertyInfo> snfps = fmymodel.getProvidedServiceProperties(name);
+//						if(snfps!=null)
+//						{
+//							bar.add(addNFProperties(snfps, ser));
+//						}
+					}
+				}
+				
+				
+//				// find fields/methods with provided service anno.
+//				List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class);
+//				if(getters!=null)
 //				{
-//					try
+//					for(Getter getter: getters)
 //					{
-//						PublishInfo pi = getPublishInfo(f.getAnnotation(Publish.class));
-//	
-//						f.setAccessible(true);
-//						MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
+//						Map<Class<?>, ProvideService> fservices = findServiceInterfaces(
+//							getter.member() instanceof Method
+//								? ((Method)getter.member()).getReturnType()
+//								: ((Field)getter.member()).getType());
+//						
+//						if(fservices.isEmpty())
+//						{
+//							throw new RuntimeException("No service interfaces found on: "+getter.member());
+//						}
+//						
+//						// TODO: Service settings 
+////						if(getter.annotation() instanceof ProvideService)
 //						ret.add((comp, pojos, context) ->
 //						{
-//							try
+//							Object value	= getter.fetcher().apply(comp, pojos, context);
+//							if(value==null)
 //							{
-//								IPublishServiceFeature	feature	= comp.getFeature(IPublishServiceFeature.class);
-//								Object	servicepojo	= fhandle.invoke(pojos.get(pojos.size()-1));
-//								if(servicepojo==null)
-//								{
-//									throw new RuntimeException("No value for provided service: "+f);
-//								}
-//								// do we want to chain the publication on serviceStart and serviceEnd of each service?!
-//								// how could this be done? with listeners on other feature?!
-//								feature.publishService((IService)servicepojo, pi).get();
-//								return null;
+//								throw new RuntimeException("No value for provided service: "+getter.member());
 //							}
-//							catch(Throwable e)
-//							{
-//								throw SUtil.throwUnchecked(e);
-//							}
+//							ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
+//							feature.addService(value, getter.member().getName(), fservices);
+//							return null;
 //						});
 //					}
-//					catch(Exception e)
-//					{
-//						SUtil.throwUnchecked(e);
-//					}
 //				}
+				
 				return ret;
 			}
 		});

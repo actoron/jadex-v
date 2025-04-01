@@ -40,7 +40,8 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 	
 	//-------- augment injection feature with field injection --------
 	
-	static
+	@Override
+	public void init()
 	{
 		// Single service field / parameter.
 		InjectionModel.addValueFetcher(

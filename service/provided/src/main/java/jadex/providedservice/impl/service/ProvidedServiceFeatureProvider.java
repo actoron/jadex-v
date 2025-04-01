@@ -35,7 +35,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 	 *  
 	 *  In case of pojo class, also return ProvideService annotations if any.
 	 */
-	protected static Map<Class<?>, ProvideService> findServiceInterfaces(Class< ? > pojoclazz)
+	public static Map<Class<?>, ProvideService> findServiceInterfaces(Class< ? > pojoclazz)
 	{
 		Map<Class<?>, ProvideService>	services	= new LinkedHashMap<>();
 		
@@ -135,7 +135,8 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 	
 	//-------- augment injection feature with new setup code --------
 	
-	static
+	@Override
+	public void init()
 	{
 		// Add IServiceIdentifier injection
 		InjectionModel.addValueFetcher((pojotypes, valuetype, annotation) ->
