@@ -496,12 +496,6 @@ public class Component implements IComponent
 		return executable;
 	}
 	
-	// TODO move to model feature?
-	public ClassLoader getClassLoader()
-	{
-		return this.getClass().getClassLoader();
-	}
-
 	public static <T extends Component> T createComponent(Class<T> type, Supplier<T> creator)
 	{
 		List<ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProviderListForComponent(type);

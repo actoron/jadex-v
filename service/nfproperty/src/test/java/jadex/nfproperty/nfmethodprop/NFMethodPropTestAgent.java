@@ -8,39 +8,35 @@ import org.junit.jupiter.api.Test;
 
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
-import jadex.micro.annotation.Agent;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.Inject;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.sensor.service.ExecutionTimeProperty;
 import jadex.providedservice.IService;
-import jadex.providedservice.annotation.Service;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Tests waitqueue and execution time non-functional properties on 
  *  provided services.
  */
-@Agent
-@Service
-//@RequiredServices(@RequiredService(name="testser", type=ITestService.class))
 public class NFMethodPropTestAgent 
 {
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	@Test
 	public void waitTimes()
 	{
-		IComponentHandle prov = IComponentManager.get().create(new ProviderAgent()).get();
+		IComponentManager.get().create(new ProviderAgent()).get();
 		
 		IComponentHandle exta = IComponentManager.get().create(new NFMethodPropTestAgent()).get();
 	
 		double[] res = exta.scheduleStep(agent ->
 		{
 			double[] ret = new double[3];
-			ITestService ser = (ITestService)agent.getFeature(IRequiredServiceFeature.class).getService(ITestService.class).get();
+			ITestService ser = (ITestService)agent.getFeature(IRequiredServiceFeature.class).searchService(ITestService.class).get();
 			
 			//final List<TestReport> results = new ArrayList<TestReport>();
 			final long wa = 250;

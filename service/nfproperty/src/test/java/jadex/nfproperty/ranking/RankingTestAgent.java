@@ -9,11 +9,9 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import jadex.common.Tuple2;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
-import jadex.micro.annotation.Agent;
+import jadex.core.IComponentManager;
 
-@Agent
 public class RankingTestAgent 
 {
 	@Test

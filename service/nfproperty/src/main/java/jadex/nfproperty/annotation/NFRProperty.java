@@ -22,7 +22,7 @@ public @interface NFRProperty
 	/**
 	 *  The type of the property.
 	 */
-	public Class<? extends INFProperty> value();
+	public Class<? extends INFProperty<?,?>> value();
 	
 	/**
 	 *  The method name (if method property).
