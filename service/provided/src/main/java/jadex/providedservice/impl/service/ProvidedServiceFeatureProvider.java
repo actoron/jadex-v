@@ -137,6 +137,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 	
 	static
 	{
+		// Add IServiceIdentifier injection
 		InjectionModel.addValueFetcher((pojotypes, valuetype, annotation) ->
 		{
 			IInjectionHandle	ret	= null;
@@ -165,6 +166,8 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 			return ret;
 		}, Inject.class);
 		
+		
+		// Provide services from class, field and method annotations
 		InjectionModel.addExtraOnStart(new Function<Class<?>, List<IInjectionHandle>>()
 		{
 			@Override
@@ -219,7 +222,6 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 					}
 				}
 
-				
 				return ret;
 			}
 		});
