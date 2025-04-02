@@ -1,6 +1,9 @@
 package jadex.nfproperty.impl;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +14,7 @@ import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
+import jadex.injection.impl.InjectionModel.Getter;
 import jadex.nfproperty.INFProperty;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.annotation.NFProperties;
@@ -57,7 +61,7 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 			{
 				List<IInjectionHandle>	ret	= new ArrayList<>();
 				
-				// Find class with property annotations.
+				// Add component properties
 				Class<?>	test	= pojoclazz;
 				while(test!=null)
 				{
@@ -82,68 +86,66 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 					test	= test.getSuperclass();
 				}
 				
-				// find interfaces with service annotation on pojo
-				Map<Class<?>, ProvideService> services = ProvidedServiceFeatureProvider.findServiceInterfaces(pojoclazz);
-				if(!services.isEmpty())
+				// Add properties for interfaces with service annotation on pojo
+				addServicePropertyInjections(pojoclazz, ret);
+				
+				// Add properties for fields/methods with provided service anno.
+				List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class);
+				if(getters!=null)
 				{
-					for(Class<?> service: services.keySet())
+					for(Getter getter: getters)
 					{
-						Map<MethodInfo, List<NFPropertyInfo>> nfps = NFPropertyLoader.createProvidedNFProperties(pojoclazz, getClass());
-						nfps.entrySet().forEach(entry ->
-						{
-							ret.add((comp, pojos, context) ->
-							{
-								IService	ser	= (IService)comp.getFeature(IProvidedServiceFeature.class).getProvidedService(service);
-								// TODO: wait for future
-								((NFPropertyFeature)comp.getFeature(INFPropertyFeature.class)).addNFMethodProperties(entry.getValue(), ser, entry.getKey());
-								return null;
-							});
-						});
+						Class<?>	clazz	= getter.member() instanceof Method
+							? ((Method)getter.member()).getReturnType()
+							: ((Field)getter.member()).getType();
 						
-//						List<NFPropertyInfo> snfps = fmymodel.getProvidedServiceProperties(name);
-//						if(snfps!=null)
-//						{
-//							bar.add(addNFProperties(snfps, ser));
-//						}
+						addServicePropertyInjections(clazz, ret);
 					}
 				}
-				
-				
-//				// find fields/methods with provided service anno.
-//				List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class);
-//				if(getters!=null)
-//				{
-//					for(Getter getter: getters)
-//					{
-//						Map<Class<?>, ProvideService> fservices = findServiceInterfaces(
-//							getter.member() instanceof Method
-//								? ((Method)getter.member()).getReturnType()
-//								: ((Field)getter.member()).getType());
-//						
-//						if(fservices.isEmpty())
-//						{
-//							throw new RuntimeException("No service interfaces found on: "+getter.member());
-//						}
-//						
-//						// TODO: Service settings 
-////						if(getter.annotation() instanceof ProvideService)
-//						ret.add((comp, pojos, context) ->
-//						{
-//							Object value	= getter.fetcher().apply(comp, pojos, context);
-//							if(value==null)
-//							{
-//								throw new RuntimeException("No value for provided service: "+getter.member());
-//							}
-//							ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
-//							feature.addService(value, getter.member().getName(), fservices);
-//							return null;
-//						});
-//					}
-//				}
 				
 				return ret;
 			}
 		});
+	}
+	
+	/**
+	 *  Add properties injections for the given service pojo clazz. 
+	 */
+	protected static void addServicePropertyInjections(Class<?> pojoclazz, List<IInjectionHandle> ret)
+	{
+		Map<Class<?>, ProvideService> services = ProvidedServiceFeatureProvider.findServiceInterfaces(pojoclazz);
+		
+		for(Class<?> service: services.keySet())
+		{
+			Map<MethodInfo, List<NFPropertyInfo>> nfps = NFPropertyLoader.createProvidedNFProperties(pojoclazz, service);
+			
+			// Properties on service
+			if(nfps.get(null)!=null)
+			{
+				ret.add((comp, pojos, context) ->
+				{
+					IService	ser	= (IService)comp.getFeature(IProvidedServiceFeature.class).getProvidedService(service);
+					// TODO: wait for future
+					((NFPropertyFeature)comp.getFeature(INFPropertyFeature.class)).addNFProperties(nfps.get(null), ser);
+					return null;
+				});
+			}
+			
+			// Properties on methods
+			nfps.entrySet().forEach(entry ->
+			{
+				if(entry!=null)
+				{
+					ret.add((comp, pojos, context) ->
+					{
+						IService	ser	= (IService)comp.getFeature(IProvidedServiceFeature.class).getProvidedService(service);
+						// TODO: wait for future
+						((NFPropertyFeature)comp.getFeature(INFPropertyFeature.class)).addNFMethodProperties(entry.getValue(), ser, entry.getKey());
+						return null;
+					});
+				}
+			});
+		}
 	}
 }
 

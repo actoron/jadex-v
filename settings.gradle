@@ -174,7 +174,7 @@ includeBuild('service/provided') {}
 includeBuild('service/required') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
-//includeBuild('service/nfproperty') {}
+includeBuild('service/nfproperty') {}
 
 includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
@@ -202,7 +202,7 @@ includeBuild('monitoring/log4j') {}
 includeBuild('environment/environment'){name='environment'}
 
 includeBuild('application/micro'){name='application-micro'}
-//includeBuild('application/micro-nfp'){name='application-micro-nfp'}
+includeBuild('application/micro-nfp'){name='application-micro-nfp'}
 //includeBuild('application/bdi'){name='application-bdi'}
 //includeBuild('application/bdi-service'){name='application-bdi-service'}
 includeBuild('application/bpmn'){name='application-bpmn'}

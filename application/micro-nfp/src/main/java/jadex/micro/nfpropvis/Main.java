@@ -1,12 +1,10 @@
 package jadex.micro.nfpropvis;
 
 import jadex.core.IComponentManager;
-import jadex.micro.annotation.Agent;
 
 /**
  *  Application configurations with users and providers. 
  */
-@Agent
 /*@ComponentTypes({
 	@ComponentType(name="user", clazz=UserAgent.class),
 	@ComponentType(name="provider", clazz=ProviderAgent.class)
@@ -23,7 +21,7 @@ import jadex.micro.annotation.Agent;
 		@Component(type="provider", number="5")
 	})
 })*/
-public class ApplicationAgent
+public class Main
 {
 	public static void main(String[] args) 
 	{

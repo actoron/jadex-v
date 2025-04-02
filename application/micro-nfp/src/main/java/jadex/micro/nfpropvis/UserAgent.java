@@ -31,35 +31,22 @@ import jadex.common.MethodInfo;
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.future.ComponentResultListener;
-import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Configuration;
-import jadex.micro.annotation.Configurations;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.impl.search.ComposedEvaluator;
 import jadex.nfproperty.sensor.service.AverageEvaluator;
 import jadex.nfproperty.sensor.service.WaitqueueEvaluator;
 import jadex.providedservice.IService;
-import jadex.providedservice.ServiceScope;
-import jadex.providedservice.annotation.Service;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.requiredservice.annotation.RequiredService;
-import jadex.requiredservice.annotation.RequiredServices;
 
 /**
  *  Ranking of a requires services via an waitqueue ranker.
  */
-@RequiredServices(@RequiredService(name="aser", type=ICryptoService.class, scope=ServiceScope.VM)) // multiple=true,
 //ranker="new AverageEvaluator(new WaitqueueEvaluator(new MethodInfo(ICryttoService.class.getMethod(\"encrypt\", new Class[]{String.class}))))"
-
-@Agent
-@Service
-@Configurations({@Configuration(name="default"), @Configuration(name="with gui")})
 
 //@RequiredServices(@RequiredService(name="cryptoser", type=ICryptoService.class, multiple=true, 
 //	binding=@Binding(scope=ServiceScope.PLATFORM, dynamic=true),
@@ -67,7 +54,7 @@ import jadex.requiredservice.annotation.RequiredServices;
 //	value=WaitqueueProperty.class, methodname="encrypt", ranker=WaitqueueEvaluator.class)))
 public class UserAgent
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** The evaluator. */
@@ -157,7 +144,7 @@ public class UserAgent
 	 */
 	public void invoke()
 	{
-		ITerminableIntermediateFuture<ICryptoService> sfut = agent.getFeature(IRequiredServiceFeature.class).getServices("aser");
+		ITerminableIntermediateFuture<ICryptoService> sfut = agent.getFeature(IRequiredServiceFeature.class).searchServices(ICryptoService.class);
 		ITerminableIntermediateFuture<Tuple2<ICryptoService, Double>> fut = agent.getFeature(INFPropertyFeature.class).rankServicesWithScores(sfut, ranker, null);
 		fut.addResultListener(new IResultListener<Collection<Tuple2<ICryptoService,Double>>>() {
 			
