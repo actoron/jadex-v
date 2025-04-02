@@ -642,13 +642,20 @@ public class ComponentManager implements IComponentManager
 			{
 				if(globalrunner==null)
 				{
-					globalrunner	= new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
+					try
 					{
-						public void handleException(Exception exception)
+						globalrunner	= SUtil.getExecutor().submit(() -> new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
 						{
-							globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
-						}
-					};
+							public void handleException(Exception exception)
+							{
+								globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
+							}
+						}).get();
+					}
+					catch(Exception e)
+					{
+						SUtil.throwUnchecked(e);
+					}
 				}
 			}
 		}
