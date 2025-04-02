@@ -284,13 +284,20 @@ public class Component implements IComponent
 		return logger;
 	}
 	
+	// TODO: move to model/bpmn
 	public ValueProvider getValueProvider()
 	{
 		if(valueprovider==null)
 			valueprovider = new ValueProvider(this);
 		return valueprovider;
 	}
-	
+
+	// TODO: move to model/bpmn
+	public ClassLoader getClassLoader()
+	{
+		return pojo!=null ? pojo.getClass().getClassLoader() : getClass().getClassLoader();
+	}
+
 	/*public Map<String, Object> getResults(Object pojo)
 	{
 		return Collections.EMPTY_MAP;

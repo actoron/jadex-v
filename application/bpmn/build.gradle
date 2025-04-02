@@ -32,7 +32,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:requiredservice:'+v
 	//implementation 'org.activecomponents.jadex:requiredservicebpmn:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
-	//implementation 'org.activecomponents.jadex:providedservicebpmn:'+v
+	implementation 'org.activecomponents.jadex:providedservicebpmn:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 

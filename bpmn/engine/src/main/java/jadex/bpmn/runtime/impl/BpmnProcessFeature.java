@@ -325,7 +325,9 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
             }
         } 
         
-        getTopLevelThread().terminateOnEnd();
+        // Don't auto terminate when waiting for events.
+        if(getModel().getEventSubProcessStartEvents().isEmpty())
+        	getTopLevelThread().terminateOnEnd();
         
         //started = true;
         

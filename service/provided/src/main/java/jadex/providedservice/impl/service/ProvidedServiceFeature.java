@@ -174,7 +174,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	/**
 	 *  Register a service.
 	 */
-	protected void	addService(Object pojo, String name, Map<Class<?>, ProvideService> interfaces)
+	public void	addService(Object pojo, String name, Map<Class<?>, ProvideService> interfaces)
 	{
 		if(services==null)
 		{

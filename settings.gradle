@@ -186,7 +186,7 @@ includeBuild('micro/lib'){name='libmicro'}
 includeBuild('model/model') {name='model'}
 
 includeBuild('bpmn/engine') {name='bpmn'}
-//includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
+includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
 //includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 
 includeBuild('bt/engine') {name='bt'}
