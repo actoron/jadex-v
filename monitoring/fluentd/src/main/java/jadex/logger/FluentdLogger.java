@@ -79,7 +79,7 @@ public class FluentdLogger implements Logger
     @Override
     public boolean isLoggable(Level level) 
     {
-        return level.compareTo(this.level)>=0;
+        return this.level!=null && level.compareTo(this.level)>=0;
     }
 
     @Override
