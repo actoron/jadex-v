@@ -150,7 +150,7 @@ public class ServiceCallTask implements ITask
 		final String	fmethod	= method;
 		final String	fresultparam	= resultparam;
 		
-		Class<?> servicetype = process.getFeature(IRequiredServiceFeature.class).getServiceInfo(fservice).getType().getType(process.getClass().getClassLoader(), process.getFeature(IModelFeature.class).getModel().getAllImports());
+		Class<?> servicetype = process.getFeature(IBpmnRequiredServiceFeature.class).getServiceInfo(fservice).getType().getType(process.getClass().getClassLoader(), process.getFeature(IModelFeature.class).getModel().getAllImports());
 		Method[] methods = servicetype.getMethods();
 		Method met = null;
 		for(Method meth : methods)
@@ -223,7 +223,7 @@ public class ServiceCallTask implements ITask
 		}
 		else*/
 		{
-			process.getFeature(IRequiredServiceFeature.class).getService(service)
+			process.getFeature(IBpmnRequiredServiceFeature.class).getService(service)
 				.addResultListener(new ExceptionDelegationResultListener<Object, Void>(ret)
 			{
 				public void customResultAvailable(Object result)

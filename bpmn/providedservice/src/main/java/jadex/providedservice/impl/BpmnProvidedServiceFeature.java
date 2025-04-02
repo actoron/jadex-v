@@ -31,12 +31,15 @@ public class BpmnProvidedServiceFeature	implements IBpmnProvidedServiceFeature, 
 		ProvidedServiceFeature	psf	= (ProvidedServiceFeature) self.getFeature(IProvidedServiceFeature.class);
 
 		ProvidedServiceModel	model	= loadModel();
-		for(ProvidedServiceInfo info: model.getServices())
+		if(model!=null)
 		{
-			Object	service	= createServiceImplementation(info, self.getValueProvider());
-			Class<?>	type	= info.getType().getType(self.getClassLoader(), mf.getModel().getAllImports());
-			Map<Class<?>, ProvideService>	types	= Collections.singletonMap(type, null);
-			psf.addService(service, info.getName(), types);
+			for(ProvidedServiceInfo info: model.getServices())
+			{
+				Object	service	= createServiceImplementation(info, self.getValueProvider());
+				Class<?>	type	= info.getType().getType(self.getClassLoader(), mf.getModel().getAllImports());
+				Map<Class<?>, ProvideService>	types	= Collections.singletonMap(type, null);
+				psf.addService(service, info.getName(), types);
+			}
 		}
 	}
 	

@@ -6,8 +6,6 @@ import jadex.bpmn.model.MBpmnModel;
 import jadex.common.ClassInfo;
 import jadex.model.modelinfo.IModelInfo;
 import jadex.providedservice.ServiceScope;
-import jadex.requiredservice.RequiredServiceBinding;
-import jadex.requiredservice.RequiredServiceInfo;
 
 public class BpmnRequiredServiceLoader 
 {
