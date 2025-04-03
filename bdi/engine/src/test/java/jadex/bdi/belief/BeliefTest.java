@@ -17,17 +17,19 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
+import jadex.bdi.Val;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.runtime.IBDIAgent;
-import jadex.bdi.runtime.Val;
-import jadex.bdi.runtime.impl.IInternalBDIAgentFeature;
+import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.ChangeEvent;
 import jadex.common.Tuple2;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IEvent;
@@ -38,7 +40,7 @@ import jadex.rules.eca.Rule;
  */
 public class BeliefTest
 {
-	@Agent(type="bdip")
+	@BDIAgent
 	static class BeliefTestAgent
 	{
 		@Belief
@@ -66,7 +68,6 @@ public class BeliefTest
 
 		@Belief(updaterate = 1000)
 		Val<Long>	updatebelief	= new Val<>(()->System.currentTimeMillis());
-
 	}
 	
 	public static class Bean
@@ -96,12 +97,12 @@ public class BeliefTest
 	public void testValBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		Future<IEvent>	fut	= new Future<>();
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(fut, "beliefchanged", "valbelief");
+			addEventListenerRule(fut, ChangeEvent.FACTCHANGED, "valbelief");
 			pojo.valbelief.set(2);
 		});
 		
@@ -112,12 +113,12 @@ public class BeliefTest
 	public void testBeanBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		Future<IEvent>	fut	= new Future<>();
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(fut, "factchanged", "beanbelief");
+			addEventListenerRule(fut, ChangeEvent.FACTCHANGED, "beanbelief");
 			pojo.beanbelief.setValue(2);
 		});
 		
@@ -128,16 +129,16 @@ public class BeliefTest
 	public void testListBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(changedfut, "factchanged", "listbelief");
-			addEventListenerRule(addedfut, "factadded", "listbelief");
-			addEventListenerRule(removedfut, "factremoved", "listbelief");
+			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "listbelief");
+			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "listbelief");
+			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "listbelief");
 			pojo.listbelief.set(1, "3");
 			pojo.listbelief.add(1, "2");
 			pojo.listbelief.remove(1);
@@ -153,14 +154,14 @@ public class BeliefTest
 	public void testSetBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(addedfut, "factadded", "setbelief");
-			addEventListenerRule(removedfut, "factremoved", "setbelief");
+			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "setbelief");
+			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "setbelief");
 			pojo.setbelief.add("2");
 			pojo.setbelief.remove("2");
 
@@ -174,16 +175,16 @@ public class BeliefTest
 	public void testMapBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<IEvent>	addedfut	= new Future<>();
 		Future<IEvent>	removedfut	= new Future<>();
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(changedfut, "factchanged", "mapbelief");
-			addEventListenerRule(addedfut, "factadded", "mapbelief");
-			addEventListenerRule(removedfut, "factremoved", "mapbelief");
+			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "mapbelief");
+			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "mapbelief");
+			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "mapbelief");
 			pojo.mapbelief.put("2", "two");
 			pojo.mapbelief.put("3", "three");
 			pojo.mapbelief.remove("2");
@@ -199,7 +200,7 @@ public class BeliefTest
 	public void testDynamicBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		Future<Integer>	firstfut	= new Future<>();
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<Integer>	secondfut	= new Future<>();
@@ -207,7 +208,7 @@ public class BeliefTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(changedfut, "beliefchanged", "dynamicbelief");
+			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "dynamicbelief");
 			firstfut.setResult(pojo.dynamicbelief.get());
 			pojo.valbelief.set(2);
 			secondfut.setResult(pojo.dynamicbelief.get());
@@ -232,7 +233,7 @@ public class BeliefTest
 	public void testUpdaterateBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IBDIAgent.create(pojo);
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		Future<Long>	firstfut	= new Future<>();
 		Future<Long>	secondfut	= new Future<>();
 		Future<IEvent>	changedfut	= new Future<>();
@@ -240,7 +241,7 @@ public class BeliefTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(changedfut, "beliefchanged", "updatebelief");
+			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "updatebelief");
 			firstfut.setResult(pojo.updatebelief.get());
 			IExecutionFeature.get().waitForDelay(500).get();
 			secondfut.setResult(pojo.updatebelief.get());
@@ -250,7 +251,7 @@ public class BeliefTest
 		
 		assertNotNull(firstfut.get(TestHelper.TIMEOUT));
 		assertEquals(firstfut.get(TestHelper.TIMEOUT), secondfut.get(TestHelper.TIMEOUT));
-		assertNotEquals(firstfut.get(TestHelper.TIMEOUT), thirdfut.get(2000));
+		assertNotEquals(firstfut.get(TestHelper.TIMEOUT), thirdfut.get(TestHelper.TIMEOUT));
 		changedfut.get(TestHelper.TIMEOUT);	// Check if event was generated
 	}
 
@@ -262,7 +263,8 @@ public class BeliefTest
 	 */
 	public static void	addEventListenerRule(Future<IEvent> fut, String... events)
 	{
-		IInternalBDIAgentFeature	feat	= IInternalBDIAgentFeature.get();
+		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
+			.getFeature(IBDIAgentFeature.class);
 		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
 			"EventListenerRule"+Arrays.toString(events),	// Rule Name
 			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true

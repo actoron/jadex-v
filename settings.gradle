@@ -181,7 +181,7 @@ includeBuild('communication/messaging') {}
 
 includeBuild('micro/lib'){name='libmicro'}
 
-//includeBuild('bdi/engine') {name='bdi'}
+includeBuild('bdi/engine') {name='bdi'}
 
 includeBuild('model/model') {name='model'}
 
