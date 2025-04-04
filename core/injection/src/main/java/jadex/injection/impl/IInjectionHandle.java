@@ -1,5 +1,7 @@
 package jadex.injection.impl;
 
+import java.util.List;
+
 import jadex.core.IComponent;
 
 /**
@@ -11,8 +13,9 @@ public interface IInjectionHandle
 	/**
 	 *  Handle the injection at runtime, e.g. method invocation.
 	 *  @param self	The component.
-	 *  @param pojo	The actual pojo object (might be the component pojo or a subobject, e.g. service impl).
-	 *  @param context	E.g. BDI goal/plan...
+	 *  @param pojos	The actual pojo objects as a hierachy of component pojo plus subobjects, if any.
+	 *  				The injection is for the last pojo in the list.
+	 *  @param context	E.g. found service, BDI goal/plan...
 	 */
-	public void	handleInjection(IComponent self, Object pojo, Object context);
+	public void	handleInjection(IComponent self, List<Object> pojos, Object context);
 }

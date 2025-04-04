@@ -13,11 +13,13 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.common.ICommand;
+import jadex.common.IFilter;
 import jadex.common.IParameterGuesser;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.SimpleParameterGuesser;
+import jadex.common.transformation.traverser.FilterProcessor;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.SCloner;
 import jadex.common.transformation.traverser.Traverser;
@@ -32,6 +34,7 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
 import jadex.core.LambdaPojo;
+import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
@@ -40,7 +43,6 @@ import jadex.core.impl.SComponentFeatureProvider;
 import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
-import jadex.execution.NoCopy;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -132,15 +134,17 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								List<Object> myargs = new ArrayList<Object>(); 
 								Class<?>[] ptypes = method.getParameterTypes();
 								java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
-								List<ITraverseProcessor> procs = Traverser.getDefaultProcessors();
-								//;new ArrayList<>(ISerializationServices.get().getCloneProcessors());
-								
+
 								for(int p = 0; p < ptypes.length; p++)
 								{
-									if(hasAnnotation(pannos[p], NoCopy.class))
+									if(isNoCopy(args[p]) || hasAnnotation(pannos[p], NoCopy.class))
+									{
 										myargs.add(args[p]);
+									}
 									else
+									{
 										myargs.add(SCloner.clone(args[p], procs));
+									}
 								}
 								
 								FutureFunctionality func = new FutureFunctionality()
@@ -165,7 +169,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									
 									public Object handleResult(Object val) throws Exception
 									{
-										if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
+										if(!isNoCopy(val) && !hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
 						            	{
 											Object val2 = SCloner.clone(val, procs);
 											//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
@@ -177,7 +181,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									
 									public Object handleIntermediateResult(Object val) throws Exception
 									{
-										if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
+										if(!isNoCopy(val) && !hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
 						            	{
 											val = SCloner.clone(val, procs);
 											//System.out.println("cloned val: "+val);
@@ -331,6 +335,33 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		}, true);
 	}
 	
+	/**
+	 *  Helper to skip NoCopy objects while cloning. 
+	 */
+	protected static IFilter<Object>	filter = new IFilter<Object>()
+	{
+		public boolean filter(Object object)
+		{
+			return isNoCopy(object);
+		}
+	};
+	
+	/**
+	 *  Helper to skip NoCopy objects while cloning. 
+	 */
+	protected static List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
+	{
+		procs.add(procs.size()-1, new FilterProcessor(filter));
+	}
+	
+	/**
+	 *  Helper method to check if a value doesn't need copying in component methods
+	 */
+	protected static boolean isNoCopy(Object val)
+	{
+		return val==null || val.getClass().isAnnotationPresent(NoCopy.class);
+	}
+
 	@Override
 	public Class<IExecutionFeature> getFeatureType()
 	{

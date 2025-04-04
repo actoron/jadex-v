@@ -1,8 +1,12 @@
 package jadex.injection;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -113,6 +117,51 @@ public class InjectionTest
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
 	}
 
+	@Test
+	public void	testSuperclass()
+	{
+		List<String>	invocations	= new ArrayList<>();
+		class Baseclass
+		{
+			@OnStart
+			void start1()
+			{
+				invocations.add("s1");
+			}
+			@OnEnd
+			void end1()
+			{
+				invocations.add("e1");
+			}
+		}
+		class Subclass	extends Baseclass
+		{
+			@OnStart
+			void start2()
+			{
+				invocations.add("s2");
+			}
+			// Override to check if it is invoked twice, because it is declared twice.
+			@OnEnd
+			void end1()
+			{
+				super.end1();
+			}
+
+		}
+		
+		IComponentHandle	handle	= IComponentManager.get().create(new Subclass()).get();
+		// schedule check as onStart runs on extra step.
+		handle.scheduleStep(() ->
+		{
+			assertEquals("[s1, s2]", invocations.toString());
+			return null;
+		}).get(TIMEOUT);
+		
+		handle.terminate().get();
+		assertEquals("[s1, s2, e1]", invocations.toString());
+	}
+	
 
 	public static void main(String[] args)
 	{

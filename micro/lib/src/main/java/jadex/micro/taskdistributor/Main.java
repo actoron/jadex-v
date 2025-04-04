@@ -17,5 +17,7 @@ public class Main
 		
 		IComponentManager.get().create(new TaskWorkerAgent());
 		IComponentManager.get().create(new TaskWorkerAgent());
+		
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }
