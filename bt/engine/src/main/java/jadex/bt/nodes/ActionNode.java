@@ -1,12 +1,16 @@
 package jadex.bt.nodes;
 
 import java.lang.System.Logger.Level;
+import java.util.ArrayList;
+import java.util.List;
 
 import jadex.bt.actions.UserBaseAction;
 import jadex.bt.impl.Event;
+import jadex.bt.nodes.CompositeNode.IIndexContext;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.future.Future;
+import jadex.future.FutureBarrier;
 import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -75,27 +79,31 @@ public class ActionNode<T> extends Node<T>
      		System.getLogger(this.getClass().getName()).log(Level.ERROR, "exception in action: "+e);
     		ret.setResultIfUndone(NodeState.FAILED);
     	}
+    	
+    	//ret.then(ns -> System.out.println("action node fini: "+this+" "+ns)).printOnEx();
 		
 		return ret;
     }
     
     @Override
-    public void abort(AbortMode abortmode, NodeState state, ExecutionContext<T> execontext) 
+    public IFuture<Void> internalAbort(AbortMode abortmode, NodeState state, ExecutionContext<T> execontext) 
     {
+    	//FutureBarrier<Void> ret = new FutureBarrier<>();
+    	
     	ActionNodeContext<T> context = getNodeContext(execontext);
     	
      	if(context.getAborted()!=null || NodeState.RUNNING!=context.getState())
-    		return;
+    		return IFuture.DONE;
  
      	IFuture<NodeState> usercall = context.getUsercall();
      	
-      	super.abort(abortmode, state, execontext);
+      	//ret.add(super.internalAbort(abortmode, state, execontext));
 
     	if(abortmode==AbortMode.SELF)
     	{
     		if(usercall==null)
     		{
-    			//System.out.println("abort: no user action: "+this);
+    			System.out.println("abort: no user action: "+this+" "+context.getValue("cnt"));
     			System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: no user action: "+this);
     		}
     		else
@@ -123,14 +131,20 @@ public class ActionNode<T> extends Node<T>
     		//System.out.println("ignoring abort: "+abortmode+" "+this);
 			System.getLogger(this.getClass().getName()).log(Level.INFO, "ignoring abort: "+abortmode+" "+this);
     	}
+    	
+    	//return ret.waitFor();
+    	return super.internalAbort(abortmode, state, execontext);
     }
     
     @Override
     public void reset(ExecutionContext<T> context, Boolean all) 
     {
     	super.reset(context, all);
-    	//System.out.println("removed call: "+getNodeContext(context).getUsercall());
-    	getNodeContext(context).setUsercall(null);
+    	if(getNodeContext(context)!=null)
+    	{
+    		//System.out.println("removed call: "+getNodeContext(context).getUsercall());
+    		getNodeContext(context).setUsercall(null);
+    	}
     }
     
     @Override
@@ -142,6 +156,14 @@ public class ActionNode<T> extends Node<T>
     protected NodeContext<T> createNodeContext()
     {
     	return new ActionNodeContext<T>();
+    }
+    
+    @Override
+    public NodeContext<T> copyNodeContext(NodeContext<T> src)
+    {
+    	ActionNodeContext<T> ret = (ActionNodeContext<T>)super.copyNodeContext(src);
+    	//ret.setUsercall(((ActionNodeContext<T>)src).getUsercall());
+		return ret;
     }
     
     public static class ActionNodeContext<T> extends NodeContext<T>
@@ -158,7 +180,19 @@ public class ActionNode<T> extends Node<T>
 			//System.out.println("usercall: "+usercall+" "+this);
 			this.usercall = usercall;
 		}
+		
+		public List<String> getDetailsShort()
+		{
+			List<String> ret = super.getDetailsShort();
+			
+			if(getUsercall()!=null)
+				ret.add("user call done: "+getUsercall().isDone());
+			
+			return ret;
+		}
     }
+    
+   
     
 	/*@Override
 	public String toString() 

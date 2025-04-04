@@ -4,13 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.actions.UserAction;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.CompositeNode;
-import jadex.bt.nodes.ParallelNode;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.nodes.ParallelNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -134,17 +135,17 @@ public class TestParallelNode
     @Test
     public void testParallelAbort() 
     {
-    	ActionNode<Object> action1 = new ActionNode<>(new UserAction<>((event, context) -> 
+    	ActionNode<Object> action1 = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Action 1 running...");
-            return new Future<>();
+            return new TerminableFuture<>();
             // Simulate a running action
         }));
 
-    	ActionNode<Object> action2 = new ActionNode<>(new UserAction<>((event, context) -> 
+    	ActionNode<Object> action2 = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Action 2 running...");
-            return new Future<>();
+            return new TerminableFuture<>();
             // Simulate a running action
         }));
 

@@ -69,7 +69,7 @@ public class PerceptionProcessor
     public <T extends SpaceObject> void manage(Class<T> clazz, Collection<T> coll)
     {
     	manage(clazz, coll, 
-    		obj -> findAndUpdateOrAdd(obj, coll), 
+    		obj -> {if(obj.getPosition()!=null) findAndUpdateOrAdd(obj, coll);}, 
     		obj -> coll.remove(obj),
     		obj -> {if(obj.getPosition()==null) {coll.remove(obj); 
     			//System.out.println("removing: "+obj+" from "+coll);

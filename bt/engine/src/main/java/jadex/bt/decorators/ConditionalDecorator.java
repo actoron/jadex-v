@@ -77,11 +77,12 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		}
 		else if(condition!=null)
 		{
+			//System.out.println("trigger deco before exe in cond: "+this);
 			Future<NodeState> ret = new Future<>();
 			IFuture<Boolean> fut = condition.apply(event, state, context);
 			fut.then(triggered ->
 			{
-				ret.setResult(mapToNodeState(triggered));
+				ret.setResult(mapToNodeState(triggered, state));
 			}).catchEx(ex -> ret.setResult(NodeState.FAILED));
 			return ret;
 		}
@@ -144,7 +145,7 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		return NodeState.RUNNING!=state;
 	}
 	
-	public NodeState mapToNodeState(Boolean state)
+	public NodeState mapToNodeState(Boolean state, NodeState nstate)
 	{
 		throw new UnsupportedOperationException();
 	}

@@ -6,6 +6,7 @@ import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.future.IFuture;
 
+@Deprecated
 public class UserAction<T> extends UserBaseAction<T, IFuture<NodeState>>
 { 
 	public UserAction(BiFunction<Event, T, IFuture<NodeState>> action)

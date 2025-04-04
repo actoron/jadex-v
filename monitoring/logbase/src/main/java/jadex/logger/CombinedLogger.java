@@ -9,14 +9,16 @@ public class CombinedLogger implements System.Logger
 {
 	protected final System.Logger ilogger;
     protected final System.Logger elogger;
+    protected boolean system;
 
-    public CombinedLogger(System.Logger ilogger, System.Logger elogger) 
+    public CombinedLogger(System.Logger ilogger, System.Logger elogger, boolean system) 
     {
         if(ilogger==null && elogger==null)
         	throw new NullPointerException();
 
         this.ilogger = ilogger;
         this.elogger = elogger;
+        this.system = system;
     }
 
     @Override
@@ -64,10 +66,12 @@ public class CombinedLogger implements System.Logger
         if(elogger != null)
             elogger.log(level, bundle, format, params);
     }
-    
-    @Override
-	public String toString()
+
+	@Override
+	public String toString() 
 	{
-		return super.toString()+"(ilogger="+ilogger+", elogger="+elogger+")";
+		return "CombinedLogger [ilogger=" + ilogger + ", elogger=" + elogger + ", system=" + system + "]";
 	}
+    
+   
 }
