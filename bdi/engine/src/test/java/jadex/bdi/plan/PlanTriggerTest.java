@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
@@ -13,6 +15,8 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.impl.ChangeEvent;
+import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.rules.eca.ChangeInfo;
 
@@ -72,40 +76,40 @@ public class PlanTriggerTest
 //		}
 	}
 	
-//	@Test
-//	void testFactAdded()
-//	{
-//		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-//		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-//		agent.scheduleStep(() -> pojo.bel.add(0, "new fact"));
-//		checkEventInfo(pojo.added, "bel", "factadded", null, "new fact", 0);
-//	}
-//	
-//	@Test
-//	void testFactChanged()
-//	{
-//		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-//		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-//		agent.scheduleStep(() -> 
-//		{
-//			pojo.bel.add("old fact");
-//			pojo.bel.set(0, "new fact");
-//		});		
-//		checkEventInfo(pojo.changed, "bel", "factchanged", "old fact", "new fact", 0);
-//	}
-//
-//	@Test
-//	void testFactRemoved()
-//	{
-//		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-//		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-//		agent.scheduleStep(() -> 
-//		{
-//			pojo.bel.add("new fact");
-//			pojo.bel.remove(0);			
-//		});
-//		checkEventInfo(pojo.removed, "bel", "factremoved", null, "new fact", 0);
-//	}
+	@Test
+	void testFactAdded()
+	{
+		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		agent.scheduleStep(() -> pojo.bel.add(0, "new fact"));
+		checkEventInfo(pojo.added, "bel", "factadded", null, "new fact", 0);
+	}
+	
+	@Test
+	void testFactChanged()
+	{
+		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		agent.scheduleStep(() -> 
+		{
+			pojo.bel.add("old fact");
+			pojo.bel.set(0, "new fact");
+		});		
+		checkEventInfo(pojo.changed, "bel", "factchanged", "old fact", "new fact", 0);
+	}
+
+	@Test
+	void testFactRemoved()
+	{
+		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		agent.scheduleStep(() -> 
+		{
+			pojo.bel.add("new fact");
+			pojo.bel.remove(0);			
+		});
+		checkEventInfo(pojo.removed, "bel", "factremoved", null, "new fact", 0);
+	}
 	
 //	@Test
 //	void testGoal()

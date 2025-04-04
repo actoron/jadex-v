@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,8 +19,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IPlan;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
+import jadex.bdi.annotation.Plan;
+import jadex.bdi.annotation.Trigger;
+import jadex.bdi.impl.plan.RPlan;
 import jadex.bdi.impl.wrappers.ListWrapper;
 import jadex.bdi.impl.wrappers.MapWrapper;
 import jadex.bdi.impl.wrappers.SetWrapper;
@@ -39,6 +44,7 @@ import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
 import jadex.rules.eca.ChangeInfo;
@@ -108,22 +114,60 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	@Override
 	public void init()
 	{
+		// Fetch RPlan from context
+		// May fail at runtime (only works inside plans).
+		InjectionModel.addValueFetcher((pojotypes, valuetype, annotation) ->
+		{
+			if(IPlan.class.equals(valuetype))
+			{
+				return (comp, pojos, context) ->
+				{
+					if(context instanceof IPlan)
+					{
+						return context;
+					}
+					else
+					{
+						throw new UnsupportedOperationException("Cannot inject IPlan (not inside plan?): "+pojotypes.get(pojotypes.size()-1));
+					}
+				};
+			}
+			else
+			{
+				return null;
+			}
+		}, Inject.class);
+		
 		InjectionModel.addExtraOnStart(pojoclazz ->
 		{
 			List<IInjectionHandle>	ret	= new ArrayList<>();
 			
-			// Manage field beliefs.
+			// Manage belief fields.
 			for(Field f: InjectionModel.findFields(pojoclazz, Belief.class))
 			{
 				try
 				{
-					addFieldBelief(pojoclazz, f, ret);
+					addBeliefField(pojoclazz, f, ret);
 				}
 				catch(Exception e)
 				{
 					SUtil.throwUnchecked(e);
 				}
 			}
+			
+			// Manage plan methods.
+			for(Method m: InjectionModel.findMethods(pojoclazz, Plan.class))
+			{
+				try
+				{
+					addPlanMethod(pojoclazz, m, ret);
+				}
+				catch(Exception e)
+				{
+					SUtil.throwUnchecked(e);
+				}
+			}
+			
 			return ret;
 		});
 	}
@@ -131,7 +175,74 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Check various options for a field belief.
 	 */
-	protected void addFieldBelief(Class<?> pojoclazz, Field f, List<IInjectionHandle> ret) throws Exception
+	protected void addPlanMethod(Class<?> pojoclazz, Method m, List<IInjectionHandle> ret) throws Exception
+	{
+		Plan	anno	= m.getAnnotation(Plan.class);
+		Trigger	trigger	= anno.trigger();
+		
+		// Inform user when no trigger is defined
+		if(trigger.factadded().length==0
+			&& trigger.factremoved().length==0
+			&& trigger.factchanged().length==0)
+		{
+			throw new RuntimeException("Plan has no trigger: "+m);
+		}
+		
+		// Add rule to trigger plan creation on given events.
+		Map<String, String[]>	tevents	= new LinkedHashMap<String, String[]>();
+		tevents.put(ChangeEvent.FACTADDED, trigger.factadded());
+		tevents.put(ChangeEvent.FACTREMOVED, trigger.factremoved());
+		tevents.put(ChangeEvent.FACTCHANGED, trigger.factchanged());
+				
+		List<EventType>	events	= new ArrayList<>();
+		for(String tevent: tevents.keySet())
+		{
+			for(String dep: tevents.get(tevent))
+			{
+				Field	depf	= SReflect.getField(pojoclazz, dep);
+				if(depf==null)
+				{
+					throw new RuntimeException("Dependent belief '"+dep+"' not found: "+m);
+				}
+				else if(!depf.isAnnotationPresent(Belief.class))
+				{
+					throw new RuntimeException("Dependent belief '"+dep+"' is not annotated with @Belief: "+m+", "+depf);
+				}
+				events.add(new EventType(tevent, dep));
+			}
+		}
+		
+		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, Collections.singletonList(pojoclazz), null);
+
+		ret.add((comp, pojos, context) ->
+		{
+			try
+			{
+				RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				rs.getRulebase().addRule(new Rule<Void>(
+					"TriggerPlan_"+m.getName(),	// Rule Name
+					event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
+					(event, rule, context2, condresult) ->
+					{
+						// Action -> start plan
+						RPlan	plan	= new RPlan(new ChangeEvent<Object>(event), planhandle, comp, pojos);
+						plan.executePlanBody();
+						return IFuture.DONE;
+					},
+					events.toArray(new EventType[events.size()])));	// Trigger Event(s)
+				return null;
+			}
+			catch(Throwable t)
+			{
+				throw SUtil.throwUnchecked(t);
+			}
+		});
+	}
+	
+	/**
+	 *  Check various options for a field belief.
+	 */
+	protected void addBeliefField(Class<?> pojoclazz, Field f, List<IInjectionHandle> ret) throws Exception
 	{
 		Belief	belief	= f.getAnnotation(Belief.class);
 		

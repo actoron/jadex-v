@@ -31,7 +31,7 @@ public class InjectionModel
 {
 	static IInjectionHandle	NULL	= (self, pojos, context) -> null;
 	
-	 /** The pojo classes as a hierachy of component pojo plus subobjects, if any.
+	 /** The pojo classes as a hierarchy of component pojo plus subobjects, if any.
 	  *  The model is for the last pojo in the list. */
 	protected List<Class<?>>	classes;
 	
