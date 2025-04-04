@@ -12,11 +12,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Trigger
 {
-//	/**
-//	 *  Goal types to react on, i.e. choose this plan to handle goals of the given type(s).
-//	 */
-//	public Class<?>[] goals() default {};
-//	
+	/**
+	 *  Goal types to react on, i.e. choose this plan to handle goals of the given type(s).
+	 */
+	public Class<?>[] goals() default {};
+	
 //	/**
 //	 *  Goal type finished events to react on, i.e. the plan will be executed after the goal has been processed (e.g. by a different plan).
 //	 */

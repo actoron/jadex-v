@@ -1,6 +1,7 @@
 package jadex.bdi;
 
 import jadex.core.IComponentFeature;
+import jadex.future.IFuture;
 
 /**
  *  Public methods for working with BDI agents.
@@ -27,12 +28,12 @@ public interface IBDIAgentFeature	extends IComponentFeature
 //	 */
 //	public IGoal getGoal(Object goal);
 
-//	/**
-//	 *  Dispatch a pojo goal wait for its result.
-//	 *  @param goal The pojo goal.
-//	 *  @return The goal result.
-//	 */
-//	public <T, E> IFuture<E> dispatchTopLevelGoal(T goal);
+	/**
+	 *  Dispatch a pojo goal wait for its result.
+	 *  @param goal The pojo goal.
+	 *  @return The goal result.
+	 */
+	public <T, E> IFuture<E> dispatchTopLevelGoal(T goal);
 	
 //	/**
 //	 *  Drop a pojo goal.

@@ -8,15 +8,20 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
+import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.impl.ChangeEvent;
+import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingConsumer;
 import jadex.future.Future;
 import jadex.rules.eca.ChangeInfo;
 
@@ -37,8 +42,8 @@ public class PlanTriggerTest
 		Future<Object>	goal	= new Future<>();
 		Future<Object>	goalfinished	= new Future<>();
 		
-//		@Goal
-//		class MyGoal{}
+		@Goal
+		class MyGoal{}
 		
 		@Plan(trigger=@Trigger(factadded="bel"))
 		void addedPlan(IPlan plan)
@@ -50,11 +55,7 @@ public class PlanTriggerTest
 		void changedPlan(IPlan plan)
 		{
 			ChangeEvent<?>	event	= (ChangeEvent<?>)plan.getReason();
-			// Ignore initial "beliefchanged" event
-			if("factchanged".equals(event.getType()))
-			{
-				changed.setResult(event);
-			}
+			changed.setResult(event);
 		}
 
 		@Plan(trigger=@Trigger(factremoved="bel"))
@@ -68,7 +69,7 @@ public class PlanTriggerTest
 //		{
 //			goal.setResult(plan.getReason());
 //		}
-//		
+		
 //		@Plan(trigger=@Trigger(goalfinisheds=MyGoal.class))
 //		void goalFinishedPlan(IPlan plan)
 //		{
@@ -146,15 +147,15 @@ public class PlanTriggerTest
 		assertEquals(info, ci.getInfo(), "info");
 	}
 
-//	/**
-//	 *  Check if goal matches expectations.
-//	 */
-//	public static void checkGoalInfo(Future<Object> fut, Class<?> pojoclass)
-//	{
-//		Object	goal	= fut.get(TestHelper.TIMEOUT);
-//		assertInstanceOf(IGoal.class, goal, "reason");
-//		assertEquals(pojoclass, ((IGoal)goal).getPojo().getClass(), "pojo");
-//	}
+	/**
+	 *  Check if goal matches expectations.
+	 */
+	public static void checkGoalInfo(Future<Object> fut, Class<?> pojoclass)
+	{
+		Object	goal	= fut.get(TestHelper.TIMEOUT);
+		assertInstanceOf(IGoal.class, goal, "reason");
+		assertEquals(pojoclass, ((IGoal)goal).getPojo().getClass(), "pojo");
+	}
 
 //	/**
 //	 *  Check if old/new value and info match expectations.

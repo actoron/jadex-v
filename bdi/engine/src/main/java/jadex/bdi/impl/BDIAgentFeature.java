@@ -4,6 +4,8 @@ import jadex.bdi.IBDIAgentFeature;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.execution.impl.ILifecycle;
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.rules.eca.RuleSystem;
 
 public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
@@ -34,6 +36,36 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	@Override
 	public void onEnd()
 	{
+	}
+	
+	//-------- IBDIAgentFeature interface --------
+
+	/**
+	 *  Dispatch a pojo goal wait for its result.
+	 *  @param goal The pojo goal.
+	 *  @return The goal result.
+	 */
+	public <T, E> IFuture<E> dispatchTopLevelGoal(final T goal)
+	{
+		final Future<E> ret = new Future<E>();
+		
+//		final MGoal mgoal = ((MCapability)capa.getModelElement()).getGoal(goal.getClass().getName());
+//		if(mgoal==null)
+//			throw new RuntimeException("Unknown goal type: "+goal);
+//		final RGoal rgoal = new RGoal(mgoal, goal, null, null, null);
+//		rgoal.addListener(new ExceptionDelegationResultListener<Void, E>(ret)
+//		{
+//			public void customResultAvailable(Void result)
+//			{
+//				Object res = RGoal.getGoalResult(rgoal, self.getPojo().getClass().getClassLoader());
+//				ret.setResult((E)res);
+//			}
+//		});
+//
+////		System.out.println("adopt goal");
+//		RGoal.adoptGoal(rgoal);
+		
+		return ret;
 	}
 	
 	//-------- internal methods --------
