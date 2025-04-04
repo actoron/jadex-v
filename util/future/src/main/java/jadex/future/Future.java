@@ -1,6 +1,7 @@
 package jadex.future;
 
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -317,7 +318,18 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 			// Combine exception and current stack trace with filler in between.
 			StackTraceElement[]	stack0	= t.getStackTrace();
 			StackTraceElement[]	stack1	= new RuntimeException().fillInStackTrace().getStackTrace();
-			t.setStackTrace((StackTraceElement[])SUtil.joinArrays(stack1,
+			
+			// Hack !!! JUnit cuts the stack trace at the first own class.
+			// -> strip junit elements to disable cut
+			List<StackTraceElement>	stack	= new ArrayList<>();
+			for(StackTraceElement element: stack1)
+			{
+				if(!element.getClassName().contains("junit"))
+					stack.add(element);
+			}
+			
+			t.setStackTrace((StackTraceElement[])SUtil.joinArrays(
+				stack.toArray(new StackTraceElement[stack.size()]),
 				new StackTraceElement[]{new StackTraceElement("End of future stack trace", "\n", "Original exception: "+t.toString(), -1)}, stack0));
 			
 			if(t instanceof RuntimeException)
