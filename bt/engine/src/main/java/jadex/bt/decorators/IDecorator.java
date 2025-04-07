@@ -7,5 +7,7 @@ import jadex.future.IFuture;
 
 public interface IDecorator<T> 
 {
+	public String getType();
+	
 	public IFuture<NodeState> internalExecute(Event event, NodeState result, ExecutionContext<T> context);
 }

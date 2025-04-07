@@ -29,19 +29,25 @@ public class FailureDecorator <T> extends ConditionalDecorator<T>
 		super.observeCondition(events, (event, rule, context, condresult) -> // action
 		{
 			//System.out.println("failure condition triggered: "+event);
-			System.getLogger(getClass().getName()).log(Level.INFO, "failure condition triggered: "+event);
 			
-			getNode().abort(AbortMode.SELF, NodeState.FAILED, getExecutionContext());
-			
+			if(getNode().getNodeContext(getExecutionContext())!=null)
+			{
+				System.getLogger(getClass().getName()).log(Level.INFO, "failure condition triggered: "+event);
+				getNode().abort(AbortMode.SELF, NodeState.FAILED, getExecutionContext());
+			}
+			else
+			{
+				System.getLogger(getClass().getName()).log(Level.INFO, "failure condition triggered, but node not active: "+event);
+			}
 			return IFuture.DONE;
 		});
 		return this;
 	}
 	
 	@Override
-	public NodeState mapToNodeState(Boolean state)
+	public NodeState mapToNodeState(Boolean state, NodeState nstate)
 	{
-		NodeState ret = state!=null && state? NodeState.FAILED: NodeState.RUNNING; 
+		NodeState ret = state!=null && state? NodeState.FAILED: nstate; 
 		//System.out.println("map: "+state+":"+ret+" "+this);
 		return ret;
 	}

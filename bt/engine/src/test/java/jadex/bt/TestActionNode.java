@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.actions.UserAction;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.ActionNode;
@@ -56,10 +57,10 @@ public class TestActionNode
     @Test
     public void testActionNodeAbort() 
     {
-        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
-            return new Future<>();
+            return new TerminableFuture<>();
             // Simulate a running action
         }));
 

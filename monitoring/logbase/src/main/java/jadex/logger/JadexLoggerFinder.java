@@ -153,9 +153,11 @@ public class JadexLoggerFinder extends LoggerFinder
 	            {
 	            	Logger ilogger = selected.icreator()!=null? selected.icreator().apply(selected.getLoggerName()): null;
 	            	Logger elogger = selected.ecreator()!=null? selected.ecreator().apply(selected.getLoggerName()): null;
-	            	logger = new CombinedLogger(ilogger, elogger);
+	            	logger = new CombinedLogger(ilogger, elogger, isSystem);
 	                loggers.put(selected, logger);
 	                loggersbyname.put(selected.getLoggerName(), logger);
+	                
+	                //System.out.println("created logger: "+logger+" system: "+isSystem);
 	            }
 	        } 
 	        else 
@@ -183,6 +185,8 @@ public class JadexLoggerFinder extends LoggerFinder
 		int idx = name.lastIndexOf(".");
 		if(idx>0)
 			packname = name.substring(0, idx);
+		if(packname.startsWith("class "))
+			packname = packname.substring(6);
 		
 		ret = isSystemPackage(packname);
 		

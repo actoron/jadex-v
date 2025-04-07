@@ -185,6 +185,11 @@ public class Environment
 		
 		SpaceObject object = getSpaceObject(obj);
 		
+		if(hasTask("move"))
+		{
+			System.out.println("still has move task: "+getTask("move"));
+		}
+		
 		EnvironmentTask task = new EnvironmentTask(object, "move", this, ret, data ->
 		{
 			return performMove(object, destination, speed, data.delta(), tolerance);
@@ -194,6 +199,23 @@ public class Environment
 		addTask(task);
 		
 		return ret;
+	}
+	
+	@ComponentMethod
+	public IFuture<IVector2> getMoveTarget(@NoCopy SpaceObject obj)
+	{
+		IVector2 ret = null;
+		
+		for(EnvironmentTask task: tasks)
+		{
+			if("move".equals(task.getType()))
+			{
+				ret = (IVector2)task.getInfo("destination");
+				break;
+			}
+		}
+		
+		return new Future<>(ret);
 	}
 	
 	/**
@@ -337,6 +359,19 @@ public class Environment
 	}
 	
 	//-------- internal methods --------
+	
+	protected boolean hasTask(String type)
+	{
+		return tasks.stream().anyMatch(task -> type.equals(task.getType()));
+	}
+	
+	protected EnvironmentTask getTask(String type)
+	{
+	    return tasks.stream()
+	        .filter(task -> type.equals(task.getType()))
+	        .findFirst()
+	        .orElse(null); 
+	}
 	
 	protected long internalGetStepDelay()
 	{
@@ -520,9 +555,9 @@ public class Environment
 		if(!rem)
 			System.out.println("task not found: "+task+" "+tasks);
 		//else
-		//	System.out.println("removed task: "+task+" "+tasks);
+		//	System.out.println("env removed task: "+task+" "+tasks);
 	}
-
+	
 	protected TaskData performMove(SpaceObject obj, IVector2 destination, double speed, long deltatime, double tolerance)
 	{
 		boolean finished = false;

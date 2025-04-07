@@ -29,7 +29,7 @@ public class Val<T>
 	}
 	
 	/**
-	 *  Create belief value with a dynamic function.
+	 * Create belief value with a dynamic function.
 	 */
 	public Val(Callable<T> dynamic, long updaterate)
 	{

@@ -168,23 +168,6 @@ public class CleanerworldEnvironment extends Environment
 		return ret;
 	}
 	
-	@ComponentMethod
-	public IFuture<IVector2> getTarget(@NoCopy Cleaner cl)
-	{
-		IVector2 ret = null;
-		
-		for(EnvironmentTask task: tasks)
-		{
-			if("move".equals(task.getType()))
-			{
-				ret = (IVector2)task.getInfo("destination");
-				break;
-			}
-		}
-		
-		return new Future<>(ret);
-	}
-	
 	protected TaskData performLoadBattery(Cleaner cleaner, Chargingstation station, long deltatime)
 	{
 		IVector2 loc = cleaner.getPosition();
@@ -277,6 +260,10 @@ public class CleanerworldEnvironment extends Environment
 			throw new IllegalStateException("Ran out of battery during moveTo() -> target location not reached!");
 		}
 		cl.setChargestate(chargestate);
+		
+		/*Set<SpaceObject> changed = res.changed()==null? new HashSet<>(): new HashSet<>(res.changed());
+		changed.add(cl);
+		res = new TaskData(res.finsihed(), res.data(), changed);*/
 	
 		return res;
 	}

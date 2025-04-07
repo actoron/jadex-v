@@ -1,12 +1,16 @@
 package jadex.bt.state;
 
 import java.lang.System.Logger.Level;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import jadex.bt.nodes.CompositeNode.IIndexContext;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 
 public class NodeContext<T>
@@ -18,9 +22,9 @@ public class NodeContext<T>
 	
 	protected AbortMode aborted = null;
 	
-	protected Future<NodeState> call;
+	protected Future<NodeState> callfuture;
 	
-	protected boolean repeat = false;
+	protected IFuture<Void> abortfuture;
 	
 	protected long timeout = 0;
 	
@@ -33,7 +37,7 @@ public class NodeContext<T>
 	protected Map<String, Object> values;
 	
 	protected int nodeid;
-
+	
 	public boolean isFinishedInBefore() 
 	{
 		return finishedinbefore;
@@ -92,9 +96,8 @@ public class NodeContext<T>
 			// This can be ok, if the future is held outside and finished afterwards
 			//if(call!=null && !call.isDone())
 			//	System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! removing unfinished call: "+call+" nodeid="+getNodeid()); 
-			call = null;
+			callfuture = null;
 		}
-		repeat = false;
 		timeout = 0;
 		repeatdelay = 0;
 		if(this.timeouttimer!=null && !this.timeouttimer.isDone())
@@ -146,20 +149,37 @@ public class NodeContext<T>
 		return this;
 	}
 
-	public Future<NodeState> getCall() 
+	public Future<NodeState> getCallFuture() 
 	{
-		return call;
+		return callfuture;  
 	}
-
-	public NodeContext<T> setCall(Future<NodeState> call) 
+	
+	public NodeContext<T> setCallFuture(Future<NodeState> callfuture) 
 	{
-		if(call==null)
+		if(callfuture==null)
 			//System.out.println("setting call to null");
-  			System.getLogger(this.getClass().getName()).log(Level.INFO, "setting call to null");
+  			System.getLogger(this.getClass().getName()).log(Level.INFO, "setting call future to null");
+		
+		this.callfuture = callfuture;
 
-		this.call = call;
 		return this;
-	}		
+	}	
+	
+	public IFuture<Void> getAbortFuture() 
+	{
+		return abortfuture;  
+	}
+	
+	public NodeContext<T> setAbortFuture(IFuture<Void> abortfuture) 
+	{
+		if(abortfuture==null)
+			//System.out.println("setting call to null");
+  			System.getLogger(this.getClass().getName()).log(Level.INFO, "setting abort future to null");
+		
+		this.abortfuture = abortfuture;
+
+		return this;
+	}	
 	
 	public NodeContext<T> setValue(String name, Object value)
 	{
@@ -177,16 +197,6 @@ public class NodeContext<T>
 	public Object removeValue(String name)
 	{
 		return values==null? null: values.remove(name);
-	}
-
-	public boolean isRepeat() 
-	{
-		return repeat;
-	}
-
-	public void setRepeat(boolean repeat) 
-	{
-		this.repeat = repeat;
 	}
 
 	public long getTimeout() 
@@ -219,4 +229,22 @@ public class NodeContext<T>
 		this.nodeid = nodeid;
 	}
 	
+	public List<String> getDetailsShort()
+	{
+		List<String> ret = new ArrayList<>();
+		
+		if(isFinishedInBefore())
+			ret.add("finished in before: true");
+		if(getAborted()!=null)
+		{
+			ret.add("aborted: "+getAborted());
+			ret.add("abort done: "+getAbortFuture().isDone());
+		}
+		if(this instanceof IIndexContext)
+			ret.add("index: "+((IIndexContext)this).getIndex());
+		if(callfuture!=null)
+			ret.add("call done: "+callfuture.isDone());
+		
+		return ret;
+	}
 }

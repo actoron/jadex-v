@@ -176,7 +176,7 @@ public class EnvironmentTask
 	@Override
 	public String toString() 
 	{
-		return "EnvironmentTask [id=" + id + "]";
+		return "EnvironmentTask [id=" + id + ", owner=" + owner + ", type=" + type + ", task=" + task + "]";
 	}
 
 	private Environment getEnclosingInstance() 
