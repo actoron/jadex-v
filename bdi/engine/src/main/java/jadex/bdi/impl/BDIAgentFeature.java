@@ -41,7 +41,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	//-------- IBDIAgentFeature interface --------
 
 	/**
-	 *  Dispatch a pojo goal wait for its result.
+	 *  Dispatch a pojo goal and optionally wait for its result.
 	 *  @param goal The pojo goal.
 	 *  @return The goal result.
 	 */
