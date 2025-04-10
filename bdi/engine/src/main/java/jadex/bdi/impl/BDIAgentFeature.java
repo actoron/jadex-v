@@ -66,9 +66,6 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 			});
 		rule.addEvent(new EventType(new String[]{ChangeEvent.GOALOPTION, EventType.MATCHALL}));
 		rulesystem.getRulebase().addRule(rule);
-
-		
-		
 	}
 	
 	@Override

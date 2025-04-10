@@ -70,11 +70,11 @@ public class PlanTriggerTest
 			goal.setResult(plan.getReason());
 		}
 		
-//		@Plan(trigger=@Trigger(goalfinisheds=MyGoal.class))
-//		void goalFinishedPlan(IPlan plan)
-//		{
-//			goalfinished.setResult(plan.getReason());
-//		}
+		@Plan(trigger=@Trigger(goalfinisheds=MyGoal.class))
+		void goalFinishedPlan(IPlan plan)
+		{
+			goalfinished.setResult(plan.getReason());
+		}
 	}
 	
 	@Test
@@ -121,14 +121,14 @@ public class PlanTriggerTest
 		checkGoalInfo(pojo.goal, PlanTriggerTestAgent.MyGoal.class);
 	}
 
-//	@Test
-//	void testGoalFinished()
-//	{
-//		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-//		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-//		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
-//		checkGoalEventInfo(pojo.goalfinished, PlanTriggerTestAgent.MyGoal.class.getName(), "goaldropped", PlanTriggerTestAgent.MyGoal.class);
-//	}
+	@Test
+	void testGoalFinished()
+	{
+		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
+		checkGoalEventInfo(pojo.goalfinished, PlanTriggerTestAgent.MyGoal.class.getName(), "goaldropped", PlanTriggerTestAgent.MyGoal.class);
+	}
 
 	/**
 	 *  Check if old/new value and info match expectations.
@@ -157,17 +157,17 @@ public class PlanTriggerTest
 		assertEquals(pojoclass, ((IGoal)goal).getPojo().getClass(), "pojo");
 	}
 
-//	/**
-//	 *  Check if old/new value and info match expectations.
-//	 */
-//	public static void checkGoalEventInfo(Future<Object> fut, String source, String type, Class<?> pojoclass)
-//	{
-//		Object	event	= fut.get(TestHelper.TIMEOUT);
-//		assertInstanceOf(ChangeEvent.class, event, "reason");
-//		assertEquals(source, ((ChangeEvent<?>)event).getSource(), "source");
-//		assertEquals(type, ((ChangeEvent<?>)event).getType(), "type");
-//		assertInstanceOf(IGoal.class, ((ChangeEvent<?>)event).getValue());
-//		assertEquals(pojoclass, ((IGoal)((ChangeEvent<?>)event).getValue()).getPojo().getClass(), "pojo");
-//	}
+	/**
+	 *  Check if old/new value and info match expectations.
+	 */
+	public static void checkGoalEventInfo(Future<Object> fut, String source, String type, Class<?> pojoclass)
+	{
+		Object	event	= fut.get(TestHelper.TIMEOUT);
+		assertInstanceOf(ChangeEvent.class, event, "reason");
+		assertEquals(source, ((ChangeEvent<?>)event).getSource(), "source");
+		assertEquals(type, ((ChangeEvent<?>)event).getType(), "type");
+		assertInstanceOf(IGoal.class, ((ChangeEvent<?>)event).getValue());
+		assertEquals(pojoclass, ((IGoal)((ChangeEvent<?>)event).getValue()).getPojo().getClass(), "pojo");
+	}
 }
 

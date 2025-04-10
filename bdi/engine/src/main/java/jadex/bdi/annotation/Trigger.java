@@ -17,10 +17,10 @@ public @interface Trigger
 	 */
 	public Class<?>[] goals() default {};
 	
-//	/**
-//	 *  Goal type finished events to react on, i.e. the plan will be executed after the goal has been processed (e.g. by a different plan).
-//	 */
-//	public Class<?>[] goalfinisheds() default {};
+	/**
+	 *  Goal type finished events to react on, i.e. the plan will be executed after the goal has been processed (e.g. by a different plan).
+	 */
+	public Class<?>[] goalfinisheds() default {};
 		
 	/**
 	 *  The fact added belief names, i.e. the plan will be executed whenever a fact is added to the given belief set(s).

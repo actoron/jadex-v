@@ -1,5 +1,6 @@
 package jadex.bdi.impl.plan;
 
+import jadex.bdi.impl.goal.RProcessableElement;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 
@@ -95,12 +96,12 @@ public class ExecutePlanStepAction implements Runnable
 					{
 						public void resultAvailable(Object result)
 						{
-	//						IInternalBDIAgentFeature.get().getCapability().removePlan(rplan);
-	//						Object reason = rplan.getReason();
-	//						if(reason instanceof RProcessableElement)
-	//						{
-	//							((RProcessableElement)reason).planFinished(rplan);
-	//						}
+//							IInternalBDIAgentFeature.get().getCapability().removePlan(rplan);
+							Object reason = rplan.getReason();
+							if(reason instanceof RProcessableElement)
+							{
+								((RProcessableElement)reason).planFinished(rplan);
+							}
 						}
 						
 						public void exceptionOccurred(Exception exception)
@@ -111,12 +112,12 @@ public class ExecutePlanStepAction implements Runnable
 				}
 				else
 				{
-					//						IInternalBDIAgentFeature.get().getCapability().removePlan(rplan);
-					//						Object reason = rplan.getReason();
-					//						if(reason instanceof RProcessableElement)
-					//						{
-					//							((RProcessableElement)reason).planFinished(rplan);
-					//						}
+//					IInternalBDIAgentFeature.get().getCapability().removePlan(rplan);
+					Object reason = rplan.getReason();
+					if(reason instanceof RProcessableElement)
+					{
+						((RProcessableElement)reason).planFinished(rplan);
+					}
 				}
 			}
 			// Only needs to to something for waiting and new plans

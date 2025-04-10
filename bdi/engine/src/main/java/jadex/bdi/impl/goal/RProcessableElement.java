@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import jadex.bdi.impl.RElement;
+import jadex.bdi.impl.plan.RPlan;
 import jadex.core.IComponent;
 
 /**
@@ -77,22 +78,22 @@ public abstract class RProcessableElement extends RElement//extends RParameterEl
 //		this.triedplans = triedplans;
 //	}
 
-//	/**
-//	 *  Called when plan execution has finished.
-//	 */
-//	public void planFinished(IInternalPlan rplan)
-//	{
-//		if(rplan!=null)
-//		{
-//			if(apl!=null)
-//			{
+	/**
+	 *  Called when plan execution has finished.
+	 */
+	public void planFinished(/*IInternalPlan*/RPlan rplan)
+	{
+		if(rplan!=null)
+		{
+			if(apl!=null)
+			{
 //				// do not add tried plan if apl is already reset because procedural
 //				// goal semantics is wrong otherwise (isProceduralSucceeded)
 //				addTriedPlan(rplan);
 //				apl.planFinished(rplan);
-//			}
-//		}
-//	}
+			}
+		}
+	}
 	
 //	/**
 //	 *  Test if parameter writes are currently allowed.

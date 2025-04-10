@@ -265,7 +265,7 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 //				@Override
 //				public void resultAvailable(Void result)
 //				{
-//					IExecutionFeature.get().scheduleStep(new DropGoalAction(RGoal.this));
+					IExecutionFeature.get().scheduleStep(new DropGoalAction(RGoal.this));
 //				}
 //				
 //				@Override
@@ -279,7 +279,7 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 		}
 		else if(GoalLifecycleState.DROPPED.equals(lifecyclestate))
 		{
-//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, getMGoal().getName()}), this));
+			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, modelname}), this));
 //
 //			if(getListeners()!=null)
 //			{
@@ -451,100 +451,36 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 //		return ret;
 ////		ret = getMGoal().isUnique()? getPojoElement().equals(((RProcessableElement)obj).getPojoElement()): super.equals(obj);
 //	}
-//
-//	/**
-//	 *  Called when a plan is finished.
-//	 */
-//	public void planFinished(IInternalPlan rplan)
-//	{
+
+	/**
+	 *  Called when a plan is finished.
+	 */
+	public void planFinished(/*IInternalPlan*/RPlan rplan)
+	{
 //		// Atomic block to avoid goal conditions being triggered in between
 //		// Required, e.g. for writing back parameter set values into query goal -> first add value would trigger goal target, other values would not be set.
 //		boolean	queue	= IInternalBDIAgentFeature.get().getRuleSystem().isQueueEvents();
 //		IInternalBDIAgentFeature.get().getRuleSystem().setQueueEvents(true);
 //		
-//		//if(this.toString().indexOf("GetOne")!=-1 && this.getId().toString().indexOf("Rich")!=-1)
-//		//	System.out.println("planfin: "+this+" "+getLifecycleState()+" "+getProcessingState());
-//
 //		super.planFinished(rplan);
 //
 //		childplan = null;
-//		
+		
 //		if(rplan!=null)
 //		{
-////			if(rplan.getModelElement().getName().indexOf("seen")!=-1)
-////				System.out.println("hhhhhhhhhhhhhggg");
-//			
-////			System.out.println("plan fini: "+rplan);
-//			
-//			// Find parameter mappings for xml agents
-//			// todo: goal-goal mappings
-//			// Todo: unify mapping code with RPlan.createPlan()
-//			//if(rplan instanceof RPlan)// && rplan.isPassed()) -> also copy results from failed plan, if any (e.g. used for negotiation rounds in booktrading)
-//			if(rplan instanceof RPlan && (rplan.isPassed() || rplan.isFailed())) 
-//			{
-//				MPlan mplan = (MPlan)((RPlan)rplan).getModelElement();
-//				if(mplan.getParameters()!=null && mplan.getParameters().size()>0)
-//				{
-//					for(MParameter mparam: mplan.getParameters())
-//					{
-//						if(MParameter.Direction.OUT.equals(mparam.getDirection()) || MParameter.Direction.INOUT.equals(mparam.getDirection()))
-//						{
-//							List<String> mappings = ((MPlanParameter)mparam).getGoalMappings();
-//							if(mappings!=null)
-//							{
-//								for(String mapping: mappings)
-//								{
-//									MCapability	capa	= ((IBDIModel)IInternalBDIAgentFeature.get().getBDIModel()).getCapability();
-//									String targetelm = mapping.substring(0, mapping.indexOf("."));
-//									String targetpara = mapping.substring(mapping.indexOf(".")+1);
-//									
-//									if(capa.getGoalReferences().containsKey(targetelm))
-//									{
-//										targetelm	= capa.getGoalReferences().get(targetelm);
-//									}
-//									
-//									if(getModelElement().getName().equals(targetelm))
-//									{
-//										if(mparam.isMulti(null))
-//										{
-//											getParameterSet(targetpara).removeValues();
-//											Object[] vals = rplan.getParameterSet(mparam.getName()).getValues();
-//											for(Object val: vals)
-//											{
-//												getParameterSet(targetpara).addValue(val);
-//											}
-//										}
-//										else
-//										{
-//											getParameter(targetpara).setValue(rplan.getParameter(mparam.getName()).getValue());
-//										}
-//										break;
-//									}
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//			
 //			if(rplan.isFailed())
 //			{
 //				this.setException(rplan.getException());
 //			}
 //		}
-////		if(rplan!=null)
-////			System.out.println("plan finished: "+rplan.getId());
-//		
-////		if(getPojoElement().getClass().getName().indexOf("PatrolPlan")!=-1)
-////			System.out.println("pips");
-//		
-//		// Check procedural success semantics
+		
+		// Check procedural success semantics
 //		if(isProceduralSucceeded())
-//		{
-//			// succeeded leads to lifecycle state dropping!
-//			setProcessingState(isRecur() ? GoalProcessingState.PAUSED : GoalProcessingState.SUCCEEDED);
-//		}
-//		
+		{
+			// succeeded leads to lifecycle state dropping!
+			setProcessingState(/*isRecur() ? GoalProcessingState.PAUSED :*/ GoalProcessingState.SUCCEEDED);
+		}
+		
 //		// Continue goal processing if still active
 //		if(GoalLifecycleState.ACTIVE.equals(getLifecycleState()))
 //		{
@@ -610,7 +546,7 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 //		}
 //		
 //		IInternalBDIAgentFeature.get().getRuleSystem().setQueueEvents(queue);
-//	}
+	}
 //	
 //	//-------- methods that are goal specific --------
 //

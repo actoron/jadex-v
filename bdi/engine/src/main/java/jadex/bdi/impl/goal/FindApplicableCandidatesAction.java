@@ -52,7 +52,7 @@ public class FindApplicableCandidatesAction implements Runnable
 		apl.build();
 		if(apl.isEmpty())
 		{
-//			element.planFinished(null);
+			element.planFinished(null);
 		}
 		else
 		{

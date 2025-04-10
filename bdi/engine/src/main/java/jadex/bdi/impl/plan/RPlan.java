@@ -1250,6 +1250,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	
 	protected IFuture<?> executePlanBody()
 	{
+		// TODO: set passed/failed and execute passed/failed/aborted
 		try
 		{
 			Object	ret	= body.apply(comp, parentpojos, this);

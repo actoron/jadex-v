@@ -4,7 +4,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jadex.common.SReflect;
 import jadex.core.IComponent;
 
 /**
@@ -48,7 +47,7 @@ public abstract class RElement
 //		this.modelelement = modelelement;
 		if(modelname==null)
 		{
-			modelname	= SReflect.getInnerClassName(pojoelement.getClass());
+			modelname	= pojoelement.getClass().getName();
 		}
 		this.modelname	= modelname;
 		this.pojoelement	= pojoelement;

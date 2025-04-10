@@ -32,7 +32,6 @@ import jadex.bdi.impl.wrappers.SetWrapper;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.common.Tuple2;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
@@ -52,6 +51,7 @@ import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
+import jadex.rules.eca.ICondition;
 import jadex.rules.eca.IEvent;
 import jadex.rules.eca.IRule;
 import jadex.rules.eca.Rule;
@@ -188,22 +188,25 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		if(trigger.factadded().length==0
 			&& trigger.factremoved().length==0
 			&& trigger.factchanged().length==0
-			&& trigger.goals().length==0)
+			&& trigger.goals().length==0
+			&& trigger.goalfinisheds().length==0)
 		{
 			throw new RuntimeException("Plan has no trigger: "+m);
 		}
 		
-		// Add rule to trigger plan creation on given events.
+		// Add rule to trigger direct plan creation on given events.
 		if(trigger.factadded().length>0
 			|| trigger.factremoved().length>0
-			|| trigger.factchanged().length>0)
+			|| trigger.factchanged().length>0
+			|| trigger.goalfinisheds().length>0)
 		{
+			List<EventType>	events	= new ArrayList<>();
+			
+			// Add fact trigger events.
 			Map<String, String[]>	tevents	= new LinkedHashMap<String, String[]>();
 			tevents.put(ChangeEvent.FACTADDED, trigger.factadded());
 			tevents.put(ChangeEvent.FACTREMOVED, trigger.factremoved());
 			tevents.put(ChangeEvent.FACTCHANGED, trigger.factchanged());
-					
-			List<EventType>	events	= new ArrayList<>();
 			for(String tevent: tevents.keySet())
 			{
 				for(String dep: tevents.get(tevent))
@@ -221,6 +224,15 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 			
+			// Add goal finished trigger events.
+			for(Class<?> goaltype: trigger.goalfinisheds())
+			{
+				events.add(new EventType(ChangeEvent.GOALDROPPED, goaltype.getName()));
+			}
+			
+			// Convert to array
+			EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+			
 			// In extra on start, add rule to run plan when event happens.  
 			ret.add((comp, pojos, context) ->
 			{
@@ -229,7 +241,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
 					rs.getRulebase().addRule(new Rule<Void>(
 						"TriggerPlan_"+m.getName(),	// Rule Name
-						event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
+						ICondition.TRUE_CONDITION,	// Condition -> true
 						(event, rule, context2, condresult) ->
 						{
 							// Action -> start plan
@@ -237,7 +249,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(plan));
 							return IFuture.DONE;
 						},
-						events.toArray(new EventType[events.size()])));	// Trigger Event(s)
+						aevents));	// Trigger Event(s)
 					return null;
 				}
 				catch(Throwable t)
@@ -293,6 +305,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					events.add(new EventType(ChangeEvent.FACTADDED, dep));
 					events.add(new EventType(ChangeEvent.FACTREMOVED, dep));
 				}
+				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 				
 				ret.add((comp, pojos, context) ->
 				{
@@ -302,7 +315,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
 						rs.getRulebase().addRule(new Rule<Void>(
 							"DependenBeliefChange_"+f.getName(),	// Rule Name
-							event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
+							ICondition.TRUE_CONDITION,	// Condition -> true
 							new IAction<Void>()	// Action -> throw change event
 							{
 								Object	oldvalue	= value.get();
@@ -315,7 +328,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 									return IFuture.DONE;
 								}								
 							},
-							events.toArray(new EventType[events.size()])));	// Trigger Event(s)
+							aevents));	// Trigger Event(s)
 						return null;
 					}
 					catch(Throwable t)
