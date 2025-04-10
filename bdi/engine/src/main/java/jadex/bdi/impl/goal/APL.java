@@ -7,8 +7,8 @@ import java.util.List;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
+import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
-import jadex.injection.impl.IInjectionHandle;
 
 /**
  *  The APL is the applicable plan list. It stores the
@@ -1184,18 +1184,18 @@ public class APL
 //		}
 //	}
 
-	public static class	MethodPlanCandidate	implements ICandidateInfo
+	public static class	PlanCandidate	implements ICandidateInfo
 	{
-		/** The model name of the plan (i.e. method name). */
+		/** The model name of the plan (e.g. method name). */
 		protected String	name;
 		
-		/** The plan body method invocation handle. */
-		protected IInjectionHandle	body;
+		/** The plan body. */
+		protected IPlanBody	body;
 		
 		/**
 		 *  Create a method plan candidate info.
 		 */
-		public MethodPlanCandidate(String name, IInjectionHandle body)
+		public PlanCandidate(String name, IPlanBody body)
 		{
 			this.name	= name;
 			this.body	= body;
@@ -1211,7 +1211,7 @@ public class APL
 		@Override
 		public String toString()
 		{
-			return "MethodPlanCandidate("+name+")";
+			return "PlanCandidate("+name+")";
 		}
 	}
 }

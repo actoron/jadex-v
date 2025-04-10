@@ -3,6 +3,8 @@ package jadex.injection.impl;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -453,8 +455,11 @@ public class InjectionModel
 
 		return fetchers;
 	}
-
-
+	
+	/**
+	 *  Helper method to find all direct and inherited fields with the given annotation.
+	 *  Fields are returned in order: subclass first, then superclass.
+	 */
 	public static List<Field> findFields(Class<?> clazz, Class<? extends Annotation> annotation)
 	{
 		List<Field>	allfields	= new ArrayList<>();
@@ -477,6 +482,10 @@ public class InjectionModel
 		return allfields;
 	}
 	
+	/**
+	 *  Helper method to find all direct and inherited methods with the given annotation.
+	 *  Methods are returned in reverse order: superclass first, then subclass.
+	 */
 	public static List<Method> findMethods(Class<?> clazz, Class<? extends Annotation> annotation)
 	{
 		List<Method>	allmethods	= new ArrayList<>();
@@ -487,10 +496,6 @@ public class InjectionModel
 			{
 				if(method.isAnnotationPresent(annotation))
 				{
-					if((method.getModifiers() & Modifier.STATIC)!=0)
-					{
-						throw new RuntimeException("Methods with @"+annotation.getSimpleName()+" must not be static: "+method);
-					}
 					allmethods.add(method);
 				}
 			}
@@ -527,17 +532,72 @@ public class InjectionModel
 	}
 	
 	/**
-	 *  Create a handle for a method invocation.
-	 *  
+	 *  Helper method to find all direct and inherited inner classes with the given annotation.
+	 *  Inner classes are returned in order: subclass first, then superclass.
 	 */
-	public static IInjectionHandle	createMethodInvocation(Method method, List<Class<?>> classes, List<IInjectionHandle> preparams)
+	public static List<Class<?>> findInnerClasses(Class<?> clazz, Class<? extends Annotation> annotation)
+	{
+		List<Class<?>>	allclasses	= new ArrayList<>();
+		Class<?> myclazz	= clazz;
+		while(myclazz!=null)
+		{
+			for(Class<?> innerclazz: myclazz.getDeclaredClasses())
+			{
+				if(innerclazz.isAnnotationPresent(annotation))
+				{
+					allclasses.add(innerclazz);
+				}
+			}
+			myclazz	= myclazz.getSuperclass();
+		}
+		return allclasses;
+	}
+	
+	/**
+	 *  Check constructors of the given class and find one where all args can be injected.
+	 *  @throw {@link UnsupportedOperationException} when no viable constructor is found or multiple constructors are viable.
+	 */
+	public static IInjectionHandle	findViableConstructor(Class<?> clazz, List<Class<?>> parentclasses)
+	{
+		Constructor<?>	found	= null;
+		IInjectionHandle	ret	= null;
+		for(Constructor<?> con: clazz.getDeclaredConstructors())
+		{
+			try
+			{
+				ret	= createMethodInvocation(con, parentclasses, null);	// TODO: preparams!?
+				if(found!=null)
+				{
+					throw new UnsupportedOperationException("Multiple viable constructors: "+con+", "+found);
+				}
+				found	= con;
+			}
+			catch(Exception e)
+			{
+				// ignore constructor.
+			}
+		}
+		
+		if(ret==null)
+		{
+			throw new UnsupportedOperationException("No viable constructors: "+clazz);
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  Create a handle for a method or constructor invocation.
+	 */
+	public static IInjectionHandle	createMethodInvocation(Executable method, List<Class<?>> classes, List<IInjectionHandle> preparams)
 	{
 		try
 		{
 			IInjectionHandle	ret;
 			
 			method.setAccessible(true);
-			MethodHandle	handle	= MethodHandles.lookup().unreflect(method);
+			boolean	isstatic	= method instanceof Constructor || (method.getModifiers()&Modifier.STATIC)!=0;
+			MethodHandle	handle	= method instanceof Method ? MethodHandles.lookup().unreflect((Method)method) : MethodHandles.lookup().unreflectConstructor((Constructor<?>) method);
 			
 			// Find parameters
 			Parameter[]	params	= method.getParameters();
@@ -590,41 +650,84 @@ public class InjectionModel
 						throw new UnsupportedOperationException("Cannot inject "+ptypes[i].getSimpleName()+" in "+method);
 					}
 				}
-
-				ret	= (self, pojos, context) ->
+				
+				if(isstatic)
 				{
-					try
+					ret	= (self, pojos, context) ->
 					{
-						Object[]	args	= new Object[param_injections.size()+1];
-						args[0]	= pojos.get(pojos.size()-1);
-						for(int j=1; j<args.length; j++)
+						try
 						{
-							args[j]	= param_injections.get(j-1).apply(self, pojos, context);
+							Object[]	args	= new Object[param_injections.size()];
+							for(int j=0; j<args.length; j++)
+							{
+								args[j]	= param_injections.get(j).apply(self, pojos, context);
+							}
+							
+							return handle.invokeWithArguments(args);
 						}
-						
-						return handle.invokeWithArguments(args);
-					}
-					catch(Throwable e)
+						catch(Throwable e)
+						{
+							// Rethrow user exception
+							throw SUtil.throwUnchecked(e);
+						}
+					};
+
+				}
+				else
+				{
+					ret	= (self, pojos, context) ->
 					{
-						// Rethrow user exception
-						throw SUtil.throwUnchecked(e);
-					}
-				};			
+						try
+						{
+							Object[]	args	= new Object[param_injections.size()+1];
+							args[0]	= pojos.get(pojos.size()-1);
+							for(int j=1; j<args.length; j++)
+							{
+								args[j]	= param_injections.get(j-1).apply(self, pojos, context);
+							}
+							
+							return handle.invokeWithArguments(args);
+						}
+						catch(Throwable e)
+						{
+							// Rethrow user exception
+							throw SUtil.throwUnchecked(e);
+						}
+					};
+				}
 			}
 			else
 			{
-				ret	= (self, pojos, context) ->
+				if(isstatic)
 				{
-					try
+					ret	= (self, pojos, context) ->
 					{
-						return handle.invoke(pojos.get(pojos.size()-1));
-					}
-					catch(Throwable e)
+						try
+						{
+							return handle.invoke();
+						}
+						catch(Throwable e)
+						{
+							// Rethrow user exception
+							throw SUtil.throwUnchecked(e);
+						}
+					};
+				}
+				else
+				{
+					ret	= (self, pojos, context) ->
 					{
-						// Rethrow user exception
-						throw SUtil.throwUnchecked(e);
-					}
-				};
+						try
+						{
+							return handle.invoke(pojos.get(pojos.size()-1));
+						}
+						catch(Throwable e)
+						{
+							// Rethrow user exception
+							throw SUtil.throwUnchecked(e);
+						}
+					};					
+				}
 			}
 			
 			return ret;

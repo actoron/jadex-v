@@ -89,7 +89,7 @@ public class ExecutePlanStepAction implements Runnable
 //				IInternalBDIAgentFeature.get().getCapability().addPlan(rplan);
 				
 				@SuppressWarnings("unchecked")
-				IFuture<Object>	ret	= (IFuture<Object>) rplan.executePlanBody();
+				IFuture<Object>	ret	= (IFuture<Object>) rplan.getBody().executePlan(rplan);
 				if(ret!=null)
 				{
 					ret.addResultListener(new IResultListener<Object>()

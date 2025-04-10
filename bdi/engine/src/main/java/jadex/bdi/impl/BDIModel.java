@@ -7,7 +7,7 @@ import java.util.Map;
 
 import jadex.bdi.impl.goal.APL;
 import jadex.bdi.impl.goal.ICandidateInfo;
-import jadex.injection.impl.IInjectionHandle;
+import jadex.bdi.impl.plan.IPlanBody;
 
 /**
  *  Meta info about the agent/capability etc.
@@ -29,7 +29,7 @@ public class BDIModel
 	/**
 	 *  Add a plan to the model.
 	 */
-	protected void	addPlanforGoal(Class<?> goaltype, String planname, IInjectionHandle planhandle)
+	protected void	addPlanforGoal(Class<?> goaltype, String planname, IPlanBody body)
 	{
 		List<ICandidateInfo>	goalplans	= plans.get(goaltype);
 		if(goalplans==null)
@@ -37,7 +37,7 @@ public class BDIModel
 			goalplans	= new ArrayList<>(4);
 			plans.put(goaltype, goalplans);
 		}
-		goalplans.add(new APL.MethodPlanCandidate(planname, planhandle));
+		goalplans.add(new APL.PlanCandidate(planname, body));
 	}
 	
 	//-------- static part --------

@@ -1,6 +1,7 @@
 package jadex.bdi.impl;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,6 +33,9 @@ public abstract class RElement
 	
 	/** The enclosing (e.g.) capability pojo(s). */
 	protected List<Object>	parentpojos;
+	
+	/** The enclosing (e.g.) capability pojo(s). */
+	protected List<Object>	allpojos;
 	
 	//-------- constructors --------
 	
@@ -79,13 +83,22 @@ public abstract class RElement
 //	}
 
 	/**
-	 *  Get the id.
+	 *  Get the instance id.
 	 *  @return The id.
 	 */
 	public String getId()
 	{
 		return id;
 	}
+
+//	/**
+//	 *  Get the model name.
+//	 *  @return The model name
+//	 */
+//	public String getName()
+//	{
+//		return modelname;
+//	}
 
 //	/**
 //	 *  Set the id.
@@ -162,6 +175,27 @@ public abstract class RElement
 	public List<Object> getParentPojos()
 	{
 		return parentpojos;
+	}
+	
+	/**
+	 *  Get all the pojo elements including parents and element pojo, if any.
+	 */
+	public List<Object> getAllPojos()
+	{
+		if(allpojos==null)
+		{
+			if(pojoelement==null)
+			{
+				allpojos	= parentpojos;
+			}
+			else
+			{
+				allpojos	= new ArrayList<>(parentpojos.size()+1);
+				allpojos.addAll(getAllPojos());
+				allpojos.add(pojoelement);
+			}
+		}
+		return allpojos;
 	}
 	
 	/**

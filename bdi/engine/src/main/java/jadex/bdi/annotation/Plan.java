@@ -6,14 +6,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ *	Plans are started for events or goals.
+ *  Can be modeled as methods of the agent or as separate class with extra body method.
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Plan
 {
 	/**
-	 *  The trigger.
+	 *  The trigger, i.e. reasons to start the plan.
 	 */
 	public Trigger trigger() default @Trigger();
 

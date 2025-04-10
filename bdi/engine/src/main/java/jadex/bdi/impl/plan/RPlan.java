@@ -6,8 +6,6 @@ import jadex.bdi.IPlan;
 import jadex.bdi.impl.RElement;
 import jadex.core.IComponent;
 import jadex.future.Future;
-import jadex.future.IFuture;
-import jadex.injection.impl.IInjectionHandle;
 
 /**
  *  Runtime element of a plan.
@@ -81,7 +79,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	protected PlanProcessingState processingstate;
 	
 	/** The plan body. */
-	protected IInjectionHandle body;
+	protected IPlanBody body;
 	
 //	/** The candidate from which this plan was created. Used for tried plans in proc elem. */
 //	protected ICandidateInfo candidate;
@@ -196,7 +194,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	 *  Create a new plan.
 	 */
 	public RPlan(/*MPlan mplan, ICandidateInfo candidate,*/ String name, Object reason/*, Map<String, Object> mappingvals)*/
-		, IInjectionHandle body, IComponent comp, List<Object> pojos)
+		, IPlanBody body, IComponent comp, List<Object> pojos)
 	{
 //		super(mplan, mappingvals);
 		super(name, null, comp, pojos);
@@ -1248,22 +1246,21 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //	}
 //	
 	
-	protected IFuture<?> executePlanBody()
+	protected IPlanBody getBody()
 	{
-		// TODO: set passed/failed and execute passed/failed/aborted
-		try
-		{
-			Object	ret	= body.apply(comp, parentpojos, this);
-			if(ret!=null && !(ret instanceof IFuture))
-			{
-				throw new UnsupportedOperationException("Plan methods must return IFuture or null: "+this);
-			}
-			return (IFuture<?>)ret;
-		}
-		catch(Exception e)
-		{
-			return new Future<Object>(e);
-		}
+		return body;
+	}
+	
+	/**
+	 *  Set the pojo.
+	 *  For class plans that need to be instantiated after rplan is created.
+	 */	
+	protected void	setPojo(Object pojoelement)
+	{
+		this.pojoelement	= pojoelement;
+		
+		// Re-generate list of all pojos on next access, i.e. now include pojoelement
+		this.allpojos	= null;
 	}
 
 	/**
