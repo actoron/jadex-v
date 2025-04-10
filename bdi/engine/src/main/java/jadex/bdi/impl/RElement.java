@@ -91,14 +91,14 @@ public abstract class RElement
 		return id;
 	}
 
-//	/**
-//	 *  Get the model name.
-//	 *  @return The model name
-//	 */
-//	public String getName()
-//	{
-//		return modelname;
-//	}
+	/**
+	 *  Get the model name.
+	 *  @return The model name
+	 */
+	public String getModelName()
+	{
+		return modelname;
+	}
 
 //	/**
 //	 *  Set the id.

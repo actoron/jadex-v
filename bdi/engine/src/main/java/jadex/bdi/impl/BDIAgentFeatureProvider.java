@@ -28,6 +28,7 @@ import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
+import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.ExecutePlanStepAction;
@@ -262,12 +263,13 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		checkPlanDefinition(anno, planname);
 		
 		// TODO: add injection context, e.g. triggering goal!? (e.g. RPlan.getReason)
+		IInjectionHandle	precondition	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanPrecondition.class);
 		IInjectionHandle	constructor	= InjectionModel.findViableConstructor(planclazz, Collections.singletonList(pojoclazz));
 		IInjectionHandle	body	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanBody.class);
 		IInjectionHandle	passed	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanPassed.class);
 		IInjectionHandle	failed	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanFailed.class);
 		IInjectionHandle	aborted	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanAborted.class);
-		IPlanBody	planbody	= new ClassPlanBody(constructor, body, passed, failed, aborted);
+		ClassPlanBody	planbody	= new ClassPlanBody(precondition, constructor, body, passed, failed, aborted);
 		
 		// Add rule to trigger direct plan creation on given events.
 		EventType[] aevents = getTriggerEvents(pojoclazz, trigger, planname);
@@ -285,8 +287,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						(event, rule, context2, condresult) ->
 						{
 							// Action -> start plan
-							RPlan	plan	= new RPlan(planname, new ChangeEvent<Object>(event), planbody, comp, pojos);
-							comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(plan));
+							RPlan	rplan	= new RPlan(planname, new ChangeEvent<Object>(event), planbody, comp, pojos);
+							if(planbody.checkPrecondition(rplan))
+							{
+								comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));
+							}
 							return IFuture.DONE;
 						},
 						aevents));	// Trigger Event(s)

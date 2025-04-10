@@ -15,6 +15,9 @@ import jadex.injection.impl.IInjectionHandle;
  */
 public class ClassPlanBody implements IPlanBody
 {
+	/** The plan precondition invocation handle. */
+	protected IInjectionHandle	precondition;
+	
 	/** The plan constructor invocation handle. */
 	protected IInjectionHandle	constructor;
 	
@@ -33,13 +36,61 @@ public class ClassPlanBody implements IPlanBody
 	/**
 	 *  Create a class plan body.
 	 */
-	public ClassPlanBody(IInjectionHandle costructor, IInjectionHandle body, IInjectionHandle passed, IInjectionHandle failed, IInjectionHandle aborted)
+	public ClassPlanBody(IInjectionHandle precondition, IInjectionHandle constructor, IInjectionHandle body, IInjectionHandle passed, IInjectionHandle failed, IInjectionHandle aborted)
 	{
-		this.constructor	= costructor;
+		this.precondition	= precondition;
+		this.constructor	= constructor;
 		this.body	= body;
 		this.passed	= passed;
 		this.failed	= failed;
 		this.aborted	= aborted;
+	}
+	
+	/**
+	 *  Check the precondition, if any.
+	 */
+	public boolean	checkPrecondition(RPlan rplan)
+	{
+		boolean	ret	= true;
+		if(precondition!=null)
+		{
+			Object	result	= null;
+			try
+			{
+				if(!precondition.isStatic())
+				{
+					createPlanPojo(rplan);
+				}
+				result	= internalInvokePart(rplan, precondition);
+			}
+			catch(Exception e)
+			{
+				// Exception is logged in internalInvokePart()
+				ret	= false;
+			}
+			
+			if(result instanceof Boolean)
+			{
+				ret	= (boolean)result;
+			}
+			else if(result!=null)
+			{
+				throw new UnsupportedOperationException("Plan precondition must return a boolean value: "+rplan.getModelName()+", "+result);
+			}
+		}
+		return ret;
+	}
+	
+	/**
+	 *  Create the plan pojo.
+	 */
+	public void	createPlanPojo(RPlan rplan)
+	{
+		if(rplan.getPojo()==null)
+		{
+			Object pojo	= internalInvokePart(rplan, constructor);
+			rplan.setPojo(pojo);
+		}
 	}
 	
 	@Override
@@ -52,9 +103,8 @@ public class ClassPlanBody implements IPlanBody
 		{
 			rplan.setLifecycleState(PlanLifecycleState.BODY);
 			
-			// Instantiate pojo
-			Object pojo	= internalInvokePart(rplan, constructor);
-			rplan.setPojo(pojo);
+			// Instantiate pojo if not already done (e.g. because of precondition evaluated in APL)
+			createPlanPojo(rplan);
 			
 			// Call body
 //			Object result	= 

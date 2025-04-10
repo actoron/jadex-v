@@ -20,4 +20,12 @@ public interface IInjectionHandle
 	 *  @return  A result when fetching a value for a field or performing a method invocation with non-void return type.
 	 */
 	public Object	apply(IComponent self, List<Object> pojos, Object context);
+	
+	/**
+	 *  Returns true when the handle represents a static method call.
+	 */
+	public default boolean isStatic()
+	{
+		return false;
+	}
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
+import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 
@@ -348,52 +349,18 @@ public class APL
 	 */
 	public static boolean checkMPlan(ICandidateInfo cand, RProcessableElement element)
 	{
-//		MPlanInfo mplaninfo = (MPlanInfo)cand.getRawCandidate();
-		
-		boolean ret;
-//		MPlan mplan = mplaninfo.getMPlan();
-//		
-//		Map<String, Object>	vals	= new LinkedHashMap<String, Object>();
-//		if(mplaninfo.getBinding()!=null)
-//		{
-//			vals.putAll(mplaninfo.getBinding());
-//		}
-//		if(element!=null)
-//		{
-//			vals.put(element.getFetcherName(), element);
-//		}
-//				
-//		// check pojo precondition
-//		ClassLoader	cl	= IInternalBDIAgentFeature.get().getClassLoader();
-//		MethodInfo mi = mplan.getBody().getPreconditionMethod(cl);
-//		if(mi!=null)
-//		{
-//			Method m = mi.getMethod(cl);
-//			Object pojo = null;
-//			if(!Modifier.isStatic(m.getModifiers()))
-//			{
-//				RPlan rp = RPlan.createRPlan(mplan, cand, element, mplaninfo.getBinding());
-//				pojo = rp.getBody().getBody();
-//			}
-//			
-//			try
-//			{
-//				SAccess.setAccessible(m, true);
-//				
-//				Object[] params = BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(), element!=null ? element.getModelElement(): null, null, null, element);
-//				if(params==null)
-//					System.out.println("Invalid parameter assignment");
-//				Boolean val = (Boolean)m.invoke(pojo, params);
-//				ret	= val.booleanValue();
-//			}
-//			catch(Exception e)
-//			{
-//				ret	= false;
-//			}
-//		}
-//		else
+		boolean ret	= true;
+				
+		// check pojo precondition
+		if(cand instanceof PlanCandidate)
 		{
-			ret	= true;
+			IPlanBody	body	= ((PlanCandidate)cand).body;
+			if(body instanceof ClassPlanBody)
+			{
+				// TODO: avoid potentially unnecessary and duplicate RPlan creation
+				RPlan	rplan	= cand.createPlan(element);
+				ret	= ((ClassPlanBody) body).checkPrecondition(rplan);
+			}
 		}
 		
 		return ret;

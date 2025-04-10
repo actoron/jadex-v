@@ -9,6 +9,13 @@ public interface IPlan// extends IParameterElement, IFinishableElement<Object>  
 //	 *  Get the id.
 //	 */
 //	public String getId();
+	
+	/**
+	 *  Get the model name.
+	 *  @return The model name
+	 */
+	public String getModelName();
+
 //	
 //	/**
 //	 *  Abort the plan.

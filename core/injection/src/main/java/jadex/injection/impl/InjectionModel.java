@@ -21,6 +21,7 @@ import java.util.function.Function;
 
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
+import jadex.core.IComponent;
 import jadex.execution.impl.ExecutionFeatureProvider;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
@@ -653,25 +654,34 @@ public class InjectionModel
 				
 				if(isstatic)
 				{
-					ret	= (self, pojos, context) ->
+					ret	= new IInjectionHandle()
 					{
-						try
+						@Override
+						public Object apply(IComponent self, List<Object> pojos, Object context)
 						{
-							Object[]	args	= new Object[param_injections.size()];
-							for(int j=0; j<args.length; j++)
+							try
 							{
-								args[j]	= param_injections.get(j).apply(self, pojos, context);
+								Object[]	args	= new Object[param_injections.size()];
+								for(int j=0; j<args.length; j++)
+								{
+									args[j]	= param_injections.get(j).apply(self, pojos, context);
+								}
+								
+								return handle.invokeWithArguments(args);
 							}
-							
-							return handle.invokeWithArguments(args);
+							catch(Throwable e)
+							{
+								// Rethrow user exception
+								throw SUtil.throwUnchecked(e);
+							}
 						}
-						catch(Throwable e)
+						
+						@Override
+						public boolean isStatic()
 						{
-							// Rethrow user exception
-							throw SUtil.throwUnchecked(e);
+							return true;
 						}
 					};
-
 				}
 				else
 				{
@@ -700,16 +710,26 @@ public class InjectionModel
 			{
 				if(isstatic)
 				{
-					ret	= (self, pojos, context) ->
+					ret	= new IInjectionHandle()
 					{
-						try
+						@Override
+						public Object apply(IComponent self, List<Object> pojos, Object context)
 						{
-							return handle.invoke();
+							try
+							{
+								return handle.invoke();
+							}
+							catch(Throwable e)
+							{
+								// Rethrow user exception
+								throw SUtil.throwUnchecked(e);
+							}
 						}
-						catch(Throwable e)
+						
+						@Override
+						public boolean isStatic()
 						{
-							// Rethrow user exception
-							throw SUtil.throwUnchecked(e);
+							return true;
 						}
 					};
 				}
