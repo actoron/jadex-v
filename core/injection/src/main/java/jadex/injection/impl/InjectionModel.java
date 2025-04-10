@@ -36,22 +36,22 @@ public class InjectionModel
 	protected List<Class<?>>	classes;
 	
 	/** Field injections on component start. */
-	protected IInjectionHandle	fields;
+	protected volatile IInjectionHandle	fields;
 	
 	/** Code to run on component start. */
-	protected IInjectionHandle	onstart;
+	protected volatile IInjectionHandle	onstart;
 	
 	/** Extra code to run on component start (before OnStart). */
-	protected IInjectionHandle	extra;
+	protected volatile IInjectionHandle	extra;
 	
 	/** Method injections after component start. */
-	protected IInjectionHandle	methods;
+	protected volatile IInjectionHandle	methods;
 	
 	/** Code to run on component end. */
-	protected IInjectionHandle	onend;
+	protected volatile IInjectionHandle	onend;
 	
 	/** Code to fetch component results. */
-	protected IInjectionHandle	results;
+	protected volatile IInjectionHandle	results;
 	
 	/**
 	 *  Create injection model for given stack of pojo classes.
@@ -70,7 +70,13 @@ public class InjectionModel
 	{
 		if(fields==null)
 		{
-			fields	= unifyHandles(getFieldInjections(classes));
+			synchronized(this)
+			{
+				if(fields==null)
+				{
+					fields	= unifyHandles(getFieldInjections(classes));					
+				}
+			}
 		}
 		
 		return fields==NULL ? null : fields;
@@ -83,7 +89,13 @@ public class InjectionModel
 	{
 		if(onstart==null)
 		{
-			onstart	= unifyHandles(getMethodInvocations(classes, OnStart.class));
+			synchronized(this)
+			{
+				if(onstart==null)
+				{
+					onstart	= unifyHandles(getMethodInvocations(classes, OnStart.class));
+				}
+			}
 		}
 		
 		return onstart==NULL ? null : onstart;
@@ -96,7 +108,13 @@ public class InjectionModel
 	{
 		if(extra==null)
 		{
-			extra	= unifyHandles(getExtraOnstartHandles(classes.get(classes.size()-1)));
+			synchronized(this)
+			{
+				if(extra==null)
+				{
+					extra	= unifyHandles(getExtraOnstartHandles(classes.get(classes.size()-1)));
+				}
+			}
 		}
 		
 		return extra==NULL ? null : extra;
@@ -109,7 +127,13 @@ public class InjectionModel
 	{
 		if(methods==null)
 		{
-			methods	= unifyHandles(getMethodInjections(classes));
+			synchronized(this)
+			{
+				if(methods==null)
+				{
+					methods	= unifyHandles(getMethodInjections(classes));
+				}
+			}
 		}
 		
 		return methods==NULL ? null : methods;
@@ -122,7 +146,13 @@ public class InjectionModel
 	{
 		if(onend==null)
 		{
-			onend	= unifyHandles(getMethodInvocations(classes, OnEnd.class));
+			synchronized(this)
+			{
+				if(onend==null)
+				{
+					onend	= unifyHandles(getMethodInvocations(classes, OnEnd.class));
+				}
+			}
 		}
 		
 		return onend==NULL ? null : onend;
@@ -135,41 +165,47 @@ public class InjectionModel
 	{
 		if(results==null)
 		{
-			// TODO: also @Provide!???
-			List<Getter>	fetchers = getGetters(classes, ProvideResult.class);
-			
-			if(fetchers==null)
+			synchronized(this)
 			{
-				results	= NULL;
-			}
-			else
-			{
-				// Find names for getters
-				Map<String, Tuple2<IInjectionHandle, Annotation[]>>	ffetchers	= new LinkedHashMap<>();
-				for(Getter fetcher: fetchers)
+				if(results==null)
 				{
-					String name	= fetcher.annotation() instanceof ProvideResult && ! "".equals(((ProvideResult)fetcher.annotation()).value())
-						? ((ProvideResult)fetcher.annotation()).value()
-						: fetcher.member() instanceof Method && fetcher.member().getName().startsWith("get")
-							? fetcher.member().getName().substring(3).toLowerCase()
-							: fetcher.member().getName();
-					Annotation[]	annos	= fetcher.member() instanceof Method
-						? (Annotation[])SUtil.joinArrays(((Method)fetcher.member()).getAnnotations(),
-							((Method)fetcher.member()).getAnnotatedReturnType().getAnnotations())
-						: ((Field)fetcher.member()).getAnnotations();
-					ffetchers.put(name, new Tuple2<>(fetcher.fetcher(), annos));
-				}
-				
-				// New handle to apply all getters
-				results	= (comp, pojos, context) ->
-				{
-					Map<String, Object>	ret	= new LinkedHashMap<>();
-					for(String name: ffetchers.keySet())
+					// TODO: also @Provide!???
+					List<Getter>	fetchers = getGetters(classes, ProvideResult.class);
+					
+					if(fetchers==null)
 					{
-						ret.put(name, ExecutionFeatureProvider.copyVal(ffetchers.get(name).getFirstEntity().apply(comp, pojos, context), ffetchers.get(name).getSecondEntity()));
+						results	= NULL;
 					}
-					return ret;
-				};
+					else
+					{
+						// Find names for getters
+						Map<String, Tuple2<IInjectionHandle, Annotation[]>>	ffetchers	= new LinkedHashMap<>();
+						for(Getter fetcher: fetchers)
+						{
+							String name	= fetcher.annotation() instanceof ProvideResult && ! "".equals(((ProvideResult)fetcher.annotation()).value())
+								? ((ProvideResult)fetcher.annotation()).value()
+								: fetcher.member() instanceof Method && fetcher.member().getName().startsWith("get")
+									? fetcher.member().getName().substring(3).toLowerCase()
+									: fetcher.member().getName();
+							Annotation[]	annos	= fetcher.member() instanceof Method
+								? (Annotation[])SUtil.joinArrays(((Method)fetcher.member()).getAnnotations(),
+									((Method)fetcher.member()).getAnnotatedReturnType().getAnnotations())
+								: ((Field)fetcher.member()).getAnnotations();
+							ffetchers.put(name, new Tuple2<>(fetcher.fetcher(), annos));
+						}
+						
+						// New handle to apply all getters
+						results	= (comp, pojos, context) ->
+						{
+							Map<String, Object>	ret	= new LinkedHashMap<>();
+							for(String name: ffetchers.keySet())
+							{
+								ret.put(name, ExecutionFeatureProvider.copyVal(ffetchers.get(name).getFirstEntity().apply(comp, pojos, context), ffetchers.get(name).getSecondEntity()));
+							}
+							return ret;
+						};
+					}
+				}
 			}
 		}
 		return results==NULL ? null : results;

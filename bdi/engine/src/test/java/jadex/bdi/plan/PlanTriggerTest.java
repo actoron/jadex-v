@@ -64,11 +64,11 @@ public class PlanTriggerTest
 			removed.setResult(plan.getReason());
 		}
 
-//		@Plan(trigger=@Trigger(goals=MyGoal.class))
-//		void goalPlan(IPlan plan)
-//		{
-//			goal.setResult(plan.getReason());
-//		}
+		@Plan(trigger=@Trigger(goals=MyGoal.class))
+		void goalPlan(IPlan plan)
+		{
+			goal.setResult(plan.getReason());
+		}
 		
 //		@Plan(trigger=@Trigger(goalfinisheds=MyGoal.class))
 //		void goalFinishedPlan(IPlan plan)
@@ -112,14 +112,14 @@ public class PlanTriggerTest
 		checkEventInfo(pojo.removed, "bel", "factremoved", null, "new fact", 0);
 	}
 	
-//	@Test
-//	void testGoal()
-//	{
-//		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-//		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-//		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
-//		checkGoalInfo(pojo.goal, PlanTriggerTestAgent.MyGoal.class);
-//	}
+	@Test
+	void testGoal()
+	{
+		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
+		checkGoalInfo(pojo.goal, PlanTriggerTestAgent.MyGoal.class);
+	}
 
 //	@Test
 //	void testGoalFinished()

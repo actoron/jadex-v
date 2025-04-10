@@ -3,6 +3,7 @@ package jadex.bdi.impl.plan;
 import java.util.List;
 
 import jadex.bdi.IPlan;
+import jadex.bdi.impl.RElement;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -15,7 +16,7 @@ import jadex.injection.impl.IInjectionHandle;
  *  They are only visible as long as the plan lives, so only plan
  *  conditions could use them.
  */
-public class RPlan /*extends RParameterElement*/ implements IPlan//, IInternalPlan
+public class RPlan extends RElement/*extends RParameterElement*/ implements IPlan//, IInternalPlan
 {
 //	/** The rplans for plan threads. */
 //	public static final ThreadLocal<RPlan>	RPLANS	= new ThreadLocal<RPlan>();
@@ -102,209 +103,106 @@ public class RPlan /*extends RParameterElement*/ implements IPlan//, IInternalPl
 //	 *  
 //	 *  Reason is Object (not RProcessableElement) because it can be also ChangeEvent
 //	 */
-//	public static RPlan createRPlan(MPlan mplan, ICandidateInfo candidate, Object reason, Map<String, Object> binding)
+//	public static RPlan createRPlan(/*MPlan mplan, */ICandidateInfo candidate, Object reason/*, Map<String, Object> binding*/)
 //	{
-//		// Find parameter mappings for xml agents
-//		Map<String, Object> mappingvals = binding;
-//		
-//		// Todo: service call mappings?
-//		if(reason instanceof RParameterElement && mplan.getParameters()!=null && mplan.getParameters().size()>0)
-//		{
-//			RParameterElement rpe = (RParameterElement)reason;
-//			
-//			for(MParameter mparam: mplan.getParameters())
-//			{
-//				if(MParameter.Direction.IN.equals(mparam.getDirection()) || MParameter.Direction.INOUT.equals(mparam.getDirection()))
-//				{
-//					List<String> mappings = rpe instanceof RGoal ? ((MPlanParameter)mparam).getGoalMappings()
-//						: rpe instanceof RMessageEvent ? ((MPlanParameter)mparam).getMessageEventMappings() : ((MPlanParameter)mparam).getInternalEventMappings();
-//					if(mappings!=null)
-//					{
-//						for(String mapping: mappings)
-//						{
-//							MCapability	capa	= IInternalBDIAgentFeature.get().getBDIModel().getCapability();
-//							String sourceelm = mapping.substring(0, mapping.indexOf("."));
-//							String sourcepara = mapping.substring(mapping.indexOf(".")+1);
-//							
-//							if(rpe instanceof RGoal && capa.getGoalReferences().containsKey(sourceelm))
-//							{
-//								sourceelm	= capa.getGoalReferences().get(sourceelm);
-//							}
-//							else if((rpe instanceof RMessageEvent /*|| rpe instanceof RInternalEvent*/) && capa.getEventReferences().containsKey(sourceelm))
-//							{
-//								sourceelm	= capa.getEventReferences().get(sourceelm);
-//							}
-//							
-//							if(rpe.getModelElement().getName().equals(sourceelm))
-//							{
-//								if(mappingvals==null)
-//									mappingvals = new HashMap<String, Object>();
-//								if(mparam.isMulti(null))
-//								{
-//									mappingvals.put(mparam.getName(), rpe.getParameterSet(sourcepara).getValues());
-//								}
-//								else
-//								{
-//									mappingvals.put(mparam.getName(), rpe.getParameter(sourcepara).getValue());
-//								}
-//								break;
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//		
-//		final RPlan rplan = new RPlan(mplan, candidate, reason, mappingvals); //mappingvals==null? new RPlan(mplan, candidate, ia): 
-//		rplan.setDispatchedElement(reason);
-//		
+//		RPlan	ret	= null;
 //		MBody mbody = mplan.getBody();
 //		
 //		IPlanBody body = null;
-//		MicroAgent	ia	= ((MicroAgent)IExecutionFeature.get().getComponent());
 //
-//		if(candidate.getRawCandidate().getClass().isAnnotationPresent(Plan.class))
-//		{
-//			body = new ClassPlanBody(rplan, candidate.getRawCandidate());
-//		}
-//		else if(mbody.getClazz()!=null && mbody.getServiceName()==null)
-//		{
-//			Class<?> clazz0 = (Class<?>)mbody.getClazz().getType(ia.getClassLoader());
-//			Class<?> clazz	= clazz0;
-//			while(body==null && !Object.class.equals(clazz))
-//			{
-//				if(clazz.isAnnotationPresent(Plan.class))
-//				{
-//					body = new ClassPlanBody(rplan, clazz0);
-//				}
-////				else if(clazz.isAnnotationPresent(Agent.class))
+////		if(candidate.getRawCandidate().getClass().isAnnotationPresent(Plan.class))
+////		{
+////			body = new ClassPlanBody(rplan, candidate.getRawCandidate());
+////		}
+////		else if(mbody.getClazz()!=null && mbody.getServiceName()==null)
+////		{
+////			Class<?> clazz0 = (Class<?>)mbody.getClazz().getType(ia.getClassLoader());
+////			Class<?> clazz	= clazz0;
+////			while(body==null && !Object.class.equals(clazz))
+////			{
+////				if(clazz.isAnnotationPresent(Plan.class))
 ////				{
-////					body = new ComponentPlanBody(clazz0.getName()+".class", rplan);
+////					body = new ClassPlanBody(rplan, clazz0);
 ////				}
-//				else
-//				{
-//					clazz	= clazz.getSuperclass();
-//				}
-//			}
-//			
-//			if(body==null)
-//			{
-//				throw new RuntimeException("Neither @Plan nor @Agent annotation on plan body class: "+mbody.getClazz());
-//			}
-//		}
-//		else if(mbody.getMethod()!=null)
+//////				else if(clazz.isAnnotationPresent(Agent.class))
+//////				{
+//////					body = new ComponentPlanBody(clazz0.getName()+".class", rplan);
+//////				}
+////				else
+////				{
+////					clazz	= clazz.getSuperclass();
+////				}
+////			}
+////			
+////			if(body==null)
+////			{
+////				throw new RuntimeException("Neither @Plan nor @Agent annotation on plan body class: "+mbody.getClazz());
+////			}
+////		}
+////		else if(mbody.getMethod()!=null)
 //		{
 //			Method met = mbody.getMethod().getMethod(ia.getClassLoader());
 //			body = new MethodPlanBody(rplan, met);
+//			rplan = new RPlan(mplan, candidate, reason/*, mappingvals*/); //mappingvals==null? new RPlan(mplan, candidate, ia): 
 //		}
-////		else if(mbody.getServiceName()!=null)
-////		{
-////			try
-////			{
-////				IServiceParameterMapper<Object> mapper;
-////				if(mbody.getMapperClass()!=null)
-////				{
-////					mapper = (IServiceParameterMapper<Object>)mbody.getMapperClass().getType(ia.getClassLoader()).newInstance();
-////				}
-////				else
-////				{
-//////					final BDIAgentInterpreter ip = (BDIAgentInterpreter)((BDIAgent)ia).getInterpreter();
-////					mapper = new DefaultAnnotationMapper(mbody.getServiceName(), ia);
-////				}
-////				Object plan = new ServiceCallPlan(ia, mbody.getServiceName(), mbody.getServiceMethodName(), mapper, rplan);
-////				body = new ClassPlanBody(ia, rplan, plan);
-////			}
-////			catch(Exception e)
-////			{
-////				throw new RuntimeException(e);
-////			}
-////		}
-////		else if(mbody.getComponent()!=null)
-////		{
-////			body	= new ComponentPlanBody(mbody.getComponent(), ia, rplan);
-////		}
+//////		else if(mbody.getComponent()!=null)
+//////		{
+//////			body	= new ComponentPlanBody(mbody.getComponent(), ia, rplan);
+//////		}
 //		
 //		if(body==null)
 //			throw new RuntimeException("Plan body not created: "+rplan);
 //		
-//		MTrigger wqtr = mplan.getWaitqueue();
-//		if(wqtr!=null)
-//		{
-//			List<EventType> events = new ArrayList<EventType>();
-//			
-//			for(String belname: SUtil.notNull(wqtr.getFactAddeds()))
-//			{
-//				events.add(new EventType(ChangeEvent.FACTADDED, belname));
-//			}
-//			for(String belname: SUtil.notNull(wqtr.getFactRemoveds()))
-//			{
-//				events.add(new EventType(ChangeEvent.FACTREMOVED, belname));
-//			}
-//			for(String belname: SUtil.notNull(wqtr.getFactChangeds()))
-//			{
-//				events.add(new EventType(ChangeEvent.FACTCHANGED, belname));
-//			}			
-//			for(MGoal goal: SUtil.notNull(wqtr.getGoalFinisheds()))
-//			{
-//				events.add(new EventType(ChangeEvent.GOALDROPPED, goal.getName()));
-//			}
-//			
-//			if(!events.isEmpty())
-//			{
-//////			final BDIAgentInterpreter ip = (BDIAgentInterpreter)((BDIAgent)ia).getInterpreter();
-////				final String rulename = rplan.getId()+"_waitqueue";
-////				Rule<Void> rule = new Rule<Void>(rulename, ICondition.TRUE_CONDITION, new IAction<Void>()
-////				{
-////					public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-////					{
-////						System.out.println("Added to waitqueue: "+event);
-////						rplan.addToWaitqueue(new ChangeEvent(event));				
-////						return IFuture.DONE;
-////					}
-////				});
-////				rule.setEvents(events);
-////				ia.getComponentFeature(IInternalBDIAgentFeature.class).getRuleSystem().getRulebase().addRule(rule);
-//				
-//				rplan.setupEventsRule(events);
-//			}
-//			
-//			for(MMessageEvent mevent: SUtil.notNull(wqtr.getMessageEvents()))
-//			{
-//				WaitAbstraction wa = rplan.getOrCreateWaitqueueWaitAbstraction();
-//				wa.addModelElement(mevent);
-//			}
-//			
-//			// Todo: not for waitqueue, like goals...?
-////			for(MServiceCall mevent: SUtil.safeList(wqtr.getServices()))
+////		MTrigger wqtr = mplan.getWaitqueue();
+////		if(wqtr!=null)
+////		{
+////			List<EventType> events = new ArrayList<EventType>();
+////			
+////			for(String belname: SUtil.notNull(wqtr.getFactAddeds()))
+////			{
+////				events.add(new EventType(ChangeEvent.FACTADDED, belname));
+////			}
+////			for(String belname: SUtil.notNull(wqtr.getFactRemoveds()))
+////			{
+////				events.add(new EventType(ChangeEvent.FACTREMOVED, belname));
+////			}
+////			for(String belname: SUtil.notNull(wqtr.getFactChangeds()))
+////			{
+////				events.add(new EventType(ChangeEvent.FACTCHANGED, belname));
+////			}			
+////			for(MGoal goal: SUtil.notNull(wqtr.getGoalFinisheds()))
+////			{
+////				events.add(new EventType(ChangeEvent.GOALDROPPED, goal.getName()));
+////			}
+////			
+////			if(!events.isEmpty())
+////			{
+////				rplan.setupEventsRule(events);
+////			}
+////			
+////			for(MMessageEvent mevent: SUtil.notNull(wqtr.getMessageEvents()))
 ////			{
 ////				WaitAbstraction wa = rplan.getOrCreateWaitqueueWaitAbstraction();
 ////				wa.addModelElement(mevent);
 ////			}
-//		}
+////		}
 //		
 //		rplan.setBody(body);
 //		
 //		return rplan;
 //	}
 	
-	/** The component. */
-	protected IComponent	comp;
-	
-	/** The enclosing capability pojo(s). */
-	protected List<Object>	pojos;
-	
 	/**
 	 *  Create a new plan.
 	 */
-	public RPlan(/*MPlan mplan, ICandidateInfo candidate,*/ Object reason/*, Map<String, Object> mappingvals)*/
+	public RPlan(/*MPlan mplan, ICandidateInfo candidate,*/ String name, Object reason/*, Map<String, Object> mappingvals)*/
 		, IInjectionHandle body, IComponent comp, List<Object> pojos)
 	{
 //		super(mplan, mappingvals);
+		super(name, null, comp, pojos);
 //		this.candidate = candidate;
 		this.reason = reason;
 		this.body	= body;
-		this.comp	= comp;
-		this.pojos	= pojos;
 		setLifecycleState(PlanLifecycleState.NEW);
 		setProcessingState(PlanProcessingState.READY);
 	}
@@ -1350,11 +1248,11 @@ public class RPlan /*extends RParameterElement*/ implements IPlan//, IInternalPl
 //	}
 //	
 	
-	public IFuture<?> executePlanBody()
+	protected IFuture<?> executePlanBody()
 	{
 		try
 		{
-			Object	ret	= body.apply(comp, pojos, this);
+			Object	ret	= body.apply(comp, parentpojos, this);
 			if(ret!=null && !(ret instanceof IFuture))
 			{
 				throw new UnsupportedOperationException("Plan methods must return IFuture or null: "+this);

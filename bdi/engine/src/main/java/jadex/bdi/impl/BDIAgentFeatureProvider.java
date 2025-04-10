@@ -24,6 +24,7 @@ import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.bdi.impl.wrappers.ListWrapper;
 import jadex.bdi.impl.wrappers.MapWrapper;
@@ -180,63 +181,79 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		Plan	anno	= m.getAnnotation(Plan.class);
 		Trigger	trigger	= anno.trigger();
 		
+		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, Collections.singletonList(pojoclazz), null);
+		String	planname	= m.getName();
+		
 		// Inform user when no trigger is defined
 		if(trigger.factadded().length==0
 			&& trigger.factremoved().length==0
-			&& trigger.factchanged().length==0)
+			&& trigger.factchanged().length==0
+			&& trigger.goals().length==0)
 		{
 			throw new RuntimeException("Plan has no trigger: "+m);
 		}
 		
 		// Add rule to trigger plan creation on given events.
-		Map<String, String[]>	tevents	= new LinkedHashMap<String, String[]>();
-		tevents.put(ChangeEvent.FACTADDED, trigger.factadded());
-		tevents.put(ChangeEvent.FACTREMOVED, trigger.factremoved());
-		tevents.put(ChangeEvent.FACTCHANGED, trigger.factchanged());
-				
-		List<EventType>	events	= new ArrayList<>();
-		for(String tevent: tevents.keySet())
+		if(trigger.factadded().length>0
+			|| trigger.factremoved().length>0
+			|| trigger.factchanged().length>0)
 		{
-			for(String dep: tevents.get(tevent))
+			Map<String, String[]>	tevents	= new LinkedHashMap<String, String[]>();
+			tevents.put(ChangeEvent.FACTADDED, trigger.factadded());
+			tevents.put(ChangeEvent.FACTREMOVED, trigger.factremoved());
+			tevents.put(ChangeEvent.FACTCHANGED, trigger.factchanged());
+					
+			List<EventType>	events	= new ArrayList<>();
+			for(String tevent: tevents.keySet())
 			{
-				Field	depf	= SReflect.getField(pojoclazz, dep);
-				if(depf==null)
+				for(String dep: tevents.get(tevent))
 				{
-					throw new RuntimeException("Dependent belief '"+dep+"' not found: "+m);
+					Field	depf	= SReflect.getField(pojoclazz, dep);
+					if(depf==null)
+					{
+						throw new RuntimeException("Dependent belief '"+dep+"' not found: "+m);
+					}
+					else if(!depf.isAnnotationPresent(Belief.class))
+					{
+						throw new RuntimeException("Dependent belief '"+dep+"' is not annotated with @Belief: "+m+", "+depf);
+					}
+					events.add(new EventType(tevent, dep));
 				}
-				else if(!depf.isAnnotationPresent(Belief.class))
-				{
-					throw new RuntimeException("Dependent belief '"+dep+"' is not annotated with @Belief: "+m+", "+depf);
-				}
-				events.add(new EventType(tevent, dep));
 			}
+			
+			// In extra on start, add rule to run plan when event happens.  
+			ret.add((comp, pojos, context) ->
+			{
+				try
+				{
+					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+					rs.getRulebase().addRule(new Rule<Void>(
+						"TriggerPlan_"+m.getName(),	// Rule Name
+						event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
+						(event, rule, context2, condresult) ->
+						{
+							// Action -> start plan
+							RPlan	plan	= new RPlan(planname, new ChangeEvent<Object>(event), planhandle, comp, pojos);
+							comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(plan));
+							return IFuture.DONE;
+						},
+						events.toArray(new EventType[events.size()])));	// Trigger Event(s)
+					return null;
+				}
+				catch(Throwable t)
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+			});
 		}
 		
-		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, Collections.singletonList(pojoclazz), null);
-
-		ret.add((comp, pojos, context) ->
+		// Add plan to BDI model for lookup during means-end reasoning (i.e. APL build)
+		for(Class<?> goaltype: trigger.goals())
 		{
-			try
-			{
-				RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				rs.getRulebase().addRule(new Rule<Void>(
-					"TriggerPlan_"+m.getName(),	// Rule Name
-					event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
-					(event, rule, context2, condresult) ->
-					{
-						// Action -> start plan
-						RPlan	plan	= new RPlan(new ChangeEvent<Object>(event), planhandle, comp, pojos);
-						plan.executePlanBody();
-						return IFuture.DONE;
-					},
-					events.toArray(new EventType[events.size()])));	// Trigger Event(s)
-				return null;
-			}
-			catch(Throwable t)
-			{
-				throw SUtil.throwUnchecked(t);
-			}
-		});
+			// TODO: need outer pojo not inner. -> change extra on start to List<Class>
+			BDIModel	model	= BDIModel.getModel(pojoclazz);
+			model.addPlanforGoal(goaltype, planname, planhandle);
+		}
 	}
 	
 	/**

@@ -1,11 +1,25 @@
 package jadex.bdi.impl.goal;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
+import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.ChangeEvent;
+import jadex.bdi.impl.plan.RPlan;
+import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
+import jadex.injection.IInjectionFeature;
+import jadex.injection.impl.InjectionFeature;
+import jadex.rules.eca.Event;
+import jadex.rules.eca.EventType;
+import jadex.rules.eca.RuleSystem;
 
 /**
  *  Goal instance implementation.
  */
-public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPlan
+public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 {
 	//-------- attributes --------
 	
@@ -15,29 +29,30 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 	/** The processing state. */
 	protected GoalProcessingState processingstate;
 
-//	/** The parent plan. */
-//	protected RPlan parentplan;
+	/** The parent plan (if subgoal). */
+	protected RPlan parentplan;
 //	protected RGoal parentgoal;
-//	
+	
 //	/** The child plan. */
 //	protected RPlan childplan;
 //	
 //	/** The candidate from which this plan was created. Used for tried plans in proc elem. */
 //	protected ICandidateInfo candidate;
 	
-	/** The pojo. */
-	protected Object	pojo;
-	
 	//-------- constructors --------
 	
 	/**
 	 *  Create a new rgoal. 
+	 *  @param pojo	The pojo goal.
+	 *  @param parant	The Plan (if subgoal) or null.
 	 */
-	public RGoal(/*MGoal mgoal, */Object pojo/*, RGoal parentgoal, Map<String, Object> vals, ICandidateInfo candidate*/)
+	public RGoal(/*MGoal mgoal, */Object pojogoal, RPlan parent, IComponent comp, List<Object> pojoparents/*, Map<String, Object> vals, ICandidateInfo candidate*/)
 	{
+		super(pojogoal, comp, pojoparents);
 		this.lifecyclestate = GoalLifecycleState.NEW;
 		this.processingstate = GoalProcessingState.IDLE;
-		this.pojo	= pojo;
+		this.comp	= comp;
+		this.parentplan	= parent;
 	}
 
 	//-------- methods --------
@@ -47,37 +62,18 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 	 */
 	public Object	getPojo()
 	{
-		return pojo;
+		return pojoelement;
 	}
 
-//	/**
-//	 *  Get the name of the element in the fetcher (e.g. $goal).
-//	 *  @return The element name in the fetcher name.
-//	 */
-//	public String getFetcherName()
-//	{
-//		return "$goal";
-//	}
-//	
-//	/**
-//	 *  Adopt a goal so that the agent tries pursuing it.
-//	 */
-//	public static void adoptGoal(RGoal rgoal)
-//	{
-//		assert IExecutionFeature.get().isComponentThread();
-//		
-//		AdoptGoalAction.adoptGoal(rgoal);
-//	}
-//	
-//	/**
-//	 *  Get the parentplan.
-//	 *  @return The parentplan.
-//	 */
-//	public RPlan getParentPlan()
-//	{
-//		return parentplan;
-//	}
-//	
+	/**
+	 *  Get the parentplan.
+	 *  @return The parentplan.
+	 */
+	public RPlan getParentPlan()
+	{
+		return parentplan;
+	}
+	
 //	/**
 //	 *  Get the parentgoal.
 //	 *  @return The parentgoal.
@@ -90,29 +86,11 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 //	/**
 //	 *  Get parent (goal or plan).
 //	 */
-//	public RParameterElement getParent()
+//	public Object	getParent()
 //	{
 //		return parentplan!=null? parentplan: parentgoal;
 //	}
-//
-//	/**
-//	 *  Set parent (goal or plan).
-//	 */
-//	public void	setParent(RGoal parent)
-//	{
-//		assert parentgoal==null && parentplan==null;
-//		parentgoal	= parent;
-//	}
-//	
-//	/**
-//	 *  Set parent (goal or plan).
-//	 */
-//	public void	setParent(RPlan parent)
-//	{
-//		assert parentgoal==null && parentplan==null;
-//		parentplan	= parent;
-//	}
-//
+
 	/**
 	 *  Get the lifecycleState.
 	 *  @return The lifecycleState.
@@ -153,164 +131,99 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 		this.processingstate = processingstate;
 //		publishToolGoalEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION);
 	}
-//	
-//	/**
-//	 *  Set the processingState.
-//	 *  @param processingState The processingState to set.
-//	 */
-//	public void setProcessingState(GoalProcessingState processingstate)
-//	{
-//		if(getProcessingState().equals(processingstate))
-//			return;
-//		
-//		//if(processingstate.equals(GoalProcessingState.FAILED))
-//		//	System.out.println("setting proc: "+this+" "+processingstate);
-//		
-////		if(getMGoal().getName().indexOf("achievecleanup")!=-1)
-////			System.out.println("proc state: "+processingstate+" "+this);
-//		
-////		if(GoalProcessingState.FAILED.equals(processingstate))
-////			System.out.println("failed: "+this);
-//		
-//		if(GoalProcessingState.FAILED.equals(getProcessingState())
-//			|| GoalProcessingState.SUCCEEDED.equals(getProcessingState()))
-//		{
-//			throw new RuntimeException("Final proc state cannot be changed: "+getProcessingState()+" "+processingstate);
-//		}
-//			
-////		if(getId().indexOf("AnalyzeTarget")!=-1)
-////			System.out.println("changeprocstate: "+this+" "+processingstate+" "+getProcessingState());
-//		
-////		this.processingstate = processingstate;
-//	
-//		// If was inprocess -> now stop processing.
-////		System.out.println("changeprocstate: "+this+" "+processingstate+" "+getProcessingState());
-//
-//		if(!GoalProcessingState.INPROCESS.equals(processingstate))
-//		{
-//			// todo: introduce some state for finished?!
-////			state.setAttributeValue(rgoal, OAVBDIRuntimeModel.processableelement_has_state, null);
-//			setState(State.INITIAL);
-//			
-//			// Reset APL.
-//			setApplicablePlanList(null);
-//			
+	
+	/**
+	 *  Set the processingState.
+	 *  @param processingState The processingState to set.
+	 */
+	public void setProcessingState(GoalProcessingState processingstate)
+	{
+		if(getProcessingState().equals(processingstate))
+			return;
+		
+		if(GoalProcessingState.FAILED.equals(getProcessingState())
+			|| GoalProcessingState.SUCCEEDED.equals(getProcessingState()))
+		{
+			throw new RuntimeException("Final proc state cannot be changed: "+getProcessingState()+" "+processingstate);
+		}
+			
+		// If was inprocess -> now stop processing.
+		if(!GoalProcessingState.INPROCESS.equals(processingstate))
+		{
+			// Reset APL.
+			setApplicablePlanList(null);
+			
 //			// Clean tried plans if necessary.
 //			setTriedPlans(null);
-//		}
-//		
-//		doSetProcessingState(processingstate);
-//		
-//		// If now is inprocess -> start processing
-//		if(GoalProcessingState.INPROCESS.equals(processingstate))
-//		{
-////			if(getId().indexOf("AchieveCleanup")!=-1)
-////				System.out.println("activating: "+this);
+		}
+		
+		doSetProcessingState(processingstate);
+		
+		// If now is inprocess -> start processing
+		if(GoalProcessingState.INPROCESS.equals(processingstate))
+		{
 //			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALINPROCESS, getMGoal().getName()}), this));
-////			publishToolGoalEvent(ChangeEvent.GOALINPROCESS);
-//			setState(RProcessableElement.State.UNPROCESSED);
-//		}
+//			publishToolGoalEvent(ChangeEvent.GOALINPROCESS);
+			comp.getFeature(IExecutionFeature.class).scheduleStep(new FindApplicableCandidatesAction(this));
+		}
 //		else
 //		{
 //			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, getMGoal().getName()}), this));
 //		}
-//		
-//		if(GoalProcessingState.SUCCEEDED.equals(processingstate)
-//			|| GoalProcessingState.FAILED.equals(processingstate))
-//		{
-////			if(getModelElement().getName().indexOf("vision")==-1)
-////				System.out.println("sgmndsdgbjk");
-////			if(getModelElement().getName().indexOf("cleanup")!=-1)
-////				System.out.println("fini: "+this+" "+getParameter("waste").getValue());
-//			setLifecycleState(GoalLifecycleState.DROPPING);
-//		}
-//		
-////		System.out.println("exit: "+rgoal+" "+state.getAttributeValue(rgoal, OAVBDIRuntimeModel.processableelement_has_state));
-//	}
-//	
-//	/**
-//	 *  Set the lifecycle state.
-//	 *  @param processingState The processingState to set.
-//	 */
-//	public void setLifecycleState(GoalLifecycleState lifecyclestate)
-//	{
-//		if(lifecyclestate.equals(getLifecycleState()))
-//			return;
-//		
-//		//if(getId().indexOf("AnalyzeTarget")!=-1)// && GoalLifecycleState.SUSPENDED.equals(lifecyclestate))
-//		//	System.out.println("life state: "+this+" "+lifecyclestate);
-//		
-//		//System.out.println(ia.getId()+" setLifecycleState: "+this+", "+lifecyclestate);
-//		
-////		if(this.toString().indexOf("docnt")!=-1 && GoalLifecycleState.DROPPING.equals(lifecyclestate))
-////			System.out.println("setting life: "+this+" "+lifecyclestate);
-//		
-////		if(this.toString().indexOf("TreatV")!=-1 && ia.getComponentIdentifier().getName().indexOf("Ambu")!=-1) //&& *///GoalLifecycleState.ACTIVE.equals(getLifecycleState())
-////			&& GoalLifecycleState.OPTION.equals(lifecyclestate))
-////		{
-////			System.out.println("treat goal: "+this);
-////			System.out.println("plan to abort: "+childplan+", "+this);
-////			agent.getComponentFeature(IBDIAgentFeature.class).getCapability().dumpGoals();
-////		}
-//		
-//		if(GoalLifecycleState.DROPPED.equals(getLifecycleState()))
-//			throw new RuntimeException("Final proc state cannot be changed: "+getLifecycleState()+" "+lifecyclestate);
-//		if(GoalLifecycleState.DROPPING.equals(getLifecycleState()) && !GoalLifecycleState.DROPPED.equals(lifecyclestate))
-//			throw new RuntimeException("Final proc state cannot be changed: "+getLifecycleState()+" "+lifecyclestate);
-//		
-////		System.out.println("goal state change: "+this.getId()+" "+getLifecycleState()+" "+lifecyclestate);
-////		if(RGoal.GOALLIFECYCLESTATE_DROPPING.equals(lifecyclestate) && RGoal.GOALLIFECYCLESTATE_NEW.equals(getLifecycleState()))
-////			Thread.dumpStack();
-////		if(RGoal.GOALLIFECYCLESTATE_ADOPTED.equals(lifecyclestate) && RGoal.GOALLIFECYCLESTATE_DROPPING.equals(getLifecycleState()))
-////			Thread.dumpStack();
-////		if(RGoal.GOALLIFECYCLESTATE_DROPPED.equals(getLifecycleState()))
-////			Thread.dumpStack();
-//		
-////		if(getId().indexOf("QueryCharging")!=-1 && GOALLIFECYCLESTATE_DROPPING.equals(lifecyclestate))
-////			System.out.println("goal state change: "+this.getId()+" "+getLifecycleState()+" "+lifecyclestate);
-////		if(getId().indexOf("Battery")!=-1 && GOALLIFECYCLESTATE_DROPPING.equals(lifecyclestate))
-////			System.out.println("goal state change: "+this.getId()+" "+getLifecycleState()+" "+lifecyclestate);
-////		if(getId().indexOf("AchieveCleanup")!=-1)
-////			System.out.println("goal state change: "+this.getId()+" "+getLifecycleState()+" "+lifecyclestate);
-////		if(getId().indexOf("Pick")!=-1)
-////		if(ia.getExternalAccess().getComponentIdentifier().getLocalName().indexOf("Sentry")!=-1)
-////			System.out.println("goal state change: "+this.getId()+" "+getLifecycleState()+" "+lifecyclestate);
-//
-////		BDIAgentInterpreter ip = (BDIAgentInterpreter)((BDIAgent)ia).getInterpreter();
-//		doSetLifecycleState(lifecyclestate);
-//		
-//		if(GoalLifecycleState.ADOPTED.equals(lifecyclestate))
-//		{
-//			setLifecycleState(GoalLifecycleState.OPTION);
+		
+		if(GoalProcessingState.SUCCEEDED.equals(processingstate)
+			|| GoalProcessingState.FAILED.equals(processingstate))
+		{
+			setLifecycleState(GoalLifecycleState.DROPPING);
+		}
+	}
+	
+	/**
+	 *  Set the lifecycle state.
+	 *  @param processingState The processingState to set.
+	 */
+	public void setLifecycleState(GoalLifecycleState lifecyclestate)
+	{
+		if(lifecyclestate.equals(getLifecycleState()))
+			return;
+		
+		if(GoalLifecycleState.DROPPED.equals(getLifecycleState()))
+			throw new RuntimeException("Final proc state cannot be changed: "+getLifecycleState()+" "+lifecyclestate);
+		if(GoalLifecycleState.DROPPING.equals(getLifecycleState()) && !GoalLifecycleState.DROPPED.equals(lifecyclestate))
+			throw new RuntimeException("Final proc state cannot be changed: "+getLifecycleState()+" "+lifecyclestate);
+		
+		doSetLifecycleState(lifecyclestate);
+		
+		if(GoalLifecycleState.ADOPTED.equals(lifecyclestate))
+		{
+			setLifecycleState(GoalLifecycleState.OPTION);
 //			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALADOPTED, getMGoal().getName()}), this));
-//		}
-//		else if(GoalLifecycleState.ACTIVE.equals(lifecyclestate))
-//		{
-////			System.out.println("active->inprocess: "+getId());
+		}
+		else if(GoalLifecycleState.ACTIVE.equals(lifecyclestate))
+		{
 //			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALACTIVE, getMGoal().getName()}), this));
-//
+
 //			// start means-end reasoning
 //			if(onActivate())
 //			{
-//				setProcessingState(GoalProcessingState.INPROCESS);
+				setProcessingState(GoalProcessingState.INPROCESS);
 //			}
 //			else
 //			{
 //				setProcessingState(GoalProcessingState.IDLE);
 //			}
-//		}
-//		else if(GoalLifecycleState.OPTION.equals(lifecyclestate))
-//		{
-//			// ready to be activated via deliberation
-////			if(getId().indexOf("AchieveCleanup")!=-1)
-////			System.out.println("option->idle: "+getId());
+		}
+		
+		// ready to be activated via deliberation
+		else if(GoalLifecycleState.OPTION.equals(lifecyclestate))
+		{
 //			abortPlans().addResultListener(new IResultListener<Void>()
 //			{
 //				@Override
 //				public void resultAvailable(Void result)
 //				{
 //					setProcessingState(GoalProcessingState.IDLE);
-//					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALOPTION, getMGoal().getName()}), RGoal.this));
+					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALOPTION, modelname}), RGoal.this));
 //				}
 //				
 //				@Override
@@ -321,20 +234,18 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 //					resultAvailable(null);	// safety-net: continue anyways
 //				}
 //			});
-//		}
-//		else if(GoalLifecycleState.SUSPENDED.equals(lifecyclestate))
-//		{
-//			// goal is suspended (no more plan executions)
-////			if(getId().indexOf("PerformLook")==-1)
-////				System.out.println("suspending: "+getId());
-//			
+		}
+		
+		// goal is suspended (no more plan executions)
+		else if(GoalLifecycleState.SUSPENDED.equals(lifecyclestate))
+		{
 //			abortPlans().addResultListener(new IResultListener<Void>()
 //			{
 //				@Override
 //				public void resultAvailable(Void result)
 //				{
 //					setProcessingState(GoalProcessingState.IDLE);
-//					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, getMGoal().getName()}), RGoal.this));
+////					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, getMGoal().getName()}), RGoal.this));
 //				}
 //				
 //				@Override
@@ -345,10 +256,10 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 //					resultAvailable(null);	// safety-net: continue anyways
 //				}
 //			});
-//		}
-//		
-//		if(GoalLifecycleState.DROPPING.equals(lifecyclestate))
-//		{
+		}
+		
+		if(GoalLifecycleState.DROPPING.equals(lifecyclestate))
+		{
 //			abortPlans().addResultListener(new IResultListener<Void>()
 //			{
 //				@Override
@@ -365,9 +276,9 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 //					resultAvailable(null);	// safety-net: continue anyways
 //				}
 //			});
-//		}
-//		else if(GoalLifecycleState.DROPPED.equals(lifecyclestate))
-//		{
+		}
+		else if(GoalLifecycleState.DROPPED.equals(lifecyclestate))
+		{
 //			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, getMGoal().getName()}), this));
 //
 //			if(getListeners()!=null)
@@ -379,9 +290,27 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 //				}
 //				super.notifyListeners();
 //			}
-//		}
-//	}
-//	
+		}
+	}
+	
+	
+	/**
+	 *  Adopt a goal.
+	 */
+	public void	adopt()
+	{
+		// TODO: handle goal parameters
+		
+		// inject goal elements
+		List<Object>	goalpojos	= new ArrayList<Object>(parentpojos.size()+1);
+		goalpojos.addAll(goalpojos);
+		goalpojos.add(pojoelement);
+		((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addExtraObject(goalpojos);
+			
+//		IInternalBDIAgentFeature.get().getCapability().addGoal(goal);
+		setLifecycleState(RGoal.GoalLifecycleState.ADOPTED);
+	}
+	
 //	/**
 //	 *  Abort the child plans.
 //	 */
@@ -406,22 +335,22 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 //	{
 //		return (MGoal)getModelElement();
 //	}
-//	
-//	/**
-//	 *  Test if the element is succeeded.
-//	 */
-//	public boolean isSucceeded()
-//	{
-//		return GoalProcessingState.SUCCEEDED.equals(processingstate);
-//	}
-//	
-//	/**
-//	 *  Test if the element is failed.
-//	 */
-//	public boolean isFailed()
-//	{
-//		return GoalProcessingState.FAILED.equals(processingstate);
-//	}
+	
+	/**
+	 *  Test if the element is succeeded.
+	 */
+	public boolean isSucceeded()
+	{
+		return GoalProcessingState.SUCCEEDED.equals(processingstate);
+	}
+	
+	/**
+	 *  Test if the element is failed.
+	 */
+	public boolean isFailed()
+	{
+		return GoalProcessingState.FAILED.equals(processingstate);
+	}
 //	
 //	/**
 //	 *  Test if the goal is in lifecyclestate 'active'.
@@ -1196,4 +1125,12 @@ public class RGoal /*extends RFinishableEleme*/ implements IGoal//, IInternalPla
 //	{
 //		this.candidate = candidate;
 //	}
+	
+	/**
+	 *  Get the rule system.
+	 */
+	protected RuleSystem	getRuleSystem()
+	{
+		return ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+	}
 }
