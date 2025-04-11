@@ -26,6 +26,7 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
+import jadex.bdi.annotation.PlanContextCondition;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.PlanPrecondition;
@@ -218,26 +219,19 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// In extra on start, add rule to run plan when event happens.  
 			ret.add((comp, pojos, context) ->
 			{
-				try
-				{
-					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-					rs.getRulebase().addRule(new Rule<Void>(
-						"TriggerPlan_"+planname,	// Rule Name
-						ICondition.TRUE_CONDITION,	// Condition -> true
-						(event, rule, context2, condresult) ->
-						{
-							// Action -> start plan
-							RPlan	plan	= new RPlan(planname, new ChangeEvent<Object>(event), body, comp, pojos);
-							comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(plan));
-							return IFuture.DONE;
-						},
-						aevents));	// Trigger Event(s)
-					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
+				RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				rs.getRulebase().addRule(new Rule<Void>(
+					"TriggerPlan_"+planname,	// Rule Name
+					ICondition.TRUE_CONDITION,	// Condition -> true
+					(event, rule, context2, condresult) ->
+					{
+						// Action -> start plan
+						RPlan	plan	= new RPlan(planname, new ChangeEvent<Object>(event), body, comp, pojos);
+						comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(plan));
+						return IFuture.DONE;
+					},
+					aevents));	// Trigger Event(s)
+				return null;
 			});
 		}
 		
@@ -264,12 +258,13 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		
 		// TODO: add injection context, e.g. triggering goal!? (e.g. RPlan.getReason)
 		IInjectionHandle	precondition	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanPrecondition.class);
+		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanContextCondition.class);
 		IInjectionHandle	constructor	= InjectionModel.findViableConstructor(planclazz, Collections.singletonList(pojoclazz));
 		IInjectionHandle	body	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanBody.class);
 		IInjectionHandle	passed	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanPassed.class);
 		IInjectionHandle	failed	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanFailed.class);
 		IInjectionHandle	aborted	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanAborted.class);
-		ClassPlanBody	planbody	= new ClassPlanBody(precondition, constructor, body, passed, failed, aborted);
+		ClassPlanBody	planbody	= new ClassPlanBody(precondition, contextcondition, constructor, body, passed, failed, aborted);
 		
 		// Add rule to trigger direct plan creation on given events.
 		EventType[] aevents = getTriggerEvents(pojoclazz, trigger, planname);
@@ -278,30 +273,83 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// In extra on start, add rule to run plan when event happens.  
 			ret.add((comp, pojos, context) ->
 			{
-				try
+				RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				rs.getRulebase().addRule(new Rule<Void>(
+					"TriggerPlan_"+planname,	// Rule Name
+					ICondition.TRUE_CONDITION,	// Condition -> true
+					(event, rule, context2, condresult) ->
+					{
+						// Action -> start plan
+						RPlan	rplan	= new RPlan(planname, new ChangeEvent<Object>(event), planbody, comp, pojos);
+						if(planbody.checkPrecondition(rplan))
+						{
+							comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));
+						}
+						return IFuture.DONE;
+					},
+					aevents));	// Trigger Event(s)
+				return null;
+			});
+		}
+		
+		// Add rule to trigger context condition
+		if(contextcondition!=null)
+		{
+			// createMethodInvocation(..) guarantees that a single method exists.
+			Method	contextmethod	= InjectionModel.findMethods(planclazz, PlanContextCondition.class).get(0);
+			PlanContextCondition	contextanno	= contextmethod.getAnnotation(PlanContextCondition.class);
+			
+			// Create events
+			if(contextanno.beliefs().length>0)
+			{
+				List<EventType>	events	= new ArrayList<>();
+				for(String dep: contextanno.beliefs())
+				{
+					Field	depf	= SReflect.getField(pojoclazz, dep);
+					if(depf==null)
+					{
+						throw new RuntimeException("Triggering belief '"+dep+"' not found for context conditions: "+contextmethod);
+					}
+					else if(!depf.isAnnotationPresent(Belief.class))
+					{
+						throw new RuntimeException("Triggering belief '"+dep+"' cof context condition is not annotated with @Belief: "+contextmethod+", "+depf);
+					}
+					events.add(new EventType(ChangeEvent.FACTADDED, dep));
+					events.add(new EventType(ChangeEvent.FACTREMOVED, dep));
+					events.add(new EventType(ChangeEvent.FACTCHANGED, dep));
+				}
+				// Convert to array
+				EventType[]	cevents	= events.toArray(new EventType[events.size()]);
+				// In extra on start, add rule to check condition when event happens.  
+				ret.add((comp, pojos, context) ->
 				{
 					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
 					rs.getRulebase().addRule(new Rule<Void>(
-						"TriggerPlan_"+planname,	// Rule Name
+						"PlanContextCondition_"+planname,	// Rule Name
 						ICondition.TRUE_CONDITION,	// Condition -> true
 						(event, rule, context2, condresult) ->
 						{
-							// Action -> start plan
-							RPlan	rplan	= new RPlan(planname, new ChangeEvent<Object>(event), planbody, comp, pojos);
-							if(planbody.checkPrecondition(rplan))
+							Set<RPlan>	plans	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getPlans();
+							if(plans!=null)
 							{
-								comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));
+								for(RPlan rplan: plans)
+								{
+									if(!planbody.checkContextCondition(rplan))
+									{
+										rplan.abort();
+									}
+								}
 							}
 							return IFuture.DONE;
 						},
-						aevents));	// Trigger Event(s)
+						cevents));	// Trigger Event(s)
 					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
-			});
+				});
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Context condition must specify at least one trigger belief: "+contextmethod);
+			}
 		}
 		
 		// Add plan to BDI model for lookup during means-end reasoning (i.e. APL build)
@@ -358,11 +406,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					Field	depf	= SReflect.getField(pojoclazz, dep);
 					if(depf==null)
 					{
-						throw new RuntimeException("Dependent belief '"+dep+"' not found for plan: "+planname);
+						throw new RuntimeException("Triggering belief '"+dep+"' not found for plan: "+planname);
 					}
 					else if(!depf.isAnnotationPresent(Belief.class))
 					{
-						throw new RuntimeException("Dependent belief '"+dep+"' of plan '"+planname+"' is not annotated with @Belief: "+depf);
+						throw new RuntimeException("Triggering belief '"+dep+"' of plan '"+planname+"' is not annotated with @Belief: "+depf);
 					}
 					events.add(new EventType(tevent, dep));
 				}

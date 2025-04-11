@@ -1,6 +1,7 @@
 package jadex.bdi.impl;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import jadex.bdi.IBDIAgentFeature;
@@ -8,6 +9,7 @@ import jadex.bdi.IDeliberationStrategy;
 import jadex.bdi.IGoal.GoalLifecycleState;
 import jadex.bdi.impl.goal.EasyDeliberationStrategy;
 import jadex.bdi.impl.goal.RGoal;
+import jadex.bdi.impl.plan.RPlan;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.execution.IExecutionFeature;
@@ -15,6 +17,8 @@ import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.injection.IInjectionFeature;
+import jadex.injection.impl.InjectionFeature;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
 import jadex.rules.eca.ICondition;
@@ -34,6 +38,9 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/** The rule system. */
 	protected RuleSystem	rulesystem;
 	
+	/** The currently running plans. */
+	protected Set<RPlan>	plans;
+	
 	/**
 	 *  Create the feature.
 	 */
@@ -41,7 +48,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 		this.self	= self;
 		this.model	= BDIModel.getModel(self.getPojo().getClass());
-		this.rulesystem	= new RuleSystem(self);
+		this.rulesystem	= new RuleSystem(self, false);	// TODO: true in old version but processEvents called for belief write!?
 	}
 	
 	//-------- ILifecycle interface --------
@@ -188,5 +195,32 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	public BDIModel getModel()
 	{
 		return model;
+	}
+	
+	/**
+	 *  Add a plan.
+	 *  Called when the plan is first executed.
+	 */
+	public void addPlan(RPlan rplan)
+	{
+		if(rplan.getPojo()!=null)
+		{
+			// TODO: remove extra object for @OnEnd etc.
+			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos());
+		}
+		
+		if(plans==null)
+		{
+			plans	= new LinkedHashSet<>();
+		}
+		plans.add(rplan);
+	}
+	
+	/**
+	 *  Get the plans, if any.
+	 */
+	public Set<RPlan>	getPlans()
+	{
+		return plans;
 	}
 }

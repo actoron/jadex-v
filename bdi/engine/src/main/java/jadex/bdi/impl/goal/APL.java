@@ -7,7 +7,6 @@ import java.util.List;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
-import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 
@@ -344,7 +343,7 @@ public class APL
 	}
 	
 	/**
-	 *  Test precondition (and match expression) of a plan to decide
+	 *  Test precondition of a plan to decide
 	 *  if it can be added to the candidates.
 	 */
 	public static boolean checkMPlan(ICandidateInfo cand, RProcessableElement element)
@@ -352,15 +351,11 @@ public class APL
 		boolean ret	= true;
 				
 		// check pojo precondition
-		if(cand instanceof PlanCandidate)
+		if(cand.getBody().hasPrecondition())
 		{
-			IPlanBody	body	= ((PlanCandidate)cand).body;
-			if(body instanceof ClassPlanBody)
-			{
-				// TODO: avoid potentially unnecessary and duplicate RPlan creation
-				RPlan	rplan	= cand.createPlan(element);
-				ret	= ((ClassPlanBody) body).checkPrecondition(rplan);
-			}
+			// TODO: avoid duplicate RPlan creation
+			RPlan	rplan	= cand.createPlan(element);
+			ret	= cand.getBody().checkPrecondition(rplan);
 		}
 		
 		return ret;
@@ -1174,7 +1169,13 @@ public class APL
 			// TODO: plan from another capability needs other parent pojos
 			return new RPlan(name, reason, body, reason.getComponent(), reason.getParentPojos());
 		}
-		
+
+		@Override
+		public IPlanBody	getBody()
+		{
+			return body;
+		}
+
 		@Override
 		public String toString()
 		{

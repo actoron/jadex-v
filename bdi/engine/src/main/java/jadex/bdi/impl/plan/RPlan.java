@@ -5,7 +5,9 @@ import java.util.List;
 import jadex.bdi.IPlan;
 import jadex.bdi.impl.RElement;
 import jadex.core.IComponent;
+import jadex.execution.StepAborted;
 import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Runtime element of a plan.
@@ -475,36 +477,19 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //			subgoals.remove(subgoal);
 //		}
 //	}
-//	
-//	/**
-//	 * 
-//	 */
-//	public IFuture<Void> abort()
-//	{
-//		//if(agent.getId().toString().indexOf("Sokrates")!=-1)
-//		//System.out.println("aborting: "+this+" "+IComponentIdentifier.LOCAL.get()+" "+agent.getId());
-//		
-//		if(setFinishing())
-//		{
-//			if(!isFinished())
-//			{
-//	//			setLifecycleState(PLANLIFECYCLESTATE_ABORTED);
-////				Exception ex = new PlanAbortedException();
-////				setException(ex); // remove? // todo: BodyAborted
-//				
-//				// Stop plan execution if any.
-////				System.out.println("aborting2: "+this);
-////				body.abort();
-////				System.out.println("aborting3: "+this);
-//				
+	
+	/**
+	 * 
+	 */
+	public IFuture<Void> abort()
+	{
+		if(setFinishing())
+		{
+			if(!isFinished())
+			{
 //				// If plan is waiting interrupt waiting
 //				if(PlanProcessingState.WAITING.equals(getProcessingState()))
 //				{
-////					System.out.println("aborting4: "+this);
-//	//				RPlan.executePlan(this, ia, new ICommand<Boolean>()
-//	//				{
-//	//					public void execute(Boolean args)
-//	//					{
 //							// The resume command continues the blocked plan thread and
 //							// the commands are to continue all listeners on hold
 //							// This is not completely clean because the agent does not wait for these threads
@@ -525,32 +510,21 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //									rescom.execute(new ResumeCommandArgs(null, null, () -> new PlanAbortedException()));
 //								}
 //							}
-//	//					}
-//	//				});
 //				}
-////				else
-////				{
-////					// happens with state=RUNNING ?!
-////					System.out.println("plan abort: not performing abort due to plan state: "+getProcessingState());
-////				}
 //				// Can be currently executing and being abort due to e.g. goal condition triggering
 //				else if(!atomic && PlanProcessingState.RUNNING.equals(getProcessingState()))
-//				{
-//					// abort immediately when not atomic
-//					throw new StepAborted();
-//					
-//					// if not immediately it will detect the abort in beforeBlock() when next future.get() is
-//					// called and will avoid the next wait
-//				}
-//	//			else if(!PlanLifecycleState.NEW.equals(getLifecycleState()))
-//	//			{
-//	//				System.out.println("Cannot abort plan: "+getId()+" "+getProcessingState()+" "+getLifecycleState());
-//	//			}
-//			}			
-//		}
-//		
-//		return finished;
-//	}
+				{
+					// abort immediately when not atomic
+					throw new StepAborted();
+					
+					// if not immediately it will detect the abort in beforeBlock() when next future.get() is
+					// called and will avoid the next wait
+				}
+			}			
+		}
+		
+		return finished;
+	}
 	
 	
 //	/**

@@ -18,6 +18,9 @@ public class ClassPlanBody implements IPlanBody
 	/** The plan precondition invocation handle. */
 	protected IInjectionHandle	precondition;
 	
+	/** The plan context condition invocation handle. */
+	protected IInjectionHandle	contextcondition;
+	
 	/** The plan constructor invocation handle. */
 	protected IInjectionHandle	constructor;
 	
@@ -36,9 +39,10 @@ public class ClassPlanBody implements IPlanBody
 	/**
 	 *  Create a class plan body.
 	 */
-	public ClassPlanBody(IInjectionHandle precondition, IInjectionHandle constructor, IInjectionHandle body, IInjectionHandle passed, IInjectionHandle failed, IInjectionHandle aborted)
+	public ClassPlanBody(IInjectionHandle precondition, IInjectionHandle contextcondition, IInjectionHandle constructor, IInjectionHandle body, IInjectionHandle passed, IInjectionHandle failed, IInjectionHandle aborted)
 	{
 		this.precondition	= precondition;
+		this.contextcondition	= contextcondition;
 		this.constructor	= constructor;
 		this.body	= body;
 		this.passed	= passed;
@@ -46,45 +50,26 @@ public class ClassPlanBody implements IPlanBody
 		this.aborted	= aborted;
 	}
 	
-	/**
-	 *  Check the precondition, if any.
-	 */
-	public boolean	checkPrecondition(RPlan rplan)
+	@Override
+	public boolean	hasPrecondition()
 	{
-		boolean	ret	= true;
-		if(precondition!=null)
-		{
-			Object	result	= null;
-			try
-			{
-				if(!precondition.isStatic())
-				{
-					createPlanPojo(rplan);
-				}
-				result	= internalInvokePart(rplan, precondition);
-			}
-			catch(Exception e)
-			{
-				// Exception is logged in internalInvokePart()
-				ret	= false;
-			}
-			
-			if(result instanceof Boolean)
-			{
-				ret	= (boolean)result;
-			}
-			else if(result!=null)
-			{
-				throw new UnsupportedOperationException("Plan precondition must return a boolean value: "+rplan.getModelName()+", "+result);
-			}
-		}
-		return ret;
+		return precondition!=null;
 	}
 	
-	/**
-	 *  Create the plan pojo.
-	 */
-	public void	createPlanPojo(RPlan rplan)
+	@Override
+	public boolean	checkPrecondition(RPlan rplan)
+	{
+		return checkCondition(rplan, precondition, "precondition");
+	}
+	
+	@Override
+	public boolean	checkContextCondition(RPlan rplan)
+	{
+		return checkCondition(rplan, contextcondition, "context condition");
+	}
+	
+	@Override
+	public void	createPojo(RPlan rplan)
 	{
 		if(rplan.getPojo()==null)
 		{
@@ -104,7 +89,7 @@ public class ClassPlanBody implements IPlanBody
 			rplan.setLifecycleState(PlanLifecycleState.BODY);
 			
 			// Instantiate pojo if not already done (e.g. because of precondition evaluated in APL)
-			createPlanPojo(rplan);
+			createPojo(rplan);
 			
 			// Call body
 //			Object result	= 
@@ -190,11 +175,46 @@ public class ClassPlanBody implements IPlanBody
 		
 		return ret;
 	}
+	
+	/**
+	 *  Execute a condition handle and get the boolean result.
+	 */
+	protected boolean	checkCondition(RPlan rplan, IInjectionHandle condition, String condname)
+	{
+		boolean	ret	= true;
+		if(condition!=null)
+		{
+			Object	result	= null;
+			try
+			{
+				if(!condition.isStatic())
+				{
+					createPojo(rplan);
+				}
+				result	= internalInvokePart(rplan, condition);
+			}
+			catch(Exception e)
+			{
+				// Exception is logged in internalInvokePart()
+				ret	= false;
+			}
+			
+			if(result instanceof Boolean)
+			{
+				ret	= (boolean)result;
+			}
+			else if(result!=null)
+			{
+				throw new UnsupportedOperationException("Plan "+condname+" must return a boolean value: "+rplan.getModelName()+", "+result);
+			}
+		}
+		return ret;
+	}
 
 	/**
 	 *  Invoke a plan part.
 	 */
-	protected Object internalInvokePart(RPlan rplan, IInjectionHandle handle)
+	protected static Object internalInvokePart(RPlan rplan, IInjectionHandle handle)
 	{
 		// Allow some methods to be null
 		if(handle==null)

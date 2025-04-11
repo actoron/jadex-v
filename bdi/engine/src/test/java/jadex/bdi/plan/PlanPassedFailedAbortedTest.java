@@ -13,6 +13,7 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
+import jadex.bdi.annotation.PlanContextCondition;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
@@ -36,11 +37,11 @@ public class PlanPassedFailedAbortedTest
 		@Plan(trigger=@Trigger(factchanged="bel"))
 		class TestPlan
 		{
-//			@PlanContextCondition(beliefs="bel")
-//			boolean context()
-//			{
-//				return bel.get()!=null;
-//			}
+			@PlanContextCondition(beliefs="bel")
+			boolean context()
+			{
+				return bel.get()!=null;
+			}
 			
 			@PlanBody
 			void body(IPlan plan)
@@ -97,12 +98,12 @@ public class PlanPassedFailedAbortedTest
 		assertEquals("failed", pojo.fut.get(TestHelper.TIMEOUT));
 	}
 	
-//	@Test
-//	void testPlanAborted()
-//	{
-//		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
-//		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-//		agent.scheduleStep(() -> pojo.bel.set("abort"));
-//		assertEquals("aborted", pojo.fut.get(TestHelper.TIMEOUT));
-//	}
+	@Test
+	void testPlanAborted()
+	{
+		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		agent.scheduleStep(() -> pojo.bel.set("abort"));
+		assertEquals("aborted", pojo.fut.get(TestHelper.TIMEOUT));
+	}
 }

@@ -135,13 +135,13 @@ public class PlanConditionTest
 		}
 	}
 	
-//	@Test
-//	void testPlanContextcondition()
-//	{
-//		PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
-//		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-//		agent.scheduleStep(() -> pojo.trigger.add("go"));
-//		assertEquals("aborted", pojo.contextfut.get(TestHelper.TIMEOUT));
-//	}
+	@Test
+	void testPlanContextcondition()
+	{
+		PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		agent.scheduleStep(() -> pojo.trigger.add("go"));
+		assertEquals("aborted", pojo.contextfut.get(TestHelper.TIMEOUT));
+	}
 }
 

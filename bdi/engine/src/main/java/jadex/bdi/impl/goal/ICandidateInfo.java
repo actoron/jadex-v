@@ -1,9 +1,11 @@
 package jadex.bdi.impl.goal;
 
+import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 
 /**
  *  The info objects for plan candidates.
+ *  Is on model level and takes instance objects as arguments of methods.
  */
 public interface ICandidateInfo
 {
@@ -12,6 +14,12 @@ public interface ICandidateInfo
 	 *  @return	The plan instance.
 	 */
 	public /*IInternalPlan*/RPlan	createPlan(RProcessableElement reason);
+	
+	/**
+	 *  Get the plan body of this candidate.
+	 */
+	public IPlanBody	getBody();
+		
 //	
 //	/**
 //	 *  Get the candidate model element.

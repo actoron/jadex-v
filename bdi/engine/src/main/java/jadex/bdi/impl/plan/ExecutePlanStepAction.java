@@ -1,5 +1,7 @@
 package jadex.bdi.impl.plan;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.goal.RProcessableElement;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
@@ -62,19 +64,19 @@ public class ExecutePlanStepAction implements Runnable
 //			}
 //		}
 		
-//		// Initial context condition evaluation
-//		// Checks the context condition also directly before a plan is executed
-//		// Otherwise the rule might trigger only after the next state change (event)
-//		boolean context	= checkContextCondition();
-//		if(!context)
-//		{
-//			rplan.abort();
-//			if(rplan.getReason() instanceof RProcessableElement)
-//			{
-//				((RProcessableElement)rplan.getReason()).planFinished(null);
-//			}
-//		}
-//		else
+		// Initial context condition evaluation
+		// Checks the context condition also directly before a plan is executed
+		// Otherwise the rule might trigger only after the next state change (event)
+		boolean context	= checkContextCondition();
+		if(!context)
+		{
+			rplan.abort();
+			if(rplan.getReason() instanceof RProcessableElement)
+			{
+				((RProcessableElement)rplan.getReason()).planFinished(null);
+			}
+		}
+		else
 		{
 			// A new plan body must only be executed if it hasn't been aborted 
 			if(!rplan.isFinishing() && RPlan.PlanLifecycleState.NEW.equals(rplan.getLifecycleState()))
@@ -86,7 +88,11 @@ public class ExecutePlanStepAction implements Runnable
 //					rgoal.setChildPlan(rplan);
 //				}
 				
-//				IInternalBDIAgentFeature.get().getCapability().addPlan(rplan);
+				// Force creation of pojo before adding plan to agent.
+				rplan.getBody().createPojo(rplan);
+				
+				// TODO: capability?
+				((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).addPlan(rplan);
 				
 				@SuppressWarnings("unchecked")
 				IFuture<Object>	ret	= (IFuture<Object>) rplan.getBody().executePlan(rplan);
@@ -129,29 +135,14 @@ public class ExecutePlanStepAction implements Runnable
 		}
 	}
 	
-//	/**
-//	 *  Check the context condition.
-//	 *  @return True if context is ok.
-//	 */
-//	protected boolean	checkContextCondition()
-//	{
-//		// Check context condition initially, allows for fast abort before first step
-//		MPlan mplan = (MPlan)rplan.getModelElement();
-//		final MethodInfo mi = mplan.getBody().getContextConditionMethod(rplan.getBody().getClass().getClassLoader());
-//		boolean context = true;
-//		if(mi!=null)
-//		{
-//			context	= BDILifecycleAgentFeature.invokeBooleanMethod(rplan.getBody().getBody(),
-//				mi.getMethod(rplan.getBody().getClass().getClassLoader()), mplan, null, rplan);
-//		}
-//		else if(mplan.getContextCondition()!=null)
-//		{
-//			context = BDILifecycleAgentFeature.evaluateCondition(mplan.getContextCondition(), rplan.getModelElement(), 
-//				Collections.singletonMap(rplan.getFetcherName(), (Object)rplan));
-//		}
-////		System.out.println("context cond: "+context+" "+mplan.getName());
-//		return context;
-//	}
+	/**
+	 *  Check the context condition.
+	 *  @return True if context is ok.
+	 */
+	protected boolean	checkContextCondition()
+	{
+		return rplan.getBody().checkContextCondition(rplan);
+	}
 	
 	/**
 	 *  Return a string.
