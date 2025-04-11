@@ -3,8 +3,6 @@ package jadex.bdi.impl.plan;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.goal.RProcessableElement;
-import jadex.future.IFuture;
-import jadex.future.IResultListener;
 
 // todo: use IPlan (and plan executor abstract to be able to execute plans as subcomponents)
 // todo: allow using multi-step plans
@@ -94,29 +92,28 @@ public class ExecutePlanStepAction implements Runnable
 				// TODO: capability?
 				((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).addPlan(rplan);
 				
-				@SuppressWarnings("unchecked")
-				IFuture<Object>	ret	= (IFuture<Object>) rplan.getBody().executePlan(rplan);
-				if(ret!=null)
-				{
-					ret.addResultListener(new IResultListener<Object>()
-					{
-						public void resultAvailable(Object result)
-						{
-//							IInternalBDIAgentFeature.get().getCapability().removePlan(rplan);
-							Object reason = rplan.getReason();
-							if(reason instanceof RProcessableElement)
-							{
-								((RProcessableElement)reason).planFinished(rplan);
-							}
-						}
-						
-						public void exceptionOccurred(Exception exception)
-						{
-							resultAvailable(null);
-						}
-					});
-				}
-				else
+				rplan.getBody().executePlan(rplan);
+//				if(ret!=null)
+//				{
+//					ret.addResultListener(new IResultListener<Object>()
+//					{
+//						public void resultAvailable(Object result)
+//						{
+////							IInternalBDIAgentFeature.get().getCapability().removePlan(rplan);
+//							Object reason = rplan.getReason();
+//							if(reason instanceof RProcessableElement)
+//							{
+//								((RProcessableElement)reason).planFinished(rplan);
+//							}
+//						}
+//						
+//						public void exceptionOccurred(Exception exception)
+//						{
+//							resultAvailable(null);
+//						}
+//					});
+//				}
+//				else
 				{
 //					IInternalBDIAgentFeature.get().getCapability().removePlan(rplan);
 					Object reason = rplan.getReason();

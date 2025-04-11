@@ -115,7 +115,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public void doSetLifecycleState(GoalLifecycleState lifecyclestate)
 	{
-		//System.out.println("lifecyle state: "+getId()+", "+lifecyclestate);
+//		System.out.println("lifecyle state: "+getId()+", "+lifecyclestate);
 		
 		this.lifecyclestate = lifecyclestate;
 	}
@@ -135,10 +135,9 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public void doSetProcessingState(GoalProcessingState processingstate)
 	{
-		//System.out.println("proc state: "+getId()+", "+processingstate);
+//		System.out.println("proc state: "+getId()+", "+processingstate);
 		
 		this.processingstate = processingstate;
-//		publishToolGoalEvent(IMonitoringEvent.EVENT_TYPE_MODIFICATION);
 	}
 	
 	/**

@@ -258,6 +258,8 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //			}
 //		}
 		
+//		System.out.println("lifecyle state: "+getId()+", "+lifecyclestate);
+		
 		this.lifecyclestate = lifecyclestate;
 		
 		if(PlanLifecycleState.PASSED.equals(lifecyclestate)
@@ -265,7 +267,6 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 			|| PlanLifecycleState.ABORTED.equals(lifecyclestate))
 		{
 			//System.out.println("rplan finished: "+finished+" "+this);
-			assert finished!=null;
 			if(finished!=null)
 				finished.setResult(null);
 		}

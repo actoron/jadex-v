@@ -1,7 +1,7 @@
 package jadex.bdi.impl.plan;
 
-import jadex.future.Future;
-import jadex.future.IFuture;
+import jadex.bdi.impl.plan.RPlan.PlanLifecycleState;
+import jadex.execution.StepAborted;
 import jadex.injection.impl.IInjectionHandle;
 
 /**
@@ -21,23 +21,23 @@ public class MethodPlanBody implements IPlanBody
 	}
 	
 	@Override
-	public IFuture<?> executePlan(RPlan rplan)
+	public void	executePlan(RPlan rplan)
 	{
-		// TODO: set passed/failed and execute passed/failed/aborted
-		// TODO: log exceptions
 		try
 		{
-			Object	ret	= body.apply(rplan.getComponent(), rplan.getParentPojos(), rplan);
-			if(ret!=null && !(ret instanceof IFuture))
-			{
-				throw new UnsupportedOperationException("Plan methods must return IFuture or null: "+this);
-			}
-			return (IFuture<?>)ret;
+			rplan.setLifecycleState(PlanLifecycleState.BODY);
+			ClassPlanBody.internalInvokePart(rplan, body);
+			rplan.setLifecycleState(PlanLifecycleState.PASSED);
 		}
 		catch(Exception e)
 		{
+			rplan.setLifecycleState(PlanLifecycleState.FAILED);
 			rplan.setException(e);
-			return new Future<Object>(e);
+		}
+		catch(StepAborted e)
+		{
+			rplan.setLifecycleState(PlanLifecycleState.ABORTED);
+			throw e;
 		}
 	}
 }

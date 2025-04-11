@@ -54,7 +54,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 			@Override
 			public IFuture<Void> addEvent(IEvent event)
 			{
-				// Avoid micro plan step inside event processing
+				// Avoid plan self-abort inside event processing
 				RPlan	rplan	= RPlan.RPLANS.get();
 				if(rplan!=null && !rplan.isAtomic())
 				{

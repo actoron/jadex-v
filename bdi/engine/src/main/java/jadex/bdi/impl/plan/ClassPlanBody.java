@@ -1,12 +1,10 @@
 package jadex.bdi.impl.plan;
 
 import jadex.bdi.GoalFailureException;
-import jadex.bdi.PlanAbortedException;
 import jadex.bdi.PlanFailureException;
 import jadex.bdi.impl.plan.RPlan.PlanLifecycleState;
 import jadex.common.SUtil;
 import jadex.execution.StepAborted;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.impl.IInjectionHandle;
 
@@ -79,9 +77,9 @@ public class ClassPlanBody implements IPlanBody
 	}
 	
 	@Override
-	public IFuture<?> executePlan(RPlan rplan)
+	public void/*IFuture<?>*/ executePlan(RPlan rplan)
 	{
-		final Future<Void> ret = new Future<Void>();
+//		final Future<Void> ret = new Future<Void>();
 		
 		PlanLifecycleState	next; // next step: call passed(), failed(), aborted()
 		try
@@ -117,13 +115,11 @@ public class ClassPlanBody implements IPlanBody
 		catch(Exception e)
 		{
 			rplan.setException(e);
-			
-			// Next step: failed() or aborted()
-			next = e instanceof PlanAbortedException? PlanLifecycleState.ABORTING: PlanLifecycleState.FAILING;	// TODO unify planaborted
+			next = PlanLifecycleState.FAILING;
 		}
 		catch(StepAborted e)
 		{
-			next = PlanLifecycleState.ABORTING;	// TODO unify planaborted	
+			next = PlanLifecycleState.ABORTING;
 		}
 
 		
@@ -173,7 +169,7 @@ public class ClassPlanBody implements IPlanBody
 //			ret.setException(rplan.getException());
 //		}
 		
-		return ret;
+//		return ret;
 	}
 	
 	/**
@@ -238,14 +234,10 @@ public class ClassPlanBody implements IPlanBody
 			assert RPlan.RPLANS.get()==null : RPlan.RPLANS.get()+", "+rplan;
 			RPlan.RPLANS.set(rplan);
 //			rplan.setProcessingState(RPlan.PlanProcessingState.RUNNING);
-			Object res = null;
-			res = handle.apply(rplan.getComponent(), rplan.getAllPojos(), rplan);
-			
+			Object	res	= handle.apply(rplan.getComponent(), rplan.getAllPojos(), rplan);
 			if(res instanceof IFuture)
 			{
-				@SuppressWarnings("unchecked")
-				IFuture<Object> fut = (IFuture<Object>)res;
-				res	= fut.get();
+				res	= ((IFuture<?>)res).get();
 			}
 			
 			return res;
@@ -255,7 +247,6 @@ public class ClassPlanBody implements IPlanBody
 			// Print exception, when relevant for user. 
 			if(!(e instanceof StepAborted)
 				&& !(e instanceof GoalFailureException)
-				&& !(e instanceof PlanAbortedException)
 				&& !(e instanceof PlanFailureException))
 			{
 				System.err.println("Plan '"+rplan.getId()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
