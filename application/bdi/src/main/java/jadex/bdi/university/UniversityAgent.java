@@ -1,41 +1,51 @@
 package jadex.bdi.university;
 
-import jadex.bdi.annotation.Belief;
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
+import jadex.bdi.IPlan;
+import jadex.bdi.PlanFailureException;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IPlan;
-import jadex.bdi.runtime.PlanFailureException;
 import jadex.core.IComponent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Go to university example taken from  
  *  Winikoff, Padgham: developing intelligent agent systems, 2004.
  */
-@Agent(type="bdip")//, keepalive=Boolean3.FALSE)
+@BDIAgent
 public class UniversityAgent
 {
 	/** The bdi agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
-	/** Belief if it is currently raining. Set through an agent argument. */
-	@Belief
-	protected boolean raining = Boolean.TRUE.equals(agent.getFeature(IBDIAgentFeature.class).getArgument("raining"));
+	/** Belief if it is currently raining. */
+//	@Belief
+	protected boolean raining;
 	
-	/** Belief if wait time is not too long. Set through an agent argument. */
-	@Belief
-	protected boolean waiting = Boolean.TRUE.equals(agent.getFeature(IBDIAgentFeature.class).getArgument("waiting"));
+	/** Belief if wait time is not too long. */
+//	@Belief
+	protected boolean waiting;
 	
 	/** The top-level goal to come to the university. */
 	@Goal
 	protected class ComeToUniGoal
 	{
+	}
+
+	/**
+	 *  Create the agent pojo with given initial beliefs.
+	 */
+	public UniversityAgent(boolean raining, boolean waiting)
+	{
+		this.raining	= raining;
+		this.waiting	= waiting;
 	}
 	
 	/** The take x goal is for using a train or tram. */
@@ -82,7 +92,7 @@ public class UniversityAgent
 	 *  The walk plan for the come to university goal.
 	 *  Walk only if its not raining and not as first choice
 	 */
-	@Plan(trigger=@Trigger(goals=ComeToUniGoal.class), priority=-1)
+	@Plan(trigger=@Trigger(goals=ComeToUniGoal.class)/*, priority=-1*/)
 	protected class WalkPlan
 	{
 		@PlanPrecondition
@@ -136,7 +146,7 @@ public class UniversityAgent
 	 *  Take X plan for the take X goal.
 	 */
 	@Plan(trigger=@Trigger(goals=TakeXGoal.class))
-	protected void takeX(TakeXGoal goal)
+	protected void takeX(/*TakeXGoal goal*/IPlan plan)
 	{
 		System.out.println("Walking to station.");
 		System.out.println("Checking time table.");
@@ -147,7 +157,8 @@ public class UniversityAgent
 		}
 		else
 		{
-			System.out.println("Taking "+goal.getType());
+//			System.out.println("Taking "+goal.getType());
+			System.out.println("Taking "+((TakeXGoal)((IGoal)plan.getReason()).getPojo()).getType());
 		}
 	}
 }

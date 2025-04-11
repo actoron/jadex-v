@@ -354,7 +354,7 @@ public class APL
 		if(cand.getBody().hasPrecondition())
 		{
 			// TODO: avoid duplicate RPlan creation
-			RPlan	rplan	= cand.createPlan(element);
+			RPlan	rplan	= cand.createPlan(cand, element);
 			ret	= cand.getBody().checkPrecondition(rplan);
 		}
 		
@@ -490,11 +490,11 @@ public class APL
 //		return ret;
 //	}
 	
-//	/**
-//	 *  After plan has finished the candidate will be removed from the APL.
-//	 */
-//	public void planFinished(IInternalPlan rplan)
-//	{
+	/**
+	 *  After plan has finished the candidate will be removed from the APL.
+	 */
+	public void planFinished(RPlan rplan)
+	{
 //		MProcessableElement mpe = (MProcessableElement)element.getModelElement();
 //		ExcludeMode exclude = mpe.getExcludeMode();
 //		
@@ -508,8 +508,8 @@ public class APL
 //			return;
 //		
 //		if(isToExclude(rplan, exclude))
-//			candidates.remove(rplan.getCandidate());
-//	}
+			candidates.remove(rplan.getCandidate());
+	}
 	
 //	/** 
 //	 *  Create candidates for a matching mplan.
@@ -1164,10 +1164,10 @@ public class APL
 		}
 		
 		@Override
-		public RPlan createPlan(RProcessableElement reason)
+		public RPlan createPlan(ICandidateInfo cand, RProcessableElement reason)
 		{
 			// TODO: plan from another capability needs other parent pojos
-			return new RPlan(name, reason, body, reason.getComponent(), reason.getParentPojos());
+			return new RPlan(cand, name, reason, body, reason.getComponent(), reason.getParentPojos());
 		}
 
 		@Override

@@ -1,8 +1,5 @@
 package jadex.bdi.university;
 
-import jadex.bdi.runtime.BDICreationInfo;
-import jadex.bdi.runtime.IBDIAgent;
-import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 
 /**
@@ -18,10 +15,7 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-//		IBDIAgent.create("jadex.bdi.university.UniversityAgent");
-		IBDIAgent.create(new BDICreationInfo("jadex.bdi.university.UniversityAgent")
-			.addArgument("raining", true)
-			.addArgument("waiting", false));
+		IComponentManager.get().create(new UniversityAgent(true, false)).get();
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

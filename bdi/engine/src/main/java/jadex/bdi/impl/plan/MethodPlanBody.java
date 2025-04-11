@@ -36,6 +36,7 @@ public class MethodPlanBody implements IPlanBody
 		}
 		catch(Exception e)
 		{
+			rplan.setException(e);
 			return new Future<Object>(e);
 		}
 	}

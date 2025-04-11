@@ -226,7 +226,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					(event, rule, context2, condresult) ->
 					{
 						// Action -> start plan
-						RPlan	plan	= new RPlan(planname, new ChangeEvent<Object>(event), body, comp, pojos);
+						RPlan	plan	= new RPlan(null, planname, new ChangeEvent<Object>(event), body, comp, pojos);
 						comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(plan));
 						return IFuture.DONE;
 					},
@@ -280,7 +280,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					(event, rule, context2, condresult) ->
 					{
 						// Action -> start plan
-						RPlan	rplan	= new RPlan(planname, new ChangeEvent<Object>(event), planbody, comp, pojos);
+						RPlan	rplan	= new RPlan(null, planname, new ChangeEvent<Object>(event), planbody, comp, pojos);
 						if(planbody.checkPrecondition(rplan))
 						{
 							comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));

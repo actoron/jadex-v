@@ -1,7 +1,9 @@
 package jadex.bdi.impl.goal;
 
 import java.lang.reflect.Method;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import jadex.bdi.impl.RElement;
 import jadex.bdi.impl.plan.RPlan;
@@ -15,8 +17,8 @@ public abstract class RProcessableElement extends RElement//extends RParameterEl
 	/** The applicable plan list. */
 	protected APL apl;
 	
-//	/** The tried plans. */
-//	protected List<IInternalPlan> triedplans;
+	/** The tried plans. */
+	protected Set</*IInternalPlan*/RPlan> triedplans;
 	
 	/**
 	 *  Create a new element.
@@ -48,26 +50,26 @@ public abstract class RProcessableElement extends RElement//extends RParameterEl
 		this.apl = apl;
 	}
 
-//	/**
-//	 *  Add a tried plan.
-//	 */
-//	public void addTriedPlan(IInternalPlan plan)
-//	{
-//		if(triedplans==null)
-//		{
-//			triedplans = new ArrayList<IInternalPlan>();
-//		}
-//		triedplans.add(plan);
-//	}
-//	
-//	/**
-//	 *  Get the triedplans.
-//	 *  @return The triedplans.
-//	 */
-//	public List<IInternalPlan> getTriedPlans()
-//	{
-//		return triedplans;
-//	}
+	/**
+	 *  Add a tried plan.
+	 */
+	public void addTriedPlan(RPlan plan)
+	{
+		if(triedplans==null)
+		{
+			triedplans = new LinkedHashSet<>();
+		}
+		triedplans.add(plan);
+	}
+	
+	/**
+	 *  Get the triedplans.
+	 *  @return The triedplans.
+	 */
+	public Set<RPlan> getTriedPlans()
+	{
+		return triedplans;
+	}
 //
 //	/**
 //	 *  Set the triedplans.
@@ -87,10 +89,10 @@ public abstract class RProcessableElement extends RElement//extends RParameterEl
 		{
 			if(apl!=null)
 			{
-//				// do not add tried plan if apl is already reset because procedural
-//				// goal semantics is wrong otherwise (isProceduralSucceeded)
-//				addTriedPlan(rplan);
-//				apl.planFinished(rplan);
+				// do not add tried plan if apl is already reset because procedural
+				// goal semantics is wrong otherwise (isProceduralSucceeded)
+				addTriedPlan(rplan);
+				apl.planFinished(rplan);
 			}
 		}
 	}

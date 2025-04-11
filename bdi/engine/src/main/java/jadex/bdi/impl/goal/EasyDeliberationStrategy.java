@@ -221,14 +221,14 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		return inhibitors!=null && !inhibitors.isEmpty();
 	}
 	
-	/**
-	 * Test if goal is inhibited by another goal.
-	 */
-	protected boolean isInhibitedBy(RGoal goal, RGoal other)
-	{
-		Set<RGoal> inhibitors = getInhibitions(goal, false);
-		return !goal.isFinished() && inhibitors!=null && inhibitors.contains(other);
-	}
+//	/**
+//	 * Test if goal is inhibited by another goal.
+//	 */
+//	protected boolean isInhibitedBy(RGoal goal, RGoal other)
+//	{
+//		Set<RGoal> inhibitors = getInhibitions(goal, false);
+//		return !goal.isFinished() && inhibitors!=null && inhibitors.contains(other);
+//	}
 	
 	/**
 	 *  Test if this goal inhibits the other.

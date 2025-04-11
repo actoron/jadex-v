@@ -1,10 +1,16 @@
 package jadex.bdi.impl.plan;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import jadex.bdi.IPlan;
 import jadex.bdi.impl.RElement;
+import jadex.bdi.impl.goal.AdoptGoalAction;
+import jadex.bdi.impl.goal.ICandidateInfo;
+import jadex.bdi.impl.goal.RGoal;
 import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -50,9 +56,9 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //	/** The plan has a dispatched element (current goal/event). */
 //	protected Object dispatchedelement;
 //	
-//	/** The plan has subgoals attribute (hack!!! redundancy to goal_has_parentplan). */
-//	protected List<RGoal> subgoals;
-//		
+	/** The plan has subgoals attribute. */
+	protected Set<RGoal> subgoals;
+
 //	/** The plan has a wait abstraction attribute. */
 //	protected WaitAbstraction waitabstraction;
 //		
@@ -68,8 +74,8 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //	/** The non-blocking resumes. */
 //	protected List<ICommand<ResumeCommandArgs>> resumecommands;
 //	
-//	/** The plan has exception attribute. */
-//	protected Exception exception;
+	/** The exception thrown in body (if any). */
+	protected Exception exception;
 //	
 //	/** The result. */
 //	protected Object result;
@@ -83,9 +89,9 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/** The plan body. */
 	protected IPlanBody body;
 	
-//	/** The candidate from which this plan was created. Used for tried plans in proc elem. */
-//	protected ICandidateInfo candidate;
-//	
+	/** The candidate from which this plan was created. Used for tried plans in proc elem. */
+	protected ICandidateInfo candidate;
+	
 //	/** The plan listeners. */
 //	protected List<IResultListener<Object>> listeners;
 //	
@@ -195,12 +201,12 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/**
 	 *  Create a new plan.
 	 */
-	public RPlan(/*MPlan mplan, ICandidateInfo candidate,*/ String name, Object reason/*, Map<String, Object> mappingvals)*/
+	public RPlan(/*MPlan mplan,*/ ICandidateInfo candidate, String name, Object reason/*, Map<String, Object> mappingvals)*/
 		, IPlanBody body, IComponent comp, List<Object> pojos)
 	{
 //		super(mplan, mappingvals);
 		super(name, null, comp, pojos);
-//		this.candidate = candidate;
+		this.candidate = candidate;
 		this.reason = reason;
 		this.body	= body;
 		setLifecycleState(PlanLifecycleState.NEW);
@@ -240,6 +246,8 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	 */
 	public void setLifecycleState(PlanLifecycleState lifecyclestate)
 	{
+		assert this.lifecyclestate!=lifecyclestate;
+		
 //		// Cleanup previous lifecycle phase
 //		if(subgoals!=null)
 //		{
@@ -261,13 +269,6 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 			if(finished!=null)
 				finished.setResult(null);
 		}
-		
-//		if(PlanLifecycleState.PASSED.equals(lifecyclestate)
-//			|| PlanLifecycleState.FAILED.equals(lifecyclestate)
-//			|| PlanLifecycleState.ABORTED.equals(lifecyclestate))
-//		{
-//			System.out.println("plan lifecycle: "+lifecyclestate+", "+this);
-//		}
 	}
 	
 	/**
@@ -297,33 +298,33 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //		this.dispatchedelement = dispatchedelement;
 //	}
 //	
-//	/**
-//	 *  Get the exception.
-//	 *  @return The exception.
-//	 */
-//	public Exception getException()
-//	{
-//		return exception;
-//	}
-//
-//	/**
-//	 *  Set the exception.
-//	 *  @param exception The exception to set.
-//	 */
-//	public void setException(Exception exception)
-//	{
-////		System.out.println("setting ex: "+exception+" "+this);
-//		this.exception = exception;
-//	}
+	/**
+	 *  Get the exception.
+	 *  @return The exception.
+	 */
+	public Exception getException()
+	{
+		return exception;
+	}
+
+	/**
+	 *  Set the exception.
+	 *  @param exception The exception to set.
+	 */
+	public void setException(Exception exception)
+	{
+//		System.out.println("setting ex: "+exception+" "+this);
+		this.exception = exception;
+	}
 	
-//	/**
-//	 *  Get the candidate.
-//	 *  @return The candidate.
-//	 */
-//	public ICandidateInfo getCandidate()
-//	{
-//		return candidate;
-//	}
+	/**
+	 *  Get the candidate.
+	 *  @return The candidate.
+	 */
+	public ICandidateInfo getCandidate()
+	{
+		return candidate;
+	}
 //
 //	/**
 //	 *  Set the candidate.
@@ -455,28 +456,28 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		return isPassed() || isFailed() || isAborted();
 	}
 	
-//	/**
-//	 * 
-//	 */
-//	public void addSubgoal(RGoal subgoal)
-//	{
-//		if(subgoals==null)
-//		{
-//			subgoals = new ArrayList<RGoal>();
-//		}
-//		subgoals.add(subgoal);
-//	}
-//	
-//	/**
-//	 * 
-//	 */
-//	public void removeSubgoal(RGoal subgoal)
-//	{
-//		if(subgoals!=null)
-//		{
-//			subgoals.remove(subgoal);
-//		}
-//	}
+	/**
+	 *  Add goal to current subgoals.
+	 */
+	public void addSubgoal(RGoal subgoal)
+	{
+		if(subgoals==null)
+		{
+			subgoals = new LinkedHashSet<>();
+		}
+		subgoals.add(subgoal);
+	}
+	
+	/**
+	 *  Remove goal from current subgoals.
+	 */
+	public void removeSubgoal(RGoal subgoal)
+	{
+		if(subgoals!=null)
+		{
+			subgoals.remove(subgoal);
+		}
+	}
 	
 	/**
 	 * 
@@ -585,11 +586,11 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //		return ret;
 //	}
 //	
-//	/**
-//	 *  Dispatch a goal wait for its result.
-//	 */
-//	public <T, E> IFuture<E> dispatchSubgoal(final T goal)
-//	{
+	/**
+	 *  Dispatch a goal wait for its result.
+	 */
+	public <T, E> IFuture<E> dispatchSubgoal(final T goal)
+	{
 //		return dispatchSubgoal(goal, -1);
 //	}
 //	
@@ -598,18 +599,11 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //	 */
 //	public <T, E> IFuture<E> dispatchSubgoal(final T goal, long timeout)
 //	{
-////		final BDIAgentInterpreter ip = (BDIAgentInterpreter)((BDIAgent)ia).getInterpreter();
-//
-////		final Future<E> ret = new BDIFuture<E>();
 //		final Future<E> ret = new Future<E>();
-//		
-//		IBDIModel bdim = IInternalBDIAgentFeature.get().getBDIModel();
-//		final MGoal mgoal = bdim.getCapability().getGoal(goal.getClass().getName());
-//		if(mgoal==null)
-//			throw new RuntimeException("Unknown goal type: "+goal);
-//		final RGoal rgoal = new RGoal(mgoal, goal, null, null, null);
-//		rgoal.setParent(this);
-//		
+		
+		// TODO: hack!!! goal from other capability needs different parents?
+		final RGoal rgoal = new RGoal(goal, this, comp, getParentPojos());
+		
 //		final ResumeCommand<E> rescom = new ResumeCommand<E>(ret, false);
 ////		setResumeCommand(rescom);
 //		addResumeCommand(rescom);
@@ -645,14 +639,15 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //				removeSubgoal(rgoal);
 //			}
 //		});
-//	
-//		addSubgoal(rgoal);
-//		
-//		//AdoptGoalAction.adoptGoal(getAgent(), rgoal);
-//		IExecutionFeature.get().scheduleStep(new AdoptGoalAction(rgoal));
-//		
-//		return ret;
-//	}
+	
+		addSubgoal(rgoal);
+		
+		IExecutionFeature.get().scheduleStep(new AdoptGoalAction(rgoal));
+		
+		@SuppressWarnings("unchecked")
+		IFuture<E>	ret	= (IFuture<E>) rgoal.getFinished();
+		return ret;
+	}
 //	
 //	/**
 //	 *  Wait for a fact change of a belief.

@@ -13,7 +13,7 @@ public interface ICandidateInfo
 	 *  Get the plan instance.
 	 *  @return	The plan instance.
 	 */
-	public /*IInternalPlan*/RPlan	createPlan(RProcessableElement reason);
+	public /*IInternalPlan*/RPlan	createPlan(ICandidateInfo cand,  RProcessableElement reason);
 	
 	/**
 	 *  Get the plan body of this candidate.

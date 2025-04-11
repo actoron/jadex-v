@@ -116,7 +116,7 @@ public class ClassPlanBody implements IPlanBody
 		}
 		catch(Exception e)
 		{
-//			rplan.setException(e);
+			rplan.setException(e);
 			
 			// Next step: failed() or aborted()
 			next = e instanceof PlanAbortedException? PlanLifecycleState.ABORTING: PlanLifecycleState.FAILING;	// TODO unify planaborted

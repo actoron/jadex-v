@@ -3,6 +3,7 @@ package jadex.bdi.impl.goal;
 import java.util.ArrayList;
 import java.util.List;
 
+import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
 import jadex.bdi.impl.BDIAgentFeature;
@@ -10,6 +11,8 @@ import jadex.bdi.impl.ChangeEvent;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.InjectionFeature;
 import jadex.rules.eca.Event;
@@ -19,7 +22,7 @@ import jadex.rules.eca.RuleSystem;
 /**
  *  Goal instance implementation.
  */
-public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
+public class RGoal extends /*RFinishableElement*/RProcessableElement implements IGoal//, IInternalPlan
 {
 	//-------- attributes --------
 	
@@ -38,6 +41,12 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 //	
 //	/** The candidate from which this plan was created. Used for tried plans in proc elem. */
 //	protected ICandidateInfo candidate;
+	
+	/** The finished future (if someone waits for the goal). */
+	public Future<Object>	finished;
+	
+	/** Remember last plan exception to pass on in case goal fails due to no more plans. */
+	protected Exception	exception;
 	
 	//-------- constructors --------
 	
@@ -141,8 +150,7 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 		if(getProcessingState().equals(processingstate))
 			return;
 		
-		if(GoalProcessingState.FAILED.equals(getProcessingState())
-			|| GoalProcessingState.SUCCEEDED.equals(getProcessingState()))
+		if(isFinished())
 		{
 			throw new RuntimeException("Final proc state cannot be changed: "+getProcessingState()+" "+processingstate);
 		}
@@ -171,8 +179,7 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 //			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, getMGoal().getName()}), this));
 //		}
 		
-		if(GoalProcessingState.SUCCEEDED.equals(processingstate)
-			|| GoalProcessingState.FAILED.equals(processingstate))
+		if(isFinished())
 		{
 			setLifecycleState(GoalLifecycleState.DROPPING);
 		}
@@ -280,6 +287,19 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 		else if(GoalLifecycleState.DROPPED.equals(lifecyclestate))
 		{
 			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, modelname}), this));
+			
+			if(finished!=null)
+			{
+				if(isSucceeded())
+				{
+					// TODO: Goal result
+					finished.setResult(null);
+				}
+				else
+				{
+					finished.setException(exception!=null ? exception : new GoalFailureException());
+				}
+			}
 //
 //			if(getListeners()!=null)
 //			{
@@ -293,6 +313,17 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 		}
 	}
 	
+	/**
+	 *  Get the finished future to wait for goal finished/result.
+	 */
+	public IFuture<Object>	getFinished()
+	{
+		if(finished==null)
+		{
+			finished	= new Future<>();
+		}
+		return finished;
+	}
 	
 	/**
 	 *  Adopt a goal.
@@ -351,6 +382,15 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 	{
 		return GoalProcessingState.FAILED.equals(processingstate);
 	}
+	
+	/**
+	 *  Test if the element is finished.
+	 */
+	public boolean isFinished()
+	{
+		return isSucceeded() || isFailed();
+	}
+//	
 //	
 //	/**
 //	 *  Test if the goal is in lifecyclestate 'active'.
@@ -462,20 +502,20 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 //		boolean	queue	= IInternalBDIAgentFeature.get().getRuleSystem().isQueueEvents();
 //		IInternalBDIAgentFeature.get().getRuleSystem().setQueueEvents(true);
 //		
-//		super.planFinished(rplan);
+		super.planFinished(rplan);
 //
 //		childplan = null;
 		
-//		if(rplan!=null)
-//		{
-//			if(rplan.isFailed())
-//			{
-//				this.setException(rplan.getException());
-//			}
-//		}
+		if(rplan!=null)
+		{
+			if(rplan.isFailed())
+			{
+				this.exception	= rplan.getException();
+			}
+		}
 		
 		// Check procedural success semantics
-//		if(isProceduralSucceeded())
+		if(isProceduralSucceeded(rplan))
 		{
 			// succeeded leads to lifecycle state dropping!
 			setProcessingState(/*isRecur() ? GoalProcessingState.PAUSED :*/ GoalProcessingState.SUCCEEDED);
@@ -576,22 +616,21 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 //		return getMGoal().isRecur();
 //	}
 //	
-//	/**
-//	 *  Test if a goal has succeeded with respect to its plan execution.
-//	 */
-//	public boolean isProceduralSucceeded()
-//	{
-//		boolean ret = false;
-//		
-//		// todo: perform goals
-//		if(isProceduralGoal() && getTriedPlans()!=null && !getTriedPlans().isEmpty())
-//		{
-//			// OR case
+	/**
+	 *  Test if a goal has succeeded with respect to its plan execution.
+	 */
+	public boolean isProceduralSucceeded(RPlan last)
+	{
+		boolean ret = false;
+		
+		// todo: perform goals
+		if(/*isProceduralGoal() && */getTriedPlans()!=null && !getTriedPlans().isEmpty())
+		{
+			// OR case
 //			if(getMGoal().isOrSuccess())
-//			{
-//				IInternalPlan rplan = getTriedPlans().get(getTriedPlans().size()-1);
-//				ret = rplan.isPassed();
-//			}
+			{
+				ret = last.isPassed();
+			}
 //			// AND case
 //			else
 //			{
@@ -614,10 +653,10 @@ public class RGoal extends RFinishableElement implements IGoal//, IInternalPlan
 //					}
 //				}
 //			}
-//		}
-//		
-//		return ret;
-//	}
+		}
+		
+		return ret;
+	}
 //	
 //	/**
 //	 * 

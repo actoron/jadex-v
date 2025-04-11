@@ -1,5 +1,7 @@
 package jadex.bdi;
 
+import jadex.future.IFuture;
+
 /**
  *  User interface for plans.
  */
@@ -50,10 +52,10 @@ public interface IPlan// extends IParameterElement, IFinishableElement<Object>  
 //	 */
 //	public IFuture<Void> waitFor(long delay);
 //	
-//	/**
-//	 *  Dispatch a goal wait for its result.
-//	 */
-//	public <T, E> IFuture<E> dispatchSubgoal(T goal);
+	/**
+	 *  Dispatch a goal wait for its result.
+	 */
+	public <T, E> IFuture<E> dispatchSubgoal(T goal);
 //	
 //	/**
 //	 *  Dispatch a goal wait for its result.
