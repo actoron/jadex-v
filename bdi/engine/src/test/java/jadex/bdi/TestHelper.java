@@ -6,5 +6,5 @@ package jadex.bdi;
 public class TestHelper
 {
 	/** Global test timeout. */
-	public static final long	TIMEOUT	= -1;
+	public static final long	TIMEOUT	= 10000;
 }

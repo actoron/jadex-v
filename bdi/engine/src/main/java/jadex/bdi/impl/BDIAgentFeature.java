@@ -48,7 +48,33 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 		this.self	= self;
 		this.model	= BDIModel.getModel(self.getPojo().getClass());
-		this.rulesystem	= new RuleSystem(self, false);	// TODO: true in old version but processEvents called for belief write!?
+		// TODO: true in old version but processEvents called for belief write!?
+		this.rulesystem	= new RuleSystem(self, false)
+		{
+			@Override
+			public IFuture<Void> addEvent(IEvent event)
+			{
+				// Avoid micro plan step inside event processing
+				RPlan	rplan	= RPlan.RPLANS.get();
+				if(rplan!=null && !rplan.isAtomic())
+				{
+					try
+					{
+						rplan.startAtomic();
+						return super.addEvent(event);
+					}
+					finally
+					{
+						rplan.endAtomic();
+					}
+				}
+				
+				else
+				{
+					return super.addEvent(event);
+				}
+			}
+		};
 	}
 	
 	//-------- ILifecycle interface --------

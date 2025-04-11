@@ -191,7 +191,18 @@ public class ClassPlanBody implements IPlanBody
 				{
 					createPojo(rplan);
 				}
-				result	= internalInvokePart(rplan, condition);
+				
+				// If currently inside (maybe other) plans -> reset RPLANS variable.
+				RPlan	currentplan	= 	RPlan.RPLANS.get();
+				RPlan.RPLANS.set(null);
+				try
+				{
+					result	= internalInvokePart(rplan, condition);
+				}
+				finally
+				{
+					RPlan.RPLANS.set(currentplan);
+				}
 			}
 			catch(Exception e)
 			{
@@ -224,8 +235,8 @@ public class ClassPlanBody implements IPlanBody
 		
 		try
 		{
-//			assert RPlan.RPLANS.get()==null : RPlan.RPLANS.get()+", "+rplan;
-//			RPlan.RPLANS.set(rplan);
+			assert RPlan.RPLANS.get()==null : RPlan.RPLANS.get()+", "+rplan;
+			RPlan.RPLANS.set(rplan);
 //			rplan.setProcessingState(RPlan.PlanProcessingState.RUNNING);
 			Object res = null;
 			res = handle.apply(rplan.getComponent(), rplan.getAllPojos(), rplan);
@@ -253,8 +264,8 @@ public class ClassPlanBody implements IPlanBody
 		}
 		finally
 		{
-//			assert RPlan.RPLANS.get()==rplan : RPlan.RPLANS.get()+", "+rplan;
-//			RPlan.RPLANS.set(null);
+			assert RPlan.RPLANS.get()==rplan : RPlan.RPLANS.get()+", "+rplan;
+			RPlan.RPLANS.set(null);
 		}
 	}
 }

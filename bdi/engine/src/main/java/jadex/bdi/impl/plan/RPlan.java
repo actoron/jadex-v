@@ -18,17 +18,17 @@ import jadex.future.IFuture;
  */
 public class RPlan extends RElement/*extends RParameterElement*/ implements IPlan//, IInternalPlan
 {
-//	/** The rplans for plan threads. */
-//	public static final ThreadLocal<RPlan>	RPLANS	= new ThreadLocal<RPlan>();
+	/** The rplans for plan threads. */
+	public static final ThreadLocal<RPlan>	RPLANS	= new ThreadLocal<RPlan>();
 	
 	//-------- plan states --------
 	
-	public static enum PlanProcessingState
-	{
-		READY, 
-		RUNNING,
-		WAITING,
-	};
+//	public static enum PlanProcessingState
+//	{
+//		READY, 
+//		RUNNING,
+//		WAITING,
+//	};
 	
 	public static enum PlanLifecycleState
 	{
@@ -77,8 +77,8 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/** The plan has lifecycle state attribute. */
 	protected PlanLifecycleState lifecyclestate;
 	
-	/** The plan has processing state attribute (ready or waiting). */
-	protected PlanProcessingState processingstate;
+//	/** The plan has processing state attribute (ready or waiting). */
+//	protected PlanProcessingState processingstate;
 	
 	/** The plan body. */
 	protected IPlanBody body;
@@ -92,8 +92,8 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //	/** The wait cnt for rule names. */
 //	protected int cnt;
 //	
-//	/** The atomic flag. */
-//	protected boolean atomic;
+	/** The atomic flag. */
+	protected boolean atomic;
 	
 	/** The finished future (if finishing or finished). */
 	public Future<Void>	finished;
@@ -204,26 +204,26 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		this.reason = reason;
 		this.body	= body;
 		setLifecycleState(PlanLifecycleState.NEW);
-		setProcessingState(PlanProcessingState.READY);
+//		setProcessingState(PlanProcessingState.READY);
 	}
 	
-	/**
-	 *  Get the processingState.
-	 *  @return The processingState.
-	 */
-	public PlanProcessingState getProcessingState()
-	{
-		return processingstate;
-	}
-
-	/**
-	 *  Set the processingState.
-	 *  @param processingState The processingState to set.
-	 */
-	public void setProcessingState(PlanProcessingState processingstate)
-	{
-		this.processingstate = processingstate;
-	}
+//	/**
+//	 *  Get the processingState.
+//	 *  @return The processingState.
+//	 */
+//	public PlanProcessingState getProcessingState()
+//	{
+//		return processingstate;
+//	}
+//
+//	/**
+//	 *  Set the processingState.
+//	 *  @param processingState The processingState to set.
+//	 */
+//	public void setProcessingState(PlanProcessingState processingstate)
+//	{
+//		this.processingstate = processingstate;
+//	}
 
 	/**
 	 *  Get the lifecycleState.
@@ -511,14 +511,14 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //								}
 //							}
 //				}
-//				// Can be currently executing and being abort due to e.g. goal condition triggering
-//				else if(!atomic && PlanProcessingState.RUNNING.equals(getProcessingState()))
+				// Can be currently executing and being abort due to e.g. goal condition triggering
+				/*else*/ if(!atomic /*&& PlanProcessingState.RUNNING.equals(getProcessingState())*/)
 				{
-					// abort immediately when not atomic
+					// abort immediately when running and not atomic -> otherwise later checks for aborted in endAtomic(). 
 					throw new StepAborted();
 					
-					// if not immediately it will detect the abort in beforeBlock() when next future.get() is
-					// called and will avoid the next wait
+					// if not running it will detect the abort in before/afterBlock() when next future.get() is
+					// called or resumed and will avoid the next wait/wakeup
 				}
 			}			
 		}
@@ -963,17 +963,17 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //		}
 //	}
 
-//	/**
-//	 *  Check if plan is already aborted.
-//	 */
-//	protected void testBodyAborted()
-//	{
-//		// Throw error to exit body method of aborted plan.
-//		if(isFinishing() && PlanLifecycleState.BODY.equals(getLifecycleState()))
-//		{
-//			throw new StepAborted();
-//		}
-//	}
+	/**
+	 *  Check if plan is already aborted.
+	 */
+	protected void testBodyAborted()
+	{
+		// Throw error to exit body method of aborted plan.
+		if(isFinishing() && PlanLifecycleState.BODY.equals(getLifecycleState()))
+		{
+			throw new StepAborted();
+		}
+	}
 
 //	public record ResumeCommandArgs(Boolean donotify, Boolean abort, Supplier<Exception> exception) {}
 //	
@@ -1158,24 +1158,42 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //		this.result = result;
 //	}
 //	
-//	/**
-//	 *  When in atomic mode, plans will not be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
-//	 */
-//	@Override
-//	public void startAtomic()
-//	{
-//		this.atomic	= true;
-//	}
-//
-//	/**
-//	 *  When not atomic mode, plans will be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
-//	 */
-//	@Override
-//	public void endAtomic()
-//	{
-//		this.atomic	= false;
-//		testBodyAborted();
-//	}
+	
+	/**
+	 *  Check if currently inside Atomic block.
+	 */
+	@Override
+	public boolean	isAtomic()
+	{
+		return atomic;
+	}
+	
+	/**
+	 *  When in atomic mode, plans will not be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
+	 */
+	@Override
+	public void startAtomic()
+	{
+		if(atomic)
+		{
+			throw new IllegalStateException("Already in atomic block.");
+		}
+		this.atomic	= true;
+	}
+
+	/**
+	 *  When not in atomic mode, plans will be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
+	 */
+	@Override
+	public void endAtomic()
+	{
+		if(!atomic)
+		{
+			throw new IllegalStateException("Not in atomic block.");
+		}
+		this.atomic	= false;
+		testBodyAborted();
+	}
 
 //	/**
 //	 *  Set up a rule for the waitqueue to signal to what kinds of events this plan

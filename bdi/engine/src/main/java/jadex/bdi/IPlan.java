@@ -130,13 +130,18 @@ public interface IPlan// extends IParameterElement, IFinishableElement<Object>  
 //	 */
 //	public IFuture<Void> waitForCondition(ICondition cond, String[] events, long timeout);
 //	
-//	/**
-//	 *  When in atomic mode, plans will not be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
-//	 */
-//	public void startAtomic();
-//
-//	/**
-//	 *  When bot atomic mode, plans will be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
-//	 */
-//	public void endAtomic();
+	/**
+	 *  Check if currently inside Atomic block.
+	 */
+	public boolean	isAtomic();
+	
+	/**
+	 *  When in atomic mode, plans will not be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
+	 */
+	public void startAtomic();
+
+	/**
+	 *  When not in atomic mode, plans will be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.
+	 */
+	public void endAtomic();
 }
