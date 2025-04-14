@@ -4,6 +4,7 @@ package jadex.benchmark;
 import java.util.ArrayList;
 import java.util.List;
 
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
@@ -11,13 +12,12 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponent;
 import jadex.future.Future;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Change a belief -> create a goal -> execute a plan
  */
-@Agent(type="bdip")
+@BDIAgent
 public class ReasoningBDIBenchmarkAgent
 {
 	@Belief

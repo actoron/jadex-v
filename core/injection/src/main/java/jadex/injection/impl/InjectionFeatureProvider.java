@@ -1,6 +1,7 @@
 package jadex.injection.impl;
 
 import java.util.Map;
+import java.util.Set;
 
 import jadex.common.NameValue;
 import jadex.common.SReflect;
@@ -104,4 +105,14 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		}): null, Inject.class);
 	}
 
+	/**
+	 *  Get the predecessors, i.e. features that should be inited first.
+	 *  @return The predecessors.
+	 */
+	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
+	{
+		// Make sure feature is last in liost, because it starts user code that might not return.
+		all.remove(getFeatureType());
+		return all;
+	}
 }

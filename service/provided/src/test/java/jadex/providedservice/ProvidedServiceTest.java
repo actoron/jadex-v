@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -194,24 +195,26 @@ public class ProvidedServiceTest
 	@Test
 	public void	testBrokenFieldService()
 	{
-		assertThrows(RuntimeException.class, () ->IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 		{
 			@ProvideService
 			Object	myservice	= new IMyService(){};
-		}).get(TIMEOUT));
+		}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
 	public void	testBrokenMethodService()
 	{
-		assertThrows(RuntimeException.class, () ->IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 		{
 			@ProvideService
 			Object	createService(IComponent comp)
 			{
 				return new IMyService(){};
 			}
-		}).get(TIMEOUT));
+		}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
@@ -225,6 +228,7 @@ public class ProvidedServiceTest
 				return new IMyService(){};
 			}
 		}).get(TIMEOUT);
+		comp.scheduleStep(() -> null).get(TIMEOUT);
 		
 		// Test that service can be found
 		assertNotNull(searchService(comp, IMyService.class));
@@ -238,6 +242,7 @@ public class ProvidedServiceTest
 	public void	testClassService()
 	{
 		IComponentHandle	comp = IComponentManager.get().create(new AnnoImpl()).get(TIMEOUT);
+		comp.scheduleStep(() -> null).get(TIMEOUT);
 		
 		// Test that service can be found
 		assertNotNull(searchService(comp, IMyService.class));
@@ -251,6 +256,7 @@ public class ProvidedServiceTest
 	public void	testMultiService()
 	{
 		IComponentHandle	comp = IComponentManager.get().create(new MultiImpl()).get(TIMEOUT);
+		comp.scheduleStep(() -> null).get(TIMEOUT);
 		
 		// Test that services can be found
 		assertNotNull(searchService(comp, IMyService.class));
@@ -265,8 +271,9 @@ public class ProvidedServiceTest
 	@Test
 	public void	testBrokenClassService()
 	{
-		assertThrows(RuntimeException.class, () ->
-			IComponentManager.get().create(new BrokenAnnoImpl()).get(TIMEOUT));
+		IComponentHandle	handle	=
+			IComponentManager.get().create(new BrokenAnnoImpl()).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
@@ -283,6 +290,7 @@ public class ProvidedServiceTest
 				return new Future<>(IComponentManager.get().getCurrentComponent().getId());
 			}
 		).get();
+		handle.scheduleStep(() -> null).get(TIMEOUT);
 		
 		IMyLambdaService service = searchService(handle, IMyLambdaService.class);
 		
@@ -333,6 +341,7 @@ public class ProvidedServiceTest
 		IComponentHandle	handle	= IComponentManager.get().create(
 			(INoCopyService)obj -> new Future<>(obj)
 		).get();
+		handle.scheduleStep(() -> null).get(TIMEOUT);
 		
 		INoCopyService service = searchService(handle, INoCopyService.class);
 		
@@ -365,6 +374,7 @@ public class ProvidedServiceTest
 		IComponentHandle	handle	= IComponentManager.get().create(
 			(ICopyParameterService)obj -> new Future<>(obj)
 		).get();
+		handle.scheduleStep(() -> null).get(TIMEOUT);
 		
 		ICopyParameterService service = searchService(handle, ICopyParameterService.class);
 		
@@ -397,7 +407,8 @@ public class ProvidedServiceTest
 		IComponentHandle	handle	= IComponentManager.get().create(
 			(ICopyResultService)obj -> new Future<>(obj)
 		).get();
-		
+		handle.scheduleStep(() -> null).get(TIMEOUT);
+
 		ICopyResultService service = searchService(handle, ICopyResultService.class);
 		
 		// Call service from other component
@@ -449,18 +460,20 @@ public class ProvidedServiceTest
 		handle.terminate().get(TIMEOUT);
 		
 		// Test broken no service injection.
-		assertThrows(RuntimeException.class, () -> IComponentManager.get().create(new Object()
+		IComponentHandle	handle2	= IComponentManager.get().create(new Object()
 		{
 			@Inject
 			IServiceIdentifier sid;
-		}).get(TIMEOUT));
+		}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle2.scheduleStep(() -> {return null;}).get(TIMEOUT));
 
 		// Test broken multi service injection.
-		assertThrows(RuntimeException.class, () -> IComponentManager.get().create(new MultiImpl()
+		IComponentHandle	handle3	= IComponentManager.get().create(new MultiImpl()
 		{
 			@Inject
 			IServiceIdentifier sid;
-		}).get(TIMEOUT));
+		}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle3.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 	
 	//-------- helper methods --------

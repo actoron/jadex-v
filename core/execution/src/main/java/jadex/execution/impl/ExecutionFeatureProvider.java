@@ -381,12 +381,16 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			exe.scheduleStep(() -> 
 			{
-				FastLambda<Object> self	= null;
+				T self	= null;
 				try
 				{
+					self	= creator.get();
 					@SuppressWarnings("unchecked")
-					FastLambda<Object> fself	= (FastLambda<Object>)creator.get();
-					self	= fself;
+					FastLambda<Object> fself	= (FastLambda<Object>)self;
+					
+					// Make component available as soon as possible
+					ret.setResult(self);
+					
 					startFeatures(self);
 					
 					// run body and termination in same step as init
@@ -396,26 +400,22 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						System.out.println("starting: "+lfeature);
 						lfeature.onStart();*/
 						
-						Object	result	= self.getPojo().apply(self);
-						if(self.result!=null)
-							self.result.setResult(result);
+						Object	result	= fself.getPojo().apply(self);
+						if(fself.result!=null)
+							fself.result.setResult(result);
 					}
 					catch(Exception e)
 					{
 						self.handleException(e);
 					}
-					if(self.terminate)
+					if(fself.terminate)
 					{
 						exe.scheduleStep((Runnable)() -> fself.terminate());
 					}
-					
-					@SuppressWarnings("unchecked")
-					T t	= (T)self;
-					ret.setResult(t);
 				}
 				catch(Exception e)
 				{
-					ret.setException(e);
+					ret.setExceptionIfUndone(e);
 					if(self!=null)
 					{
 						self.terminate();
@@ -423,7 +423,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				catch(StepAborted e)
 				{
-					ret.setException(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
+					ret.setExceptionIfUndone(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
 					throw e;
 				}
 			});
@@ -438,20 +438,29 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				try
 				{
 					self = creator.get();
-					startFeatures(self);
+					
+					// Make component available as soon as possible
 					ret.setResult(self);
+					
+					startFeatures(self);
 				}
 				catch(Exception e)
 				{
-					ret.setException(e);
-					if(self!=null)
+					if(ret.setExceptionIfUndone(e))
 					{
-						self.terminate();
+						if(self!=null)
+						{
+							self.terminate();
+						}
+					}
+					else
+					{
+						SUtil.throwUnchecked(e);
 					}
 				}
 				catch(StepAborted e)
 				{
-					ret.setException(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
+					ret.setExceptionIfUndone(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
 					throw e;
 				}
 			});

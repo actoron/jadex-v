@@ -2,8 +2,8 @@ package jadex.benchmark;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bdi.runtime.IBDIAgent;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 
 public class SimpleBDIBenchmark
 {
@@ -13,7 +13,7 @@ public class SimpleBDIBenchmark
 		BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			SimpleBDIBenchmarkAgent	pojo	= new SimpleBDIBenchmarkAgent();
-			IComponentHandle	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IComponentManager.get().create(pojo).get();
 			pojo.inited.get();
 			return () -> agent.terminate().get();
 		});
@@ -25,7 +25,7 @@ public class SimpleBDIBenchmark
 		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			SimpleBDIBenchmarkAgent	pojo	= new SimpleBDIBenchmarkAgent();
-			IComponentHandle	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IComponentManager.get().create(pojo).get();
 			pojo.inited.get();
 			agent.terminate().get();
 		});

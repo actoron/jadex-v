@@ -8,7 +8,10 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgent;
+import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Belief;
+import jadex.core.ComponentTerminatedException;
+import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 
 /**
@@ -19,33 +22,35 @@ public class BrokenBeliefTest
 	@Test
 	public void	testObjectField()
 	{
-		assertThrows(UnsupportedOperationException.class, () ->
-			IComponentManager.get().create(new IBDIAgent()
+		IComponentHandle	handle	= IComponentManager.get().create(new IBDIAgent()
 			{
 				@Belief
 				Object	broken;
-			}));
+			}).get(TestHelper.TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT));
 	}
 	
 	@Test
 	public void	testDependentBeliefs()
 	{
-		assertThrows(UnsupportedOperationException.class, () ->
+		IComponentHandle	handle	=
 			IComponentManager.get().create(new IBDIAgent()
 			{
 				@Belief(beliefs = "dummy")
 				Map<Object, Object>	broken;
-			}));
+			}).get(TestHelper.TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT));
 	}
 	
 	@Test
 	public void	testUpdateRate()
 	{
-		assertThrows(UnsupportedOperationException.class, () ->
+		IComponentHandle	handle	=
 			IComponentManager.get().create(new IBDIAgent()
 			{
 				@Belief(updaterate = 1)
 				Set<Object>	broken;
-			}));
+			}).get(TestHelper.TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT));
 	}
 }

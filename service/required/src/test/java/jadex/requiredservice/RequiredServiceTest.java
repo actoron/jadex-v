@@ -65,6 +65,7 @@ public class RequiredServiceTest
 			
 			// Test that service is found.
 			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider.scheduleStep(() -> null).get(TIMEOUT);
 			assertInstanceOf(IHelloService.class, caller.scheduleStep(getservice).get(TIMEOUT));
 		}
 		finally
@@ -92,6 +93,7 @@ public class RequiredServiceTest
 			
 			// Test that service is found.
 			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider.scheduleStep(() -> null).get(TIMEOUT);
 			assertInstanceOf(IHelloService.class, caller.scheduleStep(search).get(TIMEOUT));
 		}
 		finally
@@ -121,6 +123,8 @@ public class RequiredServiceTest
 			// Test that services are found.
 			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
 			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider.scheduleStep(() -> null).get(TIMEOUT);
+			provider2.scheduleStep(() -> null).get(TIMEOUT);
 			assertEquals(2, caller.scheduleStep(getservices).get(TIMEOUT).size());
 		}
 		finally
@@ -154,6 +158,9 @@ public class RequiredServiceTest
 			// Test that services are found.
 			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
 			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			// Schedule steps on providers to make sure feature init is complete.
+			provider.scheduleStep(() -> null).get(TIMEOUT);
+			provider2.scheduleStep(() -> null).get(TIMEOUT);
 			assertEquals(2, caller.scheduleStep(search).get(TIMEOUT).size());
 		}
 		finally
@@ -193,8 +200,10 @@ public class RequiredServiceTest
 				
 				// Check that a service is found
 				provider[0]	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+				provider[0].scheduleStep(() -> null).get(TIMEOUT);
 				
 				// Schedule check to make sure it is executed after result add.
+				caller.scheduleStep(() -> null).get(TIMEOUT);
 				caller.scheduleStep(() ->
 				{
 					assertEquals(1, results.size());
@@ -224,6 +233,7 @@ public class RequiredServiceTest
 			IThrowingFunction<IComponent, IHelloService>	getservice
 				= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalService(IHelloService.class);
 			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider.scheduleStep(() -> null).get(TIMEOUT);
 			
 			// Test that service call returns on component thread
 			IHelloService	service	= caller.scheduleStep(getservice).get(TIMEOUT);
@@ -274,36 +284,36 @@ public class RequiredServiceTest
 		}
 		
 		// Test that previous field service is not provided.
-		assertThrows(ServiceNotFoundException.class,
-			() -> IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 			{
 				@Inject
 				IHelloService myservice;
-			}).get(TIMEOUT));
+			}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 	
 	@Test
 	public void	testBrokenFieldInjection()
 	{
 		// Check that unsupported field injection with query is detected
-		assertThrows(UnsupportedOperationException.class, () ->
-			IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 			{
 				@InjectService(mode=Mode.QUERY)
 				IHelloService	myservice;
-			}).get(TIMEOUT));
+			}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
 	public void	testBrokenCollectionInjection()
 	{
 		// Check that unsupported field injection with query is detected
-		assertThrows(UnsupportedOperationException.class, () ->
-			IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 			{
 				@InjectService
 				LinkedList<IHelloService>	myservice;
-			}).get(TIMEOUT));
+			}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
@@ -378,7 +388,10 @@ public class RequiredServiceTest
 		assertEquals(0, list.size());
 		
 		IComponentHandle	provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+		provider.scheduleStep(() -> null).get(TIMEOUT);
+		
 		// Schedule check to make sure it is executed after result add.
+		handle.scheduleStep(() -> null).get(TIMEOUT);
 		handle.scheduleStep(() ->
 		{
 			assertEquals(1, list.size());
@@ -400,12 +413,12 @@ public class RequiredServiceTest
 	public void	testBrokenQueryInjection()
 	{
 		// Check that missing initial value is detected
-		assertThrows(UnsupportedOperationException.class, () ->
-			IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 			{
 				@InjectService(mode=Mode.QUERY)
 				List<IHelloService>	myservice;
-			}).get(TIMEOUT));
+			}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
@@ -437,12 +450,12 @@ public class RequiredServiceTest
 		}
 		
 		// Test that previous field service is not provided.
-		assertThrows(ServiceNotFoundException.class,
-			() -> IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 			{
 				@InjectService
 				IHelloService myservice;
-			}).get(TIMEOUT));
+			}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
@@ -475,33 +488,33 @@ public class RequiredServiceTest
 	public void	testFieldNotFound()
 	{
 		// Check that exception is thrown
-		assertThrows(ServiceNotFoundException.class,
-			() -> IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 			{
 				@Inject
 				IHelloService myservice;
-			}).get(TIMEOUT));
+			}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
 	public void	testParameterNotFound()
 	{
 		// Check that exception is thrown
-		assertThrows(ServiceNotFoundException.class,
-			() -> IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 		{
 			@OnStart
 			void start(IHelloService myservice)
 			{
 				System.out.println("myservice: "+myservice);
 			}
-		}).get(TIMEOUT));
+		}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test
 	public void	testMethodInjection()
 	{
-		IComponentHandle	provider[]	= new IComponentHandle[1];
+		IComponentHandle	provider	= null;
 		IComponentHandle	provider2	= null;
 		try
 		{
@@ -519,14 +532,11 @@ public class RequiredServiceTest
 			
 			assertTrue(services.isEmpty());
 			
-			// TODO: why step necessary!?
-			caller.scheduleStep(() ->
-			{
-				provider[0]	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
-				return null;
-			}).get(TIMEOUT);
+			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider.scheduleStep(() -> null).get(TIMEOUT);
 			
 			// Schedule check to make sure it is executed after result add.
+			caller.scheduleStep(() -> null).get(TIMEOUT);
 			caller.scheduleStep(() ->
 			{
 				assertEquals(1, services.size());
@@ -534,7 +544,10 @@ public class RequiredServiceTest
 			}).get(TIMEOUT);
 			
 			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider2.scheduleStep(() -> null).get(TIMEOUT);
+			
 			// Schedule check to make sure it is executed after result add.
+			caller.scheduleStep(() -> null).get(TIMEOUT);
 			caller.scheduleStep(() ->
 			{
 				assertEquals(2, services.size());
@@ -543,9 +556,9 @@ public class RequiredServiceTest
 		}
 		finally
 		{
-			if(provider[0]!=null)
+			if(provider!=null)
 			{
-				provider[0].terminate().get(TIMEOUT);
+				provider.terminate().get(TIMEOUT);
 			}
 			if(provider2!=null)
 			{
@@ -557,7 +570,7 @@ public class RequiredServiceTest
 	@Test
 	public void	testSubannoMethodInjection()
 	{
-		IComponentHandle	provider[]	= new IComponentHandle[1];
+		IComponentHandle	provider	= null;
 		IComponentHandle	provider2	= null;
 		try
 		{
@@ -575,14 +588,12 @@ public class RequiredServiceTest
 			
 			assertTrue(services.isEmpty());
 			
-			// TODO: why step necessary!?
-			caller.scheduleStep(() ->
-			{
-				provider[0]	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
-				return null;
-			}).get(TIMEOUT);
+			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			// Schedule step on provider to make sure feature init is complete.
+			provider.scheduleStep(() -> null).get(TIMEOUT);
 			
 			// Schedule check to make sure it is executed after result add.
+			caller.scheduleStep(() -> null).get(TIMEOUT);
 			caller.scheduleStep(() ->
 			{
 				assertEquals(1, services.size());
@@ -590,7 +601,11 @@ public class RequiredServiceTest
 			}).get();
 			
 			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			// Schedule step on provider to make sure feature init is complete.
+			provider2.scheduleStep(() -> null).get(TIMEOUT);
+			
 			// Schedule check to make sure it is executed after result add.
+			caller.scheduleStep(() -> null).get(TIMEOUT);
 			caller.scheduleStep(() ->
 			{
 				assertEquals(2, services.size());
@@ -599,9 +614,9 @@ public class RequiredServiceTest
 		}
 		finally
 		{
-			if(provider[0]!=null)
+			if(provider!=null)
 			{
-				provider[0].terminate().get(TIMEOUT);
+				provider.terminate().get(TIMEOUT);
 			}
 			if(provider2!=null)
 			{
@@ -613,13 +628,14 @@ public class RequiredServiceTest
 	@Test
 	public void	testBrokenMethodInjection()
 	{
-		assertThrows(UnsupportedOperationException.class, () -> IComponentManager.get().create(new Object()
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 		{
 			@Inject
 			void addService(IHelloService hello1, IHelloService hello2)
 			{
 			}
-		}).get(TIMEOUT));			
+		}).get(TIMEOUT);
+		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
 	}
 
 	@Test

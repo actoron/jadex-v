@@ -29,7 +29,8 @@ public class NFMethodPropTestAgent
 	@Test
 	public void waitTimes()
 	{
-		IComponentManager.get().create(new ProviderAgent()).get();
+		IComponentHandle	provider	= IComponentManager.get().create(new ProviderAgent()).get();
+		provider.scheduleStep(() -> null).get();
 		
 		IComponentHandle exta = IComponentManager.get().create(new NFMethodPropTestAgent()).get();
 	

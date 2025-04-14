@@ -35,6 +35,7 @@ public class MethodListenerTest
 		IComponentHandle	handle	= IComponentManager.get().create(
 			(IMyLambdaService)() -> new Future<>(IComponentManager.get().getCurrentComponent().getId())
 		).get(TIMEOUT);
+		handle.scheduleStep(() -> null).get(TIMEOUT);
 		
 		IMyLambdaService	service	= ProvidedServiceTest.searchService(handle, IMyLambdaService.class);
 		Method	m	= IMyLambdaService.class.getMethod("myMethod");
