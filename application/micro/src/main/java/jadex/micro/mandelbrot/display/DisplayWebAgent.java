@@ -4,6 +4,7 @@ import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
+import jadex.providedservice.annotation.ProvideService;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
 
@@ -27,6 +28,7 @@ public class DisplayWebAgent
 	protected IComponent agent;
 	
 	/** The service. */
+	@ProvideService
 	IDisplayService	disp	= new DisplayService();
 		
 	protected String app;

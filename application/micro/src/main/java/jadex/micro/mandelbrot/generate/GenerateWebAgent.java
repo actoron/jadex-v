@@ -2,7 +2,9 @@ package jadex.micro.mandelbrot.generate;
 
 import jadex.core.IComponent;
 import jadex.injection.annotation.Inject;
+import jadex.micro.mandelbrot.display.DisplayService;
 import jadex.micro.mandelbrot.display.IDisplayService;
+import jadex.providedservice.annotation.ProvideService;
 import jadex.publishservice.publish.annotation.Publish;
 import jadex.requiredservice.IRequiredServiceFeature;
 
@@ -21,6 +23,10 @@ public class GenerateWebAgent
 {
 	@Inject
 	protected IComponent agent;
+	
+	/** The service. */
+	@ProvideService
+	IGenerateService	disp	= new GenerateService();
 	
 	protected IDisplayService displayservice;
 	

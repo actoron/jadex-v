@@ -21,8 +21,8 @@ public class MainSwing
 		//SUtil.DEBUG = true;
 
 		IComponentManager.get().create(new IntermediateTaskDistributorAgent<PartDataChunk, AreaData>());
-		IComponentManager.get().create(new GenerateAgent());
 		IComponentManager.get().create(new DisplayAgent());
+		IComponentManager.get().create(new GenerateAgent());
 		
 		int cores = Runtime.getRuntime().availableProcessors();
 		System.out.println("creating calculators: "+(cores+1));
