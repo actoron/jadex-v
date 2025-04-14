@@ -71,7 +71,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	{
 		// Inject IComponent
 		InjectionModel.addValueFetcher(
-			(comptypes, valuetype, anno) -> IComponent.class.equals(valuetype) ? ((self, pojo, context) -> self) : null,
+			(comptypes, valuetype, anno) -> IComponent.class.equals(valuetype) ? ((self, pojo, context, oldval) -> self) : null,
 			Inject.class);
 		
 		// Inject any pojo from hierarchy of subobjects.
@@ -87,7 +87,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 						throw new RuntimeException("Conflicting value injections: "+valuetype+", "+comptypes);
 					}
 					int	index	= i;
-					ret	= (self, pojos, context) -> pojos.get(index);
+					ret	= (self, pojos, context, oldval) -> pojos.get(index);
 				}
 			}
 			
@@ -96,7 +96,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		
 		// Inject features
 		InjectionModel.addValueFetcher((comptypes, valuetype, anno) ->
-			(valuetype instanceof Class) && SReflect.isSupertype(IComponentFeature.class, (Class<?>)valuetype) ? ((self, pojo, context) ->
+			(valuetype instanceof Class) && SReflect.isSupertype(IComponentFeature.class, (Class<?>)valuetype) ? ((self, pojo, context, oldval) ->
 		{
 			@SuppressWarnings("unchecked")
 			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)valuetype;

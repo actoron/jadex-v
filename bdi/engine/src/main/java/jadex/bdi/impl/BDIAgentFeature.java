@@ -1,7 +1,10 @@
 package jadex.bdi.impl;
 
+import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jadex.bdi.IBDIAgentFeature;
@@ -18,6 +21,7 @@ import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.IInjectionFeature;
+import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionFeature;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
@@ -115,8 +119,6 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	 */
 	public <T, E> IFuture<E> dispatchTopLevelGoal(final T goal)
 	{
-		final Future<E> ret = new Future<E>();
-		
 //		final MGoal mgoal = ((MCapability)capa.getModelElement()).getGoal(goal.getClass().getName());
 //		if(mgoal==null)
 //			throw new RuntimeException("Unknown goal type: "+goal);
@@ -136,6 +138,8 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		// TODO: why step for subgoal and not for top-level!?
 		rgoal.adopt();
 		
+		@SuppressWarnings("unchecked")
+		IFuture<E>	ret	= (IFuture<E>) rgoal.getFinished();
 		return ret;
 	}
 	
@@ -227,19 +231,18 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	 *  Add a plan.
 	 *  Called when the plan is first executed.
 	 */
-	public void addPlan(RPlan rplan)
-	{
-		if(rplan.getPojo()!=null)
-		{
-			// TODO: remove extra object for @OnEnd etc.
-			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos());
-		}
-		
+	public void addPlan(RPlan rplan, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	{		
 		if(plans==null)
 		{
 			plans	= new LinkedHashSet<>();
 		}
 		plans.add(rplan);
+		
+		if(rplan.getPojo()!=null)
+		{
+			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos(), rplan, contextfetchers);
+		}
 	}
 	
 	/**
@@ -248,5 +251,14 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	public Set<RPlan>	getPlans()
 	{
 		return plans;
+	}
+	
+	/**
+	 *  Remove a plan after it has finished.
+	 */
+	public void removePlan(RPlan rplan)
+	{
+		// TODO remove extra object.
+		plans.remove(rplan);
 	}
 }

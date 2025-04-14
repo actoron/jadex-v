@@ -1,18 +1,26 @@
 package jadex.bdi.impl.plan;
 
-import jadex.bdi.GoalFailureException;
-import jadex.bdi.PlanFailureException;
+import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.Map;
+
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.plan.RPlan.PlanLifecycleState;
 import jadex.common.SUtil;
 import jadex.execution.StepAborted;
 import jadex.future.IFuture;
 import jadex.injection.impl.IInjectionHandle;
+import jadex.injection.impl.IValueFetcherCreator;
 
 /**
  *  Plan represented by a class.
  */
 public class ClassPlanBody implements IPlanBody
 {
+	/** Fetch local values, e.g. goal. */
+	protected Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers;
+	
 	/** The plan precondition invocation handle. */
 	protected IInjectionHandle	precondition;
 	
@@ -37,8 +45,11 @@ public class ClassPlanBody implements IPlanBody
 	/**
 	 *  Create a class plan body.
 	 */
-	public ClassPlanBody(IInjectionHandle precondition, IInjectionHandle contextcondition, IInjectionHandle constructor, IInjectionHandle body, IInjectionHandle passed, IInjectionHandle failed, IInjectionHandle aborted)
+	public ClassPlanBody(Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers,
+		IInjectionHandle precondition, IInjectionHandle contextcondition, IInjectionHandle constructor,
+		IInjectionHandle body, IInjectionHandle passed, IInjectionHandle failed, IInjectionHandle aborted)
 	{
+		this.contextfetchers	= contextfetchers;
 		this.precondition	= precondition;
 		this.contextcondition	= contextcondition;
 		this.constructor	= constructor;
@@ -66,7 +77,10 @@ public class ClassPlanBody implements IPlanBody
 		return checkCondition(rplan, contextcondition, "context condition");
 	}
 	
-	@Override
+	/**
+	 *  Create the pojo plan body if any (e.g. no pojo for method plan).
+	 *  Skips pojo creation when already created.
+	 */
 	public void	createPojo(RPlan rplan)
 	{
 		if(rplan.getPojo()==null)
@@ -88,6 +102,9 @@ public class ClassPlanBody implements IPlanBody
 			
 			// Instantiate pojo if not already done (e.g. because of precondition evaluated in APL)
 			createPojo(rplan);
+			
+			// Add rplan in try/catch because add plan executes injections, which may fail. 
+			((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).addPlan(rplan, contextfetchers);
 			
 			// Call body
 //			Object result	= 
@@ -144,17 +161,21 @@ public class ClassPlanBody implements IPlanBody
 		}
 		catch(Exception e)
 		{
-//			if(rplan.getException()==null)
-//			{
-//				rplan.setException(e);
+			if(rplan.getException()==null)
+			{
+				rplan.setException(e);
 				rplan.setLifecycleState(RPlan.PlanLifecycleState.FAILED);
-//			}
-//			// -> already failed/aborted
-//			else
-//			{
-//				// Print exception, otherwise it would be silently ignored.
-//				System.err.println("Warning: Exception in aborted() or failed() method: "+SUtil.getExceptionStacktrace(e));
-//			}
+			}
+			// -> already failed/aborted
+			else
+			{
+				// Print exception, otherwise it would be silently ignored.
+				System.err.println("Warning: Exception in aborted() or failed() method: "+SUtil.getExceptionStacktrace(e));
+			}
+		}
+		finally
+		{
+			((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).removePlan(rplan);
 		}
 		
 //		if(rplan.getException()==null)
@@ -185,6 +206,7 @@ public class ClassPlanBody implements IPlanBody
 			{
 				if(!condition.isStatic())
 				{
+					// TODO: add to agent so injections get executed?
 					createPojo(rplan);
 				}
 				
@@ -202,7 +224,8 @@ public class ClassPlanBody implements IPlanBody
 			}
 			catch(Exception e)
 			{
-				// Exception is logged in internalInvokePart()
+				// Set exception to log error (hack!?)
+				rplan.setException(e);
 				ret	= false;
 			}
 			
@@ -234,24 +257,13 @@ public class ClassPlanBody implements IPlanBody
 			assert RPlan.RPLANS.get()==null : RPlan.RPLANS.get()+", "+rplan;
 			RPlan.RPLANS.set(rplan);
 //			rplan.setProcessingState(RPlan.PlanProcessingState.RUNNING);
-			Object	res	= handle.apply(rplan.getComponent(), rplan.getAllPojos(), rplan);
+			Object	res	= handle.apply(rplan.getComponent(), rplan.getAllPojos(), rplan, null);
 			if(res instanceof IFuture)
 			{
 				res	= ((IFuture<?>)res).get();
 			}
 			
 			return res;
-		}
-		catch(Throwable e)
-		{
-			// Print exception, when relevant for user. 
-			if(!(e instanceof StepAborted)
-				&& !(e instanceof GoalFailureException)
-				&& !(e instanceof PlanFailureException))
-			{
-				System.err.println("Plan '"+rplan.getId()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
-			}
-			throw SUtil.throwUnchecked(e);
 		}
 		finally
 		{

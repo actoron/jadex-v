@@ -7,14 +7,6 @@ package jadex.bdi.impl.plan;
 public interface IPlanBody
 {
 	/**
-	 *  Create the pojo plan body if any (e.g. no pojo for method plan).
-	 *  Skips pojo creation when already
-	 */
-	public default void	createPojo(RPlan rplan)
-	{
-	}
-	
-	/**
 	 *  Execute the plan body.
 	 */
 	public void	executePlan(RPlan rplan);

@@ -1,7 +1,5 @@
 package jadex.bdi.impl.plan;
 
-import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.goal.RProcessableElement;
 
 // todo: use IPlan (and plan executor abstract to be able to execute plans as subcomponents)
@@ -85,12 +83,6 @@ public class ExecutePlanStepAction implements Runnable
 //					RGoal rgoal = (RGoal)element;
 //					rgoal.setChildPlan(rplan);
 //				}
-				
-				// Force creation of pojo before adding plan to agent.
-				rplan.getBody().createPojo(rplan);
-				
-				// TODO: capability?
-				((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).addPlan(rplan);
 				
 				rplan.getBody().executePlan(rplan);
 //				if(ret!=null)

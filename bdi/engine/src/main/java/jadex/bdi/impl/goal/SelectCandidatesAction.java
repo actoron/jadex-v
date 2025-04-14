@@ -251,11 +251,12 @@ public class SelectCandidatesAction implements Runnable
 //				}
 			}
 		}
-//		else
-//		{
-//			// todo: throw goal failed exception for goal listeners
-//			element.planFinished(null);
-//		}
+		
+		// No more candidates -> fail goal.
+		else
+		{
+			element.planFinished(null);
+		}
 	}
 	
 	public String toString()

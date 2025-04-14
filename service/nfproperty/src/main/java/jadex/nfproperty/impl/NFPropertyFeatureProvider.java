@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import jadex.common.MethodInfo;
 import jadex.core.impl.Component;
@@ -54,57 +53,54 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 	@Override
 	public void init()
 	{
-		InjectionModel.addExtraOnStart(new Function<Class<?>, List<IInjectionHandle>>()
+		InjectionModel.addExtraOnStart((pojoclazzes, contextfetchers)->
 		{
-			@Override
-			public List<IInjectionHandle> apply(Class<?> pojoclazz)
+			List<IInjectionHandle>	ret	= new ArrayList<>();
+			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
+			
+			// Add component properties
+			Class<?>	test	= pojoclazz;
+			while(test!=null)
 			{
-				List<IInjectionHandle>	ret	= new ArrayList<>();
-				
-				// Add component properties
-				Class<?>	test	= pojoclazz;
-				while(test!=null)
+				if(test.isAnnotationPresent(NFProperties.class))
 				{
-					if(test.isAnnotationPresent(NFProperties.class))
-					{
-						NFProperties	val	= test.getAnnotation(NFProperties.class);
-						List<NFPropertyInfo> nfprops = NFPropertyLoader.createNFPropertyInfos(val);
-						
-						for(NFPropertyInfo nfprop: nfprops)
-						{
-							ret.add((comp, pojos, context) ->
-							{
-								Class<?> clazz = nfprop.getClazz().getType(pojos.get(pojos.size()-1).getClass().getClassLoader());
-								INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, comp, null, null, nfprop.getParameters());
-								// TODO: wait for future
-								comp.getFeature(INFPropertyFeature.class).getComponentPropertyProvider().addNFProperty(nfp);
-								return null;
-							});
-						}
-					}
+					NFProperties	val	= test.getAnnotation(NFProperties.class);
+					List<NFPropertyInfo> nfprops = NFPropertyLoader.createNFPropertyInfos(val);
 					
-					test	= test.getSuperclass();
-				}
-				
-				// Add properties for interfaces with service annotation on pojo
-				addServicePropertyInjections(pojoclazz, ret);
-				
-				// Add properties for fields/methods with provided service anno.
-				List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class);
-				if(getters!=null)
-				{
-					for(Getter getter: getters)
+					for(NFPropertyInfo nfprop: nfprops)
 					{
-						Class<?>	clazz	= getter.member() instanceof Method
-							? ((Method)getter.member()).getReturnType()
-							: ((Field)getter.member()).getType();
-						
-						addServicePropertyInjections(clazz, ret);
+						ret.add((comp, pojos, context, oldval) ->
+						{
+							Class<?> clazz = nfprop.getClazz().getType(pojos.get(pojos.size()-1).getClass().getClassLoader());
+							INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, comp, null, null, nfprop.getParameters());
+							// TODO: wait for future
+							comp.getFeature(INFPropertyFeature.class).getComponentPropertyProvider().addNFProperty(nfp);
+							return null;
+						});
 					}
 				}
 				
-				return ret;
+				test	= test.getSuperclass();
 			}
+			
+			// Add properties for interfaces with service annotation on pojo
+			addServicePropertyInjections(pojoclazz, ret);
+			
+			// Add properties for fields/methods with provided service anno.
+			List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class, contextfetchers);
+			if(getters!=null)
+			{
+				for(Getter getter: getters)
+				{
+					Class<?>	clazz	= getter.member() instanceof Method
+						? ((Method)getter.member()).getReturnType()
+						: ((Field)getter.member()).getType();
+					
+					addServicePropertyInjections(clazz, ret);
+				}
+			}
+			
+			return ret;
 		});
 	}
 	
@@ -122,7 +118,7 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 			// Properties on service
 			if(nfps.get(null)!=null)
 			{
-				ret.add((comp, pojos, context) ->
+				ret.add((comp, pojos, context, oldval) ->
 				{
 					IService	ser	= (IService)comp.getFeature(IProvidedServiceFeature.class).getProvidedService(service);
 					// TODO: wait for future
@@ -136,7 +132,7 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 			{
 				if(entry!=null)
 				{
-					ret.add((comp, pojos, context) ->
+					ret.add((comp, pojos, context, oldval) ->
 					{
 						IService	ser	= (IService)comp.getFeature(IProvidedServiceFeature.class).getProvidedService(service);
 						// TODO: wait for future

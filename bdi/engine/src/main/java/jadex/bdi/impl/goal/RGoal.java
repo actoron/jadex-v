@@ -335,7 +335,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		List<Object>	goalpojos	= new ArrayList<Object>(parentpojos.size()+1);
 		goalpojos.addAll(goalpojos);
 		goalpojos.add(pojoelement);
-		((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addExtraObject(goalpojos);
+		((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addExtraObject(goalpojos, this, null);
 			
 //		IInternalBDIAgentFeature.get().getCapability().addGoal(goal);
 		setLifecycleState(RGoal.GoalLifecycleState.ADOPTED);
@@ -514,34 +514,34 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		}
 		
 		// Check procedural success semantics
-		if(isProceduralSucceeded(rplan))
+		if(rplan!=null && isProceduralSucceeded(rplan))
 		{
 			// succeeded leads to lifecycle state dropping!
 			setProcessingState(/*isRecur() ? GoalProcessingState.PAUSED :*/ GoalProcessingState.SUCCEEDED);
 		}
 		
-//		// Continue goal processing if still active
-//		if(GoalLifecycleState.ACTIVE.equals(getLifecycleState()))
-//		{
-//			// Retry if plan executed and more plans available.
-//			if(rplan!=null && isRetry() && RProcessableElement.State.CANDIDATESSELECTED.equals(getState()))
-//			{
-//				Runnable	step	= getMGoal().isRebuild() ? new FindApplicableCandidatesAction(this) : new SelectCandidatesAction(this); 
+		// Continue goal processing if still active
+		if(GoalLifecycleState.ACTIVE.equals(getLifecycleState()))
+		{
+			// Retry if plan executed and more plans available.
+			if(rplan!=null /*&& isRetry() && RProcessableElement.State.CANDIDATESSELECTED.equals(getState())*/)
+			{
+				Runnable	step	= /*getMGoal().isRebuild() ? new FindApplicableCandidatesAction(this) : */new SelectCandidatesAction(this); 
 //				if(getMGoal().getRetryDelay()>-1)
 //				{
 //					IExecutionFeature.get().waitForDelay(getMGoal().getRetryDelay())
 //						.then(v -> IExecutionFeature.get().scheduleStep(step));
 //				}
 //				else
-//				{
-//					IExecutionFeature.get().scheduleStep(step);
-//				}
-//			}
-//			
-//			// No retry but not finished (or idle for  maintain goals). 
-//			else if(!isFinished() && !GoalProcessingState.IDLE.equals(getProcessingState()))
-//			{				
-//				// Recur when possible
+				{
+					IExecutionFeature.get().scheduleStep(step);
+				}
+			}
+			
+			// No retry but not finished (or idle for  maintain goals). 
+			else if(!isFinished() && !GoalProcessingState.IDLE.equals(getProcessingState()))
+			{				
+				// Recur when possible
 //				if(isRecur())
 //				{
 //					setProcessingState(GoalProcessingState.PAUSED);
@@ -574,16 +574,16 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //				
 //				// Else no more plans -> fail.
 //				else //if(!isRetry() || RProcessableElement.State.NOCANDIDATES.equals(getState()))
-//				{
-//					if(getException()==null)
-//					{
-//						setException(new GoalFailureException("No more candidates: "+this));
-//					}
-//					setProcessingState(GoalProcessingState.FAILED);
-//				}
-//			}
-//		}
-//		
+				{
+					if(exception==null)
+					{
+						exception	= new GoalFailureException("No more candidates: "+this);
+					}
+					setProcessingState(GoalProcessingState.FAILED);
+				}
+			}
+		}
+		
 //		IInternalBDIAgentFeature.get().getRuleSystem().setQueueEvents(queue);
 	}
 //	

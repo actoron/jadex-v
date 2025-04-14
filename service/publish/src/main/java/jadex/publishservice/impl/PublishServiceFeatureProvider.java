@@ -5,7 +5,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 import jadex.common.SReflect;
 import jadex.common.SUtil;
@@ -24,74 +23,71 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 	@Override
 	public void init()
 	{
-		InjectionModel.addExtraOnStart(new Function<Class<?>, List<IInjectionHandle>>()
+		InjectionModel.addExtraOnStart((pojoclazzes, contextfetchers) ->
 		{
-			@Override
-			public List<IInjectionHandle> apply(Class<?> pojoclazz)
+			List<IInjectionHandle>	ret	= new ArrayList<>();
+			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
+			
+			// Find class with publish annotation.
+			Class<?>	test	= pojoclazz;
+			while(test!=null)
 			{
-				List<IInjectionHandle>	ret	= new ArrayList<>();
-				
-				// Find class with publish annotation.
-				Class<?>	test	= pojoclazz;
-				while(test!=null)
+				if(test.isAnnotationPresent(Publish.class))
 				{
-					if(test.isAnnotationPresent(Publish.class))
+					Publish	publish	= test.getAnnotation(Publish.class);
+					PublishInfo pi = getPublishInfo(publish);
+					ret.add((comp, pojos, context, oldval) ->
 					{
-						Publish	publish	= test.getAnnotation(Publish.class);
-						PublishInfo pi = getPublishInfo(publish);
-						ret.add((comp, pojos, context) ->
+						IProvidedServiceFeature	prov	= comp.getFeature(IProvidedServiceFeature.class);
+						Object	service	= prov.getProvidedService(publish.publishtarget());
+						
+						IPublishServiceFeature	feature	= comp.getFeature(IPublishServiceFeature.class);
+						// do we want to chain the publication on serviceStart and serviceEnd of each service?!
+						// how could this be done? with listeners on other feature?!
+						feature.publishService((IService)service, pi).get();
+						return null;
+					});
+				}
+				
+				test	= test.getSuperclass();
+			}
+			
+			// Find fields with publish annotation.
+			for(Field f: InjectionModel.findFields(pojoclazz, Publish.class))
+			{
+				try
+				{
+					PublishInfo pi = getPublishInfo(f.getAnnotation(Publish.class));
+
+					f.setAccessible(true);
+					MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
+					ret.add((comp, pojos, context, oldval) ->
+					{
+						try
 						{
-							IProvidedServiceFeature	prov	= comp.getFeature(IProvidedServiceFeature.class);
-							Object	service	= prov.getProvidedService(publish.publishtarget());
-							
 							IPublishServiceFeature	feature	= comp.getFeature(IPublishServiceFeature.class);
+							Object	servicepojo	= fhandle.invoke(pojos.get(pojos.size()-1));
+							if(servicepojo==null)
+							{
+								throw new RuntimeException("No value for provided service: "+f);
+							}
 							// do we want to chain the publication on serviceStart and serviceEnd of each service?!
 							// how could this be done? with listeners on other feature?!
-							feature.publishService((IService)service, pi).get();
+							feature.publishService((IService)servicepojo, pi).get();
 							return null;
-						});
-					}
-					
-					test	= test.getSuperclass();
-				}
-				
-				// Find fields with publish annotation.
-				for(Field f: InjectionModel.findFields(pojoclazz, Publish.class))
-				{
-					try
-					{
-						PublishInfo pi = getPublishInfo(f.getAnnotation(Publish.class));
-	
-						f.setAccessible(true);
-						MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
-						ret.add((comp, pojos, context) ->
+						}
+						catch(Throwable e)
 						{
-							try
-							{
-								IPublishServiceFeature	feature	= comp.getFeature(IPublishServiceFeature.class);
-								Object	servicepojo	= fhandle.invoke(pojos.get(pojos.size()-1));
-								if(servicepojo==null)
-								{
-									throw new RuntimeException("No value for provided service: "+f);
-								}
-								// do we want to chain the publication on serviceStart and serviceEnd of each service?!
-								// how could this be done? with listeners on other feature?!
-								feature.publishService((IService)servicepojo, pi).get();
-								return null;
-							}
-							catch(Throwable e)
-							{
-								throw SUtil.throwUnchecked(e);
-							}
-						});
-					}
-					catch(Exception e)
-					{
-						SUtil.throwUnchecked(e);
-					}
+							throw SUtil.throwUnchecked(e);
+						}
+					});
 				}
-				return ret;
+				catch(Exception e)
+				{
+					SUtil.throwUnchecked(e);
+				}
 			}
+			return ret;
 		});
 	}
 		

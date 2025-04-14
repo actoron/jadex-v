@@ -1,5 +1,6 @@
 package jadex.injection.impl;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +36,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	public InjectionFeature(IComponent self)
 	{
 		this.self	= self;
-		this.model	= InjectionModel.get(Collections.singletonList(self.getPojo()));
+		this.model	= InjectionModel.get(Collections.singletonList(self.getPojo()), null);
 	}
 	
 	//-------- lifecycle methods --------
@@ -45,24 +46,24 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	{
 		if(model.getExtraOnStart()!=null)
 		{
-			model.getExtraOnStart().apply(self, Collections.singletonList(self.getPojo()), null);
+			model.getExtraOnStart().apply(self, Collections.singletonList(self.getPojo()), null, null);
 		}
 
 		if(model.getFieldInjections()!=null)
 		{
-			model.getFieldInjections().apply(self, Collections.singletonList(self.getPojo()), null);
+			model.getFieldInjections().apply(self, Collections.singletonList(self.getPojo()), null, null);
 		}
 
 		if(model.getOnStart()!=null)
 		{
 			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getOnStart().apply(self, Collections.singletonList(self.getPojo()), null));
+				model.getOnStart().apply(self, Collections.singletonList(self.getPojo()), null, null));
 		}
 		
 		if(model.getMethodInjections()!=null)
 		{
 			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null));
+				model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null, null));
 		}
 	}
 
@@ -73,17 +74,17 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		{
 			for(List<Object> pojos: extras)
 			{
-				InjectionModel	model	= InjectionModel.get(pojos);
+				InjectionModel	model	= InjectionModel.get(pojos, null);
 				if(model.getOnEnd()!=null)
 				{	
-					model.getOnEnd().apply(self, pojos, null);
+					model.getOnEnd().apply(self, pojos, null, null);
 				}
 			}
 		}
 		
 		if(model.getOnEnd()!=null)
 		{	
-			model.getOnEnd().apply(self, Collections.singletonList(self.getPojo()), null);
+			model.getOnEnd().apply(self, Collections.singletonList(self.getPojo()), null, null);
 		}
 		
 		// Notify on end -> conflict with terminate() in IComponentFactory.run(Object)
@@ -126,11 +127,11 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			// Go backwards through list so outer objects overwrite conflicting results of inner objects.
 			for(List<Object> pojos: extras.reversed())
 			{
-				InjectionModel	model	= InjectionModel.get(pojos);
+				InjectionModel	model	= InjectionModel.get(pojos, null);
 				if(model.getResultsFetcher()!=null)
 				{
 					@SuppressWarnings("unchecked")
-					Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, pojos, null);
+					Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, pojos, null, null);
 					if(ret==null)
 					{
 						ret	= results;
@@ -146,7 +147,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		if(model.getResultsFetcher()!=null)
 		{
 			@SuppressWarnings("unchecked")
-			Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, Collections.singletonList(self.getPojo()), null);
+			Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, Collections.singletonList(self.getPojo()), null, null);
 			if(ret==null)
 			{
 				ret	= results;
@@ -192,8 +193,12 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 *  
 	 *  @param pojos	The actual pojo objects as a hierachy of component pojo plus subobjects.
 	 *  				The injection is for the last pojo in the list.
+	 *  
+	 *  @param context	Optional local context of the pojo (e.g. rplan for a plan pojo).
+	 *  
+	 *  @param contextfetchers	Local fetchers, if any.
 	 */
-	public void	addExtraObject(List<Object> pojos)
+	public void	addExtraObject(List<Object> pojos, Object context, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
 		if(extras==null)
 		{
@@ -201,28 +206,28 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		}
 		extras.add(pojos);
 		
-		InjectionModel	model	= InjectionModel.get(pojos);
+		InjectionModel	model	= InjectionModel.get(pojos, contextfetchers);
 
 		if(model.getExtraOnStart()!=null)
 		{
-			model.getExtraOnStart().apply(self, pojos, null);
+			model.getExtraOnStart().apply(self, pojos, context, null);
 		}
 
 		if(model.getFieldInjections()!=null)
 		{
-			model.getFieldInjections().apply(self, pojos, null);
+			model.getFieldInjections().apply(self, pojos, context, null);
 		}
 
 		if(model.getOnStart()!=null)
 		{
 			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getOnStart().apply(self, pojos, null));
+				model.getOnStart().apply(self, pojos, context, null));
 		}
 		
 		if(model.getMethodInjections()!=null)
 		{
 			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getMethodInjections().apply(self, pojos, null));
+				model.getMethodInjections().apply(self, pojos, context, null));
 		}
 	}
 }

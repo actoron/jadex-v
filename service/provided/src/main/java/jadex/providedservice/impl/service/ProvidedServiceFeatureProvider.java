@@ -4,13 +4,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
@@ -148,7 +146,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				Map<Class<?>, ProvideService> services = findServiceInterfaces(pojotypes.get(pojotypes.size()-1));
 				if(services.size()==1)
 				{
-					ret	= (comp, pojos, context) ->
+					ret	= (comp, pojos, context, oldval) ->
 					{
 						ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
 						Object	service	= feature.getProvidedService(services.keySet().iterator().next());
@@ -169,62 +167,58 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 		
 		
 		// Provide services from class, field and method annotations
-		InjectionModel.addExtraOnStart(new Function<Class<?>, List<IInjectionHandle>>()
+		InjectionModel.addExtraOnStart((pojoclazzes, contextfetchers) ->
 		{
-			@Override
-			public List<IInjectionHandle> apply(Class<?> pojoclazz)
+			List<IInjectionHandle>	ret	= new ArrayList<>();
+			
+			// find interfaces with service annotation on pojo
+			Map<Class<?>, ProvideService> services = findServiceInterfaces(pojoclazzes.get(pojoclazzes.size()-1));
+			if(!services.isEmpty())
 			{
-				List<IInjectionHandle>	ret	= new ArrayList<>();
-				
-				// find interfaces with service annotation on pojo
-				Map<Class<?>, ProvideService> services = findServiceInterfaces(pojoclazz);
-				if(!services.isEmpty())
-				{
-					// TODO: Service settings 
+				// TODO: Service settings 
 //					if(getter.annotation() instanceof ProvideService)
-					ret.add((comp, pojos, context) ->
+				ret.add((comp, pojos, context, oldval) ->
+				{
+					ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
+					feature.addService(pojos.get(pojos.size()-1), null, services);
+					return null;
+				});
+			}
+			
+			
+			// find fields/methods with provided service anno.
+			List<Getter>	getters	= InjectionModel.getGetters(pojoclazzes, ProvideService.class, contextfetchers);
+			if(getters!=null)
+			{
+				for(Getter getter: getters)
+				{
+					Map<Class<?>, ProvideService> fservices = findServiceInterfaces(
+						getter.member() instanceof Method
+							? ((Method)getter.member()).getReturnType()
+							: ((Field)getter.member()).getType());
+					
+					if(fservices.isEmpty())
 					{
+						throw new RuntimeException("No service interfaces found on: "+getter.member());
+					}
+					
+					// TODO: Service settings 
+//						if(getter.annotation() instanceof ProvideService)
+					ret.add((comp, pojos, context, oldval) ->
+					{
+						Object value	= getter.fetcher().apply(comp, pojos, context, null);
+						if(value==null)
+						{
+							throw new RuntimeException("No value for provided service: "+getter.member());
+						}
 						ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
-						feature.addService(pojos.get(pojos.size()-1), null, services);
+						feature.addService(value, getter.member().getName(), fservices);
 						return null;
 					});
 				}
-				
-				
-				// find fields/methods with provided service anno.
-				List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class);
-				if(getters!=null)
-				{
-					for(Getter getter: getters)
-					{
-						Map<Class<?>, ProvideService> fservices = findServiceInterfaces(
-							getter.member() instanceof Method
-								? ((Method)getter.member()).getReturnType()
-								: ((Field)getter.member()).getType());
-						
-						if(fservices.isEmpty())
-						{
-							throw new RuntimeException("No service interfaces found on: "+getter.member());
-						}
-						
-						// TODO: Service settings 
-//						if(getter.annotation() instanceof ProvideService)
-						ret.add((comp, pojos, context) ->
-						{
-							Object value	= getter.fetcher().apply(comp, pojos, context);
-							if(value==null)
-							{
-								throw new RuntimeException("No value for provided service: "+getter.member());
-							}
-							ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
-							feature.addService(value, getter.member().getName(), fservices);
-							return null;
-						});
-					}
-				}
-
-				return ret;
 			}
+
+			return ret;
 		});
 	}
 }

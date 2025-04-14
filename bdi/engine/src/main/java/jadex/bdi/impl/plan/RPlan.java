@@ -4,11 +4,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import jadex.bdi.GoalFailureException;
 import jadex.bdi.IPlan;
+import jadex.bdi.PlanFailureException;
 import jadex.bdi.impl.RElement;
 import jadex.bdi.impl.goal.AdoptGoalAction;
 import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.impl.goal.RGoal;
+import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.StepAborted;
@@ -312,10 +315,16 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	 *  Set the exception.
 	 *  @param exception The exception to set.
 	 */
-	public void setException(Exception exception)
+	public void setException(Exception e)
 	{
-//		System.out.println("setting ex: "+exception+" "+this);
-		this.exception = exception;
+		this.exception = e;
+
+		// Print exception, when relevant for user. 
+		if(!(e instanceof GoalFailureException)
+			&& !(e instanceof PlanFailureException))
+		{
+			System.err.println("Plan '"+getId()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
+		}
 	}
 	
 	/**

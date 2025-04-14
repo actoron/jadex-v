@@ -54,7 +54,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 				{
 					throw new UnsupportedOperationException("Mode query not supportet for skalar fields/parameter: "+pojotypes.get(pojotypes.size()-1)+", "+valuetype+", "+anno);
 				}					
-				ret	= (self, pojos, context) -> self.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>((Class<?>)valuetype));
+				ret	= (self, pojos, context, oldval) -> self.getFeature(IRequiredServiceFeature.class).getLocalService(new ServiceQuery<>((Class<?>)valuetype));
 			}
 			return ret;
 		}, InjectService.class, Inject.class);
@@ -78,10 +78,10 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 						if(anno instanceof InjectService && ((InjectService)anno).mode().equals(Mode.QUERY))
 						{
 							// Inject query results into existing collection.
-							ret	= ((self, pojos, context) ->
+							ret	= ((self, pojos, context, oldval) ->
 							{
 								@SuppressWarnings("unchecked")
-								Collection<Object>	coll	= (Collection<Object>) context;
+								Collection<Object>	coll	= (Collection<Object>) oldval;
 								if(coll==null)
 								{
 									throw new UnsupportedOperationException("Query injections only allowed for field with initial value: "+pojos.get(pojos.size()-1)+", "+valuetype+", "+anno);
@@ -90,21 +90,21 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 								self.getFeature(IRequiredServiceFeature.class).addQuery(new ServiceQuery<>((Class<?>)typeparam))
 									.next(result -> coll.add(result));
 								// Don't change field value, i.e. return original value.
-								return context;
+								return oldval;
 							});
 						}
 						
 						// Set search result (ArrayList) as direct field value.
 						else if(SReflect.isSupertype((Class<?>) generic.getRawType(), ArrayList.class))
 						{
-							ret	= ((self, pojos, context) ->
+							ret	= ((self, pojos, context, oldval) ->
 								self.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>((Class<?>)typeparam)));
 						}
 						
 						// Copy search result into LinkedHashSet
 						else if(SReflect.isSupertype((Class<?>) generic.getRawType(), LinkedHashSet.class))
 						{
-							ret	= ((self, pojos, context) ->
+							ret	= ((self, pojos, context, oldval) ->
 							{
 								Set<Object>	set	= new LinkedHashSet<>();
 								set.addAll(self.getFeature(IRequiredServiceFeature.class).getLocalServices(new ServiceQuery<>((Class<?>)typeparam)));
@@ -123,7 +123,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 		}, InjectService.class, Inject.class);
 		
 		// Single service method parameter.
-		InjectionModel.addMethodInjection((classes, method) ->
+		InjectionModel.addMethodInjection((classes, method, contextfetchers) ->
 		{
 			IInjectionHandle	ret	= null;
 			
@@ -154,18 +154,18 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 					}
 					else
 					{
-						preparams.add((self, pojos, context) -> context);
+						preparams.add((self, pojos, context, oldval) -> context);
 					}
 				}
-				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, classes, preparams);
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, classes, contextfetchers, preparams);
 				
 				Class<?>	fservice	= service;
-				ret	= (self, pojos, context) ->
+				ret	= (self, pojos, context, oldval) ->
 				{
 					ISubscriptionIntermediateFuture<?> query	= self.getFeature(IRequiredServiceFeature.class).addQuery(new ServiceQuery<>(fservice));
 					query.next(result ->
 					{
-						invocation.apply(self, pojos, result);
+						invocation.apply(self, pojos, result, null);
 					});
 					return null;
 				};

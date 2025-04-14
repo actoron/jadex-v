@@ -20,6 +20,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
@@ -56,6 +57,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
+import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionModel;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
@@ -131,7 +133,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		{
 			if(IPlan.class.equals(valuetype))
 			{
-				return (comp, pojos, context) ->
+				return (comp, pojos, context, oldval) ->
 				{
 					if(context instanceof IPlan)
 					{
@@ -149,9 +151,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 		}, Inject.class);
 		
-		InjectionModel.addExtraOnStart(pojoclazz ->
+		InjectionModel.addExtraOnStart((pojoclazzes, contextfetchers) ->
 		{
 			List<IInjectionHandle>	ret	= new ArrayList<>();
+			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
 			
 			// Manage belief fields.
 			for(Field f: InjectionModel.findFields(pojoclazz, Belief.class))
@@ -171,7 +174,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			{
 				try
 				{
-					addPlanMethod(pojoclazz, m, ret);
+					addPlanMethod(pojoclazz, m, ret, contextfetchers);
 				}
 				catch(Exception e)
 				{
@@ -185,7 +188,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			{
 				try
 				{
-					addPlanClass(pojoclazz, planclass, ret);
+					addPlanClass(planclass, pojoclazzes, ret, contextfetchers);
 				}
 				catch(Exception e)
 				{
@@ -200,78 +203,42 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Add required code to handle a plan method.
 	 */
-	protected void addPlanMethod(Class<?> pojoclazz, Method m, List<IInjectionHandle> ret) throws Exception
+	protected void addPlanMethod(Class<?> pojoclazz, Method m, List<IInjectionHandle> ret,
+		Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers) throws Exception
 	{
 		Plan	anno	= m.getAnnotation(Plan.class);
 		Trigger	trigger	= anno.trigger();
 		
-		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, Collections.singletonList(pojoclazz), null);
-		IPlanBody	body	= new MethodPlanBody(planhandle);
+		contextfetchers = createContextFetchers(trigger, contextfetchers);
+		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, Collections.singletonList(pojoclazz), contextfetchers, null);
+		IPlanBody	planbody	= new MethodPlanBody(contextfetchers, planhandle);
 		String	planname	= m.getName();
 		
 		// Inform user when no trigger is defined
 		checkPlanDefinition(anno, planname);
 		
-		// Add rule to trigger direct plan creation on given events.
-		EventType[] aevents = getTriggerEvents(pojoclazz, trigger, planname);
-		if(aevents!=null && aevents.length>0)
-		{
-			// In extra on start, add rule to run plan when event happens.  
-			ret.add((comp, pojos, context) ->
-			{
-				RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				rs.getRulebase().addRule(new Rule<Void>(
-					"TriggerPlan_"+planname,	// Rule Name
-					ICondition.TRUE_CONDITION,	// Condition -> true
-					(event, rule, context2, condresult) ->
-					{
-						// Action -> start plan
-						RPlan	plan	= new RPlan(null, planname, new ChangeEvent<Object>(event), body, comp, pojos);
-						comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(plan));
-						return IFuture.DONE;
-					},
-					aevents));	// Trigger Event(s)
-				return null;
-			});
-		}
+		addEventTriggerRule(pojoclazz, ret, trigger, planbody, planname);
 		
 		// Add plan to BDI model for lookup during means-end reasoning (i.e. APL build)
 		for(Class<?> goaltype: trigger.goals())
 		{
 			// TODO: need outer pojo to get global bdi model not inner. -> change extra on start to List<Class>
 			BDIModel	model	= BDIModel.getModel(pojoclazz);
-			model.addPlanforGoal(goaltype, planname, body);
+			model.addPlanforGoal(goaltype, planname, planbody);
 		}
 	}
-	
+
 	/**
-	 *  Add required code to handle a plan class.
+	 *  Add rule to trigger direct plan creation on given events.
 	 */
-	protected void addPlanClass(Class<?> pojoclazz, Class<?> planclazz, List<IInjectionHandle> ret) throws Exception
+	protected void addEventTriggerRule(Class<?> pojoclazz, List<IInjectionHandle> ret, Trigger trigger,
+			IPlanBody planbody, String planname)
 	{
-		Plan	anno	= planclazz.getAnnotation(Plan.class);
-		Trigger	trigger	= anno.trigger();
-		String	planname	= planclazz.getName();
-		
-		// Inform user when no trigger is defined
-		checkPlanDefinition(anno, planname);
-		
-		// TODO: add injection context, e.g. triggering goal!? (e.g. RPlan.getReason)
-		IInjectionHandle	precondition	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanPrecondition.class);
-		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanContextCondition.class);
-		IInjectionHandle	constructor	= InjectionModel.findViableConstructor(planclazz, Collections.singletonList(pojoclazz));
-		IInjectionHandle	body	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanBody.class);
-		IInjectionHandle	passed	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanPassed.class);
-		IInjectionHandle	failed	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanFailed.class);
-		IInjectionHandle	aborted	= createMethodInvocation(planclazz, Collections.singletonList(pojoclazz), PlanAborted.class);
-		ClassPlanBody	planbody	= new ClassPlanBody(precondition, contextcondition, constructor, body, passed, failed, aborted);
-		
-		// Add rule to trigger direct plan creation on given events.
 		EventType[] aevents = getTriggerEvents(pojoclazz, trigger, planname);
 		if(aevents!=null && aevents.length>0)
 		{
 			// In extra on start, add rule to run plan when event happens.  
-			ret.add((comp, pojos, context) ->
+			ret.add((comp, pojos, context, oldval) ->
 			{
 				RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
 				rs.getRulebase().addRule(new Rule<Void>(
@@ -291,6 +258,83 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				return null;
 			});
 		}
+	}
+
+	/**
+	 *  Create contextfetchers for triggering goals.
+	 */
+	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> createContextFetchers(Trigger trigger,
+		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	_contextfetchers)
+	{
+		List<IValueFetcherCreator>	lcreators	= null;
+		for(Class<?> goaltype: trigger.goals())
+		{
+			if(lcreators==null)
+			{
+				lcreators	= new ArrayList<>(4);
+			}
+			lcreators.add((pojotypes, valuetype, annotation) -> 
+			{
+				if(goaltype.equals(valuetype))
+				{
+					return (comp, pojos, context, oldval) ->
+					{
+						return ((IGoal)((IPlan)context).getReason()).getPojo();
+					};
+				}
+				else
+				{
+					return null;
+				}
+			});
+		}
+		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers	= null;
+		if(lcreators!=null)
+		{
+			contextfetchers	= new LinkedHashMap<>();
+			contextfetchers.put(Inject.class, lcreators);
+		}
+		
+		if(_contextfetchers!=null)
+		{
+			if(contextfetchers!=null)
+			{
+				contextfetchers.putAll(_contextfetchers);
+			}
+			else
+			{
+				contextfetchers	= _contextfetchers;
+			}
+		}
+
+		
+		return contextfetchers;
+	}
+	
+	/**
+	 *  Add required code to handle a plan class.
+	 */
+	protected void addPlanClass(Class<?> planclazz, List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
+		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers) throws Exception
+	{
+		Plan	anno	= planclazz.getAnnotation(Plan.class);
+		Trigger	trigger	= anno.trigger();
+		String	planname	= planclazz.getName();
+		
+		// Inform user when no trigger is defined
+		checkPlanDefinition(anno, planname);
+		
+		contextfetchers = createContextFetchers(trigger, contextfetchers);
+		IInjectionHandle	precondition	= createMethodInvocation(planclazz, parentclazzes, PlanPrecondition.class, contextfetchers);
+		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, parentclazzes, PlanContextCondition.class, contextfetchers);
+		IInjectionHandle	constructor	= InjectionModel.findViableConstructor(planclazz, parentclazzes, contextfetchers);
+		IInjectionHandle	body	= createMethodInvocation(planclazz, parentclazzes, PlanBody.class, contextfetchers);
+		IInjectionHandle	passed	= createMethodInvocation(planclazz, parentclazzes, PlanPassed.class, contextfetchers);
+		IInjectionHandle	failed	= createMethodInvocation(planclazz, parentclazzes, PlanFailed.class, contextfetchers);
+		IInjectionHandle	aborted	= createMethodInvocation(planclazz, parentclazzes, PlanAborted.class, contextfetchers);
+		ClassPlanBody	planbody	= new ClassPlanBody(contextfetchers, precondition, contextcondition, constructor, body, passed, failed, aborted);
+		
+		addEventTriggerRule(parentclazzes.get(parentclazzes.size()-1), ret, trigger, planbody, planname);
 		
 		// Add rule to trigger context condition
 		if(contextcondition!=null)
@@ -305,7 +349,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				List<EventType>	events	= new ArrayList<>();
 				for(String dep: contextanno.beliefs())
 				{
-					Field	depf	= SReflect.getField(pojoclazz, dep);
+					Field	depf	= SReflect.getField(parentclazzes.get(parentclazzes.size()-1), dep);
 					if(depf==null)
 					{
 						throw new RuntimeException("Triggering belief '"+dep+"' not found for context conditions: "+contextmethod);
@@ -321,7 +365,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				// Convert to array
 				EventType[]	cevents	= events.toArray(new EventType[events.size()]);
 				// In extra on start, add rule to check condition when event happens.  
-				ret.add((comp, pojos, context) ->
+				ret.add((comp, pojos, context, oldval) ->
 				{
 					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
 					rs.getRulebase().addRule(new Rule<Void>(
@@ -355,8 +399,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		// Add plan to BDI model for lookup during means-end reasoning (i.e. APL build)
 		for(Class<?> goaltype: trigger.goals())
 		{
-			// TODO: need outer pojo not inner. -> change extra on start to List<Class>
-			BDIModel	model	= BDIModel.getModel(pojoclazz);
+			// need outer pojo not inner. -> change extra on start to List<Class>
+			BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
 			model.addPlanforGoal(goaltype, planname, planbody);
 		}
 	}
@@ -366,13 +410,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 *  @return	null, if no such method.
 	 *  @throws	UnsupportedOperationException if multiple methods match.
 	 */
-	protected IInjectionHandle createMethodInvocation(Class<?> planclazz, List<Class<?>> parentclasses, Class<? extends Annotation> anno)
+	protected IInjectionHandle createMethodInvocation(Class<?> planclazz, List<Class<?>> parentclasses, Class<? extends Annotation> anno,
+		Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
 	{
 		IInjectionHandle	ret	= null;
 		List<Method> methods	= InjectionModel.findMethods(planclazz, anno);
 		if(methods.size()==1)
 		{
-			ret	= InjectionModel.createMethodInvocation(methods.get(0), parentclasses, null);
+			ret	= InjectionModel.createMethodInvocation(methods.get(0), parentclasses, contextfetchers, null);
 		}
 		else if(methods.size()>1)
 		{
@@ -486,7 +531,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 				
-				ret.add((comp, pojos, context) ->
+				ret.add((comp, pojos, context, oldval) ->
 				{
 					try
 					{
@@ -518,7 +563,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 			
 			// Init Val on agent start
-			ret.add((comp, pojos, context) ->
+			ret.add((comp, pojos, context, dummy) ->
 			{
 				// TODO: check if dependent beliefs are only added to dynamic val
 				
@@ -594,7 +639,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// List belief
 			if(List.class.equals(f.getType()))
 			{
-				ret.add((comp, pojos, context) ->
+				ret.add((comp, pojos, context, oldval) ->
 				{
 					try
 					{
@@ -617,7 +662,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// Set belief
 			else if(Set.class.equals(f.getType()))
 			{
-				ret.add((comp, pojos, context) ->
+				ret.add((comp, pojos, context, oldval) ->
 				{
 					try
 					{
@@ -640,7 +685,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// Map belief
 			else if(Map.class.equals(f.getType()))
 			{
-				ret.add((comp, pojos, context) ->
+				ret.add((comp, pojos, context, oldval) ->
 				{
 					try
 					{
@@ -668,7 +713,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					// Check if method exists
 					f.getType().getMethod("addPropertyChangeListener", PropertyChangeListener.class);
 					
-					ret.add((comp, pojos, context) ->
+					ret.add((comp, pojos, context, oldval) ->
 					{
 						try
 						{
