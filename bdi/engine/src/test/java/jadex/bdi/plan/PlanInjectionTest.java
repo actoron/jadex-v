@@ -1,6 +1,7 @@
 package jadex.bdi.plan;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ public class PlanInjectionTest
 	public void	testGoalInjection()
 	{
 		@BDIAgent
-		class PlanInjectionAgent
+		class GoalInjectionAgent
 		{
 			@Goal
 			static class MyGoal {}
@@ -45,8 +46,36 @@ public class PlanInjectionTest
 			}
 		}
 		
-		IComponentHandle	handle	= IComponentManager.get().create(new PlanInjectionAgent()).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PlanInjectionAgent.MyGoal())).get(TestHelper.TIMEOUT);
+		IComponentHandle	handle	= IComponentManager.get().create(new GoalInjectionAgent()).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new GoalInjectionAgent.MyGoal())).get(TestHelper.TIMEOUT);
+	}
+	
+	/**
+	 *  Test that the context specific goal is only available for plan with given trigger.
+	 */
+	@Test
+	public void	testBrokenGoalInjection()
+	{
+		@BDIAgent
+		class BrokenGoalInjectionAgent
+		{
+			@Goal
+			static class MyGoal {}
+			@Goal
+			static class MyGoal2 {}
+			
+			@Plan(trigger=@Trigger(goals=MyGoal.class))
+			static class MyPlan
+			{
+				@Inject
+				MyGoal2	thegoal;
+			}
+		}
+		
+		IComponentHandle	handle	= IComponentManager.get().create(new BrokenGoalInjectionAgent()).get(TestHelper.TIMEOUT);
+		assertThrows(UnsupportedOperationException.class,
+			() -> handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class)
+					.dispatchTopLevelGoal(new BrokenGoalInjectionAgent.MyGoal())).get(TestHelper.TIMEOUT));
 	}
 	
 	/**

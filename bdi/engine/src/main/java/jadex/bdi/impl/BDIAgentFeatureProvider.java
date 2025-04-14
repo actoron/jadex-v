@@ -485,7 +485,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			&& trigger.goals().length==0
 			&& trigger.goalfinisheds().length==0)
 		{
-			throw new RuntimeException("Plan has no trigger: "+planname);
+			throw new UnsupportedOperationException("Plan has no trigger: "+planname);
 		}
 		
 		// TODO: more checks?
