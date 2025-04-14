@@ -333,7 +333,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		
 		// inject goal elements
 		List<Object>	goalpojos	= new ArrayList<Object>(parentpojos.size()+1);
-		goalpojos.addAll(goalpojos);
+		goalpojos.addAll(parentpojos);
 		goalpojos.add(pojoelement);
 		((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addExtraObject(goalpojos, this, null);
 			

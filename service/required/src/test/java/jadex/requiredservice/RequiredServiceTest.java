@@ -486,17 +486,16 @@ public class RequiredServiceTest
 	@Test
 	public void	testParameterNotFound()
 	{
-		// Check that exception occurs in OnStart step.
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+		// Check that exception is thrown
+		assertThrows(ServiceNotFoundException.class,
+			() -> IComponentManager.get().create(new Object()
 		{
 			@OnStart
 			void start(IHelloService myservice)
 			{
 				System.out.println("myservice: "+myservice);
 			}
-		}).get(TIMEOUT);
-		
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		}).get(TIMEOUT));
 	}
 
 	@Test

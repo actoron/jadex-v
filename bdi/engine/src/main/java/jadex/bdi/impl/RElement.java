@@ -191,7 +191,7 @@ public abstract class RElement
 			else
 			{
 				allpojos	= new ArrayList<>(parentpojos.size()+1);
-				allpojos.addAll(getAllPojos());
+				allpojos.addAll(parentpojos);
 				allpojos.add(pojoelement);
 			}
 		}

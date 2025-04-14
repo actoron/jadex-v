@@ -54,6 +54,9 @@ public class Component implements IComponent
 	/** Cache for the component logger. */
 	protected Logger logger;
 	
+	/** The last exception, if any. */
+	protected Exception	exception;
+	
 	/** The value provider. */
 	protected ValueProvider valueprovider;
 	
@@ -461,6 +464,7 @@ public class Component implements IComponent
 	
 	public void handleException(Exception exception)
 	{
+		this.exception	= exception;
 		if(exception instanceof ComponentTerminatedException && this.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
 		{
 			System.getLogger(this.getClass().getName()).log(Level.INFO, "Component terminated exception: "+exception);
@@ -472,7 +476,15 @@ public class Component implements IComponent
 			handler.accept(exception, this);
 		}
 	}
-	
+
+	/**
+	 *  Get the last exception, if any.
+	 */
+	public Exception getException()
+	{
+		return exception;
+	}
+
 	/**
 	 *  Get the component handle.
 	 *  @param cid The component id.

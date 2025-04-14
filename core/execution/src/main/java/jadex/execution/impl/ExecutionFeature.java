@@ -951,7 +951,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			// Print and otherwise ignore any other exceptions
 			RuntimeException ex = new RuntimeException("Exception in step", t);//.printStackTrace();
-			ex.printStackTrace();
+//			ex.printStackTrace();
 			self.handleException(ex);
 		}
 		

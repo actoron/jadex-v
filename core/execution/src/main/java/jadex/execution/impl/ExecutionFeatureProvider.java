@@ -46,6 +46,7 @@ import jadex.core.impl.SComponentFeatureProvider;
 import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
+import jadex.execution.StepAborted;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -420,6 +421,11 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						self.terminate();
 					}
 				}
+				catch(StepAborted e)
+				{
+					ret.setException(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
+					throw e;
+				}
 			});
 		}
 		
@@ -442,6 +448,11 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					{
 						self.terminate();
 					}
+				}
+				catch(StepAborted e)
+				{
+					ret.setException(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
+					throw e;
 				}
 			});
 		}

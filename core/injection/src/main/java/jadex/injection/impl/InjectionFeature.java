@@ -9,7 +9,6 @@ import java.util.Map;
 import jadex.common.NameValue;
 import jadex.core.IComponent;
 import jadex.core.ResultProvider;
-import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
@@ -56,14 +55,16 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 
 		if(model.getOnStart()!=null)
 		{
-			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getOnStart().apply(self, Collections.singletonList(self.getPojo()), null, null));
+			// TODO: wait for future return value?
+//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getOnStart().apply(self, Collections.singletonList(self.getPojo()), null, null);
 		}
 		
 		if(model.getMethodInjections()!=null)
 		{
-			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null, null));
+			// TODO: wait for future return value?
+//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null, null);
 		}
 	}
 
@@ -220,14 +221,40 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 
 		if(model.getOnStart()!=null)
 		{
-			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getOnStart().apply(self, pojos, context, null));
+			// TODO: wait for future return value?
+//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getOnStart().apply(self, pojos, context, null);
 		}
 		
 		if(model.getMethodInjections()!=null)
 		{
-			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getMethodInjections().apply(self, pojos, context, null));
+			// TODO: wait for future return value?
+//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getMethodInjections().apply(self, pojos, context, null);
+		}
+	}
+
+	
+	/**
+	 *  Remove an extra pojo.
+	 *  E.g. inject fields in service impl, call OnStart/End methods.
+	 *  
+	 *  @param pojos	The actual pojo objects as a hierachy of component pojo plus subobjects.
+	 *  				The injection is for the last pojo in the list.
+	 *  
+	 *  @param context	Optional local context of the pojo (e.g. rplan for a plan pojo).
+	 *  
+	 *  @param contextfetchers	Local fetchers, if any.
+	 */
+	public void	removeExtraObject(List<Object> pojos, Object context, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	{
+		InjectionModel	model	= InjectionModel.get(pojos, contextfetchers);
+
+		if(model.getOnEnd()!=null)
+		{
+			// TODO: wait for future return value?
+//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getOnEnd().apply(self, pojos, context, null);
 		}
 	}
 }

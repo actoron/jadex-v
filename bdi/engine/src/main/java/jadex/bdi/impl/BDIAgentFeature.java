@@ -256,9 +256,14 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/**
 	 *  Remove a plan after it has finished.
 	 */
-	public void removePlan(RPlan rplan)
+	public void removePlan(RPlan rplan, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
 		// TODO remove extra object.
 		plans.remove(rplan);
+
+		if(rplan.getPojo()!=null)
+		{
+			((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rplan.getAllPojos(), rplan, contextfetchers);
+		}
 	}
 }
