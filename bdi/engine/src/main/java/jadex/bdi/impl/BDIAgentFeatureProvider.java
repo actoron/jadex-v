@@ -234,7 +234,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		contextfetchers = createContextFetchers(pojoclazz,
 			new String[][]{trigger.factadded(), trigger.factremoved(), trigger.factchanged()},
 			new Class<?>[][] {trigger.goals(), trigger.goalfinisheds()},
-			planname, contextfetchers);
+			planname, true, contextfetchers);
 		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, Collections.singletonList(pojoclazz), contextfetchers, null);
 		IPlanBody	planbody	= new MethodPlanBody(contextfetchers, planhandle);
 		
@@ -288,7 +288,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 *  Create contextfetchers for triggering events.
 	 */
 	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> createContextFetchers(
-		Class<?> pojoclazz, String[][] beliefevents, Class<?>[][] goalevents, String element,
+		Class<?> pojoclazz, String[][] beliefevents, Class<?>[][] goalevents, String element, boolean plan,
 		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	_contextfetchers)
 	{
 		List<IValueFetcherCreator>	lcreators	= null;
@@ -341,10 +341,21 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			{
 				if(SReflect.isSupertype((Class<?>) valuetype, belieftype))
 				{
-					return (comp, pojos, context, oldval) ->
+					if(plan)
 					{
-						return ((ChangeInfo<?>)((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getValue();
-					};
+						return (comp, pojos, context, oldval) ->
+						{
+							return ((ChangeInfo<?>)((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getValue();
+						};
+					}
+					// else goal condition -> context is change event.
+					else
+					{
+						return (comp, pojos, context, oldval) ->
+						{
+							return ((ChangeInfo<?>)((ChangeEvent<?>)context).getValue()).getValue();
+						};
+					}
 				}
 				else
 				{
@@ -392,7 +403,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		contextfetchers = createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
 			new String[][]{trigger.factadded(), trigger.factremoved(), trigger.factchanged()},
 			new Class<?>[][]{trigger.goals(), trigger.goalfinisheds()},
-			planname, contextfetchers);
+			planname, true, contextfetchers);
 		IInjectionHandle	precondition	= createMethodInvocation(planclazz, parentclazzes, PlanPrecondition.class, contextfetchers);
 		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, parentclazzes, PlanContextCondition.class, contextfetchers);
 		IInjectionHandle	constructor	= InjectionModel.findViableConstructor(planclazz, parentclazzes, contextfetchers);
@@ -490,16 +501,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			EventType[]	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), creation.factadded(), creation.factremoved(), creation.factchanged(), new Class<?>[0], goalname);
 			if(events!=null && events.length>0)
 			{
-				
-				
-//				// Add fetcher for belief value.
-//				contextfetchers	= new LinkedHashMap<>(contextfetchers);
-//				contextfetchers.put(Inject.class, Collections.singletonList((pojotypes, valuetype, annotation) -> 
-//				{
-//					IInjectionHandle	fetcher	= null;
-//					if()
-//					return fetcher;
-//				}));
+				// Add fetcher for belief value.
+				contextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
+					new String[][] {creation.factadded(), creation.factremoved(), creation.factchanged()},
+					new Class<?>[][] {},
+					goalname, false, contextfetchers);
 				
 				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(constructor, parentclazzes, contextfetchers, null);
 				

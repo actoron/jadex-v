@@ -499,6 +499,22 @@ public class InjectionModel
 	}
 	
 	/**
+	 *  Helper method to find all constructors with the given annotation.
+	 */
+	public static List<Constructor<?>> findConstructors(Class<?> clazz, Class<? extends Annotation> annotation)
+	{
+		List<Constructor<?>>	allcons	= new ArrayList<>();
+		for(Constructor<?> con: clazz.getDeclaredConstructors())
+		{
+			if(con.isAnnotationPresent(annotation))
+			{
+				allcons.add(con);
+			}
+		}
+		return allcons;
+	}
+	
+	/**
 	 *  Helper method to find all direct and inherited methods with the given annotation.
 	 *  Methods are returned in reverse order: superclass first, then subclass.
 	 */
