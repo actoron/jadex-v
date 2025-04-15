@@ -6,8 +6,10 @@ import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -493,10 +495,15 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	{
 		String	goalname	= goalclazz.getName();
 		
-		// Add rules to trigger creation condition
-		for(Constructor<?> constructor: InjectionModel.findConstructors(goalclazz, GoalCreationCondition.class))
+		int	numcreations	= 0;
+		
+		// Add rules to trigger creation condition for annotated constructors and methods
+		List<Executable>	executables	= new ArrayList<>(4);
+		executables.addAll(InjectionModel.findConstructors(goalclazz, GoalCreationCondition.class));
+		executables.addAll(InjectionModel.findMethods(goalclazz, GoalCreationCondition.class));
+		for(Executable executable: executables)
 		{
-			GoalCreationCondition	creation	= constructor.getAnnotation(GoalCreationCondition.class);
+			GoalCreationCondition	creation	= executable.getAnnotation(GoalCreationCondition.class);
 			// TODO: find beliefs of all capabilities!?
 			EventType[]	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), creation.factadded(), creation.factremoved(), creation.factchanged(), new Class<?>[0], goalname);
 			if(events!=null && events.length>0)
@@ -507,29 +514,76 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					new Class<?>[][] {},
 					goalname, false, contextfetchers);
 				
-				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(constructor, parentclazzes, contextfetchers, null);
-				
-				// In extra on start, add rule to create goal when event happens.  
-				ret.add((comp, pojos, context, oldval) ->
+				// check for static
+				if(executable instanceof Method && !Modifier.isStatic(executable.getModifiers()))
 				{
-					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-					rs.getRulebase().addRule(new Rule<Void>(
-						"GoalCreationCondition_"+goalname,	// Rule Name
-						ICondition.TRUE_CONDITION,	// Condition -> true
-						(event, rule, context2, condresult) ->
-						{
-							Object	pojogoal	= handle.apply(comp, pojos, new ChangeEvent<Object>(event), null);
-							RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos);
-							rgoal.adopt();
-							return IFuture.DONE;
-						},
-						events));	// Trigger Event(s)
-					return null;
-				});
+					throw new UnsupportedOperationException("Goal creation condition method must be static: "+executable);
+				}
+				
+				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(executable, parentclazzes, contextfetchers, null);
+				String	rulename	= "GoalCreationCondition"+(++numcreations)+"_"+goalname;
+				
+				// Constructor or method returning goal object
+				if(executable instanceof Constructor<?> || goalclazz.equals(((Method)executable).getReturnType()))
+				{
+					// In extra on start, add rule to create goal when event happens.  
+					ret.add((comp, pojos, context, oldval) ->
+					{
+						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						rs.getRulebase().addRule(new Rule<Void>(
+							rulename,	// Rule Name
+							ICondition.TRUE_CONDITION,	// Condition -> true
+							(event, rule, context2, condresult) ->
+							{
+								Object	pojogoal	= handle.apply(comp, pojos, new ChangeEvent<Object>(event), null);
+								if(pojogoal!=null)	// For method, check if no goal is created
+								{
+									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos);
+									rgoal.adopt();
+								}
+								return IFuture.DONE;
+							},
+							events));	// Trigger Event(s)
+						return null;
+					});
+				}
+				
+				// boolean method
+				else if(SReflect.isSupertype(Boolean.class, ((Method)executable).getReturnType()))
+				{
+					IInjectionHandle	constructor	= InjectionModel.findViableConstructor(goalclazz, parentclazzes, contextfetchers);
+					
+					// In extra on start, add rule to create goal when event happens.  
+					ret.add((comp, pojos, context, oldval) ->
+					{
+						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						rs.getRulebase().addRule(new Rule<Void>(
+							rulename,	// Rule Name
+							ICondition.TRUE_CONDITION,	// Condition -> true
+							(event, rule, context2, condresult) ->
+							{
+								ChangeEvent<?>	change	= new ChangeEvent<Object>(event);
+								Boolean	value	= (Boolean)handle.apply(comp, pojos, change, null);
+								if(Boolean.TRUE.equals(value))
+								{
+									Object	pojogoal	= constructor.apply(comp, pojos, change, null);
+									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos);
+									rgoal.adopt();
+								}
+								return IFuture.DONE;
+							},
+							events));	// Trigger Event(s)
+						return null;
+					});
+				}
+				else
+				{
+					throw new UnsupportedOperationException("Goal creation condition method must return boolean or goal object: "+executable);
+				}
 			}
 			else
 			{
-				throw new UnsupportedOperationException("Creation condition must specify at least one trigger belief: "+constructor);
+				throw new UnsupportedOperationException("Creation condition must specify at least one trigger belief: "+executable);
 			}
 		}
 	}
