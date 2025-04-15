@@ -5,10 +5,14 @@ import java.beans.PropertyChangeListener;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -24,6 +28,8 @@ import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
+import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
@@ -32,6 +38,7 @@ import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.annotation.Trigger;
+import jadex.bdi.impl.goal.RGoal;
 import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.IPlanBody;
@@ -195,6 +202,20 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					SUtil.throwUnchecked(e);
 				}
 			}
+			
+			// Manage goal classes
+			// TODO: external goal classes
+			for(Class<?> goalclass: InjectionModel.findInnerClasses(pojoclazz, Goal.class))
+			{
+				try
+				{
+					addGoalClass(goalclass, pojoclazzes, ret, contextfetchers);
+				}
+				catch(Exception e)
+				{
+					SUtil.throwUnchecked(e);
+				}
+			}
 
 			return ret;
 		});
@@ -208,11 +229,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	{
 		Plan	anno	= m.getAnnotation(Plan.class);
 		Trigger	trigger	= anno.trigger();
+		String	planname	= m.getName();
 		
-		contextfetchers = createContextFetchers(trigger, contextfetchers);
+		contextfetchers = createContextFetchers(pojoclazz,
+			new String[][]{trigger.factadded(), trigger.factremoved(), trigger.factchanged()},
+			new Class<?>[][] {trigger.goals(), trigger.goalfinisheds()},
+			planname, contextfetchers);
 		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, Collections.singletonList(pojoclazz), contextfetchers, null);
 		IPlanBody	planbody	= new MethodPlanBody(contextfetchers, planhandle);
-		String	planname	= m.getName();
 		
 		// Inform user when no trigger is defined
 		checkPlanDefinition(anno, planname);
@@ -234,7 +258,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	protected void addEventTriggerRule(Class<?> pojoclazz, List<IInjectionHandle> ret, Trigger trigger,
 			IPlanBody planbody, String planname)
 	{
-		EventType[] aevents = getTriggerEvents(pojoclazz, trigger, planname);
+		EventType[] aevents = getTriggerEvents(pojoclazz, trigger.factadded(), trigger.factremoved(), trigger.factchanged(), trigger.goalfinisheds(), planname);
 		if(aevents!=null && aevents.length>0)
 		{
 			// In extra on start, add rule to run plan when event happens.  
@@ -261,18 +285,27 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	}
 
 	/**
-	 *  Create contextfetchers for triggering goals.
+	 *  Create contextfetchers for triggering events.
 	 */
-	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> createContextFetchers(Trigger trigger,
+	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> createContextFetchers(
+		Class<?> pojoclazz, String[][] beliefevents, Class<?>[][] goalevents, String element,
 		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	_contextfetchers)
 	{
 		List<IValueFetcherCreator>	lcreators	= null;
-		for(Class<?> goaltype: trigger.goals())
+		
+		// Add fetchers for trigger goals
+		Set<Class<?>>	allgoals	= new LinkedHashSet<>();
+		for(Class<?>[] goaltypes: goalevents)
+		{
+			allgoals.addAll(Arrays.asList(goaltypes));
+		}
+		for(Class<?> goaltype: allgoals)
 		{
 			if(lcreators==null)
 			{
 				lcreators	= new ArrayList<>(4);
 			}
+			
 			lcreators.add((pojotypes, valuetype, annotation) -> 
 			{
 				if(goaltype.equals(valuetype))
@@ -288,6 +321,38 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			});
 		}
+		
+		// Add fetchers for belief events.
+		Set<Class<?>>	belieftypes	= new LinkedHashSet<>();
+		for(String[] beliefs: beliefevents)
+		{
+			for(String belief: beliefs)
+			{
+				belieftypes.add(getBeliefType(pojoclazz, belief, element));
+			}
+		}
+		for(Class<?> belieftype: belieftypes)
+		{
+			if(lcreators==null)
+			{
+				lcreators	= new ArrayList<>(4);
+			}
+			lcreators.add((pojotypes, valuetype, annotation) -> 
+			{
+				if(SReflect.isSupertype((Class<?>) valuetype, belieftype))
+				{
+					return (comp, pojos, context, oldval) ->
+					{
+						return ((ChangeInfo<?>)((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getValue();
+					};
+				}
+				else
+				{
+					return null;
+				}
+			});
+		}
+		
 		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers	= null;
 		if(lcreators!=null)
 		{
@@ -324,7 +389,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		// Inform user when no trigger is defined
 		checkPlanDefinition(anno, planname);
 		
-		contextfetchers = createContextFetchers(trigger, contextfetchers);
+		contextfetchers = createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
+			new String[][]{trigger.factadded(), trigger.factremoved(), trigger.factchanged()},
+			new Class<?>[][]{trigger.goals(), trigger.goalfinisheds()},
+			planname, contextfetchers);
 		IInjectionHandle	precondition	= createMethodInvocation(planclazz, parentclazzes, PlanPrecondition.class, contextfetchers);
 		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, parentclazzes, PlanContextCondition.class, contextfetchers);
 		IInjectionHandle	constructor	= InjectionModel.findViableConstructor(planclazz, parentclazzes, contextfetchers);
@@ -334,6 +402,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		IInjectionHandle	aborted	= createMethodInvocation(planclazz, parentclazzes, PlanAborted.class, contextfetchers);
 		ClassPlanBody	planbody	= new ClassPlanBody(contextfetchers, precondition, contextcondition, constructor, body, passed, failed, aborted);
 		
+		// TODO: fidn belifs of all capabilities!?
 		addEventTriggerRule(parentclazzes.get(parentclazzes.size()-1), ret, trigger, planbody, planname);
 		
 		// Add rule to trigger context condition
@@ -406,6 +475,60 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	}
 	
 	/**
+	 *  Add required code to handle a goal class.
+	 */
+	protected void addGoalClass(Class<?> goalclazz, List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
+		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers) throws Exception
+	{
+		String	goalname	= goalclazz.getName();
+		
+		// Add rules to trigger creation condition
+		for(Constructor<?> constructor: InjectionModel.findConstructors(goalclazz, GoalCreationCondition.class))
+		{
+			GoalCreationCondition	creation	= constructor.getAnnotation(GoalCreationCondition.class);
+			// TODO: find beliefs of all capabilities!?
+			EventType[]	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), creation.factadded(), creation.factremoved(), creation.factchanged(), new Class<?>[0], goalname);
+			if(events!=null && events.length>0)
+			{
+				
+				
+//				// Add fetcher for belief value.
+//				contextfetchers	= new LinkedHashMap<>(contextfetchers);
+//				contextfetchers.put(Inject.class, Collections.singletonList((pojotypes, valuetype, annotation) -> 
+//				{
+//					IInjectionHandle	fetcher	= null;
+//					if()
+//					return fetcher;
+//				}));
+				
+				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(constructor, parentclazzes, contextfetchers, null);
+				
+				// In extra on start, add rule to create goal when event happens.  
+				ret.add((comp, pojos, context, oldval) ->
+				{
+					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+					rs.getRulebase().addRule(new Rule<Void>(
+						"GoalCreationCondition_"+goalname,	// Rule Name
+						ICondition.TRUE_CONDITION,	// Condition -> true
+						(event, rule, context2, condresult) ->
+						{
+							Object	pojogoal	= handle.apply(comp, pojos, new ChangeEvent<Object>(event), null);
+							RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos);
+							rgoal.adopt();
+							return IFuture.DONE;
+						},
+						events));	// Trigger Event(s)
+					return null;
+				});
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Creation condition must specify at least one trigger belief: "+constructor);
+			}
+		}
+	}
+	
+	/**
 	 *  Creates a methods invocation handle for the method with the given annotation.
 	 *  @return	null, if no such method.
 	 *  @throws	UnsupportedOperationException if multiple methods match.
@@ -429,40 +552,32 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Get rule events that trigger the plan, if any.
 	 */
-	protected EventType[] getTriggerEvents(Class<?> pojoclazz, Trigger trigger, String planname)
+	protected EventType[] getTriggerEvents(Class<?> pojoclazz, String[] factadded, String[] factremoved, String[] factchanged, Class<?>[] goalfinished, String element)
 	{
 		EventType[]	aevents	= null;
-		if(trigger.factadded().length>0
-			|| trigger.factremoved().length>0
-			|| trigger.factchanged().length>0
-			|| trigger.goalfinisheds().length>0)
+		if(factadded.length>0
+			|| factremoved.length>0
+			|| factchanged.length>0
+			|| goalfinished.length>0)
 		{
 			List<EventType>	events	= new ArrayList<>();
 			
 			// Add fact trigger events.
 			Map<String, String[]>	tevents	= new LinkedHashMap<String, String[]>();
-			tevents.put(ChangeEvent.FACTADDED, trigger.factadded());
-			tevents.put(ChangeEvent.FACTREMOVED, trigger.factremoved());
-			tevents.put(ChangeEvent.FACTCHANGED, trigger.factchanged());
+			tevents.put(ChangeEvent.FACTADDED, factadded);
+			tevents.put(ChangeEvent.FACTREMOVED, factremoved);
+			tevents.put(ChangeEvent.FACTCHANGED, factchanged);
 			for(String tevent: tevents.keySet())
 			{
 				for(String dep: tevents.get(tevent))
 				{
-					Field	depf	= SReflect.getField(pojoclazz, dep);
-					if(depf==null)
-					{
-						throw new RuntimeException("Triggering belief '"+dep+"' not found for plan: "+planname);
-					}
-					else if(!depf.isAnnotationPresent(Belief.class))
-					{
-						throw new RuntimeException("Triggering belief '"+dep+"' of plan '"+planname+"' is not annotated with @Belief: "+depf);
-					}
+					getBeliefType(pojoclazz, dep, element);
 					events.add(new EventType(tevent, dep));
 				}
 			}
 			
 			// Add goal finished trigger events.
-			for(Class<?> goaltype: trigger.goalfinisheds())
+			for(Class<?> goaltype: goalfinished)
 			{
 				events.add(new EventType(ChangeEvent.GOALDROPPED, goaltype.getName()));
 			}
@@ -471,6 +586,52 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			aevents	= events.toArray(new EventType[events.size()]);
 		}
 		return aevents;
+	}
+
+	/**
+	 *  Get the type of a belief.
+	 *  For set/list return the inner element type.
+	 *  For map return the value type.
+	 */
+	protected Class<?>	getBeliefType(Class<?> pojoclazz, String dep, String element)
+	{
+		Field	depf	= SReflect.getField(pojoclazz, dep);
+		if(depf==null)
+		{
+			throw new RuntimeException("Triggering belief '"+dep+"' not found for : "+element);
+		}
+		else if(!depf.isAnnotationPresent(Belief.class))
+		{
+			throw new RuntimeException("Triggering belief '"+dep+"' of '"+element+"' is not annotated with @Belief: "+depf);
+		}
+		
+		Class<?>	type	= depf.getType();
+		
+		if(SReflect.isSupertype(Collection.class, type))
+		{
+			if(depf.getGenericType() instanceof ParameterizedType)
+			{
+				ParameterizedType	generic	= (ParameterizedType)((Type)depf.getGenericType());
+				type	= (Class<?>) generic.getActualTypeArguments()[0];
+			}
+			else
+			{
+				throw new RuntimeException("Triggering belief '"+dep+"' of '"+element+"' does not define generic value type.");
+			}
+		}
+		else if(SReflect.isSupertype(Map.class, type))
+		{
+			if(depf.getGenericType() instanceof ParameterizedType)
+			{
+				ParameterizedType	generic	= (ParameterizedType)((Type)depf.getGenericType());
+				type	= (Class<?>) generic.getActualTypeArguments()[1];
+			}
+			else
+			{
+				throw new RuntimeException("Triggering belief '"+dep+"' of '"+element+"' does not define generic value type.");
+			}
+		}
+		return type;
 	}
 	
 	/**

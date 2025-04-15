@@ -1,14 +1,19 @@
 package jadex.bdi.plan;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
+import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
@@ -26,6 +31,34 @@ import jadex.injection.annotation.OnStart;
  */
 public class PlanInjectionTest
 {
+	/**
+	 *  Test that the context specific belief value can be injected.
+	 */
+	@Test
+	public void	testBeliefInjection()
+	{
+		@BDIAgent
+		class BeliefInjectionAgent
+		{
+			Future<String>	done	= new Future<>();
+			
+			@Belief
+			Set<String>	mybelief	= new LinkedHashSet<>();
+			
+			// Use removed also to check that duplicate belief types work.
+			@Plan(trigger=@Trigger(factadded="mybelief", factremoved = "mybelief"))
+			void	body(String fact)
+			{
+				done.setResult(fact);
+			}
+		}
+		
+		BeliefInjectionAgent	pojo	= new BeliefInjectionAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> pojo.mybelief.add("newfact")).get(TestHelper.TIMEOUT);
+		assertEquals("newfact", pojo.done.get(TestHelper.TIMEOUT));
+	}
+	
 	/**
 	 *  Test that the context specific goal object can be injected.
 	 */
