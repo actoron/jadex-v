@@ -23,13 +23,16 @@ public class BrokenBeliefTest
 	public void	testObjectField()
 	{
 		IComponentHandle	handle	= IComponentManager.get().create(new IBDIAgent()
-			{
-				@Belief
-				Object	broken;
-			}).get(TestHelper.TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT));
+		{
+			@Belief
+			Object	broken;
+		}).get(TestHelper.TIMEOUT);
+		
+		TestHelper.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class,
+				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
 	}
-	
+
 	@Test
 	public void	testDependentBeliefs()
 	{
@@ -39,7 +42,10 @@ public class BrokenBeliefTest
 				@Belief(beliefs = "dummy")
 				Map<Object, Object>	broken;
 			}).get(TestHelper.TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT));
+
+		TestHelper.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class,
+				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
 	}
 	
 	@Test
@@ -51,6 +57,8 @@ public class BrokenBeliefTest
 				@Belief(updaterate = 1)
 				Set<Object>	broken;
 			}).get(TestHelper.TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT));
+		TestHelper.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class,
+				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
 	}
 }
