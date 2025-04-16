@@ -44,7 +44,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import jadex.bdi.runtime.IBDIAgentFeature;
+import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.runtime.IBeliefListener;
 import jadex.common.SGUI;
 import jadex.core.IComponentHandle;
@@ -252,8 +252,8 @@ public class GuiPanel extends JPanel
 
 		agent.scheduleStep(ia ->
 		{
-				INegotiationAgent ag = (INegotiationAgent)ia.getFeature(MicroAgentFeature.class).getSelf().getPojo();
-				ag.getAgent().getFeature(IBDIAgentFeature.class).addBeliefListener("orders", new IBeliefListener<Object>()
+				INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
+				ia.getFeature(IBDIAgentFeature.class).addBeliefListener("orders", new IBeliefListener<Object>()
 				{
 					public void factRemoved(ChangeInfo<Object> info)
 					{

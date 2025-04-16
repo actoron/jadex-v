@@ -3,6 +3,10 @@ package jadex.quickstart.cleanerworld.single;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
+import jadex.bdi.IPlan;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.ExcludeMode;
@@ -15,11 +19,7 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IGoal;
-import jadex.bdi.runtime.IPlan;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.IWaste;
@@ -30,7 +30,7 @@ import jadex.quickstart.cleanerworld.gui.SensorGui;
 /**
  *  Using inner classes for plans with conditions.
  */
-@Agent(type="bdip")	// This annotation makes the java class and agent and enabled BDI features
+@BDIAgent    // This annotation enabled BDI features
 public class CleanerBDIAgentE1
 {
 	//-------- fields holding agent data --------

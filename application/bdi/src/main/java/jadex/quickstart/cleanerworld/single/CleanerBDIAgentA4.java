@@ -1,18 +1,18 @@
 package jadex.quickstart.cleanerworld.single;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
  *  Use goal settings to control plan selection.
  */
-@Agent(type="bdip")	// This annotation makes the java class and agent and enabled BDI features
+@BDIAgent    // This annotation enabled BDI features
 public class CleanerBDIAgentA4
 {
 	//-------- fields holding agent data --------

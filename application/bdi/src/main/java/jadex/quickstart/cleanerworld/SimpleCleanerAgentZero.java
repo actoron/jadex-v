@@ -1,17 +1,17 @@
 package jadex.quickstart.cleanerworld;
 
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.IWaste;
 import jadex.quickstart.cleanerworld.environment.IWastebin;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
  *  Possible solution for exercise zero (non-BDI cleaner).
  */
-@Agent
 public class SimpleCleanerAgentZero
 {
 	//-------- simple example behavior --------
@@ -19,7 +19,6 @@ public class SimpleCleanerAgentZero
 	/**
 	 *  The body is executed when the agent is started.
 	 */
-	//@AgentBody
 	@OnStart
 	private void	exampleBehavior()
 	{
@@ -87,5 +86,18 @@ public class SimpleCleanerAgentZero
 				}
 			}
 		}
+	}
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new SimpleCleanerAgentZero());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

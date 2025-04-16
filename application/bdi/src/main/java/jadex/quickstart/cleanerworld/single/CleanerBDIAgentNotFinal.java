@@ -3,6 +3,7 @@ package jadex.quickstart.cleanerworld.single;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.ExcludeMode;
@@ -33,8 +34,8 @@ import jadex.quickstart.cleanerworld.gui.SensorGui;
  *  @version 1.0 (2017/10/19)
  *
  */
-@Agent(type="bdi")
-public class CleanerBDIAgentFinal
+@BDIAgent    // This annotation enabled BDI features
+public class CleanerBDIAgentNotFinal
 {
 	//-------- beliefs that can be used in plan and goal conditions --------
 	

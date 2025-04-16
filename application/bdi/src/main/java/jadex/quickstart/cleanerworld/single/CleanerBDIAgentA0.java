@@ -1,15 +1,17 @@
 package jadex.quickstart.cleanerworld.single;
 
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.bdi.annotation.BDIAgent;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 
 /**
  *  BDI agent template.
  */
-@Agent(type="bdi")    // This annotation makes the java class and agent and enabled BDI features
+@BDIAgent    // This annotation enabled BDI features
 public class CleanerBDIAgentA0
 {
     //-------- fields holding agent data --------
@@ -38,4 +40,18 @@ public class CleanerBDIAgentA0
     //-------- additional BDI agent code --------
     
     //... BDI goals and plans will be added here
+
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new CleanerBDIAgentA0());
+		
+		// Open the world view
+		EnvironmentGui.create();
+	}
 }

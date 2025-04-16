@@ -3,6 +3,8 @@ package jadex.quickstart.cleanerworld.single;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
@@ -10,9 +12,7 @@ import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
@@ -21,7 +21,7 @@ import jadex.quickstart.cleanerworld.gui.SensorGui;
 /**
  *  Managing known charging stations in a belief set.
  */
-@Agent(type="bdip")	// This annotation makes the java class and agent and enabled BDI features
+@BDIAgent    // This annotation enabled BDI features
 public class CleanerBDIAgentC0
 {
 	//-------- fields holding agent data --------
