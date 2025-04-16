@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IPlan;
+import jadex.bdi.PlanAborted;
 import jadex.bdi.PlanFailureException;
 import jadex.bdi.impl.RElement;
 import jadex.bdi.impl.goal.AdoptGoalAction;
@@ -14,9 +15,9 @@ import jadex.bdi.impl.goal.RGoal;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
 
 /**
  *  Runtime element of a plan.
@@ -106,6 +107,9 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	
 	/** The finished future (if finishing or finished). */
 	public Future<Void>	finished;
+	
+	/** The wait future (if currently waiting). */
+	public Future<?>	waitfuture;
 	
 //	/**
 //	 *  Create a new rplan based on an mplan.
@@ -503,7 +507,18 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		{
 			if(!isFinished())
 			{
-//				// If plan is waiting interrupt waiting
+				// If plan is waiting interrupt waiting
+				if(waitfuture!=null)
+				{
+					if(waitfuture instanceof ITerminableFuture)
+					{
+						((ITerminableFuture<?>)waitfuture).terminate(new RuntimeException(new PlanAborted()));
+					}
+					else
+					{
+						waitfuture.setExceptionIfUndone(new RuntimeException(new PlanAborted()));
+					}
+				}
 //				if(PlanProcessingState.WAITING.equals(getProcessingState()))
 //				{
 //							// The resume command continues the blocked plan thread and
@@ -531,7 +546,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 				/*else*/ if(!atomic && RPLANS.get()==this/*&& PlanProcessingState.RUNNING.equals(getProcessingState())*/)
 				{
 					// abort immediately when running and not atomic -> otherwise later checks for aborted in endAtomic(). 
-					throw new StepAborted();
+					throw new PlanAborted();
 					
 					// if not running it will detect the abort in before/afterBlock() when next future.get() is
 					// called or resumed and will avoid the next wait/wakeup
@@ -912,11 +927,11 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //		return getId()+"_wait_#"+cnt++;
 //	}
 //	
-//	/**
-//	 *  Called before blocking the component thread.
-//	 */
-//	public <T> void	beforeBlock(Future<T> fut)
-//	{
+	/**
+	 *  Called before blocking the component thread.
+	 */
+	public <T> void	beforeBlock(Future<T> fut)
+	{
 //		testBodyAborted();
 //		ISuspendable sus = ISuspendable.SUSPENDABLE.get();
 //		if(sus!=null && !RPlan.PlanProcessingState.WAITING.equals(getProcessingState()))
@@ -926,14 +941,18 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 ////			System.out.println("setting rescom: "+getId()+" "+rescom);
 //			resumecommand = rescom;
 //		}
-//	}
-//	
-//	/**
-//	 *  Called after unblocking the component thread.
-//	 */
-//	public void	afterBlock()
-//	{
-//		testBodyAborted();
+		assert this.waitfuture==null;
+		this.waitfuture	= fut;
+	}
+	
+	/**
+	 *  Called after unblocking the component thread.
+	 */
+	public void	afterBlock()
+	{
+		assert this.waitfuture!=null;
+		this.waitfuture	= null;
+		testBodyAborted();
 //		setProcessingState(PlanProcessingState.RUNNING);
 //		setWaitAbstraction(null);
 //		if(resumecommand!=null)
@@ -944,7 +963,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 ////			resumecommand.execute(new Tuple2<Boolean, Boolean>(Boolean.FALSE, null));
 //			resumecommand = null;
 //		}
-//	}
+	}
 
 	/**
 	 *  Check if plan is already aborted.
@@ -954,7 +973,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		// Throw error to exit body method of aborted plan.
 		if(isFinishing() && PlanLifecycleState.BODY.equals(getLifecycleState()))
 		{
-			throw new StepAborted();
+			throw new PlanAborted();
 		}
 	}
 

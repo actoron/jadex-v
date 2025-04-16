@@ -1,6 +1,7 @@
 package jadex.bdi.blocksworld;
 
 import jadex.bdi.IPlan;
+import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.blocksworld.BlocksworldAgent.ClearGoal;
 import jadex.bdi.blocksworld.BlocksworldAgent.StackGoal;
@@ -11,7 +12,7 @@ import jadex.injection.annotation.Inject;
 /**
  *  Stack a block on top of another.
  */
-//@Plan
+@Plan
 public class StackBlocksPlan	
 {
 	//-------- attributes --------

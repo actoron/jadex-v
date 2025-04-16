@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.PlanAborted;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.plan.RPlan.PlanLifecycleState;
 import jadex.common.SUtil;
-import jadex.execution.StepAborted;
 import jadex.future.IFuture;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.IValueFetcherCreator;
@@ -129,14 +129,14 @@ public class ClassPlanBody implements IPlanBody
 			// Next step: passed()
 			next	= PlanLifecycleState.PASSING;
 		}
+		catch(PlanAborted e)
+		{
+			next = PlanLifecycleState.ABORTING;
+		}
 		catch(Exception e)
 		{
 			rplan.setException(e);
 			next = PlanLifecycleState.FAILING;
-		}
-		catch(StepAborted e)
-		{
-			next = PlanLifecycleState.ABORTING;
 		}
 
 		

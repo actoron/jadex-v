@@ -293,11 +293,13 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 				if(isSucceeded())
 				{
 					// TODO: Goal result
-					finished.setResult(null);
+					// Use undone as future is maybe used by plan and set to exception on plan abort. 
+					finished.setResultIfUndone(null);
 				}
 				else
 				{
-					finished.setException(exception!=null ? exception : new GoalFailureException());
+					// Use undone as future is maybe used by plan and set to exception on plan abort. 
+					finished.setExceptionIfUndone(exception!=null ? exception : new GoalFailureException());
 				}
 			}
 //

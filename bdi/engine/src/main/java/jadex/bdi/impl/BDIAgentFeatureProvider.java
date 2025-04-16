@@ -209,46 +209,45 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 			
 			// Manage external plan classes if pojo is not itself a plan.
-			if(!isPlan(pojoclazzes))
+			if(!isPlan(pojoclazzes) && pojoclazz.isAnnotationPresent(Plan.class) && !Object.class.equals(pojoclazz.getAnnotation(Plan.class).impl())
+				|| pojoclazz.isAnnotationPresent(Plans.class))
 			{
-				if(pojoclazz.isAnnotationPresent(Plan.class) || pojoclazz.isAnnotationPresent(Plans.class))
+				// TODO: support @Plan and @Plans
+				Plan[]	plans;
+				if(pojoclazz.isAnnotationPresent(Plans.class))
 				{
-					Plan[]	plans;
-					if(pojoclazz.isAnnotationPresent(Plans.class))
+					plans	= pojoclazz.getAnnotation(Plans.class).value();
+				}
+				else
+				{
+					plans	= new Plan[]{pojoclazz.getAnnotation(Plan.class)};
+				}
+				
+				for(Plan plan: plans)
+				{
+					if(Object.class.equals(plan.impl()))
 					{
-						plans	= pojoclazz.getAnnotation(Plans.class).value();
-					}
-					else
-					{
-						plans	= new Plan[]{pojoclazz.getAnnotation(Plan.class)};
+						throw new UnsupportedOperationException("External plan must define impl class: "+pojoclazz+", "+plan);
 					}
 					
-					for(Plan plan: plans)
+					if(plan.impl().isAnnotationPresent(Plan.class))
 					{
-						if(Object.class.equals(plan.impl()))
+						Trigger	trigger	= plan.impl().getAnnotation(Plan.class).trigger();
+						List<EventType>	events	= getTriggerEvents(pojoclazz, trigger.factadded(), trigger.factremoved(), trigger.factchanged(),
+							trigger.goalfinisheds(),plan.impl().getName());
+						if((events!=null && events.size()>0) || trigger.goals().length>0)
 						{
-							throw new UnsupportedOperationException("External plan must define impl class: "+pojoclazz+", "+plan);
+							throw new UnsupportedOperationException("External Plan must not define its own trigger: "+plan.impl());
 						}
-						
-						if(plan.impl().isAnnotationPresent(Plan.class))
-						{
-							Trigger	trigger	= plan.impl().getAnnotation(Plan.class).trigger();
-							List<EventType>	events	= getTriggerEvents(pojoclazz, trigger.factadded(), trigger.factremoved(), trigger.factchanged(),
-								trigger.goalfinisheds(),plan.impl().getName());
-							if((events!=null && events.size()>0) || trigger.goals().length>0)
-							{
-								throw new UnsupportedOperationException("External Plan must not define its own trigger: "+plan.impl());
-							}
-						}
-						
-						try
-						{
-							addPlanClass(plan.impl(), plan.trigger(), pojoclazzes, ret, contextfetchers);
-						}
-						catch(Exception e)
-						{
-							SUtil.throwUnchecked(e);
-						}
+					}
+					
+					try
+					{
+						addPlanClass(plan.impl(), plan.trigger(), pojoclazzes, ret, contextfetchers);
+					}
+					catch(Exception e)
+					{
+						SUtil.throwUnchecked(e);
 					}
 				}
 			}

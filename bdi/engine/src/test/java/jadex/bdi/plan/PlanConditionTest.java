@@ -97,9 +97,18 @@ public class PlanConditionTest
 			}
 			
 			@PlanBody
-			void body(IPlan plan)
+			void body(IPlan plan, String fact)
 			{
-				bel.set(false);
+				if("go".equals(fact))
+				{
+					// Trigger self-abort
+					bel.set(false);
+				}
+				else
+				{
+					// Wait and be aborted from outside
+					new Future<Void>().get(TestHelper.TIMEOUT);
+				}
 				contextfut.setResultIfUndone("not aborted");
 			}
 			
@@ -118,7 +127,7 @@ public class PlanConditionTest
 		{
 			PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
 			IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-			agent.scheduleStep(() -> pojo.trigger.add("go"));
+			agent.scheduleStep(() -> pojo.trigger.add("go")).get(TestHelper.TIMEOUT);
 			assertEquals(PlanConditionTestAgent.PrePlan1.class.getName(), pojo.prefut.get(TestHelper.TIMEOUT));
 		}
 		
@@ -129,18 +138,29 @@ public class PlanConditionTest
 			agent.scheduleStep(() ->
 			{
 				pojo.bel.set(false);
-				pojo.trigger.add("go");			
-			});
+				pojo.trigger.add("go");
+				return null;
+			}).get(TestHelper.TIMEOUT);
 			assertEquals(PlanConditionTestAgent.PrePlan2.class.getName(), pojo.prefut.get(TestHelper.TIMEOUT));
 		}
 	}
 	
 	@Test
-	void testPlanContextcondition()
+	void testPlanSelfabort()
 	{
 		PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
 		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		agent.scheduleStep(() -> pojo.trigger.add("go"));
+		agent.scheduleStep(() -> pojo.trigger.add("go")).get(TestHelper.TIMEOUT);
+		assertEquals("aborted", pojo.contextfut.get(TestHelper.TIMEOUT));
+	}
+	
+	@Test
+	void testPlanExtabort()
+	{
+		PlanConditionTestAgent	pojo	= new PlanConditionTestAgent();
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		agent.scheduleStep(() -> pojo.trigger.add("wait")).get(TestHelper.TIMEOUT);
+		agent.scheduleStep(() -> {pojo.bel.set(false); return null;}).get(TestHelper.TIMEOUT);
 		assertEquals("aborted", pojo.contextfut.get(TestHelper.TIMEOUT));
 	}
 }

@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.Set;
 
 import jadex.bdi.IPlan;
+import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.blocksworld.BlocksworldAgent.ConfigureGoal;
 import jadex.common.SUtil;
@@ -15,7 +16,7 @@ import jadex.injection.annotation.Inject;
 /**
  *  Measures Jadex performance by executing several configure goals.
  */
-//@Plan
+@Plan
 public class BenchmarkPlan
 {
 	//-------- attributes --------

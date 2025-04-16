@@ -90,7 +90,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	@Override
 	public void onStart()
 	{
-		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener(rulesystem));
+		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener(/*rulesystem*/));
 		
 		// Initiate goal deliberation
 		final IDeliberationStrategy delstr = new EasyDeliberationStrategy();

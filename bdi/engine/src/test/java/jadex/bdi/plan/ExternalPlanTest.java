@@ -34,7 +34,8 @@ public class ExternalPlanTest
 		@Goal
 		class TriggerGoal {}
 	}		
-
+	
+	@Plan
 	static class MyExtPlan
 	{
 		@PlanBody

@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.PlanAborted;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.plan.RPlan.PlanLifecycleState;
-import jadex.execution.StepAborted;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.IValueFetcherCreator;
 
@@ -45,15 +45,14 @@ public class MethodPlanBody implements IPlanBody
 			
 			rplan.setLifecycleState(PlanLifecycleState.PASSED);
 		}
+		catch(PlanAborted e)
+		{
+			rplan.setLifecycleState(PlanLifecycleState.ABORTED);
+		}
 		catch(Exception e)
 		{
 			rplan.setLifecycleState(PlanLifecycleState.FAILED);
 			rplan.setException(e);
-		}
-		catch(StepAborted e)
-		{
-			rplan.setLifecycleState(PlanLifecycleState.ABORTED);
-			throw e;
 		}
 		finally
 		{

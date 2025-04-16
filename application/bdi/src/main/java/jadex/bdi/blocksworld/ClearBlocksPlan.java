@@ -2,6 +2,7 @@ package jadex.bdi.blocksworld;
 
 import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
+import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.blocksworld.BlocksworldAgent.ClearGoal;
 import jadex.bdi.impl.goal.RGoal;
@@ -9,7 +10,7 @@ import jadex.bdi.impl.goal.RGoal;
 /**
  *  Clear a block.
  */
-//@Plan
+@Plan
 public class ClearBlocksPlan extends StackBlocksPlan
 {
     /**

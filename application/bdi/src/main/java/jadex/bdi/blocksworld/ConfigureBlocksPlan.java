@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import jadex.bdi.IPlan;
+import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.blocksworld.BlocksworldAgent.ConfigureGoal;
 import jadex.bdi.blocksworld.BlocksworldAgent.StackGoal;
@@ -14,7 +15,7 @@ import jadex.injection.annotation.Inject;
 /**
  *  Stack blocks according to the target configuration.
  */
-//@Plan
+@Plan
 public class ConfigureBlocksPlan
 {
 	//-------- attributes --------
