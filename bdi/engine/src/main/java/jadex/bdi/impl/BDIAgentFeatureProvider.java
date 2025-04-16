@@ -32,6 +32,7 @@ import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
@@ -495,12 +496,12 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	{
 		String	goalname	= goalclazz.getName();
 		
-		int	numcreations	= 0;
 		
 		// Add rules to trigger creation condition for annotated constructors and methods
 		List<Executable>	executables	= new ArrayList<>(4);
 		executables.addAll(InjectionModel.findConstructors(goalclazz, GoalCreationCondition.class));
 		executables.addAll(InjectionModel.findMethods(goalclazz, GoalCreationCondition.class));
+		int	numcreations	= 0;
 		for(Executable executable: executables)
 		{
 			GoalCreationCondition	creation	= executable.getAnnotation(GoalCreationCondition.class);
@@ -509,7 +510,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			if(events!=null && events.length>0)
 			{
 				// Add fetcher for belief value.
-				contextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
+				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
 					new String[][] {creation.factadded(), creation.factremoved(), creation.factchanged()},
 					new Class<?>[][] {},
 					goalname, false, contextfetchers);
@@ -520,7 +521,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					throw new UnsupportedOperationException("Goal creation condition method must be static: "+executable);
 				}
 				
-				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(executable, parentclazzes, contextfetchers, null);
+				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(executable, parentclazzes, fcontextfetchers, null);
 				String	rulename	= "GoalCreationCondition"+(++numcreations)+"_"+goalname;
 				
 				// Constructor or method returning goal object
@@ -539,7 +540,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								if(pojogoal!=null)	// For method, check if no goal is created
 								{
 									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos);
-									rgoal.adopt();
+									rgoal.adopt(fcontextfetchers);
 								}
 								return IFuture.DONE;
 							},
@@ -551,7 +552,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				// boolean method
 				else if(SReflect.isSupertype(Boolean.class, ((Method)executable).getReturnType()))
 				{
-					IInjectionHandle	constructor	= InjectionModel.findViableConstructor(goalclazz, parentclazzes, contextfetchers);
+					IInjectionHandle	constructor	= InjectionModel.findViableConstructor(goalclazz, parentclazzes, fcontextfetchers);
 					
 					// In extra on start, add rule to create goal when event happens.  
 					ret.add((comp, pojos, context, oldval) ->
@@ -568,7 +569,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								{
 									Object	pojogoal	= constructor.apply(comp, pojos, change, null);
 									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos);
-									rgoal.adopt();
+									rgoal.adopt(fcontextfetchers);
 								}
 								return IFuture.DONE;
 							},
@@ -584,6 +585,66 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			else
 			{
 				throw new UnsupportedOperationException("Creation condition must specify at least one trigger belief: "+executable);
+			}
+		}
+		
+		// Add target condition rules
+		List<Method>	methods	= InjectionModel.findMethods(goalclazz, GoalTargetCondition.class);
+		numcreations	= 0;
+		for(Method method: methods)
+		{
+			GoalTargetCondition	target	= method.getAnnotation(GoalTargetCondition.class);
+			// TODO: find beliefs of all capabilities!?
+			EventType[]	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), target.beliefs(), target.beliefs(), target.beliefs(), new Class<?>[0], goalname);
+			if(events!=null && events.length>0)
+			{
+				// Add fetcher for belief value.
+				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
+					new String[][] {target.beliefs()},
+					new Class<?>[][] {},
+					goalname, false, contextfetchers);
+				
+				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
+				String	rulename	= "GoalTargetCondition"+(++numcreations)+"_"+goalname;
+				
+				// check for boolean method
+				if(SReflect.isSupertype(Boolean.class, method.getReturnType()))
+				{
+					// In extra on start, add rule to create goal when event happens.  
+					ret.add((comp, pojos, context, oldval) ->
+					{
+						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						rs.getRulebase().addRule(new Rule<Void>(
+							rulename,	// Rule Name
+							ICondition.TRUE_CONDITION,	// Condition -> true
+							(event, rule, context2, condresult) ->
+							{
+								Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+								for(RGoal goal: goals)
+								{
+									if(!goal.isFinished())
+									{
+										Boolean	value	= (Boolean)handle.apply(comp, goal.getAllPojos(), new ChangeEvent<Object>(event), null);
+										if(Boolean.TRUE.equals(value))
+										{
+											goal.targetConditionTriggered(/*event, rule, context2*/);
+										}
+									}
+								}
+								return IFuture.DONE;
+							},
+							events));	// Trigger Event(s)
+						return null;
+					});
+				}
+				else
+				{
+					throw new UnsupportedOperationException("Goal target condition method must return boolean: "+method);
+				}
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Creation condition must specify at least one trigger belief: "+method);
 			}
 		}
 	}

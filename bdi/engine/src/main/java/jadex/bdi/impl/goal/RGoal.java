@@ -1,7 +1,8 @@
 package jadex.bdi.impl.goal;
 
-import java.util.ArrayList;
+import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
@@ -13,8 +14,8 @@ import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.injection.IInjectionFeature;
-import jadex.injection.impl.InjectionFeature;
+import jadex.future.IResultListener;
+import jadex.injection.impl.IValueFetcherCreator;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.RuleSystem;
@@ -36,9 +37,9 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	protected RPlan parentplan;
 //	protected RGoal parentgoal;
 	
-//	/** The child plan. */
-//	protected RPlan childplan;
-//	
+	/** The child plan. */
+	protected RPlan childplan;
+	
 //	/** The candidate from which this plan was created. Used for tried plans in proc elem. */
 //	protected ICandidateInfo candidate;
 	
@@ -266,22 +267,22 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		
 		if(GoalLifecycleState.DROPPING.equals(lifecyclestate))
 		{
-//			abortPlans().addResultListener(new IResultListener<Void>()
-//			{
-//				@Override
-//				public void resultAvailable(Void result)
-//				{
+			abortPlans().addResultListener(new IResultListener<Void>()
+			{
+				@Override
+				public void resultAvailable(Void result)
+				{
 					IExecutionFeature.get().scheduleStep(new DropGoalAction(RGoal.this));
-//				}
-//				
-//				@Override
-//				public void exceptionOccurred(Exception exception)
-//				{
-//					// Should not fail?
-//					exception.printStackTrace();
-//					resultAvailable(null);	// safety-net: continue anyways
-//				}
-//			});
+				}
+				
+				@Override
+				public void exceptionOccurred(Exception exception)
+				{
+					// Should not fail?
+					exception.printStackTrace();
+					resultAvailable(null);	// safety-net: continue anyways
+				}
+			});
 		}
 		else if(GoalLifecycleState.DROPPED.equals(lifecyclestate))
 		{
@@ -326,37 +327,33 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	
 	/**
 	 *  Adopt a goal.
+	 *  @param contextfetchers For injecting event values when triggered by a creation condition, null otherwise.
 	 */
-	public void	adopt()
+	public void	adopt(Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
 	{
 		// TODO: handle goal parameters
-		
-		// inject goal elements
-		List<Object>	goalpojos	= new ArrayList<Object>(parentpojos.size()+1);
-		goalpojos.addAll(parentpojos);
-		goalpojos.add(pojoelement);
-		((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addExtraObject(goalpojos, this, null);
 			
-//		IInternalBDIAgentFeature.get().getCapability().addGoal(goal);
+		((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).addGoal(this, contextfetchers);
+		
 		setLifecycleState(RGoal.GoalLifecycleState.ADOPTED);
 	}
 	
-//	/**
-//	 *  Abort the child plans.
-//	 */
-//	protected IFuture<Void> abortPlans()
-//	{
-//		IFuture<Void>	ret;
-//		if(childplan!=null)
-//		{
-//			ret	= childplan.abort();
-//		}
-//		else
-//		{
-//			ret	= IFuture.DONE;
-//		}
-//		return ret;
-//	}
+	/**
+	 *  Abort the child plans.
+	 */
+	protected IFuture<Void> abortPlans()
+	{
+		IFuture<Void>	ret;
+		if(childplan!=null)
+		{
+			ret	= childplan.abort();
+		}
+		else
+		{
+			ret	= IFuture.DONE;
+		}
+		return ret;
+	}
 //	
 //	/**
 //	 *  Get the model element.
@@ -400,23 +397,23 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //		return lifecyclestate==GoalLifecycleState.ACTIVE;
 //	}
 //	
-//	/**
-//	 *  Get the childplan.
-//	 *  @return The childplan.
-//	 */
-//	public RPlan getChildPlan()
-//	{
-//		return childplan;
-//	}
-//
-//	/**
-//	 *  Set the childplan.
-//	 *  @param childplan The childplan to set.
-//	 */
-//	public void setChildPlan(RPlan childplan)
-//	{
-//		this.childplan = childplan;
-//	}
+	/**
+	 *  Get the childplan.
+	 *  @return The childplan.
+	 */
+	public RPlan getChildPlan()
+	{
+		return childplan;
+	}
+
+	/**
+	 *  Set the childplan.
+	 *  @param childplan The childplan to set.
+	 */
+	public void setChildPlan(RPlan childplan)
+	{
+		this.childplan = childplan;
+	}
 //	
 //	/**
 //	 *  Get the hashcode.
@@ -790,12 +787,11 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //		}
 //	}
 //	
-//	/**
-//	 *  Called when the target condition of a goal triggers.
-//	 */
-//	public void targetConditionTriggered(IEvent event, IRule<Void> rule, Object context)
-//	{
-////		System.out.println("Goal target triggered: "+RGoal.this);
+	/**
+	 *  Called when the target condition of a goal triggers.
+	 */
+	public void targetConditionTriggered(/*IEvent event, IRule<Void> rule, Object context*/)
+	{
 //		if(getMGoal().getConditions(MGoal.CONDITION_MAINTAIN)!=null)
 //		{
 //			// Change maintain goal rule so it does not consider target condition triggered unless we move from false to true (not just true to true)
@@ -830,10 +826,10 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //			}
 //		}
 //		else
-//		{
-//			setProcessingState(IGoal.GoalProcessingState.SUCCEEDED);
-//		}
-//	}
+		{
+			setProcessingState(IGoal.GoalProcessingState.SUCCEEDED);
+		}
+	}
 //	
 //	/**
 //	 * 

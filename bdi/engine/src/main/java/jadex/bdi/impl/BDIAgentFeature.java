@@ -2,6 +2,7 @@ package jadex.bdi.impl;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,9 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	
 	/** The currently running plans. */
 	protected Set<RPlan>	plans;
+	
+	/** The currently adopted goals. */
+	protected Map<Class<?>, Set<RGoal>>	goals;
 	
 	/**
 	 *  Create the feature.
@@ -136,7 +140,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 //
 		// Adopt directly (no schedule step)
 		// TODO: why step for subgoal and not for top-level!?
-		rgoal.adopt();
+		rgoal.adopt(null);
 		
 		@SuppressWarnings("unchecked")
 		IFuture<E>	ret	= (IFuture<E>) rgoal.getFinished();
@@ -258,12 +262,50 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	 */
 	public void removePlan(RPlan rplan, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
-		// TODO remove extra object.
 		plans.remove(rplan);
 
 		if(rplan.getPojo()!=null)
 		{
 			((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rplan.getAllPojos(), rplan, contextfetchers);
 		}
+	}
+
+	
+	/**
+	 *  Add a Goal.
+	 *  Called when the goal is adopted.
+	 */
+	public void addGoal(RGoal rgoal, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	{		
+		if(goals==null)
+		{
+			goals	= new LinkedHashMap<>();
+		}
+		Set<RGoal>	typedgoals	= goals.get(rgoal.getPojo().getClass()); 
+		if(typedgoals==null)
+		{
+			typedgoals	= new LinkedHashSet<>();
+			goals.put(rgoal.getPojo().getClass(), typedgoals);
+		}
+		typedgoals.add(rgoal);
+		
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), rgoal, contextfetchers);
+	}
+	
+	/**
+	 *  Get the goals of the given type, if any.
+	 */
+	public Set<RGoal>	getGoals(Class<?> goaltype)
+	{
+		return goals!=null ? goals.get(goaltype) : null;
+	}
+	
+	/**
+	 *  Remove a Goal after it is dropped.
+	 */
+	public void removeGoal(RGoal rgoal, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	{
+		goals.get(rgoal.getPojo().getClass()).remove(rgoal);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rgoal.getAllPojos(), rgoal, contextfetchers);
 	}
 }

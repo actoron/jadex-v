@@ -1,5 +1,6 @@
 package jadex.bdi.impl.plan;
 
+import jadex.bdi.impl.goal.RGoal;
 import jadex.bdi.impl.goal.RProcessableElement;
 
 // todo: use IPlan (and plan executor abstract to be able to execute plans as subcomponents)
@@ -27,9 +28,20 @@ public class ExecutePlanStepAction implements Runnable
 	 */
 	public boolean isValid()
 	{
-		// todo: abort execution
 		boolean ret = RPlan.PlanLifecycleState.NEW.equals(rplan.getLifecycleState())
 			|| RPlan.PlanLifecycleState.BODY.equals(rplan.getLifecycleState());
+		
+		if(ret)
+		{
+			Object element = rplan.getReason();
+			if(element instanceof RGoal)
+			{
+				RGoal rgoal = (RGoal)element;
+				
+				ret	= RGoal.GoalLifecycleState.ACTIVE.equals(rgoal.getLifecycleState())
+					&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState());
+			}
+		}
 		
 		return ret;
 	}
@@ -43,22 +55,6 @@ public class ExecutePlanStepAction implements Runnable
 		{
 			return;
 		}
-		
-//		final Object element = rplan.getReason();
-//		if(element instanceof RGoal)
-//		{
-//			RGoal rgoal = (RGoal)element;
-//			
-////			System.out.println("executing candidate: "+rplan+" "+rgoal.getLifecycleState()+" "+rgoal.getProcessingState());
-//			
-//			if(!(RGoal.GoalLifecycleState.ACTIVE.equals(rgoal.getLifecycleState())
-//				&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState())))
-//			{
-//				// todo: hack, how to avoid side effect
-////				rplan.abort();
-//				return;
-//			}
-//		}
 		
 		// Initial context condition evaluation
 		// Checks the context condition also directly before a plan is executed
@@ -77,12 +73,13 @@ public class ExecutePlanStepAction implements Runnable
 			// A new plan body must only be executed if it hasn't been aborted 
 			if(!rplan.isFinishing() && RPlan.PlanLifecycleState.NEW.equals(rplan.getLifecycleState()))
 			{
-//				// Set plan as child of goal
-//				if(element instanceof RGoal)
-//				{
-//					RGoal rgoal = (RGoal)element;
-//					rgoal.setChildPlan(rplan);
-//				}
+				// Set plan as child of goal
+				Object element = rplan.getReason();
+				if(element instanceof RGoal)
+				{
+					RGoal rgoal = (RGoal)element;
+					rgoal.setChildPlan(rplan);
+				}
 				
 				rplan.getBody().executePlan(rplan);
 //				if(ret!=null)

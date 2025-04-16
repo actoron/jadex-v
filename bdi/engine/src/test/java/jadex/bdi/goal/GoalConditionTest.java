@@ -5,15 +5,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
@@ -84,7 +87,7 @@ public class GoalConditionTest
 				@GoalCreationCondition(factadded="trigger")
 				public static StartGoal create(String param, GoalCreationAgent pojo)
 				{
-					return pojo.new StartGoal(param);
+					return "value".equals(param) ? pojo.new StartGoal(param) : null;
 				}
 				
 				public StartGoal(String param)
@@ -103,6 +106,8 @@ public class GoalConditionTest
 		
 		GoalCreationAgent	pojo	= new GoalCreationAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> pojo.trigger.add("wrong")).get(TestHelper.TIMEOUT);
+		assertFalse(pojo.created.isDone());
 		handle.scheduleStep(() -> pojo.trigger.add("value")).get(TestHelper.TIMEOUT);
 		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
 		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
@@ -153,5 +158,50 @@ public class GoalConditionTest
 		handle.scheduleStep(() -> pojo.trigger.add("value")).get(TestHelper.TIMEOUT);
 		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
 		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
+	}
+
+	@Test
+	public void	testTargetCondition()
+	{
+		@BDIAgent
+		class GoalTargetAgent
+		{
+			@Belief
+			List<String> trigger	= new ArrayList<>(Collections.singletonList("value"));
+			
+			@Goal
+			class StartGoal
+			{
+				@GoalTargetCondition(beliefs="trigger")
+				boolean targetCondition(String fact)
+				{
+					return "value".equals(fact) && trigger.contains("value");
+				}
+			}
+
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				// Should not trigger on remove
+				trigger.remove("value");
+
+				// Should not trigger on wrong add/remove
+				trigger.add("wrong");
+				trigger.remove("wrong");
+
+				// Should trigger on value add
+				trigger.add("value");
+				
+				// Plan should be aborted, so this shouldn't execute.
+				trigger.add("wrong");
+			}
+		}
+		
+		GoalTargetAgent	pojo	= new GoalTargetAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		assertEquals(Collections.singletonList("value"), pojo.trigger);
 	}
 }
