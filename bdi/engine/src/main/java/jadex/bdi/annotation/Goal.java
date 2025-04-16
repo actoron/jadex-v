@@ -54,13 +54,13 @@ public @interface Goal
 //	 *  If true (default) means-end reasoning is allowed to select another plan after a plan has already been executed.
 //	 */
 //	public boolean retry() default true;
-//	
-//	/** 
-//	 *  If true (defaults to false), a new round of means-end reasoning is started after each plan execution.
-//	 *  As a result, the APL is rebuild and the exclude set is cleared.
-//	 */
-//	public boolean recur() default false;
-//	
+	
+	/** 
+	 *  If true (defaults to false), a new round of means-end reasoning is started after each plan execution.
+	 *  As a result, the APL is rebuild and the exclude set is cleared.
+	 */
+	public boolean recur() default false;
+	
 //	/** 
 //	 *  The delay between two plan executions (in milliseconds). 
 //	 */

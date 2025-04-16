@@ -510,8 +510,9 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //		IInternalBDIAgentFeature.get().getRuleSystem().setQueueEvents(true);
 //		
 		super.planFinished(rplan);
-//
-//		childplan = null;
+
+		assert rplan==childplan;
+		childplan = null;
 		
 		if(rplan!=null)
 		{
@@ -525,14 +526,14 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		if(rplan!=null && isProceduralSucceeded(rplan))
 		{
 			// succeeded leads to lifecycle state dropping!
-			setProcessingState(/*isRecur() ? GoalProcessingState.PAUSED :*/ GoalProcessingState.SUCCEEDED);
+			setProcessingState(isRecur() ? GoalProcessingState.PAUSED : GoalProcessingState.SUCCEEDED);
 		}
 		
 		// Continue goal processing if still active
 		if(GoalLifecycleState.ACTIVE.equals(getLifecycleState()))
 		{
 			// Retry if plan executed and more plans available.
-			if(rplan!=null /*&& isRetry() && RProcessableElement.State.CANDIDATESSELECTED.equals(getState())*/)
+			if(rplan!=null && GoalProcessingState.INPROCESS.equals(processingstate) /*&& isRetry() && RProcessableElement.State.CANDIDATESSELECTED.equals(getState())*/)
 			{
 				Runnable	step	= /*getMGoal().isRebuild() ? new FindApplicableCandidatesAction(this) : */new SelectCandidatesAction(this); 
 //				if(getMGoal().getRetryDelay()>-1)
@@ -550,38 +551,38 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			else if(!isFinished() && !GoalProcessingState.IDLE.equals(getProcessingState()))
 			{				
 				// Recur when possible
-//				if(isRecur())
-//				{
-//					setProcessingState(GoalProcessingState.PAUSED);
-//					
-//					// Auto-recur, when no recur condition defined.
+				if(isRecur())
+				{
+					setProcessingState(GoalProcessingState.PAUSED);
+					
+					// Auto-recur, when no recur condition defined.
 //					if(getMGoal().getConditions(MGoal.CONDITION_RECUR)==null)
-//					{
-//						Runnable	step	= () ->
-//						{
-//							if(jadex.bdi.impl.goal.GoalLifecycleState.ACTIVE.equals(getLifecycleState())
-//								&& jadex.bdi.impl.goal.GoalProcessingState.PAUSED.equals(getProcessingState()))
-//							{
-//								setProcessingState(jadex.bdi.impl.goal.GoalProcessingState.INPROCESS);
-//							}
-//						};
-//						
+					{
+						Runnable	step	= () ->
+						{
+							if(GoalLifecycleState.ACTIVE.equals(getLifecycleState())
+								&& GoalProcessingState.PAUSED.equals(getProcessingState()))
+							{
+								setProcessingState(GoalProcessingState.INPROCESS);
+							}
+						};
+						
 //						if(getMGoal().getRecurDelay()>0)
 //						{
 //							IExecutionFeature.get().waitForDelay(getMGoal().getRecurDelay())
 //								.then(v -> IExecutionFeature.get().scheduleStep(step));
 //						}
 //						else
-//						{
-//							IExecutionFeature.get().scheduleStep(step);
-//						}
-//					}
-//					
-//					// else condition will trigger recur
-//				}
-//				
-//				// Else no more plans -> fail.
-//				else //if(!isRetry() || RProcessableElement.State.NOCANDIDATES.equals(getState()))
+						{
+							IExecutionFeature.get().scheduleStep(step);
+						}
+					}
+					
+					// else condition will trigger recur
+				}
+				
+				// Else no more plans -> fail.
+				else //if(!isRetry() || RProcessableElement.State.NOCANDIDATES.equals(getState()))
 				{
 					if(exception==null)
 					{
@@ -615,14 +616,14 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //		return getMGoal().isRetry();
 //	}
 //	
-//	/**
-//	 * 
-//	 */
-//	public boolean isRecur()
-//	{
-//		return getMGoal().isRecur();
-//	}
-//	
+	/**
+	 *  Check if the recur flag is set.
+	 */
+	public boolean isRecur()
+	{
+		return annotation.recur();
+	}
+	
 	/**
 	 *  Test if a goal has succeeded with respect to its plan execution.
 	 */
