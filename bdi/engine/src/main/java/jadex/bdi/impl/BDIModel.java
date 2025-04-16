@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jadex.bdi.annotation.Goal;
 import jadex.bdi.impl.goal.APL;
 import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.impl.plan.IPlanBody;
@@ -14,12 +15,15 @@ import jadex.bdi.impl.plan.IPlanBody;
  */
 public class BDIModel
 {
-	// TODO: probably need separate MInfo in model and (R)ICandidateInfo with correct parent pojos for capability plans 
+	/** The plans that are triggered by an instance of the element class. */
+	// TODO: probably need separate MInfo in model and (R)ICandidateInfo with correct parent pojos for capability plans
 	protected Map<Class<?>, List<ICandidateInfo>>	plans	= new LinkedHashMap<>();
+	
+	/** The known goals (goal pojoclazz -> goal annotation for meta info). */
+	protected Map<Class<?>, Goal>	goals	= new LinkedHashMap<>();
 	
 	/**
 	 *  Get plans that are triggered by an instance of the element class.
-	 * @return 
 	 */
 	public List<ICandidateInfo> getTriggeredPlans(Class<?> elementclass)
 	{
@@ -29,15 +33,31 @@ public class BDIModel
 	/**
 	 *  Add a plan to the model.
 	 */
-	protected void	addPlanforGoal(Class<?> goaltype, String planname, IPlanBody body)
+	protected void	addPlanforGoal(Class<?> goalpojoclazz, String planname, IPlanBody body)
 	{
-		List<ICandidateInfo>	goalplans	= plans.get(goaltype);
+		List<ICandidateInfo>	goalplans	= plans.get(goalpojoclazz);
 		if(goalplans==null)
 		{
 			goalplans	= new ArrayList<>(4);
-			plans.put(goaltype, goalplans);
+			plans.put(goalpojoclazz, goalplans);
 		}
 		goalplans.add(new APL.PlanCandidate(planname, body));
+	}
+	
+	/**
+	 *  Get meta info for a goal.
+	 */
+	public Goal getGoalInfo(Class<?> goalpojoclazz)
+	{
+		return goals.get(goalpojoclazz);
+	}
+	
+	/**
+	 *  Add goal meta info.
+	 */
+	protected void	addGoal(Class<?> goalpojoclazz, Goal annotation)
+	{
+		goals.put(goalpojoclazz, annotation);
 	}
 	
 	//-------- static part --------

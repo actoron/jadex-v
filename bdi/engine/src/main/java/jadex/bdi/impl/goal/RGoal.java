@@ -7,6 +7,7 @@ import java.util.Map;
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
+import jadex.bdi.annotation.Goal;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.ChangeEvent;
 import jadex.bdi.impl.plan.RPlan;
@@ -49,6 +50,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	/** Remember last plan exception to pass on in case goal fails due to no more plans. */
 	protected Exception	exception;
 	
+	protected Goal	annotation;
+	
 	//-------- constructors --------
 	
 	/**
@@ -63,6 +66,12 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		this.processingstate = GoalProcessingState.IDLE;
 		this.comp	= comp;
 		this.parentplan	= parent;
+		
+		this.annotation	= ((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).getModel().getGoalInfo(pojogoal.getClass());
+		if(annotation==null)
+		{
+			throw new IllegalArgumentException("Unknown goal type (missing @Goal annotation?): "+pojogoal.getClass());
+		}
 	}
 
 	//-------- methods --------

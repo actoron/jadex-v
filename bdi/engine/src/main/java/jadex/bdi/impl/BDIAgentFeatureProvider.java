@@ -559,6 +559,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	{
 		String	goalname	= goalclazz.getName();
 		
+		// BDI model is for outmost pojo.
+		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
+		model.addGoal(goalclazz, goalclazz.getAnnotation(Goal.class));
+		
 		
 		// Add rules to trigger creation condition for annotated constructors and methods
 		List<Executable>	executables	= new ArrayList<>(4);
