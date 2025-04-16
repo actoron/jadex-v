@@ -1,6 +1,7 @@
 package jadex.bdi.annotation;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -11,6 +12,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+@Repeatable(Plans.class)
 public @interface Plan
 {
 	/**
@@ -33,4 +35,9 @@ public @interface Plan
 //	 */
 //	public Body body() default @Body();
 
+	/**
+	 *  The plan implementation class, when plan is declared on the agent.
+	 *  Unused for inner class plans.
+	 */
+	public Class<?> impl() default Object.class;
 }

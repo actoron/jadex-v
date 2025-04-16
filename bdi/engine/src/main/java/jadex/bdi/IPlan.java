@@ -46,12 +46,12 @@ public interface IPlan// extends IParameterElement, IFinishableElement<Object>  
 //	 *  @return The dispatched element.
 //	 */
 //	public Object getDispatchedElement();
-//	
-//	/**
-//	 *  Wait for a delay.
-//	 */
-//	public IFuture<Void> waitFor(long delay);
-//	
+	
+	/**
+	 *  Wait for a delay.
+	 */
+	public IFuture<Void> waitFor(long delay);
+	
 	/**
 	 *  Dispatch a goal wait for its result.
 	 */

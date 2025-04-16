@@ -202,6 +202,9 @@ public class ClassPlanBody implements IPlanBody
 		if(condition!=null)
 		{
 			Object	result	= null;
+			// If currently inside (maybe other) plans -> reset RPLANS variable.
+			RPlan	currentplan	= 	RPlan.RPLANS.get();
+			RPlan.RPLANS.set(null);
 			try
 			{
 				if(!condition.isStatic())
@@ -209,24 +212,18 @@ public class ClassPlanBody implements IPlanBody
 					// TODO: add to agent so injections get executed?
 					createPojo(rplan);
 				}
-				
-				// If currently inside (maybe other) plans -> reset RPLANS variable.
-				RPlan	currentplan	= 	RPlan.RPLANS.get();
-				RPlan.RPLANS.set(null);
-				try
-				{
-					result	= internalInvokePart(rplan, condition);
-				}
-				finally
-				{
-					RPlan.RPLANS.set(currentplan);
-				}
+			
+				result	= internalInvokePart(rplan, condition);
 			}
 			catch(Exception e)
 			{
 				// Set exception to log error (hack!?)
 				rplan.setException(e);
 				ret	= false;
+			}
+			finally
+			{
+				RPlan.RPLANS.set(currentplan);
 			}
 			
 			if(result instanceof Boolean)

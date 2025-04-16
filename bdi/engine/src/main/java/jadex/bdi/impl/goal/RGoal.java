@@ -204,7 +204,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		if(GoalLifecycleState.ADOPTED.equals(lifecyclestate))
 		{
 			setLifecycleState(GoalLifecycleState.OPTION);
-//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALADOPTED, getMGoal().getName()}), this));
+			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALADOPTED, modelname}), this));
 		}
 		else if(GoalLifecycleState.ACTIVE.equals(lifecyclestate))
 		{

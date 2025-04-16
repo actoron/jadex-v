@@ -314,7 +314,10 @@ public class InjectionModel
 //				{
 //					throw new RuntimeException("Multiple Inject annotations on field: "+field);
 //				}
-				allfields.put(field, null);
+				if(!allfields.containsKey(field))
+				{
+					allfields.put(field, null);
+				}
 				
 				try
 				{

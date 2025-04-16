@@ -33,9 +33,9 @@ public class ChangeEvent<T>
 //	public static final String PARAMETERCHANGED = "parameterchanged";
 //
 //	
-//	/** Event type that a goal has been added. */
-//	public static final String GOALADOPTED = "goaladopted";
-//	
+	/** Event type that a goal has been added. */
+	public static final String GOALADOPTED = "goaladopted";
+	
 	/** Event type that a goal has been removed. */
 	public static final String GOALDROPPED = "goaldropped";
 //

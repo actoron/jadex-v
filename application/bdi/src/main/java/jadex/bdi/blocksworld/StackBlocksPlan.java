@@ -1,31 +1,26 @@
 package jadex.bdi.blocksworld;
 
-import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.blocksworld.BlocksworldAgent.ClearGoal;
 import jadex.bdi.blocksworld.BlocksworldAgent.StackGoal;
-import jadex.bdi.runtime.IPlan;
+import jadex.bdi.impl.goal.RGoal;
+import jadex.injection.annotation.Inject;
 
 
 /**
  *  Stack a block on top of another.
  */
-@Plan
+//@Plan
 public class StackBlocksPlan	
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	protected BlocksworldAgent capa;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
-	
-	@PlanReason
-	protected Object goal;
 	
 	//-------- methods --------
 
@@ -81,7 +76,7 @@ public class StackBlocksPlan
 	 */
 	public Block getBlock()
 	{
-		return ((StackGoal)goal).getBlock();
+		return ((StackGoal)((RGoal)rplan.getReason()).getPojo()).getBlock();
 	}
 	
 	/**
@@ -89,6 +84,6 @@ public class StackBlocksPlan
 	 */
 	public Block getTarget()
 	{
-		return ((StackGoal)goal).getTarget();
+		return ((StackGoal)((RGoal)rplan.getReason()).getPojo()).getTarget();
 	}
 }

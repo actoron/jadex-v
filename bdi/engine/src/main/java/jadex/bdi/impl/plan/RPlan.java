@@ -446,6 +446,11 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		{
 			finished = new Future<Void>();
 			ret = true;
+			
+			if(isFinished())
+			{
+				finished.setResult(null);
+			}
 		}
 		return ret;
 	}
@@ -554,48 +559,21 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	// methods that can be called from pojo plan
 
 	/**
-//	 *  Wait for a delay.
-//	 */
-//	public IFuture<Void> waitFor(long delay)
-//	{
-//		//System.out.println("before wait: "+delay+" "+agent.getId());
-//		
-////		final Future<Void> ret = new BDIFuture<Void>();
+	 *  Wait for a delay.
+	 */
+	public IFuture<Void> waitFor(long delay)
+	{
 //		final Future<Void> ret = new Future<Void>();
 //		
 //		final ResumeCommand<Void> rescom = new ResumeCommand<Void>(ret, true);
-////		setResumeCommand(rescom);
 //		addResumeCommand(rescom);
-//
-//		getAgent().getFeature(IExecutionFeature.class).waitForDelay(delay).then(v -> rescom.execute(null));
-//		
-//		/*getAgent().getFeature(IExecutionFeature.class).waitForDelay(delay, new IComponentStep<Void>()
-//		{
-//			public IFuture<Void> execute(IInternalAccess ia)
-//			{
-//				//System.out.println("after wait: "+delay+" "+agent.getId());
-////				if(rescom.equals(getResumeCommand()))
-//				{
-//					rescom.execute(null);
-////					RPlan.executePlan(RPlan.this, ia, rescom);
-//				}
-//				
-////				if(getException()!=null)
-////				{
-////					return new Future<Void>(getException());
-////				}
-////				else
-////				{
-////					return IFuture.DONE;
-////				}
-//				return IFuture.DONE;
-//			}
-//		}, false);//.addResultListener(new DelegationResultListener<Void>(ret, true));
-//		*/
-//		
+
+		return getComponent().getFeature(IExecutionFeature.class).waitForDelay(delay);
+//			.then(v -> rescom.execute(null));
+		
 //		return ret;
-//	}
-//	
+	}
+	
 	/**
 	 *  Dispatch a goal wait for its result.
 	 */

@@ -40,6 +40,7 @@ import jadex.bdi.annotation.PlanContextCondition;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.PlanPrecondition;
+import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.impl.goal.RGoal;
 import jadex.bdi.impl.plan.ClassPlanBody;
@@ -192,17 +193,63 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 			
-			// Manage plan classes
-			// TODO: external plan classes
+			// Manage inner plan classes
 			for(Class<?> planclass: InjectionModel.findInnerClasses(pojoclazz, Plan.class))
 			{
 				try
 				{
-					addPlanClass(planclass, pojoclazzes, ret, contextfetchers);
+					Plan	anno	= planclass.getAnnotation(Plan.class);
+					Trigger	trigger	= anno.trigger();
+					addPlanClass(planclass, trigger, pojoclazzes, ret, contextfetchers);
 				}
 				catch(Exception e)
 				{
 					SUtil.throwUnchecked(e);
+				}
+			}
+			
+			// Manage external plan classes if pojo is not itself a plan.
+			if(!isPlan(pojoclazzes))
+			{
+				if(pojoclazz.isAnnotationPresent(Plan.class) || pojoclazz.isAnnotationPresent(Plans.class))
+				{
+					Plan[]	plans;
+					if(pojoclazz.isAnnotationPresent(Plans.class))
+					{
+						plans	= pojoclazz.getAnnotation(Plans.class).value();
+					}
+					else
+					{
+						plans	= new Plan[]{pojoclazz.getAnnotation(Plan.class)};
+					}
+					
+					for(Plan plan: plans)
+					{
+						if(Object.class.equals(plan.impl()))
+						{
+							throw new UnsupportedOperationException("External plan must define impl class: "+pojoclazz+", "+plan);
+						}
+						
+						if(plan.impl().isAnnotationPresent(Plan.class))
+						{
+							Trigger	trigger	= plan.impl().getAnnotation(Plan.class).trigger();
+							List<EventType>	events	= getTriggerEvents(pojoclazz, trigger.factadded(), trigger.factremoved(), trigger.factchanged(),
+								trigger.goalfinisheds(),plan.impl().getName());
+							if((events!=null && events.size()>0) || trigger.goals().length>0)
+							{
+								throw new UnsupportedOperationException("External Plan must not define its own trigger: "+plan.impl());
+							}
+						}
+						
+						try
+						{
+							addPlanClass(plan.impl(), plan.trigger(), pojoclazzes, ret, contextfetchers);
+						}
+						catch(Exception e)
+						{
+							SUtil.throwUnchecked(e);
+						}
+					}
 				}
 			}
 			
@@ -225,6 +272,21 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	}
 	
 	/**
+	 *  Check, if a pojo is a plan
+	 */
+	protected boolean	isPlan(List<Class<?>> pojoclazzes)
+	{
+		boolean	ret	= false;
+		if(pojoclazzes.size()>1)
+		{
+			// For now, just check if inner class.
+			// TODO: support inner capabilities!?
+			ret	= pojoclazzes.get(pojoclazzes.size()-1).getName().startsWith(pojoclazzes.get(pojoclazzes.size()-2).getName());
+		}
+		return ret;
+	}
+
+	/**
 	 *  Add required code to handle a plan method.
 	 */
 	protected void addPlanMethod(Class<?> pojoclazz, Method m, List<IInjectionHandle> ret,
@@ -242,7 +304,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		IPlanBody	planbody	= new MethodPlanBody(contextfetchers, planhandle);
 		
 		// Inform user when no trigger is defined
-		checkPlanDefinition(anno, planname);
+		checkPlanDefinition(trigger, planname);
 		
 		addEventTriggerRule(pojoclazz, ret, trigger, planbody, planname);
 		
@@ -261,9 +323,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	protected void addEventTriggerRule(Class<?> pojoclazz, List<IInjectionHandle> ret, Trigger trigger,
 			IPlanBody planbody, String planname)
 	{
-		EventType[] aevents = getTriggerEvents(pojoclazz, trigger.factadded(), trigger.factremoved(), trigger.factchanged(), trigger.goalfinisheds(), planname);
-		if(aevents!=null && aevents.length>0)
+		List<EventType> events = getTriggerEvents(pojoclazz, trigger.factadded(), trigger.factremoved(), trigger.factchanged(), trigger.goalfinisheds(), planname);
+		if(events!=null && events.size()>0)
 		{
+			EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 			// In extra on start, add rule to run plan when event happens.  
 			ret.add((comp, pojos, context, oldval) ->
 			{
@@ -351,12 +414,15 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							return ((ChangeInfo<?>)((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getValue();
 						};
 					}
-					// else goal condition -> context is change event.
+					// else goal condition -> context is goal or change event.
 					else
 					{
 						return (comp, pojos, context, oldval) ->
 						{
-							return ((ChangeInfo<?>)((ChangeEvent<?>)context).getValue()).getValue();
+							// Support fact injection in conditions but inject null, when triggered by goal (hack!?)
+							// e.g. goal-adopted triggers initial check of target condition.
+							Object	value	= ((ChangeEvent<?>)context).getValue();
+							return value instanceof ChangeInfo<?> ? ((ChangeInfo<?>)value).getValue() : null;
 						};
 					}
 				}
@@ -393,15 +459,13 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Add required code to handle a plan class.
 	 */
-	protected void addPlanClass(Class<?> planclazz, List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
+	protected void addPlanClass(Class<?> planclazz, Trigger trigger, List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
 		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers) throws Exception
 	{
-		Plan	anno	= planclazz.getAnnotation(Plan.class);
-		Trigger	trigger	= anno.trigger();
 		String	planname	= planclazz.getName();
 		
 		// Inform user when no trigger is defined
-		checkPlanDefinition(anno, planname);
+		checkPlanDefinition(trigger, planname);
 		
 		contextfetchers = createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
 			new String[][]{trigger.factadded(), trigger.factremoved(), trigger.factchanged()},
@@ -506,9 +570,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		{
 			GoalCreationCondition	creation	= executable.getAnnotation(GoalCreationCondition.class);
 			// TODO: find beliefs of all capabilities!?
-			EventType[]	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), creation.factadded(), creation.factremoved(), creation.factchanged(), new Class<?>[0], goalname);
-			if(events!=null && events.length>0)
+			List<EventType>	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), creation.factadded(), creation.factremoved(), creation.factchanged(), new Class<?>[0], goalname);
+			if(events!=null && events.size()>0)
 			{
+				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+				
 				// Add fetcher for belief value.
 				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
 					new String[][] {creation.factadded(), creation.factremoved(), creation.factchanged()},
@@ -544,7 +610,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								}
 								return IFuture.DONE;
 							},
-							events));	// Trigger Event(s)
+							aevents));	// Trigger Event(s)
 						return null;
 					});
 				}
@@ -573,7 +639,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								}
 								return IFuture.DONE;
 							},
-							events));	// Trigger Event(s)
+							aevents));	// Trigger Event(s)
 						return null;
 					});
 				}
@@ -595,9 +661,12 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		{
 			GoalTargetCondition	target	= method.getAnnotation(GoalTargetCondition.class);
 			// TODO: find beliefs of all capabilities!?
-			EventType[]	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), target.beliefs(), target.beliefs(), target.beliefs(), new Class<?>[0], goalname);
-			if(events!=null && events.length>0)
+			List<EventType>	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), target.beliefs(), target.beliefs(), target.beliefs(), new Class<?>[0], goalname);
+			if(events!=null && events.size()>0)
 			{
+				events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
+				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+				
 				// Add fetcher for belief value.
 				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
 					new String[][] {target.beliefs()},
@@ -620,20 +689,23 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							(event, rule, context2, condresult) ->
 							{
 								Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
-								for(RGoal goal: goals)
+								if(goals!=null)
 								{
-									if(!goal.isFinished())
+									for(RGoal goal: goals)
 									{
-										Boolean	value	= (Boolean)handle.apply(comp, goal.getAllPojos(), new ChangeEvent<Object>(event), null);
-										if(Boolean.TRUE.equals(value))
+										if(!goal.isFinished())
 										{
-											goal.targetConditionTriggered(/*event, rule, context2*/);
+											Boolean	value	= (Boolean)handle.apply(comp, goal.getAllPojos(), new ChangeEvent<Object>(event), null);
+											if(Boolean.TRUE.equals(value))
+											{
+												goal.targetConditionTriggered(/*event, rule, context2*/);
+											}
 										}
 									}
 								}
 								return IFuture.DONE;
 							},
-							events));	// Trigger Event(s)
+							aevents));	// Trigger Event(s)
 						return null;
 					});
 				}
@@ -673,15 +745,15 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Get rule events that trigger the plan, if any.
 	 */
-	protected EventType[] getTriggerEvents(Class<?> pojoclazz, String[] factadded, String[] factremoved, String[] factchanged, Class<?>[] goalfinished, String element)
+	protected List<EventType> getTriggerEvents(Class<?> pojoclazz, String[] factadded, String[] factremoved, String[] factchanged, Class<?>[] goalfinished, String element)
 	{
-		EventType[]	aevents	= null;
+		List<EventType>	events	= null;
 		if(factadded.length>0
 			|| factremoved.length>0
 			|| factchanged.length>0
 			|| goalfinished.length>0)
 		{
-			List<EventType>	events	= new ArrayList<>();
+			events	= new ArrayList<>(4);
 			
 			// Add fact trigger events.
 			Map<String, String[]>	tevents	= new LinkedHashMap<String, String[]>();
@@ -702,11 +774,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			{
 				events.add(new EventType(ChangeEvent.GOALDROPPED, goaltype.getName()));
 			}
-			
-			// Convert to array
-			aevents	= events.toArray(new EventType[events.size()]);
 		}
-		return aevents;
+		return events;
 	}
 
 	/**
@@ -758,9 +827,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Throw exception, when something is wrong with the plan definition.
 	 */
-	protected void	checkPlanDefinition(Plan anno, String planname)
+	protected void	checkPlanDefinition(Trigger trigger, String planname)
 	{
-		Trigger	trigger	= anno.trigger();
 		if(trigger.factadded().length==0
 			&& trigger.factremoved().length==0
 			&& trigger.factchanged().length==0

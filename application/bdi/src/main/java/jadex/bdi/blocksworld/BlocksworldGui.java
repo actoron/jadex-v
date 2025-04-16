@@ -36,15 +36,14 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.blocksworld.BlocksworldAgent.ConfigureGoal;
-import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.common.SGUI;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
 import jadex.future.IFuture;
-import jadex.micro.impl.MicroAgentFeature;
 
 
 /**
@@ -83,7 +82,7 @@ public class BlocksworldGui	extends JFrame
 		
 		agent.scheduleStep(ia -> 
 			{
-				BlocksworldAgent pag = (BlocksworldAgent)ia.getFeature(MicroAgentFeature.class).getSelf().getPojo();
+				BlocksworldAgent pag = (BlocksworldAgent)ia.getPojo();
 				final Block[] blocks = (Block[])pag.getBlocks().toArray(new Block[0]);
 				final Table table = pag.getTable();//new Table(pag.getTable());
 				final Object md = pag.getMode();
