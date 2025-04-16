@@ -528,7 +528,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //							}
 //				}
 				// Can be currently executing and being abort due to e.g. goal condition triggering
-				/*else*/ if(!atomic /*&& PlanProcessingState.RUNNING.equals(getProcessingState())*/)
+				/*else*/ if(!atomic && RPLANS.get()==this/*&& PlanProcessingState.RUNNING.equals(getProcessingState())*/)
 				{
 					// abort immediately when running and not atomic -> otherwise later checks for aborted in endAtomic(). 
 					throw new StepAborted();
