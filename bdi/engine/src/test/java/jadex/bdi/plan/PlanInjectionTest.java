@@ -11,6 +11,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
@@ -76,7 +77,10 @@ public class PlanInjectionTest
 			static class MyPlan
 			{
 				@Inject
-				MyGoal	thegoal;
+				MyGoal	mygoal;
+				
+				@Inject
+				IGoal	thegoal;
 			}
 		}
 		

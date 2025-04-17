@@ -399,10 +399,71 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			{
 				if(valuetype instanceof Class<?> && SReflect.isSupertype((Class<?>) valuetype, goaltype))
 				{
-					return (comp, pojos, context, oldval) ->
+					// Has goal triggers
+					if(goalevents[0].length>0)
 					{
-						return ((IGoal)((IPlan)context).getReason()).getPojo();
-					};
+						// Has goal finished triggers
+						if(goalevents[1].length>0)
+						{
+							// Both triggers -> need to check reason type.
+							return (comp, pojos, context, oldval) ->
+							{
+								return ((IPlan)context).getReason() instanceof ChangeEvent<?> 
+									? ((IGoal) ((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getPojo()
+									: ((IGoal) ((IPlan)context).getReason()).getPojo();
+							};
+						}
+						else
+						{
+							// Only goal triggers 
+							return (comp, pojos, context, oldval) -> ((IGoal) ((IPlan)context).getReason()).getPojo();
+						}
+					}
+					else
+					{
+						// Only goal finished triggers
+						return (comp, pojos, context, oldval) -> ((IGoal) ((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getPojo();
+					}
+				}
+				else
+				{
+					return null;
+				}
+			});
+		}
+		
+		// If at least one goal -> add IGoal fetcher
+		if(lcreators!=null)
+		{
+			lcreators.add((pojotypes, valuetype, annotation) -> 
+			{
+				if(IGoal.class.equals(valuetype))
+				{
+					// Has goal triggers
+					if(goalevents[0].length>0)
+					{
+						// Has goal finished triggers
+						if(goalevents[1].length>0)
+						{
+							// Both triggers -> need to check reason type.
+							return (comp, pojos, context, oldval) ->
+							{
+								return ((IPlan)context).getReason() instanceof ChangeEvent<?> 
+									? ((ChangeEvent<?>)((IPlan)context).getReason()).getValue()
+									: ((IPlan)context).getReason();
+							};
+						}
+						else
+						{
+							// Only goal triggers 
+							return (comp, pojos, context, oldval) -> ((IPlan)context).getReason();
+						}
+					}
+					else
+					{
+						// Only goal finished triggers
+						return (comp, pojos, context, oldval) -> ((ChangeEvent<?>)((IPlan)context).getReason()).getValue();
+					}
 				}
 				else
 				{
