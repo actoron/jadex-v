@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -527,7 +528,10 @@ public class InjectionModel
 		Class<?> myclazz	= clazz;
 		while(myclazz!=null)
 		{
-			for(Method method: myclazz.getDeclaredMethods())
+			// Sort by name as java does not guarantee any order (reversed because it is later re-reversed)
+			List<Method>	methods	= Arrays.asList(myclazz.getDeclaredMethods());
+			methods.sort((a,b) -> a.getName().compareTo(b.getName()));
+			for(Method method: methods.reversed())
 			{
 				if(method.isAnnotationPresent(annotation))
 				{

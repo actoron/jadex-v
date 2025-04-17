@@ -70,18 +70,18 @@ public @interface Goal
 //	 *  The delay (default 0 for no delay) before restarting goal processing if recur is set to true (in milliseconds).
 //	 */
 //	public long recurdelay() default 0;
-//
-//	/**
-//	 *  Should a procedural goal succeed when first plan executed successfully
-//	 *  or after all plans have been executed (with at least one passed plan). 
-//	 *  Plan success flag. Determines when a goal is succeeded
-//	 *  depending on plan success. Default a procedural goal 
-//	 *  has succeeded when the first plan has passed.
-//	 *  If not 'or' but 'and' mode is used the goal will
-//	 *  only succeed after execution of the last plan from the APL.
-//	 */
-//	public boolean orsuccess() default true;
-//	
+
+	/**
+	 *  Should a procedural goal succeed when first plan executed successfully
+	 *  or after all plans have been executed (with at least one passed plan). 
+	 *  Plan success flag. Determines when a goal is succeeded
+	 *  depending on plan success. Default a procedural goal 
+	 *  has succeeded when the first plan has passed.
+	 *  If not 'or' but 'and' mode is used the goal will
+	 *  only succeed after execution of the last plan from the APL.
+	 */
+	public boolean orsuccess() default true;
+	
 //	/**
 //	 *  Should the goal be unique (no other goal is allowed that is the same).
 //	 */

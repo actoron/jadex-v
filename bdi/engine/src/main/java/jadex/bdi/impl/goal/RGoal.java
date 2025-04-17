@@ -3,6 +3,7 @@ package jadex.bdi.impl.goal;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
@@ -635,32 +636,32 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		if(/*isProceduralGoal() && */getTriedPlans()!=null && !getTriedPlans().isEmpty())
 		{
 			// OR case
-//			if(getMGoal().isOrSuccess())
+			if(annotation.orsuccess())
 			{
 				ret = last.isPassed();
 			}
-//			// AND case
-//			else
-//			{
-//				// No further candidate? Then is considered as succeeded
-//				// todo: is it sufficient that one plan has succeeded or all?
-//				// todo: what to do when rebuild?
-//				if(getApplicablePlanList().isEmpty())
-//				{
-//					List<IInternalPlan> tps = getTriedPlans();
-//					if(tps!=null && !tps.isEmpty())
-//					{
-//						for(IInternalPlan plan: tps)
-//						{
-//							if(plan.isPassed())
-//							{
-//								ret = true;
-//								break;
-//							}
-//						}
-//					}
-//				}
-//			}
+			// AND case
+			else
+			{
+				// No further candidate? Then is considered as succeeded
+				// todo: is it sufficient that one plan has succeeded or all?
+				// todo: what to do when rebuild?
+				if(getApplicablePlanList().isEmpty())
+				{
+					Set<RPlan> tps = getTriedPlans();
+					if(tps!=null && !tps.isEmpty())
+					{
+						for(RPlan plan: tps)
+						{
+							if(plan.isPassed())
+							{
+								ret = true;
+								break;
+							}
+						}
+					}
+				}
+			}
 		}
 		
 		return ret;
