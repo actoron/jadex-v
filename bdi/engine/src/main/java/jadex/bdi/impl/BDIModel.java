@@ -15,12 +15,22 @@ import jadex.bdi.impl.plan.IPlanBody;
  */
 public class BDIModel
 {
+	/**
+	 *  Meta-info for a goal.
+	 *  @param target Is target condition present?
+	 *  @param maintain Is maintain condition present?
+	 *  @param annotation goal flags.
+	 */ 
+	public record MGoal(boolean target, boolean maintain, Goal annotation) {};
+	
+	
 	/** The plans that are triggered by an instance of the element class. */
 	// TODO: probably need separate MInfo in model and (R)ICandidateInfo with correct parent pojos for capability plans
 	protected Map<Class<?>, List<ICandidateInfo>>	plans	= new LinkedHashMap<>();
 	
 	/** The known goals (goal pojoclazz -> goal annotation for meta info). */
-	protected Map<Class<?>, Goal>	goals	= new LinkedHashMap<>();
+	protected Map<Class<?>, MGoal>	goals	= new LinkedHashMap<>();
+	
 	
 	/**
 	 *  Get plans that are triggered by an instance of the element class.
@@ -47,7 +57,7 @@ public class BDIModel
 	/**
 	 *  Get meta info for a goal.
 	 */
-	public Goal getGoalInfo(Class<?> goalpojoclazz)
+	public MGoal getGoalInfo(Class<?> goalpojoclazz)
 	{
 		return goals.get(goalpojoclazz);
 	}
@@ -55,9 +65,9 @@ public class BDIModel
 	/**
 	 *  Add goal meta info.
 	 */
-	protected void	addGoal(Class<?> goalpojoclazz, Goal annotation)
+	protected void	addGoal(Class<?> goalpojoclazz, boolean target, boolean maintain, Goal annotation)
 	{
-		goals.put(goalpojoclazz, annotation);
+		goals.put(goalpojoclazz, new MGoal(target, maintain, annotation));
 	}
 	
 	//-------- static part --------

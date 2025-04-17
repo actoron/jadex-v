@@ -8,8 +8,8 @@ import java.util.Set;
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
-import jadex.bdi.annotation.Goal;
 import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.BDIModel.MGoal;
 import jadex.bdi.impl.ChangeEvent;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.core.IComponent;
@@ -51,7 +51,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	/** Remember last plan exception to pass on in case goal fails due to no more plans. */
 	protected Exception	exception;
 	
-	protected Goal	annotation;
+	protected MGoal	mgoal;
 	
 	//-------- constructors --------
 	
@@ -68,8 +68,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		this.comp	= comp;
 		this.parentplan	= parent;
 		
-		this.annotation	= ((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).getModel().getGoalInfo(pojogoal.getClass());
-		if(annotation==null)
+		this.mgoal	= ((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).getModel().getGoalInfo(pojogoal.getClass());
+		if(mgoal==null)
 		{
 			throw new IllegalArgumentException("Unknown goal type (missing @Goal annotation?): "+pojogoal.getClass());
 		}
@@ -220,15 +220,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		{
 //			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALACTIVE, getMGoal().getName()}), this));
 
-//			// start means-end reasoning
-//			if(onActivate())
-//			{
+			// start means-end reasoning unless maintain goal
+			if(!mgoal.maintain())
+			{
 				setProcessingState(GoalProcessingState.INPROCESS);
-//			}
-//			else
-//			{
-//				setProcessingState(GoalProcessingState.IDLE);
-//			}
+			}
+			else
+			{
+				setProcessingState(GoalProcessingState.IDLE);
+			}
 		}
 		
 		// ready to be activated via deliberation
@@ -568,9 +568,9 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 							}
 						};
 						
-						if(annotation.recurdelay()>0)
+						if(mgoal.annotation().recurdelay()>0)
 						{
-							IExecutionFeature.get().waitForDelay(annotation.recurdelay())
+							IExecutionFeature.get().waitForDelay(mgoal.annotation().recurdelay())
 								.then(v -> IExecutionFeature.get().scheduleStep(step));
 						}
 						else
@@ -596,19 +596,11 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		
 //		IInternalBDIAgentFeature.get().getRuleSystem().setQueueEvents(queue);
 	}
-//	
-//	//-------- methods that are goal specific --------
-//
-//	// todo: implement those methods in goal types
-//	
-//	/**
-//	 * 
-//	 */
-//	public boolean onActivate()
-//	{
-//		return getMGoal().getConditions(MGoal.CONDITION_MAINTAIN)==null; // for perform, achieve, query
-//	}
-//	
+	
+	//-------- methods that are goal specific --------
+
+	// todo: implement those methods in goal types
+	
 //	/**
 //	 * 
 //	 */
@@ -622,7 +614,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public boolean isRecur()
 	{
-		return annotation.recur();
+		return mgoal.annotation().recur();
+	}
+	
+	/**
+//	 *  Check if the goal is declarative, i.e. has target and/or maintain condition.
+	 */
+	public boolean isDeclarative()
+	{
+		return mgoal.target() || mgoal.maintain(); 
 	}
 	
 	/**
@@ -633,10 +633,10 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		boolean ret = false;
 		
 		// todo: perform goals
-		if(/*isProceduralGoal() && */getTriedPlans()!=null && !getTriedPlans().isEmpty())
+		if(!isDeclarative() && getTriedPlans()!=null && !getTriedPlans().isEmpty())
 		{
 			// OR case
-			if(annotation.orsuccess())
+			if(mgoal.annotation().orsuccess())
 			{
 				ret = last.isPassed();
 			}
@@ -666,15 +666,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		
 		return ret;
 	}
-//	
-//	/**
-//	 * 
-//	 */
-//	public boolean isProceduralGoal()
-//	{
-//		return !getMGoal().isDeclarative();
-//	}
-//	
+	
 //	/**
 //	 *  Get the goal result of the pojo element.
 //	 *  Searches @GoalResult and delivers value.
@@ -805,17 +797,17 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public void targetConditionTriggered(/*IEvent event, IRule<Void> rule, Object context*/)
 	{
-//		if(getMGoal().getConditions(MGoal.CONDITION_MAINTAIN)!=null)
-//		{
-//			// Change maintain goal rule so it does not consider target condition triggered unless we move from false to true (not just true to true)
-//			if (GoalProcessingState.INPROCESS.equals(getProcessingState()))
-//			{
-//				abortPlans().addResultListener(new IResultListener<Void>()
-//				{
-//					@Override
-//					public void resultAvailable(Void result)
-//					{
-//						setProcessingState(IGoal.GoalProcessingState.IDLE);
+		if(mgoal.maintain())
+		{
+			// Change maintain goal rule so it does not consider target condition triggered unless we move from false to true (not just true to true)
+			if(GoalProcessingState.INPROCESS.equals(getProcessingState()))
+			{
+				abortPlans().addResultListener(new IResultListener<Void>()
+				{
+					@Override
+					public void resultAvailable(Void result)
+					{
+						setProcessingState(IGoal.GoalProcessingState.IDLE);
 //						// Hack! Notify finished listeners to allow for waiting via waitForGoal
 //						// Cannot use notifyListeners() because it checks isSucceeded
 //						if(getListeners()!=null)
@@ -826,19 +818,27 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //							}
 //						}
 //						listeners = null;
-//					}
-//					
-//					@Override
-//					public void exceptionOccurred(Exception exception)
-//					{
-//						// Should not fail?
-//						exception.printStackTrace();
-//						resultAvailable(null);	// safety-net: continue anyways
-//					}
-//				});
-//			}
-//		}
-//		else
+						
+						
+						if(finished!=null)
+						{
+							// TODO: goal result.
+							// TODO: only notifies first finished -> use intermediate result for maintain goal!?
+							finished.setResultIfUndone(null);
+						}
+					}
+					
+					@Override
+					public void exceptionOccurred(Exception exception)
+					{
+						// Should not fail?
+						exception.printStackTrace();
+						resultAvailable(null);	// safety-net: continue anyways
+					}
+				});
+			}
+		}
+		else
 		{
 			setProcessingState(IGoal.GoalProcessingState.SUCCEEDED);
 		}

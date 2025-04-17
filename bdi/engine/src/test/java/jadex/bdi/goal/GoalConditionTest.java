@@ -3,8 +3,10 @@ package jadex.bdi.goal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,12 +18,14 @@ import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Test various goal conditions
@@ -178,7 +182,6 @@ public class GoalConditionTest
 					return "value".equals(fact) && trigger.contains("value");
 				}
 			}
-
 			
 			@Plan(trigger=@Trigger(goals=StartGoal.class))
 			protected void	process(StartGoal goal)
@@ -203,5 +206,84 @@ public class GoalConditionTest
 		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
+	}
+
+	@Test
+	public void	testMaintainCondition()
+	{
+		@BDIAgent
+		class GoalMaintainAgent
+		{
+			@Belief
+			List<String> trigger;
+			
+			@Goal
+			class StartGoal
+			{
+				@GoalMaintainCondition(beliefs="trigger")
+				boolean maintainCondition()
+				{
+					return trigger.contains("value");
+				}
+			}
+
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				trigger.add("value");
+			}
+		}
+		
+		GoalMaintainAgent	pojo	= new GoalMaintainAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		assertEquals(Collections.singletonList("value"), pojo.trigger);
+		handle.scheduleStep(() -> pojo.trigger.removeFirst()).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		assertEquals(Collections.singletonList("value"), pojo.trigger);
+	}
+
+	@Test
+	public void	testMaintainTargetCondition()
+	{
+		@BDIAgent
+		class GoalMaintainAgent
+		{
+			@Belief
+			List<String> trigger	= new ArrayList<>(Collections.singletonList("value"));
+			
+			@Goal
+			class StartGoal
+			{
+				@GoalMaintainCondition(beliefs="trigger")
+				boolean maintainCondition()
+				{
+					return trigger.contains("value");
+				}
+				
+				@GoalMaintainCondition(beliefs="trigger")
+				boolean targetCondition()
+				{
+					return trigger.size()>1;
+				}
+			}
+
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				trigger.add("value");
+			}
+		}
+		
+		GoalMaintainAgent	pojo	= new GoalMaintainAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal()));
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		assertFalse(goalfut.isDone()); // Should stay idle initially
+		assertEquals(Collections.singletonList("value"), pojo.trigger);
+		
+		handle.scheduleStep(() -> pojo.trigger.removeFirst()).get(TestHelper.TIMEOUT);
+		assertNull(goalfut.get(TestHelper.TIMEOUT));
+		assertEquals(Arrays.asList("value", "value"), pojo.trigger);
 	}
 }

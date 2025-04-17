@@ -1,5 +1,7 @@
 package jadex.quickstart.cleanerworld.environment;
 
+import java.beans.PropertyChangeListener;
+
 /**
  *  Cleaner object represents knowledge about a cleaner robot.
  */
@@ -40,4 +42,13 @@ public interface ICleaner	extends ILocationObject
 //	 *  @return The identifier that can be used to send a message to the cleaner.
 //	 */
 //	public IComponentIdentifier getAgentIdentifier();
+	
+	/**
+	 * Add a PropertyChangeListener to the listener list.
+	 * The listener is registered for all properties.
+	 *
+	 * @param listener The PropertyChangeListener to be added.
+	 */
+	// TODO: Hack!!! Needed for sanity check in BDI feature, that belief type is supported
+	public void addPropertyChangeListener(PropertyChangeListener listener);
 }
