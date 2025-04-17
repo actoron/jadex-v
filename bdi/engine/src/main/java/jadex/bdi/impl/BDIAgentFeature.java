@@ -1,6 +1,7 @@
 package jadex.bdi.impl;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -9,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IDeliberationStrategy;
 import jadex.bdi.IGoal.GoalLifecycleState;
 import jadex.bdi.impl.goal.EasyDeliberationStrategy;
 import jadex.bdi.impl.goal.RGoal;
@@ -91,24 +91,8 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	public void onStart()
 	{
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener(/*rulesystem*/));
-		
-		// Initiate goal deliberation
-		final IDeliberationStrategy delstr = new EasyDeliberationStrategy();
-		delstr.init();
-		Rule<Void> rule = new Rule<Void>("goal_activate", 
-			new LifecycleStateCondition(RGoal.GoalLifecycleState.OPTION),
-			new IAction<Void>()
-			{
-				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-				{
-					RGoal goal = (RGoal)event.getContent();				
-					return delstr.goalIsOption(goal);							
-				}
-			});
-		rule.addEvent(new EventType(new String[]{ChangeEvent.GOALOPTION, EventType.MATCHALL}));
-		rulesystem.getRulebase().addRule(rule);
 	}
-	
+		
 	@Override
 	public void onEnd()
 	{
@@ -307,5 +291,161 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 		goals.get(rgoal.getPojo().getClass()).remove(rgoal);
 		((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rgoal.getAllPojos(), rgoal, contextfetchers);
+	}
+	
+	/**
+	 *  Start deliberation in extra step otherwise model might not be inited.
+	 *  (BDI feature onStart is executed before injection feature) 
+	 */
+	public void	startDeliberation(boolean usedelib)
+	{
+		// Initiate goal deliberation
+		final IDeliberationStrategy delstr = new EasyDeliberationStrategy();
+		delstr.init();
+		
+		if(usedelib)
+		{
+			List<EventType> events = new ArrayList<EventType>();
+			events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, EventType.MATCHALL}));
+			Rule<Void> rule = new Rule<Void>("goal_addinitialinhibitors", 
+				ICondition.TRUE_CONDITION, new IAction<Void>()
+			{
+				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+				{
+					// create the complete inhibitorset for a newly adopted goal
+					RGoal goal = (RGoal)event.getContent();
+					return delstr.goalIsAdopted(goal);
+				}
+			});
+			rule.setEvents(events);
+			rulesystem.getRulebase().addRule(rule);
+			
+			events = new ArrayList<EventType>();
+			events.add(new EventType(new String[]{ChangeEvent.GOALDROPPED, EventType.MATCHALL}));
+			rule = new Rule<Void>("goal_removegoalfromdelib", 
+				ICondition.TRUE_CONDITION, new IAction<Void>()
+			{
+				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+				{
+					// Remove a goal completely from 
+					RGoal goal = (RGoal)event.getContent();
+					return delstr.goalIsDropped(goal);
+				}
+			});
+			rule.setEvents(events);
+			rulesystem.getRulebase().addRule(rule);
+			
+			events = BDIAgentFeature.getGoalEvents();
+			rule = new Rule<Void>("goal_addinhibitor", 
+				new ICondition()
+				{
+					public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
+					{
+						// return true when other goal is active and inprocess
+						boolean ret = false;
+						EventType type = event.getType();
+						RGoal goal = (RGoal)event.getContent();
+						ret = ChangeEvent.GOALACTIVE.equals(type.getType(0)) && RGoal.GoalProcessingState.INPROCESS.equals(goal.getProcessingState())
+							|| (ChangeEvent.GOALINPROCESS.equals(type.getType(0)) && RGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState()));
+//								return ret? ICondition.TRUE: ICondition.FALSE;
+						return new Future<Tuple2<Boolean,Object>>(ret? ICondition.TRUE: ICondition.FALSE);
+					}
+				}, new IAction<Void>()
+			{
+				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+				{
+					RGoal goal = (RGoal)event.getContent();
+					return delstr.goalIsActive(goal);
+				}
+			});
+			rule.setEvents(events);
+			rulesystem.getRulebase().addRule(rule);
+			
+			rule = new Rule<Void>("goal_removeinhibitor", 
+				new ICondition()
+				{
+					public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
+					{
+//							if(getComponentIdentifier().getName().indexOf("Ambu")!=-1)
+//								System.out.println("remin");
+						
+						// return true when other goal is active and inprocess
+						boolean ret = false;
+						EventType type = event.getType();
+						if(event.getContent() instanceof RGoal)
+						{
+							RGoal goal = (RGoal)event.getContent();
+							ret = ChangeEvent.GOALSUSPENDED.equals(type.getType(0)) 
+								|| ChangeEvent.GOALOPTION.equals(type.getType(0))
+//									|| ChangeEvent.GOALDROPPED.equals(type.getType(0)) 
+								|| !RGoal.GoalProcessingState.INPROCESS.equals(goal.getProcessingState());
+						}
+//								return ret? ICondition.TRUE: ICondition.FALSE;
+						return new Future<Tuple2<Boolean,Object>>(ret? ICondition.TRUE: ICondition.FALSE);
+					}
+				}, new IAction<Void>()
+			{
+				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+				{
+					// Remove inhibitions of this goal 
+					RGoal goal = (RGoal)event.getContent();
+					return delstr.goalIsNotActive(goal);
+				}
+			});
+			rule.setEvents(events);
+			rulesystem.getRulebase().addRule(rule);
+		}
+
+		Rule<Void> rule = new Rule<Void>("goal_activate", 
+			new LifecycleStateCondition(RGoal.GoalLifecycleState.OPTION),
+			new IAction<Void>()
+			{
+				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+				{
+					RGoal goal = (RGoal)event.getContent();				
+					return delstr.goalIsOption(goal);							
+				}
+			});
+		rule.addEvent(new EventType(new String[]{ChangeEvent.GOALOPTION, EventType.MATCHALL}));
+		rulesystem.getRulebase().addRule(rule);
+	}
+	
+	/**
+	 *  Create goal events for a goal name. creates
+	 *  goaladopted, goaldropped
+	 *  goaloption, goalactive, goalsuspended
+	 *  goalinprocess, goalnotinprocess
+	 *  events.
+	 */
+	public static List<EventType> getGoalEvents(/*MGoal mgoal*/)
+	{
+		List<EventType> events = new ArrayList<EventType>();
+//		if(mgoal==null)
+		{
+			events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, EventType.MATCHALL}));
+			events.add(new EventType(new String[]{ChangeEvent.GOALDROPPED, EventType.MATCHALL}));
+			
+			events.add(new EventType(new String[]{ChangeEvent.GOALOPTION, EventType.MATCHALL}));
+			events.add(new EventType(new String[]{ChangeEvent.GOALACTIVE, EventType.MATCHALL}));
+			events.add(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, EventType.MATCHALL}));
+			
+			events.add(new EventType(new String[]{ChangeEvent.GOALINPROCESS, EventType.MATCHALL}));
+			events.add(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, EventType.MATCHALL}));
+		}
+//		else
+//		{
+//			String name = mgoal.getName();
+//			events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, name}));
+//			events.add(new EventType(new String[]{ChangeEvent.GOALDROPPED, name}));
+//			
+//			events.add(new EventType(new String[]{ChangeEvent.GOALOPTION, name}));
+//			events.add(new EventType(new String[]{ChangeEvent.GOALACTIVE, name}));
+//			events.add(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, name}));
+//			
+//			events.add(new EventType(new String[]{ChangeEvent.GOALINPROCESS, name}));
+//			events.add(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, name}));
+//		}
+		
+		return events;
 	}
 }

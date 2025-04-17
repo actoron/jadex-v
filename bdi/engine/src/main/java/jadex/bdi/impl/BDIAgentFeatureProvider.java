@@ -30,6 +30,7 @@ import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
+import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
@@ -267,6 +268,28 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 
+			// If outmost pojo (agent) -> start deliberation after all rules are added.
+			if(pojoclazzes.size()==1)
+			{
+				BDIModel	model	= BDIModel.getModel(pojoclazzes.get(0));
+				boolean	usedelib	= false;
+				for(Class<?> goaltype: model.getGoaltypes())
+				{
+					Deliberation	delib	= model.getGoalInfo(goaltype).annotation().deliberation();
+					usedelib	= delib.inhibits().length>0;
+					if(usedelib)
+					{
+						break;
+					}
+				}
+				boolean	fusedelib	= usedelib;
+				ret.add((comp, pojos, context, oldval) ->
+				{
+					((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).startDeliberation(fusedelib);
+					return null;
+				});
+			}
+			
 			return ret;
 		});
 	}

@@ -6,8 +6,8 @@ import java.util.Set;
 
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IPlan;
-import jadex.bdi.PlanAborted;
 import jadex.bdi.PlanFailureException;
+import jadex.bdi.impl.PlanAborted;
 import jadex.bdi.impl.RElement;
 import jadex.bdi.impl.goal.AdoptGoalAction;
 import jadex.bdi.impl.goal.ICandidateInfo;

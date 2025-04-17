@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.PlanAborted;
 import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.PlanAborted;
 import jadex.bdi.impl.plan.RPlan.PlanLifecycleState;
 import jadex.common.SUtil;
 import jadex.future.IFuture;

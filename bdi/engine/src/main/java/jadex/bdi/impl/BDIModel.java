@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.impl.goal.APL;
@@ -60,6 +61,14 @@ public class BDIModel
 	public MGoal getGoalInfo(Class<?> goalpojoclazz)
 	{
 		return goals.get(goalpojoclazz);
+	}
+	
+	/**
+	 *  Get the pojo goal classes of the agent.
+	 */
+	public Set<Class<?>> getGoaltypes()
+	{
+		return goals.keySet();
 	}
 	
 	/**

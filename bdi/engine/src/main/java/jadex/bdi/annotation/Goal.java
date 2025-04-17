@@ -86,12 +86,12 @@ public @interface Goal
 //	 *  Should the goal be unique (no other goal is allowed that is the same).
 //	 */
 //	public boolean unique() default false;
-//	
-//	/**
-//	 *  The deliberation settings.
-//	 */
-//	public Deliberation deliberation() default @Deliberation();
-//	
+	
+	/**
+	 *  The deliberation settings.
+	 */
+	public Deliberation deliberation() default @Deliberation();
+	
 //	/**
 //	 *  The publication settings can be used to export goal
 //	 *  as a component service.

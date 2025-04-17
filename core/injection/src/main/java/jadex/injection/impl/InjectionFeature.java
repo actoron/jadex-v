@@ -56,9 +56,10 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		if(model.getOnStart()!=null)
 		{
 			// TODO: wait for future return value?
-			// TODO: onstart should be scheduled? in case user uses a never ending loop in on start (i.e. main cycle)
+			// TODO: onstart should be scheduled? 
+			// 1) in case user uses a never ending loop in on start (i.e. main cycle)
 			// 		 cf. micro quiz example master agent
-			//		 or component creation needs to be async (bootstrap is currently sync!)
+			// 2) other features should be inited before user code (e.g. bdi feature after injection but before user code)
 //			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
 				model.getOnStart().apply(self, Collections.singletonList(self.getPojo()), null, null);
 		}

@@ -1,4 +1,4 @@
-package jadex.bdi;
+package jadex.bdi.impl;
 
 import jadex.bdi.impl.goal.RGoal;
 import jadex.future.IFuture;

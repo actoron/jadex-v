@@ -1,12 +1,20 @@
 package jadex.bdi.impl.goal;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bdi.IDeliberationStrategy;
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
 import jadex.bdi.IGoal.GoalLifecycleState;
+import jadex.bdi.IGoal.GoalProcessingState;
+import jadex.bdi.annotation.Deliberation;
+import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.IDeliberationStrategy;
+import jadex.core.IComponentManager;
 import jadex.future.IFuture;
 
 /**
@@ -31,14 +39,20 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	public IFuture<Void> goalIsAdopted(RGoal goal)
 	{
-//		Collection<RGoal>	others	= getCapability().getGoals();
-//		for(RGoal other: others)
-//		{
-//			if(!isInhibitedBy(other, goal) && inhibits(other, goal))
-//			{
-//				addInhibitor(goal, other);
-//			}
-//		}
+		for(Class<?> goaltype: getBDIFeature().getModel().getGoaltypes())
+		{
+			Set<RGoal>	goals	= getBDIFeature().getGoals(goaltype);
+			if(goals!=null)
+			{
+				for(RGoal other: goals)
+				{
+					if(!isInhibitedBy(other, goal) && inhibits(other, goal))
+					{
+						addInhibitor(goal, other);
+					}
+				}
+			}
+		}
 		
 		return IFuture.DONE;
 	}
@@ -49,14 +63,14 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	public IFuture<Void> goalIsDropped(RGoal goal)
 	{
-//		// Remove the goal itself
-//		inhibitions.remove(goal);
-//
-//		// Remove the goal from all other inhibition goal sets
-//		for(Set<RGoal> inh: inhibitions.values())
-//		{
-//			inh.remove(goal);
-//		}
+		// Remove the goal itself
+		inhibitions.remove(goal);
+
+		// Remove the goal from all other inhibition goal sets
+		for(Set<RGoal> inh: inhibitions.values())
+		{
+			inh.remove(goal);
+		}
 		
 		return IFuture.DONE;
 	}
@@ -78,25 +92,22 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	public IFuture<Void> goalIsActive(RGoal goal)
 	{
-//		MDeliberation delib = goal.getMGoal().getDeliberation();
-//		if(delib!=null)
-//		{
-//			Set<MGoal> inhs = delib.getInhibitions(getCapability().getMCapability());
-//			if(inhs!=null)
-//			{
-//				for(MGoal inh: inhs)
-//				{
-//					Collection<RGoal> goals = getCapability().getGoals(inh);
-//					for(RGoal other: goals)
-//					{
-//						if(!isInhibitedBy(goal, other) && inhibits(goal, other))
-//						{
-//							addInhibitor(other, goal);
-//						}
-//					}
-//				}
-//			}
-//		}
+		Deliberation delib = getBDIFeature().getModel().getGoalInfo(goal.getPojo().getClass()).annotation().deliberation();
+		Class<?>[] inhs = delib.inhibits();
+		for(Class<?> inh: inhs)
+		{
+			Collection<RGoal> goals = getBDIFeature().getGoals(inh);
+			if(goals!=null)
+			{
+				for(RGoal other: goals)
+				{
+					if(!isInhibitedBy(goal, other) && inhibits(goal, other))
+					{
+						addInhibitor(other, goal);
+					}
+				}
+			}
+		}
 		return IFuture.DONE;
 	}
 	
@@ -106,41 +117,38 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	public IFuture<Void> goalIsNotActive(RGoal goal)
 	{
-//		// Remove inhibitions of this goal 
-//		MDeliberation delib = goal.getMGoal().getDeliberation();
-//		if(delib!=null)
+		// Remove inhibitions of this goal 
+		Deliberation delib = getBDIFeature().getModel().getGoalInfo(goal.getPojo().getClass()).annotation().deliberation();
+		Class<?>[] inhs = delib.inhibits();
+		for(Class<?> inh: inhs)
+		{
+			Collection<RGoal> goals = getBDIFeature().getGoals(inh);
+			if(goals!=null)
+			{
+				for(RGoal other: goals)
+				{
+					if(goal.equals(other))
+						continue;
+					
+					if(isInhibitedBy(other, goal))
+						removeInhibitor(other, goal);
+				}
+			}
+		}
+			
+//		// Remove inhibitor from goals of same type if cardinality is used
+//		if(delib.isCardinalityOne())
 //		{
-//			Set<MGoal> inhs = delib.getInhibitions(getCapability().getMCapability());
-//			if(inhs!=null)
+//			Collection<RGoal> goals = getCapability().getGoals(goal.getMGoal());
+//			if(goals!=null)
 //			{
-//				for(MGoal inh: inhs)
+//				for(RGoal other: goals)
 //				{
-//					Collection<RGoal> goals = getCapability().getGoals(inh);
-//					for(RGoal other: goals)
-//					{
-//						if(goal.equals(other))
-//							continue;
-//						
-//						if(isInhibitedBy(other, goal))
-//							removeInhibitor(other, goal);
-//					}
-//				}
-//			}
-//			
-//			// Remove inhibitor from goals of same type if cardinality is used
-//			if(delib.isCardinalityOne())
-//			{
-//				Collection<RGoal> goals = getCapability().getGoals(goal.getMGoal());
-//				if(goals!=null)
-//				{
-//					for(RGoal other: goals)
-//					{
-//						if(goal.equals(other))
-//							continue;
-//						
-//						if(isInhibitedBy(other, goal))
-//							removeInhibitor(other, goal);
-//					}
+//					if(goal.equals(other))
+//						continue;
+//					
+//					if(isInhibitedBy(other, goal))
+//						removeInhibitor(other, goal);
 //				}
 //			}
 //		}
@@ -158,11 +166,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		if(inhibitors.add(inhibitor) && inhibitors.size()==1) // inhibit on first inhibitor
 		{
 			inhibitGoal(goal);
-//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALINHIBITED, goal.getMGoal().getName()}), this));
 		}
-		
-//		if(inhibitor.getId().indexOf("AchieveCleanup")!=-1)
-//			System.out.println("add inhibit: "+getId()+" "+inhibitor.getId()+" "+inhibitors);
 	}
 	
 	/**
@@ -176,10 +180,10 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 //			goal.drop();
 //		}
 //		else
-//		{
-//			if(IGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState()))
-//				goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
-//		}
+		{
+			if(IGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState()))
+				goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
+		}
 	}
 	
 	/**
@@ -187,17 +191,16 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	protected void removeInhibitor(RGoal goal, RGoal inhibitor)
 	{
-//		Set<RGoal> inhibitors = getInhibitions(goal, false);
-//		
-//		if(inhibitors!=null)
-//		{
-//			if(inhibitors.remove(inhibitor) && inhibitors.size()==0)
-//			{
-//				inhibitions.remove(goal);
-//				reactivateGoal(goal);
-////				getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALNOTINHIBITED, goal.getMGoal().getName()}), this));
-//			}
-//		}
+		Set<RGoal> inhibitors = getInhibitions(goal, false);
+		
+		if(inhibitors!=null)
+		{
+			if(inhibitors.remove(inhibitor) && inhibitors.size()==0)
+			{
+				inhibitions.remove(goal);
+				reactivateGoal(goal);
+			}
+		}
 	}
 	
 	/**
@@ -221,14 +224,14 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		return inhibitors!=null && !inhibitors.isEmpty();
 	}
 	
-//	/**
-//	 * Test if goal is inhibited by another goal.
-//	 */
-//	protected boolean isInhibitedBy(RGoal goal, RGoal other)
-//	{
-//		Set<RGoal> inhibitors = getInhibitions(goal, false);
-//		return !goal.isFinished() && inhibitors!=null && inhibitors.contains(other);
-//	}
+	/**
+	 * Test if goal is inhibited by another goal.
+	 */
+	protected boolean isInhibitedBy(RGoal goal, RGoal other)
+	{
+		Set<RGoal> inhibitors = getInhibitions(goal, false);
+		return !goal.isFinished() && inhibitors!=null && inhibitors.contains(other);
+	}
 	
 	/**
 	 *  Test if this goal inhibits the other.
@@ -241,51 +244,47 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		// todo: cardinality
 		boolean ret = false;
 		
-//		if(goal.getLifecycleState().equals(GoalLifecycleState.ACTIVE) && goal.getProcessingState().equals(GoalProcessingState.INPROCESS))
-//		{
-//			MDeliberation delib = goal.getMGoal().getDeliberation();
-//			if(delib!=null)
-//			{
-//				Set<MGoal> minh = delib.getInhibitions(goal.getMCapability());
-//				MGoal mother = other.getMGoal();
-//				if(minh!=null && minh.contains(mother))
+		if(goal.getLifecycleState().equals(GoalLifecycleState.ACTIVE) && goal.getProcessingState().equals(GoalProcessingState.INPROCESS))
+		{
+			Deliberation delib = getBDIFeature().getModel().getGoalInfo(goal.getPojo().getClass()).annotation().deliberation();
+			Class<?>[] inhs = delib.inhibits();
+			if(Arrays.asList(inhs).contains(other.getPojo().getClass()))
+			{
+				ret = true;
+				
+//				// check if instance relation
+//				Map<String, MethodInfo> dms = delib.getInhibitionMethods();
+//				if(dms!=null)
 //				{
-//					ret = true;
-//					
-//					// check if instance relation
-//					Map<String, MethodInfo> dms = delib.getInhibitionMethods();
-//					if(dms!=null)
+//					MethodInfo mi = dms.get(mother.getName());
+//					if(mi!=null)
 //					{
-//						MethodInfo mi = dms.get(mother.getName());
-//						if(mi!=null)
+//						Method dm = mi.getMethod(IInternalBDIAgentFeature.get().getClassLoader());
+//						try
 //						{
-//							Method dm = mi.getMethod(IInternalBDIAgentFeature.get().getClassLoader());
-//							try
-//							{
-//								SAccess.setAccessible(dm, true);
-//								ret = ((Boolean)dm.invoke(goal.getPojo(), new Object[]{other.getPojo()})).booleanValue();
-//							}
-//							catch(Exception e)
-//							{
-//								Throwable	t	= e instanceof InvocationTargetException ? ((InvocationTargetException)e).getTargetException() : e;
-//								System.err.println("Exception in inhibits expression: "+t);
-//							}
+//							SAccess.setAccessible(dm, true);
+//							ret = ((Boolean)dm.invoke(goal.getPojo(), new Object[]{other.getPojo()})).booleanValue();
+//						}
+//						catch(Exception e)
+//						{
+//							Throwable	t	= e instanceof InvocationTargetException ? ((InvocationTargetException)e).getTargetException() : e;
+//							System.err.println("Exception in inhibits expression: "+t);
 //						}
 //					}
 //				}
-//			}
-//		}
+			}
+		}
 		
 		return ret;
 	}
 	
-//	/**
-//	 *  Get the capability.
-//	 */
-//	protected RCapability getCapability()
-//	{
-//		return IInternalBDIAgentFeature.get().getCapability();
-//	}
+	/**
+	 *  Get the capability.
+	 */
+	protected BDIAgentFeature	getBDIFeature()
+	{
+		return (BDIAgentFeature) IComponentManager.get().getCurrentComponent().getFeature(IBDIAgentFeature.class);
+	}
 	
 	/**
 	 *  Get or create the inhibition set.

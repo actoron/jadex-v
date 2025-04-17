@@ -180,14 +180,13 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		// If now is inprocess -> start processing
 		if(GoalProcessingState.INPROCESS.equals(processingstate))
 		{
-//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALINPROCESS, getMGoal().getName()}), this));
-//			publishToolGoalEvent(ChangeEvent.GOALINPROCESS);
+			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALINPROCESS, modelname}), this));
 			comp.getFeature(IExecutionFeature.class).scheduleStep(new FindApplicableCandidatesAction(this));
 		}
-//		else
-//		{
-//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, getMGoal().getName()}), this));
-//		}
+		else
+		{
+			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, modelname}), this));
+		}
 		
 		if(isFinished())
 		{
@@ -218,7 +217,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		}
 		else if(GoalLifecycleState.ACTIVE.equals(lifecyclestate))
 		{
-//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALACTIVE, getMGoal().getName()}), this));
+			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALACTIVE, modelname}), this));
 
 			// start means-end reasoning unless maintain goal
 			if(!mgoal.maintain())
@@ -234,45 +233,45 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		// ready to be activated via deliberation
 		else if(GoalLifecycleState.OPTION.equals(lifecyclestate))
 		{
-//			abortPlans().addResultListener(new IResultListener<Void>()
-//			{
-//				@Override
-//				public void resultAvailable(Void result)
-//				{
-//					setProcessingState(GoalProcessingState.IDLE);
+			abortPlans().addResultListener(new IResultListener<Void>()
+			{
+				@Override
+				public void resultAvailable(Void result)
+				{
+					setProcessingState(GoalProcessingState.IDLE);
 					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALOPTION, modelname}), RGoal.this));
-//				}
-//				
-//				@Override
-//				public void exceptionOccurred(Exception exception)
-//				{
-//					// Should not fail?
-//					exception.printStackTrace();
-//					resultAvailable(null);	// safety-net: continue anyways
-//				}
-//			});
+				}
+				
+				@Override
+				public void exceptionOccurred(Exception exception)
+				{
+					// Should not fail?
+					exception.printStackTrace();
+					resultAvailable(null);	// safety-net: continue anyways
+				}
+			});
 		}
 		
 		// goal is suspended (no more plan executions)
 		else if(GoalLifecycleState.SUSPENDED.equals(lifecyclestate))
 		{
-//			abortPlans().addResultListener(new IResultListener<Void>()
-//			{
-//				@Override
-//				public void resultAvailable(Void result)
-//				{
-//					setProcessingState(GoalProcessingState.IDLE);
-////					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, getMGoal().getName()}), RGoal.this));
-//				}
-//				
-//				@Override
-//				public void exceptionOccurred(Exception exception)
-//				{
-//					// Should not fail?
-//					exception.printStackTrace();
-//					resultAvailable(null);	// safety-net: continue anyways
-//				}
-//			});
+			abortPlans().addResultListener(new IResultListener<Void>()
+			{
+				@Override
+				public void resultAvailable(Void result)
+				{
+					setProcessingState(GoalProcessingState.IDLE);
+					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, modelname}), RGoal.this));
+				}
+				
+				@Override
+				public void exceptionOccurred(Exception exception)
+				{
+					// Should not fail?
+					exception.printStackTrace();
+					resultAvailable(null);	// safety-net: continue anyways
+				}
+			});
 		}
 		
 		if(GoalLifecycleState.DROPPING.equals(lifecyclestate))

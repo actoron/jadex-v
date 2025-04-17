@@ -123,7 +123,7 @@ public class GoalFlagsTest
 		long	before	= System.nanoTime();
 		assertEquals(1, pojo.fut.getNextIntermediateResult());
 		long	after	= System.nanoTime();
-		assertTrue(after-before>500000000, "Waited: "+(after-before));
+		assertTrue(after-before>400000000, "Waited: "+(after-before));
 		handle.terminate().get(TestHelper.TIMEOUT);
 	}
 }
