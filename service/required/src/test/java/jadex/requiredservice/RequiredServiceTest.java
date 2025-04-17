@@ -16,6 +16,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
@@ -290,7 +291,9 @@ public class RequiredServiceTest
 				@Inject
 				IHelloService myservice;
 			}).get(TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		
+		SUtil.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 	}
 	
 	@Test
@@ -302,7 +305,9 @@ public class RequiredServiceTest
 				@InjectService(mode=Mode.QUERY)
 				IHelloService	myservice;
 			}).get(TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		
+		SUtil.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 	}
 
 	@Test
@@ -314,7 +319,9 @@ public class RequiredServiceTest
 				@InjectService
 				LinkedList<IHelloService>	myservice;
 			}).get(TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		
+		SUtil.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 	}
 
 	@Test
@@ -422,7 +429,9 @@ public class RequiredServiceTest
 				@InjectService(mode=Mode.QUERY)
 				List<IHelloService>	myservice;
 			}).get(TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		
+		SUtil.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 	}
 
 	@Test
@@ -460,7 +469,9 @@ public class RequiredServiceTest
 				@InjectService
 				IHelloService myservice;
 			}).get(TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		
+		SUtil.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 	}
 
 	@Test
@@ -499,7 +510,9 @@ public class RequiredServiceTest
 				@Inject
 				IHelloService myservice;
 			}).get(TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		
+		SUtil.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 	}
 
 	@Test
@@ -514,7 +527,9 @@ public class RequiredServiceTest
 				System.out.println("myservice: "+myservice);
 			}
 		}).get(TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		
+		SUtil.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 	}
 
 	@Test
@@ -641,7 +656,9 @@ public class RequiredServiceTest
 			{
 			}
 		}).get(TIMEOUT);
-		assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT));
+		
+		SUtil.runWithoutOutErr(
+			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 	}
 
 	@Test

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import jadex.bdi.IBDIAgent;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.Belief;
+import jadex.common.SUtil;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -28,7 +29,7 @@ public class BrokenBeliefTest
 			Object	broken;
 		}).get(TestHelper.TIMEOUT);
 		
-		TestHelper.runWithoutOutErr(
+		SUtil.runWithoutOutErr(
 			() -> assertThrows(ComponentTerminatedException.class,
 				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
 	}
@@ -43,7 +44,7 @@ public class BrokenBeliefTest
 				Map<Object, Object>	broken;
 			}).get(TestHelper.TIMEOUT);
 
-		TestHelper.runWithoutOutErr(
+		SUtil.runWithoutOutErr(
 			() -> assertThrows(ComponentTerminatedException.class,
 				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
 	}
@@ -57,7 +58,7 @@ public class BrokenBeliefTest
 				@Belief(updaterate = 1)
 				Set<Object>	broken;
 			}).get(TestHelper.TIMEOUT);
-		TestHelper.runWithoutOutErr(
+		SUtil.runWithoutOutErr(
 			() -> assertThrows(ComponentTerminatedException.class,
 				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
 	}
