@@ -1,6 +1,7 @@
 package jadex.bdi.goal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -95,5 +96,34 @@ public class GoalFlagsTest
 		assertEquals(1, pojo.fut.getNextIntermediateResult());
 		assertEquals(2, pojo.fut.getNextIntermediateResult());
 		assertEquals(3, pojo.fut.getNextIntermediateResult());
+	}
+
+	@Test
+	public void	testRecurDelay()
+	{
+		@BDIAgent
+		class RecurDelayAgent
+		{
+			IntermediateFuture<Integer>	fut	= new IntermediateFuture<>();
+			
+			@Goal(recur=true, recurdelay=500)
+			class MyGoal {}
+			
+			@Plan(trigger=@Trigger(goals=MyGoal.class))
+			void	myPlan1()
+			{
+				fut.addIntermediateResult(1);
+			}
+		}
+		
+		RecurDelayAgent	pojo	= new RecurDelayAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
+		assertEquals(1, pojo.fut.getNextIntermediateResult());
+		long	before	= System.nanoTime();
+		assertEquals(1, pojo.fut.getNextIntermediateResult());
+		long	after	= System.nanoTime();
+		assertTrue(after-before>500000000, "Waited: "+(after-before));
+		handle.terminate().get(TestHelper.TIMEOUT);
 	}
 }

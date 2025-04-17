@@ -5,8 +5,10 @@ import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IComponentManager;
 import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
@@ -95,5 +97,19 @@ public class CleanerBDIAgentA4
 		actsense.moveTo(0.3, 0.7);
 		actsense.moveTo(0.7, 0.3);
 		actsense.moveTo(0.3, 0.3);
+	}
+
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new CleanerBDIAgentA4());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

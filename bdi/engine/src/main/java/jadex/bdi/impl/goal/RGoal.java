@@ -568,12 +568,12 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 							}
 						};
 						
-//						if(getMGoal().getRecurDelay()>0)
-//						{
-//							IExecutionFeature.get().waitForDelay(getMGoal().getRecurDelay())
-//								.then(v -> IExecutionFeature.get().scheduleStep(step));
-//						}
-//						else
+						if(annotation.recurdelay()>0)
+						{
+							IExecutionFeature.get().waitForDelay(annotation.recurdelay())
+								.then(v -> IExecutionFeature.get().scheduleStep(step));
+						}
+						else
 						{
 							IExecutionFeature.get().scheduleStep(step);
 						}
