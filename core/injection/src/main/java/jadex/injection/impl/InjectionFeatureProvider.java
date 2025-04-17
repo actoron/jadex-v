@@ -81,7 +81,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			IInjectionHandle	ret	= null;
 			for(int i=0; i<comptypes.size(); i++)
 			{
-				if((valuetype instanceof Class) && SReflect.isSupertype((Class<?>)valuetype, comptypes.get(i)))
+				if((valuetype instanceof Class) && !Object.class.equals(valuetype) && SReflect.isSupertype((Class<?>)valuetype, comptypes.get(i)))
 				{
 					if(ret!=null)
 					{

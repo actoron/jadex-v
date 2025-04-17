@@ -5,7 +5,6 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.blocksworld.BlocksworldAgent.ClearGoal;
 import jadex.bdi.blocksworld.BlocksworldAgent.StackGoal;
-import jadex.bdi.impl.goal.RGoal;
 import jadex.injection.annotation.Inject;
 
 
@@ -22,6 +21,9 @@ public class StackBlocksPlan
 	
 	@Inject
 	protected IPlan rplan;
+	
+	 @Inject
+	protected Object goal;
 	
 	//-------- methods --------
 
@@ -77,7 +79,7 @@ public class StackBlocksPlan
 	 */
 	public Block getBlock()
 	{
-		return ((StackGoal)((RGoal)rplan.getReason()).getPojo()).getBlock();
+		return ((StackGoal)goal).getBlock();
 	}
 	
 	/**
@@ -85,6 +87,6 @@ public class StackBlocksPlan
 	 */
 	public Block getTarget()
 	{
-		return ((StackGoal)((RGoal)rplan.getReason()).getPojo()).getTarget();
+		return ((StackGoal)goal).getTarget();
 	}
 }

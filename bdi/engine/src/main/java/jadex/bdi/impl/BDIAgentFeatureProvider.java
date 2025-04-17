@@ -373,7 +373,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			
 			lcreators.add((pojotypes, valuetype, annotation) -> 
 			{
-				if(goaltype.equals(valuetype))
+				if(valuetype instanceof Class<?> && SReflect.isSupertype((Class<?>) valuetype, goaltype))
 				{
 					return (comp, pojos, context, oldval) ->
 					{
@@ -404,7 +404,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 			lcreators.add((pojotypes, valuetype, annotation) -> 
 			{
-				if(SReflect.isSupertype((Class<?>) valuetype, belieftype))
+				if(valuetype instanceof Class<?> && SReflect.isSupertype((Class<?>) valuetype, belieftype))
 				{
 					if(plan)
 					{
