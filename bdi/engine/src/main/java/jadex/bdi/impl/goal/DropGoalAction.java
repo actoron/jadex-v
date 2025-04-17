@@ -49,7 +49,6 @@ public class DropGoalAction implements Runnable
 //			
 //			protected void cont()
 //			{
-//				IInternalBDIAgentFeature.get().getCapability().removeGoal(goal);
 				goal.setLifecycleState(RGoal.GoalLifecycleState.DROPPED);
 //			}
 //		});

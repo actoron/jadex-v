@@ -53,6 +53,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	
 	protected MGoal	mgoal;
 	
+	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers;
+	
 	//-------- constructors --------
 	
 	/**
@@ -60,13 +62,14 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 *  @param pojo	The pojo goal.
 	 *  @param parant	The Plan (if subgoal) or null.
 	 */
-	public RGoal(/*MGoal mgoal, */Object pojogoal, RPlan parent, IComponent comp, List<Object> pojoparents/*, Map<String, Object> vals, ICandidateInfo candidate*/)
+	public RGoal(/*MGoal mgoal, */Object pojogoal, RPlan parent, IComponent comp, List<Object> pojoparents, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers/*, Map<String, Object> vals, ICandidateInfo candidate*/)
 	{
 		super(pojogoal, comp, pojoparents);
 		this.lifecyclestate = GoalLifecycleState.NEW;
 		this.processingstate = GoalProcessingState.IDLE;
 		this.comp	= comp;
 		this.parentplan	= parent;
+		this.contextfetchers	= contextfetchers;
 		
 		this.mgoal	= ((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).getModel().getGoalInfo(pojogoal.getClass());
 		if(mgoal==null)
@@ -162,7 +165,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		
 		if(isFinished())
 		{
-			throw new RuntimeException("Final proc state cannot be changed: "+getProcessingState()+" "+processingstate);
+			throw new RuntimeException("Final proc state cannot be changed: "+getProcessingState()+" "+processingstate+", "+this);
 		}
 			
 		// If was inprocess -> now stop processing.
@@ -171,8 +174,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			// Reset APL.
 			setApplicablePlanList(null);
 			
-//			// Clean tried plans if necessary.
-//			setTriedPlans(null);
+			// Clean tried plans if necessary.
+			setTriedPlans(null);
 		}
 		
 		doSetProcessingState(processingstate);
@@ -295,6 +298,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		}
 		else if(GoalLifecycleState.DROPPED.equals(lifecyclestate))
 		{
+			((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).removeGoal(this, contextfetchers);
 			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, modelname}), this));
 			
 			if(finished!=null)
@@ -340,7 +344,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 *  Adopt a goal.
 	 *  @param contextfetchers For injecting event values when triggered by a creation condition, null otherwise.
 	 */
-	public void	adopt(Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
+	public void	adopt()
 	{
 		// TODO: handle goal parameters
 			

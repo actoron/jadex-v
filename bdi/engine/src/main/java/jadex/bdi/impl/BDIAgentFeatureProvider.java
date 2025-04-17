@@ -627,8 +627,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								Object	pojogoal	= handle.apply(comp, pojos, new ChangeEvent<Object>(event), null);
 								if(pojogoal!=null)	// For method, check if no goal is created
 								{
-									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos);
-									rgoal.adopt(fcontextfetchers);
+									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos, fcontextfetchers);
+									rgoal.adopt();
 								}
 								return IFuture.DONE;
 							},
@@ -656,8 +656,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								if(Boolean.TRUE.equals(value))
 								{
 									Object	pojogoal	= constructor.apply(comp, pojos, change, null);
-									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos);
-									rgoal.adopt(fcontextfetchers);
+									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos, fcontextfetchers);
+									rgoal.adopt();
 								}
 								return IFuture.DONE;
 							},

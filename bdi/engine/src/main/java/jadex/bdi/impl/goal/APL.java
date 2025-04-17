@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
 import jadex.bdi.impl.plan.IPlanBody;
@@ -167,7 +168,7 @@ public class APL
 		}
 		else
 		{
-//			removeTriedCandidates();
+			removeTriedCandidates();
 		}
 	}
 	
@@ -176,42 +177,41 @@ public class APL
 	 */
 	protected void removeTriedCandidates()
 	{
-//		MProcessableElement mpe = (MProcessableElement)element.getModelElement();
-//		ExcludeMode exclude = mpe.getExcludeMode();
-//		
-//		if(candidates!=null && candidates.size()>0 && !ExcludeMode.Never.equals(exclude) && element.getTriedPlans()!=null)
-//		{
-//			List<Object> cands = new ArrayList<Object>(candidates);
-//			for(Object candidate: cands)
-//			{
-//				for(IInternalPlan plan: element.getTriedPlans())
-//				{
-//					if(plan.getCandidate().equals(candidate))
-//					{
-//						if(isToExclude(plan, exclude))
-//						{
-//							candidates.remove(candidate);
-//							break;
-//						}
-//					}
-//				}
-//			}
-//		}
+		ExcludeMode exclude = ((RGoal)element).mgoal.annotation().excludemode();
+		
+		if(candidates!=null && candidates.size()>0 && !ExcludeMode.Never.equals(exclude) && element.getTriedPlans()!=null)
+		{
+			List<Object> cands = new ArrayList<Object>(candidates);
+			for(Object candidate: cands)
+			{
+				for(RPlan plan: element.getTriedPlans())
+				{
+					if(plan.getCandidate().equals(candidate))
+					{
+						if(isToExclude(plan, exclude))
+						{
+							candidates.remove(candidate);
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 	
-//	/**
-//	 *  Check if an rplan is to exclude wrt the exclude mode and plan result state.
-//	 *  @param rplan The tried plan.
-//	 *  @param exclude
-//	 *  @return True, if should be excluded.
-//	 */
-//	protected boolean isToExclude(IInternalPlan rplan, ExcludeMode exclude)
-//	{
-//		return exclude.equals(ExcludeMode.WhenTried)
-//			|| (rplan.isPassed() && exclude.equals(ExcludeMode.WhenSucceeded))
-//			|| (rplan.isFailed() && exclude.equals(ExcludeMode.WhenFailed))
-//			|| (rplan.isAborted() && rplan.getException()!=null && exclude.equals(ExcludeMode.WhenFailed));
-//	}
+	/**
+	 *  Check if an rplan is to exclude wrt the exclude mode and plan result state.
+	 *  @param rplan The tried plan.
+	 *  @param exclude
+	 *  @return True, if should be excluded.
+	 */
+	protected boolean isToExclude(RPlan rplan, ExcludeMode exclude)
+	{
+		return exclude.equals(ExcludeMode.WhenTried)
+			|| (rplan.isPassed() && exclude.equals(ExcludeMode.WhenSucceeded))
+			|| (rplan.isFailed() && exclude.equals(ExcludeMode.WhenFailed))
+			|| (rplan.isAborted() && rplan.getException()!=null && exclude.equals(ExcludeMode.WhenFailed));
+	}
 	
 	//-------- helper methods --------
 
@@ -495,19 +495,13 @@ public class APL
 	 */
 	public void planFinished(RPlan rplan)
 	{
-//		MProcessableElement mpe = (MProcessableElement)element.getModelElement();
-//		ExcludeMode exclude = mpe.getExcludeMode();
-//		
-//		// always delete the rplan because the candidate can be reused
-//		Object cand = rplan.getCandidate();
-//		if(cand instanceof CandidateInfoMPlan)
-//			((CandidateInfoMPlan)cand).removePlan();
-//
-//		// Do nothing if APL exclude is never
-//		if(ExcludeMode.Never.equals(exclude))
-//			return;
-//		
-//		if(isToExclude(rplan, exclude))
+		ExcludeMode exclude = ((RGoal)element).mgoal.annotation().excludemode();
+		
+		// Do nothing if APL exclude is never
+		if(ExcludeMode.Never.equals(exclude))
+			return;
+		
+		if(isToExclude(rplan, exclude))
 			candidates.remove(rplan.getCandidate());
 	}
 	

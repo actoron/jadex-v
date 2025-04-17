@@ -111,7 +111,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 //		if(mgoal==null)
 //			throw new RuntimeException("Unknown goal type: "+goal);
 		// TODO: Capability context!?
-		final RGoal rgoal = new RGoal(goal, null, self, Collections.singletonList(self.getPojo()));
+		final RGoal rgoal = new RGoal(goal, null, self, Collections.singletonList(self.getPojo()), null);
 //		
 //		rgoal.addListener(new ExceptionDelegationResultListener<Void, E>(ret)
 //		{
@@ -124,7 +124,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 //
 		// Adopt directly (no schedule step)
 		// TODO: why step for subgoal and not for top-level!?
-		rgoal.adopt(null);
+		rgoal.adopt();
 		
 		@SuppressWarnings("unchecked")
 		IFuture<E>	ret	= (IFuture<E>) rgoal.getFinished();

@@ -70,15 +70,15 @@ public abstract class RProcessableElement extends RElement//extends RParameterEl
 	{
 		return triedplans;
 	}
-//
-//	/**
-//	 *  Set the triedplans.
-//	 *  @param triedplans The triedplans to set.
-//	 */
-//	public void setTriedPlans(List<IInternalPlan> triedplans)
-//	{
-//		this.triedplans = triedplans;
-//	}
+
+	/**
+	 *  Set the triedplans.
+	 *  @param triedplans The triedplans to set.
+	 */
+	public void setTriedPlans(Set<RPlan> triedplans)
+	{
+		this.triedplans = triedplans;
+	}
 
 	/**
 	 *  Called when plan execution has finished.

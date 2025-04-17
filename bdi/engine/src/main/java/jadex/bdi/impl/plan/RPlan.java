@@ -605,7 +605,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //		final Future<E> ret = new Future<E>();
 		
 		// TODO: hack!!! goal from other capability needs different parents?
-		final RGoal rgoal = new RGoal(goal, this, comp, getParentPojos());
+		final RGoal rgoal = new RGoal(goal, this, comp, getParentPojos(), null);
 		
 //		final ResumeCommand<E> rescom = new ResumeCommand<E>(ret, false);
 ////		setResumeCommand(rescom);

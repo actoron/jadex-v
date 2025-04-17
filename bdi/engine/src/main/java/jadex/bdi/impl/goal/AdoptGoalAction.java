@@ -46,7 +46,7 @@ public class AdoptGoalAction implements Runnable
 	{
 		if(isValid())
 		{
-			goal.adopt(null);
+			goal.adopt();
 		}
 		// else action no longer required
 	}

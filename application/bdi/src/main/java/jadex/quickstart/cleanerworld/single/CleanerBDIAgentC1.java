@@ -13,10 +13,12 @@ import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IComponentManager;
 import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
@@ -73,17 +75,16 @@ public class CleanerBDIAgentC1
 	/**
 	 *  A goal to recharge whenever the battery is low.
 	 */
-	@Goal(recur=true, recurdelay=3000,
-		deliberation=@Deliberation(inhibits=PerformPatrol.class))	// Pause patrol goal while loading battery
+	@Goal(deliberation=@Deliberation(inhibits=PerformPatrol.class))	// Pause patrol goal while loading battery
 	class MaintainBatteryLoaded
 	{
-		@GoalMaintainCondition	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
+		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
 			return self.getChargestate()>=0.2; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
 		}
 			
-		@GoalTargetCondition	// Only stop charging, when this condition is true
+		@GoalTargetCondition(beliefs="self")	// Only stop charging, when this condition is true
 		boolean isBatteryFullyLoaded()
 		{
 			return self.getChargestate()>=0.9; // Charge until 90%
@@ -102,7 +103,7 @@ public class CleanerBDIAgentC1
 		IChargingstation	station;
 		
 		// Check if there is a station in the beliefs
-		@GoalTargetCondition
+		@GoalTargetCondition(beliefs="stations")
 		boolean isStationKnown()
 		{
 			station	= stations.isEmpty() ? null : stations.iterator().next();
@@ -179,5 +180,19 @@ public class CleanerBDIAgentC1
 		
 		// Load until 100% (never reached, but plan is aborted when goal succeeds).
 		actsense.recharge(chargingstation, 1.0);
+	}
+
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new CleanerBDIAgentC1());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

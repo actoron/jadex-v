@@ -42,13 +42,13 @@ public @interface Goal
 //	 *  Rebuild the APL on each retry;
 //	 */
 //	public boolean rebuild() default false;
-//	
-//	/**
-//	 *  When to exclude a plan from the APL after it has been executed.
-//	 *  Default is to execute it after it has been tried without consideration
-//	 *  of its success state.
-//	 */
-//	public ExcludeMode excludemode() default ExcludeMode.WhenTried;
+	
+	/**
+	 *  When to exclude a plan from the APL after it has been executed.
+	 *  Default is to execute it after it has been tried without consideration
+	 *  of its success state.
+	 */
+	public ExcludeMode excludemode() default ExcludeMode.WhenTried;
 //	
 //	/** 
 //	 *  If true (default) means-end reasoning is allowed to select another plan after a plan has already been executed.
