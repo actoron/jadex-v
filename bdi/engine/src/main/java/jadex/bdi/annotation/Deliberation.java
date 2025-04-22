@@ -13,11 +13,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Deliberation
 {
-//	/**
-//	 *  The cardinality.
-//	 *  True if only one goal can be active at the same time.
-//	 */
-//	public boolean cardinalityone() default false;
+	/**
+	 *  The cardinality.
+	 *  True if only one goal can be active at the same time.
+	 */
+	public boolean cardinalityone() default false;
 	
 	/**
 	 *  The inhibited goal.

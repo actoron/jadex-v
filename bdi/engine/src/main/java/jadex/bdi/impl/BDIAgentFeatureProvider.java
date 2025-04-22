@@ -276,7 +276,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				for(Class<?> goaltype: model.getGoaltypes())
 				{
 					Deliberation	delib	= model.getGoalInfo(goaltype).annotation().deliberation();
-					usedelib	= delib.inhibits().length>0;
+					usedelib	= delib.inhibits().length>0 || delib.cardinalityone();
 					if(usedelib)
 					{
 						break;

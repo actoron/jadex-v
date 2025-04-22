@@ -1,5 +1,6 @@
 package jadex.bdi.goal;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -18,6 +19,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
+import jadex.future.IntermediateFuture;
 
 /**
  *  Test goal deliberation.
@@ -86,5 +88,47 @@ public class GoalDeliberationTest
 		
 		// Check passed to see if goal gets reactivated after the other succeeds
 		assertNull(pojo.passed.get(TestHelper.TIMEOUT));
+	}
+
+
+	@Test
+	public void	testCardinalityOne()
+	{
+		@BDIAgent
+		class GoaltypeDeliberationAgent
+		{
+			int	plancnt	= 0;
+			Future<Void>	block	= new Future<>();
+			IntermediateFuture<Void>	processing	= new IntermediateFuture<>();
+			
+			@Goal(deliberation=@Deliberation(cardinalityone=true))
+			class Inhibit {}
+			
+			@Plan(trigger=@Trigger(goals=Inhibit.class))
+			class ProcessInhibit
+			{
+				@PlanBody
+				void	body()
+				{
+					plancnt++;
+					processing.addIntermediateResult(null);
+					
+					// First plan: Blocks until released.
+					block.get();
+				}
+			}
+		}
+		
+		GoaltypeDeliberationAgent pojo	= new GoaltypeDeliberationAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new Inhibit()));
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new Inhibit()));
+		pojo.processing.getNextIntermediateResult(TestHelper.TIMEOUT);
+		assertEquals(1, pojo.plancnt);
+		
+		// Release plan to process second goal.
+		pojo.block.setResult(null);
+		pojo.processing.getNextIntermediateResult(TestHelper.TIMEOUT);
+		assertEquals(2, pojo.plancnt);
 	}
 }

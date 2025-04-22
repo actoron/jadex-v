@@ -180,6 +180,13 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		
 		doSetProcessingState(processingstate);
 		
+		// Goal notinprocess event trigger reactivation of inhibited goal
+		// -> set to dropping first to abort plans and avoid reactivation
+		if(isFinished())
+		{
+			setLifecycleState(GoalLifecycleState.DROPPING);
+		}
+
 		// If now is inprocess -> start processing
 		if(GoalProcessingState.INPROCESS.equals(processingstate))
 		{
@@ -189,11 +196,6 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		else
 		{
 			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, modelname}), this));
-		}
-		
-		if(isFinished())
-		{
-			setLifecycleState(GoalLifecycleState.DROPPING);
 		}
 	}
 	

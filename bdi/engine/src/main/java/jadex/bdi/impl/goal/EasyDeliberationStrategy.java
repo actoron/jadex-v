@@ -96,19 +96,33 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		Class<?>[] inhs = delib.inhibits();
 		for(Class<?> inh: inhs)
 		{
-			Collection<RGoal> goals = getBDIFeature().getGoals(inh);
-			if(goals!=null)
+			addInhibitors(goal, inh);
+		}
+		
+		if(delib.cardinalityone())
+		{
+			addInhibitors(goal, goal.getPojo().getClass());
+		}
+		
+		return IFuture.DONE;
+	}
+	
+	/**
+	 *  Add inhibitors of the given goal type to the goal.
+	 */
+	protected void addInhibitors(RGoal goal, Class<?> inh)
+	{
+		Collection<RGoal> goals = getBDIFeature().getGoals(inh);
+		if(goals!=null)
+		{
+			for(RGoal other: goals)
 			{
-				for(RGoal other: goals)
+				if(!isInhibitedBy(goal, other) && inhibits(goal, other))
 				{
-					if(!isInhibitedBy(goal, other) && inhibits(goal, other))
-					{
-						addInhibitor(other, goal);
-					}
+					addInhibitor(other, goal);
 				}
 			}
 		}
-		return IFuture.DONE;
 	}
 	
 	/**
@@ -122,38 +136,31 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		Class<?>[] inhs = delib.inhibits();
 		for(Class<?> inh: inhs)
 		{
-			Collection<RGoal> goals = getBDIFeature().getGoals(inh);
-			if(goals!=null)
-			{
-				for(RGoal other: goals)
-				{
-					if(goal.equals(other))
-						continue;
-					
-					if(isInhibitedBy(other, goal))
-						removeInhibitor(other, goal);
-				}
-			}
+			removeInhibitors(goal, inh);
 		}
 			
-//		// Remove inhibitor from goals of same type if cardinality is used
-//		if(delib.isCardinalityOne())
-//		{
-//			Collection<RGoal> goals = getCapability().getGoals(goal.getMGoal());
-//			if(goals!=null)
-//			{
-//				for(RGoal other: goals)
-//				{
-//					if(goal.equals(other))
-//						continue;
-//					
-//					if(isInhibitedBy(other, goal))
-//						removeInhibitor(other, goal);
-//				}
-//			}
-//		}
+		// Remove inhibitor from goals of same type if cardinality is used
+		if(delib.cardinalityone())
+		{
+			removeInhibitors(goal, goal.getPojo().getClass());
+		}
 	
 		return IFuture.DONE;
+	}
+
+	protected void removeInhibitors(RGoal goal, Class<?> inh) {
+		Collection<RGoal> goals = getBDIFeature().getGoals(inh);
+		if(goals!=null)
+		{
+			for(RGoal other: goals)
+			{
+				if(goal.equals(other))
+					continue;
+				
+				if(isInhibitedBy(other, goal))
+					removeInhibitor(other, goal);
+			}
+		}
 	}
 	
 	/**
@@ -241,37 +248,44 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		if(goal.equals(other))
 			return false;
 		
-		// todo: cardinality
 		boolean ret = false;
 		
 		if(goal.getLifecycleState().equals(GoalLifecycleState.ACTIVE) && goal.getProcessingState().equals(GoalProcessingState.INPROCESS))
 		{
 			Deliberation delib = getBDIFeature().getModel().getGoalInfo(goal.getPojo().getClass()).annotation().deliberation();
-			Class<?>[] inhs = delib.inhibits();
-			if(Arrays.asList(inhs).contains(other.getPojo().getClass()))
+			ret	= delib.cardinalityone() && goal.getPojo().getClass().equals(other.getPojo().getClass());
+			if(!ret)
 			{
-				ret = true;
-				
-//				// check if instance relation
-//				Map<String, MethodInfo> dms = delib.getInhibitionMethods();
-//				if(dms!=null)
-//				{
-//					MethodInfo mi = dms.get(mother.getName());
-//					if(mi!=null)
-//					{
-//						Method dm = mi.getMethod(IInternalBDIAgentFeature.get().getClassLoader());
-//						try
-//						{
-//							SAccess.setAccessible(dm, true);
-//							ret = ((Boolean)dm.invoke(goal.getPojo(), new Object[]{other.getPojo()})).booleanValue();
-//						}
-//						catch(Exception e)
-//						{
-//							Throwable	t	= e instanceof InvocationTargetException ? ((InvocationTargetException)e).getTargetException() : e;
-//							System.err.println("Exception in inhibits expression: "+t);
-//						}
-//					}
-//				}
+				Class<?>[] inhs = delib.inhibits();
+				if(Arrays.asList(inhs).contains(other.getPojo().getClass()))
+				{
+					ret = true;
+					
+	//				// check if instance relation
+	//				Map<String, MethodInfo> dms = delib.getInhibitionMethods();
+	//				if(dms!=null)
+	//				{
+	//					MethodInfo mi = dms.get(mother.getName());
+	//					if(mi!=null)
+	//					{
+	//						Method dm = mi.getMethod(IInternalBDIAgentFeature.get().getClassLoader());
+	//						try
+	//						{
+	//							SAccess.setAccessible(dm, true);
+	//							ret = ((Boolean)dm.invoke(goal.getPojo(), new Object[]{other.getPojo()})).booleanValue();
+	//						}
+	//						catch(Exception e)
+	//						{
+	//							Throwable	t	= e instanceof InvocationTargetException ? ((InvocationTargetException)e).getTargetException() : e;
+	//							System.err.println("Exception in inhibits expression: "+t);
+	//						}
+	//					}
+	//				}
+				}
+			}
+			else
+			{
+				System.out.println("Cardinality: "+goal+", "+other);
 			}
 		}
 		
