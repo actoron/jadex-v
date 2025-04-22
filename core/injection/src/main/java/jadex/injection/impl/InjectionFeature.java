@@ -9,6 +9,7 @@ import java.util.Map;
 import jadex.common.NameValue;
 import jadex.core.IComponent;
 import jadex.core.ResultProvider;
+import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
@@ -43,32 +44,38 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	@Override
 	public void onStart()
 	{
+		startPojo(model, Collections.singletonList(self.getPojo()), null);		
+	}
+	
+	/**
+	 *  Perform init and start operations for the given object.
+	 */
+	protected void startPojo(InjectionModel model, List<Object> pojos, Object context)
+	{
 		if(model.getExtraOnStart()!=null)
 		{
-			model.getExtraOnStart().apply(self, Collections.singletonList(self.getPojo()), null, null);
+			model.getExtraOnStart().apply(self, pojos, context, null);
 		}
 
 		if(model.getFieldInjections()!=null)
 		{
-			model.getFieldInjections().apply(self, Collections.singletonList(self.getPojo()), null, null);
-		}
-
-		if(model.getOnStart()!=null)
-		{
-			// TODO: wait for future return value?
-			// TODO: onstart should be scheduled? 
-			// 1) in case user uses a never ending loop in on start (i.e. main cycle)
-			// 		 cf. micro quiz example master agent
-			// 2) other features should be inited before user code (e.g. bdi feature after injection but before user code)
-//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getOnStart().apply(self, Collections.singletonList(self.getPojo()), null, null);
+			model.getFieldInjections().apply(self, pojos, context, null);
 		}
 		
 		if(model.getMethodInjections()!=null)
 		{
 			// TODO: wait for future return value?
+			// Schedule as step so it is registered before user OnStart, but executed after user OnStart
+			// -> if user OnStart blocks init thread, injections are executed anyways.
+			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+				model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null, null));
+		}
+		
+		if(model.getOnStart()!=null)
+		{
+			// TODO: wait for future return value?
 //			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null, null);
+				model.getOnStart().apply(self, pojos, context, null);
 		}
 	}
 
@@ -87,10 +94,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			}
 		}
 		
-		if(model.getOnEnd()!=null)
-		{	
-			model.getOnEnd().apply(self, Collections.singletonList(self.getPojo()), null, null);
-		}
+		endPojo(model, Collections.singletonList(self.getPojo()), null);
 		
 		// Notify on end -> conflict with terminate() in IComponentFactory.run(Object)
 //		// Inform result subscribers, if any
@@ -212,30 +216,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		extras.add(pojos);
 		
 		InjectionModel	model	= InjectionModel.get(pojos, contextfetchers);
-
-		if(model.getExtraOnStart()!=null)
-		{
-			model.getExtraOnStart().apply(self, pojos, context, null);
-		}
-
-		if(model.getFieldInjections()!=null)
-		{
-			model.getFieldInjections().apply(self, pojos, context, null);
-		}
-
-		if(model.getOnStart()!=null)
-		{
-			// TODO: wait for future return value?
-//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getOnStart().apply(self, pojos, context, null);
-		}
-		
-		if(model.getMethodInjections()!=null)
-		{
-			// TODO: wait for future return value?
-//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getMethodInjections().apply(self, pojos, context, null);
-		}
+		startPojo(model, pojos, context);
 	}
 
 	
@@ -254,6 +235,14 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	{
 		InjectionModel	model	= InjectionModel.get(pojos, contextfetchers);
 
+		endPojo(model, pojos, context);
+	}
+	
+	/**
+	 *  Perform end operations on object.
+	 */
+	protected void endPojo(InjectionModel model, List<Object> pojos, Object context)
+	{
 		if(model.getOnEnd()!=null)
 		{
 			// TODO: wait for future return value?

@@ -564,16 +564,16 @@ public class RequiredServiceTest
 				return null;
 			}).get(TIMEOUT);
 			
-//			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
-//			provider2.scheduleStep(() -> null).get(TIMEOUT);
-//			
-//			// Schedule check to make sure it is executed after result add.
-//			caller.scheduleStep(() -> null).get(TIMEOUT);
-//			caller.scheduleStep(() ->
-//			{
-//				assertEquals(2, services.size());
-//				return null;
-//			}).get(TIMEOUT);
+			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider2.scheduleStep(() -> null).get(TIMEOUT);
+			
+			// Schedule check to make sure it is executed after result add.
+			caller.scheduleStep(() -> null).get(TIMEOUT);
+			caller.scheduleStep(() ->
+			{
+				assertEquals(2, services.size());
+				return null;
+			}).get(TIMEOUT);
 		}
 		finally
 		{
@@ -615,6 +615,7 @@ public class RequiredServiceTest
 			
 			// Schedule check to make sure it is executed after result add.
 			caller.scheduleStep(() -> null).get(TIMEOUT);
+			caller.scheduleStep(() -> null).get(TIMEOUT);	// TODO: why two steps needed?
 			caller.scheduleStep(() ->
 			{
 				assertEquals(1, services.size());
