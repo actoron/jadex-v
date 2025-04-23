@@ -255,15 +255,15 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	{
 		assert this.lifecyclestate!=lifecyclestate;
 		
-//		// Cleanup previous lifecycle phase
-//		if(subgoals!=null)
-//		{
-//			for(IGoal subgoal: subgoals)
-//			{
-//				// Todo: wait for goals dropped?
-//				subgoal.drop();
-//			}
-//		}
+		// Cleanup previous lifecycle phase
+		if(subgoals!=null)
+		{
+			for(RGoal subgoal: subgoals)
+			{
+				// Todo: wait for goals dropped?
+				subgoal.drop();
+			}
+		}
 		
 //		System.out.println("lifecyle state: "+getId()+", "+lifecyclestate);
 		
@@ -512,10 +512,12 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 				{
 					if(waitfuture instanceof ITerminableFuture)
 					{
+//						System.out.println("terminate waitfuture: "+this);
 						((ITerminableFuture<?>)waitfuture).terminate(new RuntimeException(new PlanAborted()));
 					}
 					else
 					{
+//						System.out.println("setEx on waitfuture: "+this);
 						waitfuture.setExceptionIfUndone(new RuntimeException(new PlanAborted()));
 					}
 				}

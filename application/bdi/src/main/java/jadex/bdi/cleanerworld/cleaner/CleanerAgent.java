@@ -287,14 +287,14 @@ public class CleanerAgent
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		/*@GoalTargetCondition(beliefs={"self", "wastes"})
+		@GoalTargetCondition(beliefs={"self", "wastes"})
 		boolean	isClean()
 		{
 			// Test if the waste is not believed to be in the environment
 			return !wastes.contains(waste)
 				// and also not the waste we just picked up.
-				&& !waste.equals(self.getCarriedWaste());
-		}*/
+				&& !waste.equals(getSelf().getCarriedWaste());
+		}
 		
 //		// Goal should only be pursued when carrying no waste
 //		// or when goal is resumed after recharging and carried waste is of this goal.

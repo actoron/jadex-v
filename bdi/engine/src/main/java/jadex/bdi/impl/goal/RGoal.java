@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jadex.bdi.GoalDroppedException;
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
@@ -739,42 +740,46 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //		return ret;
 //	}
 //	
-//	/**
-//	 *  Drop the goal.
-//	 */
-//	public IFuture<Void> drop()
-//	{
-//		Future<Void> ret = new Future<Void>();
-//		
-//		if(!GoalLifecycleState.NEW.equals(getLifecycleState())
-//			&& !GoalLifecycleState.DROPPING.equals(getLifecycleState()) 
-//			&& !GoalLifecycleState.DROPPED.equals(getLifecycleState()))
-//		{
-//			addListener(new DelegationResultListener<Void>(ret)
-//			{
-//				@Override
-//				public void exceptionOccurred(Exception exception)
-//				{
-//					if(exception instanceof GoalDroppedException)
-//					{
-//						// Goal dropped -> mission accomplished
-//						customResultAvailable(null);
-//					}
-//					else
-//					{
-//						super.exceptionOccurred(exception);
-//					}
-//				}
-//			});
-//			setLifecycleState(GoalLifecycleState.DROPPING);
-//		}
-//		else
-//		{
-//			ret.setResult(null);
-//		}
-//		
-//		return ret;
-//	}
+	/**
+	 *  Drop the goal.
+	 */
+	public IFuture<Void> drop()
+	{
+		Future<Void> ret = new Future<Void>();
+		
+		if(!GoalLifecycleState.NEW.equals(getLifecycleState())
+			&& !GoalLifecycleState.DROPPING.equals(getLifecycleState()) 
+			&& !GoalLifecycleState.DROPPED.equals(getLifecycleState()))
+		{
+			getFinished().addResultListener(new IResultListener<Object>()
+			{
+				@Override
+				public void resultAvailable(Object result)
+				{
+					ret.setResult(null);
+				}
+				public void exceptionOccurred(Exception exception)
+				{
+					if(exception instanceof GoalDroppedException)
+					{
+						// Goal dropped -> mission accomplished
+						ret.setResult(null);
+					}
+					else
+					{
+						ret.setException(exception);
+					}
+				}
+			});
+			setLifecycleState(GoalLifecycleState.DROPPING);
+		}
+		else
+		{
+			ret.setResult(null);
+		}
+		
+		return ret;
+	}
 //	
 //	/**
 //	 *  Add a new listener to get notified when the goal is finished.
