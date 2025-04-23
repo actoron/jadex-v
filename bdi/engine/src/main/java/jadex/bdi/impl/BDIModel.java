@@ -9,6 +9,7 @@ import java.util.Set;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.impl.goal.APL;
 import jadex.bdi.impl.goal.ICandidateInfo;
+import jadex.bdi.impl.goal.MGoal;
 import jadex.bdi.impl.plan.IPlanBody;
 
 /**
@@ -16,15 +17,6 @@ import jadex.bdi.impl.plan.IPlanBody;
  */
 public class BDIModel
 {
-	/**
-	 *  Meta-info for a goal.
-	 *  @param target Is target condition present?
-	 *  @param maintain Is maintain condition present?
-	 *  @param annotation goal flags.
-	 */ 
-	public record MGoal(boolean target, boolean maintain, Goal annotation) {};
-	
-	
 	/** The plans that are triggered by an instance of the element class. */
 	// TODO: probably need separate MInfo in model and (R)ICandidateInfo with correct parent pojos for capability plans
 	protected Map<Class<?>, List<ICandidateInfo>>	plans	= new LinkedHashMap<>();
@@ -38,6 +30,7 @@ public class BDIModel
 	 */
 	public List<ICandidateInfo> getTriggeredPlans(Class<?> elementclass)
 	{
+		
 		return plans.get(elementclass);
 	}
 	

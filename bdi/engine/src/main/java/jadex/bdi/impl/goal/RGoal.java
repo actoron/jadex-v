@@ -10,7 +10,6 @@ import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
 import jadex.bdi.impl.BDIAgentFeature;
-import jadex.bdi.impl.BDIModel.MGoal;
 import jadex.bdi.impl.ChangeEvent;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.core.IComponent;
@@ -751,6 +750,10 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			&& !GoalLifecycleState.DROPPING.equals(getLifecycleState()) 
 			&& !GoalLifecycleState.DROPPED.equals(getLifecycleState()))
 		{
+			if(exception==null)
+			{
+				exception	= new GoalDroppedException();
+			}
 			getFinished().addResultListener(new IResultListener<Object>()
 			{
 				@Override

@@ -17,6 +17,7 @@ import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ISuspendable;
 import jadex.future.ITerminableFuture;
 
 /**
@@ -110,6 +111,9 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	
 	/** The wait future (if currently waiting). */
 	public Future<?>	waitfuture;
+	
+	/** The blocked suspendable (if currently waiting). */
+	public ISuspendable	waitsus;
 	
 //	/**
 //	 *  Create a new rplan based on an mplan.
@@ -513,12 +517,15 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 					if(waitfuture instanceof ITerminableFuture)
 					{
 //						System.out.println("terminate waitfuture: "+this);
-						((ITerminableFuture<?>)waitfuture).terminate(new RuntimeException(new PlanAborted()));
+						((ITerminableFuture<?>)waitfuture).terminate();
 					}
 					else
 					{
 //						System.out.println("setEx on waitfuture: "+this);
-						waitfuture.setExceptionIfUndone(new RuntimeException(new PlanAborted()));
+//						waitfuture.setExceptionIfUndone(new RuntimeException(new PlanAborted()));
+						// Do not set exception on maybe external future (may lead to duplicate results).
+						// -> just release lock -> body is aborted in afterBlock()
+						waitfuture.abortGet(waitsus);
 					}
 				}
 //				if(PlanProcessingState.WAITING.equals(getProcessingState()))
@@ -935,7 +942,8 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	public <T> void	beforeBlock(Future<T> fut)
 	{
 //		testBodyAborted();
-//		ISuspendable sus = ISuspendable.SUSPENDABLE.get();
+		waitsus = ISuspendable.SUSPENDABLE.get();
+		assert waitsus!=null;
 //		if(sus!=null && !RPlan.PlanProcessingState.WAITING.equals(getProcessingState()))
 //		{
 //			final ResumeCommand<T> rescom = new ResumeCommand<T>(fut, sus, false);
@@ -954,6 +962,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	{
 		assert this.waitfuture!=null;
 		this.waitfuture	= null;
+		this.waitsus	= null;
 		testBodyAborted();
 //		setProcessingState(PlanProcessingState.RUNNING);
 //		setWaitAbstraction(null);
