@@ -283,10 +283,6 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	//				}
 				}
 			}
-			else
-			{
-				System.out.println("Cardinality: "+goal+", "+other);
-			}
 		}
 		
 		return ret;

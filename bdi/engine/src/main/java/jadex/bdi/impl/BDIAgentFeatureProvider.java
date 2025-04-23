@@ -167,6 +167,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		InjectionModel.addExtraOnStart((pojoclazzes, contextfetchers) ->
 		{
 			List<IInjectionHandle>	ret	= new ArrayList<>();
+			
+			// Only add extra code if outmost pojo is bdi agent.
+			// TODO: only apply extra code to annotated classes (i.e. agent and capability but not plan/goal)!?
+			if(isCreator(pojoclazzes.get(0))<0)
+			{
+				return ret;
+			}
+			
 			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
 			
 			// Manage belief fields.

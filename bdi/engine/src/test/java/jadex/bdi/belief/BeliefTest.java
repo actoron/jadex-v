@@ -47,6 +47,9 @@ public class BeliefTest
 		Val<Integer>	valbelief	= new Val<>(1);
 		
 		@Belief
+		Val<Bean>	valbeanbelief	= new Val<>(null);
+		
+		@Belief
 		Bean	beanbelief	= new Bean(1);
 		
 		@Belief
@@ -123,6 +126,27 @@ public class BeliefTest
 		});
 		
 		checkEventInfo(fut, 1, 2, null);
+	}
+
+	@Test
+	public void testValBeanBelief()
+	{
+		BeliefTestAgent	pojo	= new BeliefTestAgent();
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		// Test delayed set after init.
+		exta.scheduleStep(() ->
+		{
+			pojo.valbeanbelief.set(new Bean(1));
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		
+		Future<IEvent>	fut	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(fut, ChangeEvent.FACTCHANGED, "valbeanbelief");
+			pojo.valbeanbelief.get().setValue(2);
+		});
+		checkEventInfo(fut, null, pojo.valbeanbelief.get(), null);
 	}
 
 	@Test
