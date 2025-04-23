@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bdi.GoalDroppedException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
@@ -15,11 +14,14 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.impl.BDIAgentFeature;
+import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingFunction;
 import jadex.future.Future;
+import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
 
 /**
  *  Test subgoal handling of plans.
@@ -72,18 +74,24 @@ public class PlanSubgoalTest
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		
 		// Dispatch top-level goal and check if sub plan is started.
-		IFuture<Object>	topfut	= handle.scheduleAsyncStep(comp
-			-> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TopGoal()));
+		ITerminableFuture<Object>	topfut	= (ITerminableFuture<Object>) handle.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Object>>()
+		{
+			public ITerminableFuture<Object> apply(IComponent comp)
+			{
+				return comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TopGoal());
+			}
+		});
 		agent.started.get(TestHelper.TIMEOUT);
 		assertFalse(agent.aborted.isDone());
 		
 		// Drop top-level goal and check if sub plan is aborted.
-		IFuture<Void>	dropfut	= handle.scheduleAsyncStep(comp
-				-> ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(SubgoalAgent.TopGoal.class).iterator().next().drop());
+		@SuppressWarnings("serial")
+		class MyException extends RuntimeException{};
+		topfut.terminate(new MyException());
 		agent.aborted.get(TestHelper.TIMEOUT);
 		
-		assertThrows(GoalDroppedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));
-		assertThrows(GoalDroppedException.class, () -> topfut.get(TestHelper.TIMEOUT));
-		dropfut.get(TestHelper.TIMEOUT);
+//		assertThrows(GoalDroppedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));
+		assertThrows(FutureTerminatedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));
+		assertThrows(MyException.class, () -> topfut.get(TestHelper.TIMEOUT));
 	}
 }

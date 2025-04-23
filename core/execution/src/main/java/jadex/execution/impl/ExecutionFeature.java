@@ -1,5 +1,6 @@
 package jadex.execution.impl;
 
+import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -355,12 +356,31 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		Future<T> ret;
 		try
 		{
+			// Check if return type is explicitly given
 			Class<?> clazz = step.getFutureReturnType();
 		
+			// TODO: use FutureFunctionaly.getReturnFuture
 			if(IFuture.class.equals(clazz))
+			{
+				// Check if apply is overridden with new return type
+				try
+				{
+					Method	m	= step.getClass().getMethod("apply", IComponent.class);
+					clazz	= m.getReturnType();
+				}
+				catch(NoSuchMethodException e)
+				{
+				}
+			}
+			
+			if(IFuture.class.equals(clazz))
+			{
 				ret = new Future<T>();
+			}
 			else
+			{
 				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
+			}
 		}
 		catch(Exception e)
 		{

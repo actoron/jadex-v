@@ -21,6 +21,7 @@ import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionFeature;
@@ -105,7 +106,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	 *  @param goal The pojo goal.
 	 *  @return The goal result.
 	 */
-	public <T, E> IFuture<E> dispatchTopLevelGoal(final T goal)
+	public <T, E> ITerminableFuture<E> dispatchTopLevelGoal(final T goal)
 	{
 //		final MGoal mgoal = ((MCapability)capa.getModelElement()).getGoal(goal.getClass().getName());
 //		if(mgoal==null)
@@ -127,7 +128,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		rgoal.adopt();
 		
 		@SuppressWarnings("unchecked")
-		IFuture<E>	ret	= (IFuture<E>) rgoal.getFinished();
+		ITerminableFuture<E>	ret	= (ITerminableFuture<E>) rgoal.getFinished();
 		return ret;
 	}
 	

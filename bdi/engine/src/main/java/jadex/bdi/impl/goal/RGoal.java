@@ -17,6 +17,8 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
+import jadex.future.ITerminableFuture;
+import jadex.future.TerminableFuture;
 import jadex.injection.impl.IValueFetcherCreator;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
@@ -46,7 +48,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //	protected ICandidateInfo candidate;
 	
 	/** The finished future (if someone waits for the goal). */
-	public Future<Object>	finished;
+	public TerminableFuture<Object>	finished;
 	
 	/** Remember last plan exception to pass on in case goal fails due to no more plans. */
 	protected Exception	exception;
@@ -308,12 +310,12 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 				if(isSucceeded())
 				{
 					// TODO: Goal result
-					// Use undone as future is maybe used by plan and set to exception on plan abort. 
+					// Use undone as future is maybe terminated. 
 					finished.setResultIfUndone(null);
 				}
 				else
 				{
-					// Use undone as future is maybe used by plan and set to exception on plan abort. 
+					// Use undone as future is maybe terminated. 
 					finished.setExceptionIfUndone(exception!=null ? exception : new GoalFailureException());
 				}
 			}
@@ -333,11 +335,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	/**
 	 *  Get the finished future to wait for goal finished/result.
 	 */
-	public IFuture<Object>	getFinished()
+	public ITerminableFuture<Object>	getFinished()
 	{
 		if(finished==null)
 		{
-			finished	= new Future<>();
+			finished	= new TerminableFuture<>(reason -> 
+			{
+				exception	= reason;
+				drop();	
+			});
 		}
 		return finished;
 	}

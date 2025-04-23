@@ -585,7 +585,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/**
 	 *  Wait for a delay.
 	 */
-	public IFuture<Void> waitFor(long delay)
+	public ITerminableFuture<Void> waitFor(long delay)
 	{
 //		final Future<Void> ret = new Future<Void>();
 //		
@@ -601,7 +601,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/**
 	 *  Dispatch a goal wait for its result.
 	 */
-	public <T, E> IFuture<E> dispatchSubgoal(final T goal)
+	public <T, E> ITerminableFuture<E> dispatchSubgoal(final T goal)
 	{
 //		return dispatchSubgoal(goal, -1);
 //	}
@@ -657,7 +657,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		IExecutionFeature.get().scheduleStep(new AdoptGoalAction(rgoal));
 		
 		@SuppressWarnings("unchecked")
-		IFuture<E>	ret	= (IFuture<E>) rgoal.getFinished();
+		ITerminableFuture<E>	ret	= (ITerminableFuture<E>) rgoal.getFinished();
 		return ret;
 	}
 //	
