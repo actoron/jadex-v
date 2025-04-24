@@ -482,7 +482,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/**
 	 *  Add goal to current subgoals.
 	 */
-	public void addSubgoal(RGoal subgoal)
+	protected void addSubgoal(RGoal subgoal)
 	{
 		if(subgoals==null)
 		{
@@ -653,6 +653,9 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //		});
 	
 		addSubgoal(rgoal);
+		rgoal.getFinished()
+			.then(o -> removeSubgoal(rgoal))
+			.catchEx( e -> removeSubgoal(rgoal));
 		
 		IExecutionFeature.get().scheduleStep(new AdoptGoalAction(rgoal));
 		
@@ -961,6 +964,14 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	public void	afterBlock()
 	{
 		assert this.waitfuture!=null;
+		
+		// Timeout: Future not finished but plan thread unblocked  
+		// E.g. when waiting for goal -> terminate future to drop goal.
+		if(!waitfuture.isDone() && waitfuture instanceof ITerminableFuture)
+		{
+			((ITerminableFuture<?>)waitfuture).terminate();
+		}
+		
 		this.waitfuture	= null;
 		this.waitsus	= null;
 		testBodyAborted();
