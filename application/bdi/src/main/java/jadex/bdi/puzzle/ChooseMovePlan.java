@@ -1,13 +1,13 @@
 package jadex.bdi.puzzle;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
+import jadex.bdi.impl.goal.APL;
+import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.puzzle.SokratesMLRAgent.ChooseMoveGoal;
-import jadex.bdi.runtime.impl.ICandidateInfo;
 
 /**
  *  Meta-level reasoning plan for choosing between applicable plans.
@@ -54,7 +54,7 @@ public class ChooseMovePlan
 		{
 			for(ICandidateInfo plan: plans)
 			{
-				if(matchColor(board, ((MovePlan)plan.getRawCandidate()).move, same))
+				if(matchColor(board, ((MovePlan)((APL.PojoPlanCandidate)plan).getPojo()).move, same))
 				{
 					sel_col.add(plan);
 				}
@@ -71,7 +71,7 @@ public class ChooseMovePlan
 		{
 			for(ICandidateInfo plan: sel_col)
 			{
-				if(matchJump(board, ((MovePlan)plan.getRawCandidate()).move, jump))
+				if(matchJump(board, ((MovePlan)((APL.PojoPlanCandidate)plan).getPojo()).move, jump))
 				{
 					sel_jump.add(plan);
 				}

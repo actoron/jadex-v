@@ -90,9 +90,9 @@ public class BDIModel
 	/**
 	 *  Add goal meta info.
 	 */
-	protected void	addGoal(Class<?> goalpojoclazz, boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild)
+	protected void	addGoal(Class<?> goalpojoclazz, boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild, IInjectionHandle selectcandidate)
 	{
-		goals.put(goalpojoclazz, new MGoal(target, maintain, annotation, aplbuild));
+		goals.put(goalpojoclazz, new MGoal(target, maintain, annotation, aplbuild, selectcandidate));
 	}
 	
 	//-------- static part --------

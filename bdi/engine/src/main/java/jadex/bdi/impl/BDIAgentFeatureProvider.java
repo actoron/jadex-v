@@ -35,6 +35,7 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
@@ -45,6 +46,7 @@ import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
+import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.impl.goal.RGoal;
 import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.ExecutePlanStepAction;
@@ -387,7 +389,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 */
 	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> createContextFetchers(
 		Class<?> pojoclazz, String[][] beliefevents, Class<?>[][] goalevents, String element, boolean plan,
-		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	_contextfetchers)
+		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers)
 	{
 		List<IValueFetcherCreator>	lcreators	= null;
 		
@@ -526,25 +528,21 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			});
 		}
 		
-		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers	= null;
+		// Add/copy new fetcher creators
 		if(lcreators!=null)
 		{
-			contextfetchers	= new LinkedHashMap<>();
-			contextfetchers.put(Inject.class, lcreators);
-		}
-		
-		if(_contextfetchers!=null)
-		{
-			if(contextfetchers!=null)
+			contextfetchers	= contextfetchers==null ? new LinkedHashMap<>() : new LinkedHashMap<>(contextfetchers);			
+			if(contextfetchers.get(Inject.class)==null)
 			{
-				contextfetchers.putAll(_contextfetchers);
+				contextfetchers.put(Inject.class, lcreators);
 			}
 			else
 			{
-				contextfetchers	= _contextfetchers;
+				List<IValueFetcherCreator>	list	= new ArrayList<>(contextfetchers.get(Inject.class));
+				list.addAll(lcreators);
+				contextfetchers.put(Inject.class, list);
 			}
 		}
-
 		
 		return contextfetchers;
 	}
@@ -794,7 +792,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 		}
 
-		// Add target condition rules
+		// Add maintain condition rules
 		List<Method>	maintaincondmethods	= InjectionModel.findMethods(goalclazz, GoalMaintainCondition.class);
 		numcreations	= 0;
 		for(Method method: maintaincondmethods)
@@ -841,10 +839,39 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		}
 		
 		IInjectionHandle	aplbuild	= createMethodInvocation(goalclazz, parentclazzes, GoalAPLBuild.class, contextfetchers);
+		IInjectionHandle selectcandidate = createGoalSelectCandidateMethod(goalclazz, parentclazzes, contextfetchers);
 		
 		// BDI model is for outmost pojo.
 		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
-		model.addGoal(goalclazz, !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), goalclazz.getAnnotation(Goal.class), aplbuild);
+		model.addGoal(goalclazz, !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), goalclazz.getAnnotation(Goal.class), aplbuild, selectcandidate);
+	}
+
+	protected IInjectionHandle createGoalSelectCandidateMethod(Class<?> goalclazz, List<Class<?>> parentclazzes,
+			Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
+	{
+		IValueFetcherCreator	creator	= (pojotypes, valuetype, annotation) ->
+		{
+			if(valuetype instanceof ParameterizedType
+				&& List.class.equals(((ParameterizedType)valuetype).getRawType())
+				&& ICandidateInfo.class.equals(((ParameterizedType)valuetype).getActualTypeArguments()[0]))
+			{
+				return (comp, pojos, context, oldval) -> context;
+			}
+			return null;
+		};
+		
+		contextfetchers	= contextfetchers==null ? new LinkedHashMap<>() : new LinkedHashMap<>(contextfetchers);			
+		if(contextfetchers.get(Inject.class)==null)
+		{
+			contextfetchers.put(Inject.class, Collections.singletonList(creator));
+		}
+		else
+		{
+			List<IValueFetcherCreator>	list	= new ArrayList<>(contextfetchers.get(Inject.class));
+			list.add(creator);
+			contextfetchers.put(Inject.class, list);
+		}
+		return createMethodInvocation(goalclazz, parentclazzes, GoalSelectCandidate.class, contextfetchers);
 	}
 
 	/**

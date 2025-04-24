@@ -10,6 +10,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -642,7 +643,7 @@ public class InjectionModel
 			
 			// Find parameters
 			Parameter[]	params	= method.getParameters();
-			Class<?>[]	ptypes	= method.getParameterTypes();
+			Type[]	ptypes	= method.getGenericParameterTypes();
 			if(ptypes.length!=0)
 			{
 				List<IInjectionHandle>	param_injections	= new ArrayList<>();
@@ -713,7 +714,7 @@ public class InjectionModel
 					}
 					else
 					{
-						throw new UnsupportedOperationException("Cannot inject "+ptypes[i].getSimpleName()+" in "+method);
+						throw new UnsupportedOperationException("Cannot inject "+ptypes[i].getTypeName()+" in "+method);
 					}
 				}
 				

@@ -1,12 +1,12 @@
 package jadex.bdi.puzzle;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.puzzle.SokratesMLRAgent.MakeMoveGoal;
-import jadex.bdi.runtime.IPlan;
 
 
 /**

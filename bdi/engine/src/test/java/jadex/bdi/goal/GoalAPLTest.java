@@ -1,7 +1,10 @@
 package jadex.bdi.goal;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,10 +13,14 @@ import org.junit.jupiter.api.Test;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
+import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
+import jadex.bdi.annotation.GoalSelectCandidate;
+import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
+import jadex.bdi.annotation.Trigger;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.goal.APL;
 import jadex.bdi.impl.goal.ICandidateInfo;
@@ -26,7 +33,7 @@ import jadex.future.Future;
 /**
  *  Test manual APL building.
  */
-public class GoalAPLBuildTest
+public class GoalAPLTest
 {
 	@Test
 	public void	testPojoGoalAPLBuild()
@@ -99,4 +106,47 @@ public class GoalAPLBuildTest
 		assertNull(agent.executed.get(TestHelper.TIMEOUT));
 	}
 
+	@Test
+	public void	testSelectCandidate()
+	{
+		@BDIAgent
+		class SelectCandidate
+		{
+			@Belief
+			List<String>	results	= new ArrayList<>();
+			
+			@Goal
+			class SelectGoal
+			{
+				@GoalTargetCondition(beliefs="results")
+				boolean	target()
+				{
+					return results.size()>=2;
+				}
+				
+				@GoalSelectCandidate
+				ICandidateInfo	select(List<ICandidateInfo>	candidates)
+				{
+					return results.isEmpty() ? candidates.get(1) : candidates.get(0);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=SelectGoal.class))
+			void plan1()
+			{
+				results.add("result1");
+			}
+			
+			@Plan(trigger=@Trigger(goals=SelectGoal.class))
+			void plan2()
+			{
+				results.add("result2");
+			}
+		}
+		
+		SelectCandidate	agent	= new SelectCandidate();
+		IComponentHandle	handle	= IComponentManager.get().create(agent).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new SelectGoal())).get(TestHelper.TIMEOUT);
+		assertEquals(Arrays.asList("result2", "result1"), agent.results);
+	}
 }

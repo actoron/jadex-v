@@ -364,27 +364,22 @@ public class APL
 		ICandidateInfo cand = null;
 		
 		// Meta-level reasoning
-//		MElement melem = element.getModelElement();
-//		if(melem instanceof MGoal)
-//		{
-//			MGoal mgoal = (MGoal)melem;
-//			MethodInfo mi = mgoal.getSelectCandidateMethod(IInternalBDIAgentFeature.get().getClassLoader());
-//			if(mi!=null)
-//			{
-//				Method m = mi.getMethod(IInternalBDIAgentFeature.get().getClassLoader());
-//				try
-//				{
-//					SAccess.setAccessible(m, true);
-//					cand = (ICandidateInfo)m.invoke(element.getPojo(),
-//								BDIAgentFeature.getInjectionValues(m.getParameterTypes(), m.getParameterAnnotations(), melem, null, null, element,
-//									Collections.singletonList(getCandidates())));
-//				}
-//				catch(Exception e)
-//				{
-//					System.err.println("Error in select candidates method: "+e.getMessage());
-//				}
-//			}
-//		}
+		if(element instanceof RGoal)
+		{
+			MGoal mgoal = ((RGoal)element).getMGoal();
+			if(mgoal.selectcandidate()!=null)
+			{
+				Object	result	= mgoal.selectcandidate().apply(element.getComponent(), element.getAllPojos(), candidates, null);
+				if(result instanceof ICandidateInfo)
+				{
+					cand	= (ICandidateInfo)result;
+				}
+				else
+				{
+					throw new UnsupportedOperationException("@GoalSelectCandidate method must return ICandidateInfo");
+				}
+			}
+		}
 		
 		if(cand==null)
 		{
@@ -1200,6 +1195,14 @@ public class APL
 			RPlan	rplan	= new RPlan(this, pojo.getClass().getName(), reason, body, reason.getComponent(), reason.getParentPojos());
 			rplan.setPojo(pojo);
 			return rplan;
+		}
+
+		/**
+		 *  Get the pojo.
+		 */
+		public Object	getPojo()
+		{
+			return pojo;
 		}
 
 		@Override

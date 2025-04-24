@@ -9,6 +9,6 @@ import jadex.injection.impl.IInjectionHandle;
  *  @param maintain Is maintain condition present?
  *  @param annotation goal flags.
  */ 
-public record MGoal(boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild)
+public record MGoal(boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild, IInjectionHandle selectcandidate)
 {
 }
