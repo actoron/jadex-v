@@ -1271,7 +1271,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	 *  Set the pojo.
 	 *  For class plans that need to be instantiated after rplan is created.
 	 */	
-	protected void	setPojo(Object pojoelement)
+	public void	setPojo(Object pojoelement)
 	{
 		this.pojoelement	= pojoelement;
 		

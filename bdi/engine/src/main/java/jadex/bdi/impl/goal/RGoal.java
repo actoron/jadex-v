@@ -377,14 +377,14 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		}
 		return ret;
 	}
-//	
-//	/**
-//	 *  Get the model element.
-//	 */
-//	public MGoal getMGoal()
-//	{
-//		return (MGoal)getModelElement();
-//	}
+	
+	/**
+	 *  Get the model element.
+	 */
+	public MGoal getMGoal()
+	{
+		return mgoal;
+	}
 	
 	/**
 	 *  Test if the element is succeeded.

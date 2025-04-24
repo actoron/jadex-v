@@ -10,13 +10,19 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.impl.goal.APL;
 import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.impl.goal.MGoal;
+import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.IPlanBody;
+import jadex.injection.impl.IInjectionHandle;
 
 /**
  *  Meta info about the agent/capability etc.
  */
 public class BDIModel
 {
+	/** The plan bodies for plan classes. */
+	// use dby @GoalAPLBuild to find plan bodies for plan pojo.
+	protected Map<Class<?>, ClassPlanBody>	mplans	= new LinkedHashMap<>();
+	
 	/** The plans that are triggered by an instance of the element class. */
 	// TODO: probably need separate MInfo in model and (R)ICandidateInfo with correct parent pojos for capability plans
 	protected Map<Class<?>, List<ICandidateInfo>>	plans	= new LinkedHashMap<>();
@@ -24,6 +30,23 @@ public class BDIModel
 	/** The known goals (goal pojoclazz -> goal annotation for meta info). */
 	protected Map<Class<?>, MGoal>	goals	= new LinkedHashMap<>();
 	
+	
+	/**
+	 *  Get plan body for pojo class.
+	 */
+	public ClassPlanBody	getPlanBody(Class<?> pojoclazz)
+	{
+		
+		return mplans.get(pojoclazz);
+	}
+	
+	/**
+	 *  Add a plan to the model.
+	 */
+	protected void	addPlanBody(Class<?> planpojoclazz, ClassPlanBody body)
+	{
+		mplans.put(planpojoclazz, body);
+	}
 	
 	/**
 	 *  Get plans that are triggered by an instance of the element class.
@@ -45,7 +68,7 @@ public class BDIModel
 			goalplans	= new ArrayList<>(4);
 			plans.put(goalpojoclazz, goalplans);
 		}
-		goalplans.add(new APL.PlanCandidate(planname, body));
+		goalplans.add(new APL.MPlanCandidate(planname, body));
 	}
 	
 	/**
@@ -67,9 +90,9 @@ public class BDIModel
 	/**
 	 *  Add goal meta info.
 	 */
-	protected void	addGoal(Class<?> goalpojoclazz, boolean target, boolean maintain, Goal annotation)
+	protected void	addGoal(Class<?> goalpojoclazz, boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild)
 	{
-		goals.put(goalpojoclazz, new MGoal(target, maintain, annotation));
+		goals.put(goalpojoclazz, new MGoal(target, maintain, annotation, aplbuild));
 	}
 	
 	//-------- static part --------

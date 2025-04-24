@@ -54,4 +54,23 @@ public interface IGoal //extends IParameterElement, IFinishableElement<Void>// n
 	 *  Get the pojo of the goal
 	 */
 	public Object	getPojo();
+
+	
+	/**
+	 *  Test if goal is succeeded.
+	 *  @return True, if is succeeded.
+	 */
+	public boolean	isSucceeded();
+	
+	/**
+	 *  Test if goal is failed.
+	 *  @return True, if is failed.
+	 */
+	public boolean	isFailed();
+	
+	/**
+	 *  Test if goal is finished.
+	 *  @return True, if is finished.
+	 */
+	public boolean	isFinished();
 }

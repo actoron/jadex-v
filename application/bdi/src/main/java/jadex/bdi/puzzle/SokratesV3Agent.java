@@ -6,6 +6,10 @@ import java.util.List;
 
 import javax.swing.SwingUtilities;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
+import jadex.bdi.IPlan;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
@@ -16,24 +20,20 @@ import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgent;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IGoal;
-import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Puzzle agent tries to solve a solitair board game
- *  by recursiveky applying means-end-reasoning.
+ *  by recursively applying means-end-reasoning.
  */
-@Agent(type="bdip")
+@BDIAgent
 public class SokratesV3Agent
 {
 	//-------- attributes --------
@@ -43,7 +43,6 @@ public class SokratesV3Agent
 	protected IBoard	board	= new JackBoard();
 	
 	/** The number of tried moves. */
-	@Belief // needs not to be belief, just used here to test the BDIDebugger
 	protected int	triescnt;
 	
 	/** The depth of the current move. */
@@ -129,7 +128,7 @@ public class SokratesV3Agent
 		/**
 		 *  Move goal is successful when resulting board represents a solution.
 		 */
-		@GoalTargetCondition//(beliefs="board")
+		@GoalTargetCondition(beliefs="board")
 		public boolean	isAchieved()
 		{
 			return board.isSolution();
@@ -299,6 +298,6 @@ public class SokratesV3Agent
 
 	public static void main(String[] args)
 	{
-		IBDIAgent.create(new SokratesV3Agent());
+		IComponentManager.get().create(new SokratesV3Agent());
 	}
 }

@@ -32,6 +32,7 @@ import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalAPLBuild;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
@@ -565,12 +566,20 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			planname, true, contextfetchers);
 		IInjectionHandle	precondition	= createMethodInvocation(planclazz, parentclazzes, PlanPrecondition.class, contextfetchers);
 		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, parentclazzes, PlanContextCondition.class, contextfetchers);
-		IInjectionHandle	constructor	= InjectionModel.findViableConstructor(planclazz, parentclazzes, contextfetchers);
+		IInjectionHandle	constructor	= null;
+		try
+		{
+			constructor	= InjectionModel.findViableConstructor(planclazz, parentclazzes, contextfetchers);
+		}
+		catch(UnsupportedOperationException e)
+		{
+			// Ignore when no constructor found as plan may be used in @GoalAPLBuild
+		}
 		IInjectionHandle	body	= createMethodInvocation(planclazz, parentclazzes, PlanBody.class, contextfetchers);
 		IInjectionHandle	passed	= createMethodInvocation(planclazz, parentclazzes, PlanPassed.class, contextfetchers);
 		IInjectionHandle	failed	= createMethodInvocation(planclazz, parentclazzes, PlanFailed.class, contextfetchers);
 		IInjectionHandle	aborted	= createMethodInvocation(planclazz, parentclazzes, PlanAborted.class, contextfetchers);
-		ClassPlanBody	planbody	= new ClassPlanBody(contextfetchers, precondition, contextcondition, constructor, body, passed, failed, aborted);
+		ClassPlanBody	planbody	= new ClassPlanBody(planname, contextfetchers, precondition, contextcondition, constructor, body, passed, failed, aborted);
 		
 		// TODO: fidn belifs of all capabilities!?
 		addEventTriggerRule(parentclazzes.get(parentclazzes.size()-1), ret, trigger, planbody, planname);
@@ -636,10 +645,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		}
 		
 		// Add plan to BDI model for lookup during means-end reasoning (i.e. APL build)
+		// need outer pojo not inner.
+		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
+		model.addPlanBody(planclazz, planbody);
 		for(Class<?> goaltype: trigger.goals())
 		{
-			// need outer pojo not inner. -> change extra on start to List<Class>
-			BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
 			model.addPlanforGoal(goaltype, planname, planbody);
 		}
 	}
@@ -830,10 +840,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 		}
 		
+		IInjectionHandle	aplbuild	= createMethodInvocation(goalclazz, parentclazzes, GoalAPLBuild.class, contextfetchers);
 		
 		// BDI model is for outmost pojo.
 		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
-		model.addGoal(goalclazz, !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), goalclazz.getAnnotation(Goal.class));
+		model.addGoal(goalclazz, !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), goalclazz.getAnnotation(Goal.class), aplbuild);
 	}
 
 	/**
@@ -1013,14 +1024,15 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 */
 	protected void	checkPlanDefinition(Trigger trigger, String planname)
 	{
-		if(trigger.factadded().length==0
-			&& trigger.factremoved().length==0
-			&& trigger.factchanged().length==0
-			&& trigger.goals().length==0
-			&& trigger.goalfinisheds().length==0)
-		{
-			throw new UnsupportedOperationException("Plan has no trigger: "+planname);
-		}
+		// Allow plans without trigger for @GoalAPLBuild
+//		if(trigger.factadded().length==0
+//			&& trigger.factremoved().length==0
+//			&& trigger.factchanged().length==0
+//			&& trigger.goals().length==0
+//			&& trigger.goalfinisheds().length==0)
+//		{
+//			throw new UnsupportedOperationException("Plan has no trigger: "+planname);
+//		}
 		
 		// TODO: more checks?
 		// TODO: test cases for checks?

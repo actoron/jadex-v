@@ -18,6 +18,9 @@ import jadex.injection.impl.IValueFetcherCreator;
  */
 public class ClassPlanBody implements IPlanBody
 {
+	/** The name of the plan class. */
+	protected String	planname;
+	
 	/** Fetch local values, e.g. goal. */
 	protected Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers;
 	
@@ -45,7 +48,7 @@ public class ClassPlanBody implements IPlanBody
 	/**
 	 *  Create a class plan body.
 	 */
-	public ClassPlanBody(Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers,
+	public ClassPlanBody(String planname, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers,
 		IInjectionHandle precondition, IInjectionHandle contextcondition, IInjectionHandle constructor,
 		IInjectionHandle body, IInjectionHandle passed, IInjectionHandle failed, IInjectionHandle aborted)
 	{
@@ -85,8 +88,15 @@ public class ClassPlanBody implements IPlanBody
 	{
 		if(rplan.getPojo()==null)
 		{
-			Object pojo	= internalInvokePart(rplan, constructor);
-			rplan.setPojo(pojo);
+			if(constructor!=null)
+			{
+				Object pojo	= internalInvokePart(rplan, constructor);
+				rplan.setPojo(pojo);
+			}
+			else
+			{
+				throw new UnsupportedOperationException("No viable constructor for plan: "+planname);
+			}
 		}
 	}
 	

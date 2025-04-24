@@ -1,6 +1,7 @@
 package jadex.bdi.impl.goal;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
+import jadex.common.SUtil;
 
 /**
  *  The APL is the applicable plan list. It stores the
@@ -72,60 +74,51 @@ public class APL
 		
 		if(candidates==null)
 		{
-//			boolean	done	= false;
-//
-//			Object pojo = element.getPojo();
-//			if(pojo!=null && element instanceof IGoal)
-//			{
-//				IGoal goal = (IGoal)element;
-//				MGoal mgoal = (MGoal)goal.getModelElement();
-//				ClassLoader	cl	= ((MicroAgent)IExecutionFeature.get().getComponent()).getClassLoader();
-//				MethodInfo mi = mgoal.getBuildAPLMethod(cl);
-//				if(mi!=null)
-//				{
-//					Method m = mi.getMethod(cl);
-//					try
-//					{
-//						SAccess.setAccessible(m, true);
-//						@SuppressWarnings("unchecked")
-//						List<Object> cands = (List<Object>)m.invoke(pojo, new Object[0]);
-//						candidates = new ArrayList<ICandidateInfo>();
-//						if(cands!=null)
-//						{
-//							for(Object cand: cands)
-//							{
-//								if(cand.getClass().isAnnotationPresent(Plan.class))
-//								{
-//									MCapability	mcapa = (MCapability)IInternalBDIAgentFeature.get().getCapability().getModelElement();
-//									MPlan mplan = mcapa.getPlan(cand.getClass().getName());
-//									CandidateInfoPojoPlan ci = new CandidateInfoPojoPlan(cand, element);
-//									RPlan rplan = RPlan.createRPlan(mplan, ci, element, null);
-//									ci.rplan = rplan;
-//									
-//									candidates.add(ci);
-////									RPlan.executePlan(rplan, ia);
-//								}
-//								else if(cand instanceof ICandidateInfo)
-//								{
-//									candidates.add((ICandidateInfo)cand);
-//								}
-//								else
-//								{
-//									throw new RuntimeException("Candidates must be pojo plans or of type ICandidateInfo");
-//								}
-//							}
-//						}
-//						done = true;
-//					}
-//					catch(Exception e)
-//					{
-//						throw SUtil.throwUnchecked(e);
-//					}
-//				}
-//			}
-//			
-//			if(!done)
-//			{
+			boolean	done	= false;
+
+			Object pojo = element.getPojo();
+			if(pojo!=null && element instanceof RGoal)
+			{
+				RGoal goal = (RGoal)element;
+				MGoal mgoal = (MGoal)goal.getMGoal();
+				if(mgoal.aplbuild()!=null)
+				{
+					try
+					{
+						@SuppressWarnings("unchecked")
+						Collection<Object>	result	= (Collection<Object>) mgoal.aplbuild().apply(goal.getComponent(), goal.getAllPojos(), goal, null);
+						candidates = new ArrayList<ICandidateInfo>();
+						if(result!=null)
+						{
+							BDIModel	model	= ((BDIAgentFeature)goal.getComponent().getFeature(IBDIAgentFeature.class)).getModel();
+							for(Object cand: result)
+							{
+								IPlanBody	body	= model.getPlanBody(cand.getClass());
+								if(body!=null)
+								{
+									candidates.add(new PojoPlanCandidate(cand, body));
+								}
+								else if(cand instanceof ICandidateInfo)
+								{
+									candidates.add((ICandidateInfo)cand);
+								}
+								else
+								{
+									throw new RuntimeException("Candidates must be pojo plans or of type ICandidateInfo");
+								}
+							}
+						}
+						done = true;
+					}
+					catch(Exception e)
+					{
+						throw SUtil.throwUnchecked(e);
+					}
+				}
+			}
+			
+			if(!done)
+			{
 //				// Handle waiting plans
 //				Collection<RPlan> rplans = IInternalBDIAgentFeature.get().getCapability().getPlans();
 //				if(rplans!=null)
@@ -160,11 +153,11 @@ public class APL
 				}
 				
 				removeTriedCandidates();
-//			}
-//			else
-//			{
-//				removeTriedCandidates();
-//			}
+			}
+			else
+			{
+				removeTriedCandidates();
+			}
 		}
 		else
 		{
@@ -177,7 +170,7 @@ public class APL
 	 */
 	protected void removeTriedCandidates()
 	{
-		ExcludeMode exclude = ((RGoal)element).mgoal.annotation().excludemode();
+		ExcludeMode exclude = ((RGoal)element).getMGoal().annotation().excludemode();
 		
 		if(candidates!=null && candidates.size()>0 && !ExcludeMode.Never.equals(exclude) && element.getTriedPlans()!=null)
 		{
@@ -354,7 +347,7 @@ public class APL
 		if(cand.getBody().hasPrecondition())
 		{
 			// TODO: avoid duplicate RPlan creation
-			RPlan	rplan	= cand.createPlan(cand, element);
+			RPlan	rplan	= cand.createPlan(element);
 			ret	= cand.getBody().checkPrecondition(rplan);
 		}
 		
@@ -495,7 +488,7 @@ public class APL
 	 */
 	public void planFinished(RPlan rplan)
 	{
-		ExcludeMode exclude = ((RGoal)element).mgoal.annotation().excludemode();
+		ExcludeMode exclude = ((RGoal)element).getMGoal().annotation().excludemode();
 		
 		// Do nothing if APL exclude is never
 		if(ExcludeMode.Never.equals(exclude))
@@ -1140,7 +1133,10 @@ public class APL
 //		}
 //	}
 
-	public static class	PlanCandidate	implements ICandidateInfo
+	/**
+	 *  Candidate info for a plan from the model.
+	 */
+	public static class	MPlanCandidate	implements ICandidateInfo
 	{
 		/** The model name of the plan (e.g. method name). */
 		protected String	name;
@@ -1149,19 +1145,19 @@ public class APL
 		protected IPlanBody	body;
 		
 		/**
-		 *  Create a method plan candidate info.
+		 *  Create a plan candidate info.
 		 */
-		public PlanCandidate(String name, IPlanBody body)
+		public MPlanCandidate(String name, IPlanBody body)
 		{
 			this.name	= name;
 			this.body	= body;
 		}
 		
 		@Override
-		public RPlan createPlan(ICandidateInfo cand, RProcessableElement reason)
+		public RPlan createPlan(RProcessableElement reason)
 		{
 			// TODO: plan from another capability needs other parent pojos
-			return new RPlan(cand, name, reason, body, reason.getComponent(), reason.getParentPojos());
+			return new RPlan(this, name, reason, body, reason.getComponent(), reason.getParentPojos());
 		}
 
 		@Override
@@ -1173,7 +1169,49 @@ public class APL
 		@Override
 		public String toString()
 		{
-			return "PlanCandidate("+name+")";
+			return "MPlanCandidate("+name+")";
+		}
+	}
+
+	/**
+	 *  Candidate info for a pojo, e.g. from GoalAPLBuild.
+	 */
+	public static class PojoPlanCandidate implements ICandidateInfo
+	{
+		/** The plan pojo. */
+		protected Object	pojo;
+		
+		/** The plan body. */
+		protected IPlanBody	body;
+
+		/**
+		 *  Create the plan candidate.
+		 */
+		public PojoPlanCandidate(Object pojo, IPlanBody body)
+		{
+			this.pojo	= pojo;
+			this.body	= body;
+		}
+		
+		@Override
+		public RPlan createPlan(RProcessableElement reason)
+		{
+			// TODO: reason parent pojos may be wrong for plan from other capability
+			RPlan	rplan	= new RPlan(this, pojo.getClass().getName(), reason, body, reason.getComponent(), reason.getParentPojos());
+			rplan.setPojo(pojo);
+			return rplan;
+		}
+
+		@Override
+		public IPlanBody getBody()
+		{
+			return body;
+		}
+
+		@Override
+		public String toString()
+		{
+			return "PojoPlanCandidate("+pojo+")";
 		}
 	}
 }

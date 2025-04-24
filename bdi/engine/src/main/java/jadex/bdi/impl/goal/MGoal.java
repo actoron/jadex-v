@@ -1,6 +1,7 @@
 package jadex.bdi.impl.goal;
 
 import jadex.bdi.annotation.Goal;
+import jadex.injection.impl.IInjectionHandle;
 
 /**
  *  Meta-info for a goal.
@@ -8,4 +9,6 @@ import jadex.bdi.annotation.Goal;
  *  @param maintain Is maintain condition present?
  *  @param annotation goal flags.
  */ 
-public record MGoal(boolean target, boolean maintain, Goal annotation) {}
+public record MGoal(boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild)
+{
+}
