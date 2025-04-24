@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jadex.common.SUtil;
+import jadex.common.TimeoutException;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.ICallable;
@@ -648,8 +649,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		/** Set by terminate() to indicate step abortion. */  
 		protected boolean	aborted;
 		
+		/** Set by timer to indicate timeout. */  
+		protected boolean	istimeout;
+		
 		/** Provide access to future when suspended. */
 		protected Future<?> future;
+		
+		/** The timer, when blocked and timeout is set. */
+		protected ITerminableFuture<Void>	timer;
 		
 		/** Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads. */
 		protected ReentrantLock lock	= new ReentrantLock();
@@ -660,10 +667,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			assert !blocked;
 			assert !aborted;
-			
+
 			beforeBlock(future);
 			
 			boolean startnew	= false;
+			boolean istimeout	= false;
 			
 			synchronized(ExecutionFeature.this)
 			{
@@ -697,8 +705,41 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				{
 					this.future	= future;
 					blocked	= true;
-					// TODO timeout?
+					
+					if(timeout==Future.UNSET)
+					{
+						timeout = SUtil.DEFTIMEOUT;
+					}
+					if(timeout>0)
+					{
+						this.timer	= waitForDelay(timeout);
+						timer.then(v -> 
+						{
+							boolean	resume	= false;
+							try
+							{
+								lock.lock();
+								// Only wake up if still waiting for same future (no timeout, when result already occurred).
+								if(future==this.future)
+								{
+									this.istimeout	= true;
+									resume	= true;
+								}
+							}
+							finally
+							{
+								lock.unlock();
+							}
+							
+							if(resume)
+							{
+								resume(future);
+							}
+						});
+					}
+					
 					wait.await();
+					istimeout	= this.istimeout;
 				}
 				catch(InterruptedException e)
 				{
@@ -726,6 +767,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			
 			afterBlock();
+			
+			if(istimeout)
+			{
+				throw new TimeoutException();
+			}
 		}
 	
 		@Override
@@ -738,23 +784,27 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					try
 					{
 						lock.lock();
-						synchronized(ExecutionFeature.this)
+						// Only wake up if still waiting for same future (invalid resume might be called from outdated future after timeout already occurred).
+						if(future==this.future)
 						{
-							// Force this thread (or another) to end execution
-							// Can be two resume() of different threads before any threads end,
-							// thus a counter is needed.
-							do_switch++;
+							synchronized(ExecutionFeature.this)
+							{
+								// Force this thread (or another) to end execution
+								// Can be two resume() of different threads before any threads end,
+								// thus a counter is needed.
+								do_switch++;
+							}
+							if(!failed && threadcount.decrementAndGet()<0)
+							{
+								failed	= true;
+								throw new IllegalStateException("Threadcount<0");
+							}
+							wait.signal();
+							
+							// Abort this step to skip afterStep() call, because other thread is already running now.
+							// Use null because code is used in bootstrapping before getComponent() is available
+							throw new StepAborted(null);
 						}
-						if(!failed && threadcount.decrementAndGet()<0)
-						{
-							failed	= true;
-							throw new IllegalStateException("Threadcount<0");
-						}
-						wait.signal();
-						
-						// Abort this step to skip afterStep() call, because other thread is already running now.
-						// Use null because code is used in bootstrapping before getComponent() is available
-						throw new StepAborted(null);
 					}
 					finally
 					{

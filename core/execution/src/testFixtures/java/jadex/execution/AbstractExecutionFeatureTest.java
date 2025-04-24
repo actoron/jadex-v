@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.common.TimeoutException;
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
 import jadex.execution.impl.ExecutionFeature;
@@ -379,5 +380,19 @@ public abstract class AbstractExecutionFeatureTest
 		long after	= comp.getComponentHandle().scheduleStep(
 			() -> IExecutionFeature.get().getTime()).get(TIMEOUT);
 		assertTrue(after >= before+wait, "Not enough time has passed.");
+	}
+
+	@Test
+	public void	testTimeout()
+	{
+		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
+		long	wait	= 50;
+		long before	= comp.getComponentHandle().scheduleStep(
+			() -> IExecutionFeature.get().getTime()).get(TIMEOUT);
+		assertThrows(TimeoutException.class, () -> comp.getComponentHandle().scheduleStep(()
+			-> new Future<>().get(wait)).get(TIMEOUT));
+		long after	= comp.getComponentHandle().scheduleStep(
+				() -> IExecutionFeature.get().getTime()).get(TIMEOUT);
+			assertTrue(after >= before+wait, "Not enough time has passed.");
 	}
 }
