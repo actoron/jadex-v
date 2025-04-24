@@ -16,6 +16,7 @@ import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
+import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
@@ -252,7 +253,7 @@ public class GoalConditionTest
 			@Belief
 			List<String> trigger	= new ArrayList<>(Collections.singletonList("value"));
 			
-			@Goal
+			@Goal(excludemode=ExcludeMode.WhenFailed)
 			class StartGoal
 			{
 				@GoalMaintainCondition(beliefs="trigger")
@@ -261,7 +262,7 @@ public class GoalConditionTest
 					return trigger.contains("value");
 				}
 				
-				@GoalMaintainCondition(beliefs="trigger")
+				@GoalTargetCondition(beliefs="trigger")
 				boolean targetCondition()
 				{
 					return trigger.size()>1;
@@ -284,6 +285,7 @@ public class GoalConditionTest
 		
 		handle.scheduleStep(() -> pojo.trigger.removeFirst()).get(TestHelper.TIMEOUT);
 		assertNull(goalfut.get(TestHelper.TIMEOUT));
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		assertEquals(Arrays.asList("value", "value"), pojo.trigger);
 	}
 }
