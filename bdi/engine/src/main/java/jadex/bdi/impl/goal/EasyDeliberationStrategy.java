@@ -16,6 +16,7 @@ import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.IDeliberationStrategy;
 import jadex.core.IComponentManager;
 import jadex.future.IFuture;
+import jadex.injection.impl.IInjectionHandle;
 
 /**
  *  The easy deliberation strategy.
@@ -92,11 +93,25 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	public IFuture<Void> goalIsActive(RGoal goal)
 	{
-		Deliberation delib = getBDIFeature().getModel().getGoalInfo(goal.getPojo().getClass()).annotation().deliberation();
+		Map<Class<?>, IInjectionHandle>	instanceinhibs	= goal.getMGoal().instanceinhibs();
+		
+		Deliberation delib = goal.getMGoal().annotation().deliberation();
 		Class<?>[] inhs = delib.inhibits();
 		for(Class<?> inh: inhs)
 		{
-			addInhibitors(goal, inh);
+			// Do only non-instance inhibits here (others are done below).
+			if(instanceinhibs==null || !instanceinhibs.containsKey(inh))
+			{
+				addInhibitors(goal, inh);
+			}
+		}
+		
+		if(instanceinhibs!=null)
+		{
+			for(Class<?> inh: instanceinhibs.keySet())
+			{
+				addInhibitors(goal, inh);
+			}
 		}
 		
 		if(delib.cardinalityone())
@@ -113,6 +128,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	protected void addInhibitors(RGoal goal, Class<?> inh)
 	{
 		Collection<RGoal> goals = getBDIFeature().getGoals(inh);
+//		System.out.println("Add inhibitors: "+goal+", "+goals);
 		if(goals!=null)
 		{
 			for(RGoal other: goals)
@@ -131,14 +147,28 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	public IFuture<Void> goalIsNotActive(RGoal goal)
 	{
+		Map<Class<?>, IInjectionHandle>	instanceinhibs	= goal.getMGoal().instanceinhibs();
+		
 		// Remove inhibitions of this goal 
-		Deliberation delib = getBDIFeature().getModel().getGoalInfo(goal.getPojo().getClass()).annotation().deliberation();
+		Deliberation delib = goal.getMGoal().annotation().deliberation();
 		Class<?>[] inhs = delib.inhibits();
 		for(Class<?> inh: inhs)
 		{
-			removeInhibitors(goal, inh);
+			// Do only non-instance inhibits here (others are done below).
+			if(instanceinhibs==null || !instanceinhibs.containsKey(inh))
+			{
+				removeInhibitors(goal, inh);
+			}
 		}
-			
+		
+		if(instanceinhibs!=null)
+		{
+			for(Class<?> inh: instanceinhibs.keySet())
+			{
+				removeInhibitors(goal, inh);
+			}
+		}
+		
 		// Remove inhibitor from goals of same type if cardinality is used
 		if(delib.cardinalityone())
 		{
@@ -147,8 +177,12 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	
 		return IFuture.DONE;
 	}
-
-	protected void removeInhibitors(RGoal goal, Class<?> inh) {
+	
+	/**
+	 *  Remove inhibitor from other goals of given type.
+	 */
+	protected void removeInhibitors(RGoal goal, Class<?> inh)
+	{
 		Collection<RGoal> goals = getBDIFeature().getGoals(inh);
 		if(goals!=null)
 		{
@@ -157,8 +191,8 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 				if(goal.equals(other))
 					continue;
 				
-				if(isInhibitedBy(other, goal))
-					removeInhibitor(other, goal);
+//				if(isInhibitedBy(other, goal))
+				removeInhibitor(other, goal);
 			}
 		}
 	}
@@ -252,36 +286,44 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		
 		if(goal.getLifecycleState().equals(GoalLifecycleState.ACTIVE) && goal.getProcessingState().equals(GoalProcessingState.INPROCESS))
 		{
-			Deliberation delib = getBDIFeature().getModel().getGoalInfo(goal.getPojo().getClass()).annotation().deliberation();
+			MGoal	mgoal	= goal.getMGoal();
+			Deliberation delib = mgoal.annotation().deliberation();
 			ret	= delib.cardinalityone() && goal.getPojo().getClass().equals(other.getPojo().getClass());
 			if(!ret)
 			{
+				// check if instance relation
+				Boolean	instanceinhibit	= null;
+				Map<Class<?>, IInjectionHandle>	instanceinhibs	= mgoal.instanceinhibs();
+				if(instanceinhibs!=null)
+				{
+					IInjectionHandle	inhib	= instanceinhibs.get(other.getPojo().getClass());
+					if(inhib!=null)
+					{
+						Object	result	= inhib.apply(goal.getComponent(), goal.getAllPojos(), other, null);
+						if(result instanceof Boolean)
+						{
+							instanceinhibit	= (Boolean)result;
+						}
+						else
+						{
+							throw new UnsupportedOperationException("@GoalInhibit methods must return boolean: "+goal.getClass().getName());
+						}
+					}
+				}
+				
+				// Check if type inhibit.
 				Class<?>[] inhs = delib.inhibits();
 				if(Arrays.asList(inhs).contains(other.getPojo().getClass()))
 				{
-					ret = true;
-					
-	//				// check if instance relation
-	//				Map<String, MethodInfo> dms = delib.getInhibitionMethods();
-	//				if(dms!=null)
-	//				{
-	//					MethodInfo mi = dms.get(mother.getName());
-	//					if(mi!=null)
-	//					{
-	//						Method dm = mi.getMethod(IInternalBDIAgentFeature.get().getClassLoader());
-	//						try
-	//						{
-	//							SAccess.setAccessible(dm, true);
-	//							ret = ((Boolean)dm.invoke(goal.getPojo(), new Object[]{other.getPojo()})).booleanValue();
-	//						}
-	//						catch(Exception e)
-	//						{
-	//							Throwable	t	= e instanceof InvocationTargetException ? ((InvocationTargetException)e).getTargetException() : e;
-	//							System.err.println("Exception in inhibits expression: "+t);
-	//						}
-	//					}
-	//				}
+					// Inhibit other when instance inhibit is not present or explicitly true
+					ret = instanceinhibit==null || instanceinhibit;
 				}
+				else
+				{
+					ret	= instanceinhibit!=null && instanceinhibit;
+				}
+				
+//				System.out.println("Inhibits: "+goal+", "+other+" = "+ret);
 			}
 		}
 		

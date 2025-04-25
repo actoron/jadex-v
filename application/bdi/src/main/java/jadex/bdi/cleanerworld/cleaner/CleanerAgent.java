@@ -13,6 +13,7 @@ import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
@@ -274,7 +275,7 @@ public class CleanerAgent
 	//-------- cleanup waste --------
 	
 	//@Goal(recur=true, recurdelay=3000,deliberation=@Deliberation(inhibits=PerformPatrol.class, cardinalityone=true))
-	@Goal(deliberation=@Deliberation(inhibits={PerformLookForWaste.class, AchieveCleanupWaste.class}, cardinalityone=true)/*, unique=true*/)
+	@Goal(deliberation=@Deliberation(inhibits={PerformLookForWaste.class/*, AchieveCleanupWaste.class*/}/*, cardinalityone=true*/)/*, unique=true*/)
 	private class AchieveCleanupWaste
 	{
 		private Waste	waste;
@@ -304,39 +305,39 @@ public class CleanerAgent
 //			return daytime.get() && (self.getCarriedWaste()==null || waste.equals(self.getCarriedWaste()));
 //		}
 		
-		@Override
-		public boolean equals(Object obj)
-		{
-			return obj instanceof AchieveCleanupWaste && ((AchieveCleanupWaste)obj).waste.equals(waste);
-		}
+//		@Override
+//		public boolean equals(Object obj)
+//		{
+//			return obj instanceof AchieveCleanupWaste && ((AchieveCleanupWaste)obj).waste.equals(waste);
+//		}
 		
 		public Waste getWaste() 
 		{
 			return waste;
 		}
 
-		@Override
-		public int hashCode()
-		{
-			return 31+waste.hashCode();
-		}
-		
-//		@GoalInhibit(AchieveCleanupWaste.class)
-//		private boolean	inhibitOther(AchieveCleanupWaste other)
+//		@Override
+//		public int hashCode()
 //		{
-//			try
-//			{
-//				return waste.equals(getSelf().getCarriedWaste()) || 
-//					(!other.waste.equals(getSelf().getCarriedWaste()) && other.waste.getLocation()!=null
-//						&& waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble()
-//							< other.waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble());
-//			}
-//			catch(Exception e)
-//			{
-//				e.printStackTrace();
-//				return false;
-//			}
+//			return 31+waste.hashCode();
 //		}
+		
+		@GoalInhibit(AchieveCleanupWaste.class)
+		private boolean	inhibitOther(AchieveCleanupWaste other)
+		{
+			try
+			{
+				return waste.equals(getSelf().getCarriedWaste()) || 
+					(!other.waste.equals(getSelf().getCarriedWaste()) && other.waste.getLocation()!=null
+						&& waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble()
+							< other.waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble());
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+				return false;
+			}
+		}
 	}
 	
 	@Plan(trigger=@Trigger(goals=AchieveCleanupWaste.class))

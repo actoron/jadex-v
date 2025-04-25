@@ -1,5 +1,7 @@
 package jadex.bdi.impl.goal;
 
+import java.util.Map;
+
 import jadex.bdi.annotation.Goal;
 import jadex.injection.impl.IInjectionHandle;
 
@@ -9,6 +11,7 @@ import jadex.injection.impl.IInjectionHandle;
  *  @param maintain Is maintain condition present?
  *  @param annotation goal flags.
  */ 
-public record MGoal(boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild, IInjectionHandle selectcandidate)
+public record MGoal(boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild, IInjectionHandle selectcandidate,
+	Map<Class<?>, IInjectionHandle> instanceinhibs)
 {
 }

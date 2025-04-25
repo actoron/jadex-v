@@ -6,13 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.bdi.annotation.Goal;
 import jadex.bdi.impl.goal.APL;
 import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.impl.goal.MGoal;
 import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.IPlanBody;
-import jadex.injection.impl.IInjectionHandle;
 
 /**
  *  Meta info about the agent/capability etc.
@@ -90,9 +88,9 @@ public class BDIModel
 	/**
 	 *  Add goal meta info.
 	 */
-	protected void	addGoal(Class<?> goalpojoclazz, boolean target, boolean maintain, Goal annotation, IInjectionHandle aplbuild, IInjectionHandle selectcandidate)
+	protected void	addGoal(Class<?> goalpojoclazz, MGoal mgoal)
 	{
-		goals.put(goalpojoclazz, new MGoal(target, maintain, annotation, aplbuild, selectcandidate));
+		goals.put(goalpojoclazz, mgoal);
 	}
 	
 	//-------- static part --------

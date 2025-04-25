@@ -629,7 +629,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	}
 	
 	/**
-//	 *  Check if the goal is declarative, i.e. has target and/or maintain condition.
+	 *  Check if the goal is declarative, i.e. has target and/or maintain condition.
 	 */
 	public boolean isDeclarative()
 	{

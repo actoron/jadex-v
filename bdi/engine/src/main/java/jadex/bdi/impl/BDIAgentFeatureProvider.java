@@ -34,6 +34,7 @@ import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
@@ -47,6 +48,7 @@ import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.impl.goal.ICandidateInfo;
+import jadex.bdi.impl.goal.MGoal;
 import jadex.bdi.impl.goal.RGoal;
 import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.ExecutePlanStepAction;
@@ -287,7 +289,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				for(Class<?> goaltype: model.getGoaltypes())
 				{
 					Deliberation	delib	= model.getGoalInfo(goaltype).annotation().deliberation();
-					usedelib	= delib.inhibits().length>0 || delib.cardinalityone();
+					usedelib	= delib.inhibits().length>0 || delib.cardinalityone() || model.getGoalInfo(goaltype).instanceinhibs()!=null;
 					if(usedelib)
 					{
 						break;
@@ -562,8 +564,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			new String[][]{trigger.factadded(), trigger.factremoved(), trigger.factchanged()},
 			new Class<?>[][]{trigger.goals(), trigger.goalfinisheds()},
 			planname, true, contextfetchers);
-		IInjectionHandle	precondition	= createMethodInvocation(planclazz, parentclazzes, PlanPrecondition.class, contextfetchers);
-		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, parentclazzes, PlanContextCondition.class, contextfetchers);
+		IInjectionHandle	precondition	= createMethodInvocation(planclazz, parentclazzes, PlanPrecondition.class, contextfetchers, Boolean.class);
+		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, parentclazzes, PlanContextCondition.class, contextfetchers, Boolean.class);
 		IInjectionHandle	constructor	= null;
 		try
 		{
@@ -573,10 +575,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		{
 			// Ignore when no constructor found as plan may be used in @GoalAPLBuild
 		}
-		IInjectionHandle	body	= createMethodInvocation(planclazz, parentclazzes, PlanBody.class, contextfetchers);
-		IInjectionHandle	passed	= createMethodInvocation(planclazz, parentclazzes, PlanPassed.class, contextfetchers);
-		IInjectionHandle	failed	= createMethodInvocation(planclazz, parentclazzes, PlanFailed.class, contextfetchers);
-		IInjectionHandle	aborted	= createMethodInvocation(planclazz, parentclazzes, PlanAborted.class, contextfetchers);
+		IInjectionHandle	body	= createMethodInvocation(planclazz, parentclazzes, PlanBody.class, contextfetchers, null);
+		IInjectionHandle	passed	= createMethodInvocation(planclazz, parentclazzes, PlanPassed.class, contextfetchers, null);
+		IInjectionHandle	failed	= createMethodInvocation(planclazz, parentclazzes, PlanFailed.class, contextfetchers, null);
+		IInjectionHandle	aborted	= createMethodInvocation(planclazz, parentclazzes, PlanAborted.class, contextfetchers, null);
 		ClassPlanBody	planbody	= new ClassPlanBody(planname, contextfetchers, precondition, contextcondition, constructor, body, passed, failed, aborted);
 		
 		// TODO: fidn belifs of all capabilities!?
@@ -838,12 +840,61 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 		}
 		
-		IInjectionHandle	aplbuild	= createMethodInvocation(goalclazz, parentclazzes, GoalAPLBuild.class, contextfetchers);
-		IInjectionHandle selectcandidate = createGoalSelectCandidateMethod(goalclazz, parentclazzes, contextfetchers);
+		// Get instance inhibition methods.
+		Map<Class<?>, IInjectionHandle>	instanceinhibs	= null;
+		List<Method> methods	= InjectionModel.findMethods(goalclazz, GoalInhibit.class);
+		for(Method m: methods)
+		{
+			Class<?>	otherclazz	= m.getAnnotation(GoalInhibit.class).value();
+			if(instanceinhibs!=null && instanceinhibs.containsKey(otherclazz))
+			{
+				throw new UnsupportedOperationException("Only one  @GoalInhibit method per other goal class is allowed: "+m+", "+otherclazz);
+			}
+			
+			IValueFetcherCreator	creator	= (pojotypes, valuetype, annotation) ->
+			{
+				if(IGoal.class.equals(valuetype))
+				{
+					return (comp, pojos, context, oldval) -> context;
+				}
+				else if(otherclazz.equals(valuetype))
+				{
+					return (comp, pojos, context, oldval) -> ((IGoal)context).getPojo();
+				}
+				return null;
+			};
+			
+			Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	mycontextfetchers;
+			mycontextfetchers	= contextfetchers==null ? new LinkedHashMap<>() : new LinkedHashMap<>(contextfetchers);			
+			if(mycontextfetchers.get(Inject.class)==null)
+			{
+				mycontextfetchers.put(Inject.class, Collections.singletonList(creator));
+			}
+			else
+			{
+				List<IValueFetcherCreator>	list	= new ArrayList<>(mycontextfetchers.get(Inject.class));
+				list.add(creator);
+				mycontextfetchers.put(Inject.class, list);
+			}
+
+			IInjectionHandle	handle	= InjectionModel.createMethodInvocation(m, parentclazzes, mycontextfetchers, null);
+			
+			if(instanceinhibs==null)
+			{
+				instanceinhibs	= new LinkedHashMap<>();
+			}
+			instanceinhibs.put(otherclazz, handle);
+		}
+		
+		// Get meta-level reasoning methods.
+		IInjectionHandle	aplbuild	= createMethodInvocation(goalclazz, parentclazzes, GoalAPLBuild.class, contextfetchers, Collection.class);
+		IInjectionHandle	selectcandidate = createGoalSelectCandidateMethod(goalclazz, parentclazzes, contextfetchers);
 		
 		// BDI model is for outmost pojo.
 		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
-		model.addGoal(goalclazz, !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), goalclazz.getAnnotation(Goal.class), aplbuild, selectcandidate);
+		MGoal mgoal	= new MGoal(!targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(),
+			goalclazz.getAnnotation(Goal.class), aplbuild, selectcandidate, instanceinhibs);
+		model.addGoal(goalclazz, mgoal);
 	}
 
 	protected IInjectionHandle createGoalSelectCandidateMethod(Class<?> goalclazz, List<Class<?>> parentclazzes,
@@ -871,7 +922,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			list.add(creator);
 			contextfetchers.put(Inject.class, list);
 		}
-		return createMethodInvocation(goalclazz, parentclazzes, GoalSelectCandidate.class, contextfetchers);
+		return createMethodInvocation(goalclazz, parentclazzes, GoalSelectCandidate.class, contextfetchers, ICandidateInfo.class);
 	}
 
 	/**
@@ -949,13 +1000,20 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 *  @throws	UnsupportedOperationException if multiple methods match.
 	 */
 	protected IInjectionHandle createMethodInvocation(Class<?> planclazz, List<Class<?>> parentclasses, Class<? extends Annotation> anno,
-		Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
+		Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers, Class<?> returntype)
 	{
 		IInjectionHandle	ret	= null;
 		List<Method> methods	= InjectionModel.findMethods(planclazz, anno);
 		if(methods.size()==1)
 		{
-			ret	= InjectionModel.createMethodInvocation(methods.get(0), parentclasses, contextfetchers, null);
+			if(returntype==null || SReflect.isSupertype(returntype, methods.get(0).getReturnType()))
+			{
+				ret	= InjectionModel.createMethodInvocation(methods.get(0), parentclasses, contextfetchers, null);
+			}
+			else
+			{
+				throw new UnsupportedOperationException("@"+anno.getSimpleName()+" method must return "+returntype.getName()+": "+methods.get(0));				
+			}
 		}
 		else if(methods.size()>1)
 		{

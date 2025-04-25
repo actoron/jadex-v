@@ -11,6 +11,7 @@ import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
@@ -95,7 +96,7 @@ public class GoalDeliberationTest
 	public void	testCardinalityOne()
 	{
 		@BDIAgent
-		class GoaltypeDeliberationAgent
+		class CardinalityOneAgent
 		{
 			int	plancnt	= 0;
 			Future<Void>	block	= new Future<>();
@@ -119,7 +120,7 @@ public class GoalDeliberationTest
 			}
 		}
 		
-		GoaltypeDeliberationAgent pojo	= new GoaltypeDeliberationAgent();
+		CardinalityOneAgent pojo	= new CardinalityOneAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new Inhibit()));
 		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new Inhibit()));
@@ -130,5 +131,47 @@ public class GoalDeliberationTest
 		pojo.block.setResult(null);
 		pojo.processing.getNextIntermediateResult(TestHelper.TIMEOUT);
 		assertEquals(2, pojo.plancnt);
+	}
+
+
+	@Test
+	public void	testInstanceInhibit()
+	{
+		@BDIAgent
+		class InstanceInhibitAgent
+		{
+			IntermediateFuture<Integer>	results	= new IntermediateFuture<>();
+			
+			@Goal
+			record MyGoal(int value)
+			{
+				@GoalInhibit(MyGoal.class)
+				boolean inhibits(MyGoal other)
+				{
+					return this.value()>other.value();
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=MyGoal.class))
+			void	myPlan(MyGoal goal)
+			{
+				results.addIntermediateResult(goal.value());
+			}
+		}
+		
+		InstanceInhibitAgent pojo	= new InstanceInhibitAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		
+		handle.scheduleStep(comp -> 
+		{
+			comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new InstanceInhibitAgent.MyGoal(1));
+			comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new InstanceInhibitAgent.MyGoal(2));
+			comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new InstanceInhibitAgent.MyGoal(3));
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		
+		assertEquals(3, pojo.results.getNextIntermediateResult(TestHelper.TIMEOUT));
+		assertEquals(2, pojo.results.getNextIntermediateResult(TestHelper.TIMEOUT));
+		assertEquals(1, pojo.results.getNextIntermediateResult(TestHelper.TIMEOUT));
 	}
 }
