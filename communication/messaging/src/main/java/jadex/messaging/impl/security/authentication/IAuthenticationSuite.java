@@ -1,7 +1,8 @@
 package jadex.messaging.impl.security.authentication;
 
 import jadex.core.impl.GlobalProcessIdentifier;
-import jadex.messaging.security.Security;
+import jadex.messaging.security.SecurityFeature;
+import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
 
 /**
  *  Suite for authenticating messages.
@@ -43,17 +44,17 @@ public interface IAuthenticationSuite
 	 *  
 	 *  @return First round payload.
 	 */
-	public byte[] getPakeRound1(Security sec, GlobalProcessIdentifier remoteid);
+	public byte[] getPakeRound1(SecurityFeature sec, GlobalProcessIdentifier remoteid);
 	
 	/** 
 	 *  Gets the second round of the password-authenticated key-exchange.
 	 *  
 	 *  @return Second round payload.
 	 */
-	public byte[] getPakeRound2(Security sec, GlobalProcessIdentifier remoteid, byte[] round1data);
+	public byte[] getPakeRound2(SecurityFeature sec, GlobalProcessIdentifier remoteid, byte[] round1data);
 	
 	/**
 	 *  Finalizes the password-authenticated key exchange.
 	 */
-	public void finalizePake(Security sec, GlobalProcessIdentifier remoteid, byte[] round2data);
+	public void finalizePake(SecurityFeature sec, GlobalProcessIdentifier remoteid, byte[] round2data);
 }

@@ -30,9 +30,6 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 {
 	//-------- attributes --------
 
-	/** The remote invocation ID. */
-	private String id;
-	
 	/** The target id. */
 	private Object target;
 	
@@ -53,10 +50,9 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 	/**
 	 *  Create a remote method invocation command.
 	 */
-	public RemoteMethodInvocationCommand(String id, Object target, Method method, Object[] args, Map<String, Object> nonfunc)
+	public RemoteMethodInvocationCommand(String id, ComponentIdentifier sender, Object target, Method method, Object[] args, Map<String, Object> nonfunc)
 	{
-		super(nonfunc);
-		this.id = id;
+		super(id, sender, nonfunc);
 		this.target	= target;
 		this.method	= new MethodInfo(method);
 		this.args	= args;
@@ -64,25 +60,6 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 		
 		//if(method.toString().toLowerCase().indexOf("registryv2")!=-1)
 		//	System.out.println("Creating command for: "+method);
-	}
-
-	/**
-	 *  Get the ID of the command.
-	 *  @return The ID.
-	 */
-	public String getId()
-	{
-		return id;
-	}
-
-	/**
-	 *  Set the ID of the command.
-	 *  @return The command (builder pattern).
-	 */
-	public RemoteMethodInvocationCommand<T> setId(String id)
-	{
-		this.id = id;
-		return this;
 	}
 
 	/**
@@ -189,9 +166,8 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 			{
 				try
 				{
-
 					Method	m	= method.getMethod(ComponentManager.get().getClassLoader());
-					ret	= m.invoke(component.getExternalAccess(), args);
+					ret	= m.invoke(component.getComponentHandle(), args);
 					
 //					System.out.println("adding lis: "+Arrays.toString(args));
 //					if(method.toString().toLowerCase().indexOf("getdesc")!=-1)

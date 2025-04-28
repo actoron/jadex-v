@@ -10,10 +10,10 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.Future;
 import jadex.messaging.ISecurityFeature.DecodedMessage;
-import jadex.messaging.impl.security.authentication.KeySecret;
-import jadex.messaging.impl.security.authentication.PasswordSecret;
+import jadex.messaging.security.authentication.KeySecret;
+import jadex.messaging.security.authentication.PasswordSecret;
 import jadex.messaging.security.SSecurity;
-import jadex.messaging.security.Security;
+import jadex.messaging.security.SecurityFeature;
 
 /**
  *  Test for the IPC subsystem.
@@ -104,8 +104,8 @@ public class IpcTest
 		ComponentIdentifier cid2 = getIpcComponentTestId("test2");
 		IpcStreamHandler ipc2 = getIpcStreamHandler(cid2);
 		
-		Security sec1 = new Security(cid1.getGlobalProcessIdentifier(), ipc1);
-		Security sec2 = new Security(cid2.getGlobalProcessIdentifier(), ipc2);
+		SecurityFeature sec1 = new SecurityFeature(cid1.getGlobalProcessIdentifier(), ipc1);
+		SecurityFeature sec2 = new SecurityFeature(cid2.getGlobalProcessIdentifier(), ipc2);
 		
 		String grp1 = "testgrp1";
 		String grp1pw = SUtil.createUniqueId();
@@ -118,7 +118,7 @@ public class IpcTest
 		sec2.addGroup(grp1, new PasswordSecret(grp1pw, false));
 		sec2.addGroup(grp2, new KeySecret(grp2key));
 		
-		byte[] emsg = sec1.encryptAndSign(cid2.getGlobalProcessIdentifier(), bmsg);
+		byte[] emsg = sec1.encryptAndSign(cid2, bmsg);
 		
 		DecodedMessage decmsg = sec2.decryptAndAuth(cid1.getGlobalProcessIdentifier(), emsg);
 		

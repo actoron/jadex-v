@@ -6,6 +6,7 @@ import jadex.binary.AbstractCodec;
 import jadex.binary.IDecodingContext;
 import jadex.binary.IEncodingContext;
 import jadex.binary.SBinarySerializer;
+import jadex.common.Tuple;
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.Traverser;
@@ -37,9 +38,8 @@ public class ComponentIdentifierCodec extends AbstractCodec
 	 */
 	public Object createObject(Class<?> clazz, IDecodingContext context)
 	{
-		String localname = context.readString();
-		GlobalProcessIdentifier gpid = (GlobalProcessIdentifier) SBinarySerializer.decodeObject(context);
-		return new ComponentIdentifier(localname, gpid);
+		String cid = context.readString();
+		return ComponentIdentifier.fromString(cid);
 	}
 	
 	/**
@@ -59,9 +59,7 @@ public class ComponentIdentifierCodec extends AbstractCodec
 	 */
 	public Object encode(Object object, Class<?> clazz, List<ITraverseProcessor> preprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, Traverser traverser, ClassLoader targetcl, IEncodingContext ec)
 	{
-		ComponentIdentifier cid = (ComponentIdentifier) object;
-		ec.writeString(cid.getLocalName());
-		traverser.doTraverse(cid.getGlobalProcessIdentifier(), cid.getGlobalProcessIdentifier().getClass(), preprocessors, processors, converter, mode, ec.getClassLoader(), ec);
+		ec.writeString(object.toString());
 		return object;
 	}
 }

@@ -30,7 +30,16 @@ public record GlobalProcessIdentifier(long pid, String host)
 		int ind = gpidstring.indexOf('@');
 		return new GlobalProcessIdentifier(Long.parseLong(gpidstring.substring(0, ind)), gpidstring.substring(ind + 1));
 	}
-	
+
+	/**
+	 *  Generates a hashcode.
+	 */
+	@Override
+	public int hashCode()
+	{
+		return 13 * (int) (pid + host.hashCode());
+	}
+
 	/**
 	 *  Compares the GPID.
 	 *  @return True, if obj is a GPID and is equal.

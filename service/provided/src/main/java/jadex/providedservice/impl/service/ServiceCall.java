@@ -130,8 +130,6 @@ public class ServiceCall
 	
 	/**
 	 *  Set the properties of the next invocation.
-	 *  @param timeout The timeout.
-	 *  @param realtime The realtime flag.
 	 */
 	public static ServiceCall getOrCreateNextInvocation()
 	{
@@ -148,8 +146,7 @@ public class ServiceCall
 	
 	/**
 	 *  Get or create the next servicecall for the next invocation. 
-	 *  @param timeout The timeout.
-	 *  @param realtime The realtime flag.
+	 *  @param props The properties.
 	 */
 	public static ServiceCall getOrCreateNextInvocation(Map<String, Object> props)
 	{
@@ -334,6 +331,18 @@ public class ServiceCall
 		lastmod	= IComponentIdentifier.LOCAL.get();
 		this.properties.remove(name);
 	}*/
+
+	/**
+	 *  Get all props directly. Do not use unless
+	 *  you are sure this is what you need. Consider
+	 *  getPropertiesClone() for a shallow copy.
+	 *
+	 *  @return The properties.
+	 */
+	public Map<String, Object> getProperties()
+	{
+		return properties;
+	}
 	
 	/**
 	 *  Get a shallow clone from all props.

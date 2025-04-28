@@ -1,4 +1,4 @@
-package jadex.messaging.impl.security.authentication;
+package jadex.messaging.security.authentication;
 
 import java.nio.charset.StandardCharsets;
 

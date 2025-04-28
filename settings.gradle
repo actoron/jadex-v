@@ -179,6 +179,7 @@ includeBuild('service/nfproperty') {}
 
 includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
+includeBuild('communication/remoteservices') {}
 
 includeBuild('micro/engine'){name='micro'}
 includeBuild('micro/providedservice') {name='providedservicemicro'}

@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
+import jadex.messaging.security.authentication.AbstractX509PemSecret;
+import jadex.messaging.security.authentication.PasswordSecret;
+import jadex.messaging.security.authentication.SharedSecret;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.agreement.jpake.JPAKERound1Payload;
 import org.bouncycastle.crypto.agreement.jpake.JPAKERound2Payload;
@@ -23,7 +27,7 @@ import jadex.common.ByteArrayWrapper;
 import jadex.common.SUtil;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.security.SSecurity;
-import jadex.messaging.security.Security;
+import jadex.messaging.security.SecurityFeature;
 
 
 /**
@@ -75,7 +79,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 *  
 	 *  @return First round payload.
 	 */
-	public byte[] getPakeRound1(Security security, GlobalProcessIdentifier remoteid)
+	public byte[] getPakeRound1(SecurityFeature security, GlobalProcessIdentifier remoteid)
 	{
 		byte[] idsalt = new byte[64];
 		SSecurity.getSecureRandom().nextBytes(idsalt);
@@ -117,7 +121,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 *  
 	 *  @return Second round payload.
 	 */
-	public byte[] getPakeRound2(Security security, GlobalProcessIdentifier remoteid, byte[] round1data)
+	public byte[] getPakeRound2(SecurityFeature security, GlobalProcessIdentifier remoteid, byte[] round1data)
 	{
 		List<byte[]> r1list = SUtil.splitData(round1data);
 		if (r1list.size() != 2)
@@ -196,7 +200,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	/**
 	 *  Finalizes the password-authenticated key exchange.
 	 */
-	public void finalizePake(Security security, GlobalProcessIdentifier remoteid, byte[] round2data)
+	public void finalizePake(SecurityFeature security, GlobalProcessIdentifier remoteid, byte[] round2data)
 	{
 		List<byte[]> r2list = SUtil.splitData(round2data);
 		if (r2list.size() != 2)

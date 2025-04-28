@@ -1,5 +1,6 @@
 package jadex.messaging.security;
 
+import jadex.core.ComponentIdentifier;
 import jadex.messaging.ISecurityInfo;
 import jadex.messaging.security.handshake.BasicSecurityMessage;
 
@@ -11,7 +12,7 @@ public interface ICryptoSuite
 	 *  @param content The content
 	 *  @return Encrypted/signed message.
 	 */
-	public byte[] encryptAndSign(byte[] content);
+	public byte[] encryptAndSign(ComponentIdentifier receiver, byte[] content);
 	
 	/**
 	 *  Decrypt and authenticates the message from a sender.
@@ -27,7 +28,7 @@ public interface ICryptoSuite
 	 *  @param content The content.
 	 *  @return Decrypted/authenticated message or null on invalid message.
 	 */
-	public byte[] decryptAndAuthLocal(byte[] content);
+	//public byte[] decryptAndAuthLocal(byte[] content);
 	
 	/**
 	 *  Gets the security infos related to the authentication state.
@@ -59,7 +60,7 @@ public interface ICryptoSuite
 	 *  @return True, if handshake continues, false when finished.
 	 *  @throws SecurityException if handshake failed.
 	 */
-	public boolean handleHandshake(Security security, BasicSecurityMessage incomingmessage);
+	public boolean handleHandshake(SecurityFeature security, BasicSecurityMessage incomingmessage);
 	
 	/**
 	 *  Gets the ID used to identify the handshake of the suite.

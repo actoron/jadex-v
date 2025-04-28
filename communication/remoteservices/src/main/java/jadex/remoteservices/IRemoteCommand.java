@@ -4,11 +4,12 @@ package jadex.remoteservices;
 import jadex.core.IComponent;
 import jadex.messaging.ISecurityInfo;
 import jadex.future.IFuture;
+import jadex.remoteservices.impl.IIdSenderCommand;
 
 /**
  *  Interface for remotely executable commands.
  */
-public interface IRemoteCommand<T>
+public interface IRemoteCommand<T> extends IIdSenderCommand
 {
 	/**
 	 *  Execute a command.
@@ -25,6 +26,4 @@ public interface IRemoteCommand<T>
 	 *  @return Exception describing the error if invalid.
 	 */
 	public Exception isValid(IComponent component);
-
-	public String getId();
 }

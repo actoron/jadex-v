@@ -10,6 +10,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import jadex.core.ComponentIdentifier;
+import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
+import jadex.messaging.security.authentication.AbstractX509PemSecret;
+import jadex.messaging.security.authentication.X509PemStringsSecret;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.digests.Blake3Digest;
 import org.bouncycastle.crypto.modes.ChaCha20Poly1305;
@@ -22,7 +26,7 @@ import jadex.common.SUtil;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.ISecurityInfo;
 import jadex.messaging.security.SSecurity;
-import jadex.messaging.security.Security;
+import jadex.messaging.security.SecurityFeature;
 import jadex.messaging.security.handshake.BasicSecurityMessage;
 import jadex.messaging.security.handshake.InitialHandshakeFinalMessage;
 
@@ -84,9 +88,9 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 *  @param content The content
 	 *  @return Encrypted/signed message.
 	 */
-	public byte[] encryptAndSign(byte[] content)
+	public byte[] encryptAndSign(ComponentIdentifier receiver, byte[] content)
 	{
-		return chacha20Poly1305Enc(content, key, nonceprefix, msgid.getAndIncrement());
+		return chacha20Poly1305Enc(content, key, nonceprefix, receiver, msgid.getAndIncrement());
 	}
 	
 	/**
@@ -98,8 +102,9 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 */
 	public byte[] decryptAndAuth(byte[] content)
 	{
-		byte[] ret = chacha20Poly1305Dec(content, key, ~nonceprefix);
-		if (ret != null && !isValid(Pack.littleEndianToLong(content, 8)))
+		ChaChaDecryptedMessage decmsg = chacha20Poly1305Dec(content, key, ~nonceprefix);
+		byte[] ret = decmsg.msg();
+		if (ret != null && !isValid(decmsg.msgid()))
 			ret = null;
 		return ret;
 	}
@@ -110,11 +115,11 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 *  @param content The content.
 	 *  @return Decrypted/authenticated message or null on invalid message.
 	 */
-	public byte[] decryptAndAuthLocal(byte[] content)
+	/*public byte[] decryptAndAuthLocal(byte[] content)
 	{
 		byte[] ret = chacha20Poly1305Dec(content, key, nonceprefix);
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Gets the security infos related to the authentication state.
@@ -145,7 +150,7 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 *  @return True, if handshake continues, false when finished.
 	 *  @throws SecurityException if handshake failed.
 	 */
-	public boolean handleHandshake(Security sec, BasicSecurityMessage incomingmessage)
+	public boolean handleHandshake(SecurityFeature sec, BasicSecurityMessage incomingmessage)
 	{
 		boolean ret = true;
 		
@@ -367,56 +372,6 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	}
 	
 	/**
-	 *  Signs a key with platform secrets.
-	 *  
-	 *  @param key The key (public key).
-	 *  
-	 *  @return Tuple of signatures local/remote.
-	 */
-	/*protected Tuple2<AuthToken, AuthToken> getPlatformSignatures(byte[] pubkey, Security sec, GlobalProcessIdentifier remoteid)
-	{
-		AuthToken local = null;
-		AbstractAuthenticationSecret ps = sec.getInternalPlatformSecret();
-		if (ps != null && ps.canSign())
-			local = signKey(challenge, pubkey, ps);
-		
-		AuthToken remote = null;
-		ps = agent.getInternalPlatformSecret(remoteid);
-		if (ps != null && ps.canSign())
-			remote = signKey(challenge, pubkey, ps);
-		
-		if (local != null || remote != null)
-			return new Tuple2<>(local, remote);
-		
-		return null;
-	}*/
-	
-	/**
-	 *  Verifies platform signatures of a key.
-	 *  
-	 *  @param key The key.
-	 *  @param networksigs The signatures.
-	 *  @return List of network that authenticated the key.
-	 */
-	/*protected boolean verifyPlatformSignatures(byte[] key, Tuple2<AuthToken, AuthToken> sigs, AbstractAuthenticationSecret localsecret)
-	{
-		boolean ret = false;
-		if (sigs != null)
-		{
-			if (sigs.getFirstEntity() != null)
-			{
-				ret = verifyKey(challenge, key, localsecret, sigs.getFirstEntity());
-			}
-			
-			if (!ret && sigs.getSecondEntity() != null)
-			{
-				ret = verifyKey(challenge, key, localsecret, sigs.getSecondEntity());
-			}
-		}
-		return ret;
-	}*/
-	
-	/**
 	 *  Generates a token verifying the platform name.
 	 *  
 	 *  @param key The key.
@@ -571,17 +526,9 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	}
 	
 	/**
-	 *  Finalize.
-	 */
-	protected void finalize() throws Throwable
-	{
-		destroy();
-	};
-	
-	/**
 	 *  Hashes the network name.
 	 *  
-	 *  @param nwname The network name.
+	 *  @param gname The group name.
 	 *  @param salt The salt.
 	 *  @return Hashed network name.
 	 */
@@ -611,27 +558,6 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 			ret.put(hashGroupName(name, salt), name);
 		return ret;
 	}
-//	protected static final MultiCollection<ByteArrayWrapper, Tuple2<String, AbstractAuthenticationSecret>> getHashedNetworks(MultiCollection<String, AbstractAuthenticationSecret> networks, byte[] salt)
-//	{
-//		MultiCollection<ByteArrayWrapper, Tuple2<String, AbstractAuthenticationSecret>> ret = new MultiCollection<ByteArrayWrapper, Tuple2<String,AbstractAuthenticationSecret>>();
-//		if (networks != null)
-//		{
-//			for (Map.Entry<String, Collection<AbstractAuthenticationSecret>> nw : networks.entrySet())
-//			{
-//				if (nw.getValue() != null)
-//				{
-//					ByteArrayWrapper namehash = new ByteArrayWrapper(hashNetworkName(nw.getKey(), salt));
-//					for (AbstractAuthenticationSecret secret : nw.getValue())
-//					{
-//						Tuple2<String, AbstractAuthenticationSecret> tup;
-//						tup = new Tuple2<String, AbstractAuthenticationSecret>(nw.getKey(), secret);
-//						ret.add(namehash, tup);
-//					}
-//				}
-//			}
-//		}
-//		return ret;
-//	}
 	
 	/**
 	 *  Encrypts content using an RFC 7539-like AEAD construction.
@@ -642,77 +568,37 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 *  @param msgid Current message ID.
 	 *  @return 
 	 */
-	protected static final byte[] chacha20Poly1305Enc(byte[] content, byte[] key, int nonceprefix, long msgid)
+	protected static final byte[] chacha20Poly1305Enc(byte[] content, byte[] key, int nonceprefix, ComponentIdentifier receiver, long msgid)
 	{
-		ChaCha20Poly1305 cipher = getChaChaCipher(content, key, nonceprefix, msgid);
-		
-		byte[] encmsg = new byte[cipher.getOutputSize(content.length) + 16];
-		/*SUtil.intIntoBytes((int)(msgid >>> 32), encmsg, 0);
-		SUtil.intIntoBytes((int) msgid, encmsg, 4);*/
-		Pack.longToLittleEndian(msgid, encmsg, 8);
-		int len = cipher.processBytes(content, 0, content.length, encmsg, 16);
+		byte[] nonce = new byte[12];
+		SUtil.intIntoBytes(nonceprefix, nonce, 0);
+		SUtil.longIntoBytes(msgid, nonce, 4);
+
+		ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
+		AEADParameters keyparam = new AEADParameters(new KeyParameter(key), 128, nonce, null);//aadbytes);
+		cipher.init(true, keyparam);
+
+		int msgidoff = 8; // Offset of the long size message ID
+		String receiverstring = receiver.toString();
+		int receiverstringlengthoffset = 4; // Offset for the int-size receiver string length
+		int receiverlen = SUtil.stringSizeAsUtf8(receiverstring);
+		int prefixoffset = receiverlen + msgidoff + receiverstringlengthoffset; // Offset for the message ID plus receiver string
+		byte[] encmsg = new byte[cipher.getOutputSize(content.length) + prefixoffset]; // Create output array
+
+		SUtil.longIntoBytes(msgid, encmsg, 0); // Copy message ID into output
+		SUtil.stringIntoByteArray(receiverstring, receiverlen, encmsg, msgidoff); // Write receiver ID as UTF8 string
+
+		cipher.processAADBytes(encmsg, msgidoff, receiverstringlengthoffset + receiverlen);
+		int len = cipher.processBytes(content, 0, content.length, encmsg, prefixoffset);
 		try
 		{
-			cipher.doFinal(encmsg, len + 16);
-		} catch (Exception e) {}
-		
-		return encmsg;
-		
-		/*
-		int[] state = new int[16];
-		int blockcount = 0;
-		
-		// Generate key for Poly1305 authentication (first chacha block).
-		byte[] polykey = new byte[32];
-		setupChaChaState(state, key, blockcount, nonceprefix, msgid);
-		ChaChaEngine.chachaCore(20, state, state);
-		for (int i = 0; i < 8; ++i)
-			Pack.intToLittleEndian(state[i], polykey, i << 2);
-		Poly1305KeyGenerator.clamp(polykey);
-		++blockcount;
-		
-		// Pad content, leave 4 byte for clear text length.
-		// Output: 
-		// padding (8) / marker
-		// message id (8)
-		// padded and encrypted content (last encrypted 4 byte: clear text length)
-		// Authenticator (16) 
-		int retlen = pad16Size(content.length + 4);
-		byte[] ret = new byte[retlen + 32];
-		
-		// Copy clear text for encryption
-		System.arraycopy(content, 0, ret, 16, content.length);
-		
-		// Write clear text length
-		Pack.intToLittleEndian(content.length, ret, ret.length - 20);
-		
-		// Write message ID.
-		Pack.longToLittleEndian(msgid, ret, 8);
-		
-		// Encrypt content
-		int pos = 16;
-		while (pos < ret.length - 16)
+			cipher.doFinal(encmsg, len + prefixoffset);
+		} catch (Exception e)
 		{
-			setupChaChaState(state, key, blockcount, nonceprefix, msgid);
-			ChaChaEngine.chachaCore(20, state, state);
-			++blockcount;
-			
-			for (int i = 0; i < state.length && pos < ret.length - 16; ++i)
-			{
-				int val = Pack.littleEndianToInt(ret, pos);
-				val ^= state[i];
-				Pack.intToLittleEndian(val, ret, pos);
-				pos += 4;
-			}
+			throw SUtil.throwUnchecked(e);
 		}
 		
-		// Generate and write authenticator.
-		Poly1305 poly1305 = new Poly1305();
-		poly1305.init(new KeyParameter(polykey));
-		poly1305.update(ret, 0, ret.length - 16);
-		poly1305.doFinal(ret, 16 + retlen);
-		
-		return ret;*/
+		return encmsg;
 	}
 	
 	/**
@@ -723,84 +609,41 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 *  @param nonceprefix Local nonce prefix used.
 	 *  @return Clear text or null if authentication failed.
 	 */
-	protected static final byte[] chacha20Poly1305Dec(byte[] content, byte[] key, int nonceprefix)
+	protected static ChaChaDecryptedMessage chacha20Poly1305Dec(byte[] content, byte[] key, int nonceprefix)
 	{
-		ChaCha20Poly1305 cipher = getChaChaCipher(content, key, nonceprefix, null);
-		
-		byte[] decmsg = new byte[cipher.getOutputSize(content.length) + 8];
-		int len = cipher.processBytes(content, 16, content.length - 16, decmsg, 8);
+		long msgid = SUtil.bytesToLong(content, 0); // Decode message ID.
+		int msgidoff = 8; // Offset of the long size message ID
+
+		byte[] nonce = new byte[12];
+		SUtil.intIntoBytes(nonceprefix, nonce, 0);
+		System.arraycopy(content, 0, nonce, 4, 8); // No need to reencode msgid into nonce, we can just copy it
+
+		int receiverstringlengthoffset = 4; // Offset for the int-size receiver string length
+		int cidlen = SUtil.bytesToInt(content, msgidoff);
+		String cidstr = new String(content,  + receiverstringlengthoffset + msgidoff, cidlen, SUtil.UTF8);
+		int prefixoffset = cidlen + receiverstringlengthoffset + msgidoff; // Offset for the message ID plus receiver string
+
+		ComponentIdentifier receiver = ComponentIdentifier.fromString(cidstr);
+
+		ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
+		AEADParameters keyparam = new AEADParameters(new KeyParameter(key), 128, nonce, null);
+		cipher.init(false, keyparam);
+		cipher.processAADBytes(content, msgidoff, cidlen + receiverstringlengthoffset);
+		byte[] decmsg = new byte[cipher.getOutputSize(content.length - prefixoffset)];
+		int len = cipher.processBytes(content, prefixoffset, content.length - prefixoffset, decmsg, 0);
 		try
 		{
-			cipher.doFinal(decmsg, len + 8);
+			cipher.doFinal(decmsg, len);
 		} catch (Exception e)
 		{
-			// Validation likely failed.
+			// Validation failed.
 			decmsg = null;
 		}
-		
-		return decmsg;
-		
-		/*byte[] ret = null;
-		
-		try
-		{
-			long msgid = Pack.littleEndianToLong(content, 8);
-			
-			int[] state = new int[16];
-			int blockcount = 0;
-			
-			byte[] polykey = new byte[32];
-			setupChaChaState(state, key, blockcount, nonceprefix, msgid);
-			ChaChaEngine.chachaCore(20, state, state);
-			for (int i = 0; i < 8; ++i)
-				Pack.intToLittleEndian(state[i], polykey, i << 2);
-			Poly1305KeyGenerator.clamp(polykey);
-			++blockcount;
-			
-			// Check authentication.
-			byte[] checkpoly = new byte[16];
-			Poly1305 poly1305 = new Poly1305();
-			poly1305.init(new KeyParameter(polykey));
-			poly1305.update(content, 0, content.length - 16);
-			poly1305.doFinal(checkpoly, 0);
-			for (int i = 0; i < checkpoly.length; ++i)
-				if (checkpoly[i] != content[content.length - 16 + i])
-					return null; // Authentication failed.
-			
-			// Decrypt content
-			int pos = 16;
-			while (pos < content.length - 16)
-			{
-				setupChaChaState(state, key, blockcount, nonceprefix, msgid);
-				ChaChaEngine.chachaCore(20, state, state);
-				++blockcount;
-				
-				for (int i = 0; i < state.length && pos < content.length - 16; ++i)
-				{
-					int val = Pack.littleEndianToInt(content, pos);
-					val ^= state[i];
-					Pack.intToLittleEndian(val, content, pos);
-					pos += 4;
-				}
-			}
-			
-			int contentlen = Pack.littleEndianToInt(content, content.length - 20);
-			
-			// Sanity check
-			if (contentlen < 0 || contentlen > content.length - 36)
-				return null;
-			
-			ret = new byte[contentlen];
-			System.arraycopy(content, 16, ret, 0, ret.length);
-		}
-		catch (Exception e)
-		{
-		}
-		
-		return ret;*/
+
+		return new ChaChaDecryptedMessage(msgid, receiver, decmsg);
 	}
 	
-	public static final ChaCha20Poly1305 getChaChaCipher(byte[] content, byte[] key, int nonceprefix, Long msgid)
+	public static final ChaCha20Poly1305 getChaChaCipherX(byte[] content, byte[] key, int nonceprefix, Long msgid)
 	{
 		boolean enc = true;
 		if (msgid == null)
@@ -818,22 +661,6 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 		AEADParameters keyparam = new AEADParameters(new KeyParameter(key), 128, nonce, null);
 		cipher.init(enc, keyparam);
 		return cipher;
-	}
-	
-	/**
-	 *  Sets up ChaCha20.
-	 */
-	protected static final void setupChaChaState(int[] state, int[] key, int blockcount, int nonceprefix, long msgid)
-	{
-		state[0] = 0x61707865;
-		state[1] = 0x3320646e;
-		state[2] = 0x79622d32;
-		state[3] = 0x6b206574;
-		System.arraycopy(key, 0, state, 4, key.length);
-		state[12] = blockcount;
-		state[13] = nonceprefix;
-		state[14] = (int)(msgid >>> 32);
-		state[15] = (int) msgid;
 	}
 	
 	/**
@@ -1280,6 +1107,8 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 			super(sender, conversationid);
 		}
 	}
+
+	public static record ChaChaDecryptedMessage(long msgid, ComponentIdentifier receiver, byte[] msg) {};
 	
 	public record GroupSignature(ByteArrayWrapper groupnamehash, AuthToken signature) {};
 }

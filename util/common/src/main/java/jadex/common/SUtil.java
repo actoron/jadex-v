@@ -37,7 +37,11 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -85,6 +89,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -2815,6 +2820,17 @@ public class SUtil
 
 	public static void main(String[] args)
 	{
+		String str = "12\uD83E\uDD21\uD83E\uDD21";
+		String str2 = "123456";
+
+		System.out.println("b-len " + str.getBytes(UTF8).length);
+
+		System.out.println("Size 1: " + str + " " + stringSizeAsUtf8(str) + " " + str.codePointCount(0, str.length()));
+		System.out.println("Size 2: " + stringSizeAsUtf8(str2));
+
+	}
+	/*public static void main(String[] args)
+	{
 //		String res = SUtil.makeConform("uniique-dialogservice.de/ues4/rc?f=https://plus.google.com/+targobank?koop_id=mar_vermoegen18");
 //		System.out.println(res);
 		
@@ -2829,7 +2845,7 @@ public class SUtil
 		}
 		
 		System.out.println("needed: "+(System.currentTimeMillis()-start)/1000);
-	}
+	}*/
 	
 	/**
 	 *  Converts a number of bytes
@@ -3054,6 +3070,117 @@ public class SUtil
 		buffer[offset++] = (byte)((val >>> 16) & 0xFF);
 		buffer[offset++] = (byte)((val >>> 8) & 0xFF);
 		buffer[offset++] = (byte)(val & 0xFF);
+	}
+
+	/**
+	 *  Calculates the size of a String if encoded with UTF-8.
+	 *  Uses an optimized, non-branching approach for speed.
+	 *
+	 *  @param string The input string.
+	 *  @return The number of bytes the String uses if encoded with UTF-8.
+	 */
+	public static final int stringSizeAsUtf8(String string)
+	{
+		int bytes = string.codePoints().map(codepoint ->
+		{
+			// Calculate the UTF-8 size using bit manipulation
+
+			int result = 1; // At least one byte.
+
+			// Check each additional range using bitwise operations
+			int tmp = codepoint & 0xFFFFFF80; // Check for 2 bytes
+			// Normally we would have to user (tmp | -tmp) >>> 31,
+			// but all Unicode values are positive, so we can use this
+			result += -tmp >>> 31;    // Increment if non-zero
+
+			tmp = codepoint & 0xFFFFF800; // Check for 3 bytes
+			result += -tmp >>> 31;    // Increment if non-zero
+
+			tmp = codepoint & 0xFFFF0000; // Check for 4 bytes
+			result += -tmp >>> 31;    // Increment if non-zero
+
+			return result;
+		}).sum();
+
+		return bytes;
+	}
+
+	/**
+	 *  Converts a String to a byte array prefixed
+	 *  by a big-endian encoded integer length followed by
+	 *  the UTF8-encoded string data.
+	 *
+	 *  @param string The input String.
+	 *  @return Byte array prefixed by 4 bytes encoding the length of the string.
+	 */
+	public static byte[] stringToByteArray(String string)
+	{
+		// Calculate size of the string in UTF8.
+		int utf8size = stringSizeAsUtf8(string);
+
+		// Allocate final array of the right size include prefixed length integer.
+		byte[] result = new byte[utf8size + 4];
+
+		stringIntoByteArray(string, utf8size, result, 0);
+
+		return result;
+	}
+
+	/**
+	 *  Writes a String to a byte array prefixed
+	 *  by a big-endian encoded integer length followed by
+	 *  the UTF8-encoded string data.
+	 *  The array must be of sufficient size to accomodate the string.
+	 *  Use stringSizeAsUtf8() to precalculate and add 4 for the length integer,
+	 *  then consider the public static void stringToByteArray(String string, byte[] output, int offset, int utf8size)
+	 *  method.
+	 *
+	 *  @param string The input String.
+	 *  @param output The output array.
+	 *  @param offset Offset in the output array.
+	 */
+	public static void stringIntoByteArray(String string, byte[] output, int offset)
+	{
+		int utf8size = stringSizeAsUtf8(string);
+		stringIntoByteArray(string, utf8size, output, offset);
+	}
+
+	/**
+	 *  Writes a String to a byte array prefixed
+	 *  by a big-endian encoded integer length followed by
+	 *  the UTF8-encoded string data.
+	 *  The array must be of sufficient size to accomodate the string.
+	 *  User stringSizeAsUtf8() to precalculate and add 4 for the length integer.
+	 *
+	 *  @param string The input String.
+	 *  @param utf8size Size of the string as UTF8.
+	 *  @param output The output array.
+	 *  @param offset Offset in the output array.
+	 *
+	 */
+	public static void stringIntoByteArray(String string, int utf8size, byte[] output, int offset)
+	{
+		// Encode String length into result
+		intIntoBytes(utf8size, output, offset);
+
+		ByteBuffer resultbuffer = ByteBuffer.wrap(output, offset + 4, utf8size);
+		CharsetEncoder enc = UTF8.newEncoder();
+		enc.encode(CharBuffer.wrap(string), resultbuffer, true);
+	}
+
+	/**
+	 *  Converts part of a byte array that was encoded by
+	 *  stringToByteArray(), or one of the
+	 *  stringIntoByteArray() back into a String.
+	 *
+	 *  @param input The input array.
+	 *  @param offset Offset in the input array.
+	 *  @return Decoded String.
+	 */
+	public static String byteArrayToString(byte[] input, int offset)
+	{
+		int strlen = bytesToInt(input, offset);
+		return new String(input, 4, strlen, UTF8);
 	}
 	
 	/**
@@ -3536,11 +3663,29 @@ public class SUtil
 	{
 		return runJvmSubprocess(clazz, null, null, false);
 	}
-	
+
+	/**
+	 *  Runs a new JVM as a subprocess with a similar configuration as the parent JVM.
+	 *
+	 *  @param clazz Class to run.
+	 *  @param jvmargs Arguments for the JVM.
+	 *  @param args Command-line arguments.
+	 *  @param inheritio If true, attach the subproces IO to main process IO.
+	 *  @return The started process.
+	 *
+	 *  @throws IOException
+	 *  @throws InterruptedException
+	 */
+	public static Process runJvmSubprocess(Class<?> clazz, List<String> jvmargs, List<String> args, boolean inheritio)
+	{
+		return runJvmSubprocess(clazz, null, jvmargs, args, inheritio);
+	}
+
 	/**
 	 *  Runs a new JVM as a subprocess with a similar configuration as the parent JVM.
 	 *  
 	 *  @param clazz Class to run.
+	 *  @param envvars Environment variables.
 	 *  @param jvmargs Arguments for the JVM.
 	 *  @param args Command-line arguments.
 	 *  @param inheritio If true, attach the subproces IO to main process IO.
@@ -3549,7 +3694,7 @@ public class SUtil
 	 *  @throws IOException 
 	 *  @throws InterruptedException
 	 */
-	public static Process runJvmSubprocess(Class<?> clazz, List<String> jvmargs, List<String> args, boolean inheritio)
+	public static Process runJvmSubprocess(Class<?> clazz, Map<? extends String, ? extends String> envvars, List<String> jvmargs, List<String> args, boolean inheritio)
 	{
 		try
 		{
@@ -3568,6 +3713,9 @@ public class SUtil
 				command.addAll(args);
 			
 			ProcessBuilder builder = new ProcessBuilder(command);
+			if (envvars != null)
+				envvars.entrySet().forEach( e -> builder.environment().put(e.getKey(), e.getValue()));
+
 			if (inheritio)
 				return builder.inheritIO().start();
 			return builder.start();
@@ -5478,7 +5626,7 @@ public class SUtil
 		}
 		return appdir;
 	}
-	
+
 //	/**
 //	 * Main method for testing.
 //	 */

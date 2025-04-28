@@ -334,7 +334,9 @@ public class Traverser
 	{
 		Object ret = null;
 		if (context instanceof TraversedObjectsContext)
+		{
 			ret = ((TraversedObjectsContext) context).get(inputobject);
+		}
 		return ret;
 	}
 	

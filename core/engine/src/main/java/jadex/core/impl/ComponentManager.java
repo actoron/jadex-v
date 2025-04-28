@@ -340,7 +340,7 @@ public class ComponentManager implements IComponentManager
 	}
 	
 	static boolean	HANDLES_INITED	= false;
-	static ThreadLocal<Object>	LOCAL;
+	static ThreadLocal<Object> LOCAL;
 	static MethodHandle	GET_COMPONENT;
 	
 	/**

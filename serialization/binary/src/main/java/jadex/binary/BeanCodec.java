@@ -198,6 +198,7 @@ public class BeanCodec extends AbstractCodec
 		for(Map.Entry<String, BeanProperty> entry : props.entrySet())
 		{
 			BeanProperty prop = entry.getValue();
+
 			if(prop!=null && prop.isReadable())
 			{
 				Object val = prop.getPropertyValue(object);
@@ -233,7 +234,7 @@ public class BeanCodec extends AbstractCodec
 		}
 	}
 	
-	/**
+	/**`
 	 * 
 	 */
 	public static void readBeanProperties(Object object, Class clazz, IDecodingContext context, IBeanIntrospector intro)
