@@ -49,6 +49,9 @@ public class ClassPlanBody extends AbstractPlanBody
 	/** The aborted method. */
 	protected Method abortedmethod;
 	
+	/** The finished method. */
+	protected Method finishedmethod;
+	
 	//--------- constructors ---------
 	
 	/**
@@ -88,6 +91,9 @@ public class ClassPlanBody extends AbstractPlanBody
 		mi = mbody.getAbortedMethod(cl);
 		if(mi!=null)
 			abortedmethod = mi.getMethod(cl);
+		mi = mbody.getFinishedMethod(cl);
+		if(mi!=null)
+			finishedmethod = mi.getMethod(cl);
 		
 		if(plan!=null)
 			injectElements();//ia.getComponentFeature(IPojoComponentFeature.class).getPojoAgent());
@@ -401,6 +407,39 @@ public class ClassPlanBody extends AbstractPlanBody
 	}
 	
 	/**
+	 *  Invoke the plan failed method.
+	 */
+	public Object invokeFinished(Object[] params)
+	{
+		Object ret = null;
+		if(finishedmethod!=null)
+		{
+			try
+			{
+				SAccess.setAccessible(finishedmethod, true);
+				ret = finishedmethod.invoke(plan, params);			
+			}
+			catch(Throwable t)
+			{
+				t	= t instanceof InvocationTargetException ? ((InvocationTargetException)t).getTargetException() : t;
+				if(t instanceof Error)
+				{
+					throw (Error)t;
+				}
+				else if(t instanceof RuntimeException)
+				{
+					throw (RuntimeException)t;
+				}
+				else
+				{
+					throw new RuntimeException(t);
+				}
+			}
+		}
+		return ret;
+	}
+	
+	/**
 	 *  Get the passed parameters.
 	 */
 	public Class<?>[] getPassedParameterTypes()
@@ -423,6 +462,14 @@ public class ClassPlanBody extends AbstractPlanBody
 	public Class<?>[] getAbortedParameterTypes()
 	{
 		return abortedmethod==null? null: abortedmethod.getParameterTypes();		
+	}
+	
+	/**
+	 *  Get the finished parameters.
+	 */
+	public Class<?>[] getFinishedParameterTypes()
+	{
+		return finishedmethod==null? null: finishedmethod.getParameterTypes();		
 	}
 	
 	/**

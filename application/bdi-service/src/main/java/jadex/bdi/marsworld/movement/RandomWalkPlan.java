@@ -5,11 +5,11 @@ import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanCapability;
 import jadex.bdi.annotation.PlanReason;
-import jadex.bdi.marsworld.math.IVector2;
-import jadex.bdi.marsworld.math.Vector2Int;
 import jadex.bdi.marsworld.movement.MovementCapability.Move;
 import jadex.bdi.marsworld.movement.MovementCapability.WalkAround;
 import jadex.bdi.runtime.IPlan;
+import jadex.math.IVector2;
+import jadex.math.Vector2Int;
 
 /**
  *  Wander around randomly.

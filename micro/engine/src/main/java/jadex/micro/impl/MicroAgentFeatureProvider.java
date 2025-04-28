@@ -84,13 +84,13 @@ public class MicroAgentFeatureProvider extends ComponentFeatureProvider<MicroAge
 	
 	
 	@Override
-	public boolean isCreator(Object obj) 
+	public int	isCreator(Class<?> pojoclazz)
 	{
 		boolean ret = false;
-		Agent val = findAnnotation(obj.getClass(), Agent.class, getClass().getClassLoader());
+		Agent val = findAnnotation(pojoclazz, Agent.class, getClass().getClassLoader());
 		if(val!=null)
 			ret = "micro".equals(val.type());
-		return ret;
+		return ret ? 1 : -1;
 	}
 	
 	public static <T extends Annotation> T findAnnotation(Class<?> clazz, Class<T> anclazz, ClassLoader cl)

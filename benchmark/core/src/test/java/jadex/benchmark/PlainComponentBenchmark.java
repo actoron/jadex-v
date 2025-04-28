@@ -1,31 +1,42 @@
 package jadex.benchmark;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
-import jadex.core.impl.Component;
+import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 
 public class PlainComponentBenchmark
 {
 	@Test
 	void	benchmarkMemory()
 	{
-		double	pct	= BenchmarkHelper.benchmarkMemory(() ->
+//		IComponentManager.get().setComponentIdNumberMode(true);
+		BenchmarkHelper.benchmarkMemory(() ->
 		{
-			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
+//			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
+			IComponentHandle	comp	= IComponentManager.get().create(null).get();
 			return () -> comp.terminate().get();
 		});
-		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
 	
 	@Test
 	void	benchmarkTime()
 	{
-		double	pct	= BenchmarkHelper.benchmarkTime(() ->
+//		IComponentManager.get().setComponentIdNumberMode(true);
+		BenchmarkHelper.benchmarkTime(() ->
 		{
-			Component.createComponent(Component.class, () -> new Component(this)).terminate().get();
+			IComponentManager.get().create(null).get().terminate().get();
 		});
-		assertTrue(pct<20, ">20%: "+pct);	// Fail when more than 20% worse
 	}
+
+//	@Test
+//	void	benchmarkGetLoggerTime()
+//	{
+//		Component	comp	= new Component(this);
+//		BenchmarkHelper.benchmarkTime(() ->
+//		{
+//			if(comp.getLogger().isLoggable(java.lang.System.Logger.Level.DEBUG))
+//				comp.getLogger().log(java.lang.System.Logger.Level.DEBUG, "test");
+//		});
+//	}
 }

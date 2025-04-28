@@ -225,19 +225,25 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	public E get(long timeout, boolean realtime)
 	{
     	boolean suspend = false;
-		ISuspendable caller = ISuspendable.SUSPENDABLE.get();
-//		ISuspendable caller = ISuspendable.SUSPENDABLE.isBound()? ISuspendable.SUSPENDABLE.get(): null;
-
-		if(caller==null) 
-			caller = new ThreadSuspendable();
+		ISuspendable caller = null;
 		
 		if(!isDone())
 			FutureHelper.notifyStackedListeners();	// Avoid self-blocking
+		
+		// Future.get() is much faster when the future is already finished
+		// -> allow other threads to complete future before continuing
+		if(!isDone())
+			Thread.yield();
 		
     	synchronized(this)
     	{
 	    	if(!isDone())
 	    	{
+	    		caller = ISuspendable.SUSPENDABLE.get();
+//	    		ISuspendable caller = ISuspendable.SUSPENDABLE.isBound()? ISuspendable.SUSPENDABLE.get(): null;
+	    		if(caller==null) 
+	    			caller = new ThreadSuspendable();
+	    		
 	    	   	if(callers==null)
 	    	   	{
 	    	   		callers	= Collections.synchronizedMap(new HashMap<ISuspendable, String[]>());
@@ -537,7 +543,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	/**
 	 *  Abort a blocking get call.
 	 *  @param caller The caller
-	 */
+	 * /
 	public void abortGet(ISuspendable caller)
 	{
 //		System.out.println("abort get1");
@@ -566,7 +572,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				}
 			}
 		}
-	}
+	}*/
 
     /**
      *  Schedule a notification for selected listeners.

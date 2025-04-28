@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.actions.UserAction;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.Decorator;
@@ -188,9 +189,9 @@ public class DecoratorTest
 		when(exe.waitForDelay(1000)).thenReturn(fut);
 		when(comp.getComponentHandle()).thenReturn(access);
 		
-		Node<IComponent> an = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<IComponent> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
-		    Future<NodeState> ret = new Future<>();
+		    TerminableFuture<NodeState> ret = new TerminableFuture<>();
 		    new Thread(() -> 
 		    {
 		    	SUtil.sleep(1000);
@@ -249,9 +250,9 @@ public class DecoratorTest
 	{
 		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 		
-		Node<IComponentHandle> an = new ActionNode<>(new UserAction<>((event, IComponent) -> 
+		Node<IComponentHandle> an = new ActionNode<>(new TerminableUserAction<>((event, IComponent) -> 
 		{
-		    Future<NodeState> ret = new Future<>();
+		    TerminableFuture<NodeState> ret = new TerminableFuture<>();
 		    new Thread(() -> 
 		    {
 		    	SUtil.sleep(10000);

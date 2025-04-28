@@ -44,8 +44,9 @@ dependencies
     //implementation 'org.activecomponents.jadex:simulation:'+v
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 	
-	//implementation 'org.activecomponents.jadex:fluentd:'+v 
-	implementation 'org.activecomponents.jadex:opentelemetry:'+v 
+	//implementation 'org.activecomponents.jadex:opentelemetry:'+v // turns on otel logging and needs otel endpoints
+	
+	implementation 'org.activecomponents.jadex:environment:'+v
 	
 	// libgdx for game ui
 	implementation 'com.badlogicgames.gdx:gdx:1.12.1'

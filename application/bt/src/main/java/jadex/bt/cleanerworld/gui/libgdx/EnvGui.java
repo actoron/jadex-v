@@ -1,5 +1,7 @@
 package jadex.bt.cleanerworld.gui.libgdx;
 
+import java.util.Set;
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -16,18 +18,19 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
-import jadex.bt.cleanerworld.environment.ILocation;
-import jadex.bt.cleanerworld.environment.impl.Chargingstation;
-import jadex.bt.cleanerworld.environment.impl.Cleaner;
-import jadex.bt.cleanerworld.environment.impl.Environment;
-import jadex.bt.cleanerworld.environment.impl.Location;
-import jadex.bt.cleanerworld.environment.impl.Waste;
-import jadex.bt.cleanerworld.environment.impl.Wastebin;
+import jadex.bt.cleanerworld.environment.Chargingstation;
+import jadex.bt.cleanerworld.environment.Cleaner;
+import jadex.bt.cleanerworld.environment.CleanerworldEnvironment;
+import jadex.bt.cleanerworld.environment.Waste;
+import jadex.bt.cleanerworld.environment.Wastebin;
+import jadex.environment.Environment;
+import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 
 
 public class EnvGui extends ApplicationAdapter 
 {
-    final Environment env = Environment.getInstance();
+    protected final CleanerworldEnvironment env;
 
     protected SpriteBatch batch;
     protected OrthographicCamera camera;
@@ -47,6 +50,11 @@ public class EnvGui extends ApplicationAdapter
     protected Texture downtex;
     protected Texture daytex;
     protected Texture nighttex;
+    
+    public EnvGui(String envid)
+    {
+    	env = (CleanerworldEnvironment)Environment.get(envid);
+    }
     
     @Override
     public void create() 
@@ -73,11 +81,11 @@ public class EnvGui extends ApplicationAdapter
         viewport.apply();
     }
 
-    protected Vector2 convertToVector2(ILocation loc, int w, int h) 
+    protected Vector2 convertToVector2(IVector2 loc, int w, int h) 
     {
         if (w <= 0) w = Gdx.graphics.getWidth();
         if (h <= 0) h = Gdx.graphics.getHeight();
-        return new Vector2((float)(loc.getX() * w), (float)(loc.getY() * h));
+        return new Vector2((float)(loc.getX().getAsDouble() * w), (float)(loc.getY().getAsDouble() * h));
     }
     
     @Override
@@ -115,7 +123,7 @@ public class EnvGui extends ApplicationAdapter
         batch.draw(background, 0, 0, w, h, 0, 0, w / background.getWidth(), h / background.getHeight());
         
         // Render waste bins
-        for(Wastebin bin : env.getWastebins()) 
+        for(Wastebin bin : env.getWastebins().get()) 
         {
             Texture bintex = bin.isFull() ? wastebinfulltex : wastebintex;
             Vector2 pos = convertToVector2(bin.getLocation(), w, h);  
@@ -143,14 +151,14 @@ public class EnvGui extends ApplicationAdapter
                     if(isMouseOverIcon(mousex, mousey, xsu, ysu, uptex.getWidth(), uptex.getHeight())) 
                     {
                     	//System.out.println("fill bin: "+bin);
-                    	Wastebin ebin = env.getWastebin(bin.getId());
+                    	Wastebin ebin = env.getWastebin(bin.getId()).get();
                         if(ebin!=null)
                         	ebin.fill();
                         handledclick = true;
                     } 
                     else if(isMouseOverIcon(mousex, mousey, xsd, ysd, downtex.getWidth(), downtex.getHeight()))
                     {
-                    	Wastebin ebin = env.getWastebin(bin.getId());
+                    	Wastebin ebin = env.getWastebin(bin.getId()).get();
                         if(ebin!=null)
                         	ebin.empty();
                         handledclick = true;
@@ -160,14 +168,16 @@ public class EnvGui extends ApplicationAdapter
         }
 
         // Render waste
-        for(Waste waste : env.getWastes()) 
+        for(Waste waste : env.getWastes().get()) 
         {
+        	if(waste.getPosition()==null)
+        		continue;
             Vector2 pos = convertToVector2(waste.getLocation(), w, h);
             batch.draw(wastetex, pos.x, pos.y);
         }
 
         // Render charging stations
-        for(Chargingstation station : env.getChargingstations()) 
+        for(Chargingstation station : env.getChargingStations().get()) 
         {
             Vector2 pos = convertToVector2(station.getLocation(), w, h);
             batch.draw(stationtex, pos.x, pos.y);
@@ -182,7 +192,7 @@ public class EnvGui extends ApplicationAdapter
         }
 
         // Render cleaners
-        for(Cleaner cleaner : env.getCleaners()) 
+        for(Cleaner cleaner : env.getCleaners().get()) 
         {
             Vector2 pos = convertToVector2(cleaner.getLocation(), w, h);
             
@@ -221,7 +231,7 @@ public class EnvGui extends ApplicationAdapter
         float icony = 560;  
         float iconw = 32;  
         float iconh = 32; 
-        if(env.getDaytime()) 
+        if(env.isDaytime().get()) 
         {
             batch.draw(nighttex, iconx, icony, iconw, iconh);  
         } 
@@ -246,7 +256,7 @@ public class EnvGui extends ApplicationAdapter
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shaperen.begin(ShapeRenderer.ShapeType.Filled);
-        shaperen.setColor(0, 0, 0, env.getDaytime() ? 0f : 0.3f); 
+        shaperen.setColor(0, 0, 0, env.isDaytime().get() ? 0f : 0.3f); 
         shaperen.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()); 
         shaperen.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
@@ -259,20 +269,20 @@ public class EnvGui extends ApplicationAdapter
 
         if(!handledclick && Gdx.input.isButtonJustPressed(com.badlogic.gdx.Input.Buttons.LEFT)) 
         {
-    		final Location	mouseloc = new Location((double)mousex/(double)w, (double)mousey/(double)h);
+    		final IVector2 mouseloc = new Vector2Double((double)mousex/(double)w, (double)mousey/(double)h);
     		final double tol = 5/(double)h;
 
-    		final Environment env = Environment.getInstance();
-    		
-    		Waste[] wastes = env.getWastes();
+    		Set<Waste> wastes = env.getWastes().get();
     		Waste nearest = null;
     		double dist = 0;
-    		for(int i=0; i<wastes.length; i++)
+    		for(Waste waste: wastes)
     		{
-    			if(nearest==null || wastes[i].getLocation().getDistance(mouseloc)<dist)
+    			if(waste.getLocation()==null)
+    				continue;
+    			if(nearest==null || waste.getLocation().getDistance(mouseloc).getAsDouble()<dist)
     			{
-    				nearest = wastes[i];
-    				dist = wastes[i].getLocation().getDistance(mouseloc);
+    				nearest = waste;
+    				dist = waste.getLocation().getDistance(mouseloc).getAsDouble();
     			}
     		}
     		Waste waste = null;
@@ -314,9 +324,9 @@ public class EnvGui extends ApplicationAdapter
 		font.draw(batch, text, textX, textY);
 	}
     
-    protected Vector2 convertToVector2(ILocation loc, float w, float h)
+    protected Vector2 convertToVector2(IVector2 loc, float w, float h)
     {
-    	return new Vector2((float)(loc.getX()*w), (float)(loc.getY()*h));
+    	return new Vector2((float)(loc.getX().getAsDouble()*w), (float)(loc.getY().getAsDouble()*h));
     }
     
     @Override
@@ -326,18 +336,13 @@ public class EnvGui extends ApplicationAdapter
         background.dispose();
     }
 
-    public static void createEnv() 
+    public static void create(String envid, int fps) 
     {
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("Cleaner World");
         config.setWindowedMode(800, 600);
-        config.setForegroundFPS(10);
-        new Lwjgl3Application(new EnvGui(), config);
-    }
-
-    public static void main(String[] args) 
-    {
-        EnvGui.createEnv();
+        config.setForegroundFPS(fps);
+        new Lwjgl3Application(new EnvGui(envid), config);
     }
 }
 

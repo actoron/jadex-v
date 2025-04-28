@@ -1,6 +1,7 @@
 package jadex.bdi.marsworld.environment;
 
-import jadex.bdi.marsworld.math.IVector2;
+import jadex.environment.SpaceObject;
+import jadex.math.IVector2;
 
 public class Homebase extends SpaceObject
 {
@@ -74,5 +75,22 @@ public class Homebase extends SpaceObject
 		ret.setId(this.getId());
 		ret.setOre(this.getOre());
 		return ret;
+	}
+	
+	public void onUpdateFrom(SpaceObject source)
+	{
+		Homebase h = (Homebase)source;
+		setHeight(h.getHeight());
+		setWidth(h.getWidth());
+		setOre(h.getOre());
+		setMissionTime(h.getMissionTime());
+		//System.out.println("updated target: "+this);
+	}
+	
+	public String getRemainingTime()
+	{
+		long rt = getMissionTime()-System.currentTimeMillis();
+		if(rt<0) rt=0;
+		return ""+rt/1000+"s";
 	}
 }

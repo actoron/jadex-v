@@ -241,7 +241,7 @@ public class MTrigger
 //	 *  Get the goal finished events.
 //	 */
 //	public IMTriggerReference[]	getGoalFinisheds();
-
+	
 	/**
 	 *  Add a fact added belief trigger. 
 	 */

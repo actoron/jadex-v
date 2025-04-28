@@ -1,7 +1,6 @@
 package jadex.bdi.runtime.impl;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -13,8 +12,8 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
-import jadex.core.impl.ComponentManager;
 import jadex.core.impl.ComponentFeatureProvider;
+import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
@@ -52,32 +51,21 @@ public class BDILifecycleAgentFeatureProvider extends ComponentFeatureProvider<M
 	}
 	
 	@Override
-	public boolean isCreator(Object obj)
+	public int	isCreator(Class<?> pojoclazz)
 	{
 		boolean ret = false;
-		if(obj instanceof String)
-		{
-			ret	= ((String)obj).startsWith("bdi:");
-		}
-		else if(obj instanceof BDICreationInfo)
+		if(BDICreationInfo.class.equals(pojoclazz))
 		{
 			ret	= true;
 		}
-		else if(obj!=null)
+		else
 		{
-			Class<?>	clazz	= obj.getClass();
-			Agent val;
-			do
-			{
-				val	= MicroClassReader.getAnnotation(clazz, Agent.class, obj.getClass().getClassLoader());
-				clazz	= clazz.getSuperclass();
-			} 
-			while(val==null && !clazz.equals(Object.class));
-			
+			Agent val = MicroAgentFeatureProvider.findAnnotation(pojoclazz, Agent.class, getClass().getClassLoader());
 			if(val!=null)
 				ret = val.type().startsWith("bdi");
 		}
-		return ret;
+		// prio 2 as micro has prio 1
+		return ret ? 2 : -1;
 	}
 	
 	@Override
@@ -117,9 +105,12 @@ public class BDILifecycleAgentFeatureProvider extends ComponentFeatureProvider<M
 					try
 					{
 						AgentResult r = MicroClassReader.getAnnotation(fls[i], AgentResult.class, ComponentManager.get().getClassLoader());
-						fls[i].setAccessible(true);
-						Object val = fls[i].get(pojo);
-						ret.put(fls[i].getName(), val);
+						if(r!=null)
+						{
+							fls[i].setAccessible(true);
+							Object val = fls[i].get(pojo);
+							ret.put(fls[i].getName(), val);
+						}
 					}
 					catch(Exception e)
 					{

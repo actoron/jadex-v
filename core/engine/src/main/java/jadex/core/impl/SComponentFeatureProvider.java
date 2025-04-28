@@ -12,24 +12,26 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jadex.core.IComponentFeature;
+
 /**
  *  Static helper methods for dealing with features.
  */
 public class SComponentFeatureProvider
 {
 	/** The available providers are cached at startup and do not change during runtime. */
-	protected static final List<ComponentFeatureProvider<Object>>	ALL_PROVIDERS;
+	protected static final List<ComponentFeatureProvider<IComponentFeature>>	ALL_PROVIDERS;
 	
 	static
 	{
 		//System.out.println("init providers started");
 		
-		List<ComponentFeatureProvider<Object>>	all	= new ArrayList<>();
+		List<ComponentFeatureProvider<IComponentFeature>>	all	= new ArrayList<>();
 		// Collect all feature providers
 		ServiceLoader.load(ComponentFeatureProvider.class).forEach(provider ->
 		{
 			@SuppressWarnings("unchecked")
-			ComponentFeatureProvider<Object>	oprovider	= provider;
+			ComponentFeatureProvider<IComponentFeature>	oprovider	= provider;
 			all.add(oprovider);
 		});
 		
@@ -42,17 +44,17 @@ public class SComponentFeatureProvider
 	}
 			
 	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 
-	protected static final Map<Class<? extends Component>, Map<Class<Object>, ComponentFeatureProvider<Object>>>	PROVIDERS_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
+	protected static final Map<Class<? extends Component>, Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>>	PROVIDERS_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
 	
 	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 
-	protected static final Map<Class<? extends Component>, List<ComponentFeatureProvider<Object>>>	PROVIDERLIST_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
+	protected static final Map<Class<? extends Component>, List<ComponentFeatureProvider<IComponentFeature>>>	PROVIDERLIST_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
 	
 	/**
 	 *  Helper method to get the providers, that are relevant for the given component type.
 	 */
-	public static List<ComponentFeatureProvider<Object>>	getProviderListForComponent(Class<? extends Component> type)
+	public static List<ComponentFeatureProvider<IComponentFeature>>	getProviderListForComponent(Class<? extends Component> type)
 	{
-		List<ComponentFeatureProvider<Object>>	ret	= PROVIDERLIST_BY_TYPE.get(type);
+		List<ComponentFeatureProvider<IComponentFeature>>	ret	= PROVIDERLIST_BY_TYPE.get(type);
 		if(ret==null)
 		{
 			getProvidersForComponent(type);
@@ -64,16 +66,16 @@ public class SComponentFeatureProvider
 	/**
 	 *  Helper method to get the providers, that are relevant for the given component type.
 	 */
-	public static Map<Class<Object>, ComponentFeatureProvider<Object>>	getProvidersForComponent(Class<? extends Component> type)
+	public static Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	getProvidersForComponent(Class<? extends Component> type)
 	{
-		Map<Class<Object>, ComponentFeatureProvider<Object>>	ret	= PROVIDERS_BY_TYPE.get(type);
+		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	ret	= PROVIDERS_BY_TYPE.get(type);
 		if(ret==null)
 		{
 			ret	= new LinkedHashMap<>();
 			
 			// Collect feature providers for this component type
 			// Replaces early providers with later providers for the same feature (e.g. execfeature <- simexecfeature)
-			for(ComponentFeatureProvider<Object> provider: ALL_PROVIDERS)
+			for(ComponentFeatureProvider<IComponentFeature> provider: ALL_PROVIDERS)
 			{
 				// Ignores providers for incompatible agent types (e.g. no micro features in gpmn agent)
 				if(provider.getRequiredComponentType().isAssignableFrom(type))
@@ -141,14 +143,46 @@ public class SComponentFeatureProvider
 		return LIFECYCLE_PROVIDERS;
 	}
 	
+	protected static Map<Class<?>, IComponentLifecycleManager>	CREATORS	= new LinkedHashMap<>();
+	
+	public static synchronized IComponentLifecycleManager	getCreator(Class<?> clazz)
+	{
+		if(!CREATORS.containsKey(clazz))
+		{
+			int	prio	= -1;
+			IComponentLifecycleManager	ret	= null;
+			for(IComponentLifecycleManager creator: SComponentFeatureProvider.getLifecycleProviders())
+			{
+				int	newprio	= creator.isCreator(clazz);
+				if(newprio>=0)
+				{
+					if(newprio==prio)
+					{
+						throw new RuntimeException("Conflicting creators with priority "+prio+": "+ret+", "+creator);
+					}
+					else if(newprio>prio)
+					{
+						prio	= newprio;
+						ret	= creator;
+					}
+				}
+			}
+			
+			// Add result (may be null if no creator found)
+			CREATORS.put(clazz, ret);
+		}
+		
+		return CREATORS.get(clazz);
+	}
+	
 	/**
 	 *  Build an ordered list of component features.
 	 *  @param provs A list of component feature lists.
 	 *  @return An ordered list of component features.
 	 */
-	public static Collection<ComponentFeatureProvider<Object>> orderComponentFeatures(Collection<ComponentFeatureProvider<Object>> provs)
+	public static Collection<ComponentFeatureProvider<IComponentFeature>> orderComponentFeatures(Collection<ComponentFeatureProvider<IComponentFeature>> provs)
 	{
-		DependencyResolver<ComponentFeatureProvider<Object>> dr = new DependencyResolver<ComponentFeatureProvider<Object>>();
+		DependencyResolver<ComponentFeatureProvider<IComponentFeature>> dr = new DependencyResolver<ComponentFeatureProvider<IComponentFeature>>();
 
 		// visualize feature dependencies for debugging
 //		Class<?> cl = SReflect.classForName0("jadex.tools.featuredeps.DepViewerPanel", null);
@@ -165,15 +199,15 @@ public class SComponentFeatureProvider
 //			}
 //		}
 		
-		Map<Class<?>, ComponentFeatureProvider<Object>> provsmap = new HashMap<>();
-		for(ComponentFeatureProvider<Object> prov: provs)
+		Map<Class<?>, ComponentFeatureProvider<IComponentFeature>> provsmap = new HashMap<>();
+		for(ComponentFeatureProvider<IComponentFeature> prov: provs)
 		{
 			provsmap.put(prov.getFeatureType(), prov);
 		}
 
-		Map<Class<?>, ComponentFeatureProvider<Object>> odeps = new HashMap<>();
+		Map<Class<?>, ComponentFeatureProvider<IComponentFeature>> odeps = new HashMap<>();
 		
-		for(ComponentFeatureProvider<Object> prov: provs)
+		for(ComponentFeatureProvider<IComponentFeature> prov: provs)
 		{
 //			IComponentFeatureFactory last = null;
 			// Only use the last feature of a given type (allows overriding features)
@@ -184,7 +218,7 @@ public class SComponentFeatureProvider
 				// If overridden old position is used as dependency!
 				if(odeps.containsKey(prov.getFeatureType()))
 				{
-					ComponentFeatureProvider<Object> odep = odeps.get(prov.getFeatureType());
+					ComponentFeatureProvider<IComponentFeature> odep = odeps.get(prov.getFeatureType());
 					if(odep!=null)
 					{
 						dr.addDependency(prov, odep);
@@ -232,7 +266,7 @@ public class SComponentFeatureProvider
 //			}
 		}
 
-		Collection<ComponentFeatureProvider<Object>> ret = dr.resolveDependencies(true);
+		Collection<ComponentFeatureProvider<IComponentFeature>> ret = dr.resolveDependencies(true);
 		//System.out.println("ordered features: "+ret);
 		return ret;
 	}

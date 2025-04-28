@@ -6,13 +6,12 @@ import jadex.bpmn.model.MActivity;
 import jadex.bpmn.runtime.IActivityHandler;
 import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.core.IComponent;
-import jadex.core.IComponentFeature;
 import jadex.execution.IExecutionFeature;
 
 /**
  * 
  */
-public interface IInternalBpmnComponentFeature extends IComponentFeature
+public interface IInternalBpmnComponentFeature extends IBpmnComponentFeature
 {	
 	/** Constant for step event. */
 	public static final String TYPE_ACTIVITY = "activity";

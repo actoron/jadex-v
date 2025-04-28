@@ -2,7 +2,6 @@ package jadex.bdi.marsworld.movement;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Body;
@@ -16,13 +15,14 @@ import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.marsworld.BaseAgent;
 import jadex.bdi.marsworld.environment.BaseObject;
-import jadex.bdi.marsworld.environment.Environment;
 import jadex.bdi.marsworld.environment.Homebase;
 import jadex.bdi.marsworld.environment.Target;
-import jadex.bdi.marsworld.math.IVector2;
 import jadex.bdi.runtime.ICapability;
 import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
+import jadex.environment.Environment;
+import jadex.environment.SpaceObject;
+import jadex.math.IVector2;
 import jadex.micro.annotation.Agent;
 
 /**
@@ -133,7 +133,7 @@ public class MovementCapability
 		@GoalCreationCondition(beliefs="missionend")
 		public static boolean checkCreate(MovementCapability capa)
 		{
-			return capa.missionend.get() && !capa.getMyself().getPosition().equals(capa.getHomebasePosition());
+			return capa.missionend.get() && !capa.getMyself().getPosition().equals(capa.getHomebase().getPosition());
 		}
 		
 		/**
@@ -142,19 +142,10 @@ public class MovementCapability
 		 */
 		public IVector2 getDestination()
 		{
-			return capa.getHomebasePosition();
+			return capa.getHomebase().getPosition();
 		}
 	}
 
-	/**
-	 *  Get the homebase position.
-	 *  @return The homebase position.
-	 */
-	public IVector2 getHomebasePosition()
-	{
-		return getHomebase().getPosition();
-	}
-	
 	/**
 	 *  Get the homebase.
 	 *  @return The homebase.
@@ -225,8 +216,40 @@ public class MovementCapability
 	{
 		if(!mytargets.contains(target))
 		{
-			//System.out.println("added target: "+get+" "+target);
+			//System.out.println("added target: "+agent.getId()+" "+target);
 			mytargets.add(target);
 		}
+		/*else
+		{
+			System.out.println("target known: "+agent.getId()+" "+target);//+" "+mytargets);
+		}*/
+	}
+	
+	public void updateTarget(Target target)
+	{
+		//mytargets.remove(target);  // does not work, creates another goal
+		Target t = getTarget(target);
+		t.updateFrom((Target)updateSpaceObject(target));
+		//mytargets.add(target);
+	}
+	
+	public SpaceObject updateSpaceObject(SpaceObject so)
+	{
+		SpaceObject ret = (Target)getEnvironment().getSpaceObject(so.getId()).get();
+		return ret;
+	}
+	
+	protected Target getTarget(Target target)
+	{
+		Target ret = null;
+		for(Target t: mytargets)
+		{
+			if(t.equals(target))
+			{
+				ret = t;
+				break;
+			}
+		}
+		return ret;
 	}
 }

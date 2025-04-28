@@ -93,6 +93,11 @@ public class TerminableDelegationFutureHandler<E>
 		}
 	}
 	
+	public ITerminableFuture<E> getTerminationSource() 
+	{
+		return src;
+	}
+
 	/**
 	 *  Terminate the future.
 	 *  The exception will be set to FutureTerminatedException.

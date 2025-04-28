@@ -23,9 +23,15 @@ public class ExecutionContext<T> implements ITimerContext
 	
 	protected Map<String, Object> values;
 	
-	public NodeContext<T> getNodeContext(Node<T> node)
+	/*public NodeContext<T> getNodeContext(Node<T> node)
 	{
 		return nodestates.get(node);
+	}*/
+	
+	public NodeContext<T> getNodeContext(Node<T> node) 
+	{
+	    NodeContext<T> context = nodestates.get(node);
+	    return context;
 	}
 	
 	public void setNodeContext(Node<T> node, NodeContext<T> state)

@@ -22,7 +22,7 @@ public class FeatureTest
 {
 	// Test features for plain components.
 	@SuppressWarnings("unchecked")
-	static Class<Object>[]	COMPONENT_FEATURE_TYPES	= new Class[]
+	static Class<? extends IComponentFeature>[]	COMPONENT_FEATURE_TYPES	= new Class[]
 	{
 		// Ordered alphabetically by fully qualified name of provider (wtf?)
 		IExecutionFeature.class,
@@ -33,7 +33,7 @@ public class FeatureTest
 
 	// Test features for micro agent components.
 	@SuppressWarnings("unchecked")
-	static Class<Object>[]	AGENT_FEATURE_TYPES	= new Class[]
+	static Class<? extends IComponentFeature>[]	AGENT_FEATURE_TYPES	= new Class[]
 	{
 		// Ordered alphabetically by fully qualified name of provider (wtf?)
 		IExecutionFeature.class,
@@ -58,11 +58,11 @@ public class FeatureTest
 		doTestLoading(new MicroAgent(this, null){}, AGENT_FEATURE_TYPES);
 	}
 	
-	protected void	doTestLoading(Component comp, Class<Object>[] feature_types)
+	protected void	doTestLoading(Component comp, Class<? extends IComponentFeature>[] feature_types)
 	{
-		for(Class<Object> type: feature_types)
+		for(Class<? extends IComponentFeature> type: feature_types)
 		{
-			Object	feature	= comp.getFeature((Class)type);
+			IComponentFeature	feature	= comp.getFeature(type);
 			assertTrue(feature!=null, "Feature could not be loaded");
 			assertTrue(type.isAssignableFrom(feature.getClass()), "Feature type does not match: "+feature.getClass()+", "+type);
 		}
@@ -81,7 +81,7 @@ public class FeatureTest
 		}
 		
 		// Test that lazy feature is created on demand.
-		assertTrue(comp.getFeature(ITestLazyFeature.class)!=null, "Lazy feature could bnot be created");
+		assertTrue(comp.getFeature(ITestLazyFeature.class)!=null, "Lazy feature could not be created");
 	}
 	
 	@Test
@@ -122,17 +122,17 @@ public class FeatureTest
 		doTestOrdering(new MicroAgent(null, null){}, AGENT_FEATURE_TYPES);
 	}
 		
-	protected void doTestOrdering(Component comp, Class<Object>[] feature_types)
+	protected void doTestOrdering(Component comp, Class<? extends IComponentFeature>[] feature_types)
 	{
 		// Force instantiation of lazy features, if any
-		for(Class<Object> type: feature_types)
+		for(Class<? extends IComponentFeature> type: feature_types)
 		{
-			comp.getFeature((Class)type);
+			comp.getFeature(type);
 		}
 		
 		// Check if actual ordering matches desired ordering
-		Iterator<Object>	it	= comp.getFeatures().iterator();
-		for(Class<Object> featuretype: feature_types)
+		Iterator<IComponentFeature>	it	= comp.getFeatures().iterator();
+		for(Class<? extends IComponentFeature> featuretype: feature_types)
 		{
 			assertTrue(it.hasNext(), "Feature missing: "+featuretype);
 			Object next	= it.next();

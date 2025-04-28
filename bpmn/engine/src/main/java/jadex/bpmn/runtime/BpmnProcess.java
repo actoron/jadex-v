@@ -24,41 +24,13 @@ public class BpmnProcess extends Component
 	
 	public static IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		Component comp = null;
-		String	filename;
-		if(pojo instanceof String)
+		String	filename = ((RBpmnProcess)pojo).getFilename();
+		Component	comp = Component.createComponent(BpmnProcess.class, () -> 
 		{
-			filename	= (String)pojo;
-			if(filename.startsWith("bpmn:"))
-				filename	= filename.substring(5);
-			String	ffilename	= filename ;
-			//comp = Component.createComponent(BpmnProcess.class,
-			//	() -> new BpmnProcess((Object)null, loadModel(ffilename), cid));
-			comp = Component.createComponent(BpmnProcess.class, () -> 
-			{
-				// this is executed before the features are inited
-				IModelInfo model = loadModel(ffilename);
-				return new BpmnProcess((Object)null, model, cid, app);
-			});
-			
-		}
-		else if(pojo instanceof RBpmnProcess)
-		{
-			filename = ((RBpmnProcess)pojo).getFilename();
-			if(filename.startsWith("bpmn:"))
-				filename = filename.substring(5);
-			String	ffilename	= filename ;
-			//comp = Component.createComponent(BpmnProcess.class,
-			//	() -> new BpmnProcess((RBpmnProcess)pojo, loadModel(ffilename), cid));
-		
-			comp = Component.createComponent(BpmnProcess.class, () -> 
-			{
-				// this is executed before the features are inited
-				IModelInfo model = loadModel(ffilename);
-				return new BpmnProcess((RBpmnProcess)pojo, model, cid, app);
-			});
-		}
-		
+			// this is executed before the features are inited
+			IModelInfo model = loadModel(filename);
+			return new BpmnProcess((RBpmnProcess)pojo, model, cid, app);
+		});
 		return comp.getComponentHandle();
 	}
 	

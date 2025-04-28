@@ -12,8 +12,8 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
-import jadex.core.impl.ComponentManager;
 import jadex.core.impl.ComponentFeatureProvider;
+import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
@@ -45,16 +45,16 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<MicroAgentF
 	
 	
 	@Override
-	public boolean isCreator(Object obj) 
+	public int	isCreator(Class<?> pojoclazz)
 	{
-		boolean ret = obj instanceof IBTProvider;
+		boolean ret = SReflect.isSupertype(IBTProvider.class, pojoclazz);
 		if(!ret)
 		{
-			Agent val = MicroAgentFeatureProvider.findAnnotation(obj.getClass(), Agent.class, getClass().getClassLoader());
+			Agent val = MicroAgentFeatureProvider.findAnnotation(pojoclazz, Agent.class, getClass().getClassLoader());
 			if(val!=null)
 				ret = "bt".equals(val.type());
 		}
-		return ret;
+		return ret ? 1 : -1;
 	}
 	
 	@Override

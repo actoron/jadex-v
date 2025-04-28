@@ -6,6 +6,7 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanCapability;
+import jadex.bdi.annotation.PlanFinished;
 import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.carry.ICarryService;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
@@ -16,6 +17,7 @@ import jadex.bdi.marsworld.movement.MovementCapability.Move;
 import jadex.bdi.marsworld.producer.ProducerAgent.ProduceOre;
 import jadex.bdi.runtime.IPlan;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 
@@ -35,6 +37,8 @@ public class ProduceOrePlan
 	
 	@PlanReason
 	protected ProduceOre goal;
+	
+	protected ITerminableFuture<Void> task;
 		
 	/**
 	 *  The plan body.
@@ -54,9 +58,12 @@ public class ProduceOrePlan
 		
 		Producer myself = (Producer)capa.getMyself();
 		
-		env.produce(myself, target).get();
+		task = env.produce(myself, target);
+		task.get();
+		task = null;
+		//producer.getMoveCapa().updateTarget(target);
 		
-//		System.out.println("Produced ore at target: "+getAgentName()+", "+ore+" ore produced.");
+		//System.out.println("Produced ore at target: "+producer.getAgent().getId()+", "+target.getCapacity()+" ore produced.");
 		
 		callCarryAgent(target);
 	}
@@ -83,6 +90,17 @@ public class ProduceOrePlan
 		catch(RuntimeException e)
 		{
 			System.out.println("No carry found");
+		}
+	}
+	
+	@PlanFinished
+	protected void finished()
+	{
+		//System.out.println("plan finished: "+this);
+		if(task!=null)
+		{
+			//System.out.println("aborting env task");
+			task.terminate();
 		}
 	}
 }

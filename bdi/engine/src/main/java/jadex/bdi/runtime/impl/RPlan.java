@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.model.IBDIModel;
@@ -904,7 +905,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 							if(resc!=null)
 							{
 								//System.out.println("aborting5: "+this+", "+resc);
-								resc.execute(new ResumeCommandArgs(null, null, new PlanAbortedException()));
+								resc.execute(new ResumeCommandArgs(null, null, () -> new PlanAbortedException()));
 							}
 							List<ICommand<ResumeCommandArgs>> rescoms = getResumeCommands();
 							if(rescoms!=null)
@@ -913,7 +914,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 								//System.out.println("aborting6: "+this+", "+SUtil.arrayToString(tmp));
 								for(ICommand<ResumeCommandArgs> rescom: tmp)
 								{
-									rescom.execute(new ResumeCommandArgs(null, null, new PlanAbortedException()));
+									rescom.execute(new ResumeCommandArgs(null, null, () -> new PlanAbortedException()));
 								}
 							}
 	//					}
@@ -1161,7 +1162,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 			
 			public void exceptionOccurred(Exception exception)
 			{
-				rescom.execute(new ResumeCommandArgs(null, null, exception));
+				rescom.execute(new ResumeCommandArgs(null, null, () -> exception));
 				removeSubgoal(rgoal);
 			}
 		});
@@ -1471,7 +1472,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		{
 			if(!cancelled)
 			{
-				rescom.execute(new ResumeCommandArgs(null, null, new TimeoutException()));
+				rescom.execute(new ResumeCommandArgs(null, null, () -> new TimeoutException()));
 			}
 		}
 		
@@ -1632,7 +1633,7 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 		}
 	}
 
-	public record ResumeCommandArgs(Boolean donotify, Boolean abort, Exception exception) {}
+	public record ResumeCommandArgs(Boolean donotify, Boolean abort, Supplier<Exception> exception) {}
 	
 	/**
 	 * 
@@ -1679,8 +1680,6 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 
 //			System.out.println("exe: "+this+" "+RPlan.this.getId()+" "+this);
 
-			Exception ex = args!=null? args.exception(): null;
-			
 			if(rulename!=null)
 			{
 				//System.out.println("rem rule: "+rulename);
@@ -1713,18 +1712,19 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 				
 				if(donotify)
 				{
-					if(!abort)//sus==null)
-					{
+					/*if(!abort)//sus==null)
+					{*/
+						Exception ex	= args!=null && args.exception()!=null ? args.exception().get() : null;
 						if(ex!=null)
 						{
 							if(waitfuture instanceof ITerminableFuture)
 							{
-//								System.out.println("notify1: "+getId());
+								//System.out.println("notify1: "+getId());
 								((ITerminableFuture<?>)waitfuture).terminate(ex);
 							}
 							else
 							{
-//								System.out.println("notify2: "+getId());
+								//System.out.println("notify2: "+getId());
 								waitfuture.setExceptionIfUndone(ex);
 							}
 							
@@ -1737,15 +1737,15 @@ public class RPlan extends RParameterElement implements IPlan, IInternalPlan
 							{
 								o = ((ChangeEvent)o).getValue();
 							}
-//							System.out.println("notify3: "+getId());
+							//System.out.println("notify3: "+getId());
 							waitfuture.setResultIfUndone(isvoid? null: (T)o);
 						}
-					}
+					/*}
 					else
 					{
-//						System.out.println("notify4: "+getId());
+						System.out.println("notify4: "+getId());
 						waitfuture.abortGet(sus);
-					}
+					}*/
 				}
 			}
 		}

@@ -2,6 +2,7 @@ package jadex.core;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import jadex.core.annotation.NoCopy;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.idgenerator.IdGenerator;
@@ -9,6 +10,7 @@ import jadex.idgenerator.IdGenerator;
 /**
  *  Identifier for components.
  */
+@NoCopy	// object is immutable -> no copy necessary when used in component or service methods
 public class ComponentIdentifier
 {
 	protected static IdGenerator gen = new IdGenerator();
@@ -29,7 +31,7 @@ public class ComponentIdentifier
 	public ComponentIdentifier()
 	{
 		this.localname = ComponentManager.get().isComponentIdNumberMode()? ""+ID_COUNTER.getAndIncrement(): gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
-		gpid = new GlobalProcessIdentifier();
+		gpid = GlobalProcessIdentifier.SELF;
 	}
 	
 	/**
@@ -40,7 +42,7 @@ public class ComponentIdentifier
 	public ComponentIdentifier(String localname)
 	{
 		this.localname = localname;
-		gpid = new GlobalProcessIdentifier();
+		gpid = GlobalProcessIdentifier.SELF;
 	}
 	
 	/**

@@ -167,12 +167,15 @@ includeBuild('core/engine') {}
 includeBuild('core/featuretest') {}
 includeBuild('core/execution') {}
 includeBuild('core/simulation') {}
+includeBuild('core/injection'){name='injection'}
 //includeBuild('core/errorhandling') {}
 
 includeBuild('model/model') {}
 
 includeBuild('service/provided') {}
+includeBuild('service/provided2') {}
 includeBuild('service/required') {}
+includeBuild('service/required2') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {}
@@ -202,7 +205,10 @@ includeBuild('monitoring/fluentd') {}
 includeBuild('monitoring/opentelemetry') {}
 includeBuild('monitoring/log4j') {}
 
+includeBuild('environment/environment'){name='environment'}
+
 includeBuild('application/micro'){name='application-micro'}
+//includeBuild('application/micro2'){name='application-micro2'}
 includeBuild('application/micro-nfp'){name='application-micro-nfp'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}

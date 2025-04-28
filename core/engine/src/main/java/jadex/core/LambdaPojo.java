@@ -23,6 +23,15 @@ public class LambdaPojo<T> extends ResultProvider
 
 	public T getResult() 
 	{
-		return results.size()>0? (T)results.values().iterator().next(): null;
+		if(results.size()>0)
+		{
+			@SuppressWarnings("unchecked")
+			T	ret	= (T)results.values().iterator().next();
+			return  ret;
+		}
+		else
+		{
+			return null;
+		}
 	}
 };

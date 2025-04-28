@@ -1,7 +1,7 @@
 package jadex.bdi.marsworld.environment;
 
-import jadex.bdi.marsworld.math.IVector2;
-import jadex.bdi.marsworld.math.Vector2Double;
+import jadex.environment.SpaceObject;
+import jadex.math.IVector2;
 
 public class BaseObject extends SpaceObject
 {
@@ -90,9 +90,22 @@ public class BaseObject extends SpaceObject
 	
 	public BaseObject copy()
 	{
-		BaseObject ret = new BaseObject(this.getPosition(), this.getName(), this.getSpeed(), this.getVision(), this.getRotation(), 
+		BaseObject ret = new BaseObject(this.getPosition(), this.getName(), 
+			this.getSpeed(), this.getVision(), this.getRotation(), 
 			this.getWidth(), this.getHeight());
 		ret.setId(this.getId());
 		return ret;
+	}
+	
+	public void onUpdateFrom(SpaceObject source)
+	{
+		BaseObject bo = (BaseObject)source;
+		setHeight(bo.getHeight());
+		setWidth(bo.getWidth());
+		setName(bo.getName());
+		setRotation(bo.getRotation());
+		setSpeed(bo.getSpeed());
+		setVision(bo.getVision());
+		//System.out.println("updated: "+this);
 	}
 }

@@ -1,7 +1,7 @@
 package jadex.bdi.marsworld.environment;
 
-import jadex.bdi.marsworld.math.IVector2;
-import jadex.bdi.marsworld.math.Vector2Double;
+import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 
 public class Sentry extends BaseObject
 {

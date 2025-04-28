@@ -15,6 +15,7 @@ import java.util.Map;
 
 import jadex.common.IResultCommand;
 import jadex.common.SAccess;
+import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
@@ -123,15 +124,24 @@ public class RuleSystem
 		{
 			IEvent event = pcman.removeEvent(0);
 			
-			//if(event.getType().toString().indexOf("daytime")!=-1)
+			//if(event.getType().toString().indexOf("stations")!=-1)
+			//	System.out.println("station event:"+event);
+			
+			//if(event.getType().toString().indexOf("self")!=-1)
+			//	System.out.println("self event:"+event);
+			
+			//if(event.getType().toString().indexOf("wastes")!=-1)
 			//	System.out.println("sdgfsdgf");
 			
-//			if(event.getType().getType(0).indexOf("factadded")!=-1)// && event.getType().getType(1).indexOf("mybean")!=-1)
+			//if(event.getType().getType(0).indexOf("factadded")!=-1)// && event.getType().getType(1).indexOf("mybean")!=-1)
 //				&& event.getType().getType(1).indexOf("Ambu")!=-1)
-//				System.out.println("proc ev: "+event);
+			//	System.out.println("proc ev: "+event);
 				
 			List<IRule<?>> rules = rulebase.getRules(event.getType());
 			
+			//if(event.getType().getType(1).indexOf("mytargets")!=-1)
+			//	System.out.println("rules: "+rules);
+				
 			if(rules!=null)
 			{
 				IRule<?>[] rs = rules.toArray(new IRule<?>[rules.size()]);
@@ -260,13 +270,14 @@ public class RuleSystem
 					
 					public void exceptionOccurred(Exception exception)
 					{
-						ret.setResult(null);
+						System.out.println("Rule failed: "+rules[i]+", "+event+"\n"+SUtil.getExceptionStacktrace(exception));
+						processRules(rules, i+1, event, res).addResultListener(new DelegationResultListener<Void>(ret));
 					}
 				});
 			}
 			else
 			{
-				ret.setResult(null);
+				processRules(rules, i+1, event, res).addResultListener(new DelegationResultListener<Void>(ret));
 			}
 		}
 		else

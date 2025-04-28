@@ -22,25 +22,11 @@ public class BDIAgent extends MicroAgent
 	
 	public static IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		String	classname;
 		BDIAgent agent = null;
-		if(pojo instanceof String)
+		if(pojo instanceof BDICreationInfo)
 		{
-			classname	= (String)pojo;
-			if(classname.startsWith("bdi:"))
-				classname	= classname.substring(4);
-			String	fclassname	= classname ;
 			agent = Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent((Object)null, loadModel(fclassname, null), cid, app));
-		}
-		else if(pojo instanceof BDICreationInfo)
-		{
-			classname	= ((BDICreationInfo)pojo).getClassname();
-			if(classname.startsWith("bdi:"))
-				classname	= classname.substring(4);
-			String	fclassname	= classname ;
-			agent = Component.createComponent(BDIAgent.class,
-				() -> new BDIAgent((BDICreationInfo)pojo, loadModel(fclassname, null), cid, app));
+				() -> new BDIAgent((BDICreationInfo)pojo, loadModel(((BDICreationInfo)pojo).getClassname(), null), cid, app));
 		}
 		else
 		{

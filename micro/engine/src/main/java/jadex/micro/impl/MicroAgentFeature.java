@@ -25,7 +25,6 @@ import jadex.javaparser.SimpleValueFetcher;
 import jadex.micro.InjectionInfoHolder;
 import jadex.micro.MicroAgent;
 import jadex.micro.MicroModel;
-import jadex.model.IModelFeature;
 import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 
@@ -62,6 +61,11 @@ public class MicroAgentFeature	implements ILifecycle, IComponentFeature
 			//if(wasAnnotationCalled(ann))
 			//	return IFuture.DONE;
 			//else
+			
+			// hack!!!
+			//invokeMethod(getSelf(), ann, null).get();//.catchEx(e -> getSelf().handleException(e));
+			
+			//System.out.println("scheduled invoke: "+ann+" "+IExecutionFeature.get().getComponent());
 			getSelf().getFeature(IExecutionFeature.class).scheduleStep(() -> invokeMethod(getSelf(), ann, null)).catchEx(e -> getSelf().handleException(e));
 		}
 	}

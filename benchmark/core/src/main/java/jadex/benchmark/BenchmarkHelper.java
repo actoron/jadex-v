@@ -17,15 +17,24 @@ import jadex.common.SUtil;
 import jadex.logger.OpenTelemetryLogHandler;
 import jadex.logger.OpenTelemetryLogger;
 
+
+/**
+ * 	Perform micro benchmarks and write/compare results.
+ */
 public class BenchmarkHelper
 {
+	// Check execution environment
 	static final String	EXEC_ENV	= SUtil.isGradle() ? "gradle" : "ide";
 
 	static
 	{
+		// TODO: support other loggers? Read URL from env?
 		System.setProperty(OpenTelemetryLogger.URL, "https://otel.actoron.com");
 	}
 	
+	/**
+	 *  Derive the benchmark name from the calling method.
+	 */
 	protected static String	getCaller()
 	{
 		StackTraceElement[]	stels	= new Exception().fillInStackTrace().getStackTrace();
@@ -38,9 +47,34 @@ public class BenchmarkHelper
 		throw new IllegalCallerException("Must be called from outside class");
 	}
 	
-	public static double	benchmarkMemory(Callable<Runnable> startup)
+	/**
+	 *  Perform a number of create operations (callable),
+	 *  measure the memory change and afterwards perform
+	 *  take down operations (runnable). 
+	 *  Fail when comparison to previous value exceeds limit in percent (default 20%).
+	 */
+	public static void	benchmarkMemory(Callable<Runnable> startup)
 	{
+		benchmarkMemory(startup, 20);
+	}
+	
+	/**
+	 *  Perform a number of create operations (callable),
+	 *  measure the memory change and afterwards perform
+	 *  take down operations (runnable). 
+	 *  
+	 *  @param limit Fail when comparison to previous value exceeds limit in percent (default 20%).
+	 */
+	public static void	benchmarkMemory(Callable<Runnable> startup, double limit)
+	{
+		if(System.getenv("JADEX_BENCHMARK_MEMORY_SKIP")!=null)
+		{
+			System.out.println("Skipping memory benchmark: "+getCaller());
+			return;
+		}
+		
 		int	msecs	= 500;
+		int	sleep	= 500;
 		int retries	= 10;
 		List<Long>	vals	= new ArrayList<>();
 		try
@@ -49,6 +83,8 @@ public class BenchmarkHelper
 			{
 				List<Runnable>	teardowns	= new ArrayList<>();
 				
+				System.gc();
+				Thread.sleep(sleep);
 				System.gc();
 				long	start	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at start: "+start);
@@ -59,6 +95,8 @@ public class BenchmarkHelper
 					teardowns.add(startup.call());
 				
 				System.gc();
+				Thread.sleep(sleep);
+				System.gc();
 				long	end	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at end: "+end);
 				
@@ -67,7 +105,7 @@ public class BenchmarkHelper
 				{
 					System.out.println("Per component: "+took);
 					System.out.println("runs: "+cnt);
-					addToDB(took, false);
+					addToDB(took, limit, false);
 					vals.add(took);
 					System.out.println();
 				}
@@ -76,19 +114,46 @@ public class BenchmarkHelper
 					teardown.run();
 			}
 			vals.sort((a,b) -> (int)(a-b));
-			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
-			System.out.println("vals: "+vals);
-			System.out.println("avg [0..3): "+value);
-			return addToDB(value, true);
+			
+//			// Use average of best three values
+//			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
+//			System.out.println("vals: "+vals);
+//			System.out.println("avg [0..3): "+value);
+//			addToDB(value, limit, true);
+			
+			// Use only best value
+			addToDB(vals.get(0), limit, true);
 		}
 		catch(Exception e)
 		{
 			throw SUtil.throwUnchecked(e);
 		}
 	}
-
-	public static double	benchmarkTime(Runnable code)
+	
+	/**
+	 *  Perform a number of operations and measure the time in nanoseconds.
+	 *  Takes about 10 seconds due to cool down periods.
+	 *  Fail when comparison to previous value exceeds limit in percent (default 20%).
+	 */
+	public static void	benchmarkTime(Runnable code)
 	{
+		benchmarkTime(code, 20);
+	}
+	
+	/**
+	 *  Perform a number of operations and measure the time in nanoseconds.
+	 *  Takes about 10 seconds due to cool down periods.
+	 *  
+	 *  @param limit Fail when comparison to previous value exceeds limit in percent (default 20%).
+	 */
+	public static void	benchmarkTime(Runnable code, double limit)
+	{
+		if(System.getenv("JADEX_BENCHMARK_TIME_SKIP")!=null)
+		{
+			System.out.println("Skipping time benchmark: "+getCaller());
+			return;
+		}
+		
 		int	retries	= 10;	// how often to repeat everything 
 		long cooldown	= 10000;	// How long to sleep before runs
 		long msecs	= 2000;	// How long to run the benchmark
@@ -131,7 +196,7 @@ public class BenchmarkHelper
 					System.out.println("took: "+took);
 					System.out.println("runs: "+cnt*runs);
 					
-					addToDB(took, false);
+					addToDB(took, limit, false);
 					vals.add(took);
 					
 					System.out.println("Used memory: "+usedmem);
@@ -145,10 +210,15 @@ public class BenchmarkHelper
 				}
 			}
 			vals.sort((a,b) -> (int)(a-b));
-			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
-			System.out.println("vals: "+vals);
-			System.out.println("avg [0..3): "+value);
-			return addToDB(value, true);
+			
+//			// Use average of best three values
+//			long value	= (long)vals.subList(0, 3).stream().mapToLong(a -> a).average().getAsDouble();
+//			System.out.println("vals: "+vals);
+//			System.out.println("avg [0..3): "+value);
+//			addToDB(value, limit, true);
+			
+			// Use only best value
+			addToDB(vals.get(0), limit, true);
 		}
 		catch(Exception e)
 		{
@@ -159,13 +229,13 @@ public class BenchmarkHelper
 	/**
 	 *  Compare value to DB and (optionally) write new value.
 	 */
-	protected static double	addToDB(double value, boolean write) throws IOException
+	protected static void	addToDB(double value, double limit, boolean write) throws IOException
 	{
 		double	pct	= 0;
 		String	caller	= getCaller();
 		Path	db	= Path.of(".benchmark_"+EXEC_ENV, caller+".json");
 		double	best	= 0;
-		double	last	= 0;
+//		double	last	= 0;
 		long	new_date	= System.currentTimeMillis();
 		long	best_date	= new_date;
 		
@@ -173,16 +243,21 @@ public class BenchmarkHelper
 		{
 			JsonValue	val	= Json.parse(Files.readString(db));
 			best	= ((JsonObject)val).get("best").asDouble();
-			last	= ((JsonObject)val).get("last").asDouble();
+//			last	= ((JsonObject)val).get("last").asDouble();
 			
 			pct	= (value - best)*100.0/best;
 			System.out.println("Change(%): "+pct);
 			
-			// Write new value if two better values in a row
-			if(last<=best && value<=best)
+//			// Write new value if two better values in a row
+//			if(last<=best && value<=best)
+//			{
+//				// Use only second best value to avoid outliers
+//				best	= Math.max(last, value);
+//			}
+			// Write new value when better or equal than old (e.g. update best_date also when same value)
+			if(value<=best)
 			{
-				// Use only second best value to avoid outliers
-				best	= Math.max(last, value);
+				best	= value;
 			}
 			
 			// Keep old best date
@@ -214,7 +289,8 @@ public class BenchmarkHelper
 				  "benchmark_name="+caller
 				+" benchmark_value="+value
 				+" benchmark_prev="+best
-				+" benchmark_pct="+pct);
+				+" benchmark_pct="+pct
+				+" benchmark_limit="+limit);
 			// JSON
 //			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
 //					  "{\"benchmark\": true"
@@ -228,8 +304,9 @@ public class BenchmarkHelper
 			
 			// Hack!!! Force OpenTelemetry to push logs before exiting
 			OpenTelemetryLogHandler.forceFlush();
+
+			if(pct>limit)
+				throw new RuntimeException("Degredation (%) exceeds limit: "+pct+" vs. "+limit);
 		}
-		
-		return pct;
 	}
 }

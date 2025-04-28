@@ -8,7 +8,7 @@ import jadex.core.IComponentFeature;
 /**
  *  A feature provider is loaded from the classpath and adds a specific feature to components.
  */
-public abstract class ComponentFeatureProvider<T> extends FeatureProvider<T>
+public abstract class ComponentFeatureProvider<T extends IComponentFeature> extends FeatureProvider<T>
 {
 	/**
 	 *  If the feature does not apply to all kinds of components,
@@ -27,7 +27,7 @@ public abstract class ComponentFeatureProvider<T> extends FeatureProvider<T>
 	 *  @param self	The component to which the feature belongs.
 	 *  @return	The feature instance.
 	 */
-	public abstract <T extends IComponentFeature> T createFeatureInstance(Component self);
+	public abstract T createFeatureInstance(Component self);
 	
 	/**
 	 *  Allow a feature implementation to replace another implementation.

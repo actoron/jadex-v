@@ -1,7 +1,8 @@
 package jadex.bdi.marsworld.environment;
 
-import jadex.bdi.marsworld.math.IVector2;
-import jadex.bdi.marsworld.math.Vector2Double;
+import jadex.environment.SpaceObject;
+import jadex.math.IVector2;
+import jadex.math.Vector2Double;
 
 public class Producer extends BaseObject
 {
@@ -38,6 +39,12 @@ public class Producer extends BaseObject
 		ret.setVision(this.getVision());
 		ret.setId(this.getId());
 		return ret;
+	}
+	
+	public void onUpdateFrom(SpaceObject source)
+	{
+		Producer p = (Producer)source;
+		setStatus(p.getStatus());
 	}
 	
 }

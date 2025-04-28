@@ -27,7 +27,10 @@ public class BenchmarkAgent extends SokratesV3Agent
 	
 	public static void main(String[] args)
 	{
-		IBDIAgent.create(new BenchmarkAgent(true));
-		IComponentManager.get().waitForLastComponentTerminated();
+		for(;;)
+		{
+			IBDIAgent.create(new BenchmarkAgent(true));
+			IComponentManager.get().waitForLastComponentTerminated();
+		}
 	}
 }

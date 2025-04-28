@@ -30,11 +30,12 @@ public class ChildCreationDecorator<T> extends ConditionalDecorator<T>
 	}
 	
 	@Override
-	public void setNode(Node<T> node)
+	public Decorator<T> setNode(Node<T> node)
 	{
 		if(!(node instanceof CompositeNode<T>))
 			throw new IllegalArgumentException("Must be added on composite node");
 		this.node = node;
+		return this;
 	}
 	
 	@Override

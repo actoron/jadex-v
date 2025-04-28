@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
+import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -37,18 +38,9 @@ public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvide
 	}
 	
 	@Override
-	public boolean isCreator(Object obj)
+	public int	isCreator(Class<?> pojoclazz)
 	{
-		boolean ret = false;
-		if(obj instanceof String)
-		{
-			ret	= ((String)obj).startsWith("bpmn:");
-		}
-		else if(obj instanceof RBpmnProcess)
-		{
-			ret	= true;
-		}
-		return ret;
+		return SReflect.isSupertype(RBpmnProcess.class, pojoclazz) ? 1 : -1;
 	}
 	
 	@Override
@@ -75,7 +67,7 @@ public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvide
 	
 	public Map<String, Object> getResults(Object pojo)
 	{
-		Map<String, Object> ret = Collections.EMPTY_MAP;
+		Map<String, Object> ret = Collections.emptyMap();
 		if(pojo!=null)
 		{
 			if(pojo instanceof RBpmnProcess)

@@ -2,16 +2,18 @@ package jadex.bdi.marsworld;
 
 import java.util.Set;
 
+import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
 import jadex.bdi.marsworld.environment.BaseObject;
-import jadex.bdi.marsworld.environment.Environment;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
-import jadex.bdi.marsworld.environment.SpaceObject;
 import jadex.bdi.marsworld.environment.Target;
-import jadex.bdi.marsworld.environment.VisionEvent;
 import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.core.IComponent;
+import jadex.environment.Environment;
+import jadex.environment.SpaceObject;
+import jadex.environment.SpaceObjectsEvent;
+import jadex.environment.VisionEvent;
 import jadex.execution.IExecutionFeature;
 import jadex.micro.annotation.Agent;
 import jadex.model.annotation.OnStart;
@@ -22,6 +24,7 @@ public abstract class BaseAgent
 	@Agent 
 	protected IComponent agent;
 	
+	@Belief
 	protected BaseObject self;
 	
 	protected MarsworldEnvironment env;
@@ -50,13 +53,29 @@ public abstract class BaseAgent
 			{
 				if(e instanceof VisionEvent)
 				{
-					Set<SpaceObject> seen = ((VisionEvent)e).getSeen();
+					Set<SpaceObject> seen = ((VisionEvent)e).getVision().getSeen();
 					for(SpaceObject obj: seen)
 					{
 						if(obj instanceof Target)
 						{
 							getMoveCapa().addTarget((Target)obj);
-							System.out.println("New target seen: "+agent.getId().getLocalName()+", "+obj);
+							//System.out.println("New target seen: "+agent.getId().getLocalName()+", "+obj);
+						}
+					}
+				}
+				else if(e instanceof SpaceObjectsEvent)
+				{
+					Set<SpaceObject> changed = ((SpaceObjectsEvent)e).getObjects();
+					//System.out.println("update space objects: "+agent.getId()+" "+changed);
+					for(SpaceObject obj: changed)
+					{
+						if(obj.equals(movecapa.getMyself()))
+						{
+							self.updateFrom(obj);
+						}
+						else if(obj instanceof Target)
+						{
+							movecapa.updateTarget((Target)obj);
 						}
 					}
 				}
@@ -75,12 +94,12 @@ public abstract class BaseAgent
 		return self;
 	}
 	
-	public BaseObject getSpaceObject(boolean renew)
+	/*public BaseObject getSpaceObject(boolean renew)
 	{
 		if(renew)
-			self = (BaseObject)env.getSpaceObject(self.getId());
+			self = (BaseObject)env.getSpaceObject(self.getId()).get();
 		return self;
-	}
+	}*/
 	
 	public MarsworldEnvironment getEnvironment()
 	{

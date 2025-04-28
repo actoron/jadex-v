@@ -2,7 +2,7 @@ package jadex.providedservice;
 
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
-import jadex.execution.FutureReturnType;
+import jadex.execution.future.FutureReturnType;
 import jadex.future.IFuture;
 import jadex.providedservice.annotation.Reference;
 

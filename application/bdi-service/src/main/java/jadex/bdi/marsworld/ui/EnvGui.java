@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -17,13 +18,14 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import jadex.bdi.marsworld.environment.Carry;
-import jadex.bdi.marsworld.environment.Environment;
 import jadex.bdi.marsworld.environment.Homebase;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.Producer;
 import jadex.bdi.marsworld.environment.Sentry;
 import jadex.bdi.marsworld.environment.Target;
-import jadex.bdi.marsworld.math.IVector2;
+import jadex.bdi.marsworld.environment.Target.Status;
+import jadex.environment.Environment;
+import jadex.math.IVector2;
 
 
 public class EnvGui extends ApplicationAdapter 
@@ -63,12 +65,18 @@ public class EnvGui extends ApplicationAdapter
  
         batch = new SpriteBatch();
         shaperen = new ShapeRenderer();
-        backgroundtex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/mars.png"));
-        carrytex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/carry.png"));
-        producertex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/producer.png"));
-        sentrytex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/sentry.png"));
-        targettex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/flag.png"));
-        homebasetex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/images/target.png"));
+        backgroundtex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/mars.png"));
+        backgroundtex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        carrytex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/carry.png"));
+        carrytex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        producertex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/producer.png"));
+        producertex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        sentrytex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/sentry.png"));
+        sentrytex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        targettex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/flag.png"));
+        targettex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        homebasetex = new Texture(Gdx.files.internal("jadex/bdi/marsworld/ui/images/target.png"));
+        homebasetex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, wdim.x, wdim.y);
@@ -173,8 +181,11 @@ public class EnvGui extends ApplicationAdapter
             batch.draw(targettex, wpos.x - wdim.x / 2, wpos.y - wdim.y / 2, wdim.x, wdim.y); 
         	
 		    //batch.draw(robottex, wpos.x, wpos.y, wdim.x, wdim.y);
-		    //font.setColor(Color.BLACK);
-		    //drawText(batch, font, target.getName(), mapEnvToWorld(pos), wdim.x, 0);
+		    font.setColor(Color.BLACK);
+		    String txt = ""+target.getStatus()+" "+target.getPosition();
+		    if(target.getStatus()==Status.Analyzed)
+		    	txt += " detected ore: "+target.getDetectedOre()+" produced ore: "+target.getOre();   
+		    drawText(batch, font, txt, mapEnvToWorld(pos), wdim.x, wdim.y/2);
 		    //font.draw(batch, "halloooo", wpos.x, wpos.y);
         }
         
@@ -183,6 +194,8 @@ public class EnvGui extends ApplicationAdapter
     	Vector2 wpos = mapEnvToWorld(pos);
     	Vector2 wdim = mapEnvToWorld(new Vector2((float)base.getWidth(), (float)base.getHeight()));
         batch.draw(homebasetex, wpos.x - wdim.x / 2, wpos.y - wdim.y / 2, wdim.x, wdim.y); 
+        font.setColor(Color.BLACK);
+	    drawText(batch, font, "Time: "+base.getRemainingTime()+" Ore: "+base.getOre(), mapEnvToWorld(pos), wdim.x, wdim.y/2);
         
         batch.end();
     }
@@ -249,7 +262,7 @@ public class EnvGui extends ApplicationAdapter
     {
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("Marsworld");
-        config.setWindowedMode(800, 600);
+        config.setWindowedMode(1200, 800);
         config.setForegroundFPS(10);
         new Lwjgl3Application(new EnvGui(convid), config);
     }
