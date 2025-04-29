@@ -33,6 +33,7 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
+import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
@@ -755,6 +756,45 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 		}
 		
+		// Add context condition rules
+		List<Method>	contextcondmethods	= InjectionModel.findMethods(goalclazz, GoalContextCondition.class);
+		numcreations	= 0;
+		for(Method method: contextcondmethods)
+		{
+			GoalContextCondition	context	= method.getAnnotation(GoalContextCondition.class);
+			// TODO: find beliefs of all capabilities!?
+			List<EventType>	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), context.beliefs(), context.beliefs(), context.beliefs(), new Class<?>[0], goalname);
+			if(events!=null && events.size()>0)
+			{
+				events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
+				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+				
+				// Add fetcher for belief value.
+				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
+					new String[][] {context.beliefs()},
+					new Class<?>[][] {},
+					goalname, false, contextfetchers);
+				
+				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
+				String	rulename	= "GoalContextCondition"+(++numcreations)+"_"+goalname;
+				
+				// check for boolean method
+				if(SReflect.isSupertype(Boolean.class, method.getReturnType()))
+				{
+					// In extra on start, add rule to suspend goal when event happens.  
+					ret.add(createContextCondition(goalclazz, aevents, handle, rulename));
+				}
+				else
+				{
+					throw new UnsupportedOperationException("Goal context condition method must return boolean: "+method);
+				}
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Goal context condition must specify at least one trigger belief: "+method);
+			}
+		}
+		
 		// Add target condition rules
 		List<Method>	targetcondmethods	= InjectionModel.findMethods(goalclazz, GoalTargetCondition.class);
 		numcreations	= 0;
@@ -926,6 +966,60 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	}
 
 	/**
+	 *  Create a handle that adds a context condition rule for a goal type.
+	 */
+	protected IInjectionHandle createContextCondition(Class<?> goalclazz, EventType[] aevents,
+		IInjectionHandle conditionmethod, String rulename)
+	{
+		return (comp, pojos, context, oldval) ->
+		{
+			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+			rs.getRulebase().addRule(new Rule<Void>(
+				rulename,	// Rule Name
+				ICondition.TRUE_CONDITION,	// Condition -> true
+				(event, rule, context2, condresult) ->
+				{
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					if(goals!=null)
+					{
+						ChangeEvent<Object>	ce	= null;
+						for(RGoal goal: goals)
+						{
+							if(RGoal.GoalLifecycleState.SUSPENDED.equals(goal.getLifecycleState()))
+							{	
+								if(ce==null)
+								{
+									ce	= new ChangeEvent<Object>(event);
+								}
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								if(Boolean.TRUE.equals(value))
+								{
+									goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
+								}
+							}
+							else if(!RGoal.GoalLifecycleState.DROPPING.equals(goal.getLifecycleState())
+								  && !RGoal.GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()))
+							{	
+								if(ce==null)
+								{
+									ce	= new ChangeEvent<Object>(event);
+								}
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								if(!Boolean.TRUE.equals(value))
+								{
+									goal.setLifecycleState(RGoal.GoalLifecycleState.SUSPENDED);
+								}
+							}
+						}
+					}
+					return IFuture.DONE;
+				},
+				aevents));	// Trigger Event(s)
+			return null;
+		};
+	}
+
+	/**
 	 *  Create a handle that adds a target condition rule for a goal type.
 	 */
 	protected IInjectionHandle createTargetCondition(Class<?> goalclazz, EventType[] aevents,
@@ -1082,7 +1176,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		
 		Class<?>	type	= depf.getType();
 		
-		if(SReflect.isSupertype(Collection.class, type))
+		if(SReflect.isSupertype(Val.class, type) || SReflect.isSupertype(Collection.class, type))
 		{
 			if(depf.getGenericType() instanceof ParameterizedType)
 			{

@@ -4,6 +4,8 @@ package jadex.bdi.goal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,12 +14,15 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
+import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
@@ -287,5 +292,43 @@ public class GoalConditionTest
 		assertNull(goalfut.get(TestHelper.TIMEOUT));
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		assertEquals(Arrays.asList("value", "value"), pojo.trigger);
+	}
+
+	@Test
+	public void	testContextCondition()
+	{
+		@BDIAgent
+		class GoalContextAgent
+		{
+			@Belief
+			Val<Boolean>	context	= new Val<>(false);
+			
+			@Goal
+			class ContextGoal
+			{
+				@GoalContextCondition(beliefs="context")
+				boolean	context(Boolean value)
+				{
+					// value is null on initial check (not triggered by belief change)
+					return value==null ? context.get() : value;
+				}
+			}
+		}
+		
+		GoalContextAgent	pojo	= new GoalContextAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new ContextGoal()));
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		assertFalse(goalfut.isDone()); // Should be suspended initially
+		
+		handle.scheduleStep(() -> {pojo.context.set(false); return null;}).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		assertFalse(goalfut.isDone()); // Should still be suspended
+		
+		handle.scheduleStep(() -> {pojo.context.set(true); return null;}).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		assertTrue(goalfut.isDone()); // Should be processed.
+		assertThrows(GoalFailureException.class, () -> goalfut.get(TestHelper.TIMEOUT));
 	}
 }

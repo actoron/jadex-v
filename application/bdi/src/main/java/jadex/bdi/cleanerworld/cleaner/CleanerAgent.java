@@ -2,6 +2,7 @@ package jadex.bdi.cleanerworld.cleaner;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import jadex.bdi.IBDIAgentFeature;
@@ -12,9 +13,11 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
@@ -24,6 +27,7 @@ import jadex.bdi.cleanerworld.environment.CleanerworldEnvironment;
 import jadex.bdi.cleanerworld.environment.Waste;
 import jadex.bdi.cleanerworld.environment.Wastebin;
 import jadex.bdi.cleanerworld.ui.SensorGui;
+import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.core.IComponent;
 import jadex.environment.Environment;
 import jadex.environment.PerceptionProcessor;
@@ -143,7 +147,7 @@ public class CleanerAgent
 			new SensorGui(agent.getComponentHandle()).setVisible(true);
 		
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PerformLookForWaste());
-//		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PerformPatrol());
+		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PerformPatrol());
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MaintainBatteryLoaded());
 	}
 	
@@ -207,27 +211,27 @@ public class CleanerAgent
 		}
 	}
 	
-//	/**
-//	 *  Goal that lets the agent perform patrol rounds.
-//	 */
-//	@Goal(excludemode=ExcludeMode.Never, orsuccess=false)
-//	public class PerformPatrol
-//	{
-//		/**
-//		 *  Suspend the goal when daytime.
-//		 */
-//		@GoalContextCondition(beliefs="daytime")
-//		public boolean checkContext()
-//		{
-//			return !daytime.get();
-//		}
-//		
-//		@GoalSelectCandidate
-//		ICandidateInfo	chooseMove(IBDIAgentFeature bdi, List<ICandidateInfo> cands)
-//		{
-//			return cands.get((int)(Math.random()*cands.size()));
-//		}
-//	}
+	/**
+	 *  Goal that lets the agent perform patrol rounds.
+	 */
+	@Goal(excludemode=ExcludeMode.Never, orsuccess=false)
+	public class PerformPatrol
+	{
+		/**
+		 *  Suspend the goal when daytime.
+		 */
+		@GoalContextCondition(beliefs="daytime")
+		public boolean checkContext()
+		{
+			return !daytime.get();
+		}
+		
+		@GoalSelectCandidate
+		ICandidateInfo	chooseMove(IBDIAgentFeature bdi, List<ICandidateInfo> cands)
+		{
+			return cands.get((int)(Math.random()*cands.size()));
+		}
+	}
 	
 	//-------- look for waste --------
 		
@@ -238,14 +242,14 @@ public class CleanerAgent
 	@Goal(excludemode=ExcludeMode.Never, orsuccess=false)
 	private class PerformLookForWaste
 	{
-//		/**
-//		 *  Monitor day time and restart moving when night is gone.
-//		 */
-//		@GoalContextCondition(beliefs="daytime")
-//		private boolean context()
-//		{
-//			return daytime.get();
-//		}
+		/**
+		 *  Monitor day time and restart moving when night is gone.
+		 */
+		@GoalContextCondition(beliefs="daytime")
+		private boolean context()
+		{
+			return daytime.get();
+		}
 	}
 	
 	@Goal(excludemode=ExcludeMode.Never)
@@ -297,13 +301,13 @@ public class CleanerAgent
 				&& !waste.equals(getSelf().getCarriedWaste());
 		}
 		
-//		// Goal should only be pursued when carrying no waste
-//		// or when goal is resumed after recharging and carried waste is of this goal.
-//		@GoalContextCondition(beliefs={"daytime", "self"})
-//		boolean isPossible()
-//		{
-//			return daytime.get() && (self.getCarriedWaste()==null || waste.equals(self.getCarriedWaste()));
-//		}
+		// Goal should only be pursued when carrying no waste
+		// or when goal is resumed after recharging and carried waste is of this goal.
+		@GoalContextCondition(beliefs={"daytime"/*, "self"*/})
+		boolean isPossible()
+		{
+			return daytime.get() /*&& (self.getCarriedWaste()==null || waste.equals(self.getCarriedWaste()))*/;
+		}
 		
 //		@Override
 //		public boolean equals(Object obj)
@@ -325,18 +329,12 @@ public class CleanerAgent
 		@GoalInhibit(AchieveCleanupWaste.class)
 		private boolean	inhibitOther(AchieveCleanupWaste other)
 		{
-			try
-			{
-				return waste.equals(getSelf().getCarriedWaste()) || 
-					(!other.waste.equals(getSelf().getCarriedWaste()) && other.waste.getLocation()!=null
-						&& waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble()
-							< other.waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble());
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-				return false;
-			}
+			// Inhibit all other goals when currently carrying the waste of this goal
+			return waste.equals(getSelf().getCarriedWaste()) || 
+				// Otherwise inhibit other goals where waste is further away
+				(!other.waste.equals(getSelf().getCarriedWaste()) && other.waste.getLocation()!=null
+					&& waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble()
+						< other.waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble());
 		}
 	}
 	
@@ -389,50 +387,50 @@ public class CleanerAgent
 		getEnvironment().move((Cleaner)getSelf(), new Vector2Double(Math.random(), Math.random())).get();
 	}
 	
-//	/**
-//	 *  Declare a plan for the PerformPatrol goal by using a method with @Plan and @Trigger annotation.
-//	 */
-//	@Plan(trigger=@Trigger(goals=PerformPatrol.class))	
-//	private void performPatrolPlan()
-//	{
-//		// Follow a simple path around the four corners of the museum and back to the first corner.
-//		//System.out.println("Starting performPatrolPlan()");
-//		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.9)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.9)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.1)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1)).get();
-//	}
-//
-//	/**
-//	 *  Declare a second plan for the PerformPatrol goal.
-//	 */
-//	@Plan(trigger=@Trigger(goals=PerformPatrol.class))
-//	private void performPatrolPlan2()
-//	{
-//		// Follow another path around the middle of the museum.
-//		//System.out.println("Starting performPatrolPlan2()");
-//		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
-//	}
-//	
-//	/**
-//	 *  Declare a third plan for the PerformPatrol goal.
-//	 */
-//	@Plan(trigger=@Trigger(goals=PerformPatrol.class))
-//	private void performPatrolPlan3()
-//	{
-//		// Follow a zig-zag path in the museum.
-//		//System.out.println("Starting performPatrolPlan3()");
-//		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3)).get();
-//		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
-//	}
+	/**
+	 *  Declare a plan for the PerformPatrol goal by using a method with @Plan and @Trigger annotation.
+	 */
+	@Plan(trigger=@Trigger(goals=PerformPatrol.class))	
+	private void performPatrolPlan()
+	{
+		// Follow a simple path around the four corners of the museum and back to the first corner.
+		//System.out.println("Starting performPatrolPlan()");
+		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.9)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.9)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.9, 0.1)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.1, 0.1)).get();
+	}
+
+	/**
+	 *  Declare a second plan for the PerformPatrol goal.
+	 */
+	@Plan(trigger=@Trigger(goals=PerformPatrol.class))
+	private void performPatrolPlan2()
+	{
+		// Follow another path around the middle of the museum.
+		//System.out.println("Starting performPatrolPlan2()");
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
+	}
+	
+	/**
+	 *  Declare a third plan for the PerformPatrol goal.
+	 */
+	@Plan(trigger=@Trigger(goals=PerformPatrol.class))
+	private void performPatrolPlan3()
+	{
+		// Follow a zig-zag path in the museum.
+		//System.out.println("Starting performPatrolPlan3()");
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.7)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.7)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.7, 0.3)).get();
+		getEnvironment().move(getSelf(), new Vector2Double(0.3, 0.3)).get();
+	}
 	
 	public static <T extends SpaceObject> T findClosestElement(Set<T> elements, IVector2 loc) 
 	{
