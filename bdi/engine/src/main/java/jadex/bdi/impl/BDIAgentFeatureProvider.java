@@ -942,11 +942,16 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
 					if(goals!=null)
 					{
+						ChangeEvent<Object>	ce	= null;
 						for(RGoal goal: goals)
 						{
 							if(!goal.isFinished())
 							{
-								Boolean	value	= (Boolean)conditionmethod.apply(comp, goal.getAllPojos(), new ChangeEvent<Object>(event), null);
+								if(ce==null)
+								{
+									ce	= new ChangeEvent<Object>(event);
+								}
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
 								if(Boolean.TRUE.equals(value))
 								{
 									goal.targetConditionTriggered(/*event, rule, context2*/);
