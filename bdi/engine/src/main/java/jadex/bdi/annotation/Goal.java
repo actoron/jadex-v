@@ -1,6 +1,7 @@
 package jadex.bdi.annotation;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -21,12 +22,13 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
+@Repeatable(Goals.class)
 public @interface Goal
 {
-//	/**
-//	 *  The goal class, when used inside a  {@link Goals} annotation.
-//	 */
-//	public Class<?> clazz() default Object.class;
+	/**
+	 *  The goal class, when used inside a  {@link Goals} annotation.
+	 */
+	public Class<?> impl() default Object.class;
 //	
 //	/**
 //	 *  Post the goal to all plans of the APL in parallel.

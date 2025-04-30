@@ -39,6 +39,7 @@ import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
+import jadex.bdi.annotation.Goals;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
@@ -215,6 +216,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				try
 				{
 					Plan	anno	= planclass.getAnnotation(Plan.class);
+					if(!Object.class.equals(anno.impl()))
+					{
+						throw new UnsupportedOperationException("Inner plan class must not define external impl: "+planclass);
+					}
 					Trigger	trigger	= anno.trigger();
 					addPlanClass(planclass, trigger, pojoclazzes, ret, contextfetchers);
 				}
@@ -225,13 +230,16 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 			
 			// Manage external plan classes if pojo is not itself a plan.
-			if(!isPlan(pojoclazzes) && pojoclazz.isAnnotationPresent(Plan.class) && !Object.class.equals(pojoclazz.getAnnotation(Plan.class).impl())
+			if(!isPlanOrGoal(pojoclazzes) && pojoclazz.isAnnotationPresent(Plan.class) && !Object.class.equals(pojoclazz.getAnnotation(Plan.class).impl())
 				|| pojoclazz.isAnnotationPresent(Plans.class))
 			{
-				// TODO: support @Plan and @Plans
 				Plan[]	plans;
 				if(pojoclazz.isAnnotationPresent(Plans.class))
 				{
+					if(pojoclazz.isAnnotationPresent(Plan.class))
+					{
+						throw new UnsupportedOperationException("Use either @Plan or @Plans annotations: "+pojoclazz);						
+					}
 					plans	= pojoclazz.getAnnotation(Plans.class).value();
 				}
 				else
@@ -268,20 +276,69 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 			
-			// Manage goal classes
-			// TODO: external goal classes
+			// Manage inner goal classes
 			for(Class<?> goalclass: InjectionModel.findInnerClasses(pojoclazz, Goal.class))
 			{
 				try
 				{
-					addGoalClass(goalclass, pojoclazzes, ret, contextfetchers);
+					Goal	anno	= goalclass.getAnnotation(Goal.class);
+					if(!Object.class.equals(anno.impl()))
+					{
+						throw new UnsupportedOperationException("Inner goal class must not define external impl: "+goalclass);
+					}
+					addGoalClass(goalclass, anno, pojoclazzes, ret, contextfetchers);
 				}
 				catch(Exception e)
 				{
 					SUtil.throwUnchecked(e);
 				}
 			}
-
+			
+			// Manage external goal classes if pojo is not itself a goal.
+			if(!isPlanOrGoal(pojoclazzes) && pojoclazz.isAnnotationPresent(Goal.class) && !Object.class.equals(pojoclazz.getAnnotation(Goal.class).impl())
+				|| pojoclazz.isAnnotationPresent(Goals.class))
+			{
+				Goal[]	goals;
+				if(pojoclazz.isAnnotationPresent(Goals.class))
+				{
+					if(pojoclazz.isAnnotationPresent(Goal.class))
+					{
+						throw new UnsupportedOperationException("Use either @Goal or @Goals annotations: "+pojoclazz);						
+					}
+					goals	= pojoclazz.getAnnotation(Goals.class).value();
+				}
+				else
+				{
+					goals	= new Goal[]{pojoclazz.getAnnotation(Goal.class)};
+				}
+				
+				for(Goal goal: goals)
+				{
+					if(Object.class.equals(goal.impl()))
+					{
+						throw new UnsupportedOperationException("External goal must define impl class: "+pojoclazz+", "+goal);
+					}
+					
+					// TODO: check if external goal class defines any settings!?
+//					if(goal.impl().isAnnotationPresent(Goal.class))
+//					{
+//						if(..)
+//						{
+//							throw new UnsupportedOperationException("External Goal must not define its own settings: "+goal.impl());
+//						}
+//					}
+					
+					try
+					{
+						addGoalClass(goal.impl(), goal, pojoclazzes, ret, contextfetchers);
+					}
+					catch(Exception e)
+					{
+						SUtil.throwUnchecked(e);
+					}
+				}
+			}
+			
 			// If outmost pojo (agent) -> start deliberation after all rules are added.
 			if(pojoclazzes.size()==1)
 			{
@@ -309,9 +366,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	}
 	
 	/**
-	 *  Check, if a pojo is a plan
+	 *  Check, if a pojo is a plan or goal
 	 */
-	protected boolean	isPlan(List<Class<?>> pojoclazzes)
+	protected boolean	isPlanOrGoal(List<Class<?>> pojoclazzes)
 	{
 		boolean	ret	= false;
 		if(pojoclazzes.size()>1)
@@ -319,7 +376,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// For now, just check if inner class.
 			// TODO: support inner capabilities!?
 			ret	= pojoclazzes.get(pojoclazzes.size()-1).getName().startsWith(pojoclazzes.get(pojoclazzes.size()-2).getName());
-		}
+		} 
 		return ret;
 	}
 
@@ -658,7 +715,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Add required code to handle a goal class.
 	 */
-	protected void addGoalClass(Class<?> goalclazz, List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
+	protected void addGoalClass(Class<?> goalclazz, Goal anno, List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
 		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers) throws Exception
 	{
 		String	goalname	= goalclazz.getName();
@@ -933,7 +990,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		// BDI model is for outmost pojo.
 		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
 		MGoal mgoal	= new MGoal(!targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(),
-			goalclazz.getAnnotation(Goal.class), aplbuild, selectcandidate, instanceinhibs);
+			anno, aplbuild, selectcandidate, instanceinhibs);
 		model.addGoal(goalclazz, mgoal);
 	}
 
