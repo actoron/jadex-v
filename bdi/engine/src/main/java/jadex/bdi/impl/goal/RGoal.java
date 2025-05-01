@@ -568,7 +568,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 					setProcessingState(GoalProcessingState.PAUSED);
 					
 					// Auto-recur, when no recur condition defined.
-//					if(getMGoal().getConditions(MGoal.CONDITION_RECUR)==null)
+					if(!getMGoal().recur())
 					{
 						Runnable	step	= () ->
 						{
@@ -621,11 +621,11 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //	}
 //	
 	/**
-	 *  Check if the recur flag is set.
+	 *  Check if the recur flag is set or a recur condition is present.
 	 */
 	public boolean isRecur()
 	{
-		return mgoal.annotation().recur();
+		return mgoal.annotation().recur() || mgoal.recur();
 	}
 	
 	/**

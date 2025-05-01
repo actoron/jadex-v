@@ -39,6 +39,7 @@ import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalRecurCondition;
 import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Goals;
@@ -843,6 +844,20 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
 		}
 		
+		// Add recur condition rules
+		List<Method>	recurcondmethods	= InjectionModel.findMethods(goalclazz, GoalRecurCondition.class);
+		numcreations	= 0;
+		for(Method method: recurcondmethods)
+		{
+			String	rulename	= "GoalRecurCondition"+(++numcreations)+"_"+goalname;
+			GoalRecurCondition	recur	= method.getAnnotation(GoalRecurCondition.class);
+			String[]	beliefs	= recur.beliefs();
+			String	condname	= "recur";
+			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createRecurCondition(goalclazz, aevents, handle, rulename);
+			
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
+		}
+		
 		// Add target condition rules
 		List<Method>	targetcondmethods	= InjectionModel.findMethods(goalclazz, GoalTargetCondition.class);
 		numcreations	= 0;
@@ -955,7 +970,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		
 		// BDI model is for outmost pojo.
 		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
-		MGoal mgoal	= new MGoal(!targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(),
+		MGoal mgoal	= new MGoal(!targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), !recurcondmethods.isEmpty(),
 			anno, aplbuild, selectcandidate, instanceinhibs);
 		model.addGoal(goalclazz, mgoal);
 	}
@@ -1151,6 +1166,50 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								if(Boolean.TRUE.equals(value))
 								{
 									goal.drop();
+								}
+							}
+						}
+					}
+					return IFuture.DONE;
+				},
+				aevents));	// Trigger Event(s)
+			return null;
+		};
+	}
+
+	/**
+	 *  Create a handle that adds a drop condition rule for a goal type.
+	 */
+	protected IInjectionHandle createRecurCondition(Class<?> goalclazz, EventType[] aevents,
+		IInjectionHandle conditionmethod, String rulename)
+	{
+		return (comp, pojos, context, oldval) ->
+		{
+			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+			rs.getRulebase().addRule(new Rule<Void>(
+				rulename,	// Rule Name
+				ICondition.TRUE_CONDITION,	// Condition -> true
+				(event, rule, context2, condresult) ->
+				{
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					if(goals!=null)
+					{
+						ChangeEvent<Object>	ce	= null;
+						for(RGoal goal: goals)
+						{
+							if(RGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState())
+								&& RGoal.GoalProcessingState.PAUSED.equals(goal.getProcessingState()))
+							{
+								if(ce==null)
+								{
+									ce	= new ChangeEvent<Object>(event);
+								}
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								if(Boolean.TRUE.equals(value))
+								{
+									goal.setTriedPlans(null);
+									goal.setApplicablePlanList(null);
+									goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
 								}
 							}
 						}

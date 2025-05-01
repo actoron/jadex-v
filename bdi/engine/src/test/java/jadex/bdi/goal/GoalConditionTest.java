@@ -27,6 +27,7 @@ import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalRecurCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
@@ -397,5 +398,59 @@ public class GoalConditionTest
 		assertTrue(goalfut.isDone()); // Should be failed.
 		assertThrows(GoalDroppedException.class, () -> goalfut.get(TestHelper.TIMEOUT));
 		assertNull(pojo.aborted.get(TestHelper.TIMEOUT));
+	}
+
+	@Test
+	public void	testRecurCondition()
+	{
+		@BDIAgent
+		class GoalRecurAgent
+		{
+			@Belief
+			Val<Boolean>	recur	= new Val<>(false);
+			
+			int plancnt	= 0;
+			
+			@Goal
+			class RecurGoal
+			{
+				@GoalRecurCondition(beliefs="recur")
+				boolean	recur(Boolean value)
+				{
+					// value is null on initial check (not triggered by belief change)
+					return value==null ? recur.get() : value;
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=RecurGoal.class))
+			class myPlan
+			{
+				@PlanBody
+				void body()
+				{
+					plancnt++;
+				}
+			}
+		}
+		
+		GoalRecurAgent	pojo	= new GoalRecurAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new RecurGoal()));
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		assertFalse(goalfut.isDone()); // Should be paused
+		assertEquals(1, pojo.plancnt);
+		
+		handle.scheduleStep(() -> {pojo.recur.set(false); return null;}).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		assertFalse(goalfut.isDone()); // Should still be paused
+		assertEquals(1, pojo.plancnt);
+		
+		handle.scheduleStep(() -> {pojo.recur.set(true); return null;}).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		assertFalse(goalfut.isDone()); // Should still be paused
+		assertEquals(2, pojo.plancnt);
 	}
 }
