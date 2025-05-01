@@ -3,7 +3,7 @@ package jadex.bdi;
 /**
  *  Interface for a bdi goal.
  */
-public interface IGoal //extends IParameterElement, IFinishableElement<Void>// needed for xml version of BDI
+public interface IGoal //extends IParameterElement, IFinishableElement<Void>
 {
 	//-------- goal states --------
 	

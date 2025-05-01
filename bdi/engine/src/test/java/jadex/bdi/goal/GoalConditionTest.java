@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.GoalDroppedException;
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
@@ -24,9 +25,12 @@ import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
+import jadex.bdi.annotation.PlanAborted;
+import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -319,10 +323,12 @@ public class GoalConditionTest
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new ContextGoal()));
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertFalse(goalfut.isDone()); // Should be suspended initially
 		
 		handle.scheduleStep(() -> {pojo.context.set(false); return null;}).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertFalse(goalfut.isDone()); // Should still be suspended
 		
 		handle.scheduleStep(() -> {pojo.context.set(true); return null;}).get(TestHelper.TIMEOUT);
@@ -330,5 +336,66 @@ public class GoalConditionTest
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertTrue(goalfut.isDone()); // Should be processed.
 		assertThrows(GoalFailureException.class, () -> goalfut.get(TestHelper.TIMEOUT));
+	}
+
+	@Test
+	public void	testDropCondition()
+	{
+		@BDIAgent
+		class GoalDropAgent
+		{
+			@Belief
+			Val<Boolean>	drop	= new Val<>(false);
+			
+			Future<Void>	aborted	= new Future<>();
+			
+			@Goal
+			class DropGoal
+			{
+				@GoalDropCondition(beliefs="drop")
+				boolean	drop(Boolean value)
+				{
+					// value is null on initial check (not triggered by belief change)
+					return value==null ? drop.get() : value;
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=DropGoal.class))
+			class blockPlan
+			{
+				@PlanBody
+				void body()
+				{
+					new Future<>().get();
+				}
+				
+				@PlanAborted
+				void abort()
+				{
+					aborted.setResult(null);
+				}
+			}
+		}
+		
+		GoalDropAgent	pojo	= new GoalDropAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new DropGoal()));
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		assertFalse(goalfut.isDone()); // Should be processing
+		assertFalse(pojo.aborted.isDone());
+		
+		handle.scheduleStep(() -> {pojo.drop.set(false); return null;}).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		assertFalse(goalfut.isDone()); // Should still be processing
+		assertFalse(pojo.aborted.isDone());
+		
+		handle.scheduleStep(() -> {pojo.drop.set(true); return null;}).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		assertTrue(goalfut.isDone()); // Should be failed.
+		assertThrows(GoalDroppedException.class, () -> goalfut.get(TestHelper.TIMEOUT));
+		assertNull(pojo.aborted.get(TestHelper.TIMEOUT));
 	}
 }

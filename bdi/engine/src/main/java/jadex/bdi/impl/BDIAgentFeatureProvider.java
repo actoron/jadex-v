@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import jadex.bdi.IBDIAgentFeature;
@@ -35,6 +36,7 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
 import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.GoalSelectCandidate;
@@ -818,38 +820,27 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		numcreations	= 0;
 		for(Method method: contextcondmethods)
 		{
+			String	rulename	= "GoalContextCondition"+(++numcreations)+"_"+goalname;
 			GoalContextCondition	context	= method.getAnnotation(GoalContextCondition.class);
-			// TODO: find beliefs of all capabilities!?
-			List<EventType>	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), context.beliefs(), context.beliefs(), context.beliefs(), new Class<?>[0], goalname);
-			if(events!=null && events.size()>0)
-			{
-				events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
-				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-				
-				// Add fetcher for belief value.
-				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
-					new String[][] {context.beliefs()},
-					new Class<?>[][] {},
-					goalname, false, contextfetchers);
-				
-				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
-				String	rulename	= "GoalContextCondition"+(++numcreations)+"_"+goalname;
-				
-				// check for boolean method
-				if(SReflect.isSupertype(Boolean.class, method.getReturnType()))
-				{
-					// In extra on start, add rule to suspend goal when event happens.  
-					ret.add(createContextCondition(goalclazz, aevents, handle, rulename));
-				}
-				else
-				{
-					throw new UnsupportedOperationException("Goal context condition method must return boolean: "+method);
-				}
-			}
-			else
-			{
-				throw new UnsupportedOperationException("Goal context condition must specify at least one trigger belief: "+method);
-			}
+			String[]	beliefs	= context.beliefs();
+			String	condname	= "context";
+			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createContextCondition(goalclazz, aevents, handle, rulename);
+			
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
+		}
+		
+		// Add drop condition rules
+		List<Method>	dropcondmethods	= InjectionModel.findMethods(goalclazz, GoalDropCondition.class);
+		numcreations	= 0;
+		for(Method method: dropcondmethods)
+		{
+			String	rulename	= "GoalDropCondition"+(++numcreations)+"_"+goalname;
+			GoalDropCondition	drop	= method.getAnnotation(GoalDropCondition.class);
+			String[]	beliefs	= drop.beliefs();
+			String	condname	= "drop";
+			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createDropCondition(goalclazz, aevents, handle, rulename);
+			
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
 		}
 		
 		// Add target condition rules
@@ -857,38 +848,13 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		numcreations	= 0;
 		for(Method method: targetcondmethods)
 		{
+			String	rulename	= "GoalTargetCondition"+(++numcreations)+"_"+goalname;
 			GoalTargetCondition	target	= method.getAnnotation(GoalTargetCondition.class);
-			// TODO: find beliefs of all capabilities!?
-			List<EventType>	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), target.beliefs(), target.beliefs(), target.beliefs(), new Class<?>[0], goalname);
-			if(events!=null && events.size()>0)
-			{
-				events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
-				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-				
-				// Add fetcher for belief value.
-				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
-					new String[][] {target.beliefs()},
-					new Class<?>[][] {},
-					goalname, false, contextfetchers);
-				
-				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
-				String	rulename	= "GoalTargetCondition"+(++numcreations)+"_"+goalname;
-				
-				// check for boolean method
-				if(SReflect.isSupertype(Boolean.class, method.getReturnType()))
-				{
-					// In extra on start, add rule to finish goal when event happens.  
-					ret.add(createTargetCondition(goalclazz, aevents, handle, rulename));
-				}
-				else
-				{
-					throw new UnsupportedOperationException("Goal target condition method must return boolean: "+method);
-				}
-			}
-			else
-			{
-				throw new UnsupportedOperationException("Goal target condition must specify at least one trigger belief: "+method);
-			}
+			String[]	beliefs	= target.beliefs();
+			String	condname	= "target";
+			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createTargetCondition(goalclazz, aevents, handle, rulename);
+			
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
 		}
 
 		// Add maintain condition rules
@@ -992,6 +958,43 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		MGoal mgoal	= new MGoal(!targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(),
 			anno, aplbuild, selectcandidate, instanceinhibs);
 		model.addGoal(goalclazz, mgoal);
+	}
+
+	protected void addCondition(List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
+			Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers, String goalname,
+			Method method, String[] beliefs, String condname,
+			BiFunction<EventType[], IInjectionHandle, IInjectionHandle> creator)
+	{
+		// TODO: find beliefs of all capabilities!?
+		List<EventType>	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), beliefs, beliefs, beliefs, new Class<?>[0], goalname);
+		if(events!=null && events.size()>0)
+		{
+			events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
+			EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+			
+			// Add fetcher for belief value.
+			Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes.get(parentclazzes.size()-1),
+				new String[][] {beliefs},
+				new Class<?>[][] {},
+				goalname, false, contextfetchers);
+			
+			IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
+			
+			// check for boolean method
+			if(SReflect.isSupertype(Boolean.class, method.getReturnType()))
+			{
+				// In extra on start, add rule to suspend goal when event happens.  
+				ret.add(creator.apply(aevents, handle));
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Goal "+condname+" condition method must return boolean: "+method);
+			}
+		}
+		else
+		{
+			throw new UnsupportedOperationException("Goal "+condname+" condition must specify at least one trigger belief: "+method);
+		}
 	}
 
 	protected IInjectionHandle createGoalSelectCandidateMethod(Class<?> goalclazz, List<Class<?>> parentclazzes,
@@ -1106,6 +1109,48 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								if(Boolean.TRUE.equals(value))
 								{
 									goal.targetConditionTriggered(/*event, rule, context2*/);
+								}
+							}
+						}
+					}
+					return IFuture.DONE;
+				},
+				aevents));	// Trigger Event(s)
+			return null;
+		};
+	}
+
+	/**
+	 *  Create a handle that adds a drop condition rule for a goal type.
+	 */
+	protected IInjectionHandle createDropCondition(Class<?> goalclazz, EventType[] aevents,
+		IInjectionHandle conditionmethod, String rulename)
+	{
+		return (comp, pojos, context, oldval) ->
+		{
+			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+			rs.getRulebase().addRule(new Rule<Void>(
+				rulename,	// Rule Name
+				ICondition.TRUE_CONDITION,	// Condition -> true
+				(event, rule, context2, condresult) ->
+				{
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					if(goals!=null)
+					{
+						ChangeEvent<Object>	ce	= null;
+						for(RGoal goal: goals)
+						{
+							if(!RGoal.GoalLifecycleState.DROPPING.equals(goal.getLifecycleState())
+								 && !RGoal.GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()))
+							{
+								if(ce==null)
+								{
+									ce	= new ChangeEvent<Object>(event);
+								}
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								if(Boolean.TRUE.equals(value))
+								{
+									goal.drop();
 								}
 							}
 						}
