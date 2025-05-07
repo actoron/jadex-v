@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
@@ -253,7 +254,7 @@ public class CleanerAgent
 	}
 	
 	@Goal(excludemode=ExcludeMode.Never)
-	private class QueryWastebin
+	private class QueryWastebin	implements Supplier<Wastebin>
 	{
 //		@GoalResult
 		protected Wastebin wastebin;
@@ -265,15 +266,11 @@ public class CleanerAgent
 			return wastebin!=null;
 		}
 
-		public Wastebin getWastebin() 
+		@Override
+		public Wastebin get() 
 		{
 			return wastebin;
 		}
-
-//		public void setWastebin(Wastebin wastebin) 
-//		{
-//			this.wastebin = wastebin;
-//		}
 	}
 	
 	//-------- cleanup waste --------
@@ -352,9 +349,10 @@ public class CleanerAgent
 		}
 		
 		// Dispatch a subgoal to find a waste bin
-		QueryWastebin	querygoal = new QueryWastebin();
-		plan.dispatchSubgoal(querygoal).get();
-		Wastebin wastebin = querygoal.getWastebin();
+//		QueryWastebin	querygoal = new QueryWastebin();
+//		plan.dispatchSubgoal(querygoal).get();
+//		Wastebin wastebin = querygoal.getWastebin();
+		Wastebin wastebin = plan.dispatchSubgoal(new QueryWastebin()).get();
 		
 		// Move to waste bin as provided by subgoal
 		getEnvironment().move(getSelf(), wastebin.getLocation()).get();

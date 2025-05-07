@@ -2,6 +2,7 @@ package jadex.bdi.puzzle;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
@@ -83,15 +84,12 @@ public class SokratesMLRAgent
 		@GoalSelectCandidate
 		ICandidateInfo	chooseMove(IBDIAgentFeature bdi, List<ICandidateInfo> cands)
 		{
-//			return (ICandidateInfo)bdi.dispatchTopLevelGoal(new ChooseMoveGoal(cands)).get();
-			ChooseMoveGoal	choose	= new ChooseMoveGoal(cands);
-			bdi.dispatchTopLevelGoal(choose).get();
-			return choose.cand;
+			return (ICandidateInfo)bdi.dispatchTopLevelGoal(new ChooseMoveGoal(cands)).get();
 		}
 	}
 	
 	@Goal
-	class ChooseMoveGoal
+	class ChooseMoveGoal	implements Supplier<ICandidateInfo>
 	{
 		List<ICandidateInfo>	cands;
 		
@@ -101,6 +99,12 @@ public class SokratesMLRAgent
 		public ChooseMoveGoal(List<ICandidateInfo> cands)
 		{
 			this.cands	= cands;
+		}
+		
+		@Override
+		public ICandidateInfo get()
+		{
+			return cand;
 		}
 	}
 	

@@ -1,5 +1,7 @@
 package jadex.bdi;
 
+import java.util.function.Supplier;
+
 import jadex.future.ITerminableFuture;
 
 /**
@@ -55,7 +57,12 @@ public interface IPlan// extends IParameterElement, IFinishableElement<Object>  
 	/**
 	 *  Dispatch a goal wait for its result.
 	 */
-	public <T, E> ITerminableFuture<E> dispatchSubgoal(T goal);
+	public ITerminableFuture<Void> dispatchSubgoal(Object goal);
+	
+	/**
+	 *  Dispatch a goal wait for its result.
+	 */
+	public <T> ITerminableFuture<T> dispatchSubgoal(Supplier<T> goal);
 //	
 //	/**
 //	 *  Dispatch a goal wait for its result.

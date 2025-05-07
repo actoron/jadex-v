@@ -7,12 +7,13 @@ import jadex.injection.impl.IInjectionHandle;
 
 /**
  *  Meta-info for a goal.
+ *  @param query Is query condition present?
  *  @param target Is target condition present?
  *  @param maintain Is maintain condition present?
  *  @param recur Is recur condition present?
  *  @param annotation goal flags.
  */ 
-public record MGoal(boolean target, boolean maintain, boolean recur, Goal annotation, IInjectionHandle aplbuild, IInjectionHandle selectcandidate,
+public record MGoal(boolean query, boolean target, boolean maintain, boolean recur, Goal annotation, IInjectionHandle aplbuild, IInjectionHandle selectcandidate,
 	Map<Class<?>, IInjectionHandle> instanceinhibs)
 {
 }

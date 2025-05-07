@@ -23,7 +23,6 @@ import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.DelegationResultListener;
-import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
@@ -79,10 +78,10 @@ public class SokratesV3Agent
 		}
 		
 		final long	start	= System.currentTimeMillis();
-		IFuture<MoveGoal> fut = agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MoveGoal());
-		fut.addResultListener(new IResultListener<MoveGoal>()
+		IFuture<Void> fut = agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MoveGoal());
+		fut.addResultListener(new IResultListener<Void>()
 		{
-			public void resultAvailable(MoveGoal movegoal)
+			public void resultAvailable(Void v)
 			{
 				long end = System.currentTimeMillis();
 				if(printresults)
@@ -202,27 +201,15 @@ public class SokratesV3Agent
 				{
 					public void customResultAvailable(Void result)
 					{
-						IFuture<MoveGoal> fut = plan.dispatchSubgoal(new MoveGoal());
-						fut.addResultListener(new ExceptionDelegationResultListener<MoveGoal, Void>(ret)
-						{
-							public void customResultAvailable(MoveGoal result)
-							{
-								ret.setResult(null);
-							}
-						});
+						IFuture<Void> fut = plan.dispatchSubgoal(new MoveGoal());
+						fut.addResultListener(new DelegationResultListener<Void>(ret));
 					}
 				});
 			}
 			else
 			{
-				IFuture<MoveGoal> fut = plan.dispatchSubgoal(new MoveGoal());
-				fut.addResultListener(new ExceptionDelegationResultListener<MoveGoal, Void>(ret)
-				{
-					public void customResultAvailable(MoveGoal result)
-					{
-						ret.setResult(null);
-					}
-				});
+				IFuture<Void> fut = plan.dispatchSubgoal(new MoveGoal());
+				fut.addResultListener(new DelegationResultListener<Void>(ret));
 			}
 			
 			return ret;

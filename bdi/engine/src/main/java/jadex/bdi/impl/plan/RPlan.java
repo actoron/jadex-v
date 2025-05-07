@@ -3,6 +3,7 @@ package jadex.bdi.impl.plan;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IPlan;
@@ -598,10 +599,16 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //		return ret;
 	}
 	
-	/**
-	 *  Dispatch a goal wait for its result.
-	 */
-	public <T, E> ITerminableFuture<E> dispatchSubgoal(final T goal)
+	@Override
+	public <T> ITerminableFuture<T> dispatchSubgoal(Supplier<T> goal)
+	{
+		@SuppressWarnings("unchecked")
+		ITerminableFuture<T>	ret	= (ITerminableFuture<T>) dispatchSubgoal((Object)goal);
+		return ret;
+	}
+	
+	@Override
+	public ITerminableFuture<Void> dispatchSubgoal(Object goal)
 	{
 //		return dispatchSubgoal(goal, -1);
 //	}
@@ -660,7 +667,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		IExecutionFeature.get().scheduleStep(new AdoptGoalAction(rgoal));
 		
 		@SuppressWarnings("unchecked")
-		ITerminableFuture<E>	ret	= (ITerminableFuture<E>) rgoal.getFinished();
+		ITerminableFuture<Void>	ret	= (ITerminableFuture<Void>) rgoal.getFinished();
 		return ret;
 	}
 //	

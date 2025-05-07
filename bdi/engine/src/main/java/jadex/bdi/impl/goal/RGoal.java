@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jadex.bdi.GoalDroppedException;
 import jadex.bdi.GoalFailureException;
@@ -49,6 +50,9 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	
 	/** The finished future (if someone waits for the goal). */
 	public TerminableFuture<Object>	finished;
+	
+	/** The goal result, if this is a query goal. */
+	Object	result	= null;
 	
 	/** Remember last plan exception to pass on in case goal fails due to no more plans. */
 	protected Exception	exception;
@@ -309,9 +313,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			{
 				if(isSucceeded())
 				{
-					// TODO: Goal result
 					// Use undone as future is maybe terminated. 
-					finished.setResultIfUndone(null);
+					finished.setResultIfUndone(result);
 				}
 				else
 				{
@@ -335,7 +338,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	/**
 	 *  Get the finished future to wait for goal finished/result.
 	 */
-	public ITerminableFuture<Object>	getFinished()
+	public ITerminableFuture<?>	getFinished()
 	{
 		if(finished==null)
 		{
@@ -533,9 +536,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 				this.exception	= rplan.getException();
 			}
 		}
+
+		// 'Procedural' query goal success semantics (i.e. pojo is supplier without query condition).
+		if(!isDeclarative()	&& getPojo() instanceof Supplier<?>)
+		{
+			this.result	= ((Supplier<?>)getPojo()).get();
+		}
 		
 		// Check procedural success semantics
-		if(rplan!=null && isProceduralSucceeded(rplan))
+		if(result!=null || rplan!=null && isProceduralSucceeded(rplan))
 		{
 			// succeeded leads to lifecycle state dropping!
 			setProcessingState(isRecur() ? GoalProcessingState.PAUSED : GoalProcessingState.SUCCEEDED);
@@ -633,7 +642,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public boolean isDeclarative()
 	{
-		return mgoal.target() || mgoal.maintain(); 
+		return mgoal.query() || mgoal.target() || mgoal.maintain(); 
 	}
 	
 	/**
@@ -644,7 +653,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		boolean ret = false;
 		
 		// todo: perform goals
-		if(!isDeclarative() && getTriedPlans()!=null && !getTriedPlans().isEmpty())
+		if(!(isDeclarative() || getPojo() instanceof Supplier<?>) 
+			&& getTriedPlans()!=null && !getTriedPlans().isEmpty())
 		{
 			// OR case
 			if(mgoal.annotation().orsuccess())
@@ -760,24 +770,18 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			{
 				exception	= new GoalDroppedException();
 			}
-			getFinished().addResultListener(new IResultListener<Object>()
+			getFinished()
+				.then(o -> ret.setResult(null))
+				.catchEx(e ->
 			{
-				@Override
-				public void resultAvailable(Object result)
+				if(e instanceof GoalDroppedException)
 				{
+					// Goal dropped -> mission accomplished
 					ret.setResult(null);
 				}
-				public void exceptionOccurred(Exception exception)
+				else
 				{
-					if(exception instanceof GoalDroppedException)
-					{
-						// Goal dropped -> mission accomplished
-						ret.setResult(null);
-					}
-					else
-					{
-						ret.setException(exception);
-					}
+					ret.setException(e);
 				}
 			});
 			setLifecycleState(GoalLifecycleState.DROPPING);
@@ -812,6 +816,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //	}
 //	
 	/**
+	 *  Called when the query condition of a goal triggers.
+	 */
+	public void queryConditionTriggered(Object result)
+	{
+		this.result	= result;
+		targetConditionTriggered();
+	}
+	
+	/**
 	 *  Called when the target condition of a goal triggers.
 	 */
 	public void targetConditionTriggered(/*IEvent event, IRule<Void> rule, Object context*/)
@@ -841,9 +854,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 						
 						if(finished!=null)
 						{
-							// TODO: goal result.
 							// TODO: only notifies first finished -> use intermediate result for maintain goal!?
-							finished.setResultIfUndone(null);
+							finished.setResultIfUndone(result);
 						}
 					}
 					

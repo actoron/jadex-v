@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal.GoalLifecycleState;
@@ -101,12 +102,16 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	
 	//-------- IBDIAgentFeature interface --------
 
-	/**
-	 *  Dispatch a pojo goal and optionally wait for its result.
-	 *  @param goal The pojo goal.
-	 *  @return The goal result.
-	 */
-	public <T, E> ITerminableFuture<E> dispatchTopLevelGoal(final T goal)
+	@Override
+	public <T> ITerminableFuture<T> dispatchTopLevelGoal(Supplier<T> goal)
+	{
+		@SuppressWarnings("unchecked")
+		ITerminableFuture<T>	ret	= (ITerminableFuture<T>)dispatchTopLevelGoal((Object)goal);
+		return ret;
+	}
+	
+	@Override
+	public ITerminableFuture<Void> dispatchTopLevelGoal(Object goal)
 	{
 //		final MGoal mgoal = ((MCapability)capa.getModelElement()).getGoal(goal.getClass().getName());
 //		if(mgoal==null)
@@ -128,7 +133,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		rgoal.adopt();
 		
 		@SuppressWarnings("unchecked")
-		ITerminableFuture<E>	ret	= (ITerminableFuture<E>) rgoal.getFinished();
+		ITerminableFuture<Void>	ret	= (ITerminableFuture<Void>) rgoal.getFinished();
 		return ret;
 	}
 	

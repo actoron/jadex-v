@@ -2,6 +2,7 @@ package jadex.quickstart.cleanerworld.single;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
@@ -14,6 +15,7 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
@@ -112,17 +114,13 @@ public class CleanerBDIAgentE1
 	 *  A goal to know a charging station.
 	 */
 	@Goal(excludemode=ExcludeMode.Never)
-	class QueryChargingStation
+	class QueryChargingStation	implements Supplier<IChargingstation>
 	{
-		// Remember the station when found
-		IChargingstation	station;
-		
-		// Check if there is a station in the beliefs
-		@GoalTargetCondition(beliefs="stations")
-		boolean isStationKnown()
+		@GoalQueryCondition(beliefs="stations")
+		@Override
+		public IChargingstation get()
 		{
-			station	= stations.isEmpty() ? null : stations.iterator().next();
-			return station!=null;
+			return stations.isEmpty() ? null : stations.iterator().next();
 		}
 	}
 
@@ -130,17 +128,14 @@ public class CleanerBDIAgentE1
 	 *  A goal to know a waste bin.
 	 */
 	@Goal(excludemode=ExcludeMode.Never)
-	class QueryWastebin
+	class QueryWastebin	implements Supplier<IWastebin>
 	{
-		// Remember the waste bin when found
-		IWastebin	wastebin;
-		
 		// Check if there is a waste bin in the beliefs
-		@GoalTargetCondition(beliefs="wastebins")
-		boolean isWastebinKnown()
+		@GoalQueryCondition(beliefs="wastebins")
+		@Override
+		public IWastebin get()
 		{
-			wastebin	= wastebins.isEmpty() ? null : wastebins.iterator().next();
-			return wastebin!=null;
+			return wastebins.isEmpty() ? null : wastebins.iterator().next();
 		}
 	}
 
@@ -262,9 +257,7 @@ public class CleanerBDIAgentE1
 //		IChargingstation	chargingstation	= stations.iterator().next();	// from Exercise C0
 		
 		// Dispatch a subgoal to find a charging station (from Exercise C1)
-		QueryChargingStation	querygoal	= new QueryChargingStation();
-		plan.dispatchSubgoal(querygoal).get();
-		IChargingstation	chargingstation	= querygoal.station;
+		IChargingstation	chargingstation	= plan.dispatchSubgoal(new QueryChargingStation()).get();
 		
 		// Move to charging station as provided by subgoal
 		actsense.moveTo(chargingstation.getLocation());
@@ -369,9 +362,7 @@ public class CleanerBDIAgentE1
 			System.out.println("Starting DropWastePlan");
 			
 			// Dispatch a subgoal to find a waste bin
-			QueryWastebin	querygoal	= new QueryWastebin();
-			plan.dispatchSubgoal(querygoal).get();
-			IWastebin	wastebin	= querygoal.wastebin;
+			IWastebin	wastebin	= plan.dispatchSubgoal(new QueryWastebin()).get();
 			
 			// Move to waste bin as provided by subgoal
 			actsense.moveTo(wastebin.getLocation());

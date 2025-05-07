@@ -36,7 +36,7 @@ public class PlanSubgoalTest
 		@BDIAgent
 		class SubgoalAgent
 		{
-			IFuture<Object>	subfut;
+			IFuture<Void>	subfut;
 			Future<Void>	started	= new Future<>();
 			Future<Void>	aborted	= new Future<>();
 			
@@ -76,9 +76,9 @@ public class PlanSubgoalTest
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		
 		// Dispatch top-level goal and check if sub plan is started.
-		ITerminableFuture<Object>	topfut	= (ITerminableFuture<Object>) handle.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Object>>()
+		ITerminableFuture<Void>	topfut	= (ITerminableFuture<Void>) handle.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Void>>()
 		{
-			public ITerminableFuture<Object> apply(IComponent comp)
+			public ITerminableFuture<Void> apply(IComponent comp)
 			{
 				return comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TopGoal());
 			}
@@ -104,7 +104,7 @@ public class PlanSubgoalTest
 		@BDIAgent
 		class SubgoalAgent
 		{
-			IFuture<Object>	subfut;
+			IFuture<Void>	subfut;
 			Future<Void>	started	= new Future<>();
 			Future<Void>	aborted	= new Future<>();
 			
@@ -146,9 +146,9 @@ public class PlanSubgoalTest
 		SUtil.runWithoutOutErr(() ->
 		{
 			// Dispatch top-level goal and check if sub plan is started.
-			ITerminableFuture<Object>	topfut	= (ITerminableFuture<Object>) handle.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Object>>()
+			ITerminableFuture<Void>	topfut	= (ITerminableFuture<Void>) handle.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Void>>()
 			{
-				public ITerminableFuture<Object> apply(IComponent comp)
+				public ITerminableFuture<Void> apply(IComponent comp)
 				{
 					return comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TopGoal());
 				}

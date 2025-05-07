@@ -2,6 +2,7 @@ package jadex.quickstart.cleanerworld.single;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
@@ -13,6 +14,7 @@ import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
@@ -104,17 +106,13 @@ public class CleanerBDIAgentD2
 	 *  A goal to know a charging station.
 	 */
 	@Goal(excludemode=ExcludeMode.Never)
-	class QueryChargingStation
+	class QueryChargingStation	implements Supplier<IChargingstation>
 	{
-		// Remember the station when found
-		IChargingstation	station;
-		
-		// Check if there is a station in the beliefs
-		@GoalTargetCondition(beliefs="stations")
-		boolean isStationKnown()
+		@GoalQueryCondition(beliefs="stations")
+		@Override
+		public IChargingstation get()
 		{
-			station	= stations.isEmpty() ? null : stations.iterator().next();
-			return station!=null;
+			return stations.isEmpty() ? null : stations.iterator().next();
 		}
 	}
 
@@ -139,7 +137,10 @@ public class CleanerBDIAgentD2
 		@GoalTargetCondition(beliefs="wastes")
 		boolean	isClean()
 		{
-			return !wastes.contains(waste);
+			// Test if the waste is not believed to be in the environment
+			return !wastes.contains(waste)
+				// and also not the waste we just picked up.
+				&& !waste.equals(self.getCarriedWaste());
 		}
 	}
 	
@@ -203,9 +204,7 @@ public class CleanerBDIAgentD2
 //		IChargingstation	chargingstation	= stations.iterator().next();	// from Exercise C0
 		
 		// Dispatch a subgoal to find a charging station (from Exercise C1)
-		QueryChargingStation	querygoal	= new QueryChargingStation();
-		plan.dispatchSubgoal(querygoal).get();
-		IChargingstation	chargingstation	= querygoal.station;
+		IChargingstation	chargingstation	= plan.dispatchSubgoal(new QueryChargingStation()).get();
 		
 		// Move to charging station as provided by subgoal
 		actsense.moveTo(chargingstation.getLocation());

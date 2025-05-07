@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,7 @@ import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalRecurCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
@@ -173,6 +175,92 @@ public class GoalConditionTest
 		handle.scheduleStep(() -> pojo.trigger.add("value")).get(TestHelper.TIMEOUT);
 		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
 		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
+	}
+
+	@Test
+	public void	testProceduralQueryGoal()
+	{
+		@BDIAgent
+		class GoalQueryAgent
+		{
+			@Belief
+			List<String> trigger	= new ArrayList<>();
+			
+			@Goal
+			class StartGoal	implements Supplier<String>
+			{
+				public String get()
+				{
+					return trigger.isEmpty() ? null : trigger.get(0);
+				}
+			}
+
+			// Should not succeed on nop
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	nop(StartGoal goal) {}
+
+			// Should succeed on value add
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				trigger.add("value");
+			}
+			
+			// Goal should be succeeded, so this shouldn't execute.
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process2(StartGoal goal)
+			{
+				trigger.add("wrong");
+			}
+		}
+		
+		GoalQueryAgent	pojo	= new GoalQueryAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		String value	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		assertEquals("value", value);
+		assertEquals(Collections.singletonList("value"), pojo.trigger);
+	}
+
+	@Test
+	public void	testQueryCondition()
+	{
+		@BDIAgent
+		class GoalQueryAgent
+		{
+			@Belief
+			List<String> trigger	= new ArrayList<>(Collections.singletonList("value"));
+			
+			@Goal
+			class StartGoal	implements Supplier<String>
+			{
+				@GoalQueryCondition(beliefs="trigger")
+				public String get()
+				{
+					return trigger.isEmpty() ? null : trigger.get(0);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				// Should not trigger on remove
+				trigger.remove("value");
+
+				// Should trigger on value add
+				trigger.add("value");
+				
+				// Plan should be aborted, so this shouldn't execute.
+				trigger.add("wrong");
+			}
+		}
+		
+		GoalQueryAgent	pojo	= new GoalQueryAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		String value	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		assertEquals("value", value);
+		assertEquals(Collections.singletonList("value"), pojo.trigger);
 	}
 
 	@Test

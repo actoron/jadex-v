@@ -2,6 +2,7 @@ package jadex.quickstart.cleanerworld.single;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
@@ -11,25 +12,28 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
-import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IComponentManager;
 import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.IWaste;
 import jadex.quickstart.cleanerworld.environment.IWastebin;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
- *  Separate Maintain and Target Conditions.
+ *  Instance level goal inhibitions.
  */
 @BDIAgent    // This annotation enabled BDI features
-public class CleanerBDIAgentD3b_old
+public class CleanerBDIAgentD5
 {
 	//-------- fields holding agent data --------
 	
@@ -90,7 +94,7 @@ public class CleanerBDIAgentD3b_old
 	 *  A goal to recharge whenever the battery is low.
 	 */
 	@Goal(recur=true, recurdelay=3000,
-		deliberation=@Deliberation(inhibits={PerformPatrol.class, AchieveCleanupWaste.class}))	// Pause patrol goal while loading battery
+		deliberation=@Deliberation(inhibits= {PerformPatrol.class, AchieveCleanupWaste.class}))	// Pause patrol goal while loading battery
 	class MaintainBatteryLoaded
 	{
 		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
@@ -110,17 +114,13 @@ public class CleanerBDIAgentD3b_old
 	 *  A goal to know a charging station.
 	 */
 	@Goal(excludemode=ExcludeMode.Never)
-	class QueryChargingStation
+	class QueryChargingStation	implements Supplier<IChargingstation>
 	{
-		// Remember the station when found
-		IChargingstation	station;
-		
-		// Check if there is a station in the beliefs
-		@GoalTargetCondition(beliefs="stations")
-		boolean isStationKnown()
+		@GoalQueryCondition(beliefs="stations")
+		@Override
+		public IChargingstation get()
 		{
-			station	= stations.isEmpty() ? null : stations.iterator().next();
-			return station!=null;
+			return stations.isEmpty() ? null : stations.iterator().next();
 		}
 	}
 
@@ -128,25 +128,21 @@ public class CleanerBDIAgentD3b_old
 	 *  A goal to know a waste bin.
 	 */
 	@Goal(excludemode=ExcludeMode.Never)
-	class QueryWastebin
+	class QueryWastebin	implements Supplier<IWastebin>
 	{
-		// Remember the waste bin when found
-		IWastebin	wastebin;
-		
 		// Check if there is a waste bin in the beliefs
-		@GoalTargetCondition(beliefs="wastebins")
-		boolean isWastebinKnown()
+		@GoalQueryCondition(beliefs="wastebins")
+		@Override
+		public IWastebin get()
 		{
-			wastebin	= wastebins.isEmpty() ? null : wastebins.iterator().next();
-			return wastebin!=null;
+			return wastebins.isEmpty() ? null : wastebins.iterator().next();
 		}
 	}
 
 	/**
 	 *  A goal to cleanup waste.
 	 */
-	@Goal(recur=true, recurdelay=3000,
-		deliberation=@Deliberation(inhibits=PerformPatrol.class, cardinalityone=true))
+	@Goal(deliberation=@Deliberation(inhibits=PerformPatrol.class, cardinalityone=true))
 	class AchieveCleanupWaste
 	{
 		// Remember the waste item to clean up
@@ -161,7 +157,7 @@ public class CleanerBDIAgentD3b_old
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		@GoalTargetCondition(beliefs={"self", "wastes"})
+		@GoalTargetCondition(beliefs="wastes")
 		boolean	isClean()
 		{
 			// Test if the waste is not believed to be in the environment
@@ -169,22 +165,19 @@ public class CleanerBDIAgentD3b_old
 				// and also not the waste we just picked up.
 				&& !waste.equals(self.getCarriedWaste());
 		}
-		
-		// Goal should only be pursued when carrying no waste
-		// or when goal is resumed after recharging and carried waste is of this goal.
-		@GoalContextCondition
-		boolean isPossible()
+
+		// Use an instance-level inhibition to decide between cleanup goals
+		@GoalInhibit(AchieveCleanupWaste.class)
+		boolean	shouldInhibit(AchieveCleanupWaste other)
 		{
-			return self.getCarriedWaste()==null || self.getCarriedWaste().equals(waste);
-		}
-		
-		/**
-		 *  String representation of this goal to aid debug output.
-		 */
-		@Override
-		public String toString()
-		{
-			return getClass().getSimpleName()+"("+waste+")";
+			// Prefer this goal when the waste was already picked up
+			// or this waste is nearer than the other
+			boolean test	= waste.equals(self.getCarriedWaste())
+				|| !other.waste.equals(self.getCarriedWaste())
+					&& self.getLocation().getDistance(waste.getLocation())
+						< self.getLocation().getDistance(other.waste.getLocation());
+			System.out.println("Inhibit of "+this+" for "+other+" is "+test);
+			return test;
 		}
 	}
 	
@@ -248,9 +241,7 @@ public class CleanerBDIAgentD3b_old
 //		IChargingstation	chargingstation	= stations.iterator().next();	// from Exercise C0
 		
 		// Dispatch a subgoal to find a charging station (from Exercise C1)
-		QueryChargingStation	querygoal	= new QueryChargingStation();
-		plan.dispatchSubgoal(querygoal).get();
-		IChargingstation	chargingstation	= querygoal.station;
+		IChargingstation	chargingstation	= plan.dispatchSubgoal(new QueryChargingStation()).get();
 		
 		// Move to charging station as provided by subgoal
 		actsense.moveTo(chargingstation.getLocation());
@@ -263,10 +254,10 @@ public class CleanerBDIAgentD3b_old
 	 *  A plan to move randomly in the environment.
 	 */
 	@Plan(trigger=@Trigger(goals={QueryChargingStation.class, QueryWastebin.class}))
-	private void	moveAround(IPlan plan)
+	private void	moveAround()
 	{
 		// Choose a random location and move there.
-		System.out.println("Starting moveAround() plan for goal "+plan.getReason());
+		System.out.println("Starting moveAround() plan");
 		actsense.moveTo(Math.random(), Math.random());
 	}
 	
@@ -288,22 +279,31 @@ public class CleanerBDIAgentD3b_old
 	{
 		System.out.println("Starting cleanupWaste() plan");
 		
-		// Move to waste and pick it up, if not yet done
-		if(!cleanup.waste.equals(self.getCarriedWaste()))
-		{
-			actsense.moveTo(cleanup.waste.getLocation());
-			actsense.pickUpWaste(cleanup.waste);
-		}
+		// Move to waste and pick it up
+		actsense.moveTo(cleanup.waste.getLocation());
+		actsense.pickUpWaste(cleanup.waste);
 		
 		// Dispatch a subgoal to find a waste bin
-		QueryWastebin	querygoal	= new QueryWastebin();
-		plan.dispatchSubgoal(querygoal).get();
-		IWastebin	wastebin	= querygoal.wastebin;
+		IWastebin	wastebin	= plan.dispatchSubgoal(new QueryWastebin()).get();
 		
 		// Move to waste bin as provided by subgoal
 		actsense.moveTo(wastebin.getLocation());
 		
 		// Finally drop the waste into the bin
 		actsense.dropWasteInWastebin(cleanup.waste, wastebin);
+	}
+
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new CleanerBDIAgentD5());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

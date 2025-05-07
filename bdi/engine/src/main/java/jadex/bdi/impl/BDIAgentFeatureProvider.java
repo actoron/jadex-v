@@ -39,6 +39,7 @@ import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalRecurCondition;
 import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
@@ -827,7 +828,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	condname	= "context";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createContextCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, true);
 		}
 		
 		// Add drop condition rules
@@ -841,7 +842,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	condname	= "drop";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createDropCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, true);
 		}
 		
 		// Add recur condition rules
@@ -855,7 +856,21 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	condname	= "recur";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createRecurCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, true);
+		}
+		
+		// Add query condition rules
+		List<Method>	querycondmethods	= InjectionModel.findMethods(goalclazz, GoalQueryCondition.class);
+		numcreations	= 0;
+		for(Method method: querycondmethods)
+		{
+			String	rulename	= "GoalQueryCondition"+(++numcreations)+"_"+goalname;
+			GoalQueryCondition	query	= method.getAnnotation(GoalQueryCondition.class);
+			String[]	beliefs	= query.beliefs();
+			String	condname	= "query";
+			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createQueryCondition(goalclazz, aevents, handle, rulename);
+			
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, false);
 		}
 		
 		// Add target condition rules
@@ -869,7 +884,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	condname	= "target";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createTargetCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, true);
 		}
 
 		// Add maintain condition rules
@@ -970,7 +985,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		
 		// BDI model is for outmost pojo.
 		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
-		MGoal mgoal	= new MGoal(!targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), !recurcondmethods.isEmpty(),
+		MGoal mgoal	= new MGoal(!querycondmethods.isEmpty(), !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), !recurcondmethods.isEmpty(),
 			anno, aplbuild, selectcandidate, instanceinhibs);
 		model.addGoal(goalclazz, mgoal);
 	}
@@ -978,7 +993,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	protected void addCondition(List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
 			Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers, String goalname,
 			Method method, String[] beliefs, String condname,
-			BiFunction<EventType[], IInjectionHandle, IInjectionHandle> creator)
+			BiFunction<EventType[], IInjectionHandle, IInjectionHandle> creator, boolean bool)
 	{
 		// TODO: find beliefs of all capabilities!?
 		List<EventType>	events	= getTriggerEvents(parentclazzes.get(parentclazzes.size()-1), beliefs, beliefs, beliefs, new Class<?>[0], goalname);
@@ -996,7 +1011,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
 			
 			// check for boolean method
-			if(SReflect.isSupertype(Boolean.class, method.getReturnType()))
+			if(!bool || SReflect.isSupertype(Boolean.class, method.getReturnType()))
 			{
 				// In extra on start, add rule to suspend goal when event happens.  
 				ret.add(creator.apply(aevents, handle));
@@ -1083,6 +1098,47 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								if(!Boolean.TRUE.equals(value))
 								{
 									goal.setLifecycleState(RGoal.GoalLifecycleState.SUSPENDED);
+								}
+							}
+						}
+					}
+					return IFuture.DONE;
+				},
+				aevents));	// Trigger Event(s)
+			return null;
+		};
+	}
+
+	/**
+	 *  Create a handle that adds a query condition rule for a goal type.
+	 */
+	protected IInjectionHandle createQueryCondition(Class<?> goalclazz, EventType[] aevents,
+		IInjectionHandle conditionmethod, String rulename)
+	{
+		return (comp, pojos, context, oldval) ->
+		{
+			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+			rs.getRulebase().addRule(new Rule<Void>(
+				rulename,	// Rule Name
+				ICondition.TRUE_CONDITION,	// Condition -> true
+				(event, rule, context2, condresult) ->
+				{
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					if(goals!=null)
+					{
+						ChangeEvent<Object>	ce	= null;
+						for(RGoal goal: goals)
+						{
+							if(!goal.isFinished())
+							{
+								if(ce==null)
+								{
+									ce	= new ChangeEvent<Object>(event);
+								}
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								if(value!=null)
+								{
+									goal.queryConditionTriggered(value);
 								}
 							}
 						}

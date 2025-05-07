@@ -1,5 +1,7 @@
 package jadex.bdi;
 
+import java.util.function.Supplier;
+
 import jadex.core.IComponentFeature;
 import jadex.future.ITerminableFuture;
 
@@ -33,7 +35,14 @@ public interface IBDIAgentFeature	extends IComponentFeature
 	 *  @param goal The pojo goal.
 	 *  @return The goal result.
 	 */
-	public <T, E> ITerminableFuture<E> dispatchTopLevelGoal(T goal);
+	public <T> ITerminableFuture<T> dispatchTopLevelGoal(Supplier<T> goal);
+
+	/**
+	 *  Dispatch a pojo goal wait for it to finish.
+	 *  @param goal The pojo goal.
+	 *  @return The goal result.
+	 */
+	public ITerminableFuture<Void> dispatchTopLevelGoal(Object goal);
 	
 //	/**
 //	 *  Drop a pojo goal.
