@@ -308,6 +308,57 @@ public class GoalConditionTest
 	}
 
 	@Test
+	public void	testTargetWithResult()
+	{
+		@BDIAgent
+		class GoalTargetResultAgent
+		{
+			@Belief
+			List<String> trigger	= new ArrayList<>(Collections.singletonList("value"));
+			
+			@Goal
+			class StartGoal	implements Supplier<String>
+			{
+				@GoalTargetCondition(beliefs="trigger")
+				boolean targetCondition(String fact)
+				{
+					return "value".equals(fact) && trigger.contains("value");
+				}
+				
+				@Override
+				public String get()
+				{
+					return trigger.get(0);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				// Should not trigger on remove
+				trigger.remove("value");
+
+				// Should not trigger on wrong add/remove
+				trigger.add("wrong");
+				trigger.remove("wrong");
+
+				// Should trigger on value add
+				trigger.add("value");
+				
+				// Plan should be aborted, so this shouldn't execute.
+				trigger.add("wrong");
+			}
+		}
+		
+		GoalTargetResultAgent	pojo	= new GoalTargetResultAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		String	result	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		assertEquals("value", result);
+		assertEquals(Collections.singletonList("value"), pojo.trigger);
+	}
+
+	@Test
 	public void	testMaintainCondition()
 	{
 		@BDIAgent

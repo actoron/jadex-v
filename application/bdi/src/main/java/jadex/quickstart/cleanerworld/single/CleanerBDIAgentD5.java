@@ -19,7 +19,6 @@ import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.common.SUtil;
 import jadex.core.IComponentManager;
 import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;

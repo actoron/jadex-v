@@ -18,6 +18,7 @@ import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
@@ -182,33 +183,13 @@ public class CleanerAgent
 	}
 	
 	@Goal(excludemode=ExcludeMode.Never)
-	public class QueryChargingStation
+	public class QueryChargingStation	implements Supplier<Chargingstation>
 	{
-		protected Chargingstation station;
-		
-		@GoalTargetCondition(beliefs="stations")
-		public boolean checkTarget()
+		@GoalQueryCondition(beliefs="stations")
+		@Override
+		public Chargingstation get()
 		{
-			station = findClosestElement(stations, getSelf().getLocation());
-			return station!=null;
-		}
-		
-		/**
-		 *  Get the station.
-		 *  @return The station.
-		 */
-		public Chargingstation getStation()
-		{
-			return station;
-		}
-
-		/**
-		 *  Set the station.
-		 *  @param station The station to set.
-		 */
-		public void setStation(Chargingstation station)
-		{
-			this.station = station;
+			return findClosestElement(stations, getSelf().getLocation());
 		}
 	}
 	
@@ -256,20 +237,11 @@ public class CleanerAgent
 	@Goal(excludemode=ExcludeMode.Never)
 	private class QueryWastebin	implements Supplier<Wastebin>
 	{
-//		@GoalResult
-		protected Wastebin wastebin;
-		
-		@GoalTargetCondition(beliefs="wastebins")
-		public boolean checkTarget()
-		{
-			wastebin = findClosestElement(wastebins, getSelf().getLocation());
-			return wastebin!=null;
-		}
-
+		@GoalQueryCondition(beliefs="wastebins")
 		@Override
-		public Wastebin get() 
+		public Wastebin get()
 		{
-			return wastebin;
+			return findClosestElement(wastebins, getSelf().getLocation());
 		}
 	}
 	
@@ -364,10 +336,7 @@ public class CleanerAgent
 	@Plan(trigger=@Trigger(goals=MaintainBatteryLoaded.class))
 	private void loadBattery(CleanerAgent agentapi, IPlan planapi)
 	{
-//		QueryChargingStation sg = (QueryChargingStation)planapi.dispatchSubgoal((new QueryChargingStation())).get();	//WTF!?
-		QueryChargingStation sg = new QueryChargingStation();
-		planapi.dispatchSubgoal(sg).get();
-		Chargingstation station = (Chargingstation)sg.getStation();
+		Chargingstation station = planapi.dispatchSubgoal(new QueryChargingStation()).get();
 		
 		//System.out.println("Moving to station: "+station);
 		getEnvironment().move(getSelf(), station.getLocation()).get();

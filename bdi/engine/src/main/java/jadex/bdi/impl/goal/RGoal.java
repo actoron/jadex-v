@@ -829,6 +829,12 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public void targetConditionTriggered(/*IEvent event, IRule<Void> rule, Object context*/)
 	{
+		// If not declarative query goal but is supplier -> store current result.
+		if(!mgoal.query() && getPojo() instanceof Supplier<?>)
+		{
+			result	= ((Supplier<?>)getPojo()).get();
+		}
+		
 		if(mgoal.maintain())
 		{
 			// Change maintain goal rule so it does not consider target condition triggered unless we move from false to true (not just true to true)
