@@ -106,17 +106,21 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 			}
 		}
 		
+		if(delib.cardinalityone())
+		{
+			// Do only non-instance inhibit here (others are done below).
+			if(instanceinhibs==null || !instanceinhibs.containsKey(goal.getPojo().getClass()))
+			{
+				addInhibitors(goal, goal.getPojo().getClass());
+			}
+		}
+		
 		if(instanceinhibs!=null)
 		{
 			for(Class<?> inh: instanceinhibs.keySet())
 			{
 				addInhibitors(goal, inh);
 			}
-		}
-		
-		if(delib.cardinalityone())
-		{
-			addInhibitors(goal, goal.getPojo().getClass());
 		}
 		
 		return IFuture.DONE;
@@ -287,45 +291,60 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 		if(goal.getLifecycleState().equals(GoalLifecycleState.ACTIVE) && goal.getProcessingState().equals(GoalProcessingState.INPROCESS))
 		{
 			MGoal	mgoal	= goal.getMGoal();
-			Deliberation delib = mgoal.annotation().deliberation();
-			ret	= delib.cardinalityone() && goal.getPojo().getClass().equals(other.getPojo().getClass());
+			
+			// check if instance relation
+			Boolean	instanceinhibit	= null;
+			Map<Class<?>, IInjectionHandle>	instanceinhibs	= mgoal.instanceinhibs();
+			if(instanceinhibs!=null)
+			{
+				IInjectionHandle	inhib	= instanceinhibs.get(other.getPojo().getClass());
+				if(inhib!=null)
+				{
+					instanceinhibit	= (Boolean)inhib.apply(goal.getComponent(), goal.getAllPojos(), other, null);
+				}				
+			}
+			
+			ret	= instanceinhibit!=null && instanceinhibit;
+			
 			if(!ret)
 			{
-				// check if instance relation
-				Boolean	instanceinhibit	= null;
-				Map<Class<?>, IInjectionHandle>	instanceinhibs	= mgoal.instanceinhibs();
-				if(instanceinhibs!=null)
+				Deliberation delib = mgoal.annotation().deliberation();
+				
+				// Check if cardinality.
+				if(delib.cardinalityone() && goal.getPojo().getClass().equals(other.getPojo().getClass()))
 				{
-					IInjectionHandle	inhib	= instanceinhibs.get(other.getPojo().getClass());
-					if(inhib!=null)
+					// Only inhibit, when not inverse instance relation  
+					Boolean	reverseinhibit	= null;
+					if(instanceinhibs!=null)
 					{
-						Object	result	= inhib.apply(goal.getComponent(), goal.getAllPojos(), other, null);
-						if(result instanceof Boolean)
+						IInjectionHandle	inhib	= instanceinhibs.get(goal.getPojo().getClass());
+						if(inhib!=null)
 						{
-							instanceinhibit	= (Boolean)result;
-						}
-						else
-						{
-							throw new UnsupportedOperationException("@GoalInhibit methods must return boolean: "+goal.getClass().getName());
+							reverseinhibit	= (Boolean)inhib.apply(other.getComponent(), other.getAllPojos(), goal, null);
 						}
 					}
+					
+					ret	= reverseinhibit==null || !reverseinhibit;
 				}
-				
-				// Check if type inhibit.
-				Class<?>[] inhs = delib.inhibits();
-				if(Arrays.asList(inhs).contains(other.getPojo().getClass()))
+			
+				if(!ret)
 				{
-					// Inhibit other when instance inhibit is not present or explicitly true
-					ret = instanceinhibit==null || instanceinhibit;
+					// Check if type inhibit.
+					Class<?>[] inhs = delib.inhibits();
+					if(Arrays.asList(inhs).contains(other.getPojo().getClass()))
+					{
+						// Inhibit other when instance inhibit is not present or explicitly true
+						ret = instanceinhibit==null || instanceinhibit;
+					}
+					else
+					{
+						ret	= instanceinhibit!=null && instanceinhibit;
+					}
+					
 				}
-				else
-				{
-					ret	= instanceinhibit!=null && instanceinhibit;
-				}
-				
-//				System.out.println("Inhibits: "+goal+", "+other+" = "+ret);
 			}
 		}
+//		System.out.println("Inhibits: "+goal+", "+other+" = "+ret);
 		
 		return ret;
 	}

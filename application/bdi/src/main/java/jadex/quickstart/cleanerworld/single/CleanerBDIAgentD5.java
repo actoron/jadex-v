@@ -19,6 +19,7 @@ import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.common.SUtil;
 import jadex.core.IComponentManager;
 import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
@@ -100,7 +101,7 @@ public class CleanerBDIAgentD5
 		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
-			return self.getChargestate()>=0.4; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
+			return self.getChargestate()>=0.2; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
 		}
 			
 		@GoalTargetCondition(beliefs="self")	// Only stop charging, when this condition is true
@@ -157,7 +158,7 @@ public class CleanerBDIAgentD5
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		@GoalTargetCondition(beliefs="wastes")
+		@GoalTargetCondition(beliefs={"wastes", "self"})
 		boolean	isClean()
 		{
 			// Test if the waste is not believed to be in the environment
@@ -172,12 +173,10 @@ public class CleanerBDIAgentD5
 		{
 			// Prefer this goal when the waste was already picked up
 			// or this waste is nearer than the other
-			boolean test	= waste.equals(self.getCarriedWaste())
-				|| !other.waste.equals(self.getCarriedWaste())
+			return waste.equals(self.getCarriedWaste())
+				|| waste.getLocation()!=null && other.waste.getLocation()!=null
 					&& self.getLocation().getDistance(waste.getLocation())
 						< self.getLocation().getDistance(other.waste.getLocation());
-			System.out.println("Inhibit of "+this+" for "+other+" is "+test);
-			return test;
 		}
 	}
 	

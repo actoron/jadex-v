@@ -99,7 +99,7 @@ public class CleanerBDIAgentD4
 		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
-			return self.getChargestate()>=0.4; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
+			return self.getChargestate()>=0.2; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
 		}
 			
 		@GoalTargetCondition(beliefs="self")	// Only stop charging, when this condition is true
@@ -156,7 +156,7 @@ public class CleanerBDIAgentD4
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		@GoalTargetCondition(beliefs="wastes")
+		@GoalTargetCondition(beliefs={"wastes", "self"})
 		boolean	isClean()
 		{
 			// Test if the waste is not believed to be in the environment

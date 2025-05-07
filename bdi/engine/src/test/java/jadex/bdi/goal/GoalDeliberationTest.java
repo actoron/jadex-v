@@ -174,4 +174,55 @@ public class GoalDeliberationTest
 		assertEquals(2, pojo.results.getNextIntermediateResult(TestHelper.TIMEOUT));
 		assertEquals(1, pojo.results.getNextIntermediateResult(TestHelper.TIMEOUT));
 	}
+	
+	
+	@Test
+	public void	testInstanceInhibitSwitch()
+	{
+		@BDIAgent
+		class InstanceInhibitSwitchAgent
+		{
+			Future<Void>	started	= new Future<>();
+			Future<Void>	aborted	= new Future<>();
+			
+			@Goal(deliberation=@Deliberation(cardinalityone=true))
+			record MyGoal(int value)
+			{
+				@GoalInhibit(MyGoal.class)
+				boolean inhibits(MyGoal other)
+				{
+					return this.value()>other.value();
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=MyGoal.class))
+			class BlockPlan
+			{
+				@PlanBody
+				void body()
+				{
+					started.setResultIfUndone(null);
+					new Future<>().get();
+				}
+				
+				@PlanAborted
+				void abort()
+				{
+					aborted.setResult(null);
+				}
+			}
+		}
+		
+		InstanceInhibitSwitchAgent pojo	= new InstanceInhibitSwitchAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new InstanceInhibitSwitchAgent.MyGoal(1)));
+		
+		// Plan is started but not aborted.
+		assertNull(pojo.started.get(TestHelper.TIMEOUT));
+		assertFalse(pojo.aborted.isDone());
+
+		// Create second goal to disable first.
+		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new InstanceInhibitSwitchAgent.MyGoal(2)));
+		assertNull(pojo.aborted.get(TestHelper.TIMEOUT));
+	}
 }

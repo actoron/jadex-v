@@ -938,45 +938,53 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		List<Method> methods	= InjectionModel.findMethods(goalclazz, GoalInhibit.class);
 		for(Method m: methods)
 		{
-			Class<?>	otherclazz	= m.getAnnotation(GoalInhibit.class).value();
-			if(instanceinhibs!=null && instanceinhibs.containsKey(otherclazz))
+			// check for boolean method
+			if(SReflect.isSupertype(Boolean.class, m.getReturnType()))
 			{
-				throw new UnsupportedOperationException("Only one  @GoalInhibit method per other goal class is allowed: "+m+", "+otherclazz);
-			}
-			
-			IValueFetcherCreator	creator	= (pojotypes, valuetype, annotation) ->
-			{
-				if(IGoal.class.equals(valuetype))
+				Class<?>	otherclazz	= m.getAnnotation(GoalInhibit.class).value();
+				if(instanceinhibs!=null && instanceinhibs.containsKey(otherclazz))
 				{
-					return (comp, pojos, context, oldval) -> context;
+					throw new UnsupportedOperationException("Only one  @GoalInhibit method per other goal class is allowed: "+m+", "+otherclazz);
 				}
-				else if(otherclazz.equals(valuetype))
+				
+				IValueFetcherCreator	creator	= (pojotypes, valuetype, annotation) ->
 				{
-					return (comp, pojos, context, oldval) -> ((IGoal)context).getPojo();
+					if(IGoal.class.equals(valuetype))
+					{
+						return (comp, pojos, context, oldval) -> context;
+					}
+					else if(otherclazz.equals(valuetype))
+					{
+						return (comp, pojos, context, oldval) -> ((IGoal)context).getPojo();
+					}
+					return null;
+				};
+				
+				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	mycontextfetchers;
+				mycontextfetchers	= contextfetchers==null ? new LinkedHashMap<>() : new LinkedHashMap<>(contextfetchers);			
+				if(mycontextfetchers.get(Inject.class)==null)
+				{
+					mycontextfetchers.put(Inject.class, Collections.singletonList(creator));
 				}
-				return null;
-			};
-			
-			Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	mycontextfetchers;
-			mycontextfetchers	= contextfetchers==null ? new LinkedHashMap<>() : new LinkedHashMap<>(contextfetchers);			
-			if(mycontextfetchers.get(Inject.class)==null)
-			{
-				mycontextfetchers.put(Inject.class, Collections.singletonList(creator));
+				else
+				{
+					List<IValueFetcherCreator>	list	= new ArrayList<>(mycontextfetchers.get(Inject.class));
+					list.add(creator);
+					mycontextfetchers.put(Inject.class, list);
+				}
+	
+				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(m, parentclazzes, mycontextfetchers, null);
+				
+				if(instanceinhibs==null)
+				{
+					instanceinhibs	= new LinkedHashMap<>();
+				}
+				instanceinhibs.put(otherclazz, handle);
 			}
 			else
 			{
-				List<IValueFetcherCreator>	list	= new ArrayList<>(mycontextfetchers.get(Inject.class));
-				list.add(creator);
-				mycontextfetchers.put(Inject.class, list);
+				throw new UnsupportedOperationException("@GoalInhibit method must return boolean: "+m);
 			}
-
-			IInjectionHandle	handle	= InjectionModel.createMethodInvocation(m, parentclazzes, mycontextfetchers, null);
-			
-			if(instanceinhibs==null)
-			{
-				instanceinhibs	= new LinkedHashMap<>();
-			}
-			instanceinhibs.put(otherclazz, handle);
 		}
 		
 		// Get meta-level reasoning methods.
