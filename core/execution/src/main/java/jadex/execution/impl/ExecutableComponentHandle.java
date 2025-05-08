@@ -9,11 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import jadex.common.IParameterGuesser;
 import jadex.common.NameValue;
 import jadex.common.SAccess;
 import jadex.common.SUtil;
-import jadex.common.SimpleParameterGuesser;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
@@ -234,19 +232,19 @@ public class ExecutableComponentHandle implements IComponentHandle
 		Call.setCurrentInvocation(next); // next becomes current
 		Call.resetNextInvocation(); // next is null
 		
-		// Try to guess parameters from given args or component internals.
-		IParameterGuesser guesser = new SimpleParameterGuesser(component.getValueProvider().getParameterGuesser(), args);
-		Object[] iargs = new Object[method.getParameterTypes().length];
-		for(int i=0; i<method.getParameterTypes().length; i++)
-		{
-			iargs[i] = guesser.guessParameter(method.getParameterTypes()[i], false);
-		}
+//		// Try to guess parameters from given args or component internals.
+//		IParameterGuesser guesser = new SimpleParameterGuesser(component.getValueProvider().getParameterGuesser(), args);
+//		Object[] iargs = new Object[method.getParameterTypes().length];
+//		for(int i=0; i<method.getParameterTypes().length; i++)
+//		{
+//			iargs[i] = guesser.guessParameter(method.getParameterTypes()[i], false);
+//		}
 		
 		try
 		{
 			// It is now allowed to use protected/private component methods
 			SAccess.setAccessible(method, true);
-			return method.invoke(pojo, iargs);
+			return method.invoke(pojo, args.toArray(new Object[args.size()]));
 		}
 		catch(Exception e)
 		{
