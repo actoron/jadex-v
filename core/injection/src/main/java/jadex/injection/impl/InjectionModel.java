@@ -289,6 +289,14 @@ public class InjectionModel
 		{
 			key.add(pojo!=null ? pojo.getClass() : Object.class);
 		}
+		return getStatic(key, contextfetchers);
+	}
+	
+	/**
+	 *  Get the model for a stack of pojo classes.
+	 */
+	public static InjectionModel	getStatic(List<Class<?>> key, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	{
 		synchronized(cache)
 		{
 			if(!cache.containsKey(key))
@@ -329,9 +337,9 @@ public class InjectionModel
 						IInjectionHandle	test	= check.getValueFetcher(classes, field.getGenericType(), field.getAnnotation(anno));
 						if(test!=null)
 						{
-							if(fetcher!=null)
+							if(fetcher!=null && fetcher!=test)	// TODO: why duplicate of fetcher in bdi marsworld
 							{
-								throw new RuntimeException("Conflicting field injections: "+fetcher+", "+test);
+								throw new RuntimeException("Conflicting field injections: "+field+", "+fetcher.getClass()+", "+test.getClass());
 							}
 							fetcher	= test;
 						}

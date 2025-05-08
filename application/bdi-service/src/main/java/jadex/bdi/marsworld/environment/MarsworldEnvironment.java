@@ -9,11 +9,9 @@ import jadex.bdi.marsworld.environment.Carry.Status;
 import jadex.core.annotation.NoCopy;
 import jadex.environment.Environment;
 import jadex.environment.EnvironmentTask;
-import jadex.environment.SpaceObject;
 import jadex.environment.EnvironmentTask.TaskData;
+import jadex.environment.SpaceObject;
 import jadex.execution.ComponentMethod;
-import jadex.execution.impl.TimerContext;
-import jadex.execution.impl.TimerCreator;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 import jadex.math.IVector2;
@@ -36,6 +34,7 @@ public class MarsworldEnvironment extends Environment
 		super(id, sps);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T getData(String name, TaskData data, Class<T> type)
 	{
 		return data==null || data.data()==null? null: (T)data.data().get(name);

@@ -1,19 +1,15 @@
 package jadex.bdi.marsworld.movement;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
-import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanFinished;
-import jadex.bdi.annotation.PlanReason;
-import jadex.bdi.marsworld.BaseAgent;
 import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
-import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
 import jadex.math.IVector2;
 
 /**
@@ -24,13 +20,13 @@ public class MoveToLocationPlan
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	protected MovementCapability capa;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected IDestinationGoal goal;
 	
 	protected ITerminableFuture<Void> task;
@@ -58,7 +54,7 @@ public class MoveToLocationPlan
 		return IFuture.DONE;
 	}
 	
-	@PlanFinished
+	@OnEnd
 	public void finished()
 	{
 		//System.out.println("fini: "+this);

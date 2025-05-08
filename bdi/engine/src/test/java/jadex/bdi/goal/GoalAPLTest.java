@@ -85,7 +85,7 @@ public class GoalAPLTest
 				List<ICandidateInfo>	buildAPL(IComponent comp)
 				{
 					IPlanBody	body	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getModel().getPlanBody(MyPlan.class);
-					return Collections.singletonList(new APL.MPlanCandidate("myplan", body));
+					return Collections.singletonList(new APL.MPlanCandidate(Collections.singletonList(APLBuildAgent.class), "myplan", body));
 				}
 			}
 			

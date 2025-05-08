@@ -1133,6 +1133,9 @@ public class APL
 	 */
 	public static class	MPlanCandidate	implements ICandidateInfo
 	{
+		/** The parent classes of the plan. */
+		protected List<Class<?>>	parentclazzes;
+		
 		/** The model name of the plan (e.g. method name). */
 		protected String	name;
 		
@@ -1142,8 +1145,9 @@ public class APL
 		/**
 		 *  Create a plan candidate info.
 		 */
-		public MPlanCandidate(String name, IPlanBody body)
+		public MPlanCandidate(List<Class<?>> parentclazzes, String name, IPlanBody body)
 		{
+			this.parentclazzes	= parentclazzes;
 			this.name	= name;
 			this.body	= body;
 		}
@@ -1151,8 +1155,9 @@ public class APL
 		@Override
 		public RPlan createPlan(RProcessableElement reason)
 		{
-			// TODO: plan from another capability needs other parent pojos
-			return new RPlan(this, name, reason, body, reason.getComponent(), reason.getParentPojos());
+			List<Object>	parentpojos	= ((BDIAgentFeature)reason.getComponent()
+				.getFeature(IBDIAgentFeature.class)).getCapability(parentclazzes);
+			return new RPlan(this, name, reason, body, reason.getComponent(), parentpojos);
 		}
 
 		@Override

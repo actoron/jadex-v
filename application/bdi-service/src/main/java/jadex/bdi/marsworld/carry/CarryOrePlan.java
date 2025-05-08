@@ -1,19 +1,17 @@
 package jadex.bdi.marsworld.carry;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanFinished;
-import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.carry.CarryAgent.CarryOre;
 import jadex.bdi.marsworld.environment.Carry;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.movement.MovementCapability.Move;
-import jadex.bdi.runtime.IPlan;
 import jadex.future.ITerminableFuture;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
 
 /**
  *  Inform the sentry agent about a new target.
@@ -23,13 +21,13 @@ public class CarryOrePlan
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	protected CarryAgent carry;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected CarryOre goal;
 	
 	protected ITerminableFuture<Void> task;
@@ -79,7 +77,7 @@ public class CarryOrePlan
 		}
 	}
 	
-	@PlanFinished
+	@OnEnd
 	protected void finished()
 	{
 		//carry.getMoveCapa().updateSelf();

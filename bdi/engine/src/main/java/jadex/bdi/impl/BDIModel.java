@@ -28,6 +28,8 @@ public class BDIModel
 	/** The known goals (goal pojoclazz -> goal annotation for meta info). */
 	protected Map<Class<?>, MGoal>	goals	= new LinkedHashMap<>();
 	
+	/** The known beliefs (name->value type, only for static checking, not used at runtime). */
+	protected Map<String, Class<?>>	beliefs	= new LinkedHashMap<>();
 	
 	/**
 	 *  Get plan body for pojo class.
@@ -58,7 +60,7 @@ public class BDIModel
 	/**
 	 *  Add a plan to the model.
 	 */
-	protected void	addPlanforGoal(Class<?> goalpojoclazz, String planname, IPlanBody body)
+	protected void	addPlanforGoal(Class<?> goalpojoclazz, List<Class<?>> planparents, String planname, IPlanBody body)
 	{
 		List<ICandidateInfo>	goalplans	= plans.get(goalpojoclazz);
 		if(goalplans==null)
@@ -66,7 +68,7 @@ public class BDIModel
 			goalplans	= new ArrayList<>(4);
 			plans.put(goalpojoclazz, goalplans);
 		}
-		goalplans.add(new APL.MPlanCandidate(planname, body));
+		goalplans.add(new APL.MPlanCandidate(planparents, planname, body));
 	}
 	
 	/**
@@ -91,6 +93,24 @@ public class BDIModel
 	protected void	addGoal(Class<?> goalpojoclazz, MGoal mgoal)
 	{
 		goals.put(goalpojoclazz, mgoal);
+	}
+	
+	/**
+	 *  Add a belief (type).
+	 */
+	protected void	addBelief(String name, Class<?> type)
+	{
+		// TODO: capability names
+//		System.out.println("addBelief: "+name+", "+type);
+		beliefs.put(name, type);
+	}
+	
+	/**
+	 *  Get a belief (type) or null.
+	 */
+	protected Class<?>	getBelief(String name)
+	{
+		return beliefs.get(name);
 	}
 	
 	//-------- static part --------

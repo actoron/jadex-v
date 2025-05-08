@@ -53,6 +53,9 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/** The currently adopted goals. */
 	protected Map<Class<?>, Set<RGoal>>	goals;
 	
+	/** The capabilities. */
+	protected Map<List<Class<?>>, List<Object>>	capabilities;
+	
 	/**
 	 *  Create the feature.
 	 */
@@ -532,5 +535,31 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 //		}
 		
 		return events;
+	}
+	
+	/**
+	 *  Add a capability.
+	 */
+	protected void	addCapability(List<Object> pojos)
+	{
+		// Add to known sub-objects
+		List<Class<?>>	pojoclazzes	= new ArrayList<>();
+		for(Object pojo: pojos)
+		{
+			pojoclazzes.add(pojo.getClass());
+		}
+		if(capabilities==null)
+		{
+			capabilities	= new LinkedHashMap<>();
+		}
+		// TODO: support multiple instances of same capability?
+		capabilities.put(pojoclazzes, pojos);
+		
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null, null);
+	}
+	
+	public List<Object> getCapability(List<Class<?>> parentclazzes)
+	{
+		return parentclazzes.size()==1 ? Collections.singletonList(self.getPojo()) : capabilities.get(parentclazzes);
 	}
 }

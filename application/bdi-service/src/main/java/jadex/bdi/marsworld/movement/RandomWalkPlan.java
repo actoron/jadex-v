@@ -1,13 +1,11 @@
 package jadex.bdi.marsworld.movement;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.movement.MovementCapability.Move;
 import jadex.bdi.marsworld.movement.MovementCapability.WalkAround;
-import jadex.bdi.runtime.IPlan;
+import jadex.injection.annotation.Inject;
 import jadex.math.IVector2;
 import jadex.math.Vector2Int;
 
@@ -19,13 +17,13 @@ public class RandomWalkPlan
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	protected MovementCapability capa;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected WalkAround goal;
 	
 	//-------- constructors --------
