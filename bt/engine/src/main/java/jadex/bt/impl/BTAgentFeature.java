@@ -248,6 +248,87 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		}
 	}
 	
+	public static class DecouplingAction implements BiFunction<Event, IComponent, IFuture<NodeState>>
+	{
+		//protected BiFunction<Event, IComponent, ? extends IFuture<NodeState>> action;
+		protected ActionNode<IComponent> node;
+		
+		public DecouplingAction(ActionNode<IComponent> node)
+		{
+			this.node = node;
+			//this.action = action;
+		}
+		
+		@Override
+		public IFuture<NodeState> apply(Event event, IComponent agent) 
+		{
+			//Exception ex = new RuntimeException();
+			
+			UserBaseAction<IComponent, ? extends IFuture<NodeState>> action = node.getAction();
+			
+			BiFunction<Event, IComponent, ? extends IFuture<NodeState>> action2 = action.getAction();
+			
+			IFuture<NodeState>[] stepret = new IFuture[1]; 
+			stepret[0] = ((IComponent)agent).getFeature(IExecutionFeature.class).scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<NodeState>>() 
+			{
+				@Override
+				public IFuture<NodeState> apply(IComponent comp) throws Exception 
+				{
+					if(stepret[0]!=null && stepret[0].isDone())
+					{
+						System.getLogger(getClass().getName()).log(Level.INFO, "action omitted: "+node);
+						//System.out.println("action omitted: "+node);
+						Future<NodeState> donefut = Future.getFuture(getFutureReturnType());
+						stepret[0].delegateTo(donefut);
+						return donefut;
+					}
+					
+					//ex.printStackTrace();
+					
+					IFuture<NodeState> ret = action2.apply((Event)event, (IComponent)agent);
+					
+					Future<NodeState> ret2 = (Future<NodeState>)FutureFunctionality.getDelegationFuture(ret.getClass(), new FutureFunctionality()
+					{
+						public Object handleResult(Object result) throws Exception
+						{
+							executeRulesystem();
+							return result;
+						}
+						
+						public void	handleException(Exception exception)
+						{
+							executeRulesystem();
+						}
+					});
+					
+					ret.delegateTo(ret2);
+					
+					/*ret.then(s -> 
+					{
+						executeRulesystem();
+						ret2.setResult(s);
+					}).catchEx(ex ->
+					{
+						executeRulesystem();
+						ret2.setException(ex);
+					});*/
+					
+					return ret2;
+				}
+				
+				@Override
+				public Class<? extends IFuture<?>> getFutureReturnType() 
+				{
+					//if(action.getDescription().indexOf("pickup")!=-1)
+					//	System.out.println("RETURNTYPE: action: "+action.getFutureReturnType()+" "+action.getDescription());
+					return action.getFutureReturnType();
+				}
+			});
+			
+			return stepret[0];
+		}
+	}
+	
 	protected void initRulesystem()
 	{
 		Collection<Node<IComponent>> nodes = new ArrayList<>();
@@ -255,13 +336,15 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		
 		nodes.stream().forEach(node ->
 		{
-			if(node instanceof ActionNode<IComponent>)
+			/*if(node instanceof ActionNode<IComponent>)
 			{
 				ActionNode<IComponent> an = (ActionNode<IComponent>)node;
 				
 				UserBaseAction<IComponent, ? extends IFuture<NodeState>> action = an.getAction();
 				
 				BiFunction<Event, IComponent, ? extends IFuture<NodeState>> action2 = action.getAction();
+				
+				//if(!action2 instanceof DecouplingAction)
 				
 				// todo: how can this be done with generics?
 				//action.setAction((BiFunction<Event, IComponent, ? extends IFuture<NodeState>>)(e, agent) ->
@@ -312,7 +395,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 							{
 								executeRulesystem();
 								ret2.setException(ex);
-							});*/
+							});* /
 							
 							return ret2;
 						}
@@ -328,7 +411,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 					
 					return stepret[0];
 				});
-			}
+			}*/
 			
 			List<ConditionalDecorator<IComponent>> cdecos = node.getDecorators().stream()
 				.filter(deco -> deco instanceof ConditionalDecorator)

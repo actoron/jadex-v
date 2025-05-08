@@ -26,6 +26,7 @@ public class JulLogger implements java.lang.System.Logger
     java.util.logging.Level	hacklevel;
     public void setLevel(Level level)
     {
+    	//System.out.println("setLevel: "+level+" "+this);
     	hacklevel	= convertToJulLevel(level);
     }
 

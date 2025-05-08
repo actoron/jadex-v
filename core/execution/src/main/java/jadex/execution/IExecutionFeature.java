@@ -67,7 +67,6 @@ public interface IExecutionFeature extends IComponentFeature
 	/**
 	 *  Schedule a step that provides a result.
 	 *  @param step	A step that is executed via the {@link IThrowingConsumer#accept()} method.
-	 *  @return	A future that provides access to the step result, once it is available.
 	 */
 	public void scheduleStep(IThrowingConsumer<IComponent> step);
 	

@@ -32,6 +32,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:bdi:'+v
 	implementation 'org.activecomponents.jadex:benchmark-core:'+v
 	implementation 'org.activecomponents.jadex:application-bdi:'+v
+	implementation 'org.activecomponents.jadex:environment:'+v
 	
 	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 

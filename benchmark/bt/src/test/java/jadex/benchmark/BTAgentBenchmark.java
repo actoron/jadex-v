@@ -4,17 +4,19 @@ package jadex.benchmark;
 import org.junit.jupiter.api.Test;
 
 import jadex.bt.IBTProvider;
-import jadex.bt.actions.UserAction;
+import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
+import jadex.future.TerminableFuture;
 
 /**
- *  Benchmark creation and killing of micro agents.
+ *  Benchmark creation and killing of bt agents.
  */
 public class BTAgentBenchmark 
 {
@@ -29,9 +31,9 @@ public class BTAgentBenchmark
 				public Node<IComponent> createBehaviorTree()
 				{
 					ActionNode<IComponent> an = new ActionNode<>("hello");
-					an.setAction(new UserAction<IComponent>((e, agent) -> 
+					an.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 					{ 
-						Future<NodeState> fut = new Future<>();
+						TerminableFuture<NodeState> fut = new TerminableFuture<>();
 						//System.out.println("Hello from behavior trees: "+agent.getId()+" "+agent.getAppId());
 						//fut.setResult(NodeState.SUCCEEDED);
 						ret.setResult(null);
@@ -56,9 +58,10 @@ public class BTAgentBenchmark
 				public Node<IComponent> createBehaviorTree()
 				{
 					ActionNode<IComponent> an = new ActionNode<>("hello");
-					an.setAction(new UserAction<IComponent>((e, agent) -> 
+					an.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 					{ 
-						Future<NodeState> fut = new Future<>();
+						TerminableFuture<NodeState> fut = new TerminableFuture<>();
+						System.out.println("compos: "+ComponentManager.get().getNumberOfComponents());
 						//System.out.println("Hello from behavior trees: "+agent.getId()+" "+agent.getAppId());
 						//fut.setResult(NodeState.SUCCEEDED);
 						ret.setResult(null);
