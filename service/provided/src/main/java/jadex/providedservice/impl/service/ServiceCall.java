@@ -43,7 +43,7 @@ public class ServiceCall
 	
 	/** The upcoming service invocations. */
 	protected static final ThreadLocal<ServiceCall> LAST = new ThreadLocal<ServiceCall>();
-
+	
 	static
 	{
 		ThreadLocalTransferHelper.addThreadLocal(CURRENT);
