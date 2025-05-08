@@ -52,7 +52,6 @@ import jadex.future.IResultListener;
 import jadex.javaparser.SJavaParser;
 import jadex.micro.MicroAgent;
 import jadex.micro.impl.MicroAgentFeature;
-import jadex.model.IModelFeature;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
@@ -1037,7 +1036,7 @@ public class BDILifecycleAgentFeature extends MicroAgentFeature implements IInte
 											{
 												pvals[i] = ((ChangeInfo)o).getValue();
 											}
-											else if(SReflect.isSupertype(agent.getClass(), ptypes[i]))
+											else if(SReflect.isSupertype(ptypes[i], agent.getClass()))
 											{
 												pvals[i] = agent;
 											}
