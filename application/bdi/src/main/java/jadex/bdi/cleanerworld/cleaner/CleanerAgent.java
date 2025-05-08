@@ -34,16 +34,19 @@ import jadex.bdi.runtime.impl.ICandidateInfo;
 import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.environment.Environment;
+import jadex.environment.EnvironmentEvent;
 import jadex.environment.PerceptionProcessor;
 import jadex.environment.SpaceObject;
 import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.math.IVector2;
 import jadex.math.Vector2Double;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.AgentArgument;
+import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 
 /**
@@ -85,6 +88,7 @@ public class CleanerAgent
 	private boolean	sensorgui	= true;
 	
 	private CleanerworldEnvironment env;
+	private ISubscriptionIntermediateFuture<? extends EnvironmentEvent> envfut;
 	
 	public CleanerAgent()
 	{
@@ -92,6 +96,12 @@ public class CleanerAgent
 	
 	public CleanerAgent(String envid)
 	{
+		this(envid, true);
+	}
+	
+	public CleanerAgent(String envid, boolean sensorgui)
+	{
+		this.sensorgui = sensorgui;
 		this.env = (CleanerworldEnvironment)Environment.get(envid);
 	}
 	
@@ -117,12 +127,10 @@ public class CleanerAgent
 	 *  @param bdifeature Provides access to bdi specific methods
 	 */
 	@OnStart
-	private void exampleBehavior(IBDIAgentFeature bdifeature)
+	public void start(IBDIAgentFeature bdifeature)
 	{
 		//System.out.println("RUNNING ON START");
-		
-		SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
-		
+				
 		Cleaner s = new Cleaner(new Vector2Double(Math.random()*0.4+0.3, Math.random()*0.4+0.3), getAgent().getId().getLocalName(), 0.1, 0.1, 0.8);  
 		s = (Cleaner)getEnvironment().addSpaceObject((SpaceObject)s).get();
 		bdifeature.setBeliefValue("self", s);
@@ -140,7 +148,8 @@ public class CleanerAgent
 				pp.findAndUpdateOrAdd(obj, others);
 		}, obj -> others.remove(obj), obj -> {if(obj.getPosition()==null) others.remove(obj);});
 		
-		getEnvironment().observeObject((Cleaner)getSelf()).next(e ->
+		envfut = getEnvironment().observeObject((Cleaner)getSelf());
+		envfut.next(e ->
 		{
 			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
 			{
@@ -150,11 +159,20 @@ public class CleanerAgent
 		
 		// Open a window showing the agent's perceptions
 		if(sensorgui)
+		{
 			new SensorGui(agent.getComponentHandle()).setVisible(true);
+			SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
+		}
 		
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PerformLookForWaste());
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PerformPatrol());
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MaintainBatteryLoaded());
+	}
+	
+	@OnEnd
+	public void onEnd()
+	{
+		envfut.terminate();
 	}
 	
 	/**

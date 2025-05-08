@@ -1,5 +1,6 @@
 package jadex.execution.impl;
 
+import java.lang.System.Logger.Level;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -25,6 +26,7 @@ import jadex.common.transformation.traverser.SCloner;
 import jadex.common.transformation.traverser.Traverser;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
@@ -40,6 +42,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
+import jadex.execution.Call;
 import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
@@ -114,11 +117,11 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				                {
 				            		if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
 				            		{   
-				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
+				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method, null);
 				            		}
 				            		else if(ALLOWED_METHODS.contains(method.getName()))
 				            		{
-				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
+				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method, null);
 				            		}
 				            		else
 				            		{
@@ -129,7 +132,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							.method(ElementMatchers.isAnnotatedWith(ComponentMethod.class)) 
 							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 							{
+								//if(method.getName().indexOf("observe")!=-1)
+								//	System.out.println("WSEFHJEWBRF");
+								
 								IComponent caller = IComponentManager.get().getCurrentComponent();
+								
+								//Call next = Call.createCall(caller.getId(), null);
+								Call next = Call.getOrCreateNextInvocation();
 								
 								List<Object> myargs = new ArrayList<Object>(); 
 								Class<?>[] ptypes = method.getParameterTypes();
@@ -160,10 +169,23 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 										else
 										{
 											//System.out.println("todo: scheduleDecoupledStep");
-											caller.getFeature(IExecutionFeature.class).scheduleStep(agent ->
+											
+											// Schedule back at the caller can go wrong if the component was terminated in the meantime
+											try
 											{
-												com.execute(args);
-											});
+												caller.getFeature(IExecutionFeature.class).scheduleStep(agent ->
+												{
+													com.execute(args);
+												});
+											}
+											catch(ComponentTerminatedException e)
+											{
+												// Shall we execute on fallback thread or just ignore?!
+												
+												System.getLogger(ExecutionFeatureProvider.class.getName()).log(Level.WARNING, "scheduleStep exception, caller already terminated: "+caller);
+												
+												//System.out.println("scheduleStep exception, caller already terminated: "+caller);
+											}
 										}
 									}
 									
@@ -199,17 +221,17 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						        	//System.out.println("already on agent: "+getId());
 						        	if(ret instanceof IFuture)
 						        	{
-						        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method);
+						        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method, next);
 						        		fut.delegateTo(ret);
 						        	}
 						        	else if(method.getReturnType().equals(void.class))
 						        	{
-						        		invokeMethod(comp, pojo, myargs, method);
+						        		invokeMethod(comp, pojo, myargs, method, next);
 						        	}
 						        	else
 						        	{
 						        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
-						        		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
+						        		throw new InvalidComponentAccessException(comp.getId(), "Component methods must be async: "+method.getName());
 						        	}
 						        }
 						        else
@@ -225,7 +247,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						        			
 						        			public IFuture<Object> call() throws Exception
 						        			{
-						        				return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
+						        				return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method, next);
 						        			}
 										});
 							        	fut.delegateTo(ret);
@@ -233,11 +255,11 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						        	//System.out.println("scheduled on agent: "+getId());
 						        	else if(method.getReturnType().equals(void.class))
 						        	{
-						        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method));
+						        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method, next));
 						        	}
 						        	else 
 						        	{
-						        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
+						        		//System.out.println("Component methods must be async: "+method.getName()+" "+pojo);
 						          		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
 						        	}
 						        }
@@ -261,8 +283,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					return null;
 				}
 				
-				protected Object invokeMethod(Component component, Object pojo, List<Object> args, Method method)
+				protected Object invokeMethod(Component component, Object pojo, List<Object> args, Method method, Call next)
 				{
+					//Call.roll();
+					//Call next = Call.getNextInvocation();
+					Call.setCurrentInvocation(next); // next becomes current
+					Call.resetNextInvocation(); // next is null
+					
 					// Try to guess parameters from given args or component internals.
 					IParameterGuesser guesser = new SimpleParameterGuesser(component.getValueProvider().getParameterGuesser(), args);
 					Object[] iargs = new Object[method.getParameterTypes().length];

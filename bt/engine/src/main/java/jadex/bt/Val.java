@@ -101,7 +101,13 @@ public class Val<T>
 		{
 			writeField();
 			IExecutionFeature.get().scheduleStep(() -> performUpdates());
-		}).printOnEx();
+		}).catchEx(ex ->
+		{
+			//ex.printStackTrace();
+			//System.out.println("ex on val update, terminating updates:"+name);
+			System.getLogger(this.getClass().getName()).log(Level.WARNING, "ex on val update, terminating updates:"+name);
+		});
+		//}).printOnEx();
 	}
 	
 	private void writeField()

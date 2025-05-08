@@ -13,13 +13,18 @@ import java.util.stream.Collectors;
 
 import jadex.common.IFilter;
 import jadex.common.SReflect;
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.annotation.NoCopy;
+import jadex.core.impl.ComponentManager;
 import jadex.environment.EnvironmentTask.TaskData;
+import jadex.errorhandling.IErrorHandlingFeature;
+import jadex.execution.Call;
 import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -31,6 +36,8 @@ import jadex.math.IVector2;
 import jadex.math.Vector1Double;
 import jadex.math.Vector2Double;
 import jadex.micro.annotation.Agent;
+import jadex.model.ServiceCallInfo;
+import jadex.model.annotation.OnEnd;
 import jadex.model.annotation.OnStart;
 
 @Agent
@@ -105,6 +112,11 @@ public class Environment
 	@OnStart
 	protected void start()
 	{
+		ComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (ex, comp) ->
+		{
+			ex.printStackTrace();
+		});
+		
 		addTask(new EnvironmentTask(null, "kdtree", this, null, Void ->
 		{
 			kdtree.rebuild();
@@ -112,6 +124,13 @@ public class Environment
 		}));
 		
 		performStep(0);
+	}
+	
+	@OnEnd
+	protected void end(Exception e)
+	{
+		System.out.println("end: "+agent.getId()+" "+e);
+		e.printStackTrace();
 	}
 	
 	//-------- The agent methods --------
@@ -162,13 +181,21 @@ public class Environment
 	@ComponentMethod
 	public ISubscriptionIntermediateFuture<? extends EnvironmentEvent> observeObject(@NoCopy SpaceObject obj)
 	{
+		ComponentIdentifier caller = null;
+		Call call = Call.getCurrentInvocation();
+		if(call.getCaller()!=null)
+		{
+			//System.out.println("call is: "+call);
+			caller = call.getCaller();
+		}
+		
 		SubscriptionIntermediateFuture<? extends EnvironmentEvent> ret = new SubscriptionIntermediateFuture<>();
 		ret.setTerminationCommand(ex ->
 		{
 			observers.remove(ret);
 		});
 		
-		observers.put(ret, new ObserverInfo(ret, getSpaceObject(obj)));
+		observers.put(ret, new ObserverInfo(ret, caller, getSpaceObject(obj)));
 		
 		return ret;
 	}
@@ -186,10 +213,8 @@ public class Environment
 		
 		SpaceObject object = getSpaceObject(obj);
 		
-		if(hasTask("move"))
-		{
-			System.out.println("still has move task: "+getTask("move"));
-		}
+		if(hasTask("move", object))
+			System.out.println("still has move task: "+getTask("move", object)+" "+object);
 		
 		EnvironmentTask task = new EnvironmentTask(object, "move", this, ret, data ->
 		{
@@ -361,15 +386,17 @@ public class Environment
 	
 	//-------- internal methods --------
 	
-	protected boolean hasTask(String type)
-	{
-		return tasks.stream().anyMatch(task -> type.equals(task.getType()));
-	}
-	
-	protected EnvironmentTask getTask(String type)
+	protected boolean hasTask(String type, SpaceObject object)
 	{
 	    return tasks.stream()
 	        .filter(task -> type.equals(task.getType()))
+	        .anyMatch(task -> object==null || object.equals(task.getOwner()));
+	}
+	
+	protected EnvironmentTask getTask(String type, SpaceObject object)
+	{
+	    return tasks.stream()
+	    	.filter(task -> type.equals(task.getType()) && (object==null || object.equals(task.getOwner())))
 	        .findFirst()
 	        .orElse(null); 
 	}
@@ -406,19 +433,25 @@ public class Environment
 	
 	protected void performStep(long lasttime)
 	{
-		long time = System.currentTimeMillis();
-		long delta = lasttime!=0? time-lasttime: internalGetStepDelay();
-		
-		//System.out.println("step: "+delta);
-		
-		performTasks(delta);
-		
-		notifyVision();
-		
-		agent.getFeature(IExecutionFeature.class).waitForDelay(internalGetStepDelay())
-			.then(v -> performStep(time))
-			.catchEx(ex -> ex.printStackTrace());
-		
+		try
+		{
+			long time = System.currentTimeMillis();
+			long delta = lasttime!=0? time-lasttime: internalGetStepDelay();
+			
+			//System.out.println("step: "+delta);
+			
+			performTasks(delta);
+			
+			notifyVision();
+			
+			agent.getFeature(IExecutionFeature.class).waitForDelay(internalGetStepDelay())
+				.then(v -> performStep(time))
+				.catchEx(ex -> ex.printStackTrace());
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 		//timercreator.createTimer(timercontext, getStepDelay())
 		//	.then(v -> performStep(time))
 		//	.catchEx(ex -> ex.printStackTrace());
@@ -534,7 +567,7 @@ public class Environment
 	
 	protected <T extends EnvironmentEvent> void addResult(SubscriptionIntermediateFuture<T> future, T result) 
 	{
-		future.addIntermediateResult(result);
+		future.addIntermediateResultIfUndone(result);
 	}
 	
 	// todo!

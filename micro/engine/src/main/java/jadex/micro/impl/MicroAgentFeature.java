@@ -62,6 +62,7 @@ public class MicroAgentFeature	implements ILifecycle, IComponentFeature
 			//	return IFuture.DONE;
 			//else
 			
+			// todo: support futures on onStart()!!!!
 			// hack!!!
 			//invokeMethod(getSelf(), ann, null).get();//.catchEx(e -> getSelf().handleException(e));
 			
