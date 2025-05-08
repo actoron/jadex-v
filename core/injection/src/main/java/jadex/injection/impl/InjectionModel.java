@@ -674,7 +674,7 @@ public class InjectionModel
 									{
 										if(fetcher!=null)
 										{
-											throw new RuntimeException("Conflicting parameter injections: "+fetcher+", "+test);
+											throw new RuntimeException("Conflicting parameter injections: "+method+", "+fetcher+", "+test);
 										}
 										fetcher	= test;
 									}

@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
@@ -14,6 +16,7 @@ import jadex.bdi.PlanFailureException;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
@@ -45,7 +48,12 @@ public class BuyerAgent implements INegotiationAgent
 	
 	protected Future<Gui> gui;
 	
+	/** The uninited orders, that are passed as arguments. */
 	protected Order[]	ios;
+	
+	/** The inited orders as beliefs. */
+	@Belief
+	protected Set<Order>	orders	= new LinkedHashSet<>();
 	
 	public BuyerAgent(Order[] ios)
 	{
@@ -66,7 +74,7 @@ public class BuyerAgent implements INegotiationAgent
 				// Hack!!! use start time as deadline for initial orders
 				o.setDeadline(new Date(exe.getTime()+o.getStartTime()), exe);
 				o.setStartTime(getTime());
-				createGoal(o);
+				orders.add(o);
 			}
 		}
 		
@@ -103,6 +111,7 @@ public class BuyerAgent implements INegotiationAgent
 		/**
 		 *  Create a new PurchaseBook. 
 		 */
+		@GoalCreationCondition(factadded="orders")
 		public PurchaseBook(Order order)
 		{
 			this.order = order;
@@ -117,13 +126,13 @@ public class BuyerAgent implements INegotiationAgent
 			return order;
 		}
 		
-		@GoalDropCondition(/*parameters="order"*/)
+		@GoalDropCondition(/*parameters="order"*/beliefs="orders")
 		public boolean checkDrop()
 		{
 			return order.getState().equals(Order.FAILED);
 		}
 		
-		@GoalTargetCondition(/*parameters="order"*/)
+		@GoalTargetCondition(/*parameters="order"*/beliefs="orders")
 		public boolean checkTarget()
 		{
 			return Order.DONE.equals(order.getState());
@@ -139,11 +148,12 @@ public class BuyerAgent implements INegotiationAgent
 	{
 //		System.out.println("getOrders belief called");
 		List<Order> ret = new ArrayList<Order>();
-		Collection<PurchaseBook> goals = agent.getFeature(IBDIAgentFeature.class).getGoals(PurchaseBook.class);
-		for(PurchaseBook goal: goals)
-		{
-			ret.add(goal.getOrder());
-		}
+		ret.addAll(orders);
+//		Collection<PurchaseBook> goals = agent.getFeature(IBDIAgentFeature.class).getGoals(PurchaseBook.class);
+//		for(PurchaseBook goal: goals)
+//		{
+//			ret.add(goal.getOrder());
+//		}
 		return ret;
 	}
 	
