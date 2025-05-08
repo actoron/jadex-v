@@ -42,7 +42,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	{
 		for(Class<?> goaltype: getBDIFeature().getModel().getGoaltypes())
 		{
-			Set<RGoal>	goals	= getBDIFeature().getGoals(goaltype);
+			Set<RGoal>	goals	= getBDIFeature().doGetGoals(goaltype);
 			if(goals!=null)
 			{
 				for(RGoal other: goals)
@@ -131,7 +131,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	protected void addInhibitors(RGoal goal, Class<?> inh)
 	{
-		Collection<RGoal> goals = getBDIFeature().getGoals(inh);
+		Collection<RGoal> goals = getBDIFeature().doGetGoals(inh);
 //		System.out.println("Add inhibitors: "+goal+", "+goals);
 		if(goals!=null)
 		{
@@ -187,7 +187,7 @@ public class EasyDeliberationStrategy implements IDeliberationStrategy
 	 */
 	protected void removeInhibitors(RGoal goal, Class<?> inh)
 	{
-		Collection<RGoal> goals = getBDIFeature().getGoals(inh);
+		Collection<RGoal> goals = getBDIFeature().doGetGoals(inh);
 		if(goals!=null)
 		{
 			for(RGoal other: goals)

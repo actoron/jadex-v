@@ -1,5 +1,6 @@
 package jadex.bdi;
 
+import java.util.Set;
 import java.util.function.Supplier;
 
 import jadex.core.IComponentFeature;
@@ -10,13 +11,13 @@ import jadex.future.ITerminableFuture;
  */
 public interface IBDIAgentFeature	extends IComponentFeature
 {
-//	/**
-//	 *  Get the goals of a given type as pojos.
-//	 *  @param clazz The pojo goal class.
-//	 *  @return The currently instantiated goals of that type.
-//	 */
-//	public <T> Collection<T> getGoals(Class<T> clazz);
-//	
+	/**
+	 *  Get the goals of a given type as pojos.
+	 *  @param clazz The pojo goal class.
+	 *  @return The currently instantiated goals of that type.
+	 */
+	public <T> Set<T> getGoals(Class<T> clazz);
+	
 //	/**
 //	 *  Get the current goals as api representation.
 //	 *  @return All currently instantiated goals.
@@ -43,12 +44,26 @@ public interface IBDIAgentFeature	extends IComponentFeature
 	 *  @return The goal result.
 	 */
 	public ITerminableFuture<Void> dispatchTopLevelGoal(Object goal);
+
+	/**
+	 *  Add a belief listener.
+	 *  @param name The belief name.
+	 *  @param listener The belief listener.
+	 */
+	public <T> void addBeliefListener(String name, IBeliefListener<T> listener);
+
+	/**
+	 *  Remove a belief listener.
+	 *  @param name The belief name.
+	 *  @param listener The belief listener.
+	 */
+	public <T> void removeBeliefListener(String name, IBeliefListener<T> listener);
 	
-//	/**
-//	 *  Drop a pojo goal.
-//	 *  @param goal The pojo goal.
-//	 */
-//	public void dropGoal(Object goal);	
+	/**
+	 *  Drop a pojo goal.
+	 *  @param goal The pojo goal.
+	 */
+	public void dropGoal(Object goal);	
 	
 //	/**
 //	 *  Dispatch a pojo plan and wait for its result.
@@ -71,20 +86,6 @@ public interface IBDIAgentFeature	extends IComponentFeature
 //	 *  @param value The value.
 //	 */
 //	public void setBeliefValue(String beliefname, Object value);
-//	
-//	/**
-//	 *  Add a belief listener.
-//	 *  @param name The belief name.
-//	 *  @param listener The belief listener.
-//	 */
-//	public void addBeliefListener(String name, final IBeliefListener<?> listener);
-//	
-//	/**
-//	 *  Remove a belief listener.
-//	 *  @param name The belief name.
-//	 *  @param listener The belief listener.
-//	 */
-//	public void removeBeliefListener(String name, IBeliefListener<?> listener);
 //	
 //	/**
 //	 *  Set a value and throw the change events.

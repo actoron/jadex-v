@@ -1077,7 +1077,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				ICondition.TRUE_CONDITION,	// Condition -> true
 				(event, rule, context2, condresult) ->
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
 						ChangeEvent<Object>	ce	= null;
@@ -1131,7 +1131,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				ICondition.TRUE_CONDITION,	// Condition -> true
 				(event, rule, context2, condresult) ->
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
 						ChangeEvent<Object>	ce	= null;
@@ -1172,7 +1172,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				ICondition.TRUE_CONDITION,	// Condition -> true
 				(event, rule, context2, condresult) ->
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
 						ChangeEvent<Object>	ce	= null;
@@ -1213,7 +1213,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				ICondition.TRUE_CONDITION,	// Condition -> true
 				(event, rule, context2, condresult) ->
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
 						ChangeEvent<Object>	ce	= null;
@@ -1255,7 +1255,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				ICondition.TRUE_CONDITION,	// Condition -> true
 				(event, rule, context2, condresult) ->
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
 						ChangeEvent<Object>	ce	= null;
@@ -1299,7 +1299,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				ICondition.TRUE_CONDITION,	// Condition -> true
 				(event, rule, context2, condresult) ->
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getGoals(goalclazz);
+					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
 						for(RGoal goal: goals)

@@ -18,6 +18,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IBeliefListener;
 import jadex.bdi.TestHelper;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
@@ -278,7 +279,96 @@ public class BeliefTest
 		assertNotEquals(firstfut.get(TestHelper.TIMEOUT), thirdfut.get(TestHelper.TIMEOUT));
 		changedfut.get(TestHelper.TIMEOUT);	// Check if event was generated
 	}
+	
+	@Test
+	public void	testBeliefListener()
+	{
+		BeliefTestAgent	pojo	= new BeliefTestAgent();
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		
+		// Test fact changed
+		List<String>	facts	= new ArrayList<>();
+		exta.scheduleStep(comp -> {
+			comp.getFeature(IBDIAgentFeature.class)
+				.addBeliefListener("valbelief", new IBeliefListener<Integer>()
+			{
+				@Override
+				public void factChanged(ChangeInfo<Integer> info)
+				{
+					facts.add(info.getOldValue()+":"+info.getValue());
+				}
+			});
+			
+			pojo.valbelief.set(1);
+			pojo.valbelief.set(2);
+			pojo.valbelief.set(3);
+			
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		// TODO: should trigger change on set of identical value (1->1)?
+		assertEquals(Arrays.asList("1:1", "1:2", "2:3"), facts);
 
+		// Test fact added/removed
+		List<String>	changes	= new ArrayList<>();
+		exta.scheduleStep(comp -> {
+			comp.getFeature(IBDIAgentFeature.class)
+				.addBeliefListener("setbelief", new IBeliefListener<String>()
+			{
+				@Override
+				public void	factAdded(ChangeInfo<String> info)
+				{
+					changes.add("a:"+info.getValue());
+				}
+				
+				@Override
+				public void	factRemoved(ChangeInfo<String> info)
+				{
+					changes.add("r:"+info.getValue());
+				}
+			});
+			
+			pojo.setbelief.add("1");	// already contained
+			pojo.setbelief.add("2");
+			pojo.setbelief.remove("1");
+			
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertEquals(Arrays.asList("a:2", "r:1"), changes);
+
+		// Test map belief
+		List<String>	mchanges	= new ArrayList<>();
+		exta.scheduleStep(comp -> {
+			comp.getFeature(IBDIAgentFeature.class)
+				.addBeliefListener("mapbelief", new IBeliefListener<String>()
+			{
+				@Override
+				public void	factChanged(ChangeInfo<String> info)
+				{
+					mchanges.add("c:"+info.getInfo()+";"+info.getValue());
+				}
+				
+				@Override
+				public void	factAdded(ChangeInfo<String> info)
+				{
+					mchanges.add("a:"+info.getInfo()+";"+info.getValue());
+				}
+					
+				@Override
+				public void	factRemoved(ChangeInfo<String> info)
+				{
+					mchanges.add("r:"+info.getInfo()+";"+info.getValue());
+				}
+			});
+			
+			pojo.mapbelief.put("2", "two");	// already contained
+			pojo.mapbelief.put("3", "three");
+			pojo.mapbelief.remove("1");
+			
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertEquals(Arrays.asList("c:2;two", "a:3;three", "r:1;one"), mchanges);
+	}
+	
 	//-------- helper methods --------
 	
 	/**

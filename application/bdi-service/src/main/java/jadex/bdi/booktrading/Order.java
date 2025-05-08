@@ -4,13 +4,13 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Date;
 
+import jadex.core.annotation.NoCopy;
 import jadex.execution.IExecutionFeature;
-import jadex.providedservice.annotation.Reference;
 
 /**
  * The order for purchasing or selling books.
  */
-@Reference
+@NoCopy
 public class Order
 {
 	//-------- constants --------

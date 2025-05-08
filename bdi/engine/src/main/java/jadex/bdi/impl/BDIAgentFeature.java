@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IBeliefListener;
 import jadex.bdi.IGoal.GoalLifecycleState;
 import jadex.bdi.impl.goal.EasyDeliberationStrategy;
 import jadex.bdi.impl.goal.RGoal;
@@ -26,6 +27,7 @@ import jadex.future.ITerminableFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionFeature;
+import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
 import jadex.rules.eca.ICondition;
@@ -135,6 +137,83 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		@SuppressWarnings("unchecked")
 		ITerminableFuture<Void>	ret	= (ITerminableFuture<Void>) rgoal.getFinished();
 		return ret;
+	}
+	
+	@Override
+	public void dropGoal(Object goal)
+	{
+		for(RGoal rgoal: doGetGoals(goal.getClass()))
+		{
+			if(goal.equals(rgoal.getPojo()))
+			{
+				rgoal.drop();
+				break;
+			}
+		}
+	}
+	
+	@Override
+	public <T> Set<T> getGoals(Class<T> clazz)
+	{
+		Set<T> ret	= null;
+		Set<RGoal>	goals	= doGetGoals(clazz);
+		if(goals!=null)
+		{
+			ret	= new LinkedHashSet<>();
+			for(RGoal goal: goals)
+			{
+				@SuppressWarnings("unchecked")
+				T	pojo	= (T)goal.getPojo();
+				ret.add(pojo);
+			}
+		}
+		return ret==null ? Collections.emptySet() : ret;
+	}
+	
+	@Override
+	public <T> void addBeliefListener(String name, IBeliefListener<T> listener)
+	{
+//		String fname = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
+		
+		List<EventType> events = new ArrayList<EventType>();
+		events.add(new EventType(new String[]{ChangeEvent.FACTCHANGED, name}));
+		events.add(new EventType(new String[]{ChangeEvent.FACTADDED, name}));
+		events.add(new EventType(new String[]{ChangeEvent.FACTREMOVED, name}));
+
+		String rulename = name+"_belief_listener_"+System.identityHashCode(listener);
+		Rule<Void> rule = new Rule<Void>(rulename, 
+			ICondition.TRUE_CONDITION, new IAction<Void>()
+		{
+			public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+			{
+				@SuppressWarnings("unchecked")
+				ChangeInfo<T>	info	= (ChangeInfo<T>)event.getContent();
+				
+				if(ChangeEvent.FACTADDED.equals(event.getType().getType(0)))
+				{
+					listener.factAdded(info);
+				}
+				else if(ChangeEvent.FACTREMOVED.equals(event.getType().getType(0)))
+				{
+					listener.factRemoved(info);
+				}
+				else if(ChangeEvent.FACTCHANGED.equals(event.getType().getType(0)))
+				{
+					listener.factChanged(info);
+				}
+				return IFuture.DONE;
+			}
+		});
+		rule.setEvents(events);
+		getRuleSystem().getRulebase().addRule(rule);
+	}
+	
+	@Override
+	public <T> void removeBeliefListener(String name, IBeliefListener<T> listener)
+	{
+//		name = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
+		String rulename = name+"_belief_listener_"+System.identityHashCode(listener);
+		getRuleSystem().getRulebase().removeRule(rulename);
 	}
 	
 	//-------- internal methods --------
@@ -285,7 +364,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/**
 	 *  Get the goals of the given type, if any.
 	 */
-	public Set<RGoal>	getGoals(Class<?> goaltype)
+	public Set<RGoal>	doGetGoals(Class<?> goaltype)
 	{
 		return goals!=null ? goals.get(goaltype) : null;
 	}
