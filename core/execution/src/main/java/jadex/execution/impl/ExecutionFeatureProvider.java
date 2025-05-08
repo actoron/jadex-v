@@ -12,7 +12,6 @@ import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import jadex.common.ICommand;
 import jadex.common.IFilter;
 import jadex.common.IParameterGuesser;
 import jadex.common.NameValue;
@@ -47,6 +46,7 @@ import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.execution.StepAborted;
+import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -146,7 +146,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					.method(ElementMatchers.isAnnotatedWith(ComponentMethod.class)) 
 					.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 					{
-						IComponent caller = IComponentManager.get().getCurrentComponent();
+						// Schedule back to global runner, when not called from any component.
+						final IComponent caller = IComponentManager.get().getCurrentComponent()!=null
+							? IComponentManager.get().getCurrentComponent()
+							: ComponentManager.get().getGlobalRunner();
 						
 						List<Object> myargs = new ArrayList<Object>(); 
 						Class<?>[] ptypes = method.getParameterTypes();
@@ -157,34 +160,8 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							myargs.add(copyVal(args[p], pannos[p]));
 						}
 						
-						FutureFunctionality func = new FutureFunctionality()
-						{
-							@Override
-							public <T> void scheduleForward(final ICommand<T> com, final T args)
-							{
-								if(caller==null)
-								{
-									ComponentManager.get().getGlobalRunner().getFeature(IExecutionFeature.class)
-										.scheduleStep(agent ->
-									{
-										com.execute(args);
-									});
-								}
-								// Don't reschedule if already on correct thread.
-								else if(caller.getFeature(IExecutionFeature.class).isComponentThread())
-								{
-									com.execute(args);
-								}
-								else
-								{
-									//System.out.println("todo: scheduleDecoupledStep");
-									caller.getFeature(IExecutionFeature.class).scheduleStep(agent ->
-									{
-										com.execute(args);
-									});
-								}
-							}
-							
+						FutureFunctionality func = new ComponentFutureFunctionality(caller)
+						{							
 							public Object handleResult(Object val) throws Exception
 							{
 								return copyVal(val, method.getAnnotatedReturnType().getAnnotations());

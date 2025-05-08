@@ -7,7 +7,7 @@ import jadex.future.ITerminableFuture;
 
 /**
  *  Schedule forward future executions (e.g. results) on component thread,
- *  i.e. the component is the callee side of the future.
+ *  i.e. the component is the caller side of the future.
  */
 public class ComponentFutureFunctionality extends FutureFunctionality
 {

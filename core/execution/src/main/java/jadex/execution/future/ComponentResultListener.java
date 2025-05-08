@@ -3,9 +3,9 @@ package jadex.execution.future;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
-import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
@@ -178,10 +178,10 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 	
 		Future<Void> ret = new Future<Void>();
 		
+		IComponent	current	= IComponentManager.get().getCurrentComponent();
+		
 		// Execute directly on component thread?
-		if(SUtil.equals(ExecutionFeature.LOCAL.get(), 
-			access!=null ? access.getId() : 
-			component.getId()))
+		if(current!=null && (access!=null ? access.getId().equals(current.getId()) : current==component))
 		{
 			notification.run();
 		}
@@ -202,41 +202,31 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 				return IFuture.DONE;
 			};
 			
+			IFuture<Void>	schedule;
 			// Schedule using external access, let execution feature deal with exceptions in listener code
 			if(access!=null)
 			{
 				//access.scheduleStep(ia -> invocation.get())
-				access.scheduleStep(invocation)
-					.then(x -> ret.setResult(null))
-					.catchEx(ex0 ->
-					{
-						if(!invoked[0])
-						{
-							System.out.println("schedule forward1: "+notification+"\n"+trace);
-							//Starter.scheduleRescueStep(access.getId(), () -> invocation.get());
-						}
-						
-						ret.setException(ex0);
-					});
+				schedule	= access.scheduleAsyncStep(invocation);
 			}
-			
 			// Schedule using internal access, let execution feature deal with exceptions in listener code
 			else
 			{
-				component.getFeature(IExecutionFeature.class).scheduleStep(invocation)
-					.then(x -> ret.setResult(null))
-					.catchEx(ex0 ->
-					{
-						if(!invoked[0])
-						{
-							ex0.printStackTrace();
-							System.out.println("schedule forward2: "+notification+"\n"+trace);
-							//Starter.scheduleRescueStep(component.getId(), () -> invocation.get());
-						}
-						
-						ret.setException(ex0);
-					});
+				schedule	= component.getFeature(IExecutionFeature.class).scheduleAsyncStep(invocation);
 			}
+			
+			schedule
+				.then(x -> ret.setResult(null))
+				.catchEx(ex0 ->
+				{
+					if(!invoked[0])
+					{
+						System.out.println("schedule forward1: "+notification+"\n"+trace);
+						//Starter.scheduleRescueStep(access.getId(), () -> invocation.get());
+					}
+					
+					ret.setException(ex0);
+				});
 		}
 		return ret;
 	}
