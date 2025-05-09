@@ -1549,7 +1549,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								public IFuture<Void>	execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 								{
 									Object	newvalue	= value.get();
-									rs.addEvent(new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, null)));
+									if(!SUtil.equals(oldval, newvalue))
+									{
+										rs.addEvent(new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, null)));
+									}
 									oldvalue	= newvalue;
 									return IFuture.DONE;
 								}								
@@ -1597,6 +1600,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					if(belief.updaterate()>0)
 					{
 						Val<Object>	fvalue	= value;
+						// Call inner dynamic explicitly as Val.get() doesn't call it when update rate is present
 						Callable<Object>	dynamic	= getDynamic(fvalue);
 						IExecutionFeature	exe	= comp.getFeature(IExecutionFeature.class);
 						Consumer<Void>	update	= new Consumer<Void>()
@@ -1616,7 +1620,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								}
 							}
 						};
-						exe.scheduleStep(() -> update.accept(null));
+						// Must happen after injections but before on start
+						update.accept(null);
 					}
 					
 					return null;

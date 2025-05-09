@@ -145,7 +145,7 @@ public class Val<T>
 			}
 		}
 		
-		if(changehandler!=null)
+		if(changehandler!=null && !SUtil.equals(old, value))
 		{
 			changehandler.accept(old, value);
 		}
