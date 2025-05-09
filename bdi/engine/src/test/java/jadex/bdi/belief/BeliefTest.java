@@ -305,8 +305,7 @@ public class BeliefTest
 			
 			return null;
 		}).get(TestHelper.TIMEOUT);
-		// TODO: should trigger change on set of identical value (1->1)?
-		assertEquals(Arrays.asList("1:1", "1:2", "2:3"), facts);
+		assertEquals(Arrays.asList("1:2", "2:3"), facts);
 
 		// Test fact added/removed
 		List<String>	changes	= new ArrayList<>();
