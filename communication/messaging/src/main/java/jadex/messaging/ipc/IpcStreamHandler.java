@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 
 import jadex.collection.RwMapWrapper;
 import jadex.common.IAutoLock;
+import jadex.common.SBinConv;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentManager;
@@ -275,7 +276,7 @@ public class IpcStreamHandler implements IIpcFeature
 				{
 					String gpidstr = gpid.toString();
 					byte[] gpidbytes = gpidstr.getBytes(SUtil.UTF8);
-					os.write(SUtil.intToBytes(gpidbytes.length));
+					os.write(SBinConv.intToBytes(gpidbytes.length));
 					os.write(gpidbytes);
 					
 					while(true)
@@ -341,7 +342,7 @@ public class IpcStreamHandler implements IIpcFeature
 				GlobalProcessIdentifier origin = null;
 				{
 					readbytes = 0;
-					byte[] msg = new byte[SUtil.bytesToInt(sizebuf)];
+					byte[] msg = new byte[SBinConv.bytesToInt(sizebuf)];
 					while (readbytes < msg.length)
 						readbytes += is.read(msg, readbytes, msg.length - readbytes);
 					
@@ -394,7 +395,7 @@ public class IpcStreamHandler implements IIpcFeature
 		}
 
 		readbytes = 0;
-		byte[] chunk = new byte[SUtil.bytesToInt(sizebuf)];
+		byte[] chunk = new byte[SBinConv.bytesToInt(sizebuf)];
 		while (readbytes < chunk.length)
 			readbytes += is.read(chunk, readbytes, chunk.length - readbytes);
 
@@ -410,7 +411,7 @@ public class IpcStreamHandler implements IIpcFeature
 	 */
 	private void writeChunk(OutputStream os, byte[] chunk) throws IOException
 	{
-		os.write(SUtil.intToBytes(chunk.length));
+		os.write(SBinConv.intToBytes(chunk.length));
 		os.write(chunk);
 		os.flush();
 	}

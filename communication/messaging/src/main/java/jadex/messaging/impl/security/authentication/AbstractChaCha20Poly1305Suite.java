@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import jadex.common.SBinConv;
 import jadex.core.ComponentIdentifier;
 import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
 import jadex.messaging.security.authentication.AbstractX509PemSecret;
@@ -571,8 +572,8 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	protected static final byte[] chacha20Poly1305Enc(byte[] content, byte[] key, int nonceprefix, ComponentIdentifier receiver, long msgid)
 	{
 		byte[] nonce = new byte[12];
-		SUtil.intIntoBytes(nonceprefix, nonce, 0);
-		SUtil.longIntoBytes(msgid, nonce, 4);
+		SBinConv.intIntoBytes(nonceprefix, nonce, 0);
+		SBinConv.longIntoBytes(msgid, nonce, 4);
 
 		ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
 		AEADParameters keyparam = new AEADParameters(new KeyParameter(key), 128, nonce, null);//aadbytes);
@@ -581,12 +582,12 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 		int msgidoff = 8; // Offset of the long size message ID
 		String receiverstring = receiver.toString();
 		int receiverstringlengthoffset = 4; // Offset for the int-size receiver string length
-		int receiverlen = SUtil.stringSizeAsUtf8(receiverstring);
+		int receiverlen = SBinConv.stringSizeAsUtf8(receiverstring);
 		int prefixoffset = receiverlen + msgidoff + receiverstringlengthoffset; // Offset for the message ID plus receiver string
 		byte[] encmsg = new byte[cipher.getOutputSize(content.length) + prefixoffset]; // Create output array
 
-		SUtil.longIntoBytes(msgid, encmsg, 0); // Copy message ID into output
-		SUtil.stringIntoByteArray(receiverstring, receiverlen, encmsg, msgidoff); // Write receiver ID as UTF8 string
+		SBinConv.longIntoBytes(msgid, encmsg, 0); // Copy message ID into output
+		SBinConv.stringIntoByteArray(receiverstring, receiverlen, encmsg, msgidoff); // Write receiver ID as UTF8 string
 
 		cipher.processAADBytes(encmsg, msgidoff, receiverstringlengthoffset + receiverlen);
 		int len = cipher.processBytes(content, 0, content.length, encmsg, prefixoffset);
@@ -611,15 +612,15 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 	 */
 	protected static ChaChaDecryptedMessage chacha20Poly1305Dec(byte[] content, byte[] key, int nonceprefix)
 	{
-		long msgid = SUtil.bytesToLong(content, 0); // Decode message ID.
+		long msgid = SBinConv.bytesToLong(content, 0); // Decode message ID.
 		int msgidoff = 8; // Offset of the long size message ID
 
 		byte[] nonce = new byte[12];
-		SUtil.intIntoBytes(nonceprefix, nonce, 0);
+		SBinConv.intIntoBytes(nonceprefix, nonce, 0);
 		System.arraycopy(content, 0, nonce, 4, 8); // No need to reencode msgid into nonce, we can just copy it
 
 		int receiverstringlengthoffset = 4; // Offset for the int-size receiver string length
-		int cidlen = SUtil.bytesToInt(content, msgidoff);
+		int cidlen = SBinConv.bytesToInt(content, msgidoff);
 		String cidstr = new String(content,  + receiverstringlengthoffset + msgidoff, cidlen, SUtil.UTF8);
 		int prefixoffset = cidlen + receiverstringlengthoffset + msgidoff; // Offset for the message ID plus receiver string
 
@@ -653,9 +654,9 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 		}
 		
 		byte[] nonce = new byte[12];
-		SUtil.intIntoBytes(nonceprefix, nonce, 0);
-		SUtil.intIntoBytes((int)(msgid.longValue() >>> 32), nonce, 4);
-		SUtil.intIntoBytes((int) msgid.longValue(), nonce, 8);
+		SBinConv.intIntoBytes(nonceprefix, nonce, 0);
+		SBinConv.intIntoBytes((int)(msgid.longValue() >>> 32), nonce, 4);
+		SBinConv.intIntoBytes((int) msgid.longValue(), nonce, 8);
 		
 		ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
 		AEADParameters keyparam = new AEADParameters(new KeyParameter(key), 128, nonce, null);

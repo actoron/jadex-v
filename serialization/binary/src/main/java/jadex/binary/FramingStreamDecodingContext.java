@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
+import jadex.common.SBinConv;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.traverser.IErrorReporter;
@@ -56,7 +57,7 @@ public class FramingStreamDecodingContext extends StreamDecodingContext
 		{
 			byte[] encsize = new byte[4];
 			read(encsize);
-			framesize = SUtil.bytesToInt(encsize);
+			framesize = SBinConv.bytesToInt(encsize);
 		}
 		else
 		{
