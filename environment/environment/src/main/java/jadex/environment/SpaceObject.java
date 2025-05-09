@@ -83,7 +83,7 @@ public class SpaceObject
 	@Override
 	public String toString() 
 	{
-		return "SpaceObject [position=" + position + ", id=" + id + "]";
+		return getClass().getSimpleName()+" [position=" + position + ", id=" + id + "]";
 	}
 	
 	public SpaceObject copy()

@@ -16,12 +16,19 @@ public class SelectCandidatesAction implements Runnable
 	/** The element. */
 	protected RProcessableElement element;
 	
+	/** The abort state (changes when plans should be aborted). */
+	protected int	abortstate;
+	
 	/**
 	 *  Create a new action.
 	 */
 	public SelectCandidatesAction(RProcessableElement element)
 	{
 		this.element = element;
+		if(element instanceof RGoal)
+		{
+			this.abortstate	= ((RGoal)element).getAbortState(); 
+		}
 	}
 	
 	/**
@@ -36,7 +43,8 @@ public class SelectCandidatesAction implements Runnable
 		{
 			RGoal rgoal = (RGoal)element;
 			ret = RGoal.GoalLifecycleState.ACTIVE.equals(rgoal.getLifecycleState())
-				&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState());
+				&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState())
+				&& abortstate==rgoal.getAbortState();
 		}
 		
 		return ret;

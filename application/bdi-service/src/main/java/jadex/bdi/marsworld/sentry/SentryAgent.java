@@ -13,7 +13,6 @@ import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Sentry;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability;
-import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.injection.annotation.OnStart;
@@ -32,7 +31,6 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 	@OnStart
 	public void start(IComponent agent)
 	{
-		super.body();
 		// TODO
 //		SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
 	}
@@ -66,7 +64,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 		@GoalCreationCondition(factadded="mytargets")
 		public AnalyzeTarget(SentryAgent outer, Target target)
 		{
-			//System.out.println("new analyze target goal: "+target);
+//			System.out.println("new analyze target goal: "+target);
 //			if(target==null)
 //				System.out.println("target nulls");
 			this.outer = outer;
@@ -177,35 +175,41 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 			return outer;
 		}
 		
-		// hashcode and equals implementation for unique flag
+		@Override
+		public String toString()
+		{
+			return getClass().getSimpleName()+" [target="+target+"]";
+		}
 		
-		/**
-		 *  Get the hashcode.
-		 */
-		public int hashCode()
-		{
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + outer.getClass().hashCode();
-			result = prime * result + ((target == null) ? 0 : target.hashCode());
-			return result;
-		}
-
-		/**
-		 *  Test if equal to other goal.
-		 *  @param obj The other object.
-		 *  @return True, if equal.
-		 */
-		public boolean equals(Object obj)
-		{
-			boolean ret = false;
-			if(obj instanceof AnalyzeTarget)
-			{
-				AnalyzeTarget other = (AnalyzeTarget)obj;
-				ret = outer.getClass().equals(other.getOuter().getClass()) && SUtil.equals(target, other.getTarget());
-			}
-			return ret;
-		}
+//		// hashcode and equals implementation for unique flag
+//		
+//		/**
+//		 *  Get the hashcode.
+//		 */
+//		public int hashCode()
+//		{
+//			final int prime = 31;
+//			int result = 1;
+//			result = prime * result + outer.getClass().hashCode();
+//			result = prime * result + ((target == null) ? 0 : target.hashCode());
+//			return result;
+//		}
+//
+//		/**
+//		 *  Test if equal to other goal.
+//		 *  @param obj The other object.
+//		 *  @return True, if equal.
+//		 */
+//		public boolean equals(Object obj)
+//		{
+//			boolean ret = false;
+//			if(obj instanceof AnalyzeTarget)
+//			{
+//				AnalyzeTarget other = (AnalyzeTarget)obj;
+//				ret = outer.getClass().equals(other.getOuter().getClass()) && SUtil.equals(target, other.getTarget());
+//			}
+//			return ret;
+//		}
 	}
 
 }

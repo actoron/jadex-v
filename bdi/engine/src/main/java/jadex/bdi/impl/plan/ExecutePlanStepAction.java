@@ -14,12 +14,20 @@ public class ExecutePlanStepAction implements Runnable
 	/** The plan. */
 	protected RPlan rplan;
 	
+	/** The abort state (changes when plans should be aborted). */
+	protected int	abortstate;
+	
 	/**
 	 *  Create a new action.
 	 */
 	public ExecutePlanStepAction(RPlan rplan)
 	{
 		this.rplan = rplan;
+		Object element = rplan.getReason();
+		if(element instanceof RGoal)
+		{
+			this.abortstate	= ((RGoal)element).getAbortState(); 
+		}
 	}
 	
 	/**
@@ -37,9 +45,9 @@ public class ExecutePlanStepAction implements Runnable
 			if(element instanceof RGoal)
 			{
 				RGoal rgoal = (RGoal)element;
-				
-				ret	= RGoal.GoalLifecycleState.ACTIVE.equals(rgoal.getLifecycleState())
-					&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState());
+				ret = RGoal.GoalLifecycleState.ACTIVE.equals(rgoal.getLifecycleState())
+					&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState())
+					&& abortstate==rgoal.getAbortState();
 			}
 		}
 		
@@ -80,6 +88,8 @@ public class ExecutePlanStepAction implements Runnable
 					RGoal rgoal = (RGoal)element;
 					rgoal.setChildPlan(rplan);
 				}
+				
+//				System.out.println("execute: "+this);
 				
 				rplan.getBody().executePlan(rplan);
 //				if(ret!=null)

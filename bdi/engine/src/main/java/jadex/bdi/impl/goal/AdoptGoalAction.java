@@ -19,7 +19,6 @@ public class AdoptGoalAction implements Runnable
 	 */
 	public AdoptGoalAction(RGoal goal)
 	{
-//		System.out.println("adopting: "+goal.getId()+" "+goal.getPojoElement().getClass().getName());
 		this.goal = goal;
 		
 		// todo: support this also for a parent goal?!
@@ -27,6 +26,7 @@ public class AdoptGoalAction implements Runnable
 		{
 			this.planstate = goal.getParentPlan().getLifecycleState();
 		}
+//		System.out.println("adopting: "+goal.getId()+", "+goal.getPojo()+", "+planstate);
 	}
 	
 	/**

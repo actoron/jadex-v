@@ -135,7 +135,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public void doSetLifecycleState(GoalLifecycleState lifecyclestate)
 	{
-//		System.out.println("lifecyle state: "+getId()+", "+lifecyclestate);
+//		System.out.println("lifecyle state: "+getId()+", "+lifecyclestate+", "+getPojo()+", "+getParentPlan());
 		
 		this.lifecyclestate = lifecyclestate;
 	}
@@ -155,7 +155,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public void doSetProcessingState(GoalProcessingState processingstate)
 	{
-//		System.out.println("proc state: "+getId()+", "+processingstate);
+//		System.out.println("proc state: "+getId()+", "+processingstate+", "+getPojo()+", "+getParentPlan());
 		
 		this.processingstate = processingstate;
 	}
@@ -364,11 +364,23 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		setLifecycleState(RGoal.GoalLifecycleState.ADOPTED);
 	}
 	
+	/** Remember abort state to remove outdated already scheduled actions.
+	 *  Happens in marsworld due to strange context condition of analyze target goal
+	 *  -> leads to random walk plan executed twice. */
+	int abortstate	= 0;
+	
+	public int	getAbortState()
+	{
+		return abortstate;
+	}
+	
 	/**
 	 *  Abort the child plans.
 	 */
 	protected IFuture<Void> abortPlans()
 	{
+		abortstate++;
+		
 		IFuture<Void>	ret;
 		if(childplan!=null)
 		{

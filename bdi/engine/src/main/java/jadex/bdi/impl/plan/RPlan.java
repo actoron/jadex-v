@@ -508,6 +508,8 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	 */
 	public IFuture<Void> abort()
 	{
+//		System.out.println("abort: "+this);
+		
 		if(setFinishing())
 		{
 			if(!isFinished())
@@ -1344,4 +1346,10 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //			return ret;
 //		}
 //	}
+	
+	@Override
+	public String toString()
+	{
+		return super.toString() + ", reason="+getReason();
+	}
 }
