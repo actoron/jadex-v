@@ -50,7 +50,29 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	}
 	
 	//-------- IProvidedServiceFeature interface --------
+
+	@Override
+	public <T> T getProvidedService(IServiceIdentifier sid)
+	{
+		if(services!=null)
+		{
+			for(List<IService> lservices: services.values())
+			{
+				for(IService service: lservices)
+				{
+					if(sid.equals(service.getServiceId()))
+					{
+						@SuppressWarnings("unchecked")
+						T	ret	= (T)service;
+						return ret;
+					}
+				}
+			}
+		}
+		return null;
+	}
 	
+
 	@Override
 	public <T> T getProvidedService(Class<T> type)
 	{

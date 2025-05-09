@@ -9,6 +9,14 @@ import jadex.core.IComponentFeature;
 public interface IProvidedServiceFeature extends IComponentFeature
 {
 	/**
+	 *  Get the provided service implementation object by id.
+	 *  
+	 *  @param name The service identifier.
+	 *  @return The service.
+	 */
+	public <T> T getProvidedService(IServiceIdentifier sid);
+	
+	/**
 	 *  Get a locally provided service.
 	 *  @return	The first provided service matching the type.
 	 */

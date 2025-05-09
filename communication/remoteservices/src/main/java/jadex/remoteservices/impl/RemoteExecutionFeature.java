@@ -1,34 +1,55 @@
 package jadex.remoteservices.impl;
 
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IComponent;
-import jadex.core.IComponentFeature;
-import jadex.core.impl.ComponentManager;
+import jadex.core.impl.Component;
 import jadex.execution.future.FutureFunctionality;
-import jadex.execution.future.IntermediateComponentResultListener;
 import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.IIntermediateResultListener;
+import jadex.future.IIntermediateFutureCommandResultListener;
 import jadex.future.IResultListener;
+import jadex.future.ITerminableFuture;
 import jadex.messaging.IMessageFeature;
 import jadex.messaging.IMessageHandler;
 import jadex.messaging.ISecurityInfo;
+import jadex.providedservice.annotation.Security;
 import jadex.providedservice.impl.service.CallAccess;
 import jadex.providedservice.impl.service.ServiceCall;
+import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservices.IRemoteCommand;
+import jadex.remoteservices.IRemoteConversationCommand;
 import jadex.remoteservices.IRemoteExecutionFeature;
-import jadex.remoteservices.impl.remotecommands.*;
-
-import java.lang.reflect.Method;
-import java.util.*;
+import jadex.remoteservices.IRemoteOrderedConversationCommand;
+import jadex.remoteservices.impl.remotecommands.AbstractInternalRemoteCommand;
+import jadex.remoteservices.impl.remotecommands.AbstractResultCommand;
+import jadex.remoteservices.impl.remotecommands.IOrderedConversation;
+import jadex.remoteservices.impl.remotecommands.ISecuredRemoteCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteBackwardCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteFinishedCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteForwardCmdCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteIntermediateResultCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteMethodInvocationCommand;
+import jadex.remoteservices.impl.remotecommands.RemotePullCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteReference;
+import jadex.remoteservices.impl.remotecommands.RemoteResultCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteTerminationCommand;
 
 
 /**
  *  Feature for securely sending and handling remote execution commands.
  */
-public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IRemoteExecutionFeature
+public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeature, IInternalRemoteExecutionFeature
 {
 	//-------- constants ---------
 	
@@ -60,7 +81,7 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 	}});
 
 	/** The component. */
-	protected IComponent component;
+	protected Component component;
 
 	/** Commands that have been sent to a remote component.
 	 *  Stored to set return value etc. */
@@ -76,7 +97,7 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 	/**
 	 *  Create the feature.
 	 */
-	public RemoteExecutionFeature(IComponent component)
+	public RemoteExecutionFeature(Component component)
 	{
 		this.component = component;
 	}
@@ -94,7 +115,8 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 	 *  Shutdown the feature.
 	 */
 	@Override
-	public void onEnd() {
+	public void onEnd()
+	{
 	}
 
 	/**
@@ -107,12 +129,12 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 	 */
 	public <T> IFuture<T> execute(ComponentIdentifier target, IRemoteCommand<T> command, Class<? extends IFuture<T>> clazz, Long timeout)
 	{
-		final String rxid = SUtil.createUniqueId("");
+		final String rxid = command.getId();
 //		System.out.println(getComponent().getComponentIdentifier() + " sending remote command: "+command+", rxid="+rxid);
 
 		// TODO: Merge with DecouplingInterceptor code.
 		@SuppressWarnings("unchecked")
-		final Future<T> ret	= (Future<T>) FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality(ComponentManager.getLogger())
+		final Future<T> ret	= (Future<T>) FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality()
 		{
 			@Override
 			public boolean isUndone(boolean undone)
@@ -124,19 +146,19 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 			@Override
 			public void handleTerminated(Exception reason)
 			{
-				sendRxMessage(target, rxid, new RemoteTerminationCommand<T>(reason));
+				sendRxMessage(target, new RemoteTerminationCommand<T>(reason));
 			}
 			
 			@Override
 			public void handlePull()
 			{
-				sendRxMessage(target, rxid, new RemotePullCommand<T>());
+				sendRxMessage(target, new RemotePullCommand<T>());
 			}
 			
 			@Override
 			public void handleBackwardCommand(Object info)
 			{
-				sendRxMessage(target, rxid, new RemoteBackwardCommand<T>(info));
+				sendRxMessage(target, new RemoteBackwardCommand<T>(info));
 //				// ignore backward failures and wait for forward failure (i.e. timeout)  
 //					.addResultListener(new IResultListener<Void>()
 //				{
@@ -216,7 +238,7 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 		OutCommand outcmd = new OutCommand(ret);
 		outcommands.put(rxid, outcmd);
 		
-		sendRxMessage(target, rxid, command).addResultListener(new IResultListener<Void>()
+		sendRxMessage(target, command).addResultListener(new IResultListener<Void>()
 		{
 			public void exceptionOccurred(Exception exception)
 			{
@@ -246,9 +268,8 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 	 *  @param args	The arguments.
 	 *  @return	The result(s) of the method invocation, if any. Connects any futures involved.
 	 */
-	public <T> IFuture<T>	executeRemoteMethod(RemoteReference ref, Method method, Object[] args)
-	{
-		ServiceCall invoc = ServiceCall.getNextInvocation();
+	public <T> IFuture<T> executeRemoteMethod(RemoteReference ref, Method method, Object[] args)
+	{		ServiceCall invoc = ServiceCall.getNextInvocation();
 		// TODO: Implement timeout alternative
 		Map<String, Object>	nonfunc	= invoc!=null ? invoc.getProperties() : null;
 		CallAccess.resetNextInvocation();
@@ -260,25 +281,25 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 		
 //		if(method.toString().toLowerCase().indexOf("getdesc")!=-1)
 //			System.out.println("Executing requested remote method invocation: "+method);
-		
-		return execute(ref.getRemoteComponent(), new RemoteMethodInvocationCommand<T>(ref.getTargetIdentifier(), method, args, nonfunc), clazz, timeout);
+
+		final String rxid = SUtil.createUniqueId();
+		return execute(ref.getRemoteComponent(), new RemoteMethodInvocationCommand<T>(rxid, component.getId(), ref.getTargetIdentifier(), method, args, nonfunc), clazz, timeout);
 	}
 
 	/**
 	 *  Sends RX message.
 	 *  
 	 *  @param receiver The receiver.
-	 *  @param rxid The remote execution ID.
 	 *  @param msg The message.
 	 *  
 	 *  @return Null, when sent.
 	 */
-	protected IFuture<Void> sendRxMessage(ComponentIdentifier receiver, String rxid, final Object msg)
+	protected IFuture<Void> sendRxMessage(ComponentIdentifier receiver, final Object msg)
 	{
 		/*if(DEBUG)
 			header.put(RX_DEBUG, msg!=null ? msg.toString() : null);*/
 		
-		IFuture<Void> ret = component.getFeature(IMessageFeature.class).sendMessage(msg, header, receiver);
+		IFuture<Void> ret = component.getFeature(IMessageFeature.class).sendMessage(msg, receiver);
 //		ret.addResultListener(new IResultListener<Void>()
 //		{
 //			public void exceptionOccurred(Exception exception)
@@ -306,7 +327,7 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 		 */
 		public boolean isHandling(ISecurityInfo secinfos, Object msg)
 		{
-			return header.getProperty(RX_ID) instanceof String;
+			return msg instanceof IIdSenderCommand;
 		}
 		
 		/**
@@ -326,18 +347,18 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 		@SuppressWarnings({ "rawtypes", "unchecked" })
 		public void handleMessage(ISecurityInfo secinfos, Object msg)
 		{
-			final String rxid = (String) header.getProperty(RX_ID);
+			final String rxid = ((IIdSenderCommand) msg).getId();
 //			System.out.println(getComponent().getId() + " received remote command: "+msg+", rxid="+rxid);
 			
 			if(msg instanceof IRemoteCommand)
 			{
-				final IComponentIdentifier remote = (IComponentIdentifier) header.getProperty(IMsgHeader.SENDER);
+				IRemoteCommand<?> cmd = (IRemoteCommand<?>)msg;
+				final ComponentIdentifier remote = cmd.getSender();
 				Exception validityex = ((IRemoteCommand) msg).isValid(component);
 				if (validityex == null)
 				{
-					if(checkSecurity(secinfos, header, msg))
+					if(checkSecurity(secinfos, cmd))
 					{
-						IRemoteCommand<?> cmd = (IRemoteCommand<?>)msg;
 						ServiceCall	sc	= null;
 						if(cmd instanceof AbstractInternalRemoteCommand)
 						{
@@ -348,11 +369,14 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 //							if(nonfunc==null)
 //								nonfunc = new HashMap<String, Object>();
 							nonfunc.put(ServiceCall.SECURITY_INFOS, secinfos);
-							IComponentIdentifier.LOCAL.set((IComponentIdentifier)header.getProperty(IMsgHeader.SENDER));
+							//TODO: REQUIRED IComponentIdentifier.LOCAL??
+							//IComponentIdentifier.LOCAL.set((IComponentIdentifier)header.getProperty(IMsgHeader.SENDER));
+
 							// Local is used to set the caller in the new service call context
 							sc = ServiceCall.getOrCreateNextInvocation(nonfunc);
 							// After call creation it can be reset
-							IComponentIdentifier.LOCAL.set(getComponent().getId());
+							//TODO: REQUIRED IComponentIdentifier.LOCAL??
+							//IComponentIdentifier.LOCAL.set(getComponent().getId());
 						}
 						final ServiceCall fsc = sc;
 						
@@ -384,17 +408,17 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 							term	= null;
 						}
 						
-						retfut.addResultListener(component.getFeature(IExecutionFeature.class).createResultListener(new IIntermediateFutureCommandResultListener()
+						retfut.addResultListener(new IIntermediateFutureCommandResultListener()
 						{
 							/** Result counter. */
 							int counter = Integer.MIN_VALUE;
 							
 							public void intermediateResultAvailable(Object result)
 							{
-								RemoteIntermediateResultCommand<?> rc = new RemoteIntermediateResultCommand(result, fsc!=null ? fsc.getProperties() : null);
+								RemoteIntermediateResultCommand<?> rc = new RemoteIntermediateResultCommand(rxid, component.getId(), result, fsc!=null ? fsc.getProperties() : null);
 								rc.setResultCount(counter++);
 //								System.out.println("send RemoteIntermediateResultCommand to: "+remote);
-								IFuture<Void> fut = sendRxMessage(remote, rxid, rc);
+								IFuture<Void> fut = sendRxMessage(remote, rc);
 								if(term!=null)
 								{
 									fut.addResultListener(term);
@@ -404,28 +428,28 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 							public void finished()
 							{
 								incommands.remove(rxid);
-								RemoteFinishedCommand<?> rc = new RemoteFinishedCommand(fsc!=null ? fsc.getProperties() : null);
+								RemoteFinishedCommand<?> rc = new RemoteFinishedCommand(rxid, component.getId(), fsc!=null ? fsc.getProperties() : null);
 								rc.setResultCount(counter++);
-								sendRxMessage(remote, rxid, rc);
+								sendRxMessage(remote, rc);
 							}
 							
 							public void resultAvailable(final Object result)
 							{
 //								getComponent().getLogger().severe("sending result: "+rxid+", "+result);
 								incommands.remove(rxid);
-								RemoteResultCommand<?> rc = new RemoteResultCommand(result, fsc!=null ? fsc.getProperties() : null);
+								RemoteResultCommand<?> rc = new RemoteResultCommand(rxid, component.getId(), result, fsc!=null ? fsc.getProperties() : null);
 								final int msgcounter = counter++;
 								rc.setResultCount(msgcounter);
-								sendRxMessage(remote, rxid, rc).addResultListener(new IResultListener<Void>()
+								sendRxMessage(remote, rc).addResultListener(new IResultListener<Void>()
 								{
 									@Override
 									public void exceptionOccurred(Exception exception)
 									{
-										getComponent().getLogger().severe("sending result failed: "+rxid+", "+result+", "+exception);
+										component.getLogger().log(System.Logger.Level.ERROR,"sending result failed: "+rxid+", "+result+", "+exception);
 										// Serialization of result failed -> send back exception.
-										RemoteResultCommand<?> rc = new RemoteResultCommand(exception, fsc!=null ? fsc.getProperties() : null);
+										RemoteResultCommand<?> rc = new RemoteResultCommand(rxid, component.getId(), exception, fsc!=null ? fsc.getProperties() : null);
 										rc.setResultCount(msgcounter);
-										sendRxMessage(remote, rxid, rc);
+										sendRxMessage(remote, rc);
 									}
 									
 									@Override
@@ -440,17 +464,17 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 							public void exceptionOccurred(Exception exception)
 							{
 								incommands.remove(rxid);
-								RemoteResultCommand<?> rc = new RemoteResultCommand(exception, fsc!=null ? fsc.getProperties() : null);
+								RemoteResultCommand<?> rc = new RemoteResultCommand(rxid, component.getId(), exception, fsc!=null ? fsc.getProperties() : null);
 								rc.setResultCount(counter++);
-								sendRxMessage(remote, rxid, rc);
+								sendRxMessage(remote, rc);
 							}
 							
 							public void commandAvailable(Object command)
 							{
-								RemoteForwardCmdCommand fc = new RemoteForwardCmdCommand(command);
+								RemoteForwardCmdCommand fc = new RemoteForwardCmdCommand(rxid, component.getId(), command);
 								fc.setResultCount(counter++);
 //								System.out.println(getComponent()+" sending forward command: "+remote+", "+msg+", "+command);
-								IFuture<Void>	fut	= sendRxMessage(remote, rxid, fc);
+								IFuture<Void>	fut	= sendRxMessage(remote, fc);
 //								fut.addResultListener(new IResultListener<Void>()
 //								{
 //									@Override
@@ -475,7 +499,7 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 							public void maxResultCountAvailable(int max) 
 							{
 							}
-						}));
+						});
 					}
 					else
 					{
@@ -487,20 +511,20 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 							errormsg = "Method invocation command "+rmic.getMethod()+" not allowed.";
 							
 						}
-						RemoteResultCommand<?> rc = new RemoteResultCommand(new SecurityException(errormsg), null);
-						sendRxMessage(remote, rxid, rc);	
+						RemoteResultCommand<?> rc = new RemoteResultCommand(rxid, component.getId(), new SecurityException(errormsg), null);
+						sendRxMessage(remote, rc);
 					}
 				}
 				else
 				{
 					// Not allowed -> send back exception.
-					RemoteResultCommand<?> rc = new RemoteResultCommand(validityex, null);
-					sendRxMessage(remote, rxid, rc);	
+					RemoteResultCommand<?> rc = new RemoteResultCommand(rxid, component.getId(), validityex, null);
+					sendRxMessage(remote, rc);
 				}
 			}
 			else if(msg instanceof IRemoteConversationCommand || msg instanceof IRemoteOrderedConversationCommand)
 			{
-				if(checkSecurity(secinfos, header, msg))
+				if(checkSecurity(secinfos, (IIdSenderCommand) msg))
 				{
 					// Can be result/exception -> for outcommands
 					// or termination -> for incommands.
@@ -518,8 +542,9 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 							ServiceCall sc = ServiceCall.getLastInvocation();
 							if(sc==null)
 							{
+								ComponentIdentifier sender = ((IIdSenderCommand) msg).getSender();
 								// TODO: why null?
-								sc	= CallAccess.createServiceCall((IComponentIdentifier)header.getProperty(IMsgHeader.SENDER), nonfunc);
+								sc	= CallAccess.createServiceCall(sender, nonfunc);
 								CallAccess.setLastInvocation(sc);
 							}
 							else
@@ -544,15 +569,16 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 					}
 					else
 					{
-						getComponent().getLogger().warning("Outdated remote command: "+msg);
+						component.getLogger().log(System.Logger.Level.WARNING,"Outdated remote command: "+msg);
 					}
 				}
 				else
 				{
-					getComponent().getLogger().warning("Command from "+header.getProperty(IMsgHeader.SENDER)+" not allowed: "+msg.getClass());
+
+					component.getLogger().log(System.Logger.Level.WARNING, "Command from "+((IIdSenderCommand) msg).getSender()+" not allowed: "+msg.getClass());
 				}
 			}
-			else if(header.getProperty(MessageComponentFeature.EXCEPTION)!=null)
+			/*else if(header.getProperty(MessageFeature.EXCEPTION)!=null) //TODO:
 			{
 				// Message could not be delivered -> remove the future (and abort, if possible)
 				
@@ -570,25 +596,29 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 					((Future) ((OutCommand)outcommands.remove(rxid)).getFuture())
 						.setException((Exception)header.getProperty(MessageComponentFeature.EXCEPTION));
 				}
-			}
+			}*/
 			else
 			{
-				getComponent().getLogger().warning("Invalid remote execution message: "+header+", "+msg);
+				component.getLogger().log(System.Logger.Level.WARNING, "Invalid remote execution message: "+msg);
 			}
 		}
 
 		/**
 		 *  Check if it is ok to execute a command.
 		 */
-		protected boolean checkSecurity(ISecurityInfo secinfos, IMsgHeader header, Object msg)
+		protected boolean checkSecurity(ISecurityInfo secinfos, IIdSenderCommand msg)
 		{
 			boolean	trusted	= false;
 			
 			if (secinfos == null)
 			{
-				System.err.println("Remote execution command received without security infos (misrouted local message?): From " + header.getSender() + " To: " + header.getReceiver());
+				System.err.println("Remote execution command received without security infos (misrouted local message?): From " + msg.getSender() + " To: unknown");
 				return false;
 			}
+
+			// Verify sender.
+			if (!secinfos.getSender().equals(msg.getSender().getGlobalProcessIdentifier()))
+				return false;
 			
 			// Admin platforms (i.e. in possession  of our platform key) can do anything.
 			if(secinfos.getRoles().contains(Security.ADMIN))
@@ -601,7 +631,7 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 			{
 				if(msg instanceof ISecuredRemoteCommand)
 				{
-					Set<String>	secroles = ServiceIdentifier.getRoles(((ISecuredRemoteCommand)msg).getSecurityLevel(getInternalAccess()), getInternalAccess());
+					Set<String>	secroles = ServiceIdentifier.getRoles(((ISecuredRemoteCommand)msg).getSecurityLevel(component), component);
 					//System.out.println("secroles " + (secroles != null ? Arrays.toString(secroles.toArray()) : "null") + " " + secinfos);
 					// No service roles and trusted role is ok.
 					if (secroles == null && secinfos.getRoles().contains(Security.TRUSTED))
@@ -628,7 +658,7 @@ public class RemoteExecutionFeature implements ILifecycle, IComponentFeature, IR
 			
 			if(!trusted)
 			{
-				getComponent().getLogger().info("Untrusted command not executed: "+msg);
+				component.getLogger().log(System.Logger.Level.INFO,"Untrusted command not executed: "+msg);
 //				System.out.println("Untrusted command not executed: "+msg);
 			}
 //			else

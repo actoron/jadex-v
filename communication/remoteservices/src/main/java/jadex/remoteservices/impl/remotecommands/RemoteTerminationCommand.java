@@ -4,11 +4,12 @@ import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.messaging.ISecurityInfo;
+import jadex.remoteservices.IRemoteConversationCommand;
 
 /**
  *  Command for future termmination.
  */
-public class RemoteTerminationCommand<T> implements IRemoteConversationCommand<T>
+public class RemoteTerminationCommand<T> extends AbstractIdSenderCommand implements IRemoteConversationCommand<T>
 {
 	/** The termination reason (if any). */
 	protected Exception reason;

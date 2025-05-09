@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import jadex.common.SBinConv;
+import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
+import jadex.messaging.security.authentication.AbstractX509PemSecret;
+import jadex.messaging.security.authentication.PasswordSecret;
+import jadex.messaging.security.authentication.SharedSecret;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.agreement.jpake.JPAKERound1Payload;
 import org.bouncycastle.crypto.agreement.jpake.JPAKERound2Payload;
@@ -23,7 +28,7 @@ import jadex.common.ByteArrayWrapper;
 import jadex.common.SUtil;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.security.SSecurity;
-import jadex.messaging.security.Security;
+import jadex.messaging.security.SecurityFeature;
 
 
 /**
@@ -75,7 +80,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 *  
 	 *  @return First round payload.
 	 */
-	public byte[] getPakeRound1(Security security, GlobalProcessIdentifier remoteid)
+	public byte[] getPakeRound1(SecurityFeature security, GlobalProcessIdentifier remoteid)
 	{
 		byte[] idsalt = new byte[64];
 		SSecurity.getSecureRandom().nextBytes(idsalt);
@@ -107,9 +112,9 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 		
 		byte[] nwbytes = new byte[0];
 		if (groups.size() > 0)
-			nwbytes = SUtil.mergeData(groups.toArray(new byte[groups.size()][]));
+			nwbytes = SBinConv.mergeData(groups.toArray(new byte[groups.size()][]));
 		
-		return SUtil.mergeData(idsalt, nwbytes);
+		return SBinConv.mergeData(idsalt, nwbytes);
 	}
 	
 	/** 
@@ -117,9 +122,9 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 *  
 	 *  @return Second round payload.
 	 */
-	public byte[] getPakeRound2(Security security, GlobalProcessIdentifier remoteid, byte[] round1data)
+	public byte[] getPakeRound2(SecurityFeature security, GlobalProcessIdentifier remoteid, byte[] round1data)
 	{
-		List<byte[]> r1list = SUtil.splitData(round1data);
+		List<byte[]> r1list = SBinConv.splitData(round1data);
 		if (r1list.size() != 2)
 			throw new IllegalArgumentException("Illegal round 1 data.");
 		
@@ -153,7 +158,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 				}
 			}
 			
-			List<byte[]> gloads = SUtil.splitData(r1list.get(1));
+			List<byte[]> gloads = SBinConv.splitData(r1list.get(1));
 			if (gloads.size() % 2 > 0)
 				throw new IllegalArgumentException("Illegal round 1 data.");
 			
@@ -188,17 +193,17 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 		
 		byte[] gbytes = new byte[0];
 		if (groups.size() > 0)
-			gbytes = SUtil.mergeData(groups.toArray(new byte[groups.size()][]));
+			gbytes = SBinConv.mergeData(groups.toArray(new byte[groups.size()][]));
 		
-		return SUtil.mergeData(idsalt, gbytes);
+		return SBinConv.mergeData(idsalt, gbytes);
 	}
 	
 	/**
 	 *  Finalizes the password-authenticated key exchange.
 	 */
-	public void finalizePake(Security security, GlobalProcessIdentifier remoteid, byte[] round2data)
+	public void finalizePake(SecurityFeature security, GlobalProcessIdentifier remoteid, byte[] round2data)
 	{
-		List<byte[]> r2list = SUtil.splitData(round2data);
+		List<byte[]> r2list = SBinConv.splitData(round2data);
 		if (r2list.size() != 2)
 			throw new IllegalArgumentException("Illegal finalization data.");
 		
@@ -225,7 +230,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 				}
 			}
 			
-			List<byte[]> gloads = SUtil.splitData(r2list.get(1));
+			List<byte[]> gloads = SBinConv.splitData(r2list.get(1));
 			if (gloads.size() % 2 > 0)
 				throw new IllegalArgumentException("Illegal finalization data.");
 			
@@ -475,7 +480,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 		byte[] kpx1 = bigIntegerArrayToByteArray(r1pl.getKnowledgeProofForX1());
 		byte[] kpx2 = bigIntegerArrayToByteArray(r1pl.getKnowledgeProofForX2());
 		
-		return SUtil.mergeData(pid, gx1, gx2, kpx1, kpx2);
+		return SBinConv.mergeData(pid, gx1, gx2, kpx1, kpx2);
 	}
 	
 	/**
@@ -486,7 +491,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 */
 	protected static final JPAKERound1Payload bytesToRound1(byte[] bytes)
 	{
-		List<byte[]> list = SUtil.splitData(bytes);
+		List<byte[]> list = SBinConv.splitData(bytes);
 		
 		if (list.size() != 5)
 			throw new IllegalArgumentException("Failed to decode round 1 payload.");
@@ -510,7 +515,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 		byte[] a = r2pl.getA().toByteArray();
 		byte[] kpx2 = bigIntegerArrayToByteArray(r2pl.getKnowledgeProofForX2s());
 		
-		return SUtil.mergeData(pid, a, kpx2);
+		return SBinConv.mergeData(pid, a, kpx2);
 	}
 	
 	/**
@@ -521,7 +526,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 */
 	protected static final JPAKERound2Payload bytesToRound2(byte[] bytes)
 	{
-		List<byte[]> list = SUtil.splitData(bytes);
+		List<byte[]> list = SBinConv.splitData(bytes);
 		
 		if (list.size() != 3)
 			throw new IllegalArgumentException("Failed to decode round 1 payload.");
@@ -564,7 +569,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 		for (int i = 0; i < list.length; ++i)
 			list[i] = bigintarr[i].toByteArray();
 		
-		return SUtil.mergeData(list);
+		return SBinConv.mergeData(list);
 	}
 	
 	/**
@@ -575,7 +580,7 @@ public class Blake3X509AuthenticationSuite implements IAuthenticationSuite
 	 */
 	protected static final BigInteger[] byteArrayToBigIntegerArray(byte[] bytes)
 	{
-		List<byte[]> list = SUtil.splitData(bytes);
+		List<byte[]> list = SBinConv.splitData(bytes);
 		BigInteger[] ret = new BigInteger[list.size()];
 		
 		for (int i = 0; i < ret.length; ++i)

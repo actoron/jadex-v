@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.ISecurityInfo;
 
 /**
@@ -21,6 +22,9 @@ public class SecurityInfo implements ISecurityInfo
 	
 	/** Flag if default authorization is allowed. */
 //	protected boolean allowdefaultauthorization;
+
+	/** Sender of the message. */
+	protected GlobalProcessIdentifier sender;
 	
 	/** Host name, if authenticated. */
 	protected String authhost;
@@ -77,7 +81,25 @@ public class SecurityInfo implements ISecurityInfo
 //	{
 //		this.platformauth = platformauth;
 //	}
-	
+
+	/**
+	 *  Gets the sender of the message.
+	 *  @return Sender of the message.
+	 */
+	public GlobalProcessIdentifier getSender()
+	{
+		return sender;
+	}
+
+	/**
+	 *  Sets the sender of the message.
+	 *  @param sender The sender.
+	 */
+	public void setSender(GlobalProcessIdentifier sender)
+	{
+		this.sender = sender;
+	}
+
 	/**
 	 *  Returns the authenticated host as String.
 	 *

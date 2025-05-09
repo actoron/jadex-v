@@ -2,13 +2,14 @@ package jadex.remoteservices;
 
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
 import jadex.remoteservices.IRemoteCommand;
 
 /**
  *  Feature for securely sending and handling remote execution commands.
  */
-public interface IRemoteExecutionFeature
+public interface IRemoteExecutionFeature extends IComponentFeature
 {
 	/**
 	 *  Execute a command on a remote agent.

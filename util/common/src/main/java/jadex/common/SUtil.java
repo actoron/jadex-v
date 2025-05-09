@@ -37,7 +37,11 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -85,6 +89,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -2220,19 +2225,19 @@ public class SUtil
 		byte[] precached = new byte[32];
 		getSecureRandom().nextBytes(precached);
 		
-		long rndlong = SUtil.bytesToLong(precached, 0);
+		long rndlong = SBinConv.bytesToLong(precached, 0);
 		for (int i = 0; i < 11; ++i)
 			chars[i + o] = ID_CHARS[(int) (rndlong >>> ((i << 2) + (i << 1)) & 0x3F)];
 		o += 11;
-		rndlong = SUtil.bytesToLong(precached, 8);
+		rndlong = SBinConv.bytesToLong(precached, 8);
 		for (int i = 0; i < 11; ++i)
 			chars[i + o] = ID_CHARS[(int) (rndlong >>> ((i << 2) + (i << 1)) & 0x3F)];
 		o += 11;
-		rndlong = SUtil.bytesToLong(precached, 16);
+		rndlong = SBinConv.bytesToLong(precached, 16);
 		for (int i = 0; i < 11; ++i)
 			chars[i + o] = ID_CHARS[(int) (rndlong >>> ((i << 2) + (i << 1)) & 0x3F)];
 		o += 11;
-		rndlong = SUtil.bytesToLong(precached, 24);
+		rndlong = SBinConv.bytesToLong(precached, 24);
 		for (int i = 0; i < 11; ++i)
 			chars[i + o] = ID_CHARS[(int) (rndlong >>> ((i << 2) + (i << 1)) & 0x3F)];
 
@@ -2298,29 +2303,6 @@ public class SUtil
 			retchars[++offset] = ID_CHARS[(random[i] & 0xFF) % 36];
 		}
 		return name+new String(retchars);
-	}
-	
-	/**
-	 * 
-	 */
-	protected static void testIntByteConversion()
-	{
-		Random	rnd	= new Random(123);	
-		for(int i=1; i<10000000; i++)
-		{
-			int	val	= rnd.nextInt(Integer.MAX_VALUE);
-			if(i%2==0)	// Test negative values too.
-			{
-				val	= -val;
-			}
-			byte[]	bytes	= intToBytes(val);
-			int	val2	= bytesToInt(bytes);
-			if(val!=val2)
-			{
-				throw new RuntimeException("Failed: "+val+", "+val2+", "+arrayToString(bytes));
-			}
-//			System.out.println("Converted: "+val+", "+arrayToString(bytes));
-		}
 	}
 
 	/**
@@ -2813,7 +2795,7 @@ public class SUtil
 		throw convertToRuntimeException(e);
 	}
 
-	public static void main(String[] args)
+	/*public static void main(String[] args)
 	{
 //		String res = SUtil.makeConform("uniique-dialogservice.de/ues4/rc?f=https://plus.google.com/+targobank?koop_id=mar_vermoegen18");
 //		System.out.println(res);
@@ -2829,7 +2811,7 @@ public class SUtil
 		}
 		
 		System.out.println("needed: "+(System.currentTimeMillis()-start)/1000);
-	}
+	}*/
 	
 	/**
 	 *  Converts a number of bytes
@@ -2868,193 +2850,8 @@ public class SUtil
 		
 		return ret;
 	}
-	
-	/**
-	 *  Convert bytes to a short.
-	 */
-	public static short bytesToShort(byte[] buffer)
-	{
-		assert buffer.length == 2;
-		
-		return bytesToShort(buffer, 0);
-	}
-	
-	/**
-	 *  Convert bytes to a short.
-	 */
-	public static short bytesToShort(byte[] buffer, int offset)
-	{
-		short value = (short)((0xFF & buffer[offset]) << 8);
-		value |= (0xFF & buffer[offset + 1]);
 
-		return value;
-	}
 
-	/**
-	 *  Convert a short to bytes.
-	 */
-	public static byte[] shortToBytes(int val)
-	{
-		byte[] buffer = new byte[2];
-
-		shortIntoBytes(val, buffer, 0);
-
-		return buffer;
-	}
-	
-	/**
-	 *  Convert a short into byte array.
-	 */
-	public static void shortIntoBytes(int val, byte[] buffer, int offset)
-	{
-		buffer[offset] = (byte)((val >>> 8) & 0xFF);
-		buffer[offset+1] = (byte)(val & 0xFF);
-	}
-
-	/**
-	 *  Convert bytes to an integer.
-	 */
-	public static int bytesToInt(byte[] buffer)
-	{
-		assert buffer.length == 4;
-//		if(buffer.length != 4)
-//		{
-//			throw new IllegalArgumentException("buffer length must be 4 bytes!");
-//		}
-		
-		return bytesToInt(buffer, 0);
-	}
-	
-	/**
-	 *  Convert bytes to an integer.
-	 */
-	public static int bytesToInt(byte[] buffer, int offset)
-	{
-		int value = (0xFF & buffer[offset]) << 24;
-		value |= (0xFF & buffer[offset+1]) << 16;
-		value |= (0xFF & buffer[offset+2]) << 8;
-		value |= (0xFF & buffer[offset+3]);
-		
-		return value;
-	}
-
-	/**
-	 *  Convert an integer to bytes.
-	 */
-	public static byte[] intToBytes(int val)
-	{
-		byte[] buffer = new byte[4];
-		
-		intIntoBytes(val, buffer, 0);
-
-		return buffer;
-	}
-	
-	/**
-	 *  Convert a long to bytes.
-	 */
-	public static void intIntoBytes(int val, byte[] buffer, int offset)
-	{
-		buffer[offset++] = (byte)((val >>> 24) & 0xFF);
-		buffer[offset++] = (byte)((val >>> 16) & 0xFF);
-		buffer[offset++] = (byte)((val >>> 8) & 0xFF);
-		buffer[offset++] = (byte)(val & 0xFF);
-	}
-	
-//	/**
-//	 *  Convert an ip to a long.
-//	 *  @param ip The ip address.
-//	 *  @return The long.
-//	 */
-//	public static long ipToLong(InetAddress ip)
-//	{
-//		byte[] octets = ip.getAddress();
-//		long result = 0;
-//		for(byte octet : octets)
-//		{
-//			result <<= 8;
-//			result |= octet & 0xff;
-//		}
-//		return result;
-//	}
-
-	/**
-	 *  Convert bytes to a long.
-	 */
-	public static long bytesToLong(byte[] buffer)
-	{
-		assert buffer.length == 8;
-
-		long value = (0xFFL & buffer[0]) << 56L;
-		value |= (0xFFL & buffer[1]) << 48L;
-		value |= (0xFFL & buffer[2]) << 40L;
-		value |= (0xFFL & buffer[3]) << 32L;
-		value |= (0xFFL & buffer[4]) << 24L;
-		value |= (0xFFL & buffer[5]) << 16L;
-		value |= (0xFFL & buffer[6]) << 8L;
-		value |= (0xFFL & buffer[7]);
-
-		return value;
-	}
-	
-	/**
-	 *  Convert bytes to a long.
-	 */
-	public static long bytesToLong(byte[] buffer, int offset)
-	{
-		long value = (0xFFL & buffer[offset++]) << 56L;
-		value |= (0xFFL & buffer[offset++]) << 48L;
-		value |= (0xFFL & buffer[offset++]) << 40L;
-		value |= (0xFFL & buffer[offset++]) << 32L;
-		value |= (0xFFL & buffer[offset++]) << 24L;
-		value |= (0xFFL & buffer[offset++]) << 16L;
-		value |= (0xFFL & buffer[offset++]) << 8L;
-		value |= (0xFFL & buffer[offset++]);
-
-		return value;
-	}
-
-	/**
-	 *  Convert a long to bytes.
-	 */
-	public static byte[] longToBytes(long val)
-	{
-		byte[] buffer = new byte[8];
-
-		buffer[0] = (byte)((val >>> 56) & 0xFF);
-		buffer[1] = (byte)((val >>> 48) & 0xFF);
-		buffer[2] = (byte)((val >>> 40) & 0xFF);
-		buffer[3] = (byte)((val >>> 32) & 0xFF);
-		buffer[4] = (byte)((val >>> 24) & 0xFF);
-		buffer[5] = (byte)((val >>> 16) & 0xFF);
-		buffer[6] = (byte)((val >>> 8) & 0xFF);
-		buffer[7] = (byte)(val & 0xFF);
-
-		return buffer;
-	}
-	
-	/**
-	 *  Convert a long to bytes.
-	 */
-	public static void longIntoBytes(long val, byte[] buffer)
-	{
-		longIntoBytes(val, buffer, 0);
-	}
-	
-	/**
-	 *  Convert a long to bytes.
-	 */
-	public static void longIntoBytes(long val, byte[] buffer, int offset)
-	{
-		buffer[offset++] = (byte)((val >>> 56) & 0xFF);
-		buffer[offset++] = (byte)((val >>> 48) & 0xFF);
-		buffer[offset++] = (byte)((val >>> 40) & 0xFF);
-		buffer[offset++] = (byte)((val >>> 32) & 0xFF);
-		buffer[offset++] = (byte)((val >>> 24) & 0xFF);
-		buffer[offset++] = (byte)((val >>> 16) & 0xFF);
-		buffer[offset++] = (byte)((val >>> 8) & 0xFF);
-		buffer[offset++] = (byte)(val & 0xFF);
-	}
 	
 	/**
 	 *  Get the network ip for an internet address and the prefix length.
@@ -3070,23 +2867,23 @@ public class SUtil
 		{
 			if(addr instanceof Inet4Address)
 			{
-				int ad = SUtil.bytesToInt(addr.getAddress());
+				int ad = SBinConv.bytesToInt(addr.getAddress());
 				ad >>>= 32-prefixlen;
 				ad <<= 32-prefixlen;
-				ret = InetAddress.getByAddress(SUtil.intToBytes(ad));
+				ret = InetAddress.getByAddress(SBinConv.intToBytes(ad));
 			}
 			else if(addr instanceof Inet6Address)
 			{
 				// Use only first 64 bit of IPv6 address.
 				byte[]	baddr	= new byte[8];
 				System.arraycopy(addr.getAddress(), 0, baddr, 0, 8);
-				long ad = SUtil.bytesToLong(baddr);
-				System.arraycopy(SUtil.longToBytes(ad), 0, baddr, 0, 8);
+				long ad = SBinConv.bytesToLong(baddr);
+				System.arraycopy(SBinConv.longToBytes(ad), 0, baddr, 0, 8);
 				ad >>>= 8;
-				System.arraycopy(SUtil.longToBytes(ad), 0, baddr, 0, 8);
+				System.arraycopy(SBinConv.longToBytes(ad), 0, baddr, 0, 8);
 				ad <<= 8;
 				baddr	= new byte[16];
-				System.arraycopy(SUtil.longToBytes(ad), 0, baddr, 0, 8);
+				System.arraycopy(SBinConv.longToBytes(ad), 0, baddr, 0, 8);
 				ret = InetAddress.getByAddress(baddr);
 			}
 		}
@@ -3536,11 +3333,29 @@ public class SUtil
 	{
 		return runJvmSubprocess(clazz, null, null, false);
 	}
-	
+
+	/**
+	 *  Runs a new JVM as a subprocess with a similar configuration as the parent JVM.
+	 *
+	 *  @param clazz Class to run.
+	 *  @param jvmargs Arguments for the JVM.
+	 *  @param args Command-line arguments.
+	 *  @param inheritio If true, attach the subproces IO to main process IO.
+	 *  @return The started process.
+	 *
+	 *  @throws IOException
+	 *  @throws InterruptedException
+	 */
+	public static Process runJvmSubprocess(Class<?> clazz, List<String> jvmargs, List<String> args, boolean inheritio)
+	{
+		return runJvmSubprocess(clazz, null, jvmargs, args, inheritio);
+	}
+
 	/**
 	 *  Runs a new JVM as a subprocess with a similar configuration as the parent JVM.
 	 *  
 	 *  @param clazz Class to run.
+	 *  @param envvars Environment variables.
 	 *  @param jvmargs Arguments for the JVM.
 	 *  @param args Command-line arguments.
 	 *  @param inheritio If true, attach the subproces IO to main process IO.
@@ -3549,7 +3364,7 @@ public class SUtil
 	 *  @throws IOException 
 	 *  @throws InterruptedException
 	 */
-	public static Process runJvmSubprocess(Class<?> clazz, List<String> jvmargs, List<String> args, boolean inheritio)
+	public static Process runJvmSubprocess(Class<?> clazz, Map<? extends String, ? extends String> envvars, List<String> jvmargs, List<String> args, boolean inheritio)
 	{
 		try
 		{
@@ -3568,6 +3383,9 @@ public class SUtil
 				command.addAll(args);
 			
 			ProcessBuilder builder = new ProcessBuilder(command);
+			if (envvars != null)
+				envvars.entrySet().forEach( e -> builder.environment().put(e.getKey(), e.getValue()));
+
 			if (inheritio)
 				return builder.inheritIO().start();
 			return builder.start();
@@ -4416,71 +4234,6 @@ public class SUtil
 		}
 		
 		return writer.toString();
-	}
-	
-	/**
-	 *  Primitive encoding approach: Merges multiple byte arrays
-	 *  into a single one so it can be split later.
-	 * 
-	 *  @param data The input data.
-	 *  @return A merged byte array.
-	 */
-	public static byte[] mergeData(byte[]... data)
-	{
-		int datasize = 0;
-		for (int i = 0; i < data.length; ++i)
-			datasize += data[i].length;
-		byte[] ret = new byte[datasize + (data.length << 2)];
-		int offset = 0;
-		for (int i = 0; i < data.length; ++i)
-		{
-			SUtil.intIntoBytes(data[i].length, ret, offset);
-			offset += 4;
-			System.arraycopy(data[i], 0, ret, offset, data[i].length);
-			offset += data[i].length;
-		}
-		return ret;
-	}
-	
-	/**
-	 *  Primitive encoding approach: Splits a byte array
-	 *  that was encoded with mergeData().
-	 * 
-	 *  @param data The input data.
-	 *  @return A list of byte arrays representing the original set.
-	 */
-	public static List<byte[]> splitData(byte[] data)
-	{
-		return splitData(data, -1, -1);
-	}
-	
-	/**
-	 *  Primitive encoding approach: Splits a byte array
-	 *  that was encoded with mergeData().
-	 * 
-	 *  @param data The input data.
-	 *  @param offset Offset where the data is located.
-	 *  @param length Length of the data, rest of data used if length < 0.
-	 *  @return A list of byte arrays representing the original set.
-	 */
-	public static List<byte[]> splitData(byte[] data, int offset, int length)
-	{
-		List<byte[]> ret = new ArrayList<byte[]>();
-		offset = offset < 0 ? 0 : offset;
-		length = length < 0 ? data.length - offset : length;
-		int endpos = offset + length;
-		while (offset < endpos)
-		{
-			int datalen = SUtil.bytesToInt(data, offset);
-			offset += 4;
-			if (offset + datalen > endpos)
-				throw new IllegalArgumentException("Invalid encoded data.");
-			byte[] datapart = new byte[datalen];
-			System.arraycopy(data, offset, datapart, 0, datalen);
-			offset += datalen;
-			ret.add(datapart);
-		}
-		return ret;
 	}
 	
 	/**
@@ -5478,7 +5231,7 @@ public class SUtil
 		}
 		return appdir;
 	}
-	
+
 //	/**
 //	 * Main method for testing.
 //	 */

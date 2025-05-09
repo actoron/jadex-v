@@ -4,6 +4,7 @@ import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.IPullIntermediateFuture;
 import jadex.messaging.ISecurityInfo;
+import jadex.remoteservices.IRemoteConversationCommand;
 
 import java.util.Collection;
 
@@ -11,7 +12,7 @@ import java.util.Collection;
 /**
  *  Command for pulling from pull intermediate futures.
  */
-public class RemotePullCommand<T> implements IRemoteConversationCommand<Collection<T>>
+public class RemotePullCommand<T> extends AbstractIdSenderCommand implements IRemoteConversationCommand<Collection<T>>
 {
 	/**
 	 *  Create the command.

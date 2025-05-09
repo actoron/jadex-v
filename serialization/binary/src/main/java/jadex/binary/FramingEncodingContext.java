@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
+import jadex.common.SBinConv;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.traverser.ITraverseProcessor;
@@ -68,7 +69,7 @@ public class FramingEncodingContext extends AbstractEncodingContext
 		
 		if (frameinfo.getSecondEntity())
 		{
-			SUtil.intIntoBytes(framesize, buffer, frameinfo.getFirstEntity() - 4);
+			SBinConv.intIntoBytes(framesize, buffer, frameinfo.getFirstEntity() - 4);
 		}
 		else
 		{

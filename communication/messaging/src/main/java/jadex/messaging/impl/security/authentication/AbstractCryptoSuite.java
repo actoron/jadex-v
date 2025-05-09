@@ -10,7 +10,7 @@ import jadex.core.IComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.security.ICryptoSuite;
-import jadex.messaging.security.Security;
+import jadex.messaging.security.SecurityFeature;
 import jadex.messaging.security.SecurityInfo;
 
 /**
@@ -95,9 +95,10 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 	 */
 	protected void setupSecInfos(GlobalProcessIdentifier remoteid, List<String> authnets, String authenticatedhost)
 	{
-		Security sec = (Security) IComponentManager.get().getFeature(ISecurityFeature.class);
+		SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
 //		Security sec = Security.get();
 		secinf = new SecurityInfo();
+		secinf.setSender(remoteid);
 //		secinf.setPlatformAuthenticated(platformauth);
 //		if (authenticatedhost == null && platformauth)
 //			secinf.setAuthenticatedPlatformName(remoteid.toString());
@@ -117,10 +118,10 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 		secinf.setSharedNetworks(sharednets);
 		
 		if (authenticatedhost != null && sec.isTrustedHosts(authenticatedhost))
-			fixedroles.add(Security.TRUSTED);
+			fixedroles.add(SecurityFeature.TRUSTED);
 		
 		if (sec.isDefaultAuthorization() && secinf.getSharedGroups() != null && secinf.getSharedGroups().size() > 0)
-			fixedroles.add(Security.TRUSTED);
+			fixedroles.add(SecurityFeature.TRUSTED);
 		
 		// Admin role is automatically trusted.
 		//if (fixedroles.contains(Security.ADMIN))
@@ -136,7 +137,7 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 		if (!sec.getInternalAllowNoGroup() && secinf.getGroups().isEmpty())
 			throw new SecurityException("Connections to platforms with no authenticated networks are not allowed: " + remoteid);
 		
-		if (sec.getInternalRefuseUntrusted() && !secinf.getRoles().contains(Security.TRUSTED))
+		if (sec.getInternalRefuseUntrusted() && !secinf.getRoles().contains(SecurityFeature.TRUSTED))
 			throw new SecurityException("Untrusted connection not allowed: " + remoteid);
 	}
 	

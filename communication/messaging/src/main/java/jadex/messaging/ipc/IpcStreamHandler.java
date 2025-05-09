@@ -1,11 +1,6 @@
 package jadex.messaging.ipc;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.StandardProtocolFamily;
 import java.net.UnixDomainSocketAddress;
 import java.nio.channels.Channels;
@@ -19,6 +14,7 @@ import java.util.function.Consumer;
 
 import jadex.collection.RwMapWrapper;
 import jadex.common.IAutoLock;
+import jadex.common.SBinConv;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentManager;
@@ -280,7 +276,7 @@ public class IpcStreamHandler implements IIpcFeature
 				{
 					String gpidstr = gpid.toString();
 					byte[] gpidbytes = gpidstr.getBytes(SUtil.UTF8);
-					os.write(SUtil.intToBytes(gpidbytes.length));
+					os.write(SBinConv.intToBytes(gpidbytes.length));
 					os.write(gpidbytes);
 					
 					while(true)
@@ -288,9 +284,11 @@ public class IpcStreamHandler implements IIpcFeature
 						ScheduledMessage smsg = fqueue.poll(connectiontimeout, TimeUnit.MILLISECONDS);
 						if (smsg != null)
 						{
-							SerializationServices.get().encode(os, cl, smsg.receiver());
-							os.write(SUtil.intToBytes(smsg.message.length));
-							os.write(smsg.message);
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							SerializationServices.get().encode(baos, cl, smsg.receiver());
+							//byte[] encrec = ((Security) ComponentManager.get().getFeature(ISecurityFeatur
+							writeChunk(os, baos.toByteArray());
+							writeChunk(os, smsg.message());
 							os.flush();
 						}
 						else
@@ -338,14 +336,13 @@ public class IpcStreamHandler implements IIpcFeature
 			byte[] sizebuf = new byte[4];
 			try
 			{
-				readbytes = 0;
 				while (readbytes < sizebuf.length)
 					readbytes += is.read(sizebuf, readbytes, sizebuf.length - readbytes);
 				
 				GlobalProcessIdentifier origin = null;
 				{
 					readbytes = 0;
-					byte[] msg = new byte[SUtil.bytesToInt(sizebuf)];
+					byte[] msg = new byte[SBinConv.bytesToInt(sizebuf)];
 					while (readbytes < msg.length)
 						readbytes += is.read(msg, readbytes, msg.length - readbytes);
 					
@@ -355,17 +352,13 @@ public class IpcStreamHandler implements IIpcFeature
 				
 				while (channel.isConnected())
 				{
-					Object o = serserv.decode(is, cl);
+					byte[] recbytes = readChunk(is, sizebuf);
+					//recbytes = ((Security) ComponentManager.get().getFeature(ISecurityFeature.class)).decryptAndAuth(origin, recbytes).message();
+
+					Object o = serserv.decode(new ByteArrayInputStream(recbytes), cl);
 					ComponentIdentifier receiver = (ComponentIdentifier) o;
-					
-					readbytes = 0;
-					while (readbytes < sizebuf.length)
-						readbytes += is.read(sizebuf, readbytes, sizebuf.length - readbytes);
-					
-					readbytes = 0;
-					byte[] msg = new byte[SUtil.bytesToInt(sizebuf)];
-					while (readbytes < msg.length)
-						readbytes += is.read(msg, readbytes, msg.length - readbytes);
+
+					byte[] msg = readChunk(is, sizebuf);
 					
 					if (receiver.getLocalName() != null)
 					{
@@ -383,6 +376,44 @@ public class IpcStreamHandler implements IIpcFeature
 				SUtil.close(is);
 			}
 		});
+	}
+
+	/**
+	 *  Reads a size-prefixed chunk from stream.
+	 *
+	 *  @param is The input stream.
+	 *  @param sizebuf Buffer for storing the size value.
+	 *  @return The chunk.
+	 *  @throws IOException Thrown on IO error.
+	 */
+	private byte[] readChunk(InputStream is, byte[] sizebuf) throws IOException
+	{
+		int readbytes = 0;
+		while (readbytes < sizebuf.length)
+		{
+			readbytes += is.read(sizebuf, readbytes, sizebuf.length - readbytes);
+		}
+
+		readbytes = 0;
+		byte[] chunk = new byte[SBinConv.bytesToInt(sizebuf)];
+		while (readbytes < chunk.length)
+			readbytes += is.read(chunk, readbytes, chunk.length - readbytes);
+
+		return chunk;
+	}
+
+	/**
+	 *  Writes a size-prefixed chunk to output stream.
+	 *
+	 *  @param os The output stream.
+	 *  @param chunk The chunk.
+	 *  @throws IOException Thrown on write error.
+	 */
+	private void writeChunk(OutputStream os, byte[] chunk) throws IOException
+	{
+		os.write(SBinConv.intToBytes(chunk.length));
+		os.write(chunk);
+		os.flush();
 	}
 	
 	/**

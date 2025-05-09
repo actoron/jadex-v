@@ -139,8 +139,7 @@ public class ComponentIdentifier
 		if (splitstr.length == 3)
 		{
 			long pid = Long.parseLong(splitstr[1]);
-			
-			return new ComponentIdentifier(splitstr[0], pid, splitstr[2]);
+			return new ComponentIdentifier("null".equals(splitstr[0]) ? null : splitstr[0], pid, splitstr[2]);
 		}
 		throw new IllegalArgumentException("Not a component identifier: " + idstring);
 	}

@@ -3,6 +3,7 @@ package jadex.messaging.impl.security.authentication;
 import java.util.Arrays;
 import java.util.List;
 
+import jadex.common.SBinConv;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.SecretWithEncapsulation;
 import org.bouncycastle.crypto.agreement.X448Agreement;
@@ -62,7 +63,7 @@ public class BIKEX448ChaCha20Poly1305Suite extends AbstractChaCha20Poly1305Suite
 			xkg.init(new X448KeyGenerationParameters(SSecurity.getSecureRandom()));
 			AsymmetricCipherKeyPair xkp = xkg.generateKeyPair();
 			
-			byte[] pubkey = SUtil.mergeData(((BIKEPublicKeyParameters) bkp.getPublic()).getEncoded(),
+			byte[] pubkey = SBinConv.mergeData(((BIKEPublicKeyParameters) bkp.getPublic()).getEncoded(),
 											((X448PublicKeyParameters) xkp.getPublic()).getEncoded());
 			
 			generatedkey = new GeneratedBIKEX448Key(bkp, xkp, pubkey);
@@ -81,7 +82,7 @@ public class BIKEX448ChaCha20Poly1305Suite extends AbstractChaCha20Poly1305Suite
 		if (remotepublickey == null)
 			throw new IllegalStateException("Requested encapsulated secret without public key");
 		
-		List<byte[]> bremotepubkeys = SUtil.splitData(remotepublickey);
+		List<byte[]> bremotepubkeys = SBinConv.splitData(remotepublickey);
 		BIKEPublicKeyParameters bikeparams = new BIKEPublicKeyParameters(BIKEParameters.bike256, bremotepubkeys.get(0));
 		x448remotepublickey = bremotepubkeys.get(1);
 		

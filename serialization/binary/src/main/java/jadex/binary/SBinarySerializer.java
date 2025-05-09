@@ -452,7 +452,10 @@ public class SBinarySerializer
 			if (classname.equals(NULL_MARKER))
 				return null;
 			else if (classname.equals(REFERENCE_MARKER))
-				return context.getObjectForId(context.readVarInt());
+			{
+				Object ret = context.getObjectForId(context.readVarInt());
+				return ret;
+			}
 			else
 				clazz = SReflect.findClass(classname, null, context.getClassloader());
 		}

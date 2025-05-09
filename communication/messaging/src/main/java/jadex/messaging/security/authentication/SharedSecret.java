@@ -1,4 +1,4 @@
-package jadex.messaging.impl.security.authentication;
+package jadex.messaging.security.authentication;
 
 /**
  *  Authentication based on a shared secret.
