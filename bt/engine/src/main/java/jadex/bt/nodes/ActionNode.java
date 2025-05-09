@@ -103,8 +103,8 @@ public class ActionNode<T> extends Node<T>
     	{
     		if(usercall==null)
     		{
-    			System.out.println("abort: no user action: "+this+" "+context.getValue("cnt"));
-    			System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: no user action: "+this);
+    			//System.out.println("abort: no user action: "+this+" "+context.getValue("cnt"));
+    	      	System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: no user action: "+this+" "+context.getValue("cnt"));
     		}
     		else
     		{

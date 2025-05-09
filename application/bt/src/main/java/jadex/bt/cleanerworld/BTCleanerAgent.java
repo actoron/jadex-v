@@ -14,7 +14,6 @@ import jadex.bt.BTCache;
 import jadex.bt.IBTProvider;
 import jadex.bt.Val;
 import jadex.bt.actions.TerminableUserAction;
-import jadex.bt.actions.UserAction;
 import jadex.bt.cleanerworld.environment.Chargingstation;
 import jadex.bt.cleanerworld.environment.Cleaner;
 import jadex.bt.cleanerworld.environment.CleanerworldEnvironment;
@@ -158,7 +157,7 @@ public class BTCleanerAgent implements IBTProvider
 			{
 				//ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
 				ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().move((Cleaner)getPojo(agent).getSelf(), new Vector2Double(Math.random(), Math.random()));
-				ret.setTerminationCommand(ex -> {System.out.println("terminate on moveTo"); fut.terminate();});
+				ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate on moveTo"); fut.terminate();});
 				fut.then(Void -> ret.setResultIfUndone(NodeState.FAILED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			}
 			else
@@ -190,7 +189,7 @@ public class BTCleanerAgent implements IBTProvider
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 			//ITerminableFuture<Void> fut = actsense.moveTo(station.getLocation());
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().move((Cleaner)getPojo(agent).getSelf(), station.getLocation());
-			ret.setTerminationCommand(ex -> {System.out.println("terminate moveTo"); fut.terminate();});
+			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate moveTo"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
 		}));
@@ -204,8 +203,8 @@ public class BTCleanerAgent implements IBTProvider
 			//System.out.println("Load at station: "+agent.getId()+" "+getPojo(agent).getSelf().getCarriedWaste()+" "+station);
 			System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "Load at station: "+agent.getId()+" "+getPojo(agent).getSelf().getCarriedWaste()+" "+station);
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().loadBattery((Cleaner)getPojo(agent).getSelf(), station);
-			ret.setTerminationCommand(ex -> {System.out.println("terminate loadBattery"); fut.terminate();});
-			fut.then(Void -> {System.out.println("loaded battery"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
+			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate loadBattery"); fut.terminate();});
+			fut.then(Void -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "loaded battery"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
 		}));
 		
@@ -220,8 +219,8 @@ public class BTCleanerAgent implements IBTProvider
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 			//ITerminableFuture<Void> fut = actsense.moveTo(waste.getLocation());
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().move((Cleaner)getPojo(agent).getSelf(), waste.getLocation());
-			ret.setTerminationCommand(ex -> {System.out.println("terminate moveTo"); fut.terminate();});
-			fut.then(Void -> {System.out.println("reached waste"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
+			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate moveTo"); fut.terminate();});
+			fut.then(Void -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "reached waste"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
 		}));
 		gotowaste.addDecorator(new ConditionalDecorator<IComponent>().setFunction((node, state, context) -> getPojo(context).getSelf().getCarriedWaste()!=null? NodeState.SUCCEEDED: state)
@@ -238,8 +237,8 @@ public class BTCleanerAgent implements IBTProvider
 			
 			//actsense.pickUpWaste(waste);
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().pickupWaste((Cleaner)getPojo(agent).getSelf(), waste);
-			ret.setTerminationCommand(ex -> {System.out.println("terminate on pickup"); fut.terminate();});
-			fut.then(Void -> {System.out.println("picked up waste"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
+			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate on pickup"); fut.terminate();});
+			fut.then(Void -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "picked up waste"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			//fut.get();
 			//System.out.println("picked up waste");
 			//ret.setResultIfUndone(NodeState.SUCCEEDED);
@@ -263,7 +262,7 @@ public class BTCleanerAgent implements IBTProvider
 			{
 				//ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
 				ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().move((Cleaner)getPojo(agent).getSelf(), new Vector2Double(Math.random(), Math.random()));
-				ret.setTerminationCommand(ex -> {System.out.println("terminate moveTo"); fut.terminate();});
+				ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate moveTo"); fut.terminate();});
 				fut.then(Void -> ret.setResultIfUndone(NodeState.FAILED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			}
 			else
@@ -290,7 +289,7 @@ public class BTCleanerAgent implements IBTProvider
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 			//ITerminableFuture<Void> fut = actsense.moveTo(wastebin.getLocation());
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().move((Cleaner)getPojo(agent).getSelf(),wastebin.getLocation());
-			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
+			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
 		}));
@@ -304,7 +303,7 @@ public class BTCleanerAgent implements IBTProvider
 			//System.out.println("Drop waste: "+agent.getId()+" "+getPojo(agent).getSelf().getCarriedWaste()+" "+wastebin);
 			System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "Goto wastebin: "+"Drop waste: "+agent.getId()+" "+getPojo(agent).getSelf().getCarriedWaste()+" "+wastebin);
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().dropWasteInWastebin((Cleaner)getPojo(agent).getSelf(), getPojo(agent).getSelf().getCarriedWaste(), wastebin);
-			ret.setTerminationCommand(ex -> {System.out.println("terminate on drop"); fut.terminate();});
+			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate on drop"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
 		}));
@@ -318,7 +317,7 @@ public class BTCleanerAgent implements IBTProvider
 			//ITerminableFuture<Void> fut = actsense.moveTo(Math.random(), Math.random());
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().move((Cleaner)getPojo(agent).getSelf(), new Vector2Double(Math.random(), Math.random()));
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
-			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
+			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
 		}));
@@ -339,7 +338,7 @@ public class BTCleanerAgent implements IBTProvider
 			//ITerminableFuture<Void> fut = actsense.moveTo(loc);
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().move((Cleaner)getPojo(agent).getSelf(), loc);
 			TerminableFuture<NodeState> ret = new TerminableFuture<>();
-			ret.setTerminationCommand(ex -> {System.out.println("terminate on actsense moveTo"); fut.terminate();});
+			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate on actsense moveTo"); fut.terminate();});
 			fut.then(Void -> ret.setResultIfUndone(NodeState.SUCCEEDED)).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
 			return ret;
 		}));

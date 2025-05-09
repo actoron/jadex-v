@@ -56,7 +56,7 @@ class SensorPanel extends JPanel
 			for(Cleaner cleaner: data.cleaners)
 			{
 				// Paint agent.
-				Point p	= onScreenLocation(cleaner.getLocation(), bounds);
+				Point p	= onScreenLocation(cleaner.getPosition(), bounds);
 				int w	= (int)(cleaner.getVisionRange()*bounds.width);
 				int h	= (int)(cleaner.getVisionRange()*bounds.height);
 				int colorcode	= Math.abs(cleaner.getId().toString().hashCode()%8);
@@ -73,7 +73,7 @@ class SensorPanel extends JPanel
 			}
 
 			// Paint agent.
-			Point	p	= onScreenLocation(data.self.getLocation(), bounds);
+			Point	p	= onScreenLocation(data.self.getPosition(), bounds);
 			int w	= (int)(data.self.getVisionRange()*bounds.width);
 			int h	= (int)(data.self.getVisionRange()*bounds.height);
 			int colorcode	= Math.abs(data.self.getId().toString().hashCode()%8);
@@ -102,7 +102,7 @@ class SensorPanel extends JPanel
 			for(Chargingstation station: data.stations)
 			{
 				g.setColor(Color.blue);
-				p = onScreenLocation(station.getLocation(), bounds);
+				p = onScreenLocation(station.getPosition(), bounds);
 				g.drawRect(p.x-10, p.y-10, 20, 20);
 				g.setColor(data.daytime ? Color.black : Color.white);
 				g.drawString(station.getId(), p.x+14, p.y+5);
@@ -112,7 +112,7 @@ class SensorPanel extends JPanel
 			for(Wastebin bin: data.wastebins)
 			{
 				g.setColor(Color.red);
-				p = onScreenLocation(bin.getLocation(), bounds);
+				p = onScreenLocation(bin.getPosition(), bounds);
 				g.drawOval(p.x-10, p.y-10, 20, 20);
 				g.setColor(data.daytime ? Color.black : Color.white);
 				g.drawString(bin.getId()+" ("+bin.getWastes().length+"/"+bin.getCapacity()+")", p.x+14, p.y+5);
@@ -121,10 +121,10 @@ class SensorPanel extends JPanel
 			// Paint waste.
 			for(Waste waste: data.wastes)
 			{
-				if(waste.getLocation()==null) // is waste carried by cleaner?
+				if(waste.getPosition()==null) // is waste carried by cleaner?
 					continue;
 				g.setColor(Color.red);
-				p	= onScreenLocation(waste.getLocation(), bounds);
+				p	= onScreenLocation(waste.getPosition(), bounds);
 				g.fillOval(p.x-3, p.y-3, 7, 7);
 			}
 

@@ -232,9 +232,11 @@ public abstract class Node<T> implements IDecorator<T>
 
 	    NodeContext<T> context = getNodeContext(execontext);
 
-	    Runnable doexe = () -> {
+	    Runnable doexe = () -> 
+	    {
 	        Future<NodeState> call = context.getCallFuture();
-	        if (call != null) {
+	        if (call != null) 
+	        {
 	            System.out.println("execute called with ongoing call in context: " + Node.this + " " + ret);
 	            ret.setException(new RuntimeException("execute called with ongoing call in context: " + Node.this + " " + ret));
 	            return;
@@ -244,24 +246,31 @@ public abstract class Node<T> implements IDecorator<T>
 	        context.setCallFuture(innerFuture);
 	        context.setState(NodeState.RUNNING);
 
-	        if (getParent() == null) {
+	        if (getParent() == null) 
+	        {
 	            execontext.setRootCall(innerFuture);
 	        }
 
-	        decorators.get(decorators.size() - 1).internalExecute(event, NodeState.RUNNING, execontext).then(state -> {
-	            if (state != NodeState.SUCCEEDED && state != NodeState.FAILED) {
+	        decorators.get(decorators.size() - 1).internalExecute(event, NodeState.RUNNING, execontext).then(state -> 
+	        {
+	            if (state != NodeState.SUCCEEDED && state != NodeState.FAILED) 
+	            {
 	                throw new RuntimeException("wrong final state: " + this);
 	            }
 	            innerFuture.setResult(state);  
 	        }).catchEx(innerFuture);
 
-	        innerFuture.then(state -> {
-	            System.out.println("node finished, resetting: " + Node.this + " " + state);
+	        innerFuture.then(state -> 
+	        {
+	            //System.out.println("node finished, resetting: " + Node.this + " " + state);
+	            System.getLogger(Node.class.getName()).log(Level.INFO, "node finished, resetting: " + Node.this + " " + state);
 	            reset(execontext, true);  
 
 	            ret.setResultIfUndone(state);
-	        }).catchEx(ex -> {
-	            System.out.println("inner process failed, resetting: " + Node.this + " " + ex);
+	        }).catchEx(ex -> 
+	        {
+	            //System.out.println("inner process failed, resetting: " + Node.this + " " + ex);
+	            System.getLogger(Node.class.getName()).log(Level.INFO, "inner process failed, resetting: " + Node.this + " " + ex);
 	            reset(execontext, true);  
 	            ret.setResultIfUndone(NodeState.FAILED);
 	        });
@@ -269,7 +278,8 @@ public abstract class Node<T> implements IDecorator<T>
 
 	    if (context.getAbortFuture() != null) 
 	    {
-	        System.out.println("waiting for abort of: " + this);
+	        //System.out.println("waiting for abort of: " + this);
+	        System.getLogger(Node.class.getName()).log(Level.INFO, "waiting for abort of: " + this);
 	        context.getAbortFuture().then(Void -> doexe.run()).catchEx(ret);
 	    } 
 	    else 
@@ -373,7 +383,8 @@ public abstract class Node<T> implements IDecorator<T>
        	if(context==null || context.getAborted()!=null || NodeState.RUNNING!=context.getState())
     		return IFuture.DONE;
        	
-       	System.out.println("abort: "+this+" "+context.getState()+" "+state);
+       	//System.out.println("abort: "+this+" "+context.getState()+" "+state);
+		System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: "+this+" "+context.getState()+" "+state);
        	
        	//context.setAborted(abortmode);
     	
@@ -383,7 +394,8 @@ public abstract class Node<T> implements IDecorator<T>
     	
     	ret.then(Void -> 
     	{
-    		System.out.println("abort fini: "+this+" "+abortmode);
+    		//System.out.println("abort fini: "+this+" "+abortmode);
+    		System.getLogger(this.getClass().getName()).log(Level.INFO, "abort fini: "+this+" "+abortmode);
     		//Thread.dumpStack();
     	}).printOnEx();
     	

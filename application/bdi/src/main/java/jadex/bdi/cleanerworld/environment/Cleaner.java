@@ -17,6 +17,10 @@ public class Cleaner extends SpaceObject
 	
 	protected double size;
 	
+	public Cleaner()
+	{
+	}
+	
 	public Cleaner(IVector2 position, String name, double speed, double vision, double chargestate)
 	{
 		super(position);
@@ -36,7 +40,7 @@ public class Cleaner extends SpaceObject
 		this.carriedwaste = carriedwaste;
 	}
 
-	public IVector2 getLocation()
+	/*public IVector2 getLocation()
 	{
 		return getPosition();
 	}
@@ -44,7 +48,7 @@ public class Cleaner extends SpaceObject
 	public void setLocation(IVector2 loc)
 	{
 		setPosition(loc);
-	}
+	}*/
 	
 	public String getName() 
 	{

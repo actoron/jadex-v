@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bt.actions.UserAction;
+import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.CompositeNode;
 import jadex.bt.nodes.Node;
-import jadex.bt.nodes.SequenceNode;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.nodes.SequenceNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.SUtil;
 import jadex.future.Future;
@@ -24,22 +24,22 @@ public class TestSequenceNode
 	@Test
 	public void testSequenceSuccess()
 	{
-		Node<Object> findres = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> findres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
 		    System.out.println("Searching for resources...");
-		    return new Future<NodeState>(NodeState.SUCCEEDED);
+		    return new TerminableFuture<NodeState>(NodeState.SUCCEEDED);
 		}));
 		
-		Node<Object> collectres = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> collectres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
 		    System.out.println("Collecting resources...");
-		    return new Future<NodeState>(NodeState.SUCCEEDED);
+		    return new TerminableFuture<NodeState>(NodeState.SUCCEEDED);
 		}));
 		
-		Node<Object> drivehome = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> drivehome = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
 		    System.out.println("Driving home...");
-		    return new Future<NodeState>(NodeState.SUCCEEDED);
+		    return new TerminableFuture<NodeState>(NodeState.SUCCEEDED);
 		}));
 		
 		CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres).addChild(collectres).addChild(drivehome);
@@ -57,28 +57,28 @@ public class TestSequenceNode
 	@Test
 	public void testSequenceFailure()
 	{
-		Node<Object> findres = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> findres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
 		    System.out.println("Searching for resources...");
-		    return new Future<NodeState>(NodeState.SUCCEEDED);
+		    return new TerminableFuture<NodeState>(NodeState.SUCCEEDED);
 		}));
 		
-		Node<Object> collectres = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> collectres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
 		    System.out.println("Collecting resources...");
-		    return new Future<NodeState>(NodeState.FAILED);
+		    return new TerminableFuture<NodeState>(NodeState.FAILED);
 		}));
 		
-		Node<Object> drivehome = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> drivehome = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
 		    System.out.println("Driving home...");
-		    return new Future<NodeState>(NodeState.SUCCEEDED);
+		    return new TerminableFuture<NodeState>(NodeState.SUCCEEDED);
 		}));
 		
 		CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres).addChild(collectres).addChild(drivehome);
 		
 		Event event = new Event("start", null);
-		 ExecutionContext<Object> context = new ExecutionContext<Object>();
+		ExecutionContext<Object> context = new ExecutionContext<Object>();
 		IFuture<NodeState> ret = sequence.execute(event, context);
 		
 		NodeState state = ret.get();
@@ -103,7 +103,7 @@ public class TestSequenceNode
 	@Test
 	public void testSequenceAbort() 
 	{
-	    Node<Object> findres = new ActionNode<>(new UserAction<>((event, context) -> 
+	    Node<Object> findres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	        System.out.println("Searching for resources...");
 	        TerminableFuture<NodeState> ret = new TerminableFuture<>();
@@ -125,7 +125,7 @@ public class TestSequenceNode
 	@Test
 	public void testSequenceWithRunningNode() 
 	{
-	    Node<Object> findres = new ActionNode<>(new UserAction<>((event, context) -> 
+	    Node<Object> findres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	        System.out.println("Searching for resources...");
 	        TerminableFuture<NodeState> ret = new TerminableFuture<>();
@@ -145,7 +145,7 @@ public class TestSequenceNode
 	@Test
 	public void testSequenceWithDelayedNodes() throws InterruptedException 
 	{
-		Node<Object> findres = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> findres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	        System.out.println("Searching for resources...");
 	        TerminableFuture<NodeState> ret = new TerminableFuture<>();
@@ -170,10 +170,10 @@ public class TestSequenceNode
 	@Test
 	public void testSequenceReset() 
 	{
-		Node<Object> findres = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> findres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	        System.out.println("Searching for resources...");
-	        return new Future<NodeState>(NodeState.SUCCEEDED);
+	        return new TerminableFuture<NodeState>(NodeState.SUCCEEDED);
 	    }));
 	    
 	    CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres);

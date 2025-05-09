@@ -177,7 +177,7 @@ public class EnvironmentGui	extends JFrame
 				Set<Chargingstation> stations = env.getChargingStations().get();
 				for(Chargingstation station: stations)
 				{
-					Point p	= onScreenLocation(station.getLocation(), bounds);
+					Point p	= onScreenLocation(station.getPosition(), bounds);
 					chargingstation.setText(station.getId());
 					chargingstation.setForeground(daytime ? Color.black : Color.white);
 					render(g, chargingstation, p);
@@ -187,7 +187,7 @@ public class EnvironmentGui	extends JFrame
 				Set<Wastebin> wastebins = env.getWastebins().get();
 				for(Wastebin wb: wastebins)
 				{
-					Point p	= onScreenLocation(wb.getLocation(), bounds);
+					Point p	= onScreenLocation(wb.getPosition(), bounds);
 					JLabel	renderer	= wastebin;
 					if(wb.isFull())
 						renderer	= wastebin_full;
@@ -200,9 +200,9 @@ public class EnvironmentGui	extends JFrame
 				Set<Waste> wastes = env.getWastes().get();
 				for(Waste was: wastes)
 				{
-					if(was.getLocation()==null)
+					if(was.getPosition()==null)
 						continue;
-					Point p	= onScreenLocation(was.getLocation(), bounds);
+					Point p	= onScreenLocation(was.getPosition(), bounds);
 					waste.setForeground(daytime ? Color.black : Color.white);
 					render(g, waste, p);
 				}
@@ -214,7 +214,7 @@ public class EnvironmentGui	extends JFrame
 				for(Cleaner cleaner: cleaners)
 				{
 					int colorcode	= Math.abs(cleaner.getId().toString().hashCode()%8);
-					Point	p	= onScreenLocation(cleaner.getLocation(), bounds);
+					Point	p	= onScreenLocation(cleaner.getPosition(), bounds);
 					w	= (int)(cleaner.getVisionRange()*bounds.width);
 					h	= (int)(cleaner.getVisionRange()*bounds.height);
 					g.setColor(new Color((colorcode&1)!=0?255:100, (colorcode&2)!=0?255:100, (colorcode&4)!=0?255:100, 192));	// Vision range
@@ -224,7 +224,7 @@ public class EnvironmentGui	extends JFrame
 				// Paint the cleaner agents.
 				for(Cleaner cl: cleaners)
 				{
-					Point	p	= onScreenLocation(cl.getLocation(), bounds);
+					Point	p	= onScreenLocation(cl.getPosition(), bounds);
 					cleaner.setText("<html>"
 						+ cl.getId()+"<br>"
 						+ "battery: " + (int)(cl.getChargestate()*100.0) + "%<br>"
@@ -328,12 +328,12 @@ public class EnvironmentGui	extends JFrame
 				double dist = 0;
 				for(Waste waste: wastes)
 				{
-					if(waste.getLocation()==null)
+					if(waste.getPosition()==null)
 						continue;
-					if(nearest==null || waste.getLocation().getDistance(mouseloc).getAsDouble()<dist)
+					if(nearest==null || waste.getPosition().getDistance(mouseloc).getAsDouble()<dist)
 					{
 						nearest = waste;
-						dist = waste.getLocation().getDistance(mouseloc).getAsDouble();
+						dist = waste.getPosition().getDistance(mouseloc).getAsDouble();
 					}
 				}
 				Waste waste = null;

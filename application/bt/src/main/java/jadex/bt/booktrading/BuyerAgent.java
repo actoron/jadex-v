@@ -14,7 +14,6 @@ import org.w3c.dom.events.Event;
 
 import jadex.bt.IBTProvider;
 import jadex.bt.actions.TerminableUserAction;
-import jadex.bt.actions.UserAction;
 import jadex.bt.booktrading.domain.IBuyBookService;
 import jadex.bt.booktrading.domain.INegotiationAgent;
 import jadex.bt.booktrading.domain.NegotiationReport;

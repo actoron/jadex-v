@@ -149,7 +149,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 		else
 		{
 			
-			IComponentHandle exta = component.getExternalAccess(sid.getProviderId());
+			IComponentHandle exta = component.getComponentHandle(sid.getProviderId());
 			exta.scheduleStep(agent ->
 			{
 				if(methodinfo!=null)

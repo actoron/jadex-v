@@ -48,7 +48,7 @@ public class MarsworldEnvironment extends Environment
 		
 		Carry carry = getSpaceObject(car);
 		
-		addTask(new EnvironmentTask(carry, "load", this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), carry, "load", this, ret, data ->
 		{
 			Long time = getData("time", data, Long.class);
 			return performLoad(carry, getSpaceObject(target), data.delta(), true, time!=null? time: 0l);
@@ -64,7 +64,7 @@ public class MarsworldEnvironment extends Environment
 		
 		Carry carry = getSpaceObject(car);
 		
-		addTask(new EnvironmentTask(carry, "unload", this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), carry, "unload", this, ret, data ->
 		{
 			Long time = getData("time", data, Long.class);
 			return performLoad(carry, getSpaceObject(target), data.delta(), false, time!=null? time: 0l);
@@ -81,7 +81,7 @@ public class MarsworldEnvironment extends Environment
 		Sentry sentry = getSpaceObject(sen);
 		
 		long TIME = 3000;
-		addTask(new EnvironmentTask(sentry, "analyzeTarget", this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), sentry, "analyzeTarget", this, ret, data ->
 		{
 			Long time = getData("time", data, Long.class);
 			return performAnalyzeTarget(sentry, getSpaceObject(target), data.delta(), time!=null? time: TIME);
@@ -97,7 +97,7 @@ public class MarsworldEnvironment extends Environment
 		
 		BaseObject object = getSpaceObject(obj);
 		
-		addTask(new EnvironmentTask(object, "rotate", this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), object, "rotate", this, ret, data ->
 		{
 			return performRotate(object, target, data.delta());
 		}));
@@ -112,7 +112,7 @@ public class MarsworldEnvironment extends Environment
 		
 		Producer producer = getSpaceObject(prod);
 		
-		addTask(new EnvironmentTask(producer, "produce", this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), producer, "produce", this, ret, data ->
 		{
 			Long time = getData("time", data, Long.class);
 			return performProduce(producer, getSpaceObject(target), data.delta(), time!=null? time: 0l); 
