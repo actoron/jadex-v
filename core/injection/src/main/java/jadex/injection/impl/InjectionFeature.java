@@ -52,9 +52,9 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 */
 	protected void startPojo(InjectionModel model, List<Object> pojos, Object context)
 	{
-		if(model.getExtraOnStart()!=null)
+		if(model.getPreInject()!=null)
 		{
-			model.getExtraOnStart().apply(self, pojos, context, null);
+			model.getPreInject().apply(self, pojos, context, null);
 		}
 
 		if(model.getFieldInjections()!=null)
@@ -62,6 +62,11 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			model.getFieldInjections().apply(self, pojos, context, null);
 		}
 		
+		if(model.getPostInject()!=null)
+		{
+			model.getPostInject().apply(self, pojos, context, null);
+		}
+
 		if(model.getMethodInjections()!=null)
 		{
 			// TODO: wait for future return value?

@@ -43,19 +43,22 @@ public class InjectionModel
 	/** The context specific value fetchers. */
 	protected Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers;
 	
+	/** Code to run on component start before field injections. */
+	protected volatile IInjectionHandle	preinject;
+	
 	/** Field injections on component start. */
 	protected volatile IInjectionHandle	fields;
 	
-	/** Code to run on component start. */
+	/** Code to run on component start after field injections. */
+	protected volatile IInjectionHandle	postinject;
+	
+	/** User code to run on component start. */
 	protected volatile IInjectionHandle	onstart;
 	
-	/** Extra code to run on component start (before OnStart). */
-	protected volatile IInjectionHandle	extra;
-	
-	/** Method injections after component start. */
+	/** Method injections to be initialized after component start. */
 	protected volatile IInjectionHandle	methods;
 	
-	/** Code to run on component end. */
+	/** User code to run on component end. */
 	protected volatile IInjectionHandle	onend;
 	
 	/** Code to fetch component results. */
@@ -133,22 +136,41 @@ public class InjectionModel
 	}
 
 	/**
-	 * Get external code to run on component start.
+	 * Get external code to run before field injections.
 	 */
-	public IInjectionHandle getExtraOnStart()
+	public IInjectionHandle getPreInject()
 	{
-		if(extra==null)
+		if(preinject==null)
 		{
 			synchronized(this)
 			{
-				if(extra==null)
+				if(preinject==null)
 				{
-					extra	= unifyHandles(getExtraOnstartHandles(classes, contextfetchers));
+					preinject	= unifyHandles(getPreInjectHandles(classes, contextfetchers));
 				}
 			}
 		}
 		
-		return extra==NULL ? null : extra;
+		return preinject==NULL ? null : preinject;
+	}
+
+	/**
+	 * Get external code to run after field injections.
+	 */
+	public IInjectionHandle getPostInject()
+	{
+		if(postinject==null)
+		{
+			synchronized(this)
+			{
+				if(postinject==null)
+				{
+					postinject	= unifyHandles(getPostInjectHandles(classes, contextfetchers));
+				}
+			}
+		}
+		
+		return postinject==NULL ? null : postinject;
 	}
 
 	/**
@@ -866,16 +888,41 @@ public class InjectionModel
 	}
 	
 	
+	/** Other features can add their handles that get executed before field injections. */
+	protected static List<IExtraCodeCreator>	pre_inject	= Collections.synchronizedList(new ArrayList<>());
+	
+	/**
+	 * Other features can add their handles that get executed before field injections.
+	 */
+	protected static List<IInjectionHandle>	getPreInjectHandles(List<Class<?>> pojoclazzes, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
+	{
+		List<IInjectionHandle>	ret	= new ArrayList<>();
+		for(IExtraCodeCreator extra: pre_inject)
+		{
+			ret.addAll(extra.getExtraCode(pojoclazzes, contextfetchers));
+		}
+		return ret;
+	}
+
+	/**
+	 * Other features can add their handles that get executed before field injections.
+	 */
+	public static void	addPreInject(IExtraCodeCreator extra)
+	{
+		pre_inject.add(extra);
+	}
+	
+	
 	/** Other features can add their handles that get executed after field injection and before @OnStart methods. */
-	protected static List<IExtraCodeCreator>	extra_onstart	= Collections.synchronizedList(new ArrayList<>());
+	protected static List<IExtraCodeCreator>	post_inject	= Collections.synchronizedList(new ArrayList<>());
 	
 	/**
 	 * Other features can add their handles that get executed after field injection and before @OnStart methods.
 	 */
-	protected static List<IInjectionHandle>	getExtraOnstartHandles(List<Class<?>> pojoclazzes, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
+	protected static List<IInjectionHandle>	getPostInjectHandles(List<Class<?>> pojoclazzes, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
 	{
 		List<IInjectionHandle>	ret	= new ArrayList<>();
-		for(IExtraCodeCreator extra: extra_onstart)
+		for(IExtraCodeCreator extra: post_inject)
 		{
 			ret.addAll(extra.getExtraCode(pojoclazzes, contextfetchers));
 		}
@@ -885,9 +932,9 @@ public class InjectionModel
 	/**
 	 * Other features can add their handles that get executed after field injection and before @OnStart methods.
 	 */
-	public static void	addExtraOnStart(IExtraCodeCreator extra)
+	public static void	addPostInject(IExtraCodeCreator extra)
 	{
-		extra_onstart.add(extra);
+		post_inject.add(extra);
 	}
 	
 	

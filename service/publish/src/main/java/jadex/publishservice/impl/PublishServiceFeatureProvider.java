@@ -23,7 +23,7 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 	@Override
 	public void init()
 	{
-		InjectionModel.addExtraOnStart((pojoclazzes, contextfetchers) ->
+		InjectionModel.addPostInject((pojoclazzes, contextfetchers) ->
 		{
 			List<IInjectionHandle>	ret	= new ArrayList<>();
 			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);

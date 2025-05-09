@@ -166,8 +166,8 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 		}, Inject.class);
 		
 		
-		// Provide services from class, field and method annotations
-		InjectionModel.addExtraOnStart((pojoclazzes, contextfetchers) ->
+		// Provide services from class (do pre-inject so SID injection works, hack?)
+		InjectionModel.addPreInject((pojoclazzes, contextfetchers) ->
 		{
 			List<IInjectionHandle>	ret	= new ArrayList<>();
 			
@@ -185,6 +185,13 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				});
 			}
 			
+			return ret;
+		});
+			
+		// Provide services from field and method annotations
+		InjectionModel.addPostInject((pojoclazzes, contextfetchers) ->
+		{
+			List<IInjectionHandle>	ret	= new ArrayList<>();
 			
 			// find fields/methods with provided service anno.
 			List<Getter>	getters	= InjectionModel.getGetters(pojoclazzes, ProvideService.class, contextfetchers);

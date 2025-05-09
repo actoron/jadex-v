@@ -176,7 +176,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 		}, Inject.class);
 		
-		InjectionModel.addExtraOnStart((pojoclazzes, contextfetchers) ->
+		InjectionModel.addPostInject((pojoclazzes, contextfetchers) ->
 		{
 			List<IInjectionHandle>	ret	= new ArrayList<>();
 			
@@ -197,7 +197,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				List<Class<?>>	capaclazzes	= new ArrayList<>(pojoclazzes);
 				capaclazzes.add(capafield.getType());
 				InjectionModel	capamodel	= InjectionModel.getStatic(capaclazzes, contextfetchers);
-				capamodel.getExtraOnStart();
+				capamodel.getPreInject();
+				capamodel.getPostInject();
 				
 				// Add capability object at runtime
 				try
