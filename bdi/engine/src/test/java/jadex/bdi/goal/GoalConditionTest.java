@@ -217,8 +217,10 @@ public class GoalConditionTest
 		GoalQueryAgent	pojo	= new GoalQueryAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		String value	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
-		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		assertEquals("value", value);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
 	}
 

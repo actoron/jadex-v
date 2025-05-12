@@ -61,6 +61,12 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	
 	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers;
 	
+	
+	/** Increase means-end reasoning cycle number whenever goal gets (re)activated.
+	 *  Used to ignore outdated plans and means-end reasoning actions. */
+	protected int mrcycle	= 0;
+	
+	
 	//-------- constructors --------
 	
 	/**
@@ -119,6 +125,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //	{
 //		return parentplan!=null? parentplan: parentgoal;
 //	}
+	
+	/** Means-end reasoning cycle number.
+	 *  Used to ignore outdated plans and means-end reasoning actions.
+	 */
+	public int	getMRCycle()
+	{
+		return mrcycle;
+	}
+
 
 	/**
 	 *  Get the lifecycleState.
@@ -228,6 +243,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		}
 		else if(GoalLifecycleState.ACTIVE.equals(lifecyclestate))
 		{
+			mrcycle++;
+			
 			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALACTIVE, modelname}), this));
 
 			// start means-end reasoning unless maintain goal
@@ -364,23 +381,11 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		setLifecycleState(RGoal.GoalLifecycleState.ADOPTED);
 	}
 	
-	/** Remember abort state to remove outdated already scheduled actions.
-	 *  Happens in marsworld due to strange context condition of analyze target goal
-	 *  -> leads to random walk plan executed twice. */
-	int abortstate	= 0;
-	
-	public int	getAbortState()
-	{
-		return abortstate;
-	}
-	
 	/**
 	 *  Abort the child plans.
 	 */
 	protected IFuture<Void> abortPlans()
 	{
-		abortstate++;
-		
 		IFuture<Void>	ret;
 		if(childplan!=null)
 		{

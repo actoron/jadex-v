@@ -16,8 +16,8 @@ public class SelectCandidatesAction implements Runnable
 	/** The element. */
 	protected RProcessableElement element;
 	
-	/** The abort state (changes when plans should be aborted). */
-	protected int	abortstate;
+	/** The MR cycle number of the goal, if any. */
+	protected int	mrcycle;
 	
 	/**
 	 *  Create a new action.
@@ -25,9 +25,10 @@ public class SelectCandidatesAction implements Runnable
 	public SelectCandidatesAction(RProcessableElement element)
 	{
 		this.element = element;
+//		System.out.println("schedule: "+this);
 		if(element instanceof RGoal)
 		{
-			this.abortstate	= ((RGoal)element).getAbortState(); 
+			this.mrcycle	= ((RGoal)element).getMRCycle(); 
 		}
 	}
 	
@@ -43,9 +44,10 @@ public class SelectCandidatesAction implements Runnable
 		{
 			RGoal rgoal = (RGoal)element;
 			ret = RGoal.GoalLifecycleState.ACTIVE.equals(rgoal.getLifecycleState())
-				&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState())
-				&& abortstate==rgoal.getAbortState();
+					&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState())
+					&& mrcycle==rgoal.getMRCycle();
 		}
+//		System.out.println("isvalid: "+this+", "+ret);
 		
 		return ret;
 	}

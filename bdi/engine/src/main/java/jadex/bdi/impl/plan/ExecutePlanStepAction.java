@@ -14,8 +14,8 @@ public class ExecutePlanStepAction implements Runnable
 	/** The plan. */
 	protected RPlan rplan;
 	
-	/** The abort state (changes when plans should be aborted). */
-	protected int	abortstate;
+	/** The MR cycle number of the goal, if any. */
+	protected int	mrcycle;
 	
 	/**
 	 *  Create a new action.
@@ -26,8 +26,9 @@ public class ExecutePlanStepAction implements Runnable
 		Object element = rplan.getReason();
 		if(element instanceof RGoal)
 		{
-			this.abortstate	= ((RGoal)element).getAbortState(); 
+			this.mrcycle	= ((RGoal)element).getMRCycle(); 
 		}
+//		System.out.println("schedule: "+this+", "+mrcycle);
 	}
 	
 	/**
@@ -41,16 +42,27 @@ public class ExecutePlanStepAction implements Runnable
 		
 		if(ret)
 		{
-			Object element = rplan.getReason();
-			if(element instanceof RGoal)
-			{
-				RGoal rgoal = (RGoal)element;
-				ret = RGoal.GoalLifecycleState.ACTIVE.equals(rgoal.getLifecycleState())
-					&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState())
-					&& abortstate==rgoal.getAbortState();
-			}
+			ret = isReasonValid();
 		}
+//		System.out.println("isvalid: "+this+", "+ret+", "+mrcycle);
 		
+		return ret;
+	}
+
+	/**
+	 *  Check if the reason for this plan is still in same means-end reasoning cycle.
+	 */
+	protected boolean isReasonValid()
+	{
+		boolean	ret	= true;
+		Object element = rplan.getReason();
+		if(element instanceof RGoal)
+		{
+			RGoal rgoal = (RGoal)element;
+			ret = RGoal.GoalLifecycleState.ACTIVE.equals(rgoal.getLifecycleState())
+				&& RGoal.GoalProcessingState.INPROCESS.equals(rgoal.getProcessingState())
+				&& mrcycle==rgoal.getMRCycle();
+		}
 		return ret;
 	}
 	
@@ -89,7 +101,7 @@ public class ExecutePlanStepAction implements Runnable
 					rgoal.setChildPlan(rplan);
 				}
 				
-//				System.out.println("execute: "+this);
+//				System.out.println("execute: "+rplan.getComponent().getPojo()+"; "+this);
 				
 				rplan.getBody().executePlan(rplan);
 //				if(ret!=null)
@@ -118,7 +130,15 @@ public class ExecutePlanStepAction implements Runnable
 					Object reason = rplan.getReason();
 					if(reason instanceof RProcessableElement)
 					{
-						((RProcessableElement)reason).planFinished(rplan);
+						// Only inform about finished plan when still in same reasoning cycle (cf. GoalFlickerTest)
+						if(isReasonValid())
+						{
+							((RProcessableElement)reason).planFinished(rplan);
+						}
+//						else
+//						{
+//							System.out.println("invalid: "+reason);
+//						}
 					}
 				}
 			}
