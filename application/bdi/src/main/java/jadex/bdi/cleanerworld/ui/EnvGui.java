@@ -126,7 +126,7 @@ public class EnvGui extends ApplicationAdapter
         for(Wastebin bin : env.getWastebins().get()) 
         {
             Texture bintex = bin.isFull() ? wastebinfulltex : wastebintex;
-            Vector2 pos = convertToVector2(bin.getLocation(), w, h);  
+            Vector2 pos = convertToVector2(bin.getPosition(), w, h);  
             batch.draw(bintex, pos.x, pos.y);
 
             // Optionally draw bin info (e.g. ID and capacity)
@@ -172,14 +172,14 @@ public class EnvGui extends ApplicationAdapter
         {
         	if(waste.getPosition()==null)
         		continue;
-            Vector2 pos = convertToVector2(waste.getLocation(), w, h);
+            Vector2 pos = convertToVector2(waste.getPosition(), w, h);
             batch.draw(wastetex, pos.x, pos.y);
         }
 
         // Render charging stations
         for(Chargingstation station : env.getChargingStations().get()) 
         {
-            Vector2 pos = convertToVector2(station.getLocation(), w, h);
+            Vector2 pos = convertToVector2(station.getPosition(), w, h);
             batch.draw(stationtex, pos.x, pos.y);
             
             // Optionally draw station ID
@@ -194,7 +194,7 @@ public class EnvGui extends ApplicationAdapter
         // Render cleaners
         for(Cleaner cleaner : env.getCleaners().get()) 
         {
-            Vector2 pos = convertToVector2(cleaner.getLocation(), w, h);
+            Vector2 pos = convertToVector2(cleaner.getPosition(), w, h);
             
             //int colorcode	= Math.abs(cleaner.getId().toString().hashCode()%8);
 			float vw = (float)cleaner.getVisionRange()*w;
@@ -277,12 +277,12 @@ public class EnvGui extends ApplicationAdapter
     		double dist = 0;
     		for(Waste waste: wastes)
     		{
-    			if(waste.getLocation()==null)
+    			if(waste.getPosition()==null)
     				continue;
-    			if(nearest==null || waste.getLocation().getDistance(mouseloc).getAsDouble()<dist)
+    			if(nearest==null || waste.getPosition().getDistance(mouseloc).getAsDouble()<dist)
     			{
     				nearest = waste;
-    				dist = waste.getLocation().getDistance(mouseloc).getAsDouble();
+    				dist = waste.getPosition().getDistance(mouseloc).getAsDouble();
     			}
     		}
     		Waste waste = null;

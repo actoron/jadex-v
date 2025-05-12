@@ -1,5 +1,6 @@
 package jadex.bt.decorators;
 
+import java.lang.System.Logger.Level;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -76,20 +77,23 @@ public class Decorator<T> implements IDecorator<T>
 		        	boolean aborted = false;
 		        	if(context.isFinishedInBefore())
 		        	{
-		        		System.out.println("decorator aborted in before: "+Decorator.this+" "+istate);
+		        		//System.out.println("decorator aborted in before: "+Decorator.this+" "+istate);
+		        		System.getLogger(Decorator.class.getName()).log(Level.INFO, "decorator aborted in before: "+Decorator.this+" "+istate);
 		        		aborted = true;
 		        		//ret.setResult(istate);
 		        	}
 		        	else if(context.getAborted()==AbortMode.SELF)
 		        	{
-		        		System.out.println("decorator node aborted: "+Decorator.this+" "+istate);
+		        		//System.out.println("decorator node aborted: "+Decorator.this+" "+istate);
+		        		System.getLogger(Decorator.class.getName()).log(Level.INFO, "decorator node aborted: "+Decorator.this+" "+istate);
 		        		aborted = true;
 		        		//ret.setResult(istate);
 		        	}
 		        	else if(context.getCallFuture()==null || context.getCallFuture().isDone()) // can happen when e.g. success condition triggers multiple times
 			        //else if(!context.hasCall() || context.hasDoneCall()) // can happen when e.g. success condition triggers multiple times
 		        	{
-		        		System.out.println("decorator call finished: "+Decorator.this+" "+istate+" "+context.getCallFuture());
+		        		//System.out.println("decorator call finished: "+Decorator.this+" "+istate+" "+context.getCallFuture());
+		        		System.getLogger(Decorator.class.getName()).log(Level.INFO, "decorator node aborted: "+"decorator call finished: "+Decorator.this+" "+istate+" "+context.getCallFuture());
 		        		aborted = true;
 		        		//ret.setResult(istate);
 		        	}

@@ -5,19 +5,18 @@ import jadex.math.IVector2;
 
 public class Chargingstation extends SpaceObject
 {
+	public Chargingstation()
+	{
+	}
+	
 	public Chargingstation(IVector2 position)
 	{
 		super(position);
 	}
 	
-	public IVector2 getLocation()
-	{
-		return getPosition();
-	}
-	
 	public String toString() 
 	{
-		return "Chargingstation(" + "id="+getId() + ", location="+getLocation() + ")";
+		return "Chargingstation(" + "id="+getId() + ", location="+getPosition() + ")";
 	}
 	
 	public Chargingstation copy()

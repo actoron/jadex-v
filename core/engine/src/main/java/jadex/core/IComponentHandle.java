@@ -29,11 +29,11 @@ public interface IComponentHandle
 	public String getAppId();
 	
 	/**
-	 *  Get the external access.
+	 *  Get the component handle.
 	 *  @param The id of the component.
-	 *  @return The external access.
+	 *  @return The component handle.
 	 */
-	public default IComponentHandle getExternalAccess(ComponentIdentifier cid)
+	public default IComponentHandle getComponentHandle(ComponentIdentifier cid)
 	{
 		return ComponentManager.get().getComponent(cid).getComponentHandle();
 	}

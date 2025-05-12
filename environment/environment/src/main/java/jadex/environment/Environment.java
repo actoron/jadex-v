@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import jadex.common.IFilter;
@@ -113,7 +114,7 @@ public class Environment
 			ex.printStackTrace();
 		});
 		
-		addTask(new EnvironmentTask(null, "kdtree", this, null, Void ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), null, "kdtree", this, null, Void ->
 		{
 			kdtree.rebuild();
 			return TaskData.FALSE;
@@ -212,7 +213,7 @@ public class Environment
 		if(hasTask("move", object))
 			System.out.println("still has move task: "+getTask("move", object)+" "+object);
 		
-		EnvironmentTask task = new EnvironmentTask(object, "move", this, ret, data ->
+		EnvironmentTask task = new EnvironmentTask(getAgent().getComponentHandle(), object, "move", this, ret, data ->
 		{
 			return performMove(object, destination, speed, data.delta(), tolerance);
 		});
@@ -384,9 +385,9 @@ public class Environment
 	
 	protected boolean hasTask(String type, SpaceObject object)
 	{
-	    return tasks.stream()
-	        .filter(task -> type.equals(task.getType()))
-	        .anyMatch(task -> object==null || object.equals(task.getOwner()));
+		return tasks.stream()
+			.filter(task -> type.equals(task.getType()))
+			.anyMatch(task -> object==null || object.equals(task.getOwner()));
 	}
 	
 	protected EnvironmentTask getTask(String type, SpaceObject object)
@@ -478,9 +479,9 @@ public class Environment
 			catch(Exception e)
 			{
 				removeTask(task);
-				e.printStackTrace();
+				//e.printStackTrace();
 				if(task.getFuture()!=null)
-					task.getFuture().setException(e);
+					task.getFuture().setExceptionIfUndone(e);
 			}
 		}
 	}
@@ -580,10 +581,13 @@ public class Environment
 	
 	protected void removeTask(EnvironmentTask task)
 	{
+		//System.out.println("remove task on: "+ComponentManager.get().getCurrentComponent());
+		
 		boolean rem = false;
 		rem = tasks.remove(task);
 		if(!rem)
-			System.out.println("task not found: "+task+" "+tasks);
+			System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.INFO, task);
+			//System.out.println("task not found: "+task+" "+tasks);
 		//else
 		//	System.out.println("env removed task: "+task+" "+tasks);
 	}
@@ -712,6 +716,11 @@ public class Environment
 		}
 		
 		return ret;
+	}
+	
+	protected IComponent getAgent() 
+	{
+		return agent;
 	}
 
 	@Override

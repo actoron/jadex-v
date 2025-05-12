@@ -14,16 +14,16 @@ public class Wastebin extends SpaceObject
 	
 	private int capacity;
 	
+	public Wastebin() 
+	{
+		this.wastes = new ArrayList<>();
+	}
+	
 	public Wastebin(IVector2 position, int capacity)
 	{
 		super(position);
 		this.capacity = capacity;
 		this.wastes = new ArrayList<>();
-	}
-	
-	public IVector2 getLocation()
-	{
-		return getPosition();
 	}
 	
 	/**

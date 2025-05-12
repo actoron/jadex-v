@@ -5,24 +5,20 @@ import jadex.math.IVector2;
 
 public class Waste extends SpaceObject
 {
+	public Waste() 
+	{
+	}
+	
 	public Waste(IVector2 position)
 	{
 		super(position);
-	}
-	
-	public IVector2 getLocation()
-	{
-		return getPosition();
-	}
-	
-	public void setLocation(IVector2 loc)
-	{
-		setPosition(loc);
+		if(position==null)
+			System.out.println("created waste with pos: "+position);
 	}
 	
 	public String toString() 
 	{
-		return "Waste(" + "id="+getId() + ", location="+getLocation() + ")";
+		return "Waste(" + "id="+getId() + ", location="+getPosition() + ")";
 	}
 	
 	public Waste copy()
@@ -34,6 +30,8 @@ public class Waste extends SpaceObject
 	
 	public void onUpdateFrom(SpaceObject source)
 	{
+		if(source.getPosition()==null)
+			System.out.println("waste loc to null");
 		Waste w = (Waste)source;
 		setPosition(w.getPosition());
 	}

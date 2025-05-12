@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
+import jadex.core.IComponentHandle;
 import jadex.future.TerminableFuture;
 
 public class EnvironmentTask 
@@ -63,7 +64,7 @@ public class EnvironmentTask
 		}
 	}
 	
-	public EnvironmentTask(SpaceObject owner, String type, Environment env, TerminableFuture<Void> future, Function<TaskData, TaskData> task) 
+	public EnvironmentTask(IComponentHandle handle, SpaceObject owner, String type, Environment env, TerminableFuture<Void> future, Function<TaskData, TaskData> task) 
 	{
 		this.owner = owner;
 		this.type = type;
@@ -76,7 +77,10 @@ public class EnvironmentTask
 			future.setTerminationCommand(ex ->
 			{
 				//System.out.println("env removing task: "+this+" "+ex);
-				env.removeTask(this);
+				handle.scheduleStep(agent ->
+				{
+					env.removeTask(this);
+				});
 			});
 		}
 	}

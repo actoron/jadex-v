@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 import jadex.bt.actions.TerminableUserAction;
-import jadex.bt.actions.UserAction;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.CompositeNode;
@@ -23,16 +22,16 @@ public class TestSelectorNode
 	@Test
 	public void testSelectorSuccessOnFirst() 
 	{
-		Node<Object> alwaysSucceed = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<Object> alwaysSucceed = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
 			System.out.println("Always succeed...");
-			return new Future<NodeState>(NodeState.SUCCEEDED);
+			return new TerminableFuture<NodeState>(NodeState.SUCCEEDED);
         }));
 
-        Node<Object> alwaysFail = new ActionNode<>(new UserAction<>((event, context) -> 
+        Node<Object> alwaysFail = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
         	System.out.println("Always fail...");
-        	return new Future<NodeState>(NodeState.FAILED);
+        	return new TerminableFuture<NodeState>(NodeState.FAILED);
         }));
 
         CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysSucceed).addChild(alwaysFail);
@@ -48,16 +47,16 @@ public class TestSelectorNode
     @Test
     public void testSelectorSuccessOnSecond() 
     {
-        Node<Object> alwaysFail = new ActionNode<>(new UserAction<>((event, context) -> 
+        Node<Object> alwaysFail = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Always fail...");
-            return new Future<NodeState>(NodeState.FAILED);
+            return new TerminableFuture<NodeState>(NodeState.FAILED);
         }));
 
-        Node<Object> alwaysSucceed = new ActionNode<>(new UserAction<>((event, context) -> 
+        Node<Object> alwaysSucceed = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Always succeed...");
-            return new Future<NodeState>(NodeState.SUCCEEDED);
+            return new TerminableFuture<NodeState>(NodeState.SUCCEEDED);
         }));
 
         CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysFail).addChild(alwaysSucceed);

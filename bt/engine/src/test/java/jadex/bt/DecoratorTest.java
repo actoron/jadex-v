@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 import jadex.bt.actions.TerminableUserAction;
-import jadex.bt.actions.UserAction;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.Decorator;
 import jadex.bt.decorators.RetryDecorator;
@@ -40,10 +39,10 @@ public class DecoratorTest
 	public void testRetryDecorator() 
 	{
 	    AtomicInteger attempt = new AtomicInteger(0);
-	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	    	System.out.println("action called: "+attempt.get());
-	        Future<NodeState> ret = new Future<>();
+	        TerminableFuture<NodeState> ret = new TerminableFuture<>();
 	        if(attempt.incrementAndGet() < 3) 
 	        {
 	            ret.setResult(NodeState.FAILED);
@@ -73,10 +72,10 @@ public class DecoratorTest
 	public void testRetryDelayDecorator() 
 	{
 	    AtomicInteger attempt = new AtomicInteger(0);
-	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	    	System.out.println("action called: "+attempt.get());
-	        Future<NodeState> ret = new Future<>();
+	    	TerminableFuture<NodeState> ret = new TerminableFuture<>();
 	        if(attempt.incrementAndGet() < 3) 
 	        {
 	            ret.setResult(NodeState.FAILED);
@@ -148,9 +147,9 @@ public class DecoratorTest
 		when(exe.waitForDelay(1000)).thenReturn(fut);
 		when(comp.getComponentHandle()).thenReturn(access);
 		
-		Node<IComponent> an = new ActionNode<>(new UserAction<>((event, context) -> 
+		Node<IComponent> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 		{
-		    Future<NodeState> ret = new Future<>();
+		    TerminableFuture<NodeState> ret = new TerminableFuture<>();
 		    new Thread(() -> 
 		    {
 		    	SUtil.sleep(500);
@@ -219,9 +218,9 @@ public class DecoratorTest
 	{
 		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
 		
-		Node<IComponentHandle> an = new ActionNode<>(new UserAction<>((event, compo) -> 
+		Node<IComponentHandle> an = new ActionNode<>(new TerminableUserAction<>((event, compo) -> 
 		{
-		    Future<NodeState> ret = new Future<>();
+			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 		    new Thread(() -> 
 		    {
 		    	SUtil.sleep(500);
@@ -279,10 +278,12 @@ public class DecoratorTest
 	@Test
 	public void testResultInvertDecorator() 
 	{
-	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	    	System.out.println("action called");
-	        return new Future<>(NodeState.FAILED);
+	    	TerminableFuture<NodeState> ret = new TerminableFuture<>();
+	    	ret.setResult(NodeState.FAILED);
+	        return ret;
 	    }));
 
 	    Decorator<Object> id = new ConditionalDecorator<>().setFunction((event, state, context) -> NodeState.SUCCEEDED==state? NodeState.FAILED: NodeState.SUCCEEDED);
@@ -299,10 +300,12 @@ public class DecoratorTest
 	@Test
 	public void testSuccessDecorator() 
 	{
-	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	        System.out.println("action called");
-	        return new Future<>(NodeState.FAILED);
+	        TerminableFuture<NodeState> ret = new TerminableFuture<>();
+	    	ret.setResult(NodeState.FAILED);
+	        return ret;
 	    }));
 
 	    Decorator<Object> sd = new ConditionalDecorator<>().setFunction((event, state, context) -> NodeState.SUCCEEDED);
@@ -320,10 +323,10 @@ public class DecoratorTest
 	@Test
 	public void testFailureDecorator() 
 	{
-	    Node<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+	    Node<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
 	        System.out.println("action called");
-	        return new Future<>(NodeState.SUCCEEDED);
+	        return new TerminableFuture<>(NodeState.SUCCEEDED);
 	    }));
 
 	    Decorator<Object> sd = new ConditionalDecorator<>().setFunction((event, state, context) -> NodeState.FAILED);

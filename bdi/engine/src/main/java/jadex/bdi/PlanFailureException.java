@@ -18,6 +18,14 @@ public class PlanFailureException extends BDIFailureException
 	{
 		this(null, null);
 	}
+	
+	/**
+	 *  Create a new plan failure exception.
+	 */
+	public PlanFailureException(Throwable cause)
+	{
+		this(null, cause);
+	}
 
 	/**
 	 *  Create a new plan failure exception.
@@ -27,7 +35,7 @@ public class PlanFailureException extends BDIFailureException
 	{
 		this(message, null);
 	}
-
+	
 	/**
 	 *  Create a new plan failure exception.
 	 *  @param message The message.

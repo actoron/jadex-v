@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
+import jadex.bdi.PlanFailureException;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
@@ -207,7 +208,7 @@ public class CleanerAgent
 		@Override
 		public Chargingstation get()
 		{
-			return findClosestElement(stations, getSelf().getLocation());
+			return findClosestElement(stations, getSelf().getPosition());
 		}
 	}
 	
@@ -259,7 +260,7 @@ public class CleanerAgent
 		@Override
 		public Wastebin get()
 		{
-			return findClosestElement(wastebins, getSelf().getLocation());
+			return findClosestElement(wastebins, getSelf().getPosition());
 		}
 	}
 	
@@ -319,23 +320,34 @@ public class CleanerAgent
 			// Inhibit all other goals when currently carrying the waste of this goal
 			return waste.equals(getSelf().getCarriedWaste()) || 
 				// Otherwise inhibit other goals where waste is further away
-				(!other.waste.equals(getSelf().getCarriedWaste()) && other.waste.getLocation()!=null
-					&& waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble()
-						< other.waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble());
+				(!other.waste.equals(getSelf().getCarriedWaste()) && other.waste.getPosition()!=null
+					&& waste.getPosition().getDistance(getSelf().getPosition()).getAsDouble()
+						< other.waste.getPosition().getDistance(getSelf().getPosition()).getAsDouble());
 		}
 	}
 	
 	@Plan(trigger=@Trigger(goals=AchieveCleanupWaste.class))
 	private void cleanupWaste(IPlan plan, AchieveCleanupWaste goal)
 	{
-		//System.out.println("Starting cleanupWaste() plan");
 		Waste waste = goal.getWaste();
+		System.out.println("Starting cleanupWaste() plan: "+waste.getPosition());
 		
 		// Move to waste and pick it up, if not yet done
 		if(!waste.equals(getSelf().getCarriedWaste()))
 		{
-			getEnvironment().move(getSelf(), waste.getLocation()).get();
-			getEnvironment().pickupWaste(getSelf(), waste).get();
+			getEnvironment().move(getSelf(), waste.getPosition()).get();
+			System.out.println("pickup cleanupWaste() plan: "+waste.getPosition());
+			
+			// todo: pickupWaste -> boolean result
+			try
+			{
+				// Pickup waste can always fail due to other cleaner that pick up this waste
+				getEnvironment().pickupWaste(getSelf(), waste).get();
+			}
+			catch(Exception e)
+			{
+				throw new PlanFailureException(e);
+			}
 		}
 		
 		// Dispatch a subgoal to find a waste bin
@@ -345,7 +357,7 @@ public class CleanerAgent
 		Wastebin wastebin = plan.dispatchSubgoal(new QueryWastebin()).get();
 		
 		// Move to waste bin as provided by subgoal
-		getEnvironment().move(getSelf(), wastebin.getLocation()).get();
+		getEnvironment().move(getSelf(), wastebin.getPosition()).get();
 		
 		// Finally drop the waste into the bin
 		getEnvironment().dropWasteInWastebin(getSelf(), waste, wastebin).get();
@@ -357,7 +369,7 @@ public class CleanerAgent
 		Chargingstation station = planapi.dispatchSubgoal(new QueryChargingStation()).get();
 		
 		//System.out.println("Moving to station: "+station);
-		getEnvironment().move(getSelf(), station.getLocation()).get();
+		getEnvironment().move(getSelf(), station.getPosition()).get();
 		
 		getEnvironment().loadBattery(getSelf(), (Chargingstation)station).get();
 	}

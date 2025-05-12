@@ -34,7 +34,7 @@ public class CleanerBDIBenchmark
 			IComponentHandle agent = IComponentManager.get().create(new BenchmarkCleanerBDIAgent(ret, envid)).get();
 			ret.get();
 			agent.terminate().get();
-		});
+		}, 50);
 	}
 
 	@Test
@@ -46,6 +46,6 @@ public class CleanerBDIBenchmark
 			IComponentHandle agent = IComponentManager.get().create(new BenchmarkCleanerBDIAgent(ret, envid)).get();
 			ret.get();
 			return () -> agent.terminate().get();
-		});
+		}, 50);
 	}
 }
