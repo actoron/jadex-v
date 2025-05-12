@@ -27,7 +27,7 @@ public abstract class BaseAgent
 	protected IComponent agent;
 	
 	@Belief
-	protected Val<BaseObject> self;
+	protected Val<BaseObject> self	= new Val<>((BaseObject)null);
 	
 	protected MarsworldEnvironment env;
 	
