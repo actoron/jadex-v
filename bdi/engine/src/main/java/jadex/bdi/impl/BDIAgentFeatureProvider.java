@@ -2,6 +2,7 @@ package jadex.bdi.impl;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.System.Logger.Level;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -1051,20 +1052,40 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], goalname);
 		if(events!=null && events.size()>0)
 		{
-			events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
-			EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-			
-			// Add fetcher for belief value.
-			Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes,
-				new String[][] {beliefs},
-				new Class<?>[][] {},
-				goalname, false, contextfetchers);
-			
-			IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
-			
 			// check for boolean method
 			if(!bool || SReflect.isSupertype(Boolean.class, method.getReturnType()))
 			{
+				events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
+				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+				
+				// Add fetcher for belief value.
+				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes,
+					new String[][] {beliefs},
+					new Class<?>[][] {},
+					goalname, false, contextfetchers);
+				
+				IInjectionHandle	handle0	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
+				IInjectionHandle	handle	= (self, pojos, context, oldval) ->
+				{
+					try
+					{
+						Object	value	= handle0.apply(self, pojos, context, oldval);
+						return value;
+					}
+					catch(Exception e)
+					{
+						if(bool)
+						{
+							self.getLogger().log(Level.WARNING, "Exception in "+condname+" condition: "+method+", "+e);
+							return false;
+						}
+						else
+						{
+							throw SUtil.throwUnchecked(e);
+						}
+					}
+				};
+				
 				// In extra on start, add rule to suspend goal when event happens.  
 				ret.add(creator.apply(aevents, handle));
 			}
