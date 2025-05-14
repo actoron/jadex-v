@@ -330,13 +330,13 @@ public class CleanerAgent
 	private void cleanupWaste(IPlan plan, AchieveCleanupWaste goal)
 	{
 		Waste waste = goal.getWaste();
-		System.out.println("Starting cleanupWaste() plan: "+waste.getPosition());
+//		System.out.println("Starting cleanupWaste() plan: "+waste.getPosition());
 		
 		// Move to waste and pick it up, if not yet done
 		if(!waste.equals(getSelf().getCarriedWaste()))
 		{
 			getEnvironment().move(getSelf(), waste.getPosition()).get();
-			System.out.println("pickup cleanupWaste() plan: "+waste.getPosition());
+//			System.out.println("pickup cleanupWaste() plan: "+waste.getPosition());
 			
 			// todo: pickupWaste -> boolean result
 			try

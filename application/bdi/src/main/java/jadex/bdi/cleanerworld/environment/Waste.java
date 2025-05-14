@@ -12,8 +12,8 @@ public class Waste extends SpaceObject
 	public Waste(IVector2 position)
 	{
 		super(position);
-		if(position==null)
-			System.out.println("created waste with pos: "+position);
+//		if(position==null)
+//			System.out.println("created waste with pos: "+position);
 	}
 	
 	public String toString() 

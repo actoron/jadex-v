@@ -61,9 +61,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	
 	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers;
 	
+	/** Set to true when goal is added to agent.
+	 *  Used to check if goal needs to be removed when dropped. */
+	// TODO: better way? -> cf. GoalFlickerTest
+	protected boolean	adopted;
+	
 	
 	/** Increase means-end reasoning cycle number whenever goal gets (re)activated.
 	 *  Used to ignore outdated plans and means-end reasoning actions. */
+	// TODO: better way? -> cf. GoalFlickerTest
 	protected int mrcycle	= 0;
 	
 	
@@ -323,8 +329,11 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		}
 		else if(GoalLifecycleState.DROPPED.equals(lifecyclestate))
 		{
-			((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).removeGoal(this, contextfetchers);
-			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, modelname}), this));
+			if(adopted)
+			{
+				((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).removeGoal(this, contextfetchers);
+				getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, modelname}), this));
+			}
 			
 			if(finished!=null)
 			{
@@ -362,6 +371,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			finished	= new TerminableFuture<>(reason -> 
 			{
 				exception	= reason;
+//				System.out.println("drop: "+this+", "+reason);
 				drop();	
 			});
 		}
@@ -374,6 +384,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public void	adopt()
 	{
+		adopted	= true;
+		
 		// TODO: handle goal parameters
 			
 		((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).addGoal(this, contextfetchers);
@@ -779,8 +791,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	{
 		Future<Void> ret = new Future<Void>();
 		
-		if(!GoalLifecycleState.NEW.equals(getLifecycleState())
-			&& !GoalLifecycleState.DROPPING.equals(getLifecycleState()) 
+		if(!GoalLifecycleState.DROPPING.equals(getLifecycleState()) 
 			&& !GoalLifecycleState.DROPPED.equals(getLifecycleState()))
 		{
 			if(exception==null)
@@ -1169,5 +1180,11 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	protected RuleSystem	getRuleSystem()
 	{
 		return ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+	}
+
+	@Override
+	public String toString()
+	{
+		return super.toString() + ", " +lifecyclestate + ", " + processingstate + ", " +parentplan;
 	}
 }

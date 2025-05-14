@@ -211,7 +211,10 @@ public class Environment
 		SpaceObject object = getSpaceObject(obj);
 		
 		if(hasTask("move", object))
+		{
 			System.out.println("still has move task: "+getTask("move", object)+" "+object);
+			obj.debug();
+		}
 		
 		EnvironmentTask task = new EnvironmentTask(getAgent().getComponentHandle(), object, "move", this, ret, data ->
 		{

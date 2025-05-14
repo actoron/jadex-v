@@ -13,9 +13,7 @@ import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.movement.MovementCapability.Move;
 import jadex.bdi.marsworld.producer.ProducerAgent.ProduceOre;
 import jadex.future.IFuture;
-import jadex.future.ITerminableFuture;
 import jadex.injection.annotation.Inject;
-import jadex.injection.annotation.OnEnd;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 
@@ -36,8 +34,6 @@ public class ProduceOrePlan
 	@Inject
 	protected ProduceOre goal;
 	
-	protected ITerminableFuture<Void> task;
-		
 	/**
 	 *  The plan body.
 	 */
@@ -56,9 +52,7 @@ public class ProduceOrePlan
 		
 		Producer myself = (Producer)capa.getMyself();
 		
-		task = env.produce(myself, target);
-		task.get();
-		task = null;
+		env.produce(myself, target).get();
 		//producer.getMoveCapa().updateTarget(target);
 		
 		//System.out.println("Produced ore at target: "+producer.getAgent().getId()+", "+target.getCapacity()+" ore produced.");
@@ -88,17 +82,6 @@ public class ProduceOrePlan
 		catch(RuntimeException e)
 		{
 			System.out.println("No carry found");
-		}
-	}
-	
-	@OnEnd
-	protected void finished()
-	{
-		//System.out.println("plan finished: "+this);
-		if(task!=null)
-		{
-			//System.out.println("aborting env task");
-			task.terminate();
 		}
 	}
 }

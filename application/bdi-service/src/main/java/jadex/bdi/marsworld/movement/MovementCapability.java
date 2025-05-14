@@ -119,6 +119,7 @@ public class MovementCapability
 		 */
 		public Missionend(MovementCapability capa)
 		{
+			System.out.println("Missionend: "+capa.getMyself());
 			this.capa = capa;
 		}
 		
@@ -128,7 +129,7 @@ public class MovementCapability
 		@GoalCreationCondition(factchanged="missionend")
 		public static boolean checkCreate(MovementCapability capa)
 		{
-			return capa.missionend.get() && !capa.getMyself().getPosition().equals(capa.getHomebase().getPosition());
+			return capa.missionend.get();// && !capa.getMyself().getPosition().equals(capa.getHomebase().getPosition());
 		}
 		
 		/**

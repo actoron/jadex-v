@@ -9,9 +9,7 @@ import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.movement.MovementCapability.Move;
-import jadex.future.ITerminableFuture;
 import jadex.injection.annotation.Inject;
-import jadex.injection.annotation.OnEnd;
 
 /**
  *  Inform the sentry agent about a new target.
@@ -29,8 +27,6 @@ public class CarryOrePlan
 	
 	@Inject
 	protected CarryOre goal;
-	
-	protected ITerminableFuture<Void> task;
 	
 	/**
 	 *  The plan body.
@@ -54,8 +50,7 @@ public class CarryOrePlan
 	
 			// Load ore at the target.
 			//System.out.println("load start");
-			task = env.load(myself, target);
-			task.get();
+			env.load(myself, target).get();
 			//System.out.println("load end");
 			//System.out.println("myself: "+myself.getPosition());
 			
@@ -66,28 +61,12 @@ public class CarryOrePlan
 			
 			// Unload ore at homebase
 			//System.out.println("unload start");
-			task = env.unload(myself, capa.getHomebase());
-			task.get();
-			task = null;
+			env.unload(myself, capa.getHomebase()).get();
 			//System.out.println("unload end");
 			
 			finished = target.getOre()==0;
 			//if(finished)
 			//	System.out.println("carry ore plan finished: "+carry.getAgent().getId());
-		}
-	}
-	
-	@OnEnd
-	protected void finished()
-	{
-		//carry.getMoveCapa().updateSelf();
-		//carry.getMoveCapa().updateTarget(goal.getTarget());
-		
-		//System.out.println("plan finished: "+this);
-		if(task!=null)
-		{
-			//System.out.println("aborting env task");
-			task.terminate();
 		}
 	}
 }

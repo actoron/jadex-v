@@ -1,13 +1,16 @@
 package jadex.bdi.goal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
@@ -15,9 +18,12 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.Plan;
+import jadex.bdi.annotation.PlanBody;
+import jadex.bdi.annotation.PlanContextCondition;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 
 /**
@@ -98,5 +104,60 @@ public class GoalFlickerTest
 		assertEquals(1, executions.size());
 //		System.out.println();
 
+	}
+
+
+	@Test
+	public void	testSubgoalFlickering()
+	{
+		List<String>	executions	= new ArrayList<>();
+		
+		@BDIAgent
+		class ContextAgent
+		{
+			@Belief
+			Val<Boolean>	context	= new Val<Boolean>(true);
+			
+			@Goal
+			class TopGoal{}
+			@Goal
+			class SubGoal{}
+			
+			@Plan(trigger=@Trigger(goals=TopGoal.class))
+			class	TopPlan
+			{
+				@PlanContextCondition(beliefs="context")
+				boolean context()
+				{
+					return context.get();
+				}
+				
+				@PlanBody
+				void body(IExecutionFeature exe, IPlan plan)
+				{
+					// Schedule step to abort plan.
+					exe.scheduleStep(() -> context.set(false));
+					
+					// Dispatch subgoal (schedules AdoptGoalAction)
+					// and block until aborted
+					plan.dispatchSubgoal(new SubGoal()).get();
+				}
+			}
+
+			@Plan(trigger=@Trigger(goals=SubGoal.class))
+			void	myPlan()
+			{
+//				System.out.println("executed");
+				executions.add("executed");
+				new Future<>().get();
+			}
+		}
+		
+		ContextAgent	pojo	= new ContextAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		assertThrows(GoalFailureException.class, () ->
+			handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class)
+					.dispatchTopLevelGoal(pojo.new TopGoal())).get(TestHelper.TIMEOUT));
+		assertEquals(0, executions.size());
 	}
 }

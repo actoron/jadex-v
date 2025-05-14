@@ -171,4 +171,11 @@ public class SpaceObject
 			pcs = new PropertyChangeSupport(this);
 		pcs.removePropertyChangeListener(listener);
 	}
+	
+	/**
+	 *  Override to print debug information on duplicate move task.
+	 */
+	public void debug()
+	{
+	}
 }

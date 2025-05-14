@@ -266,11 +266,12 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 			for(RGoal subgoal: subgoals)
 			{
 				// Todo: wait for goals dropped?
+//				System.out.println("drop: "+this+", "+subgoal);
 				subgoal.drop();
 			}
 		}
 		
-//		System.out.println("lifecyle state: "+getId()+", "+lifecyclestate);
+//		System.out.println("lifecycle state: "+this+", "+lifecyclestate);
 		
 		this.lifecyclestate = lifecyclestate;
 		
@@ -558,6 +559,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 				/*else*/ if(!atomic && RPLANS.get()==this/*&& PlanProcessingState.RUNNING.equals(getProcessingState())*/)
 				{
 					// abort immediately when running and not atomic -> otherwise later checks for aborted in endAtomic(). 
+//					System.out.println("throw PlanAborted() "+this);
 					throw new PlanAborted();
 					
 					// if not running it will detect the abort in before/afterBlock() when next future.get() is

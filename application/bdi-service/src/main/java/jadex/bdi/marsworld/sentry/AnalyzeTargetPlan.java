@@ -13,9 +13,7 @@ import jadex.bdi.marsworld.movement.MovementCapability.Move;
 import jadex.bdi.marsworld.producer.IProduceService;
 import jadex.bdi.marsworld.sentry.SentryAgent.AnalyzeTarget;
 import jadex.future.IFuture;
-import jadex.future.ITerminableFuture;
 import jadex.injection.annotation.Inject;
-import jadex.injection.annotation.OnEnd;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 
@@ -35,8 +33,6 @@ public class AnalyzeTargetPlan
 	
 	@Inject
 	protected AnalyzeTarget goal;
-	
-	protected ITerminableFuture<Void> task;
 	
 	/**
 	 *  The plan body.
@@ -63,9 +59,7 @@ public class AnalyzeTargetPlan
 		{
 			//Sentry myself = (Sentry)sentry.getSpaceObject(true);
 			
-			task = env.analyzeTarget((Sentry)sentry.getSpaceObject(), target);
-			task.get();
-			task = null;
+			env.analyzeTarget((Sentry)sentry.getSpaceObject(), target).get();
 			//sentry.getMoveCapa().updateTarget(target);
 			
 			//System.out.println("Analyzed target: "+sentry.getAgent().getId()+", "+target.getOre()+" ore found.");
@@ -99,17 +93,6 @@ public class AnalyzeTargetPlan
 		for(IProduceService anser: ansers)
 		{
 			anser.doProduce(target);
-		}
-	}
-	
-	@OnEnd
-	protected void finished()
-	{
-		//System.out.println("plan finished: "+this);
-		if(task!=null)
-		{
-			//System.out.println("aborting env task");
-			task.terminate();
 		}
 	}
 }

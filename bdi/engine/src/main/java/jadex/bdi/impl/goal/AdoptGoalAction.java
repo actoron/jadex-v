@@ -26,7 +26,7 @@ public class AdoptGoalAction implements Runnable
 		{
 			this.planstate = goal.getParentPlan().getLifecycleState();
 		}
-//		System.out.println("adopting: "+goal.getId()+", "+goal.getPojo()+", "+planstate);
+//		System.out.println("adopting: "+goal+", "+planstate);
 	}
 	
 	/**
@@ -46,8 +46,13 @@ public class AdoptGoalAction implements Runnable
 	{
 		if(isValid())
 		{
+//			System.out.println("adopted: "+goal+", "+planstate);
 			goal.adopt();
 		}
 		// else action no longer required
+//		else
+//		{
+//			System.out.println("not adopted: "+goal+", "+planstate);
+//		}
 	}
 }
