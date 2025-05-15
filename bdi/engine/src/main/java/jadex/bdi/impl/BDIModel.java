@@ -18,12 +18,11 @@ import jadex.bdi.impl.plan.IPlanBody;
 public class BDIModel
 {
 	/** The plan bodies for plan classes. */
-	// use dby @GoalAPLBuild to find plan bodies for plan pojo.
+	// used by @GoalAPLBuild to find plan bodies for plan pojos.
 	protected Map<Class<?>, ClassPlanBody>	mplans	= new LinkedHashMap<>();
 	
-	/** The plans that are triggered by an instance of the element class. */
-	// TODO: probably need separate MInfo in model and (R)ICandidateInfo with correct parent pojos for capability plans
-	protected Map<Class<?>, List<ICandidateInfo>>	plans	= new LinkedHashMap<>();
+	/** The plans that are triggered by an instance of the element class (e.g. goal). */
+	protected Map<Class<?>, List<ICandidateInfo>>	triggeredplans	= new LinkedHashMap<>();
 	
 	/** The known goals (goal pojoclazz -> goal annotation for meta info). */
 	protected Map<Class<?>, MGoal>	goals	= new LinkedHashMap<>();
@@ -45,7 +44,10 @@ public class BDIModel
 	 */
 	protected void	addPlanBody(Class<?> planpojoclazz, ClassPlanBody body)
 	{
-		mplans.put(planpojoclazz, body);
+		if(mplans.put(planpojoclazz, body)!=null)
+		{
+			throw new UnsupportedOperationException("Plan cannot be declared twice: "+planpojoclazz);
+		}
 	}
 	
 	/**
@@ -54,7 +56,7 @@ public class BDIModel
 	public List<ICandidateInfo> getTriggeredPlans(Class<?> elementclass)
 	{
 		
-		return plans.get(elementclass);
+		return triggeredplans.get(elementclass);
 	}
 	
 	/**
@@ -62,11 +64,11 @@ public class BDIModel
 	 */
 	protected void	addPlanforGoal(Class<?> goalpojoclazz, List<Class<?>> planparents, String planname, IPlanBody body)
 	{
-		List<ICandidateInfo>	goalplans	= plans.get(goalpojoclazz);
+		List<ICandidateInfo>	goalplans	= triggeredplans.get(goalpojoclazz);
 		if(goalplans==null)
 		{
 			goalplans	= new ArrayList<>(4);
-			plans.put(goalpojoclazz, goalplans);
+			triggeredplans.put(goalpojoclazz, goalplans);
 		}
 		goalplans.add(new APL.MPlanCandidate(planparents, planname, body));
 	}
@@ -92,7 +94,10 @@ public class BDIModel
 	 */
 	protected void	addGoal(Class<?> goalpojoclazz, MGoal mgoal)
 	{
-		goals.put(goalpojoclazz, mgoal);
+		if(goals.put(goalpojoclazz, mgoal)!=null)
+		{
+			throw new UnsupportedOperationException("Goal cannot be declared twice: "+goalpojoclazz);
+		}
 	}
 	
 	/**
@@ -100,8 +105,6 @@ public class BDIModel
 	 */
 	protected void	addBelief(String name, Class<?> type)
 	{
-		// TODO: capability names
-//		System.out.println("addBelief: "+name+", "+type);
 		beliefs.put(name, type);
 	}
 	

@@ -185,7 +185,7 @@ public class ClassPlanBody implements IPlanBody
 		}
 		finally
 		{
-			((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).removePlan(rplan, contextfetchers);
+			((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).removePlan(rplan);
 		}
 		
 //		if(rplan.getException()==null)

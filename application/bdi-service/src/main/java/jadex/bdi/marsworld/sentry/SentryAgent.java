@@ -60,8 +60,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 		/**
 		 *  Create a new AnalyzeTarget. 
 		 */
-//		@GoalCreationCondition(factadded="movecapa.mytargets")
-		@GoalCreationCondition(factadded="mytargets")
+		@GoalCreationCondition(factadded="movecapa.mytargets")
 		public AnalyzeTarget(SentryAgent outer, Target target)
 		{
 //			System.out.println("new analyze target goal: "+target);
@@ -85,8 +84,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 //			return ret;
 //		}
 
-//		@GoalContextCondition(beliefs="movecapa.mytargets")
-		@GoalContextCondition(beliefs="mytargets")
+		@GoalContextCondition(beliefs="movecapa.mytargets")
 		public boolean checkContext()
 		{
 			IVector2 mypos = outer.getMoveCapa().getMyself().getPosition();
@@ -143,8 +141,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 			// == $goal.target
 		}
 		
-//		@GoalDropCondition(beliefs="movecapa.missionend")
-		@GoalDropCondition(beliefs="missionend")
+		@GoalDropCondition(beliefs="movecapa.missionend")
 		public boolean checkDrop()
 		{
 			//System.out.println("check ndropping: "+this+" "+outer.getMoveCapa().isMissionend());

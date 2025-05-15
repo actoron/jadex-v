@@ -17,8 +17,7 @@ import jadex.future.IFuture;
 @BDIAgent
 //@RequiredServices(@RequiredService(name="targetser", type=ITargetAnnouncementService.class)) 
 @Plan(trigger=@Trigger(goals=CarryAgent.CarryOre.class), impl=CarryOrePlan.class)
-@Plan(trigger=@Trigger(factadded="mytargets"), impl=InformNewTargetPlan.class)
-//@Plan(trigger=@Trigger(factadded="movecapa.mytargets"), impl=InformNewTargetPlan.class)
+@Plan(trigger=@Trigger(factadded="movecapa.mytargets"), impl=InformNewTargetPlan.class)
 public class CarryAgent extends BaseAgent implements ICarryService
 {
 	public CarryAgent(String envid)
@@ -36,8 +35,7 @@ public class CarryAgent extends BaseAgent implements ICarryService
 			this.target = target;
 		}
 		
-		@GoalDropCondition(beliefs="missionend")
-//		@GoalDropCondition(beliefs="movecapa.missionend")
+		@GoalDropCondition(beliefs="movecapa.missionend")
 		public boolean checkDrop()
 		{
 			return movecapa.isMissionend();

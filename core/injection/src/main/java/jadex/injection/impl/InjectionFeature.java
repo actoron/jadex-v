@@ -36,7 +36,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	public InjectionFeature(IComponent self)
 	{
 		this.self	= self;
-		this.model	= InjectionModel.get(Collections.singletonList(self.getPojo()), null);
+		this.model	= InjectionModel.get(Collections.singletonList(self.getPojo()), null, null);
 	}
 	
 	//-------- lifecycle methods --------
@@ -91,7 +91,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		{
 			for(List<Object> pojos: extras)
 			{
-				InjectionModel	model	= InjectionModel.get(pojos, null);
+				InjectionModel	model	= InjectionModel.get(pojos, null, null);
 				if(model.getOnEnd()!=null)
 				{	
 					model.getOnEnd().apply(self, pojos, null, null);
@@ -141,7 +141,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			// Go backwards through list so outer objects overwrite conflicting results of inner objects.
 			for(List<Object> pojos: extras.reversed())
 			{
-				InjectionModel	model	= InjectionModel.get(pojos, null);
+				InjectionModel	model	= InjectionModel.get(pojos, null, null);
 				if(model.getResultsFetcher()!=null)
 				{
 					@SuppressWarnings("unchecked")
@@ -208,11 +208,13 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 *  @param pojos	The actual pojo objects as a hierachy of component pojo plus subobjects.
 	 *  				The injection is for the last pojo in the list.
 	 *  
+	 *  @param context	Optional path information, e.g. name of subcapability(s).
+	 *  
 	 *  @param context	Optional local context of the pojo (e.g. rplan for a plan pojo).
 	 *  
 	 *  @param contextfetchers	Local fetchers, if any.
 	 */
-	public void	addExtraObject(List<Object> pojos, Object context, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public void	addExtraObject(List<Object> pojos, List<String> path, Object context, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
 		if(extras==null)
 		{
@@ -220,7 +222,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		}
 		extras.add(pojos);
 		
-		InjectionModel	model	= InjectionModel.get(pojos, contextfetchers);
+		InjectionModel	model	= InjectionModel.get(pojos, path, contextfetchers);
 		startPojo(model, pojos, context);
 	}
 
@@ -233,13 +235,15 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 *  				The injection is for the last pojo in the list.
 	 *  
 	 *  @param context	Optional local context of the pojo (e.g. rplan for a plan pojo).
-	 *  
-	 *  @param contextfetchers	Local fetchers, if any.
 	 */
-	public void	removeExtraObject(List<Object> pojos, Object context, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public void	removeExtraObject(List<Object> pojos, Object context)
 	{
-		InjectionModel	model	= InjectionModel.get(pojos, contextfetchers);
-
+		InjectionModel	model	= InjectionModel.get(pojos, null, null);
+		if(extras!=null)
+		{
+			extras.remove(pojos);
+		}
+		
 		endPojo(model, pojos, context);
 	}
 	

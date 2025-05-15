@@ -223,7 +223,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 			if(pojo!=self.getPojo())
 			{
 				List<Object>	pojos	= Arrays.asList(new Object[]{self.getPojo(), pojo});	// TODO: recursive sub-services
-				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null, null);
+				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null, null, null);
 			}
 			
 			// Finally make the services publicly available
