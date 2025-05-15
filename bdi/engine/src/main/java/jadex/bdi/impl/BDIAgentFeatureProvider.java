@@ -437,7 +437,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	protected void addPlanMethod(List<Class<?>> pojoclazzes, Method m, List<IInjectionHandle> ret,
 		Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers) throws Exception
 	{
-		Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
 		Plan	anno	= m.getAnnotation(Plan.class);
 		Trigger	trigger	= anno.trigger();
 		String	planname	= m.getName();
@@ -446,7 +445,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			new String[][]{trigger.factadded(), trigger.factremoved(), trigger.factchanged()},
 			new Class<?>[][] {trigger.goals(), trigger.goalfinisheds()},
 			planname, true, contextfetchers);
-		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, Collections.singletonList(pojoclazz), contextfetchers, null);
+		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, pojoclazzes, contextfetchers, null);
 		IPlanBody	planbody	= new MethodPlanBody(contextfetchers, planhandle);
 		
 		// Inform user when no trigger is defined
@@ -458,7 +457,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		for(Class<?> goaltype: trigger.goals())
 		{
 			// TODO: need outer pojo to get global bdi model not inner. -> change extra on start to List<Class>
-			BDIModel	model	= BDIModel.getModel(pojoclazz);
+			BDIModel	model	= BDIModel.getModel(pojoclazzes.get(0));
 			model.addPlanforGoal(goaltype, pojoclazzes, planname, planbody);
 		}
 	}
@@ -815,7 +814,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								Object	pojogoal	= handle.apply(comp, pojos, new ChangeEvent<Object>(event), null);
 								if(pojogoal!=null)	// For method, check if no goal is created
 								{
-									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos, fcontextfetchers);
+									RGoal	rgoal	= new RGoal(pojogoal, null, comp, fcontextfetchers);
 									rgoal.adopt();
 								}
 								return IFuture.DONE;
@@ -844,7 +843,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								if(Boolean.TRUE.equals(value))
 								{
 									Object	pojogoal	= constructor.apply(comp, pojos, change, null);
-									RGoal	rgoal	= new RGoal(pojogoal, null, comp, pojos, fcontextfetchers);
+									RGoal	rgoal	= new RGoal(pojogoal, null, comp, fcontextfetchers);
 									rgoal.adopt();
 								}
 								return IFuture.DONE;
@@ -1040,7 +1039,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		// BDI model is for outmost pojo.
 		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
 		MGoal mgoal	= new MGoal(!querycondmethods.isEmpty(), !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), !recurcondmethods.isEmpty(),
-			anno, aplbuild, selectcandidate, instanceinhibs);
+			anno, parentclazzes, aplbuild, selectcandidate, instanceinhibs);
 		model.addGoal(goalclazz, mgoal);
 	}
 

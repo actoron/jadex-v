@@ -33,3 +33,4 @@ startHelloWorld.sh
 /benchmark/execution/.benchmark_ide
 /benchmark/.venv
 /bdi/engine - Kopie
+/application/bdi-service/.lwjgl/

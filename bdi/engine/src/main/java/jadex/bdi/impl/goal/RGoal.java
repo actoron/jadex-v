@@ -81,9 +81,10 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 *  @param pojo	The pojo goal.
 	 *  @param parant	The Plan (if subgoal) or null.
 	 */
-	public RGoal(/*MGoal mgoal, */Object pojogoal, RPlan parent, IComponent comp, List<Object> pojoparents, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers/*, Map<String, Object> vals, ICandidateInfo candidate*/)
+	public RGoal(/*MGoal mgoal, */Object pojogoal, RPlan parent, IComponent comp, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers/*, Map<String, Object> vals, ICandidateInfo candidate*/)
 	{
-		super(pojogoal, comp, pojoparents);
+		// Hack!!! set parent pojos (i.e. capability) later.
+		super(pojogoal, comp, null);
 		this.lifecyclestate = GoalLifecycleState.NEW;
 		this.processingstate = GoalProcessingState.IDLE;
 		this.comp	= comp;
@@ -95,8 +96,12 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		{
 			throw new IllegalArgumentException("Unknown goal type (missing @Goal annotation?): "+pojogoal.getClass());
 		}
-	}
+		
+		this.parentpojos	= ((BDIAgentFeature)getComponent()
+				.getFeature(IBDIAgentFeature.class)).getCapability(mgoal.parentclazzes());
 
+	}
+	
 	//-------- methods --------
 	
 	/**

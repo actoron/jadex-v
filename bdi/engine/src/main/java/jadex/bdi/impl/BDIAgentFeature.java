@@ -118,21 +118,8 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	@Override
 	public ITerminableFuture<Void> dispatchTopLevelGoal(Object goal)
 	{
-//		final MGoal mgoal = ((MCapability)capa.getModelElement()).getGoal(goal.getClass().getName());
-//		if(mgoal==null)
-//			throw new RuntimeException("Unknown goal type: "+goal);
-		// TODO: Capability context!?
-		final RGoal rgoal = new RGoal(goal, null, self, Collections.singletonList(self.getPojo()), null);
-//		
-//		rgoal.addListener(new ExceptionDelegationResultListener<Void, E>(ret)
-//		{
-//			public void customResultAvailable(Void result)
-//			{
-//				Object res = RGoal.getGoalResult(rgoal, self.getPojo().getClass().getClassLoader());
-//				ret.setResult((E)res);
-//			}
-//		});
-//
+		final RGoal rgoal = new RGoal(goal, null, self, null);
+		
 		// Adopt directly (no schedule step)
 		// TODO: why step for subgoal and not for top-level!?
 		rgoal.adopt();
