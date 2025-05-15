@@ -1074,14 +1074,15 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					}
 					catch(Exception e)
 					{
+						self.getLogger().log(Level.WARNING, "Exception in "+condname+" condition: "+method+", "+e);
 						if(bool)
 						{
-							self.getLogger().log(Level.WARNING, "Exception in "+condname+" condition: "+method+", "+e);
 							return false;
 						}
 						else
 						{
-							throw SUtil.throwUnchecked(e);
+							// Query condition
+							return null;
 						}
 					}
 				};

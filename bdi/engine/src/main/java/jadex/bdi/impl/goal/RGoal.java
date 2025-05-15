@@ -1,5 +1,6 @@
 package jadex.bdi.impl.goal;
 
+import java.lang.System.Logger.Level;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
@@ -256,7 +257,28 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			// start means-end reasoning unless maintain goal
 			if(!mgoal.maintain())
 			{
-				setProcessingState(GoalProcessingState.INPROCESS);
+				// Check for result if procedural query goal.
+				Object	result	= null;
+				if(!isDeclarative() && getPojo() instanceof Supplier<?>)
+				{
+					try
+					{
+						result	= ((Supplier<?>)getPojo()).get();
+					}
+					catch(Exception e)
+					{
+						getComponent().getLogger().log(Level.WARNING, "Exception in query goal Supplier.get() implementation: "+e);
+					}
+				}
+				
+				if(result!=null)
+				{
+					queryConditionTriggered(result);
+				}
+				else
+				{
+					setProcessingState(GoalProcessingState.INPROCESS);
+				}
 			}
 			else
 			{
@@ -858,7 +880,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	public void targetConditionTriggered(/*IEvent event, IRule<Void> rule, Object context*/)
 	{
 		// If not declarative query goal but is supplier -> store current result.
-		if(!mgoal.query() && getPojo() instanceof Supplier<?>)
+		if(result==null && getPojo() instanceof Supplier<?>)
 		{
 			result	= ((Supplier<?>)getPojo()).get();
 		}

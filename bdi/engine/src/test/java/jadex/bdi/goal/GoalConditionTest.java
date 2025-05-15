@@ -178,6 +178,41 @@ public class GoalConditionTest
 	}
 
 	@Test
+	public void	testNoPlanProceduralQueryGoal()
+	{
+		@BDIAgent
+		class GoalQueryAgent
+		{
+			List<String>	executions	= new ArrayList<>();
+			
+			@Goal
+			class StartGoal	implements Supplier<String>
+			{
+				public String get()
+				{
+					return "value";
+				}
+			}
+
+			// Goal should be immediately succeeded, so this shouldn't execute.
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process2(StartGoal goal)
+			{
+				executions.add("wrong");
+			}
+		}
+		
+		GoalQueryAgent	pojo	= new GoalQueryAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		String value	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		assertEquals("value", value);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		assertEquals(0, pojo.executions.size());
+	}
+
+	@Test
 	public void	testProceduralQueryGoal()
 	{
 		@BDIAgent
