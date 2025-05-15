@@ -77,7 +77,6 @@ public class TestCreationScope
 			@Plan(trigger=@Trigger(goals=MyCapa1.MyGoal.class))
 			void	myPlan(MyCapa2 capa)
 			{
-				System.out.println("executed");
 				result.setResult(capa);
 			}
 		}

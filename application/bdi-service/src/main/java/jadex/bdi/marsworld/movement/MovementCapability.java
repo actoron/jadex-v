@@ -119,7 +119,7 @@ public class MovementCapability
 		 */
 		public Missionend(MovementCapability capa)
 		{
-			System.out.println("Missionend: "+capa.getMyself());
+//			System.out.println("Missionend: "+capa.getMyself());
 			this.capa = capa;
 		}
 		

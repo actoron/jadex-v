@@ -358,7 +358,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		{
 			if(adopted)
 			{
-				((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).removeGoal(this, contextfetchers);
+				((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).removeGoal(this);
 				getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, modelname}), this));
 			}
 			

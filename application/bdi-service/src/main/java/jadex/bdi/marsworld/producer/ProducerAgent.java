@@ -20,8 +20,7 @@ import jadex.future.IFuture;
 //	@RequiredService(name="carryser", type=ICarryService.class) 
 //})
 @Plan(trigger=@Trigger(goals=ProducerAgent.ProduceOre.class), impl=ProduceOrePlan.class)
-@Plan(trigger=@Trigger(factadded="mytargets"), impl=InformNewTargetPlan.class)
-//@Plan(trigger=@Trigger(factadded="movecapa.mytargets"), impl=InformNewTargetPlan.class)
+@Plan(trigger=@Trigger(factadded="movecapa.mytargets"), impl=InformNewTargetPlan.class)
 public class ProducerAgent extends BaseAgent implements IProduceService
 {
 	public ProducerAgent(String envid)
@@ -46,8 +45,7 @@ public class ProducerAgent extends BaseAgent implements IProduceService
 			this.target = target;
 		}
 		
-//		@GoalDropCondition(beliefs="movecapa.missionend")
-		@GoalDropCondition(beliefs="missionend")
+		@GoalDropCondition(beliefs="movecapa.missionend")
 		public boolean checkDrop()
 		{
 			return movecapa.isMissionend();

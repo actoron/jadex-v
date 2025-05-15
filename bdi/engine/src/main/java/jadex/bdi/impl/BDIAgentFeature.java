@@ -165,6 +165,11 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 //		String fname = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
 		
+		if(model.getBelief(name)==null)
+		{
+			throw new IllegalArgumentException("No such belief: "+name);
+		}
+		
 		List<EventType> events = new ArrayList<EventType>();
 		events.add(new EventType(new String[]{ChangeEvent.FACTCHANGED, name}));
 		events.add(new EventType(new String[]{ChangeEvent.FACTADDED, name}));
@@ -304,7 +309,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		
 		if(rplan.getPojo()!=null)
 		{
-			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos(), rplan, contextfetchers);
+			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos(), null, rplan, contextfetchers);
 		}
 	}
 	
@@ -319,13 +324,13 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/**
 	 *  Remove a plan after it has finished.
 	 */
-	public void removePlan(RPlan rplan, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public void removePlan(RPlan rplan)
 	{
 		plans.remove(rplan);
 
 		if(rplan.getPojo()!=null)
 		{
-			((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rplan.getAllPojos(), rplan, contextfetchers);
+			((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rplan.getAllPojos(), rplan);
 		}
 	}
 
@@ -348,7 +353,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		}
 		typedgoals.add(rgoal);
 		
-		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), rgoal, contextfetchers);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), null, rgoal, contextfetchers);
 	}
 	
 	/**
@@ -362,10 +367,10 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/**
 	 *  Remove a Goal after it is dropped.
 	 */
-	public void removeGoal(RGoal rgoal, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public void removeGoal(RGoal rgoal)
 	{
 		goals.get(rgoal.getPojo().getClass()).remove(rgoal);
-		((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rgoal.getAllPojos(), rgoal, contextfetchers);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rgoal.getAllPojos(), rgoal);
 	}
 	
 	/**
@@ -527,7 +532,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/**
 	 *  Add a capability.
 	 */
-	protected void	addCapability(List<Object> pojos)
+	protected void	addCapability(List<Object> pojos, List<String> path)
 	{
 		// Add to known sub-objects
 		List<Class<?>>	pojoclazzes	= new ArrayList<>();
@@ -542,7 +547,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		// TODO: support multiple instances of same capability?
 		capabilities.put(pojoclazzes, pojos);
 		
-		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null, null);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, path, null, null);
 	}
 	
 	public List<Object> getCapability(List<Class<?>> parentclazzes)

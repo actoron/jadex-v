@@ -56,7 +56,7 @@ public class MethodPlanBody implements IPlanBody
 		}
 		finally
 		{
-			((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).removePlan(rplan, contextfetchers);			
+			((BDIAgentFeature)rplan.getComponent().getFeature(IBDIAgentFeature.class)).removePlan(rplan);			
 		}
 	}
 }

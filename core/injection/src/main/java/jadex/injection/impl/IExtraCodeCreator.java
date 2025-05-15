@@ -16,9 +16,11 @@ public interface IExtraCodeCreator
 	 *  @param pojotypes	The type of the component pojo and potential subobject pojos.
 	 *  					The extra code is for the last pojo in the list.
 	 *  
+	 *  @param path			Optional path name(s) if this model is a named subobject (e.g. capability). 
+	 *  
 	 *  @param contextfetchers	The context specific value fetchers.
 	 *  
 	 *  @return A handle for extra code or null, when this creator doesn't match.
 	 */
-	public List<IInjectionHandle>	getExtraCode(List<Class<?>> pojotypes, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers);
+	public List<IInjectionHandle>	getExtraCode(List<Class<?>> pojotypes, List<String> path, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers);
 }

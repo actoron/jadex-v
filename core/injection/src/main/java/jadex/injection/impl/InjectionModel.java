@@ -36,9 +36,12 @@ public class InjectionModel
 {
 	static IInjectionHandle	NULL	= (self, pojos, context, oldval) -> null;
 	
-	 /** The pojo classes as a hierarchy of component pojo plus subobjects, if any.
-	  *  The model is for the last pojo in the list. */
+	/** The pojo classes as a hierarchy of component pojo plus subobjects, if any.
+	 *  The model is for the last pojo in the list. */
 	protected List<Class<?>>	classes;
+	
+	/** Optional path name(s) if this model is a named subobject (e.g. capability). */
+	protected List<String>	path;
 	
 	/** The context specific value fetchers. */
 	protected Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers;
@@ -67,9 +70,10 @@ public class InjectionModel
 	/**
 	 *  Create injection model for given stack of pojo classes.
 	 */
-	protected InjectionModel(List<Class<?>> classes, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	protected InjectionModel(List<Class<?>> classes, List<String> path, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
 		this.classes	= classes;
+		this.path	= path;
 		this.contextfetchers	= contextfetchers;
 	}
 	
@@ -146,7 +150,7 @@ public class InjectionModel
 			{
 				if(preinject==null)
 				{
-					preinject	= unifyHandles(getPreInjectHandles(classes, contextfetchers));
+					preinject	= unifyHandles(getPreInjectHandles(classes, path, contextfetchers));
 				}
 			}
 		}
@@ -165,7 +169,7 @@ public class InjectionModel
 			{
 				if(postinject==null)
 				{
-					postinject	= unifyHandles(getPostInjectHandles(classes, contextfetchers));
+					postinject	= unifyHandles(getPostInjectHandles(classes, path, contextfetchers));
 				}
 			}
 		}
@@ -304,26 +308,26 @@ public class InjectionModel
 	/**
 	 *  Get the model for a stack of pojo objects.
 	 */
-	public static InjectionModel	get(List<Object> pojos, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public static InjectionModel	get(List<Object> pojos, List<String> path, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
 		List<Class<?>>	key	= new ArrayList<Class<?>>(pojos.size());
 		for(Object pojo: pojos)
 		{
 			key.add(pojo!=null ? pojo.getClass() : Object.class);
 		}
-		return getStatic(key, contextfetchers);
+		return getStatic(key, path, contextfetchers);
 	}
 	
 	/**
 	 *  Get the model for a stack of pojo classes.
 	 */
-	public static InjectionModel	getStatic(List<Class<?>> key, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public static InjectionModel	getStatic(List<Class<?>> key, List<String> path, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
 		synchronized(cache)
 		{
 			if(!cache.containsKey(key))
 			{
-				cache.put(key, new InjectionModel(key, contextfetchers));
+				cache.put(key, new InjectionModel(key, path, contextfetchers));
 			}
 			return cache.get(key);
 		}
@@ -894,12 +898,12 @@ public class InjectionModel
 	/**
 	 * Other features can add their handles that get executed before field injections.
 	 */
-	protected static List<IInjectionHandle>	getPreInjectHandles(List<Class<?>> pojoclazzes, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
+	protected static List<IInjectionHandle>	getPreInjectHandles(List<Class<?>> pojoclazzes, List<String> path, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
 	{
 		List<IInjectionHandle>	ret	= new ArrayList<>();
 		for(IExtraCodeCreator extra: pre_inject)
 		{
-			ret.addAll(extra.getExtraCode(pojoclazzes, contextfetchers));
+			ret.addAll(extra.getExtraCode(pojoclazzes, path, contextfetchers));
 		}
 		return ret;
 	}
@@ -919,12 +923,12 @@ public class InjectionModel
 	/**
 	 * Other features can add their handles that get executed after field injection and before @OnStart methods.
 	 */
-	protected static List<IInjectionHandle>	getPostInjectHandles(List<Class<?>> pojoclazzes, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
+	protected static List<IInjectionHandle>	getPostInjectHandles(List<Class<?>> pojoclazzes, List<String> path, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
 	{
 		List<IInjectionHandle>	ret	= new ArrayList<>();
 		for(IExtraCodeCreator extra: post_inject)
 		{
-			ret.addAll(extra.getExtraCode(pojoclazzes, contextfetchers));
+			ret.addAll(extra.getExtraCode(pojoclazzes, path, contextfetchers));
 		}
 		return ret;
 	}
