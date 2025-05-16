@@ -180,7 +180,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				ret.add((comp, pojos, context, oldval) ->
 				{
 					ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
-					feature.addService(pojos.get(pojos.size()-1), null, services);
+					feature.addService(pojos, pojos.get(pojos.size()-1), null, services);
 					return null;
 				});
 			}
@@ -219,7 +219,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 							throw new RuntimeException("No value for provided service: "+getter.member());
 						}
 						ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
-						feature.addService(value, getter.member().getName(), fservices);
+						feature.addService(pojos, value, getter.member().getName(), fservices);
 						return null;
 					});
 				}

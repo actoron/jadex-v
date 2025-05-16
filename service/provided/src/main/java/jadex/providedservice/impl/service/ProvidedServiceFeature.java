@@ -3,7 +3,6 @@ package jadex.providedservice.impl.service;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -196,7 +195,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	/**
 	 *  Register a service.
 	 */
-	public void	addService(Object pojo, String name, Map<Class<?>, ProvideService> interfaces)
+	public void	addService(List<Object> parents, Object pojo, String name, Map<Class<?>, ProvideService> interfaces)
 	{
 		if(services==null)
 		{
@@ -219,10 +218,12 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 				lservices.add(service);
 			}
 			
-			// If service pojo is not the component pojo -> handle injection in service pojo as well
-			if(pojo!=self.getPojo())
+			// If service pojo is not the last parent pojo -> handle injection in service pojo as well
+			// else last parent directly implements the service
+			if(pojo!=parents.get(parents.size()-1))
 			{
-				List<Object>	pojos	= Arrays.asList(new Object[]{self.getPojo(), pojo});	// TODO: recursive sub-services
+				List<Object>	pojos	= new ArrayList<>(parents);
+				pojos.add(pojo);
 				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null, null, null);
 			}
 			
