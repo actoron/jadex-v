@@ -137,7 +137,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 	public class MakeProposal	implements Supplier<Integer>
 	{
 		protected String cfp;
-		protected int proposal;
+		protected Integer proposal	= null;
 		
 		/**
 		 *  Create a new MakeProposal. 

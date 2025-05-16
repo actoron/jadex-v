@@ -216,6 +216,8 @@ public class BuyerAgent implements INegotiationAgent
 				return o1.getSecondEntity().compareTo(o2.getSecondEntity());
 			}
 		});
+		
+//		System.out.println("proposals for "+order+": "+Arrays.asList(proposals));
 
 		// Do we have a winner?
 		if(proposals.length>0 && proposals[0].getSecondEntity().intValue()<=acceptable_price)
