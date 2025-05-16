@@ -7,7 +7,6 @@ import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IFutureCommandResultListener;
@@ -189,7 +188,7 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 		else
 		{
 			// Debug caller thread
-			String trace = "Component("+ExecutionFeature.LOCAL.get()+") ";
+//			String trace = "Component("+ExecutionFeature.LOCAL.get()+") ";
 			//String trace = SUtil.getExceptionStacktrace(new RuntimeException("stack trace").fillInStackTrace());
 			
 			// Differentiate between exception in listener (true) and exception before invocation (false)
@@ -219,11 +218,12 @@ public class ComponentResultListener<E> implements IResultListener<E>, IFutureCo
 				.then(x -> ret.setResult(null))
 				.catchEx(ex0 ->
 				{
-					if(!invoked[0])
-					{
-						System.out.println("schedule forward1: "+notification+"\n"+trace);
-						//Starter.scheduleRescueStep(access.getId(), () -> invocation.get());
-					}
+					// TODO why only terminate() in ComponentFutureFunctionality?
+//					if(!invoked[0])
+//					{
+//						System.out.println("schedule forward1: "+notification+"\n"+trace);
+//						//Starter.scheduleRescueStep(access.getId(), () -> invocation.get());
+//					}
 					
 					ret.setException(ex0);
 				});
