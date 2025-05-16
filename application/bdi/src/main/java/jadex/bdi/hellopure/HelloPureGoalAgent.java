@@ -16,10 +16,6 @@ import jadex.injection.annotation.OnStart;
 /**
  *  BDI agent that uses belief to trigger goal and execute plans.
  *  The goal has a target condition based on the state of its 'text' parameter.
- *  
- *  Pure BDI agent that is not bytecode enhanced. 
- *  This is achieved by using the baseclass BDIAgent that signals enhancement
- *  has already been done.
  */
 @BDIAgent
 public class HelloPureGoalAgent
@@ -30,7 +26,7 @@ public class HelloPureGoalAgent
 	@Goal
 	public class HelloGoal
 	{
-		@GoalParameter
+//		@GoalParameter
 		protected Val<String> text;
 		
 		@GoalCreationCondition(factchanged="sayhello")
@@ -39,7 +35,7 @@ public class HelloPureGoalAgent
 			this.text	= new Val<>(text);
 		}
 		
-		@GoalTargetCondition(parameters="text")
+		@GoalTargetCondition//(parameters="text")
 		public boolean checkTarget()
 		{
 			System.out.println("checkTarget: "+text);

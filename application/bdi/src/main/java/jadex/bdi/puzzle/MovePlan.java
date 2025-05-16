@@ -1,5 +1,6 @@
 package jadex.bdi.puzzle;
 
+import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
@@ -65,9 +66,9 @@ public class MovePlan
 	 *  The plan aborted code.
 	 */
 	@PlanAborted
-	void aborted(IPlan plan, MakeMoveGoal goal)
+	void aborted(IPlan plan, IGoal igoal, MakeMoveGoal goal)
 	{
-		print("Aborted "+move, goal.depth);
+		print((igoal.isSucceeded()?"Succeeded ":"Aborted ")+move, goal.depth);
 	}
 
 	/**
