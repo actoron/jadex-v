@@ -28,6 +28,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IBeliefListener;
+import jadex.bdi.ICapability;
 import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
 import jadex.bdi.Val;
@@ -177,6 +179,53 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 		}, Inject.class);
 		
+		// Fetch ICapability.
+		InjectionModel.addValueFetcher((pojotypes, valuetype, annotation) ->
+		{
+			IInjectionHandle	ret	= null;
+			
+			if(ICapability.class.equals(valuetype))
+			{
+				// Find capability in hierarchy
+				BDIModel	model	= BDIModel.getModel(pojotypes.get(0));
+				List<Class<?>>	test	= pojotypes;
+				while(!test.isEmpty())
+				{
+					if(model.getCapabilities().contains(test))
+					{
+						break;
+					}
+					test	= test.subList(0, test.size()-1);
+				}
+				
+				if(!test.isEmpty())
+				{
+					String	prefix	= model.getCapabilityPrefix(test);
+					
+					ret	= (comp, pojos, context, oldval) ->
+					{
+						IBDIAgentFeature	feat	= comp.getFeature(IBDIAgentFeature.class);
+						return new ICapability()
+						{
+							@Override
+							public <T> void addBeliefListener(String name, IBeliefListener<T> listener)
+							{
+								feat.addBeliefListener(prefix+name, listener);
+							}
+							
+							@Override
+							public <T> void removeBeliefListener(String name, IBeliefListener<T> listener)
+							{
+								feat.removeBeliefListener(prefix+name, listener);
+							}
+						};
+					};
+				}
+			}
+			
+			return ret;
+		}, Inject.class);
+		
 		InjectionModel.addPostInject((pojoclazzes, path, contextfetchers) ->
 		{
 			List<IInjectionHandle>	ret	= new ArrayList<>();
@@ -188,7 +237,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				return ret;
 			}
 			
+			BDIModel	model	= BDIModel.getModel(pojoclazzes.get(0));
 			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
+			
+			// Add dummy for outmost capability (i.e. agent)
+			if(pojoclazzes.size()==1)
+			{
+				model.addCapability(pojoclazzes, Collections.emptyList());
+			}
 			
 			// Add inner capabilities before processing outer stuff
 			List<Field>	capafields	= InjectionModel.findFields(pojoclazz, Capability.class);
@@ -199,6 +255,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				capaclazzes.add(capafield.getType());
 				List<String>	capanames	= path==null ? new ArrayList<>() : new ArrayList<>(path);
 				capanames.add(capafield.getName());
+				
+				model.addCapability(capaclazzes, capanames);
+				
 				InjectionModel	capamodel	= InjectionModel.getStatic(capaclazzes, capanames, contextfetchers);
 				capamodel.getPreInject();
 				capamodel.getPostInject();
@@ -405,7 +464,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// If outmost pojo (agent) -> start deliberation after all rules are added.
 			if(pojoclazzes.size()==1)
 			{
-				BDIModel	model	= BDIModel.getModel(pojoclazzes.get(0));
 				boolean	usedelib	= false;
 				for(Class<?> goaltype: model.getGoaltypes())
 				{

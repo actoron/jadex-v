@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
+import jadex.bdi.ICapability;
 import jadex.bdi.TestHelper;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
@@ -25,6 +26,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.injection.annotation.Inject;
 import jadex.rules.eca.ChangeInfo;
 
 /**
@@ -33,7 +35,7 @@ import jadex.rules.eca.ChangeInfo;
 public class TestBeliefNames
 {
 	@Test
-	public void testEventGeneration()
+	public void testGlobalBeliefListener()
 	{
 		class MyCapa
 		{
@@ -54,6 +56,45 @@ public class TestBeliefNames
 		handle.scheduleStep(comp ->
 		{
 			comp.getFeature(IBDIAgentFeature.class).addBeliefListener("capa.belief",
+				new IBeliefListener<String>()
+			{
+				@Override
+				public void factChanged(ChangeInfo<String> change)
+				{
+					result.setResult(change.getValue());
+				}
+			});
+			pojo.capa.belief.set("value");
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertEquals("value", result.get(TestHelper.TIMEOUT));
+	}
+	
+	@Test
+	public void testLocalBeliefListener()
+	{
+		class MyCapa
+		{
+			@Belief
+			Val<String>	belief	= new Val<>("initial");
+			
+			@Inject
+			ICapability	capa;
+		}
+		
+		@BDIAgent
+		class MyAgent
+		{
+			@Capability
+			MyCapa	capa	= new MyCapa();
+		}
+		
+		Future<String>	result	= new Future<>();
+		MyAgent	pojo	= new MyAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(comp ->
+		{
+			pojo.capa.capa.addBeliefListener("belief",
 				new IBeliefListener<String>()
 			{
 				@Override

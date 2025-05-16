@@ -5,7 +5,7 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
-import jadex.bdi.runtime.ICapability;
+import jadex.bdi.ICapability;
 import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.core.IThrowingConsumer;
@@ -13,16 +13,17 @@ import jadex.core.IThrowingConsumer;
 /**
  *  Frame for displaying of the customer gui.
  */
+@SuppressWarnings("serial")
 public class CustomerFrame extends JFrame
 {
 	/**
 	 *  Create a new frame.
 	 */
-	public CustomerFrame(IComponent agent, ICapability capa)
+	public CustomerFrame(IComponent agent, ICapability capa, CustomerCapability cust)
 	{
 		super(agent.getComponentHandle().getId().getLocalName());
 		
-		add(new CustomerPanel(agent, capa));
+		add(new CustomerPanel(agent, capa, cust));
 		pack();
 		setLocation(SGUI.calculateMiddlePosition(this));
 		setVisible(true);

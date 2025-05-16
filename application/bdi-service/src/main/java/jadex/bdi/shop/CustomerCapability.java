@@ -5,21 +5,21 @@ import java.util.List;
 
 import javax.swing.SwingUtilities;
 
+import jadex.bdi.ICapability;
+import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.annotation.Capability;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.ICapability;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Customer capability.
  */
-@Capability
-//TODO
+//@Capability
 //@RequiredServices({
 //	@RequiredService(name="localshopservices", type=IShopService.class, scope=ServiceScope.PLATFORM), //multiple=true,
 //	@RequiredService(name="remoteshopservices", type=IShopService.class, scope=ServiceScope.GLOBAL), // multiple=true,
@@ -29,44 +29,44 @@ public class CustomerCapability
 	//-------- attributes --------
 
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
-	
-	/** The capability. */
-	@Agent
-	protected ICapability capa;
 	
 	/** The inventory. */
 	@Belief
 	protected List<ItemInfo> inventory = new ArrayList<ItemInfo>();
+	
+	@Belief
+	protected Val<Double>	money	= new Val<>(100.0);
 	
 	//-------- constructors --------
 	
 	/**
 	 *  Called when the agent is started.
 	 */
-	public CustomerCapability()
+	@OnStart
+	public void	start(ICapability capa)
 	{
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			public void run()
 			{
-				new CustomerFrame(agent, capa);
+				new CustomerFrame(agent, capa, CustomerCapability.this);
 			}
 		});
 	}
 	
-	/**
-	 *  Get the money.
-	 */
-	@Belief
-	public native double getMoney();
-	
-	/**
-	 *  Set the money.
-	 */
-	@Belief
-	public native void setMoney(double money);
+//	/**
+//	 *  Get the money.
+//	 */
+//	@Belief
+//	public native double getMoney();
+//	
+//	/**
+//	 *  Set the money.
+//	 */
+//	@Belief
+//	public native void setMoney(double money);
 	
 	//-------- goals --------
 	
@@ -109,7 +109,7 @@ public class CustomerCapability
 	public void	buyItem(BuyItem big)
 	{
 		// Check if enough money to buy the item
-		if(getMoney()<big.price)
+		if(money.get()<big.price)
 			throw new RuntimeException("Not enough money to buy: "+big.name);
 		
 		// Buy the item at the shop (the shop is a service at another agent)
@@ -117,7 +117,7 @@ public class CustomerCapability
 		IFuture<ItemInfo>	future	= big.shop.buyItem(big.name, big.price);
 		System.out.println(agent.getId().getLocalName()+" getting item: "+future);
 		ItemInfo item = (ItemInfo)future.get();
-		System.out.println(agent.getId().getLocalName()+" bought item: "+item);
+		System.out.println(agent.getId().getLocalName()+" bought: "+item);
 		
 		// Update the customer inventory 
 		ItemInfo ii = null;
@@ -143,14 +143,6 @@ public class CustomerCapability
 		}
 		
 		// Update the account
-		setMoney(getMoney() - big.price);
-	}
-
-	/**
-	 * @return the capa
-	 */
-	public ICapability getCapability()
-	{
-		return capa;
+		money.set(money.get() - big.price);
 	}
 }

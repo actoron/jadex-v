@@ -2,37 +2,39 @@ package jadex.bdi.shop;
 
 import java.util.List;
 
+import jadex.bdi.Val;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
-import jadex.bdi.annotation.Mapping;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.core.IComponent;
-import jadex.micro.annotation.Agent;
 
 
 /**
- * 
+ *  Agent with both shop and customer capability.
  */
-@Agent(type="bdi")
+@BDIAgent
 public class ShopAndCustomerAgent
 {
 	//-------- attributes --------
 
-	/** The agent. */
-	@Agent
-	protected IComponent agent;
-	
 	/** The customer capability. */
-	@Capability(beliefmapping=@Mapping("money"))
+	@Capability//(beliefmapping=@Mapping("money"))
 	protected CustomerCapability customercap = new CustomerCapability();
 
 	/** The shop capability. */
-	@SuppressWarnings("unchecked")
-	@Capability(beliefmapping=@Mapping(value="money", target="money"))
-	protected ShopCapa shopcap = new ShopCapa((String)agent.getFeature(IBDIAgentFeature.class).getArgument("shopname"), 
-		(List<ItemInfo>)agent.getFeature(IBDIAgentFeature.class).getArgument("catalog"));
+	@Capability//(beliefmapping=@Mapping(value="money", target="money"))
+	protected ShopCapa shopcap;
 	
 	/** The money. */
 	@Belief
-	protected double money	= 100.0;
+	protected Val<Double>	money	= new Val<>(100.0);
+	
+	//-------- constructors --------
+	
+	/**
+	 *  Create a shop agent.
+	 */
+	public ShopAndCustomerAgent(String shopname, List<ItemInfo> catalog)
+	{
+		this.shopcap	= new ShopCapa(shopname, catalog);
+	}
 }

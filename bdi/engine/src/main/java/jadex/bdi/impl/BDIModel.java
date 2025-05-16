@@ -30,6 +30,9 @@ public class BDIModel
 	/** The known beliefs (name->value type, only for static checking, not used at runtime). */
 	protected Map<String, Class<?>>	beliefs	= new LinkedHashMap<>();
 	
+	/** The capabilities (path -> prefix). */
+	protected Map<List<Class<?>>, String>	capabilities	= new LinkedHashMap<>();	
+	
 	/**
 	 *  Get plan body for pojo class.
 	 */
@@ -116,6 +119,32 @@ public class BDIModel
 		return beliefs.get(name);
 	}
 	
+	/**
+	 *  Add a capability.
+	 */
+	protected void	addCapability(List<Class<?>> pojoclazzes, List<String> capanames)
+	{
+		String	prefix	= "";
+		for(String name: capanames.reversed())
+		{
+			prefix 	= name + "." + prefix;
+		}
+		capabilities.put(pojoclazzes, prefix);
+	}
+	
+	/**
+	 *  Get the capabilities.
+	 */
+	protected Set<List<Class<?>>>	getCapabilities()
+	{
+		return capabilities.keySet();
+	}
+	
+	public String getCapabilityPrefix(List<Class<?>> pojoclazzes)
+	{
+		return capabilities.get(pojoclazzes);
+	}
+
 	//-------- static part --------
 	
 	/** The cached bdi models.

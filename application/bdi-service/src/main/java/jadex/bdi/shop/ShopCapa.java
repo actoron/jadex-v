@@ -1,28 +1,23 @@
 package jadex.bdi.shop;
 
 import java.util.List;
+import java.util.function.Supplier;
 
+import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.annotation.Capability;
 import jadex.bdi.annotation.Goal;
-import jadex.bdi.annotation.GoalResult;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.providedservice.annotation.ProvideService;
 
 /**
  * 
  */
-@Capability
-// TODO
-//@ProvidedServices(@ProvidedService(type=IShopService.class, //	implementation=@Implementation(value=ShopService.class)))
-//	implementation=@Implementation(expression="new ShopService($pojocapa.getShopname())")))
+//@Capability
 public class ShopCapa
 {
 	@Belief
-	public native double getMoney();
-	
-	@Belief
-	public native void setMoney(double money);
+	protected Val<Double>	money	= new Val<>(100.0);
 	
 	/** The shop name. */
 	protected String shopname;
@@ -31,6 +26,9 @@ public class ShopCapa
 	@Belief
 	protected List<ItemInfo> catalog;
 	
+	@ProvideService
+	protected IShopService	shopserv;
+	
 	/**
 	 *  Create a shop capability.
 	 */
@@ -38,6 +36,7 @@ public class ShopCapa
 	{
 		this.shopname	= shopname;
 		this.catalog	= catalog;
+		this.shopserv	= new ShopService(shopname);
 	}
 	
 	/**
@@ -57,7 +56,7 @@ public class ShopCapa
 	}
 	
 	@Goal
-	public class SellGoal
+	public class SellGoal	implements Supplier<ItemInfo>
 	{
 		/** The text. */
 		protected String name;
@@ -66,7 +65,6 @@ public class ShopCapa
 		protected double price;
 		
 		/** The result. */
-		@GoalResult
 		protected ItemInfo result;
 
 		/**
@@ -100,7 +98,8 @@ public class ShopCapa
 		 *  Get the result.
 		 *  @return The result.
 		 */
-		public ItemInfo getResult()
+		@Override
+		public ItemInfo get()
 		{
 			return result;
 		}
@@ -149,7 +148,7 @@ public class ShopCapa
 //			getBeliefbase().getBeliefSet("catalog").modified(ii);
 			catalog.set(pos, ii);
 			
-			setMoney(getMoney()+goal.getPrice());
+			money.set(money.get()+goal.getPrice());
 		}
 		else
 		{
