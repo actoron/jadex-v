@@ -1,5 +1,7 @@
 package jadex.bdi.marsworld.sentry;
 
+import javax.swing.SwingUtilities;
+
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
@@ -13,6 +15,7 @@ import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Sentry;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability;
+import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.injection.annotation.OnStart;
@@ -31,8 +34,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 	@OnStart
 	public void start(IComponent agent)
 	{
-		// TODO
-//		SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
+		SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
 	}
 	
 	public IFuture<Void> announceNewTarget(Target target)

@@ -496,12 +496,20 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/**
 	 *  Remove goal from current subgoals.
 	 */
-	public void removeSubgoal(RGoal subgoal)
+	protected void removeSubgoal(RGoal subgoal)
 	{
 		if(subgoals!=null)
 		{
 			subgoals.remove(subgoal);
 		}
+	}
+	
+	/**
+	 *  Get current subgoal, if any.
+	 */
+	public Set<RGoal>	getSubgoals()
+	{
+		return subgoals;
 	}
 	
 	/**

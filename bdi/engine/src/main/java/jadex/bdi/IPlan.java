@@ -9,10 +9,10 @@ import jadex.future.ITerminableFuture;
  */
 public interface IPlan// extends IParameterElement, IFinishableElement<Object>  // todo: do not extend IParameterElement in case of non bdiv3x
 {
-//	/**
-//	 *  Get the id.
-//	 */
-//	public String getId();
+	/**
+	 *  Get the id.
+	 */
+	public String getId();
 	
 	/**
 	 *  Get the model name.

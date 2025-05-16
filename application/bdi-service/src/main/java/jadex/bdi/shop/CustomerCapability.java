@@ -11,6 +11,7 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
@@ -52,6 +53,7 @@ public class CustomerCapability
 			public void run()
 			{
 				new CustomerFrame(agent, capa, CustomerCapability.this);
+				new BDIViewer(agent.getComponentHandle()).setVisible(true);
 			}
 		});
 	}

@@ -1,5 +1,6 @@
 package jadex.bdi;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -18,12 +19,12 @@ public interface IBDIAgentFeature	extends IComponentFeature, ICapability
 	 */
 	public <T> Set<T> getGoals(Class<T> clazz);
 	
-//	/**
-//	 *  Get the current goals as api representation.
-//	 *  @return All currently instantiated goals.
-//	 */
-//	public Collection<IGoal> getGoals();
-//	
+	/**
+	 *  Get the current goals as api representation.
+	 *  @return All currently instantiated goals.
+	 */
+	public Collection<IGoal> getGoals();
+	
 //	/**
 //	 *  Get the goal api representation for a pojo goal.
 //	 *  @param goal The pojo goal.

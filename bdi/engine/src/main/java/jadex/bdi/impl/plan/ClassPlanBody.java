@@ -52,6 +52,7 @@ public class ClassPlanBody implements IPlanBody
 		IInjectionHandle precondition, IInjectionHandle contextcondition, IInjectionHandle constructor,
 		IInjectionHandle body, IInjectionHandle passed, IInjectionHandle failed, IInjectionHandle aborted)
 	{
+		this.planname	= planname;
 		this.contextfetchers	= contextfetchers;
 		this.precondition	= precondition;
 		this.contextcondition	= contextcondition;

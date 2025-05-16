@@ -19,6 +19,7 @@ import jadex.math.IVector2;
 /**
  *  Panel for showing the cleaner world view as provided by sensor.
  */
+@SuppressWarnings("serial")
 class SensorPanel extends JPanel
 {
 	//-------- attributes --------

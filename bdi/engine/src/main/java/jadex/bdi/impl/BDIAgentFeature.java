@@ -2,6 +2,7 @@ package jadex.bdi.impl;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -12,6 +13,7 @@ import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
+import jadex.bdi.IGoal;
 import jadex.bdi.IGoal.GoalLifecycleState;
 import jadex.bdi.impl.goal.EasyDeliberationStrategy;
 import jadex.bdi.impl.goal.RGoal;
@@ -159,6 +161,21 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		}
 		return ret==null ? Collections.emptySet() : ret;
 	}
+	
+	@Override
+	public Collection<IGoal> getGoals()
+	{
+		List<IGoal>	ret	= new ArrayList<>();
+		if(goals!=null)
+		{
+			for(Class<?> type: goals.keySet())
+			{
+				ret.addAll(goals.get(type));
+			}
+		}
+		return ret;
+	}
+	
 	
 	@Override
 	public <T> void addBeliefListener(String name, IBeliefListener<T> listener)

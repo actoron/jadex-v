@@ -28,11 +28,11 @@ public interface IGoal //extends IParameterElement, IFinishableElement<Void>
 		// Todo: ABORTED?
 	};
 	
-//	/**
-//	 *  Get the id.
-//	 */
-//	public String getId();
-//	
+	/**
+	 *  Get the id.
+	 */
+	public String getId();
+	
 //	/**
 //	 *  Drop the goal.
 //	 */

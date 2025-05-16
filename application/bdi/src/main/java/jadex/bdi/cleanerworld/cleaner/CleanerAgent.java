@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import javax.swing.SwingUtilities;
+
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
 import jadex.bdi.PlanFailureException;
@@ -31,6 +33,7 @@ import jadex.bdi.cleanerworld.environment.Waste;
 import jadex.bdi.cleanerworld.environment.Wastebin;
 import jadex.bdi.cleanerworld.ui.SensorGui;
 import jadex.bdi.impl.goal.ICandidateInfo;
+import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.environment.Environment;
 import jadex.environment.EnvironmentEvent;
@@ -158,7 +161,7 @@ public class CleanerAgent
 		if(sensorgui)
 		{
 			new SensorGui(agent.getComponentHandle()).setVisible(true);
-//			SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
+			SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
 		}
 		
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PerformLookForWaste());

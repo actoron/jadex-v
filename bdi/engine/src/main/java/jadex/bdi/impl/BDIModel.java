@@ -114,9 +114,17 @@ public class BDIModel
 	/**
 	 *  Get a belief (type) or null.
 	 */
-	protected Class<?>	getBelief(String name)
+	public Class<?>	getBelief(String name)
 	{
 		return beliefs.get(name);
+	}
+	
+	/**
+	 *  Get the beliefs
+	 */
+	public Set<String>	getBeliefs()
+	{
+		return beliefs.keySet();
 	}
 	
 	/**
