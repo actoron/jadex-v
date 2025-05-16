@@ -38,7 +38,7 @@ public class BpmnProvidedServiceFeature	implements IBpmnProvidedServiceFeature, 
 				Object	service	= createServiceImplementation(info, self.getValueProvider());
 				Class<?>	type	= info.getType().getType(self.getClassLoader(), mf.getModel().getAllImports());
 				Map<Class<?>, ProvideService>	types	= Collections.singletonMap(type, null);
-				psf.addService(service, info.getName(), types);
+				psf.addService(Collections.singletonList(self.getPojo()), service, info.getName(), types);
 			}
 		}
 	}
