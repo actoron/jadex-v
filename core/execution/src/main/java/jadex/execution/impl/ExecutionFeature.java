@@ -609,7 +609,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							}
 							
 							// Stop this thread, because there are no more steps -> set executing=false
-							else if(steps.isEmpty() && !terminated)
+							else if(!terminated && steps.isEmpty())
 							{
 								// decrement only if not resume step (otherwise decremented already)
 								if(!failed && threadcount.decrementAndGet()<0)
@@ -915,11 +915,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					((StepInfo)step).getFuture().setExceptionIfUndone(ex);
 				}
 			}
-			steps.clear();
+//			steps.clear();
+			steps	= null;
 		}
 		
 		// Drop queued timer tasks.
-		List<TimerTaskInfo> todo = new ArrayList<>();
+		List<TimerTaskInfo> todo = null;
 		TimerTaskInfo[] ttis;
 		synchronized(ExecutionFeature.class)
 		{
@@ -929,17 +930,25 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			{
 				if(getComponent().getId().equals(tti.getComponentId()))
 				{
+					if(todo==null)
+					{
+						todo	= new ArrayList<>();
+					}
 					todo.add(tti);
 					tti.getTask().cancel();
-					entries.remove(tti);
+//					entries.remove(tti);
 				}
 			}
+			entries	= null;
 		}
-		for(TimerTaskInfo tti: todo)
+		if(todo!=null)
 		{
-			if(ex==null)
-				ex	= new ComponentTerminatedException(getComponent().getId());
-			tti.getFuture().setExceptionIfUndone(ex);
+			for(TimerTaskInfo tti: todo)
+			{
+				if(ex==null)
+					ex	= new ComponentTerminatedException(getComponent().getId());
+				tti.getFuture().setExceptionIfUndone(ex);
+			}
 		}
 		
 		//System.out.println("terminate end");

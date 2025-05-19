@@ -156,7 +156,7 @@ public class Component implements IComponent
 	 */
 	public Collection<IComponentFeature>	getFeatures()
 	{
-		return features!=null ? (Collection<IComponentFeature>)features.values() : Collections.emptySet();
+		return features!=null ? features.values() : Collections.emptySet();
 	}
 	
 	/**

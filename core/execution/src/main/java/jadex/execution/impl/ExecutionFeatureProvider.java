@@ -89,7 +89,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		Future<T>	ret	= new Future<>();
 
 		// Fast Lambda Agent -> optimized lifecycle
-		if(SReflect.isSupertype(FastLambda.class, type))
+		if(FastLambda.class.isAssignableFrom(type))
 		{
 			exe.scheduleStep(() -> 
 			{

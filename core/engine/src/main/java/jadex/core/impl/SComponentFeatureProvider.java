@@ -2,7 +2,6 @@ package jadex.core.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -35,7 +34,7 @@ public class SComponentFeatureProvider
 			all.add(oprovider);
 		});
 		
-		// Classpath order undefined (differs betweenn gradle/eclipse
+		// Classpath order undefined (differs between gradle/eclipse
 		// -> order feature providers alphabetically by fully qualified class name 
 		all.sort((o1, o2) -> o1.getClass().getName().compareTo(o2.getClass().getName()));
 		ALL_PROVIDERS = orderComponentFeatures(all);
@@ -45,10 +44,10 @@ public class SComponentFeatureProvider
 	}
 			
 	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 
-	protected static final Map<Class<? extends Component>, Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>>	PROVIDERS_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
+	protected static final Map<Class<? extends Component>, Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>>	PROVIDERS_BY_TYPE	= new LinkedHashMap<>();
 	
 	/** The providers by type are calculated on demand and cached for further use (comp_type -> map of (feature_type -> provider)). */ 
-	protected static final Map<Class<? extends Component>, List<ComponentFeatureProvider<IComponentFeature>>>	PROVIDERLIST_BY_TYPE	= Collections.synchronizedMap(new LinkedHashMap<>());
+	protected static final Map<Class<? extends Component>, List<ComponentFeatureProvider<IComponentFeature>>>	PROVIDERLIST_BY_TYPE	= new LinkedHashMap<>();
 	
 	/**
 	 *  Helper method to get the providers, that are relevant for the given component type.
@@ -72,59 +71,62 @@ public class SComponentFeatureProvider
 		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	ret	= PROVIDERS_BY_TYPE.get(type);
 		if(ret==null)
 		{
-			ret	= new LinkedHashMap<>();
-			
-			// Collect feature providers for this component type
-			// Replaces early providers with later providers for the same feature (e.g. execfeature <- simexecfeature)
-			for(ComponentFeatureProvider<IComponentFeature> provider: ALL_PROVIDERS)
+			synchronized(PROVIDERS_BY_TYPE)
 			{
-				// Ignores providers for incompatible agent types (e.g. no micro features in gpmn agent)
-				if(provider.getRequiredComponentType().isAssignableFrom(type))
+				ret	= new LinkedHashMap<>();
+				
+				// Collect feature providers for this component type
+				// Replaces early providers with later providers for the same feature (e.g. execfeature <- simexecfeature)
+				for(ComponentFeatureProvider<IComponentFeature> provider: ALL_PROVIDERS)
 				{
-					// Check for conflict (two providers for same feature type)
-					if(ret.containsKey(provider.getFeatureType()))
+					// Ignores providers for incompatible agent types (e.g. no micro features in gpmn agent)
+					if(provider.getRequiredComponentType().isAssignableFrom(type))
 					{
-						if(provider.replacesFeatureProvider(ret.get(provider.getFeatureType())))
+						// Check for conflict (two providers for same feature type)
+						if(ret.containsKey(provider.getFeatureType()))
 						{
-							// Both want to replace each other -> fail
-							if(ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
+							if(provider.replacesFeatureProvider(ret.get(provider.getFeatureType())))
 							{
-								throw new IllegalStateException("Cyclic replacement of providers for same feature type: "
+								// Both want to replace each other -> fail
+								if(ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
+								{
+									throw new IllegalStateException("Cyclic replacement of providers for same feature type: "
+										+provider.getFeatureType().getName()+", "+ret.get(provider.getFeatureType())+", "+provider);
+								}
+								// new provider wants to replace existing -> replace
+								else
+								{
+									ret.put(provider.getFeatureType(), provider);
+								}
+							}
+							// existing provider wants to replace new -> nop
+							//else if(ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
+							
+							// no provider wants to replace the other -> fail
+							else if(!ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
+							{
+								throw new IllegalStateException("Two providers for same feature type: "
 									+provider.getFeatureType().getName()+", "+ret.get(provider.getFeatureType())+", "+provider);
 							}
-							// new provider wants to replace existing -> replace
-							else
-							{
-								ret.put(provider.getFeatureType(), provider);
-							}
 						}
-						// existing provider wants to replace new -> nop
-						//else if(ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
-						
-						// no provider wants to replace the other -> fail
-						else if(!ret.get(provider.getFeatureType()).replacesFeatureProvider(provider))
+						else
 						{
-							throw new IllegalStateException("Two providers for same feature type: "
-								+provider.getFeatureType().getName()+", "+ret.get(provider.getFeatureType())+", "+provider);
+							ret.put(provider.getFeatureType(), provider);
 						}
-					}
-					else
-					{
-						ret.put(provider.getFeatureType(), provider);
 					}
 				}
+				
+				ret = ret.values().stream().collect(
+				Collectors.toMap(
+					ComponentFeatureProvider::getFeatureType, 
+					element -> element, 
+					(existing, replacement) -> existing, 
+					LinkedHashMap::new)
+				);
+				
+				PROVIDERS_BY_TYPE.put(type, ret);
+				PROVIDERLIST_BY_TYPE.put(type, new ArrayList<>(ret.values()));
 			}
-			
-			ret = ret.values().stream().collect(
-			Collectors.toMap(
-				ComponentFeatureProvider::getFeatureType, 
-				element -> element, 
-				(existing, replacement) -> existing, 
-				LinkedHashMap::new)
-			);
-			
-			PROVIDERS_BY_TYPE.put(type, ret);
-			PROVIDERLIST_BY_TYPE.put(type, new ArrayList<>(ret.values()));
 		}
 		return ret;
 	}
