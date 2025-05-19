@@ -464,22 +464,27 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// If outmost pojo (agent) -> start deliberation after all rules are added.
 			if(pojoclazzes.size()==1)
 			{
-				boolean	usedelib	= false;
-				for(Class<?> goaltype: model.getGoaltypes())
+				if(!model.getGoaltypes().isEmpty())
 				{
-					Deliberation	delib	= model.getGoalInfo(goaltype).annotation().deliberation();
-					usedelib	= delib.inhibits().length>0 || delib.cardinalityone() || model.getGoalInfo(goaltype).instanceinhibs()!=null;
-					if(usedelib)
+					boolean	usedelib	= false;
+					for(Class<?> goaltype: model.getGoaltypes())
 					{
-						break;
+						Deliberation	delib	= model.getGoalInfo(goaltype).annotation().deliberation();
+						usedelib	= delib.inhibits().length>0 || delib.cardinalityone() || model.getGoalInfo(goaltype).instanceinhibs()!=null;
+						if(usedelib)
+						{
+							break;
+						}
 					}
+					
+					// If no delib -> still start strategy for simple option->active rule.
+					boolean	fusedelib	= usedelib;
+					ret.add((comp, pojos, context, oldval) ->
+					{
+						((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).startDeliberation(fusedelib);
+						return null;
+					});
 				}
-				boolean	fusedelib	= usedelib;
-				ret.add((comp, pojos, context, oldval) ->
-				{
-					((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).startDeliberation(fusedelib);
-					return null;
-				});
 			}
 			
 			return ret;

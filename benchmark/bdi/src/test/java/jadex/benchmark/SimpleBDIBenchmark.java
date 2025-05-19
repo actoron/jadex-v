@@ -30,4 +30,15 @@ public class SimpleBDIBenchmark
 			agent.terminate().get();
 		});
 	}
+
+	public static void	main(String[] args)
+	{
+		for(int i=0; i<10000; i++)
+		{
+			SimpleBDIBenchmarkAgent	pojo	= new SimpleBDIBenchmarkAgent();
+			IComponentManager.get().create(pojo).get();
+			pojo.inited.get();
+		}
+		IComponentManager.get().waitForLastComponentTerminated();
+	}
 }
