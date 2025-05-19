@@ -11,14 +11,13 @@ import jadex.bt.nodes.Node.NodeState;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.TerminableFuture;
 
 /**
  *  Benchmark creation and killing of bt agents with shared tree.
  */
-public class BTSharedAgentBenchmark 
+public class BTSharedAgentBenchmark	extends BaseTest
 {
 	public static class TestAgent implements IBTProvider 
 	{

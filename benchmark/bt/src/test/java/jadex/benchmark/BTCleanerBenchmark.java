@@ -1,7 +1,5 @@
 package jadex.benchmark;
 
-import java.lang.System.Logger.Level;
-
 import org.junit.jupiter.api.Test;
 
 import jadex.bt.cleanerworld.environment.CleanerworldEnvironment;
@@ -9,19 +7,15 @@ import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.environment.Environment;
 import jadex.future.Future;
-import jadex.logger.ILoggingFeature;
 
 /**
  *  Benchmark creation and killing of bt agents.
  */
-public class BTCleanerBenchmark 
+public class BTCleanerBenchmark	extends BaseTest
 {
 	static String envid;
 	static
 	{
-		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.ERROR);
-		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultAppLoggingLevel(Level.ERROR);
-
 		int fps = 5; // steps / frames per second
 		CleanerworldEnvironment env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
 		env.createWorld().get();
