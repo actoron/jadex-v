@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import jadex.core.IComponentManager;
 
 /**
- *  Benchmark plain MjComponent with included execution feature.
+ *  Benchmark simple lambda agent.
  */
 public class LambdaAgentBenchmark
 {
