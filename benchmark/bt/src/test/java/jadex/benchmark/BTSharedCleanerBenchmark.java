@@ -20,7 +20,7 @@ public class BTSharedCleanerBenchmark
 	static
 	{
 		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.ERROR);
-		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultAppLoggingLevel(Level.WARNING);
+		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultAppLoggingLevel(Level.ERROR);
 
 		int fps = 5; // steps / frames per second
 		CleanerworldEnvironment env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);

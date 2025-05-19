@@ -61,7 +61,7 @@ public class BTAgentBenchmark
 					an.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 					{ 
 						TerminableFuture<NodeState> fut = new TerminableFuture<>();
-						System.out.println("compos: "+ComponentManager.get().getNumberOfComponents());
+//						System.out.println("compos: "+ComponentManager.get().getNumberOfComponents());
 						//System.out.println("Hello from behavior trees: "+agent.getId()+" "+agent.getAppId());
 						//fut.setResult(NodeState.SUCCEEDED);
 						ret.setResult(null);

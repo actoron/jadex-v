@@ -235,7 +235,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		}
 		else
 		{
-			throw new RuntimeException("Cannot create lambda agent from: "+cid);
+			throw new RuntimeException("Cannot create lambda agent from: "+pojo);
 		}
 	
 		return ret;
