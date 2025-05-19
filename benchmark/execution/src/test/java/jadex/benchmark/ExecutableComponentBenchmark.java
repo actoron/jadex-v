@@ -26,4 +26,13 @@ public class ExecutableComponentBenchmark
 			return () -> comp.terminate().get();			
 		});
 	}
+
+	public static void	main(String[] args)
+	{
+		for(;;)
+		{
+//			Component.createComponent(Component.class, () -> new Component()).terminate().get();
+			new Component(null).terminate().get();
+		}
+	}
 }

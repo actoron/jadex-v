@@ -547,43 +547,51 @@ public class ComponentManager implements IComponentManager
 	
 	public void notifyEventListener(String type, ComponentIdentifier cid, String appid)
 	{
-		Runnable	notify	= () ->
-		{
-			Set<IComponentListener> mylisteners = null;
-			
-			synchronized(listeners)
-			{
-				Set<IComponentListener> ls = listeners.get(type);
-				if(ls!=null)
-					mylisteners = new HashSet<IComponentListener>(ls);
-			}
-			
-			if(mylisteners!=null)
-			{
-				if(COMPONENT_ADDED.equals(type))
-					mylisteners.stream().forEach(lis -> lis.componentAdded(cid));
-				else if(COMPONENT_REMOVED.equals(type))
-					mylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
-				else if(COMPONENT_LASTREMOVED.equals(type))
-					mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
-				else if(COMPONENT_LASTREMOVEDAPP.equals(type))
-					mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid, appid));
-			}
-		};
+		Set<IComponentListener> mylisteners = null;
 		
-		if(Component.isExecutable())
+		synchronized(listeners)
 		{
-			getGlobalRunner().getComponentHandle().scheduleStep(notify);
+			Set<IComponentListener> ls = listeners.get(type);
+			if(ls!=null)
+				mylisteners = new HashSet<IComponentListener>(ls);
 		}
-		else
+		
+		if(mylisteners!=null)
 		{
-			try
+			if(Component.isExecutable())
 			{
-				notify.run();
+				Set<IComponentListener> fmylisteners	= mylisteners;
+				Runnable	notify	= () ->
+				{
+					if(COMPONENT_ADDED.equals(type))
+						fmylisteners.stream().forEach(lis -> lis.componentAdded(cid));
+					else if(COMPONENT_REMOVED.equals(type))
+						fmylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
+					else if(COMPONENT_LASTREMOVED.equals(type))
+						fmylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
+					else if(COMPONENT_LASTREMOVEDAPP.equals(type))
+						fmylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid, appid));
+				};
+
+				getGlobalRunner().getComponentHandle().scheduleStep(notify);
 			}
-			catch(Exception e)
+			else
 			{
-				getLogger(Object.class).log(Level.INFO, "Exception in event notification: "+SUtil.getExceptionStacktrace(e));
+				try
+				{
+					if(COMPONENT_ADDED.equals(type))
+						mylisteners.stream().forEach(lis -> lis.componentAdded(cid));
+					else if(COMPONENT_REMOVED.equals(type))
+						mylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
+					else if(COMPONENT_LASTREMOVED.equals(type))
+						mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
+					else if(COMPONENT_LASTREMOVEDAPP.equals(type))
+						mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid, appid));
+				}
+				catch(Exception e)
+				{
+					getLogger(Object.class).log(Level.INFO, "Exception in event notification: "+SUtil.getExceptionStacktrace(e));
+				}
 			}
 		}
 	}
