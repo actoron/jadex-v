@@ -17,4 +17,12 @@ public class LambdaAgentBenchmark
 			IComponentManager.get().run(comp ->{return comp.getId();}).get();
 		});
 	}
+
+	public static void main(String[] args)
+	{
+		for(;;)
+		{
+			IComponentManager.get().run(comp ->{return comp.getId();}).get();
+		}
+	}
 }

@@ -2,8 +2,11 @@ package jadex.execution;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
+import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -76,20 +79,12 @@ public class LambdaAgent //extends Component
 	 *  Create a component and receive a result, when the body finishes.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	//public static <T> IFuture<T> create(Callable<T> body, ComponentIdentifier cid)
 	public static <T> Result<T> create(Callable<T> body, ComponentIdentifier cid, Application app)
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		try
-		{
-			addResultHandle(comp, res, body.getClass().getMethod("call").getAnnotatedReturnType().getAnnotations());
-			return new Result<T>(comp.getComponentHandle(), res);
-		}
-		catch(Exception e)
-		{
-			return new Result<T>(comp.getComponentHandle(), new Future<T>(e));
-		}
+		addResultHandle(comp, res, getAnnos(body.getClass()));
+		return new Result<T>(comp.getComponentHandle(), res);
 	}
 	
 	/**
@@ -100,32 +95,8 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		try
-		{
-			// Can be also explicitly declared with component type or just implicit (lambda) as object type
-			Method	m	= null;
-			try
-			{
-				m	= body.getClass().getMethod("apply", IComponent.class);
-			}
-			catch(Exception e)
-			{
-				try
-				{
-					m	= body.getClass().getMethod("apply", Object.class);
-				}
-				catch(Exception e2)
-				{
-				}
-			}
-			
-			addResultHandle(comp, res, m!=null ? m.getAnnotatedReturnType().getAnnotations() : null);
-			return new Result<T>(comp.getComponentHandle(), res);
-		}
-		catch(Exception e)
-		{
-			return new Result<T>(comp.getComponentHandle(), new Future<T>(e));
-		}
+		addResultHandle(comp, res, getAnnos(body.getClass()));
+		return new Result<T>(comp.getComponentHandle(), res);
 	}
 	
 	/**
@@ -166,6 +137,54 @@ public class LambdaAgent //extends Component
 		{
 			// Copy result on add
 			result.then(res -> ExecutionFeatureProvider.addResult(comp.getId(), "result", ExecutionFeatureProvider.copyVal(res, annos)));
+		}
+	}
+	
+	protected static Map<Class<?>, Annotation[]>	ANNOS	= new LinkedHashMap<>();
+	
+	/**
+	 *  Get annotations from method return type to check for NoCopy.
+	 */
+	protected static Annotation[]	getAnnos(Class<?> pojoclazz)
+	{
+		synchronized (ANNOS)
+		{
+			if(!ANNOS.containsKey(pojoclazz))
+			{
+				Method	m	= null;
+				
+				if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
+				{
+					// Can be also explicitly declared with component type or just implicit (lambda) as object type
+					try
+					{
+						m	= pojoclazz.getMethod("apply", IComponent.class);
+					}
+					catch(Exception e)
+					{
+						try
+						{
+							m	= pojoclazz.getMethod("apply", Object.class);
+						}
+						catch(Exception e2)
+						{
+						}
+					}
+				}
+				else	// Callable
+				{
+					try
+					{
+						m	= pojoclazz.getMethod("call");
+					}
+					catch(Exception e)
+					{
+					}
+				}
+				
+				ANNOS.put(pojoclazz, m!=null ? m.getAnnotatedReturnType().getAnnotations() : null);
+			}
+			return ANNOS.get(pojoclazz);
 		}
 	}
 }

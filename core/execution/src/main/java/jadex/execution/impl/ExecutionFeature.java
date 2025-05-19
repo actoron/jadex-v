@@ -4,8 +4,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Timer;
@@ -18,6 +20,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.core.ComponentIdentifier;
@@ -334,9 +337,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			Class<?> clazz = step instanceof ICallable
 				? ((ICallable)step).getFutureReturnType()
-				: step.getClass().getMethod("call").getReturnType();
+				: getReturnType(step.getClass());
 			
-			if(IFuture.class.equals(clazz))
+			if(clazz==null || IFuture.class.equals(clazz))
 				ret = new Future<T>();
 			else
 				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
@@ -363,18 +366,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			// TODO: use FutureFunctionaly.getReturnFuture
 			if(IFuture.class.equals(clazz))
 			{
-				// Check if apply is overridden with new return type
-				try
-				{
-					Method	m	= step.getClass().getMethod("apply", IComponent.class);
-					clazz	= m.getReturnType();
-				}
-				catch(NoSuchMethodException e)
-				{
-				}
+				clazz	= getReturnType(step.getClass());
 			}
 			
-			if(IFuture.class.equals(clazz))
+			if(clazz==null || IFuture.class.equals(clazz))
 			{
 				ret = new Future<T>();
 			}
@@ -1171,6 +1166,54 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					e.printStackTrace();
 				}
 			}
+		}
+	}
+
+	protected static Map<Class<?>, Class<?>>	RETURNTYPE	= new LinkedHashMap<>();
+	
+	/**
+	 *  Get return type from pojo method.
+	 */
+	protected static Class<?>	getReturnType(Class<?> pojoclazz)
+	{
+		synchronized (RETURNTYPE)
+		{
+			if(!RETURNTYPE.containsKey(pojoclazz))
+			{
+				Method	m	= null;
+				
+				if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
+				{
+					// Can be also explicitly declared with component type or just implicit (lambda) as object type
+					try
+					{
+						m	= pojoclazz.getMethod("apply", IComponent.class);
+					}
+					catch(Exception e)
+					{
+						try
+						{
+							m	= pojoclazz.getMethod("apply", Object.class);
+						}
+						catch(Exception e2)
+						{
+						}
+					}
+				}
+				else	// Callable
+				{
+					try
+					{
+						m	= pojoclazz.getMethod("call");
+					}
+					catch(Exception e)
+					{
+					}
+				}
+				
+				RETURNTYPE.put(pojoclazz, m!=null ? m.getReturnType() : null);
+			}
+			return RETURNTYPE.get(pojoclazz);
 		}
 	}
 }
