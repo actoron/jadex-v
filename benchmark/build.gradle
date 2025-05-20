@@ -25,6 +25,6 @@ task purge(type: Delete)
 {
 	delete fileTree('.')
 	{
-        include '**/.benchmark*/*'
+        include '**/.benchmark*/*Cleaner*Memory*'
     }
 }
