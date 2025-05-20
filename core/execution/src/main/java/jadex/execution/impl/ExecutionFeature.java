@@ -427,7 +427,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					//if(!this.cancel())
 					//	return;
 					
-					scheduleStep((Runnable)() -> ret.setResultIfUndone(null));
+					try
+					{
+						scheduleStep((Runnable)() -> ret.setResultIfUndone(null));
+					}
+					catch(ComponentTerminatedException e)
+					{
+						ret.setExceptionIfUndone(e);
+					}
 					
 					synchronized(ExecutionFeature.class)
 					{

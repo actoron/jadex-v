@@ -484,6 +484,7 @@ public class BTCleanerAgent implements IBTProvider
 	public void onEnd()
 	{
 		envfut.terminate();
+		env.removeSpaceObject(getSelf());
 	}
 	
 	public List<IVector2> getPatrolpoints()

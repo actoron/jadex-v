@@ -173,6 +173,7 @@ public class CleanerAgent
 	public void onEnd()
 	{
 		envfut.terminate();
+		env.removeSpaceObject(getSelf());
 	}
 	
 	/**

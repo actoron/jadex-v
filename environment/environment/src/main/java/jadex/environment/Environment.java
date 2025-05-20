@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import jadex.common.IFilter;
@@ -104,6 +105,15 @@ public class Environment
 		this.kdtree = new KdTree();
 		this.tasks = new ArrayList<EnvironmentTask>();
 		this.observers = new HashMap<>();
+		
+//		new Timer().scheduleAtFixedRate(new TimerTask()
+//		{
+//			@Override
+//			public void run()
+//			{
+//				System.out.println("\n "+spaceobjects.size()+"\t "+tasks.size()+"\t "+observers.size());
+//			}
+//		}, 5000, 5000);
 	}
 	
 	@OnStart
