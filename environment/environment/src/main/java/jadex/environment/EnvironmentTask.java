@@ -74,11 +74,13 @@ public class EnvironmentTask
 		
 		if(future!=null)
 		{
+//			System.out.println("env setcommand task: "+this);
 			future.setTerminationCommand(ex ->
 			{
-				//System.out.println("env removing task: "+this+" "+ex);
+//				System.out.println("env removing task: "+this+" "+ex);
 				handle.scheduleStep(agent ->
 				{
+//					System.out.println("env remove task: "+this+" "+ex);
 					env.removeTask(this);
 				});
 			});

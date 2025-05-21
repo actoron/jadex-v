@@ -115,7 +115,7 @@ public class Environment
 //			@Override
 //			public void run()
 //			{
-//				System.out.println("\n "+spaceobjects.size()+"\t "+tasks.size()+"\t "+observers.size());
+//				System.out.println("\n "+spaceobjects.size()+"\t "+spaceobjectsbytype.size()+"\t "+tasks.size()+"\t "+tasksbyspaceobject.size()+"\t "+observers.size());
 //			}
 //		}, 5000, 5000);
 	}

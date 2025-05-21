@@ -105,6 +105,15 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	@Override
 	public void onEnd()
 	{
+		// Abort all plans (terminates wait futures if any)
+		// TODO: generic future handler to terminate any futures on component end
+		if(plans!=null && !plans.isEmpty())
+		{
+			for(RPlan plan: plans.toArray(new RPlan[plans.size()]))
+			{
+				plan.abort();
+			}
+		}
 	}
 	
 	//-------- IBDIAgentFeature interface --------
