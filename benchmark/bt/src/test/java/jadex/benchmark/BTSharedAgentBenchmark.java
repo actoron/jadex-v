@@ -17,7 +17,7 @@ import jadex.future.TerminableFuture;
 /**
  *  Benchmark creation and killing of bt agents with shared tree.
  */
-public class BTSharedAgentBenchmark	extends BaseTest
+public class BTSharedAgentBenchmark
 {
 	public static class TestAgent implements IBTProvider 
 	{

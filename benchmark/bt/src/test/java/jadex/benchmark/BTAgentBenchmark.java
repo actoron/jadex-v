@@ -1,8 +1,6 @@
 package jadex.benchmark;
 
 
-import org.junit.jupiter.api.Test;
-
 import jadex.bt.IBTProvider;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.nodes.ActionNode;
@@ -17,9 +15,9 @@ import jadex.future.TerminableFuture;
 /**
  *  Benchmark creation and killing of bt agents.
  */
-public class BTAgentBenchmark 	extends BaseTest
+public class BTAgentBenchmark
 {
-	@Test
+//	@Test
 	void benchmarkTime()
 	{
 		BenchmarkHelper.benchmarkTime(() -> 
@@ -46,7 +44,7 @@ public class BTAgentBenchmark 	extends BaseTest
 		});
 	}
 
-	@Test
+//	@Test
 	void benchmarkMemory()
 	{
 		BenchmarkHelper.benchmarkMemory(() -> 

@@ -5,13 +5,13 @@ import java.util.ResourceBundle;
 /**
  *  Logger implementation that uses an internal and an external logger.
  */
-public class CombinedLogger implements System.Logger 
+public class CombinedLogger implements ISystemLogger
 {
-	protected final System.Logger ilogger;
-    protected final System.Logger elogger;
+	protected final ISystemLogger ilogger;
+    protected final ISystemLogger elogger;
     protected boolean system;
 
-    public CombinedLogger(System.Logger ilogger, System.Logger elogger, boolean system) 
+    public CombinedLogger(ISystemLogger ilogger, ISystemLogger elogger, boolean system) 
     {
         if(ilogger==null && elogger==null)
         	throw new NullPointerException();
@@ -73,5 +73,12 @@ public class CombinedLogger implements System.Logger
 		return "CombinedLogger [ilogger=" + ilogger + ", elogger=" + elogger + ", system=" + system + "]";
 	}
     
-   
+   @Override
+   public void setLevel(Level level)
+   {
+	   if(ilogger!=null)
+		   ilogger.setLevel(level);
+	   if(elogger!=null)
+		   elogger.setLevel(level);
+   }
 }

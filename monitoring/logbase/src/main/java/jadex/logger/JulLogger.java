@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 /**
  *  Logger implementation that uses java.util.logging.Logger
  */
-public class JulLogger implements java.lang.System.Logger
+public class JulLogger implements ISystemLogger
 {
     protected final java.util.logging.Logger logger;
 

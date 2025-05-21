@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 /**
  *  Graylog implementation of a logger.
  */
-public class GraylogLogger implements java.lang.System.Logger 
+public class GraylogLogger implements ISystemLogger
 {
     protected final java.util.logging.Logger logger;
 
@@ -52,5 +52,10 @@ public class GraylogLogger implements java.lang.System.Logger
     {
         logger.log(JulLogger.convertToJulLevel(level), msg, thrown);
     }
-
+    
+    @Override
+    public void setLevel(Level level)
+    {
+    	logger.setLevel(JulLogger.convertToJulLevel(level));
+    }
 }
