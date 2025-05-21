@@ -14,6 +14,8 @@ import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
 import jadex.common.SUtil;
+import jadex.core.IComponentManager;
+import jadex.logger.ILoggingFeature;
 import jadex.logger.OpenTelemetryLogHandler;
 import jadex.logger.OpenTelemetryLogger;
 
@@ -281,6 +283,12 @@ public class BenchmarkHelper
 			Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
 			
 			// Write to log
+			
+			// Hack!!! increase level when disabled by user (e.g. BTCleaner benchmarks)
+			ILoggingFeature	feat	= IComponentManager.get().getFeature(ILoggingFeature.class);
+			Level	level	= feat.getDefaultAppLogginglevel();
+			feat.setAppLoggingLevel(Level.INFO);
+			
 			// logfmt
 			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
 //				  "benchmark=true"
@@ -301,6 +309,8 @@ public class BenchmarkHelper
 //					+", \"benchmark_prev\": "+prev
 //					+", \"benchmark_pct\": "+pct
 //					+"}");
+			
+			feat.setAppLoggingLevel(level);
 			
 			// Hack!!! Force OpenTelemetry to push logs before exiting
 			OpenTelemetryLogHandler.forceFlush();
