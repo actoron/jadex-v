@@ -22,7 +22,7 @@ public class BTSharedCleanerBenchmark
 		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(Level.ERROR);
 		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(Level.WARNING);
 		
-		int fps = 5; // steps / frames per second
+		int fps = 0; // steps / frames per second: 0 -> disable steps
 		CleanerworldEnvironment env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
 		env.createWorld().get();
 		envid = Environment.add(env);

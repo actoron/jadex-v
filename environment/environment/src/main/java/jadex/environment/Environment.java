@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,7 +62,9 @@ public class Environment
 	protected Map<String, List<SpaceObject>> spaceobjectsbytype;
 	
 	protected List<EnvironmentTask> tasks;
-	
+
+	protected Map<SpaceObject, List<EnvironmentTask>> tasksbyspaceobject;
+
 	protected Map<SubscriptionIntermediateFuture<? extends EnvironmentEvent>, ObserverInfo> observers;
 
 	@Inject
@@ -102,6 +105,7 @@ public class Environment
 		this.areasize = new Vector2Double(1,1);
 		this.spaceobjects = new HashMap<String, SpaceObject>();
 		this.spaceobjectsbytype = new HashMap<String, List<SpaceObject>>();
+		this.tasksbyspaceobject	= new LinkedHashMap<>();
 		this.kdtree = new KdTree();
 		this.tasks = new ArrayList<EnvironmentTask>();
 		this.observers = new HashMap<>();
@@ -130,7 +134,10 @@ public class Environment
 			return TaskData.FALSE;
 		}));
 		
-		performStep(0);
+		if(sps>0)
+		{
+			performStep(0);
+		}
 	}
 	
 	@OnEnd
@@ -398,17 +405,27 @@ public class Environment
 	
 	protected boolean hasTask(String type, SpaceObject object)
 	{
-		return tasks.stream()
-			.filter(task -> type.equals(task.getType()))
-			.anyMatch(task -> object==null || object.equals(task.getOwner()));
+		boolean	ret	= false;
+		if(tasksbyspaceobject.containsKey(object))
+		{
+			ret	= tasksbyspaceobject.get(object).stream()
+				.filter(task -> type.equals(task.getType()))
+				.anyMatch(task -> true);
+		}
+		return ret;
 	}
 	
 	protected EnvironmentTask getTask(String type, SpaceObject object)
 	{
-	    return tasks.stream()
-	    	.filter(task -> type.equals(task.getType()) && (object==null || object.equals(task.getOwner())))
-	        .findFirst()
-	        .orElse(null); 
+		EnvironmentTask	ret	= null;
+		if(tasksbyspaceobject.containsKey(object))
+		{
+			ret	= tasksbyspaceobject.get(object).stream()
+				.filter(task -> type.equals(task.getType()))
+				.findFirst()
+				.orElse(null);
+		}
+		return ret;
 	}
 	
 	protected long internalGetStepDelay()
@@ -590,6 +607,11 @@ public class Environment
 	{
 		task.setId(""+objcnt.getAndIncrement());
 		tasks.add(task);
+		if(!tasksbyspaceobject.containsKey(task.owner))
+		{
+			tasksbyspaceobject.put(task.owner, new ArrayList<>());
+		}
+		tasksbyspaceobject.get(task.owner).add(task);
 	}
 	
 	protected void removeTask(EnvironmentTask task)
@@ -603,6 +625,14 @@ public class Environment
 			//System.out.println("task not found: "+task+" "+tasks);
 		//else
 		//	System.out.println("env removed task: "+task+" "+tasks);
+		if(tasksbyspaceobject.containsKey(task.owner))
+		{
+			tasksbyspaceobject.get(task.owner).remove(task);
+			if(tasksbyspaceobject.get(task.owner).isEmpty())
+			{
+				tasksbyspaceobject.remove(task.owner);
+			}
+		}
 	}
 	
 	protected TaskData performMove(SpaceObject obj, IVector2 destination, double speed, long deltatime, double tolerance)
