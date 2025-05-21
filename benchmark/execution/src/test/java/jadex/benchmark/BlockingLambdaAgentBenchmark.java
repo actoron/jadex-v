@@ -24,7 +24,7 @@ public class BlockingLambdaAgentBenchmark
 			});
 			ret.get();
 			agent.terminate().get();
-		});
+		}, 30);	// Slower due to Thread.yield() in Future.get()
 	}
 
 	public static void	main(String[] args)
