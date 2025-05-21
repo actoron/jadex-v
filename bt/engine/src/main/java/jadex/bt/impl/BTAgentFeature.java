@@ -156,6 +156,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	@Override
 	public void onEnd()
 	{
+		bt.abort(AbortMode.SUBTREE, NodeState.FAILED, context);
 	}
 	
 	protected void initVals()
