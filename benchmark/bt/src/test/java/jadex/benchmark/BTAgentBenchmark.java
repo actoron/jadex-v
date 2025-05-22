@@ -76,8 +76,8 @@ public class BTAgentBenchmark
 
 	public static void	main(String[] args)
 	{
-//		for(;;)
-		for(int i=0; i<10000; i++)
+		for(;;)
+//		for(int i=0; i<10000; i++)
 		{
 			Future<Void> ret = new Future<>();
 			IComponentHandle agent = IComponentManager.get().create(new IBTProvider()
@@ -97,8 +97,8 @@ public class BTAgentBenchmark
 				}
 			}).get();
 			ret.get();
-//			agent.terminate().get();
+			agent.terminate().get();
 		}
-		IComponentManager.get().waitForLastComponentTerminated();
+//		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

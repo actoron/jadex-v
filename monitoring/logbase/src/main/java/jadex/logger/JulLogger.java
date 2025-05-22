@@ -68,18 +68,33 @@ public class JulLogger implements ISystemLogger
 
     public static java.util.logging.Level convertToJulLevel(Level level) 
     {
+//    	// Start with INFO and WARNING for speed as these are mostly used
+//        if(level==Level.INFO)
+//            return java.util.logging.Level.INFO;
+//        if(level==Level.WARNING)
+//            return java.util.logging.Level.WARNING;
+//        if(level==Level.ERROR)
+//            return java.util.logging.Level.SEVERE;
+//        if(level==Level.TRACE)
+//            return java.util.logging.Level.FINEST;
+//        if(level==Level.DEBUG)
+//            return java.util.logging.Level.FINE;
+//        
+//        return java.util.logging.Level.INFO;
+            
         switch (level) 
         {
-            case TRACE:
-                return java.util.logging.Level.FINEST;
-            case DEBUG:
-                return java.util.logging.Level.FINE;
+        	// Start with INFO and WARNING for speed as these are mostly used
             case INFO:
                 return java.util.logging.Level.INFO;
             case WARNING:
                 return java.util.logging.Level.WARNING;
             case ERROR:
                 return java.util.logging.Level.SEVERE;
+            case TRACE:
+                return java.util.logging.Level.FINEST;
+            case DEBUG:
+                return java.util.logging.Level.FINE;
             default:
                 return java.util.logging.Level.INFO;
         }

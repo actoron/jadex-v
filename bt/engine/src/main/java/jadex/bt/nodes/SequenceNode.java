@@ -37,12 +37,12 @@ public class SequenceNode<T> extends CompositeNode<T>
     	
     	getNodeContext(context).incIndex();
     	//System.out.println("sequence executing child: "+getNodeContext(context).getIndex());
-  		System.getLogger(this.getClass().getName()).log(Level.INFO, "sequence executing child: "+this+" "+getNodeContext(context).getIndex());
+  		getLogger().log(Level.INFO, "sequence executing child: "+this+" "+getNodeContext(context).getIndex());
 
     	
     	if(getNodeContext(context).getIndex() < getChildCount()) 
     	{
-            System.getLogger(this.getClass().getName()).log(Level.INFO, "sequence child is: "+getChild(getNodeContext(context).getIndex()));
+            getLogger().log(Level.INFO, "sequence child is: "+getChild(getNodeContext(context).getIndex()));
             IFuture<NodeState> child = getChild(getNodeContext(context).getIndex()).execute(event, context);
             
             if(child.isDone())
@@ -57,13 +57,13 @@ public class SequenceNode<T> extends CompositeNode<T>
     	else if(getChildCount()==0 || getChildCount()==getNodeContext(context).getIndex())
     	{
     		//System.out.println("sequence succeeded: "+this);
-     		System.getLogger(this.getClass().getName()).log(Level.INFO, "sequence succeeded: "+this);
+     		getLogger().log(Level.INFO, "sequence succeeded: "+this);
     		ret.setResult(NodeState.SUCCEEDED);
     	}
     	else
     	{
     		//System.out.println("sequence failed: "+this);
-    		System.getLogger(this.getClass().getName()).log(Level.INFO, "sequence failed: "+this);
+    		getLogger().log(Level.INFO, "sequence failed: "+this);
     		ret.setResult(NodeState.FAILED);
     	}
     	
@@ -73,7 +73,7 @@ public class SequenceNode<T> extends CompositeNode<T>
     protected void handleResult(Event event, NodeState state, Future<NodeState> ret, ExecutionContext<T> context) 
     {
     	//System.out.println("seq node, child finished with: "+this+" "+state);
-    	System.getLogger(this.getClass().getName()).log(Level.INFO, "seq node, child finished with: "+this+" "+state);
+    	getLogger().log(Level.INFO, "seq node, child finished with: "+this+" "+state);
     	
     	if(state==NodeState.FAILED)
     	{
@@ -85,7 +85,7 @@ public class SequenceNode<T> extends CompositeNode<T>
     	else if(state==NodeState.SUCCEEDED)
     	{
     		//System.out.println("seq node, child success, next: "+this+" "+state);
-    		System.getLogger(this.getClass().getName()).log(Level.INFO, "seq node, child success, next: "+this+" "+state);
+    		getLogger().log(Level.INFO, "seq node, child success, next: "+this+" "+state);
     		executeNextChild(event, context).delegateTo(ret);
     	}
     } 

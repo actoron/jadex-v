@@ -1,28 +1,38 @@
 package jadex.bt.nodes;
 
+import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 import jadex.bt.INodeListener;
 import jadex.bt.decorators.Decorator;
 import jadex.bt.decorators.IDecorator;
 import jadex.bt.impl.Event;
-import jadex.bt.nodes.ParallelNode.ParallelNodeContext;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.common.SReflect;
 import jadex.future.Future;
-import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 
 public abstract class Node<T> implements IDecorator<T>
 {
 	public static AtomicInteger idgen = new AtomicInteger();
+	
+	// replace getLogger() for speed.
+	// TODO: specific loggers for subclasses? currently all mapped to system logger 
+	protected static Logger	logger;
+	protected static Logger	getLogger()
+	{
+		if(logger==null)
+		{
+			logger	= System.getLogger(Node.class.getName());
+		}
+		return logger;
+	}
 	
 	public enum NodeState 
 	{
@@ -150,7 +160,7 @@ public abstract class Node<T> implements IDecorator<T>
 				else
 				{
 					//System.out.println("execute newly called: "+this);
-					System.getLogger(this.getClass().getName()).log(Level.INFO, "execute newly called: "+Node.this);
+					getLogger().log(Level.INFO, "execute newly called: "+Node.this);
 					
 					//ret = new Future<>();
 					context.setCallFuture(ret);
@@ -162,14 +172,14 @@ public abstract class Node<T> implements IDecorator<T>
 					ret.then(state -> 
 					{
 						//System.out.println("node fini: "+state+" "+this+" "+ret);
-						System.getLogger(this.getClass().getName()).log(Level.INFO, "node fini: "+state+" "+Node.this+" "+ret);
+						getLogger().log(Level.INFO, "node fini: "+state+" "+Node.this+" "+ret);
 						context.setState(state);
 						notifyFinished(state, execontext);
 						
 					}).catchEx(ex -> 
 					{
 						//System.out.println("node fini failed: "+ex+" "+this);
-						System.getLogger(this.getClass().getName()).log(Level.INFO, "node fini failed: "+ex+" "+Node.this);
+						getLogger().log(Level.INFO, "node fini failed: "+ex+" "+Node.this);
 						context.setState(NodeState.FAILED);
 						notifyFinished(NodeState.FAILED, execontext);
 					});
@@ -183,7 +193,7 @@ public abstract class Node<T> implements IDecorator<T>
 		    			{
 			        		if(state!=NodeState.SUCCEEDED && state!=NodeState.FAILED)
 			        		{
-		    	        		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+state);
+		    	        		getLogger().log(java.lang.System.Logger.Level.WARNING, "Should only receive final state: "+state);
 		    	        		throw new RuntimeException("wrong final state: "+this);
 			        		}
 		
@@ -200,7 +210,7 @@ public abstract class Node<T> implements IDecorator<T>
 		    	};
 		        
 		    	//System.out.println("execution chain started: "+this);
-				System.getLogger(this.getClass().getName()).log(Level.INFO, "execution chain started: "+Node.this+" "+context.hashCode());
+				getLogger().log(Level.INFO, "execution chain started: "+Node.this+" "+context.hashCode());
 		
 		    	decorators.get(decorators.size()-1).internalExecute(event, NodeState.RUNNING, execontext).then(state -> doafter.accept(state)).catchEx(ex -> doafter.accept(NodeState.FAILED));
 			}
@@ -242,7 +252,7 @@ public abstract class Node<T> implements IDecorator<T>
 	            return;
 	        }
 
-	        System.getLogger(this.getClass().getName()).log(Level.INFO, "execute newly called: " + Node.this);
+	        getLogger().log(Level.INFO, "execute newly called: " + Node.this);
 	        context.setCallFuture(innerFuture);
 	        context.setState(NodeState.RUNNING);
 
@@ -312,7 +322,7 @@ public abstract class Node<T> implements IDecorator<T>
         }
         
     	//System.out.println("execute again called: "+this);
-		System.getLogger(this.getClass().getName()).log(Level.INFO, "execute again called: "+this);
+		getLogger().log(Level.INFO, "execute again called: "+this);
     	
         reset(execontext, false);  // First, reset the state of this node
         context.setState(NodeState.RUNNING);  // Set state to running again (reset sets to null)
@@ -322,8 +332,8 @@ public abstract class Node<T> implements IDecorator<T>
         // if not repeat that means a reexecution has been triggered by condition
         /*{
         	//System.out.println("execute assumes abort: "+this+", active children: "+getActiveChildCount(execontext));
-   			System.getLogger(this.getClass().getName()).log(Level.INFO, "execute assumes abort: "+this+", active children: "+getActiveChildCount(execontext));
-  			//System.getLogger(this.getClass().getName()).log(Level.INFO, "execute assumes abort: "+this+", active children: "+getActiveChildCount(execontext));
+   			getLogger().log(Level.INFO, "execute assumes abort: "+this+", active children: "+getActiveChildCount(execontext));
+  			//getLogger().log(Level.INFO, "execute assumes abort: "+this+", active children: "+getActiveChildCount(execontext));
 
    			// Then abort children to execute this node further
         	abort(AbortMode.SUBTREE, NodeState.FAILED, execontext).printOnEx(); // todo: is abort initiate sufficient?!
@@ -332,11 +342,11 @@ public abstract class Node<T> implements IDecorator<T>
         		//return ret;  // Return as execution is continued by the current context
         	else
         		//System.out.println("Keeping execution in abort as no children active");
-  				System.getLogger(this.getClass().getName()).log(Level.INFO, "Keeping execution in abort as no children active");
+  				getLogger().log(Level.INFO, "Keeping execution in abort as no children active");
         }*/
         
     	//System.out.println("execution chain started: "+this);
-		System.getLogger(this.getClass().getName()).log(Level.INFO, "execution chain started: "+this+" "+context.hashCode());
+		getLogger().log(Level.INFO, "execution chain started: "+this+" "+context.hashCode());
         
     	decorators.get(decorators.size()-1).internalExecute(event, NodeState.RUNNING, execontext).delegateTo(ret);
 	
@@ -384,7 +394,7 @@ public abstract class Node<T> implements IDecorator<T>
     		return IFuture.DONE;
        	
        	//System.out.println("abort: "+this+" "+context.getState()+" "+state);
-		System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: "+this+" "+context.getState()+" "+state);
+		getLogger().log(Level.INFO, "abort: "+this+" "+context.getState()+" "+state);
        	
        	//context.setAborted(abortmode);
     	
@@ -395,7 +405,7 @@ public abstract class Node<T> implements IDecorator<T>
     	ret.then(Void -> 
     	{
     		//System.out.println("abort fini: "+this+" "+abortmode);
-    		System.getLogger(this.getClass().getName()).log(Level.INFO, "abort fini: "+this+" "+abortmode);
+    		getLogger().log(Level.INFO, "abort fini: "+this+" "+abortmode);
     		//Thread.dumpStack();
     	}).printOnEx();
     	
@@ -417,7 +427,7 @@ public abstract class Node<T> implements IDecorator<T>
     	if(AbortMode.SELF==abortmode)
     	{
            	//System.out.println("abort: "+this+" "+context.getState()+" "+state);
-    		System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: "+this+" "+context.getState()+" "+state);
+    		getLogger().log(Level.INFO, "abort: "+this+" "+context.getState()+" "+state);
            	
            	//if(this.toString().indexOf("patrol")!=-1)
            	//	System.out.println("hererer");
@@ -454,7 +464,7 @@ public abstract class Node<T> implements IDecorator<T>
   		NodeContext<T> context = getNodeContext(execontext);
   		
   		//System.out.println("Node reset, clear context: "+this+" all="+all);
-   		System.getLogger(this.getClass().getName()).log(Level.INFO, "Node reset, clear context: "+this+" all="+all);
+   		getLogger().log(Level.INFO, "Node reset, clear context: "+this+" all="+all);
 
       	context.reset(all);
     }
@@ -462,7 +472,7 @@ public abstract class Node<T> implements IDecorator<T>
     public void succeed(ExecutionContext<T> execontext)
     {
     	//System.out.println("node succeeded: "+this);
-   		System.getLogger(this.getClass().getName()).log(Level.INFO, "node succeeded: "+this);
+   		getLogger().log(Level.INFO, "node succeeded: "+this);
 
     	abort(AbortMode.SELF, NodeState.SUCCEEDED, execontext);
     }
@@ -521,6 +531,7 @@ public abstract class Node<T> implements IDecorator<T>
 			return false;
 		if(getClass() != obj.getClass())
 			return false;
+		@SuppressWarnings("unchecked")
 		Node<T> other = (Node<T>)obj;
 		return id == other.id;
 	}
