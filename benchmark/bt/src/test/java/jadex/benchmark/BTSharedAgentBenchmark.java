@@ -72,7 +72,7 @@ public class BTSharedAgentBenchmark
 			IComponentHandle agent = IComponentManager.get().create(new TestAgent(ret)).get();
 			ret.get();
 			return () -> agent.terminate().get();
-		}, 50);
+		});
 	}
 
 }

@@ -37,7 +37,7 @@ public class BTSharedCleanerBenchmark
 			IComponentHandle agent = IComponentManager.get().create(new BTSharedCleanerBenchmarkAgent(ret, envid)).get();
 			ret.get();
 			agent.terminate().get();
-		}, 50);
+		});
 	}
 
 	@Test
@@ -49,6 +49,6 @@ public class BTSharedCleanerBenchmark
 			IComponentHandle agent = IComponentManager.get().create(new BTSharedCleanerBenchmarkAgent(ret, envid)).get();
 			ret.get();
 			return () -> agent.terminate().get();
-		}, 50);
+		});
 	}
 }
