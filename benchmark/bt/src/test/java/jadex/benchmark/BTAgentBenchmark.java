@@ -74,4 +74,31 @@ public class BTAgentBenchmark
 		});
 	}
 
+	public static void	main(String[] args)
+	{
+//		for(;;)
+		for(int i=0; i<10000; i++)
+		{
+			Future<Void> ret = new Future<>();
+			IComponentHandle agent = IComponentManager.get().create(new IBTProvider()
+			{
+				public Node<IComponent> createBehaviorTree()
+				{
+					ActionNode<IComponent> an = new ActionNode<>("hello");
+					an.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
+					{ 
+						TerminableFuture<NodeState> fut = new TerminableFuture<>();
+						//System.out.println("Hello from behavior trees: "+agent.getId()+" "+agent.getAppId());
+						//fut.setResult(NodeState.SUCCEEDED);
+						ret.setResult(null);
+						return fut;
+					}));
+					return an;
+				}
+			}).get();
+			ret.get();
+//			agent.terminate().get();
+		}
+		IComponentManager.get().waitForLastComponentTerminated();
+	}
 }

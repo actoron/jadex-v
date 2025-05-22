@@ -247,7 +247,8 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    		
 	    	   	if(callers==null)
 	    	   	{
-	    	   		callers	= Collections.synchronizedMap(new HashMap<ISuspendable, String[]>());
+	    	   		// Size one as normally only one listens on future 
+	    	   		callers	= Collections.synchronizedMap(new HashMap<ISuspendable, String[]>(1));
 	    	   	}
 	    	   	callers.put(caller, new String[] {CALLER_QUEUED});
 	    	   	suspend = true;
@@ -649,7 +650,8 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    		int cnt	= notificount!=null && notificount.containsKey(listener) ? notificount.get(listener) : 0;
 	    		if(notificount==null)
 	    		{
-	    			notificount	= new IdentityHashMap<IResultListener<E>, Integer>();
+	    			// Size one as normally only one listens on future 
+	    			notificount	= new IdentityHashMap<IResultListener<E>, Integer>(1);
 	    		}
 	    		notificount.put(listener, cnt+1);
     		}
@@ -823,7 +825,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    	else
 	    	{
     			if(listeners==null)
-    				listeners = new IdentityHashMap<>();
+    			{
+    				// Size one as normally only one listens on future 
+    				listeners = new IdentityHashMap<>(1);
+    			}
     			listeners.put(listener, null);	// Add listener but don't set notification thread until there is something to notify...
 	    	}
     	}
