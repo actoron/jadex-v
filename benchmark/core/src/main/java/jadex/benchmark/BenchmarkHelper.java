@@ -76,7 +76,7 @@ public class BenchmarkHelper
 		}
 		
 		int	msecs	= 500;
-		int	sleep	= 500;
+		int	sleep	= 1000;
 		int retries	= 10;
 		List<Long>	vals	= new ArrayList<>();
 		try
