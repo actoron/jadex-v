@@ -123,6 +123,20 @@ public class LambdaAgent //extends Component
 		return ret;
 	}
 	
+	public static	IFuture<Void> run(Runnable body)
+	{
+		Future<Void>	ret	= new Future<>();
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
+		return ret;
+	}
+	
+	public static	IFuture<Void> run(IThrowingConsumer<IComponent> body)
+	{
+		Future<Void>	ret	= new Future<>();
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
+		return ret;
+	}
+	
 	//-------- result handling --------
 
 	private static <T> void addResultHandle(Component comp, IFuture<T> result, Annotation... annos)

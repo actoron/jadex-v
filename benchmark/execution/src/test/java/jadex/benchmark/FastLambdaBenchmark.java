@@ -26,14 +26,15 @@ public class FastLambdaBenchmark
 		});
 	}
 	
-	@Test
-	void	benchmarkTime()
-	{
-		BenchmarkHelper.benchmarkTime(() -> 
-		{
-			LambdaAgent.run(comp ->{return comp.getId();}).get();
-		});
-	}
+	// Not needed anymore, because normal Lambda benchmark is now actually a FastLambda
+//	@Test
+//	void	benchmarkTime()
+//	{
+//		BenchmarkHelper.benchmarkTime(() -> 
+//		{
+//			LambdaAgent.run(comp ->{return comp.getId();}).get();
+//		});
+//	}
 
 	public static void main(String[] args)
 	{

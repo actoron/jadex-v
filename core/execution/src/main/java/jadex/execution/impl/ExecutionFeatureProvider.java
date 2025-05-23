@@ -115,17 +115,27 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						System.out.println("starting: "+lfeature);
 						lfeature.onStart();*/
 
-						Object	result;
+						Object	result	= null;
 						Object	pojo	= fself.getPojo();
 						if(pojo instanceof Callable)
 						{
 							result	= ((Callable<?>)pojo).call();							
 						}
-						else //if(pojo instanceof IThrowingFunction)
+						else if(pojo instanceof IThrowingFunction)
 						{
 							@SuppressWarnings("unchecked")
 							IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
 							result	= itf.apply(self);							
+						}
+						else if(pojo instanceof Runnable)
+						{
+							((Runnable)pojo).run();							
+						}
+						else //if(pojo instanceof IThrowingConsumer)
+						{
+							@SuppressWarnings("unchecked")
+							IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+							itc.accept(self);							
 						}
 						
 						if(fself.result!=null)
@@ -136,7 +146,14 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					catch(Exception e)
 					{
-						self.handleException(e);
+						if(fself.result!=null)
+						{
+							fself.result.setException(e);
+						}
+						else
+						{
+							self.handleException(e);
+						}
 					}
 					if(fself.terminate)
 					{
@@ -427,6 +444,20 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			@SuppressWarnings("unchecked")
 			IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
 			return LambdaAgent.run(itf);
+		}
+		else if(pojo instanceof Runnable)
+		{
+			@SuppressWarnings("unchecked")
+			IFuture<T>	ret	= (IFuture<T>) LambdaAgent.run((Runnable)pojo);
+			return ret;
+		}
+		else if(pojo instanceof IThrowingConsumer)
+		{
+			@SuppressWarnings("unchecked")
+			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+			@SuppressWarnings("unchecked")
+			IFuture<T>	ret	= (IFuture<T>) LambdaAgent.run(itc);
+			return ret;
 		}
 		else
 		{
