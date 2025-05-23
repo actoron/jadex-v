@@ -75,4 +75,14 @@ public class BTSharedAgentBenchmark
 		});
 	}
 
+	public static void	main(String[] args)
+	{
+		for(;;)
+		{
+			Future<Void> ret = new Future<>();
+			IComponentHandle agent = IComponentManager.get().create(new TestAgent(ret)).get();
+			ret.get();
+			agent.terminate().get();
+		}
+	}
 }

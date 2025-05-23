@@ -28,6 +28,7 @@ dependencies
 	api 'org.activecomponents.jadex:core:'+v
 	
 	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:traverser:'+v
 	
 	testFixturesImplementation 'org.activecomponents.jadex:common:'+v

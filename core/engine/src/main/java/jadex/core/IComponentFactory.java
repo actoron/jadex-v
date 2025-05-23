@@ -26,7 +26,7 @@ public interface IComponentFactory
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id.
+	 *  @param cid The component id or null for auto-generationm.
 	 *  @return The external access of the running component.
 	 */
 	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
@@ -37,7 +37,7 @@ public interface IComponentFactory
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id.
+	 *  @param cid The component id or null for auto-generationm.
 	 *  @param app The application context.
 	 *  @return The external access of the running component.
 	 */
@@ -88,18 +88,6 @@ public interface IComponentFactory
 		return run((Object)pojo);
 	}
 
-	
-	/**
-	 *  Usage of components as functions that terminate after execution.
-	 *  Create a component based on a function.
-	 *  @param pojo The callable.
-	 *  @return The execution result.
-	 */
-	public default <T> IFuture<T> run(IResultProvider pojo)
-	{
-		return run((Object)pojo);
-	}
-
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
@@ -108,37 +96,46 @@ public interface IComponentFactory
 	 */
 	public default <T> IFuture<T> run(Object pojo)
 	{
-		Future<T> ret = new Future<>();
-		IComponentHandle handle = create(pojo).get();
-		
-		// all run components that push notify on results will automatically get terminated after first result.
-		handle.subscribeToResults()
-			.next(r -> 
-			{
-//				System.out.println("received: "+r);	
-				handle.terminate();
-			});
-//			.catchEx(e -> {})	// NOP on unsupported operation exception
-
-		handle.waitForTermination().then(Void -> 
+		return run(pojo, null, null);
+	}
+	
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The pojo.
+	 *  @param cid The component id or null for auto-generationm.
+	 *  @return The execution result.
+	 */
+	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid)
+	{
+		return run(pojo, cid, null);
+	}
+	
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The pojo.
+	 *  @param cid The component id or null for auto-generationm.
+	 *  @return The execution result.
+	 */
+	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
+	{
+		if(pojo==null)
 		{
-			handle.getResults().then(res->
+			return new Future<>(new UnsupportedOperationException("No null pojo allowed for run()."));
+		}
+		else
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
 			{
-				if(res!=null && res.size()==1)
-				{
-					@SuppressWarnings("unchecked")
-					T	result	= (T)res.values().iterator().next();
-					ret.setResult(result);
-				}
-				else
-				{
-					ret.setException(new RuntimeException("no single result found: "+res));
-				}
-			})
-			.catchEx(e -> ret.setException(e));
-		});
-		
-		return ret;
+				return creator.run(pojo, cid, app);
+			}
+			else
+			{
+				return new Future<>(new RuntimeException("Could not create component: "+pojo));
+			}
+		}
 	}
 	
 	/**
