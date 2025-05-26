@@ -48,6 +48,7 @@ public class ComponentManager implements IComponentManager
 			{
 				if(instance == null)
 					instance = new ComponentManager();
+				instance.initFeatures();
 			}
 		}
 		return instance;
@@ -134,12 +135,15 @@ public class ComponentManager implements IComponentManager
 		}
 		
 		// Add default exception handler
-		getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (ex, comp) ->
+		if(getFeature(IErrorHandlingFeature.class)!=null)
 		{
-			System.out.println("Exception in user code of component; component will be terminated: "+comp.getId());
-			ex.printStackTrace();
-			comp.terminate();
-		});
+			getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (ex, comp) ->
+			{
+				System.out.println("Exception in user code of component; component will be terminated: "+comp.getId());
+				ex.printStackTrace();
+				comp.terminate();
+			});
+		}
 		
 		// remove default handler
 		//removeExceptionHandler(null, Exception.class);
@@ -176,6 +180,8 @@ public class ComponentManager implements IComponentManager
 	 */
 	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype)
 	{
+		System.out.println("getFeature: "+featuretype);
+		
 		IRuntimeFeature feature = featurecache.get(featuretype);
 		if (feature == null)
 		{
@@ -217,6 +223,46 @@ public class ComponentManager implements IComponentManager
 		@SuppressWarnings("unchecked")
 		T ret = (T) feature;
 		return ret;
+	}
+	
+	/**
+	 *  Init the non-lazy features.
+	 */
+	public void initFeatures()
+	{
+		try (IAutoLock l = featurecache.writeLock())
+		{
+			@SuppressWarnings("rawtypes")
+			Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
+			for (;it.hasNext();)
+			{
+				RuntimeFeatureProvider<IRuntimeFeature> prov = it.next();
+				
+				if(!prov.isLazyFeature())
+				{
+					Set<Class<? extends IRuntimeFeature>> preds = prov.getDependencies();
+					for (Class<?> pred : preds)
+					{
+						@SuppressWarnings("unchecked")
+						Class<IRuntimeFeature> cpred = (Class<IRuntimeFeature>) pred;
+						getFeature(cpred);
+					}
+					IRuntimeFeature feature = prov.createFeatureInstance();
+					featurecache.put(prov.getFeatureType(), feature);
+				}
+			}
+		}
+	}
+	
+	/**
+	 *  Test if a feature is present.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return True, if the feature is present, i.e. created.
+	 */
+	public boolean hasFeature(Class<?> featuretype)
+	{
+		return featurecache.get(featuretype)!=null;
 	}
 	
 	/**
