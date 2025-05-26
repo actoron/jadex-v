@@ -49,7 +49,7 @@ public class BTCleanerBenchmark
 			IComponentHandle agent = IComponentManager.get().create(new BTCleanerBenchmarkAgent(ret, envid)).get();
 			ret.get();
 			return () -> agent.terminate().get();
-		}, 100);
+		});
 	}
 	
 	public static void	main(String[] args)

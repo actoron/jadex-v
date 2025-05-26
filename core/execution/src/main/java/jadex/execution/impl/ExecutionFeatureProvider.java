@@ -1,13 +1,15 @@
 package jadex.execution.impl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import jadex.collection.WeakKeyValueMap;
 import jadex.common.IFilter;
 import jadex.common.NameValue;
 import jadex.common.SReflect;
@@ -35,6 +37,7 @@ import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.execution.StepAborted;
 import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 
 public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
@@ -111,14 +114,46 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						/*ILifecycle lfeature = (ILifecycle)feature;
 						System.out.println("starting: "+lfeature);
 						lfeature.onStart();*/
+
+						Object	result	= null;
+						Object	pojo	= fself.getPojo();
+						if(pojo instanceof Callable)
+						{
+							result	= ((Callable<?>)pojo).call();							
+						}
+						else if(pojo instanceof IThrowingFunction)
+						{
+							@SuppressWarnings("unchecked")
+							IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
+							result	= itf.apply(self);							
+						}
+						else if(pojo instanceof Runnable)
+						{
+							((Runnable)pojo).run();							
+						}
+						else //if(pojo instanceof IThrowingConsumer)
+						{
+							@SuppressWarnings("unchecked")
+							IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+							itc.accept(self);							
+						}
 						
-						Object	result	= fself.getPojo().apply(self);
 						if(fself.result!=null)
-							fself.result.setResult(result);
+						{
+							// TODO: unify with LambdaAgent result handle?
+							fself.result.setResult(copyVal(result, getAnnos(pojo.getClass())));
+						}
 					}
 					catch(Exception e)
 					{
-						self.handleException(e);
+						if(fself.result!=null)
+						{
+							fself.result.setException(e);
+						}
+						else
+						{
+							self.handleException(e);
+						}
 					}
 					if(fself.terminate)
 					{
@@ -247,7 +282,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 	
-	protected static Map<ComponentIdentifier, IResultProvider>	results	= new WeakHashMap<>();
+	protected static Map<ComponentIdentifier, IResultProvider>	results	= new WeakKeyValueMap<>();
 	
 	@Override
 	public Map<String, Object> getResults(IComponent comp)
@@ -345,5 +380,88 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			}
 		}
 		return false;
+	}
+	
+	protected static Map<Class<?>, Annotation[]>	ANNOS	= new LinkedHashMap<>();
+	
+	/**
+	 *  Get annotations from method return type to check for NoCopy.
+	 */
+	public static Annotation[]	getAnnos(Class<?> pojoclazz)
+	{
+		synchronized (ANNOS)
+		{
+			if(!ANNOS.containsKey(pojoclazz))
+			{
+				Method	m	= null;
+				
+				if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
+				{
+					// Can be also explicitly declared with component type or just implicit (lambda) as object type
+					try
+					{
+						m	= pojoclazz.getMethod("apply", IComponent.class);
+					}
+					catch(Exception e)
+					{
+						try
+						{
+							m	= pojoclazz.getMethod("apply", Object.class);
+						}
+						catch(Exception e2)
+						{
+						}
+					}
+				}
+				else	// Callable
+				{
+					try
+					{
+						m	= pojoclazz.getMethod("call");
+					}
+					catch(Exception e)
+					{
+					}
+				}
+				
+				ANNOS.put(pojoclazz, m!=null ? m.getAnnotatedReturnType().getAnnotations() : null);
+			}
+			return ANNOS.get(pojoclazz);
+		}
+	}
+	
+	@Override
+	public <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
+	{
+		if(pojo instanceof Callable)
+		{
+			@SuppressWarnings("unchecked")
+			Callable<T>	callable	= (Callable<T>)pojo;
+			return LambdaAgent.run(callable);
+		}
+		else if(pojo instanceof IThrowingFunction)
+		{
+			@SuppressWarnings("unchecked")
+			IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
+			return LambdaAgent.run(itf);
+		}
+		else if(pojo instanceof Runnable)
+		{
+			@SuppressWarnings("unchecked")
+			IFuture<T>	ret	= (IFuture<T>) LambdaAgent.run((Runnable)pojo);
+			return ret;
+		}
+		else if(pojo instanceof IThrowingConsumer)
+		{
+			@SuppressWarnings("unchecked")
+			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+			@SuppressWarnings("unchecked")
+			IFuture<T>	ret	= (IFuture<T>) LambdaAgent.run(itc);
+			return ret;
+		}
+		else
+		{
+			return new Future<>(new RuntimeException("Cannot run lambda agent from: "+pojo));
+		}
 	}
 }

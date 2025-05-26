@@ -1,7 +1,5 @@
 package jadex.execution.impl;
 
-import jadex.core.IComponent;
-import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
 import jadex.future.Future;
 
@@ -18,18 +16,10 @@ public class FastLambda<T>	extends Component
 	// Set to false for memory benchmarking
 	protected boolean	terminate;
 	
-	public FastLambda(IThrowingFunction<IComponent, T> body, Future<T> result, boolean terminate)
+	public FastLambda(Object body, Future<T> result, boolean terminate)
 	{
 		super(body);
 		this.terminate	= terminate;
 		this.result	= result;
-	}
-	
-	@Override
-	public IThrowingFunction<IComponent, T> getPojo()
-	{
-		@SuppressWarnings("unchecked")
-		IThrowingFunction<IComponent, T>	ret	= (IThrowingFunction<IComponent, T>)super.getPojo();
-		return ret;
 	}
 }

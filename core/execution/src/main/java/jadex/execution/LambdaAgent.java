@@ -1,12 +1,8 @@
 package jadex.execution;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
-import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -83,7 +79,7 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		addResultHandle(comp, res, getAnnos(body.getClass()));
+		addResultHandle(comp, res, ExecutionFeatureProvider.getAnnos(body.getClass()));
 		return new Result<T>(comp.getComponentHandle(), res);
 	}
 	
@@ -95,7 +91,7 @@ public class LambdaAgent //extends Component
 	{
 		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
 		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		addResultHandle(comp, res, getAnnos(body.getClass()));
+		addResultHandle(comp, res, ExecutionFeatureProvider.getAnnos(body.getClass()));
 		return new Result<T>(comp.getComponentHandle(), res);
 	}
 	
@@ -113,9 +109,30 @@ public class LambdaAgent //extends Component
 	
 	//-------- Fast Lambda methods --------
 	
+	public static <T>	IFuture<T> run(Callable<T> body)
+	{
+		Future<T>	ret	= new Future<>();
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
+		return ret;
+	}
+	
 	public static <T>	IFuture<T> run(IThrowingFunction<IComponent, T> body)
 	{
 		Future<T>	ret	= new Future<>();
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
+		return ret;
+	}
+	
+	public static	IFuture<Void> run(Runnable body)
+	{
+		Future<Void>	ret	= new Future<>();
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
+		return ret;
+	}
+	
+	public static	IFuture<Void> run(IThrowingConsumer<IComponent> body)
+	{
+		Future<Void>	ret	= new Future<>();
 		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
 		return ret;
 	}
@@ -137,54 +154,6 @@ public class LambdaAgent //extends Component
 		{
 			// Copy result on add
 			result.then(res -> ExecutionFeatureProvider.addResult(comp.getId(), "result", ExecutionFeatureProvider.copyVal(res, annos)));
-		}
-	}
-	
-	protected static Map<Class<?>, Annotation[]>	ANNOS	= new LinkedHashMap<>();
-	
-	/**
-	 *  Get annotations from method return type to check for NoCopy.
-	 */
-	protected static Annotation[]	getAnnos(Class<?> pojoclazz)
-	{
-		synchronized (ANNOS)
-		{
-			if(!ANNOS.containsKey(pojoclazz))
-			{
-				Method	m	= null;
-				
-				if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
-				{
-					// Can be also explicitly declared with component type or just implicit (lambda) as object type
-					try
-					{
-						m	= pojoclazz.getMethod("apply", IComponent.class);
-					}
-					catch(Exception e)
-					{
-						try
-						{
-							m	= pojoclazz.getMethod("apply", Object.class);
-						}
-						catch(Exception e2)
-						{
-						}
-					}
-				}
-				else	// Callable
-				{
-					try
-					{
-						m	= pojoclazz.getMethod("call");
-					}
-					catch(Exception e)
-					{
-					}
-				}
-				
-				ANNOS.put(pojoclazz, m!=null ? m.getAnnotatedReturnType().getAnnotations() : null);
-			}
-			return ANNOS.get(pojoclazz);
 		}
 	}
 }
