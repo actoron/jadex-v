@@ -266,6 +266,90 @@ public class ComponentManager implements IComponentManager
 	}
 	
 	/**
+	 *  Add a runtime feature.
+	 *  @param feature The feature
+	 */
+	public void addFeature(IRuntimeFeature feature)
+	{
+	     Class<? extends IRuntimeFeature> type = resolveFeatureInterface(feature.getClass());
+	     addFeature((Class<IRuntimeFeature>)type, feature);
+	}
+	
+	/**
+	 *  Add a runtime feature.
+	 *  @param type The feature type.
+	 *  @param feature The feature.
+	 */
+	public void addFeature(Class<? extends IRuntimeFeature> type, IRuntimeFeature feature)
+	{
+	     featurecache.put((Class<IRuntimeFeature>)type, feature);
+	}
+
+    private Class<? extends IRuntimeFeature> resolveFeatureInterface(Class<?> implClass) 
+    {
+        Set<Class<? extends IRuntimeFeature>> interfaces = new HashSet<>();
+
+        for (Class<?> iface : implClass.getInterfaces()) 
+        {
+            collectRuntimeFeatureInterfaces(iface, interfaces);
+        }
+
+        Class<?> superclass = implClass.getSuperclass();
+        while (superclass != null) 
+        {
+            for (Class<?> iface : superclass.getInterfaces()) 
+                collectRuntimeFeatureInterfaces(iface, interfaces);
+            superclass = superclass.getSuperclass();
+        }
+
+        Set<Class<? extends IRuntimeFeature>> mostspec = getMostSpecificInterfaces(interfaces);
+
+        if (mostspec.size() == 1) 
+        {
+            return mostspec.iterator().next();
+        } 
+        else if (mostspec.isEmpty()) 
+        {
+            throw new IllegalArgumentException("No interface extending IRuntimeFeature found for class " + implClass.getName());
+        } 
+        else 
+        {
+            throw new IllegalArgumentException("Multiple unrelated interfaces extending IRuntimeFeature found: " + mostspec);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void collectRuntimeFeatureInterfaces(Class<?> iface, Set<Class<? extends IRuntimeFeature>> result) 
+    {
+        if (!iface.isInterface()) return;
+        
+        if (IRuntimeFeature.class.isAssignableFrom(iface)) 
+            result.add((Class<? extends IRuntimeFeature>) iface);
+
+        for (Class<?> parent : iface.getInterfaces()) 
+            collectRuntimeFeatureInterfaces(parent, result);
+    }
+
+    private Set<Class<? extends IRuntimeFeature>> getMostSpecificInterfaces(Set<Class<? extends IRuntimeFeature>> interfaces) 
+    {
+        Set<Class<? extends IRuntimeFeature>> result = new HashSet<>(interfaces);
+
+        for (Class<? extends IRuntimeFeature> a : interfaces) 
+        {
+            for (Class<? extends IRuntimeFeature> b : interfaces) 
+            {
+                if (a != b && a.isAssignableFrom(b)) 
+                {
+                    result.remove(a); // a is more generic than b -> remove
+                }
+            }
+        }
+
+        return result;
+    }
+	
+	
+	/**
 	 *  Returns the process identifier of the Java process.
 	 *  
 	 *  @return Process identifier of the Java process.

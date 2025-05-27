@@ -45,6 +45,27 @@ public interface IComponentManager extends IComponentFactory
 	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype);
 	
 	/**
+	 *  Add a runtime feature.
+	 *  @param feature The feature
+	 */
+	public void addFeature(IRuntimeFeature feature);
+	
+	/**
+	 *  Add a runtime feature.
+	 *  @param type The feature type.
+	 *  @param feature The feature.
+	 */
+	public void addFeature(Class<? extends IRuntimeFeature> type, IRuntimeFeature feature);
+	
+	/**
+	 *  Test if a feature is present.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return True, if the feature is present, i.e. created.
+	 */
+	public boolean hasFeature(Class<?> featuretype);
+	
+	/**
 	 *  Sets the class loader used by components.
 	 *  @param classloader The class loader that components should use.
 	 */
