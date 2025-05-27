@@ -180,7 +180,7 @@ public class ComponentManager implements IComponentManager
 	 */
 	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype)
 	{
-		System.out.println("getFeature: "+featuretype);
+//		System.out.println("getFeature: "+featuretype);
 		
 		IRuntimeFeature feature = featurecache.get(featuretype);
 		if (feature == null)
