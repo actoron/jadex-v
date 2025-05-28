@@ -12,6 +12,8 @@ import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.core.IRuntimeFeature;
+import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.ILifecycle;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.InjectionFeature;
@@ -230,8 +232,14 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 			// Finally make the services publicly available
 			for(IService service: lservices)
 			{
+				// Add as feature if it is a runtime feature
+				if(SReflect.isSupertype(IRuntimeFeature.class, service.getServiceId().getServiceType().getType0()))
+				{
+					((ComponentManager)IComponentManager.get()).addFeature((IRuntimeFeature) service);
+				}
+				
 				ServiceRegistry.getRegistry().addLocalService(service);
-			}
+			}			
 		}
 	}
 

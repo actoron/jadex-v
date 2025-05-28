@@ -28,6 +28,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:classreader:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
+    implementation 'org.activecomponents.jadex:autostart:'+v
     implementation 'org.activecomponents.jadex:core:'+v
     implementation 'org.activecomponents.jadex:execution:'+v
     implementation 'org.activecomponents.jadex:injection:'+v
