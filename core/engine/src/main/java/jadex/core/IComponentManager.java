@@ -51,6 +51,12 @@ public interface IComponentManager extends IComponentFactory
 	public void addFeature(IRuntimeFeature feature);
 	
 	/**
+	 *  Remove a runtime feature.
+	 *  @param type The feature type.
+	 */
+	public void removeFeature(Class<IRuntimeFeature> type);
+	
+	/**
 	 *  Add a runtime feature.
 	 *  @param type The feature type.
 	 *  @param feature The feature.

@@ -347,7 +347,15 @@ public class ComponentManager implements IComponentManager
 
         return result;
     }
-	
+    
+    /**
+	 *  Remove a runtime feature.
+	 *  @param type The feature type.
+	 */
+	public void removeFeature(Class<IRuntimeFeature> type)
+	{
+		featurecache.remove(type);
+	}
 	
 	/**
 	 *  Returns the process identifier of the Java process.
