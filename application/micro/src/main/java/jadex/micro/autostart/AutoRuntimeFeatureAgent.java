@@ -7,11 +7,11 @@ import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 
-public class AutoRuntimeFeatureAgent	//implements IAutoRuntimeFeature
+public class AutoRuntimeFeatureAgent	implements IAutoRuntimeFeature
 {
 	@Inject	IComponent component;
 	
-//	@Override
+	@Override
 	public IFuture<String> getCompName()
 	{
 		return new Future<>(component.getId().getLocalName());
@@ -20,13 +20,22 @@ public class AutoRuntimeFeatureAgent	//implements IAutoRuntimeFeature
 	@OnStart
 	protected void onStart()
 	{
+		completed.setResult(null);
 		System.out.println("Created AutoRuntimeFeatureAgent: " + component.getId());
 	}
 
+	static Future<Void> completed = new Future<>();
+	
 	public static void main(String[] args)
 	{
 		System.out.println("AutoRuntimeFeatureAgent main method called.");
-		IComponentManager.get().run(comp -> comp.getId()).get();
-		System.out.println("AutoRuntimeFeatureAgent main method end.");
+		IComponentManager.get();
+		
+		// Ensure the component manager is initialized before accessing features.
+		completed.get(); // Wait for the agent to be created and onStart to be called.
+		
+		System.out.println("AutoRuntimeFeatureAgent main getting feature.");
+		String	name	= IComponentManager.get().getFeature(IAutoRuntimeFeature.class).getCompName().get();
+		System.out.println("AutoRuntimeFeatureAgent main method end: " + name);
 	}
 }
