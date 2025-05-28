@@ -230,8 +230,8 @@ public class ComponentManager implements IComponentManager
 	 */
 	public void initFeatures()
 	{
-		try (IAutoLock l = featurecache.writeLock())
-		{
+		//try (IAutoLock l = featurecache.writeLock())
+		//{
 			@SuppressWarnings("rawtypes")
 			Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
 			for (;it.hasNext();)
@@ -248,10 +248,13 @@ public class ComponentManager implements IComponentManager
 						getFeature(cpred);
 					}
 					IRuntimeFeature feature = prov.createFeatureInstance();
-					featurecache.put(prov.getFeatureType(), feature);
+					try (IAutoLock l = featurecache.writeLock())
+					{
+						featurecache.put(prov.getFeatureType(), feature);
+					}
 				}
 			}
-		}
+		//}
 	}
 	
 	/**
