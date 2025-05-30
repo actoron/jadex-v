@@ -472,7 +472,9 @@ public class Component implements IComponent
 		else
 		{
 			@SuppressWarnings("unchecked")
-			BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getFeature(IErrorHandlingFeature.class).getExceptionHandler(exception, this);
+			BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get()
+				.getFeature(IErrorHandlingFeature.class)
+				.getExceptionHandler(exception, this);
 			handler.accept(exception, this);
 		}
 	}

@@ -7,5 +7,5 @@ import jadex.providedservice.annotation.Service;
 @Service
 public interface IAutoRuntimeFeature	extends IRuntimeFeature
 {
-	public IFuture<String>	getCompName();
+	public IFuture<String>	getComponentName();
 }

@@ -46,7 +46,7 @@ public class TestFeatureStart
     @Test
     public void testAutostartFeaturePresent() 
     {
-        assertTrue(((ComponentManager)IComponentManager.get()).hasFeature(IAutostartFeature.class),
+        assertTrue(((ComponentManager)IComponentManager.get()).getFeature(IAutostartFeature.class)!=null,
         	"Autostart feature should be present");
     }
 

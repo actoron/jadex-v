@@ -2,6 +2,7 @@ package jadex.future;
 
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -1528,5 +1529,13 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		}
 		
 		return ret;
+	}
+	
+	public static IFuture<Void> all(Collection<IFuture<?>> futs)
+	{
+		FutureBarrier<?> bar = new FutureBarrier<>();
+		for(IFuture<?> fut: futs)
+			bar.add((Future)fut);
+		return bar.waitFor();
 	}
 }

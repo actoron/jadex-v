@@ -12,7 +12,7 @@ public class AutoRuntimeFeatureAgent	implements IAutoRuntimeFeature
 	@Inject	IComponent component;
 	
 	@Override
-	public IFuture<String> getCompName()
+	public IFuture<String> getComponentName()
 	{
 		return new Future<>(component.getId().getLocalName());
 	}
@@ -35,7 +35,7 @@ public class AutoRuntimeFeatureAgent	implements IAutoRuntimeFeature
 		completed.get(); // Wait for the agent to be created and onStart to be called.
 		
 		System.out.println("AutoRuntimeFeatureAgent main getting feature.");
-		String	name	= IComponentManager.get().getFeature(IAutoRuntimeFeature.class).getCompName().get();
+		String	name	= IComponentManager.get().getFeature(IAutoRuntimeFeature.class).getComponentName().get();
 		System.out.println("AutoRuntimeFeatureAgent main method end: " + name);
 	}
 }

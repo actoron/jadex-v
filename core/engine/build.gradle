@@ -37,6 +37,8 @@ dependencies
 	implementation 'org.activecomponents.jadex:idgenerator:'+v
 	//implementation 'org.activecomponents.jadex:errorhandling:'+v
 	
+	//implementation 'io.github.classgraph:classgraph:4.8.179'
+	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }

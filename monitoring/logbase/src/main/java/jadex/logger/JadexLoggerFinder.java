@@ -43,7 +43,9 @@ public class JadexLoggerFinder extends LoggerFinder
 		
 		if(iprov!=null || eprov!=null)
 		{
+			//System.out.println("logger finder before log feat");
 			ILoggingFeature logf = IComponentManager.get().getFeature(ILoggingFeature.class);
+			//System.out.println("logger finder after log feat");
 			Collection<LoggerCreator> lcs = logf.getLoggerCreators();
 			
 			LoggerCreator sysc = lcs.stream().filter(c -> c.system() && c.filter()==null).findFirst().orElse(null);

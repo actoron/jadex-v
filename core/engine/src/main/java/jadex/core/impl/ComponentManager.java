@@ -24,6 +24,8 @@ import jadex.core.IComponentListener;
 import jadex.core.IComponentManager;
 import jadex.core.IRuntimeFeature;
 import jadex.errorhandling.IErrorHandlingFeature;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Singleton class providing general information for supporting components.
@@ -35,6 +37,70 @@ import jadex.errorhandling.IErrorHandlingFeature;
 public class ComponentManager implements IComponentManager
 {
 	private static volatile ComponentManager instance;
+	
+	//private static Set<Class<? extends IRuntimeFeature>> knownfeatures = new HashSet<>();
+	
+	// todo: make configurable!
+	/*static 
+	{
+		long start = System.currentTimeMillis();
+		
+		String javacp = System.getProperty("java.class.path");
+	    String sep = System.getProperty("path.separator");
+	    /*List<String> fcp = Arrays.stream(javacp.split(sep))
+	    	.filter(path -> !path.contains("/java") && !path.contains("jdk") && !path.contains("jre"))
+	    	.collect(Collectors.toList());
+	    String fcps = String.join(sep, fcp);* /
+	    
+	    List<String> fcp = Arrays.stream(javacp.split(sep))
+		    .filter(path -> 
+		    {
+		        String lower = path.toLowerCase();
+		        return !lower.contains("/java") &&
+		               !lower.contains("jdk") &&
+		               !lower.contains("jre") &&
+		               !lower.contains("rt.jar") &&
+		               !lower.contains("tools.jar") &&
+		               !lower.contains("sun") &&
+		               !lower.contains("com.sun") &&
+		               !lower.contains("oracle") &&
+		               !lower.contains("ext") &&
+		               !lower.contains("modules");
+		    })
+		    .collect(Collectors.toList());
+	    String fcps = String.join(sep, fcp);
+	    
+	    System.out.println("javacp: "+javacp);
+	    System.out.println("fcp: "+fcps);
+	    
+	    //ClassLoader cl = ComponentManager.class.getClassLoader();
+	    //List<URL> urls = SUtil.getClasspathURLs(cl, true);
+	    //System.out.println("urls: "+urls);
+
+	    try (ScanResult res = new ClassGraph()
+	    	.enableClassInfo()
+	    	.overrideClasspath(fcps)
+	        //.overrideClasspath(urls.toArray(new URL[0]))
+	        .scan()) 
+	    {
+	    	for (ClassInfo ci : res.getClassesImplementing(IRuntimeFeature.class.getName())) 
+            {
+                if (!ci.isInterface() && !ci.isAbstract()) 
+                {
+                    Class<?> cls = ci.loadClass();
+                    if (IRuntimeFeature.class.isAssignableFrom(cls)) 
+                    {
+                        knownfeatures.add((Class<? extends IRuntimeFeature>) cls);
+                    }
+                }
+            }
+	    }
+
+		long end = System.currentTimeMillis();
+		
+		System.out.println("found feature types: "+knownfeatures);
+		System.out.println("needed: "+(end-start));
+	}*/
 	
 	/**
 	 *  Returns the component manager instance.
@@ -48,8 +114,9 @@ public class ComponentManager implements IComponentManager
 			{
 				if(instance == null)
 					instance = new ComponentManager();
-				instance.initFeatures();
+				//System.out.println("created compmanager: "+instance);
 			}
+			instance.init();
 		}
 		return instance;
 	}
@@ -79,7 +146,7 @@ public class ComponentManager implements IComponentManager
 
 	
 	/** Cache fore runtime features. */
-	protected RwMapWrapper<Class<IRuntimeFeature>, IRuntimeFeature> featurecache = new RwMapWrapper<Class<IRuntimeFeature>, IRuntimeFeature>(new HashMap<>());
+	protected RwMapWrapper<Class<? extends IRuntimeFeature>, Future<? extends IRuntimeFeature>> featurecache = new RwMapWrapper<>(new HashMap<>());
 	
 	public void addComponentListener(IComponentListener listener, String... types)
 	{
@@ -134,16 +201,7 @@ public class ComponentManager implements IComponentManager
 			e.printStackTrace();
 		}
 		
-		// Add default exception handler
-		if(getFeature(IErrorHandlingFeature.class)!=null)
-		{
-			getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (ex, comp) ->
-			{
-				System.out.println("Exception in user code of component; component will be terminated: "+comp.getId());
-				ex.printStackTrace();
-				comp.terminate();
-			});
-		}
+		//knownfeatures.stream().forEach(type -> featurecache.put((Class)type, new Future()));
 		
 		// remove default handler
 		//removeExceptionHandler(null, Exception.class);
@@ -152,6 +210,27 @@ public class ComponentManager implements IComponentManager
 		// Otherwise without logbase feature internal logs get printed
 		// With logbase feature the parent logger is ignored anyway.
 		configureRootLogger(java.util.logging.Level.WARNING);
+	}
+	
+	private void init()
+	{
+		// Add default exception handler
+		IErrorHandlingFeature ehf = getFeature(IErrorHandlingFeature.class);
+		if(ehf!=null)
+		{
+			ehf.addExceptionHandler(Exception.class, false, (ex, comp) ->
+			{
+				System.out.println("Exception in user code of component; component will be terminated: "+comp.getId());
+				ex.printStackTrace();
+				comp.terminate();
+			});
+		}
+		
+		//System.out.println("before initFeatures");
+		IFuture<Void> ifut = instance.initFeatures();
+		//ifut.then(Void -> System.out.println("init features completed"));
+		ifut.printOnEx();
+		//System.out.println("after initFeatures");
 	}
 	
 	/**
@@ -180,92 +259,198 @@ public class ComponentManager implements IComponentManager
 	 */
 	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype)
 	{
-//		System.out.println("getFeature: "+featuretype);
+		return awaitFeature(featuretype).get();
+	}
+	
+	/**
+	 *  Get the feature instance for the given type.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return The feature or null if not found or available.
+	 */
+	public <T extends IRuntimeFeature> IFuture<T> awaitFeature(Class<T> featuretype)
+	{
+		//System.out.println("awaitFeature: "+featuretype+" "+featurecache.keySet()+" "+this);
 		
-		IRuntimeFeature feature = featurecache.get(featuretype);
-		if (feature == null)
+		Future<T> ret;
+
+		try (IAutoLock l = featurecache.writeLock())
 		{
-			try (IAutoLock l = featurecache.writeLock())
+			@SuppressWarnings("unchecked")
+			Future<T> existing = (Future<T>)featurecache.get(featuretype);
+			if(existing != null)
+				return existing;
+
+			ret = new Future<>();
+			featurecache.put(featuretype, ret);
+			//System.out.println("awaitFeature2: "+featuretype+" "+featurecache.keySet());
+		}
+
+		/*Timer t = new Timer();
+		t.schedule(new TimerTask() {
+			
+			@Override
+			public void run() 
 			{
-				feature = featurecache.get(featuretype);
-				if (feature == null)
+				if(!ret.isDone())
 				{
-					RuntimeFeatureProvider<IRuntimeFeature> prov = null;
-					@SuppressWarnings("rawtypes")
-					Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
-					for (;it.hasNext();)
-					{
-						@SuppressWarnings("unchecked")
-						RuntimeFeatureProvider<IRuntimeFeature> next = it.next();
-						if (next.getFeatureType().equals(featuretype))
-						{
-							prov = next;
-							break;
-						}
-					}
-					if (prov != null)
-					{
-						Set<Class<? extends IRuntimeFeature>> preds = prov.getDependencies();
-						for (Class<?> pred : preds)
-						{
-							@SuppressWarnings("unchecked")
-							Class<IRuntimeFeature> cpred = (Class<IRuntimeFeature>) pred;
-							getFeature(cpred);
-						}
-						feature = prov.createFeatureInstance();
-						@SuppressWarnings("unchecked")
-						Class<IRuntimeFeature> basefeaturetype = (Class<IRuntimeFeature>) featuretype;
-						featurecache.put(basefeaturetype, feature);
-					}
+					System.out.println("Feature could not be resolved: "+featuretype);
+					ret.setExceptionIfUndone(new TimeoutException("Feature could not be resolved: "+featuretype));
 				}
 			}
-		}
-		@SuppressWarnings("unchecked")
-		T ret = (T) feature;
+		}, 5000);*/
+		
+		createFeature(featuretype).then(feature -> 
+		{
+			if (feature != null)
+			{
+				//System.out.println("await feature, created feature: "+feature+" "+featurecache.keySet());
+				ret.setResult(feature);
+			}
+			else
+			{
+				ret.setException(new RuntimeException("Feature was declared but could not be created: " + featuretype));
+			}
+		}).catchEx(ret);
+
 		return ret;
 	}
 	
 	/**
-	 *  Init the non-lazy features.
+	 *  Create a runtime feature based on providers. 
+	 *  @param featuretype The type.
+	 *  @return The feature or null if no provider was found.
 	 */
-	public void initFeatures()
+	protected <T extends IRuntimeFeature> IFuture<T> createFeature(Class<T> featuretype)
 	{
-		//try (IAutoLock l = featurecache.writeLock())
-		//{
-			@SuppressWarnings("rawtypes")
-			Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
-			for (;it.hasNext();)
+		//System.out.println("createFeature: "+featuretype);
+		Future<T> ret = new Future<>();
+		RuntimeFeatureProvider<IRuntimeFeature> prov = null;
+
+		@SuppressWarnings("rawtypes")
+		Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
+		for (; it.hasNext(); )
+		{
+			@SuppressWarnings("unchecked")
+			RuntimeFeatureProvider<IRuntimeFeature> next = it.next();
+			if (next.getFeatureType().equals(featuretype))
 			{
-				RuntimeFeatureProvider<IRuntimeFeature> prov = it.next();
-				
-				if(!prov.isLazyFeature())
-				{
-					Set<Class<? extends IRuntimeFeature>> preds = prov.getDependencies();
-					for (Class<?> pred : preds)
-					{
-						@SuppressWarnings("unchecked")
-						Class<IRuntimeFeature> cpred = (Class<IRuntimeFeature>) pred;
-						getFeature(cpred);
-					}
-					IRuntimeFeature feature = prov.createFeatureInstance();
-					try (IAutoLock l = featurecache.writeLock())
-					{
-						featurecache.put(prov.getFeatureType(), feature);
-					}
-				}
+				prov = next;
+				break;
 			}
-		//}
+		}
+
+		if (prov != null)
+		{
+			Future<Void> alldeps = new Future<>();
+
+			Set<Class<? extends IRuntimeFeature>> preds = prov.getDependencies();
+
+			Iterator<Class<? extends IRuntimeFeature>> itpred = preds.iterator();
+			Runnable[] chain = new Runnable[1];
+
+			chain[0] = () ->
+			{
+				if(itpred.hasNext())
+				{
+					Class<? extends IRuntimeFeature> dep = itpred.next();
+					awaitFeature(dep).then(f -> chain[0].run()).catchEx(alldeps);
+				}
+				else
+				{
+					alldeps.setResult(null);
+				}
+			};
+
+			chain[0].run();
+
+			final RuntimeFeatureProvider<IRuntimeFeature> fprov = prov;
+			alldeps.then(v ->
+			{
+				T instance = (T)fprov.createFeatureInstance();
+				ret.setResult(instance);
+			}).catchEx(ret);
+		}
+		else
+		{
+			ret.setResult(null);
+		}
+		return ret;
 	}
 	
 	/**
-	 *  Test if a feature is present.
-	 *  
-	 *  @param featuretype Requested runtime feature type.
-	 *  @return True, if the feature is present, i.e. created.
-	 */
-	public boolean hasFeature(Class<?> featuretype)
+	 *  Init the non-lazy features with providers.
+	 * /
+	public IFuture<Void> initFeatures()
 	{
-		return featurecache.get(featuretype)!=null;
+		Future<Void> ret = new Future<>();
+		
+		@SuppressWarnings("rawtypes")
+		Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
+		for (;it.hasNext();)
+		{
+			RuntimeFeatureProvider<IRuntimeFeature> prov = it.next();
+			
+			if(!prov.isLazyFeature())
+			{
+				Class<IRuntimeFeature> featuretype = prov.getFeatureType();
+				createFeature(featuretype).then(feature ->
+				{
+					if(feature!=null)
+					{
+						try (IAutoLock l = featurecache.writeLock())
+						{
+							featurecache.put(featuretype, feature);
+						}
+					}
+					else // should not occur as there is a provider
+					{
+						ret.setException(new RuntimeException("Could not create feature: "+featuretype));
+						//featurecache.put(featuretype, ret);
+					}
+				}).catchEx(ret);
+				
+				/*Set<Class<? extends IRuntimeFeature>> preds = prov.getDependencies();
+				for (Class<?> pred : preds)
+				{
+					@SuppressWarnings("unchecked")
+					Class<IRuntimeFeature> cpred = (Class<IRuntimeFeature>) pred;
+					getFeature(cpred);
+				}
+				IRuntimeFeature feature = prov.createFeatureInstance();
+				try (IAutoLock l = featurecache.writeLock())
+				{
+					featurecache.put(prov.getFeatureType(), feature);
+				}* /
+			}
+		}
+		
+		return ret;
+	}*/
+	
+	public IFuture<Void> initFeatures()
+	{
+	    Future<Void> chain = new Future<>();
+	    @SuppressWarnings("rawtypes")
+		Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
+	    initNextFeature((Iterator)it, chain);
+	    return chain;
+	}
+
+	private void initNextFeature(Iterator<RuntimeFeatureProvider<IRuntimeFeature>> it, Future<Void> chain)
+	{
+	    if (!it.hasNext())
+	    {
+	        chain.setResult(null);
+	        return;
+	    }
+
+	    RuntimeFeatureProvider<IRuntimeFeature> prov = it.next();
+	    //System.out.println("init next: "+prov.getFeatureType());
+	    awaitFeature(prov.getFeatureType()).then(res -> 
+	    {
+	    	initNextFeature(it, chain);
+	    }).catchEx(chain);
 	}
 	
 	/**
@@ -278,16 +463,60 @@ public class ComponentManager implements IComponentManager
 	     addFeature((Class<IRuntimeFeature>)type, feature);
 	}
 	
-	/**
-	 *  Add a runtime feature.
-	 *  @param type The feature type.
-	 *  @param feature The feature.
-	 */
 	public void addFeature(Class<? extends IRuntimeFeature> type, IRuntimeFeature feature)
 	{
-	     featurecache.put((Class<IRuntimeFeature>)type, feature);
+		Future<IRuntimeFeature> feafut = null;
+
+		try (IAutoLock l = featurecache.writeLock())
+		{
+			Object cached = featurecache.get(type);
+
+			if (cached instanceof Future)
+			{
+				@SuppressWarnings("unchecked")
+				Future<IRuntimeFeature> fut = (Future<IRuntimeFeature>) cached;
+
+				if (fut.isDone())
+					throw new RuntimeException("Feature already resolved: " + type);
+
+				feafut = fut;
+			}
+			else if (cached != null)
+			{
+				throw new RuntimeException("Feature already resolved with non-future: " + type);
+			}
+			else
+			{
+				Future<IRuntimeFeature> fut = new Future<>();
+				featurecache.put(type, fut);
+				feafut = fut;
+			}
+		}
+
+		// lock-free notification
+		if (feafut != null)
+			feafut.setResult(feature);
+	}
+	
+	/**
+	 *  Test if a feature is present.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return True, if the feature is present, i.e. created.
+	 * /
+	public boolean isFeatureKnown(Class<?> featuretype)
+	{
+		//return featurecache.get(featuretype)!=null;
+		return knownfeatures.contains(featuretype);
+	}*/
+	
+	public boolean isFeatureResolved(Class<?> type) 
+	{
+		Object val = featurecache.get(type);
+		return val != null && (!(val instanceof Future) || ((Future<?>)val).isDone());
 	}
 
+	
     private Class<? extends IRuntimeFeature> resolveFeatureInterface(Class<?> implClass) 
     {
         Set<Class<? extends IRuntimeFeature>> interfaces = new HashSet<>();
@@ -359,6 +588,47 @@ public class ComponentManager implements IComponentManager
 	{
 		featurecache.remove(type);
 	}
+	
+	/**
+	 *  Get the feature instance for the given type.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return The feature or null if not found or available.
+	 * /
+	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype)
+	{
+//		System.out.println("getFeature: "+featuretype);
+		
+		Object feature = featurecache.get(featuretype);
+		if(feature instanceof IFuture)
+		{
+			IFuture<T> f = (IFuture<T>)feature;
+			if(f.isDone())
+				feature = f.get();
+			else
+				throw new RuntimeException("Feature still unresolved: "+featuretype);
+		}
+		else if (feature == null)
+		{
+			try (IAutoLock l = featurecache.writeLock())
+			{
+				feature = featurecache.get(featuretype);
+				if (feature == null)
+				{
+					feature = createFeature(featuretype);
+					if(feature!=null)
+					{
+						@SuppressWarnings("unchecked")
+						Class<IRuntimeFeature> basefeaturetype = (Class<IRuntimeFeature>) featuretype;
+						featurecache.put(basefeaturetype, feature);
+					}
+				}
+			}
+		}
+		@SuppressWarnings("unchecked")
+		T ret = (T) feature;
+		return ret;
+	}*/
 	
 	/**
 	 *  Returns the process identifier of the Java process.

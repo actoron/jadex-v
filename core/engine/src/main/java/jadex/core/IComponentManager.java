@@ -1,6 +1,7 @@
 package jadex.core;
 
 import jadex.core.impl.ComponentManager;
+import jadex.future.IFuture;
 
 /**
  *  Interface providing configuration options and general information for supporting components.
@@ -28,7 +29,7 @@ public interface IComponentManager extends IComponentFactory
 	 *  Get the component/pojo toString() of the first started component.
 	 *  @return null if no component has been started yet. 
 	 */
-	public String	getInferredApplicationName();
+	public String getInferredApplicationName();
 	
 	/**
 	 * Get the current component.
@@ -43,6 +44,14 @@ public interface IComponentManager extends IComponentFactory
 	 *  @return The feature or null if not found or available.
 	 */
 	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype);
+	
+	/**
+	 *  Get the feature instance for the given type.
+	 *  
+	 *  @param featuretype Requested runtime feature type.
+	 *  @return The feature or null if not found or available.
+	 */
+	public <T extends IRuntimeFeature> IFuture<T>  awaitFeature(Class<T> featuretype);
 	
 	/**
 	 *  Add a runtime feature.
@@ -68,8 +77,8 @@ public interface IComponentManager extends IComponentFactory
 	 *  
 	 *  @param featuretype Requested runtime feature type.
 	 *  @return True, if the feature is present, i.e. created.
-	 */
-	public boolean hasFeature(Class<?> featuretype);
+	 * /
+	public boolean hasFeature(Class<?> featuretype);*/
 	
 	/**
 	 *  Sets the class loader used by components.
