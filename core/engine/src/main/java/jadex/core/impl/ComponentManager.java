@@ -42,12 +42,25 @@ public class ComponentManager implements IComponentManager
 	 */
 	public static final ComponentManager get()
 	{
+		return get(null);
+	}
+
+	/**
+	 *  Returns the component manager instance.
+	 *
+	 *  @param pid Sets a custom local process identifier, can only be done once.
+	 *  @return The component manager instance.
+	 */
+	public static final ComponentManager get(String pid)
+	{
 		if(instance == null)
 		{
 			synchronized(ComponentManager.class)
 			{
+				if (pid == null)
+					pid = "" + ProcessHandle.current().pid();
 				if(instance == null)
-					instance = new ComponentManager();
+					instance = new ComponentManager(pid);
 			}
 		}
 		return instance;
@@ -57,7 +70,7 @@ public class ComponentManager implements IComponentManager
 	private ClassLoader classloader = ComponentManager.class.getClassLoader();
 	
 	/** Cached process ID. */
-	private long pid;
+	private String pid;
 	
 	/** Cached host name. */
 	private String host;
@@ -117,10 +130,12 @@ public class ComponentManager implements IComponentManager
 	
 	/**
 	 *  Create a new component manager.
+	 *
+	 *  @param pid The local process ID.
 	 */
-	private ComponentManager()
+	private ComponentManager(String pid)
 	{
-		pid = ProcessHandle.current().pid();
+		this.pid = pid;
 		host = SUtil.createPlainRandomId("unknown", 12);
 		try
 		{
@@ -224,7 +239,7 @@ public class ComponentManager implements IComponentManager
 	 *  
 	 *  @return Process identifier of the Java process.
 	 */
-	public long pid()
+	public String pid()
 	{
 		return pid;
 	}

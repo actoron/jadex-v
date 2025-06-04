@@ -69,7 +69,7 @@ public class OpenTelemetryLogHandler extends Handler
         // should only use attributes as index labels that do not change for same application
         // cf. Loki label best practices https://grafana.com/docs/loki/latest/get-started/labels/bp-labels/
         //attrs.put(AttributeKey.stringKey("service.name"),  GlobalProcessIdentifier.SELF.toString());
-        attrs.put(AttributeKey.stringKey("service.name"),  GlobalProcessIdentifier.SELF.host().toString());
+        attrs.put(AttributeKey.stringKey("service.name"),  GlobalProcessIdentifier.getSelf().host().toString());
         attrs.put(AttributeKey.booleanKey("runtime.benchmark"), System.getProperty("user.dir").contains("benchmark"));
         attrs.put(AttributeKey.booleanKey("runtime.gradle"),  SUtil.isGradle());
 //        attrs.put(AttributeKey.stringKey("runtime.env"), ""+System.getenv());
@@ -118,7 +118,7 @@ public class OpenTelemetryLogHandler extends Handler
             //.setAttribute(AttributeKey.stringKey("service.name"), "my_java_service")
             .setAttribute(AttributeKey.stringKey("component.id"), comp!=null ? comp.getId().toString() : "")
             .setAttribute(AttributeKey.stringKey("application.name"), ""+IComponentManager.get().getInferredApplicationName())
-            .setAttribute(AttributeKey.stringKey("service.instance.id"), GlobalProcessIdentifier.SELF.toString())
+            .setAttribute(AttributeKey.stringKey("service.instance.id"), GlobalProcessIdentifier.getSelf().toString())
             .setTimestamp(record.getMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)
             .setAttribute(AttributeKey.stringKey("iso.timestamp"), isotime);
         

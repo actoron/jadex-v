@@ -136,8 +136,8 @@ public class BIKEX448ChaCha20Poly1305Suite extends AbstractChaCha20Poly1305Suite
 	
 	public static void main(String[] args)
 	{
-		BIKEX448ChaCha20Poly1305Suite suite1 = new BIKEX448ChaCha20Poly1305Suite(new GlobalProcessIdentifier(100, GlobalProcessIdentifier.SELF.host()));
-		BIKEX448ChaCha20Poly1305Suite suite2 = new BIKEX448ChaCha20Poly1305Suite(new GlobalProcessIdentifier(200, GlobalProcessIdentifier.SELF.host()));
+		BIKEX448ChaCha20Poly1305Suite suite1 = new BIKEX448ChaCha20Poly1305Suite(new GlobalProcessIdentifier("100", GlobalProcessIdentifier.getSelf().host()));
+		BIKEX448ChaCha20Poly1305Suite suite2 = new BIKEX448ChaCha20Poly1305Suite(new GlobalProcessIdentifier("200", GlobalProcessIdentifier.getSelf().host()));
 		
 		suite2.remotepublickey =  suite1.getPubKey();
 		suite1.remotepublickey =  suite2.getPubKey();

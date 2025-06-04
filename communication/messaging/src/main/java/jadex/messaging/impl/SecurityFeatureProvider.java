@@ -29,7 +29,7 @@ public class SecurityFeatureProvider extends RuntimeFeatureProvider<ISecurityFea
 	public ISecurityFeature createFeatureInstance()
 	{
 		IIpcFeature ipc = IComponentManager.get().getFeature(IIpcFeature.class);
-		ISecurityFeature ret = new SecurityFeature(GlobalProcessIdentifier.SELF, ipc);
+		ISecurityFeature ret = new SecurityFeature(GlobalProcessIdentifier.getSelf(), ipc);
 		return ret;
 	}
 	

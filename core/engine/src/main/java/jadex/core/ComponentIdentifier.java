@@ -31,7 +31,7 @@ public class ComponentIdentifier
 	public ComponentIdentifier()
 	{
 		this.localname = ComponentManager.get().isComponentIdNumberMode()? ""+ID_COUNTER.getAndIncrement(): gen.idStringFromNumber(ID_COUNTER.getAndIncrement());
-		gpid = GlobalProcessIdentifier.SELF;
+		gpid = GlobalProcessIdentifier.getSelf();
 	}
 	
 	/**
@@ -42,7 +42,7 @@ public class ComponentIdentifier
 	public ComponentIdentifier(String localname)
 	{
 		this.localname = localname;
-		gpid = GlobalProcessIdentifier.SELF;
+		gpid = GlobalProcessIdentifier.getSelf();
 	}
 	
 	/**
@@ -64,7 +64,7 @@ public class ComponentIdentifier
 	 *  @param pid Process ID of the process on the host running the component
 	 *  @param host Host running the process that is running the component
 	 */
-	public ComponentIdentifier(String localname, long pid, String host)
+	public ComponentIdentifier(String localname, String pid, String host)
 	{
 		this.localname = localname;
 		gpid = new GlobalProcessIdentifier(pid, host);
@@ -94,7 +94,7 @@ public class ComponentIdentifier
 	 */
 	public boolean isLocal()
 	{
-		return GlobalProcessIdentifier.SELF.equals(gpid);
+		return GlobalProcessIdentifier.getSelf().equals(gpid);
 	}
 	
 	/**
@@ -138,7 +138,7 @@ public class ComponentIdentifier
 		
 		if (splitstr.length == 3)
 		{
-			long pid = Long.parseLong(splitstr[1]);
+			String pid = splitstr[1];
 			return new ComponentIdentifier("null".equals(splitstr[0]) ? null : splitstr[0], pid, splitstr[2]);
 		}
 		throw new IllegalArgumentException("Not a component identifier: " + idstring);

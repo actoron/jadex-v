@@ -57,7 +57,7 @@ public class MessageFeature implements IMessageFeature
 	{
 		for (ComponentIdentifier receiver : receivers)
 		{
-			if (GlobalProcessIdentifier.SELF.equals(receiver.getGlobalProcessIdentifier()))
+			if (GlobalProcessIdentifier.getSelf().equals(receiver.getGlobalProcessIdentifier()))
 			{
 				// Local message
 				IComponentHandle exta = ComponentManager.get().getComponent(receiver).getComponentHandle();
@@ -189,7 +189,7 @@ public class MessageFeature implements IMessageFeature
 		conversationid = conversationid != null ? conversationid :SUtil.createUniqueId(self.toString());
 		TransmittedExchange tex = new TransmittedExchange(self.getId(), conversationid, message);
 		
-		if (GlobalProcessIdentifier.SELF.equals(receiver.getGlobalProcessIdentifier()))
+		if (GlobalProcessIdentifier.getSelf().equals(receiver.getGlobalProcessIdentifier()))
 		{
 			// Local message
 			IComponentHandle exta = ComponentManager.get().getComponent(receiver).getComponentHandle();

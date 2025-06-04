@@ -48,7 +48,7 @@ public class IpcStreamHandler implements IIpcFeature
 	private GlobalProcessIdentifier gpid;
 	
 	/** Currently established connections. */
-	private RwMapWrapper<Long, LinkedBlockingQueue<ScheduledMessage>> connections;
+	private RwMapWrapper<String, LinkedBlockingQueue<ScheduledMessage>> connections;
 	
 	/** Expire unused connections after this timeout */
 	private long connectiontimeout = 900000;
@@ -233,7 +233,7 @@ public class IpcStreamHandler implements IIpcFeature
 	 *  @param remotepid The remot pid.
 	 *  @return Queue for sending messages.
 	 */
-	private LinkedBlockingQueue<ScheduledMessage> connect(long remotepid)
+	private LinkedBlockingQueue<ScheduledMessage> connect(String remotepid)
 	{
 		LinkedBlockingQueue<ScheduledMessage> queue = null;
 		
