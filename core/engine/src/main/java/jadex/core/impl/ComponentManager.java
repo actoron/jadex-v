@@ -126,7 +126,7 @@ public class ComponentManager implements IComponentManager
 				if (pid == null)
 					pid = "" + ProcessHandle.current().pid();
 				if(instance == null)
-					instance = new ComponentManager();
+					instance = new ComponentManager(pid);
 			}
 			instance.init();
 		}
