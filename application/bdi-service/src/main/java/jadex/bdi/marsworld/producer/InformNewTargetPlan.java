@@ -2,15 +2,13 @@ package jadex.bdi.marsworld.producer;
 
 import java.util.Collection;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.sentry.ITargetAnnouncementService;
-import jadex.bdi.runtime.IPlan;
 import jadex.future.IFuture;
+import jadex.injection.annotation.Inject;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
@@ -21,13 +19,13 @@ public class InformNewTargetPlan
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	protected ProducerAgent producer;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected Target target;
 	
 	//-------- methods --------
@@ -40,7 +38,7 @@ public class InformNewTargetPlan
 	{
 		//System.out.println("inform new target: "+producer.getAgent().getId()+" "+target);
 		
-		IFuture<Collection<ITargetAnnouncementService>> fut = producer.getAgent().getFeature(IRequiredServiceFeature.class).getServices("targetser");
+		IFuture<Collection<ITargetAnnouncementService>> fut = producer.getAgent().getFeature(IRequiredServiceFeature.class).searchServices(ITargetAnnouncementService.class);
 		Collection<ITargetAnnouncementService> ansers = fut.get();
 		
 		if(ansers.size()==0)

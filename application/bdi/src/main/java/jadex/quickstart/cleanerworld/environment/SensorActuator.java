@@ -35,8 +35,8 @@ public class SensorActuator
 	/** The current movement target, if any. */
 	private Location	target;
 	
-	/** The pheromone to disperse (if any). */
-	private String	pheromone;
+//	/** The pheromone to disperse (if any). */
+//	private String	pheromone;
 	
 	/** The known other cleaners. */
 	private Set<ICleaner>	cleaners	= new LinkedHashSet<>();
@@ -297,7 +297,7 @@ public class SensorActuator
 		{
 			// After move finished/failed always reset state.
 			target	= null;
-			pheromone	= null;
+//			pheromone	= null;
 		}
 	}
 	

@@ -13,9 +13,7 @@ import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.featuretest.impl.TestFeature1NewProvider;
 import jadex.featuretest.impl.TestFeature2NewProvider;
-import jadex.micro.MicroAgent;
-import jadex.micro.impl.MicroAgentFeature;
-import jadex.model.IModelFeature;
+import jadex.featuretest.impl.TestFeature2NewProvider.SubComponent;
 
 @Testable
 public class FeatureTest
@@ -31,7 +29,7 @@ public class FeatureTest
 		ITestLazyFeature.class,
 	};
 
-	// Test features for micro agent components.
+	// Test features for sub components.
 	@SuppressWarnings("unchecked")
 	static Class<? extends IComponentFeature>[]	AGENT_FEATURE_TYPES	= new Class[]
 	{
@@ -39,8 +37,6 @@ public class FeatureTest
 		IExecutionFeature.class,
 		ITestFeature1.class,
 		ITestFeature2.class,
-		IModelFeature.class,
-		MicroAgentFeature.class,
 		ITestLazyFeature.class,
 	};
 
@@ -55,7 +51,7 @@ public class FeatureTest
 	public void	testAgentLoading()
 	{
 		// Dummy agent component for feature loading.
-		doTestLoading(new MicroAgent(this, null){}, AGENT_FEATURE_TYPES);
+		doTestLoading(new SubComponent(this){}, AGENT_FEATURE_TYPES);
 	}
 	
 	protected void	doTestLoading(Component comp, Class<? extends IComponentFeature>[] feature_types)
@@ -100,7 +96,7 @@ public class FeatureTest
 	public void	testAgentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
-		Component	comp	= new MicroAgent(null, null){};
+		Component	comp	= new SubComponent(null){};
 		
 		// IMjTestFeature1 feature should be replaced
 		assertTrue(comp.getFeature(ITestFeature1.class) instanceof TestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(ITestFeature1.class));
@@ -119,7 +115,7 @@ public class FeatureTest
 	public void testAgentOrdering()
 	{
 		// Dummy agent component for feature loading.
-		doTestOrdering(new MicroAgent(null, null){}, AGENT_FEATURE_TYPES);
+		doTestOrdering(new SubComponent(null){}, AGENT_FEATURE_TYPES);
 	}
 		
 	protected void doTestOrdering(Component comp, Class<? extends IComponentFeature>[] feature_types)

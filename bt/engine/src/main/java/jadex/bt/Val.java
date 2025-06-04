@@ -6,7 +6,6 @@ import java.util.concurrent.Callable;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.common.SUtil;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.impl.MicroAgentFeature;
 
 /**
  *  Wrapper for belief values.
@@ -114,7 +113,7 @@ public class Val<T>
 	{
 		try
 		{
-			BTAgentFeature.writeField(dynamic.call(), name, pojo, MicroAgentFeature.get().getSelf());
+			BTAgentFeature.writeField(dynamic.call(), name, pojo, IExecutionFeature.get().getComponent());
 		}
 		catch(Exception e)
 		{
@@ -126,7 +125,7 @@ public class Val<T>
 	{
 		try
 		{
-			BTAgentFeature.writeField(value, name, pojo, MicroAgentFeature.get().getSelf());
+			BTAgentFeature.writeField(value, name, pojo, IExecutionFeature.get().getComponent());
 		}
 		catch(Exception e)
 		{

@@ -1,7 +1,11 @@
 package jadex.remoteservices.impl.remotecommands;
 
+import java.lang.reflect.Method;
+import java.util.Map;
+
+import javax.management.ServiceNotFoundException;
+
 import jadex.common.MethodInfo;
-import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -14,13 +18,8 @@ import jadex.messaging.ISecurityInfo;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.annotation.Security;
-import jadex.providedservice.impl.search.ServiceNotFoundException;
-import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservices.IRemoteCommand;
-
-import java.lang.reflect.Method;
-import java.util.Map;
 
 
 /**
@@ -240,7 +239,7 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 	 */
 	public Security getSecurityLevel(Component component)
 	{
-		return BasicService.getSecurityLevel(component, null, null, null, method.getMethod(IComponentManager.get().getClassLoader()), target instanceof IServiceIdentifier? (IServiceIdentifier)target: null);
+		return ServiceIdentifier.getSecurityLevel(component, method.getMethod(IComponentManager.get().getClassLoader()), target instanceof IServiceIdentifier? (IServiceIdentifier)target: null);
 	}
 
 	/**

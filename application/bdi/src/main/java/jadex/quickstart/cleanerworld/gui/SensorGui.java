@@ -12,7 +12,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import jadex.common.SGUI;
-import jadex.execution.IExecutionFeature;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
 
 
@@ -38,7 +37,6 @@ public class SensorGui
 	public SensorGui(SensorActuator sensor)
 	{
 		String	id	= sensor.getSelf().getId();
-		IExecutionFeature lifecycle	= IExecutionFeature.get();
 		
 		// Open window on swing thread
 		SwingUtilities.invokeLater(()->

@@ -1,7 +1,9 @@
 package jadex.quickstart.cleanerworld;
 
-import jadex.model.annotation.OnStart;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
@@ -28,5 +30,18 @@ public class SimpleCleanerAgent
 		{
 			actsense.moveTo(Math.random(), Math.random());
 		}
+	}
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new SimpleCleanerAgent());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

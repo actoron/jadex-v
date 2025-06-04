@@ -5,11 +5,9 @@ import java.lang.System.Logger.Level;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
+import jadex.injection.annotation.OnStart;
 import jadex.logger.ILoggingFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 
-@Agent
 public class HelloWorldLoggingAgent 
 {
 	@OnStart

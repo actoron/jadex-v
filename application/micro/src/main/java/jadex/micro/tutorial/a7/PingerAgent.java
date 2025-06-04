@@ -2,12 +2,10 @@ package jadex.micro.tutorial.a7;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IService;
-import jadex.requiredservice.annotation.OnService;
 
-@Agent
 public class PingerAgent 
 {	
 	@OnStart
@@ -16,7 +14,7 @@ public class PingerAgent
 		System.out.println("agent started: "+agent.getId().getLocalName());
 	}
 	
-	@OnService
+	@Inject
 	protected void onPingServiceFound(IPingService service)
 	{
 		String name = ((IService)service).getServiceId().getProviderId().getLocalName();

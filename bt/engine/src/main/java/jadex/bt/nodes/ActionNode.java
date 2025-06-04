@@ -1,16 +1,13 @@
 package jadex.bt.nodes;
 
 import java.lang.System.Logger.Level;
-import java.util.ArrayList;
 import java.util.List;
 
 import jadex.bt.actions.UserBaseAction;
 import jadex.bt.impl.Event;
-import jadex.bt.nodes.CompositeNode.IIndexContext;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.future.Future;
-import jadex.future.FutureBarrier;
 import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -50,7 +47,7 @@ public class ActionNode<T> extends Node<T>
     @Override
     public IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context) 
     {
-		System.getLogger(this.getClass().getName()).log(Level.INFO, "exeuting action node: "+this);
+		getLogger().log(Level.INFO, "exeuting action node: "+this);
   		//System.out.println("exeuting action node: "+this);
     	
     	Future<NodeState> ret = new Future<>();
@@ -68,7 +65,7 @@ public class ActionNode<T> extends Node<T>
 		   		if(!(e instanceof FutureTerminatedException))
 		   		{
 		   			//System.out.println("exception in action: "+e);
-		   			System.getLogger(this.getClass().getName()).log(Level.ERROR, "exception in action: "+e);
+		   			getLogger().log(Level.ERROR, "exception in action: "+e);
 		   		}
 		   		ret.setResultIfUndone(NodeState.FAILED);
 			});
@@ -76,7 +73,7 @@ public class ActionNode<T> extends Node<T>
     	catch(Exception e)
     	{
      		//System.out.println("exception in action: "+e);
-     		System.getLogger(this.getClass().getName()).log(Level.ERROR, "exception in action: "+e);
+     		getLogger().log(Level.ERROR, "exception in action: "+e);
     		ret.setResultIfUndone(NodeState.FAILED);
     	}
     	
@@ -103,33 +100,33 @@ public class ActionNode<T> extends Node<T>
     	{
     		if(usercall==null)
     		{
-    			System.out.println("abort: no user action: "+this+" "+context.getValue("cnt"));
-    			System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: no user action: "+this);
+    			//System.out.println("abort: no user action: "+this+" "+context.getValue("cnt"));
+    	      	getLogger().log(Level.INFO, "abort: no user action: "+this+" "+context.getValue("cnt"));
     		}
     		else
     		{
     			if(usercall.isDone())
         		{
         			//System.out.println("abort: user action finished: "+this);
-        			System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: user action finished: "+this);
+        			getLogger().log(Level.INFO, "abort: user action finished: "+this);
         		}
     			else if(usercall instanceof ITerminableFuture)
     			{
     				((ITerminableFuture<NodeState>)usercall).terminate();
     				//System.out.println("abort: aborting user action: "+this);
-    				System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: aborting user action: "+this);
+    				getLogger().log(Level.INFO, "abort: aborting user action: "+this);
     			}
     			else
     			{
     				//System.out.println("abort: cannot abort non-terminable action "+this);
-    				System.getLogger(this.getClass().getName()).log(Level.INFO, "abort: cannot abort non-terminable action "+this);
+    				getLogger().log(Level.INFO, "abort: cannot abort non-terminable action "+this);
     			}
     		}
     	}
     	else
     	{
     		//System.out.println("ignoring abort: "+abortmode+" "+this);
-			System.getLogger(this.getClass().getName()).log(Level.INFO, "ignoring abort: "+abortmode+" "+this);
+			getLogger().log(Level.INFO, "ignoring abort: "+abortmode+" "+this);
     	}
     	
     	//return ret.waitFor();

@@ -10,22 +10,19 @@ import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  This agent represents the central message queue. It offers a 
  *  message queue service that is used by the clients.
  */
-@Agent
-@Service
 public class MessageQueueAgent implements IMessageQueueService
 {
 	//-------- attributes --------
 	
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** The map of subscribers. */

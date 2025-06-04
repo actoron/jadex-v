@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -40,7 +39,6 @@ import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.STransformation;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.Traverser;
-import jadex.common.transformation.traverser.Traverser.MODE;
 import jadex.core.IComponent;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
@@ -53,9 +51,8 @@ import jadex.future.ITerminableFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.annotation.ParameterInfo;
-import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.ServiceCall;
+import jadex.publishservice.impl.RequestManager.ResponseInfo;
 import jadex.publishservice.impl.RequestManager.MappingInfo.HttpMethod;
 import jadex.publishservice.publish.IAsyncContextInfo;
 import jadex.publishservice.publish.PathManager;
@@ -67,7 +64,6 @@ import jadex.publishservice.publish.mapper.DefaultParameterMapper;
 import jadex.publishservice.publish.mapper.IParameterMapper;
 import jadex.publishservice.publish.mapper.IParameterMapper2;
 import jadex.publishservice.publish.mapper.IValueMapper;
-import jadex.serialization.serializers.JadexJsonSerializer;
 import jadex.transformation.jsonserializer.JsonTraverser;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncEvent;
@@ -90,7 +86,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.ResponseBuilder;
 
 /**
  *  The request manager is used to handle REST web requests.
@@ -883,14 +878,14 @@ public class RequestManager
 						ServiceCall.getOrCreateNextInvocation().setProperty("callid", fcallid);
 						ri.setCallid(fcallid);
 					
-						BasicService.isUnrestricted(service.getServiceId(), comp, mi.getMethod())
-						.then((Boolean unres) ->
-						{
+//						BasicService.isUnrestricted(service.getServiceId(), comp, mi.getMethod())
+//						.then((Boolean unres) ->
+//						{
 							//if(request.toString().indexOf("suspend")!=-1)
 							//	System.out.println("call 3: "+request);
 							try
 							{
-								if(loginsec && !unres && !isLoggedIn(request))
+								if(loginsec /* && !unres */ && !isLoggedIn(request))
 								{
 									//writeResponse(new SecurityException("Access not allowed as not logged in"), Response.Status.UNAUTHORIZED.getStatusCode(), null, mi, request, response, true, null);
 									writeResponse(ri.setResult(new SecurityException("Access not allowed as not logged in")).setStatus(Response.Status.UNAUTHORIZED.getStatusCode()).setMappingInfo(mi).setFinished(true));
@@ -1235,7 +1230,7 @@ public class RequestManager
 								writeResponse(ri.setException(e).setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).setFinished(true));
 							}
 						});
-					});
+//					});
 				}
 				else
 				{
@@ -2950,15 +2945,15 @@ public class RequestManager
 					done = true;
 					break;
 				}
-				else if(ann instanceof ParameterInfo)
-				{
-					ParameterInfo qp = (ParameterInfo)ann;
-					String name = qp.value();
-					ret.add(new Tuple2<String, String>("name", name));
-					targettypes.put(name, types[i]);
-					done = true;
-					break;
-				}
+//				else if(ann instanceof ParameterInfo)
+//				{
+//					ParameterInfo qp = (ParameterInfo)ann;
+//					String name = qp.value();
+//					ret.add(new Tuple2<String, String>("name", name));
+//					targettypes.put(name, types[i]);
+//					done = true;
+//					break;
+//				}
 				/*else
 				{
 					String name = ""+i;
@@ -3509,18 +3504,18 @@ public class RequestManager
 
 					Class< ? >[] ptypes = method.getParameterTypes();
 					String[] pnames = new String[ptypes.length];
-					java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
+//					java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
 
 					// Find parameter names
 					for(int p = 0; p < ptypes.length; p++)
 					{
-						for(int a = 0; a < pannos[p].length; a++)
-						{
-							if(pannos[p][a] instanceof ParameterInfo)
-							{
-								pnames[p] = ((ParameterInfo)pannos[p][a]).value();
-							}
-						}
+//						for(int a = 0; a < pannos[p].length; a++)
+//						{
+//							if(pannos[p][a] instanceof ParameterInfo)
+//							{
+//								pnames[p] = ((ParameterInfo)pannos[p][a]).value();
+//							}
+//						}
 
 						if(pnames[p] == null)
 						{
@@ -4085,14 +4080,14 @@ public class RequestManager
 			{
 				for(Annotation an: ans)
 				{
-					if(an instanceof ParameterInfo)
+					/*if(an instanceof ParameterInfo)
 					{
 						ParameterInfo p = (ParameterInfo)an;
 						String name = p.value();
 						ret.add(name);
 						break;
 					}
-					else if(an instanceof QueryParam)
+					else*/ if(an instanceof QueryParam)
 					{
 						QueryParam p = (QueryParam)an;
 						String name = p.value();

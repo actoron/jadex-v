@@ -7,12 +7,11 @@ import java.util.Set;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
-import jadex.requiredservice.annotation.OnService;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
+import jadex.requiredservice.annotation.InjectService;
+import jadex.requiredservice.annotation.InjectService.Mode;
 
 /**
  *  Chat micro agent provides a basic chat service. 
@@ -20,17 +19,15 @@ import jadex.requiredservice.annotation.OnService;
  *  This example shows how a service query can be used on a collection variable.
  *  The var 'chatservices' is kept up to date with available services.
  */
-@Agent
-@Service
 public class ChatAgent implements IChatService
 {
 	/** The underlying micro agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	protected ChatGui gui;
 	
-	@OnService
+	@InjectService(mode=Mode.QUERY)
 	protected Set<IChatService> chatservices = new HashSet<IChatService>();
 	
 	@OnStart
@@ -73,9 +70,9 @@ public class ChatAgent implements IChatService
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MicroAgent.create(new ChatAgent());
-		MicroAgent.create(new ChatAgent());
-		MicroAgent.create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

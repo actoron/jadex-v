@@ -5,7 +5,7 @@ import jadex.bt.cleanerworld.BTCleanerAgent;
 import jadex.bt.nodes.Node;
 import jadex.core.IComponent;
 import jadex.future.Future;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
 public class BTSharedCleanerBenchmarkAgent extends BTCleanerAgent
 {

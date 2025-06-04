@@ -2,6 +2,7 @@ package jadex.publishservice;
 
 import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
+import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.publishservice.impl.PublishInfo;
 
@@ -39,7 +40,7 @@ public interface IPublishService extends IComponentFeature
 	 *  @param service The original service.
 	 *  @param pid The publish id (e.g. url or name).
 	 */
-	public IFuture<Void> publishService(IServiceIdentifier serviceid, PublishInfo pi);
+	public IFuture<Void> publishService(IService service, PublishInfo pi);
 	
 	/**
 	 *  Unpublish a service.

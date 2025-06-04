@@ -14,7 +14,6 @@ import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.impl.service.ServiceInvocationContext;
 
 /**
  *  Property for the waiting time of a method or a service as a whole.
@@ -44,16 +43,16 @@ public class WaitingTimeProperty extends TimedProperty
 		
 		if(ProxyFactory.isProxyClass(service.getClass()))
 		{
-			listener = new UserMethodInvocationListener(new IMethodInvocationListener()
+			listener = new IMethodInvocationListener()
 			{
 				Map<Object, Long> times = new HashMap<Object, Long>();
 				
-				public void methodCallStarted(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
+				public void methodCallStarted(Object proxy, Method method, Object[] args, Object callid)
 				{
 					times.put(callid, Long.valueOf(comp.getFeature(IExecutionFeature.class).getTime()));
 				}
 				
-				public void methodCallFinished(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
+				public void methodCallFinished(Object proxy, Method method, Object[] args, Object callid)
 				{
 					Long start = times.remove(callid);
 					// May happen that property is added during ongoing call
@@ -63,7 +62,7 @@ public class WaitingTimeProperty extends TimedProperty
 						setValue(dur);
 					}
 				}
-			});
+			};
 			comp.getFeature(IProvidedServiceFeature.class).addMethodInvocationListener(service.getServiceId(), method, listener);
 		}
 		else

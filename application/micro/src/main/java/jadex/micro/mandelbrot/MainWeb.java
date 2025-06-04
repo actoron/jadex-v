@@ -21,8 +21,8 @@ public class MainWeb
 		//SUtil.DEBUG = true;
 
 		IComponentManager.get().create(new IntermediateTaskDistributorAgent<PartDataChunk, AreaData>());
-		IComponentManager.get().create(new GenerateWebAgent());
 		IComponentManager.get().create(new DisplayWebAgent());
+		IComponentManager.get().create(new GenerateWebAgent());
 		
 		int cores = Runtime.getRuntime().availableProcessors();
 		System.out.println("creating calculators: "+(cores+1));

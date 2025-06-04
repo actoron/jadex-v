@@ -5,14 +5,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.blocksworld.BlocksworldAgent.ConfigureGoal;
 import jadex.bdi.blocksworld.BlocksworldAgent.StackGoal;
-import jadex.bdi.runtime.IPlan;
+import jadex.injection.annotation.Inject;
 
 /**
  *  Stack blocks according to the target configuration.
@@ -22,13 +20,13 @@ public class ConfigureBlocksPlan
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	protected BlocksworldAgent capa;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected ConfigureGoal goal;
 	
 	//-------- methods --------

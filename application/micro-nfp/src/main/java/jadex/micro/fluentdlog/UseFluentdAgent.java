@@ -6,14 +6,12 @@ import java.util.logging.ConsoleHandler;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
+import jadex.injection.annotation.OnStart;
 import jadex.logger.FluentdLogger;
 import jadex.logger.ILoggingFeature;
 import jadex.logger.JulLogger;
 import jadex.logger.LoggerCreator;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 
-@Agent
 public class UseFluentdAgent 
 {
 	@OnStart

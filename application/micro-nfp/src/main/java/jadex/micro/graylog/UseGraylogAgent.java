@@ -7,13 +7,11 @@ import org.graylog2.logging.GelfHandler;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
+import jadex.injection.annotation.OnStart;
 import jadex.logger.GraylogLogger;
 import jadex.logger.ILoggingFeature;
 import jadex.logger.LoggerCreator;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 
-@Agent
 public class UseGraylogAgent 
 {
 	@OnStart

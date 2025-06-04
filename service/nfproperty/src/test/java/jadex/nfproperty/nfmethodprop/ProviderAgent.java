@@ -3,20 +3,14 @@ package jadex.nfproperty.nfmethodprop;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
 
 /**
  * 
  */
-@Agent
-@Service
-@ProvidedServices(@ProvidedService(type=ITestService.class))
 public class ProviderAgent implements ITestService
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 //	@NFProperties(@NFProperty(value=WaitingTimeProperty.class))

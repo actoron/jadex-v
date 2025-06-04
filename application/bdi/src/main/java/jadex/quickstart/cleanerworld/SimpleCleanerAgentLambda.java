@@ -1,7 +1,8 @@
 package jadex.quickstart.cleanerworld;
 
-import jadex.execution.LambdaAgent;
+import jadex.core.IComponentManager;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
@@ -14,8 +15,7 @@ public class SimpleCleanerAgentLambda
 	 */
 	public static void main(String[] args)
 	{
-		LambdaAgent.create(() ->
-//		IComponentManager.get().create(() ->
+		IComponentManager.get().create((Runnable)() ->
 		{
 			// Create the sensor/actuator interface object.
 			SensorActuator	actsense	= new SensorActuator();
@@ -29,5 +29,8 @@ public class SimpleCleanerAgentLambda
 				actsense.moveTo(Math.random(), Math.random());
 			}
 		});
+
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

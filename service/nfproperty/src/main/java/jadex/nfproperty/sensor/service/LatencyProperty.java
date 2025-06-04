@@ -13,7 +13,7 @@ import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.impl.service.ServiceInvocationContext;
+import jadex.providedservice.impl.service.ServiceCall;
 
 /**
  *  Property for the overall latency a service call.
@@ -52,42 +52,45 @@ public class LatencyProperty extends TimedProperty
 		
 			if(ProxyFactory.isProxyClass(service.getClass()))
 			{
-				listener = new UserMethodInvocationListener(new IMethodInvocationListener()
+				listener = new IMethodInvocationListener()
 				{
 					Map<Object, Long> times = new HashMap<Object, Long>();
 					
-					public void methodCallStarted(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
+					public void methodCallStarted(Object proxy, Method method, Object[] args, Object callid)
 					{
 						times.put(callid, Long.valueOf(System.currentTimeMillis()));
 					}
 					
-					public void methodCallFinished(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
+					public void methodCallFinished(Object proxy, Method method, Object[] args, Object callid)
 					{
 						Long start = times.remove(callid);
 						// May happen that property is added during ongoing call
 						if(start!=null)
 						{
-							if(context!=null)
+							// TODO: is this the right ServiceCall!?
+							ServiceCall	call	= ServiceCall.getNextInvocation();
+							if(call!=null)
 							{
-								ServiceInvocationContext sic = (ServiceInvocationContext)context;
-								if(sic.getNextServiceCall()!=null)
-								{
-									Long exe = (Long)sic.getNextServiceCall().getProperty("__duration");
+//								ServiceInvocationContext sic = (ServiceInvocationContext)context;
+//								if(sic.getNextServiceCall()!=null)
+//								{
+//									Long exe = (Long)sic.getNextServiceCall().getProperty("__duration");
+									Long	exe	= (Long)call.getProperty("__duration");
 									if(exe!=null)
 									{
 										long dur = System.currentTimeMillis() - start.longValue() - exe.longValue();
 //										System.out.println("latency is: "+dur);
 										setValue(dur);
-									}
+//									}
 								}
 							}
 							else
 							{
-								System.out.println("no context");
+								System.out.println("no call context");
 							}
 						}
 					}
-				});
+				};
 				comp.getFeature(IProvidedServiceFeature.class).addMethodInvocationListener(service.getServiceId(), method, listener);
 			}
 			else

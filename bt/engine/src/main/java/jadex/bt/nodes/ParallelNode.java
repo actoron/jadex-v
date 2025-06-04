@@ -73,13 +73,13 @@ public class ParallelNode<T> extends CompositeNode<T>
         if(call != null && !call.isDone()) 
         {
         	//System.out.println("execute again called: "+this+" "+ret+" "+context.isRepeat());
-   			System.getLogger(this.getClass().getName()).log(Level.INFO, "execute new child: "+this+" "+context.getState());
+   			getLogger().log(Level.INFO, "execute new child: "+this+" "+context.getState());
         	
    			executeChild(child, event, context.getResults(), execontext, context.getInternalCall());
         }
         else
         {
-        	System.getLogger(this.getClass().getName()).log(Level.INFO, "child added but node not running: "+this+" "+context.getState());
+        	getLogger().log(Level.INFO, "child added but node not running: "+this+" "+context.getState());
         }
         
         return this;

@@ -6,35 +6,31 @@ import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Description;
-import jadex.micro.mandelbrot.calculate.ICalculateService;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
 import jadex.micro.mandelbrot.display.IDisplayService;
 import jadex.micro.mandelbrot.model.AreaData;
-import jadex.model.annotation.OnEnd;
-import jadex.providedservice.ServiceScope;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
-import jadex.requiredservice.annotation.OnService;
-import jadex.requiredservice.annotation.RequiredService;
-import jadex.requiredservice.annotation.RequiredServices;
+import jadex.providedservice.annotation.ProvideService;
 	
 /**
  *  Agent that can process generate requests.
  */
-@Description("Agent offering a generate service.")
-@ProvidedServices(@ProvidedService(type=IGenerateService.class, implementation=@Implementation(GenerateService.class)))
-@RequiredServices({
-	@RequiredService(name="displayservice", type=IDisplayService.class),
-	@RequiredService(name="calculateservice", type=ICalculateService.class, scope=ServiceScope.GLOBAL), 
-	@RequiredService(name="generateservice", type=IGenerateService.class)
-})
-@Agent
+//@Description("Agent offering a generate service.")
+//@ProvidedServices(@ProvidedService(type=IGenerateService.class, implementation=@Implementation(GenerateService.class)))
+//@RequiredServices({
+//	@RequiredService(name="displayservice", type=IDisplayService.class),
+//	@RequiredService(name="calculateservice", type=ICalculateService.class, scope=ServiceScope.GLOBAL), 
+//	@RequiredService(name="generateservice", type=IGenerateService.class)
+//})
+//@Agent
 public class GenerateAgent implements IGenerateGui 
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
+	
+	/** The service. */
+	@ProvideService
+	protected IGenerateService	gen	= new GenerateService();
 	
 	/** The generate panel. */
 	protected GeneratePanel panel;
@@ -107,7 +103,8 @@ public class GenerateAgent implements IGenerateGui
 			agent.getLocalService(IGenerateService.class).calcDefaultImage();
 	}*/
 	
-	@OnService(name="displayservice")
+//	@OnService(name="displayservice")
+	@Inject
 	protected void displayServiceAvailable(IDisplayService ds)
 	{
 		//System.out.println("Found display service: "+cs);

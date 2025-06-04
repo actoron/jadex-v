@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  *  Allows for defining a concrete Future return type of a method.
- *  Helpful fpr reflective or generic methods with return type IFuture.
+ *  Helpful for reflective or generic methods with return type IFuture.
  *  In each call an argument can be passed how the return type of this
  *  call looks like. Used e.g. for the reflective IService.invokeMethod().
  */

@@ -12,38 +12,36 @@ import javax.swing.JTextPane;
 
 import jadex.common.SGUI;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Description;
-import jadex.micro.mandelbrot.generate.IGenerateService;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.micro.mandelbrot.ui.ColorChooserPanel;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
-import jadex.requiredservice.annotation.RequiredService;
-import jadex.requiredservice.annotation.RequiredServices;
+import jadex.providedservice.annotation.ProvideService;
 
 /**
  *  Agent offering a display service.
  */
-@Description("Agent offering a display service.")
-@ProvidedServices({
-	@ProvidedService(type=IDisplayService.class, implementation=@Implementation(DisplayService.class))//,
-//	@ProvidedService(type=IAppProviderService.class, implementation=@Implementation(AppProviderService.class))
-})
-@RequiredServices({
-	@RequiredService(name="generateservice", type=IGenerateService.class),
-})
-@Agent
+//@Description("Agent offering a display service.")
+//@ProvidedServices({
+//	@ProvidedService(type=IDisplayService.class, implementation=@Implementation(DisplayService.class))//,
+////	@ProvidedService(type=IAppProviderService.class, implementation=@Implementation(AppProviderService.class))
+//})
+//@RequiredServices({
+//	@RequiredService(name="generateservice", type=IGenerateService.class),
+//})
+//@Agent
 public class DisplayAgent
 {
 	//-------- attributes --------
 	
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
+	
+	/** The service. */
+	@ProvideService
+	protected IDisplayService	disp	= new DisplayService();
 	
 	/** The GUI. */
 	protected DisplayPanel panel;

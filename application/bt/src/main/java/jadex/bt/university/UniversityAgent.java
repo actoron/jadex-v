@@ -5,7 +5,7 @@ import java.lang.System.Logger.Level;
 import jadex.bt.IBTProvider;
 import jadex.bt.NodeListener;
 import jadex.bt.Val;
-import jadex.bt.actions.UserAction;
+import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.TriggerDecorator;
 import jadex.bt.impl.BTAgentFeature;
@@ -16,18 +16,16 @@ import jadex.bt.nodes.SelectorNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.future.Future;
+import jadex.future.TerminableFuture;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.logger.ILoggingFeature;
-import jadex.logger.JadexLoggerFinder;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 import jadex.rules.eca.EventType;
 
-@Agent(type="bt")
 public class UniversityAgent implements IBTProvider
 {
 	/** The bdi agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** Belief if it is currently raining. Set through an agent argument. */
@@ -54,16 +52,16 @@ public class UniversityAgent implements IBTProvider
 		
 		// take train precondition raining
 		ActionNode<IComponent> train = new ActionNode<>("train");
-		train.setAction(new UserAction<IComponent>((e, agent) -> 
+		train.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to train stop: "+agent.getId());
 			if(!waiting.get())
 			{
 				System.out.println("failed waiting for train");
-				return new Future<>(NodeState.FAILED);
+				return new TerminableFuture<>(NodeState.FAILED);
 			}
 			System.out.println("Going by train");
-			return new Future<>(NodeState.SUCCEEDED);
+			return new TerminableFuture<>(NodeState.SUCCEEDED);
 		}));
 		train.addDecorator(new ConditionalDecorator<IComponent>().setFunction((event, state, comp) -> raining.get()? NodeState.RUNNING: NodeState.FAILED));
 		//train.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});
@@ -74,7 +72,7 @@ public class UniversityAgent implements IBTProvider
 		
 		// take tram always
 		ActionNode<IComponent> tram = new ActionNode<>("tram");
-		tram.setAction(new UserAction<IComponent>((e, agent) -> 
+		tram.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to tram stop: "+agent.getId());
 			if(!waiting.get())
@@ -86,18 +84,18 @@ public class UniversityAgent implements IBTProvider
 					raining.set(true);
 					waiting.set(true);
 				}
-				return new Future<>(NodeState.FAILED);
+				return new TerminableFuture<>(NodeState.FAILED);
 			}
 			System.out.println("Going by tram");
-			return new Future<>(NodeState.SUCCEEDED);
+			return new TerminableFuture<>(NodeState.SUCCEEDED);
 		}));
 		
 		// walk when not raining
 		ActionNode<IComponent> walk = new ActionNode<>("walk");
-		walk.setAction(new UserAction<IComponent>((e, agent) -> 
+		walk.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{ 
 			System.out.println("Walking to uni: "+agent.getId());
-			return new Future<>(NodeState.SUCCEEDED);
+			return new TerminableFuture<>(NodeState.SUCCEEDED);
 		}));
 		walk.addDecorator(new ConditionalDecorator<IComponent>().setFunction((event, state, comp) -> raining.get()? NodeState.FAILED: NodeState.RUNNING));
 		//walk.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});

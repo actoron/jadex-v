@@ -1,5 +1,11 @@
 package jadex.bdi.marsworld.environment;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.plan.RPlan;
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
+import jadex.core.impl.ComponentManager;
 import jadex.environment.SpaceObject;
 import jadex.math.IVector2;
 
@@ -107,5 +113,15 @@ public class BaseObject extends SpaceObject
 		setSpeed(bo.getSpeed());
 		setVision(bo.getVision());
 		//System.out.println("updated: "+this);
+	}
+
+	@Override
+	public void debug()
+	{
+		IComponent	comp	= ComponentManager.get().getComponent(new ComponentIdentifier(name));
+		for(RPlan plan: ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getPlans())
+		{
+			System.out.println(plan);
+		}
 	}
 }

@@ -3,10 +3,10 @@ package jadex.quickstart.cleanerworld.multi.messaging;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
@@ -17,7 +17,7 @@ import jadex.quickstart.cleanerworld.gui.SensorGui;
  *  @version 1.1 (2017/11/07)
  *
  */
-@Agent(type="bdi")
+@BDIAgent
 public class SimpleMessagingCleanerAgent
 {
 	//-------- beliefs that can be used in plan and goal conditions --------

@@ -1,13 +1,18 @@
 package jadex.bdi.cleanerworld.cleaner;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IPlan;
+import jadex.bdi.PlanFailureException;
+import jadex.bdi.Val;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.ExcludeMode;
@@ -16,7 +21,7 @@ import jadex.bdi.annotation.GoalContextCondition;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
-import jadex.bdi.annotation.GoalResult;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
@@ -27,10 +32,7 @@ import jadex.bdi.cleanerworld.environment.CleanerworldEnvironment;
 import jadex.bdi.cleanerworld.environment.Waste;
 import jadex.bdi.cleanerworld.environment.Wastebin;
 import jadex.bdi.cleanerworld.ui.SensorGui;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IPlan;
-import jadex.bdi.runtime.Val;
-import jadex.bdi.runtime.impl.ICandidateInfo;
+import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.environment.Environment;
@@ -42,22 +44,21 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 import jadex.math.IVector2;
 import jadex.math.Vector2Double;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.AgentArgument;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
 
 /**
  *  Cleaner agent.
  */
-@Agent(type="bdip")
+@BDIAgent
 public class CleanerAgent
 {
 	//-------- beliefs that can be used in plan and goal conditions --------
 	
-	@Agent
+	@Inject
 	private IComponent agent;
 	
 	/** Set of the known wastes. Managed by SensorActuator object. */
@@ -78,13 +79,12 @@ public class CleanerAgent
 	
 	/** Knowledge about myself. */
 	@Belief
-	private Cleaner self = null;
+	private Val<Cleaner> self = new Val<Cleaner>((Cleaner)null);
 	
 	/** Day or night?. Use updaterate to re-check every second. */
 	@Belief(updaterate=1000)
-	private Val<Boolean> daytime = new Val(() -> getEnvironment().isDaytime().get());
+	private Val<Boolean> daytime = new Val<>(() -> getEnvironment().isDaytime().get());
 	
-	@AgentArgument
 	private boolean	sensorgui	= true;
 	
 	private CleanerworldEnvironment env;
@@ -117,7 +117,7 @@ public class CleanerAgent
 	
 	private Cleaner getSelf()
 	{
-		return (Cleaner)self;
+		return self.get();
 	}
 	
 	//-------- simple example behavior --------
@@ -133,7 +133,7 @@ public class CleanerAgent
 				
 		Cleaner s = new Cleaner(new Vector2Double(Math.random()*0.4+0.3, Math.random()*0.4+0.3), getAgent().getId().getLocalName(), 0.1, 0.1, 0.8);  
 		s = (Cleaner)getEnvironment().addSpaceObject((SpaceObject)s).get();
-		bdifeature.setBeliefValue("self", s);
+		self.set(s);
 		
 		PerceptionProcessor pp = new PerceptionProcessor();
 		
@@ -145,7 +145,7 @@ public class CleanerAgent
 			if(obj.equals(getSelf()))
 				getSelf().updateFrom(obj);
 			else
-				pp.findAndUpdateOrAdd(obj, others);
+				PerceptionProcessor.findAndUpdateOrAdd(obj, others);
 		}, obj -> others.remove(obj), obj -> {if(obj.getPosition()==null) others.remove(obj);});
 		
 		envfut = getEnvironment().observeObject((Cleaner)getSelf());
@@ -173,12 +173,13 @@ public class CleanerAgent
 	public void onEnd()
 	{
 		envfut.terminate();
+		env.removeSpaceObject(getSelf());
 	}
 	
 	/**
 	 *  Goal for keeping the battery loaded.
 	 */
-	@Goal(deliberation=@Deliberation(inhibits={PerformLookForWaste.class, AchieveCleanupWaste.class, PerformPatrol.class}))
+	@Goal(deliberation=@Deliberation(inhibits={PerformLookForWaste.class, AchieveCleanupWaste.class/*, PerformPatrol.class*/}))
 	public class MaintainBatteryLoaded
 	{
 		/**
@@ -205,33 +206,13 @@ public class CleanerAgent
 	}
 	
 	@Goal(excludemode=ExcludeMode.Never)
-	public class QueryChargingStation
+	public class QueryChargingStation	implements Supplier<Chargingstation>
 	{
-		protected Chargingstation station;
-		
-		@GoalTargetCondition(beliefs="stations")
-		public boolean checkTarget()
+		@GoalQueryCondition(beliefs="stations")
+		@Override
+		public Chargingstation get()
 		{
-			station = findClosestElement(stations, getSelf().getLocation());
-			return station!=null;
-		}
-		
-		/**
-		 *  Get the station.
-		 *  @return The station.
-		 */
-		public Chargingstation getStation()
-		{
-			return station;
-		}
-
-		/**
-		 *  Set the station.
-		 *  @param station The station to set.
-		 */
-		public void setStation(Chargingstation station)
-		{
-			this.station = station;
+			return findClosestElement(stations, getSelf().getPosition());
 		}
 	}
 	
@@ -277,33 +258,20 @@ public class CleanerAgent
 	}
 	
 	@Goal(excludemode=ExcludeMode.Never)
-	private class QueryWastebin
+	private class QueryWastebin	implements Supplier<Wastebin>
 	{
-		@GoalResult
-		protected Wastebin wastebin;
-		
-		@GoalTargetCondition(beliefs="wastebins")
-		public boolean checkTarget()
+		@GoalQueryCondition(beliefs="wastebins")
+		@Override
+		public Wastebin get()
 		{
-			wastebin = findClosestElement(wastebins, getSelf().getLocation());
-			return wastebin!=null;
-		}
-
-		public Wastebin getWastebin() 
-		{
-			return wastebin;
-		}
-
-		public void setWastebin(Wastebin wastebin) 
-		{
-			this.wastebin = wastebin;
+			return findClosestElement(wastebins, getSelf().getPosition());
 		}
 	}
 	
 	//-------- cleanup waste --------
 	
 	//@Goal(recur=true, recurdelay=3000,deliberation=@Deliberation(inhibits=PerformPatrol.class, cardinalityone=true))
-	@Goal(deliberation=@Deliberation(inhibits={PerformLookForWaste.class, AchieveCleanupWaste.class}), unique=true)
+	@Goal(deliberation=@Deliberation(inhibits={PerformLookForWaste.class/*, AchieveCleanupWaste.class*/}/*, cardinalityone=true*/)/*, unique=true*/)
 	private class AchieveCleanupWaste
 	{
 		private Waste	waste;
@@ -316,78 +284,84 @@ public class CleanerAgent
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		/*@GoalTargetCondition(beliefs={"self", "wastes"})
+		@GoalTargetCondition(beliefs={"self", "wastes"})
 		boolean	isClean()
 		{
 			// Test if the waste is not believed to be in the environment
 			return !wastes.contains(waste)
 				// and also not the waste we just picked up.
-				&& !waste.equals(self.getCarriedWaste());
-		}*/
+				&& !waste.equals(getSelf().getCarriedWaste());
+		}
 		
 		// Goal should only be pursued when carrying no waste
 		// or when goal is resumed after recharging and carried waste is of this goal.
-		@GoalContextCondition(beliefs={"daytime", "self"})
+		@GoalContextCondition(beliefs={"daytime"/*, "self"*/})
 		boolean isPossible()
 		{
-			return daytime.get() && (self.getCarriedWaste()==null || waste.equals(self.getCarriedWaste()));
+			return daytime.get() /*&& (self.getCarriedWaste()==null || waste.equals(self.getCarriedWaste()))*/;
 		}
 		
-		@Override
-		public boolean equals(Object obj)
-		{
-			return obj instanceof AchieveCleanupWaste && ((AchieveCleanupWaste)obj).waste.equals(waste);
-		}
+//		@Override
+//		public boolean equals(Object obj)
+//		{
+//			return obj instanceof AchieveCleanupWaste && ((AchieveCleanupWaste)obj).waste.equals(waste);
+//		}
 		
 		public Waste getWaste() 
 		{
 			return waste;
 		}
 
-		@Override
-		public int hashCode()
-		{
-			return 31+waste.hashCode();
-		}
+//		@Override
+//		public int hashCode()
+//		{
+//			return 31+waste.hashCode();
+//		}
 		
 		@GoalInhibit(AchieveCleanupWaste.class)
 		private boolean	inhibitOther(AchieveCleanupWaste other)
 		{
-			try
-			{
-				return waste.equals(getSelf().getCarriedWaste()) || 
-					(!other.waste.equals(getSelf().getCarriedWaste()) && other.waste.getLocation()!=null
-						&& waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble()
-							< other.waste.getLocation().getDistance(getSelf().getLocation()).getAsDouble());
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-				return false;
-			}
+			// Inhibit all other goals when currently carrying the waste of this goal
+			return waste.equals(getSelf().getCarriedWaste()) || 
+				// Otherwise inhibit other goals where waste is further away
+				(!other.waste.equals(getSelf().getCarriedWaste()) && other.waste.getPosition()!=null
+					&& waste.getPosition().getDistance(getSelf().getPosition()).getAsDouble()
+						< other.waste.getPosition().getDistance(getSelf().getPosition()).getAsDouble());
 		}
 	}
 	
 	@Plan(trigger=@Trigger(goals=AchieveCleanupWaste.class))
 	private void cleanupWaste(IPlan plan, AchieveCleanupWaste goal)
 	{
-		//System.out.println("Starting cleanupWaste() plan");
 		Waste waste = goal.getWaste();
+//		System.out.println("Starting cleanupWaste() plan: "+waste.getPosition());
 		
 		// Move to waste and pick it up, if not yet done
-		if(!waste.equals(self.getCarriedWaste()))
+		if(!waste.equals(getSelf().getCarriedWaste()))
 		{
-			getEnvironment().move(getSelf(), waste.getLocation()).get();
-			getEnvironment().pickupWaste(getSelf(), waste).get();
+			getEnvironment().move(getSelf(), waste.getPosition()).get();
+//			System.out.println("pickup cleanupWaste() plan: "+waste.getPosition());
+			
+			// todo: pickupWaste -> boolean result
+			try
+			{
+				// Pickup waste can always fail due to other cleaner that pick up this waste
+				getEnvironment().pickupWaste(getSelf(), waste).get();
+			}
+			catch(Exception e)
+			{
+				throw new PlanFailureException(e);
+			}
 		}
 		
 		// Dispatch a subgoal to find a waste bin
-		QueryWastebin	querygoal = new QueryWastebin();
-		plan.dispatchSubgoal(querygoal).get();
-		Wastebin wastebin = querygoal.getWastebin();
+//		QueryWastebin	querygoal = new QueryWastebin();
+//		plan.dispatchSubgoal(querygoal).get();
+//		Wastebin wastebin = querygoal.getWastebin();
+		Wastebin wastebin = plan.dispatchSubgoal(new QueryWastebin()).get();
 		
 		// Move to waste bin as provided by subgoal
-		getEnvironment().move(getSelf(), wastebin.getLocation()).get();
+		getEnvironment().move(getSelf(), wastebin.getPosition()).get();
 		
 		// Finally drop the waste into the bin
 		getEnvironment().dropWasteInWastebin(getSelf(), waste, wastebin).get();
@@ -396,11 +370,10 @@ public class CleanerAgent
 	@Plan(trigger=@Trigger(goals=MaintainBatteryLoaded.class))
 	private void loadBattery(CleanerAgent agentapi, IPlan planapi)
 	{
-		QueryChargingStation sg = (QueryChargingStation)planapi.dispatchSubgoal((new QueryChargingStation())).get();
-		Chargingstation station = (Chargingstation)sg.getStation();
+		Chargingstation station = planapi.dispatchSubgoal(new QueryChargingStation()).get();
 		
 		//System.out.println("Moving to station: "+station);
-		getEnvironment().move(getSelf(), station.getLocation()).get();
+		getEnvironment().move(getSelf(), station.getPosition()).get();
 		
 		getEnvironment().loadBattery(getSelf(), (Chargingstation)station).get();
 	}
@@ -500,7 +473,7 @@ public class CleanerAgent
 	@ComponentMethod
 	public IFuture<Cleaner> getCleaner() 
 	{	
-		return new Future<>(self);
+		return new Future<>(getSelf());
 	}
 
 	@ComponentMethod
@@ -512,6 +485,6 @@ public class CleanerAgent
 	@ComponentMethod
 	public IFuture<IVector2> getTarget() 
 	{
-		return getEnvironment().getTarget(self);
+		return getEnvironment().getTarget(getSelf());
 	}
 }

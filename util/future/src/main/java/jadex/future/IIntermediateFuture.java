@@ -76,6 +76,21 @@ public interface IIntermediateFuture<E> extends IFuture<Collection <E>>
      *  until a result is available or the future is finished.
      *  
 	 *  @param timeout The timeout in millis.
+     *  @return	The next intermediate result.
+     *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 
+     */
+    public E getNextIntermediateResult(long timeout);
+    
+    /**
+     *  Iterate over the intermediate results in a blocking fashion.
+     *  Manages results independently for different callers, i.e. when called
+     *  from different threads, each thread receives all intermediate results.
+     *  
+     *  The operation is guaranteed to be non-blocking, if hasNextIntermediateResult()
+     *  has returned true before for the same caller. Otherwise the caller is blocked
+     *  until a result is available or the future is finished.
+     *  
+	 *  @param timeout The timeout in millis.
 	 *  @param realtime Flag, if wait should be realtime (in constrast to simulation time).
      *  @return	The next intermediate result.
      *  @throws NoSuchElementException when there are no more intermediate results and the future is finished. 

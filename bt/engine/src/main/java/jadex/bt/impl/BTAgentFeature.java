@@ -10,11 +10,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jadex.bt.IBTAgentFeature;
 import jadex.bt.IBTProvider;
 import jadex.bt.Val;
 import jadex.bt.actions.UserBaseAction;
@@ -37,7 +37,6 @@ import jadex.common.Tuple2;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.future.FutureFunctionality;
@@ -48,14 +47,13 @@ import jadex.future.Future;
 import jadex.future.FutureHelper;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
-import jadex.micro.impl.MicroAgentFeature;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.Rule;
 import jadex.rules.eca.RuleEvent;
 import jadex.rules.eca.RuleSystem;
 
-public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
+public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 {
 	static Field valvalue = SReflect.getField(Val.class, "value");
 	//static Field valpojo = SReflect.getField(Val.class, "pojo");
@@ -84,6 +82,8 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 	/** Event type that a parameter value has changed (the whole value was changed). */
 	public static final String VALUECHANGED = "valuechanged";
 
+	/** The component. */
+	protected BTAgent	self;	
 	
 	/** The behavior tree. */
 	protected Node<IComponent> bt;
@@ -100,15 +100,20 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 
 	public static BTAgentFeature get()
 	{
-		Object o = IExecutionFeature.get().getComponent().getFeature(MicroAgentFeature.class);
+		//Object o = IExecutionFeature.get().getComponent().getFeature(IBTAgentFeature.class);
 		//if(!(o instanceof BTAgentFeature))
 		//	System.out.println("sdgjhfjhsdgfjh");
-		return (BTAgentFeature)IExecutionFeature.get().getComponent().getFeature(MicroAgentFeature.class);
+		return (BTAgentFeature)IExecutionFeature.get().getComponent().getFeature(IBTAgentFeature.class);
 	}
 
 	protected BTAgentFeature(BTAgent self)
 	{
-		super(self);
+		this.self	= self;
+	}
+	
+	public BTAgent	getSelf()
+	{
+		return self;
 	}
 	
 	@Override
@@ -129,9 +134,6 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BTStepListener());
 		//System.out.println("createStepLis");
 		
-		super.onStart();
-		//System.out.println("super on start");
-		
 		initRulesystem();
 		
 		//System.out.println("init rule system: "+IExecutionFeature.get().getComponent());
@@ -149,6 +151,12 @@ public class BTAgentFeature	extends MicroAgentFeature implements ILifecycle
 			System.out.println("execute bt");
 			return IFuture.DONE;
 		}).catchEx(e -> getSelf().handleException(e));*/
+	}
+	
+	@Override
+	public void onEnd()
+	{
+		bt.abort(AbortMode.SUBTREE, NodeState.FAILED, context);
 	}
 	
 	protected void initVals()

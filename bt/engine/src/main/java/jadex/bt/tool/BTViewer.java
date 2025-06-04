@@ -6,13 +6,13 @@ import java.util.TimerTask;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import jadex.bt.IBTAgentFeature;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.Node;
 import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
-import jadex.micro.impl.MicroAgentFeature;
 
 public class BTViewer extends JFrame 
 {
@@ -39,12 +39,12 @@ public class BTViewer extends JFrame
 	
 	private Node<?> getRoot()
 	{
-		return agent.scheduleStep((IThrowingFunction<IComponent, Node<IComponent>>)a -> ((BTAgentFeature)a.getFeature(MicroAgentFeature.class)).getBehaviorTree()).get();
+		return agent.scheduleStep((IThrowingFunction<IComponent, Node<IComponent>>)a -> ((BTAgentFeature)a.getFeature(IBTAgentFeature.class)).getBehaviorTree()).get();
 	}
 	
 	private ExecutionContext<?> getExecutionContext()
 	{
-		return agent.scheduleStep((IThrowingFunction<IComponent, ExecutionContext<?>>)a -> ((BTAgentFeature)a.getFeature(MicroAgentFeature.class)).getExecutionContext()).get();
+		return agent.scheduleStep((IThrowingFunction<IComponent, ExecutionContext<?>>)a -> ((BTAgentFeature)a.getFeature(IBTAgentFeature.class)).getExecutionContext()).get();
 	}
 	
 	private void startAutoRefresh() 

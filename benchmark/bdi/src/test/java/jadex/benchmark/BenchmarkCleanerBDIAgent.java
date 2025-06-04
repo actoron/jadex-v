@@ -1,12 +1,10 @@
 package jadex.benchmark;
 
+import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.cleanerworld.cleaner.CleanerAgent;
-import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.future.Future;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
-@Agent(type="bdip") // necessary due to BDI bug?!
 public class BenchmarkCleanerBDIAgent extends CleanerAgent
 {
 	public Future<Void> future;

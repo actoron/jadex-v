@@ -9,15 +9,12 @@ import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
 import jadex.providedservice.impl.service.ServiceCall;
 
-@Agent
-@Service
 public class TableAgent implements ITableService
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** The chop sticks */

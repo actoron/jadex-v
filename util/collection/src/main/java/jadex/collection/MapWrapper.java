@@ -36,6 +36,16 @@ public class MapWrapper<T, E> implements Map<T, E>
 		this.publisher = publisher;
 	}
 	
+	public Map<T, E> getDelegate()
+	{
+		return delegate;
+	}
+	
+	public IEventPublisher getPublisher()
+	{
+		return publisher;
+	}
+	
 	//-------- Map interface --------
 	
 	/** 

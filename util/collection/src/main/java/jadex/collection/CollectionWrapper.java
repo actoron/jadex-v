@@ -38,6 +38,11 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		return this.publisher;
 	}
 	
+	public Collection<T> getDelegate()
+	{
+		return this.delegate;
+	}
+	
 	/**
 	 *  Get the size.
 	 */

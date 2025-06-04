@@ -1,24 +1,22 @@
 package jadex.remoteservices;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jadex.common.ClassInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.execution.IExecutionFeature;
+import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
 import jadex.messaging.security.authentication.KeySecret;
 import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 @Agent
 public class CallerAgent

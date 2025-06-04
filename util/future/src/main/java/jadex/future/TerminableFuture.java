@@ -43,6 +43,15 @@ public class TerminableFuture<E> extends Future<E> implements ITerminableFuture<
 		this.terminate = terminate;
 	}
 	
+	/**
+	 *  Create a future that is already done.
+	 *  @param terminate The termination command.
+	 */
+	public TerminableFuture(E result)
+	{
+		super(result);
+	}
+	
 	//-------- methods --------
 	
 	/**

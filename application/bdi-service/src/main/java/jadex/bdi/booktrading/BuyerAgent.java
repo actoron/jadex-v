@@ -5,21 +5,22 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.PlanFailureException;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
-import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.RawEvent;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.ChangeEvent;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.PlanFailureException;
 import jadex.common.Tuple2;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
@@ -28,18 +29,18 @@ import jadex.future.CollectionResultListener;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IResultListener;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  * 
  */
-@Agent(type="bdip")
+@BDIAgent
 public class BuyerAgent implements INegotiationAgent
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	@Belief
@@ -47,7 +48,12 @@ public class BuyerAgent implements INegotiationAgent
 	
 	protected Future<Gui> gui;
 	
+	/** The uninited orders, that are passed as arguments. */
 	protected Order[]	ios;
+	
+	/** The inited orders as beliefs. */
+	@Belief
+	protected Set<Order>	orders	= new LinkedHashSet<>();
 	
 	public BuyerAgent(Order[] ios)
 	{
@@ -68,7 +74,7 @@ public class BuyerAgent implements INegotiationAgent
 				// Hack!!! use start time as deadline for initial orders
 				o.setDeadline(new Date(exe.getTime()+o.getStartTime()), exe);
 				o.setStartTime(getTime());
-				createGoal(o);
+				orders.add(o);
 			}
 		}
 		
@@ -96,15 +102,16 @@ public class BuyerAgent implements INegotiationAgent
 			gui.then(thegui -> SwingUtilities.invokeLater(()->thegui.dispose()));
 	}
 	
-	@Goal(recur=true, recurdelay=10000, unique=true)
+	@Goal(recur=true, recurdelay=10000/*, unique=true*/)
 	public class PurchaseBook implements INegotiationGoal
 	{
-		@GoalParameter
+//		@GoalParameter
 		protected Order order;
 
 		/**
 		 *  Create a new PurchaseBook. 
 		 */
+		@GoalCreationCondition(factadded="orders")
 		public PurchaseBook(Order order)
 		{
 			this.order = order;
@@ -119,13 +126,13 @@ public class BuyerAgent implements INegotiationAgent
 			return order;
 		}
 		
-		@GoalDropCondition(parameters="order")
+		@GoalDropCondition(/*parameters="order"*/beliefs="orders")
 		public boolean checkDrop()
 		{
 			return order.getState().equals(Order.FAILED);
 		}
 		
-		@GoalTargetCondition(parameters="order")
+		@GoalTargetCondition(/*parameters="order"*/beliefs="orders")
 		public boolean checkTarget()
 		{
 			return Order.DONE.equals(order.getState());
@@ -135,17 +142,18 @@ public class BuyerAgent implements INegotiationAgent
 	/**
 	 * 
 	 */
-	@Belief(rawevents={@RawEvent(ChangeEvent.GOALADOPTED), @RawEvent(ChangeEvent.GOALDROPPED), 
-		@RawEvent(ChangeEvent.PARAMETERCHANGED)})
+//	@Belief(rawevents={@RawEvent(ChangeEvent.GOALADOPTED), @RawEvent(ChangeEvent.GOALDROPPED), 
+//		@RawEvent(ChangeEvent.PARAMETERCHANGED)})
 	public List<Order> getOrders()
 	{
 //		System.out.println("getOrders belief called");
 		List<Order> ret = new ArrayList<Order>();
-		Collection<PurchaseBook> goals = agent.getFeature(IBDIAgentFeature.class).getGoals(PurchaseBook.class);
-		for(PurchaseBook goal: goals)
-		{
-			ret.add(goal.getOrder());
-		}
+		ret.addAll(orders);
+//		Collection<PurchaseBook> goals = agent.getFeature(IBDIAgentFeature.class).getGoals(PurchaseBook.class);
+//		for(PurchaseBook goal: goals)
+//		{
+//			ret.add(goal.getOrder());
+//		}
 		return ret;
 	}
 	
@@ -171,7 +179,7 @@ public class BuyerAgent implements INegotiationAgent
 			+ order.getStartPrice();
 
 		// Find available seller agents.
-		Collection<IBuyBookService>	services = agent.getFeature(IRequiredServiceFeature.class).getServices(IBuyBookService.class).get();
+		Collection<IBuyBookService>	services = agent.getFeature(IRequiredServiceFeature.class).searchServices(IBuyBookService.class).get();
 		if(services.isEmpty())
 		{
 //			System.out.println("No seller found, purchase failed.");
@@ -208,6 +216,8 @@ public class BuyerAgent implements INegotiationAgent
 				return o1.getSecondEntity().compareTo(o2.getSecondEntity());
 			}
 		});
+		
+//		System.out.println("proposals for "+order+": "+Arrays.asList(proposals));
 
 		// Do we have a winner?
 		if(proposals.length>0 && proposals[0].getSecondEntity().intValue()<=acceptable_price)

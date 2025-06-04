@@ -1,55 +1,45 @@
 package jadex.bdi.shop;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import jadex.bdi.Val;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
-import jadex.bdi.annotation.Mapping;
-import jadex.bdi.runtime.IBDIAgentFeature;
 import jadex.core.IComponent;
-import jadex.micro.annotation.Agent;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
+import jadex.injection.annotation.Inject;
 
 /**
  *  Shop bdi agent.
  */
-@Agent(type="bdi")
-@ProvidedServices(@ProvidedService(type=IShopService.class, //	implementation=@Implementation(value=ShopService.class)))
-implementation=@Implementation(expression="new ShopService($agent.getFeature(jadex.bdi.runtime.IBDIAgentFeature.class).getArgument(\"shopname\"))")))
+@BDIAgent
 public class ShopAgent
 {
 	//-------- attributes --------
 
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	// Principles: 
-	// - each belief should only be represented as one field! (no assignments)
-	// - access of beliefs of capabilities via getters/setters
-	// - delegation to the outside via own getter/setters (allows renaming)
-	// - abstract beliefs need to be declared via native getter/setter pairs
+	// - each belief should only be represented as one object (Val, List...)
+	// Abstract beliefs get assigned the object on startup.
+	// TODO: abstract bean belief!? -> use Val
 	
-	/** The customer capability. */
-	@SuppressWarnings("unchecked")
-	@Capability(beliefmapping=@Mapping("money"))
-	protected ShopCapa shopcap	= new ShopCapa((String)agent.getFeature(IBDIAgentFeature.class).getArgument("shopname"), 
-		(List<ItemInfo>)agent.getFeature(IBDIAgentFeature.class).getArgument("catalog"));
+	/** The shop capability. */
+	@Capability//(beliefmapping=@Mapping("money"))
+	protected ShopCapa shopcap;
 	
 	/** The money. */
 	@Belief
-	protected double	money	= 100;
+	protected Val<Double>	money	= new Val<>(100.0);
+	
+	//-------- constructors --------
 	
 	/**
-	 *  Get some default catalog.
+	 *  Create a shop agent.
 	 */
-	public static List<ItemInfo> getDefaultCatalog()
+	public ShopAgent(String shopname, List<ItemInfo> catalog)
 	{
-		List<ItemInfo> ret = new ArrayList<ItemInfo>();
-		ret.add(new ItemInfo("Paper", 0.89, 10));
-		ret.add(new ItemInfo("Pencil", 0.56, 2));
-		return ret;
+		this.shopcap	= new ShopCapa(shopname, catalog);
 	}
 }

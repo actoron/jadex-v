@@ -37,12 +37,12 @@ public class SequenceNode<T> extends CompositeNode<T>
     	
     	getNodeContext(context).incIndex();
     	//System.out.println("sequence executing child: "+getNodeContext(context).getIndex());
-  		System.getLogger(this.getClass().getName()).log(Level.INFO, "sequence executing child: "+this+" "+getNodeContext(context).getIndex());
+  		getLogger().log(Level.INFO, "sequence executing child: "+this+" "+getNodeContext(context).getIndex());
 
     	
     	if(getNodeContext(context).getIndex() < getChildCount()) 
     	{
-            System.getLogger(this.getClass().getName()).log(Level.INFO, "sequence child is: "+getChild(getNodeContext(context).getIndex()));
+            getLogger().log(Level.INFO, "sequence child is: "+getChild(getNodeContext(context).getIndex()));
             IFuture<NodeState> child = getChild(getNodeContext(context).getIndex()).execute(event, context);
             
             if(child.isDone())
@@ -56,12 +56,14 @@ public class SequenceNode<T> extends CompositeNode<T>
         }
     	else if(getChildCount()==0 || getChildCount()==getNodeContext(context).getIndex())
     	{
-    		System.out.println("sequence succeeded: "+this);
+    		//System.out.println("sequence succeeded: "+this);
+     		getLogger().log(Level.INFO, "sequence succeeded: "+this);
     		ret.setResult(NodeState.SUCCEEDED);
     	}
     	else
     	{
-    		System.out.println("sequence failed: "+this);
+    		//System.out.println("sequence failed: "+this);
+    		getLogger().log(Level.INFO, "sequence failed: "+this);
     		ret.setResult(NodeState.FAILED);
     	}
     	
@@ -70,18 +72,20 @@ public class SequenceNode<T> extends CompositeNode<T>
     
     protected void handleResult(Event event, NodeState state, Future<NodeState> ret, ExecutionContext<T> context) 
     {
-    	System.out.println("seq node, child finished with: "+this+" "+state);
+    	//System.out.println("seq node, child finished with: "+this+" "+state);
+    	getLogger().log(Level.INFO, "seq node, child finished with: "+this+" "+state);
     	
     	if(state==NodeState.FAILED)
     	{
-    		if(this.toString().indexOf("load")!=-1 || toString().indexOf("findst")!=-1)
-    			System.out.println("seq node child failed: "+state);
+    		//if(this.toString().indexOf("load")!=-1 || toString().indexOf("findst")!=-1)
+    		//	System.out.println("seq node child failed: "+state);
 
     		ret.setResult(NodeState.FAILED);
     	}
     	else if(state==NodeState.SUCCEEDED)
     	{
-    		System.out.println("seq node, child success, next: "+this+" "+state);
+    		//System.out.println("seq node, child success, next: "+this+" "+state);
+    		getLogger().log(Level.INFO, "seq node, child success, next: "+this+" "+state);
     		executeNextChild(event, context).delegateTo(ret);
     	}
     } 
@@ -116,7 +120,8 @@ public class SequenceNode<T> extends CompositeNode<T>
     {
     	super.reset(context, all);
     	getNodeContext(context).setIndex(-1);
-    	System.out.println("sequence node after reset = " + getNodeContext(context).getIndex()+" "+this);
+    	//System.out.println("sequence node after reset = " + getNodeContext(context).getIndex()+" "+this);
+    	System.getLogger(SequenceNode.class.getName()).log(Level.INFO, "sequence node after reset = " + getNodeContext(context).getIndex()+" "+this);
     }
     
     public static class SequenceNodeContext<T> extends NodeContext<T> implements IIndexContext

@@ -4,14 +4,14 @@ import java.util.Collection;
 
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
@@ -19,17 +19,10 @@ import jadex.nfproperty.impl.search.BasicEvaluator;
 import jadex.nfproperty.impl.search.ComposedEvaluator;
 import jadex.nfproperty.impl.search.CountThresholdSearchTerminationDecider;
 import jadex.nfproperty.sensor.unit.MemoryUnit;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
-import jadex.providedservice.annotation.Service;
+import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-@Agent
-
-@Service
-@ProvidedServices(@ProvidedService(type=ICoreDependentService.class, implementation=@Implementation(NFPropertyTestService.class)))
 @NFProperties({@NFProperty(FakeCpuLoadProperty.class),
 			   @NFProperty(FakeFreeMemoryProperty.class),
 			   @NFProperty(FakeNetworkBandwidthProperty.class),
@@ -39,9 +32,12 @@ public class ServiceSearchAgent
 {
 	protected static final int SEARCH_DELAY = 1000;
 	
-	@Agent
+	@Inject
 	protected IComponent agent;
 
+	@ProvideService
+	protected ICoreDependentService	service	= new NFPropertyTestService();
+	
 	protected boolean search;
 	
 	public ServiceSearchAgent(boolean search)

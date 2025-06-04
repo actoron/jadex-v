@@ -1,2 +1,1 @@
-jadex.publishservicejetty.impl.PublishServiceFeatureProvider
-
+jadex.publishservicejetty.impl.PublishJettyFeatureProvider

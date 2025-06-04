@@ -4,11 +4,12 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Field;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.BorderFactory;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -19,23 +20,27 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import jadex.bdi.model.MBelief;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IGoal;
-import jadex.bdi.runtime.IPlan;
-import jadex.bdi.runtime.impl.BDIAgentFeature;
-import jadex.common.UnparsedExpression;
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
+import jadex.bdi.Val;
+import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.BDIModel;
+import jadex.bdi.impl.plan.RPlan;
+import jadex.collection.CollectionWrapper;
+import jadex.collection.MapWrapper;
+import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
 
+@SuppressWarnings("serial")
 public class BDIViewer extends JFrame 
 {
     private final IComponentHandle agent;
     private final JTable goalTable, planTable, beliefTable;
     private final DefaultTableModel goalModel, planModel, beliefModel;
     
-    record BeliefValue(Object value, String preview) 
+    record BeliefInfo(Class<?> type, Object value) 
     {
     }
 
@@ -51,18 +56,18 @@ public class BDIViewer extends JFrame
         JSplitPane topSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         mainSplitPane.setTopComponent(topSplitPane);
 
-        goalModel = new DefaultTableModel(new String[]{"ID", "Type", "Lifecycle State", "Processing State", "Pojo"}, 0);
-        goalTable = createTable(goalModel);
+        goalModel = new DefaultTableModel(new String[]{"ID", /*"Type",*/ "Lifecycle State", "Processing State", "Pojo"}, 0);
+        goalTable = createTable(goalModel, false);
         topSplitPane.setTopComponent(createBorderPanel("Goals", goalTable));
 
-        planModel = new DefaultTableModel(new String[]{"ID", "Type", "Dispatched Element"}, 0);
-        planTable = createTable(planModel);
+        planModel = new DefaultTableModel(new String[]{"ID", /*"Type",*/ "State", "Subgoals", "Pojo"}, 0);
+        planTable = createTable(planModel, false);
         
         topSplitPane.setBottomComponent(createBorderPanel("Plans", planTable));
         topSplitPane.setResizeWeight(0.5);
 
-        beliefModel = new DefaultTableModel(new String[]{"Name", "Type", "Dynamic", "Updaterate", "Value"}, 0);
-        beliefTable = createTable(beliefModel);
+        beliefModel = new DefaultTableModel(new String[]{"Name", "Type", /*"Dynamic", "Updaterate",*/ "Value"}, 0);
+        beliefTable = createTable(beliefModel, true);
         mainSplitPane.setBottomComponent(createBorderPanel("Beliefs", beliefTable));
         mainSplitPane.setResizeWeight(0.66);
 
@@ -79,11 +84,12 @@ public class BDIViewer extends JFrame
         return pan; 
     }
 
-    private JTable createTable(DefaultTableModel model) 
+    private JTable createTable(DefaultTableModel model, boolean belief) 
     {
         JTable table = new JTable(model);
         PojoCellRenderer renderer = new PojoCellRenderer();
-        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) 
+        int	start	= belief ? 1 : 0;	// Skip beautifying of belief name (i.e. do not strip capa prefix)
+        for(int i=start; i<table.getColumnModel().getColumnCount(); i++) 
         {
         	table.getColumnModel().getColumn(i).setCellRenderer(renderer);
         }
@@ -127,9 +133,20 @@ public class BDIViewer extends JFrame
 
     private void refreshTables() 
     {
-       	refreshGoalsTable(goalModel, agent.scheduleStep((IThrowingFunction<IComponent, IGoal[]>)a -> a.getFeature(IBDIAgentFeature.class).getGoals().toArray(new IGoal[0])).get());
-       	refreshPlansTable(planModel, agent.scheduleStep((IThrowingFunction<IComponent, IPlan[]>)a -> ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getPlans().toArray(new IPlan[0])).get());
-       	refreshBeliefsTable(beliefModel, agent.scheduleStep((IThrowingFunction<IComponent, MBelief[]>)a -> ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getBDIModel().getCapability().getBeliefs().toArray(new MBelief[0])).get());
+       	refreshGoalsTable(goalModel, agent.scheduleStep((IThrowingFunction<IComponent, IGoal[]>)a -> {
+       		return a.getFeature(IBDIAgentFeature.class).getGoals().toArray(new IGoal[0]);
+       	}).get());
+       	
+       	refreshPlansTable(planModel, agent.scheduleStep((IThrowingFunction<IComponent, RPlan[]>)a -> 
+       	{
+       		Set<RPlan>	plans	= ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getPlans();
+       		return plans!=null ? plans.toArray(new RPlan[0]) : new RPlan[0];
+       	}).get());
+       	
+       	refreshBeliefsTable(beliefModel, agent.scheduleStep((IThrowingFunction<IComponent, String[]>)a -> 
+       	{
+       		return ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getModel().getBeliefs().toArray(new String[0]);
+       	}).get());
     }
 
     private void refreshGoalsTable(DefaultTableModel model, IGoal[] goals) 
@@ -140,7 +157,7 @@ public class BDIViewer extends JFrame
             Object[] row = new Object[]
             {
                 goal.getId(),
-                goal.getType(),
+//                goal.getPojo().getClass(),
                 goal.getLifecycleState(),
                 goal.getProcessingState(),
                 goal.getPojo()
@@ -149,42 +166,104 @@ public class BDIViewer extends JFrame
         }
     }
     
-    private void refreshPlansTable(DefaultTableModel model, IPlan[] plans) 
+    private void refreshPlansTable(DefaultTableModel model, RPlan[] plans) 
     {
         model.setRowCount(0);
-        for (IPlan plan: plans) 
+        for (RPlan plan: plans) 
         {
             Object[] row = new Object[]
             {
                 plan.getId(),
-                plan.getType(),
-                plan.getDispatchedElement(),
+                //plan.getType(),
+                plan.getLifecycleState(),
+                plan.getSubgoals(),
+                plan.getPojo()
             };
             model.addRow(row);
         }
     }
 
-    private void refreshBeliefsTable(DefaultTableModel model, MBelief[] beliefs) 
+    private void refreshBeliefsTable(DefaultTableModel model, String[] beliefs) 
     {
         model.setRowCount(0);
-        for (MBelief belief : beliefs) 
+        for (String belief : beliefs) 
         {
-            Object beliefValue = agent.scheduleStep((IThrowingFunction<IComponent, Object>) a -> 
+        	BeliefInfo info = agent.scheduleStep((IThrowingFunction<IComponent, BeliefInfo>) a -> 
             {
-            	Object val= belief.getValue();
-            	return new BeliefValue(val, val.toString());
+//            	Object val= belief.getValue();
+//            	return new BeliefValue(val, val.toString());
+            	BDIModel	bdimodel	= ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getModel();
+            	Class<?>	type	= bdimodel.getBelief(belief);
+            	Object	value	= getBeliefValue(belief, a.getPojo());
+            	return new BeliefInfo(type, value);
             }).get();
 
             model.addRow(new Object[]
             {
-                belief.getName(),
-                belief.getType(this.getClass().getClassLoader()),
-                belief.isDynamic(),
-                belief.getUpdateRate(),
-                beliefValue
+                belief,//.replace(".", "/"),
+                info.type(),
+//                belief.isDynamic(),
+//                belief.getUpdateRate(),
+                info.value()
             });
         }
     }
+    
+    public static Object	getBeliefValue(String name, Object pojo)
+    {
+    	while(name.contains("."))
+    	{
+    		String	capa	= name.substring(0, name.indexOf("."));
+    		name	= name.substring(name.indexOf(".")+1);
+    		pojo	= getFieldValue(capa, pojo);
+    	}
+    	Object	value	= getFieldValue(name, pojo);
+    	
+    	if(value instanceof Val<?>)
+    	{
+    		value	= ((Val<?>) value).get();
+    	}
+    	
+    	else if(value instanceof CollectionWrapper<?>)
+    	{
+    		value	= ((CollectionWrapper<?>) value).getDelegate();
+    	}
+    	
+    	else if(value instanceof MapWrapper<?,?>)
+    	{
+    		value	= ((MapWrapper<?,?>) value).getDelegate();
+    	}
+    	
+    	return value;
+    }
+    
+    public static Object	getFieldValue(String name, Object pojo)
+    {
+		Class<?>	clazz	= pojo.getClass();
+		Field	f	= null;
+		while(clazz!=null && f==null)
+		{
+			try
+			{
+				f	= clazz.getDeclaredField(name);
+			}
+			catch(NoSuchFieldException e)
+			{
+				clazz	= clazz.getSuperclass();
+			}
+		}
+		
+    	try
+    	{
+    		f.setAccessible(true);
+    		return f.get(pojo);
+    	}
+    	catch(Exception e)
+    	{
+    		throw SUtil.throwUnchecked(e);
+    	}
+    }
+    
 
     public static String getShortedText(String text) 
     {
@@ -209,10 +288,10 @@ public class BDIViewer extends JFrame
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if(value instanceof String || value instanceof Class)
             	setText(getShortedText(value.toString()));
-            else if(value instanceof UnparsedExpression)
-            	setText(((UnparsedExpression)value).getValue());
-            else if(value instanceof BeliefValue)
-            	setText(((BeliefValue)value).preview());
+//            else if(value instanceof UnparsedExpression)
+//            	setText(((UnparsedExpression)value).getValue());
+//            else if(value instanceof BeliefInfo)
+//            	setText(((BeliefInfo)value).preview());
             
             return this;
         }

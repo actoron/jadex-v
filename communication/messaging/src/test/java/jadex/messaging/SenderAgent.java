@@ -3,10 +3,8 @@ package jadex.messaging;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
-@Agent
 public class SenderAgent 
 {
 	protected String receiveragent;

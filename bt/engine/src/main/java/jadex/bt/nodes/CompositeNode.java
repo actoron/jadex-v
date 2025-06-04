@@ -110,7 +110,7 @@ public abstract class CompositeNode<T> extends Node<T>
     				}
     			}
     			//System.out.println("abort, active children: "+this+cnt);
-    			System.getLogger(this.getClass().getName()).log(Level.INFO, "abort, active children: "+this+cnt);
+    			getLogger().log(Level.INFO, "abort, active children: "+this+cnt);
 
     			
     			// must not propagate SUBTREE

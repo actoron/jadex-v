@@ -14,12 +14,10 @@ import jadex.common.transformation.traverser.BeanProperty;
 import jadex.common.transformation.traverser.IBeanIntrospector;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 import jadex.nfproperty.impl.AbstractNFProperty;
 import jadex.nfproperty.impl.NFPropertyMetaInfo;
 import jadex.providedservice.IService;
@@ -135,8 +133,9 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 					{
 						try
 						{
-							IModelFeature mf = component.getFeature(IModelFeature.class);
-							Object c = SJavaParser.evaluateExpression(cond, mf.getModel().getAllImports(), component.getValueProvider().getFetcher(), ComponentManager.get().getClassLoader());
+							// Set imports to pojo package (TODO: allow more imports?) 
+							String[]	imports = component.getPojo()!=null ? new String[]{component.getPojo().getClass().getPackage()+".*"} : null;
+							Object c = SJavaParser.evaluateExpression(cond, imports, component.getValueProvider().getFetcher(), ComponentManager.get().getClassLoader());
 							if(c instanceof Boolean && ((Boolean)c).booleanValue())
 								vals.add(val);
 						}
@@ -200,11 +199,14 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 		}
 		else if(obj instanceof Collection)
 		{
-			ret = (Collection<String>)obj; 
+			@SuppressWarnings("unchecked")
+			Collection<String> ret0 = (Collection<String>)obj;
+			ret	= ret0;
 		}
 		else if(SReflect.isIterable(obj))
 		{
 			ret = new ArrayList<String>();
+			@SuppressWarnings({ "unchecked", "rawtypes" })
 			Iterator<String> it = (Iterator)SReflect.getIterable(obj).iterator();
 			while(it.hasNext())
 			{

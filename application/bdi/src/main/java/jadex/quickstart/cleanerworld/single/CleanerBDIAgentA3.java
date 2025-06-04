@@ -1,18 +1,20 @@
 package jadex.quickstart.cleanerworld.single;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
  *  Use many plans for the same goal.
  */
-@Agent(type="bdi")	// This annotation makes the java class and agent and enabled BDI features
+@BDIAgent    // This annotation enabled BDI features
 public class CleanerBDIAgentA3
 {
 	//-------- fields holding agent data --------
@@ -89,5 +91,19 @@ public class CleanerBDIAgentA3
 		actsense.moveTo(0.3, 0.7);
 		actsense.moveTo(0.7, 0.3);
 		actsense.moveTo(0.3, 0.3);
+	}
+
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new CleanerBDIAgentA3());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

@@ -1,6 +1,8 @@
 package jadex.future;
 
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -246,7 +248,8 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    		
 	    	   	if(callers==null)
 	    	   	{
-	    	   		callers	= Collections.synchronizedMap(new HashMap<ISuspendable, String[]>());
+	    	   		// Size one as normally only one listens on future 
+	    	   		callers	= Collections.synchronizedMap(new HashMap<ISuspendable, String[]>(1));
 	    	   	}
 	    	   	callers.put(caller, new String[] {CALLER_QUEUED});
 	    	   	suspend = true;
@@ -317,7 +320,18 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 			// Combine exception and current stack trace with filler in between.
 			StackTraceElement[]	stack0	= t.getStackTrace();
 			StackTraceElement[]	stack1	= new RuntimeException().fillInStackTrace().getStackTrace();
-			t.setStackTrace((StackTraceElement[])SUtil.joinArrays(stack1,
+			
+			// Hack !!! JUnit cuts the stack trace at the first own class.
+			// -> strip junit elements to disable cut
+			List<StackTraceElement>	stack	= new ArrayList<>();
+			for(StackTraceElement element: stack1)
+			{
+				if(!element.getClassName().contains("junit"))
+					stack.add(element);
+			}
+			
+			t.setStackTrace((StackTraceElement[])SUtil.joinArrays(
+				stack.toArray(new StackTraceElement[stack.size()]),
 				new StackTraceElement[]{new StackTraceElement("End of future stack trace", "\n", "Original exception: "+t.toString(), -1)}, stack0));
 			
 			if(t instanceof RuntimeException)
@@ -543,7 +557,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	/**
 	 *  Abort a blocking get call.
 	 *  @param caller The caller
-	 * /
+	 */
 	public void abortGet(ISuspendable caller)
 	{
 //		System.out.println("abort get1");
@@ -572,7 +586,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				}
 			}
 		}
-	}*/
+	}
 
     /**
      *  Schedule a notification for selected listeners.
@@ -637,7 +651,8 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    		int cnt	= notificount!=null && notificount.containsKey(listener) ? notificount.get(listener) : 0;
 	    		if(notificount==null)
 	    		{
-	    			notificount	= new IdentityHashMap<IResultListener<E>, Integer>();
+	    			// Size one as normally only one listens on future 
+	    			notificount	= new IdentityHashMap<IResultListener<E>, Integer>(1);
 	    		}
 	    		notificount.put(listener, cnt+1);
     		}
@@ -811,7 +826,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	    	else
 	    	{
     			if(listeners==null)
-    				listeners = new IdentityHashMap<>();
+    			{
+    				// Size one as normally only one listens on future 
+    				listeners = new IdentityHashMap<>(1);
+    			}
     			listeners.put(listener, null);	// Add listener but don't set notification thread until there is something to notify...
 	    	}
     	}
@@ -1511,5 +1529,13 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		}
 		
 		return ret;
+	}
+	
+	public static IFuture<Void> all(Collection<IFuture<?>> futs)
+	{
+		FutureBarrier<?> bar = new FutureBarrier<>();
+		for(IFuture<?> fut: futs)
+			bar.add((Future)fut);
+		return bar.waitFor();
 	}
 }

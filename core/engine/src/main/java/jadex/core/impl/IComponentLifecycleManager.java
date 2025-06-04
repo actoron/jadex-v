@@ -2,10 +2,15 @@ package jadex.core.impl;
 
 import java.util.Map;
 
+import jadex.common.NameValue;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 
 /**
  *  Managing POJOs by creating/running/terminating corresponding components.
@@ -40,5 +45,59 @@ public interface IComponentLifecycleManager
 	/**
 	 *  Fetch the result(s) of the POJO.
 	 */
-	public Map<String, Object> getResults(Object pojo);
+	public default Map<String, Object> getResults(IComponent component)
+	{
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 *  Listen to results of the pojo.
+	 *  @throws UnsupportedOperationException when subscription is not supported
+	 */
+	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
+	{
+		return new SubscriptionIntermediateFuture<NameValue>(new UnsupportedOperationException());
+	}
+
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The pojo.
+	 *  @param cid The component id or null for auto-generationm.
+	 *  @return The execution result.
+	 */
+	public default <T> IFuture<T>	run(Object pojo, ComponentIdentifier cid, Application app)
+	{
+		Future<T> ret = new Future<>();
+		IComponentHandle handle = create(pojo, cid, app);
+		
+		// all run components that push notify on results will automatically get terminated after first result.
+		handle.subscribeToResults()
+			.next(r -> 
+			{
+//				System.out.println("received: "+r);	
+				handle.terminate();
+			});
+//			.catchEx(e -> {})	// NOP on unsupported operation exception
+
+		handle.waitForTermination().then(Void -> 
+		{
+			handle.getResults().then(res->
+			{
+				if(res!=null && res.size()==1)
+				{
+					@SuppressWarnings("unchecked")
+					T	result	= (T)res.values().iterator().next();
+					ret.setResult(result);
+				}
+				else
+				{
+					ret.setException(new RuntimeException("no single result found: "+res));
+				}
+			})
+			.catchEx(e -> ret.setException(e));
+		});
+		
+		return ret;
+	}
 }

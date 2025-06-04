@@ -130,7 +130,7 @@ public class CleanerworldEnvironment extends Environment
 		
 		Cleaner cleaner = (Cleaner)getSpaceObject(cl);
 		
-		addTask(new EnvironmentTask(cleaner, "pickupWaste", this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), cleaner, "pickupWaste", this, ret, data ->
 		{
 			return performPickupWaste(cleaner, getSpaceObject(waste), data.delta());
 		}));
@@ -145,7 +145,7 @@ public class CleanerworldEnvironment extends Environment
 		
 		Cleaner cleaner = (Cleaner)getSpaceObject(cl);
 		
-		addTask(new EnvironmentTask(cleaner, "dropWasteInWastebin", this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), cleaner, "dropWasteInWastebin", this, ret, data ->
 		{
 			return performDropWasteInWastebin(cleaner, getSpaceObject(waste), getSpaceObject(wastebin), data.delta());
 		}));
@@ -160,7 +160,7 @@ public class CleanerworldEnvironment extends Environment
 		
 		Cleaner cleaner = (Cleaner)getSpaceObject(cl);
 		
-		addTask(new EnvironmentTask(cleaner, "loadBattery", this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), cleaner, "loadBattery", this, ret, data ->
 		{
 			return performLoadBattery(cleaner, getSpaceObject(station), data.delta());
 		}));
@@ -194,7 +194,7 @@ public class CleanerworldEnvironment extends Environment
 			throw new RuntimeException("Not at location: "+cleaner+", "+station);
 		
 		double charge =cleaner.getChargestate();
-		if(charge<1 && cleaner.getPosition().getDistance(station.getLocation()).getAsDouble()<0.01)
+		if(charge<1 && cleaner.getPosition().getDistance(station.getPosition()).getAsDouble()<0.01)
 		{
 			//System.out.println("charge inkr: "+0.01*deltatime/100.0);
 			charge	= Math.min(charge + 0.01*deltatime/100.0, 1.0);
@@ -212,6 +212,20 @@ public class CleanerworldEnvironment extends Environment
 	{
 		IVector2 loc = cleaner.getPosition();
 		IVector2 wloc = waste.getPosition();
+		
+		if(loc==null)
+			throw new RuntimeException("Cleaner location is null");
+		
+		if(wloc==null)
+			throw new RuntimeException("Waste location is null")
+			{
+				@Override
+				public void printStackTrace() 
+				{
+					Thread.dumpStack();
+					super.printStackTrace();
+				}
+			};
 		
 		if(loc.getDistance(wloc).getAsDouble()>defdistance)
 			throw new RuntimeException("Not at location: "+cleaner+", "+waste);
@@ -242,7 +256,7 @@ public class CleanerworldEnvironment extends Environment
 		if(wastebin==null)
 			throw new RuntimeException("No such waste bin: "+wastebin);
 		
-		if(cleaner.getLocation().getDistance(wastebin.getLocation()).getAsDouble()<defdistance)
+		if(cleaner.getPosition().getDistance(wastebin.getPosition()).getAsDouble()<defdistance)
 		{
 			// Update local and global objects
 			wastebin.addWaste(waste);

@@ -12,7 +12,7 @@
     <jadex:package>jadex.bpmn.tutorial</jadex:package>
     <jadex:componentflags suspend="false" master="" synchronous="false" monitoring="OFF" keepalive="false"/>
     <jadex:requiredservices>
-      <jadex:requiredservice name="aser" interface="jadex.bpmn.tutorial.IAService" scope="PLATFORM"/>
+      <jadex:requiredservice name="aser" interface="jadex.bpmn.tutorial.IAService" scope="VM"/>
     </jadex:requiredservices>
   </semantic:extension>
   <semantic:process name="Pool" id="b2bhX5CuQxrrP0NY">

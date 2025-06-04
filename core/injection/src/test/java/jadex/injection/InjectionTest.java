@@ -20,6 +20,8 @@ import jadex.future.Future;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
+import jadex.injection.impl.IInjectionHandle;
+import jadex.injection.impl.InjectionModel;
 
 public class InjectionTest
 {
@@ -160,6 +162,50 @@ public class InjectionTest
 		
 		handle.terminate().get();
 		assertEquals("[s1, s2, e1]", invocations.toString());
+	}
+	
+	
+	@Test
+	public void	testBlockingStart()
+	{
+		// Also tests method injection.
+		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers) ->
+		{
+			if(method.getName().equals("injectMe"))
+			{
+				List<IInjectionHandle>	preparams	= new ArrayList<>();
+				preparams.add((self, pojos, context, oldval) -> context);
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, pojotypes, contextfetchers, preparams);
+				return (comp, pojos, context, oldvale) ->
+				{
+					comp.getFeature(IExecutionFeature.class).waitForDelay(500).then(v ->
+						invocation.apply(comp, pojos, "value", null));
+					return null;
+				};
+			}
+			else
+			{
+				return null;
+			}
+		}, Inject.class);
+		
+		Future<String>	injected	= new Future<>();
+		IComponentManager.get().create(new Object()
+		{
+			@OnStart
+			void	block()
+			{
+				new Future<Void>().get();
+			}
+			
+			@Inject
+			void injectMe(String value)
+			{
+				injected.setResult(value);
+			}
+		}).get(TIMEOUT);
+		
+		assertEquals("value", injected.get(TIMEOUT));
 	}
 	
 

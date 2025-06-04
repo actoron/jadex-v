@@ -83,7 +83,7 @@ public class SpaceObject
 	@Override
 	public String toString() 
 	{
-		return "SpaceObject [position=" + position + ", id=" + id + "]";
+		return getClass().getSimpleName()+" [position=" + position + ", id=" + id + "]";
 	}
 	
 	public SpaceObject copy()
@@ -170,5 +170,12 @@ public class SpaceObject
 		if(pcs==null)
 			pcs = new PropertyChangeSupport(this);
 		pcs.removePropertyChangeListener(listener);
+	}
+	
+	/**
+	 *  Override to print debug information on duplicate move task.
+	 */
+	public void debug()
+	{
 	}
 }

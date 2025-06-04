@@ -1,12 +1,25 @@
 package jadex.remoteservices.impl;
 
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IComponentFeature;
 import jadex.core.impl.Component;
 import jadex.execution.future.FutureFunctionality;
 import jadex.execution.impl.ILifecycle;
-import jadex.future.*;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFutureCommandResultListener;
+import jadex.future.IResultListener;
+import jadex.future.ITerminableFuture;
 import jadex.messaging.IMessageFeature;
 import jadex.messaging.IMessageHandler;
 import jadex.messaging.ISecurityInfo;
@@ -18,10 +31,19 @@ import jadex.remoteservices.IRemoteCommand;
 import jadex.remoteservices.IRemoteConversationCommand;
 import jadex.remoteservices.IRemoteExecutionFeature;
 import jadex.remoteservices.IRemoteOrderedConversationCommand;
-import jadex.remoteservices.impl.remotecommands.*;
-
-import java.lang.reflect.Method;
-import java.util.*;
+import jadex.remoteservices.impl.remotecommands.AbstractInternalRemoteCommand;
+import jadex.remoteservices.impl.remotecommands.AbstractResultCommand;
+import jadex.remoteservices.impl.remotecommands.IOrderedConversation;
+import jadex.remoteservices.impl.remotecommands.ISecuredRemoteCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteBackwardCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteFinishedCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteForwardCmdCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteIntermediateResultCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteMethodInvocationCommand;
+import jadex.remoteservices.impl.remotecommands.RemotePullCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteReference;
+import jadex.remoteservices.impl.remotecommands.RemoteResultCommand;
+import jadex.remoteservices.impl.remotecommands.RemoteTerminationCommand;
 
 
 /**

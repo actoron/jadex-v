@@ -1,7 +1,5 @@
 package jadex.core;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -28,7 +26,7 @@ public interface IComponentFactory
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id.
+	 *  @param cid The component id or null for auto-generationm.
 	 *  @return The external access of the running component.
 	 */
 	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
@@ -39,7 +37,7 @@ public interface IComponentFactory
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id.
+	 *  @param cid The component id or null for auto-generationm.
 	 *  @param app The application context.
 	 *  @return The external access of the running component.
 	 */
@@ -71,27 +69,25 @@ public interface IComponentFactory
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
-	 *  @param body The function.
+	 *  @param pojo The function.
 	 *  @return The execution result.
 	 */
-	public default <T> IFuture<T> run(IThrowingFunction<IComponent, T> body)
+	public default <T> IFuture<T> run(IThrowingFunction<IComponent, T> pojo)
 	{
-		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
-		return run(pojo);
+		return run((Object)pojo);
 	}
 	
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
-	 *  @param body The callable.
+	 *  @param pojo The callable.
 	 *  @return The execution result.
 	 */
-	public default <T> IFuture<T> run(Callable<T> body)
+	public default <T> IFuture<T> run(Callable<T> pojo)
 	{
-		LambdaPojo<T> pojo = new LambdaPojo<T>(body);
-		return run(pojo);
+		return run((Object)pojo);
 	}
-	
+
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
@@ -100,31 +96,46 @@ public interface IComponentFactory
 	 */
 	public default <T> IFuture<T> run(Object pojo)
 	{
-		Future<T> ret = new Future<>();
-		IComponentHandle comp = create(pojo).get();
-		// all pojos of type IResultProvider will terminate component after result is received
-		if(pojo instanceof IResultProvider)
+		return run(pojo, null, null);
+	}
+	
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The pojo.
+	 *  @param cid The component id or null for auto-generationm.
+	 *  @return The execution result.
+	 */
+	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid)
+	{
+		return run(pojo, cid, null);
+	}
+	
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The pojo.
+	 *  @param cid The component id or null for auto-generationm.
+	 *  @return The execution result.
+	 */
+	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
+	{
+		if(pojo==null)
 		{
-			((IResultProvider)pojo).subscribeToResults().next(r -> 
-			{
-				//System.out.println("received: "+r);	
-				comp.terminate();
-			});
+			return new Future<>(new UnsupportedOperationException("No null pojo allowed for run()."));
 		}
-		comp.waitForTermination().then(Void -> 
+		else
 		{
-			Map<String, Object> res = getResults(pojo);
-			if(res.size()==1)
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
 			{
-				@SuppressWarnings("unchecked")
-				T	result	= (T)res.values().iterator().next();
-				ret.setResult(result);
+				return creator.run(pojo, cid, app);
 			}
 			else
-				ret.setException(new RuntimeException("no result found: "+res));
-		});
-		
-		return ret;
+			{
+				return new Future<>(new RuntimeException("Could not create component: "+pojo));
+			}
+		}
 	}
 	
 	/**
@@ -168,36 +179,6 @@ public interface IComponentFactory
 		{
 			ret	= new Future<>(e);
 		}
-		
-		return ret;
-	}
-	
-	/**
-	 *  Extract the results from a pojo.
-	 *  @return The result map.
-	 */
-	public default Map<String, Object> getResults(Object pojo)
-	{
-		Map<String, Object> ret = new HashMap<>();
-		boolean done = false;
-		
-		if(pojo instanceof IResultProvider)
-		{
-			IResultProvider rp = (IResultProvider)pojo;
-			ret = new HashMap<String, Object>(rp.getResultMap());
-			done = true;
-		}
-		else if(pojo!=null)
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
-			if(creator!=null)
-			{
-				ret = creator.getResults(pojo);
-				done = true;
-			}
-		}
-		if(!done)
-			throw new RuntimeException("Could not get results: "+pojo);
 		
 		return ret;
 	}

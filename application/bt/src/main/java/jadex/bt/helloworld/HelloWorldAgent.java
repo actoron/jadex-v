@@ -3,7 +3,7 @@ package jadex.bt.helloworld;
 import java.lang.System.Logger.Level;
 
 import jadex.bt.IBTProvider;
-import jadex.bt.actions.UserAction;
+import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
@@ -11,21 +11,18 @@ import jadex.core.Application;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.future.Future;
+import jadex.future.TerminableFuture;
+import jadex.injection.annotation.OnEnd;
 import jadex.logger.ILoggingFeature;
-//import jadex.logger.OpenTelemetryLogger;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
 
-@Agent(type="bt")
 public class HelloWorldAgent implements IBTProvider
 {
 	public Node<IComponent> createBehaviorTree()
 	{
 		ActionNode<IComponent> an = new ActionNode<>("hello");
-		an.setAction(new UserAction<IComponent>((e, agent) -> 
+		an.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 		{ 
-			Future<NodeState> ret = new Future<>();
+			TerminableFuture<NodeState> ret = new TerminableFuture<>();
 			System.out.println("Hello from behavior trees: "+agent.getId()+" "+agent.getAppId());
 			System.getLogger(""+HelloWorldAgent.class).log(Level.INFO, "Hello from behavior trees 1: "+agent.getId()+" "+agent.getAppId());
 			System.getLogger(""+HelloWorldAgent.class).log(Level.WARNING, "Hello from behavior trees 2: "+agent.getId()+" "+agent.getAppId());

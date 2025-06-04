@@ -169,13 +169,10 @@ includeBuild('core/execution') {}
 includeBuild('core/simulation') {}
 includeBuild('core/injection'){name='injection'}
 //includeBuild('core/errorhandling') {}
-
-includeBuild('model/model') {}
+includeBuild('core/autostart'){name='autostart'}
 
 includeBuild('service/provided') {}
-includeBuild('service/provided2') {}
 includeBuild('service/required') {}
-includeBuild('service/required2') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {}
@@ -184,12 +181,11 @@ includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
 includeBuild('communication/remoteservices') {}
 
-includeBuild('micro/engine'){name='micro'}
-includeBuild('micro/providedservice') {name='providedservicemicro'}
-includeBuild('micro/requiredservice') {name='requiredservicemicro'}
 includeBuild('micro/lib'){name='libmicro'}
 
 includeBuild('bdi/engine') {name='bdi'}
+
+includeBuild('model/model') {name='model'}
 
 includeBuild('bpmn/engine') {name='bpmn'}
 includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
@@ -208,7 +204,6 @@ includeBuild('monitoring/log4j') {}
 includeBuild('environment/environment'){name='environment'}
 
 includeBuild('application/micro'){name='application-micro'}
-//includeBuild('application/micro2'){name='application-micro2'}
 includeBuild('application/micro-nfp'){name='application-micro-nfp'}
 includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}

@@ -2,9 +2,9 @@ package jadex.remoteservices;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.injection.annotation.OnStart;
 import jadex.messaging.IMessageFeature;
 import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
 
 @Agent
 public class TestAgent

@@ -14,15 +14,15 @@ import jadex.logger.ILoggingFeature;
 /**
  *  Benchmark creation and killing of bt agents with shared tree.
  */
-public class BTSharedCleanerBenchmark 
+public class BTSharedCleanerBenchmark
 {
 	static String envid;
 	static
 	{
-		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.ERROR);
-		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultAppLoggingLevel(Level.WARNING);
-
-		int fps = 5; // steps / frames per second
+		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(Level.ERROR);
+		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(Level.WARNING);
+		
+		int fps = 0; // steps / frames per second: 0 -> disable steps
 		CleanerworldEnvironment env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
 		env.createWorld().get();
 		envid = Environment.add(env);

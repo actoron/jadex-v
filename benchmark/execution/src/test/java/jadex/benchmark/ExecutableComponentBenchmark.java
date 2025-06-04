@@ -13,7 +13,7 @@ public class ExecutableComponentBenchmark
 	void	benchmarkTime()
 	{
 //		BenchmarkHelper.benchmarkTime(() -> Component.createComponent(Component.class, () -> new Component()).terminate().get());
-		BenchmarkHelper.benchmarkTime(() -> new Component(this).terminate().get());
+		BenchmarkHelper.benchmarkTime(() -> new Component(null).terminate().get());
 	}
 	
 	@Test
@@ -21,9 +21,18 @@ public class ExecutableComponentBenchmark
 	{
 		BenchmarkHelper.benchmarkMemory(() ->
 		{
-			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
+			Component	comp	= Component.createComponent(Component.class, () -> new Component(null));
 //			Component	comp	= new Component();
 			return () -> comp.terminate().get();			
 		});
+	}
+
+	public static void	main(String[] args)
+	{
+		for(;;)
+		{
+//			Component.createComponent(Component.class, () -> new Component()).terminate().get();
+			new Component(null).terminate().get();
+		}
 	}
 }

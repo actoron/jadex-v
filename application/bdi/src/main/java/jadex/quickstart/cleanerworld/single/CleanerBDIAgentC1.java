@@ -2,27 +2,32 @@ package jadex.quickstart.cleanerworld.single;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IPlan;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
+import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IPlan;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
  *   A subgoal for knowing charging stations
  */
-@Agent(type="bdi")	// This annotation makes the java class and agent and enabled BDI features
+@BDIAgent    // This annotation enabled BDI features
 public class CleanerBDIAgentC1
 {
 	//-------- fields holding agent data --------
@@ -73,17 +78,16 @@ public class CleanerBDIAgentC1
 	/**
 	 *  A goal to recharge whenever the battery is low.
 	 */
-	@Goal(recur=true, recurdelay=3000,
-		deliberation=@Deliberation(inhibits=PerformPatrol.class))	// Pause patrol goal while loading battery
+	@Goal(deliberation=@Deliberation(inhibits=PerformPatrol.class))	// Pause patrol goal while loading battery
 	class MaintainBatteryLoaded
 	{
-		@GoalMaintainCondition	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
+		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
 			return self.getChargestate()>=0.2; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
 		}
 			
-		@GoalTargetCondition	// Only stop charging, when this condition is true
+		@GoalTargetCondition(beliefs="self")	// Only stop charging, when this condition is true
 		boolean isBatteryFullyLoaded()
 		{
 			return self.getChargestate()>=0.9; // Charge until 90%
@@ -93,20 +97,14 @@ public class CleanerBDIAgentC1
 	/**
 	 *  A goal to know a charging station.
 	 */
-	@Goal
-	class QueryChargingStation
+	@Goal(excludemode=ExcludeMode.Never)
+	class QueryChargingStation	implements Supplier<IChargingstation>
 	{
-		// TODO: Support @GoalResult instead of target condition
-		
-		// Remember the station when found
-		IChargingstation	station;
-		
-		// Check if there is a station in the beliefs
-		@GoalTargetCondition
-		boolean isStationKnown()
+		@GoalQueryCondition(beliefs="stations")
+		@Override
+		public IChargingstation get()
 		{
-			station	= stations.isEmpty() ? null : stations.iterator().next();
-			return station!=null;
+			return stations.isEmpty() ? null : stations.iterator().next();
 		}
 	}
 	
@@ -170,14 +168,26 @@ public class CleanerBDIAgentC1
 //		IChargingstation	chargingstation	= stations.iterator().next();	// from Exercise C0
 		
 		// Dispatch a subgoal to find a charging station (from Exercise C1)
-		QueryChargingStation	querygoal	= new QueryChargingStation();
-		plan.dispatchSubgoal(querygoal).get();
-		IChargingstation	chargingstation	= querygoal.station;
+		IChargingstation	chargingstation	= plan.dispatchSubgoal(new QueryChargingStation()).get();
 		
 		// Move to charging station as provided by subgoal
 		actsense.moveTo(chargingstation.getLocation());
 		
 		// Load until 100% (never reached, but plan is aborted when goal succeeds).
 		actsense.recharge(chargingstation, 1.0);
+	}
+
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new CleanerBDIAgentC1());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

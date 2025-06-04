@@ -43,7 +43,9 @@ public class JadexLoggerFinder extends LoggerFinder
 		
 		if(iprov!=null || eprov!=null)
 		{
+			//System.out.println("logger finder before log feat");
 			ILoggingFeature logf = IComponentManager.get().getFeature(ILoggingFeature.class);
+			//System.out.println("logger finder after log feat");
 			Collection<LoggerCreator> lcs = logf.getLoggerCreators();
 			
 			LoggerCreator sysc = lcs.stream().filter(c -> c.system() && c.filter()==null).findFirst().orElse(null);
@@ -52,8 +54,8 @@ public class JadexLoggerFinder extends LoggerFinder
 			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? logf.getDefaultSystemLoggingLevel(): null; 
 			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? logf.getDefaultAppLogginglevel(): null; 
 			
-			//System.out.println("syslevel: "+syslevel);
-			//System.out.println("applevel: "+applevel);
+//			System.out.println("syslevel: "+syslevel);
+//			System.out.println("applevel: "+applevel);
 			
 			LoggerCreator nsysc = new LoggerCreator( 
 				sysc!=null && sysc.icreator()!=null? sysc.icreator(): iprov!=null? name -> iprov.getLogger(name, syslevel): null, 
@@ -151,8 +153,8 @@ public class JadexLoggerFinder extends LoggerFinder
 	            logger = loggers.get(selected);
 	            if(logger == null) 
 	            {
-	            	Logger ilogger = selected.icreator()!=null? selected.icreator().apply(selected.getLoggerName()): null;
-	            	Logger elogger = selected.ecreator()!=null? selected.ecreator().apply(selected.getLoggerName()): null;
+	            	ISystemLogger ilogger = selected.icreator()!=null? selected.icreator().apply(selected.getLoggerName()): null;
+	            	ISystemLogger elogger = selected.ecreator()!=null? selected.ecreator().apply(selected.getLoggerName()): null;
 	            	logger = new CombinedLogger(ilogger, elogger, isSystem);
 	                loggers.put(selected, logger);
 	                loggersbyname.put(selected.getLoggerName(), logger);

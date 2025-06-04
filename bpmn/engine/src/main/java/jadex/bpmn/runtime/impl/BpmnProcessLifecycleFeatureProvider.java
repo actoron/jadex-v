@@ -1,6 +1,7 @@
 package jadex.bpmn.runtime.impl;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,19 +63,29 @@ public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvide
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
 		all.remove(getFeatureType());
+		
+		// Hack!!! remove injection feature to avoid dependency cycle
+		// Injection is not used for BPMN but required for BPMN provided service.
+		Iterator<Class<?>>	it	= all.iterator();
+		while(it.hasNext())
+		{
+			if(it.next().getName().indexOf("Injection")!=-1)
+			{
+				it.remove();
+			}
+		}
+		
 		return all;
 	}
 	
-	public Map<String, Object> getResults(Object pojo)
+	@Override
+	public Map<String, Object> getResults(IComponent comp)
 	{
 		Map<String, Object> ret = Collections.emptyMap();
-		if(pojo!=null)
+		if(comp.getPojo() instanceof RBpmnProcess)
 		{
-			if(pojo instanceof RBpmnProcess)
-			{
-				RBpmnProcess p = (RBpmnProcess)pojo;
-				ret = p.getResults();
-			}
+			RBpmnProcess p = (RBpmnProcess)comp.getPojo();
+			ret = p.getResults();
 		}
 		return ret;
 	}

@@ -6,28 +6,25 @@ import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.annotation.Body;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponent;
 import jadex.future.SubscriptionIntermediateFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Blocksworld agent for stacking blocks.
  */
-@Agent(type="bdip")
-@Plans({
-	@Plan(body=@Body(ClearBlocksPlan.class), trigger=@Trigger(goals=BlocksworldAgent.ClearGoal.class)),
-	@Plan(body=@Body(StackBlocksPlan.class), trigger=@Trigger(goals=BlocksworldAgent.StackGoal.class)),
-	@Plan(body=@Body(ConfigureBlocksPlan.class), trigger=@Trigger(goals=BlocksworldAgent.ConfigureGoal.class)),
-	@Plan(body=@Body(BenchmarkPlan.class))
-})
+@BDIAgent
+@Plan(impl=ClearBlocksPlan.class, trigger=@Trigger(goals=BlocksworldAgent.ClearGoal.class))
+@Plan(impl=StackBlocksPlan.class, trigger=@Trigger(goals=BlocksworldAgent.StackGoal.class))
+@Plan(impl=ConfigureBlocksPlan.class, trigger=@Trigger(goals=BlocksworldAgent.ConfigureGoal.class))
+//@Plan(impl=BenchmarkPlan.class)
 public class BlocksworldAgent
 {
 	public enum Mode{NORMAL, STEP, SLOW}
@@ -58,7 +55,7 @@ public class BlocksworldAgent
 //	protected BlocksworldGui gui;
 	
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	@Goal

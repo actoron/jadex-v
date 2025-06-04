@@ -1,21 +1,18 @@
 package jadex.nfproperty.ranking;
 
 import jadex.future.IFuture;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
-import jadex.providedservice.annotation.Service;
 
 /**
  *  Service with nf props.
  */
-@Service
 public class NFPropertyTestService implements ICoreDependentService
 {
 	/**
 	 *  Init method.
 	 */
-	//@ServiceStart
 	@OnStart
 	public IFuture<Void> x()
 	{

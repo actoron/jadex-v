@@ -19,8 +19,6 @@ import javax.swing.SwingUtilities;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
-import jadex.execution.IExecutionFeature;
-import jadex.micro.MicroAgent;
 
 /**
  *  Basic chat user interface.
@@ -105,8 +103,7 @@ public class ChatGui extends JFrame
 	{
 		access.scheduleStep((IThrowingConsumer<IComponent>)agent ->
 		{
-			MicroAgent magent = (MicroAgent)agent;
-			ChatAgent pojo = (ChatAgent)magent.getPojo();
+			ChatAgent pojo = (ChatAgent)agent.getPojo();
 			Collection<IChatService> chatservices = pojo.getChatServices();
 			
 			// This would search the services

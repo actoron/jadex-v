@@ -1,6 +1,6 @@
 package jadex.bdi.booktrading;
 
-import jadex.bdi.runtime.IBDIAgent;
+import jadex.core.IComponentManager;
 
 /**
  *  Main for starting the example programmatically.
@@ -12,7 +12,7 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-		IBDIAgent.create(new BuyerAgent(
+		IComponentManager.get().create(new BuyerAgent(
 				new Order[]
 				{
 					new Order("All about agents", 60000, 100, 120, true),
@@ -21,7 +21,7 @@ public class Main
 					new Order("Agents in the real world", 60000, 30, 65, true)
 				}));
 
-		IBDIAgent.create(new SellerAgent(
+		IComponentManager.get().create(new SellerAgent(
 				new Order[]
 				{
 					new Order("All about agents", 60000, 130, 110, false),

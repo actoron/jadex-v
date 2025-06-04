@@ -2,7 +2,7 @@ package jadex.benchmark;
 
 import jadex.bt.cleanerworld.BTCleanerAgent;
 import jadex.future.Future;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
 public class BTCleanerBenchmarkAgent extends BTCleanerAgent
 {

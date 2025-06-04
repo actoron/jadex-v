@@ -24,9 +24,9 @@ public @interface Deliberation
 	 */
 	public Class<?>[] inhibits() default {};
 	
-	/**
-	 *  Suspend or drop on inhibition.
-	 *  @return True, if goal should be dropped.
-	 */
-	public boolean droponinhibit() default false;
+//	/**
+//	 *  Suspend or drop on inhibition.
+//	 *  @return True, if goal should be dropped.
+//	 */
+//	public boolean droponinhibit() default false;
 }

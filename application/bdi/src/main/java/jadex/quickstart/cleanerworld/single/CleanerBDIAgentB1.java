@@ -1,22 +1,24 @@
 package jadex.quickstart.cleanerworld.single;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalMaintainCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
  *  Use a belief to control a declarative goal.
  */
-@Agent(type="bdip")	// This annotation makes the java class and agent and enabled BDI features
+@BDIAgent    // This annotation enabled BDI features
 public class CleanerBDIAgentB1
 {
 	//-------- fields holding agent data --------
@@ -75,7 +77,7 @@ public class CleanerBDIAgentB1
 	/**
 	 *  Declare a plan for the PerformPatrol goal by using a method with @Plan and @Trigger annotation.
 	 */
-	@Plan(trigger=@Trigger(goals=PerformPatrol.class), priority = 1)	// The plan annotation makes a method or class a plan. The trigger states, when the plan should considered for execution.
+	@Plan(trigger=@Trigger(goals=PerformPatrol.class))	// The plan annotation makes a method or class a plan. The trigger states, when the plan should considered for execution.
 	private void	performPatrolPlan()
 	{
 		// Follow a simple path around the four corners of the museum and back to the first corner.
@@ -131,5 +133,19 @@ public class CleanerBDIAgentB1
 		
 		// Load until 100% (never reached, but plan is aborted when goal succeeds).
 		actsense.recharge(chargingstation, 1.0);
+	}
+
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new CleanerBDIAgentB1());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

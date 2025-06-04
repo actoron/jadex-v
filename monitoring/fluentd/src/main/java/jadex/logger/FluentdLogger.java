@@ -1,7 +1,6 @@
 package jadex.logger;
 
 import java.io.IOException;
-import java.lang.System.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -13,14 +12,14 @@ import org.fluentd.logger.errorhandler.ErrorHandler;
 /**
  *  Fluentd implementation of a logger.
  */
-public class FluentdLogger implements Logger 
+public class FluentdLogger implements ISystemLogger 
 {
 	public static String HOST = "FLUENT_HOST";
 	public static String PORT = "FLUENT_PORT";
 	
     protected FluentLogger logger;
     protected final boolean system;
-    protected final Level	level;
+    protected Level	level;
 
     public FluentdLogger(String name, Level level, boolean system) 
     {
@@ -79,7 +78,7 @@ public class FluentdLogger implements Logger
     @Override
     public boolean isLoggable(Level level) 
     {
-        return level.compareTo(this.level)>=0;
+        return this.level!=null && level.compareTo(this.level)>=0;
     }
 
     @Override
@@ -111,5 +110,11 @@ public class FluentdLogger implements Logger
         data.put("name", getName());
         //data.put("time", System.currentTimeMillis());
         logger.log(getLoggerType(), data);
+    }
+    
+    @Override
+    public void setLevel(Level level)
+    {
+    	this.level	= level;
     }
 }

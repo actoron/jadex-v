@@ -1,6 +1,5 @@
 package jadex.nfproperty.impl;
 
-import java.lang.System.Logger.Level;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,118 +8,107 @@ import java.util.Map;
 
 import jadex.common.ClassInfo;
 import jadex.common.MethodInfo;
-import jadex.core.impl.ComponentManager;
-import jadex.micro.MicroClassReader;
-import jadex.model.annotation.NameValue;
-import jadex.model.modelinfo.ModelInfo;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
-import jadex.nfproperty.annotation.SNameValue;
+import jadex.nfproperty.annotation.NameValue;
 import jadex.nfproperty.impl.modelinfo.NFPropertyInfo;
-import jadex.providedservice.IProvidedServiceFeature;
-import jadex.providedservice.impl.service.BasicService;
-import jadex.providedservice.impl.service.ProvidedServiceImplementation;
-import jadex.providedservice.impl.service.ProvidedServiceInfo;
-import jadex.providedservice.impl.service.ProvidedServiceModel;
-import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.requiredservice.impl.RequiredServiceModel;
 
 public class NFPropertyLoader 
 {
-	public static Object readFeatureModel(ModelInfo modelinfo, Class<?> clazz, ClassLoader cl)
-	{
-		Class<?> cma = clazz;
-		
-		NFPropertyModel model = new NFPropertyModel();
-		boolean done = false;
-		//boolean tagsdone = false;
-		
-		while(cma!=null && !cma.equals(Object.class))
-		{
-			// Take all, upper replace lower
-			if(!done && MicroClassReader.isAnnotationPresent(cma, NFProperties.class, cl))
-			{
-				NFProperties val = (NFProperties)MicroClassReader.getAnnotation(cma, NFProperties.class, cl);
-				
-				List<NFPropertyInfo> props = createNFPropertyInfos(val);
-				props.forEach(nfp -> model.addComponentProperty(nfp));
-				
-				// todo!
-//				nfpropsdone = val.replace();
-			}
-			
-			// Take all, upper replace lower
-			/*if(!tagsdone && MicroClassReader.isAnnotationPresent(cma, Tags.class, cl))
-			{
-				Tags tags = (Tags)MicroClassReader.getAnnotation(cma, Tags.class, cl);
-				
-				NFPropertyInfo nfp = createNFPropertyInfo(tags);
-				model.addComponentProperty(nfp);
-				
-				// todo!
-//				tagsdone = val.replace();
-			}*/
-			
-			cma = cma.getSuperclass();
-		}
-		
-		// creation of required service nfps happens when required service proxy is created
-		// they must be written toplevel - can be associated with reqser when name is same?!
-		
-		RequiredServiceModel rmodel = (RequiredServiceModel)modelinfo.getFeatureModel(IRequiredServiceFeature.class);
-		//Map<String, RequiredServiceInfo> rsers = rmodel.getRequiredServices();
-		//System.out.println("todo: required service nfprops");
-		System.getLogger(NFPropertyLoader.class.getName()).log(Level.WARNING, "todo: required service nfprops");
-		
-//		RequiredServiceInfo[] rsis = new RequiredServiceInfo[reqs.length];
-		/*for(int j=0; j<reqs.length; j++)
-		{
-			if(!configinfo.hasRequiredService(reqs[j].name()))
-			{
-				RequiredServiceBinding binding = createBinding(reqs[j]);
-				List<NFRPropertyInfo> nfprops = createNFRProperties(reqs[j].nfprops());
-				RequiredServiceInfo rsi = new RequiredServiceInfo(reqs[j].name(), reqs[j].type(), reqs[j].min(), reqs[j].max(),// reqs[j].multiple(), 
-					binding, nfprops, Arrays.asList(reqs[j].tags()));
-//					configinfo.setRequiredServices(rsis);
-				configinfo.addRequiredService(rsi);
-			}
-		}*/
-		
-		// creation of provided service nfps happens
-		
-		ProvidedServiceModel pmodel = (ProvidedServiceModel)modelinfo.getFeatureModel(IProvidedServiceFeature.class);
-		if(pmodel!=null)
-		{
-			ProvidedServiceInfo[] psis = pmodel.getServices();
-			for(ProvidedServiceInfo psi: psis)
-			{
-				ProvidedServiceImplementation impl = psi.getImplementation();
-				
-				Class<?> implcl = null;
-				if(impl.getClazz()!=null)
-					implcl = impl.getClazz().getType(ComponentManager.get().getClassLoader());
-				else if(impl.getClazz()==null && impl.getValue()==null)
-					implcl = clazz; // pojoclass
-				
-				Map<MethodInfo, List<NFPropertyInfo>> serprops = createProvidedNFProperties(implcl, psi.getType().getType(ComponentManager.get().getClassLoader()));
-			
-				if(serprops.get(null)!=null)
-				{
-					serprops.get(null).forEach(p -> model.addProvidedServiceProperty(psi.getName(), p));
-				}
-				
-				serprops.entrySet().forEach(entry ->
-				{
-					if(entry.getKey()!=null)
-					{
-						entry.getValue().forEach(p -> model.addProvidedServiceMethodProperty(psi.getName(), entry.getKey(), p));
-					}
-				});
-			}
-		}
-				
-		return model;
-	}
+//	public static Object readFeatureModel(ModelInfo modelinfo, Class<?> clazz, ClassLoader cl)
+//	{
+//		Class<?> cma = clazz;
+//		
+//		NFPropertyModel model = new NFPropertyModel();
+//		boolean done = false;
+//		//boolean tagsdone = false;
+//		
+//		while(cma!=null && !cma.equals(Object.class))
+//		{
+//			// Take all, upper replace lower
+//			if(!done && MicroClassReader.isAnnotationPresent(cma, NFProperties.class, cl))
+//			{
+//				NFProperties val = (NFProperties)MicroClassReader.getAnnotation(cma, NFProperties.class, cl);
+//				
+//				List<NFPropertyInfo> props = createNFPropertyInfos(val);
+//				props.forEach(nfp -> model.addComponentProperty(nfp));
+//				
+//				// todo!
+////				nfpropsdone = val.replace();
+//			}
+//			
+//			// Take all, upper replace lower
+//			/*if(!tagsdone && MicroClassReader.isAnnotationPresent(cma, Tags.class, cl))
+//			{
+//				Tags tags = (Tags)MicroClassReader.getAnnotation(cma, Tags.class, cl);
+//				
+//				NFPropertyInfo nfp = createNFPropertyInfo(tags);
+//				model.addComponentProperty(nfp);
+//				
+//				// todo!
+////				tagsdone = val.replace();
+//			}*/
+//			
+//			cma = cma.getSuperclass();
+//		}
+//		
+//		// creation of required service nfps happens when required service proxy is created
+//		// they must be written toplevel - can be associated with reqser when name is same?!
+//		
+//		RequiredServiceModel rmodel = (RequiredServiceModel)modelinfo.getFeatureModel(IRequiredServiceFeature.class);
+//		//Map<String, RequiredServiceInfo> rsers = rmodel.getRequiredServices();
+//		//System.out.println("todo: required service nfprops");
+//		System.getLogger(NFPropertyLoader.class.getName()).log(Level.WARNING, "todo: required service nfprops");
+//		
+////		RequiredServiceInfo[] rsis = new RequiredServiceInfo[reqs.length];
+//		/*for(int j=0; j<reqs.length; j++)
+//		{
+//			if(!configinfo.hasRequiredService(reqs[j].name()))
+//			{
+//				RequiredServiceBinding binding = createBinding(reqs[j]);
+//				List<NFRPropertyInfo> nfprops = createNFRProperties(reqs[j].nfprops());
+//				RequiredServiceInfo rsi = new RequiredServiceInfo(reqs[j].name(), reqs[j].type(), reqs[j].min(), reqs[j].max(),// reqs[j].multiple(), 
+//					binding, nfprops, Arrays.asList(reqs[j].tags()));
+////					configinfo.setRequiredServices(rsis);
+//				configinfo.addRequiredService(rsi);
+//			}
+//		}*/
+//		
+//		// creation of provided service nfps happens
+//		
+//		ProvidedServiceModel pmodel = (ProvidedServiceModel)modelinfo.getFeatureModel(IProvidedServiceFeature.class);
+//		if(pmodel!=null)
+//		{
+//			ProvidedServiceInfo[] psis = pmodel.getServices();
+//			for(ProvidedServiceInfo psi: psis)
+//			{
+//				ProvidedServiceImplementation impl = psi.getImplementation();
+//				
+//				Class<?> implcl = null;
+//				if(impl.getClazz()!=null)
+//					implcl = impl.getClazz().getType(ComponentManager.get().getClassLoader());
+//				else if(impl.getClazz()==null && impl.getValue()==null)
+//					implcl = clazz; // pojoclass
+//				
+//				Map<MethodInfo, List<NFPropertyInfo>> serprops = createProvidedNFProperties(implcl, psi.getType().getType(ComponentManager.get().getClassLoader()));
+//			
+//				if(serprops.get(null)!=null)
+//				{
+//					serprops.get(null).forEach(p -> model.addProvidedServiceProperty(psi.getName(), p));
+//				}
+//				
+//				serprops.entrySet().forEach(entry ->
+//				{
+//					if(entry.getKey()!=null)
+//					{
+//						entry.getValue().forEach(p -> model.addProvidedServiceMethodProperty(psi.getName(), entry.getKey(), p));
+//					}
+//				});
+//			}
+//		}
+//				
+//		return model;
+//	}
 	
 	public static List<NFPropertyInfo> createNFPropertyInfos(NFProperties nfprops)
 	{
@@ -171,7 +159,7 @@ public class NFPropertyLoader
 		}
 		
 		superclazz = impltype;
-		while(superclazz != null && !BasicService.class.equals(superclazz) && !Object.class.equals(superclazz))
+		while(superclazz != null && !Object.class.equals(superclazz))
 		{
 			classes.add(superclazz);
 			superclazz = superclazz.getSuperclass();

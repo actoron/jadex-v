@@ -29,6 +29,14 @@ public class PlainComponentBenchmark
 		});
 	}
 
+	public static void	main(String[] args)
+	{
+		for(;;)
+		{
+			IComponentManager.get().create(null).get().terminate().get();
+		}
+	}
+
 //	@Test
 //	void	benchmarkGetLoggerTime()
 //	{

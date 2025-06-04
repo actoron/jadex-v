@@ -14,7 +14,6 @@ import javax.swing.Timer;
 import jadex.bdi.cleanerworld.cleaner.CleanerAgent;
 import jadex.common.SGUI;
 import jadex.core.IComponentHandle;
-import jadex.execution.IExecutionFeature;
 
 
 /**

@@ -70,6 +70,7 @@ public class Traverser
 			processors.add(new ImageProcessor());
 			processors.add(new RectangleProcessor());
 		}
+		processors.add(new RecordProcessor());
 		processors.add(new TimestampProcessor());
 		processors.add(new LogRecordProcessor());
 		processors.add(new DateProcessor());

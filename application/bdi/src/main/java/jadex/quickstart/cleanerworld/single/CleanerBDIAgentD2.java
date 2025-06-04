@@ -2,31 +2,35 @@ package jadex.quickstart.cleanerworld.single;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
+import jadex.bdi.IPlan;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IGoal;
-import jadex.bdi.runtime.IPlan;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.core.IComponentManager;
+import jadex.injection.annotation.OnStart;
 import jadex.quickstart.cleanerworld.environment.IChargingstation;
 import jadex.quickstart.cleanerworld.environment.ICleaner;
 import jadex.quickstart.cleanerworld.environment.IWaste;
 import jadex.quickstart.cleanerworld.environment.SensorActuator;
+import jadex.quickstart.cleanerworld.gui.EnvironmentGui;
 import jadex.quickstart.cleanerworld.gui.SensorGui;
 
 /**
- *  Separate Maintain and Target Conditions.
+ *  Add target condition for cleanup goal and print result.
  */
-@Agent(type="bdi")	// This annotation makes the java class and agent and enabled BDI features
+@BDIAgent    // This annotation enabled BDI features
 public class CleanerBDIAgentD2
 {
 	//-------- fields holding agent data --------
@@ -82,17 +86,16 @@ public class CleanerBDIAgentD2
 	/**
 	 *  A goal to recharge whenever the battery is low.
 	 */
-	@Goal(recur=true, recurdelay=3000,
-		deliberation=@Deliberation(inhibits=PerformPatrol.class))	// Pause patrol goal while loading battery
+	@Goal(deliberation=@Deliberation(inhibits=PerformPatrol.class))	// Pause patrol goal while loading battery
 	class MaintainBatteryLoaded
 	{
-		@GoalMaintainCondition	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
+		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
-			return self.getChargestate()>=0.4; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
+			return self.getChargestate()>=0.2; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
 		}
 			
-		@GoalTargetCondition	// Only stop charging, when this condition is true
+		@GoalTargetCondition(beliefs="self")	// Only stop charging, when this condition is true
 		boolean isBatteryFullyLoaded()
 		{
 			return self.getChargestate()>=0.9; // Charge until 90%
@@ -103,24 +106,20 @@ public class CleanerBDIAgentD2
 	 *  A goal to know a charging station.
 	 */
 	@Goal(excludemode=ExcludeMode.Never)
-	class QueryChargingStation
+	class QueryChargingStation	implements Supplier<IChargingstation>
 	{
-		// Remember the station when found
-		IChargingstation	station;
-		
-		// Check if there is a station in the beliefs
-		@GoalTargetCondition
-		boolean isStationKnown()
+		@GoalQueryCondition(beliefs="stations")
+		@Override
+		public IChargingstation get()
 		{
-			station	= stations.isEmpty() ? null : stations.iterator().next();
-			return station!=null;
+			return stations.isEmpty() ? null : stations.iterator().next();
 		}
 	}
 
 	/**
 	 *  A goal to cleanup waste.
 	 */
-	@Goal(recur=true, recurdelay=3000)
+	@Goal
 	class AchieveCleanupWaste
 	{
 		// Remember the waste item to clean up
@@ -135,10 +134,13 @@ public class CleanerBDIAgentD2
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		@GoalTargetCondition
+		@GoalTargetCondition(beliefs="wastes")
 		boolean	isClean()
 		{
-			return !wastes.contains(waste);
+			// Test if the waste is not believed to be in the environment
+			return !wastes.contains(waste)
+				// and also not the waste we just picked up.
+				&& !waste.equals(self.getCarriedWaste());
 		}
 	}
 	
@@ -202,9 +204,7 @@ public class CleanerBDIAgentD2
 //		IChargingstation	chargingstation	= stations.iterator().next();	// from Exercise C0
 		
 		// Dispatch a subgoal to find a charging station (from Exercise C1)
-		QueryChargingStation	querygoal	= new QueryChargingStation();
-		plan.dispatchSubgoal(querygoal).get();
-		IChargingstation	chargingstation	= querygoal.station;
+		IChargingstation	chargingstation	= plan.dispatchSubgoal(new QueryChargingStation()).get();
 		
 		// Move to charging station as provided by subgoal
 		actsense.moveTo(chargingstation.getLocation());
@@ -232,5 +232,19 @@ public class CleanerBDIAgentD2
 	{
 		String	state	= goal.getProcessingState().toString();
 		System.out.println("finished goal with state "+state+" for "+cleanup.waste);
+	}
+
+
+	/**
+	 *  Main method for starting the scenario.
+	 *  @param args	ignored for now.
+	 */
+	public static void main(String[] args)
+	{
+		// Start an agent
+		IComponentManager.get().create(new CleanerBDIAgentD2());
+		
+		// Open the world view
+		EnvironmentGui.create();
 	}
 }

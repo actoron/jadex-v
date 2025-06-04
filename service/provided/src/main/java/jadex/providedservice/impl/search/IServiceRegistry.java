@@ -70,9 +70,10 @@ public interface IServiceRegistry
 	/**
 	 *  Add a service query to the registry.
 	 *  @param query ServiceQuery.
+	 *  @return Found services in form of service identifier or service events when query is in event mode.
 	 */
 	// write
-	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query);
+	public <T> ISubscriptionIntermediateFuture<Object> addQuery(ServiceQuery<T> query);
 	
 	/**
 	 *  Remove a service query from the registry.

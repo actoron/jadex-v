@@ -1,5 +1,6 @@
 package jadex.common.transformation.traverser;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
@@ -68,6 +69,21 @@ public class BeanProcessor implements ITraverseProcessor
 		{
 			throw SUtil.throwUnchecked(e);
 		}
+		
+		/*if(ret.getClass().getName().indexOf("Waste")!=-1)
+		{
+			try
+			{
+				Method m = ret.getClass().getMethod("getPosition", new Class[0]);
+				Object pos = m.invoke(ret, new Object[0]);
+				if(pos==null)
+					System.out.println("found waste with null pos: "+ret);
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}*/
 		
 		return ret;
 	}

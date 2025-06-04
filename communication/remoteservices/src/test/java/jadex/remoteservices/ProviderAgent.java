@@ -1,5 +1,8 @@
 package jadex.remoteservices;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -7,22 +10,14 @@ import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.messaging.IMessageFeature;
+import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
-import jadex.messaging.security.SecurityFeature;
 import jadex.messaging.security.authentication.KeySecret;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Component;
-import jadex.model.annotation.OnStart;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.ServiceScope;
-import jadex.providedservice.annotation.Security;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.impl.service.ServiceIdentifier;
-
-import java.util.*;
 
 @Agent
 @Service

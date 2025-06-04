@@ -11,14 +11,13 @@ import jadex.bt.nodes.Node.NodeState;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.TerminableFuture;
 
 /**
  *  Benchmark creation and killing of bt agents with shared tree.
  */
-public class BTSharedAgentBenchmark 
+public class BTSharedAgentBenchmark
 {
 	public static class TestAgent implements IBTProvider 
 	{
@@ -42,7 +41,7 @@ public class BTSharedAgentBenchmark
 			an.setAction(new TerminableUserAction<IComponent>((e, agent) -> 
 			{ 
 				TerminableFuture<NodeState> fut = new TerminableFuture<>();
-				System.out.println("compos: "+ComponentManager.get().getNumberOfComponents());
+//				System.out.println("compos: "+ComponentManager.get().getNumberOfComponents());
 				//System.out.println("Hello from behavior trees: "+agent.getId()+" "+agent.getAppId());
 				//fut.setResult(NodeState.SUCCEEDED);
 				((TestAgent)agent.getPojo()).future.setResult(null);
@@ -73,7 +72,17 @@ public class BTSharedAgentBenchmark
 			IComponentHandle agent = IComponentManager.get().create(new TestAgent(ret)).get();
 			ret.get();
 			return () -> agent.terminate().get();
-		}, 50);
+		});
 	}
 
+	public static void	main(String[] args)
+	{
+		for(;;)
+		{
+			Future<Void> ret = new Future<>();
+			IComponentHandle agent = IComponentManager.get().create(new TestAgent(ret)).get();
+			ret.get();
+			agent.terminate().get();
+		}
+	}
 }

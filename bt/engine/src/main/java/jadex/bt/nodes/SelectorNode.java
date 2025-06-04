@@ -42,10 +42,10 @@ public class SelectorNode<T> extends CompositeNode<T>
     	if(getNodeContext(context).getIndex() < getChildCount()) 
     	{
     		//System.out.println("Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
-      		System.getLogger(this.getClass().getName()).log(Level.INFO, "Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
+      		getLogger().log(Level.INFO, "Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
 
-       		if(getChild(getNodeContext(context).getIndex()).toString().indexOf("collect")!=-1)
-    			System.out.println("collectwaste");
+       		//if(getChild(getNodeContext(context).getIndex()).toString().indexOf("collect")!=-1)
+    		//	System.out.println("collectwaste");
       		
     		IFuture<NodeState> child = getChild(getNodeContext(context).getIndex()).execute(event, context);
             
@@ -69,14 +69,16 @@ public class SelectorNode<T> extends CompositeNode<T>
     {
     	if(state==NodeState.SUCCEEDED)
     	{
-    		System.out.println("selected succeeded: "+this);
+    		//System.out.println("selected succeeded: "+this);
+    		getLogger().log(Level.INFO, "selected succeeded: "+this);
     		ret.setResult(NodeState.SUCCEEDED);
     	}
     	else if(state==NodeState.FAILED)
     	{
     		if(getNodeContext(context).getAborted()!=null)
     		{
-    			System.out.println("ignoring abort return of children: "+this+" "+state);
+    			//System.out.println("ignoring abort return of children: "+this+" "+state);
+    			getLogger().log(Level.INFO, "ignoring abort return of children: "+this+" "+state);
     			ret.setResult(NodeState.FAILED);
     		}
     		else
@@ -86,7 +88,7 @@ public class SelectorNode<T> extends CompositeNode<T>
     	}
     	else
     	{
-    		System.getLogger(this.getClass().getName()).log(java.lang.System.Logger.Level.WARNING, "received non final state: "+state);
+    		getLogger().log(java.lang.System.Logger.Level.WARNING, "received non final state: "+state);
     	}
     }
     
@@ -95,7 +97,8 @@ public class SelectorNode<T> extends CompositeNode<T>
     {
     	super.reset(context, all);
     	getNodeContext(context).setIndex(-1);
-    	System.out.println("selector node after reset = " + getNodeContext(context).getIndex()+" "+this);
+    	//System.out.println("selector node after reset = " + getNodeContext(context).getIndex()+" "+this);
+      	System.getLogger(SelectorNode.class.getName()).log(Level.INFO, "selector node after reset = " + getNodeContext(context).getIndex()+" "+this);
     }
     
     public int getCurrentChildCount(ExecutionContext<T> context)

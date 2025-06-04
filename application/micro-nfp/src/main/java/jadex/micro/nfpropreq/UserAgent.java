@@ -6,23 +6,20 @@ import jadex.common.MethodInfo;
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.impl.search.ComposedEvaluator;
 import jadex.nfproperty.sensor.service.ExecutionTimeEvaluator;
-import jadex.providedservice.annotation.Service;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 // todo!
 
-@Agent
-@Service
 //@RequiredServices(@RequiredService(name="aser", type=IAService.class, scope=ServiceScope.VM, //  multiple=true,
 //	nfprops=@NFRProperty(value=ExecutionTimeProperty.class, methodname="test")))
 public class UserAgent
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 		
 	/**
@@ -40,7 +37,7 @@ public class UserAgent
 			{
 				ComposedEvaluator<IAService> ranker = new ComposedEvaluator<IAService>();
 				ranker.addEvaluator(new ExecutionTimeEvaluator(agent.getComponentHandle(), new MethodInfo(IAService.class.getMethod("test", new Class[0])), true));
-				ITerminableIntermediateFuture<IAService> sfut = agent.getFeature(IRequiredServiceFeature.class).getServices("aser");
+				ITerminableIntermediateFuture<IAService> sfut = agent.getFeature(IRequiredServiceFeature.class).searchServices(IAService.class);
 				Collection<Tuple2<IAService, Double>> res = agent.getFeature(INFPropertyFeature.class).rankServicesWithScores(sfut, ranker, null).get();
 				System.out.println("Found: "+res);
 				IAService aser = res.iterator().next().getFirstEntity();

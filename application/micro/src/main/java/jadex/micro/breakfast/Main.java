@@ -2,12 +2,11 @@ package jadex.micro.breakfast;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.ResultProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
+import jadex.injection.annotation.ProvideResult;
 
 /**
  *  Example shows how concurrent functional programming is possible with actors.
@@ -36,6 +35,7 @@ public class Main
 			System.out.println("bar: "+res)
 		);*/
 		
+		@SuppressWarnings("unchecked")
 		FutureBarrier<String> b = new FutureBarrier<String>(eggs, coffee);
 		
 		b.waitFor().get();
@@ -47,8 +47,7 @@ public class Main
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 
-	@Agent
-	public static class CoffeeMaker extends ResultProvider
+	/*public static class CoffeeMaker extends ResultProvider
 	{
 		@OnStart
 		public void start(IComponent agent)
@@ -57,14 +56,23 @@ public class Main
 			System.out.println("Coffee ready");
 			addResult("result", "Coffee ready");
 		}
-	}
+	}*/
 	
-	/*@Agent
+	/*public static class CoffeeMaker
+	{
+		@OnStart
+		public void start(IComponent agent, IInjectionFeature injection)
+		{
+			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
+			System.out.println("Coffee ready");
+			injection.addResult("result", "Coffee ready");
+		}
+	}*/
+	
 	public static class CoffeeMaker 
 	{
-		@AgentResult
+		@ProvideResult
 		protected String result;
-		
 		
 		@OnStart
 		public void start(IComponent agent)
@@ -74,10 +82,9 @@ public class Main
 			result = "Coffee ready";
 			agent.terminate();
 		}
-	}*/
+	}
 	
-	/*@Agent
-	public static class CoffeeMaker implements IResultProvider
+	/*public static class CoffeeMaker implements IResultProvider
 	{
 		protected List<SubscriptionIntermediateFuture<NameValue>> resultsubscribers = new ArrayList<SubscriptionIntermediateFuture<NameValue>>();
 		protected Map<String, Object> results = new HashMap<String, Object>();

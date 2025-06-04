@@ -1,13 +1,13 @@
 package jadex.benchmark;
 
+import jadex.bdi.annotation.BDIAgent;
 import jadex.future.Future;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Just set a future in onStart -> no BDI reasoning.
  */
-@Agent(type="bdip")
+@BDIAgent
 public class SimpleBDIBenchmarkAgent
 {
 	Future<Void>	inited	= new Future<>();

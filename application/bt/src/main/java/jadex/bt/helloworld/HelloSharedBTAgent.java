@@ -10,9 +10,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.TerminableFuture;
-import jadex.micro.annotation.Agent;
 
-@Agent(type="bt")
 public class HelloSharedBTAgent implements IBTProvider 
 { 
     public Node<IComponent> createBehaviorTree() 	

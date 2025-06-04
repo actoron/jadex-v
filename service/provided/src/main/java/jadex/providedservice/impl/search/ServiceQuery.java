@@ -14,23 +14,12 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
-import jadex.providedservice.impl.service.ProvidedServiceFeature;
 
 /**
  *  Service query definition. T is the return type for search methods.
  */
 public class ServiceQuery<T>
 {	
-	/** The raw proxy type (i.e. no proxy). */
-	public static final String	PROXYTYPE_RAW	= AbstractServiceInvocationHandler.PROXYTYPE_RAW;
-	
-	/** The direct proxy type (supports custom interceptors, but uses caller thread). */
-	public static final String	PROXYTYPE_DIRECT	= AbstractServiceInvocationHandler.PROXYTYPE_DIRECT;
-	
-	/** The (default) decoupled proxy type (decouples from component thread to caller thread). */
-	public static final String	PROXYTYPE_DECOUPLED	= AbstractServiceInvocationHandler.PROXYTYPE_DECOUPLED;
-	
 	//-------- constants --------
 	
 	/** Marker for networks not set. */
@@ -87,9 +76,6 @@ public class ServiceQuery<T>
 	
 	/** The matching mode for multivalued terms. True is and and false is or. */
 	protected Map<String, Boolean> matchingmodes;
-	
-	/** Required service proxy type. */
-	protected String requiredproxytype = PROXYTYPE_DECOUPLED;
 	
 	//-------- identification of a query --------
 	
@@ -264,7 +250,6 @@ public class ServiceQuery<T>
 		//this.platform	= original.platform;
 		//this.searchstart	= original.searchstart;
 		this.unrestricted = original.unrestricted;
-		this.requiredproxytype = original.requiredproxytype;
 	}
 
 	/**
@@ -371,8 +356,8 @@ public class ServiceQuery<T>
 	 */
 	public ServiceQuery<T> setServiceTags(String[] servicetags, IComponent component)
 	{
-		//this.servicetags = TagFilter.createRuntimeTags(servicetags).toArray(new String[servicetags!=null ? servicetags.length : 0]);
-		this.servicetags = ProvidedServiceFeature.evaluateTags(component,  Arrays.asList(servicetags)).toArray(new String[0]);
+//		this.servicetags = ProvidedServiceFeature.evaluateTags(component,  Arrays.asList(servicetags)).toArray(new String[0]);
+		this.servicetags = Arrays.asList(servicetags).toArray(new String[0]);
 		return this;
 	}
 
@@ -728,25 +713,6 @@ public class ServiceQuery<T>
 		return this;
 	}
 	
-	/**
-	 *  Returns the requested required service proxy type.
-	 *  @return The requested required service proxy type.
-	 */
-	public String getRequiredProxyType()
-	{
-		return requiredproxytype;
-	}
-	
-	/**
-	 *  Sets the requested required service proxy type.
-	 *  @param requiredproxytype The requested required service proxy type.
-	 */
-	public ServiceQuery<T> setRequiredProxyType(String requiredproxytype)
-	{
-		this.requiredproxytype = requiredproxytype;
-		return this;
-	}
-
 	/**
 	 *  Get the hashcode.
 	 */

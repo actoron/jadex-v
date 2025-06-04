@@ -8,21 +8,21 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
+import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.ChangeEvent;
-import jadex.bdi.runtime.IBDIAgent;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IGoal;
-import jadex.bdi.runtime.IPlan;
+import jadex.bdi.impl.ChangeEvent;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.future.Future;
-import jadex.micro.annotation.Agent;
 import jadex.rules.eca.ChangeInfo;
 
 /**
@@ -30,7 +30,7 @@ import jadex.rules.eca.ChangeInfo;
  */
 public class PlanTriggerTest
 {
-	@Agent(type="bdip")
+	@BDIAgent
 	static class PlanTriggerTestAgent
 	{
 		@Belief
@@ -55,11 +55,7 @@ public class PlanTriggerTest
 		void changedPlan(IPlan plan)
 		{
 			ChangeEvent<?>	event	= (ChangeEvent<?>)plan.getReason();
-			// Ignore initial "beliefchanged" event
-			if("factchanged".equals(event.getType()))
-			{
-				changed.setResult(event);
-			}
+			changed.setResult(event);
 		}
 
 		@Plan(trigger=@Trigger(factremoved="bel"))
@@ -85,7 +81,7 @@ public class PlanTriggerTest
 	void testFactAdded()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IComponentHandle	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep(() -> pojo.bel.add(0, "new fact"));
 		checkEventInfo(pojo.added, "bel", "factadded", null, "new fact", 0);
 	}
@@ -94,7 +90,7 @@ public class PlanTriggerTest
 	void testFactChanged()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IComponentHandle	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep(() -> 
 		{
 			pojo.bel.add("old fact");
@@ -107,7 +103,7 @@ public class PlanTriggerTest
 	void testFactRemoved()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IComponentHandle	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep(() -> 
 		{
 			pojo.bel.add("new fact");
@@ -120,7 +116,7 @@ public class PlanTriggerTest
 	void testGoal()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IComponentHandle	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
 		checkGoalInfo(pojo.goal, PlanTriggerTestAgent.MyGoal.class);
 	}
@@ -129,7 +125,7 @@ public class PlanTriggerTest
 	void testGoalFinished()
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
-		IComponentHandle	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
 		checkGoalEventInfo(pojo.goalfinished, PlanTriggerTestAgent.MyGoal.class.getName(), "goaldropped", PlanTriggerTestAgent.MyGoal.class);
 	}

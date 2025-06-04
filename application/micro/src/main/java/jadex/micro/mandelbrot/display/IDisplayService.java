@@ -8,14 +8,13 @@ import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.mandelbrot.model.ProgressData;
-import jadex.providedservice.annotation.Security;
 import jadex.providedservice.annotation.Service;
 
 /**
  *  Service for displaying the result of a calculation. 
  */
 @Service
-@Security(roles=Security.UNRESTRICTED)
+//@Security(roles=Security.UNRESTRICTED)
 public interface IDisplayService
 {
 	/**
