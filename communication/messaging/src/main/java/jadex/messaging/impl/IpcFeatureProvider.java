@@ -26,7 +26,7 @@ public class IpcFeatureProvider extends RuntimeFeatureProvider<IIpcFeature>
 	 */
 	public IIpcFeature createFeatureInstance()
 	{
-		IpcStreamHandler streamhandler = new IpcStreamHandler(GlobalProcessIdentifier.SELF);
+		IpcStreamHandler streamhandler = new IpcStreamHandler(GlobalProcessIdentifier.getSelf());
 		streamhandler.open();
 		
 		return streamhandler;

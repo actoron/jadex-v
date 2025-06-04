@@ -37,21 +37,21 @@ import jadex.future.IFuture;
 public class ComponentManager implements IComponentManager
 {
 	//private static Set<Class<? extends IRuntimeFeature>> knownfeatures = new HashSet<>();
-	
+
 	// todo: make configurable!
-	/*static 
+	/*static
 	{
 		long start = System.currentTimeMillis();
-		
+
 		String javacp = System.getProperty("java.class.path");
 	    String sep = System.getProperty("path.separator");
 	    /*List<String> fcp = Arrays.stream(javacp.split(sep))
 	    	.filter(path -> !path.contains("/java") && !path.contains("jdk") && !path.contains("jre"))
 	    	.collect(Collectors.toList());
 	    String fcps = String.join(sep, fcp);* /
-	    
+
 	    List<String> fcp = Arrays.stream(javacp.split(sep))
-		    .filter(path -> 
+		    .filter(path ->
 		    {
 		        String lower = path.toLowerCase();
 		        return !lower.contains("/java") &&
@@ -67,10 +67,10 @@ public class ComponentManager implements IComponentManager
 		    })
 		    .collect(Collectors.toList());
 	    String fcps = String.join(sep, fcp);
-	    
+
 	    System.out.println("javacp: "+javacp);
 	    System.out.println("fcp: "+fcps);
-	    
+
 	    //ClassLoader cl = ComponentManager.class.getClassLoader();
 	    //List<URL> urls = SUtil.getClasspathURLs(cl, true);
 	    //System.out.println("urls: "+urls);
@@ -79,14 +79,14 @@ public class ComponentManager implements IComponentManager
 	    	.enableClassInfo()
 	    	.overrideClasspath(fcps)
 	        //.overrideClasspath(urls.toArray(new URL[0]))
-	        .scan()) 
+	        .scan())
 	    {
-	    	for (ClassInfo ci : res.getClassesImplementing(IRuntimeFeature.class.getName())) 
+	    	for (ClassInfo ci : res.getClassesImplementing(IRuntimeFeature.class.getName()))
             {
-                if (!ci.isInterface() && !ci.isAbstract()) 
+                if (!ci.isInterface() && !ci.isAbstract())
                 {
                     Class<?> cls = ci.loadClass();
-                    if (IRuntimeFeature.class.isAssignableFrom(cls)) 
+                    if (IRuntimeFeature.class.isAssignableFrom(cls))
                     {
                         knownfeatures.add((Class<? extends IRuntimeFeature>) cls);
                     }
@@ -95,7 +95,7 @@ public class ComponentManager implements IComponentManager
 	    }
 
 		long end = System.currentTimeMillis();
-		
+
 		System.out.println("found feature types: "+knownfeatures);
 		System.out.println("needed: "+(end-start));
 	}*/
@@ -108,13 +108,25 @@ public class ComponentManager implements IComponentManager
 	 */
 	public static final ComponentManager get()
 	{
+		return get(null);
+	}
+
+	/**
+	 *  Returns the component manager instance.
+	 *
+	 *  @param pid Sets a custom local process identifier, can only be done once.
+	 *  @return The component manager instance.
+	 */
+	public static final ComponentManager get(String pid)
+	{
 		if(instance == null)
 		{
 			synchronized(ComponentManager.class)
 			{
+				if (pid == null)
+					pid = "" + ProcessHandle.current().pid();
 				if(instance == null)
-					instance = new ComponentManager();
-				//System.out.println("created compmanager: "+instance);
+					instance = new ComponentManager(pid);
 			}
 			instance.init();
 		}
@@ -125,7 +137,7 @@ public class ComponentManager implements IComponentManager
 	private ClassLoader classloader = ComponentManager.class.getClassLoader();
 	
 	/** Cached process ID. */
-	private long pid;
+	private String pid;
 	
 	/** Cached host name. */
 	private String host;
@@ -185,10 +197,12 @@ public class ComponentManager implements IComponentManager
 	
 	/**
 	 *  Create a new component manager.
+	 *
+	 *  @param pid The local process ID.
 	 */
-	private ComponentManager()
+	private ComponentManager(String pid)
 	{
-		pid = ProcessHandle.current().pid();
+		this.pid = pid;
 		host = SUtil.createPlainRandomId("unknown", 12);
 		try
 		{
@@ -225,14 +239,14 @@ public class ComponentManager implements IComponentManager
 				comp.terminate();
 			});
 		}
-		
+
 		//System.out.println("before initFeatures");
 		IFuture<Void> ifut = instance.initFeatures();
 		//ifut.then(Void -> System.out.println("init features completed"));
 		ifut.printOnEx();
 		//System.out.println("after initFeatures");
 	}
-	
+
 	/**
 	 *  Set the level of the root logger and its handlers.
 	 *  @param level The level to set.
@@ -261,17 +275,17 @@ public class ComponentManager implements IComponentManager
 	{
 		return awaitFeature(featuretype).get();
 	}
-	
+
 	/**
 	 *  Get the feature instance for the given type.
-	 *  
+	 *
 	 *  @param featuretype Requested runtime feature type.
 	 *  @return The feature or null if not found or available.
 	 */
 	public <T extends IRuntimeFeature> IFuture<T> awaitFeature(Class<T> featuretype)
 	{
 		//System.out.println("awaitFeature: "+featuretype+" "+featurecache.keySet()+" "+this);
-		
+
 		Future<T> ret;
 
 		try (IAutoLock l = featurecache.writeLock())
@@ -288,9 +302,9 @@ public class ComponentManager implements IComponentManager
 
 		/*Timer t = new Timer();
 		t.schedule(new TimerTask() {
-			
+
 			@Override
-			public void run() 
+			public void run()
 			{
 				if(!ret.isDone())
 				{
@@ -299,8 +313,8 @@ public class ComponentManager implements IComponentManager
 				}
 			}
 		}, 5000);*/
-		
-		createFeature(featuretype).then(feature -> 
+
+		createFeature(featuretype).then(feature ->
 		{
 			if (feature != null)
 			{
@@ -315,9 +329,9 @@ public class ComponentManager implements IComponentManager
 
 		return ret;
 	}
-	
+
 	/**
-	 *  Create a runtime feature based on providers. 
+	 *  Create a runtime feature based on providers.
 	 *  @param featuretype The type.
 	 *  @return The feature or null if no provider was found.
 	 */
@@ -377,20 +391,20 @@ public class ComponentManager implements IComponentManager
 		}
 		return ret;
 	}
-	
+
 	/**
 	 *  Init the non-lazy features with providers.
 	 * /
 	public IFuture<Void> initFeatures()
 	{
 		Future<Void> ret = new Future<>();
-		
+
 		@SuppressWarnings("rawtypes")
 		Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
 		for (;it.hasNext();)
 		{
 			RuntimeFeatureProvider<IRuntimeFeature> prov = it.next();
-			
+
 			if(!prov.isLazyFeature())
 			{
 				Class<IRuntimeFeature> featuretype = prov.getFeatureType();
@@ -409,7 +423,7 @@ public class ComponentManager implements IComponentManager
 						//featurecache.put(featuretype, ret);
 					}
 				}).catchEx(ret);
-				
+
 				/*Set<Class<? extends IRuntimeFeature>> preds = prov.getDependencies();
 				for (Class<?> pred : preds)
 				{
@@ -424,10 +438,10 @@ public class ComponentManager implements IComponentManager
 				}* /
 			}
 		}
-		
+
 		return ret;
 	}*/
-	
+
 	public IFuture<Void> initFeatures()
 	{
 	    Future<Void> chain = new Future<>();
@@ -447,12 +461,12 @@ public class ComponentManager implements IComponentManager
 
 	    RuntimeFeatureProvider<IRuntimeFeature> prov = it.next();
 	    //System.out.println("init next: "+prov.getFeatureType());
-	    awaitFeature(prov.getFeatureType()).then(res -> 
+	    awaitFeature(prov.getFeatureType()).then(res ->
 	    {
 	    	initNextFeature(it, chain);
 	    }).catchEx(chain);
 	}
-	
+
 	/**
 	 *  Add a runtime feature.
 	 *  @param feature The feature
@@ -462,7 +476,7 @@ public class ComponentManager implements IComponentManager
 	     Class<? extends IRuntimeFeature> type = resolveFeatureInterface(feature.getClass());
 	     addFeature((Class<IRuntimeFeature>)type, feature);
 	}
-	
+
 	public void addFeature(Class<? extends IRuntimeFeature> type, IRuntimeFeature feature)
 	{
 		Future<IRuntimeFeature> feafut = null;
@@ -497,10 +511,10 @@ public class ComponentManager implements IComponentManager
 		if (feafut != null)
 			feafut.setResult(feature);
 	}
-	
+
 	/**
 	 *  Test if a feature is present.
-	 *  
+	 *
 	 *  @param featuretype Requested runtime feature type.
 	 *  @return True, if the feature is present, i.e. created.
 	 * /
@@ -509,68 +523,68 @@ public class ComponentManager implements IComponentManager
 		//return featurecache.get(featuretype)!=null;
 		return knownfeatures.contains(featuretype);
 	}*/
-	
-	public boolean isFeatureResolved(Class<?> type) 
+
+	public boolean isFeatureResolved(Class<?> type)
 	{
 		Object val = featurecache.get(type);
 		return val != null && (!(val instanceof Future) || ((Future<?>)val).isDone());
 	}
 
-	
-    private Class<? extends IRuntimeFeature> resolveFeatureInterface(Class<?> implClass) 
+
+    private Class<? extends IRuntimeFeature> resolveFeatureInterface(Class<?> implClass)
     {
         Set<Class<? extends IRuntimeFeature>> interfaces = new HashSet<>();
 
-        for (Class<?> iface : implClass.getInterfaces()) 
+        for (Class<?> iface : implClass.getInterfaces())
         {
             collectRuntimeFeatureInterfaces(iface, interfaces);
         }
 
         Class<?> superclass = implClass.getSuperclass();
-        while (superclass != null) 
+        while (superclass != null)
         {
-            for (Class<?> iface : superclass.getInterfaces()) 
+            for (Class<?> iface : superclass.getInterfaces())
                 collectRuntimeFeatureInterfaces(iface, interfaces);
             superclass = superclass.getSuperclass();
         }
 
         Set<Class<? extends IRuntimeFeature>> mostspec = getMostSpecificInterfaces(interfaces);
 
-        if (mostspec.size() == 1) 
+        if (mostspec.size() == 1)
         {
             return mostspec.iterator().next();
-        } 
-        else if (mostspec.isEmpty()) 
+        }
+        else if (mostspec.isEmpty())
         {
             throw new IllegalArgumentException("No interface extending IRuntimeFeature found for class " + implClass.getName());
-        } 
-        else 
+        }
+        else
         {
             throw new IllegalArgumentException("Multiple unrelated interfaces extending IRuntimeFeature found: " + mostspec);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void collectRuntimeFeatureInterfaces(Class<?> iface, Set<Class<? extends IRuntimeFeature>> result) 
+    private void collectRuntimeFeatureInterfaces(Class<?> iface, Set<Class<? extends IRuntimeFeature>> result)
     {
         if (!iface.isInterface()) return;
-        
-        if (IRuntimeFeature.class.isAssignableFrom(iface)) 
+
+        if (IRuntimeFeature.class.isAssignableFrom(iface))
             result.add((Class<? extends IRuntimeFeature>) iface);
 
-        for (Class<?> parent : iface.getInterfaces()) 
+        for (Class<?> parent : iface.getInterfaces())
             collectRuntimeFeatureInterfaces(parent, result);
     }
 
-    private Set<Class<? extends IRuntimeFeature>> getMostSpecificInterfaces(Set<Class<? extends IRuntimeFeature>> interfaces) 
+    private Set<Class<? extends IRuntimeFeature>> getMostSpecificInterfaces(Set<Class<? extends IRuntimeFeature>> interfaces)
     {
         Set<Class<? extends IRuntimeFeature>> result = new HashSet<>(interfaces);
 
-        for (Class<? extends IRuntimeFeature> a : interfaces) 
+        for (Class<? extends IRuntimeFeature> a : interfaces)
         {
-            for (Class<? extends IRuntimeFeature> b : interfaces) 
+            for (Class<? extends IRuntimeFeature> b : interfaces)
             {
-                if (a != b && a.isAssignableFrom(b)) 
+                if (a != b && a.isAssignableFrom(b))
                 {
                     result.remove(a); // a is more generic than b -> remove
                 }
@@ -579,7 +593,7 @@ public class ComponentManager implements IComponentManager
 
         return result;
     }
-    
+
     /**
 	 *  Remove a runtime feature.
 	 *  @param type The feature type.
@@ -588,17 +602,17 @@ public class ComponentManager implements IComponentManager
 	{
 		featurecache.remove(type);
 	}
-	
+
 	/**
 	 *  Get the feature instance for the given type.
-	 *  
+	 *
 	 *  @param featuretype Requested runtime feature type.
 	 *  @return The feature or null if not found or available.
 	 * /
 	public <T extends IRuntimeFeature> T getFeature(Class<T> featuretype)
 	{
 //		System.out.println("getFeature: "+featuretype);
-		
+
 		Object feature = featurecache.get(featuretype);
 		if(feature instanceof IFuture)
 		{
@@ -635,7 +649,7 @@ public class ComponentManager implements IComponentManager
 	 *  
 	 *  @return Process identifier of the Java process.
 	 */
-	public long pid()
+	public String pid()
 	{
 		return pid;
 	}
@@ -1048,7 +1062,7 @@ public class ComponentManager implements IComponentManager
 			run.run();
 		}
 	}
-	
+
 	protected volatile IComponent	globalrunner;
 	/**
 	 *  Get or create a component to run global steps on, e.g. component listener notifications.
