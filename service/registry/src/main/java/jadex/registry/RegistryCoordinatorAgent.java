@@ -17,8 +17,6 @@ import jadex.providedservice.impl.service.ServiceCall;
 
 public class RegistryCoordinatorAgent implements IRegistryCoordinatorService 
 {
-	
-	
 	/** The agent. */
 	@Inject
 	protected IComponent agent;

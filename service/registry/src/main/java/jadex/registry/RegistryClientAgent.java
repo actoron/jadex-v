@@ -36,13 +36,13 @@ public class RegistryClientAgent //implements IRegistryClientService
 
     protected void findCoordinator()
     {
-    	/*String coord = IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+"@global@www.actoron.com";
+    	String coord = IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+"@global@www.actoron.com";
     	StringTokenizer stok = new StringTokenizer(coord, "@");
     	String agentname = stok.nextToken();
     	String pid = stok.nextToken();
     	String hostname = stok.nextToken();
     	
-    	ComponentIdentifier copid = new ComponentIdentifier(agentname, )
+    	/*ComponentIdentifier copid = new ComponentIdentifier(agentname, )
     	
 		IServiceIdentifier rrsid = BasicService.createServiceIdentifier(new ComponentIdentifier(IRemoteRegistryService.REMOTE_REGISTRY_NAME, platform), new ClassInfo(IRemoteRegistryService.class), null, IRemoteRegistryService.REMOTE_REGISTRY_NAME, null, ServiceScope.NETWORK, null, true);
 		IRemoteRegistryService rrs = (IRemoteRegistryService) RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, rrsid);
