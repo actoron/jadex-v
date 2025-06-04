@@ -31,6 +31,16 @@ public record GlobalProcessIdentifier(long pid, String host)
 		return new GlobalProcessIdentifier(Long.parseLong(gpidstring.substring(0, ind)), gpidstring.substring(ind + 1));
 	}
 
+	public long getProcessId()
+	{
+		return pid;
+	}
+	
+	public String getHost()
+	{
+		return host;
+	}
+	
 	/**
 	 *  Generates a hashcode.
 	 */

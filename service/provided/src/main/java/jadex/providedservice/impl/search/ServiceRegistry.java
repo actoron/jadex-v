@@ -3,6 +3,7 @@ package jadex.providedservice.impl.search;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -362,9 +363,9 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	/**
 	 *  Remove services of a platform from the registry.
 	 *  @param platform The platform, null for everything.
-	 * /
+	 */
 	// write
-	public void removeServices(IComponentIdentifier platform)
+	public void removeServices(ComponentIdentifier platform)
 	{
 		Set<IServiceIdentifier> pservs = null;
 		
@@ -392,7 +393,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			if(pservs!=null)
 			{
 				for(IServiceIdentifier serv : pservs)
-					checkQueries(serv,  ServiceEvent.SERVICE_REMOVED);
+					checkQueries(serv,  ServiceEvent.SERVICE_REMOVED, true);
 			}
 		}
 		finally
@@ -413,7 +414,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 				proxyrwlock.writeLock().unlock();
 			}
 		}
-	}*/
+	}
 	
 	/**
 	 *  Remove services of a platform from the registry.
@@ -616,9 +617,9 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	/**
 	 *  Remove all service queries of a specific component from the registry.
 	 *  @param owner The query owner.
-	 * /
+	 */
 	// write
-	public void removeQueries(IComponentIdentifier owner)
+	public void removeQueries(ComponentIdentifier owner)
 	{
 		rwlock.writeLock().lock();
 		try
@@ -636,21 +637,21 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 		{
 			rwlock.writeLock().unlock();
 		}
-	}*/
+	}
 	
 	/**
 	 *  Remove all service queries of a specific platform from the registry.
 	 *  @param platform The platform from which the query owner comes.
-	 * /
+	 */
 	// write
-	public void removeQueriesOfPlatform(IComponentIdentifier platform)
+	public void removeQueriesOfRuntime(ComponentIdentifier runtime)
 	{
 		rwlock.writeLock().lock();
 		Set<ServiceQueryInfo<?>> qinfos = new HashSet<ServiceQueryInfo<?>>();
 		try
 		{
 			// todo: Should use index to find all services of a platform
-			Set<ServiceQueryInfo<?>> qis = queries.getValues(QueryInfoExtractor.KEY_TYPE_OWNER_PLATORM, platform.toString());
+			Set<ServiceQueryInfo<?>> qis = queries.getValues(QueryInfoExtractor.KEY_TYPE_OWNER_PLATORM, runtime.toString());
 			
 			if(qis!=null)
 			{
@@ -665,61 +666,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 		{
 			rwlock.writeLock().unlock();
 		}
-	}*/
-	
-	/**
-	 *  Add an excluded component. 
-	 *  @param The component identifier.
-	 * /
-	// write
-	public void addExcludedComponent(IComponentIdentifier cid)
-	{
-		rwlock.writeLock().lock();
-		try
-		{
-			if (excludedservices == null)
-				excludedservices = new HashMap<>();
-			excludedservices.put(cid, null);
-		}
-		finally
-		{
-			rwlock.writeLock().unlock();
-		}
-	}*/
-	
-	/**
-	 *  Remove an excluded component. 
-	 *  @param The component identifier.
-	 * /
-	public void removeExcludedComponent(IComponentIdentifier cid)
-	{
-		Lock lock = rwlock.writeLock();
-		lock.lock();
-		try
-		{
-			if(excludedservices!=null)
-			{
-				Set<IServiceIdentifier> exs = excludedservices.remove(cid);
-				
-				lock.unlock();
-				lock = null;
-				
-				// Get and remove services from cache
-				if(exs!=null)
-				{
-					for(IServiceIdentifier ser: exs)
-					{
-						checkQueries(ser, ServiceEvent.SERVICE_ADDED);
-					}
-				}
-			}
-		}
-		finally
-		{
-			if (lock != null)
-				lock.unlock();
-		}
-	}*/
+	}
 	
 	/**
 	 *  Test if a service is visible, i.e. visible after init for all components or visible for subcomponents also during init.
@@ -864,11 +811,11 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
 			ret = gpi1.equals(gpi2);
 		}
-		else if(ServiceScope.COMPONENT.equals(scope))
+		/*else if(ServiceScope.COMPONENT.equals(scope))
 		{
 			ret = searchstart.equals(sercid);
 			ser.getProviderId().equals(query.getOwner());
-		}
+		}*/
 		
 		return ret;
 	}
@@ -903,10 +850,10 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
 			ret = gpi1.equals(gpi2);
 		}
-		else if(ServiceScope.COMPONENT.equals(scope))
+		/*else if(ServiceScope.COMPONENT.equals(scope))
 		{
 			ret = searchstart.equals(sercid);
-		}
+		}*/
 		
 		return ret;
 	}

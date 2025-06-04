@@ -176,6 +176,7 @@ includeBuild('service/required') {}
 includeBuild('service/publish') {}
 includeBuild('service/publishjetty') {}
 includeBuild('service/nfproperty') {}
+includeBuild('service/registry') {}
 
 includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
