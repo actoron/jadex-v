@@ -286,7 +286,7 @@ public class BenchmarkHelper
 			
 			// Hack!!! increase level when disabled by user (e.g. BTCleaner benchmarks)
 			ILoggingFeature	feat	= IComponentManager.get().getFeature(ILoggingFeature.class);
-			Level	level	= feat.getDefaultAppLogginglevel();
+			Level	level	= feat.getAppLogginglevel();
 			feat.setAppLoggingLevel(Level.INFO);
 			
 			// logfmt
