@@ -859,7 +859,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public void addStepListener(IStepListener lis)
 	{
 		if(listeners==null)
-			listeners	= new ArrayList<>();
+			listeners	= new ArrayList<>(1);
 		listeners.add(lis);
 	}
 
@@ -939,7 +939,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				{
 					if(todo==null)
 					{
-						todo	= new ArrayList<>();
+						todo	= new ArrayList<>(1);
 					}
 					todo.add(tti);
 					tti.getTask().cancel();
