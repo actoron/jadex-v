@@ -1,7 +1,5 @@
 package jadex.core.impl;
 
-import jadex.core.ComponentIdentifier;
-
 /**
  * Represents a globally identifiable process on a host (JVM instance).
  */

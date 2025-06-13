@@ -1,4 +1,4 @@
-println "inlcluded version.gradle"
+logger.lifecycle "inlcluded version.gradle"
 
 
 // Separated versioning utilities, used by main build.gradle as well as docs/mkdocs-ng
@@ -15,7 +15,7 @@ Object fetchNextBuildNameFromGitTag()
 		}
 		else
 			versionprops.setProperty("jadexversion_major", envverstr);
-		println "version from environment is: " + versionprops
+		logger.lifecycle "version from environment is: " + versionprops
 	}
 	
 	if (versionprops.getProperty("jadexversion_major") == null)
@@ -38,7 +38,7 @@ Object fetchNextBuildNameFromGitTag()
 		// Create the build name based on version path and branch info.		
 		buildname = createBuildname(versionprops, vsuffix, isnew)
 		
-		println 'Working on Jadex Version ' + buildname;
+		logger.lifecycle 'Working on Jadex Version ' + buildname;
 	}
 	
 	return buildname;// buildname!=null ? buildname : createBuildname(versionprops, branchpatch, false);
@@ -79,11 +79,11 @@ Integer getLatestMinorVersion(versionprops)
 	
 	def major = versionprops.jadexversion_major;
 	def git = "git log --tags=${major}.* --no-walk --format=%D";
-	//println "git command: "+git
+	//logger.lifecycle "git command: "+git
 	
 	def p1 = git.execute()
 	p1.waitFor()
-	//println p1.errorStream.text
+	//logger.lifecycle p1.errorStream.text
 	
 	def status = p1.exitValue()
 	def txt = p1.text;
@@ -91,13 +91,13 @@ Integer getLatestMinorVersion(versionprops)
 	{
 		def tags = txt.split("\\n")
 		
-		//println "tags are: "+ tags
+		//logger.lifecycle "tags are: "+ tags
 		
 		if(status==0)
 		{
 			for(String tag: tags)
 			{
-				println 'checking tag> ' + tag;
+				logger.lifecycle 'checking tag> ' + tag;
 				if(tag.startsWith("tag: "+major+"."))
 				{
 					tag	= tag.substring(("tag: "+major+".").length())
@@ -112,7 +112,7 @@ Integer getLatestMinorVersion(versionprops)
 					}
 					else
 					{
-						println "ignored "+tag
+						logger.lifecycle "ignored "+tag
 					}
 				}
 			}
@@ -149,7 +149,7 @@ boolean includeBranchName(branch)
 // Check if a tag points to HEAD.
 boolean	isHead(tag)
 {
-	println "Checking if "+ tag +" points to HEAD"
+	logger.lifecycle "Checking if "+ tag +" points to HEAD"
 	//def status = sh (returnStatus: true,
 	//	script: "git tag --points-at HEAD > tags.txt")
 	

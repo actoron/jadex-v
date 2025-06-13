@@ -28,7 +28,7 @@ public class ReasoningBDIBenchmark
 			IComponentHandle	agent	= IComponentManager.get().create(pojo).get();
 			pojo.completed.get();
 			agent.terminate().get();
-		});
+		}, 50);	// TODO: why the high deviations?
 	}
 
 	public static void main(String[] args)

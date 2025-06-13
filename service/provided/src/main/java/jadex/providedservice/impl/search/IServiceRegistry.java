@@ -3,6 +3,7 @@ package jadex.providedservice.impl.search;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import jadex.core.ComponentIdentifier;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
@@ -58,7 +59,7 @@ public interface IServiceRegistry
 	 *  @param platform The platform, null for everything.
 	 */
 	// write
-	//public void removeServices(UUID platform);
+	public void removeServices(ComponentIdentifier runtime);
 	
 	/**
 	 *  Remove services except from a platform from the registry.
@@ -87,36 +88,14 @@ public interface IServiceRegistry
 	 *  @param owner The query owner.
 	 */
 	// write
-	//public void removeQueries(UUID owner);
+	public void removeQueries(ComponentIdentifier owner);
 	
 	/**
 	 *  Remove all service queries of a specific platform from the registry.
 	 *  @param platform The platform from which the query owner comes.
 	 */
 	// write
-	//public void removeQueriesOfPlatform(IComponentIdentifier platform);
-	
-	/**
-	 *  Add an excluded component. 
-	 *  @param The component identifier.
-	 * /
-	// write
-	public void addExcludedComponent(IComponentIdentifier cid);*/
-	
-	/**
-	 *  Remove an excluded component. 
-	 *  @param The component identifier.
-	 * /
-	// write
-	public void removeExcludedComponent(IComponentIdentifier cid);*/
-	
-	/**
-	 *  Test if a service is included.
-	 *  @param ser The service.
-	 *  @return True if is included.
-	 */
-	// read
-	//public boolean isIncluded(IComponentIdentifier cid, IServiceIdentifier ser);
+	public void removeQueriesOfRuntime(ComponentIdentifier runtime);
 	
 	/** 
 	 *  Returns the service proxy of a local service identified by service ID.

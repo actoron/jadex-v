@@ -17,7 +17,7 @@ public class RequiredServiceInfo
 	//-------- legacy constants --------
 	
 	/** @deprecated Use {@link ServiceScope} instead */
-	public static final ServiceScope SCOPE_COMPONENT = ServiceScope.COMPONENT;
+	//public static final ServiceScope SCOPE_COMPONENT = ServiceScope.COMPONENT;
 	/** @deprecated Use {@link ServiceScope} instead */
 	public static final ServiceScope SCOPE_LOCAL = ServiceScope.VM;
 	/** @deprecated Use {@link ServiceScope} instead */

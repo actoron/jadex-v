@@ -72,7 +72,7 @@ public class RuleSystem
 	{
 		this.context = context;
 		this.rulebase = new Rulebase();
-		this.rules = new IdentityHashMap<Object, Tuple2<Object, IRule<?>[]>>(); // objects may change
+		this.rules = new IdentityHashMap<Object, Tuple2<Object, IRule<?>[]>>(1); // objects may change
 		this.pcman = new PropertyChangeManager();
 		this.queueevents = queueevents;
 	}

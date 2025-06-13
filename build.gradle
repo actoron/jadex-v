@@ -39,41 +39,42 @@ def excludes = ['communication', 'nfproperties', 'bdi-llm', 'llmbdi']
 
 ['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
-		println "Configuring task '"+mytask+"'"
+		
+		logger.lifecycle "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {
 			gradle.includedBuilds.each { build ->
-				//println "build name: "+build.getName()+" "+rootProject.name
+				//logger.lifecycle "build name: "+build.getName()+" "+rootProject.name
 				if(!rootProject.name.equals(build.getName())) {
 					if(!excludes.contains(build.name)) {
 						def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
 						//if(taskInBuild)
 						dependsOn taskInBuild
-						println "cot: "+build.getName()+" "+mytask
+						logger.lifecycle "cot: "+build.getName()+" "+mytask
 					}
 				}
 				else
 				{
-					//println "skipping: "+build.getName()
+					//logger.lifecycle "skipping: "+build.getName()
 				}
 			}
 		}
 	}
 	else {
-		println "Creating task '"+mytask+"'"
+		logger.lifecycle "Creating task '"+mytask+"'"
 		project.tasks.create([name: mytask]) {	
 			gradle.includedBuilds.each { build ->
-				//println "build name: "+build.getName()+" "+rootProject.name
+				//logger.lifecycle "build name: "+build.getName()+" "+rootProject.name
 				if(!rootProject.name.equals(build.getName())) {
 					if(!excludes.contains(build.name)) {
 						def taskInBuild = build.task(':'+mytask)
 						//if(taskInBuild)
 						dependsOn build.task(':'+mytask)
-						println "crt: "+build.getName()+" "+mytask
+						logger.lifecycle "crt: "+build.getName()+" "+mytask
 					}
 				}
 				else
 				{
-					//println "skipping: "+build.getName()
+					//logger.lifecycle "skipping: "+build.getName()
 				}
 			}
 		}
@@ -102,7 +103,7 @@ task closeStagingRepo {
     doLast {
         def stagedRepositoryId = System.getProperty("repoId")
         if(stagedRepositoryId==null) {
-        	println "no staging repo id: "+stagedRepositoryId
+        	logger.lifecycle "no staging repo id: "+stagedRepositoryId
         }
         else
         {
@@ -130,14 +131,14 @@ task closeStagingRepo {
 	        }
 	
 			def responseCode = connection.getResponseCode()
-			println "Response Code: ${responseCode}"
+			logger.lifecycle "Response Code: ${responseCode}"
     		
 	        if (responseCode == 201) {
-	            println "Response: ${readStream(connection.getInputStream())}"
+	            logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
 	            waitForStagingRepoClosed()
 	        } else {
-	            println "Failed to execute request. Response code: ${connection.responseCode}"
-            	println "Payload: ${readStream(connection.errorStream)}"
+	            logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
+            	logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
 	        }
 	
 	        connection.disconnect()
@@ -154,7 +155,7 @@ def waitForStagingRepoClosed() {
 		def data = fetchStagingRepos()
 		closed = extractRepoStatus(repoid, data)
 		if(!closed) {
-			println 'Waiting for repo to close: '+repoid
+			logger.lifecycle 'Waiting for repo to close: '+repoid
 			Thread.sleep(5000)
 		}
 	}
@@ -172,22 +173,22 @@ def fetchStagingRepos() {
         connection.setRequestProperty("Accept", "application/json")
         connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
 
-        println "Fetching staging repositories..."
+        logger.lifecycle "Fetching staging repositories..."
 
         int responseCode = connection.responseCode
-        println "Response Code: ${responseCode}"
+        logger.lifecycle "Response Code: ${responseCode}"
 
         if (responseCode == HttpURLConnection.HTTP_OK) {
             def jsonResponse = readStream(connection.getInputStream())
-            //println "Response: ${jsonResponse}"
+            //logger.lifecycle "Response: ${jsonResponse}"
             return jsonResponse
         } else {
-            println "Failed to execute request. Response code: ${responseCode}"
-            println "Payload: ${readStream(connection.errorStream)}"
+            logger.lifecycle "Failed to execute request. Response code: ${responseCode}"
+            logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
             return null
         }
     } catch (Exception e) {
-        println "Exception occurred while fetching staging repositories: ${e.message}"
+        logger.lifecycle "Exception occurred while fetching staging repositories: ${e.message}"
         return null
     }
 }
@@ -210,7 +211,7 @@ task releaseStagingRepo {
     doLast {
         def stagedRepositoryId = System.getProperty("repoId")
         if (stagedRepositoryId == null) {
-            println "No staging repo id provided."
+            logger.lifecycle "No staging repo id provided."
             return
         }
 
@@ -224,7 +225,7 @@ task releaseStagingRepo {
 
         while (attempts < maxAttempts) {
             attempts++
-            println "Attempt $attempts to release staging repository..."
+            logger.lifecycle "Attempt $attempts to release staging repository..."
 
             def connection = url.openConnection() as HttpURLConnection
             connection.setRequestMethod("POST")
@@ -238,18 +239,18 @@ task releaseStagingRepo {
             writer.flush()
             writer.close()
 
-            println "Response Code: ${connection.responseCode}"
+            logger.lifecycle "Response Code: ${connection.responseCode}"
 
             if (connection.responseCode == 201) {
-                println "Response: ${readStream(connection.getInputStream())}"
+                logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
                 break
             } else {
-                println "Failed to execute request. Response code: ${connection.responseCode}"
-                println "Payload: ${readStream(connection.errorStream)}"
+                logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
+                logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
                 if (attempts < maxAttempts) {
-                    println "Retrying... "+attempts
+                    logger.lifecycle "Retrying... "+attempts
                 } else {
-                    println "Maximum attempts reached. Exiting."
+                    logger.lifecycle "Maximum attempts reached. Exiting."
                 }
             }
             connection.disconnect()
@@ -267,7 +268,7 @@ task updateTag() {
     	def acc = parseURLWithCredentials(tag_url)
     	
     	if(acc==null) {
-    		println 'no repo access credentials'
+    		logger.lifecycle 'no repo access credentials'
     		return
     	}
 				
@@ -339,7 +340,7 @@ task createZip(type: Zip) {
 	def suf = getVar("JADEX_VERSION_SUFFIX")
 	if(suf!=null)
 		v += "-"+suf
-	println "Jadex Build Version " + v
+	logger.lifecycle "Jadex Build Version " + v
 
     archiveFileName = 'jadex-'+v+'.zip'
     destinationDirectory = file('deploy')
@@ -382,7 +383,7 @@ task deployZip() {
 		def acc = getDownloadServerAccess();
 		
 		if(acc==null) {
-    		println 'no repo access credentials'
+    		logger.lifecycle 'no repo access credentials'
     		return
     	}
 		
@@ -413,7 +414,7 @@ task deployZip() {
             ssh.disconnect();
         }
         
-		println "Zip deployed.";
+		logger.lifecycle "Zip deployed.";
 	}
 }
 
@@ -434,7 +435,7 @@ String getVar(String key) {
 }
 
 def parseURLWithCredentials(urlstring) {
-	//println "urlstring: "+urlstring
+	//logger.lifecycle "urlstring: "+urlstring
 	
 	def ret = [:];
 	def uri	= new URI(urlstring)
@@ -447,7 +448,7 @@ def parseURLWithCredentials(urlstring) {
     if(userinfo!=null)
     {
 		def String[] split = userinfo.split(":|;")
-		//println 'userinfo: ' + split
+		//logger.lifecycle 'userinfo: ' + split
         ret.user = split.length>0 ? split[0] : ''
         ret.password = split.length>1 ? split[1] : ''
         
@@ -457,14 +458,14 @@ def parseURLWithCredentials(urlstring) {
         	{
         		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
         		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
-        		//println 'fingerprint: ' + ret.fingerprint
+        		//logger.lifecycle 'fingerprint: ' + ret.fingerprint
         	}
         }
 	}
 
 	// URL without extra info (e.g. no password for security reasons)
 	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
-	//println 'url: ' + ret.url
+	//logger.lifecycle 'url: ' + ret.url
 		
 	return ret;
 }
@@ -472,11 +473,11 @@ def parseURLWithCredentials(urlstring) {
 tasks.withType(Task) { task ->
     if (task.name.startsWith('publish') || task.group == 'publishing') {
         if (!isJadexVersionSet()) {
-            println "Skipping $task.name, Jadex version not set"
+            logger.lifecycle "Skipping $task.name, Jadex version not set"
             task.enabled = false
         }
     }
-    println task.name+' '+task.enabled
+    logger.lifecycle task.name+' '+task.enabled
 }
 
 def isJadexVersionSet() {
@@ -521,12 +522,12 @@ task generateFeatureTree {
         featureTree.each { dotFile.append("  \"$it\";\n") }
         dotFile.append('}\n')
 
-        println "Featurebaum als DOT-Datei erstellt: featureTree.dot"
+        logger.lifecycle "Featurebaum als DOT-Datei erstellt: featureTree.dot"
     }
 }
 
 def getClassInfo(File classFile) {
-	println "File is: " + classFile.name
+	logger.lifecycle "File is: " + classFile.name
     def classInfo = [:]
     classInfo.interfaces = []
 
@@ -535,11 +536,11 @@ def getClassInfo(File classFile) {
 
         def magic = is.readInt()
         def magicStr = Integer.toHexString(magic).toUpperCase();
-        //println "File magic number: " + magicStr
+        //logger.lifecycle "File magic number: " + magicStr
         //if (magic != 0xCAFEBABE) throw new IllegalArgumentException("Not a class file.")
         if (!"CAFEBABE".equals(magicStr))
         {
-        	println "Magic number fail: " + magicStr + " CAFEBABE"
+        	logger.lifecycle "Magic number fail: " + magicStr + " CAFEBABE"
         	throw new IllegalArgumentException("Not a class file.")
 		}
 		
@@ -548,17 +549,17 @@ def getClassInfo(File classFile) {
 
         is.skipBytes(2) // Access flags
         classInfo.name = resolveClassName(is, constants)
-        println "Class name: " + classInfo.name
+        logger.lifecycle "Class name: " + classInfo.name
         classInfo.superClass = resolveClassName(is, constants)
-        println "Super class name: " + classInfo.superClass
+        logger.lifecycle "Super class name: " + classInfo.superClass
 
         def ifaceCount = is.readUnsignedShort()
-        println "Interface count: " + ifaceCount
+        logger.lifecycle "Interface count: " + ifaceCount
         ifaceCount.times 
         {
             classInfo.interfaces.add(resolveClassName(is, constants))
         }
-        println "Interface: " + classInfo.interfaces
+        logger.lifecycle "Interface: " + classInfo.interfaces
     }
 
     return classInfo

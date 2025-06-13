@@ -36,8 +36,6 @@ import jadex.future.IFuture;
  */
 public class ComponentManager implements IComponentManager
 {
-	private static volatile ComponentManager instance;
-	
 	//private static Set<Class<? extends IRuntimeFeature>> knownfeatures = new HashSet<>();
 
 	// todo: make configurable!
@@ -101,7 +99,9 @@ public class ComponentManager implements IComponentManager
 		System.out.println("found feature types: "+knownfeatures);
 		System.out.println("needed: "+(end-start));
 	}*/
-
+	
+	private static volatile ComponentManager instance;
+	
 	/**
 	 *  Returns the component manager instance.
 	 *  @return The component manager instance.
