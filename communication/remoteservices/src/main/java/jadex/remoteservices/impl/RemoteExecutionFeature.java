@@ -22,6 +22,7 @@ import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.messaging.IMessageFeature;
 import jadex.messaging.IMessageHandler;
+import jadex.messaging.ISecurityFeature;
 import jadex.messaging.ISecurityInfo;
 import jadex.providedservice.annotation.Security;
 import jadex.providedservice.impl.service.CallAccess;
@@ -621,7 +622,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 				return false;
 			
 			// Admin platforms (i.e. in possession  of our platform key) can do anything.
-			if(secinfos.getRoles().contains(Security.ADMIN))
+			if(secinfos.getRoles().contains(ISecurityFeature.ADMIN))
 			{
 				trusted	= true;
 			}
@@ -634,7 +635,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 					Set<String>	secroles = ServiceIdentifier.getRoles(((ISecuredRemoteCommand)msg).getSecurityLevel(component), component);
 					//System.out.println("secroles " + (secroles != null ? Arrays.toString(secroles.toArray()) : "null") + " " + secinfos);
 					// No service roles and trusted role is ok.
-					if (secroles == null && secinfos.getRoles().contains(Security.TRUSTED))
+					if (secroles == null && secinfos.getRoles().contains(ISecurityFeature.TRUSTED))
 					{
 						trusted = true;
 					}
@@ -644,7 +645,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 						trusted	= true;
 					
 					// Always allow 'unrestricted' access
-					else if(secroles != null && secroles.contains(Security.UNRESTRICTED))
+					else if(secroles != null && secroles.contains(ISecurityFeature.UNRESTRICTED))
 					{
 						trusted	= true;
 					}

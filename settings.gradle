@@ -181,6 +181,7 @@ includeBuild('service/registry') {}
 includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
 includeBuild('communication/remoteservices') {}
+includeBuild('communication/networking') {}
 
 includeBuild('micro/lib'){name='libmicro'}
 

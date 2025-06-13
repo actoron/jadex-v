@@ -27,7 +27,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import jadex.providedservice.annotation.Security;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
@@ -989,8 +988,8 @@ public class SecurityFeature implements ISecurityFeature
 		}
 
 		// Admin role is automatically trusted.
-		if (siroles.contains(Security.ADMIN))
-			siroles.add(Security.TRUSTED);
+		if (siroles.contains(ISecurityFeature.ADMIN))
+			siroles.add(ISecurityFeature.TRUSTED);
 		
 		secinf.setMappedRoles(siroles);
 	}

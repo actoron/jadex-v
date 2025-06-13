@@ -12,7 +12,6 @@ import jadex.messaging.ISecurityFeature;
 import jadex.messaging.security.ICryptoSuite;
 import jadex.messaging.security.SecurityFeature;
 import jadex.messaging.security.SecurityInfo;
-import jadex.providedservice.annotation.Security;
 
 /**
  *  Abstract crypto suite class for handling message IDs / replays.
@@ -113,7 +112,7 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 		//	fixedroles.add(Security.ADMIN);
 
 		// Everyone is member of the unrestricted group.
-		authgroups.add(Security.UNRESTRICTED);
+		authgroups.add(ISecurityFeature.UNRESTRICTED);
 
 		secinf.setGroups(new HashSet<>(authgroups));
 		
@@ -129,7 +128,7 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 		{
 			for (String group : secinf.getSharedGroups())
 			{
-				if (!Security.UNRESTRICTED.equals(group))
+				if (!ISecurityFeature.UNRESTRICTED.equals(group))
 				{
 					fixedroles.add(SecurityFeature.TRUSTED);
 					break;
