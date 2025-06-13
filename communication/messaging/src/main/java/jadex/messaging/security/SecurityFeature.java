@@ -27,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jadex.providedservice.annotation.Security;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
@@ -842,6 +843,37 @@ public class SecurityFeature implements ISecurityFeature
 			return new HashMap<>(roles);
 		}
 	}
+
+	/**
+	 *  Gets a copy of a reverse role map (from roles to groups).
+	 *
+	 *  @return Copy of a reverse role map.
+	 */
+	public Map<String, Set<String>> getReverseRoleMap()
+	{
+		Map<String, Set<String>> rolemap = null;
+		synchronized(this)
+		{
+			rolemap = new HashMap<>(roles);
+		}
+
+		Map<String, Set<String>> reverserolemap = new HashMap<>();
+		for (Map.Entry<String, Set<String>> roleentry : rolemap.entrySet())
+		{
+			for (String group : roleentry.getValue())
+			{
+				Set<String> rolegroups = reverserolemap.get(roleentry.getKey());
+				if (rolegroups == null)
+				{
+					rolegroups = new HashSet<>();
+					reverserolemap.put(roleentry.getKey(), rolegroups);
+				}
+				rolegroups.add(group);
+			}
+		}
+
+		return reverserolemap;
+	}
 	
 	/**
 	 *  Gets the name authorities.
@@ -945,19 +977,20 @@ public class SecurityFeature implements ISecurityFeature
 		
 		if (secinf.getGroups() != null)
 		{
-			for (String network : secinf.getGroups())
+			for (String group : secinf.getGroups())
 			{
-				Set<String> r = roles.get(network);
+				Set<String> r = roles.get(group);
 				if (r != null)
 					siroles.addAll(r);
-				else
-					siroles.add(network);
+				//else
+				// Always add group as role?
+				siroles.add(group);
 			}
 		}
-		
-		// TODO: Admin role is automatically trusted.
-		//if (siroles.contains(Security.ADMIN))
-		//	siroles.add(Security.TRUSTED);
+
+		// Admin role is automatically trusted.
+		if (siroles.contains(Security.ADMIN))
+			siroles.add(Security.TRUSTED);
 		
 		secinf.setMappedRoles(siroles);
 	}

@@ -31,6 +31,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:serialization:'+v
 	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:providedservice:'+v
 	
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.80'
 	implementation 'org.bouncycastle:bcpkix-jdk18on:1.80'

@@ -12,6 +12,7 @@ import jadex.messaging.ISecurityFeature;
 import jadex.messaging.security.ICryptoSuite;
 import jadex.messaging.security.SecurityFeature;
 import jadex.messaging.security.SecurityInfo;
+import jadex.providedservice.annotation.Security;
 
 /**
  *  Abstract crypto suite class for handling message IDs / replays.
@@ -90,10 +91,10 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 	 *  Sets up the message security infos for future messages.
 	 *  
 	 *  @param remoteid The ID of the remote platform.
-	 *  @param authnets The networks the platform is part of and have been authenticated.
+	 *  @param authgroups The groups if the remote entity is a member of and have been authenticated.
 	 *  @param agent The security agent.
 	 */
-	protected void setupSecInfos(GlobalProcessIdentifier remoteid, List<String> authnets, String authenticatedhost)
+	protected void setupSecInfos(GlobalProcessIdentifier remoteid, List<String> authgroups, String authenticatedhost)
 	{
 		SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
 //		Security sec = Security.get();
@@ -110,19 +111,32 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 		
 		//if (platformauth)
 		//	fixedroles.add(Security.ADMIN);
+
+		// Everyone is member of the unrestricted group.
+		authgroups.add(Security.UNRESTRICTED);
+
+		secinf.setGroups(new HashSet<>(authgroups));
 		
-		secinf.setGroups(new HashSet<>(authnets));
-		
-		Set<String> sharednets = new HashSet<>(authnets);
-		sharednets.retainAll(sec.getGroups().keySet());
-		secinf.setSharedNetworks(sharednets);
+		Set<String> sharedgroups = new HashSet<>(authgroups);
+		sharedgroups.retainAll(sec.getGroups().keySet());
+		secinf.setSharedNetworks(sharedgroups);
 		
 		if (authenticatedhost != null && sec.isTrustedHosts(authenticatedhost))
 			fixedroles.add(SecurityFeature.TRUSTED);
-		
-		if (sec.isDefaultAuthorization() && secinf.getSharedGroups() != null && secinf.getSharedGroups().size() > 0)
-			fixedroles.add(SecurityFeature.TRUSTED);
-		
+
+		// Check if default authorization should be granted.
+		if (sec.isDefaultAuthorization() && secinf.getSharedGroups() != null)
+		{
+			for (String group : secinf.getSharedGroups())
+			{
+				if (!Security.UNRESTRICTED.equals(group))
+				{
+					fixedroles.add(SecurityFeature.TRUSTED);
+					break;
+				}
+			}
+		}
+
 		// Admin role is automatically trusted.
 		//if (fixedroles.contains(Security.ADMIN))
 		//	fixedroles.add(Security.TRUSTED);

@@ -13,15 +13,15 @@ import java.lang.annotation.Target;
 public @interface Security
 {
 	//-------- constants --------
-	
-	/** The unrestricted role (access is granted to all), e.g. used for chat. */
-	public static final String	UNRESTRICTED = "__jadex-role-unrestricted__";
+
+	/** The unrestricted group and role (access is granted to all), e.g. used for chat. */
+	public static final String UNRESTRICTED = "unrestricted";
 
 	/** The default role that is assigned to services without security annotation and granted in all authenticated networks. */
-	public static final String	TRUSTED	= "trusted";
+	public static final String TRUSTED = "trusted";
 
 	/** The admin role that is required by all jadex system services, e.g. CMS. */
-	public static final String	ADMIN	= "admin";
+	public static final String ADMIN = "admin";
 	
 	//-------- properties --------
 	
