@@ -159,6 +159,7 @@ public class BenchmarkHelper
 			return;
 		}
 		
+		long	sleep	= 1000;	// How long to sleep before garbage collection
 		int	retries	= 10;	// how often to repeat everything 
 		long cooldown	= 10000;	// How long to sleep before runs
 		long msecs	= 2000;	// How long to run the benchmark
@@ -191,6 +192,8 @@ public class BenchmarkHelper
 
 				}
 				
+				System.gc();
+				Thread.sleep(sleep);
 				System.gc();
 				long	usedmem	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
