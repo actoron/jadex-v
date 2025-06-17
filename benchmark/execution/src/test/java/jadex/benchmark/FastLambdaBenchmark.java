@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
 import jadex.execution.impl.FastLambda;
@@ -27,13 +26,13 @@ public class FastLambdaBenchmark
 		{
 			IThrowingFunction<IComponent, ComponentIdentifier>	body	= comp ->{return comp.getId();};
 			// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
-			Future<IComponentHandle>	comp	= new Future<>();
+			Future<IComponent>	comp	= new Future<>();
 			Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, null, false)
 			{{
-				comp.setResult(this.getComponentHandle());
+				comp.setResult(this);
 			}});
-			IComponentHandle	handle	= comp.get();
-			return () -> handle.terminate().get();
+			IComponent	thecomp	= comp.get();
+			return () -> thecomp.getComponentHandle().terminate().get();
 		});
 	}
 }

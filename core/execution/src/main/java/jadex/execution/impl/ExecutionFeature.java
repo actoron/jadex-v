@@ -49,7 +49,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	protected volatile boolean executing;
 	protected volatile int	do_switch;
 	protected boolean terminated;
-	protected ThreadRunner runner = null;
+//	protected ThreadRunner runner = null;
 	protected Component	self = null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
@@ -1076,14 +1076,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	protected void restart()
 	{
-		if(runner==null)
-			runner	= new ThreadRunner();
+//		if(runner==null)
+//			runner	= new ThreadRunner();
 		if(!failed && threadcount.incrementAndGet()>1)
 		{
 			failed	= true;
 			throw new IllegalStateException("Threadcount>1");
 		}
-		SUtil.getExecutor().execute(runner);
+//		SUtil.getExecutor().execute(runner);
+		SUtil.getExecutor().execute(new ThreadRunner());
 	}
 	
 	protected boolean saveEndStep(Object res, Future<Object> fut)
