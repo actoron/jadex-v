@@ -4118,9 +4118,13 @@ public class SUtil
 	{
 		try
 		{
-			return SReflect.HAS_GUI
+			return 
+				// Skip hasgui check, due to triggering logger initialization
+				// -> creates component manager for logging feature which uses future.then()
+				// which uses isGuiThread() and thus creates a deadlock 
+//				SReflect.HAS_GUI &&
 				// pre-check because isEventDispatchThread is slow
-				&& Thread.currentThread().getName().startsWith("AWT-EventQueue")
+				Thread.currentThread().getName().startsWith("AWT-EventQueue")
 				&& SwingUtilities.isEventDispatchThread();
 		}
 		catch(Exception e)
