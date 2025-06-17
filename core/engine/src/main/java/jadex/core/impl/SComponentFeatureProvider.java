@@ -161,7 +161,19 @@ public class SComponentFeatureProvider
 				{
 					if(newprio==prio)
 					{
-						throw new RuntimeException("Conflicting creators with priority "+prio+": "+ret+", "+creator);
+						@SuppressWarnings("unchecked")
+						ComponentFeatureProvider<IComponentFeature> prov1 = (ComponentFeatureProvider<IComponentFeature>) ret;
+						@SuppressWarnings("unchecked")
+						ComponentFeatureProvider<IComponentFeature> prov2 = (ComponentFeatureProvider<IComponentFeature>) creator;
+						
+						if(prov2.replacesFeatureProvider(prov1))
+						{
+							ret	= creator;
+						}
+						else if(!prov1.replacesFeatureProvider(prov2))
+						{
+							throw new RuntimeException("Conflicting creators with priority "+prio+": "+ret+", "+creator);
+						}
 					}
 					else if(newprio>prio)
 					{
