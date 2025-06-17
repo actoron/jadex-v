@@ -154,6 +154,7 @@ public interface IComponentFactory
 				//ComponentManager.get().removeComponent(cid); // done in Component
 				if(Component.isExecutable())
 				{
+					// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
 					ret	= exta.scheduleStep(icomp ->
 					{
 						icomp.terminate();
