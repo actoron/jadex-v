@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,14 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	// hack for eclipse
 	@BeforeEach
 	public void	setup()
+	{
+		MasterSimulationFeature.master	= null;
+		SlaveSimulationFeature.parallel	= true;
+	}
+	
+	// hack for eclipse
+	@AfterAll
+	public static void	teardown()
 	{
 		MasterSimulationFeature.master	= null;
 		SlaveSimulationFeature.parallel	= true;
