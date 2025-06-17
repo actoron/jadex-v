@@ -141,9 +141,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	}
 
 	@Override
-	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return Component.createComponent(BDIAgent.class, () -> new BDIAgent(pojo, cid, app)).getComponentHandle();
+		return Component.createComponent(BDIAgent.class, () -> new BDIAgent(pojo, cid, app));
 	}
 
 	@Override

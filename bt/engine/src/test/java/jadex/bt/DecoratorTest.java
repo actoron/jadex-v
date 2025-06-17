@@ -29,7 +29,6 @@ import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.execution.impl.ComponentTimerCreator;
 import jadex.execution.impl.TimerCreator;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.TerminableFuture;
 
@@ -216,7 +215,7 @@ public class DecoratorTest
 	@Test
 	public void testRealComponentTimeoutDecoratorWithoutTimeout()
 	{
-		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
+		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId())).get();
 		
 		Node<IComponentHandle> an = new ActionNode<>(new TerminableUserAction<>((event, compo) -> 
 		{
@@ -247,7 +246,7 @@ public class DecoratorTest
 	@Test
 	public void testRealComponentTimeoutDecoratorWithTimeout()
 	{
-		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId()));
+		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId())).get();
 		
 		Node<IComponentHandle> an = new ActionNode<>(new TerminableUserAction<>((event, IComponent) -> 
 		{

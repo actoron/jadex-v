@@ -5,9 +5,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.common.NameValue;
-import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 

@@ -190,6 +190,46 @@ public class SComponentFeatureProvider
 		return CREATORS.get(clazz);
 	}
 	
+	protected static Map<Class<? extends Component>, IBootstrapping>	BOOTSTRAPPING	= new LinkedHashMap<>();
+	
+	public static synchronized IBootstrapping	getBootstrapping(Class<? extends Component> type)
+	{
+		if(!BOOTSTRAPPING.containsKey(type))
+		{
+			IBootstrapping	ret	= null;
+			List<ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProviderListForComponent(type);
+			for(int i=providers.size()-1; i>=0; i--)
+			{
+				ComponentFeatureProvider<IComponentFeature>	provider	= providers.get(i);
+				if(provider instanceof IBootstrapping)
+				{
+					if(ret!=null)
+					{
+						@SuppressWarnings("unchecked")
+						ComponentFeatureProvider<IComponentFeature> prov1 = (ComponentFeatureProvider<IComponentFeature>) ret;
+						if(provider.replacesFeatureProvider(prov1))
+						{
+							ret	= (IBootstrapping) provider;
+						}
+						else if(!prov1.replacesFeatureProvider(provider))
+						{
+							throw new RuntimeException("Conflicting bootstrapping providers: "+ret+", "+provider);
+						}
+					}
+					else
+					{
+						ret	= (IBootstrapping)provider;
+					}
+				}
+			}
+			
+			// Add result (may be null if no bootstrapping found)
+			BOOTSTRAPPING.put(type, ret);
+		}
+		
+		return BOOTSTRAPPING.get(type);
+	}
+	
 	/**
 	 *  Build an ordered list of component features.
 	 *  @param provs A list of component feature lists.

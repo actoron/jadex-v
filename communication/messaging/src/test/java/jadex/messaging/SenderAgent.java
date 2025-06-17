@@ -39,7 +39,7 @@ public class SenderAgent
 
     public static void main(String[] args) 
     {
-    	IComponentManager.get().create(new SenderAgent(args[0]));
+   		IComponentManager.get().create(new SenderAgent(args[0])).get();
         IComponentManager.get().waitForLastComponentTerminated();
     }
 }

@@ -517,19 +517,17 @@ public class Component implements IComponent
 		return executable;
 	}
 	
-	public static <T extends Component> T createComponent(Class<T> type, Supplier<T> creator)
+	public static <T extends Component> IFuture<IComponentHandle>	createComponent(Class<T> type, Supplier<T> creator)
 	{
-		List<ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProviderListForComponent(type);
-		for(int i=providers.size()-1; i>=0; i--)
+		IBootstrapping	bootstrapping	= SComponentFeatureProvider.getBootstrapping(type);
+		if(bootstrapping!=null)
 		{
-			ComponentFeatureProvider<IComponentFeature>	provider	= providers.get(i);
-			if(provider instanceof IBootstrapping)
-			{
-				Supplier<T>	nextcreator	= creator;
-				creator	= () -> ((IBootstrapping)provider).bootstrap(type, nextcreator);
-			}
+			return bootstrapping.bootstrap(type, creator);
 		}
-		return creator.get();
+		else
+		{
+			return new Future<>(creator.get().getComponentHandle());
+		}
 	}
 
 	@Override

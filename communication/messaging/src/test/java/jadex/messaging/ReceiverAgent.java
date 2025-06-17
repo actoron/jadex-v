@@ -104,14 +104,7 @@ public class ReceiverAgent
     @Test
 	public void testAgentMessaging() throws Exception
 	{
-    	try
-    	{
-    		IComponentManager.get().create(this).get();
-    	}
-    	catch(Exception e)
-    	{
-    		// TODO: fix messaging
-    	}
+   		IComponentManager.get().create(this).get();
     	IComponentManager.get().waitForLastComponentTerminated();
 	}
 

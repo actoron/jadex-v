@@ -29,15 +29,17 @@ dependencies
 	
 	testImplementation 'org.activecomponents.jadex:future:'+v
 	testImplementation 'org.activecomponents.jadex:benchmark-core:'+v
+	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	// required for gradle 9!? https://docs.gradle.org/8.7/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-
-test 
+test
 {
-	useJUnitPlatform()
+  useJUnitPlatform()
 }
 
 processResources 

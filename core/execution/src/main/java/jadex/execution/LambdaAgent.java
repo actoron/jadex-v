@@ -1,6 +1,5 @@
 package jadex.execution;
 
-import java.lang.annotation.Annotation;
 import java.util.concurrent.Callable;
 
 import jadex.core.Application;
@@ -21,40 +20,11 @@ import jadex.future.IFuture;
  */
 public class LambdaAgent //extends Component
 {
-	public record Result<T>(IComponentHandle component, IFuture<T> result){};
-	
 	/**
 	 *  Create a fire-and-forget component.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static IComponentHandle create(Runnable body)
-	{
-		return create(body, null, null);
-	}
-	
-	/**
-	 *  Create a fire-and-forget component.
-	 *  @param body	The code to be executed in the new component.
-	 */
-	public static IComponentHandle create(IThrowingConsumer<IComponent> body)
-	{
-		return create(body, null, null);
-	}
-	
-	/**
-	 *  Create a component and receive a result, when the body finishes.
-	 *  @param body	The code to be executed in the new component.
-	 */
-	public static <T> Result<T> create(Callable<T> body)
-	{
-		return create(body, null, null);
-	}
-	
-	/**
-	 *  Create a component and receive a result, when the body finishes.
-	 *  @param body	The code to be executed in the new component.
-	 */
-	public static <T> Result<T> create(IThrowingFunction<IComponent, T> body)
+	public static IFuture<IComponentHandle>	create(Runnable body)
 	{
 		return create(body, null, null);
 	}
@@ -63,48 +33,97 @@ public class LambdaAgent //extends Component
 	 *  Create a fire-and-forget component.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static IComponentHandle create(Runnable body, ComponentIdentifier cid, Application app)
+	public static IFuture<IComponentHandle>	create(IThrowingConsumer<IComponent> body)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
-		addResultHandle(comp, null);
-		comp.getComponentHandle().scheduleStep(() -> body);
-		return comp.getComponentHandle();
+		return create(body, null, null);
 	}
 	
 	/**
 	 *  Create a component and receive a result, when the body finishes.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static <T> Result<T> create(Callable<T> body, ComponentIdentifier cid, Application app)
+	public static IFuture<IComponentHandle>	create(Callable<?> body)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
-		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		addResultHandle(comp, res, ExecutionFeatureProvider.getAnnos(body.getClass()));
-		return new Result<T>(comp.getComponentHandle(), res);
+		return create(body, null, null);
 	}
 	
 	/**
 	 *  Create a component and receive a result, when the body finishes.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static <T> Result<T> create(IThrowingFunction<IComponent, T> body, ComponentIdentifier cid, Application app)
+	public static IFuture<IComponentHandle>	create(IThrowingFunction<IComponent, ?> body)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
-		IFuture<T> res = comp.getComponentHandle().scheduleStep(body);
-		addResultHandle(comp, res, ExecutionFeatureProvider.getAnnos(body.getClass()));
-		return new Result<T>(comp.getComponentHandle(), res);
+		return create(body, null, null);
+	}
+	
+	/**
+	 *  Create a fire-and-forget component.
+	 *  @param body	The code to be executed in the new component.
+	 */
+	public static IFuture<IComponentHandle>	create(Runnable body, ComponentIdentifier cid, Application app)
+	{
+		IFuture<IComponentHandle> ret = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		ret.then(handle -> {
+			handle.scheduleStep(comp ->
+			{
+				addResultHandler(comp);
+				body.run();
+			});
+		});
+		return ret;
 	}
 	
 	/**
 	 *  Create a component and receive a result, when the body finishes.
 	 *  @param body	The code to be executed in the new component.
 	 */
-	public static <T> IComponentHandle create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
+	public static IFuture<IComponentHandle>	create(Callable<?> body, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(Component.class, () -> new Component(body, cid, app));
-		addResultHandle(comp, null);
-		comp.getComponentHandle().scheduleStep(body);
-		return comp.getComponentHandle();
+		IFuture<IComponentHandle> ret = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		ret.then(handle -> {
+			handle.scheduleStep(comp ->
+			{
+				addResultHandler(comp);
+				Object	result	= body.call();
+				addResult(comp, result);
+			});
+		});
+		return ret;
+	}
+	
+	/**
+	 *  Create a component and receive a result, when the body finishes.
+	 *  @param body	The code to be executed in the new component.
+	 */
+	public static IFuture<IComponentHandle>	create(IThrowingFunction<IComponent, ?> body, ComponentIdentifier cid, Application app)
+	{
+		IFuture<IComponentHandle> ret = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		ret.then(handle -> {
+			handle.scheduleStep(comp ->
+			{
+				addResultHandler(comp);
+				Object	result	= body.apply(comp);
+				addResult(comp, result);
+			});
+		});
+		return ret;
+	}
+	
+	/**
+	 *  Create a component and receive a result, when the body finishes.
+	 *  @param body	The code to be executed in the new component.
+	 */
+	public static <T> IFuture<IComponentHandle> create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
+	{
+		IFuture<IComponentHandle> ret = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		ret.then(handle -> {
+			handle.scheduleStep(comp ->
+			{
+				addResultHandler(comp);
+				body.accept(comp);
+			});
+		});
+		return ret;
 	}
 	
 	//-------- Fast Lambda methods --------
@@ -139,21 +158,19 @@ public class LambdaAgent //extends Component
 	
 	//-------- result handling --------
 
-	private static <T> void addResultHandle(Component comp, IFuture<T> result, Annotation... annos)
+	private static <T> void addResultHandler(IComponent comp)
 	{
 		Object	pojo	= comp.getPojo();
 		if(pojo instanceof IResultProvider)
 		{
-			if(result!=null)
-			{
-				throw new UnsupportedOperationException("Implementing IResultProvider not supported on callable/function: "+pojo);
-			}
 			ExecutionFeatureProvider.addResultHandler(comp.getId(), (IResultProvider)pojo);
 		}
-		else if(result!=null)
-		{
-			// Copy result on add
-			result.then(res -> ExecutionFeatureProvider.addResult(comp.getId(), "result", ExecutionFeatureProvider.copyVal(res, annos)));
-		}
+	}
+	
+	private static <T> void addResult(IComponent comp, Object result)	
+	{
+		Object	pojo	= comp.getPojo();
+		ExecutionFeatureProvider.addResult(comp.getId(), "result",
+			ExecutionFeatureProvider.copyVal(result, ExecutionFeatureProvider.getAnnos(pojo.getClass())));
 	}
 }
