@@ -161,7 +161,7 @@ public class BenchmarkHelper
 		
 		long	sleep	= 3000;	// How long to sleep before garbage collection
 		int	retries	= 10;	// how often to repeat everything 
-		long cooldown	= 10000;	// How long to sleep before runs
+		long cooldown	= 100000;	// How long to sleep before runs
 		long msecs	= 2000;	// How long to run the benchmark
 		int	warmups	= 100; 	// How many warm-ups to run
 		int	runs	= 1000;	// How many runs for measurement 
