@@ -51,8 +51,8 @@ public class JadexLoggerFinder extends LoggerFinder
 			LoggerCreator sysc = lcs.stream().filter(c -> c.system() && c.filter()==null).findFirst().orElse(null);
 			LoggerCreator appc = lcs.stream().filter(c -> !c.system() && c.filter()==null).findFirst().orElse(null);
 			
-			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? logf.getDefaultSystemLoggingLevel(): null; 
-			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? logf.getDefaultAppLogginglevel(): null; 
+			java.lang.System.Logger.Level syslevel = iprov!=null && !iprov.isConfigured()? logf.getSystemLoggingLevel(): null; 
+			java.lang.System.Logger.Level applevel = iprov!=null && !iprov.isConfigured()? logf.getAppLogginglevel(): null; 
 			
 //			System.out.println("syslevel: "+syslevel);
 //			System.out.println("applevel: "+applevel);

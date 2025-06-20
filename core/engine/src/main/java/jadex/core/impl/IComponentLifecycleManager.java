@@ -27,15 +27,7 @@ public interface IComponentLifecycleManager
 	/**
 	 *  Create a component for a POJO
 	 */
-	public IComponentHandle	create(Object pojo, ComponentIdentifier cid, Application app);
-
-//	/**
-//	 *  Run a component with a POJO and fetch the results, if any.
-//	 */
-//	public default Object	run(Object pojo, ComponentIdentifier cid)
-//	{
-//		throw new UnsupportedOperationException("No run() handler implemented for "+pojo.getClass().getName());
-//	}
+	public IFuture<IComponentHandle>	create(Object pojo, ComponentIdentifier cid, Application app);
 
 	/**
 	 *  Execute termination code for the given component
@@ -69,34 +61,36 @@ public interface IComponentLifecycleManager
 	public default <T> IFuture<T>	run(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		Future<T> ret = new Future<>();
-		IComponentHandle handle = create(pojo, cid, app);
-		
-		// all run components that push notify on results will automatically get terminated after first result.
-		handle.subscribeToResults()
-			.next(r -> 
-			{
-//				System.out.println("received: "+r);	
-				handle.terminate();
-			});
-//			.catchEx(e -> {})	// NOP on unsupported operation exception
-
-		handle.waitForTermination().then(Void -> 
+		create(pojo, cid, app).then(handle -> 
 		{
-			handle.getResults().then(res->
+			// all run components that push notify on results will automatically get terminated after first result.
+			handle.subscribeToResults()
+				.next(r -> 
+				{
+//					System.out.println("received: "+r);	
+					handle.terminate();
+				});
+//				.catchEx(e -> {})	// NOP on unsupported operation exception
+
+			handle.waitForTermination().then(Void -> 
 			{
-				if(res!=null && res.size()==1)
+				handle.getResults().then(res->
 				{
-					@SuppressWarnings("unchecked")
-					T	result	= (T)res.values().iterator().next();
-					ret.setResult(result);
-				}
-				else
-				{
-					ret.setException(new RuntimeException("no single result found: "+res));
-				}
-			})
-			.catchEx(e -> ret.setException(e));
-		});
+					if(res!=null && res.size()==1)
+					{
+						@SuppressWarnings("unchecked")
+						T	result	= (T)res.values().iterator().next();
+						ret.setResult(result);
+					}
+					else
+					{
+						ret.setException(new RuntimeException("no single result found: "+res));
+					}
+				})
+				.catchEx(e -> ret.setException(e));
+			});
+		})
+		.catchEx(e -> ret.setException(e));
 		
 		return ret;
 	}

@@ -287,6 +287,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
     		synchronized(this)
     		{
     			callers.remove(caller);
+    			if(callers.isEmpty())
+				{
+					callers	= null;
+				}
     		}
     	}
     	

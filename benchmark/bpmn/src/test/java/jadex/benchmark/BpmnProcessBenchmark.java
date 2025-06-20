@@ -27,7 +27,7 @@ public class BpmnProcessBenchmark
 				ret.setResultIfUndone((ComponentIdentifier)res.value());
 			}).catchEx(ret);
 			
-			IComponentHandle	agent	= BpmnProcess.create(pojo);
+			IComponentHandle	agent	= BpmnProcess.create(pojo).get();
 			ret.get();
 			return () -> agent.terminate().get();
 		});
@@ -46,7 +46,7 @@ public class BpmnProcessBenchmark
 				ret.setResultIfUndone((ComponentIdentifier)res.value());
 			}).catchEx(ret);
 			
-			IComponentHandle	agent	= BpmnProcess.create(pojo);
+			IComponentHandle	agent	= BpmnProcess.create(pojo).get();
 			ret.get();
 			agent.terminate().get();
 		});

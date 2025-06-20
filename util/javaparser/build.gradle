@@ -45,7 +45,7 @@ if (tasks.findByName(taskName)) {
     if (tasks.findByName("compileJavacc") && tasks.findByName("compileJjtree"))
         task.dependsOn "compileJavacc", "compileJjtree"
 } else {
-    println "Task $taskName does not exist"
+    logger.lifecycle "Task $taskName does not exist"
 }
 
 /*def javacctasks = ['compileJavacc', 'compileJjtree']
@@ -55,7 +55,7 @@ tasks.whenTaskAdded{ task ->
 			return javacctasks.any {taskname.contains(it) } }) {
 	
 		task.enabled = false
-		println "Disabled $task"
+		logger.lifecycle "Disabled $task"
 	}
 }*/
 

@@ -9,6 +9,7 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ValueProvider;
+import jadex.future.IFuture;
 import jadex.model.IModelFeature;
 import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
@@ -17,21 +18,20 @@ public class BpmnProcess extends Component
 {
 	protected static BpmnModelLoader loader = new BpmnModelLoader();
 
-	public static IComponentHandle create(Object pojo)
+	public static IFuture<IComponentHandle> create(Object pojo)
 	{
 		return create(pojo, null, null);
 	}
 	
-	public static IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public static IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		String	filename = ((RBpmnProcess)pojo).getFilename();
-		Component	comp = Component.createComponent(BpmnProcess.class, () -> 
+		return Component.createComponent(BpmnProcess.class, () -> 
 		{
 			// this is executed before the features are inited
 			IModelInfo model = loadModel(filename);
 			return new BpmnProcess((RBpmnProcess)pojo, model, cid, app);
 		});
-		return comp.getComponentHandle();
 	}
 	
 	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid, Application app)

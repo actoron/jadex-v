@@ -1,5 +1,6 @@
 package jadex.logger;
 
+import java.lang.System.Logger.Level;
 import java.util.Collection;
 
 import jadex.core.IRuntimeFeature;
@@ -33,38 +34,26 @@ public interface ILoggingFeature extends IRuntimeFeature
 	public void removeLoggerCreator(LoggerCreator creator);
 	
 	/**
-	 *  Set the default logging level for the system logger (Jadex framework logger)
-	 *  @param level The level.
-	 */
-	public void setDefaultSystemLoggingLevel(java.lang.System.Logger.Level level);
-	
-	/**
-	 *  Set the default logging level for the application logger.
-	 *  @param level The level.
-	 */
-	public void setDefaultAppLoggingLevel(java.lang.System.Logger.Level level);
-
-	/**
 	 *  Set the logging level for the system logger (Jadex framework logger)
 	 *  @param level The level.
 	 */
-	public void setSystemLoggingLevel(java.lang.System.Logger.Level level);
+	public void setSystemLoggingLevel(Level level);
 	
 	/**
 	 *  Set the logging level for the application logger.
 	 *  @param level The level.
 	 */
-	public void setAppLoggingLevel(java.lang.System.Logger.Level level);
+	public void setAppLoggingLevel(Level level);
 
 	/**
 	 *  Get the default system log level.
 	 *  @return The level.
 	 */
-	public java.lang.System.Logger.Level getDefaultSystemLoggingLevel(); 
+	public Level getSystemLoggingLevel(); 
 
 	/**
 	 *  Get the default app log level.
 	 *  @return The level.
 	 */
-	public java.lang.System.Logger.Level getDefaultAppLogginglevel(); 
+	public Level getAppLogginglevel(); 
 }

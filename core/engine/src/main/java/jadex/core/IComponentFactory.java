@@ -43,27 +43,23 @@ public interface IComponentFactory
 	 */
 	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{		
-		Future<IComponentHandle> ret = new Future<>();
-		
 		if(pojo==null)
 		{
 			// Plain component for null pojo
-			ret.setResult(Component.createComponent(Component.class, () -> new Component(pojo,cid,app)).getComponentHandle());
+			return Component.createComponent(Component.class, () -> new Component(pojo,cid,app));
 		}
 		else
 		{
 			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
 			if(creator!=null)
 			{
-				ret.setResult(creator.create(pojo, cid, app));
+				return creator.create(pojo, cid, app);
 			}
 			else
 			{
-				ret.setException(new RuntimeException("Could not create component: "+pojo));
+				return new Future<>(new RuntimeException("Could not create component: "+pojo));
 			}
 		}
-		
-		return ret;
 	}
 	
 	/**
@@ -158,6 +154,7 @@ public interface IComponentFactory
 				//ComponentManager.get().removeComponent(cid); // done in Component
 				if(Component.isExecutable())
 				{
+					// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
 					ret	= exta.scheduleStep(icomp ->
 					{
 						icomp.terminate();

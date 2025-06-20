@@ -19,7 +19,7 @@ if(System.getenv(pscript)) {
 } else if (!System.getProperty(pscript)) {
     System.setProperty(pscript, "${rootProject.projectDir}/publish.gradle")
 }
-println "publish script path: "+System.getProperty(pscript)
+logger.lifecycle "publish script path: "+System.getProperty(pscript)
 
 // apply from: getSettingsDir().getAbsolutePath()+"/version.gradle" does not work
 def binding = new Binding()
@@ -30,32 +30,32 @@ def vs = shell.parse(versionScript)
 def jv = vs.fetchNextBuildNameFromGitTag()
 if (jv != null) {
 	System.setProperty(jversion, jv.full);
-	println "Configured version: "+System.getProperty(jversion);
+	logger.lifecycle "Configured version: "+System.getProperty(jversion);
 }
 else
-	println "No version configured or detected";
+	logger.lifecycle "No version configured or detected";
 
 def sigkey = getVar(sk)
 if (sigkey != null)
 {
 	def signingKey=sigkey.replace("\\n", "\n")
 	System.setProperty("signingKey", signingKey)
-	//println "skp: "+System.getProperty("signingKey")
+	//logger.lifecycle "skp: "+System.getProperty("signingKey")
 }
 else
-	println "no signing key found"
+	logger.lifecycle "no signing key found"
 	
 def sigkeyp = getVar(skp)
 if (sigkeyp != null)
 {
 	System.setProperty("signingPassword", sigkeyp)
-	//println "skp: "+System.getProperty("signingPassword")
+	//logger.lifecycle "skp: "+System.getProperty("signingPassword")
 }
 else
-	println "no signing key pass found"
+	logger.lifecycle "no signing key pass found"
 	
 def parseURLWithCredentials(urlstring) {
-	//println "urlstring: "+urlstring
+	//logger.lifecycle "urlstring: "+urlstring
 	
 	def ret = [:];
 	def uri	= new URI(urlstring)
@@ -68,7 +68,7 @@ def parseURLWithCredentials(urlstring) {
     if(userinfo!=null)
     {
 		def String[] split = userinfo.split(":|;")
-		//println 'userinfo: ' + split
+		//logger.lifecycle 'userinfo: ' + split
         ret.user = split.length>0 ? split[0] : ''
         ret.password = split.length>1 ? split[1] : ''
         
@@ -78,14 +78,14 @@ def parseURLWithCredentials(urlstring) {
         	{
         		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
         		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
-        		//println 'fingerprint: ' + ret.fingerprint
+        		//logger.lifecycle 'fingerprint: ' + ret.fingerprint
         	}
         }
 	}
 
 	// URL without extra info (e.g. no password for security reasons)
 	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
-	println 'repouser and pass: url=' + urlstring+" user="+ret.user +" pw="+ret.password
+	logger.lifecycle 'repouser and pass: url=' + urlstring+" user="+ret.user +" pw="+ret.password
 		
 	return ret;
 }
@@ -125,27 +125,27 @@ def createStagingRepo() {
         def responseStream = connection.getInputStream()
         def responseText = new BufferedReader(new InputStreamReader(responseStream)).readLines().join('\n')
         
-        println "Response: ${responseText}"
+        logger.lifecycle "Response: ${responseText}"
         def matcher = responseText =~ /<stagedRepositoryId>(.*?)<\/stagedRepositoryId>/
         if (matcher.find()) {
             def repoId = matcher.group(1)
-            println "Repository ID: ${repoId}"
+            logger.lifecycle "Repository ID: ${repoId}"
             System.setProperty("repoId", repoId)
         } else {
-            println "Repo-ID nicht gefunden"
+            logger.lifecycle "Repo-ID nicht gefunden"
         }
     } else {
-        println "HTTP-POST fehlgeschlagen: ${responseCode}"
+        logger.lifecycle "HTTP-POST fehlgeschlagen: ${responseCode}"
     }
 }
 //createStagingRepo()
 
-println 'version:'+getVar(jversion)+"|"
+logger.lifecycle 'version:'+getVar(jversion)+"|"
 if(gradle.startParameter.taskNames.contains('publish') && getVar(jversion)!=null && getVar(jversion).length()>0) {
-	println "publish task called. Creating staging repo ..."
+	logger.lifecycle "publish task called. Creating staging repo ..."
     createStagingRepo()
 } else {
-	println "publish task not called. no staging repo is created."
+	logger.lifecycle "publish task not called. no staging repo is created."
 }
 	
 //includeBuild('.') {}

@@ -25,8 +25,8 @@ public class HelloWorldLoggingAgent
 	public static void main(String[] args)
 	{
 		var lf = IComponentManager.get().getFeature(ILoggingFeature.class);	
-		lf.setDefaultSystemLoggingLevel(Level.ERROR);
-		lf.setDefaultAppLoggingLevel(Level.ALL);
+		lf.setSystemLoggingLevel(Level.ERROR);
+		lf.setAppLoggingLevel(Level.ALL);
 		
 		IComponentManager.get().create(new HelloWorldLoggingAgent()).get();
 		IComponentManager.get().waitForLastComponentTerminated();

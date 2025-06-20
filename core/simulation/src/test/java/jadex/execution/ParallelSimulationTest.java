@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jadex.common.TimeoutException;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.future.IFuture;
 import jadex.simulation.ISimulationFeature;
@@ -27,11 +29,19 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		SlaveSimulationFeature.parallel	= true;
 	}
 	
+	// hack for eclipse
+	@AfterAll
+	public static void	teardown()
+	{
+		MasterSimulationFeature.master	= null;
+		SlaveSimulationFeature.parallel	= true;
+	}
+	
 	@Test
 	public void	testStopWhenIdle()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
-		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
+		IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+		ISimulationFeature	sim	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 		sim.stop().get(TIMEOUT);
 		assertThrows(IllegalStateException.class, () -> sim.stop().get(TIMEOUT));
 	}
@@ -39,8 +49,8 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testStopWhenExecuting()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
-		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
+		IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+		ISimulationFeature	sim	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 		boolean[]	run	= new boolean[]{true};
 		sim.scheduleStep(() ->
 		{
@@ -59,8 +69,8 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	public void	testInverseOrder()
 	{
 //		System.out.println("testInverseOrder");
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
-		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
+		IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+		ISimulationFeature	sim	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 		sim.stop().get(TIMEOUT);
 		List<String>	results	= new ArrayList<>();
 		sim.waitForDelay(2000).then((v) -> results.add("A"));
@@ -73,8 +83,8 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testStart()
 	{
-		Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
-		ISimulationFeature	sim	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
+		IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+		ISimulationFeature	sim	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 		assertThrows(IllegalStateException.class, () -> sim.start());
 		sim.stop().get(TIMEOUT);
 		List<String>	results	= new ArrayList<>();
@@ -99,8 +109,8 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		for(int i=0; i<input.length; i++)
 		{
 			int num	= i;
-			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
-			sim[i]	= ((ISimulationFeature)comp.getFeature(IExecutionFeature.class));
+			IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+			sim[i]	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 			if(i==0)
 			{
 				sim[i].stop().get(TIMEOUT);

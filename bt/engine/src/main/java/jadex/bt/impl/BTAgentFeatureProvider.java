@@ -1,7 +1,6 @@
 package jadex.bt.impl;
 
 import java.util.Map;
-import java.util.Set;
 
 import jadex.bt.IBTAgentFeature;
 import jadex.bt.IBTProvider;
@@ -16,6 +15,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
+import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.impl.InjectionFeatureProvider;
 
@@ -55,7 +55,7 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 	}
 	
 	@Override
-	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return BTAgent.create(pojo, cid, app);
 	}

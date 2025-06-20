@@ -17,6 +17,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
+import jadex.future.IFuture;
 
 public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvider<BpmnProcessLifecycleFeature>  implements IComponentLifecycleManager
 {
@@ -45,7 +46,7 @@ public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvide
 	}
 	
 	@Override
-	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return BpmnProcess.create(pojo, cid, app);
 	}

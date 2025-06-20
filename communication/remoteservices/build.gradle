@@ -41,9 +41,7 @@ dependencies
 	testImplementation 'org.activecomponents.jadex:model:'+v
 	testImplementation 'org.activecomponents.jadex:micro:'+v
 	testImplementation 'org.activecomponents.jadex:providedservice:'+v
-	testImplementation 'org.activecomponents.jadex:providedservicemicro:'+v
 	testImplementation 'org.activecomponents.jadex:requiredservice:'+v
-	testImplementation 'org.activecomponents.jadex:requiredservicemicro:'+v
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'

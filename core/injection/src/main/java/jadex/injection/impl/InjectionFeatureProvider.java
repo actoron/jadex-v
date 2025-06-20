@@ -15,6 +15,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
+import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.annotation.Inject;
@@ -44,9 +45,9 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	}
 
 	@Override
-	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return Component.createComponent(Component.class, () -> new Component(pojo, cid, app)).getComponentHandle();
+		return Component.createComponent(Component.class, () -> new Component(pojo, cid, app));
 	}
 
 	@Override

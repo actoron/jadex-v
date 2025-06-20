@@ -9,8 +9,14 @@ import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
  */
 public interface ISecurityFeature extends IRuntimeFeature
 {
-	/** Special "trusted" role indicating that flagged entity may invoke any service remotely. */
+	/** The unrestricted group and role (access is granted to all), e.g. used for chat. */
+	public static final String UNRESTRICTED = "unrestricted";
+
+	/** The default role that is assigned to services without security annotation and granted in all authenticated networks. */
 	public static final String TRUSTED = "trusted";
+
+	/** The admin role that is required by all jadex system services, e.g. CMS. */
+	public static final String ADMIN = "admin";
 	
 	//-------- message-level encryption/authentication -------
 	
