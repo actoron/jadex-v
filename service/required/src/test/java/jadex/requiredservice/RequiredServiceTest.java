@@ -608,7 +608,7 @@ public class RequiredServiceTest
 	@Test
 	public void	testSubannoMethodInjection()
 	{
-		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
+		//IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
 		
 		IComponentHandle	provider	= null;
 		IComponentHandle	provider2	= null;

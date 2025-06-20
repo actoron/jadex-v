@@ -131,7 +131,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 		//ServiceScope scope = info!=null ? info.getScope() : null;
 		
 		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope,
-				roles!=null && roles.contains(Security.UNRESTRICTED), tags);
+			roles!=null && roles.contains(Security.UNRESTRICTED), tags);
 	}
 	
 	/**
