@@ -37,9 +37,6 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/** The service super types. */
 	protected ClassInfo[] supertypes;
 
-	/** The resource identifier. */
-	//protected IResourceIdentifier rid;
-	
 	/** The scope. */
 	protected ServiceScope scope;
 	
@@ -119,6 +116,45 @@ public class ServiceIdentifier implements IServiceIdentifier
 				superinfos.add(new ClassInfo(sin));
 		}
 		return superinfos.toArray(new ClassInfo[superinfos.size()]);
+	}
+	
+	/**
+	 *  Create a new service identifier for the own component.
+	 */
+	public static IServiceIdentifier createServiceIdentifier(IComponent provider, String servicename, 
+		Class<?> servicetype, Class<?> serviceimpl, ServiceScope scope, Collection<String> tags)
+	{
+//		if(servicetype.getName().indexOf("IServicePool")!=-1)
+//			System.out.println("sdjhvkl");
+		Security security = getSecurityLevel(provider, null, null);//info, serviceimpl, servicetype, null, null);
+		Set<String>	roles = ServiceIdentifier.getRoles(security, provider);
+		//ServiceScope scope = info!=null ? info.getScope() : null;
+		
+		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope,
+				roles!=null && roles.contains(Security.UNRESTRICTED), tags);
+	}
+	
+	/**
+	 *  Create a new service identifier for a potentially remote component.
+	 * /
+	public static ServiceIdentifier	createServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted)
+	{
+		return new ServiceIdentifier(providerid, type, supertypes, servicename, scope, networknames, unrestricted);
+	}*/
+	
+	/** The id counter. */
+	protected static long idcnt;
+	
+	/**
+	 *  Generate a unique name.
+	 *  @param The calling service class.
+	 */
+	public static String generateServiceName(Class<?> service)
+	{
+		synchronized(ServiceIdentifier.class)
+		{
+			return SReflect.getInnerClassName(service)+"_#"+idcnt++;
+		}
 	}
 	
 	//-------- methods --------

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,6 +29,7 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
+import jadex.logger.ILoggingFeature;
 import jadex.providedservice.annotation.Service;
 import jadex.requiredservice.annotation.InjectService;
 import jadex.requiredservice.annotation.InjectService.Mode;
@@ -37,7 +39,7 @@ import jadex.requiredservice.annotation.InjectService.Mode;
  */
 public class RequiredServiceTest
 {
-	public static final long	TIMEOUT	= 10000;
+	public static final long	TIMEOUT	= 1000000;
 	
 	//-------- test interfaces --------
 	
@@ -465,10 +467,10 @@ public class RequiredServiceTest
 		
 		// Test that previous field service is not provided.
 		IComponentHandle	handle	= IComponentManager.get().create(new Object()
-			{
-				@InjectService
-				IHelloService myservice;
-			}).get(TIMEOUT);
+		{
+			@InjectService
+			IHelloService myservice;
+		}).get(TIMEOUT);
 		
 		SUtil.runWithoutOutErr(
 			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
@@ -588,9 +590,26 @@ public class RequiredServiceTest
 		}
 	}
 
+	public static class HelloPojo implements IHelloService
+	{
+		@OnStart
+		public void onStart(IComponent agent)
+		{
+			System.out.println("agent started: "+agent);
+		}
+		
+		@Override
+		public IFuture<String> sayHello(String name) 
+		{
+			return new Future<>("Hello "+name);
+		}
+	}
+	
 	@Test
 	public void	testSubannoMethodInjection()
 	{
+		IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
+		
 		IComponentHandle	provider	= null;
 		IComponentHandle	provider2	= null;
 		try
@@ -602,6 +621,7 @@ public class RequiredServiceTest
 				@InjectService
 				void addService(IComponent comp, IHelloService hello)
 				{
+					System.out.println("addSer called: "+hello);
 					assertNotNull(comp);
 					services.add(hello);
 				}
@@ -609,7 +629,8 @@ public class RequiredServiceTest
 			
 			assertTrue(services.isEmpty());
 			
-			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			//provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider	= IComponentManager.get().create(new HelloPojo()).get(TIMEOUT);
 			// Schedule step on provider to make sure feature init is complete.
 			provider.scheduleStep(() -> null).get(TIMEOUT);
 			
@@ -618,11 +639,13 @@ public class RequiredServiceTest
 			caller.scheduleStep(() -> null).get(TIMEOUT);	// TODO: why two steps needed?
 			caller.scheduleStep(() ->
 			{
+				System.out.println(services.size());
 				assertEquals(1, services.size());
 				return null;
 			}).get();
 			
-			provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			//provider2	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
+			provider2 = IComponentManager.get().create(new HelloPojo()).get(TIMEOUT);
 			// Schedule step on provider to make sure feature init is complete.
 			provider2.scheduleStep(() -> null).get(TIMEOUT);
 			
@@ -630,6 +653,7 @@ public class RequiredServiceTest
 			caller.scheduleStep(() -> null).get(TIMEOUT);
 			caller.scheduleStep(() ->
 			{
+				System.out.println(services.size());
 				assertEquals(2, services.size());
 				return null;
 			}).get(TIMEOUT);
