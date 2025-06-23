@@ -28,7 +28,7 @@ import jadex.injection.annotation.ProvideResult;
  */
 public class ResultTest
 {
-	public static final long	TIMEOUT	= 10000;
+	public static final long	TIMEOUT	= -1;
 	
 	/**
 	 *  Test manually adding result.

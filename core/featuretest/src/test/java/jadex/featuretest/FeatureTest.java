@@ -56,6 +56,8 @@ public class FeatureTest
 	
 	protected void	doTestLoading(Component comp, Class<? extends IComponentFeature>[] feature_types)
 	{
+		comp.init();
+		
 		for(Class<? extends IComponentFeature> type: feature_types)
 		{
 			IComponentFeature	feature	= comp.getFeature(type);
@@ -69,6 +71,7 @@ public class FeatureTest
 	{
 		// Dummy component for feature loading.
 		Component	comp	= new Component(this);
+		comp.init();
 
 		// Lazy feature should not be found
 		for(Object feature: comp.getFeatures())
@@ -85,6 +88,7 @@ public class FeatureTest
 	{
 		// Dummy component for feature loading.
 		Component	comp	= new Component(this);
+		comp.init();
 		
 		// IMjTestFeature1 feature should be replaced
 		assertTrue(comp.getFeature(ITestFeature1.class) instanceof TestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(ITestFeature1.class));
@@ -97,6 +101,7 @@ public class FeatureTest
 	{
 		// Dummy component for feature loading.
 		Component	comp	= new SubComponent(null){};
+		comp.init();
 		
 		// IMjTestFeature1 feature should be replaced
 		assertTrue(comp.getFeature(ITestFeature1.class) instanceof TestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(ITestFeature1.class));
@@ -120,6 +125,8 @@ public class FeatureTest
 		
 	protected void doTestOrdering(Component comp, Class<? extends IComponentFeature>[] feature_types)
 	{
+		comp.init();
+		
 		// Force instantiation of lazy features, if any
 		for(Class<? extends IComponentFeature> type: feature_types)
 		{

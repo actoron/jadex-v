@@ -4,9 +4,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.injection.annotation.OnStart;
 import jadex.messaging.IMessageFeature;
-import jadex.micro.annotation.Agent;
 
-@Agent
 public class TestAgent
 {
 

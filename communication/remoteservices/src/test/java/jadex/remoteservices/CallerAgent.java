@@ -13,12 +13,10 @@ import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
 import jadex.messaging.security.authentication.KeySecret;
-import jadex.micro.annotation.Agent;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
 
-@Agent
 public class CallerAgent
 {
 

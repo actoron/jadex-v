@@ -102,6 +102,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				
 				try
 				{
+					// Extra init so component doesn't get added when just created as object
+					self.init();
+					
 					startFeatures(self);
 					
 					// run body and termination in same step as init
@@ -198,10 +201,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				{
 					self = creator.get();
 					
-					// Make component available as soon as possible
-					ret.setResult(self.getComponentHandle());
-					
+					// Extra init so component doesn't get added when just created as object
+					self.init();
+										
 					startFeatures(self);
+					
+					// Make component available after init is complete
+					ret.setResult(self.getComponentHandle());
 				}
 				catch(Exception e)
 				{
