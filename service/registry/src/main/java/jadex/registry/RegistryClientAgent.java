@@ -1,113 +1,506 @@
 package jadex.registry;
 
 import java.lang.System.Logger.Level;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
+import jadex.collection.IdentityHashSet;
+import jadex.common.ClassInfo;
+import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.execution.IExecutionFeature;
+import jadex.future.Future;
+import jadex.future.FutureTerminatedException;
+import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableFuture;
+import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.IntermediateEmptyResultListener;
+import jadex.future.SubscriptionIntermediateFuture;
+import jadex.future.TerminableFuture;
+import jadex.future.TerminableIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
+import jadex.providedservice.IService;
+import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.ServiceEvent;
+import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.impl.search.ServiceRegistry;
+import jadex.providedservice.impl.service.ServiceIdentifier;
+import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
 
-public class RegistryClientAgent //implements IRegistryClientService 
+public class RegistryClientAgent implements IRegistryClientService 
 {
+	/** Connection delay*/
+    protected long delay = 10000;
+
+	
     @Inject
     protected IComponent agent;
 
     /** Track currently known registries and their metadata (e.g. start time). */
     protected Set<RegistryInfo> registries = new HashSet<>();
 
-    /** Subscription to coordinator. */
-    protected ISubscriptionIntermediateFuture<CoordinatorServiceEvent> cosub;
-
+    
     /** The connected coordinator service. */
     protected IRegistryCoordinatorService coordinator;
+
+    /** Subscription to coordinator. */
+    protected ISubscriptionIntermediateFuture<CoordinatorServiceEvent> cosub;
+ 
+    
+    /** The connected registry service. */
+    protected IRemoteRegistryService registry;
+
+    /** Subscription to coordinator. */
+    protected ISubscriptionIntermediateFuture<Void> regsub;
+
+    protected Future<IRemoteRegistryService> registryfut;
+    
+    
+    protected IFuture<Void> evalfut;
+    
+    protected Set<QueryManager<?>> querymanagers = new HashSet<>();;
+    
+    protected List<String> coordinatornames = List.of
+    (
+    	IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+"@global@www.actoron.com", 
+    	IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+GlobalProcessIdentifier.getSelf()
+    );
 
     @OnStart
     public void start() 
     {
-    	findCoordinator();
-        subscribeToCoordinator();
-    }
-
-    protected void findCoordinator()
-    {
-    	String coord = IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+"@global@www.actoron.com";
-    	StringTokenizer stok = new StringTokenizer(coord, "@");
-    	String agentname = stok.nextToken();
-    	String pid = stok.nextToken();
-    	String hostname = stok.nextToken();
-    	
-    	/*ComponentIdentifier copid = new ComponentIdentifier(agentname, )
-    	
-		IServiceIdentifier rrsid = BasicService.createServiceIdentifier(new ComponentIdentifier(IRemoteRegistryService.REMOTE_REGISTRY_NAME, platform), new ClassInfo(IRemoteRegistryService.class), null, IRemoteRegistryService.REMOTE_REGISTRY_NAME, null, ServiceScope.NETWORK, null, true);
-		IRemoteRegistryService rrs = (IRemoteRegistryService) RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, rrsid);
-    	*/
+    	connectToCoordinator(0);
     }
     
-    protected void subscribeToCoordinator() 
+    protected void connectToCoordinator(int idx)
     {
-        cosub = coordinator.getRegistries();
-
-        cosub.next(event ->
-        {
-        	if(ServiceEvent.SERVICE_ADDED==event.getType()) 
+    	if(cosub!=null)
+    		cosub.terminate();    
+		
+		coordinator = getCoordinatorService(coordinatornames.get(idx));
+		
+    	cosub = coordinator.getRegistries();
+    	cosub.next(event ->
+    	{
+    		System.out.println("Received coordinator event: "+event);
+    		
+    		if(ServiceEvent.SERVICE_ADDED==event.getType()) 
         	{
-        		handleRegistryAdded(event);
+    			registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
         	}
         	else if(ServiceEvent.SERVICE_REMOVED==event.getType())
         	{
-        		handleRegistryRemoved(event);
+        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
         	}
         	else if(ServiceEvent.SERVICE_CHANGED==event.getType())
         	{
-        		handleRegistryRemoved(event);
-        		handleRegistryAdded(event);
+        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
+        		registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
         	}
         	else
         	{
                 System.getLogger(getClass().getName()).log(Level.WARNING, "Unknown event type: " + event);
         	}
-        }).finished(Void ->
+    		
+    		initRegistryReevaluation();
+    	})
+    	.finished(Void ->
         {
-        	 System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
-        }).printOnEx();
+        	cosub = null;
+        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
+        	agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
+        		.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator((idx+1)%coordinatornames.size())))
+        		.printOnEx();
+        })
+    	.catchEx(ex ->
+    	{
+    		cosub = null;
+    		System.out.println("Could not connect to coordinator: "+coordinator+" "+ex);
+    		agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
+    			.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator((idx+1)%coordinatornames.size())))
+    			.printOnEx();
+    	});
     }
-
-    protected void handleRegistryAdded(CoordinatorServiceEvent event) 
+    
+    protected IRegistryCoordinatorService getCoordinatorService(String name)
     {
-        RegistryInfo ri = new RegistryInfo(event.getService(), event.getStartTime());
-        registries.add(ri);
-
-        System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Registry added: " + ri);
-        
-        // TODO: Optionally connect to that registry / synchronize services etc.
+    	StringTokenizer stok = new StringTokenizer(name, "@");
+    	String agentname = stok.nextToken();
+    	String pid = stok.nextToken();
+    	String hostname = stok.nextToken();
+    	ComponentIdentifier copid = new ComponentIdentifier(agentname, pid, hostname);
+    	
+    	IServiceIdentifier rrsid = new ServiceIdentifier(
+			copid,//new ComponentIdentifier(IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME), // providerid
+			new ClassInfo(IRemoteRegistryService.class), //type
+			null, // supertypes
+			IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME, // sername
+			ServiceScope.GLOBAL, // scope
+			null, // networknames
+			true, // unrestricted
+			null); 
+		
+    	IRegistryCoordinatorService ret = (IRegistryCoordinatorService)RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, rrsid);
+		return ret;
     }
 
-    protected void handleRegistryRemoved(CoordinatorServiceEvent event) 
+    protected IFuture<Void> initRegistryReevaluation()
     {
-    	registries.removeIf(ri -> ri.sid().equals(event.getService()));
+    	if(evalfut==null)
+    	{
+	    	evalfut = agent.getFeature(IExecutionFeature.class).waitForDelay(5000);
+	    	
+	    	evalfut.then(a->
+	    	{
+	    		RegistryInfo ri = evaluateRegistries();
+	    		
+	    		if (ri == null) 
+	    			return;
+	    		
+	    		// check if current registry is still ok
+	    		if(registry!=null && ((IService)registry).getServiceId().equals(ri.serviceid()))
+	    			return;
 
-        System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Registry removed: " + event.getService());
+	    		// terminate old registry
+	    		if(regsub!=null)
+	    			regsub.terminate();
+	    		
+	    		// create service proxy for new registry
+	    	  	IRemoteRegistryService rreg = (IRemoteRegistryService)RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, ri.serviceid());
+	    	  	setRegistry(rreg);
+	    	  	
+	    		// connect to new registry
+	    		regsub = registry.registerClient();
+	    		
+	    		regsub.next(x ->
+	    		{
+		    		// Local query uses registry directly (w/o feature) -> only service identifiers needed and also removed events
+		    		ServiceQuery<ServiceEvent> lquery = new ServiceQuery<>((Class<IServiceIdentifier>)null)
+		    			.setEventMode()
+		    			.setOwner(agent.getId())
+		    			.setScope(ServiceScope.GLOBAL)
+		    			.setNetworkNames((String[])null);
+		    			//.setSearchStart(spid);	// Only find services that are visible to SP
+		    		
+		    		ISubscriptionIntermediateFuture<ServiceEvent> localquery = (ISubscriptionIntermediateFuture)ServiceRegistry.getRegistry().addQuery(lquery);									
+
+		    		localquery.next(event ->
+		    		{
+		    			if(ServiceScope.GLOBAL.equals(event.getService().getScope())
+		    				|| ServiceScope.HOST.equals(event.getService().getScope()))
+		    			{
+		    				agent.getFeature(IExecutionFeature.class).scheduleStep(agent ->
+		    				{
+		    					try
+    							{
+//	    							if(event.toString().indexOf("ITestService")!=-1)
+	    								System.out.println(agent+ " sending service event to registry "+registry+": "+event);
+    								regsub.sendBackwardCommand(event);
+    							}
+    							catch (Exception e)
+    							{
+    								e.printStackTrace();
+    								initRegistryReevaluation();
+    							}
+		    				});
+	    				}
+		    		}).finished(result ->
+		    		{
+		    			System.out.println("Service event query finished!?: "+result);
+	    				// Should not happen?
+	    				assert false;
+		    		}).catchEx(ex ->
+		    		{
+		    			assert ex instanceof FutureTerminatedException : ex;
+		    		});
+	    		});
+	    		
+	    		evalfut = null;
+	    		
+	    	}).printOnEx();
+    	}
+    	
+    	return evalfut;
     }
-
+    
+    protected RegistryInfo evaluateRegistries()
+    {
+    	// Order registries by 
+    	// a) tag or explicit registry wish?! // todo: how to specify? setRegistryWish() e.g. on IRemoteRegistryService?
+    	// b) global Jadex registry
+    	// c) oldest registry (longest alive)
+    	
+    	// todo: a) and b)
+    	
+    	List<RegistryInfo> sorted = registries.stream().sorted().collect(Collectors.toList());
+    	
+    	if(sorted.isEmpty()) 
+    	{
+    	    System.getLogger(getClass().getName()).log(Level.WARNING, "No registries available for evaluation.");
+    	    return null;
+    	}
+    	
+    	return sorted.get(0);
+    }
+    
+    protected IFuture<IRemoteRegistryService> getRegistryService()
+    {
+    	if(registryfut==null)
+    		registryfut = new Future<>();
+    	
+    	if(registry!=null && !registryfut.isDone())
+    		registryfut.setResult(registry);
+    	else if(registry==null)
+    		initRegistryReevaluation();
+    	
+    	return registryfut;
+    }
+    
+    protected void setRegistry(IRemoteRegistryService registry)
+    {
+    	this.registry = registry;
+    	
+    	for(QueryManager<?> qman: querymanagers)
+    	{
+    		qman.updateQuery();
+    	}
+    	
+    	if(registryfut!=null)
+    	{
+    		if(registryfut.isDone())
+    		{
+    			if(!registryfut.get().equals(registry))
+    				registryfut = new Future<>();
+    		}
+    		if(!registryfut.isDone())
+    			registryfut.setResult(registry);
+    	}
+    }
+    
+    /**
+	 *  Search for matching services using available remote information sources and provide first result.
+	 *  @param query	The search query.
+	 *  @return Future providing the corresponding service or ServiceNotFoundException when not found.
+	 */
+	public <T> ITerminableFuture<IServiceIdentifier> searchService(ServiceQuery<T> query)
+	{
+		TerminableFuture<IServiceIdentifier> ret = new TerminableFuture<>();
+		getRegistryService().then(regser ->
+		{
+			regser.searchService(query).delegateTo(ret);
+		}).catchEx(ret);
+		return ret;
+	}
+	
+	/**
+	 *  Search for all matching services.
+	 *  @param query	The search query.
+	 *  @return Each service as an intermediate result or a collection of services as final result.
+	 */
+	public <T> ITerminableIntermediateFuture<IServiceIdentifier> searchServices(ServiceQuery<T> query)
+	{
+		TerminableIntermediateFuture<IServiceIdentifier> ret = new TerminableIntermediateFuture<>();
+		getRegistryService().then(regser ->
+		{
+			IFuture<Set<IServiceIdentifier>> fut = regser.searchServices(query);
+			fut.then(result -> 
+			{
+				for(IServiceIdentifier sid: result)
+					ret.addIntermediateResult(sid);
+			}).catchEx(ret);
+		}).catchEx(ret);
+		return ret;
+	}
+	
+	/**
+	 *  Add a service query.
+	 *  Continuously searches for matching services using available remote information sources.
+	 *  @param query	The search query.
+	 *  @return Future providing the corresponding services as intermediate results.
+	 */
+	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query)
+	{
+		QueryManager<T> qman = new QueryManager<T>(query);
+		
+		querymanagers.add(qman);
+		
+		return qman.getReturnFuture();
+	}
+    
     @OnEnd
     public void stop() 
     {
+    	if (regsub != null) 
+        {
+            regsub.terminate();
+            regsub = null;
+        }
+    	
         if (cosub != null) 
         {
             cosub.terminate();
             cosub = null;
         }
+        
+        for(QueryManager<?> qman: querymanagers)
+        {
+        	qman.getReturnFuture().terminate();
+        }
+        
         registries.clear();
     }
+    
+    /**
+	 *  Query manager.
+	 */
+	protected class QueryManager<T>
+	{
+		//-------- attributes --------
+		
+		/** The query itself. */
+		protected ServiceQuery<T> query;
+		
+		/** The return future to the user. */
+		protected SubscriptionIntermediateFuture<T> retfut;
+		
+		/** The auxiliary futures as received from remote registry. */
+		protected ITerminableIntermediateFuture<Object> future;
+		
+		/** Filter for known results when not in event mode. */ 
+		protected SlidingCuckooFilter filter;
+		
+		/** The current result set when in events mode. */ 
+		protected Set<IServiceIdentifier> results;
+		
+		protected IRemoteRegistryService registryser;
+		
+		protected int retrycnt;
+		
+		//-------- constructors --------
+		
+		/**
+		 *  Create a query info.
+		 */
+		protected QueryManager(ServiceQuery<T> query)
+		{
+			this.query	= query;
+			this.retfut	= new SubscriptionIntermediateFuture<>();
+			//SFuture.avoidCallTimeouts(retfut, agent);
+			
+			filter	= query.isEventMode() ? null : new SlidingCuckooFilter();
+			results	= query.isEventMode() ? new LinkedHashSet<>() : null;
 
-    /*public Set<RegistryInfo> getKnownRegistries() 
-    {
-        return Set.copyOf(registries);
-    }*/
+			// Start handling
+//			updateQuery(getSearchableNetworks(query));
+			//String[] networknames = getQueryNetworks(query);
+			updateQuery();
+			
+			retfut.setTerminationCommand(ex ->
+			{
+				future.terminate();
+				querymanagers.remove(this);
+			});
+		}
+		
+		//-------- methods --------
+		
+		/**
+		 *  The return future for the user containing all the collected results from the internal queries.
+		 */
+		public ISubscriptionIntermediateFuture<T> getReturnFuture()
+		{
+			return retfut;
+		}
+		
+		//-------- internal methods --------
+		
+		/**
+		 *  Add/update query connections to relevant super peers for given networks.
+		 */
+		protected void updateQuery()
+		{
+			// Ignore when already terminated.
+			if(!retfut.isDone())
+			{
+				getRegistryService().then(regser ->
+				{
+					if(regser.equals(registryser))
+						retrycnt++;
+					registryser = regser;
+					
+					if(future!=null && !future.isDone())
+						future.terminate();
+					
+					future = regser.addQuery(query);
+					future.next(result ->
+					{
+						// Forward result to user query
+//						if((""+result).indexOf("ITestService")!=-1)
+//						{
+							//System.out.println("Received result: "+agent+", "+result+", "+query);
+//						}
+						// New event result?
+						Object	res	= null;
+						if(query.isEventMode())
+						{
+							// Forward event if consistent with current results.
+							ServiceEvent	event	= (ServiceEvent)result;
+							if(event.getType()==ServiceEvent.SERVICE_ADDED && results.add(event.getService())
+								|| event.getType()==ServiceEvent.SERVICE_CHANGED && results.contains(event.getService())
+								|| event.getType()==ServiceEvent.SERVICE_REMOVED && results.remove(event.getService()))
+							{
+//								System.out.println("Received SP event: "+result+"\n\t"+results);
+								res = result;
+							}
+						}
+						// New non-event result?
+						else if(!filter.contains(result.toString()))
+						{
+							filter.insert(result.toString());
+							res	= result;
+						}	
+					
+						if(res!=null)
+						{									
+							// Forward result to user query
+							@SuppressWarnings({"unchecked"})
+							SubscriptionIntermediateFuture<Object> rawfut = (SubscriptionIntermediateFuture<Object>)retfut;
+							rawfut.addIntermediateResultIfUndone(res);
+						}
+					}).catchEx(ex ->
+					{
+						// Reconnect query on error, if user query still active
+						if(!retfut.isDone())
+						{
+							if(retrycnt<3)
+							{
+								long retrydelay = delay / 3 * (retrycnt + 1);
+								agent.getFeature(IExecutionFeature.class).waitForDelay(retrydelay)
+				        		.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> updateQuery()))
+				        		.printOnEx();
+							}
+							else
+							{
+								System.out.println("Cannot connect to registry, max retries reached, reevaluating registries: "+registryser);
+								initRegistryReevaluation();
+							}
+							
+						}
+					});
+					
+				}).catchEx(retfut);
+			}
+		}
+	}	
 }

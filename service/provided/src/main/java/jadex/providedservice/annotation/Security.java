@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Security
 {
+	public static String UNRESTRICTED = "unrestricted";
 	
 	//-------- properties --------
 	

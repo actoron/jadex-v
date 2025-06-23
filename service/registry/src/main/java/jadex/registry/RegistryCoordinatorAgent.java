@@ -56,7 +56,7 @@ public class RegistryCoordinatorAgent implements IRegistryCoordinatorService
 			registries.remove(ri);
 			
 			// notify clients
-			CoordinatorServiceEvent sr = new CoordinatorServiceEvent(ri.sid(), ServiceEvent.SERVICE_REMOVED, ri.starttime());
+			CoordinatorServiceEvent sr = new CoordinatorServiceEvent(ri.serviceid(), ServiceEvent.SERVICE_REMOVED, ri.starttime());
 			clientlisteners.stream().forEach(lis ->
 			{
 				lis.addIntermediateResultIfUndone(sr);
@@ -85,7 +85,7 @@ public class RegistryCoordinatorAgent implements IRegistryCoordinatorService
 		
 		registries.stream().forEach(reg ->
 		{
-			CoordinatorServiceEvent rse = new CoordinatorServiceEvent(reg.sid(), ServiceEvent.SERVICE_ADDED, reg.starttime());
+			CoordinatorServiceEvent rse = new CoordinatorServiceEvent(reg.serviceid(), ServiceEvent.SERVICE_ADDED, reg.starttime());
 			ret.addIntermediateResult(rse);
 		});
 		

@@ -8,7 +8,9 @@ import java.util.LinkedHashSet;
 import jadex.bytecode.ProxyFactory;
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
+import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
@@ -47,7 +49,7 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 	//-------- attributes --------
 	
 	/** The local component. */
-	protected Component comp;
+	protected IComponent comp;
 	
 	/** The proxy reference. */
 	protected ProxyReference pr;
@@ -60,7 +62,7 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 	/**
 	 *  Create a new invocation handler.
 	 */
-	public RemoteMethodInvocationHandler(Component comp, ProxyReference pr)
+	public RemoteMethodInvocationHandler(IComponent comp, ProxyReference pr)
 	{
 		this.comp	= comp;
 		this.pr = pr;
@@ -1188,10 +1190,11 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 	 *  @param localcomp	The local component for sending/receiving messages.
 	 *  @param remotesvc	ID of the remote service.
 	 */
-	public static IService createRemoteServiceProxy(Component localcomp, IServiceIdentifier remotesvc)
+	public static IService createRemoteServiceProxy(IComponent localcomp, IServiceIdentifier remotesvc)
 	{
+		ClassLoader cll = IComponentManager.get().getClassLoader();
 		Collection<Class<?>> interfaces	= new LinkedHashSet<>();
-		Class<?> cl = remotesvc.getServiceType().getType(localcomp.getClassLoader());
+		Class<?> cl = remotesvc.getServiceType().getType(cll);
 		if(cl!=null)
 			interfaces.add(cl);
 		interfaces.add(IService.class);
@@ -1199,7 +1202,7 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 		{
 			for(ClassInfo ci: remotesvc.getServiceSuperTypes())
 			{
-				cl = ci.getType(localcomp.getClassLoader());
+				cl = ci.getType(cll);
 				if(cl!=null)
 					interfaces.add(cl);
 			}
@@ -1211,7 +1214,7 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 		RemoteReference rr = new RemoteReference(remotesvc.getProviderId(), remotesvc);
 		ProxyReference pr = new ProxyReference(pi, rr);
 		
-		return (IService) ProxyFactory.newProxyInstance(localcomp.getClassLoader(),
+		return (IService) ProxyFactory.newProxyInstance(cll,
 			ainterfaces, new RemoteMethodInvocationHandler(localcomp, pr));
 	}
 }

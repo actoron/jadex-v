@@ -213,6 +213,8 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 				lock	= null;	// Unlocked in checkQueries()
 				checkQueries(service, ServiceEvent.SERVICE_ADDED, true);
 			//}
+				
+			//System.out.println(indexer.getAllValues());
 		}
 		finally
 		{
@@ -327,7 +329,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	// write
 	public void removeService(IServiceIdentifier service)
 	{
-		//System.out.println("removing service: "+service);
+		System.out.println("removing service: "+service);
 		
 		Lock lock = rwlock.writeLock();
 		lock.lock();

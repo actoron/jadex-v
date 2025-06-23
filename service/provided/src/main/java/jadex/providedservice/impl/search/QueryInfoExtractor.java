@@ -123,13 +123,12 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 			if(query.getOwner()!=null)
 				ret = new SetWrapper<String>(query.getOwner().toString());
 		}
-//		else if(KEY_TYPE_PROVIDER.equals(keytype))
-//		{
-//			// WTF!?
-//			//if(ServiceScope.COMPONENT.equals(query.getScope()))
-//				ret = new SetWrapper<String>(query.getOwner().toString());
-//				//ret = new SetWrapper<String>(query.getSearchStart() != null ? query.getSearchStart().toString() : query.getOwner().toString());
-//		}
+		/*else if(KEY_TYPE_PROVIDER.equals(keytype))
+		{
+			//if(ServiceScope.COMPONENT.equals(query.getScope()))
+				//ret = new SetWrapper<String>(query.getOwner().toString());
+				//ret = new SetWrapper<String>(query.getSearchStart() != null ? query.getSearchStart().toString() : query.getOwner().toString());
+		}*/
 		/*else if(KEY_TYPE_PLATFORM.equals(keytype))
 		{
 			//if(query.getProvider()!=null)
