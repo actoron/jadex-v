@@ -155,7 +155,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							self.handleException(e);
 						}
 					}
-					if(fself.terminate)
+					if(!FastLambda.KEEPALIVE)
 					{
 						exe.scheduleStep((Runnable)() -> fself.terminate());
 					}
@@ -171,7 +171,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					{
 						self.handleException(e);
 					}
-					if(fself.terminate)
+					if(!FastLambda.KEEPALIVE)
 					{
 						exe.scheduleStep((Runnable)() -> fself.terminate());
 					}
