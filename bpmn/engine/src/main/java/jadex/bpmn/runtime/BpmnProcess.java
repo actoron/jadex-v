@@ -104,9 +104,8 @@ public class BpmnProcess extends Component
 	@Override
 	public ValueProvider getValueProvider() 
 	{
-//		if(valueprovider==null)
-//			valueprovider = new BpmnValueProvider(this);
-//		return valueprovider;
-		return new BpmnValueProvider(this);
+		if(valueprovider==null)
+			valueprovider = new BpmnValueProvider(this);
+		return valueprovider;
 	}
 }

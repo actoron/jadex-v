@@ -131,28 +131,28 @@ public class LambdaAgent //extends Component
 	public static <T>	IFuture<T> run(Callable<T> body)
 	{
 		Future<T>	ret	= new Future<>();
-		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret));
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
 		return ret;
 	}
 	
 	public static <T>	IFuture<T> run(IThrowingFunction<IComponent, T> body)
 	{
 		Future<T>	ret	= new Future<>();
-		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret));
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
 		return ret;
 	}
 	
 	public static	IFuture<Void> run(Runnable body)
 	{
 		Future<Void>	ret	= new Future<>();
-		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret));
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
 		return ret;
 	}
 	
 	public static	IFuture<Void> run(IThrowingConsumer<IComponent> body)
 	{
 		Future<Void>	ret	= new Future<>();
-		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret));
+		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret, true));
 		return ret;
 	}
 	

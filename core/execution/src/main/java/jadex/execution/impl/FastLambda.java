@@ -9,16 +9,17 @@ import jadex.future.Future;
  */
 public class FastLambda<T>	extends Component
 {
-	/** Don't terminate immediately after body. */
-	// Set to true for memory benchmarking
-	public static boolean	KEEPALIVE	= false;
-	
-	/** The future to set the result on, if any. */
+	/** The result, if any. */
 	protected Future<T>	result;
 	
-	public FastLambda(Object body, Future<T> result)
+	/** Terminate immediately after body. */
+	// Set to false for memory benchmarking
+	protected boolean	terminate;
+	
+	public FastLambda(Object body, Future<T> result, boolean terminate)
 	{
 		super(body);
+		this.terminate	= terminate;
 		this.result	= result;
 	}
 }

@@ -2,10 +2,12 @@ package jadex.benchmark;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IThrowingFunction;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.FastLambda;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -24,8 +26,6 @@ public class FastLambdaBenchmark
 //		System.getLogger("jadex.benchmark.FastLambdaBenchmark");
 		// Now "fixed" in SUtil.isGuiThread() by checking just the thread name instead of using SReflect.hasGui().
 		
-		FastLambda.KEEPALIVE	= true;	// Set to true for memory benchmarking
-		
 		BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			IThrowingFunction<IComponent, IComponent>	body	= new IThrowingFunction<IComponent, IComponent>()
@@ -38,7 +38,7 @@ public class FastLambdaBenchmark
 			};
 			// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
 			Future<IComponent>	res	= new Future<>();
-			Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, res));
+			Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, res, false));
 			IComponent	thecomp	= res.get();
 			return () -> thecomp.getComponentHandle().terminate().get();
 		});
