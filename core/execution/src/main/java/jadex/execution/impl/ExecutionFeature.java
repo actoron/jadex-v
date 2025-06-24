@@ -589,12 +589,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 //							int presize = steps.size();
 							step = steps.poll();
 //							if(step==null)
-//								System.out.println("step is null: "+steps.size()+" "+presize+" "+terminated);
-							
-							if(steps.isEmpty())
-							{
-								steps	= null;	// free memory
-							}
+//								System.out.println("step is null: "+steps.size()+" "+presize+" "+terminated);							
 						}
 						
 						assert step!=null;
@@ -617,6 +612,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						
 						synchronized(ExecutionFeature.this)
 						{
+							if(steps!=null && steps.isEmpty())
+							{
+								steps	= null;	// free memory
+							}
+							
 							// Stop this thread, because another thread is still executing
 							if(do_switch>0)
 							{
@@ -692,7 +692,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					throw new IllegalStateException("Threadcount<0");
 				}
 				
-				if(!(steps==null) && !aborted)
+				if(!(steps==null || steps.isEmpty()) && !aborted)
 				{
 					startnew	= true;
 				}
