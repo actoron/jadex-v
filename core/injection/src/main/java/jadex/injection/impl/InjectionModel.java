@@ -325,11 +325,13 @@ public class InjectionModel
 	{
 		synchronized(cache)
 		{
-			if(!cache.containsKey(key))
+			InjectionModel model	= cache.get(key);
+			if(model==null)
 			{
-				cache.put(key, new InjectionModel(key, path, contextfetchers));
+				model	= new InjectionModel(key, path, contextfetchers);
+				cache.put(key, model);
 			}
-			return cache.get(key);
+			return model;
 		}
 	}
 	

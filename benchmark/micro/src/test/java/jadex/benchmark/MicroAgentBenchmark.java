@@ -51,4 +51,21 @@ public class MicroAgentBenchmark
 		});
 	}
 
+	public static void	main(String[] args)
+	{
+		for(;;)
+		{
+			Future<Void>	ret	= new Future<>();
+			IComponentHandle	agent	= IComponentManager.get().create(new Object()
+			{
+				@OnStart
+				public void	start()
+				{
+					ret.setResult(null);
+				}
+			}).get();
+			ret.get();
+			agent.terminate().get();
+		}
+	}
 }

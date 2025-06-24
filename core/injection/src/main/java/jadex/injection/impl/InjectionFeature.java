@@ -36,7 +36,6 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	public InjectionFeature(IComponent self)
 	{
 		this.self	= self;
-		this.model	= InjectionModel.get(Collections.singletonList(self.getPojo()), null, null);
 	}
 	
 	//-------- lifecycle methods --------
@@ -44,7 +43,9 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	@Override
 	public void onStart()
 	{
-		startPojo(model, Collections.singletonList(self.getPojo()), null);		
+		List<Object> pojos	= Collections.singletonList(self.getPojo());
+		this.model	= InjectionModel.get(pojos, null, null);
+		startPojo(model, pojos, null);		
 	}
 	
 	/**
