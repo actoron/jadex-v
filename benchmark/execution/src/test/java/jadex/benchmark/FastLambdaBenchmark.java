@@ -24,24 +24,31 @@ public class FastLambdaBenchmark
 //		System.getLogger("jadex.benchmark.FastLambdaBenchmark");
 		// Now "fixed" in SUtil.isGuiThread() by checking just the thread name instead of using SReflect.hasGui().
 		
-		FastLambda.KEEPALIVE	= true;	// Set to true for memory benchmarking
-		
-		BenchmarkHelper.benchmarkMemory(() -> 
+		try
 		{
-			IThrowingFunction<IComponent, IComponent>	body	= new IThrowingFunction<IComponent, IComponent>()
+			FastLambda.KEEPALIVE	= true;	// Set to true for memory benchmarking
+			
+			BenchmarkHelper.benchmarkMemory(() -> 
 			{
-				@Override
-				public @NoCopy IComponent apply(IComponent comp) throws Exception
+				IThrowingFunction<IComponent, IComponent>	body	= new IThrowingFunction<IComponent, IComponent>()
 				{
-					return comp;
-				}
-			};
-			// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
-			Future<IComponent>	res	= new Future<>();
-			Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, res));
-			IComponent	thecomp	= res.get();
-			return () -> thecomp.getComponentHandle().terminate().get();
-		});
+					@Override
+					public @NoCopy IComponent apply(IComponent comp) throws Exception
+					{
+						return comp;
+					}
+				};
+				// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
+				Future<IComponent>	res	= new Future<>();
+				Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, res));
+				IComponent	thecomp	= res.get();
+				return () -> thecomp.getComponentHandle().terminate().get();
+			});
+		}
+		finally
+		{
+			FastLambda.KEEPALIVE	= false;	// Reset to false after memory benchmarking
+		}
 	}
 	
 	// Trigger bug
