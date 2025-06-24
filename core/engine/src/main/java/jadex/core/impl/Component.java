@@ -57,8 +57,8 @@ public class Component implements IComponent
 	/** The last exception, if any. */
 	protected Exception	exception;
 	
-	/** The value provider. */
-	protected ValueProvider valueprovider;
+//	/** The value provider. */
+//	protected ValueProvider valueprovider;
 	
 	/** The external access supplier. */
 	protected static Function<Component, IComponentHandle> accessfactory;
@@ -299,9 +299,10 @@ public class Component implements IComponent
 	// TODO: move to model/bpmn
 	public ValueProvider getValueProvider()
 	{
-		if(valueprovider==null)
-			valueprovider = new ValueProvider(this);
-		return valueprovider;
+//		if(valueprovider==null)
+//			valueprovider = new ValueProvider(this);
+//		return valueprovider;
+		return new ValueProvider(this);
 	}
 
 	// TODO: move to model/bpmn
