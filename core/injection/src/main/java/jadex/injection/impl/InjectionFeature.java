@@ -81,7 +81,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			{
 				// TODO: wait for future return value?
 				self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-					model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null, null));
+					model.getMethodInjections().apply(self, pojos, context, null));
 			}
 		}
 		
@@ -93,7 +93,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			{
 				// TODO: wait for future return value?
 				self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-					model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null, null));
+					model.getMethodInjections().apply(self, pojos, context, null));
 			}
 			
 			if(model.getOnStart()!=null)
