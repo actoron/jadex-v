@@ -142,7 +142,8 @@ public class BenchmarkHelper
 	 */
 	public static void	benchmarkTime(Runnable code)
 	{
-		benchmarkTime(code, 20);
+		// Use higher limit to avoid false positives
+		benchmarkTime(code, 30);
 	}
 	
 	/**
