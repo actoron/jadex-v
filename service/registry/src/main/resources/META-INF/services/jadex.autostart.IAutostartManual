@@ -1,0 +1,3 @@
+jadex.registry.RegistryClientAgent
+jadex.registry.RemoteRegistryAgent
+jadex.registry.RegistryCoordinatorAgent

@@ -1,14 +1,20 @@
 package jadex.registry;
 
 import java.lang.System.Logger.Level;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import jadex.collection.MultiCollection;
+import jadex.common.ClassInfo;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
@@ -19,7 +25,9 @@ import jadex.future.SubscriptionIntermediateDelegationFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.QueryEvent;
 import jadex.providedservice.impl.search.ServiceEvent;
@@ -27,6 +35,8 @@ import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceQueryInfo;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceCall;
+import jadex.providedservice.impl.service.ServiceIdentifier;
+import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
 import jadex.requiredservice.ServiceNotFoundException;
 
 
@@ -35,9 +45,17 @@ import jadex.requiredservice.ServiceNotFoundException;
  */
 public class RemoteRegistryAgent implements IRemoteRegistryService
 {
+	/** Connection delay*/
+    protected long delay = 10000;
+	
 	/** The agent. */
 	@Inject
 	protected IComponent agent;
+	
+	@Inject
+	protected IServiceIdentifier sid;
+	
+	protected long starttime = System.currentTimeMillis();
 	
 	/** The superpeer service registry */
 	protected IServiceRegistry serviceregistry = new ServiceRegistry();
@@ -51,6 +69,74 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	protected Set<SubscriptionIntermediateFuture<ComponentIdentifier>> reglisteners = new LinkedHashSet<>();
 	
 	protected Set<ComponentIdentifier> clients = new LinkedHashSet<>();
+	
+	protected List<String> coordinatornames = List.of
+    (
+    	IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+"@global@www.actoron.com", 
+    	IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+GlobalProcessIdentifier.getSelf()
+    );
+	
+	protected Map<String, ISubscriptionIntermediateFuture<Void>> coordinators = new HashMap<>();
+	
+	@OnStart
+    public void start() 
+    {
+		for(String coname: coordinatornames)
+			connectToCoordinator(coname);
+    }
+    
+    protected void connectToCoordinator(String coname)
+    {
+    	ISubscriptionIntermediateFuture<Void> cosub = coordinators.get(coname);
+    	if(cosub!=null)
+    		cosub.terminate();    
+	
+    	IRegistryCoordinatorService coser = getCoordinatorService(coname);
+		
+    	cosub = coser.registerRegistry(sid, starttime);
+    	coordinators.put(coname, cosub);
+    	cosub.next(ignore ->
+    	{
+    		System.out.println("Connected to coordinator: "+coser);
+    	})
+    	.finished(Void ->
+        {
+        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
+        	agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
+        		.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator(coname)))
+        		.printOnEx();
+        })
+    	.catchEx(ex ->
+    	{
+    		System.out.println("Could not connect to coordinator: "+coser+" "+ex);
+    		agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
+    			.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator(coname)))
+    			.printOnEx();
+    	});
+    }
+    
+    protected IRegistryCoordinatorService getCoordinatorService(String name)
+    {
+    	StringTokenizer stok = new StringTokenizer(name, "@");
+    	String agentname = stok.nextToken();
+    	String pid = stok.nextToken();
+    	String hostname = stok.nextToken();
+    	ComponentIdentifier copid = new ComponentIdentifier(agentname, pid, hostname);
+    	
+    	IServiceIdentifier rrsid = new ServiceIdentifier(
+			copid,//new ComponentIdentifier(IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME), // providerid
+			new ClassInfo(IRegistryCoordinatorService.class), //type
+			null, // supertypes
+			IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME, // sername
+			ServiceScope.GLOBAL, // scope
+			null, // networknames
+			true, // unrestricted
+			null); 
+		
+    	IRegistryCoordinatorService ret = (IRegistryCoordinatorService)RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, rrsid);
+		return ret;
+    }
+	
 	
 	/**
 	 *  Initiates the client registration procedure

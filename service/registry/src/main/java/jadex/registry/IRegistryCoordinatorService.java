@@ -2,7 +2,9 @@ package jadex.registry;
 
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.annotation.Service;
 
+@Service
 public interface IRegistryCoordinatorService 
 {
 	/** Name of the remote registry component and service. */

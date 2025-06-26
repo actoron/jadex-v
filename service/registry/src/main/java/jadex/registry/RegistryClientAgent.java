@@ -143,7 +143,7 @@ public class RegistryClientAgent implements IRegistryClientService
     	
     	IServiceIdentifier rrsid = new ServiceIdentifier(
 			copid,//new ComponentIdentifier(IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME), // providerid
-			new ClassInfo(IRemoteRegistryService.class), //type
+			new ClassInfo(IRegistryCoordinatorService.class), //type
 			null, // supertypes
 			IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME, // sername
 			ServiceScope.GLOBAL, // scope
