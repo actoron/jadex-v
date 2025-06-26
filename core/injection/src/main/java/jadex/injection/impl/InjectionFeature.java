@@ -36,7 +36,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	public InjectionFeature(IComponent self)
 	{
 		this.self	= self;
-		this.model	= InjectionModel.getStatic(Collections.singletonList(self.getPojo().getClass()), null, null);
+		this.model	= InjectionModel.getStatic(Collections.singletonList(self.getPojo()!=null ? self.getPojo().getClass() : Object.class), null, null);
 	}
 	
 	//-------- lifecycle methods --------
