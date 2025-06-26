@@ -1,19 +1,13 @@
 package jadex.bdi.marsworld.movement;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
-import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanFinished;
-import jadex.bdi.annotation.PlanReason;
-import jadex.bdi.marsworld.BaseAgent;
+import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
-import jadex.bdi.runtime.IPlan;
 import jadex.core.IComponent;
-import jadex.environment.BaseObject;
 import jadex.future.IFuture;
-import jadex.future.ITerminableFuture;
+import jadex.injection.annotation.Inject;
 import jadex.math.IVector2;
 
 /**
@@ -24,16 +18,14 @@ public class MoveToLocationPlan
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	protected MovementCapability capa;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected IDestinationGoal goal;
-	
-	protected ITerminableFuture<Void> task;
 	
 	/**
 	 *  The plan body.
@@ -49,34 +41,10 @@ public class MoveToLocationPlan
 		
 		//env.rotate(myself, dest).get();
 		
-		task = env.move(myself, dest, myself.getSpeed());
-		task.get();
-		task = null;
+		env.move(myself, dest, myself.getSpeed()).get();
 		
 		//System.out.println("MoveToLocation end: "+capa.getMyself()+" "+((BaseAgent)agent.getPojo()).getSpaceObject(true));
 		
 		return IFuture.DONE;
 	}
-	
-	@PlanFinished
-	public void finished()
-	{
-		//System.out.println("fini: "+this);
-		//capa.updateSelf(); // update the position in myself
-		
-		if(task!=null)
-		{
-			//System.out.println("terminate task: "+task);
-			task.terminate();
-		}
-	}
-//	
-//	@PlanFailed
-//	public void failed(Exception e)
-//	{
-//		if(e!=null)
-//			e.printStackTrace();
-//		System.out.println("failed: "+this);
-//	}
-
 }

@@ -1,12 +1,12 @@
 package jadex.bdi.shop;
 
-import jadex.bdi.runtime.IBDIAgentFeature;
+import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.shop.ShopCapa.SellGoal;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.injection.annotation.Inject;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.annotation.ServiceComponent;
 
 /**
  *  The shop for buying goods at the shop.
@@ -17,16 +17,12 @@ public class ShopService implements IShopService
 	//-------- attributes --------
 	
 	/** The component. */
-	@ServiceComponent
-	protected ShopAgent	shopagent;
+	@Inject
+	protected ShopCapa	shopcap;
 	
 	/** The component. */
-	@ServiceComponent
+	@Inject
 	protected IComponent	agent;
-	
-//	/** The component. */
-//	@ServiceComponent
-//	protected ICapability	capa;
 	
 	/** The shop name. */
 	protected String name;
@@ -46,12 +42,10 @@ public class ShopService implements IShopService
 	/**
 	 *  Get the shop name. 
 	 *  @return The name.
-	 *  
-	 *  @directcall (Is called on caller thread).
 	 */
-	public String getName()
+	public IFuture<String> getName()
 	{
-		return name;
+		return new Future<>(name);
 	}
 	
 	/**
@@ -60,12 +54,9 @@ public class ShopService implements IShopService
 	 */
 	public IFuture<ItemInfo> buyItem(final String item, final double price)
 	{
-		//TODO
 //		System.out.println("buyItem in ShopService: "+ServiceCall.getCurrentInvocation().getCaller());
 		
-//		ShopCapa shop = (ShopCapa)capa.getPojoCapability();
-		ShopCapa shop = shopagent.shopcap;
-		SellGoal sell = shop.new SellGoal(item, price);
+		SellGoal sell = shopcap.new SellGoal(item, price);
 		return agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(sell);
 	}
 	
@@ -76,8 +67,7 @@ public class ShopService implements IShopService
 	public IFuture<ItemInfo[]> getCatalog()
 	{
 		final Future<ItemInfo[]> ret = new Future<ItemInfo[]>();
-		ShopCapa shop = shopagent.shopcap;
-		ret.setResult(shop.getCatalog().toArray(new ItemInfo[shop.getCatalog().size()]));
+		ret.setResult(shopcap.getCatalog().toArray(new ItemInfo[shopcap.getCatalog().size()]));
 		return ret;
 	}
 

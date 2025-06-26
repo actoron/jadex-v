@@ -6,13 +6,13 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import jadex.core.annotation.NoCopy;
 import jadex.execution.IExecutionFeature;
-import jadex.providedservice.annotation.Reference;
 
 /**
  * The order for purchasing or selling books.
  */
-@Reference
+@NoCopy
 public class Order
 {
 	protected static AtomicInteger idgen = new AtomicInteger();

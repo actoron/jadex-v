@@ -9,11 +9,9 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import jadex.common.Tuple2;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
-import jadex.micro.annotation.Agent;
+import jadex.core.IComponentManager;
 
-@Agent
 public class RankingTestAgent 
 {
 	@Test
@@ -22,7 +20,10 @@ public class RankingTestAgent
 		int n=20;
 		
 		for(int i=0; i<n; i++)
-			IComponentManager.get().create(new ServiceSearchAgent(false)).get();
+		{
+			IComponentHandle	provider	= IComponentManager.get().create(new ServiceSearchAgent(false)).get();
+			provider.scheduleStep(() -> null).get();
+		}
 		
 		IComponentHandle exta = IComponentManager.get().create(new RankingTestAgent()).get();
 		

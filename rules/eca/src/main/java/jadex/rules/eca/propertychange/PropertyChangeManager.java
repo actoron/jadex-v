@@ -35,7 +35,7 @@ public class PropertyChangeManager
 	/** Protected Constructor to prevent direct instantiation **/
 	public  PropertyChangeManager()
 	{
-		this.events = new ArrayList<IEvent>();
+		this.events = new ArrayList<IEvent>(1);
 	}
 		
 	/**

@@ -7,7 +7,6 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
-import jadex.core.impl.ValueProvider;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -68,7 +67,6 @@ public interface IExecutionFeature extends IComponentFeature
 	/**
 	 *  Schedule a step that provides a result.
 	 *  @param step	A step that is executed via the {@link IThrowingConsumer#accept()} method.
-	 *  @return	A future that provides access to the step result, once it is available.
 	 */
 	public void scheduleStep(IThrowingConsumer<IComponent> step);
 	

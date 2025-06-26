@@ -3,16 +3,13 @@ package jadex.micro.helloworld;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.Description;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  The micro version of the hello world agent.
  */
-@Agent(type="micro")
-@Description("This agent prints out a hello message.")
+//@Description("This agent prints out a hello message.")
 public class HelloWorldAgent
 {
 	//-------- attributes --------

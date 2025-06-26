@@ -1,11 +1,14 @@
 package jadex.bt.decorators;
 
+import java.util.concurrent.Callable;
+
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ICommand;
 import jadex.common.ITriFunction;
+import jadex.common.SUtil;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.ITimerCreator;
 import jadex.future.Future;
@@ -34,7 +37,8 @@ public class ConditionalDecorator<T> extends Decorator<T>
 	
 	public ConditionalDecorator<T> setFunction(ITriFunction<Event, NodeState, ExecutionContext<T>, NodeState> execute) 
 	{
-		this.function = (event, state, context) -> new Future<>(execute.apply(event, state, context));
+		//this.function = (event, state, context) -> new Future<>(execute.apply(event, state, context));
+		this.function = (event, state, context) -> fromCallable(() -> execute.apply(event, state, context));
 	    return this;
 	}
 	
@@ -46,8 +50,22 @@ public class ConditionalDecorator<T> extends Decorator<T>
 	
 	public ConditionalDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
 	{
-		this.condition = (event, state, context) -> new Future<>(condition.apply(event, state, context));
+		// must use fromCallable() to avoid direct condition evaluation!
+		//this.condition = (event, state, context) -> new Future<>(condition.apply(event, state, context));
+		this.condition = (event, state, context) -> fromCallable(() -> condition.apply(event, state, context));
 	    return this;
+	}
+	
+	public <E> Future<E> fromCallable(Callable<E> call)
+	{
+		try
+		{
+			return new Future<>(call.call());
+		}
+		catch(Exception e)
+		{
+			return new Future<>(e);
+		}
 	}
 	
 	@Override
@@ -59,11 +77,12 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		}
 		else if(condition!=null)
 		{
+			//System.out.println("trigger deco before exe in cond: "+this);
 			Future<NodeState> ret = new Future<>();
 			IFuture<Boolean> fut = condition.apply(event, state, context);
 			fut.then(triggered ->
 			{
-				ret.setResult(mapToNodeState(triggered));
+				ret.setResult(mapToNodeState(triggered, state));
 			}).catchEx(ex -> ret.setResult(NodeState.FAILED));
 			return ret;
 		}
@@ -126,7 +145,7 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		return NodeState.RUNNING!=state;
 	}
 	
-	public NodeState mapToNodeState(Boolean state)
+	public NodeState mapToNodeState(Boolean state, NodeState nstate)
 	{
 		throw new UnsupportedOperationException();
 	}

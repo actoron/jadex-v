@@ -5,20 +5,17 @@ import java.util.Collection;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Chat micro agent gets chat services and sends a message.
  */
-@Agent
-//@RequiredServices({@RequiredService(name="chatservices", type=IChatService.class, scope=ServiceScope.PLATFORM)})
 public class ChatUserAgent
 {
 	/** The underlying micro agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 
 	/**
@@ -47,11 +44,11 @@ public class ChatUserAgent
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MicroAgent.create(new ChatProviderAgent());
-		MicroAgent.create(new ChatProviderAgent());
-		MicroAgent.create(new ChatProviderAgent());
+		IComponentManager.get().create(new ChatProviderAgent());
+		IComponentManager.get().create(new ChatProviderAgent());
+		IComponentManager.get().create(new ChatProviderAgent());
 		
-		MicroAgent.create(new ChatUserAgent());
+		IComponentManager.get().create(new ChatUserAgent());
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

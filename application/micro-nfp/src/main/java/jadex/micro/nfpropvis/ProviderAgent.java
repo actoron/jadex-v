@@ -1,14 +1,10 @@
 package jadex.micro.nfpropvis;
 
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Just provider without using services.
  */
-@Agent
-@Service
 public class ProviderAgent extends ProviderAndUserAgent
 {
 	/**

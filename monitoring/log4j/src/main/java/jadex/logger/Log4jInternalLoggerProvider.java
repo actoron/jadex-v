@@ -1,41 +1,48 @@
 package jadex.logger;
 
 import java.io.InputStream;
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 
 public class Log4jInternalLoggerProvider implements IInternalLoggerProvider
 {
-	public Logger getLogger(String name, Level level)
+	public ISystemLogger getLogger(String name, Level level)
 	{
-		Logger ret = new Log4jLogger(name);
+		ISystemLogger ret = new Log4jLogger(name);
 		
 		if(level != null) 
 		{
-			Configurator.setLevel(name, convertLevel(level));
-			LoggerContext context = (LoggerContext)LogManager.getContext(false);
-			Configuration config = context.getConfiguration();
-
-	        ConsoleAppender appender = ConsoleAppender.newBuilder()
-	        	.setName("ConsoleAppender")
-	            .build();
-	        appender.start();
-
-	        config.addAppender(appender);
-	        LoggerConfig lconfig = config.getLoggerConfig(name);
-	        lconfig.addAppender(appender,  convertLevel(level), null);
-
-	        context.updateLoggers();
+			setLevel(name, level);
 	    }
 		
         return ret;
+	}
+
+	public static void setLevel(String name, Level level)
+	{
+		LoggerContext context = (LoggerContext)LogManager.getContext(false);
+		Configuration config = context.getConfiguration();
+        LoggerConfig lconfig = config.getLoggerConfig(name);
+        
+        lconfig.setLevel(Log4jInternalLoggerProvider.convertLevel(level));
+
+        if(lconfig.getAppenders().containsKey("ConsoleAppender"))
+        {
+        	lconfig.removeAppender("ConsoleAppender");
+        }
+		ConsoleAppender appender = ConsoleAppender.newBuilder()
+			.setName("ConsoleAppender")
+		    .build();
+		appender.start();
+		config.addAppender(appender);
+		lconfig.addAppender(appender,  convertLevel(level), null);
+
+		context.updateLoggers();
 	}
 	
 	public static org.apache.logging.log4j.Level convertLevel(Level level) 

@@ -3,27 +3,26 @@ package jadex.nfproperty.ranking;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
 import jadex.providedservice.IService;
-import jadex.providedservice.annotation.Implementation;
-import jadex.providedservice.annotation.ProvidedService;
-import jadex.providedservice.annotation.ProvidedServices;
+import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-@Agent
-@ProvidedServices(@ProvidedService(type=ICoreDependentService.class, implementation=@Implementation(NFPropertyTestService.class)))
 @NFProperties(@NFProperty(name="componentcores", value=CoreNumberProperty2.class))
 public class NFPropertyTestAgent
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
-	//@AgentBody
+//	@ProvidedServices(@ProvidedService(type=ICoreDependentService.class, implementation=@Implementation(NFPropertyTestService.class)))
+	@ProvideService
+	protected ICoreDependentService	service	= new NFPropertyTestService();
+
 	@OnStart
 	public IFuture<Void> body()
 	{

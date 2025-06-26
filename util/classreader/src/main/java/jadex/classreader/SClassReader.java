@@ -22,11 +22,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import jadex.collection.LRU;
-import jadex.common.ClassInfo;
-import jadex.common.IFilter;
-import jadex.common.SReflect;
-import jadex.common.SScan;
-import jadex.common.SUtil;
+import jadex.common.*;
 
 /**
  *  Class using the internal fast class path scanner to provide
@@ -156,7 +152,7 @@ public class SClassReader
 			int classnameindex = is.readUnsignedShort();
 			try
 			{
-				String classname = decodeModifiedUtf8(strings.get(SUtil.bytesToShort(strings.get(classnameindex), 0) & 0xFFFF));
+				String classname = decodeModifiedUtf8(strings.get(SBinConv.bytesToShort(strings.get(classnameindex), 0) & 0xFFFF));
 				classname = classname.replace('/', '.');
 				ret.setClassName(classname);
 			}
@@ -170,7 +166,7 @@ public class SClassReader
 				byte[] ref = strings.get(classnameindex);
 				if (ref != null)
 				{
-					byte[] enc = strings.get(SUtil.bytesToShort(ref, 0) & 0xFFFF);
+					byte[] enc = strings.get(SBinConv.bytesToShort(ref, 0) & 0xFFFF);
 					if (enc != null)
 					{
 						String superclassname = decodeModifiedUtf8(enc);
@@ -188,7 +184,7 @@ public class SClassReader
 			for (int i = 0; i < ifacecount; ++i)
 			{
 				int index = is.readUnsignedShort();
-				String iname = decodeModifiedUtf8(strings.get(SUtil.bytesToShort(strings.get(index), 0) & 0xFFFF));
+				String iname = decodeModifiedUtf8(strings.get(SBinConv.bytesToShort(strings.get(index), 0) & 0xFFFF));
 				iname = iname.replace('/', '.');
 				ifaces.add(iname);
 			}
@@ -239,7 +235,7 @@ public class SClassReader
 	            case 1:
 	                int len = is.readUnsignedShort();
 	                byte[] buf = new byte[2 + len];
-	                SUtil.shortIntoBytes(len, buf, 0);
+					SBinConv.shortIntoBytes(len, buf, 0);
 	                int off = 2;
 	                int read = 0;
 	    			while (read < len)
@@ -496,7 +492,7 @@ public class SClassReader
 	        {
 	        	int ind = is.readUnsignedShort();
 	        	byte[] enc = strings.get(ind);
-	        	int val = SUtil.bytesToInt(enc);
+	        	int val = SBinConv.bytesToInt(enc);
 	        	ret = val == 0 ? false : true;
 	        	break;
 	        }

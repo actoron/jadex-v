@@ -1,6 +1,5 @@
 package jadex.logger;
 
-import java.lang.System.Logger;
 import java.util.ResourceBundle;
 import java.util.logging.Handler;
 
@@ -8,7 +7,7 @@ import java.util.logging.Handler;
 /**
  * OTEL implementation of a logger.
  */
-public class OpenTelemetryLogger implements Logger 
+public class OpenTelemetryLogger implements ISystemLogger 
 {
 	public static String URL = "OT_URL";
 	public static String KEY = "OT_KEY";
@@ -90,5 +89,11 @@ public class OpenTelemetryLogger implements Logger
 //        if("application".equals(name))
 //    		System.out.println("log: "+level+", "+logger.getLevel()+", "+Arrays.toString(logger.getHandlers()));
         logger.log(JulLogger.convertToJulLevel(level), msg, thrown);
+    }
+    
+    @Override
+    public void setLevel(Level level)
+    {
+    	this.hacklevel	= JulLogger.convertToJulLevel(level);
     }
 }

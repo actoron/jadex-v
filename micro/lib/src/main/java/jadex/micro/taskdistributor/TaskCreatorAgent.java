@@ -4,13 +4,11 @@ import java.util.UUID;
 
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.annotation.Agent;
-import jadex.requiredservice.annotation.OnService;
+import jadex.injection.annotation.Inject;
 
-@Agent
 public class TaskCreatorAgent 
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	protected int taskcnt;
@@ -25,7 +23,7 @@ public class TaskCreatorAgent
 		this.taskcnt = taskcnt;
 	}
 	
-	@OnService
+	@Inject
 	public void onService(ITaskDistributor<String, String> distri)
 	{
 		for(int i=0; i<taskcnt; i++)

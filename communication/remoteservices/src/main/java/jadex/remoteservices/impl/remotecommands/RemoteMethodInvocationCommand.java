@@ -1,7 +1,11 @@
 package jadex.remoteservices.impl.remotecommands;
 
+import java.lang.reflect.Method;
+import java.util.Map;
+
+import javax.management.ServiceNotFoundException;
+
 import jadex.common.MethodInfo;
-import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -14,13 +18,8 @@ import jadex.messaging.ISecurityInfo;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.annotation.Security;
-import jadex.providedservice.impl.search.ServiceNotFoundException;
-import jadex.providedservice.impl.service.BasicService;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservices.IRemoteCommand;
-
-import java.lang.reflect.Method;
-import java.util.Map;
 
 
 /**
@@ -30,9 +29,6 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 {
 	//-------- attributes --------
 
-	/** The remote invocation ID. */
-	private String id;
-	
 	/** The target id. */
 	private Object target;
 	
@@ -53,10 +49,9 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 	/**
 	 *  Create a remote method invocation command.
 	 */
-	public RemoteMethodInvocationCommand(String id, Object target, Method method, Object[] args, Map<String, Object> nonfunc)
+	public RemoteMethodInvocationCommand(String id, ComponentIdentifier sender, Object target, Method method, Object[] args, Map<String, Object> nonfunc)
 	{
-		super(nonfunc);
-		this.id = id;
+		super(id, sender, nonfunc);
 		this.target	= target;
 		this.method	= new MethodInfo(method);
 		this.args	= args;
@@ -64,25 +59,6 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 		
 		//if(method.toString().toLowerCase().indexOf("registryv2")!=-1)
 		//	System.out.println("Creating command for: "+method);
-	}
-
-	/**
-	 *  Get the ID of the command.
-	 *  @return The ID.
-	 */
-	public String getId()
-	{
-		return id;
-	}
-
-	/**
-	 *  Set the ID of the command.
-	 *  @return The command (builder pattern).
-	 */
-	public RemoteMethodInvocationCommand<T> setId(String id)
-	{
-		this.id = id;
-		return this;
 	}
 
 	/**
@@ -189,9 +165,8 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 			{
 				try
 				{
-
 					Method	m	= method.getMethod(ComponentManager.get().getClassLoader());
-					ret	= m.invoke(component.getExternalAccess(), args);
+					ret	= m.invoke(component.getComponentHandle(), args);
 					
 //					System.out.println("adding lis: "+Arrays.toString(args));
 //					if(method.toString().toLowerCase().indexOf("getdesc")!=-1)
@@ -264,7 +239,7 @@ public class RemoteMethodInvocationCommand<T> extends AbstractInternalRemoteComm
 	 */
 	public Security getSecurityLevel(Component component)
 	{
-		return BasicService.getSecurityLevel(component, null, null, null, method.getMethod(IComponentManager.get().getClassLoader()), target instanceof IServiceIdentifier? (IServiceIdentifier)target: null);
+		return ServiceIdentifier.getSecurityLevel(component, method.getMethod(IComponentManager.get().getClassLoader()), target instanceof IServiceIdentifier? (IServiceIdentifier)target: null);
 	}
 
 	/**

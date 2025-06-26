@@ -1,10 +1,13 @@
 package jadex.execution.impl;
 
+import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Timer;
@@ -17,11 +20,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import jadex.common.SReflect;
 import jadex.common.SUtil;
+import jadex.common.TimeoutException;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
@@ -39,11 +45,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
 	
-	private Queue<Runnable> steps = new ArrayDeque<Runnable>(4);
+	private Queue<Runnable> steps;
 	protected volatile boolean executing;
 	protected volatile int	do_switch;
 	protected boolean terminated;
-	protected ThreadRunner runner = null;
+//	protected ThreadRunner runner = null;
 	protected Component	self = null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
@@ -63,20 +69,41 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	@Override
 	public void scheduleStep(Runnable r)
 	{
-		if(terminated)
-			throw new ComponentTerminatedException(getComponent().getId());
-		
 		boolean	startnew	= false;
+		boolean	setex	= false;
 		synchronized(ExecutionFeature.this)
 		{
-			//System.out.println("insert step: "+r);
-			steps.offer(r);
-			if(!executing)
+			if(terminated)
 			{
-				startnew	= true;
-				executing	= true;
-				busy();
+				if(r instanceof StepInfo)
+				{
+					setex	= true;
+				}
+				else
+				{
+					throw new ComponentTerminatedException(getComponent().getId());
+				}
 			}
+			else
+			{
+				//System.out.println("insert step: "+r);
+				if(steps==null)
+				{
+					steps	= new ArrayDeque<>(2);
+				}
+				steps.offer(r);
+				if(!executing)
+				{
+					startnew	= true;
+					executing	= true;
+					busy();
+				}
+			}
+		}
+		
+		if(setex)
+		{
+			((StepInfo)r).getFuture().setException(new ComponentTerminatedException(getComponent().getId()));
 		}
 		
 		if(startnew)
@@ -312,19 +339,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		Future<T> ret;
 		try
 		{
-			if(step instanceof ICallable)
-			{
-				Class<?> clazz = ((ICallable)step).getFutureReturnType();
-		
-				if(IFuture.class.equals(clazz))
-					ret = new Future<T>();
-				else
-					ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
-			}
-			else
-			{
+			Class<?> clazz = step instanceof ICallable
+				? ((ICallable)step).getFutureReturnType()
+				: getReturnType(step.getClass());
+			
+			if(clazz==null || IFuture.class.equals(clazz))
 				ret = new Future<T>();
-			}
+			else
+				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
 		}
 		catch(Exception e)
 		{
@@ -342,12 +364,23 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		Future<T> ret;
 		try
 		{
+			// Check if return type is explicitly given
 			Class<?> clazz = step.getFutureReturnType();
 		
+			// TODO: use FutureFunctionaly.getReturnFuture
 			if(IFuture.class.equals(clazz))
+			{
+				clazz	= getReturnType(step.getClass());
+			}
+			
+			if(clazz==null || IFuture.class.equals(clazz))
+			{
 				ret = new Future<T>();
+			}
 			else
+			{
 				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
+			}
 		}
 		catch(Exception e)
 		{
@@ -398,7 +431,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					//if(!this.cancel())
 					//	return;
 					
-					scheduleStep((Runnable)() -> ret.setResultIfUndone(null));
+					try
+					{
+						scheduleStep((Runnable)() -> ret.setResultIfUndone(null));
+					}
+					catch(ComponentTerminatedException e)
+					{
+						ret.setExceptionIfUndone(e);
+					}
 					
 					synchronized(ExecutionFeature.class)
 					{
@@ -546,10 +586,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						Runnable	step;
 						synchronized(ExecutionFeature.this)
 						{
-							int presize = steps.size();
+//							int presize = steps.size();
 							step = steps.poll();
-							if(step==null)
-								System.out.println("step is null: "+steps.size()+" "+presize+" "+terminated);
+//							if(step==null)
+//								System.out.println("step is null: "+steps.size()+" "+presize+" "+terminated);							
 						}
 						
 						assert step!=null;
@@ -572,6 +612,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						
 						synchronized(ExecutionFeature.this)
 						{
+							if(steps!=null && steps.isEmpty())
+							{
+								steps	= null;	// free memory
+							}
+							
 							// Stop this thread, because another thread is still executing
 							if(do_switch>0)
 							{
@@ -580,7 +625,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							}
 							
 							// Stop this thread, because there are no more steps -> set executing=false
-							else if(steps.isEmpty() && !terminated)
+							else if(!terminated && steps==null)
 							{
 								// decrement only if not resume step (otherwise decremented already)
 								if(!failed && threadcount.decrementAndGet()<0)
@@ -615,8 +660,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		/** Set by terminate() to indicate step abortion. */  
 		protected boolean	aborted;
 		
+		/** Set by timer to indicate timeout. */  
+		protected boolean	istimeout;
+		
 		/** Provide access to future when suspended. */
 		protected Future<?> future;
+		
+		/** The timer, when blocked and timeout is set. */
+		protected ITerminableFuture<Void>	timer;
 		
 		/** Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads. */
 		protected ReentrantLock lock	= new ReentrantLock();
@@ -627,10 +678,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			assert !blocked;
 			assert !aborted;
-			
+
 			beforeBlock(future);
 			
 			boolean startnew	= false;
+			boolean istimeout	= false;
 			
 			synchronized(ExecutionFeature.this)
 			{
@@ -640,7 +692,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					throw new IllegalStateException("Threadcount<0");
 				}
 				
-				if(!steps.isEmpty() && !aborted)
+				if(!(steps==null || steps.isEmpty()) && !aborted)
 				{
 					startnew	= true;
 				}
@@ -664,8 +716,41 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				{
 					this.future	= future;
 					blocked	= true;
-					// TODO timeout?
+					
+					if(timeout==Future.UNSET)
+					{
+						timeout = SUtil.DEFTIMEOUT;
+					}
+					if(timeout>0)
+					{
+						this.timer	= waitForDelay(timeout);
+						timer.then(v -> 
+						{
+							boolean	resume	= false;
+							try
+							{
+								lock.lock();
+								// Only wake up if still waiting for same future (no timeout, when result already occurred).
+								if(future==this.future)
+								{
+									this.istimeout	= true;
+									resume	= true;
+								}
+							}
+							finally
+							{
+								lock.unlock();
+							}
+							
+							if(resume)
+							{
+								resume(future);
+							}
+						});
+					}
+					
 					wait.await();
+					istimeout	= this.istimeout;
 				}
 				catch(InterruptedException e)
 				{
@@ -693,6 +778,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			
 			afterBlock();
+			
+			if(istimeout)
+			{
+				throw new TimeoutException();
+			}
 		}
 	
 		@Override
@@ -705,23 +795,27 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					try
 					{
 						lock.lock();
-						synchronized(ExecutionFeature.this)
+						// Only wake up if still waiting for same future (invalid resume might be called from outdated future after timeout already occurred).
+						if(future==this.future)
 						{
-							// Force this thread (or another) to end execution
-							// Can be two resume() of different threads before any threads end,
-							// thus a counter is needed.
-							do_switch++;
+							synchronized(ExecutionFeature.this)
+							{
+								// Force this thread (or another) to end execution
+								// Can be two resume() of different threads before any threads end,
+								// thus a counter is needed.
+								do_switch++;
+							}
+							if(!failed && threadcount.decrementAndGet()<0)
+							{
+								failed	= true;
+								throw new IllegalStateException("Threadcount<0");
+							}
+							wait.signal();
+							
+							// Abort this step to skip afterStep() call, because other thread is already running now.
+							// Use null because code is used in bootstrapping before getComponent() is available
+							throw new StepAborted(null);
 						}
-						if(!failed && threadcount.decrementAndGet()<0)
-						{
-							failed	= true;
-							throw new IllegalStateException("Threadcount<0");
-						}
-						wait.signal();
-						
-						// Abort this step to skip afterStep() call, because other thread is already running now.
-						// Use null because code is used in bootstrapping before getComponent() is available
-						throw new StepAborted(null);
 					}
 					finally
 					{
@@ -774,7 +868,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public void addStepListener(IStepListener lis)
 	{
 		if(listeners==null)
-			listeners	= new ArrayList<>();
+			listeners	= new ArrayList<>(1);
 		listeners.add(lis);
 	}
 
@@ -794,7 +888,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		executeEndStep();
 		
-		Collection<Object>	cfeatures	= self.getFeatures();
+		Collection<IComponentFeature>	cfeatures	= self.getFeatures();
 		Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
 		for(int i=features.length-1; i>=0; i--)
 		{
@@ -828,20 +922,23 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		ComponentTerminatedException ex = null;
 		synchronized(ExecutionFeature.this) 
 		{
-			for(Object step: steps)
+			if(steps!=null)
 			{
-				if(step instanceof StepInfo)
+				for(Object step: steps)
 				{
-					if(ex==null)
-						ex	= new ComponentTerminatedException(getComponent().getId());
-					((StepInfo)step).getFuture().setExceptionIfUndone(ex);
+					if(step instanceof StepInfo)
+					{
+						if(ex==null)
+							ex	= new ComponentTerminatedException(getComponent().getId());
+						((StepInfo)step).getFuture().setExceptionIfUndone(ex);
+					}
 				}
+				steps	= null;
 			}
-			steps.clear();
 		}
 		
 		// Drop queued timer tasks.
-		List<TimerTaskInfo> todo = new ArrayList<>();
+		List<TimerTaskInfo> todo = null;
 		TimerTaskInfo[] ttis;
 		synchronized(ExecutionFeature.class)
 		{
@@ -851,17 +948,25 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			{
 				if(getComponent().getId().equals(tti.getComponentId()))
 				{
+					if(todo==null)
+					{
+						todo	= new ArrayList<>(1);
+					}
 					todo.add(tti);
 					tti.getTask().cancel();
-					entries.remove(tti);
+//					entries.remove(tti);
 				}
 			}
+			entries	= null;
 		}
-		for(TimerTaskInfo tti: todo)
+		if(todo!=null)
 		{
-			if(ex==null)
-				ex	= new ComponentTerminatedException(getComponent().getId());
-			tti.getFuture().setExceptionIfUndone(ex);
+			for(TimerTaskInfo tti: todo)
+			{
+				if(ex==null)
+					ex	= new ComponentTerminatedException(getComponent().getId());
+				tti.getFuture().setExceptionIfUndone(ex);
+			}
 		}
 		
 		//System.out.println("terminate end");
@@ -938,8 +1043,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			// Print and otherwise ignore any other exceptions
 			RuntimeException ex = new RuntimeException("Exception in step", t);//.printStackTrace();
-			ex.printStackTrace();
-			self.handleException(ex);
+//			ex.printStackTrace();
+			if(self!=null)
+				self.handleException(ex);
+			else
+				throw t;
 		}
 		
 		afterStep();
@@ -979,14 +1087,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	protected void restart()
 	{
-		if(runner==null)
-			runner	= new ThreadRunner();
+//		if(runner==null)
+//			runner	= new ThreadRunner();
 		if(!failed && threadcount.incrementAndGet()>1)
 		{
 			failed	= true;
 			throw new IllegalStateException("Threadcount>1");
 		}
-		SUtil.getExecutor().execute(runner);
+//		SUtil.getExecutor().execute(runner);
+		SUtil.getExecutor().execute(new ThreadRunner());
 	}
 	
 	protected boolean saveEndStep(Object res, Future<Object> fut)
@@ -1088,6 +1197,54 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					e.printStackTrace();
 				}
 			}
+		}
+	}
+
+	protected static Map<Class<?>, Class<?>>	RETURNTYPE	= new LinkedHashMap<>();
+	
+	/**
+	 *  Get return type from pojo method.
+	 */
+	protected static Class<?>	getReturnType(Class<?> pojoclazz)
+	{
+		synchronized (RETURNTYPE)
+		{
+			if(!RETURNTYPE.containsKey(pojoclazz))
+			{
+				Method	m	= null;
+				
+				if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
+				{
+					// Can be also explicitly declared with component type or just implicit (lambda) as object type
+					try
+					{
+						m	= pojoclazz.getMethod("apply", IComponent.class);
+					}
+					catch(Exception e)
+					{
+						try
+						{
+							m	= pojoclazz.getMethod("apply", Object.class);
+						}
+						catch(Exception e2)
+						{
+						}
+					}
+				}
+				else	// Callable
+				{
+					try
+					{
+						m	= pojoclazz.getMethod("call");
+					}
+					catch(Exception e)
+					{
+					}
+				}
+				
+				RETURNTYPE.put(pojoclazz, m!=null ? m.getReturnType() : null);
+			}
+			return RETURNTYPE.get(pojoclazz);
 		}
 	}
 }

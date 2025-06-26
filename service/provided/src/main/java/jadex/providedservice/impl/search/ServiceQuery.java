@@ -14,28 +14,17 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
-import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
-import jadex.providedservice.impl.service.ProvidedServiceFeature;
 
 /**
  *  Service query definition. T is the return type for search methods.
  */
 public class ServiceQuery<T>
 {	
-	/** The raw proxy type (i.e. no proxy). */
-	public static final String	PROXYTYPE_RAW	= AbstractServiceInvocationHandler.PROXYTYPE_RAW;
-	
-	/** The direct proxy type (supports custom interceptors, but uses caller thread). */
-	public static final String	PROXYTYPE_DIRECT	= AbstractServiceInvocationHandler.PROXYTYPE_DIRECT;
-	
-	/** The (default) decoupled proxy type (decouples from component thread to caller thread). */
-	public static final String	PROXYTYPE_DECOUPLED	= AbstractServiceInvocationHandler.PROXYTYPE_DECOUPLED;
-	
 	//-------- constants --------
 	
 	/** Marker for networks not set. */
 	//Hack!!! should not be public??? 
-	public static final String[]	NETWORKS_NOT_SET	= new String[]{"__NETWORKS_NOT_SET__"};	// TODO: new String[0] for better performance, but unable to check remotely after marshalling!
+	public static final String[] NETWORKS_NOT_SET = new String[]{"__NETWORKS_NOT_SET__"};	// TODO: new String[0] for better performance, but unable to check remotely after marshalling!
 	
 	/** Default matching modes set the elements with OR semantics. */
 	public static final Map<String, Boolean> DEFAULT_MATCHINGMODES = SUtil.createHashMap(
@@ -88,17 +77,11 @@ public class ServiceQuery<T>
 	/** The matching mode for multivalued terms. True is and and false is or. */
 	protected Map<String, Boolean> matchingmodes;
 	
-	/** Required service proxy type. */
-	protected String requiredproxytype = PROXYTYPE_DECOUPLED;
-	
 	//-------- identification of a query --------
 	
 	/** The query id. Id is used for hashcode and equals and the same is used by servicequeryinfo class.
 	    Allows for hashing queryies and use a queryinfo object for lookup. */
 	protected String id;
-	
-//	/** Is the query prepared? Prepared means that the query is ready to be processed by the registry. */ 
-//	protected boolean prepared;
 	
 	/**
 	 *  Create a new service query.
@@ -109,22 +92,6 @@ public class ServiceQuery<T>
 		// Here it does NOT set the networknames automatically because used for serialization.
 	}
 	
-//	/**
-//	 *  Create a new service query.
-//	 */
-//	public ServiceQuery(ClassInfo servicetype, String scope, IComponentIdentifier owner)
-//	{
-//		this(servicetype, scope, (IFilter<T>) null, null, owner);
-//	}
-//	
-//	/**
-//	 *  Create a new service query.
-//	 */
-//	public ServiceQuery(ClassInfo servicetype, String scope, IComponentIdentifier provider, IComponentIdentifier owner)
-//	{
-//		this(servicetype, scope, (IFilter<T>) null, provider, owner);
-//	}
-//	
 	/**
 	 *  Create a new service query.
 	 */
@@ -140,80 +107,6 @@ public class ServiceQuery<T>
 	{
 		this(servicetype == null ?(ClassInfo) null : new ClassInfo(servicetype), scope, null);
 	}
-	
-//	
-//	/**
-//	 *  Create a new service query.
-//	 */
-//	public ServiceQuery(Class<T> servicetype, String scope, IFilter<T> filter, IComponentIdentifier provider, IComponentIdentifier owner)
-//	{
-////		this(new ClassInfo(servicetype), scope, filter, provider, owner);this.returntype = servicetype;
-//		this.servicetype = new ClassInfo(servicetype);
-//		this.returntype = this.servicetype;
-//		// todo: what is the best place for this?
-//		this.scope = scope==null && ServiceIdentifier.isSystemService(servicetype)? ServiceScope.PLATFORM: scope;
-//		this.filter = filter;
-//		this.provider = provider;
-//		this.owner = owner;
-//		
-//	}
-//	
-//	/**
-//	 *  Create a new service query.
-//	 */
-//	public ServiceQuery(ClassInfo servicetype, String scope, IFilter<T> filter, IComponentIdentifier provider, IComponentIdentifier owner)
-//	{
-//		this.returntype = servicetype;
-//		this.servicetype = servicetype;
-//		this.scope = scope;
-//		this.filter = filter;
-//		this.provider = provider;
-//		this.owner = owner;
-//	}
-//	
-//	/**
-//	 *  Create a new service query.
-//	 */
-//	public ServiceQuery(Class<T> returntype, Class<?> servicetype, String scope, IAsyncFilter<T> filter, IComponentIdentifier provider, IComponentIdentifier owner)
-//	{
-//		this(new ClassInfo(returntype), new ClassInfo(servicetype), scope, filter, provider, owner);
-//	}
-	
-//	/**
-//	 *  Create a new service query.
-//	 */
-//	public ServiceQuery(ClassInfo returntype, ClassInfo servicetype, String scope, IAsyncFilter<T> filter, IComponentIdentifier provider, IComponentIdentifier owner)
-//	{
-//		this.returntype = returntype;
-//		this.servicetype = servicetype;
-//		this.scope = scope;
-//		this.filter = filter;
-//		this.provider = provider;
-//		this.owner = owner;
-//	}
-//	
-//	/**
-//	 *  Create a new service query.
-//	 */
-//	public ServiceQuery(ClassInfo servicetype, String scope, IAsyncFilter<T> filter, IComponentIdentifier provider, IComponentIdentifier owner)
-//	{
-//		this(servicetype, servicetype, scope, filter, provider, owner);
-////		this.returntype = servicetype;
-////		this.servicetype = servicetype;
-////		this.scope = scope;
-////		this.filter = filter;
-////		this.provider = provider;
-////		this.owner = owner;
-//	}
-	
-	/**
-	 *  Create a new service query.
-	 *  owner = startpoint
-	 */
-//	public ServiceQuery(Class<?> servicetype, String scope, IComponentIdentifier provider, IComponentIdentifier owner)
-//	{
-//		this(servicetype, scope, provider, owner, null);
-//	}
 	
 	/**
 	 *  Create a new service query.
@@ -264,7 +157,6 @@ public class ServiceQuery<T>
 		//this.platform	= original.platform;
 		//this.searchstart	= original.searchstart;
 		this.unrestricted = original.unrestricted;
-		this.requiredproxytype = original.requiredproxytype;
 	}
 
 	/**
@@ -371,8 +263,8 @@ public class ServiceQuery<T>
 	 */
 	public ServiceQuery<T> setServiceTags(String[] servicetags, IComponent component)
 	{
-		//this.servicetags = TagFilter.createRuntimeTags(servicetags).toArray(new String[servicetags!=null ? servicetags.length : 0]);
-		this.servicetags = ProvidedServiceFeature.evaluateTags(component,  Arrays.asList(servicetags)).toArray(new String[0]);
+//		this.servicetags = ProvidedServiceFeature.evaluateTags(component,  Arrays.asList(servicetags)).toArray(new String[0]);
+		this.servicetags = Arrays.asList(servicetags).toArray(new String[0]);
 		return this;
 	}
 
@@ -383,7 +275,7 @@ public class ServiceQuery<T>
 	public ServiceQuery<T> setProvider(ComponentIdentifier provider)
 	{
 		//this.searchstart = provider;
-		this.scope = ServiceScope.COMPONENT;
+		//this.scope = ServiceScope.COMPONENT;
 		return this;
 	}
 	
@@ -728,25 +620,6 @@ public class ServiceQuery<T>
 		return this;
 	}
 	
-	/**
-	 *  Returns the requested required service proxy type.
-	 *  @return The requested required service proxy type.
-	 */
-	public String getRequiredProxyType()
-	{
-		return requiredproxytype;
-	}
-	
-	/**
-	 *  Sets the requested required service proxy type.
-	 *  @param requiredproxytype The requested required service proxy type.
-	 */
-	public ServiceQuery<T> setRequiredProxyType(String requiredproxytype)
-	{
-		this.requiredproxytype = requiredproxytype;
-		return this;
-	}
-
 	/**
 	 *  Get the hashcode.
 	 */

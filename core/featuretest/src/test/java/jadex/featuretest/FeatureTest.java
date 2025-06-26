@@ -13,16 +13,14 @@ import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.featuretest.impl.TestFeature1NewProvider;
 import jadex.featuretest.impl.TestFeature2NewProvider;
-import jadex.micro.MicroAgent;
-import jadex.micro.impl.MicroAgentFeature;
-import jadex.model.IModelFeature;
+import jadex.featuretest.impl.TestFeature2NewProvider.SubComponent;
 
 @Testable
 public class FeatureTest
 {
 	// Test features for plain components.
 	@SuppressWarnings("unchecked")
-	static Class<Object>[]	COMPONENT_FEATURE_TYPES	= new Class[]
+	static Class<? extends IComponentFeature>[]	COMPONENT_FEATURE_TYPES	= new Class[]
 	{
 		// Ordered alphabetically by fully qualified name of provider (wtf?)
 		IExecutionFeature.class,
@@ -31,16 +29,14 @@ public class FeatureTest
 		ITestLazyFeature.class,
 	};
 
-	// Test features for micro agent components.
+	// Test features for sub components.
 	@SuppressWarnings("unchecked")
-	static Class<Object>[]	AGENT_FEATURE_TYPES	= new Class[]
+	static Class<? extends IComponentFeature>[]	AGENT_FEATURE_TYPES	= new Class[]
 	{
 		// Ordered alphabetically by fully qualified name of provider (wtf?)
 		IExecutionFeature.class,
 		ITestFeature1.class,
 		ITestFeature2.class,
-		IModelFeature.class,
-		MicroAgentFeature.class,
 		ITestLazyFeature.class,
 	};
 
@@ -55,14 +51,16 @@ public class FeatureTest
 	public void	testAgentLoading()
 	{
 		// Dummy agent component for feature loading.
-		doTestLoading(new MicroAgent(this, null){}, AGENT_FEATURE_TYPES);
+		doTestLoading(new SubComponent(this){}, AGENT_FEATURE_TYPES);
 	}
 	
-	protected void	doTestLoading(Component comp, Class<Object>[] feature_types)
+	protected void	doTestLoading(Component comp, Class<? extends IComponentFeature>[] feature_types)
 	{
-		for(Class<Object> type: feature_types)
+		comp.init();
+		
+		for(Class<? extends IComponentFeature> type: feature_types)
 		{
-			Object	feature	= comp.getFeature((Class)type);
+			IComponentFeature	feature	= comp.getFeature(type);
 			assertTrue(feature!=null, "Feature could not be loaded");
 			assertTrue(type.isAssignableFrom(feature.getClass()), "Feature type does not match: "+feature.getClass()+", "+type);
 		}
@@ -73,6 +71,7 @@ public class FeatureTest
 	{
 		// Dummy component for feature loading.
 		Component	comp	= new Component(this);
+		comp.init();
 
 		// Lazy feature should not be found
 		for(Object feature: comp.getFeatures())
@@ -81,7 +80,7 @@ public class FeatureTest
 		}
 		
 		// Test that lazy feature is created on demand.
-		assertTrue(comp.getFeature(ITestLazyFeature.class)!=null, "Lazy feature could bnot be created");
+		assertTrue(comp.getFeature(ITestLazyFeature.class)!=null, "Lazy feature could not be created");
 	}
 	
 	@Test
@@ -89,6 +88,7 @@ public class FeatureTest
 	{
 		// Dummy component for feature loading.
 		Component	comp	= new Component(this);
+		comp.init();
 		
 		// IMjTestFeature1 feature should be replaced
 		assertTrue(comp.getFeature(ITestFeature1.class) instanceof TestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(ITestFeature1.class));
@@ -100,7 +100,8 @@ public class FeatureTest
 	public void	testAgentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
-		Component	comp	= new MicroAgent(null, null){};
+		Component	comp	= new SubComponent(null){};
+		comp.init();
 		
 		// IMjTestFeature1 feature should be replaced
 		assertTrue(comp.getFeature(ITestFeature1.class) instanceof TestFeature1NewProvider, "Feature is not replaced: "+comp.getFeature(ITestFeature1.class));
@@ -119,20 +120,22 @@ public class FeatureTest
 	public void testAgentOrdering()
 	{
 		// Dummy agent component for feature loading.
-		doTestOrdering(new MicroAgent(null, null){}, AGENT_FEATURE_TYPES);
+		doTestOrdering(new SubComponent(null){}, AGENT_FEATURE_TYPES);
 	}
 		
-	protected void doTestOrdering(Component comp, Class<Object>[] feature_types)
+	protected void doTestOrdering(Component comp, Class<? extends IComponentFeature>[] feature_types)
 	{
+		comp.init();
+		
 		// Force instantiation of lazy features, if any
-		for(Class<Object> type: feature_types)
+		for(Class<? extends IComponentFeature> type: feature_types)
 		{
-			comp.getFeature((Class)type);
+			comp.getFeature(type);
 		}
 		
 		// Check if actual ordering matches desired ordering
-		Iterator<Object>	it	= comp.getFeatures().iterator();
-		for(Class<Object> featuretype: feature_types)
+		Iterator<IComponentFeature>	it	= comp.getFeatures().iterator();
+		for(Class<? extends IComponentFeature> featuretype: feature_types)
 		{
 			assertTrue(it.hasNext(), "Feature missing: "+featuretype);
 			Object next	= it.next();

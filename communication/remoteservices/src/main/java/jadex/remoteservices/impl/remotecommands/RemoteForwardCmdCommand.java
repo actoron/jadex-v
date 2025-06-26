@@ -1,6 +1,7 @@
 package jadex.remoteservices.impl.remotecommands;
 
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.IForwardCommandFuture;
 import jadex.future.IFuture;
@@ -25,8 +26,9 @@ public class RemoteForwardCmdCommand extends AbstractResultCommand //implements 
 	/**
 	 *  Create the command.
 	 */
-	public RemoteForwardCmdCommand(Object command)
+	public RemoteForwardCmdCommand(String id, ComponentIdentifier sender, Object command)
 	{
+		super(id, sender, null);
 		this.command = command;
 	}
 	

@@ -4,7 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.IPlan;
+import jadex.bdi.PlanFailureException;
 import jadex.bdi.TestHelper;
+import jadex.bdi.Val;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
@@ -13,20 +17,16 @@ import jadex.bdi.annotation.PlanContextCondition;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgent;
-import jadex.bdi.runtime.IPlan;
-import jadex.bdi.runtime.PlanFailureException;
-import jadex.bdi.runtime.Val;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.future.Future;
-import jadex.micro.annotation.Agent;
 
 /**
  *  Test plan pre- and context conditions
  */
 public class PlanPassedFailedAbortedTest
 {
-	@Agent(type="bdip")
+	@BDIAgent
 	static class PlanPassedFailedAbortedTestAgent
 	{
 		@Belief
@@ -84,7 +84,7 @@ public class PlanPassedFailedAbortedTest
 	void testPlanPassed()
 	{
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
-		IComponentHandle	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep(() -> pojo.bel.set("pass"));
 		assertEquals("passed", pojo.fut.get(TestHelper.TIMEOUT));
 	}
@@ -93,7 +93,7 @@ public class PlanPassedFailedAbortedTest
 	void testPlanFailed()
 	{
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
-		IComponentHandle	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep(() -> pojo.bel.set("fail"));
 		assertEquals("failed", pojo.fut.get(TestHelper.TIMEOUT));
 	}
@@ -102,7 +102,7 @@ public class PlanPassedFailedAbortedTest
 	void testPlanAborted()
 	{
 		PlanPassedFailedAbortedTestAgent	pojo	= new PlanPassedFailedAbortedTestAgent();
-		IComponentHandle	agent	= IBDIAgent.create(pojo);
+		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep(() -> pojo.bel.set("abort"));
 		assertEquals("aborted", pojo.fut.get(TestHelper.TIMEOUT));
 	}

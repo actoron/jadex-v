@@ -3,23 +3,20 @@ package jadex.micro.tutorial.a2;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.core.IComponent;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Chat micro agent provides a basic chat service. 
  *  
  *  The agent provides the service implementation by itself. 
  */
-@Agent
-@Service
 public class ChatProviderAgent implements IChatService
 {
 	/** The underlying micro agent. */
-	@Agent
-	protected MicroAgent agent;
+	@Inject
+	protected IComponent agent;
 	
 	@OnStart
 	protected void onStart()

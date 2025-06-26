@@ -1,5 +1,6 @@
 package jadex.remoteservices.impl.remotecommands;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.IntermediateFuture;
@@ -23,9 +24,9 @@ public class RemoteFinishedCommand<T>	extends AbstractResultCommand
 	/**
 	 *  Create the command.
 	 */
-	public RemoteFinishedCommand(Map<String, Object> nonfunc)
+	public RemoteFinishedCommand(String id, ComponentIdentifier sender, Map<String, Object> nonfunc)
 	{
-		super(nonfunc);
+		super(id, sender, nonfunc);
 	}
 	
 	/**

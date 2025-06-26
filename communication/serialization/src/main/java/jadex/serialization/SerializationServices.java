@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import jadex.common.SBinConv;
 import jadex.common.SUtil;
 import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.traverser.ITraverseProcessor;
@@ -93,7 +94,7 @@ public class SerializationServices implements ISerializationServices
 	{
 		try
 		{
-			os.write(SUtil.intToBytes(defaultserializer));
+			os.write(SBinConv.intToBytes(defaultserializer));
 		}
 		catch (IOException e)
 		{
@@ -115,7 +116,7 @@ public class SerializationServices implements ISerializationServices
 	{
 		byte[] intbuf = new byte[4];
 		SUtil.readStream(intbuf, is);
-		ISerializer ser = serializers[SUtil.bytesToInt(intbuf)];
+		ISerializer ser = serializers[SBinConv.bytesToInt(intbuf)];
 		
 		return ser.decode(is, cl, internalGetPostprocessors(), null, ser);
 	}

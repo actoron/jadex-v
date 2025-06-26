@@ -27,10 +27,15 @@ dependencies
 	implementation 'org.activecomponents.jadex:collection:' + v
 	implementation 'org.activecomponents.jadex:future:' + v
     implementation 'org.activecomponents.jadex:core:' + v
-    implementation 'org.activecomponents.jadex:model:' + v
     implementation 'org.activecomponents.jadex:execution:' + v
-    implementation 'org.activecomponents.jadex:micro:' + v
+    implementation 'org.activecomponents.jadex:injection:' + v
     implementation 'org.activecomponents.jadex:bdi:' + v
+    implementation 'org.activecomponents.jadex:environment:'+v
+    
+    // libgdx for game ui
+	implementation 'com.badlogicgames.gdx:gdx:1.12.1'
+    implementation 'com.badlogicgames.gdx:gdx-backend-lwjgl3:1.12.1'
+    implementation 'com.badlogicgames.gdx:gdx-platform:1.12.1:natives-desktop'
 }
 
 processResources {

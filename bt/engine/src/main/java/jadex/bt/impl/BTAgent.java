@@ -4,39 +4,22 @@ import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
-import jadex.micro.MicroAgent;
-import jadex.model.modelinfo.IModelInfo;
+import jadex.future.IFuture;
 
-public class BTAgent extends MicroAgent
+public class BTAgent extends Component
 {
-	public static IComponentHandle create(Object pojo)
+	public static IFuture<IComponentHandle> create(Object pojo)
 	{
 		return create(pojo, null, null);
 	}
 	
-	public static IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public static IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		Component comp = Component.createComponent(BTAgent.class, () -> 
-		{
-			// this is executed before the features are inited
-			return loadModel(pojo.getClass().toString(), pojo, null).thenApply(model ->
-			{
-				//System.out.println("loaded micro model: "+model);
-				
-				return new BTAgent(pojo, model, cid, app);
-			}).get();
-		});
-		
-		return comp.getComponentHandle();
+		return Component.createComponent(BTAgent.class, () -> new BTAgent(pojo, cid, app));
 	}
 	
-	public BTAgent(Object pojo, IModelInfo model)
+	public BTAgent(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		this(pojo, model, null, null);
-	}
-	
-	public BTAgent(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
-	{
-		super(pojo, model, cid, app);
+		super(pojo, cid, app);
 	}
 }

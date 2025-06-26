@@ -1,11 +1,13 @@
 package jadex.bpmn.runtime.impl;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
+import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -15,6 +17,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
+import jadex.future.IFuture;
 
 public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvider<BpmnProcessLifecycleFeature>  implements IComponentLifecycleManager
 {
@@ -37,22 +40,13 @@ public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvide
 	}
 	
 	@Override
-	public boolean isCreator(Object obj)
+	public int	isCreator(Class<?> pojoclazz)
 	{
-		boolean ret = false;
-		if(obj instanceof String)
-		{
-			ret	= ((String)obj).startsWith("bpmn:");
-		}
-		else if(obj instanceof RBpmnProcess)
-		{
-			ret	= true;
-		}
-		return ret;
+		return SReflect.isSupertype(RBpmnProcess.class, pojoclazz) ? 1 : -1;
 	}
 	
 	@Override
-	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return BpmnProcess.create(pojo, cid, app);
 	}
@@ -70,19 +64,29 @@ public class BpmnProcessLifecycleFeatureProvider extends ComponentFeatureProvide
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
 		all.remove(getFeatureType());
+		
+		// Hack!!! remove injection feature to avoid dependency cycle
+		// Injection is not used for BPMN but required for BPMN provided service.
+		Iterator<Class<?>>	it	= all.iterator();
+		while(it.hasNext())
+		{
+			if(it.next().getName().indexOf("Injection")!=-1)
+			{
+				it.remove();
+			}
+		}
+		
 		return all;
 	}
 	
-	public Map<String, Object> getResults(Object pojo)
+	@Override
+	public Map<String, Object> getResults(IComponent comp)
 	{
-		Map<String, Object> ret = Collections.EMPTY_MAP;
-		if(pojo!=null)
+		Map<String, Object> ret = Collections.emptyMap();
+		if(comp.getPojo() instanceof RBpmnProcess)
 		{
-			if(pojo instanceof RBpmnProcess)
-			{
-				RBpmnProcess p = (RBpmnProcess)pojo;
-				ret = p.getResults();
-			}
+			RBpmnProcess p = (RBpmnProcess)comp.getPojo();
+			ret = p.getResults();
 		}
 		return ret;
 	}

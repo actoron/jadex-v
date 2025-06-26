@@ -1,23 +1,19 @@
 package jadex.bdi.hellopure;
 
+import jadex.bdi.Val;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  Simple hello agent that activates a plan based on a belief change.
- *  
- *  Pure BDI agent that is not bytecode enhanced. 
- *  This is achieved by using the baseclass BDIAgent that signals enhancement
- *  has already been done.
  */
-@Agent(type="bdip")
+@BDIAgent
 public class HelloPureAgent
 {
 	/** The text that is printed. */

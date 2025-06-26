@@ -2,14 +2,21 @@ package jadex.messaging;
 
 import jadex.core.IRuntimeFeature;
 import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
 
 /**
  *  Security is responsible for validating (remote) requests.
  */
 public interface ISecurityFeature extends IRuntimeFeature
 {
-	/** Special "trusted" role indicating that flagged entity may invoke any service remotely. */
+	/** The unrestricted group and role (access is granted to all), e.g. used for chat. */
+	public static final String UNRESTRICTED = "unrestricted";
+
+	/** The default role that is assigned to services without security annotation and granted in all authenticated networks. */
 	public static final String TRUSTED = "trusted";
+
+	/** The admin role that is required by all jadex system services, e.g. CMS. */
+	public static final String ADMIN = "admin";
 	
 	//-------- message-level encryption/authentication -------
 	
@@ -39,15 +46,23 @@ public interface ISecurityFeature extends IRuntimeFeature
 	 *  @param content The content.
 	 *  @return Decrypted/authenticated message or null on invalid message.
 	 */
-	public DecodedMessage decryptAndAuth(GlobalProcessIdentifier sender, byte[] content);
+	//public DecodedMessage decryptAndAuth(GlobalProcessIdentifier sender, byte[] content);
 	
 	/**
 	 *  Sets a new group.
 	 * 
 	 *  @param groupname The group name.
-	 *  @param secret The secret, null to remove.
+	 *  @param secret The secret encoded as String, null to remove.
 	 */
-	public void addGroup(String networkname, String secret);
+	public void addGroup(String groupname, String secret);
+
+	/**
+	 *  Adds a new group.
+	 *
+	 *  @param groupname The group name.
+	 *  @param asecret The secret.
+	 */
+	public void addGroup(String groupname, AbstractAuthenticationSecret asecret);
 	
 	/**
 	 *  Remove a group.

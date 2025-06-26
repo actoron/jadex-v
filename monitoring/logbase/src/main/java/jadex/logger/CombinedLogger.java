@@ -5,18 +5,20 @@ import java.util.ResourceBundle;
 /**
  *  Logger implementation that uses an internal and an external logger.
  */
-public class CombinedLogger implements System.Logger 
+public class CombinedLogger implements ISystemLogger
 {
-	protected final System.Logger ilogger;
-    protected final System.Logger elogger;
+	protected final ISystemLogger ilogger;
+    protected final ISystemLogger elogger;
+    protected boolean system;
 
-    public CombinedLogger(System.Logger ilogger, System.Logger elogger) 
+    public CombinedLogger(ISystemLogger ilogger, ISystemLogger elogger, boolean system) 
     {
         if(ilogger==null && elogger==null)
         	throw new NullPointerException();
 
         this.ilogger = ilogger;
         this.elogger = elogger;
+        this.system = system;
     }
 
     @Override
@@ -41,33 +43,42 @@ public class CombinedLogger implements System.Logger
     @Override
     public void log(Level level, String msg) 
     {
-        if(ilogger != null) 
+        if(ilogger != null && ilogger.isLoggable(level)) 
             ilogger.log(level, msg);
-        if(elogger != null) 
+        if(elogger != null && elogger.isLoggable(level)) 
             elogger.log(level, msg);
     }
 
     @Override
     public void log(Level level, ResourceBundle bundle, String msg, Throwable thrown) 
     {
-        if(ilogger != null) 
+        if(ilogger != null && ilogger.isLoggable(level)) 
             ilogger.log(level, bundle, msg, thrown);
-        if(elogger != null) 
+        if(elogger != null && elogger.isLoggable(level)) 
             elogger.log(level, bundle, msg, thrown);
     }
 
     @Override
     public void log(Level level, ResourceBundle bundle, String format, Object... params) 
     {
-        if(ilogger != null)
+        if(ilogger != null && ilogger.isLoggable(level))
             ilogger.log(level, bundle, format, params);
-        if(elogger != null)
+        if(elogger != null && elogger.isLoggable(level))
             elogger.log(level, bundle, format, params);
     }
-    
-    @Override
-	public String toString()
+
+	@Override
+	public String toString() 
 	{
-		return super.toString()+"(ilogger="+ilogger+", elogger="+elogger+")";
+		return "CombinedLogger [ilogger=" + ilogger + ", elogger=" + elogger + ", system=" + system + "]";
 	}
+    
+   @Override
+   public void setLevel(Level level)
+   {
+	   if(ilogger!=null)
+		   ilogger.setLevel(level);
+	   if(elogger!=null)
+		   elogger.setLevel(level);
+   }
 }

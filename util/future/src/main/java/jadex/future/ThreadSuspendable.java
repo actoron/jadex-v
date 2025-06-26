@@ -41,7 +41,7 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 	public void suspend(Future<?> future, long timeout, boolean realtime)
 	{
 		if(timeout==Future.UNSET)
-			timeout = getDefaultTimeout();
+			timeout = SUtil.DEFTIMEOUT;
 		
 		long endtime = timeout>0 ? System.currentTimeMillis()+timeout : -1;
 		
@@ -137,14 +137,5 @@ public class ThreadSuspendable extends ThreadLocalTransferHelper implements ISus
 	public IFuture<?>	getFuture()
 	{
 		return future;
-	}
-	
-	/**
-	 *  Get the default timeout.
-	 *  @return The default timeout (-1 for none).
-	 */
-	protected long getDefaultTimeout()
-	{
-		return SUtil.DEFTIMEOUT;
 	}
 }

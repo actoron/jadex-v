@@ -7,6 +7,8 @@ import java.util.List;
 
 import jadex.bt.impl.Event;
 import jadex.bt.state.ExecutionContext;
+import jadex.future.FutureBarrier;
+import jadex.future.IFuture;
 
 public abstract class CompositeNode<T> extends Node<T>
 {
@@ -59,12 +61,12 @@ public abstract class CompositeNode<T> extends Node<T>
     	System.out.println("child added: "+this+" "+child);
     }*/
     
-    protected Node<T> getChild(int n)
+    public Node<T> getChild(int n)
     {
     	return children.get(n);
     }
     
-    protected List<Node<T>> getChildren()
+    public List<Node<T>> getChildren()
     {
     	return children;
     }
@@ -83,15 +85,17 @@ public abstract class CompositeNode<T> extends Node<T>
     public abstract int getCurrentChildCount(ExecutionContext<T> context);
     
     @Override
-    public void abort(AbortMode abortmode, NodeState state, ExecutionContext<T> context) 
+    public IFuture<Void> internalAbort(AbortMode abortmode, NodeState state, ExecutionContext<T> context) 
     {
+    	FutureBarrier<Void> ret = new FutureBarrier<>();
+    	
     	if(getNodeContext(context).getAborted()!=null || abortmode==AbortMode.NONE)
     	{
-    		return;
+    		return IFuture.DONE;
     	}
     	else 
      	{	
-    		super.abort(abortmode, state, context);
+    		ret.add(super.internalAbort(abortmode, state, context));
     		
     		if(abortmode==AbortMode.SUBTREE || abortmode==AbortMode.SELF)
     		{
@@ -99,17 +103,22 @@ public abstract class CompositeNode<T> extends Node<T>
     			int cnt = 0;
     			for(Node<T> node: getChildren())
     			{
-    				if(node.getNodeContext(context).getState()==NodeState.RUNNING)
+    				if(node.getNodeContext(context)!=null 
+    					&& node.getNodeContext(context).getState()==NodeState.RUNNING)
+    				{
     					cnt++;
+    				}
     			}
     			//System.out.println("abort, active children: "+this+cnt);
-    			System.getLogger(this.getClass().getName()).log(Level.INFO, "abort, active children: "+this+cnt);
+    			getLogger().log(Level.INFO, "abort, active children: "+this+cnt);
 
     			
     			// must not propagate SUBTREE
-    			getChildren().stream().forEach(child -> child.abort(AbortMode.SELF, state, context));
+    			getChildren().stream().forEach(child -> ret.add(child.abort(AbortMode.SELF, state, context)));
     		}
     	}
+    	
+    	return ret.waitFor();
     }
     
     @Override
@@ -122,5 +131,22 @@ public abstract class CompositeNode<T> extends Node<T>
 				cnt++;
 		}
 		return cnt;
+    }
+    
+    @Override
+    public void reset(ExecutionContext<T> context, Boolean all) 
+    {
+    	super.reset(context, all);
+    	//if(subtree)
+    	//	getChildren().stream().forEach(child -> child.reset(context, all, subtree));
+    }
+    
+    public static interface IIndexContext
+    {
+    	public int getIndex();
+
+		public void setIndex(int idx);
+		
+		public void incIndex();
     }
 }

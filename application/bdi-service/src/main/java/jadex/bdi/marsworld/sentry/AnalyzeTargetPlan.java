@@ -2,12 +2,9 @@ package jadex.bdi.marsworld.sentry;
 
 import java.util.Collection;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanFinished;
-import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.Sentry;
 import jadex.bdi.marsworld.environment.Target;
@@ -15,9 +12,8 @@ import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.movement.MovementCapability.Move;
 import jadex.bdi.marsworld.producer.IProduceService;
 import jadex.bdi.marsworld.sentry.SentryAgent.AnalyzeTarget;
-import jadex.bdi.runtime.IPlan;
 import jadex.future.IFuture;
-import jadex.future.ITerminableFuture;
+import jadex.injection.annotation.Inject;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 
@@ -29,16 +25,14 @@ public class AnalyzeTargetPlan
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	public SentryAgent sentry;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected AnalyzeTarget goal;
-	
-	protected ITerminableFuture<Void> task;
 	
 	/**
 	 *  The plan body.
@@ -65,9 +59,7 @@ public class AnalyzeTargetPlan
 		{
 			//Sentry myself = (Sentry)sentry.getSpaceObject(true);
 			
-			task = env.analyzeTarget((Sentry)sentry.getSpaceObject(), target);
-			task.get();
-			task = null;
+			env.analyzeTarget((Sentry)sentry.getSpaceObject(), target).get();
 			//sentry.getMoveCapa().updateTarget(target);
 			
 			//System.out.println("Analyzed target: "+sentry.getAgent().getId()+", "+target.getOre()+" ore found.");
@@ -92,7 +84,7 @@ public class AnalyzeTargetPlan
 	{
 		//System.out.println("Calling some Production Agent...");
 
-		IFuture<Collection<IProduceService>> fut = sentry.getAgent().getFeature(IRequiredServiceFeature.class).getServices("produceser");
+		IFuture<Collection<IProduceService>> fut = sentry.getAgent().getFeature(IRequiredServiceFeature.class).searchServices(IProduceService.class);
 		Collection<IProduceService> ansers = fut.get();
 		
 		if(ansers.size()==0)
@@ -101,17 +93,6 @@ public class AnalyzeTargetPlan
 		for(IProduceService anser: ansers)
 		{
 			anser.doProduce(target);
-		}
-	}
-	
-	@PlanFinished
-	protected void finished()
-	{
-		//System.out.println("plan finished: "+this);
-		if(task!=null)
-		{
-			//System.out.println("aborting env task");
-			task.terminate();
 		}
 	}
 }

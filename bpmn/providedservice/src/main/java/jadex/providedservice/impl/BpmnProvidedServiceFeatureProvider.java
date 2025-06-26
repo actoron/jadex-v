@@ -3,23 +3,20 @@ package jadex.providedservice.impl;
 import java.util.Set;
 
 import jadex.bpmn.runtime.BpmnProcess;
-import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
-import jadex.micro.MicroAgent;
 import jadex.model.IModelFeature;
-import jadex.providedservice.IProvidedServiceFeature;
 
-public class BpmnProvidedServiceFeatureProvider extends ComponentFeatureProvider<IProvidedServiceFeature> 
+public class BpmnProvidedServiceFeatureProvider extends ComponentFeatureProvider<IBpmnProvidedServiceFeature> 
 {
 	@Override
-	public Class<IProvidedServiceFeature> getFeatureType()
+	public Class<IBpmnProvidedServiceFeature> getFeatureType()
 	{
-		return IProvidedServiceFeature.class;
+		return IBpmnProvidedServiceFeature.class;
 	}
 
 	@Override
-	public IProvidedServiceFeature createFeatureInstance(Component self)
+	public IBpmnProvidedServiceFeature createFeatureInstance(Component self)
 	{
 		return new BpmnProvidedServiceFeature(self);
 	}

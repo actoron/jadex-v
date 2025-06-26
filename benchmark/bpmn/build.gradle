@@ -28,7 +28,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:logbase:'+v
 	implementation 'org.activecomponents.jadex:benchmark-core:'+v
-	implementation 'org.activecomponents.jadex:model:'+v
 	implementation 'org.activecomponents.jadex:bpmn:'+v
 	
 	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'

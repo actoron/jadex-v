@@ -1,10 +1,9 @@
 plugins 
 {
-	id 'java-library'
-    
+	id 'java-library'    
 }
 
-description = 'Required service support'
+description = 'Inject, search and query services'
 
 group = 'org.activecomponents.jadex'
 
@@ -25,22 +24,20 @@ dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:common:'+v
-	implementation 'org.activecomponents.jadex:bytecode:'+v
-	implementation 'org.activecomponents.jadex:collection:'+v
-	implementation 'org.activecomponents.jadex:javaparser:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:core:'+v
-	implementation 'org.activecomponents.jadex:model:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
-    implementation 'org.activecomponents.jadex:providedservice:'+v
-	implementation 'org.activecomponents.jadex:serialization:'+v
-	implementation 'net.cinnom:nano-cuckoo:3.0.2'
-
+	implementation 'org.activecomponents.jadex:injection:'+v
+	implementation 'org.activecomponents.jadex:providedservice:'+v
+	implementation 'org.activecomponents.jadex:logbase:'+v 
+	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
-	// required for gradle 9!? https://docs.gradle.org/8.7/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
+	// Hack!? cf. https://stackoverflow.com/a/77605392
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
 
 test 
 {
@@ -54,19 +51,3 @@ processResources
         include '**/.system'
     }
 }
-
-task copyDependencies {
-    doLast {
-        copy {
-            configurations.compileClasspath.each { File file ->
-                  if (!file.absolutePath.startsWith(project.rootDir.absolutePath)) {
-                    if (file.name.endsWith('.jar'))
-                        from file.getParent()
-                }
-            } 
-            into 'build/libs/external-dependencies'
-        }
-    }
-    outputs.upToDateWhen { false }
-}
-build.dependsOn(copyDependencies)

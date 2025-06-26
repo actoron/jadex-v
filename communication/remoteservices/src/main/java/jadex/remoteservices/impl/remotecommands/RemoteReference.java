@@ -3,9 +3,10 @@ package jadex.remoteservices.impl.remotecommands;
 
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
+import jadex.providedservice.IServiceIdentifier;
 
 /**
- *  Remote reference for locating a specific target object in another platform.
+ *  Remote reference for locating a specific target object on another JVM.
  */
 public class RemoteReference
 {
@@ -41,8 +42,8 @@ public class RemoteReference
 	//-------- methods --------
 
 	/**
-	 *  Get the rms.
-	 *  @return the rms.
+	 *  Get the remote component.
+	 *  @return the remote component.
 	 */
 	public ComponentIdentifier getRemoteComponent()
 	{
@@ -50,8 +51,8 @@ public class RemoteReference
 	}
 
 	/**
-	 *  Set the rms.
-	 *  @param rms The rms to set.
+	 *  Set the remote component.
+	 *  @param comp The remote component to set.
 	 */
 	public void setRemoteComponent(ComponentIdentifier comp)
 	{
@@ -69,7 +70,7 @@ public class RemoteReference
 
 	/**
 	 *  Set the target id.
-	 *  @param cid The target id to set.
+	 *  @param targetid The target id to set.
 	 */
 	public void setTargetIdentifier(Object targetid)
 	{

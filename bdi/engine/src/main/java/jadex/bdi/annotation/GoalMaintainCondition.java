@@ -16,15 +16,15 @@ public @interface GoalMaintainCondition
 	 *  The events this condition should react to.
 	 */
 	public String[] beliefs() default {};
-	
-	/**
-	 *  The parameters this condition should react to.
-	 */
-	public String[] parameters() default {};
-	
-	/**
-	 *  The events this condition should react to.
-	 */
-	public RawEvent[] rawevents() default {};
+//	
+//	/**
+//	 *  The parameters this condition should react to.
+//	 */
+//	public String[] parameters() default {};
+//	
+//	/**
+//	 *  The events this condition should react to.
+//	 */
+//	public RawEvent[] rawevents() default {};
 }
 

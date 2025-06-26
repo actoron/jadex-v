@@ -38,7 +38,6 @@ import javax.swing.event.ChangeListener;
 
 import jadex.common.SGUI;
 import jadex.quickstart.cleanerworld.environment.ILocation;
-import jadex.quickstart.cleanerworld.environment.IPheromone;
 import jadex.quickstart.cleanerworld.environment.impl.Chargingstation;
 import jadex.quickstart.cleanerworld.environment.impl.Cleaner;
 import jadex.quickstart.cleanerworld.environment.impl.Environment;
@@ -170,16 +169,6 @@ public class EnvironmentGui	extends JFrame
 					}
 				}
 				
-				// Paint pheromones.
-				for(IPheromone pheromone: env.getPheromones())
-				{
-					int colorcode	= Math.abs(pheromone.getType().hashCode()%8);
-					g.setColor(new Color((colorcode&1)!=0?192:0, (colorcode&2)!=0?192:0, (colorcode&4)!=0?192:0, (int)(192*pheromone.getStrength())));
-					Point p	= onScreenLocation(pheromone.getLocation(), bounds);
-					int size	= (int)(pheromone.getStrength()*7);
-					g.fillOval(p.x-size, p.y-size, size*2+1, size*2+1);
-				}
-
 				// Paint charge stations.
 				Chargingstation[] stations = env.getChargingstations();
 				for(int i=0; i<stations.length; i++)

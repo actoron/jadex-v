@@ -14,7 +14,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URL;
-import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
@@ -22,9 +21,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-
-import jadex.core.IComponentHandle;
-import jadex.providedservice.IProvidedServiceFeature;
 
 public abstract class AbstractTableGui
 {

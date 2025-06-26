@@ -6,15 +6,12 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.bdi.marsworld.environment.Carry.Status;
-import jadex.environment.BaseObject;
+import jadex.core.annotation.NoCopy;
 import jadex.environment.Environment;
 import jadex.environment.EnvironmentTask;
-import jadex.environment.SpaceObject;
 import jadex.environment.EnvironmentTask.TaskData;
-import jadex.execution.AgentMethod;
-import jadex.execution.NoCopy;
-import jadex.execution.impl.TimerContext;
-import jadex.execution.impl.TimerCreator;
+import jadex.environment.SpaceObject;
+import jadex.execution.ComponentMethod;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 import jadex.math.IVector2;
@@ -34,22 +31,23 @@ public class MarsworldEnvironment extends Environment
 	
 	public MarsworldEnvironment(String id, int sps) 
 	{
-		super(id, sps, new TimerCreator(), new TimerContext());
+		super(id, sps);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T getData(String name, TaskData data, Class<T> type)
 	{
 		return data==null || data.data()==null? null: (T)data.data().get(name);
 	}
 	
-	@AgentMethod
+	@ComponentMethod
 	public ITerminableFuture<Void> load(@NoCopy Carry car, @NoCopy Target target)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
 		Carry carry = getSpaceObject(car);
 		
-		addTask(new EnvironmentTask(carry, this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), carry, "load", this, ret, data ->
 		{
 			Long time = getData("time", data, Long.class);
 			return performLoad(carry, getSpaceObject(target), data.delta(), true, time!=null? time: 0l);
@@ -58,14 +56,14 @@ public class MarsworldEnvironment extends Environment
 		return ret;
 	}
 	
-	@AgentMethod
+	@ComponentMethod
 	public ITerminableFuture<Void> unload(@NoCopy Carry car, @NoCopy Homebase target)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
 		Carry carry = getSpaceObject(car);
 		
-		addTask(new EnvironmentTask(carry, this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), carry, "unload", this, ret, data ->
 		{
 			Long time = getData("time", data, Long.class);
 			return performLoad(carry, getSpaceObject(target), data.delta(), false, time!=null? time: 0l);
@@ -74,7 +72,7 @@ public class MarsworldEnvironment extends Environment
 		return ret;
 	}
 	
-	@AgentMethod
+	@ComponentMethod
 	public ITerminableFuture<Void> analyzeTarget(@NoCopy Sentry sen, @NoCopy Target target)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
@@ -82,7 +80,7 @@ public class MarsworldEnvironment extends Environment
 		Sentry sentry = getSpaceObject(sen);
 		
 		long TIME = 3000;
-		addTask(new EnvironmentTask(sentry, this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), sentry, "analyzeTarget", this, ret, data ->
 		{
 			Long time = getData("time", data, Long.class);
 			return performAnalyzeTarget(sentry, getSpaceObject(target), data.delta(), time!=null? time: TIME);
@@ -91,14 +89,14 @@ public class MarsworldEnvironment extends Environment
 		return ret;
 	}
 	
-	@AgentMethod
+	@ComponentMethod
 	public ITerminableFuture<Void> rotate(@NoCopy BaseObject obj, IVector2 target)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
 		BaseObject object = getSpaceObject(obj);
 		
-		addTask(new EnvironmentTask(object, this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), object, "rotate", this, ret, data ->
 		{
 			return performRotate(object, target, data.delta());
 		}));
@@ -106,14 +104,14 @@ public class MarsworldEnvironment extends Environment
 		return ret;
 	}
 	
-	@AgentMethod
+	@ComponentMethod
 	public ITerminableFuture<Void> produce(@NoCopy Producer prod, @NoCopy Target target)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<Void>();
 		
 		Producer producer = getSpaceObject(prod);
 		
-		addTask(new EnvironmentTask(producer, this, ret, data ->
+		addTask(new EnvironmentTask(getAgent().getComponentHandle(), producer, "produce", this, ret, data ->
 		{
 			Long time = getData("time", data, Long.class);
 			return performProduce(producer, getSpaceObject(target), data.delta(), time!=null? time: 0l); 

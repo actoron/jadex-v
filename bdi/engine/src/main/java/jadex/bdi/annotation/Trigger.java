@@ -37,9 +37,9 @@ public @interface Trigger
 	 */
 	public String[] factchanged() default {};
 	
-	/**
-	 *  Activate from service invocation, i.e. choose this plan to handle service invocation requests of the given type.
-	 */
-	// TODO: allow multiples?
-	public ServiceTrigger service() default @ServiceTrigger();
+//	/**
+//	 *  Activate from service invocation, i.e. choose this plan to handle service invocation requests of the given type.
+//	 */
+//	// TODO: allow multiples?
+//	public ServiceTrigger service() default @ServiceTrigger();
 }

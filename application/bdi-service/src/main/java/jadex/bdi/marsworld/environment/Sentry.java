@@ -1,6 +1,5 @@
 package jadex.bdi.marsworld.environment;
 
-import jadex.environment.BaseObject;
 import jadex.math.IVector2;
 import jadex.math.Vector2Double;
 

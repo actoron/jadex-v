@@ -1,12 +1,13 @@
 package jadex.bdi.puzzle;
 
+import jadex.bdi.IGoal;
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.puzzle.SokratesMLRAgent.MakeMoveGoal;
-import jadex.bdi.runtime.IPlan;
 
 
 /**
@@ -65,9 +66,9 @@ public class MovePlan
 	 *  The plan aborted code.
 	 */
 	@PlanAborted
-	void aborted(IPlan plan, MakeMoveGoal goal)
+	void aborted(IPlan plan, IGoal igoal, MakeMoveGoal goal)
 	{
-		print("Aborted "+move, goal.depth);
+		print((igoal.isSucceeded()?"Succeeded ":"Aborted ")+move, goal.depth);
 	}
 
 	/**

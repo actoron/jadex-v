@@ -14,24 +14,22 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
 import jadex.future.IntermediateFuture;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.micro.mandelbrot.calculate.ICalculateService;
 import jadex.micro.mandelbrot.display.IDisplayService;
 import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
-import jadex.model.annotation.OnStart;
 import jadex.providedservice.IService;
-import jadex.providedservice.annotation.Service;
-import jadex.providedservice.annotation.ServiceComponent;
-import jadex.providedservice.impl.search.ServiceNotFoundException;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.ServiceNotFoundException;
 
 /**
  *  Generate service implementation. 
  */
-@Service
 public class GenerateService implements IGenerateService
 {
 	//-------- constants --------
@@ -46,7 +44,7 @@ public class GenerateService implements IGenerateService
 	//-------- attributes --------
 	
 	/** The agent. */
-	@ServiceComponent
+	@Inject
 	protected IComponent agent;
 	
 	protected IGenerateGui ggui;
@@ -71,7 +69,7 @@ public class GenerateService implements IGenerateService
 		else
 			System.out.println("gen gui interface not found");
 		
-		IDisplayService ds = agent.getFeature(IRequiredServiceFeature.class).getService(IDisplayService.class).get();
+		IDisplayService ds = agent.getFeature(IRequiredServiceFeature.class).searchService(IDisplayService.class).get();
 		List<Class<IFractalAlgorithm>> algos = ds.getAlgorithms().get();
 		defalgo = algos.get(0).getConstructor().newInstance(new Object[0]);
 	}
@@ -341,7 +339,7 @@ public class GenerateService implements IGenerateService
 		final AreaData part = (AreaData)task;					// part
 		
 //		System.out.println("invoke: "+service);
-		IFuture<IDisplayService> futd = agent.getFeature(IRequiredServiceFeature.class).getService("displayservice");
+		IFuture<IDisplayService> futd = agent.getFeature(IRequiredServiceFeature.class).searchService(IDisplayService.class);
 		futd.then(ds ->
 		{
 			//System.out.println("perform2 task start: "+task+" "+ServiceCall.getCurrentInvocation());

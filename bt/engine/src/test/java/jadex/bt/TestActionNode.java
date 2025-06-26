@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bt.actions.UserAction;
+import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node.AbortMode;
@@ -22,10 +22,10 @@ public class TestActionNode
     @Test
     public void testActionNodeSuccess() 
     {
-        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
-            return new Future<NodeState>(NodeState.SUCCEEDED);
+            return new TerminableFuture<>(NodeState.SUCCEEDED);
         }));
 
         ExecutionContext<Object> context = new ExecutionContext<Object>();
@@ -39,10 +39,10 @@ public class TestActionNode
     @Test
     public void testActionNodeFailure() 
     {
-        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
-            return new Future<NodeState>(NodeState.FAILED);
+            return new TerminableFuture<>(NodeState.FAILED);
         }));
 
         Event event = new Event("start", null);
@@ -56,10 +56,10 @@ public class TestActionNode
     @Test
     public void testActionNodeAbort() 
     {
-        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
-            return new Future<>();
+            return new TerminableFuture<>();
             // Simulate a running action
         }));
 
@@ -75,7 +75,7 @@ public class TestActionNode
     @Test
     public void testActionNodeException() 
     {
-        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
             System.out.println("Performing action...");
             throw new RuntimeException("Test exception");
@@ -95,7 +95,7 @@ public class TestActionNode
     {
     	AtomicBoolean stopped = new AtomicBoolean();
 
-        ActionNode<Object> an = new ActionNode<>(new UserAction<>((event, context) -> 
+        ActionNode<Object> an = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
         	System.out.println("Performing action...");
             AtomicBoolean aborted = new AtomicBoolean();

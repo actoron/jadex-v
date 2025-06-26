@@ -14,8 +14,6 @@ import java.lang.annotation.Target;
  *  The method should have a parameter for the "other" goal and return
  *  a boolean to denote that this goal instance should inhibit the
  *  goal instance provided in the parameter (true) or not (false).
- *  
- *  
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

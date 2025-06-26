@@ -1,4 +1,6 @@
 import groovy.json.JsonSlurper
+import java.io.*
+import java.util.zip.*
 
 // For deployment on server
 // ORG_GRADLE_PROJECT_dl_host - download host
@@ -37,41 +39,42 @@ def excludes = ['communication', 'nfproperties', 'bdi-llm', 'llmbdi']
 
 ['clean', 'compileJava', 'assemble', 'build', 'test', 'check', 'wrapper', 'sonarcube', 'publish', 'javadoc'].each { mytask ->
 	if(tasks.names.contains(mytask)) {
-		println "Configuring task '"+mytask+"'"
+		
+		logger.lifecycle "Configuring task '"+mytask+"'"
 		tasks.named(mytask) {
 			gradle.includedBuilds.each { build ->
-				//println "build name: "+build.getName()+" "+rootProject.name
+				//logger.lifecycle "build name: "+build.getName()+" "+rootProject.name
 				if(!rootProject.name.equals(build.getName())) {
 					if(!excludes.contains(build.name)) {
 						def taskInBuild = build.task(':'+mytask) // one cannot check if a task exists in a build :-(
 						//if(taskInBuild)
 						dependsOn taskInBuild
-						println "cot: "+build.getName()+" "+mytask
+						logger.lifecycle "cot: "+build.getName()+" "+mytask
 					}
 				}
 				else
 				{
-					//println "skipping: "+build.getName()
+					//logger.lifecycle "skipping: "+build.getName()
 				}
 			}
 		}
 	}
 	else {
-		println "Creating task '"+mytask+"'"
+		logger.lifecycle "Creating task '"+mytask+"'"
 		project.tasks.create([name: mytask]) {	
 			gradle.includedBuilds.each { build ->
-				//println "build name: "+build.getName()+" "+rootProject.name
+				//logger.lifecycle "build name: "+build.getName()+" "+rootProject.name
 				if(!rootProject.name.equals(build.getName())) {
 					if(!excludes.contains(build.name)) {
 						def taskInBuild = build.task(':'+mytask)
 						//if(taskInBuild)
 						dependsOn build.task(':'+mytask)
-						println "crt: "+build.getName()+" "+mytask
+						logger.lifecycle "crt: "+build.getName()+" "+mytask
 					}
 				}
 				else
 				{
-					//println "skipping: "+build.getName()
+					//logger.lifecycle "skipping: "+build.getName()
 				}
 			}
 		}
@@ -100,7 +103,7 @@ task closeStagingRepo {
     doLast {
         def stagedRepositoryId = System.getProperty("repoId")
         if(stagedRepositoryId==null) {
-        	println "no staging repo id: "+stagedRepositoryId
+        	logger.lifecycle "no staging repo id: "+stagedRepositoryId
         }
         else
         {
@@ -128,14 +131,14 @@ task closeStagingRepo {
 	        }
 	
 			def responseCode = connection.getResponseCode()
-			println "Response Code: ${responseCode}"
+			logger.lifecycle "Response Code: ${responseCode}"
     		
 	        if (responseCode == 201) {
-	            println "Response: ${readStream(connection.getInputStream())}"
+	            logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
 	            waitForStagingRepoClosed()
 	        } else {
-	            println "Failed to execute request. Response code: ${connection.responseCode}"
-            	println "Payload: ${readStream(connection.errorStream)}"
+	            logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
+            	logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
 	        }
 	
 	        connection.disconnect()
@@ -152,7 +155,7 @@ def waitForStagingRepoClosed() {
 		def data = fetchStagingRepos()
 		closed = extractRepoStatus(repoid, data)
 		if(!closed) {
-			println 'Waiting for repo to close: '+repoid
+			logger.lifecycle 'Waiting for repo to close: '+repoid
 			Thread.sleep(5000)
 		}
 	}
@@ -170,22 +173,22 @@ def fetchStagingRepos() {
         connection.setRequestProperty("Accept", "application/json")
         connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
 
-        println "Fetching staging repositories..."
+        logger.lifecycle "Fetching staging repositories..."
 
         int responseCode = connection.responseCode
-        println "Response Code: ${responseCode}"
+        logger.lifecycle "Response Code: ${responseCode}"
 
         if (responseCode == HttpURLConnection.HTTP_OK) {
             def jsonResponse = readStream(connection.getInputStream())
-            //println "Response: ${jsonResponse}"
+            //logger.lifecycle "Response: ${jsonResponse}"
             return jsonResponse
         } else {
-            println "Failed to execute request. Response code: ${responseCode}"
-            println "Payload: ${readStream(connection.errorStream)}"
+            logger.lifecycle "Failed to execute request. Response code: ${responseCode}"
+            logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
             return null
         }
     } catch (Exception e) {
-        println "Exception occurred while fetching staging repositories: ${e.message}"
+        logger.lifecycle "Exception occurred while fetching staging repositories: ${e.message}"
         return null
     }
 }
@@ -208,7 +211,7 @@ task releaseStagingRepo {
     doLast {
         def stagedRepositoryId = System.getProperty("repoId")
         if (stagedRepositoryId == null) {
-            println "No staging repo id provided."
+            logger.lifecycle "No staging repo id provided."
             return
         }
 
@@ -222,7 +225,7 @@ task releaseStagingRepo {
 
         while (attempts < maxAttempts) {
             attempts++
-            println "Attempt $attempts to release staging repository..."
+            logger.lifecycle "Attempt $attempts to release staging repository..."
 
             def connection = url.openConnection() as HttpURLConnection
             connection.setRequestMethod("POST")
@@ -236,18 +239,18 @@ task releaseStagingRepo {
             writer.flush()
             writer.close()
 
-            println "Response Code: ${connection.responseCode}"
+            logger.lifecycle "Response Code: ${connection.responseCode}"
 
             if (connection.responseCode == 201) {
-                println "Response: ${readStream(connection.getInputStream())}"
+                logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
                 break
             } else {
-                println "Failed to execute request. Response code: ${connection.responseCode}"
-                println "Payload: ${readStream(connection.errorStream)}"
+                logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
+                logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
                 if (attempts < maxAttempts) {
-                    println "Retrying... "+attempts
+                    logger.lifecycle "Retrying... "+attempts
                 } else {
-                    println "Maximum attempts reached. Exiting."
+                    logger.lifecycle "Maximum attempts reached. Exiting."
                 }
             }
             connection.disconnect()
@@ -265,7 +268,7 @@ task updateTag() {
     	def acc = parseURLWithCredentials(tag_url)
     	
     	if(acc==null) {
-    		println 'no repo access credentials'
+    		logger.lifecycle 'no repo access credentials'
     		return
     	}
 				
@@ -337,7 +340,7 @@ task createZip(type: Zip) {
 	def suf = getVar("JADEX_VERSION_SUFFIX")
 	if(suf!=null)
 		v += "-"+suf
-	println "Jadex Build Version " + v
+	logger.lifecycle "Jadex Build Version " + v
 
     archiveFileName = 'jadex-'+v+'.zip'
     destinationDirectory = file('deploy')
@@ -380,7 +383,7 @@ task deployZip() {
 		def acc = getDownloadServerAccess();
 		
 		if(acc==null) {
-    		println 'no repo access credentials'
+    		logger.lifecycle 'no repo access credentials'
     		return
     	}
 		
@@ -411,7 +414,7 @@ task deployZip() {
             ssh.disconnect();
         }
         
-		println "Zip deployed.";
+		logger.lifecycle "Zip deployed.";
 	}
 }
 
@@ -432,7 +435,7 @@ String getVar(String key) {
 }
 
 def parseURLWithCredentials(urlstring) {
-	//println "urlstring: "+urlstring
+	//logger.lifecycle "urlstring: "+urlstring
 	
 	def ret = [:];
 	def uri	= new URI(urlstring)
@@ -445,7 +448,7 @@ def parseURLWithCredentials(urlstring) {
     if(userinfo!=null)
     {
 		def String[] split = userinfo.split(":|;")
-		//println 'userinfo: ' + split
+		//logger.lifecycle 'userinfo: ' + split
         ret.user = split.length>0 ? split[0] : ''
         ret.password = split.length>1 ? split[1] : ''
         
@@ -455,14 +458,14 @@ def parseURLWithCredentials(urlstring) {
         	{
         		// Fingerprint info according to https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-04
         		ret.fingerprint	= split[i].substring('fingerprint='.length()).replace('-', ':')
-        		//println 'fingerprint: ' + ret.fingerprint
+        		//logger.lifecycle 'fingerprint: ' + ret.fingerprint
         	}
         }
 	}
 
 	// URL without extra info (e.g. no password for security reasons)
 	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
-	//println 'url: ' + ret.url
+	//logger.lifecycle 'url: ' + ret.url
 		
 	return ret;
 }
@@ -470,11 +473,11 @@ def parseURLWithCredentials(urlstring) {
 tasks.withType(Task) { task ->
     if (task.name.startsWith('publish') || task.group == 'publishing') {
         if (!isJadexVersionSet()) {
-            println "Skipping $task.name, Jadex version not set"
+            logger.lifecycle "Skipping $task.name, Jadex version not set"
             task.enabled = false
         }
     }
-    println task.name+' '+task.enabled
+    logger.lifecycle task.name+' '+task.enabled
 }
 
 def isJadexVersionSet() {
@@ -482,4 +485,193 @@ def isJadexVersionSet() {
 	return v!=null && v.length()>0;
 }
 
+task generateFeatureTree {
+    outputs.file 'featureTree.dot'
 
+    doLast {
+        def featureInterfaces = ['IRuntimeFeature', 'IComponentFeature']
+        def featureTree = []
+
+        gradle.includedBuilds.each 
+        { 
+        	includedBuild ->
+            def classesDir = new File(includedBuild.projectDir, 'build/classes/java/main')
+            if (classesDir.exists()) 
+            {
+                classesDir.eachFileRecurse 
+                { 
+                	file ->
+                    if (file.name.endsWith('.class')) 
+                    {
+                        def classInfo = getClassInfo(file)
+                        featureInterfaces.each 
+                        { 
+                        	iface ->
+                            if (classInfo.interfaces.contains(iface)) 
+                            {
+                                featureTree.add("${classInfo.name} implements $iface")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        def dotFile = new File('featureTree.dot')
+        dotFile.write('digraph G {\n')
+        featureTree.each { dotFile.append("  \"$it\";\n") }
+        dotFile.append('}\n')
+
+        logger.lifecycle "Featurebaum als DOT-Datei erstellt: featureTree.dot"
+    }
+}
+
+def getClassInfo(File classFile) {
+	logger.lifecycle "File is: " + classFile.name
+    def classInfo = [:]
+    classInfo.interfaces = []
+
+    classFile.withInputStream { input ->
+        def is = new DataInputStream(new BufferedInputStream(input, 16384))
+
+        def magic = is.readInt()
+        def magicStr = Integer.toHexString(magic).toUpperCase();
+        //logger.lifecycle "File magic number: " + magicStr
+        //if (magic != 0xCAFEBABE) throw new IllegalArgumentException("Not a class file.")
+        if (!"CAFEBABE".equals(magicStr))
+        {
+        	logger.lifecycle "Magic number fail: " + magicStr + " CAFEBABE"
+        	throw new IllegalArgumentException("Not a class file.")
+		}
+		
+        is.skipBytes(4) // Minor & Major version
+        def constants = readConstantPoolStrings(is)
+
+        is.skipBytes(2) // Access flags
+        classInfo.name = resolveClassName(is, constants)
+        logger.lifecycle "Class name: " + classInfo.name
+        classInfo.superClass = resolveClassName(is, constants)
+        logger.lifecycle "Super class name: " + classInfo.superClass
+
+        def ifaceCount = is.readUnsignedShort()
+        logger.lifecycle "Interface count: " + ifaceCount
+        ifaceCount.times 
+        {
+            classInfo.interfaces.add(resolveClassName(is, constants))
+        }
+        logger.lifecycle "Interface: " + classInfo.interfaces
+    }
+
+    return classInfo
+}
+
+def resolveClassName(DataInputStream is, Map strings) 
+{
+    def index = is.readUnsignedShort()
+    def classname = decodeModifiedUtf8(strings.get(bytesToShort(strings.get(index), 0) & 0xFFFF));
+	return classname;
+}
+
+def readConstantPoolStrings(DataInputStream is) 
+{
+	def ret = new HashMap<>();
+    def constants = [:]
+    def count = is.readUnsignedShort()
+
+    for (int i = 1; i < count; i++) 
+    {
+        def tag = is.readUnsignedByte()
+        switch (tag) 
+        {
+        	case 1:
+	        	def len = is.readUnsignedShort();
+	            def buf = new byte[2 + len];
+	            shortIntoBytes(len, buf, 0);
+	            def off = 2;
+	            def read = 0;
+	    		while (read < len)
+	    		{
+	    			read = is.read(buf, off, len - read);
+	    			off += read;
+	    		}
+	    		ret.put(i, buf);
+	                
+	            //skip(is, len);
+	            //ret.put(i, "dummy");
+				//ret.put(i, is.readUTF());
+	            break;
+			case 3:
+	        	def buf = new byte[4];
+	           	is.readFully(buf);
+	            ret.put(i, buf);
+	            break;
+	        case 4:
+	        case 9:
+	        case 10:
+	        case 11:
+	        case 12:
+	        case 18:
+	        	skip(is, 4);
+	            break;
+	        case 5:
+	        case 6:
+	        	skip(is, 8);
+	            i++;
+	            break;
+	        case 7:
+	        case 8:
+	        	def buf = new byte[2];
+	            def clen = 2;
+	            def cread = 0;
+	    		while (cread < clen)
+		    		cread += is.read(buf, cread, clen - cread);
+	    		ret.put(i, buf);
+	    		break;
+	    	case 16:
+	        case 19:
+	        case 20:
+	        	skip(is, 2);
+	            break;
+	        case 15:
+	        	skip(is, 3);
+	            break;
+	        default:
+	        	throw new RuntimeException("Unknown constant pool tag: " + tag);
+        }
+	}
+	return ret;
+}
+
+def shortIntoBytes(int val, byte[] buffer, int offset)
+{
+	buffer[offset] = (byte)((val >>> 8) & 0xFF);
+	buffer[offset+1] = (byte)(val & 0xFF);
+}
+
+def skip(DataInputStream is, int len)
+{
+	while (len > 0)
+   		len -= is.skip(len);
+}
+
+def decodeModifiedUtf8(byte[] data)
+{
+	if (data == null)
+		return null;
+	try
+	{
+		return (new DataInputStream(new ByteArrayInputStream(data))).readUTF();
+	}
+	catch (Exception e)
+	{
+		e.printStackTrace();
+	}
+}
+
+def bytesToShort(byte[] buffer, int offset)
+{
+	def value = (short)((0xFF & buffer[offset]) << 8);
+	value |= (0xFF & buffer[offset + 1]);
+
+	return value;
+}

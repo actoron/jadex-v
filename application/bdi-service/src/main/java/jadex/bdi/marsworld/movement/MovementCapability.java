@@ -3,50 +3,45 @@ package jadex.bdi.marsworld.movement;
 import java.util.ArrayList;
 import java.util.List;
 
+import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.annotation.Body;
-import jadex.bdi.annotation.Capability;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.marsworld.BaseAgent;
+import jadex.bdi.marsworld.environment.BaseObject;
 import jadex.bdi.marsworld.environment.Homebase;
 import jadex.bdi.marsworld.environment.Target;
-import jadex.bdi.runtime.ICapability;
-import jadex.bdi.runtime.Val;
 import jadex.core.IComponent;
-import jadex.environment.BaseObject;
 import jadex.environment.Environment;
 import jadex.environment.SpaceObject;
+import jadex.injection.annotation.Inject;
 import jadex.math.IVector2;
-import jadex.micro.annotation.Agent;
 
 /**
  * 
  */
-@Capability
-@Plans({
-	@Plan(trigger=@Trigger(goals={MovementCapability.Move.class, MovementCapability.Missionend.class}), body=@Body(MoveToLocationPlan.class)),
-	@Plan(trigger=@Trigger(goals=MovementCapability.WalkAround.class), body=@Body(RandomWalkPlan.class))
-})
+// TODO: use BDI annotation?
+//@BDIAgent
+@Plan(trigger=@Trigger(goals={MovementCapability.Move.class, MovementCapability.Missionend.class}), impl=MoveToLocationPlan.class)
+@Plan(trigger=@Trigger(goals=MovementCapability.WalkAround.class), impl=RandomWalkPlan.class)
 public class MovementCapability
 {
 	//-------- attributes --------
 
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	// Annotation to inform FindBugs that the uninitialized field is not a bug.
 	//@SuppressFBWarnings(value="UR_UNINIT_READ", justification="Agent field injected by interpreter")
 	
-	/** The capability. */
-	@Agent
-	protected ICapability capa;
+//	/** The capability. */
+//	@Inject
+//	protected ICapability capa;
 	
 	/** The mission end. */
 //	@Belief(dynamic=true, updaterate=1000) 
@@ -113,7 +108,7 @@ public class MovementCapability
 	 *  The mission end goal.
 	 *  Move to homebase on end.
 	 */
-	@Goal(unique=true)
+	@Goal/*(unique=true)*/
 	public static class Missionend implements IDestinationGoal
 	{
 		/** The movement capability. */
@@ -124,16 +119,17 @@ public class MovementCapability
 		 */
 		public Missionend(MovementCapability capa)
 		{
+//			System.out.println("Missionend: "+capa.getMyself());
 			this.capa = capa;
 		}
 		
 		/**
 		 *  Create a new Move. 
 		 */
-		@GoalCreationCondition(beliefs="missionend")
+		@GoalCreationCondition(factchanged="missionend")
 		public static boolean checkCreate(MovementCapability capa)
 		{
-			return capa.missionend.get() && !capa.getMyself().getPosition().equals(capa.getHomebase().getPosition());
+			return capa.missionend.get();// && !capa.getMyself().getPosition().equals(capa.getHomebase().getPosition());
 		}
 		
 		/**
@@ -185,14 +181,14 @@ public class MovementCapability
 		return ((BaseAgent)agent.getPojo()).getSpaceObject();
 	}
 
-	/**
-	 *  Get the capa.
-	 *  @return The capa.
-	 */
-	public ICapability getCapability()
-	{
-		return capa;
-	}
+//	/**
+//	 *  Get the capa.
+//	 *  @return The capa.
+//	 */
+//	public ICapability getCapability()
+//	{
+//		return capa;
+//	}
 
 	/**
 	 *  Get the my_targets.

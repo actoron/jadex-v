@@ -4,11 +4,12 @@ import jadex.core.IComponent;
 import jadex.future.IBackwardCommandFuture;
 import jadex.future.IFuture;
 import jadex.messaging.ISecurityInfo;
+import jadex.remoteservices.IRemoteConversationCommand;
 
 /**
  *  Command for sending backward command data.
  */
-public class RemoteBackwardCommand<T> implements IRemoteConversationCommand<T>
+public class RemoteBackwardCommand<T> extends AbstractIdSenderCommand implements IRemoteConversationCommand<T>
 {
 	/** The backward command info. */
 	protected Object info;

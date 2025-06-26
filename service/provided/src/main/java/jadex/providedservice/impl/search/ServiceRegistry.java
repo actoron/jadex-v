@@ -3,6 +3,7 @@ package jadex.providedservice.impl.search;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -182,8 +183,6 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	// write
 	public void addService(IServiceIdentifier service)
 	{
-		//System.out.println("add service: "+service);
-		
 		Lock lock = rwlock.writeLock();
 		lock.lock();
 		try
@@ -193,8 +192,8 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			indexer.addValue(service);
 			
 			// If services belongs to excluded component cache them
-			ComponentIdentifier cid = service.getProviderId();
-			/*if(excludedservices!=null && excludedservices.containsKey(cid))
+			/*ComponentIdentifier cid = service.getProviderId();
+			if(excludedservices!=null && excludedservices.containsKey(cid))
 			{
 				if(excludedservices==null)
 					excludedservices = new HashMap<>();
@@ -208,18 +207,21 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			}
 			else
 			{*/
-				// Downgrade to read lock.
-				lock = rwlock.readLock();
-				lock.lock();
+			// Downgrade to read lock.
+				rwlock.readLock().lock();
 				rwlock.writeLock().unlock();
-				
-				checkQueries(service, ServiceEvent.SERVICE_ADDED);
+				lock	= null;	// Unlocked in checkQueries()
+				checkQueries(service, ServiceEvent.SERVICE_ADDED, true);
 			//}
+				
+			//System.out.println(indexer.getAllValues());
 		}
 		finally
 		{
-			if(lock != null)
+			if(lock!=null)
+			{
 				lock.unlock();
+			}
 		}
 	}
 	
@@ -270,7 +272,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			}
 			
 			for(IServiceIdentifier ser : services)
-				checkQueries(ser, ServiceEvent.SERVICE_CHANGED);
+				checkQueries(ser, ServiceEvent.SERVICE_CHANGED, false);
 		}
 		else
 		{
@@ -285,7 +287,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 				rwlock.writeLock().unlock();
 			}
 			
-			checkQueries(service, ServiceEvent.SERVICE_CHANGED);
+			checkQueries(service, ServiceEvent.SERVICE_CHANGED, false);
 		}
 	}
 	
@@ -312,7 +314,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			
 			// todo: get only changed?!
 			for(IServiceIdentifier ser : services)
-				checkQueries(ser, ServiceEvent.SERVICE_CHANGED);
+				checkQueries(ser, ServiceEvent.SERVICE_CHANGED, false);
 		}
 		else
 		{
@@ -327,7 +329,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	// write
 	public void removeService(IServiceIdentifier service)
 	{
-		//System.out.println("removing service: "+service);
+		System.out.println("removing service: "+service);
 		
 		Lock lock = rwlock.writeLock();
 		lock.lock();
@@ -336,15 +338,17 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			indexer.removeValue(service);
 			
 			// Downgrade to read lock.
-			lock = rwlock.readLock();
-			lock.lock();
+			rwlock.readLock().lock();
 			rwlock.writeLock().unlock();
-			
-			checkQueries(service, ServiceEvent.SERVICE_REMOVED);
+			lock	= null;	// Unlocked in checkQueries()
+			checkQueries(service, ServiceEvent.SERVICE_REMOVED, true);
 		}
 		finally
 		{
+			if(lock!=null)
+			{
 				lock.unlock();
+			}
 		}
 		
 		proxyrwlock.writeLock().lock();
@@ -361,9 +365,9 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	/**
 	 *  Remove services of a platform from the registry.
 	 *  @param platform The platform, null for everything.
-	 * /
+	 */
 	// write
-	public void removeServices(IComponentIdentifier platform)
+	public void removeServices(ComponentIdentifier platform)
 	{
 		Set<IServiceIdentifier> pservs = null;
 		
@@ -391,7 +395,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			if(pservs!=null)
 			{
 				for(IServiceIdentifier serv : pservs)
-					checkQueries(serv,  ServiceEvent.SERVICE_REMOVED);
+					checkQueries(serv,  ServiceEvent.SERVICE_REMOVED, true);
 			}
 		}
 		finally
@@ -412,7 +416,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 				proxyrwlock.writeLock().unlock();
 			}
 		}
-	}*/
+	}
 	
 	/**
 	 *  Remove services of a platform from the registry.
@@ -530,10 +534,10 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	 *  Add a service query to the registry.
 	 *  @param query ServiceQuery.
 	 */
-	@SuppressWarnings({ "rawtypes" })
-	public <T> ISubscriptionIntermediateFuture<T> addQuery(final ServiceQuery<T> query)
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public <T> ISubscriptionIntermediateFuture<Object> addQuery(ServiceQuery<T> query)
 	{
-		final SubscriptionIntermediateFuture<T> fut = new SubscriptionIntermediateFuture<>();
+		final SubscriptionIntermediateFuture<Object> fut = new SubscriptionIntermediateFuture<>();
 		if(query.getOwner()==null)
 		{
 			fut.setException(new IllegalArgumentException("Query owner must not null: "+query));
@@ -555,7 +559,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			Set<IServiceIdentifier> sers = null;
 			try
 			{
-				ret = new ServiceQueryInfo<T>((ServiceQuery<T>) query, fut);
+				ret = new ServiceQueryInfo<T>((ServiceQuery<T>) query, (SubscriptionIntermediateFuture)fut);
 				queries.addValue((ServiceQueryInfo)ret);
 				
 				// We need the write lock during read for consistency
@@ -615,9 +619,9 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	/**
 	 *  Remove all service queries of a specific component from the registry.
 	 *  @param owner The query owner.
-	 * /
+	 */
 	// write
-	public void removeQueries(IComponentIdentifier owner)
+	public void removeQueries(ComponentIdentifier owner)
 	{
 		rwlock.writeLock().lock();
 		try
@@ -635,21 +639,21 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 		{
 			rwlock.writeLock().unlock();
 		}
-	}*/
+	}
 	
 	/**
 	 *  Remove all service queries of a specific platform from the registry.
 	 *  @param platform The platform from which the query owner comes.
-	 * /
+	 */
 	// write
-	public void removeQueriesOfPlatform(IComponentIdentifier platform)
+	public void removeQueriesOfRuntime(ComponentIdentifier runtime)
 	{
 		rwlock.writeLock().lock();
 		Set<ServiceQueryInfo<?>> qinfos = new HashSet<ServiceQueryInfo<?>>();
 		try
 		{
 			// todo: Should use index to find all services of a platform
-			Set<ServiceQueryInfo<?>> qis = queries.getValues(QueryInfoExtractor.KEY_TYPE_OWNER_PLATORM, platform.toString());
+			Set<ServiceQueryInfo<?>> qis = queries.getValues(QueryInfoExtractor.KEY_TYPE_OWNER_PLATORM, runtime.toString());
 			
 			if(qis!=null)
 			{
@@ -664,61 +668,7 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 		{
 			rwlock.writeLock().unlock();
 		}
-	}*/
-	
-	/**
-	 *  Add an excluded component. 
-	 *  @param The component identifier.
-	 * /
-	// write
-	public void addExcludedComponent(IComponentIdentifier cid)
-	{
-		rwlock.writeLock().lock();
-		try
-		{
-			if (excludedservices == null)
-				excludedservices = new HashMap<>();
-			excludedservices.put(cid, null);
-		}
-		finally
-		{
-			rwlock.writeLock().unlock();
-		}
-	}*/
-	
-	/**
-	 *  Remove an excluded component. 
-	 *  @param The component identifier.
-	 * /
-	public void removeExcludedComponent(IComponentIdentifier cid)
-	{
-		Lock lock = rwlock.writeLock();
-		lock.lock();
-		try
-		{
-			if(excludedservices!=null)
-			{
-				Set<IServiceIdentifier> exs = excludedservices.remove(cid);
-				
-				lock.unlock();
-				lock = null;
-				
-				// Get and remove services from cache
-				if(exs!=null)
-				{
-					for(IServiceIdentifier ser: exs)
-					{
-						checkQueries(ser, ServiceEvent.SERVICE_ADDED);
-					}
-				}
-			}
-		}
-		finally
-		{
-			if (lock != null)
-				lock.unlock();
-		}
-	}*/
+	}
 	
 	/**
 	 *  Test if a service is visible, i.e. visible after init for all components or visible for subcomponents also during init.
@@ -750,13 +700,16 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 	 *  @param removed Indicates if the query was removed. 
 	 */
 	// read
-	protected IFuture<Void> checkQueries(IServiceIdentifier ser, int eventtype)
+	protected IFuture<Void> checkQueries(IServiceIdentifier ser, int eventtype, boolean haslock)
 	{
 		Future<Void> ret = new Future<Void>();
 		
 		List<Tuple2<String, String[]>> spec = null;
 		Set<ServiceQueryInfo<?>> sqis = null;
-		rwlock.readLock().lock();
+		if(!haslock)
+		{
+			rwlock.readLock().lock();
+		}
 		try
 		{
 			spec = ((QueryInfoExtractor)queries.getKeyExtractor()).getIndexerSpec(ser);
@@ -767,6 +720,9 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 		{
 			rwlock.readLock().unlock();
 		}
+		
+//		System.err.println("sqis: "+sqis);
+//		Thread.dumpStack();
 		
 //		Set<ServiceQueryInfo<?>> r1 = queries.getValues(QueryInfoExtractor.KEY_TYPE_INTERFACE, ser.getServiceType().toString());
 //		Set<ServiceQueryInfo<?>> r2 = queries.getValues(QueryInfoExtractor.KEY_TYPE_INTERFACE, "null");
@@ -797,18 +753,18 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 		return ret;
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	protected void dispatchQueryEvent(ServiceQueryInfo<?> queryinfo, IServiceIdentifier ser, int eventtype)
 	{
 		ServiceQuery<?> query = queryinfo.getQuery();
 		if(query.isEventMode())
 		{
 			ServiceEvent event = new ServiceEvent(ser, eventtype);
-			((TerminableIntermediateFuture<ServiceEvent>)queryinfo.getFuture()).addIntermediateResultIfUndone(event);
+			((TerminableIntermediateFuture)queryinfo.getFuture()).addIntermediateResultIfUndone(event);
 		}
 		else if(ServiceEvent.SERVICE_ADDED==eventtype)
 		{
-			((TerminableIntermediateFuture<IServiceIdentifier>)queryinfo.getFuture()).addIntermediateResultIfUndone(ser);
+			((TerminableIntermediateFuture)queryinfo.getFuture()).addIntermediateResultIfUndone(ser);
 		}
 	}
 	
@@ -857,11 +813,11 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
 			ret = gpi1.equals(gpi2);
 		}
-		else if(ServiceScope.COMPONENT.equals(scope))
+		/*else if(ServiceScope.COMPONENT.equals(scope))
 		{
 			ret = searchstart.equals(sercid);
 			ser.getProviderId().equals(query.getOwner());
-		}
+		}*/
 		
 		return ret;
 	}
@@ -896,10 +852,10 @@ public class ServiceRegistry implements IServiceRegistry // extends AbstractServ
 			GlobalProcessIdentifier gpi2 = sercid.getGlobalProcessIdentifier();
 			ret = gpi1.equals(gpi2);
 		}
-		else if(ServiceScope.COMPONENT.equals(scope))
+		/*else if(ServiceScope.COMPONENT.equals(scope))
 		{
 			ret = searchstart.equals(sercid);
-		}
+		}*/
 		
 		return ret;
 	}

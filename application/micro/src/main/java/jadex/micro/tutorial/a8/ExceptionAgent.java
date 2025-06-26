@@ -2,11 +2,8 @@ package jadex.micro.tutorial.a8;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
-@Agent
 public class ExceptionAgent 
 {
 	@OnStart
@@ -17,7 +14,7 @@ public class ExceptionAgent
 	
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MicroAgent.create(new ExceptionAgent());
+		IComponentManager.get().create(new ExceptionAgent());
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

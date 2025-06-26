@@ -70,6 +70,7 @@ public class Traverser
 			processors.add(new ImageProcessor());
 			processors.add(new RectangleProcessor());
 		}
+		processors.add(new RecordProcessor());
 		processors.add(new TimestampProcessor());
 		processors.add(new LogRecordProcessor());
 		processors.add(new DateProcessor());
@@ -334,7 +335,9 @@ public class Traverser
 	{
 		Object ret = null;
 		if (context instanceof TraversedObjectsContext)
+		{
 			ret = ((TraversedObjectsContext) context).get(inputobject);
+		}
 		return ret;
 	}
 	

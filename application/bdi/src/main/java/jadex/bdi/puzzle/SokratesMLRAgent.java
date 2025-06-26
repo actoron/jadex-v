@@ -2,26 +2,25 @@ package jadex.bdi.puzzle;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.annotation.Body;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
-import jadex.bdi.annotation.GoalResult;
 import jadex.bdi.annotation.GoalSelectCandidate;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.IBDIAgent;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.impl.ICandidateInfo;
+import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 /**
   <H3>Puzzling agent.</H3>
   
@@ -34,11 +33,11 @@ import jadex.model.annotation.OnStart;
   between the moves. Measurements were done
   with the Benchmark.agent in this package.
  */
-@Agent(type="bdip")
-@Plans({
-	@Plan(trigger=@Trigger(goals = SokratesMLRAgent.ChooseMoveGoal.class), body = @Body(ChooseMovePlan.class)),
-	// TODO: binding options for pojo plans?
-	@Plan(body = @Body(MovePlan.class))})
+@BDIAgent
+@Plan(trigger=@Trigger(goals=SokratesMLRAgent.ChooseMoveGoal.class), impl= ChooseMovePlan.class)
+// TODO: binding options for pojo plans?
+// TODO: trigger is only required for adding correct context fetcher
+@Plan(trigger=@Trigger(goals=SokratesMLRAgent.MakeMoveGoal.class), impl=MovePlan.class)
 public class SokratesMLRAgent
 {
 	@Belief
@@ -47,7 +46,7 @@ public class SokratesMLRAgent
 	long	delay	= 500;
 	Strategy	ml	= Strategy.SAME_LONG;
 	
-	@Agent
+	@Inject
 	IComponent agent;
 	
 	enum Strategy
@@ -65,7 +64,7 @@ public class SokratesMLRAgent
 			this.depth	= depth;
 		}
 		
-		@GoalTargetCondition
+		@GoalTargetCondition(beliefs="board")
 		boolean	isSolution()
 		{
 			return board.isSolution();
@@ -90,16 +89,22 @@ public class SokratesMLRAgent
 	}
 	
 	@Goal
-	class ChooseMoveGoal
+	class ChooseMoveGoal	implements Supplier<ICandidateInfo>
 	{
 		List<ICandidateInfo>	cands;
 		
-		@GoalResult
+//		@GoalResult
 		ICandidateInfo	cand;
 		
 		public ChooseMoveGoal(List<ICandidateInfo> cands)
 		{
 			this.cands	= cands;
+		}
+		
+		@Override
+		public ICandidateInfo get()
+		{
+			return cand;
 		}
 	}
 	
@@ -131,6 +136,7 @@ public class SokratesMLRAgent
 
 	public static void main(String[] args)
 	{
-		IBDIAgent.create(new SokratesMLRAgent());
+		IComponentManager.get().create(new SokratesMLRAgent()).get();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

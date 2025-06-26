@@ -23,4 +23,14 @@ public abstract class RuntimeFeatureProvider<T extends IRuntimeFeature> extends 
 	{
 		return Collections.emptySet();
 	}
+	
+	/**
+	 *  Determines if the feature is created immediately
+	 *  on component startup (false) or later on first access (true).
+	 *  @return	Defaults to false.
+	 */
+	public boolean isLazyFeature()
+	{
+		return true;
+	}
 }

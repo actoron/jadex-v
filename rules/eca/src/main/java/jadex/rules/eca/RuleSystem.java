@@ -72,7 +72,7 @@ public class RuleSystem
 	{
 		this.context = context;
 		this.rulebase = new Rulebase();
-		this.rules = new IdentityHashMap<Object, Tuple2<Object, IRule<?>[]>>(); // objects may change
+		this.rules = new IdentityHashMap<Object, Tuple2<Object, IRule<?>[]>>(1); // objects may change
 		this.pcman = new PropertyChangeManager();
 		this.queueevents = queueevents;
 	}
@@ -124,7 +124,13 @@ public class RuleSystem
 		{
 			IEvent event = pcman.removeEvent(0);
 			
-			//if(event.getType().toString().indexOf("daytime")!=-1)
+			//if(event.getType().toString().indexOf("stations")!=-1)
+			//	System.out.println("station event:"+event);
+			
+			//if(event.getType().toString().indexOf("self")!=-1)
+			//	System.out.println("self event:"+event);
+			
+			//if(event.getType().toString().indexOf("wastes")!=-1)
 			//	System.out.println("sdgfsdgf");
 			
 			//if(event.getType().getType(0).indexOf("factadded")!=-1)// && event.getType().getType(1).indexOf("mybean")!=-1)

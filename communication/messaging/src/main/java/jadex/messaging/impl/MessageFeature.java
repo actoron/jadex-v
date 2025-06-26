@@ -2,10 +2,7 @@ package jadex.messaging.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
@@ -24,7 +21,7 @@ import jadex.messaging.ISecurityFeature.DecodedMessage;
 import jadex.messaging.ISecurityInfo;
 import jadex.messaging.SecureExchange;
 import jadex.messaging.ipc.IpcStreamHandler;
-import jadex.messaging.security.Security;
+import jadex.messaging.security.SecurityFeature;
 import jadex.serialization.SerializationServices;
 
 public class MessageFeature implements IMessageFeature
@@ -53,14 +50,14 @@ public class MessageFeature implements IMessageFeature
 	/**
 	 *  Send a message.
 	 *  @param message	The message.
-	 *  @param receiver	The message receiver(s). At least one required unless given in message object (e.g. FipaMessage).
+	 *  @param receivers	The message receiver(s). At least one required unless given in message object (e.g. FipaMessage).
 	 *  
 	 */
 	public IFuture<Void> sendMessage(Object message, ComponentIdentifier... receivers)
 	{
 		for (ComponentIdentifier receiver : receivers)
 		{
-			if (GlobalProcessIdentifier.SELF.equals(receiver.getGlobalProcessIdentifier()))
+			if (GlobalProcessIdentifier.getSelf().equals(receiver.getGlobalProcessIdentifier()))
 			{
 				// Local message
 				IComponentHandle exta = ComponentManager.get().getComponent(receiver).getComponentHandle();
@@ -73,8 +70,8 @@ public class MessageFeature implements IMessageFeature
 			{
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				SerializationServices.get().encode(baos, IComponentManager.get().getClassLoader(), message);
-				Security sec = (Security) IComponentManager.get().getFeature(ISecurityFeature.class);
-				byte[] emsg = sec.encryptAndSign(receiver.getGlobalProcessIdentifier(), baos.toByteArray());
+				SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
+				byte[] emsg = sec.encryptAndSign(receiver, baos.toByteArray());
 				baos = null;
 				IpcStreamHandler ipc = (IpcStreamHandler) IComponentManager.get().getFeature(IIpcFeature.class);
 				ipc.sendMessage(receiver, emsg);
@@ -167,15 +164,15 @@ public class MessageFeature implements IMessageFeature
 	 *  Called directly for intra-platform message delivery (i.e. local messages)
 	 *  and indirectly for remote messages.
 	 *  
-	 *  @param secinfos The security meta infos.
+	 *  @param origin Message origin.
 	 *  @param encmsg The encoded message that arrived.
 	 */
 	public void externalMessageArrived(GlobalProcessIdentifier origin, byte[] encmsg)
 	{
-		Security sec = (Security) IComponentManager.get().getFeature(ISecurityFeature.class);
+		SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
 		DecodedMessage decmsg = sec.decryptAndAuth(origin, encmsg);
 		encmsg = null;
-		Object msg = SerializationServices.get().decode(new ByteArrayInputStream(decmsg.message()), IComponentManager.get().getClassLoader());
+		Object msg = SerializationServices.get().decode(new ByteArrayInputStream(decmsg.message(), 0, decmsg.message().length), IComponentManager.get().getClassLoader());
 		messageArrived(decmsg.secinfo(), msg);
 	}
 	
@@ -192,7 +189,7 @@ public class MessageFeature implements IMessageFeature
 		conversationid = conversationid != null ? conversationid :SUtil.createUniqueId(self.toString());
 		TransmittedExchange tex = new TransmittedExchange(self.getId(), conversationid, message);
 		
-		if (GlobalProcessIdentifier.SELF.equals(receiver.getGlobalProcessIdentifier()))
+		if (GlobalProcessIdentifier.getSelf().equals(receiver.getGlobalProcessIdentifier()))
 		{
 			// Local message
 			IComponentHandle exta = ComponentManager.get().getComponent(receiver).getComponentHandle();
@@ -205,8 +202,8 @@ public class MessageFeature implements IMessageFeature
 		{
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			SerializationServices.get().encode(baos, IComponentManager.get().getClassLoader(), tex);
-			Security sec = (Security) IComponentManager.get().getFeature(ISecurityFeature.class);
-			byte[] emsg = sec.encryptAndSign(receiver.getGlobalProcessIdentifier(), baos.toByteArray());
+			SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
+			byte[] emsg = sec.encryptAndSign(receiver, baos.toByteArray());
 			baos = null;
 			IpcStreamHandler ipc = (IpcStreamHandler) IComponentManager.get().getFeature(IIpcFeature.class);
 			ipc.sendMessage(receiver, emsg);

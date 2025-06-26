@@ -6,10 +6,8 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.impl.ComponentManager;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
-@Agent
 public class CustomExceptionHandlerAgent
 {
 	@OnStart

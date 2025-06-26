@@ -14,12 +14,12 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
-import jadex.requiredservice.annotation.OnService;
+import jadex.requiredservice.annotation.InjectService;
+import jadex.requiredservice.annotation.InjectService.Mode;
 
 /**
  *  Chat micro agent provides a basic chat service and publishes it as rest web service.
@@ -32,16 +32,14 @@ import jadex.requiredservice.annotation.OnService;
  *    - The UI uses sendMessageToAll of IChatGuiService to tell its agent to send the chat message to the other agents
  *	- The agent publishes the UI via its folder and the contained index.html page on the web server
  */
-@Agent
-@Service
 @Publish(publishid="http://localhost:8081/${cid}/chatapi", publishtarget = IChatGuiService.class)
 public class ChatAgent implements IChatService, IChatGuiService
 {
 	/** The underlying micro agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
-	@OnService
+	@InjectService(mode=Mode.QUERY)
 	protected Set<IChatService> chatservices = new HashSet<IChatService>();
 	
 	protected Set<SubscriptionIntermediateFuture<String>> subscribers = new HashSet<SubscriptionIntermediateFuture<String>>();

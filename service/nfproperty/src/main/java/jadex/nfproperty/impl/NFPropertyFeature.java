@@ -1,7 +1,6 @@
 package jadex.nfproperty.impl;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,26 +25,21 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.TerminableIntermediateDelegationFuture;
-import jadex.micro.MicroAgent;
-import jadex.model.IModelFeature;
-import jadex.model.impl.AbstractModelLoader;
-import jadex.model.modelinfo.ModelInfo;
 import jadex.nfproperty.INFMixedPropertyProvider;
 import jadex.nfproperty.INFProperty;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.INFPropertyMetaInfo;
 import jadex.nfproperty.INFPropertyProvider;
+import jadex.nfproperty.annotation.Tag;
+import jadex.nfproperty.annotation.Tags;
 import jadex.nfproperty.impl.modelinfo.NFPropertyInfo;
 import jadex.nfproperty.impl.search.IRankingSearchTerminationDecider;
 import jadex.nfproperty.impl.search.IServiceRanker;
 import jadex.nfproperty.impl.search.ServiceRankingDelegationResultListener;
 import jadex.nfproperty.impl.search.ServiceRankingDelegationResultListener2;
 import jadex.nfproperty.sensor.service.TagProperty;
-import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.annotation.Tag;
-import jadex.providedservice.annotation.Tags;
 
 public class NFPropertyFeature implements ILifecycle, INFPropertyFeature  
 {
@@ -83,68 +77,68 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	@Override
 	public void	onStart()
 	{
-		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
-		NFPropertyModel mymodel = (NFPropertyModel)model.getFeatureModel(INFPropertyFeature.class);
-		if(mymodel==null)
-			mymodel = loadModel();
-		
-		if(mymodel!=null)
-		{
-			// Init nf component props
-			FutureBarrier<Void> bar = new FutureBarrier<Void>();
-			
-			Collection<NFPropertyInfo> nfprops = mymodel.getComponentProperties();
-			for(NFPropertyInfo nfprop: nfprops)
-			{
-				try
-				{
-					Class<?> clazz = nfprop.getClazz().getType(getComponent().getClassLoader(), model.getAllImports());
-					INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, getComponent(), null, null, nfprop.getParameters());
-					bar.add(getComponentPropertyProvider().addNFProperty(nfp));
-				}
-				catch(Exception e)
-				{
-					System.out.println("Property creation problem: "+e);
-				}
-			}
-			
-			Collection<String> names = mymodel.getProvidedServiceNames();
-			IProvidedServiceFeature psf = self.getFeature(IProvidedServiceFeature.class);
-			final NFPropertyModel fmymodel = mymodel;
-			
-			names.forEach(name -> 
-			{
-				IService ser = psf.getProvidedService(name);
-				
-				Map<MethodInfo, List<NFPropertyInfo>> nfps = fmymodel.getProvidedServiceMethodProperties(name);
-				nfps.entrySet().forEach(entry ->
-				{
-					bar.add(addNFMethodProperties(entry.getValue(), ser, entry.getKey()));
-				});
-				
-				List<NFPropertyInfo> snfps = fmymodel.getProvidedServiceProperties(name);
-				if(snfps!=null)
-				{
-					bar.add(addNFProperties(snfps, ser));
-					
-					// tags handled directly in provided service now
-					// Hack?! must update tags in sid :-(
-					/*IServiceIdentifier sid = ser.getServiceId();
-					getProvidedServicePropertyProvider(sid).getNFPropertyValue(TagProperty.NAME).then(val ->
-					{
-						Collection<String> coll = val == null ? new ArrayList<String>() : new LinkedHashSet<String>((Collection<String>)val);
-						Set<String> tags = new LinkedHashSet<String>(coll);
-						((ServiceIdentifier)sid).setTags(tags);
-						// Hack!!! re-index
-						ServiceRegistry reg = (ServiceRegistry)ServiceRegistry.getRegistry();
-						reg.updateService(sid);
-					}).catchEx(ex -> System.out.println("not found tag"));*/
-				}
-			});
-			
-			bar.waitFor().get();
+//		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
+//		NFPropertyModel mymodel = (NFPropertyModel)model.getFeatureModel(INFPropertyFeature.class);
+//		if(mymodel==null)
+//			mymodel = loadModel();
+//		
+//		if(mymodel!=null)
+//		{
+//			// Init nf component props
+//			FutureBarrier<Void> bar = new FutureBarrier<Void>();
+//			
+//			Collection<NFPropertyInfo> nfprops = mymodel.getComponentProperties();
+//			for(NFPropertyInfo nfprop: nfprops)
+//			{
+//				try
+//				{
+//					Class<?> clazz = nfprop.getClazz().getType(getComponent().getClassLoader(), model.getAllImports());
+//					INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, getComponent(), null, null, nfprop.getParameters());
+//					bar.add(getComponentPropertyProvider().addNFProperty(nfp));
+//				}
+//				catch(Exception e)
+//				{
+//					System.out.println("Property creation problem: "+e);
+//				}
+//			}
+//			
+//			Collection<String> names = mymodel.getProvidedServiceNames();
+//			IProvidedServiceFeature psf = self.getFeature(IProvidedServiceFeature.class);
+//			final NFPropertyModel fmymodel = mymodel;
+//			
+//			names.forEach(name -> 
+//			{
+//				IService ser = psf.getProvidedService(name);
+//				
+//				Map<MethodInfo, List<NFPropertyInfo>> nfps = fmymodel.getProvidedServiceMethodProperties(name);
+//				nfps.entrySet().forEach(entry ->
+//				{
+//					bar.add(addNFMethodProperties(entry.getValue(), ser, entry.getKey()));
+//				});
+//				
+//				List<NFPropertyInfo> snfps = fmymodel.getProvidedServiceProperties(name);
+//				if(snfps!=null)
+//				{
+//					bar.add(addNFProperties(snfps, ser));
+//					
+//					// tags handled directly in provided service now
+//					// Hack?! must update tags in sid :-(
+//					/*IServiceIdentifier sid = ser.getServiceId();
+//					getProvidedServicePropertyProvider(sid).getNFPropertyValue(TagProperty.NAME).then(val ->
+//					{
+//						Collection<String> coll = val == null ? new ArrayList<String>() : new LinkedHashSet<String>((Collection<String>)val);
+//						Set<String> tags = new LinkedHashSet<String>(coll);
+//						((ServiceIdentifier)sid).setTags(tags);
+//						// Hack!!! re-index
+//						ServiceRegistry reg = (ServiceRegistry)ServiceRegistry.getRegistry();
+//						reg.updateService(sid);
+//					}).catchEx(ex -> System.out.println("not found tag"));*/
+//				}
+//			});
+//			
+//			bar.waitFor().get();
 		}
-	}
+//	}
 	
 	/**
 	 *  Called when the feature is shutdowned.
@@ -161,25 +155,6 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 			reqserprops.values().stream().forEach(p -> bar.add(p.shutdownNFPropertyProvider()));
 
 		bar.waitFor().get();
-	}
-	
-	public NFPropertyModel loadModel()
-	{
-		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
-
-		NFPropertyModel mymodel = (NFPropertyModel)model.getFeatureModel(INFPropertyFeature.class);
-		if(mymodel==null)
-		{
-			mymodel = (NFPropertyModel)NFPropertyLoader.readFeatureModel(model, ((MicroAgent)self).getPojo().getClass(), this.getClass().getClassLoader());
-			final NFPropertyModel fmymodel = mymodel;
-			AbstractModelLoader loader = AbstractModelLoader.getLoader((Class< ? extends Component>)self.getClass());
-			loader.updateCachedModel(() ->
-			{
-				model.putFeatureModel(INFPropertyFeature.class, fmymodel);
-			});
-		}
-		
-		return mymodel;
 	}
 	
 	/**

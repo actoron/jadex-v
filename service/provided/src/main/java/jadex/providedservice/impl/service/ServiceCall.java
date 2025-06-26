@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jadex.core.ComponentIdentifier;
+import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.ThreadLocalTransferHelper;
-import jadex.providedservice.annotation.Timeout;
 
 
 /**
@@ -18,16 +18,6 @@ import jadex.providedservice.annotation.Timeout;
 public class ServiceCall
 {
 	//-------- constants --------
-
-	/** The timeout constant. */
-	public static final String TIMEOUT = Timeout.TIMEOUT;
-	public static final String DEFTIMEOUT = "deftimeout";
-	
-	/** The realtime constant. */
-	public static final String REALTIME = "realtime";
-	
-	/** The monitoring constant. */
-	public static final String MONITORING = "monitoring";
 	
 	/** The inherit constant. */
 	public static final String INHERIT = "inherit";
@@ -43,7 +33,7 @@ public class ServiceCall
 	
 	/** The upcoming service invocations. */
 	protected static final ThreadLocal<ServiceCall> LAST = new ThreadLocal<ServiceCall>();
-
+	
 	static
 	{
 		ThreadLocalTransferHelper.addThreadLocal(CURRENT);
@@ -59,21 +49,13 @@ public class ServiceCall
 	/** The service call properties. */
 	public Map<String, Object> properties;
 	
-	protected ExecutionFeature lastmod;
-	
 	//-------- constructors --------
-	
-//	static Set<Integer> sprops = Collections.synchronizedSet(new HashSet<Integer>());
 	
 	/**
 	 *  Create a service call info object.
 	 */
 	protected ServiceCall(ComponentIdentifier caller, Map<String, Object> props)
 	{
-//		if(caller==null)
-//		{
-//			System.out.println("dflishg");
-//		}
 		this.caller	= caller;
 		this.properties = props!=null? props: new HashMap<String, Object>();
 	}
@@ -115,82 +97,35 @@ public class ServiceCall
 	{
 		return LAST.get();
 	}
-	
-//	/**
-//	 *  Set the properties of the next invocation.
-//	 *  @param timeout The timeout.
-//	 *  @param realtime The realtime flag.
-//	 */
-//	public static ServiceCall setInvocationProperties(long timeout, Boolean realtime)
-//	{
-//		ServiceCall ret = new ServiceCall(IComponentIdentifier.LOCAL.get(), timeout, realtime);
-//		INVOCATIONS.set(ret);
-//		return ret;
-//	}
-	
+		
 	/**
 	 *  Set the properties of the next invocation.
-	 *  @param timeout The timeout.
-	 *  @param realtime The realtime flag.
 	 */
 	public static ServiceCall getOrCreateNextInvocation()
 	{
 		return getOrCreateNextInvocation(null);
 	}
-	
-//	/**
-//	 *  Get the next invocation if any.
-//	 */
-//	public static ServiceCall getInvocation0()
-//	{
-//		return NEXT.get();
-//	}
-	
+		
 	/**
 	 *  Get or create the next servicecall for the next invocation. 
-	 *  @param timeout The timeout.
-	 *  @param realtime The realtime flag.
+	 *  @param props The properties.
 	 */
 	public static ServiceCall getOrCreateNextInvocation(Map<String, Object> props)
 	{
 		ServiceCall ret = NEXT.get();
 		if(ret==null)
 		{
-			ret = new ServiceCall(ExecutionFeature.LOCAL.get().getComponent().getId(), props);
+			// Set id to global runner if called from non-component thread
+			ComponentIdentifier	id	= ExecutionFeature.LOCAL.get()!=null
+				? ExecutionFeature.LOCAL.get().getComponent().getId()
+				: ComponentManager.get().getGlobalRunner().getId();
+			ret = new ServiceCall(id, props);
 			
-//			if(ret.getCaller()==null)
-//			{
-//				System.out.println("sfljyh");
-//				Thread.dumpStack();
-//			}
 			
-//			if((""+ret.getCaller()).indexOf("ServiceCallAgent")!=-1)
-//			{
-//				System.out.println(ret.hashCode()+": set next: "+ret+", "+IComponentIdentifier.LOCAL.get());
-//			}
-
 			NEXT.set(ret);
-//			ret.setProperty("nextstack1", jadex.commons.SUtil.getExceptionStacktrace(new RuntimeException()));
-			
-//			if(getCurrentInvocation()!=null)
-//			{
-//				ServiceCall cur = getCurrentInvocation();
-//				Tuple2<String, String> cause = cur.getCause();
-//				if(cause!=null)
-//				{
-//					ret.setCause(new Tuple2<String, String>(cause.getSecondEntity(), SUtil.createUniqueId(caller.getName(), 3)));
-//				}
-//			}
 		}
 		else if(props!=null)
 		{
-			
-//			if(ret.getCaller()==null && props.get("method2")!=null && props.get("method2").equals("status"))
-//			{
-//				System.out.println("abgsdoyi: "+ret);
-////				Thread.dumpStack();
-//			}
-			ret.lastmod	= ExecutionFeature.LOCAL.get();
 			ret.properties.putAll(props);
 		}
 		return ret;
@@ -204,99 +139,7 @@ public class ServiceCall
 	{
 		return caller;
 	}
-	
-	/**
-	 *  Get the timeout value.
-	 *  @return The timeout value or -1.
-	 * /
-	public long	getTimeout()
-	{
-		return properties.containsKey(TIMEOUT)? ((Long)properties.get(TIMEOUT)).longValue():
-			properties.containsKey(DEFTIMEOUT)? ((Long)properties.get(DEFTIMEOUT)).longValue() : SUtil.DEFTIMEOUT;
-	}*/
-	
-	/**
-	 *  Test if the user has set a timeout.
-	 *  @return True, if the user has set a timeout.
-	 * /
-	public boolean hasUserTimeout()
-	{
-		return properties.containsKey(TIMEOUT);
-	}*/
-	
-	/**
-	 *  Set the timeout.
-	 *  @param to The timeout.
-	 * /
-	public void setTimeout(long to)
-	{
-//		if(((String)properties.get("method")).indexOf("service")!=-1)
-//			System.out.println("sdfjbsdfjk");
-		lastmod	= IComponentIdentifier.LOCAL.get();
-		properties.put(TIMEOUT, Long.valueOf(to));
-	}*/
-	
-	/**
-	 *  Get the realtime flag.
-	 *  @return True, if the timeout is a real time (i.e. system time)
-	 *    instead of platform time. 
-	 */
-//	public Boolean	getRealtime()
-//	{
-//		return (Boolean)properties.get(REALTIME);
-//	}
-	
-	/**
-	 *  Set the realtime property.
-	 */
-//	public void setRealtime(Boolean realtime)
-//	{
-//		lastmod	= IComponentIdentifier.LOCAL.get();
-//		properties.put(REALTIME, realtime);
-//	}
-	
-	/**
-	 *  Get the realtime flag.
-	 *  @return True, if the timeout is a real time (i.e. system time)
-	 *    instead of platform time. 
-	 */
-//	public boolean isRealtime()
-//	{
-//		return getRealtime().booleanValue();
-//	}
-	
-	/**
-	 *  Test if a call is remote.
-	 * /
-	public boolean isRemoteCall(IComponentIdentifier callee)
-	{
-		IComponentIdentifier platform = callee.getRoot();
-		return caller==null? false: !caller.getRoot().equals(platform);
-	}*/
-	
-//	/**
-//	 *  Get the cause.
-//	 *  @return The cause.
-//	 */
-//	public Cause getCause()
-//	{
-////		if(properties.get(CAUSE)!=null && !(properties.get(CAUSE) instanceof Cause))
-////		{
-////			System.out.println("sdmyb");
-////		}
-//		return (Cause)properties.get(CAUSE);
-//	}
-//	
-//	/**
-//	 *  Set the cause.
-//	 *  @param cause The cause.
-//	 */
-//	public void setCause(Cause cause)
-//	{
-//		lastmod	= IComponentIdentifier.LOCAL.get();
-//		properties.put(CAUSE, cause);
-//	}
-	
+		
 	/**
 	 *  Get a property.
 	 *  @param name The property name.
@@ -314,14 +157,6 @@ public class ServiceCall
 	 */
 	public void setProperty(String name, Object val)
 	{
-//		if(TIMEOUT.equals(name))
-//		{
-//			if(properties.get("method")!=null && ((String)properties.get("method")).indexOf("service")!=-1)
-//				System.out.println("setting tout: "+val);
-//			else if(properties.get("method")==null)
-//				System.out.println("setting unknown tout: "+val);
-//		}
-		//lastmod	= IComponentIdentifier.LOCAL.get();
 		this.properties.put(name, val);
 	}
 	
@@ -334,6 +169,18 @@ public class ServiceCall
 		lastmod	= IComponentIdentifier.LOCAL.get();
 		this.properties.remove(name);
 	}*/
+
+	/**
+	 *  Get all props directly. Do not use unless
+	 *  you are sure this is what you need. Consider
+	 *  getPropertiesClone() for a shallow copy.
+	 *
+	 *  @return The properties.
+	 */
+	public Map<String, Object> getProperties()
+	{
+		return properties;
+	}
 	
 	/**
 	 *  Get a shallow clone from all props.

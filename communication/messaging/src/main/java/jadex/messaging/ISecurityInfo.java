@@ -1,5 +1,7 @@
 package jadex.messaging;
 
+import jadex.core.impl.GlobalProcessIdentifier;
+
 import java.util.Set;
 
 /**
@@ -8,6 +10,12 @@ import java.util.Set;
  */
 public interface ISecurityInfo
 {
+	/**
+	 *  Gets the sender of the message.
+	 *  @return Sender of the message.
+	 */
+	public GlobalProcessIdentifier getSender();
+
 	/**
 	 *  Returns the authenticated host as String.
 	 *

@@ -1,12 +1,14 @@
 package jadex.remoteservices.impl.remotecommands;
 
+import jadex.core.ComponentIdentifier;
+
 import java.util.Map;
 
 /**
  *  Base class for Jadex built-in remote commands.
  *  Handles exchange of non-functional properties.
  */
-public abstract class AbstractInternalRemoteCommand
+public abstract class AbstractInternalRemoteCommand extends AbstractIdSenderCommand
 {
 	//-------- attributes ---------
 	
@@ -26,11 +28,13 @@ public abstract class AbstractInternalRemoteCommand
 	/**
 	 *  Create a remote command.
 	 */
-	public AbstractInternalRemoteCommand(Map<String, Object> nonfunc)
+	public AbstractInternalRemoteCommand(String id,  ComponentIdentifier sender, Map<String, Object> nonfunc)
 	{
+		setId(id);
+		setSender(sender);
 		this.nonfunc	= nonfunc;
 	}
-	
+
 	//-------- bean property methods --------
 
 	/**

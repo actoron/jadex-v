@@ -4,25 +4,32 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import jadex.common.NameValue;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
+import jadex.core.IResultProvider;
+import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
+import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 
 /**
  *  Base class for Jadex components, which provides access to component features.
@@ -30,7 +37,7 @@ import jadex.future.IFuture;
 public class Component implements IComponent
 {
 	/** The feature instances of this component, stored by the feature type. */
-	protected Map<Class<Object>, Object> features;
+	protected Map<Class<IComponentFeature>, IComponentFeature> features;
 	
 	/** The pojo, if any.*/
 	protected Object pojo;
@@ -47,14 +54,20 @@ public class Component implements IComponent
 	/** Cache for the component logger. */
 	protected Logger logger;
 	
-	/** The value provider. */
-	protected ValueProvider valueprovider;
+	/** The last exception, if any. */
+	protected Exception	exception;
+	
+//	/** The value provider. */
+//	protected ValueProvider valueprovider;
 	
 	/** The external access supplier. */
 	protected static Function<Component, IComponentHandle> accessfactory;
 		
 	/** The is the external access executable, i.e. is scheduleStep allowed?. */
 	protected static boolean executable;
+	
+	/** Identify the global runner, which is not added to component manager. */
+	protected static final String	GLOBALRUNNER_ID	= "__globalrunner__";
 		
 	/**
 	 *  Create a new component and instantiate all features (except lazy features).
@@ -77,31 +90,43 @@ public class Component implements IComponent
 	}
 	
 	/**
-	 *  Create a new component and instantiate all features (except lazy features).
-	 *  @param id	The id to use or null for an auto-generated id.
-	 *  @throws IllegalArgumentException when the id already exists. 
+	 *  Create a new component.
 	 */
 	public Component(Object pojo, ComponentIdentifier id, Application app)
 	{
 		this.pojo	= pojo;
-		this.id = id==null? new ComponentIdentifier(): id;
+		this.id = id;
 		this.app = app;
+	}
+
+	/**
+	 *  Initialize the component.
+	 *  Instantiate all features (except lazy features).
+	 *  @throws IllegalArgumentException when the id already exists. 
+	 */
+	public void init()
+	{
+		// If no id is given, create a new one.
+		this.id = id==null? new ComponentIdentifier(): id;
 		
 		//System.out.println(this.id.getLocalName());
-		ComponentManager.get().addComponent(this);
+		if(!GLOBALRUNNER_ID.equals(this.id.getLocalName()))
+		{
+			ComponentManager.get().addComponent(this);
+		}
 		
 		// Instantiate all features (except lazy ones).
 		// Use getProviderListForComponent as it uses a cached array list
-		List<ComponentFeatureProvider<Object>>	providers
+		List<ComponentFeatureProvider<IComponentFeature>>	providers
 			= SComponentFeatureProvider.getProviderListForComponent(getClass());
 		if(!providers.isEmpty())
 		{
 			features = new LinkedHashMap<>(providers.size(), 1);
-			for(ComponentFeatureProvider<Object> provider: providers)
+			for(ComponentFeatureProvider<IComponentFeature> provider: providers)
 			{
 				if(!provider.isLazyFeature())
 				{
-					Object	feature	= provider.createFeatureInstance(this);
+					IComponentFeature	feature	= provider.createFeatureInstance(this);
 					features.put(provider.getFeatureType(), feature);
 				}
 			}
@@ -138,9 +163,9 @@ public class Component implements IComponent
 	 *  Get the internal set of currently instantiated features.
 	 *  Does not include lazy, which have not yet been accessed.  
 	 */
-	public Collection<Object>	getFeatures()
+	public Collection<IComponentFeature>	getFeatures()
 	{
-		return features!=null ? (Collection<Object>)features.values() : Collections.emptySet();
+		return features!=null ? features.values() : Collections.emptySet();
 	}
 	
 	/**
@@ -181,7 +206,7 @@ public class Component implements IComponent
 		}
 		else
 		{
-			Map<Class<Object>, ComponentFeatureProvider<Object>>	providers
+			Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers
 				= SComponentFeatureProvider.getProvidersForComponent(getClass());
 			if(providers.containsKey(type))
 			{
@@ -194,7 +219,7 @@ public class Component implements IComponent
 					@SuppressWarnings("rawtypes")
 					Class rtype	= type;
 					@SuppressWarnings("unchecked")
-					Class<Object> otype	= (Class<Object>)rtype;
+					Class<IComponentFeature> otype	= (Class<IComponentFeature>)rtype;
 					features.put(otype, ret);
 					return ret;
 				}
@@ -217,16 +242,24 @@ public class Component implements IComponent
 	{
 		if(cids.length==0)
 		{
-			ComponentManager.get().removeComponent(this.getId());
-			
-			List<ComponentFeatureProvider<Object>> provs = SComponentFeatureProvider.getProviderListForComponent((Class<? extends Component>)getClass());
-			Optional<IComponentLifecycleManager> opt = provs.stream().filter(provider -> provider instanceof IComponentLifecycleManager).map(provider -> (IComponentLifecycleManager)provider).findFirst();
-			if(opt.isPresent())
+			if(!GLOBALRUNNER_ID.equals(id.getLocalName()))
 			{
-				IComponentLifecycleManager lm = opt.get();
-				lm.terminate(this);
+				ComponentManager.get().removeComponent(this.getId());
 			}
 			
+			if(getPojo()!=null)
+			{
+				IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(getPojo().getClass());
+				if(creator!=null)
+				{
+					creator.terminate(this);
+				}
+				else
+				{
+					throw new RuntimeException("Cannot terminate component of type: "+getClass());
+				}
+			}
+				
 			return IFuture.DONE;
 		}
 		else
@@ -263,13 +296,21 @@ public class Component implements IComponent
 		return logger;
 	}
 	
+	// TODO: move to model/bpmn
 	public ValueProvider getValueProvider()
 	{
-		if(valueprovider==null)
-			valueprovider = new ValueProvider(this);
-		return valueprovider;
+//		if(valueprovider==null)
+//			valueprovider = new ValueProvider(this);
+//		return valueprovider;
+		return new ValueProvider(this);
 	}
-	
+
+	// TODO: move to model/bpmn
+	public ClassLoader getClassLoader()
+	{
+		return pojo!=null ? pojo.getClass().getClassLoader() : getClass().getClassLoader();
+	}
+
 	/*public Map<String, Object> getResults(Object pojo)
 	{
 		return Collections.EMPTY_MAP;
@@ -425,26 +466,7 @@ public class Component implements IComponent
 			}
 			else
 			{
-				access = new IComponentHandle() 
-				{
-					@Override
-					public ComponentIdentifier getId() 
-					{
-						return Component.this.getId();
-					}
-					
-					@Override
-					public String getAppId() 
-					{
-						return Component.this.getAppId();
-					}
-					
-					@Override
-					public <T> T getPojoHandle(Class<T> type)
-					{
-						throw new UnsupportedOperationException();
-					}
-				};
+				access = new BasicComponentHandle();
 			}
 		}
 		return access;
@@ -452,6 +474,7 @@ public class Component implements IComponent
 	
 	public void handleException(Exception exception)
 	{
+		this.exception	= exception;
 		if(exception instanceof ComponentTerminatedException && this.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
 		{
 			System.getLogger(this.getClass().getName()).log(Level.INFO, "Component terminated exception: "+exception);
@@ -459,11 +482,21 @@ public class Component implements IComponent
 		else
 		{
 			@SuppressWarnings("unchecked")
-			BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get().getFeature(IErrorHandlingFeature.class).getExceptionHandler(exception, this);
+			BiConsumer<Exception, IComponent> handler = (BiConsumer<Exception, IComponent>)ComponentManager.get()
+				.getFeature(IErrorHandlingFeature.class)
+				.getExceptionHandler(exception, this);
 			handler.accept(exception, this);
 		}
 	}
-	
+
+	/**
+	 *  Get the last exception, if any.
+	 */
+	public Exception getException()
+	{
+		return exception;
+	}
+
 	/**
 	 *  Get the component handle.
 	 *  @param cid The component id.
@@ -494,30 +527,202 @@ public class Component implements IComponent
 		return executable;
 	}
 	
-	// TODO move to model feature?
-	public ClassLoader getClassLoader()
+	public static <T extends Component> IFuture<IComponentHandle>	createComponent(Class<T> type, Supplier<T> creator)
 	{
-		return this.getClass().getClassLoader();
-	}
-
-	public static <T extends Component> T createComponent(Class<T> type, Supplier<T> creator)
-	{
-		List<ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProviderListForComponent(type);
-		for(int i=providers.size()-1; i>=0; i--)
+		IBootstrapping	bootstrapping	= SComponentFeatureProvider.getBootstrapping(type);
+		if(bootstrapping!=null)
 		{
-			ComponentFeatureProvider<Object>	provider	= providers.get(i);
-			if(provider instanceof IBootstrapping)
-			{
-				Supplier<T>	nextcreator	= creator;
-				creator	= () -> ((IBootstrapping)provider).bootstrap(type, nextcreator);
-			}
+			return bootstrapping.bootstrap(type, creator);
 		}
-		return creator.get();
+		else
+		{
+			Future<IComponentHandle>	ret	= new Future<>();
+			try
+			{
+				T comp = creator.get();
+				comp.init();
+				ret.setResult(comp.getComponentHandle());
+			}
+			catch(Exception e)
+			{
+				ret.setException(e);
+			}
+			return ret;
+		}
 	}
 
 	@Override
 	public String toString() 
 	{
 		return "Component [id=" + id + "]";
+	}
+		
+	/**
+	 *  Fetch the result(s) of the Component.
+	 *  Schedules to the component, if not terminated.
+	 */
+	public static IFuture<Map<String, Object>> getResults(IComponent comp)
+	{
+		Future<Map<String, Object>>	ret	= new Future<>();
+		
+		if(isExecutable())
+		{
+			comp.getComponentHandle().scheduleStep(() -> doGetResults(comp))
+				.then(results -> ret.setResult(results))
+				.catchEx(e ->
+				{
+					if(e instanceof ComponentTerminatedException)
+					{
+						// When terminated, don't schedule.
+						ret.setResult(Component.doGetResults(comp));
+					}
+					else
+					{
+						ret.setException(e);
+					}
+				});
+		}
+		else
+		{
+			ret.setResult(Component.doGetResults(comp));
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  Listen to results of the component.
+	 *  Schedules to the component, if not terminated.
+	 *  @throws UnsupportedOperationException when subscription is not supported
+	 */
+	public static ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	{
+		if(isExecutable())
+		{
+			SubscriptionIntermediateFuture<NameValue>	ret	= new SubscriptionIntermediateFuture<>();
+			
+			@SuppressWarnings("rawtypes")
+			Callable	call	= new Callable<ISubscriptionIntermediateFuture<NameValue>>()
+			{
+				public ISubscriptionIntermediateFuture<NameValue>	call()
+				{
+					return doSubscribeToResults(comp);
+				}
+			};
+
+			@SuppressWarnings("unchecked")
+			ISubscriptionIntermediateFuture<NameValue>	fut	= (ISubscriptionIntermediateFuture<NameValue>)
+				comp.getComponentHandle().scheduleAsyncStep(call);
+			fut.next(res -> ret.addIntermediateResult(res))
+				.catchEx(e ->
+				{
+					if(e instanceof ComponentTerminatedException)
+					{
+						// -> ignore (no more results available)
+					}
+					else
+					{
+						ret.setException(e);
+					}
+				});
+			
+			return ret;
+		}
+		else
+		{
+			return Component.doSubscribeToResults(comp);
+		}
+	}
+	
+	/**
+	 *  Listen to results of the pojo.
+	 *  To be called on component thread, if any.
+	 *  @throws UnsupportedOperationException when subscription is not supported
+	 */
+	public static ISubscriptionIntermediateFuture<NameValue> doSubscribeToResults(IComponent component)
+	{
+		ISubscriptionIntermediateFuture<NameValue>	ret	= null;
+		boolean done = false;
+		
+		if(component.getPojo() instanceof IResultProvider)
+		{
+			IResultProvider rp = (IResultProvider)component.getPojo();
+			ret = rp.subscribeToResults();
+			done = true;
+		}
+		else if(component.getPojo()!=null)
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
+			if(creator!=null)
+			{
+				ret = creator.subscribeToResults(component);
+				done = true;
+			}
+		}
+		if(!done)
+		{
+			ret	= new SubscriptionIntermediateFuture<>(new UnsupportedOperationException("Could not get results: "+component.getPojo()));
+		}
+		
+		return ret;
+	}
+
+	/**
+	 *  Extract the results from a pojo.
+	 *  To be called on component thread, if any.
+	 *  @return The result map.
+	 */
+	public static Map<String, Object> doGetResults(IComponent component)
+	{
+		Map<String, Object> ret = new HashMap<>();
+		boolean done = false;
+		
+		if(component.getPojo() instanceof IResultProvider)
+		{
+			IResultProvider rp = (IResultProvider)component.getPojo();
+			ret = new HashMap<String, Object>(rp.getResultMap());
+			done = true;
+		}
+		else if(component.getPojo()!=null)
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
+			if(creator!=null)
+			{
+				ret = creator.getResults(component);
+				done = true;
+			}
+		}
+		if(!done)
+			throw new UnsupportedOperationException("Could not get results: "+component.getPojo());
+		
+		return ret;
+	}
+
+	@NoCopy
+	public class BasicComponentHandle implements IComponentHandle
+	{
+		@Override
+		public ComponentIdentifier getId() 
+		{
+			return Component.this.getId();
+		}
+
+		@Override
+		public String getAppId() 
+		{
+			return Component.this.getAppId();
+		}
+
+		@Override
+		public IFuture<Map<String, Object>> getResults()
+		{
+			return Component.getResults(Component.this);
+		}
+
+		@Override
+		public ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+		{
+			return Component.subscribeToResults(Component.this);
+		}
 	}
 }

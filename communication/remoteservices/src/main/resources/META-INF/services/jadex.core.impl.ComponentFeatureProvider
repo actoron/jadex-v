@@ -1,1 +1,1 @@
-jadex.messaging.impl.MessageFeatureProvider
+jadex.remoteservices.impl.RemoteExecutionFeatureProvider

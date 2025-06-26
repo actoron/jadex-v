@@ -1,29 +1,23 @@
 package jadex.bdi.hellopure;
 
+import jadex.bdi.PlanFailureException;
+import jadex.bdi.Val;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
-import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.PlanFailureException;
-import jadex.bdi.runtime.Val;
-import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
 /**
  *  BDI agent that uses belief to trigger goal and execute plans.
  *  The goal has a target condition based on the state of its 'text' parameter.
- *  
- *  Pure BDI agent that is not bytecode enhanced. 
- *  This is achieved by using the baseclass BDIAgent that signals enhancement
- *  has already been done.
  */
-@Agent(type="bdip")
+@BDIAgent
 public class HelloPureGoalAgent
 {
 	@Belief
@@ -32,16 +26,16 @@ public class HelloPureGoalAgent
 	@Goal
 	public class HelloGoal
 	{
-		@GoalParameter
+//		@GoalParameter
 		protected Val<String> text;
 		
-		@GoalCreationCondition(beliefs="sayhello")
+		@GoalCreationCondition(factchanged="sayhello")
 		public HelloGoal(String text) 
 		{
 			this.text	= new Val<>(text);
 		}
 		
-		@GoalTargetCondition(parameters="text")
+		@GoalTargetCondition//(parameters="text")
 		public boolean checkTarget()
 		{
 			System.out.println("checkTarget: "+text);

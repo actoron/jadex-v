@@ -1,348 +1,56 @@
 package jadex.execution.impl;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import jadex.common.IParameterGuesser;
-import jadex.common.SAccess;
+import jadex.collection.WeakKeyValueMap;
+import jadex.common.IFilter;
+import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.common.SimpleParameterGuesser;
+import jadex.common.transformation.traverser.FilterProcessor;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.SCloner;
 import jadex.common.transformation.traverser.Traverser;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.ICallable;
 import jadex.core.IComponent;
+import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
-import jadex.core.IComponentManager;
+import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
-import jadex.core.InvalidComponentAccessException;
-import jadex.core.LambdaPojo;
+import jadex.core.ResultProvider;
+import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
-import jadex.execution.AgentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
-import jadex.execution.NoCopy;
-import jadex.execution.future.FutureFunctionality;
+import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.implementation.InvocationHandlerAdapter;
-import net.bytebuddy.matcher.ElementMatchers;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
 	static
-	{
-		/*MjComponent.addComponentCreator(new IComponentLifecycleManager() 
-		{
-			@Override
-			public boolean isCreator(Object obj) 
-			{
-				return Runnable.class.isAssignableFrom(obj.getClass())
-					|| Supplier.class.isAssignableFrom(obj.getClass())
-					|| IThrowingFunction.class.isAssignableFrom(obj.getClass());
-			}
-			
-			@Override
-			public void create(Object pojo, ComponentIdentifier cid)
-			{
-				if(pojo instanceof Runnable)
-					LambdaAgent.create((Runnable)pojo, cid);
-				else if(pojo instanceof Callable)
-					LambdaAgent.create((Callable<?>)pojo, cid);
-				else if(pojo instanceof IThrowingFunction)
-					LambdaAgent.create((IThrowingFunction<IComponent, ?>)pojo, cid);
-			}
-			
-			@Override
-			public boolean isTerminator(IComponent component) 
-			{
-				return component.getClass().equals(MjComponent.class);
-			}
-				
-			@Override
-			public void terminate(IComponent component) 
-			{
-				((IMjInternalExecutionFeature)component.getFeature(IMjExecutionFeature.class)).terminate();
-			}
-		});*/
-		
+	{		
 		// Init the component with schedule step functionality (hack?!)
 		Component.setExternalAccessFactory(comp ->
 		{
-			return new IComponentHandle() 
-			{
-				public static Set<String> ALLOWED_METHODS = new HashSet<>();
-				
-				static
-				{
-					ALLOWED_METHODS.add("toString");
-					ALLOWED_METHODS.add("hashCode");
-					ALLOWED_METHODS.add("equals");
-				}
-				
-				protected Object pojo;
-				
-				@Override
-				public ComponentIdentifier getId()
-				{
-					return comp.getId();
-				}
-				
-				@Override
-				public String getAppId()
-				{
-					return comp.getAppId();
-				}
-				
-				@Override
-				public <T> T getPojoHandle(Class<T> type)
-				{
-					if(pojo==null)
-					{
-						synchronized(this)
-						{
-							if(pojo==null)
-							{
-								pojo = createPojo();
-							}
-						}
-					}
-					return (T)pojo;
-				}
-				
-				protected Object createPojo()
-				{
-					try
-					{
-						Object pojo = comp.getPojo();
-						
-						Object proxy = new ByteBuddy()
-							.subclass(pojo.getClass())
-							.method(ElementMatchers.not(ElementMatchers.isAnnotatedWith(AgentMethod.class)))
-				            .intercept(InvocationHandlerAdapter.of(new InvocationHandler() 
-				            {
-				            	@Override
-				            	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable 
-				                {
-				            		if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
-				            		{   
-				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
-				            		}
-				            		else if(ALLOWED_METHODS.contains(method.getName()))
-				            		{
-				            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method);
-				            		}
-				            		else
-				            		{
-				            			throw new InvalidComponentAccessException(comp.getId());
-				            		}
-				                }
-				            }))
-							.method(ElementMatchers.isAnnotatedWith(AgentMethod.class)) 
-							.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
-							{
-								List<Object> myargs = new ArrayList<Object>(); 
-								Class<?>[] ptypes = method.getParameterTypes();
-								java.lang.annotation.Annotation[][] pannos = method.getParameterAnnotations();
-								List<ITraverseProcessor> procs = Traverser.getDefaultProcessors();
-								//;new ArrayList<>(ISerializationServices.get().getCloneProcessors());
-								
-								for(int p = 0; p < ptypes.length; p++)
-								{
-									if(hasAnnotation(pannos[p], NoCopy.class))
-										myargs.add(args[p]);
-									else
-										myargs.add(SCloner.clone(args[p], procs));
-								}
-								
-								FutureFunctionality func = new FutureFunctionality()
-								{
-									public Object handleResult(Object val) throws Exception
-									{
-										if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-						            	{
-											Object val2 = SCloner.clone(val, procs);
-											//System.out.println("cloned val: "+val+" "+val2+" "+(val==val2));
-											val = val2;
-						            	}
-										
-										return val;
-									}
-									
-									public Object handleIntermediateResult(Object val) throws Exception
-									{
-										if(!hasAnnotation(method.getAnnotatedReturnType().getAnnotations(), NoCopy.class))
-						            	{
-											val = SCloner.clone(val, procs);
-											//System.out.println("cloned val: "+val);
-						            	}
-										return val;
-									}
-								};
-								
-								Future<Object> ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
-								
-								//final Object[] myargs = copyargs.toArray();
-								
-						        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
-						        {
-						        	//System.out.println("already on agent: "+getId());
-						        	if(ret instanceof IFuture)
-						        	{
-						        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method);
-						        		fut.delegateTo(ret);
-						        	}
-						        	else if(method.getReturnType().equals(void.class))
-						        	{
-						        		invokeMethod(comp, pojo, myargs, method);
-						        	}
-						        	else
-						        	{
-						        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
-						        		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
-						        	}
-						        }
-						        else
-						        {
-						        	if(ret instanceof IFuture)
-						        	{
-							        	IFuture fut = scheduleAsyncStep(new ICallable<IFuture<Object>>() 
-						        		{
-						        			public Class<? extends IFuture<?>> getFutureReturnType() 
-						        			{
-						        				return (Class<? extends IFuture<?>>)ret.getClass();
-						        			}
-						        			
-						        			public IFuture<Object> call() throws Exception
-						        			{
-						        				return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method);
-						        			}
-										});
-							        	fut.delegateTo(ret);
-						        	}
-						        	//System.out.println("scheduled on agent: "+getId());
-						        	else if(method.getReturnType().equals(void.class))
-						        	{
-						        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method));
-						        	}
-						        	else 
-						        	{
-						        		//System.out.println("Agent methods must be async: "+method.getName()+" "+pojo);
-						          		throw new InvalidComponentAccessException(comp.getId(), "Agent methods must be async: "+method.getName());
-						        	}
-						        }
-						        
-						        return ret;
-							}))
-							.make()
-							.load(pojo.getClass().getClassLoader())
-			                .getLoaded()
-			                .getConstructor()
-			                .newInstance();
-						
-						//System.out.println("proxy hashCode: "+proxy.hashCode());
-						
-						return proxy;
-					}
-					catch(Exception e)
-					{
-						SUtil.rethrowAsUnchecked(e);
-					}
-					return null;
-				}
-				
-				protected Object invokeMethod(Component component, Object pojo, List<Object> args, Method method)
-				{
-					// Try to guess parameters from given args or component internals.
-					IParameterGuesser guesser = new SimpleParameterGuesser(component.getValueProvider().getParameterGuesser(), args);
-					Object[] iargs = new Object[method.getParameterTypes().length];
-					for(int i=0; i<method.getParameterTypes().length; i++)
-					{
-						iargs[i] = guesser.guessParameter(method.getParameterTypes()[i], false);
-					}
-					
-					try
-					{
-						// It is now allowed to use protected/private component methods
-						SAccess.setAccessible(method, true);
-						return method.invoke(pojo, iargs);
-					}
-					catch(Exception e)
-					{
-						SUtil.rethrowAsUnchecked(e);
-					}
-					return null;
-				}
-				
-				protected boolean hasAnnotation(Annotation[] pannos, Class<? extends Annotation> anntype) 
-				{
-				    for (Annotation anno : pannos) 
-				    {
-				        if (anno.annotationType().equals(anntype)) 
-				        {
-				            return true;
-				        }
-				    }
-				    return false;
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleStep(Callable<T> step) 
-				{
-					return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-				}
-				
-				@Override
-				public void scheduleStep(Runnable step) 
-				{
-					comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
-				{
-					return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-				}
-				
-				@Override
-				public void scheduleStep(IThrowingConsumer<IComponent> step)
-				{
-					comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
-				{
-					return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
-				}
-				
-				@Override
-				public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
-				{
-					return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
-				}
-			};
+			return new ExecutableComponentHandle(comp);
 		}, true);
 	}
-	
+
 	@Override
 	public Class<IExecutionFeature> getFeatureType()
 	{
@@ -376,60 +84,154 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}
 	
 	@Override
-	public <T extends Component> T	bootstrap(Class<T> type, Supplier<T> creator)
+	public <T extends Component> IFuture<IComponentHandle>	bootstrap(Class<T> type, Supplier<T> creator)
 	{
-		Map<Class<Object>, ComponentFeatureProvider<Object>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
+		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
 		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
-		Future<T>	ret	= new Future<>();
-
+		
 		// Fast Lambda Agent -> optimized lifecycle
-		if(SReflect.isSupertype(FastLambda.class, type))
+		if(FastLambda.class.isAssignableFrom(type))
 		{
+//			System.out.println("Creating fast lambda agent: "+type);
 			exe.scheduleStep(() -> 
 			{
+				T self	= creator.get();
 				@SuppressWarnings("unchecked")
-				FastLambda<Object> self = (FastLambda<Object>)creator.get();
-				startFeatures(self);
+				FastLambda<Object> fself	= (FastLambda<Object>)self;
 				
-				// run body and termination in same step as init
 				try
 				{
-					/*ILifecycle lfeature = (ILifecycle)feature;
-					System.out.println("starting: "+lfeature);
-					lfeature.onStart();*/
+					// Extra init so component doesn't get added when just created as object
+					self.init();
 					
-					Object	result	= self.getPojo().apply(self);
-					if(self.result!=null)
-						self.result.setResult(result);
+					startFeatures(self);
+					
+					// run body and termination in same step as init
+					try
+					{
+						/*ILifecycle lfeature = (ILifecycle)feature;
+						System.out.println("starting: "+lfeature);
+						lfeature.onStart();*/
+
+						Object	result	= null;
+						Object	pojo	= fself.getPojo();
+						if(pojo instanceof Callable)
+						{
+							result	= ((Callable<?>)pojo).call();							
+						}
+						else if(pojo instanceof IThrowingFunction)
+						{
+							@SuppressWarnings("unchecked")
+							IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
+							result	= itf.apply(self);							
+						}
+						else if(pojo instanceof Runnable)
+						{
+							((Runnable)pojo).run();							
+						}
+						else //if(pojo instanceof IThrowingConsumer)
+						{
+							@SuppressWarnings("unchecked")
+							IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+							itc.accept(self);							
+						}
+						
+						if(fself.result!=null)
+						{
+							// TODO: unify with LambdaAgent result handle?
+							fself.result.setResult(copyVal(result, getAnnos(pojo.getClass())));
+						}
+					}
+					catch(Exception e)
+					{
+						System.err.println("Error in fast lambda agent 1: "+e);
+						if(fself.result!=null)
+						{
+							fself.result.setException(e);
+						}
+						else
+						{
+							self.handleException(e);
+						}
+					}
+					if(!FastLambda.KEEPALIVE)
+					{
+						exe.scheduleStep((Runnable)() -> fself.terminate());
+					}
 				}
 				catch(Exception e)
 				{
-					self.handleException(e);
+					System.err.println("Error in fast lambda agent: "+e);
+					if(fself.result!=null)
+					{
+						fself.result.setException(e);
+					}
+					else
+					{
+						self.handleException(e);
+					}
+					if(!FastLambda.KEEPALIVE)
+					{
+						exe.scheduleStep((Runnable)() -> fself.terminate());
+					}
 				}
-				if(self.terminate)
+				catch(StepAborted e)
 				{
-					exe.scheduleStep((Runnable)() -> self.terminate());
+					if(fself.result!=null)
+					{
+						fself.result.setException(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
+					}
+					throw e;
 				}
-				
-				@SuppressWarnings("unchecked")
-				T t	= (T)self;
-				ret.setResult(t);
 			});
+			
+			// No handle needed, because the user only wait for the run() result
+			return null;
 		}
 		
 		// Normal component
 		else
 		{
+			Future<IComponentHandle>	ret	= new Future<>();
 			exe.scheduleStep(() -> 
 			{
-				T self = creator.get();
-				startFeatures(self);
-				ret.setResult(self);
+				T self	= null;
+				try
+				{
+					self = creator.get();
+					
+					// Extra init so component doesn't get added when just created as object
+					self.init();
+										
+					startFeatures(self);
+					
+					// Make component available after init is complete
+					ret.setResult(self.getComponentHandle());
+				}
+				catch(Exception e)
+				{
+					if(ret.setExceptionIfUndone(e))
+					{
+						if(self!=null)
+						{
+							self.terminate();
+						}
+					}
+					else
+					{
+						SUtil.throwUnchecked(e);
+					}
+				}
+				catch(StepAborted e)
+				{
+					ret.setExceptionIfUndone(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
+					throw e;
+				}
 			});
+			
+			return ret;
 		}
-		
-		return ret.get();			
 	}
 	
 	/**
@@ -450,18 +252,19 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	
 	
 	@Override
-	public boolean isCreator(Object obj) 
+	public int	isCreator(Class<?> pojoclazz)
 	{
-		return Runnable.class.isAssignableFrom(obj.getClass())
-			|| Supplier.class.isAssignableFrom(obj.getClass())
-			|| IThrowingFunction.class.isAssignableFrom(obj.getClass())
-			|| LambdaPojo.class.isAssignableFrom(obj.getClass());
+		return Runnable.class.isAssignableFrom(pojoclazz)
+			|| Callable.class.isAssignableFrom(pojoclazz)
+			|| IThrowingFunction.class.isAssignableFrom(pojoclazz)
+			|| IThrowingConsumer.class.isAssignableFrom(pojoclazz)
+			? 1 : -1;
 	}
 	
 	@Override
-	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public IFuture<IComponentHandle>	create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		IComponentHandle ret;
+		IFuture<IComponentHandle>	ret;
 		
 		if(pojo instanceof Runnable)
 		{
@@ -469,13 +272,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		}
 		else if(pojo instanceof Callable)
 		{
-			ret = LambdaAgent.create((Callable<?>)pojo, cid, app).component();
+			ret = LambdaAgent.create((Callable<?>)pojo, cid, app);
 		}
 		else if(pojo instanceof IThrowingFunction)
 		{
 			@SuppressWarnings("unchecked")
 			IThrowingFunction<IComponent, ?>	itf	= (IThrowingFunction<IComponent, ?>)pojo;
-			ret = LambdaAgent.create(itf, cid, app).component();
+			ret = LambdaAgent.create(itf, cid, app);
 		}
 		else if(pojo instanceof IThrowingConsumer)
 		{
@@ -483,38 +286,200 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
 			ret = LambdaAgent.create(itc, cid, app);
 		}
-		else if(pojo instanceof LambdaPojo)
-		{
-			ret = LambdaAgent.create((LambdaPojo<?>)pojo, cid, app);
-		}
 		else
 		{
-			throw new RuntimeException("Cannot create lambda agent from: "+cid);
+			throw new RuntimeException("Cannot create lambda agent from: "+pojo);
 		}
 	
 		return ret;
 	}
 	
-	/*@Override
-	public boolean isTerminator(IComponent component) 
-	{
-		return component.getClass().equals(MjComponent.class);
-	}*/
-		
 	@Override
 	public void terminate(IComponent component) 
 	{
 		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 	
-	public Map<String, Object> getResults(Object pojo)
+	protected static Map<ComponentIdentifier, IResultProvider>	results	= new WeakKeyValueMap<>();
+	
+	@Override
+	public Map<String, Object> getResults(IComponent comp)
 	{
-		Map<String, Object> ret = new HashMap<String, Object>();
-		if(pojo instanceof LambdaPojo)
+		IResultProvider	rp;
+		synchronized(results)
 		{
-			LambdaPojo<?> lp = (LambdaPojo<?>)pojo;
-			ret.put("result", lp.getResult());
+			rp = results.get(comp.getId());
 		}
-		return ret;
+		return rp==null ? null : rp.getResultMap();
+	}
+	
+	@Override
+	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	{
+		IResultProvider	rp;
+		synchronized(results)
+		{
+			rp = results.get(comp.getId());
+			if(rp==null)
+			{
+				rp	= new ResultProvider();
+				results.put(comp.getId(), rp);
+			}
+		}
+		return rp.subscribeToResults();
+	}
+
+	public static void	addResult(ComponentIdentifier id, String name, Object value)
+	{
+		IResultProvider	rp;
+		synchronized(results)
+		{
+			rp = results.get(id);
+			if(rp==null)
+			{
+				rp	= new ResultProvider();
+				results.put(id, rp);
+			}
+		}
+		rp.addResult(name, value);
+	}
+
+	public static void addResultHandler(ComponentIdentifier id, IResultProvider provider)
+	{
+		synchronized(results)
+		{
+			if(results.containsKey(id))
+			{
+				throw new IllegalStateException("Result provider already added: "+results.get(id)+", "+provider);
+			}
+			results.put(id, provider);
+		}
+	}
+
+	/**
+	 *  Helper to skip NoCopy objects while cloning. 
+	 */
+	protected static List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
+	{
+		procs.add(procs.size()-1, new FilterProcessor(new IFilter<Object>()
+		{
+			public boolean filter(Object object)
+			{
+				return isNoCopy(object);
+			}
+		}));
+	}
+	
+	/**
+	 *  Helper method to check if a value doesn't need copying in component methods
+	 */
+	public static Object copyVal(Object val, Annotation... annos)
+	{
+		return isNoCopy(val, annos) ? val : SCloner.clone(val, procs);
+	}
+	
+	/**
+	 *  Helper method to check if a value doesn't need copying in component methods
+	 */
+	public static boolean isNoCopy(Object val, Annotation... annos)
+	{
+		if(val==null || val.getClass().isAnnotationPresent(NoCopy.class))
+		{
+			return true;
+		}
+		else
+		{
+			for(Annotation anno: annos)
+			{
+				if(anno instanceof NoCopy)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	protected static Map<Class<?>, Annotation[]>	ANNOS	= new LinkedHashMap<>();
+	
+	/**
+	 *  Get annotations from method return type to check for NoCopy.
+	 */
+	public static Annotation[]	getAnnos(Class<?> pojoclazz)
+	{
+		synchronized (ANNOS)
+		{
+			if(!ANNOS.containsKey(pojoclazz))
+			{
+				Method	m	= null;
+				
+				if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
+				{
+					// Can be also explicitly declared with component type or just implicit (lambda) as object type
+					try
+					{
+						m	= pojoclazz.getMethod("apply", IComponent.class);
+					}
+					catch(Exception e)
+					{
+						try
+						{
+							m	= pojoclazz.getMethod("apply", Object.class);
+						}
+						catch(Exception e2)
+						{
+						}
+					}
+				}
+				else	// Callable
+				{
+					try
+					{
+						m	= pojoclazz.getMethod("call");
+					}
+					catch(Exception e)
+					{
+					}
+				}
+				
+				ANNOS.put(pojoclazz, m!=null ? m.getAnnotatedReturnType().getAnnotations() : null);
+			}
+			return ANNOS.get(pojoclazz);
+		}
+	}
+	
+	@Override
+	public <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
+	{
+		if(pojo instanceof Callable)
+		{
+			@SuppressWarnings("unchecked")
+			Callable<T>	callable	= (Callable<T>)pojo;
+			return LambdaAgent.run(callable);
+		}
+		else if(pojo instanceof IThrowingFunction)
+		{
+			@SuppressWarnings("unchecked")
+			IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
+			return LambdaAgent.run(itf);
+		}
+		else if(pojo instanceof Runnable)
+		{
+			@SuppressWarnings("unchecked")
+			IFuture<T>	ret	= (IFuture<T>) LambdaAgent.run((Runnable)pojo);
+			return ret;
+		}
+		else if(pojo instanceof IThrowingConsumer)
+		{
+			@SuppressWarnings("unchecked")
+			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+			@SuppressWarnings("unchecked")
+			IFuture<T>	ret	= (IFuture<T>) LambdaAgent.run(itc);
+			return ret;
+		}
+		else
+		{
+			return new Future<>(new RuntimeException("Cannot run lambda agent from: "+pojo));
+		}
 	}
 }

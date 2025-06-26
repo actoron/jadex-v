@@ -2,6 +2,7 @@ package jadex.providedservice.impl;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,6 @@ import jadex.future.Future;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.impl.service.AbstractServiceInvocationHandler;
 
 // todo
 
@@ -110,6 +110,25 @@ public class ProcessServiceInvocationHandler  implements InvocationHandler
 	 */
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
 	{
+		// Handle special object methods,
+		// e.g. hashcode is needed because service is stored in map in provided service feature.
+		if(args!=null && args.length==1 && args[0]!=null && "equals".equals(method.getName()) && Object.class.equals(method.getParameterTypes()[0]))
+		{
+			Object	cmp	= Proxy.isProxyClass(args[0].getClass()) ? Proxy.getInvocationHandler(args[0]) : args[0];
+			return equals(cmp);
+		}
+		else if((args==null || args.length==0) && "hashCode".equals(method.getName()))
+		{
+//			System.out.println("hashcode on proxy: "+getServiceIdentifier().toString());
+			return hashCode();
+		}
+		else if((args==null || args.length==0) && "toString".equals(method.getName()))
+		{
+//			System.out.println("hashcode on proxy: "+getServiceIdentifier().toString());
+			return toString();
+		}
+
+		
 		// Drop goal when future is terminated from service caller
 		final Future<Object> ret = (Future<Object>)FutureFunctionality.getDelegationFuture(method.getReturnType(), new FutureFunctionality((Logger)null));
 //		{

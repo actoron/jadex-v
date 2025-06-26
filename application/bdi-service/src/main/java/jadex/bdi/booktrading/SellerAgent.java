@@ -5,37 +5,36 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.PlanFailureException;
+import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
-import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.RawEvent;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.runtime.ChangeEvent;
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.PlanFailureException;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.IResultListener;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 
-@Agent(type="bdip")
-@Service
+@BDIAgent
 public class SellerAgent implements IBuyBookService, INegotiationAgent
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	@Belief
@@ -43,7 +42,12 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 
 	protected Future<Gui> gui;
 	
+	/** The uninited orders, that are passed as arguments. */
 	protected Order[]	ios;
+	
+	/** The inited orders as beliefs. */
+	@Belief
+	protected Set<Order>	orders	= new LinkedHashSet<>();
 	
 	public SellerAgent(Order[] ios)
 	{
@@ -64,7 +68,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 				// Hack!!! use start time as deadline for initial orders
 				o.setDeadline(new Date(exe.getTime()+o.getStartTime()), exe);
 				o.setStartTime(getTime());
-				createGoal(o);
+				orders.add(o);
 			}
 		}
 		
@@ -92,15 +96,16 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 			gui.then(thegui -> SwingUtilities.invokeLater(()->thegui.dispose()));
 	}
 	
-	@Goal(recur=true, recurdelay=10000, unique=true)
+	@Goal(recur=true, recurdelay=10000/*, unique=true*/)
 	public class SellBook implements INegotiationGoal
 	{
-		@GoalParameter
+//		@GoalParameter
 		protected Order order;
 
 		/**
 		 *  Create a new SellBook. 
 		 */
+		@GoalCreationCondition(factadded="orders")
 		public SellBook(Order order)
 		{
 			this.order = order;
@@ -115,13 +120,13 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 			return order;
 		}
 		
-		@GoalDropCondition(parameters="order")
+		@GoalDropCondition(/*parameters="order"*/beliefs="orders")
 		public boolean checkDrop()
 		{
 			return order.getState().equals(Order.FAILED);
 		}
 		
-		@GoalTargetCondition(parameters="order")
+		@GoalTargetCondition(/*parameters="order"*/beliefs="orders")
 		public boolean checkTarget()
 		{
 			return Order.DONE.equals(order.getState());
@@ -129,10 +134,10 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 	}
 	
 	@Goal
-	public class MakeProposal
+	public class MakeProposal	implements Supplier<Integer>
 	{
 		protected String cfp;
-		protected int proposal;
+		protected Integer proposal	= null;
 		
 		/**
 		 *  Create a new MakeProposal. 
@@ -151,11 +156,8 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 			return cfp;
 		}
 
-		/**
-		 *  Get the proposal.
-		 *  @return The proposal.
-		 */
-		public int getProposal()
+		@Override
+		public Integer get()
 		{
 			return proposal;
 		}
@@ -209,15 +211,16 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 	/**
 	 * 
 	 */
-	@Belief(rawevents={@RawEvent(ChangeEvent.GOALADOPTED), @RawEvent(ChangeEvent.GOALDROPPED)})
+//	@Belief(rawevents={@RawEvent(ChangeEvent.GOALADOPTED), @RawEvent(ChangeEvent.GOALDROPPED)})
 	public List<Order> getOrders()
 	{
 		List<Order> ret = new ArrayList<Order>();
-		Collection<SellBook> goals = agent.getFeature(IBDIAgentFeature.class).getGoals(SellBook.class);
-		for(SellBook goal: goals)
-		{
-			ret.add(goal.getOrder());
-		}
+		ret.addAll(orders);
+//		Collection<SellBook> goals = agent.getFeature(IBDIAgentFeature.class).getGoals(SellBook.class);
+//		for(SellBook goal: goals)
+//		{
+//			ret.add(goal.getOrder());
+//		}
 		return ret;
 	}
 	
@@ -357,21 +360,8 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 	 */
 	public IFuture<Integer> callForProposal(String title)
 	{
-		final Future<Integer>	ret	= new Future<Integer>();
-		final MakeProposal goal = new MakeProposal(title);
-		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(goal).addResultListener(new IResultListener<Object>()
-		{
-			public void resultAvailable(Object result)
-			{
-				ret.setResult(Integer.valueOf(goal.getProposal()));
-			}
-			
-			public void exceptionOccurred(Exception exception)
-			{
-				ret.setException(exception);
-			}
-		});
-		return ret;
+		MakeProposal goal = new MakeProposal(title);
+		return agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(goal);
 	}
 
 	/**
@@ -382,21 +372,8 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 	 */
 	public IFuture<Void> acceptProposal(String title, int price)
 	{
-		final Future<Void>	ret	= new Future<Void>();
 		ExecuteTask goal = new ExecuteTask(title, price);
-		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(goal).addResultListener(new IResultListener<Object>()
-		{
-			public void resultAvailable(Object result)
-			{
-				ret.setResult(null);
-			}
-			
-			public void exceptionOccurred(Exception exception)
-			{
-				ret.setException(exception);
-			}
-		});
-		return ret;
+		return agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(goal);
 	}
 	
 	/**

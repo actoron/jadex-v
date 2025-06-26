@@ -47,7 +47,7 @@ public class ProxyInfo
 	protected Set<MethodInfo> secure;
 	
 	/** The target resolver (for intelligent proxies). */
-	protected Class<ITargetResolver> trcl;
+	//protected Class<ITargetResolver> trcl;
 	
 	//-------- constructors --------
 	
@@ -117,7 +117,7 @@ public class ProxyInfo
 	 *  @param method	The method.
 	 *  @return	The timeout or -1 if none.
 	 */
-	public long	getMethodTimeout(ComponentIdentifier platform, Method method)
+	/*public long	getMethodTimeout(ComponentIdentifier platform, Method method)
 	{
 		long	ret	= Starter.getDefaultTimeout(platform);
 		MethodInfo	key	= new MethodInfo(method);
@@ -126,7 +126,7 @@ public class ProxyInfo
 			ret	= ((Number)timeouts.get(key)).longValue();
 		}
 		return ret;
-	}
+	}*/
 
 
 	/**
@@ -256,7 +256,7 @@ public class ProxyInfo
 	
 	/**
 	 *  Add an excluded method.
-	 *  @param Method excluded.
+	 *  @param m Method excluded.
 	 */
 	public void addExcludedMethod(MethodInfo m)
 	{
@@ -295,7 +295,7 @@ public class ProxyInfo
 	
 	/**
 	 *  Add an uncached method.
-	 *  @param Method excluded.
+	 *  @param m Method excluded.
 	 */
 	public void addUncachedMethod(MethodInfo m)
 	{
@@ -334,7 +334,7 @@ public class ProxyInfo
 	
 	/**
 	 *  Add an synchronous method.
-	 *  @param Method excluded.
+	 *  @param m Method excluded.
 	 */
 	public void addSynchronousMethod(MethodInfo m)
 	{
@@ -357,19 +357,19 @@ public class ProxyInfo
 	 *  Get the target determiner clazz.
 	 *  @return The target determiner clazz
 	 */
-	public Class<ITargetResolver> getTargetResolverClazz() 
+	/*public Class<ITargetResolver> getTargetResolverClazz()
 	{
 		return trcl;
-	}
+	}*/
 
 	/**
 	 *  Set the target determiner class.
 	 *  @param tdcl The target determiner clazz to set
 	 */
-	public void setTargetResolverClazz(Class<ITargetResolver> tdcl) 
+	/*public void setTargetResolverClazz(Class<ITargetResolver> tdcl)
 	{
 		this.trcl = tdcl;
-	}
+	}*/
 
 	/**
 	 *  Get the string representation.

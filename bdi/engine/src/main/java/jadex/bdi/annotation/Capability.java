@@ -6,16 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  Marker for a capability class or variable.
+ *  Marker for a sub-object to be used as BDI capability, i.e. enable beliefs, goals, plans etc.
  */
-@Target({ElementType.FIELD, ElementType.TYPE})
+@Target({ElementType.FIELD/*, ElementType.TYPE*/})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Capability
 {
-	/**
-	 *  Belief mappings from outer beliefs to inner abstract beliefs.
-	 */
-	public Mapping[]	beliefmapping() default {};
+//	/**
+//	 *  Belief mappings from outer beliefs to inner abstract beliefs.
+//	 */
+//	public Mapping[]	beliefmapping() default {};
 	
 //	/**
 //	 *  Flag to indicate pure Java code (not to be bytecode enhanced).

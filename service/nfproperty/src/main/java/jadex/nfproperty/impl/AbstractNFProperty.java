@@ -15,11 +15,9 @@ import jadex.core.impl.Component;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 import jadex.nfproperty.INFProperty;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
-import jadex.nfproperty.annotation.SNameValue;
 import jadex.providedservice.IService;
 
 /**
@@ -115,7 +113,7 @@ public abstract class AbstractNFProperty<T, U> implements INFProperty<T, U>
 	/**
 	 *  Create a property instance from its type.
 	 */
-	public static INFProperty<?, ?> createProperty(Class<?> clazz, Component comp, IService service, MethodInfo mi, List<UnparsedExpression> params)
+	public static INFProperty<?, ?> createProperty(Class<?> clazz, IComponent comp, IService service, MethodInfo mi, List<UnparsedExpression> params)
 	{
 		INFProperty<?, ?> prop = null;
 		try
@@ -151,10 +149,9 @@ public abstract class AbstractNFProperty<T, U> implements INFProperty<T, U>
 							{
 								try
 								{
-									//Object val = SJavaParser.evaluateExpression(entry.getValue(), comp.getModel().getAllImports(), comp.getFetcher(), comp.getClassLoader());
-									IModelFeature mf = comp.getFeature(IModelFeature.class);
-									Object val = SJavaParser.evaluateExpression(entry.getValue(), mf!=null? mf.getModel().getAllImports(): null, mf!=null? 
-										comp.getValueProvider().getFetcher(): null, comp.getClassLoader());
+									// Set imports to pojo package (TODO: allow more imports?) 
+									String[]	imports = comp.getPojo()!=null ? new String[]{comp.getPojo().getClass().getPackage()+".*"} : null;
+									Object val = SJavaParser.evaluateExpression(entry.getValue(), imports, comp.getValueProvider().getFetcher(), comp.getPojo().getClass().getClassLoader());
 									ps.put(entry.getName(), val);
 								}
 								catch(Exception ex3)

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import jadex.bt.impl.Event;
+import jadex.bt.nodes.SequenceNode.SequenceNodeContext;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.future.Future;
@@ -46,7 +47,7 @@ public class ParallelNode<T> extends CompositeNode<T>
 		this.successmode = successmode;
 		return this;
 	}
-	
+
 	public boolean isKeepRunning() 
 	{
 		return keeprunning;
@@ -68,17 +69,17 @@ public class ParallelNode<T> extends CompositeNode<T>
 		ParallelNodeContext<T> context = getNodeContext(execontext);
 			
 		// If execution is ongoing, abort children, reset this node, and reexecute
-        Future<NodeState> call = context.getCall();
+        Future<NodeState> call = context.getCallFuture();
         if(call != null && !call.isDone()) 
         {
         	//System.out.println("execute again called: "+this+" "+ret+" "+context.isRepeat());
-   			System.getLogger(this.getClass().getName()).log(Level.INFO, "execute new child: "+this+" "+context.getState());
+   			getLogger().log(Level.INFO, "execute new child: "+this+" "+context.getState());
         	
    			executeChild(child, event, context.getResults(), execontext, context.getInternalCall());
         }
         else
         {
-        	System.getLogger(this.getClass().getName()).log(Level.INFO, "child added but node not running: "+this+" "+context.getState());
+        	getLogger().log(Level.INFO, "child added but node not running: "+this+" "+context.getState());
         }
         
         return this;
@@ -209,6 +210,15 @@ public class ParallelNode<T> extends CompositeNode<T>
     protected NodeContext<T> createNodeContext()
     {
     	return new ParallelNodeContext<T>();
+    }
+    
+    @Override
+    public NodeContext<T> copyNodeContext(NodeContext<T> src)
+    {
+    	ParallelNodeContext<T> ret = (ParallelNodeContext<T>)super.copyNodeContext(src);
+    	ret.setInternalCall(((ParallelNodeContext<T>)src).getInternalCall());
+    	ret.setResults(((ParallelNodeContext<T>)src).getResults());
+		return ret;
     }
     
     public static class ParallelNodeContext<T> extends NodeContext<T>

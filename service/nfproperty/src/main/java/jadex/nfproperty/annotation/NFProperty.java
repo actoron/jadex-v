@@ -5,7 +5,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jadex.model.annotation.NameValue;
 import jadex.nfproperty.INFProperty;
 
 /**
@@ -23,7 +22,7 @@ public @interface NFProperty
 	/**
 	 *  The type of the property.
 	 */
-	public Class<? extends INFProperty> value();
+	public Class<? extends INFProperty<?,?>> value();
 	
 	/**
 	 *  The init parameter values.

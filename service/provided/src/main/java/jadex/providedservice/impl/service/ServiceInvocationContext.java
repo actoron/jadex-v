@@ -1,13 +1,13 @@
 package jadex.providedservice.impl.service;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bytecode.ProxyFactory;
 import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.execution.impl.ExecutionFeature;
@@ -109,8 +109,8 @@ public class ServiceInvocationContext
 		this.used = new ArrayList<Integer>();
 		this.interceptors = interceptors;
 		
-		if(ExecutionFeature.LOCAL.get()==null)
-			throw new RuntimeException("Service methods must be called from component context. Otherwise use scheduleStep() before invocation.");
+//		if(ExecutionFeature.LOCAL.get()==null)
+//			throw new RuntimeException("Service methods must be called from component context. Otherwise use scheduleStep() before invocation.");
 		
 		this.caller = ServiceCall.getOrCreateNextInvocation().getCaller();
 		
@@ -147,8 +147,7 @@ public class ServiceInvocationContext
 						+"\nlocal: "+ExecutionFeature.LOCAL.get()
 						+"\ncurrentcall: "+currentcall
 //						+"\ncause: "+currentcall.getCause()
-						+"\nmethod: "+method
-						+"\n: lastmod"+currentcall.lastmod, e);
+						+"\nmethod: "+method, e);
 				}
 //				props.remove(ServiceCall.CAUSE); // remove cause as it has to be adapted
 			}
@@ -525,7 +524,7 @@ public class ServiceInvocationContext
 	 */
 	public boolean isLocalCall()
 	{
-		return !ProxyFactory.isProxyClass(getObject().getClass());
+		return !Proxy.isProxyClass(getObject().getClass());
 	}
 	
 	/**
@@ -538,42 +537,8 @@ public class ServiceInvocationContext
 //		if(Proxy.isProxyClass(target.getClass()))
 //			System.out.println("blubb "+Proxy.getInvocationHandler(target).getClass().getName());
 		// todo: remove string based remote check! RemoteMethodInvocationHandler is in package jadex.platform.service.remote
-		return ProxyFactory.isProxyClass(target.getClass()) && ProxyFactory.getInvocationHandler(target).getClass().getName().indexOf("Remote")!=-1;
+		return Proxy.isProxyClass(target.getClass()) && Proxy.getInvocationHandler(target).getClass().getName().indexOf("Remote")!=-1;
 	}
-	
-//	/**
-//	 * 
-//	 */
-//	public void copy(ServiceInvocationContext sic)
-//	{
-//		setObjectStack(sic.getObjectStack());
-//		setMethodStack(sic.getMethodStack());
-//		setArgumentStack(sic.getArgumentStack());
-//		setResultStack(sic.getResultStack());
-//		
-//	}
-	
-	/**
-	 *  Get the real target object.
-	 *  Returns domain service in case of service info.
-	 */
-	public Object getTargetObject()
-	{
-		Object ret = getObject();
-		if(ret instanceof ServiceInfo)
-		{
-			ret = ((ServiceInfo)ret).getDomainService();
-		}
-		return ret;
-	}
-	
-	/**
-	 *  Get the caller adapter.
-	 */
-//	public IComponentAdapter	getCallerAdapter()
-//	{
-//		return this.calleradapter;
-//	}
 	
 	/**
 	 *  Get the caller.

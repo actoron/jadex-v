@@ -4,15 +4,13 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.blocksworld.BlocksworldAgent.ConfigureGoal;
-import jadex.bdi.runtime.IPlan;
 import jadex.common.SUtil;
 import jadex.execution.IExecutionFeature;
+import jadex.injection.annotation.Inject;
 
 
 /**
@@ -29,13 +27,13 @@ public class BenchmarkPlan
 	/** The number of different goals to be executed per run. */
 	protected int	goals;
 
-	@PlanCapability
+	@Inject
 	protected BlocksworldAgent capa;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected ConfigureGoal goal;
 
 	

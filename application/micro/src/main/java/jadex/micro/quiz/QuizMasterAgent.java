@@ -12,7 +12,8 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminationCommand;
 import jadex.future.SubscriptionIntermediateFuture;
-import jadex.micro.annotation.Agent;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.micro.quiz.model.NewQuizEvent;
 import jadex.micro.quiz.model.Question;
 import jadex.micro.quiz.model.QuestionEvent;
@@ -20,17 +21,15 @@ import jadex.micro.quiz.model.Quiz;
 import jadex.micro.quiz.model.QuizEvent;
 import jadex.micro.quiz.model.QuizResults;
 import jadex.micro.quiz.model.ResultEvent;
-import jadex.model.annotation.OnStart;
 import jadex.providedservice.impl.service.ServiceCall;
 
 /**
  *  The quiz master agent.
  */
-@Agent
 public class QuizMasterAgent implements IQuizService
 {
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** The current participants. */

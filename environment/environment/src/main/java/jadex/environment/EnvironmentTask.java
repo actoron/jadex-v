@@ -1,10 +1,12 @@
 package jadex.environment;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
+import jadex.core.IComponentHandle;
 import jadex.future.TerminableFuture;
 
 public class EnvironmentTask 
@@ -13,6 +15,8 @@ public class EnvironmentTask
 	
 	protected SpaceObject owner;
 	
+	protected String type;
+	
 	protected TerminableFuture<Void> future;
 	
 	protected Function<TaskData, TaskData> task;
@@ -20,6 +24,8 @@ public class EnvironmentTask
 	protected TaskData taskdata;
 	
 	protected Environment env;
+	
+	protected Map<String, Object> infos;
 	
 	
 	public record TaskData(boolean finsihed, long delta, Map<String, Object> data, Set<SpaceObject> changed) 
@@ -58,19 +64,25 @@ public class EnvironmentTask
 		}
 	}
 	
-	public EnvironmentTask(SpaceObject owner, Environment env, TerminableFuture<Void> future, Function<TaskData, TaskData> task) 
+	public EnvironmentTask(IComponentHandle handle, SpaceObject owner, String type, Environment env, TerminableFuture<Void> future, Function<TaskData, TaskData> task) 
 	{
 		this.owner = owner;
+		this.type = type;
 		this.env = env;
 		this.future = future;
 		this.task = task;
 		
 		if(future!=null)
 		{
+//			System.out.println("env setcommand task: "+this);
 			future.setTerminationCommand(ex ->
 			{
-				//System.out.println("env removing task: "+this+" "+ex);
-				env.removeTask(this);
+//				System.out.println("env removing task: "+this+" "+ex);
+				handle.scheduleStep(agent ->
+				{
+//					System.out.println("env remove task: "+this+" "+ex);
+					env.removeTask(this);
+				});
 			});
 		}
 	}
@@ -88,6 +100,16 @@ public class EnvironmentTask
 	public SpaceObject getOwner() 
 	{
 		return owner;
+	}
+	
+	public String getType() 
+	{
+		return type;
+	}
+
+	public void setType(String type) 
+	{
+		this.type = type;
 	}
 
 	public TerminableFuture<Void> getFuture() 
@@ -108,6 +130,28 @@ public class EnvironmentTask
 	public void setTaskData(TaskData taskdata) 
 	{
 		this.taskdata = taskdata;
+	}
+	
+	public Map<String, Object> getInfos() 
+	{
+		return infos;
+	}
+
+	public void setInfos(Map<String, Object> infos) 
+	{
+		this.infos = infos;
+	}
+	
+	public void addInfo(String name, Object val)
+	{
+		if(infos==null)
+			infos = new HashMap<String, Object>();
+		infos.put(name, val);
+	}
+	
+	public Object getInfo(String name)
+	{
+		return infos==null? null: infos.get(name);
 	}
 
 	@Override
@@ -138,7 +182,7 @@ public class EnvironmentTask
 	@Override
 	public String toString() 
 	{
-		return "EnvironmentTask [id=" + id + "]";
+		return "EnvironmentTask [id=" + id + ", owner=" + owner + ", type=" + type + ", task=" + task + "]";
 	}
 
 	private Environment getEnclosingInstance() 

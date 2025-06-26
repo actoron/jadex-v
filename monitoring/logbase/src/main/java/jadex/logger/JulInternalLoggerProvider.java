@@ -1,17 +1,16 @@
 package jadex.logger;
 
 import java.io.InputStream;
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.LogManager;
 
 public class JulInternalLoggerProvider implements IInternalLoggerProvider
 {
-	public Logger getLogger(String name, Level level)
+	public ISystemLogger getLogger(String name, Level level)
 	{
 		JulLogger ret = new JulLogger(name);
-//		System.out.println("getLogger level: "+level+", "+ret);
+//		System.out.println("getLogger level: "+level+", "+name);
 		if(level!=null)
 		{
 //			ret.getLoggerImplementation().setLevel(JulLogger.convertToJulLevel(level));

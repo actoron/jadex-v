@@ -1,14 +1,15 @@
 package jadex.micro.helpline;
 
 import jadex.future.IIntermediateFuture;
-import jadex.providedservice.annotation.Security;
+import jadex.providedservice.annotation.Service;
 
 /**
  *  Basic interface for helpline.
  *  Allows to get local information about a person and
  *  add information about a person.
  */
-@Security(roles=Security.UNRESTRICTED)
+//@Security(roles=Security.UNRESTRICTED)
+@Service
 public interface IHelpline
 {
 	/**

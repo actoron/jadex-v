@@ -14,6 +14,8 @@ import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
 import jadex.common.SUtil;
+import jadex.core.IComponentManager;
+import jadex.logger.ILoggingFeature;
 import jadex.logger.OpenTelemetryLogHandler;
 import jadex.logger.OpenTelemetryLogger;
 
@@ -74,12 +76,12 @@ public class BenchmarkHelper
 		}
 		
 		int	msecs	= 500;
-		int	sleep	= 500;
+		int	sleep	= 1000;
 		int retries	= 10;
 		List<Long>	vals	= new ArrayList<>();
 		try
 		{
-			for(int r=0; r<retries; r++)
+			for(int r=0; r<retries && !isStop(vals, limit); r++)
 			{
 				List<Runnable>	teardowns	= new ArrayList<>();
 				
@@ -105,7 +107,9 @@ public class BenchmarkHelper
 				{
 					System.out.println("Per component: "+took);
 					System.out.println("runs: "+cnt);
-					addToDB(took, limit, false);
+					double pct	= addToDB(took, limit, false);
+					System.out.println("Change(%): "+pct);
+					
 					vals.add(took);
 					System.out.println();
 				}
@@ -122,7 +126,8 @@ public class BenchmarkHelper
 //			addToDB(value, limit, true);
 			
 			// Use only best value
-			addToDB(vals.get(0), limit, true);
+			double pct	= addToDB(vals.get(0), limit, true);
+			System.out.println("Change(%): "+pct);
 		}
 		catch(Exception e)
 		{
@@ -154,6 +159,7 @@ public class BenchmarkHelper
 			return;
 		}
 		
+		long	sleep	= 1000;	// How long to sleep before garbage collection
 		int	retries	= 10;	// how often to repeat everything 
 		long cooldown	= 10000;	// How long to sleep before runs
 		long msecs	= 2000;	// How long to run the benchmark
@@ -163,7 +169,7 @@ public class BenchmarkHelper
 		long	basemem = 0;
 		try
 		{
-			for(int j=0; j<retries; j++)
+			for(int j=0; j<retries && !isStop(vals, limit); j++)
 			{
 				// skip first cooldown and ignore first result
 				if(j>0)
@@ -187,6 +193,8 @@ public class BenchmarkHelper
 				}
 				
 				System.gc();
+				Thread.sleep(sleep);
+				System.gc();
 				long	usedmem	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
 				// skip first cooldown and ignore first result
@@ -196,12 +204,13 @@ public class BenchmarkHelper
 					System.out.println("took: "+took);
 					System.out.println("runs: "+cnt*runs);
 					
-					addToDB(took, limit, false);
+					double	pct	= addToDB(took, limit, false);
+					System.out.println("Change(%): "+pct);
 					vals.add(took);
 					
 					System.out.println("Used memory: "+usedmem);
-					double pct	= (usedmem - basemem)*100.0/basemem;
-					System.out.println("Mem change(%): "+pct);
+					double mempct	= (usedmem - basemem)*100.0/basemem;
+					System.out.println("Mem change(%): "+mempct);
 					System.out.println();
 				}
 				else
@@ -218,7 +227,8 @@ public class BenchmarkHelper
 //			addToDB(value, limit, true);
 			
 			// Use only best value
-			addToDB(vals.get(0), limit, true);
+			double pct	= addToDB(vals.get(0), limit, true);
+			System.out.println("Change(%): "+pct);
 		}
 		catch(Exception e)
 		{
@@ -227,9 +237,44 @@ public class BenchmarkHelper
 	}
 
 	/**
+	 *  Check if the benchmark should stop.
+	 *  Stops when the lowest three values are in 10% of the limit.
+	 */
+	private static boolean isStop(List<Long> vals, double limit)	throws IOException 
+	{
+		int n	= 2;	// How many values to compare
+		
+		// Do at least n runs
+		if(vals.size()<n)
+			return false;
+		
+		vals.sort((a,b) -> (int)(a-b));
+		
+		// Stop if improved
+		if(addToDB(vals.get(0), limit, false)<0)
+		{
+			return true;
+		}
+		// Continue if not below limit
+		if(addToDB(vals.get(0), limit, false)>limit)
+		{
+			return false;
+		}
+		
+		// Compare lowest n values
+		double	min	= vals.get(0);
+		double	max	= vals.get(n-1);
+		double	diff	= max-min;
+		double	pct	= diff*100.0/min;
+//		System.out.println("Stop check: min="+min+", max="+max+", diff="+diff+", pct="+pct);
+		// Stop if within 10% of limit
+		return pct<limit*0.1;
+	}
+
+	/**
 	 *  Compare value to DB and (optionally) write new value.
 	 */
-	protected static void	addToDB(double value, double limit, boolean write) throws IOException
+	protected static double	addToDB(double value, double limit, boolean write) throws IOException
 	{
 		double	pct	= 0;
 		String	caller	= getCaller();
@@ -246,7 +291,6 @@ public class BenchmarkHelper
 //			last	= ((JsonObject)val).get("last").asDouble();
 			
 			pct	= (value - best)*100.0/best;
-			System.out.println("Change(%): "+pct);
 			
 //			// Write new value if two better values in a row
 //			if(last<=best && value<=best)
@@ -281,6 +325,12 @@ public class BenchmarkHelper
 			Files.writeString(db, obj.toString(WriterConfig.PRETTY_PRINT));
 			
 			// Write to log
+			
+			// Hack!!! increase level when disabled by user (e.g. BTCleaner benchmarks)
+			ILoggingFeature	feat	= IComponentManager.get().getFeature(ILoggingFeature.class);
+			Level	level	= feat.getAppLogginglevel();
+			feat.setAppLoggingLevel(Level.INFO);
+			
 			// logfmt
 			System.getLogger(BenchmarkHelper.class.getName()).log(Level.INFO,
 //				  "benchmark=true"
@@ -302,11 +352,15 @@ public class BenchmarkHelper
 //					+", \"benchmark_pct\": "+pct
 //					+"}");
 			
+			feat.setAppLoggingLevel(level);
+			
 			// Hack!!! Force OpenTelemetry to push logs before exiting
 			OpenTelemetryLogHandler.forceFlush();
 
 			if(pct>limit)
 				throw new RuntimeException("Degredation (%) exceeds limit: "+pct+" vs. "+limit);
 		}
+		
+		return pct;
 	}
 }

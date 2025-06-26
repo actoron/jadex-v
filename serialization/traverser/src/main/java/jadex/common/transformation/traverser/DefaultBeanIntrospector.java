@@ -18,6 +18,7 @@ import jadex.collection.LRU;
 import jadex.collection.WeakObject;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
+import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.annotations.Exclude;
 import jadex.common.transformation.annotations.Include;
@@ -157,8 +158,9 @@ public class DefaultBeanIntrospector implements IBeanIntrospector
 					
 					for(Method setter: setters)
 					{
-						String	propname	= setter.getName().substring(3);
-						Method	getter	= getters.get(propname);
+						String propname = setter.getName().substring(3);
+						Method getter = getters.get(propname);
+
 						if(getter!=null && getter.getReturnType().equals(setter.getParameterTypes()[0]))
 						{
 							propname = Character.toLowerCase(propname.charAt(0)) + propname.substring(1);

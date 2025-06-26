@@ -5,10 +5,12 @@ import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
 import jadex.nfproperty.sensor.service.ExecutionTimeProperty;
 import jadex.nfproperty.sensor.service.WaitqueueProperty;
+import jadex.providedservice.annotation.Service;
 
 /**
  * 
  */
+@Service
 public interface IAService 
 {
 	/**

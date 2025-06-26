@@ -2,7 +2,8 @@ package jadex.benchmark;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.core.impl.Component;
+import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 
 public class PlainComponentBenchmark
 {
@@ -12,7 +13,8 @@ public class PlainComponentBenchmark
 //		IComponentManager.get().setComponentIdNumberMode(true);
 		BenchmarkHelper.benchmarkMemory(() ->
 		{
-			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
+//			Component	comp	= Component.createComponent(Component.class, () -> new Component(this));
+			IComponentHandle	comp	= IComponentManager.get().create(null).get();
 			return () -> comp.terminate().get();
 		});
 	}
@@ -23,8 +25,16 @@ public class PlainComponentBenchmark
 //		IComponentManager.get().setComponentIdNumberMode(true);
 		BenchmarkHelper.benchmarkTime(() ->
 		{
-			Component.createComponent(Component.class, () -> new Component(this)).terminate().get();
+			IComponentManager.get().create(null).get().terminate().get();
 		});
+	}
+
+	public static void	main(String[] args)
+	{
+		for(;;)
+		{
+			IComponentManager.get().create(null).get().terminate().get();
+		}
 	}
 
 //	@Test

@@ -2,6 +2,7 @@ package jadex.execution.agentmethods;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
@@ -9,13 +10,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.InvalidComponentAccessException;
-import jadex.execution.AgentMethod;
+import jadex.core.annotation.NoCopy;
+import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.NoCopy;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -48,6 +50,21 @@ public class AgentMethodTest
 			Object obj = new Object();
             Object ret = pojo.getObject1(obj).get();
             assertNotSame(obj, ret);
+		});
+		
+		agent.terminate();
+	}
+	
+	@Test
+	public void	testNoCopyType()
+	{
+		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
+		MyPojo pojo = agent.getPojoHandle(MyPojo.class);
+		
+		assertDoesNotThrow(() -> 
+		{
+            Object ret = pojo.noCopyCid(agent.getId()).get();
+            assertSame(agent.getId(), ret);
 		});
 		
 		agent.terminate();
@@ -165,46 +182,52 @@ public class AgentMethodTest
 			return IComponentManager.get().getCurrentComponent();
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<String> sayHello()
 		{
 			//return new Future<>("Hello: "+agent[0].getId());
 			return new Future<>("Hello: "+getAgent().getId());
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public void setName(String name)
 		{
 			System.out.println("setName: "+name);
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<String> getName()
 		{
 			System.out.println("getName called: "+getAgent().getFeature(IExecutionFeature.class).isComponentThread());
 			return new Future<>("my name is: "+getAgent().getId());
 		}
 		
-		@AgentMethod
+		@ComponentMethod
+		public IFuture<ComponentIdentifier> noCopyCid(ComponentIdentifier cid)
+		{
+			return new Future<>(cid);
+		}
+		
+		@ComponentMethod
 		public IFuture<Object> getObject1(@NoCopy Object obj)
 		{
 			return new Future<>(obj);
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<Integer> getObject2(Object obj)
 		{
 			return new Future<>(obj.hashCode());
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public IFuture<Void> processPerson(Person p)
 		{
 			System.out.println("processObject: "+p);
 			return Future.DONE;
 		}
 		
-		@AgentMethod
+		@ComponentMethod
 		public @NoCopy ISubscriptionIntermediateFuture<Person> generatePersons()
 		{
 			SubscriptionIntermediateFuture<Person> ret = new SubscriptionIntermediateFuture<>();

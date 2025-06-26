@@ -12,7 +12,6 @@ import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.impl.service.ServiceInvocationContext;
 
 
 /**
@@ -43,24 +42,24 @@ public class WaitqueueProperty extends SimpleValueNFProperty<Integer, Void>
 		
 		if(ProxyFactory.isProxyClass(service.getClass()))
 		{
-			listener = new UserMethodInvocationListener(new IMethodInvocationListener()
+			listener = new IMethodInvocationListener()
 			{
 				int cnt = 0;
 				
-				public void methodCallStarted(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
+				public void methodCallStarted(Object proxy, Method method, Object[] args, Object callid)
 				{
 //					System.out.println("started: "+method+" "+cnt);
 					setValue(Integer.valueOf(++cnt));
 				}
 				
-				public void methodCallFinished(Object proxy, Method method, Object[] args, Object callid, ServiceInvocationContext context)
+				public void methodCallFinished(Object proxy, Method method, Object[] args, Object callid)
 				{
 //					System.out.println("ended: "+method+" "+cnt);
 					if(cnt>0)
 						--cnt;
 					setValue(Integer.valueOf(cnt));
 				}
-			});
+			};
 			
 			comp.getFeature(IProvidedServiceFeature.class).addMethodInvocationListener(sid, method, listener);
 		}

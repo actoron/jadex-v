@@ -44,12 +44,11 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.IBeliefListener;
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IBeliefListener;
 import jadex.common.SGUI;
 import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.impl.MicroAgentFeature;
 import jadex.rules.eca.ChangeInfo;
 
 /**
@@ -252,8 +251,7 @@ public class GuiPanel extends JPanel
 
 		agent.scheduleStep(ia ->
 		{
-				INegotiationAgent ag = (INegotiationAgent)ia.getFeature(MicroAgentFeature.class).getSelf().getPojo();
-				ag.getAgent().getFeature(IBDIAgentFeature.class).addBeliefListener("orders", new IBeliefListener<Object>()
+				ia.getFeature(IBDIAgentFeature.class).addBeliefListener("orders", new IBeliefListener<Object>()
 				{
 					public void factRemoved(ChangeInfo<Object> info)
 					{
@@ -266,11 +264,6 @@ public class GuiPanel extends JPanel
 					}
 					
 					public void factAdded(ChangeInfo<Object> info)
-					{
-						refresh();
-					}
-					
-					public void beliefChanged(ChangeInfo<Object> info)
 					{
 						refresh();
 					}
@@ -279,8 +272,7 @@ public class GuiPanel extends JPanel
 		
 		agent.scheduleStep(ia ->
 		{
-				INegotiationAgent ag = (INegotiationAgent)ia.getFeature(MicroAgentFeature.class).getSelf().getPojo();
-				ag.getAgent().getFeature(IBDIAgentFeature.class).addBeliefListener("reports", new IBeliefListener<Object>()
+				ia.getFeature(IBDIAgentFeature.class).addBeliefListener("reports", new IBeliefListener<Object>()
 				{
 					public void factRemoved(ChangeInfo<Object> info)
 					{
@@ -293,11 +285,6 @@ public class GuiPanel extends JPanel
 					}
 					
 					public void factAdded(ChangeInfo<Object> info)
-					{
-						refreshDetails();
-					}
-					
-					public void beliefChanged(ChangeInfo<Object> info)
 					{
 						refreshDetails();
 					}
@@ -491,7 +478,7 @@ public class GuiPanel extends JPanel
 	{
 		agent.scheduleStep(ia ->
 		{
-				INegotiationAgent ag = (INegotiationAgent)ia.getFeature(MicroAgentFeature.class).getSelf().getPojo();
+				INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
 
 				final List<Order> aorders = ag.getOrders();
 				SwingUtilities.invokeLater(new Runnable()

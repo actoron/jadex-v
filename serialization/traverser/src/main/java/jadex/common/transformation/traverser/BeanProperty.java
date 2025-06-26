@@ -381,6 +381,10 @@ public class BeanProperty
 			}
 			catch (Throwable e)
 			{
+				System.out.println("NAAAMname " + name);
+				System.out.println("oooonbcl " + object.getClass());
+				System.out.println("valvavaaal " + value.getClass());
+				System.out.println("masmsms " + setterhandle);
 				SUtil.throwUnchecked(e);
 			}
 		}

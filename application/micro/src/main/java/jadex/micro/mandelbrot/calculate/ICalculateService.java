@@ -3,14 +3,13 @@ package jadex.micro.mandelbrot.calculate;
 import jadex.future.IIntermediateFuture;
 import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.PartDataChunk;
-import jadex.providedservice.annotation.Security;
 import jadex.providedservice.annotation.Service;
 
 /**
  *  Interface for calculating an area of points.
  */
 @Service
-@Security(roles=Security.UNRESTRICTED)
+//@Security(roles=Security.UNRESTRICTED)
 public interface ICalculateService
 {
 	/**

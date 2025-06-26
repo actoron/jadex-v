@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 
+ *  Define external classes as goals of an agent or capability.
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

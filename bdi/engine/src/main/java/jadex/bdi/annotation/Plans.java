@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 
+ *  Declare plans used by the agent.
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

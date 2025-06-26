@@ -120,4 +120,10 @@ public class ItemInfo
 	{
 		return obj instanceof ItemInfo && (name.equals(((ItemInfo)obj).name));
 	}
+	
+	@Override
+	public String toString()
+	{
+		return "Item "+name+" ("+quantity+") for "+price;
+	}
 }

@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 
 import jadex.bt.impl.BTAgentFeature;
 import jadex.common.SUtil;
-import jadex.micro.impl.MicroAgentFeature;
+import jadex.execution.IExecutionFeature;
 
 /**
  *  Wrapper for belief values.
@@ -29,7 +29,7 @@ public class Val<T>
 	}
 	
 	/**
-	 *  Create belief value with a dynamic function.
+	 * Create belief value with a dynamic function.
 	 */
 	public Val(Callable<T> dynamic, long updaterate)
 	{
@@ -37,24 +37,99 @@ public class Val<T>
 		this.updaterate = updaterate;
 	}
 	
-	private void init(Object pojo, String name)
+	private void ensureInitialized() 
+    {
+        if (this.name == null) 
+            autoInit();
+    }
+	
+	public void init(Object pojo, String name)
 	{
+		if(this.name!=null)
+			return;
+		
 		this.pojo = pojo;
 		this.name = name;
 		if(dynamic!=null)
 		{
-			try
-			{
-				BTAgentFeature.writeField(dynamic.call(), name, pojo, MicroAgentFeature.get().getSelf());
-			}
-			catch(Exception e)
-			{
-				SUtil.rethrowAsUnchecked(e);
-			}
+			writeField();
+			if(updaterate>0)
+				performUpdates();
 		}
 		else if(value!=null)
 		{
 			set(value); // reset the value to generate initial event
+		}
+	}
+	
+	private void autoInit() 
+	{
+	    if (this.name == null) 
+	    {
+	        this.pojo = IExecutionFeature.get().getComponent().getPojo();
+	        Class<?> clazz = pojo.getClass();
+
+	        while (clazz != null) 
+	        {
+	            for (var field : clazz.getDeclaredFields()) 
+	            {
+	                field.setAccessible(true);
+	                try 
+	                {
+	                    if (field.get(pojo) == this) 
+	                    {
+	                    	init(pojo, field.getName());
+	                        return;
+	                    }
+	                } 
+	                catch (IllegalAccessException e) 
+	                {
+	                    throw new RuntimeException("Field access error", e);
+	                }
+	            }
+	            clazz = clazz.getSuperclass(); 
+	        }
+
+	        throw new IllegalStateException("Could not determine field name for Val");
+	    }
+	}
+	
+	private void performUpdates()
+	{
+		IExecutionFeature.get().waitForDelay(updaterate).then(Void ->
+		{
+			writeField();
+			IExecutionFeature.get().scheduleStep(() -> performUpdates());
+		}).catchEx(ex ->
+		{
+			//ex.printStackTrace();
+			//System.out.println("ex on val update, terminating updates:"+name);
+			System.getLogger(this.getClass().getName()).log(Level.WARNING, "ex on val update, terminating updates:"+name);
+		});
+		//}).printOnEx();
+	}
+	
+	private void writeField()
+	{
+		try
+		{
+			BTAgentFeature.writeField(dynamic.call(), name, pojo, IExecutionFeature.get().getComponent());
+		}
+		catch(Exception e)
+		{
+			SUtil.rethrowAsUnchecked(e);
+		}
+	}
+	
+	private void writeField(T value)
+	{
+		try
+		{
+			BTAgentFeature.writeField(value, name, pojo, IExecutionFeature.get().getComponent());
+		}
+		catch(Exception e)
+		{
+			SUtil.rethrowAsUnchecked(e);
 		}
 	}
 	
@@ -63,6 +138,8 @@ public class Val<T>
 	 */
 	public T get()
 	{
+		ensureInitialized();
+		
 		try
 		{
 			return dynamic!=null && updaterate==0? dynamic.call(): value;
@@ -79,6 +156,8 @@ public class Val<T>
 	 */
 	public void	set(T value)
 	{
+		ensureInitialized();
+		
 		//System.out.println("setting val: "+value);
 		
 		//if(value instanceof Val)
@@ -97,14 +176,7 @@ public class Val<T>
 			//throw new IllegalStateException("Wrapper not inited. Missing @Belief/@GoalParameter annotation.");
 		}
 		
-		try
-		{
-			BTAgentFeature.writeField(value, name, pojo, MicroAgentFeature.get().getSelf());
-		}
-		catch(Exception e)
-		{
-			SUtil.rethrowAsUnchecked(e);
-		}
+		writeField(value);
 	}
 	
 	@Override

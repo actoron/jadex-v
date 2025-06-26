@@ -1,8 +1,10 @@
 package jadex.remoteservices.impl.remotecommands;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.messaging.ISecurityInfo;
+import jadex.remoteservices.IRemoteOrderedConversationCommand;
 
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -27,9 +29,9 @@ public abstract class AbstractResultCommand extends AbstractInternalRemoteComman
 	/**
 	 *  Create a remote command.
 	 */
-	public AbstractResultCommand(Map<String, Object> nonfunc)
+	public AbstractResultCommand(String id, ComponentIdentifier sender, Map<String, Object> nonfunc)
 	{
-		super(nonfunc);
+		super(id, sender, nonfunc);
 	}
 	
 	/**

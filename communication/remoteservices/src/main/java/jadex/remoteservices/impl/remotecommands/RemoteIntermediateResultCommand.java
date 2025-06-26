@@ -1,5 +1,13 @@
 package jadex.remoteservices.impl.remotecommands;
 
+import jadex.core.ComponentIdentifier;
+import jadex.core.IComponent;
+import jadex.future.IFuture;
+import jadex.future.IntermediateFuture;
+import jadex.messaging.ISecurityInfo;
+
+import java.util.Map;
+
 /**
  * Command for intermediate results.
  */
@@ -18,9 +26,9 @@ public class RemoteIntermediateResultCommand<T>	extends AbstractResultCommand
 	/**
 	 *  Create the command.
 	 */
-	public RemoteIntermediateResultCommand(T result, Map<String, Object> nonfunc)
+	public RemoteIntermediateResultCommand(String id, ComponentIdentifier sender, T result, Map<String, Object> nonfunc)
 	{
-		super(nonfunc);
+		super(id, sender, nonfunc);
 		this.result = result;
 	}
 	

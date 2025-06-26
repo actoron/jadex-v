@@ -7,10 +7,8 @@ import jadex.common.Tuple2;
 import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.future.TerminableIntermediateDelegationFuture;
 import jadex.nfproperty.impl.search.IRankingSearchTerminationDecider;
 import jadex.nfproperty.impl.search.IServiceRanker;
-import jadex.nfproperty.impl.search.ServiceRankingDelegationResultListener;
 import jadex.providedservice.IServiceIdentifier;
 
 

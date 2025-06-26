@@ -13,8 +13,8 @@ import java.awt.event.ItemListener;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,15 +37,13 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
-import jadex.bdi.runtime.IBDIAgentFeature;
-import jadex.bdi.runtime.ICapability;
-import jadex.bdi.runtime.impl.BeliefAdapter;
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IBeliefListener;
+import jadex.bdi.ICapability;
 import jadex.bdi.shop.CustomerCapability.BuyItem;
 import jadex.common.SGUI;
 import jadex.common.SUtil;
-import jadex.common.transformation.annotations.Classname;
 import jadex.core.IComponent;
-import jadex.core.IThrowingFunction;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -54,34 +52,36 @@ import jadex.rules.eca.ChangeInfo;
 /**
  *  Customer gui that allows buying items at different shops.
  */
+@SuppressWarnings("serial")
 public class CustomerPanel extends JPanel
 {
 	//-------- attributes --------
 	
 	protected IComponent agent;
 	protected ICapability capa;
-	protected List shoplist = new ArrayList();
+	protected CustomerCapability cust;
+	protected List<ItemInfo> shoplist = new ArrayList<>();
 	protected JCheckBox remote;
 	protected JTable shoptable;
 	protected AbstractTableModel shopmodel = new ItemTableModel(shoplist);
 	
-	protected List invlist = new ArrayList();
+	protected List<ItemInfo> invlist = new ArrayList<>();
 	protected AbstractTableModel invmodel = new ItemTableModel(invlist);
 	protected JTable invtable;
-	protected Map	shops;
+	protected Map<String, IShopService>	shops;
 	
 	//-------- constructors --------
 	
 	/**
 	 *  Create a new gui.
 	 */
-	public CustomerPanel(IComponent agent, ICapability capa)
+	public CustomerPanel(IComponent agent, ICapability capa, CustomerCapability cust)
 	{
 		this.agent	= agent;
-		this.capa	= capa;
-		this.shops	= new HashMap();
+		this.cust	= cust;
+		this.shops	= new LinkedHashMap<>();
 		
-		final JComboBox shopscombo = new JComboBox();
+		final JComboBox<String> shopscombo = new JComboBox<>();
 		shopscombo.addItem("none");
 		shopscombo.addItemListener(new ItemListener()
 		{
@@ -106,34 +106,34 @@ public class CustomerPanel extends JPanel
 		    	try
 		    	{
 			    	searchbut.setEnabled(false);
-					Collection<Object> coll = agent.getComponentHandle().scheduleStep(ia ->
+					Collection<IShopService> coll = agent.getComponentHandle().scheduleStep(ia ->
 					{
-						if(remote.isSelected())
+//						if(remote.isSelected())
+//						{
+//							return ia.getFeature(IRequiredServiceFeature.class).searchServices("remoteshopservices").get();
+//						}
+//						else
 						{
-							return ia.getFeature(IRequiredServiceFeature.class).getServices("remoteshopservices").get();
-						}
-						else
-						{
-							return ia.getFeature(IRequiredServiceFeature.class).getServices("localshopservices").get();
+							return ia.getFeature(IRequiredServiceFeature.class).searchServices(IShopService.class).get();
 						}
 					}).get();
 					
-//					System.out.println("Customer search result: "+result);
-					((DefaultComboBoxModel)shopscombo.getModel()).removeAllElements();
+					System.out.println("Customer search result: "+coll);
+					((DefaultComboBoxModel<String>)shopscombo.getModel()).removeAllElements();
 					shops.clear();
 					if(coll!=null && coll.size()>0)
 					{
-						for(Iterator<Object> it=coll.iterator(); it.hasNext(); )
+						for(Iterator<IShopService> it=coll.iterator(); it.hasNext(); )
 						{
-							IShopService	shop	= (IShopService)it.next();
-							String	name	= agent.getComponentHandle().scheduleStep(() -> shop.getName()).get();
+							IShopService	shop	= it.next();
+							String	name	= agent.getComponentHandle().scheduleAsyncStep(() -> shop.getName()).get();
 							shops.put(name, shop);
-							((DefaultComboBoxModel)shopscombo.getModel()).addElement(name);
+							((DefaultComboBoxModel<String>)shopscombo.getModel()).addElement(name);
 						}
 					}
 					else
 					{
-						((DefaultComboBoxModel)shopscombo.getModel()).addElement("none");
+						((DefaultComboBoxModel<String>)shopscombo.getModel()).addElement("none");
 					}
 		    	}
 		    	finally
@@ -151,8 +151,7 @@ public class CustomerPanel extends JPanel
 		
 		agent.getComponentHandle().scheduleStep(() ->
 		{
-				CustomerCapability cust = (CustomerCapability)capa.getPojoCapability();
-				final double mon = cust.getMoney();
+				final double mon = cust.money.get();
 				SwingUtilities.invokeLater(new Runnable()
 				{
 					public void run()
@@ -165,9 +164,10 @@ public class CustomerPanel extends JPanel
 		
 		agent.getComponentHandle().scheduleStep(() ->
 		{
-				capa.addBeliefListener("money", new BeliefAdapter<Object>()
+				capa.addBeliefListener("money", new IBeliefListener<Double>()
 				{
-					public void beliefChanged(final ChangeInfo<Object> info)
+					@Override
+					public void factChanged(final ChangeInfo<Double> info)
 					{
 						SwingUtilities.invokeLater(new Runnable()
 						{
@@ -219,9 +219,10 @@ public class CustomerPanel extends JPanel
 		{
 				try
 				{
-					capa.addBeliefListener("inventory", new BeliefAdapter<Object>()
+					capa.addBeliefListener("inventory", new IBeliefListener<ItemInfo>()
 					{
-						public void factRemoved(final ChangeInfo<Object> value)
+						@Override
+						public void factRemoved(final ChangeInfo<ItemInfo> value)
 						{
 							SwingUtilities.invokeLater(new Runnable()
 							{
@@ -233,7 +234,8 @@ public class CustomerPanel extends JPanel
 							});
 						}
 						
-						public void factAdded(final ChangeInfo<Object> value)
+						@Override
+						public void factAdded(final ChangeInfo<ItemInfo> value)
 						{
 							SwingUtilities.invokeLater(new Runnable()
 							{
@@ -245,7 +247,8 @@ public class CustomerPanel extends JPanel
 							});
 						}
 						
-						public void factChanged(ChangeInfo<Object> object)
+						@Override
+						public void factChanged(ChangeInfo<ItemInfo> object)
 						{
 							SwingUtilities.invokeLater(new Runnable()
 							{
@@ -285,10 +288,10 @@ public class CustomerPanel extends JPanel
 					agent.getComponentHandle().scheduleStep(ia ->
 					{
 							BuyItem	big	= new BuyItem(name, shop, price.doubleValue());
-							IFuture<BuyItem> ret = ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(big);
-							ret.addResultListener(new IResultListener<BuyItem>()
+							IFuture<Void> ret = ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(big);
+							ret.addResultListener(new IResultListener<Void>()
 							{
-								public void resultAvailable(BuyItem result)
+								public void resultAvailable(Void result)
 								{
 									// Update number of available items
 									SwingUtilities.invokeLater(() -> refresh(shop));
@@ -376,15 +379,14 @@ public class CustomerPanel extends JPanel
 	{
 		if(shop!=null)
 		{
-			agent.getComponentHandle().scheduleStep(() ->shop.getCatalog())
-				.addResultListener(new IResultListener()
+			agent.getComponentHandle().scheduleAsyncStep(() ->shop.getCatalog())
+				.addResultListener(new IResultListener<ItemInfo[]>()
 			{
-				public void resultAvailable(Object result)
+				public void resultAvailable(ItemInfo[] aitems)
 				{
 					SwingUtilities.invokeLater(() ->
 					{
 						int sel = shoptable.getSelectedRow();
-						ItemInfo[] aitems = (ItemInfo[])result;
 						shoplist.clear();
 						for(int i = 0; i < aitems.length; i++)
 						{
@@ -422,11 +424,12 @@ public class CustomerPanel extends JPanel
 		
 }
 
+@SuppressWarnings("serial")
 class ItemTableModel extends AbstractTableModel
 {
-	protected List list;
+	protected List<ItemInfo> list;
 	
-	public ItemTableModel(List list)
+	public ItemTableModel(List<ItemInfo> list)
 	{
 		this.list = list;
 	}

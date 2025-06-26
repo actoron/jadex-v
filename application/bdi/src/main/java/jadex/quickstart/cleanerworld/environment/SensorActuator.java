@@ -14,7 +14,6 @@ import jadex.quickstart.cleanerworld.environment.impl.Cleaner;
 import jadex.quickstart.cleanerworld.environment.impl.Environment;
 import jadex.quickstart.cleanerworld.environment.impl.Location;
 import jadex.quickstart.cleanerworld.environment.impl.LocationObject;
-import jadex.quickstart.cleanerworld.environment.impl.Pheromone;
 import jadex.quickstart.cleanerworld.environment.impl.Waste;
 import jadex.quickstart.cleanerworld.environment.impl.Wastebin;
 
@@ -36,8 +35,8 @@ public class SensorActuator
 	/** The current movement target, if any. */
 	private Location	target;
 	
-	/** The pheromone to disperse (if any). */
-	private String	pheromone;
+//	/** The pheromone to disperse (if any). */
+//	private String	pheromone;
 	
 	/** The known other cleaners. */
 	private Set<ICleaner>	cleaners	= new LinkedHashSet<>();
@@ -263,13 +262,6 @@ public class SensorActuator
 				// Post new own state to environment
 				Environment.getInstance().updateCleaner(self);
 				
-				// Add pheromone (if any).
-				if(pheromone!=null)
-				{
-					Pheromone	ph	= new Pheromone(self.getLocation(), pheromone);
-					Environment.getInstance().addPheromone(ph);
-				}
-
 				// Get new external state from environment.
 				update();
 				
@@ -305,7 +297,7 @@ public class SensorActuator
 		{
 			// After move finished/failed always reset state.
 			target	= null;
-			pheromone	= null;
+//			pheromone	= null;
 		}
 	}
 	

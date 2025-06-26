@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 
+ *  Call this method when the plan has failed, i.e. the body threw an exception.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

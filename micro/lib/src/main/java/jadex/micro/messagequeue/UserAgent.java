@@ -3,20 +3,18 @@ package jadex.micro.messagequeue;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.micro.annotation.Agent;
-import jadex.requiredservice.annotation.OnService;
+import jadex.injection.annotation.Inject;
 
 /**
  *  Example queue user that registers at the queue with a topic and
  *  publishes a number of topics before terminating.
  */
-@Agent
 public class UserAgent
 {
 	//-------- attributes --------
 	
 	/** The agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	/** The topic. */
@@ -34,7 +32,7 @@ public class UserAgent
 		this.topic = topic==null? "default_topic": topic;
 	}
 	
-	@OnService
+	@Inject
 	public void onService(IMessageQueueService mq)
 	{
 		final ISubscriptionIntermediateFuture<Event> fut = mq.subscribe(topic);

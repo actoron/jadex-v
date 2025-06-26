@@ -4,7 +4,7 @@
     <jadex:package>jadex.bpmn.tutorial</jadex:package>
     <jadex:componentflags keepalive="false" monitoring="OFF" persistable="false" suspend="false" synchronous="false"/>
     <jadex:requiredservices>
-      <jadex:requiredservice create="false" dynamic="false" interface="jadex.bpmn.tutorial.IBService" name="bser" scope="platform"/>
+      <jadex:requiredservice create="false" dynamic="false" interface="jadex.bpmn.tutorial.IBService" name="bser" scope="VM"/>
     </jadex:requiredservices>
   </bpmn:extension>
   <bpmn:process id="b2bhX5CuQxrrP0NY" name="Pool">

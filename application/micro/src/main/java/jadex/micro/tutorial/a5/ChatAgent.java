@@ -1,5 +1,7 @@
 package jadex.micro.tutorial.a5;
 
+import java.awt.Desktop;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -7,13 +9,12 @@ import java.util.Set;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.micro.MicroAgent;
-import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
-import jadex.providedservice.annotation.Service;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 import jadex.publishservice.publish.annotation.Publish;
-import jadex.requiredservice.annotation.OnService;
+import jadex.requiredservice.annotation.InjectService;
+import jadex.requiredservice.annotation.InjectService.Mode;
 
 /**
  *  Chat micro agent provides a basic chat service and publishes it as rest web service.
@@ -21,16 +22,14 @@ import jadex.requiredservice.annotation.OnService;
  *  It can be invoked via the standard service info page at the publish url: http://localhost:8081/chat.
  *  The agent receives the message and display at the console.
  */
-@Agent
-@Service
 @Publish(publishid="http://localhost:8081/chat")
 public class ChatAgent implements IChatService
 {
 	/** The underlying micro agent. */
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
-	@OnService
+	@InjectService(mode=Mode.QUERY)
 	protected Set<IChatService> chatservices = new HashSet<IChatService>();
 	
 	/**
@@ -50,7 +49,7 @@ public class ChatAgent implements IChatService
 	{
 		System.out.println("agent started: "+agent.getId());
 		
-		//this.gui = new ChatGui(agent.getExternalAccess());
+		openInBrowser("http://localhost:8081/chat");
 	}
 	
 	@OnEnd
@@ -70,13 +69,30 @@ public class ChatAgent implements IChatService
 	}
 	
 	/**
+	 *  Open the url in the browser.
+	 *  @param url The url.
+	 */
+	protected void openInBrowser(String url)
+	{
+		try 
+		{
+			URI uri = new URI(url);
+			Desktop.getDesktop().browse(uri);
+		}	
+		catch(Exception e) 
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	/**
 	 *  Start the example.
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		MicroAgent.create(new ChatAgent());
-		//MjMicroAgent.create(new ChatAgent());
-		//MjMicroAgent.create(new ChatAgent());
+		IComponentManager.get().create(new ChatAgent());
+		//IComponentManager.get().create(new ChatAgent());
+		//IComponentManager.get().create(new ChatAgent());
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

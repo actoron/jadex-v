@@ -9,7 +9,7 @@ import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.core.impl.RuntimeFeatureProvider;
 import jadex.messaging.IIpcFeature;
 import jadex.messaging.ISecurityFeature;
-import jadex.messaging.security.Security;
+import jadex.messaging.security.SecurityFeature;
 
 public class SecurityFeatureProvider extends RuntimeFeatureProvider<ISecurityFeature>
 {
@@ -29,7 +29,7 @@ public class SecurityFeatureProvider extends RuntimeFeatureProvider<ISecurityFea
 	public ISecurityFeature createFeatureInstance()
 	{
 		IIpcFeature ipc = IComponentManager.get().getFeature(IIpcFeature.class);
-		ISecurityFeature ret = new Security(GlobalProcessIdentifier.SELF, ipc);
+		ISecurityFeature ret = new SecurityFeature(GlobalProcessIdentifier.getSelf(), ipc);
 		return ret;
 	}
 	

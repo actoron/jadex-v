@@ -9,7 +9,6 @@ import java.util.Set;
 
 import jadex.common.Tuple2;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.ServiceKeyExtractor.SetWrapper;
 
 /**
@@ -26,8 +25,9 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 	/** Key type for the owner. */
 	public static final String KEY_TYPE_OWNER = "owner";
 	
-	/** Key type for the service provider. */
-	public static final String KEY_TYPE_PROVIDER = "provider";
+	// TODO: support provider in query
+//	/** Key type for the service provider. */
+//	public static final String KEY_TYPE_PROVIDER = "provider";
 	
 	/** Key type for the service platform. */
 	public static final String KEY_TYPE_PLATFORM = "platform";
@@ -58,7 +58,7 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 	public static final String[] QUERY_KEY_TYPES;
 	
 	/** The indexable types. */
-	public static final String[] QUERY_KEY_TYPES_INDEXABLE = {KEY_TYPE_INTERFACE, KEY_TYPE_TAGS, KEY_TYPE_OWNER, KEY_TYPE_PROVIDER, KEY_TYPE_PLATFORM, KEY_TYPE_OWNER_PLATORM, KEY_TYPE_ID, KEY_TYPE_SID, KEY_TYPE_NETWORKS, KEY_TYPE_UNRESTRICTED};//, KEY_TYPE_ISREMOTE};
+	public static final String[] QUERY_KEY_TYPES_INDEXABLE = {KEY_TYPE_INTERFACE, KEY_TYPE_TAGS, KEY_TYPE_OWNER, /*KEY_TYPE_PROVIDER,*/ KEY_TYPE_PLATFORM, KEY_TYPE_OWNER_PLATORM, KEY_TYPE_ID, KEY_TYPE_SID, KEY_TYPE_NETWORKS, KEY_TYPE_UNRESTRICTED};//, KEY_TYPE_ISREMOTE};
 	
 	static
 	{
@@ -123,12 +123,12 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 			if(query.getOwner()!=null)
 				ret = new SetWrapper<String>(query.getOwner().toString());
 		}
-		else if(KEY_TYPE_PROVIDER.equals(keytype))
+		/*else if(KEY_TYPE_PROVIDER.equals(keytype))
 		{
-			if(ServiceScope.COMPONENT.equals(query.getScope()))
-				ret = new SetWrapper<String>(query.getOwner().toString());
+			//if(ServiceScope.COMPONENT.equals(query.getScope()))
+				//ret = new SetWrapper<String>(query.getOwner().toString());
 				//ret = new SetWrapper<String>(query.getSearchStart() != null ? query.getSearchStart().toString() : query.getOwner().toString());
-		}
+		}*/
 		/*else if(KEY_TYPE_PLATFORM.equals(keytype))
 		{
 			//if(query.getProvider()!=null)
@@ -208,7 +208,7 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 		
 		//ret.add(new Tuple2<>(KEY_TYPE_PLATFORM, new String[]{sid.getProviderId().getRoot().toString()}));
 		
-		ret.add(new Tuple2<>(KEY_TYPE_PROVIDER, new String[]{sid.getProviderId().toString()}));
+		/*ret.add(new Tuple2<>(KEY_TYPE_PROVIDER, new String[]{sid.getProviderId().toString()}));*/
 		
 		String[] interfaces = new String[sid.getServiceSuperTypes() == null ? 1 : sid.getServiceSuperTypes().length + 1];
 		interfaces[0] = sid.getServiceType().getGenericTypeName();

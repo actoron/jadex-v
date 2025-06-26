@@ -2,8 +2,8 @@ package jadex.benchmark;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bdi.runtime.IBDIAgent;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 
 public class ReasoningBDIBenchmark
 {
@@ -13,7 +13,7 @@ public class ReasoningBDIBenchmark
 		 BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			ReasoningBDIBenchmarkAgent	pojo	= new ReasoningBDIBenchmarkAgent();
-			IComponentHandle	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IComponentManager.get().create(pojo).get();
 			pojo.completed.get();
 			return () -> agent.terminate().get();
 		});
@@ -25,10 +25,10 @@ public class ReasoningBDIBenchmark
 		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			ReasoningBDIBenchmarkAgent	pojo	= new ReasoningBDIBenchmarkAgent();
-			IComponentHandle	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IComponentManager.get().create(pojo).get();
 			pojo.completed.get();
 			agent.terminate().get();
-		});
+		}, 50);	// TODO: why the high deviations?
 	}
 
 	public static void main(String[] args)
@@ -36,7 +36,7 @@ public class ReasoningBDIBenchmark
 		for(;;)
 		{
 			ReasoningBDIBenchmarkAgent	pojo	= new ReasoningBDIBenchmarkAgent();
-			IComponentHandle	agent	= IBDIAgent.create(pojo);
+			IComponentHandle	agent	= IComponentManager.get().create(pojo).get();
 			pojo.completed.get();
 			agent.terminate().get();
 		}

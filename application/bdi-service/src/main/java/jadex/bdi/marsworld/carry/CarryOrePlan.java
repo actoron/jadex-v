@@ -1,19 +1,15 @@
 package jadex.bdi.marsworld.carry;
 
+import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Plan;
-import jadex.bdi.annotation.PlanAPI;
 import jadex.bdi.annotation.PlanBody;
-import jadex.bdi.annotation.PlanCapability;
-import jadex.bdi.annotation.PlanFinished;
-import jadex.bdi.annotation.PlanReason;
 import jadex.bdi.marsworld.carry.CarryAgent.CarryOre;
 import jadex.bdi.marsworld.environment.Carry;
 import jadex.bdi.marsworld.environment.MarsworldEnvironment;
 import jadex.bdi.marsworld.environment.Target;
 import jadex.bdi.marsworld.movement.MovementCapability;
 import jadex.bdi.marsworld.movement.MovementCapability.Move;
-import jadex.bdi.runtime.IPlan;
-import jadex.future.ITerminableFuture;
+import jadex.injection.annotation.Inject;
 
 /**
  *  Inform the sentry agent about a new target.
@@ -23,16 +19,14 @@ public class CarryOrePlan
 {
 	//-------- attributes --------
 
-	@PlanCapability
+	@Inject
 	protected CarryAgent carry;
 	
-	@PlanAPI
+	@Inject
 	protected IPlan rplan;
 	
-	@PlanReason
+	@Inject
 	protected CarryOre goal;
-	
-	protected ITerminableFuture<Void> task;
 	
 	/**
 	 *  The plan body.
@@ -56,8 +50,7 @@ public class CarryOrePlan
 	
 			// Load ore at the target.
 			//System.out.println("load start");
-			task = env.load(myself, target);
-			task.get();
+			env.load(myself, target).get();
 			//System.out.println("load end");
 			//System.out.println("myself: "+myself.getPosition());
 			
@@ -68,28 +61,12 @@ public class CarryOrePlan
 			
 			// Unload ore at homebase
 			//System.out.println("unload start");
-			task = env.unload(myself, capa.getHomebase());
-			task.get();
-			task = null;
+			env.unload(myself, capa.getHomebase()).get();
 			//System.out.println("unload end");
 			
 			finished = target.getOre()==0;
 			//if(finished)
 			//	System.out.println("carry ore plan finished: "+carry.getAgent().getId());
-		}
-	}
-	
-	@PlanFinished
-	protected void finished()
-	{
-		//carry.getMoveCapa().updateSelf();
-		//carry.getMoveCapa().updateTarget(goal.getTarget());
-		
-		//System.out.println("plan finished: "+this);
-		if(task!=null)
-		{
-			//System.out.println("aborting env task");
-			task.terminate();
 		}
 	}
 }

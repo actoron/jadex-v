@@ -1,20 +1,22 @@
 package jadex.environment;
 
-import java.util.Set;
-
+import jadex.core.ComponentIdentifier;
 import jadex.future.SubscriptionIntermediateFuture;
 
 public class ObserverInfo 
 {
 	protected SubscriptionIntermediateFuture<? extends EnvironmentEvent> observer;
 	
+	protected ComponentIdentifier observerid;
+	
 	protected SpaceObject obj;
 	
-	protected Set<SpaceObject> lastvision;
+	protected Vision lastvision;
 
-	public ObserverInfo(SubscriptionIntermediateFuture<? extends EnvironmentEvent> observer, SpaceObject obj) 
+	public ObserverInfo(SubscriptionIntermediateFuture<? extends EnvironmentEvent> observer, ComponentIdentifier observerid, SpaceObject obj) 
 	{
 		this.observer = observer;
+		this.observerid = observerid;
 		this.obj = obj;
 	}
 
@@ -27,13 +29,18 @@ public class ObserverInfo
 	{
 		return obj;
 	}
+	
+	public ComponentIdentifier getObserverId() 
+	{
+		return observerid;
+	}
 
-	public Set<SpaceObject> getLastVision() 
+	public Vision getLastVision() 
 	{
 		return lastvision;
 	}
 
-	public void setLastVision(Set<SpaceObject> lastvision) 
+	public void setLastVision(Vision lastvision) 
 	{
 		this.lastvision = lastvision;
 	}

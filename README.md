@@ -35,6 +35,12 @@ Key points:
 - Automatic service discovery
 - Enhanced communication security
 
+### Environment Support
+
+For many applications, having a virtual environment where active components can operate is beneficial. Jadex provides a lightweight, ready-to-use solution for environment construction. The environment manages all objects, including component representatives (typically called avatars).
+Domain-specific environment actions can be defined, and components are notified about objects within their field of vision. Additionally, components can observe specific environment objects and receive updates when changes occur.
+For more details on environment setup and programming, see [Details about environment setup and programming](environment.md).
+
 ## Installation
 
 ### Maven Repository
@@ -142,9 +148,9 @@ public class HelloAgent
 	
 	public static void main(String[] args) 
 	{
-		IComponent.create(new HelloAgent());
+		IComponentManager.get().create.create(new HelloAgent());
 		
-		IComponent.waitForLastComponentTerminated();
+		IComponentManager.get().create.waitForLastComponentTerminated();
 	}
 }
 ```
@@ -153,17 +159,18 @@ from a pojo one can additionally declare the component type `@Agent(type="bdi")`
 - `@OnStart` is called once the actor is created and starts execution
 - API access is possible via the IComponent interface. It can be injected 
 into methods calls or it can be declared as agent variable `@Agent private IComponent agent;`  
-- Components can be created via IComponent interface. `IComponent.create(new HelloAgent());`
+- Components can be created via IComponentManager interface. `IComponentManager.get().create(new HelloAgent());`
 creates a new active component from a HelloWorld pojo object. The component immediately
 starts execution.
 - Active components are started as daemons so that the main thread has to be blocked to
-prohibit program termination. This is done via `IComponent.waitForLastComponentTerminated();`
+prohibit program termination. This is done via `IComponentManager.get().create.waitForLastComponentTerminated();`
 
 You can find a lot of different examples in the application packages:
 
 - application/micro
 - application/bdi and bdi-service
 - application/bpmn
+- application/bt
 
 
 ## Authors

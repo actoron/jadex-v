@@ -1,6 +1,6 @@
 package jadex.logger;
 
-import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,7 +14,7 @@ public class LoggingFeature implements ILoggingFeature
 	
 	protected java.lang.System.Logger.Level defsystemlevel = java.lang.System.Logger.Level.WARNING;
 	protected java.lang.System.Logger.Level defapplevel = java.lang.System.Logger.Level.INFO;
-
+	
 	public LoggingFeature() 
 	{
 	}
@@ -73,22 +73,28 @@ public class LoggingFeature implements ILoggingFeature
 		return loggercreators;
 	}
 	
-	public synchronized void setDefaultSystemLoggingLevel(java.lang.System.Logger.Level level)
+	@Override
+	public synchronized void setSystemLoggingLevel(Level level)
 	{
 		defsystemlevel = level;
+		((ISystemLogger)System.getLogger(IComponent.class.getName())).setLevel(level);
 	}
 	
-	public synchronized void setDefaultAppLoggingLevel(java.lang.System.Logger.Level level)
+	@Override
+	public synchronized void setAppLoggingLevel(Level level)
 	{
 		defapplevel = level;
+		((ISystemLogger)System.getLogger("application")).setLevel(level);
 	}
 
-	public java.lang.System.Logger.Level getDefaultSystemLoggingLevel() 
+	@Override
+	public Level getSystemLoggingLevel() 
 	{
 		return defsystemlevel;
 	}
 
-	public java.lang.System.Logger.Level getDefaultAppLogginglevel() 
+	@Override
+	public Level getAppLogginglevel() 
 	{
 		return defapplevel;
 	}

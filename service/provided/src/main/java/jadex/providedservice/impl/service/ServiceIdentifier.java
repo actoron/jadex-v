@@ -1,5 +1,6 @@
 package jadex.providedservice.impl.service;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -10,9 +11,6 @@ import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.impl.Component;
-import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Security;
@@ -39,9 +37,6 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/** The service super types. */
 	protected ClassInfo[] supertypes;
 
-	/** The resource identifier. */
-	//protected IResourceIdentifier rid;
-	
 	/** The scope. */
 	protected ServiceScope scope;
 	
@@ -121,6 +116,45 @@ public class ServiceIdentifier implements IServiceIdentifier
 				superinfos.add(new ClassInfo(sin));
 		}
 		return superinfos.toArray(new ClassInfo[superinfos.size()]);
+	}
+	
+	/**
+	 *  Create a new service identifier for the own component.
+	 */
+	public static IServiceIdentifier createServiceIdentifier(IComponent provider, String servicename, 
+		Class<?> servicetype, Class<?> serviceimpl, ServiceScope scope, Collection<String> tags)
+	{
+//		if(servicetype.getName().indexOf("IServicePool")!=-1)
+//			System.out.println("sdjhvkl");
+		Security security = getSecurityLevel(provider, null, null);//info, serviceimpl, servicetype, null, null);
+		Set<String>	roles = ServiceIdentifier.getRoles(security, provider);
+		//ServiceScope scope = info!=null ? info.getScope() : null;
+		
+		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope,
+			roles!=null && roles.contains(Security.UNRESTRICTED), tags);
+	}
+	
+	/**
+	 *  Create a new service identifier for a potentially remote component.
+	 * /
+	public static ServiceIdentifier	createServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted)
+	{
+		return new ServiceIdentifier(providerid, type, supertypes, servicename, scope, networknames, unrestricted);
+	}*/
+	
+	/** The id counter. */
+	protected static long idcnt;
+	
+	/**
+	 *  Generate a unique name.
+	 *  @param The calling service class.
+	 */
+	public static String generateServiceName(Class<?> service)
+	{
+		synchronized(ServiceIdentifier.class)
+		{
+			return SReflect.getInnerClassName(service)+"_#"+idcnt++;
+		}
 	}
 	
 	//-------- methods --------
@@ -278,82 +312,46 @@ public class ServiceIdentifier implements IServiceIdentifier
 	{
 		this.tags = tags;
 	}
-
-	/**
-	 *  Test if the service is a system service.
-	 *  Checks wether the system property is set in properties annotation.
-	 *  @param iftype The interface type. 
-	 */
-	public static boolean isSystemService(Class<?> iftype)
-	{
-		// Hack cast
-		//Class<?> itype = psi.getType().getType();
-		boolean ret = false;
-		if(iftype!=null)
-		{
-			Service ser = iftype.getAnnotation(Service.class);
-			if(ser!=null && ser.system())
-			{
-				ret = true;
-			}
-			
-//			Properties[] props = iftype.getAnnotationsByType(Properties.class);
-//			for(Properties ps: props)
-//			{
-//				for(NameValue nv: ps.value())
-//				{
-//					if(nv.name().equals("system"))
-//					{
-//						Boolean res = (Boolean)SJavaParser.evaluateExpression(nv.value(), null);
-//						if(res!=null)
-//							ret = res.booleanValue();
-//						break;
-//					}
-//				}
-//			}
-		}
-		return ret;
-	}
 	
-	/**
-	 *  Method to provide the security level.
-	 */
-	public static Security getSecurityLevel(Class<?> ctype)
-	{
-		return ctype!=null ? ctype.getAnnotation(Security.class) : null;
-	}
-	
-	/**
-	 *  Is the service unrestricted.
-	 *  @param access The access.
-	 *  @param ctype The service interface.
-	 *  @return True, if is unrestricted.
-	 */
-	public static boolean isUnrestricted(Component access, ClassInfo ctype)
-	{
-		Set<String>	roles	= getRoles(getSecurityLevel(ctype.getType(access.getClassLoader(), access.getFeature(IModelFeature.class).getModel().getAllImports())), access);
-		return roles!=null && roles.contains(Security.UNRESTRICTED);
-	}
-	
-	/**
-	 *  Is the service unrestricted.
-	 *  @param access The access.
-	 *  @param ctype The service interface.
-	 *  @return True, if is unrestricted.
-	 */
-	public static boolean isUnrestricted(Component access, Class<?> ctype)
-	{
-		Set<String>	roles	= getRoles(getSecurityLevel(ctype), access);
-		return roles!=null && roles.contains(Security.UNRESTRICTED);
-	}
-	
+//	/**
+//	 *  Method to provide the security level.
+//	 */
+//	public static Security getSecurityLevel(Class<?> ctype)
+//	{
+//		return ctype!=null ? ctype.getAnnotation(Security.class) : null;
+//	}
+//	
+//	/**
+//	 *  Is the service unrestricted.
+//	 *  @param access The access.
+//	 *  @param ctype The service interface.
+//	 *  @return True, if is unrestricted.
+//	 */
+//	public static boolean isUnrestricted(Component access, ClassInfo ctype)
+//	{
+//		Set<String>	roles	= getRoles(getSecurityLevel(ctype.getType(access.getClassLoader(), access.getFeature(IModelFeature.class).getModel().getAllImports())), access);
+//		return roles!=null && roles.contains(Security.UNRESTRICTED);
+//	}
+//	
+//	/**
+//	 *  Is the service unrestricted.
+//	 *  @param access The access.
+//	 *  @param ctype The service interface.
+//	 *  @return True, if is unrestricted.
+//	 */
+//	public static boolean isUnrestricted(Component access, Class<?> ctype)
+//	{
+//		Set<String>	roles	= getRoles(getSecurityLevel(ctype), access);
+//		return roles!=null && roles.contains(Security.UNRESTRICTED);
+//	}
+//	
 	/**
 	 *  Get the roles from an annotation.
 	 *  @param sec	The security annotation or null.
 	 *  @param provider	The component that owns the service.
 	 *  @return The roles, if any or null, if none given or sec==null.
 	 */
-	public static Set<String>	getRoles(Security sec, Component provider)
+	public static Set<String>	getRoles(Security sec, IComponent provider)
 	{
 		Set<String>	ret	= null;
 		String[]	roles	= sec!=null ? sec.roles() : null;
@@ -363,12 +361,172 @@ public class ServiceIdentifier implements IServiceIdentifier
 			ret	= new HashSet<String>();
 			for(String role: roles)
 			{
-				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IModelFeature.class).getModel().getAllImports(), provider.getValueProvider().getFetcher(), provider.getClassLoader()));
+				ret.add(role);
+				// TODO: use injection to fetch roles on init.
+//				ret.add((String)SJavaParser.evaluateExpressionPotentially(role, provider.getFeature(IModelFeature.class).getModel().getAllImports(), provider.getValueProvider().getFetcher(), provider.getClassLoader()));
 			}
 		}
 		return ret;
 	}
-
+	
+	/**
+	 *  Find the most specific security setting.
+	 */ 
+	public static Security getSecurityLevel(IComponent access, Method method, IServiceIdentifier sid)
+	{
+		Security level = null;
+		
+//		// at runtime: have to refetch info from model
+//		if(info==null && sid!=null)
+//		{
+//			ProvidedServiceInfo	found	= null;
+//			ProvidedServiceModel model = (ProvidedServiceModel)((ModelInfo)access.getFeature(IModelFeature.class).getModel()).getFeatureModel(IProvidedServiceFeature.class);
+//			ProvidedServiceInfo[] pros = model.getServices();
+//			for(ProvidedServiceInfo psi: pros)
+//			{
+//				if(psi.getType().equals(sid.getServiceType()))
+//				{
+//					// Match when type and name are equal
+//					if(sid.getServiceName().equals(psi.getName()))
+//					{
+//						found	= psi;
+//						break;
+//					}
+//					
+//					// Potential match when type is equal and no other service with same type
+//					else if(found==null)
+//					{
+//						found	= psi;
+//					}
+//					
+//					// Two services with same type -> fail if settings differ because we don't know which to use
+//					else if(Arrays.equals(psi.getSecurity().roles(), found.getSecurity().roles()))
+//					{
+//						throw new RuntimeException("Use specific names for security settings on provided services with same type: "+psi.getType());
+//					}
+//				}
+//			}
+//			info	= found;
+//		}
+//		
+//		// Instance level -> check for instance settings in provided service description			
+//		if(info!=null && info.getSecurity()!=null && info.getSecurity().roles().length>0)
+//		{
+//			level	= info.getSecurity();
+//		}
+//		
+//		// at runtime: fetch implclass from service
+//		if(level==null && implclass==null && sid!=null)
+//		{
+//			Object impl = access.getFeature(IProvidedServiceFeature.class).getProvidedServiceRawImpl(sid);
+//			implclass = impl!=null ? impl.getClass() : null;
+//		}
+//		
+//		// For service call -> look for annotation in impl class hierarchy
+//		// Precedence: hierarchy before specificity (e.g. class annotation in subclass wins over method annotation in superclass)
+//		while(level==null && implclass!=null)
+//		{
+//			// Specificity: method before class
+//			if(method!=null)
+//			{
+//				Method declmeth = SReflect.getDeclaredMethod0(implclass, method.getName(), method.getParameterTypes());
+//				if(declmeth != null)
+//				{
+//					level = declmeth.getAnnotation(Security.class);
+//				}
+//			}
+//			
+//			if(level==null)
+//			{
+//				level	= implclass.getAnnotation(Security.class);
+//			}
+//			
+//			implclass	= implclass.getSuperclass();
+//		}
+//			
+//		// at runtime: fetch interface from sid
+//		if(level==null && type==null && sid!=null)
+//		{
+//			type = sid.getServiceType().getType(access.getClassLoader());
+//		}
+//		
+//		// For service call -> look for annotation in interface hierarchy
+//		// Precedence: hierarchy before specificity (e.g. class annotation in subclass wins over method annotation in superclass)
+//		if(level==null && type!=null)
+//		{
+//			List<Class<?>>	types = new LinkedList<Class<?>>();
+//			types.add(type);
+//			while(level==null && !types.isEmpty())
+//			{
+//				type	= types.remove(0);
+//				
+//				// Only consider interfaces that contain or inherit the method (if any)
+//				if(method==null || SReflect.getMethod(type, method.getName(), method.getParameterTypes())!=null)
+//				{
+//					// Specificity: method before class
+//					if(method!=null)
+//					{
+//						Method declmeth = SReflect.getDeclaredMethod0(type, method.getName(), method.getParameterTypes());
+//						if(declmeth != null)
+//						{
+//							level = declmeth.getAnnotation(Security.class);
+//						}
+//					}
+//					
+//					if(level==null)
+//					{
+//						level	= type.getAnnotation(Security.class);
+//					}
+//					
+//					// prepend -> depth first search
+//					types.addAll(0, Arrays.asList(type.getInterfaces()));
+//				}
+//			}
+//		}
+//
+//		// Default: e.g. remote invocation on non-service methods?
+//		if(level==null && method!=null)
+//		{
+//			level = method.getAnnotation(Security.class);
+//		}
+//		
+////			// Default to interface if not specified in impl.
+////			if(level==null)
+////			{
+////				level = method.getAnnotation(Security.class);
+////				Class<?> type = sid.getServiceType().getType(access.getClassLoader());
+////				
+////				if(level==null && type != null)
+////				{
+////					type = SReflect.getDeclaringInterface(type, method.getName(), method.getParameterTypes());
+////					
+////					if(type != null)
+////					{
+////						Method declmeth = null;
+////						try
+////						{
+////							declmeth = type.getDeclaredMethod(method.getName(), method.getParameterTypes());
+////						}
+////						catch (Exception e)
+////						{
+////							// Should not happen, we know the method is there...
+////						}
+////						level = declmeth.getAnnotation(Security.class);
+////						if (level == null)
+////							level = type.getAnnotation(Security.class);
+////					}
+////				}
+//				
+//		/*if(level==null && access.getDescription().isSystemComponent())
+//		{
+//			level = DEFAULT_SYSTEM_SECURITY;
+//		}*/
+//		
+//		// level==null -> disallow direct access to components (overridden by TRUSTED platform)
+//		
+		return level;
+	}
+	
 	/**
 	 *  Get the hashcode.
 	 *  @return The hashcode.

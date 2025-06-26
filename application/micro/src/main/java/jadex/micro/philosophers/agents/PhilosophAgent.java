@@ -6,16 +6,12 @@ import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.micro.annotation.Agent;
+import jadex.injection.annotation.Inject;
 import jadex.micro.philosophers.PhilosopherState;
-import jadex.providedservice.annotation.Service;
-import jadex.requiredservice.annotation.OnService;
 
-@Agent
-@Service
 public class PhilosophAgent implements IPhilosopherService
 {
-	@Agent
+	@Inject
 	protected IComponent agent;
 	
 	protected PhilosopherState state;
@@ -31,7 +27,7 @@ public class PhilosophAgent implements IPhilosopherService
 		this.state = PhilosopherState.THINKING;
 	}
 	
-	@OnService
+	@Inject
 	protected void foundTable(ITableService table)
 	{
 		this.t = table;

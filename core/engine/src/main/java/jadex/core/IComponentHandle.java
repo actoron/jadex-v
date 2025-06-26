@@ -1,10 +1,13 @@
 package jadex.core;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import jadex.common.NameValue;
 import jadex.core.impl.ComponentManager;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 
 /**
  *  Interface for component access from non-component thread, e.g. UI thread.
@@ -24,11 +27,11 @@ public interface IComponentHandle
 	public String getAppId();
 	
 	/**
-	 *  Get the external access.
+	 *  Get the component handle.
 	 *  @param The id of the component.
-	 *  @return The external access.
+	 *  @return The component handle.
 	 */
-	public default IComponentHandle getExternalAccess(ComponentIdentifier cid)
+	public default IComponentHandle getComponentHandle(ComponentIdentifier cid)
 	{
 		return ComponentManager.get().getComponent(cid).getComponentHandle();
 	}
@@ -113,6 +116,19 @@ public interface IComponentHandle
 	 *  Get the local pojo. Allows for calling pojo methods.
 	 *  @return The pojo.
 	 */
-	public <T> T getPojoHandle(Class<T> type);
+	public default <T> T getPojoHandle(Class<T> type)
+	{
+		throw new UnsupportedOperationException("Missing execution feature");
+	}
 	
+	/**
+	 *  Fetch the result(s) of the Component.
+	 */
+	public IFuture<Map<String, Object>> getResults();
+	
+	/**
+	 *  Listen to results of the component.
+	 *  @throws UnsupportedOperationException when subscription is not supported
+	 */
+	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults();
 }
