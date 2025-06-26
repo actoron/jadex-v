@@ -123,12 +123,14 @@ public class ComponentManager implements IComponentManager
 		{
 			synchronized(ComponentManager.class)
 			{
-				if (pid == null)
-					pid = "" + ProcessHandle.current().pid();
 				if(instance == null)
+				{
+					if (pid == null)
+						pid = "" + ProcessHandle.current().pid();
 					instance = new ComponentManager(pid);
+					instance.init();
+				}
 			}
-			instance.init();
 		}
 		return instance;
 	}
@@ -241,7 +243,7 @@ public class ComponentManager implements IComponentManager
 		}
 
 		//System.out.println("before initFeatures");
-		IFuture<Void> ifut = instance.initFeatures();
+		IFuture<Void> ifut = initFeatures();
 		//ifut.then(Void -> System.out.println("init features completed"));
 		ifut.printOnEx();
 		//System.out.println("after initFeatures");
@@ -381,6 +383,7 @@ public class ComponentManager implements IComponentManager
 			final RuntimeFeatureProvider<IRuntimeFeature> fprov = prov;
 			alldeps.then(v ->
 			{
+				@SuppressWarnings("unchecked")
 				T instance = (T)fprov.createFeatureInstance();
 				ret.setResult(instance);
 			}).catchEx(ret);
@@ -445,9 +448,11 @@ public class ComponentManager implements IComponentManager
 	public IFuture<Void> initFeatures()
 	{
 	    Future<Void> chain = new Future<>();
-	    @SuppressWarnings("rawtypes")
-		Iterator<RuntimeFeatureProvider> it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
-	    initNextFeature((Iterator)it, chain);
+		@SuppressWarnings("rawtypes")
+		Iterator it = ServiceLoader.load(RuntimeFeatureProvider.class, classloader).iterator();
+		@SuppressWarnings("unchecked")
+		Iterator<RuntimeFeatureProvider<IRuntimeFeature>>it1 = it;
+	    initNextFeature(it1, chain);
 	    return chain;
 	}
 
@@ -474,7 +479,7 @@ public class ComponentManager implements IComponentManager
 	public void addFeature(IRuntimeFeature feature)
 	{
 	     Class<? extends IRuntimeFeature> type = resolveFeatureInterface(feature.getClass());
-	     addFeature((Class<IRuntimeFeature>)type, feature);
+	     addFeature(type, feature);
 	}
 
 	public void addFeature(Class<? extends IRuntimeFeature> type, IRuntimeFeature feature)
@@ -821,7 +826,8 @@ public class ComponentManager implements IComponentManager
 		
 		synchronized(components)
 		{
-			if(components.containsKey(comp.getId()))
+			IComponent	old	= components.put(comp.getId(), comp);
+			if(old!=null)
 			{
 				ComponentManager.get().printComponents();
 				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
@@ -833,7 +839,7 @@ public class ComponentManager implements IComponentManager
 				first	= comp;
 			}
 			
-			components.put(comp.getId(), comp);
+			// Increment component count for appid.
 			if(comp.getAppId()!=null)
 				incrementComponentCount(comp.getAppId());
 		}
@@ -1077,12 +1083,17 @@ public class ComponentManager implements IComponentManager
 				{
 					try
 					{
-						globalrunner	= SUtil.getExecutor().submit(() -> new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
+						globalrunner	= SUtil.getExecutor().submit(() ->
 						{
-							public void handleException(Exception exception)
+							Component comp = new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
 							{
-								globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
-							}
+								public void handleException(Exception exception)
+								{
+									globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
+								}
+							};
+							comp.init();
+							return comp;
 						}).get();
 					}
 					catch(Exception e)

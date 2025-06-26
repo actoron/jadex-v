@@ -29,10 +29,13 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:injection:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
+	implementation 'org.activecomponents.jadex:logbase:'+v 
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	// Hack!? cf. https://stackoverflow.com/a/77605392
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 

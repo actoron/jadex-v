@@ -197,7 +197,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 			        	//System.out.println("scheduled on agent: "+getId());
 			        	else if(method.getReturnType().equals(void.class))
 			        	{
-			        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method, next));
+			        		scheduleStep((Runnable)() -> invokeMethod(comp, pojo, myargs, method, next));
 			        	}
 			        	else 
 			        	{

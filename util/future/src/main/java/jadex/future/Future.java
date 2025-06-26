@@ -56,7 +56,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	protected static final String	CALLER_SUSPENDED	= "suspended";
 	
 	/** Debug flag. */
-	public static boolean DEBUG = false;
+	public static final boolean DEBUG = false;
 	
 	/** Disable Stack unfolding for easier debugging. */
 	// Hack!!! Non-final to be setable from Starter 
@@ -287,6 +287,10 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
     		synchronized(this)
     		{
     			callers.remove(caller);
+    			if(callers.isEmpty())
+				{
+					callers	= null;
+				}
     		}
     	}
     	
@@ -498,16 +502,16 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
     	return true;
     }
     
-    protected boolean	notified	= false;
-    
-    /**
-     *  Was the result/exception (scheduled to be) notified to some listener/blocked caller?
-     *  @return True, if notified.
-     */
-    public boolean	isNotified()
-    {
-    	return notified;
-    }
+//    protected boolean	notified	= false;
+//    
+//    /**
+//     *  Was the result/exception (scheduled to be) notified to some listener/blocked caller?
+//     *  @return True, if notified.
+//     */
+//    public boolean	isNotified()
+//    {
+//    	return notified;
+//    }
     
 	/**
 	 *  Resume after result or exception has been set.
@@ -538,12 +542,12 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		    			caller.getLock().unlock();
 		    		}
 		    	}
-				notified	= true;
+//				notified	= true;
 			}
 
     	   	// cast to filter for notifying all listeners
     		scheduled	= scheduleNotification((IFilter<IResultListener<E>>)null, getNotificationCommand());
-			notified	= notified || scheduled;
+//			notified	= notified || scheduled;
     		
     		// avoid memory leaks
 			listeners	= null;

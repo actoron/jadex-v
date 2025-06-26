@@ -2,16 +2,14 @@ package jadex.core.impl;
 
 import java.util.function.Supplier;
 
+import jadex.core.IComponentHandle;
+import jadex.future.IFuture;
+
 /**
  *  A feature provider may implement this interface to execute code before
  *  or immediately after the creation of the component with all features.
  *  
- *  Bootstrapping is performed in a nested way, i.e.,:
- *  * code of feature 1 before creation
- *  * code of feature 2 before creation
- *  ...
- *  * code of feature 2 after creation
- *  * code of feature 1 after creation
+ *  Only one feature provider per component type can implement this interface.
  */
 public interface IBootstrapping
 {
@@ -22,5 +20,5 @@ public interface IBootstrapping
 	 *  				and can be called before, after, or in between your bootstrapping code. 
 	 *  @return	The created component instance.
 	 */
-	public <T extends Component> T	bootstrap(Class<T> type, Supplier<T> creator);
+	public <T extends Component> IFuture<IComponentHandle>	bootstrap(Class<T> type, Supplier<T> creator);
 }

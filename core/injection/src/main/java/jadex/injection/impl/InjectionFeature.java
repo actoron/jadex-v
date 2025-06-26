@@ -36,7 +36,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	public InjectionFeature(IComponent self)
 	{
 		this.self	= self;
-		this.model	= InjectionModel.get(Collections.singletonList(self.getPojo()), null, null);
+		this.model	= InjectionModel.getStatic(Collections.singletonList(self.getPojo()!=null ? self.getPojo().getClass() : Object.class), null, null);
 	}
 	
 	//-------- lifecycle methods --------
@@ -67,20 +67,40 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			model.getPostInject().apply(self, pojos, context, null);
 		}
 
-		if(model.getMethodInjections()!=null)
+		// Hack!!! Start async when component pojo to allow agents with never ending main loops (e.g. quiz, simple cleaner, ...)
+		if(pojos.size()==1)
 		{
-			// TODO: wait for future return value?
-			// Schedule as step so it is registered before user OnStart, but executed after user OnStart
-			// -> if user OnStart blocks init thread, injections are executed anyways.
-			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getMethodInjections().apply(self, Collections.singletonList(self.getPojo()), null, null));
+			if(model.getOnStart()!=null)
+			{
+				// TODO: wait for future return value?
+				self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+					model.getOnStart().apply(self, pojos, context, null));
+			}
+
+			if(model.getMethodInjections()!=null)
+			{
+				// TODO: wait for future return value?
+				self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+					model.getMethodInjections().apply(self, pojos, context, null));
+			}
 		}
 		
-		if(model.getOnStart()!=null)
+		// Start sync when extra pojo to simplify, e.g. bdi plans
+		else
 		{
-			// TODO: wait for future return value?
-//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+			// Schedule method injections first, in case OnStart blocks
+			if(model.getMethodInjections()!=null)
+			{
+				// TODO: wait for future return value?
+				self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+					model.getMethodInjections().apply(self, pojos, context, null));
+			}
+			
+			if(model.getOnStart()!=null)
+			{
+				// TODO: wait for future return value?
 				model.getOnStart().apply(self, pojos, context, null);
+			}
 		}
 	}
 

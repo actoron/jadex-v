@@ -1,7 +1,5 @@
 package jadex.featuretest.impl;
 
-import java.util.Map;
-
 import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
@@ -13,6 +11,7 @@ import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.featuretest.ITestFeature1;
+import jadex.future.IFuture;
 
 public class TestFeature1Provider extends ComponentFeatureProvider<ITestFeature1> implements ITestFeature1, IComponentLifecycleManager
 {
@@ -35,9 +34,9 @@ public class TestFeature1Provider extends ComponentFeatureProvider<ITestFeature1
 	}
 
 	@Override
-	public IComponentHandle create(Object pojo, ComponentIdentifier cid, Application app)
+	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return Component.createComponent(Component.class, () -> new Component(pojo, cid, app)).getComponentHandle();
+		return Component.createComponent(Component.class, () -> new Component(pojo, cid, app));
 	}
 
 	@Override

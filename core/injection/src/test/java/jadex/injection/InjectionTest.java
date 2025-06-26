@@ -69,7 +69,7 @@ public class InjectionTest
 			{
 				compfut.setResult(comp);
 			}
-		}));
+		})).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent1, compfut.get(TIMEOUT));
 		
 		// Check if execution feature is injected
@@ -81,7 +81,7 @@ public class InjectionTest
 			{
 				exefut.setResult(exe);
 			}
-		}));
+		})).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
 	}
 	
@@ -100,7 +100,7 @@ public class InjectionTest
 			{
 				compfut.setResult(comp);
 			}
-		}));
+		})).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent1, compfut.get(TIMEOUT));
 		
 		// Check if execution feature is injected
@@ -115,7 +115,7 @@ public class InjectionTest
 			{
 				exefut.setResult(exe);
 			}
-		}));
+		})).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
 	}
 

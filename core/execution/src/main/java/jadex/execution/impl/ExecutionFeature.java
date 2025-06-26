@@ -45,11 +45,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
 	
-	private Queue<Runnable> steps = new ArrayDeque<Runnable>(4);
+	private Queue<Runnable> steps;
 	protected volatile boolean executing;
 	protected volatile int	do_switch;
 	protected boolean terminated;
-	protected ThreadRunner runner = null;
+//	protected ThreadRunner runner = null;
 	protected Component	self = null;
 	protected Object endstep = null;
 	protected Future<Object> endfuture = null;
@@ -87,6 +87,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			else
 			{
 				//System.out.println("insert step: "+r);
+				if(steps==null)
+				{
+					steps	= new ArrayDeque<>(2);
+				}
 				steps.offer(r);
 				if(!executing)
 				{
@@ -582,10 +586,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						Runnable	step;
 						synchronized(ExecutionFeature.this)
 						{
-							int presize = steps.size();
+//							int presize = steps.size();
 							step = steps.poll();
-							if(step==null)
-								System.out.println("step is null: "+steps.size()+" "+presize+" "+terminated);
+//							if(step==null)
+//								System.out.println("step is null: "+steps.size()+" "+presize+" "+terminated);							
 						}
 						
 						assert step!=null;
@@ -608,6 +612,11 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						
 						synchronized(ExecutionFeature.this)
 						{
+							if(steps!=null && steps.isEmpty())
+							{
+								steps	= null;	// free memory
+							}
+							
 							// Stop this thread, because another thread is still executing
 							if(do_switch>0)
 							{
@@ -616,7 +625,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							}
 							
 							// Stop this thread, because there are no more steps -> set executing=false
-							else if(!terminated && steps.isEmpty())
+							else if(!terminated && steps==null)
 							{
 								// decrement only if not resume step (otherwise decremented already)
 								if(!failed && threadcount.decrementAndGet()<0)
@@ -683,7 +692,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					throw new IllegalStateException("Threadcount<0");
 				}
 				
-				if(!steps.isEmpty() && !aborted)
+				if(!(steps==null || steps.isEmpty()) && !aborted)
 				{
 					startnew	= true;
 				}
@@ -913,17 +922,19 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		ComponentTerminatedException ex = null;
 		synchronized(ExecutionFeature.this) 
 		{
-			for(Object step: steps)
+			if(steps!=null)
 			{
-				if(step instanceof StepInfo)
+				for(Object step: steps)
 				{
-					if(ex==null)
-						ex	= new ComponentTerminatedException(getComponent().getId());
-					((StepInfo)step).getFuture().setExceptionIfUndone(ex);
+					if(step instanceof StepInfo)
+					{
+						if(ex==null)
+							ex	= new ComponentTerminatedException(getComponent().getId());
+						((StepInfo)step).getFuture().setExceptionIfUndone(ex);
+					}
 				}
+				steps	= null;
 			}
-//			steps.clear();
-			steps	= null;
 		}
 		
 		// Drop queued timer tasks.
@@ -1076,14 +1087,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	protected void restart()
 	{
-		if(runner==null)
-			runner	= new ThreadRunner();
+//		if(runner==null)
+//			runner	= new ThreadRunner();
 		if(!failed && threadcount.incrementAndGet()>1)
 		{
 			failed	= true;
 			throw new IllegalStateException("Threadcount>1");
 		}
-		SUtil.getExecutor().execute(runner);
+//		SUtil.getExecutor().execute(runner);
+		SUtil.getExecutor().execute(new ThreadRunner());
 	}
 	
 	protected boolean saveEndStep(Object res, Future<Object> fut)

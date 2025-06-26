@@ -15,8 +15,6 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.Trigger;
-import jadex.common.SUtil;
-import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -71,9 +69,11 @@ public class ExternalPlanTest
 	@Test
 	public void	testBrokenExternalPlan()
 	{
-		IComponentHandle	handle	= IComponentManager.get().create(new BrokenExtPlanAgent()).get(TestHelper.TIMEOUT);
-		SUtil.runWithoutOutErr(() ->
-			assertThrows(ComponentTerminatedException.class, () ->
-				handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT)));
+//		IComponentHandle	handle	= IComponentManager.get().create(new BrokenExtPlanAgent()).get(TestHelper.TIMEOUT);
+//		SUtil.runWithoutOutErr(() ->
+//			assertThrows(ComponentTerminatedException.class, () ->
+//				handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT)));
+		assertThrows(UnsupportedOperationException.class,
+			() -> IComponentManager.get().create(new BrokenExtPlanAgent()).get(TestHelper.TIMEOUT));
 	}
 }

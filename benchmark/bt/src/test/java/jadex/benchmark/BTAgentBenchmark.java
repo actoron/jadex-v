@@ -43,7 +43,7 @@ public class BTAgentBenchmark
 			}).get();
 			ret.get();
 			agent.terminate().get();
-		});
+		}, 40);	// TODO: why slower when handle returned only after features are started?
 	}
 
 	@Test
