@@ -1,6 +1,6 @@
 package jadex.serialization;
 
-import jadex.bytecode.ProxyFactory;
+import java.lang.reflect.Proxy;
 
 
 /**
@@ -14,7 +14,7 @@ public class DefaultEqualsMethodReplacement implements IMethodReplacement
 	public Object invoke(Object obj, Object[] args)
 	{
 		// Todo: compare proxy infos instead of invocation handlers?
-		return Boolean.valueOf(args[0]!=null && ProxyFactory.isProxyClass(args[0].getClass())
-			&& ProxyFactory.getInvocationHandler(obj).equals(ProxyFactory.getInvocationHandler(args[0])));
+		return Boolean.valueOf(args[0]!=null && Proxy.isProxyClass(args[0].getClass())
+			&& Proxy.getInvocationHandler(obj).equals(Proxy.getInvocationHandler(args[0])));
 	}
 }

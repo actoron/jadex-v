@@ -1,10 +1,10 @@
 package jadex.nfproperty.sensor.service;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
-import jadex.bytecode.ProxyFactory;
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -41,7 +41,7 @@ public class WaitingTimeProperty extends TimedProperty
 		this.method = method;
 		this.sid = service.getServiceId();
 		
-		if(ProxyFactory.isProxyClass(service.getClass()))
+		if(Proxy.isProxyClass(service.getClass()))
 		{
 			listener = new IMethodInvocationListener()
 			{

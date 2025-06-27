@@ -97,13 +97,13 @@ public class CleanerBDIAgentD5
 		deliberation=@Deliberation(inhibits= {PerformPatrol.class, AchieveCleanupWaste.class}))	// Pause patrol goal while loading battery
 	class MaintainBatteryLoaded
 	{
-		@GoalMaintainCondition(beliefs="self")	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
+		@GoalMaintainCondition	// The cleaner aims to maintain the following expression, i.e. act to restore the condition, whenever it changes to false.
 		boolean isBatteryLoaded()
 		{
 			return self.getChargestate()>=0.2; // Everything is fine as long as the charge state is above 20%, otherwise the cleaner needs to recharge.
 		}
 			
-		@GoalTargetCondition(beliefs="self")	// Only stop charging, when this condition is true
+		@GoalTargetCondition	// Only stop charging, when this condition is true
 		boolean isBatteryFullyLoaded()
 		{
 			return self.getChargestate()>=0.9; // Charge until 90%
@@ -116,7 +116,7 @@ public class CleanerBDIAgentD5
 	@Goal(excludemode=ExcludeMode.Never)
 	class QueryChargingStation	implements Supplier<IChargingstation>
 	{
-		@GoalQueryCondition(beliefs="stations")
+		@GoalQueryCondition
 		@Override
 		public IChargingstation get()
 		{
@@ -131,7 +131,7 @@ public class CleanerBDIAgentD5
 	class QueryWastebin	implements Supplier<IWastebin>
 	{
 		// Check if there is a waste bin in the beliefs
-		@GoalQueryCondition(beliefs="wastebins")
+		@GoalQueryCondition
 		@Override
 		public IWastebin get()
 		{
@@ -157,7 +157,7 @@ public class CleanerBDIAgentD5
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		@GoalTargetCondition(beliefs={"wastes", "self"})
+		@GoalTargetCondition
 		boolean	isClean()
 		{
 			// Test if the waste is not believed to be in the environment

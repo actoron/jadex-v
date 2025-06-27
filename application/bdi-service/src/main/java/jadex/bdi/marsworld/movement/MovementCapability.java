@@ -45,8 +45,8 @@ public class MovementCapability
 	
 	/** The mission end. */
 //	@Belief(dynamic=true, updaterate=1000) 
-	@Belief(updaterate=1000) 
-	protected Val<Boolean> missionend = new Val<Boolean>(() -> 
+	@Belief(updaterate=1000)
+	public final Val<Boolean> missionend = new Val<Boolean>(() -> 
 	{
 		//System.out.println("missionend: "+getHomebase()+" "+getHomebase().getMissionTime());
 		return getHomebase().getMissionTime()<=System.currentTimeMillis();
@@ -55,7 +55,8 @@ public class MovementCapability
 
 	/** The targets. */
 	@Belief
-	protected List<Target> mytargets = new ArrayList<Target>();
+	// Hack!!! allow scanning of indirect methods for belief dependencies
+	public List<Target> mytargets = new ArrayList<Target>();
 	
 	/**
 	 *  The move goal.
@@ -96,7 +97,7 @@ public class MovementCapability
 		 *  Drop condition.
 		 *  @return True if should be dropped.
 		 */
-		@GoalDropCondition(beliefs="missionend")
+		@GoalDropCondition
 		public boolean checkDrop()
 		{
 			//System.out.println("walk around drop check: "+agent.getId().getLocalName());
@@ -199,15 +200,6 @@ public class MovementCapability
 		return mytargets;
 	}
 
-	/**
-	 *  Get the missionend.
-	 *  @return The missionend.
-	 */
-	public boolean isMissionend()
-	{
-		return missionend.get();
-	}
-	
 	public void addTarget(Target target)
 	{
 		if(!mytargets.contains(target))

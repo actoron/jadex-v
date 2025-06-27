@@ -26,7 +26,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:common:'+v
-	implementation 'org.activecomponents.jadex:bytecode:'+v
+	//implementation 'org.activecomponents.jadex:bytecode:'+v
 	implementation 'org.activecomponents.jadex:future:'+v
 	implementation 'org.activecomponents.jadex:javaparser:'+v
 	implementation 'org.activecomponents.jadex:collection:'+v
