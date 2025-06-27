@@ -1,5 +1,6 @@
 package jadex.bdi.impl;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,8 +28,11 @@ public class BDIModel
 	/** The known goals (goal pojoclazz -> goal annotation for meta info). */
 	protected Map<Class<?>, MGoal>	goals	= new LinkedHashMap<>();
 	
-	/** The known beliefs (name->value type, only for static checking, not used at runtime). */
-	protected Map<String, Class<?>>	beliefs	= new LinkedHashMap<>();
+	/** The known beliefs (name->value type, only for static checking, not used at runtime except for bdi viewer). */
+	protected Map<String, Class<?>>	beliefs_byname	= new LinkedHashMap<>();
+	
+	/** The known beliefs (field->name, only for static checking, not used at runtime). */
+	protected Map<Field, String>	beliefs_byfield	= new LinkedHashMap<>();
 	
 	/** The capabilities (path -> prefix). */
 	protected Map<List<Class<?>>, String>	capabilities	= new LinkedHashMap<>();	
@@ -104,27 +108,45 @@ public class BDIModel
 	}
 	
 	/**
-	 *  Add a belief (type).
+	 *  Add a belief.
 	 */
-	protected void	addBelief(String name, Class<?> type)
+	protected void	addBelief(String name, Class<?> type, Field field)
 	{
-		beliefs.put(name, type);
+		if(beliefs_byname.containsKey(name))
+		{
+			throw new UnsupportedOperationException("Belief cannot be declared twice: "+name);
+		}
+		if(beliefs_byfield.containsKey(field))
+		{
+			throw new UnsupportedOperationException("Belief field cannot be declared twice: "+field);
+		}
+		
+		beliefs_byfield.put(field, name);
+		beliefs_byname.put(name, type);
 	}
 	
 	/**
-	 *  Get a belief (type) or null.
+	 *  Get a belief type or null.
 	 */
-	public Class<?>	getBelief(String name)
+	public Class<?>	getBeliefType(String name)
 	{
-		return beliefs.get(name);
+		return beliefs_byname.get(name);
+	}
+	
+	/**
+	 *  Get a belief name or null.
+	 */
+	public String	getBeliefName(Field field)
+	{
+		return beliefs_byfield.get(field);
 	}
 	
 	/**
 	 *  Get the beliefs
 	 */
-	public Set<String>	getBeliefs()
+	public Set<String>	getBeliefNames()
 	{
-		return beliefs.keySet();
+		return beliefs_byname.keySet();
 	}
 	
 	/**

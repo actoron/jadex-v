@@ -64,7 +64,7 @@ public class SokratesMLRAgent
 			this.depth	= depth;
 		}
 		
-		@GoalTargetCondition(beliefs="board")
+		@GoalTargetCondition
 		boolean	isSolution()
 		{
 			return board.isSolution();

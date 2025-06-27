@@ -186,29 +186,29 @@ public class CleanerAgent
 		 *  When the chargestate is below 0.2
 		 *  the cleaner will activate this goal.
 		 */
-		@GoalMaintainCondition(beliefs="self")
+		@GoalMaintainCondition
 		public boolean checkMaintain()
 		{
 			//System.out.println("check maintain: "+getSelf().getChargestate());
-			return getSelf().getChargestate()>0.2;
+			return self.get().getChargestate()>0.2;
 		}
 		
 		/**
 		 *  The target condition determines when
 		 *  the goal goes back to idle. 
 		 */
-		@GoalTargetCondition(beliefs="self")
+		@GoalTargetCondition
 		public boolean checkTarget()
 		{
 			//System.out.println("check target: "+getSelf().getChargestate());
-			return getSelf().getChargestate()>=1;
+			return self.get().getChargestate()>=1;
 		}
 	}
 	
 	@Goal(excludemode=ExcludeMode.Never)
 	public class QueryChargingStation	implements Supplier<Chargingstation>
 	{
-		@GoalQueryCondition(beliefs="stations")
+		@GoalQueryCondition
 		@Override
 		public Chargingstation get()
 		{
@@ -225,7 +225,7 @@ public class CleanerAgent
 		/**
 		 *  Suspend the goal when daytime.
 		 */
-		@GoalContextCondition(beliefs="daytime")
+		@GoalContextCondition
 		public boolean checkContext()
 		{
 			return !daytime.get();
@@ -250,7 +250,7 @@ public class CleanerAgent
 		/**
 		 *  Monitor day time and restart moving when night is gone.
 		 */
-		@GoalContextCondition(beliefs="daytime")
+		@GoalContextCondition
 		private boolean context()
 		{
 			return daytime.get();
@@ -260,7 +260,7 @@ public class CleanerAgent
 	@Goal(excludemode=ExcludeMode.Never)
 	private class QueryWastebin	implements Supplier<Wastebin>
 	{
-		@GoalQueryCondition(beliefs="wastebins")
+		@GoalQueryCondition
 		@Override
 		public Wastebin get()
 		{
@@ -284,18 +284,18 @@ public class CleanerAgent
 		}
 		
 		// The goal is achieved, when the waste is gone.
-		@GoalTargetCondition(beliefs={"self", "wastes"})
+		@GoalTargetCondition
 		boolean	isClean()
 		{
 			// Test if the waste is not believed to be in the environment
 			return !wastes.contains(waste)
 				// and also not the waste we just picked up.
-				&& !waste.equals(getSelf().getCarriedWaste());
+				&& !waste.equals(self.get().getCarriedWaste());
 		}
 		
 		// Goal should only be pursued when carrying no waste
 		// or when goal is resumed after recharging and carried waste is of this goal.
-		@GoalContextCondition(beliefs={"daytime"/*, "self"*/})
+		@GoalContextCondition
 		boolean isPossible()
 		{
 			return daytime.get() /*&& (self.getCarriedWaste()==null || waste.equals(self.getCarriedWaste()))*/;

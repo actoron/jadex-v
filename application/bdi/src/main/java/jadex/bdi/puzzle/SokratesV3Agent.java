@@ -127,7 +127,7 @@ public class SokratesV3Agent
 		/**
 		 *  Move goal is successful when resulting board represents a solution.
 		 */
-		@GoalTargetCondition(beliefs="board")
+		@GoalTargetCondition
 		public boolean	isAchieved()
 		{
 			return board.isSolution();
@@ -285,6 +285,7 @@ public class SokratesV3Agent
 
 	public static void main(String[] args)
 	{
-		IComponentManager.get().create(new SokratesV3Agent());
+		IComponentManager.get().create(new SokratesV3Agent()).get();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

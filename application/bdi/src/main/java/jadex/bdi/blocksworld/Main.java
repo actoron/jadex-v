@@ -15,7 +15,7 @@ public class Main
 	 */
 	public static void main(String[] args) 
 	{
-		IComponentManager.get().create(new BlocksworldAgent());
+		IComponentManager.get().create(new BlocksworldAgent()).get();
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

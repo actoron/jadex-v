@@ -191,7 +191,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 //		String fname = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
 		
-		if(model.getBelief(name)==null)
+		if(model.getBeliefType(name)==null)
 		{
 			throw new IllegalArgumentException("No such belief: "+name);
 		}
