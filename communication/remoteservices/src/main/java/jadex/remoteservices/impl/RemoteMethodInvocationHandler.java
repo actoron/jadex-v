@@ -2,16 +2,15 @@ package jadex.remoteservices.impl;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-import jadex.bytecode.ProxyFactory;
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
@@ -1214,7 +1213,7 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 		RemoteReference rr = new RemoteReference(remotesvc.getProviderId(), remotesvc);
 		ProxyReference pr = new ProxyReference(pi, rr);
 		
-		return (IService) ProxyFactory.newProxyInstance(cll,
+		return (IService) Proxy.newProxyInstance(cll,
 			ainterfaces, new RemoteMethodInvocationHandler(localcomp, pr));
 	}
 }
