@@ -14,7 +14,12 @@ public class ExecutableComponentBenchmark
 	void	benchmarkTime()
 	{
 //		BenchmarkHelper.benchmarkTime(() -> Component.createComponent(Component.class, () -> new Component()).terminate().get());
-		BenchmarkHelper.benchmarkTime(() -> new Component(null).terminate().get());
+		BenchmarkHelper.benchmarkTime(() -> 
+		{
+			Component	comp		= new Component(null);
+			comp.init();
+			comp.terminate().get();
+		});
 	}
 	
 	@Test

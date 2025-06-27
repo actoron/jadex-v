@@ -57,8 +57,8 @@ public class Component implements IComponent
 	/** The last exception, if any. */
 	protected Exception	exception;
 	
-	/** The value provider. */
-	protected ValueProvider valueprovider;
+//	/** The value provider. */
+//	protected ValueProvider valueprovider;
 	
 	/** The external access supplier. */
 	protected static Function<Component, IComponentHandle> accessfactory;
@@ -90,15 +90,24 @@ public class Component implements IComponent
 	}
 	
 	/**
-	 *  Create a new component and instantiate all features (except lazy features).
-	 *  @param id	The id to use or null for an auto-generated id.
-	 *  @throws IllegalArgumentException when the id already exists. 
+	 *  Create a new component.
 	 */
 	public Component(Object pojo, ComponentIdentifier id, Application app)
 	{
 		this.pojo	= pojo;
-		this.id = id==null? new ComponentIdentifier(): id;
+		this.id = id;
 		this.app = app;
+	}
+
+	/**
+	 *  Initialize the component.
+	 *  Instantiate all features (except lazy features).
+	 *  @throws IllegalArgumentException when the id already exists. 
+	 */
+	public void init()
+	{
+		// If no id is given, create a new one.
+		this.id = id==null? new ComponentIdentifier(): id;
 		
 		//System.out.println(this.id.getLocalName());
 		if(!GLOBALRUNNER_ID.equals(this.id.getLocalName()))
@@ -290,9 +299,10 @@ public class Component implements IComponent
 	// TODO: move to model/bpmn
 	public ValueProvider getValueProvider()
 	{
-		if(valueprovider==null)
-			valueprovider = new ValueProvider(this);
-		return valueprovider;
+//		if(valueprovider==null)
+//			valueprovider = new ValueProvider(this);
+//		return valueprovider;
+		return new ValueProvider(this);
 	}
 
 	// TODO: move to model/bpmn
@@ -526,7 +536,18 @@ public class Component implements IComponent
 		}
 		else
 		{
-			return new Future<>(creator.get().getComponentHandle());
+			Future<IComponentHandle>	ret	= new Future<>();
+			try
+			{
+				T comp = creator.get();
+				comp.init();
+				ret.setResult(comp.getComponentHandle());
+			}
+			catch(Exception e)
+			{
+				ret.setException(e);
+			}
+			return ret;
 		}
 	}
 

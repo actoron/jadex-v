@@ -10,22 +10,20 @@ import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.security.authentication.KeySecret;
-import jadex.micro.annotation.Agent;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.annotation.Service;
 
-@Agent
-@Service
+//@Service
 public class ProviderAgent implements ITestService
 {
     public static String GROUP_NAME = "RemoteServiceTest";
 
-    @Agent
+    @Inject
     protected IComponent agent;
 
     @OnStart

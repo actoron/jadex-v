@@ -38,8 +38,8 @@ dependencies
 
 	testImplementation 'org.activecomponents.jadex:libmicro:'+v
 	testImplementation 'org.activecomponents.jadex:classreader:'+v
-	testImplementation 'org.activecomponents.jadex:model:'+v
-	testImplementation 'org.activecomponents.jadex:micro:'+v
+	//testImplementation 'org.activecomponents.jadex:model:'+v
+	//testImplementation 'org.activecomponents.jadex:micro:'+v
 	testImplementation 'org.activecomponents.jadex:providedservice:'+v
 	testImplementation 'org.activecomponents.jadex:requiredservice:'+v
 

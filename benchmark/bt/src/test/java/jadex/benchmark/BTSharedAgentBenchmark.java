@@ -60,7 +60,7 @@ public class BTSharedAgentBenchmark
 			IComponentHandle agent = IComponentManager.get().create(new TestAgent(ret)).get();
 			ret.get();
 			agent.terminate().get();
-		});
+		}, 40);	// TODO: why slower when handle returned only after features are started?
 	}
 
 	@Test

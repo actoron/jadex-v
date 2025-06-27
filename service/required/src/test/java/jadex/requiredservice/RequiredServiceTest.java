@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,7 +28,6 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
-import jadex.logger.ILoggingFeature;
 import jadex.providedservice.annotation.Service;
 import jadex.requiredservice.annotation.InjectService;
 import jadex.requiredservice.annotation.InjectService.Mode;
@@ -39,7 +37,7 @@ import jadex.requiredservice.annotation.InjectService.Mode;
  */
 public class RequiredServiceTest
 {
-	public static final long	TIMEOUT	= 1000000;
+	public static final long	TIMEOUT	= 10000;
 	
 	//-------- test interfaces --------
 	
@@ -288,42 +286,60 @@ public class RequiredServiceTest
 		}
 		
 		// Test that previous field service is not provided.
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
-			{
-				@Inject
-				IHelloService myservice;
-			}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//			{
+//				@Inject
+//				IHelloService myservice;
+//			}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(ServiceNotFoundException.class,
+			() -> IComponentManager.get().create(new Object()
+		{
+			@Inject
+			IHelloService myservice;
+		}).get(TIMEOUT));
 	}
 	
 	@Test
 	public void	testBrokenFieldInjection()
 	{
 		// Check that unsupported field injection with query is detected
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
-			{
-				@InjectService(mode=Mode.QUERY)
-				IHelloService	myservice;
-			}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//			{
+//				@InjectService(mode=Mode.QUERY)
+//				IHelloService	myservice;
+//			}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(UnsupportedOperationException.class,
+			() -> IComponentManager.get().create(new Object()
+		{
+			@InjectService(mode=Mode.QUERY)
+			IHelloService myservice;
+		}).get(TIMEOUT));
 	}
 
 	@Test
 	public void	testBrokenCollectionInjection()
 	{
 		// Check that unsupported field injection with query is detected
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
-			{
-				@InjectService
-				LinkedList<IHelloService>	myservice;
-			}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//			{
+//				@InjectService
+//				LinkedList<IHelloService>	myservice;
+//			}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(UnsupportedOperationException.class,
+			() -> IComponentManager.get().create(new Object()
+		{
+			@InjectService
+			LinkedList<IHelloService> myservice;
+		}).get(TIMEOUT));
 	}
 
 	@Test
@@ -426,14 +442,20 @@ public class RequiredServiceTest
 	public void	testBrokenQueryInjection()
 	{
 		// Check that missing initial value is detected
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
-			{
-				@InjectService(mode=Mode.QUERY)
-				List<IHelloService>	myservice;
-			}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//			{
+//				@InjectService(mode=Mode.QUERY)
+//				List<IHelloService>	myservice;
+//			}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(UnsupportedOperationException.class,
+			() -> IComponentManager.get().create(new Object()
+		{
+			@InjectService(mode=Mode.QUERY)
+			List<IHelloService> myservice;
+		}).get(TIMEOUT));
 	}
 
 	@Test
@@ -466,14 +488,20 @@ public class RequiredServiceTest
 		}
 		
 		// Test that previous field service is not provided.
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//			{
+//				@InjectService
+//				IHelloService myservice;
+//			}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(ServiceNotFoundException.class,
+			() -> IComponentManager.get().create(new Object()
 		{
 			@InjectService
 			IHelloService myservice;
-		}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		}).get(TIMEOUT));
 	}
 
 	@Test
@@ -507,14 +535,20 @@ public class RequiredServiceTest
 	public void	testFieldNotFound()
 	{
 		// Check that exception is thrown
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
-			{
-				@Inject
-				IHelloService myservice;
-			}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//			{
+//				@Inject
+//				IHelloService myservice;
+//			}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(ServiceNotFoundException.class,
+			() -> IComponentManager.get().create(new Object()
+		{
+			@InjectService
+			IHelloService myservice;
+		}).get(TIMEOUT));
 	}
 
 	@Test
@@ -674,16 +708,24 @@ public class RequiredServiceTest
 	@Test
 	public void	testBrokenMethodInjection()
 	{
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//		{
+//			@Inject
+//			void addService(IHelloService hello1, IHelloService hello2)
+//			{
+//			}
+//		}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(UnsupportedOperationException.class,
+			() -> IComponentManager.get().create(new Object()
 		{
-			@Inject
+			@InjectService
 			void addService(IHelloService hello1, IHelloService hello2)
 			{
 			}
-		}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		}).get(TIMEOUT));
 	}
 
 	@Test

@@ -37,6 +37,7 @@ import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceCall;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
+import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
 
 
@@ -133,7 +134,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 			true, // unrestricted
 			null); 
 		
-    	IRegistryCoordinatorService ret = (IRegistryCoordinatorService)RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, rrsid);
+    	IRegistryCoordinatorService ret = (IRegistryCoordinatorService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(rrsid);
 		return ret;
     }
 	

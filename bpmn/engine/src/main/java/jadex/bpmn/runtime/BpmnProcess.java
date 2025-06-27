@@ -34,6 +34,9 @@ public class BpmnProcess extends Component
 		});
 	}
 	
+	// Hack!!! Model stored until init
+	IModelInfo	modelinfo = null;
+	
 	protected BpmnProcess(RBpmnProcess info, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
 		this((Object)info, model, cid, app);
@@ -42,7 +45,14 @@ public class BpmnProcess extends Component
 	protected BpmnProcess(Object pojo, IModelInfo model, ComponentIdentifier cid, Application app)
 	{
 		super((RBpmnProcess)(pojo!=null ? pojo : createPojo(model)), cid, app);
-		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
+		this.modelinfo = model;
+	}
+	
+	@Override
+	public void init()
+	{
+		super.init();
+		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(modelinfo);
 	}
 	
 	public RBpmnProcess getPojo() 
@@ -94,8 +104,9 @@ public class BpmnProcess extends Component
 	@Override
 	public ValueProvider getValueProvider() 
 	{
-		if(valueprovider==null)
-			valueprovider = new BpmnValueProvider(this);
-		return valueprovider;
+//		if(valueprovider==null)
+//			valueprovider = new BpmnValueProvider(this);
+//		return valueprovider;
+		return new BpmnValueProvider(this);
 	}
 }

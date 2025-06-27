@@ -42,21 +42,24 @@ public abstract class AbstractExecutionFeatureTest
 	@Test
 	public void	testGetComponent()
 	{
-		// Test inside creation
-		Future<IComponent>	fut	= new Future<>();
-		IComponentHandle comp	= Component.createComponent(Component.class,
-			() -> new Component(this)
-		{
-			{
-				fut.setResult(IExecutionFeature.get().getComponent());
-			}
-		}).get(TIMEOUT);
-		IComponent	icomp	= comp.scheduleStep(c->{return c;}).get(TIMEOUT);
-		assertEquals(icomp, fut.get(TIMEOUT));
+		// Inside creation does not work anymore, because init() is now called after constructor instead of inside it.
+//		// Test inside creation
+//		Future<IComponent>	fut	= new Future<>();
+//		IComponentHandle comp	= Component.createComponent(Component.class,
+//			() -> new Component(this)
+//		{
+//			{
+//				fut.setResult(IExecutionFeature.get().getComponent());
+//			}
+//		}).get(TIMEOUT);
+//		IComponent	icomp	= comp.scheduleStep(c->{return c;}).get(TIMEOUT);
+//		assertEquals(icomp, fut.get(TIMEOUT));
 		
 		// Test after creation
+		IComponentHandle comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
 		IFuture<IComponent> result	= comp.scheduleStep(
 			() -> IExecutionFeature.get().getComponent());
+		IComponent	icomp	= comp.scheduleStep(c->{return c;}).get(TIMEOUT);
 		assertEquals(icomp, result.get(TIMEOUT));
 				
 		// Test after extra component creation
@@ -81,8 +84,12 @@ public abstract class AbstractExecutionFeatureTest
 		assertEquals(icomp3, result3.get(TIMEOUT));
 		
 		// Test plain creation (w/o bootstrap) inside component
-		Component icomp4	= comp.scheduleStep(
-				() -> new Component(this){}).get(TIMEOUT);
+		Component icomp4	= comp.scheduleStep(() ->
+		{
+			Component ret	= new Component(this);
+			ret.init();
+			return ret;
+		}).get(TIMEOUT);
 		result	= comp.scheduleStep(
 				() -> IExecutionFeature.get().getComponent());
 		IFuture<IComponent> result4	= icomp4.getComponentHandle().scheduleStep(

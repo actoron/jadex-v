@@ -13,12 +13,11 @@ import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
 import jadex.messaging.security.authentication.KeySecret;
-import jadex.micro.annotation.Agent;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
+import jadex.requiredservice.IRequiredServiceFeature;
 
-@Agent
 public class CallerAgent
 {
 
@@ -50,6 +49,7 @@ public class CallerAgent
         Set<String> groups = new HashSet<>();
         ServiceIdentifier sid = new ServiceIdentifier(provider, new ClassInfo(ITestService.class), null, servicename, ServiceScope.GLOBAL, groups, true, null);
 
+        //todo: replace with? agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(
         ITestService service = (ITestService) RemoteMethodInvocationHandler.createRemoteServiceProxy((Component) agent, sid);
 
         System.out.println("Service call result: " + service.getComponentName().get());

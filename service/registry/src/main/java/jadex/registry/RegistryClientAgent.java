@@ -14,6 +14,7 @@ import jadex.common.ClassInfo;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
@@ -37,6 +38,7 @@ import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 public class RegistryClientAgent implements IRegistryClientService 
 {
@@ -151,7 +153,7 @@ public class RegistryClientAgent implements IRegistryClientService
 			true, // unrestricted
 			null); 
 		
-    	IRegistryCoordinatorService ret = (IRegistryCoordinatorService)RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, rrsid);
+    	IRegistryCoordinatorService ret = (IRegistryCoordinatorService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(rrsid);
 		return ret;
     }
 
@@ -177,7 +179,7 @@ public class RegistryClientAgent implements IRegistryClientService
 	    			regsub.terminate();
 	    		
 	    		// create service proxy for new registry
-	    	  	IRemoteRegistryService rreg = (IRemoteRegistryService)RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, ri.serviceid());
+	    	  	IRemoteRegistryService rreg = (IRemoteRegistryService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(ri.serviceid());
 	    	  	setRegistry(rreg);
 	    	  	
 	    		// connect to new registry

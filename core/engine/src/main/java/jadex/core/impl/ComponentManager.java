@@ -826,7 +826,8 @@ public class ComponentManager implements IComponentManager
 		
 		synchronized(components)
 		{
-			if(components.containsKey(comp.getId()))
+			IComponent	old	= components.put(comp.getId(), comp);
+			if(old!=null)
 			{
 				ComponentManager.get().printComponents();
 				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
@@ -838,7 +839,7 @@ public class ComponentManager implements IComponentManager
 				first	= comp;
 			}
 			
-			components.put(comp.getId(), comp);
+			// Increment component count for appid.
 			if(comp.getAppId()!=null)
 				incrementComponentCount(comp.getAppId());
 		}
@@ -1082,12 +1083,17 @@ public class ComponentManager implements IComponentManager
 				{
 					try
 					{
-						globalrunner	= SUtil.getExecutor().submit(() -> new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
+						globalrunner	= SUtil.getExecutor().submit(() ->
 						{
-							public void handleException(Exception exception)
+							Component comp = new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
 							{
-								globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
-							}
+								public void handleException(Exception exception)
+								{
+									globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
+								}
+							};
+							comp.init();
+							return comp;
 						}).get();
 					}
 					catch(Exception e)

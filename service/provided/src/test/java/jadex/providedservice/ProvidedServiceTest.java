@@ -11,9 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
-import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -196,30 +194,47 @@ public class ProvidedServiceTest
 	@Test
 	public void	testBrokenFieldService()
 	{
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//		{
+//			@ProvideService
+//			Object	myservice	= new IMyService(){};
+//		}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		
+		assertThrows(RuntimeException.class,
+			() -> IComponentManager.get().create(new Object()
 		{
 			@ProvideService
 			Object	myservice	= new IMyService(){};
-		}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		}).get(TIMEOUT));
 	}
 
 	@Test
 	public void	testBrokenMethodService()
 	{
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+//		{
+//			@ProvideService
+//			Object	createService(IComponent comp)
+//			{
+//				return new IMyService(){};
+//			}
+//		}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		
+		assertThrows(RuntimeException.class,
+			() -> IComponentManager.get().create(new Object()
 		{
 			@ProvideService
 			Object	createService(IComponent comp)
 			{
 				return new IMyService(){};
 			}
-		}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		}).get(TIMEOUT));
 	}
 
 	@Test
@@ -276,11 +291,13 @@ public class ProvidedServiceTest
 	@Test
 	public void	testBrokenClassService()
 	{
-		IComponentHandle	handle	=
-			IComponentManager.get().create(new BrokenAnnoImpl()).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+//		IComponentHandle	handle	=
+//			IComponentManager.get().create(new BrokenAnnoImpl()).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(RuntimeException.class,
+			() -> IComponentManager.get().create(new BrokenAnnoImpl()).get(TIMEOUT));
 	}
 
 	@Test
@@ -467,24 +484,36 @@ public class ProvidedServiceTest
 		handle.terminate().get(TIMEOUT);
 		
 		// Test broken no service injection.
-		IComponentHandle	handle2	= IComponentManager.get().create(new Object()
+//		IComponentHandle	handle2	= IComponentManager.get().create(new Object()
+//		{
+//			@Inject
+//			IServiceIdentifier sid;
+//		}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle2.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(RuntimeException.class,
+			() -> IComponentManager.get().create(new Object()
 		{
 			@Inject
 			IServiceIdentifier sid;
-		}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle2.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		}).get(TIMEOUT));
 
 		// Test broken multi service injection.
-		IComponentHandle	handle3	= IComponentManager.get().create(new MultiImpl()
+//		IComponentHandle	handle3	= IComponentManager.get().create(new MultiImpl()
+//		{
+//			@Inject
+//			IServiceIdentifier sid;
+//		}).get(TIMEOUT);
+//		
+//		SUtil.runWithoutOutErr(
+//			() -> assertThrows(ComponentTerminatedException.class, () -> handle3.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		assertThrows(RuntimeException.class,
+			() -> IComponentManager.get().create(new MultiImpl()
 		{
 			@Inject
 			IServiceIdentifier sid;
-		}).get(TIMEOUT);
-		
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(ComponentTerminatedException.class, () -> handle3.scheduleStep(() -> {return null;}).get(TIMEOUT)));
+		}).get(TIMEOUT));
 	}
 	
 	//-------- helper methods --------

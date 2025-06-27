@@ -2,13 +2,13 @@ package jadex.benchmark;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IThrowingFunction;
+import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
-import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.FastLambda;
 import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Benchmark lifecycle-optimized lambda agents.
@@ -24,14 +24,36 @@ public class FastLambdaBenchmark
 //		System.getLogger("jadex.benchmark.FastLambdaBenchmark");
 		// Now "fixed" in SUtil.isGuiThread() by checking just the thread name instead of using SReflect.hasGui().
 		
-		BenchmarkHelper.benchmarkMemory(() -> 
+		try
 		{
-			IThrowingFunction<IComponent, ComponentIdentifier>	body	= comp -> comp.getId();
-			// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
-			Future<ComponentIdentifier>	res	= new Future<>();
-			Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, res, false));
-			ComponentIdentifier	thecomp	= res.get();
-			return () -> ComponentManager.get().getComponent(thecomp).getComponentHandle().terminate().get();
-		});
+			FastLambda.KEEPALIVE	= true;	// Set to true for memory benchmarking
+			
+			BenchmarkHelper.benchmarkMemory(() -> 
+			{
+				IThrowingFunction<IComponent, IComponent>	body	= new IThrowingFunction<IComponent, IComponent>()
+				{
+					@Override
+					public @NoCopy IComponent apply(IComponent comp) throws Exception
+					{
+						return comp;
+					}
+				};
+				// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
+				Future<IComponent>	res	= new Future<>();
+				Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, res));
+				IComponent	thecomp	= res.get();
+				return () -> thecomp.getComponentHandle().terminate().get();
+			});
+		}
+		finally
+		{
+			FastLambda.KEEPALIVE	= false;	// Reset to false after memory benchmarking
+		}
+	}
+	
+	// Trigger bug
+	public static void main(String[] args)
+	{
+		IFuture.DONE.then(x -> {});
 	}
 }
