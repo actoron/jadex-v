@@ -90,7 +90,7 @@ public class PlanConditionTest
 		@Plan(trigger=@Trigger(factadded="trigger"))
 		class ContextPlan
 		{
-			@PlanContextCondition(beliefs="bel")
+			@PlanContextCondition
 			boolean context()
 			{
 				return bel.get();

@@ -1,6 +1,6 @@
 package jadex.serialization;
 
-import jadex.bytecode.ProxyFactory;
+import java.lang.reflect.Proxy;
 
 
 /**
@@ -14,6 +14,6 @@ public class DefaultHashcodeMethodReplacement implements IMethodReplacement
 	public Object invoke(Object obj, Object[] args)
 	{
 		// Todo: hash code of proxy info instead of invocation handler?
-		return Integer.valueOf(ProxyFactory.getInvocationHandler(obj).hashCode());
+		return Integer.valueOf(Proxy.getInvocationHandler(obj).hashCode());
 	}
 }

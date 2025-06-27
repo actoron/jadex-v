@@ -1,8 +1,8 @@
 package jadex.nfproperty.sensor.service;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
-import jadex.bytecode.ProxyFactory;
 import jadex.common.MethodInfo;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
@@ -40,7 +40,7 @@ public class WaitqueueProperty extends SimpleValueNFProperty<Integer, Void>
 		this.method = method;
 		this.sid = service.getServiceId();
 		
-		if(ProxyFactory.isProxyClass(service.getClass()))
+		if(Proxy.isProxyClass(service.getClass()))
 		{
 			listener = new IMethodInvocationListener()
 			{

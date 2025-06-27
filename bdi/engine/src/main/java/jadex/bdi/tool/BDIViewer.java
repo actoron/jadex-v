@@ -145,7 +145,7 @@ public class BDIViewer extends JFrame
        	
        	refreshBeliefsTable(beliefModel, agent.scheduleStep((IThrowingFunction<IComponent, String[]>)a -> 
        	{
-       		return ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getModel().getBeliefs().toArray(new String[0]);
+       		return ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getModel().getBeliefNames().toArray(new String[0]);
        	}).get());
     }
 
@@ -193,7 +193,7 @@ public class BDIViewer extends JFrame
 //            	Object val= belief.getValue();
 //            	return new BeliefValue(val, val.toString());
             	BDIModel	bdimodel	= ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getModel();
-            	Class<?>	type	= bdimodel.getBelief(belief);
+            	Class<?>	type	= bdimodel.getBeliefType(belief);
             	Object	value	= getBeliefValue(belief, a.getPojo());
             	return new BeliefInfo(type, value);
             }).get();

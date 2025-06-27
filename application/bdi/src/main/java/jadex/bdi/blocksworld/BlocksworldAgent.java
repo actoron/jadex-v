@@ -62,6 +62,7 @@ public class BlocksworldAgent
 	public class ClearGoal
 	{
 		/** The block. */
+//		@GoalParameter//TODO
 		protected Block block;
 
 		/**
@@ -76,7 +77,7 @@ public class BlocksworldAgent
 		 * 
 		 * @return True, if clear.
 		 */
-		@GoalTargetCondition(beliefs="blocks")
+		@GoalTargetCondition(beliefs="blocks")	// HACK!!! should be @GoalParameter
 		public boolean checkClear()
 		{
 //			System.out.println("clear target condition for: "+block+" "+block.isClear());
@@ -120,7 +121,7 @@ public class BlocksworldAgent
 			this.target = target;
 		}
 
-		@GoalTargetCondition(beliefs="blocks")
+		@GoalTargetCondition(beliefs="blocks")// HACK!!! should be @GoalParameter
 		public boolean checkOn()
 		{
 //			System.out.println("stack target condition for: "+block+" "+target+" "+block.getLower().equals(target));
@@ -164,7 +165,7 @@ public class BlocksworldAgent
 			this.blocks = blocks;
 		}
 
-		@GoalTargetCondition(beliefs="blocks")
+		@GoalTargetCondition(beliefs="blocks")// HACK!!! should be @GoalParameter
 		public boolean checkConfiguration()
 		{
 //			System.out.println("check configure goal: "+table.configurationEquals(configuration));

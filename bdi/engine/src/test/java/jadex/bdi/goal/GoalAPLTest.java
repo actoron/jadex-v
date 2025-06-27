@@ -118,7 +118,7 @@ public class GoalAPLTest
 			@Goal
 			class SelectGoal
 			{
-				@GoalTargetCondition(beliefs="results")
+				@GoalTargetCondition
 				boolean	target()
 				{
 					return results.size()>=2;
