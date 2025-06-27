@@ -328,7 +328,8 @@ public class SecurityFeature implements ISecurityFeature
 		
 		if (ret == null)
 		{
-			cs = hstate.getResultFuture().get();
+			IFuture<ICryptoSuite> rfut = hstate != null ? hstate.getResultFuture() : null;
+			cs = rfut != null ? rfut.get() : null;
 			if (cs != null)
 			{
 				ret = cs.encryptAndSign(receiver, message);
