@@ -28,6 +28,11 @@ dependencies
     implementation 'org.activecomponents.jadex:bdi:'+v
     implementation 'org.activecomponents.jadex:classreader:'+v
     implementation 'org.activecomponents.jadex:bdi-llm:'+v
+    implementation 'org.activecomponents.jadex:injection:'+v
+    implementation 'org.activecomponents.jadex:providedservice:'+v
+    implementation 'org.activecomponents.jadex:requiredservice:'+v
+    implementation 'org.activecomponents.jadex:publishservice:'+v
+    implementation 'org.activecomponents.jadex:publishservicejetty:'+v
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1' +v
     implementation group: 'org.json', name: 'json', version: '20240303'+v
     implementation group: 'commons-io', name: 'commons-io', version: '2.16.1' +v

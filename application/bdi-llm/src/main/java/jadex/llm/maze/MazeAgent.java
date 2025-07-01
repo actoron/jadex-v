@@ -3,11 +3,11 @@ package jadex.llm.maze;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
-import jadex.bdi.runtime.Val;
+import jadex.bdi.Val;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -43,22 +43,21 @@ public class MazeAgent
 
     @Goal
     public class AgentGoal {
-        @GoalParameter
         protected Val<String> updatedCellJSONString;
 
-        @GoalCreationCondition(beliefs = "mazeBeliefPositionString")
+        @GoalCreationCondition(factadded = "mazeBeliefPositionString")
         public AgentGoal(String updatedCellJSONString) {
             this.updatedCellJSONString = new Val<>(updatedCellJSONString);
             System.out.println("A: Goal created");
         }
 
-        @GoalFinished
+        @GoalTargetCondition
         public void goalFinished() {
             System.out.println("A: Goal finished");
             System.out.printf("Data: " + updatedCellJSONString.get());
         }
 
-        @GoalTargetCondition(parameters = "updatedCellJSONString")
+        @GoalTargetCondition(beliefs ={"updatedCellJSONString"})
         public boolean checkTarget() {
             System.out.println("-->Test Goal");
 

@@ -1,7 +1,7 @@
 package jadex.bdi.llm.impl;
 
 import jadex.bdi.llm.ILlmFeature;
-import jadex.bdi.runtime.impl.BDIAgent;
+import jadex.bdi.impl.BDIAgent;
 import jadex.core.impl.Component;
 import jadex.core.impl.FeatureProvider;
 

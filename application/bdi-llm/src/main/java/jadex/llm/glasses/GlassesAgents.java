@@ -4,12 +4,12 @@ import com.google.common.collect.Ordering;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 import jadex.bdi.llm.impl.LlmFeature;
-import jadex.bdi.runtime.Val;
+import jadex.bdi.Val;
 import jadex.core.*;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
-import jadex.model.annotation.OnEnd;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnEnd;
+import jadex.injection.annotation.OnStart;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -58,11 +58,10 @@ public class GlassesAgents
     @Goal
     public class AgentGoal
     {
-        @GoalParameter
         protected Val<String> convDataSetString; // Val<String> convDataSet;
         protected IPlanBody goalPlan = null;
 
-        @GoalCreationCondition(beliefs = "datasetString")
+        @GoalCreationCondition(factadded = "datasetString")
         public AgentGoal(String convDataSetString)
         {
             //Constructor Agent
@@ -70,14 +69,14 @@ public class GlassesAgents
             System.out.println("A: Goal created");
         }
 
-        @GoalFinished
+        @OnEnd
         public void goalFinished()
         {
             System.out.println("A: Goal finished");
             agent.terminate();
         }
 
-        @GoalTargetCondition(parameters = "convDataSetString")
+        @GoalTargetCondition(beliefs = {"convDataSetString"})
         public boolean checkTarget()
         {
             System.out.println("--->Test Goal");
