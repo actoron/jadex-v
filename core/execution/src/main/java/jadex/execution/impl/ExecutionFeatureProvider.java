@@ -30,6 +30,7 @@ import jadex.core.ResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
+import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
@@ -86,6 +87,8 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	@Override
 	public <T extends Component> IFuture<IComponentHandle>	bootstrap(Class<T> type, Supplier<T> creator)
 	{
+		Application	app	= null;	// Dummy. TODO get application from caller
+		
 		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
 		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
@@ -93,6 +96,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		// Fast Lambda Agent -> optimized lifecycle
 		if(FastLambda.class.isAssignableFrom(type))
 		{
+			ComponentManager.get().increaseCreating(app);
 //			System.out.println("Creating fast lambda agent: "+type);
 			exe.scheduleStep(() -> 
 			{
@@ -184,6 +188,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					throw e;
 				}
+				finally
+				{
+					ComponentManager.get().decreaseCreating(self.getId(), app);
+				}
 			});
 			
 			// No handle needed, because the user only wait for the run() result
@@ -193,6 +201,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		// Normal component
 		else
 		{
+			ComponentManager.get().increaseCreating(app);
 			Future<IComponentHandle>	ret	= new Future<>();
 			exe.scheduleStep(() -> 
 			{
@@ -227,6 +236,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				{
 					ret.setExceptionIfUndone(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
 					throw e;
+				}
+				finally
+				{
+					ComponentManager.get().decreaseCreating(self!=null?self.getId():null, app);
 				}
 			});
 			

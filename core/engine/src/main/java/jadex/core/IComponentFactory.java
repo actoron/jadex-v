@@ -184,59 +184,7 @@ public interface IComponentFactory
 	 *  Wait for the last component being terminated.
 	 *  This call keeps the calling thread waiting till termination.
 	 */
-	public default void waitForLastComponentTerminated()
-	{
-		// Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads.
-		ReentrantLock lock	= new ReentrantLock();
-		Condition	wait	= lock.newCondition();
-
-	    try 
-	    { 
-	    	lock.lock();
-	    	boolean[]	dowait	= new boolean[1];
-		    //synchronized(ComponentManager.get().components) 
-		    ComponentManager.get().runWithComponentsLock(() ->
-		    {
-		        if(ComponentManager.get().getNumberOfComponents() != 0) 
-		        {
-		        	dowait[0]	= true;
-			        IComponentManager.get().addComponentListener(new IComponentListener() 
-			        {
-			            @Override
-			            public void lastComponentRemoved(ComponentIdentifier cid) 
-			            {
-			        	    try 
-			        	    { 
-			        	    	lock.lock();
-			        	    	IComponentManager.get().removeComponentListener(this, IComponentManager.COMPONENT_LASTREMOVED);
-			                    wait.signal();
-			                }
-			        	    finally
-			        	    {
-			        			lock.unlock();
-			        		}
-			            }
-			        }, IComponentManager.COMPONENT_LASTREMOVED);
-		        }
-		    });
-		    
-		    if(dowait[0])
-		    {
-		    	try 
-			    {
-			    	wait.await();
-			    } 
-			    catch(InterruptedException e) 
-			    {
-			        e.printStackTrace();
-			    }
-		    }
-	    }
-	    finally
-	    {
-			lock.unlock();
-		}
-	}
+	public void waitForLastComponentTerminated();
 	
 	/**
 	 *  Wait for termination of a component.

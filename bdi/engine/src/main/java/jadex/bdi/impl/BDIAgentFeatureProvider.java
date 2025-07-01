@@ -1180,8 +1180,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 										deps.add(dep);
 									}
 								}
-								catch (Exception e)
+								catch(Exception e)
 								{
+									SUtil.throwUnchecked(e);
 								}
 			                }
 			                super.visitFieldInsn(opcode, owner, name, descriptor);
