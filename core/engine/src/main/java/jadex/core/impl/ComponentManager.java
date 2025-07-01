@@ -872,7 +872,7 @@ public class ComponentManager implements IComponentManager
 			IComponent comp = components.remove(cid);
 			if(comp==null)
 				throw new RuntimeException("Unknown component id: "+cid);
-			last = components.isEmpty() && creationcnt==0;
+			last = creationcnt==0 && components.isEmpty();
 			appid = comp.getAppId();
 			if(appid!=null)
 			{
