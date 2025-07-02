@@ -62,7 +62,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static IFuture<IComponentHandle>	create(Runnable body, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle> ret = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		IFuture<IComponentHandle> ret = Component.createComponent(new Component(body, cid, app));
 		ret.then(handle -> {
 			handle.scheduleStep(comp ->
 			{
@@ -79,7 +79,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static IFuture<IComponentHandle>	create(Callable<?> body, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle> ret = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		IFuture<IComponentHandle> ret = Component.createComponent(new Component(body, cid, app));
 		ret.then(handle -> {
 			handle.scheduleStep(comp ->
 			{
@@ -97,7 +97,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static IFuture<IComponentHandle>	create(IThrowingFunction<IComponent, ?> body, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle> ret = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		IFuture<IComponentHandle> ret = Component.createComponent(new Component(body, cid, app));
 		ret.then(handle -> {
 			handle.scheduleStep(comp ->
 			{
@@ -115,7 +115,7 @@ public class LambdaAgent //extends Component
 	 */
 	public static <T> IFuture<IComponentHandle> create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle> ret = Component.createComponent(Component.class, () -> new Component(body, cid, app));
+		IFuture<IComponentHandle> ret = Component.createComponent(new Component(body, cid, app));
 		ret.then(handle -> {
 			handle.scheduleStep(comp ->
 			{
@@ -130,29 +130,49 @@ public class LambdaAgent //extends Component
 	
 	public static <T>	IFuture<T> run(Callable<T> body)
 	{
+		return run(body, null, null);
+	}
+	
+	public static <T>	IFuture<T> run(Callable<T> body, ComponentIdentifier cid, Application app)
+	{
 		Future<T>	ret	= new Future<>();
-		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret));
+		Component.createComponent(new FastLambda<>(body, cid, app, ret));
 		return ret;
 	}
 	
 	public static <T>	IFuture<T> run(IThrowingFunction<IComponent, T> body)
 	{
+		return run(body, null, null);
+	}
+	
+	public static <T>	IFuture<T> run(IThrowingFunction<IComponent, T> body, ComponentIdentifier cid, Application app)
+	{
 		Future<T>	ret	= new Future<>();
-		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret));
+		Component.createComponent(new FastLambda<>(body, cid, app, ret));
 		return ret;
 	}
 	
 	public static	IFuture<Void> run(Runnable body)
 	{
+		return run(body, null, null);
+	}
+	
+	public static	IFuture<Void> run(Runnable body, ComponentIdentifier cid, Application app)
+	{
 		Future<Void>	ret	= new Future<>();
-		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret));
+		Component.createComponent(new FastLambda<>(body, cid, app, ret));
 		return ret;
 	}
 	
 	public static	IFuture<Void> run(IThrowingConsumer<IComponent> body)
 	{
+		return run(body, null, null);
+	}
+	
+	public static	IFuture<Void> run(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
+	{
 		Future<Void>	ret	= new Future<>();
-		Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, ret));
+		Component.createComponent(new FastLambda<>(body, cid, app, ret));
 		return ret;
 	}
 	

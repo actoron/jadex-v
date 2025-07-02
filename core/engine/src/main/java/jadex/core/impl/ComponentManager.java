@@ -1092,25 +1092,15 @@ public class ComponentManager implements IComponentManager
 			{
 				if(globalrunner==null)
 				{
-					try
+					Component comp = new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID), null)
 					{
-						globalrunner	= SUtil.getExecutor().submit(() ->
+						public void handleException(Exception exception)
 						{
-							Component comp = new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
-							{
-								public void handleException(Exception exception)
-								{
-									globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
-								}
-							};
-							comp.init();
-							return comp;
-						}).get();
-					}
-					catch(Exception e)
-					{
-						SUtil.throwUnchecked(e);
-					}
+							globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
+						}
+					};
+					comp.init();
+					globalrunner = comp;
 				}
 			}
 		}

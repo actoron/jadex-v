@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 import jadex.collection.WeakKeyValueMap;
 import jadex.common.IFilter;
@@ -85,31 +84,28 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}
 	
 	@Override
-	public <T extends Component> IFuture<IComponentHandle>	bootstrap(Class<T> type, Supplier<T> creator)
+	public <T extends Component> IFuture<IComponentHandle>	bootstrap(T component)
 	{
-		Application	app	= null;	// Dummy. TODO get application from caller
-		
-		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers	= SComponentFeatureProvider.getProvidersForComponent(type);
+		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers
+			= SComponentFeatureProvider.getProvidersForComponent(component.getClass());
 		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
 		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
 		
 		// Fast Lambda Agent -> optimized lifecycle
-		if(FastLambda.class.isAssignableFrom(type))
+		if(component instanceof FastLambda)
 		{
-			ComponentManager.get().increaseCreating(app);
+			ComponentManager.get().increaseCreating(component.getApplication());
 //			System.out.println("Creating fast lambda agent: "+type);
 			exe.scheduleStep(() -> 
 			{
-				T self	= creator.get();
 				@SuppressWarnings("unchecked")
-				FastLambda<Object> fself	= (FastLambda<Object>)self;
-				
+				FastLambda<Object> fself	= (FastLambda<Object>)component;
 				try
 				{
 					// Extra init so component doesn't get added when just created as object
-					self.init();
+					fself.init();
 					
-					startFeatures(self);
+					startFeatures(fself);
 					
 					// run body and termination in same step as init
 					try
@@ -128,7 +124,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						{
 							@SuppressWarnings("unchecked")
 							IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
-							result	= itf.apply(self);							
+							result	= itf.apply(fself);							
 						}
 						else if(pojo instanceof Runnable)
 						{
@@ -138,7 +134,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						{
 							@SuppressWarnings("unchecked")
 							IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
-							itc.accept(self);							
+							itc.accept(fself);							
 						}
 						
 						if(fself.result!=null)
@@ -156,7 +152,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						}
 						else
 						{
-							self.handleException(e);
+							fself.handleException(e);
 						}
 					}
 					if(!FastLambda.KEEPALIVE)
@@ -173,7 +169,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					else
 					{
-						self.handleException(e);
+						fself.handleException(e);
 					}
 					if(!FastLambda.KEEPALIVE)
 					{
@@ -184,13 +180,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				{
 					if(fself.result!=null)
 					{
-						fself.result.setException(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
+						fself.result.setException(fself!=null && fself.getException()!=null ? fself.getException() : new RuntimeException(e));
 					}
 					throw e;
 				}
 				finally
 				{
-					ComponentManager.get().decreaseCreating(self.getId(), app);
+					ComponentManager.get().decreaseCreating(fself.getId(), fself.getApplication());
 				}
 			});
 			
@@ -201,30 +197,27 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		// Normal component
 		else
 		{
-			ComponentManager.get().increaseCreating(app);
+			ComponentManager.get().increaseCreating(component.getApplication());
 			Future<IComponentHandle>	ret	= new Future<>();
 			exe.scheduleStep(() -> 
 			{
-				T self	= null;
 				try
 				{
-					self = creator.get();
-					
 					// Extra init so component doesn't get added when just created as object
-					self.init();
+					component.init();
 										
-					startFeatures(self);
+					startFeatures(component);
 					
 					// Make component available after init is complete
-					ret.setResult(self.getComponentHandle());
+					ret.setResult(component.getComponentHandle());
 				}
 				catch(Exception e)
 				{
 					if(ret.setExceptionIfUndone(e))
 					{
-						if(self!=null)
+						if(component!=null)
 						{
-							self.terminate();
+							component.terminate();
 						}
 					}
 					else
@@ -234,12 +227,12 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				catch(StepAborted e)
 				{
-					ret.setExceptionIfUndone(self!=null && self.getException()!=null ? self.getException() : new RuntimeException(e));
+					ret.setExceptionIfUndone(component!=null && component.getException()!=null ? component.getException() : new RuntimeException(e));
 					throw e;
 				}
 				finally
 				{
-					ComponentManager.get().decreaseCreating(self!=null?self.getId():null, app);
+					ComponentManager.get().decreaseCreating(component.getId(), component.getApplication());
 				}
 			});
 			
@@ -464,30 +457,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	@Override
 	public <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		if(pojo instanceof Callable)
+		if(pojo instanceof Callable
+		|| pojo instanceof IThrowingFunction
+		|| pojo instanceof Runnable
+		|| pojo instanceof IThrowingConsumer)
 		{
-			@SuppressWarnings("unchecked")
-			Callable<T>	callable	= (Callable<T>)pojo;
-			return LambdaAgent.run(callable);
-		}
-		else if(pojo instanceof IThrowingFunction)
-		{
-			@SuppressWarnings("unchecked")
-			IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
-			return LambdaAgent.run(itf);
-		}
-		else if(pojo instanceof Runnable)
-		{
-			@SuppressWarnings("unchecked")
-			IFuture<T>	ret	= (IFuture<T>) LambdaAgent.run((Runnable)pojo);
-			return ret;
-		}
-		else if(pojo instanceof IThrowingConsumer)
-		{
-			@SuppressWarnings("unchecked")
-			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
-			@SuppressWarnings("unchecked")
-			IFuture<T>	ret	= (IFuture<T>) LambdaAgent.run(itc);
+			Future<T>	ret	= new Future<>();
+			Component.createComponent(new FastLambda<>(pojo, cid, app, ret));
 			return ret;
 		}
 		else

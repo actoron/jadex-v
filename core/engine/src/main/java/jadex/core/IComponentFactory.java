@@ -1,8 +1,6 @@
 package jadex.core;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
@@ -46,7 +44,7 @@ public interface IComponentFactory
 		if(pojo==null)
 		{
 			// Plain component for null pojo
-			return Component.createComponent(Component.class, () -> new Component(pojo,cid,app));
+			return Component.createComponent(new Component(pojo, cid, app));
 		}
 		else
 		{

@@ -1,7 +1,5 @@
 package jadex.core.impl;
 
-import java.util.function.Supplier;
-
 import jadex.core.IComponentHandle;
 import jadex.future.IFuture;
 
@@ -14,11 +12,9 @@ import jadex.future.IFuture;
 public interface IBootstrapping
 {
 	/**
-	 *  This method is executed on all features that implement IBootstrapping.
-	 *  @param type	The component type is required for loading correct feature providers.
-	 *  @param creator	Code that creates and returns the component instance
-	 *  				and can be called before, after, or in between your bootstrapping code. 
-	 *  @return	The created component instance.
+	 *  Perform bootstrapping code for the component.
+	 *  @param component	The component to bootstrap.
+	 *  @return	A handle to the initialized component instance.
 	 */
-	public <T extends Component> IFuture<IComponentHandle>	bootstrap(Class<T> type, Supplier<T> creator);
+	public <T extends Component> IFuture<IComponentHandle>	bootstrap(T component);
 }

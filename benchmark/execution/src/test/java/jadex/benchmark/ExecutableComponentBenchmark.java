@@ -3,6 +3,7 @@ package jadex.benchmark;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 
 /**
@@ -16,7 +17,7 @@ public class ExecutableComponentBenchmark
 //		BenchmarkHelper.benchmarkTime(() -> Component.createComponent(Component.class, () -> new Component()).terminate().get());
 		BenchmarkHelper.benchmarkTime(() -> 
 		{
-			Component	comp		= new Component(null);
+			Component	comp		= new Component(null, null, null);
 			comp.init();
 			comp.terminate().get();
 		});
@@ -27,7 +28,7 @@ public class ExecutableComponentBenchmark
 	{
 		BenchmarkHelper.benchmarkMemory(() ->
 		{
-			IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(null)).get();
+			IComponentHandle	comp	= IComponentManager.get().create(null).get();
 //			Component	comp	= new Component();
 			return () -> comp.terminate().get();			
 		});
@@ -37,8 +38,9 @@ public class ExecutableComponentBenchmark
 	{
 		for(;;)
 		{
-//			Component.createComponent(Component.class, () -> new Component()).terminate().get();
-			new Component(null).terminate().get();
+			Component	comp		= new Component(null, null, null);
+			comp.init();
+			comp.terminate().get();
 		}
 	}
 }
