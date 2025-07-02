@@ -248,8 +248,8 @@ public class BenchmarkHelper
 		
 		vals.sort((a,b) -> (int)(a-b));
 		
-		// Stop if improved
-		if(addToDB(vals.get(0), limit, false)<0)
+		// Stop if improved or same as best value
+		if(addToDB(vals.get(0), limit, false)<=0)
 		{
 			return true;
 		}
