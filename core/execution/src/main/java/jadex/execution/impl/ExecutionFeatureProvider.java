@@ -108,53 +108,32 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					startFeatures(fself);
 					
 					// run body and termination in same step as init
-					try
+					Object	result	= null;
+					Object	pojo	= fself.getPojo();
+					if(pojo instanceof Callable)
 					{
-						/*ILifecycle lfeature = (ILifecycle)feature;
-						System.out.println("starting: "+lfeature);
-						lfeature.onStart();*/
+						result	= ((Callable<?>)pojo).call();							
+					}
+					else if(pojo instanceof IThrowingFunction)
+					{
+						@SuppressWarnings("unchecked")
+						IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
+						result	= itf.apply(fself);							
+					}
+					else if(pojo instanceof Runnable)
+					{
+						((Runnable)pojo).run();							
+					}
+					else //if(pojo instanceof IThrowingConsumer)
+					{
+						@SuppressWarnings("unchecked")
+						IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+						itc.accept(fself);							
+					}
+					
+					// TODO: unify with LambdaAgent result handle?
+					fself.result.setResult(copyVal(result, getAnnos(pojo.getClass())));
 
-						Object	result	= null;
-						Object	pojo	= fself.getPojo();
-						if(pojo instanceof Callable)
-						{
-							result	= ((Callable<?>)pojo).call();							
-						}
-						else if(pojo instanceof IThrowingFunction)
-						{
-							@SuppressWarnings("unchecked")
-							IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
-							result	= itf.apply(fself);							
-						}
-						else if(pojo instanceof Runnable)
-						{
-							((Runnable)pojo).run();							
-						}
-						else //if(pojo instanceof IThrowingConsumer)
-						{
-							@SuppressWarnings("unchecked")
-							IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
-							itc.accept(fself);							
-						}
-						
-						if(fself.result!=null)
-						{
-							// TODO: unify with LambdaAgent result handle?
-							fself.result.setResult(copyVal(result, getAnnos(pojo.getClass())));
-						}
-					}
-					catch(Exception e)
-					{
-						System.err.println("Error in fast lambda agent 1: "+e);
-						if(fself.result!=null)
-						{
-							fself.result.setException(e);
-						}
-						else
-						{
-							fself.handleException(e);
-						}
-					}
 					if(!FastLambda.KEEPALIVE)
 					{
 						exe.scheduleStep((Runnable)() -> fself.terminate());
@@ -162,15 +141,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				catch(Exception e)
 				{
-					System.err.println("Error in fast lambda agent: "+e);
-					if(fself.result!=null)
-					{
-						fself.result.setException(e);
-					}
-					else
-					{
-						fself.handleException(e);
-					}
+					fself.result.setException(e);
 					if(!FastLambda.KEEPALIVE)
 					{
 						exe.scheduleStep((Runnable)() -> fself.terminate());
@@ -178,10 +149,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				catch(StepAborted e)
 				{
-					if(fself.result!=null)
-					{
-						fself.result.setException(fself!=null && fself.getException()!=null ? fself.getException() : new RuntimeException(e));
-					}
+					fself.result.setException(fself.getException()!=null ? fself.getException() : new RuntimeException(e));
 					throw e;
 				}
 				finally
@@ -190,7 +158,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 			});
 			
-			// No handle needed, because the user only wait for the run() result
+			// No handle needed, because the user only waits for the run() result
 			return null;
 		}
 		
@@ -227,7 +195,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				catch(StepAborted e)
 				{
-					ret.setExceptionIfUndone(component!=null && component.getException()!=null ? component.getException() : new RuntimeException(e));
+					ret.setExceptionIfUndone(component.getException()!=null ? component.getException() : new RuntimeException(e));
 					throw e;
 				}
 				finally
