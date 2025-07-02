@@ -243,6 +243,9 @@ public class BenchmarkHelper
 	 */
 	private static boolean isStop(List<Long> vals, double limit)	throws IOException 
 	{
+		if(vals.isEmpty())
+			return false;
+		
 		vals.sort((a,b) -> (int)(a-b));
 		
 		// Stop if improved
