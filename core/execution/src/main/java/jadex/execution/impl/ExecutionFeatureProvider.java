@@ -182,10 +182,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				{
 					if(ret.setExceptionIfUndone(e))
 					{
-						if(component!=null)
-						{
-							component.terminate();
-						}
+						component.terminate();
 					}
 					else
 					{
