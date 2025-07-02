@@ -243,12 +243,6 @@ public class BenchmarkHelper
 	 */
 	private static boolean isStop(List<Long> vals, double limit)	throws IOException 
 	{
-		int n	= 2;	// How many values to compare
-		
-		// Do at least n runs
-		if(vals.size()<n)
-			return false;
-		
 		vals.sort((a,b) -> (int)(a-b));
 		
 		// Stop if improved
@@ -262,6 +256,12 @@ public class BenchmarkHelper
 			return false;
 		}
 		
+		int n	= 2;	// How many values to compare
+		
+		// Do at least n runs
+		if(vals.size()<n)
+			return false;
+				
 		// Compare lowest n values
 		double	min	= vals.get(0);
 		double	max	= vals.get(n-1);
