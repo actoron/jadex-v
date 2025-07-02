@@ -60,35 +60,28 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	{
 		ExecutionFeature	ret	= ExecutionFeature.LOCAL.get();
 
-		// Component created without bootstrapping
 		// TODO: disallow plain component creation?
-		if(ret==null || ret.self!=null)
+		if(ret==null || ret.self!=self)
 		{
-			ret = doCreateFeatureInstance();				
+			ret = doCreateFeatureInstance(self);				
 		}
 		// else inside bootstrap -> reuse bootstrap feature
 		
-		assert ret.self==null;
-		ret.self	= self;
 		return ret;
 	}
 
 	/**
 	 *  Template method allowing subclasses to provide a subclass of the feature implementation.
 	 */
-	protected ExecutionFeature doCreateFeatureInstance()
+	protected ExecutionFeature doCreateFeatureInstance(Component self)
 	{
-		return new ExecutionFeature();
+		return new ExecutionFeature(self);
 	}
 	
 	@Override
 	public <T extends Component> IFuture<IComponentHandle>	bootstrap(T component)
 	{
-//		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers
-//			= SComponentFeatureProvider.getProvidersForComponent(component.getClass());
-//		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
-//		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
-		IExecutionFeature	exe	= doCreateFeatureInstance();
+		IExecutionFeature	exe	= doCreateFeatureInstance(component);
 		
 		// Fast Lambda Agent -> optimized lifecycle
 		if(component instanceof FastLambda)

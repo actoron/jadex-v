@@ -1,5 +1,6 @@
 package jadex.simulation.impl;
 
+import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ExecutionFeature;
@@ -14,8 +15,8 @@ public class SimulationFeatureProvider extends ExecutionFeatureProvider
 	}
 	
 	@Override
-	protected ExecutionFeature doCreateFeatureInstance()
+	protected ExecutionFeature doCreateFeatureInstance(Component component)
 	{
-		return new SlaveSimulationFeature();
+		return new SlaveSimulationFeature(component);
 	}
 }
