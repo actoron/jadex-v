@@ -239,7 +239,7 @@ public class BenchmarkHelper
 
 	/**
 	 *  Check if the benchmark should stop.
-	 *  Stops when the lowest three values are in 10% of the limit.
+	 *  Stops when the lowest n values are in 10% of the limit.
 	 */
 	private static boolean isStop(List<Long> vals, double limit)	throws IOException 
 	{

@@ -20,7 +20,6 @@ import jadex.common.transformation.traverser.Traverser;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
@@ -32,7 +31,6 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.SComponentFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.execution.StepAborted;
@@ -86,10 +84,11 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	@Override
 	public <T extends Component> IFuture<IComponentHandle>	bootstrap(T component)
 	{
-		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers
-			= SComponentFeatureProvider.getProvidersForComponent(component.getClass());
-		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
-		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
+//		Map<Class<IComponentFeature>, ComponentFeatureProvider<IComponentFeature>>	providers
+//			= SComponentFeatureProvider.getProvidersForComponent(component.getClass());
+//		Object	exeprovider	= providers.get(IExecutionFeature.class);	// Hack!!! cannot cast wtf???
+//		IExecutionFeature	exe	= ((ExecutionFeatureProvider)exeprovider).doCreateFeatureInstance();
+		IExecutionFeature	exe	= doCreateFeatureInstance();
 		
 		// Fast Lambda Agent -> optimized lifecycle
 		if(component instanceof FastLambda)
