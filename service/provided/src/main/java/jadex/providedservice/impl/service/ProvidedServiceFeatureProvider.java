@@ -131,6 +131,13 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 		return new ProvidedServiceFeature(self);
 	}
 	
+	@Override
+	public boolean isLazyFeature()
+	{
+		// lazy, because it is only needed when a service is provided
+		return true;
+	}
+	
 	//-------- augment injection feature with new setup code --------
 	
 	@Override

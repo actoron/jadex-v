@@ -24,7 +24,6 @@ public class MessageFeatureProvider extends ComponentFeatureProvider<IMessageFea
 		return IMessageFeature.class;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public IMessageFeature createFeatureInstance(Component self)
 	{
@@ -37,5 +36,11 @@ public class MessageFeatureProvider extends ComponentFeatureProvider<IMessageFea
 	public Class<? extends Component> getRequiredComponentType() 
 	{
 		return Component.class;
+	}
+	
+	@Override
+	public boolean isLazyFeature()
+	{
+		return true;
 	}
 }

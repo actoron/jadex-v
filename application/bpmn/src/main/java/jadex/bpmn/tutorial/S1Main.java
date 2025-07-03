@@ -21,7 +21,7 @@ public class S1Main
 		// todo: bpmn should not terminate after first call when it is a service component
 		// in Jadex 4 we had keepalive flag at starting
 		// Bpmn end check must be improved
-		IComponentManager.get().create(new RBpmnProcess("jadex/bpmn/tutorial/S1_ProvidedServices.bpmn"));
+		IComponentManager.get().create(new RBpmnProcess("jadex/bpmn/tutorial/S1_ProvidedServices.bpmn")).get();
 		
 		LambdaAgent.create(agent ->
 		{

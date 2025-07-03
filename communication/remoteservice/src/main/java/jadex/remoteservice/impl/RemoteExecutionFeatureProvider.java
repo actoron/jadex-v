@@ -22,7 +22,6 @@ public class RemoteExecutionFeatureProvider extends ComponentFeatureProvider<IRe
 		return IRemoteExecutionFeature.class;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public IRemoteExecutionFeature createFeatureInstance(Component self)
 	{
@@ -30,8 +29,8 @@ public class RemoteExecutionFeatureProvider extends ComponentFeatureProvider<IRe
 	}
 	
 	@Override
-	public Class<? extends Component> getRequiredComponentType() 
+	public boolean isLazyFeature()
 	{
-		return Component.class;
+		return true; // Lazy feature, so that it is only created when needed.
 	}
 }

@@ -14,7 +14,6 @@ import jadex.benchmark.BenchmarkHelper;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.injection.annotation.Inject;
@@ -62,26 +61,26 @@ public class InjectionTest
 	{		
 		// Check if component is injected
 		Future<IComponent>	compfut	= new Future<>();
-		IComponent	agent1	= Component.createComponent(Component.class, () -> new Component(new Object()
+		IComponent	agent1	= IComponentManager.get().create(new Object()
 		{
 			@OnStart
 			public void	start(IComponent comp)
 			{
 				compfut.setResult(comp);
 			}
-		})).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
+		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent1, compfut.get(TIMEOUT));
 		
 		// Check if execution feature is injected
 		Future<IExecutionFeature>	exefut	= new Future<>();
-		IComponent	agent2	= Component.createComponent(Component.class, () -> new Component(new Object()
+		IComponent	agent2	= IComponentManager.get().create(new Object()
 		{
 			@OnStart
 			public void	start(IExecutionFeature exe)
 			{
 				exefut.setResult(exe);
 			}
-		})).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
+		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
 	}
 	
@@ -90,7 +89,7 @@ public class InjectionTest
 	{		
 		// Check if component is injected
 		Future<IComponent>	compfut	= new Future<>();
-		IComponent	agent1	= Component.createComponent(Component.class, () -> new Component(new Object()
+		IComponent	agent1	= IComponentManager.get().create(new Object()
 		{
 			@Inject
 			IComponent comp;
@@ -100,12 +99,12 @@ public class InjectionTest
 			{
 				compfut.setResult(comp);
 			}
-		})).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
+		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent1, compfut.get(TIMEOUT));
 		
 		// Check if execution feature is injected
 		Future<IExecutionFeature>	exefut	= new Future<>();
-		IComponent	agent2	= Component.createComponent(Component.class, () -> new Component(new Object()
+		IComponent	agent2	= IComponentManager.get().create(new Object()
 		{
 			@Inject
 			IExecutionFeature exe;
@@ -115,7 +114,7 @@ public class InjectionTest
 			{
 				exefut.setResult(exe);
 			}
-		})).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
+		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
 	}
 

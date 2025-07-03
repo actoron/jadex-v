@@ -47,6 +47,13 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 	{
 		return Set.of(IProvidedServiceFeature.class, IRequiredServiceFeature.class);
 	}
+	
+	@Override
+	public boolean isLazyFeature()
+	{
+		// initialization is triggered by injection, if necessary
+		return true;
+	}
 
 	//-------- injection model extension --------
 	

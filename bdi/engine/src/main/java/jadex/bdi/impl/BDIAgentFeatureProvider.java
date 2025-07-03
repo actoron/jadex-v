@@ -149,7 +149,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	@Override
 	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return Component.createComponent(BDIAgent.class, () -> new BDIAgent(pojo, cid, app));
+		return Component.createComponent(new BDIAgent(pojo, cid, app));
 	}
 
 	@Override
@@ -1180,8 +1180,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 										deps.add(dep);
 									}
 								}
-								catch (Exception e)
+								catch(Exception e)
 								{
+									SUtil.throwUnchecked(e);
 								}
 			                }
 			                super.visitFieldInsn(opcode, owner, name, descriptor);

@@ -45,6 +45,14 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	/** Inform stop() callers when simulation stops (if any). */
 	protected Future<Void>	stopping	= null;
 	
+	/**
+	 *  Create a master simulation feature.
+	 */
+	public MasterSimulationFeature()
+	{
+		super(null);
+	}
+	
 	public void scheduleStep(ExecutionFeature exe, Runnable r)
 	{
 		super.scheduleStep(new StepInfo(exe, r));

@@ -36,7 +36,7 @@ public class TestFeature1Provider extends ComponentFeatureProvider<ITestFeature1
 	@Override
 	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return Component.createComponent(Component.class, () -> new Component(pojo, cid, app));
+		return Component.createComponent(new Component(pojo, cid, app));
 	}
 
 	@Override
