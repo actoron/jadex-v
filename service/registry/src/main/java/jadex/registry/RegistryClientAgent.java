@@ -1,7 +1,6 @@
 package jadex.registry;
 
 import java.lang.System.Logger.Level;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -9,9 +8,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
-import jadex.collection.IdentityHashSet;
 import jadex.common.ClassInfo;
-import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.impl.GlobalProcessIdentifier;
@@ -22,7 +19,6 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.future.IntermediateEmptyResultListener;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminableFuture;
 import jadex.future.TerminableIntermediateFuture;
@@ -36,7 +32,7 @@ import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceIdentifier;
-import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
+import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 
 public class RegistryClientAgent implements IRegistryClientService 
 {
