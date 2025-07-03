@@ -101,6 +101,9 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	public RemoteExecutionFeature(Component component)
 	{
 		this.component = component;
+		
+		// Done in constructor, because onStart is not called for lazy features.
+		component.getFeature(IMessageFeature.class).addMessageHandler(new RxHandler());
 	}
 	
 	/**
@@ -109,7 +112,6 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	@Override
 	public void	onStart()
 	{
-		component.getFeature(IMessageFeature.class).addMessageHandler(new RxHandler());
 	}
 
 	/**

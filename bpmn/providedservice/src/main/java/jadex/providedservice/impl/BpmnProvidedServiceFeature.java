@@ -6,6 +6,7 @@ import java.util.Map;
 import jadex.common.IValueFetcher;
 import jadex.common.SUtil;
 import jadex.core.impl.Component;
+import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ILifecycle;
 import jadex.javaparser.SJavaParser;
 import jadex.model.IModelFeature;
@@ -27,20 +28,24 @@ public class BpmnProvidedServiceFeature	implements IBpmnProvidedServiceFeature, 
 	@Override
 	public void onStart()
 	{
-		IModelFeature	mf	= self.getFeature(IModelFeature.class);
-		ProvidedServiceFeature	psf	= (ProvidedServiceFeature) self.getFeature(IProvidedServiceFeature.class);
-
-		ProvidedServiceModel	model	= loadModel();
-		if(model!=null)
+		// HACK!!! // This is a workaround for the fact that the provided service feature is lazy
+		self.getFeature(IExecutionFeature.class).scheduleStep(() ->
 		{
-			for(ProvidedServiceInfo info: model.getServices())
+			IModelFeature	mf	= self.getFeature(IModelFeature.class);
+			ProvidedServiceFeature	psf	= (ProvidedServiceFeature) self.getFeature(IProvidedServiceFeature.class);
+
+			ProvidedServiceModel	model	= loadModel();
+			if(model!=null)
 			{
-				Object	service	= createServiceImplementation(info, self.getValueProvider());
-				Class<?>	type	= info.getType().getType(self.getClassLoader(), mf.getModel().getAllImports());
-				Map<Class<?>, ProvideService>	types	= Collections.singletonMap(type, null);
-				psf.addService(Collections.singletonList(self.getPojo()), service, info.getName(), types);
+				for(ProvidedServiceInfo info: model.getServices())
+				{
+					Object	service	= createServiceImplementation(info, self.getValueProvider());
+					Class<?>	type	= info.getType().getType(self.getClassLoader(), mf.getModel().getAllImports());
+					Map<Class<?>, ProvideService>	types	= Collections.singletonMap(type, null);
+					psf.addService(Collections.singletonList(self.getPojo()), service, info.getName(), types);
+				}
 			}
-		}
+		});		
 	}
 	
 	@Override
