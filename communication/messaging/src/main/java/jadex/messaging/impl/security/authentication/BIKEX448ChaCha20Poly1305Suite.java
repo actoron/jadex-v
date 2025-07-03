@@ -19,9 +19,8 @@ import org.bouncycastle.pqc.crypto.bike.BIKEParameters;
 import org.bouncycastle.pqc.crypto.bike.BIKEPrivateKeyParameters;
 import org.bouncycastle.pqc.crypto.bike.BIKEPublicKeyParameters;
 
-import jadex.common.SUtil;
 import jadex.core.impl.GlobalProcessIdentifier;
-import jadex.messaging.security.SSecurity;
+import jadex.messaging.impl.security.SSecurity;
 
 
 /**

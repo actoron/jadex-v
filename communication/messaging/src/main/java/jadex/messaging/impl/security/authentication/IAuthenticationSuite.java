@@ -1,8 +1,7 @@
 package jadex.messaging.impl.security.authentication;
 
 import jadex.core.impl.GlobalProcessIdentifier;
-import jadex.messaging.security.SecurityFeature;
-import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
+import jadex.messaging.impl.security.SecurityFeature;
 
 /**
  *  Suite for authenticating messages.

@@ -13,7 +13,7 @@ import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
-import jadex.messaging.security.authentication.KeySecret;
+import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
