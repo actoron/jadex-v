@@ -41,7 +41,7 @@ public class TestFeature2NewProvider extends ComponentFeatureProvider<ITestFeatu
 	}
 	
 	@Override
-	public boolean replacesFeatureProvider(ComponentFeatureProvider<ITestFeature2> provider)
+	public boolean replacesFeatureProvider(ComponentFeatureProvider<?> provider)
 	{
 		return provider.getClass().equals(TestFeature2Provider.class);
 	}
