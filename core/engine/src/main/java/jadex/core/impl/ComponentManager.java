@@ -1100,6 +1100,7 @@ public class ComponentManager implements IComponentManager
 						}
 					};
 					comp.init();
+					comp.initFeatures();
 					globalrunner = comp;
 				}
 			}

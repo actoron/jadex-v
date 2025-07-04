@@ -31,7 +31,6 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.execution.StepAborted;
@@ -98,7 +97,8 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					// Extra init so component doesn't get added when just created as object
 					fself.init();
 					
-					startFeatures(fself);
+					// Extra feature init, so subcomponent can override init() before features are initialized
+					fself.initFeatures();
 					
 					// run body and termination in same step as init
 					Object	result	= null;
@@ -166,8 +166,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				{
 					// Extra init so component doesn't get added when just created as object
 					component.init();
-										
-					startFeatures(component);
+					
+					// Extra feature init, so subcomponent can override init() before features are initialized
+					component.initFeatures();
 					
 					// Make component available after init is complete
 					ret.setResult(component.getComponentHandle());
@@ -197,23 +198,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			return ret;
 		}
 	}
-	
-	/**
-	 *  Start all features, i.e. thos that implement ILifecycle.
-	 */
-	protected <T extends Component> void startFeatures(T self)
-	{
-		for(Object feature:	self.getFeatures())
-		{
-			if(feature instanceof ILifecycle)
-			{
-				ILifecycle lfeature = (ILifecycle)feature;
-				//System.out.println("starting: "+lfeature);
-				lfeature.init();
-			}
-		}
-	}
-	
 	
 	@Override
 	public int	isCreator(Class<?> pojoclazz)

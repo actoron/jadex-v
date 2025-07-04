@@ -116,6 +116,22 @@ public class Component implements IComponent
 	}
 	
 	/**
+	  * Initialize all features, i.e. non-lazy ones that implement ILifecycle.
+	  */
+	public void initFeatures()
+	{
+		for(Object feature:	getFeatures())
+		{
+			if(feature instanceof ILifecycle)
+			{
+				ILifecycle lfeature = (ILifecycle)feature;
+				//System.out.println("starting: "+lfeature);
+				lfeature.init();
+			}
+		}
+	}
+	
+	/**
 	 *  Get the id.
 	 *  @return The id.
 	 */
@@ -203,6 +219,14 @@ public class Component implements IComponent
 					@SuppressWarnings("unchecked")
 					Class<IComponentFeature> otype	= (Class<IComponentFeature>)rtype;
 					features.put(otype, ret);
+					
+					if(ret instanceof ILifecycle)
+					{
+						ILifecycle lfeature = (ILifecycle)ret;
+						//System.out.println("starting: "+lfeature);
+						lfeature.init();
+					}
+
 					return ret;
 				}
 				catch(Throwable t)
@@ -525,6 +549,7 @@ public class Component implements IComponent
 			try
 			{
 				component.init();
+				component.initFeatures();
 				ret.setResult(component.getComponentHandle());
 			}
 			catch(Exception e)
