@@ -27,7 +27,8 @@ public class AutostartFeature implements IAutostartFeature
 		List<String> aunames = findServiceClassNames(IAutostartGenerated.class);
 		names.addAll(aunames);
 		
-		System.out.println("found autostart agents: "+names);
+		System.getLogger(this.getClass().getName()).log(Level.INFO, "Found autostart agents: "+names.size()+" "+names);
+		//System.out.println("found autostart agents: "+names);
 		
 		for (String clname : names) 
 		{

@@ -12,6 +12,7 @@ import jadex.collection.MultiCollection;
 import jadex.common.ClassInfo;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
+import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.impl.GlobalProcessIdentifier;
@@ -71,73 +72,61 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	
 	protected Set<ComponentIdentifier> clients = new LinkedHashSet<>();
 	
-	protected List<String> coordinatornames = List.of
-    (
-    	IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+"@global@www.actoron.com", 
-    	IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+GlobalProcessIdentifier.getSelf()
-    );
+	protected List<String> coordinatornames = List.of(ICoordinatorService.getCoordinatorServiceNames());
 	
 	protected Map<String, ISubscriptionIntermediateFuture<Void>> coordinators = new HashMap<>();
 	
 	@OnStart
     public void start() 
     {
+		System.getLogger(getClass().getName()).log(Level.INFO, "Registry started: "+agent.getId());
+		
 		for(String coname: coordinatornames)
 			connectToCoordinator(coname);
     }
     
     protected void connectToCoordinator(String coname)
     {
+    	Runnable reconnect = () ->
+		{
+			System.getLogger(getClass().getName()).log(Level.INFO, "Reconnecting to coordinator: "+coname+" "+agent.getId());
+    		agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
+    			.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator(coname)))
+    			.printOnEx();
+		};
+    	
     	ISubscriptionIntermediateFuture<Void> cosub = coordinators.get(coname);
     	if(cosub!=null)
     		cosub.terminate();    
 	
-    	IRegistryCoordinatorService coser = getCoordinatorService(coname);
+    	ICoordinatorService coser = ICoordinatorService.getCoordinatorServiceProxy(agent, coname);
+    	
+    	if(coser==null)
+		{
+			System.out.println("Could not get coordinator service proxy: "+coname+" "+agent.getId());
+			reconnect.run();
+			return;
+		}
+    	
+    	System.out.println("Connecting to coordinator: "+agent.getId()+" "+coser);
 		
     	cosub = coser.registerRegistry(sid, starttime);
     	coordinators.put(coname, cosub);
     	cosub.next(ignore ->
     	{
-    		System.out.println("Connected to coordinator: "+coser);
+    		System.out.println("Connected to coordinator: "+agent.getId()+" "+coser);
     	})
     	.finished(Void ->
         {
         	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
-        	agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
-        		.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator(coname)))
-        		.printOnEx();
+        	reconnect.run();
         })
     	.catchEx(ex ->
     	{
     		System.out.println("Could not connect to coordinator: "+coser+" "+ex);
-    		agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
-    			.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator(coname)))
-    			.printOnEx();
+    		reconnect.run();
     	});
     }
-    
-    protected IRegistryCoordinatorService getCoordinatorService(String name)
-    {
-    	StringTokenizer stok = new StringTokenizer(name, "@");
-    	String agentname = stok.nextToken();
-    	String pid = stok.nextToken();
-    	String hostname = stok.nextToken();
-    	ComponentIdentifier copid = new ComponentIdentifier(agentname, pid, hostname);
-    	
-    	IServiceIdentifier rrsid = new ServiceIdentifier(
-			copid,//new ComponentIdentifier(IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME), // providerid
-			new ClassInfo(IRegistryCoordinatorService.class), //type
-			null, // supertypes
-			IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME, // sername
-			ServiceScope.GLOBAL, // scope
-			null, // networknames
-			true, // unrestricted
-			null); 
-		
-    	IRegistryCoordinatorService ret = (IRegistryCoordinatorService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(rrsid);
-		return ret;
-    }
-	
 	
 	/**
 	 *  Initiates the client registration procedure
@@ -159,7 +148,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 		// Listener notification as step to improve test behavior (e.g. AbstractSearchQueryTest)
 		agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
 		{
-			System.out.println(agent+": Initiated super peer connection with client "+client);//+" for network "+networkname);
+			System.out.println("Initiated registry connection with client "+agent+" "+client);//+" for network "+networkname);
 			for(SubscriptionIntermediateFuture<ComponentIdentifier> reglis: reglisteners)
 			{
 				System.getLogger(getClass().getName()).log(Level.INFO, "new connection: "+client);
@@ -205,11 +194,11 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 		{
 			public void execute(Object obj)
 			{
-				System.getLogger(getClass().getName()).log(Level.INFO, "Superpeer registry received client event: "+obj);
+				System.getLogger(getClass().getName()).log(Level.INFO, "Remote registry received client event: "+obj);
 				ServiceEvent event = (ServiceEvent) obj;
 				
 				//if(debug(event.getService()))
-					System.out.println(agent+" received client event: "+event);
+				System.out.println(agent+" received client event: "+event);
 					
 				// propagate service changes to the registry
 				dispatchEventToRegistry(serviceregistry, event);
@@ -227,6 +216,8 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	 */
 	public IFuture<IServiceIdentifier> searchService(ServiceQuery<?> query)
 	{
+		System.out.println("Remote registry searchService: "+query+" "+serviceregistry.getAllServices().size());
+		
 		IServiceIdentifier ret = serviceregistry.searchService(query);
 		/*if(ret == null)
 		{
