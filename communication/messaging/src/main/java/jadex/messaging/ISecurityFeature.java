@@ -1,8 +1,7 @@
 package jadex.messaging;
 
 import jadex.core.IRuntimeFeature;
-import jadex.core.impl.GlobalProcessIdentifier;
-import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
+import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
 
 /**
  *  Security is responsible for validating (remote) requests.

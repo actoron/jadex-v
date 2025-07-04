@@ -20,8 +20,8 @@ import jadex.messaging.ISecurityFeature;
 import jadex.messaging.ISecurityFeature.DecodedMessage;
 import jadex.messaging.ISecurityInfo;
 import jadex.messaging.SecureExchange;
-import jadex.messaging.ipc.IpcStreamHandler;
-import jadex.messaging.security.SecurityFeature;
+import jadex.messaging.impl.ipc.IpcFeature;
+import jadex.messaging.impl.security.SecurityFeature;
 import jadex.serialization.SerializationServices;
 
 public class MessageFeature implements IMessageFeature
@@ -75,7 +75,7 @@ public class MessageFeature implements IMessageFeature
 					SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
 					byte[] emsg = sec.encryptAndSign(receiver, baos.toByteArray());
 					baos = null;
-					IpcStreamHandler ipc = (IpcStreamHandler) IComponentManager.get().getFeature(IIpcFeature.class);
+					IpcFeature ipc = (IpcFeature) IComponentManager.get().getFeature(IIpcFeature.class);
 					ipc.sendMessage(receiver, emsg);
 				}
 			}
@@ -212,7 +212,7 @@ public class MessageFeature implements IMessageFeature
 			SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
 			byte[] emsg = sec.encryptAndSign(receiver, baos.toByteArray());
 			baos = null;
-			IpcStreamHandler ipc = (IpcStreamHandler) IComponentManager.get().getFeature(IIpcFeature.class);
+			IpcFeature ipc = (IpcFeature) IComponentManager.get().getFeature(IIpcFeature.class);
 			ipc.sendMessage(receiver, emsg);
 		}
 		
