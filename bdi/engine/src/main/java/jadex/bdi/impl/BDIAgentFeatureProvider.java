@@ -514,6 +514,12 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 */
 	protected static void scanClass(Class<?> pojoclazz)
 	{
+		if(pojoclazz.getSuperclass()!=null && !Object.class.equals(pojoclazz.getSuperclass()))
+		{
+			// Scan superclass first.
+			scanClass(pojoclazz.getSuperclass());
+		}
+		
 		String	pojoclazzname	= pojoclazz.getName().replace('.', '/');
 		try
 		{
