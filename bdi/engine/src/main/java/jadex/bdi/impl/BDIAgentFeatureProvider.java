@@ -30,6 +30,7 @@ import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -245,6 +246,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			
 			BDIModel	model	= BDIModel.getModel(pojoclazzes.get(0));
 			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
+			
+			scanClass(pojoclazz);
+
 			
 			// Add dummy for outmost capability (i.e. agent)
 			if(pojoclazzes.size()==1)
@@ -497,6 +501,122 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			
 			return ret;
 		});
+	}
+
+	/** The field accesses by method. */
+	protected static final Map<String, Set<Field>>	accessedfields	= new LinkedHashMap<>();
+	
+	/** The method accesses by method. */
+	protected static final Map<String, Set<String>>	accessedmethods	= new LinkedHashMap<>();
+	
+	/**
+	 *  Scan a class for method and field accesses.
+	 */
+	protected static void scanClass(Class<?> pojoclazz)
+	{
+		String	pojoclazzname	= pojoclazz.getName().replace('.', '/');
+		try
+		{
+			ClassReader	cr	= new ClassReader(pojoclazz.getName());
+			cr.accept(new ClassVisitor(Opcodes.ASM9)
+			{
+				@Override
+				public void visitInnerClass(String name, String outerName, String innerName, int access)
+				{
+					// visitInnerClass also called for non-inner classes, wtf?
+					if(!name.equals(pojoclazzname) && name.startsWith(pojoclazzname))
+					{
+//						System.out.println("Visiting inner class: "+name);
+						try
+						{
+							Class<?> innerclazz = Class.forName(name.replace('/', '.'));
+							scanClass(innerclazz);
+						}
+						catch(ClassNotFoundException e)
+						{
+							SUtil.throwUnchecked(e);
+						}
+					}
+
+					super.visitInnerClass(name, outerName, innerName, access);
+				}
+				
+				@Override
+				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions)
+				{
+					String	method	= pojoclazz.getName().replace('.', '/') +"."+name+desc; 
+//					System.out.println("Visiting method: "+method);
+					return new MethodVisitor(Opcodes.ASM9)
+					{
+			            @Override
+			            public void visitFieldInsn(int opcode, String owner, String name, String descriptor)
+			            {
+			                if(opcode==Opcodes.GETFIELD)
+			                {
+//			                	System.out.println("\tVisiting field access: "+owner+"."+name);
+								try
+								{
+									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
+									Field f	= SReflect.getField(ownerclazz, name);
+									synchronized(accessedfields)
+									{
+										Set<Field>	fields	= accessedfields.get(method);
+										if(fields==null)
+										{
+											fields	= new LinkedHashSet<>();
+											accessedfields.put(method, fields);
+										}
+										fields.add(f);
+									}
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+			                }
+			                super.visitFieldInsn(opcode, owner, name, descriptor);
+			            }
+						
+						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface)
+						{
+							String	callee	= owner+"."+name+descriptor;
+//							System.out.println("\tVisiting method call: "+callee);
+							addMethodAccess(method, callee);
+						}
+						
+						public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments)
+						{
+							if(bootstrapMethodArguments.length>=2 && (bootstrapMethodArguments[1] instanceof Handle))
+							{
+								Handle handle	= (Handle)bootstrapMethodArguments[1];
+								String	callee	= handle.getOwner()+"."+handle.getName()+handle.getDesc();
+	//							System.out.println("\tVisiting lambda call: "+callee);
+								addMethodAccess(method, callee);
+							}
+							// else Do we need to handle other cases?
+						}
+						
+						void addMethodAccess(String caller, String callee)
+						{
+							synchronized(accessedmethods)
+							{
+								Set<String>	methods	= accessedmethods.get(caller);
+								if(methods==null)
+								{
+									methods	= new LinkedHashSet<>();
+									accessedmethods.put(method, methods);
+								}
+								methods.add(callee);
+							}
+						}
+					};
+				}
+			}, 0);
+		}
+		catch(IOException e)
+		{
+			SUtil.throwUnchecked(e);
+		}
 	}
 	
 	/**
@@ -1148,54 +1268,61 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 *  Scan byte code to find beliefs that are accessed in the method.
 	 *  @param baseclazz	The goal or plan class.
 	 */
-	protected List<String> findDependentBeliefs(Class<?> baseclazz, List<Class<?>> parentclazzes, Method method)	throws IOException
+	protected static List<String> findDependentBeliefs(Class<?> baseclazz, List<Class<?>> parentclazzes, Method method)	throws IOException
 	{
-//		Textifier tf	= new Textifier();
-		List<String>	deps	= new ArrayList<>();
-		ClassReader	cr	= new ClassReader(baseclazz.getName());
-		cr.accept(new ClassVisitor(Opcodes.ASM9)
+		String	desc	= method.getDeclaringClass().getName().replace('.', '/')
+			+ "." + org.objectweb.asm.commons.Method.getMethod(method).toString();
+//		System.out.println("Finding beliefs accessed in method: "+desc+", "+method);
+		
+		// Find all method calls
+		List<String>	calls	= new ArrayList<>();
+		calls.add(desc);
+		synchronized(accessedmethods)
 		{
-			@Override
-			public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions)
+			for(int i=0; i<calls.size(); i++)
 			{
-				if((name+desc).equals(org.objectweb.asm.commons.Method.getMethod(method).toString()))
+				String call	= calls.get(i);
+				if(accessedmethods.containsKey(call))
 				{
-//					System.out.println("Found context condition method: "+name+desc+" in "+goalclazz.getName());
-					return new MethodVisitor(Opcodes.ASM9/*, new TraceMethodVisitor(tf)*/)
+					// Add all sub-methods
+					for(String subcall: accessedmethods.get(call))
 					{
-			            @Override
-			            public void visitFieldInsn(int opcode, String owner, String name, String descriptor)
-			            {
-			                if (opcode == Opcodes.GETFIELD)
-			                {
-								try
-								{
-									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
-									Field f	= ownerclazz.getDeclaredField(name);
-									BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
-									String dep	= model.getBeliefName(f);
-									if(dep!=null)
-									{
-//										System.out.println("Found belief access in context condition method: "+dep+", "+method);
-										deps.add(dep);
-									}
-								}
-								catch(Exception e)
-								{
-									SUtil.throwUnchecked(e);
-								}
-			                }
-			                super.visitFieldInsn(opcode, owner, name, descriptor);
-			            }
-			        };
+						if(!calls.contains(subcall))
+						{
+							calls.add(subcall);
+						}
+					}
 				}
-				else
-				{
-					return super.visitMethod(access, name, desc, signature, exceptions);
-				}					
 			}
-		}, 0);
-//		System.out.println("Context condition method ASM:\n" + tf.getText());
+		}
+		
+		// Find all accessed fields
+		List<String>	deps	= new ArrayList<>();
+		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
+		synchronized(accessedfields)
+		{
+			for(String desc0: calls)
+			{
+				if(accessedfields.containsKey(desc0))
+				{
+					for(Field f: accessedfields.get(desc0))
+					{
+//						System.out.println("Found field access in method: "+f+", "+method);
+						String dep	= model.getBeliefName(f);
+						if(dep!=null)
+						{
+//							System.out.println("Found belief access in method: "+dep+", "+method);
+							deps.add(dep);
+						}
+					}
+				}
+//				else
+//				{
+//					System.out.println("No belief access found in method: "+desc0);
+//				}
+			}
+		}
+		
 		return deps;
 	}
 

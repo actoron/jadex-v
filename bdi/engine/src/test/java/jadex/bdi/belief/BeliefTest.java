@@ -44,6 +44,15 @@ public class BeliefTest
 	@BDIAgent
 	static class BeliefTestAgent
 	{
+		public BeliefTestAgent() {
+			this(null);
+		}
+		
+		BeliefTestAgent(Object other)
+		{
+			
+		}
+		
 		@Belief
 		Val<Integer>	valbelief	= new Val<>(1);
 		
@@ -68,6 +77,14 @@ public class BeliefTest
 		}};
 		
 		@Belief(beliefs="valbelief")
+//		Val<Integer>	dynamicbelief	= new Val<>(new Callable<Integer>()
+//		{
+//			@Override
+//			public Integer call() throws Exception
+//			{
+//				return valbelief.get()+1;
+//			}
+//		});
 		Val<Integer>	dynamicbelief	= new Val<>(()->valbelief.get()+1);
 
 		@Belief(updaterate = 1000)

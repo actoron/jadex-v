@@ -533,7 +533,8 @@ public class GoalConditionTest
 				boolean	drop(Boolean value)
 				{
 					// value is null on initial check (not triggered by belief change)
-					return value==null ? drop.get() : value;
+					// Test indirect access to belief
+					return value==null ? isDrop() : value;
 				}
 			}
 			
@@ -551,6 +552,12 @@ public class GoalConditionTest
 				{
 					aborted.setResult(null);
 				}
+			}
+			
+			// Test indirect access to belief (TODO: separate test?)
+			boolean isDrop()
+			{
+				return drop.get();
 			}
 		}
 		

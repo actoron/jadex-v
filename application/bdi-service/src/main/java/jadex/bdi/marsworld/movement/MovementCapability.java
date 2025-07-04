@@ -46,7 +46,7 @@ public class MovementCapability
 	/** The mission end. */
 //	@Belief(dynamic=true, updaterate=1000) 
 	@Belief(updaterate=1000)
-	public final Val<Boolean> missionend = new Val<Boolean>(() -> 
+	protected final Val<Boolean> missionend = new Val<Boolean>(() -> 
 	{
 		//System.out.println("missionend: "+getHomebase()+" "+getHomebase().getMissionTime());
 		return getHomebase().getMissionTime()<=System.currentTimeMillis();
@@ -55,8 +55,7 @@ public class MovementCapability
 
 	/** The targets. */
 	@Belief
-	// Hack!!! allow scanning of indirect methods for belief dependencies
-	public List<Target> mytargets = new ArrayList<Target>();
+	protected List<Target> mytargets = new ArrayList<Target>();
 	
 	/**
 	 *  The move goal.
@@ -198,6 +197,14 @@ public class MovementCapability
 	public List<Target> getMyTargets()
 	{
 		return mytargets;
+	}
+	
+	/**
+	 *  Check if the mission is over.
+	 */
+	public boolean isMissionEnd()
+	{
+		return missionend.get();
 	}
 
 	public void addTarget(Target target)

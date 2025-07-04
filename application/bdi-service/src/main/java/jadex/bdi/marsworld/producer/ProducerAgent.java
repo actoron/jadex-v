@@ -48,7 +48,7 @@ public class ProducerAgent extends BaseAgent implements IProduceService
 		@GoalDropCondition
 		public boolean checkDrop()
 		{
-			return movecapa.missionend.get();
+			return movecapa.isMissionEnd();
 		}
 
 		/**
