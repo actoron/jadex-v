@@ -208,7 +208,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			{
 				ILifecycle lfeature = (ILifecycle)feature;
 				//System.out.println("starting: "+lfeature);
-				lfeature.onStart();
+				lfeature.init();
 			}
 		}
 	}

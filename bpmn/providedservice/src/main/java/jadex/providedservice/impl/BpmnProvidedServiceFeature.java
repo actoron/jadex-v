@@ -19,9 +19,9 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 	}
 	
 	@Override
-	public void onStart()
+	public void init()
 	{
-		super.onStart();
+		super.init();
 		
 		IModelFeature	mf	= self.getFeature(IModelFeature.class);
 		ProvidedServiceModel	model	= loadModel();

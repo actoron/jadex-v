@@ -24,7 +24,7 @@ public class BpmnProcessLifecycleFeature implements ILifecycle, IComponentFeatur
 	 *  Is only called once.
 	 */
 	@Override
-	public void	onStart()
+	public void	init()
 	{
 		IInternalBpmnComponentFeature ibf = IInternalBpmnComponentFeature.get();
 		ibf.init();
@@ -35,7 +35,7 @@ public class BpmnProcessLifecycleFeature implements ILifecycle, IComponentFeatur
 	 *  Is only called once.
 	 */
 	@Override
-	public void	onEnd()
+	public void	cleanup()
 	{
 		IInternalBpmnComponentFeature ibf = IInternalBpmnComponentFeature.get();
 		ibf.terminate();

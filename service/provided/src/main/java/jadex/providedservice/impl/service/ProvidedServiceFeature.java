@@ -97,18 +97,14 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	
 	//-------- ILifecycle methods --------
 	
-	/**
-	 *  Called in order of features, after all features are instantiated.
-	 */
-	public void	onStart()
+	@Override
+	public void	init()
 	{
 		// NOP -> injection is done by extending injection feature in Provided2FeatureProvider
 	}
 	
-	/**
-	 *  Called in reverse order of features, when the component terminates.
-	 */
-	public void	onEnd()
+	@Override
+	public void	cleanup()
 	{
 		if(services!=null)
 		{

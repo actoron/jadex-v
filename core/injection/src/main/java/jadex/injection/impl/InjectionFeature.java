@@ -42,7 +42,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	//-------- lifecycle methods --------
 	
 	@Override
-	public void onStart()
+	public void init()
 	{
 		startPojo(model, Collections.singletonList(self.getPojo()), null);		
 	}
@@ -105,7 +105,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	}
 
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 		if(extras!=null)
 		{

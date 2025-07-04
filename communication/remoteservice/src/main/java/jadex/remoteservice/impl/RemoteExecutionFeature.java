@@ -109,7 +109,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	 *  Initialize the feature.
 	 */
 	@Override
-	public void	onStart()
+	public void	init()
 	{
 	}
 
@@ -117,7 +117,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	 *  Shutdown the feature.
 	 */
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 	}
 

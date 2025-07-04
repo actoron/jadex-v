@@ -903,7 +903,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			if(features[i] instanceof ILifecycle) 
 			{
 				ILifecycle lfeature = (ILifecycle)features[i];
-				lfeature.onEnd();
+				lfeature.cleanup();
 			}
 		}
 		
