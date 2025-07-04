@@ -31,6 +31,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
+import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.execution.StepAborted;

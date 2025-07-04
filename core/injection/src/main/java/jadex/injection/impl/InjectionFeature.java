@@ -9,8 +9,8 @@ import java.util.Map;
 import jadex.common.NameValue;
 import jadex.core.IComponent;
 import jadex.core.ResultProvider;
+import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.ILifecycle;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
 

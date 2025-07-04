@@ -1,7 +1,7 @@
 package jadex.requiredservice.impl;
 
 import jadex.core.impl.Component;
-import jadex.execution.impl.ILifecycle;
+import jadex.core.impl.ILifecycle;
 import jadex.future.IFuture;
 import jadex.model.IModelFeature;
 import jadex.model.impl.AbstractModelLoader;

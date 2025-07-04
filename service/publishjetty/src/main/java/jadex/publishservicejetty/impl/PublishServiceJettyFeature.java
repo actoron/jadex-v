@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jadex.core.impl.Component;
-import jadex.execution.impl.ILifecycle;
+import jadex.core.impl.ILifecycle;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
