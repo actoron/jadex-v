@@ -103,30 +103,59 @@ public class Component implements IComponent
 			= SComponentFeatureProvider.getProviderListForComponent(getClass());
 		if(!providers.isEmpty())
 		{
-			features = new LinkedHashMap<>(providers.size(), 1);
-			for(ComponentFeatureProvider<IComponentFeature> provider: providers)
+			try
 			{
-				if(!provider.isLazyFeature())
+				features = new LinkedHashMap<>(providers.size(), 1);
+				for(ComponentFeatureProvider<IComponentFeature> provider: providers)
 				{
-					IComponentFeature	feature	= provider.createFeatureInstance(this);
-					features.put(provider.getFeatureType(), feature);
+					if(!provider.isLazyFeature())
+					{
+						IComponentFeature	feature	= provider.createFeatureInstance(this);
+						features.put(provider.getFeatureType(), feature);
+					}
+				}
+
+				// Initialize all features, i.e. non-lazy ones that implement ILifecycle.
+				for(Object feature:	getFeatures())
+				{
+					if(feature instanceof ILifecycle)
+					{
+						ILifecycle lfeature = (ILifecycle)feature;
+						//System.out.println("starting: "+lfeature);
+						lfeature.init();
+					}
 				}
 			}
-		}
-	}
-	
-	/**
-	  * Initialize all features, i.e. non-lazy ones that implement ILifecycle.
-	  */
-	public void initFeatures()
-	{
-		for(Object feature:	getFeatures())
-		{
-			if(feature instanceof ILifecycle)
+			catch(Throwable t)
 			{
-				ILifecycle lfeature = (ILifecycle)feature;
-				//System.out.println("starting: "+lfeature);
-				lfeature.init();
+				// Terminate all features
+				// TODO: cleanup() may be called for some features without init() being called.
+				// This complicated is because lazy features may be created during init() of other features.
+				Collection<IComponentFeature>	cfeatures	= getFeatures();
+				Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
+				for(int i=features.length-1; i>=0; i--)
+				{
+					if(features[i] instanceof ILifecycle) 
+					{
+						ILifecycle lfeature = (ILifecycle)features[i];
+						try
+						{
+							lfeature.cleanup();
+						}
+						catch(Throwable t2)
+						{
+							System.getLogger(this.getClass().getName()).log(Level.WARNING, "Error terminating feature: "+lfeature, t2);
+						}
+					}
+				}
+				
+				// Remove the component from the manager.
+				if(!GLOBALRUNNER_ID.equals(this.id.getLocalName()))
+				{
+					ComponentManager.get().removeComponent(this.getId());
+				}
+				
+				throw SUtil.throwUnchecked(t);
 			}
 		}
 	}
@@ -549,7 +578,6 @@ public class Component implements IComponent
 			try
 			{
 				component.init();
-				component.initFeatures();
 				ret.setResult(component.getComponentHandle());
 			}
 			catch(Exception e)

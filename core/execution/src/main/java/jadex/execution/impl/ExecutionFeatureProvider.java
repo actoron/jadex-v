@@ -97,9 +97,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					// Extra init so component doesn't get added when just created as object
 					fself.init();
 					
-					// Extra feature init, so subcomponent can override init() before features are initialized
-					fself.initFeatures();
-					
 					// run body and termination in same step as init
 					Object	result	= null;
 					Object	pojo	= fself.getPojo();
@@ -135,10 +132,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				catch(Exception e)
 				{
 					fself.result.setException(e);
-					if(!FastLambda.KEEPALIVE)
-					{
-						exe.scheduleStep((Runnable)() -> fself.terminate());
-					}
 				}
 				catch(StepAborted e)
 				{
@@ -167,19 +160,12 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					// Extra init so component doesn't get added when just created as object
 					component.init();
 					
-					// Extra feature init, so subcomponent can override init() before features are initialized
-					component.initFeatures();
-					
 					// Make component available after init is complete
 					ret.setResult(component.getComponentHandle());
 				}
 				catch(Exception e)
 				{
-					if(ret.setExceptionIfUndone(e))
-					{
-						component.terminate();
-					}
-					else
+					if(!ret.setExceptionIfUndone(e))
 					{
 						SUtil.throwUnchecked(e);
 					}
