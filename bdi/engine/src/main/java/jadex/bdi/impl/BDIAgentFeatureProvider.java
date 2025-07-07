@@ -81,13 +81,11 @@ import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
-import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
@@ -151,12 +149,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return Component.createComponent(new BDIAgent(pojo, cid, app));
-	}
-
-	@Override
-	public void terminate(IComponent component)
-	{
-		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 	
 	@Override

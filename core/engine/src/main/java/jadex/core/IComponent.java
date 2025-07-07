@@ -39,16 +39,9 @@ public interface IComponent
 	public IComponentHandle getComponentHandle();
 	
 	/**
-	 *  Get the component handle.
-	 *  @param cid The id of the component.
-	 *  @return The handle.
-	 */
-	public IComponentHandle getComponentHandle(ComponentIdentifier cid);
-	
-	/**
 	 *  Terminate the component.
 	 */
-	public  IFuture<Void> terminate(ComponentIdentifier... cids);
+	public  void	terminate();
 	
 	/**
 	 *  Get the pojo.

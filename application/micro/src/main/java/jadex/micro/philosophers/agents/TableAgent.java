@@ -52,7 +52,7 @@ public class TableAgent implements ITableService
 	public void addPhilosopher(int no)
 	{
 		ComponentIdentifier cid = ServiceCall.getCurrentInvocation().getCaller();
-		philosophers[no] = agent.getComponentHandle(cid);
+		philosophers[no] = agent.getApplication().getComponentHandle(cid);
 	}
 	
 	public IFuture<IComponentHandle> getPhilosopher(int no)
@@ -122,7 +122,7 @@ public class TableAgent implements ITableService
 	public IComponentHandle getCurrentPhilosopher()
 	{
 		ComponentIdentifier cid = ServiceCall.getCurrentInvocation().getCaller();
-		return agent.getComponentHandle(cid);
+		return agent.getApplication().getComponentHandle(cid);
 	}
 	
 	public IFuture<IComponentHandle> getStickOwner(int no)

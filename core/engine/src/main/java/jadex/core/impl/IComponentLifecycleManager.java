@@ -28,11 +28,6 @@ public interface IComponentLifecycleManager
 	 *  Create a component for a POJO
 	 */
 	public IFuture<IComponentHandle>	create(Object pojo, ComponentIdentifier cid, Application app);
-
-	/**
-	 *  Execute termination code for the given component
-	 */
-	public void terminate(IComponent component);
 	
 	/**
 	 *  Fetch the result(s) of the POJO.

@@ -20,12 +20,10 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
-import jadex.core.IComponentManager;
 import jadex.core.IResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.Future;
-import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
@@ -128,33 +126,8 @@ public class Component implements IComponent
 			}
 			catch(Throwable t)
 			{
-				// Terminate all features
-				// TODO: cleanup() may be called for some features without init() being called.
-				// This complicated is because lazy features may be created during init() of other features.
-				Collection<IComponentFeature>	cfeatures	= getFeatures();
-				Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
-				for(int i=features.length-1; i>=0; i--)
-				{
-					if(features[i] instanceof ILifecycle) 
-					{
-						ILifecycle lfeature = (ILifecycle)features[i];
-						try
-						{
-							lfeature.cleanup();
-						}
-						catch(Throwable t2)
-						{
-							System.getLogger(this.getClass().getName()).log(Level.WARNING, "Error terminating feature: "+lfeature, t2);
-						}
-					}
-				}
-				
-				// Remove the component from the manager.
-				if(!GLOBALRUNNER_ID.equals(this.id.getLocalName()))
-				{
-					ComponentManager.get().removeComponent(this.getId());
-				}
-				
+				// If an exception occurs, remove the component from the manager.
+				terminate();
 				throw SUtil.throwUnchecked(t);
 			}
 		}
@@ -273,41 +246,36 @@ public class Component implements IComponent
 	/**
 	 *  Terminate the component.
 	 */
-	public IFuture<Void> terminate(ComponentIdentifier... cids)
+	public void	terminate()
 	{
-		if(cids.length==0)
+		// TODO: avoid double termination
+		
+		// Terminate all features
+		// TODO: cleanup() may be called for some features without init() being called.
+		// This complicated is because lazy features may be created during init() of other features.
+		Collection<IComponentFeature>	cfeatures	= getFeatures();
+		Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
+		for(int i=features.length-1; i>=0; i--)
 		{
-			if(!GLOBALRUNNER_ID.equals(id.getLocalName()))
+			if(features[i] instanceof ILifecycle) 
 			{
-				ComponentManager.get().removeComponent(this.getId());
-			}
-			
-			if(getPojo()!=null)
-			{
-				IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(getPojo().getClass());
-				if(creator!=null)
+				ILifecycle lfeature = (ILifecycle)features[i];
+				try
 				{
-					creator.terminate(this);
+					lfeature.cleanup();
 				}
-				else
+				catch(Throwable t2)
 				{
-					throw new RuntimeException("Cannot terminate component of type: "+getClass());
+					System.getLogger(this.getClass().getName()).log(Level.WARNING, "Error terminating feature: "+lfeature, t2);
 				}
 			}
-				
-			return IFuture.DONE;
-		}
-		else
-		{
-			FutureBarrier<Void> bar = new FutureBarrier<Void>();
-			for(ComponentIdentifier cid: cids)
-			{
-				bar.add(IComponentManager.get().terminate(cid));
-			}
-			return bar.waitFor();
 		}
 		
-//		throw new UnsupportedOperationException("No termination code for component: "+getId());
+		// Remove the component from the manager.
+		if(!GLOBALRUNNER_ID.equals(this.id.getLocalName()))
+		{
+			ComponentManager.get().removeComponent(this.getId());
+		}
 	}
 	
 	/**

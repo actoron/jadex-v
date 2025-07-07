@@ -2,13 +2,10 @@ package jadex.featuretest.impl;
 
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
-import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.featuretest.ITestFeature2;
 import jadex.future.IFuture;
 
@@ -56,11 +53,5 @@ public class TestFeature2NewProvider extends ComponentFeatureProvider<ITestFeatu
 	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return 	Component.createComponent(new SubComponent(pojo, cid, app));
-	}
-
-	@Override
-	public void terminate(IComponent component)
-	{
-		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 }

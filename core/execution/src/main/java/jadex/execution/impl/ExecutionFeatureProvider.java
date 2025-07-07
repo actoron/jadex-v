@@ -228,12 +228,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		return ret;
 	}
 	
-	@Override
-	public void terminate(IComponent component) 
-	{
-		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
-	}
-	
 	protected static Map<ComponentIdentifier, IResultProvider>	results	= new WeakKeyValueMap<>();
 	
 	@Override

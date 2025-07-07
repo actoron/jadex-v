@@ -916,7 +916,12 @@ public class ComponentManager implements IComponentManager
 	{
 		synchronized(components)
 		{
-			return components.get(cid);
+			IComponent	ret	= components.get(cid);
+			if(ret==null)
+			{
+				throw new IllegalArgumentException("Unknown component id: "+cid);
+			}
+			return ret;
 		}
 	}
 	

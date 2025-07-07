@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jadex.core.Application;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
@@ -89,13 +90,15 @@ public class WatchdogAgent	implements IWatchdogService
 	
 	public static void main(String[] args) 
 	{
-		IComponentManager.get().create(new WatchdogAgent());
-		IComponentManager.get().create(new WatchdogAgent());
-		IComponentManager.get().create(new WatchdogAgent());
+		Application app = new Application("Watchdog Example");
 		
-		IComponentManager.get().create(new CreatorAgent());
-		IComponentManager.get().create(new TerminatorAgent());
+		app.create(new WatchdogAgent());
+		app.create(new WatchdogAgent());
+		app.create(new WatchdogAgent());
 		
-		IComponentManager.get().waitForLastComponentTerminated();
+		app.create(new CreatorAgent());
+		app.create(new TerminatorAgent());
+		
+		app.waitForLastComponentTerminated();
 	}
 }

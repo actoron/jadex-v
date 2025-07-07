@@ -3,7 +3,6 @@ package jadex.execution.impl;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -27,7 +26,6 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
-import jadex.core.IComponentFeature;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
@@ -41,7 +39,7 @@ import jadex.future.ISuspendable;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 
-public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFeature
+public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFeature, ILifecycle
 {
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
@@ -890,23 +888,17 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	}
 	
 	@Override
-	public void terminate()
+	public void init()
+	{
+	}
+	
+	@Override
+	public void cleanup()
 	{
 		if(terminated)
 			return;
 		
 		executeEndStep();
-		
-		Collection<IComponentFeature>	cfeatures	= self.getFeatures();
-		Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
-		for(int i=features.length-1; i>=0; i--)
-		{
-			if(features[i] instanceof ILifecycle) 
-			{
-				ILifecycle lfeature = (ILifecycle)features[i];
-				lfeature.cleanup();
-			}
-		}
 		
 		terminated = true;
 		
