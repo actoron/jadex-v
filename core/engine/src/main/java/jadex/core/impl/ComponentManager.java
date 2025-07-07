@@ -6,10 +6,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -157,7 +159,7 @@ public class ComponentManager implements IComponentManager
 	private final Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
 	
 	/** The number of components per appid. */
-	private final Map<String, Integer> appcompcnt = new HashMap<>();
+	private final Map<String, Set<ComponentIdentifier>> appcomps = new HashMap<>();
 	
 	/** Global counter for components in creation. */
 	private volatile int	creationcnt = 0;
@@ -848,7 +850,16 @@ public class ComponentManager implements IComponentManager
 			
 			// Increment component count for appid.
 			if(comp.getAppId()!=null)
-				incrementComponentCount(comp.getAppId());
+			{
+				String appid = comp.getAppId();
+				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
+				if(appcompset==null)
+				{
+					appcompset = new HashSet<ComponentIdentifier>();
+					appcomps.put(appid, appcompset);
+				}
+				appcompset.add(comp.getId());
+			}
 		}
 		notifyEventListener(COMPONENT_ADDED, comp.getId());
 	}
@@ -873,10 +884,19 @@ public class ComponentManager implements IComponentManager
 			if(comp==null)
 				throw new RuntimeException("Unknown component id: "+cid);
 			last = creationcnt==0 && components.isEmpty();
+			
 			appid = comp.getAppId();
 			if(appid!=null)
 			{
-				lastapp	= decrementComponentCount(appid);
+				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
+				if(appcompset==null)
+					throw new RuntimeException("Unknown app id: "+appid);
+				appcompset.remove(cid);
+				if(appcompset.isEmpty())
+				{
+					appcomps.remove(appid);
+					lastapp = appcreationcnt.getOrDefault(appid, 0) <= 1;
+				}
 			}
 		}
 		notifyEventListener(COMPONENT_REMOVED, cid);
@@ -940,7 +960,7 @@ public class ComponentManager implements IComponentManager
 	{
 		synchronized(components)
 		{
-			return appcompcnt.getOrDefault(appid, 0);
+			return appcomps.getOrDefault(appid, Collections.emptySet()).size();
 		}
 	}
 	
@@ -960,6 +980,15 @@ public class ComponentManager implements IComponentManager
 		synchronized(components)
 		{
 			System.out.println("Running components: "+components);
+		}
+	}
+	
+	@Override
+	public Set<ComponentIdentifier> getAllComponents()
+	{
+		synchronized(components)
+		{
+			return new LinkedHashSet<ComponentIdentifier>(components.keySet());
 		}
 	}
 	
@@ -1029,39 +1058,6 @@ public class ComponentManager implements IComponentManager
 				}
 			}
 		}
-	}
-	
-	public void incrementComponentCount(String appid) 
-	{
-		synchronized (components) 
-		{
-			appcompcnt.put(appid, appcompcnt.getOrDefault(appid, 0) + 1);
-			//System.out.println("inc: "+appid+" "+appcompcnt);
-		}
-	}
-	
-	/**
-	 *  Decrement the component count for the given appid.
-	 *  @return True, if it was the last component of the appid.
-	 */
-	public boolean	decrementComponentCount(String appid) 
-	{
-		boolean ret	= false;
-		synchronized (components) 
-		{
-			int count = appcompcnt.getOrDefault(appid, 0);
-			if (count <= 1) 
-			{
-				appcompcnt.remove(appid);
-				ret = appcreationcnt.getOrDefault(appid, 0) <= 1;
-			} 
-			else 
-			{
-				appcompcnt.put(appid, count - 1);
-		    }
-			//System.out.println("dec: "+appid+" "+appcompcnt);
-		}
-		return ret;
 	}
 	
 	public void runWithComponentsLock(Runnable run)
@@ -1218,6 +1214,26 @@ public class ComponentManager implements IComponentManager
 		if(lastapp)
 		{
 			notifyEventListener(IComponentManager.COMPONENT_LASTREMOVEDAPP, cid);
+		}
+	}
+
+	/**
+	 *  Get all components of the given application.
+	 *  @return The set of all component ids belonging to the application.
+	 */
+	public Set<ComponentIdentifier> getAllComponents(Application application)
+	{
+		synchronized(components)
+		{
+			Set<ComponentIdentifier> ret = appcomps.get(application.getId());
+			if(ret==null)
+			{
+				return Collections.emptySet();
+			}
+			else
+			{
+				return new LinkedHashSet<ComponentIdentifier>(ret);
+			}
 		}
 	}
 }

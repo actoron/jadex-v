@@ -1,6 +1,7 @@
 package jadex.core;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import jadex.core.impl.Component;
@@ -136,6 +137,12 @@ public interface IComponentFactory
 	}
 	
 	/**
+	 *  Get all components.
+	 *  @return The component ids.
+	 */
+	public Set<ComponentIdentifier> getAllComponents();
+	
+	/**
 	 *  Terminate components
 	 *  @param cid The component ids or none for all components.
 	 */
@@ -146,8 +153,7 @@ public interface IComponentFactory
 		
 		if(cids==null || cids.length==0)
 		{
-//			iter	= getAllComponents();
-			throw new UnsupportedOperationException("TODO");
+			iter	= getAllComponents();
 		}
 		else
 		{
