@@ -13,6 +13,8 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
+import jadex.messaging.IIpcFeature;
+import jadex.messaging.IMessageFeature;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.IProvidedServiceFeature;
@@ -30,9 +32,6 @@ public class ProviderAgent implements ITestService
     @OnStart
     protected void start(IComponent agent)
     {
-        //KeySecret secret = KeySecret.createRandom();
-        //IComponentManager.get().getFeature(ISecurityFeature.class).addGroup(GROUP_NAME, secret);
-
         IService serv = (IService) agent.getFeature(IProvidedServiceFeature.class).getProvidedService(ITestService.class);
         IServiceIdentifier sid = serv.getServiceId();
 
@@ -40,11 +39,11 @@ public class ProviderAgent implements ITestService
 
         String servicename = sid.getServiceName();
         ComponentIdentifier provider = sid.getProviderId();
+        IIpcFeature ipc = IComponentManager.get().getFeature(IIpcFeature.class);
 
         List<String> jvmargs = new ArrayList<>();
         jvmargs.add("-Djadex.provider=" + provider.toString());
         jvmargs.add("-Djadex.servicename=" + servicename);
-        //jvmargs.add("-Djadex.groupsecret=" + secret.toString());
         SUtil.getExecutor().execute(() ->
         {
             Process subproc = SUtil.runJvmSubprocess(CallerAgent.class, jvmargs, null, true);

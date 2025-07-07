@@ -4,13 +4,17 @@ import java.io.*;
 import java.net.StandardProtocolFamily;
 import java.net.UnixDomainSocketAddress;
 import java.nio.channels.Channels;
+import java.nio.channels.FileLock;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.Set;
 
 import jadex.collection.RwMapWrapper;
 import jadex.common.IAutoLock;
@@ -32,6 +36,9 @@ import jadex.serialization.SerializationServices;
  */
 public class IpcFeature implements IIpcFeature
 {
+	/** Subdirectory used for IPC FIFOs */
+	private static final String IPC_SUBDIR = "ipc";
+
 	/** Directory used for IPC. */
 	private Path socketdir;
 	
@@ -50,31 +57,10 @@ public class IpcFeature implements IIpcFeature
 	/** Expire unused connections after this timeout */
 	private long connectiontimeout = 900000;
 	
-	/** Singleton instance used for communication. */
-	private volatile static IpcFeature singleton;
-	
-	/**
-	 *  Gets the singleton instance of the handler.
-	 *  @return Singleton instance of the handler.
-	 */
-	/*public static final IpcStreamHandler get()
-	{
-		if (singleton == null)
-		{
-			synchronized (IpcStreamHandler.class)
-			{
-				if (singleton == null)
-				{
-					singleton = new IpcStreamHandler(GlobalProcessIdentifier.SELF);
-					singleton.open();
-				}
-			}
-		}
-		return singleton;
-	}*/
-	
 	/** Handler dealing with received messages. */
 	private Consumer<byte[]> secmsghandler;
+
+	private FileLock fifolock;
 	
 	/** Handler dealing with received messages. */
 	private Consumer<ReceivedMessage> rcbmsghandler = (rmsg) ->
@@ -91,7 +77,8 @@ public class IpcFeature implements IIpcFeature
 	 */
 	public IpcFeature(GlobalProcessIdentifier gpid)
 	{
-		socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve(IMessageFeature.COM_DIRECTORY_NAME);
+		socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve(IMessageFeature.COM_DIRECTORY_NAME)
+																 .resolve(IPC_SUBDIR);
 
 		this.gpid = gpid;
 		connections = new RwMapWrapper<>(new HashMap<>());
@@ -169,11 +156,29 @@ public class IpcFeature implements IIpcFeature
 	 */
 	public void open()
 	{
+		if (IIpcFeature.PERFORM_CLEANUP)
+		{
+			File[] files = socketdir.toFile().listFiles();
+			Set<String> allpids = ProcessHandle.allProcesses().map(ProcessHandle::pid).map(String::valueOf).collect(Collectors.toSet());
+			if (files != null)
+			{
+				Arrays.stream(files).filter( f -> f.getName().matches("[0-9]+")).forEach( f ->
+				{
+					if (!allpids.contains(f.getName()))
+					{
+						boolean tmp = f.delete();
+					}
+				});
+			}
+		}
+
 		socketpath = socketdir.resolve(""+gpid.pid());
 		try
 		{
 			if (socketpath.toFile().exists())
-				socketpath.toFile().delete();
+			{
+				boolean tmp = socketpath.toFile().delete();
+			}
 			socketpath.toFile().deleteOnExit();
 			
 			UnixDomainSocketAddress socketaddress = UnixDomainSocketAddress.of(socketpath);
