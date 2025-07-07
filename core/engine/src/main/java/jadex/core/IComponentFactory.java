@@ -160,6 +160,10 @@ public interface IComponentFactory
 			try
 			{
 				IComponent comp = ComponentManager.get().getComponent(cid);
+				if(comp==null)
+				{
+					throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
+				}
 				IComponentHandle	exta = comp.getComponentHandle();
 				//ComponentManager.get().removeComponent(cid); // done in Component
 				if(Component.isExecutable())
@@ -193,7 +197,12 @@ public interface IComponentFactory
 	 */
 	public default IComponentHandle getComponentHandle(ComponentIdentifier cid)
 	{
-		return ComponentManager.get().getComponent(cid).getComponentHandle();
+		IComponent comp = ComponentManager.get().getComponent(cid);
+		if(comp==null)
+		{
+			throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
+		}
+		return comp.getComponentHandle();
 	}
 	
 	/**

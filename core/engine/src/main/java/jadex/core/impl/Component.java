@@ -523,7 +523,7 @@ public class Component implements IComponent
 	public IComponentHandle getComponentHandle(ComponentIdentifier cid)
 	{
 		//return IComponent.getExternalComponentAccess(cid);
-		return ComponentManager.get().getComponent(cid).getComponentHandle();
+		return ComponentManager.get().getComponentHandle(cid);
 	}
 	
 	/**

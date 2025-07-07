@@ -2,6 +2,7 @@ package jadex.nfproperty.impl.search;
 
 import jadex.common.MethodInfo;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -149,7 +150,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 		else
 		{
 			
-			IComponentHandle exta = component.getComponentHandle(sid.getProviderId());
+			IComponentHandle exta = IComponentManager.get().getComponentHandle(sid.getProviderId());
 			exta.scheduleStep(agent ->
 			{
 				if(methodinfo!=null)

@@ -910,18 +910,13 @@ public class ComponentManager implements IComponentManager
 	
 	/**
 	 *  Get a running component.
-	 *  @throws IllegalArgumentException when the component does not exist.
+	 *  @return The component with the given id or null if not found.
 	 */
 	public IComponent getComponent(ComponentIdentifier cid)
 	{
 		synchronized(components)
 		{
-			IComponent	ret	= components.get(cid);
-			if(ret==null)
-			{
-				throw new IllegalArgumentException("Unknown component id: "+cid);
-			}
-			return ret;
+			return components.get(cid);
 		}
 	}
 	
