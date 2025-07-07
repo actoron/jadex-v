@@ -32,19 +32,16 @@ import jadex.bpmn.model.MParameter;
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
 import jadex.bpmn.model.task.annotation.Task;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.collection.IndexMap;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.common.transformation.annotations.Classname;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.future.IntermediateDefaultResultListener;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.javaccimpl.JavaCCExpressionParser;
-import jadex.model.IModelFeature;
 
 /**
  *  Opens a dialog for the task and lets the user enter
@@ -322,7 +319,7 @@ public class UserInteractionTask implements ITask
 		for(MParameter param: parameters.values())
 		{
 			Object	value	= context.getParameterValue(param.getName());
-			Class<?>	clazz	= param.getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IModelFeature.class).getModel().getAllImports());
+			Class<?>	clazz	= param.getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IBpmnComponentFeature.class).getModel().getAllImports());
 			lparameters.add(new Object[]
 			{
 				param.getName(),

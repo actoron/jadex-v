@@ -1,45 +1,17 @@
 package jadex.bpmn.runtime.task;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
-import jadex.bpmn.model.IModelContainer;
 import jadex.bpmn.model.MActivity;
-import jadex.bpmn.model.MParameter;
-import jadex.bpmn.model.MProperty;
 import jadex.bpmn.model.task.ITask;
 import jadex.bpmn.model.task.ITaskContext;
-import jadex.bpmn.model.task.ITaskPropertyGui;
 import jadex.bpmn.model.task.annotation.Task;
 import jadex.bpmn.model.task.annotation.TaskProperty;
 import jadex.bpmn.model.task.annotation.TaskPropertyGui;
 import jadex.bpmn.runtime.task.MethodCallTask.ServiceCallTaskGui;
-import jadex.bpmn.task.info.ParameterMetaInfo;
-import jadex.collection.IndexMap;
-import jadex.common.ClassInfo;
-import jadex.common.SReflect;
-import jadex.common.UnparsedExpression;
 import jadex.core.IComponent;
-import jadex.future.ExceptionDelegationResultListener;
-import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
 // todo
@@ -107,7 +79,7 @@ public class MethodCallTask implements ITask
 				else if(MParameter.DIRECTION_IN.equals(param.getDirection()))
 				{
 					args.add(context.getParameterValue(param.getName()));
-					argtypes.add(param.getClazz().getType(process.getClass().getClassLoader(), process.getFeature(IModelFeature.class).getModel().getAllImports()));
+					argtypes.add(param.getClazz().getType(process.getClass().getClassLoader(), process.getFeature(IBpmnComponentFeature.class).getModel().getAllImports()));
 				}
 				else if(MParameter.DIRECTION_INOUT.equals(param.getDirection()))
 				{
@@ -116,7 +88,7 @@ public class MethodCallTask implements ITask
 					
 					resultparam	= param.getName();
 					args.add(context.getParameterValue(param.getName()));
-					argtypes.add(param.getClazz().getType(process.getClass().getClassLoader(), process.getFeature(IModelFeature.class).getModel().getAllImports()));
+					argtypes.add(param.getClazz().getType(process.getClass().getClassLoader(), process.getFeature(IBpmnComponentFeature.class).getModel().getAllImports()));
 				}
 				else if(MParameter.DIRECTION_OUT.equals(param.getDirection()))
 				{
@@ -172,7 +144,7 @@ public class MethodCallTask implements ITask
 				
 				if(m==null)
 				{
-					throw new RuntimeException("MCT: "+ String.valueOf(process.getFeature(IModelFeature.class).getModel().getFilename()) + " Method "+fmethod+argtypes+" not found for service "+fservice+ " "  + fservice + ": "+context);
+					throw new RuntimeException("MCT: "+ String.valueOf(process.getFeature(IBpmnComponentFeature.class).getModel().getFilename()) + " Method "+fmethod+argtypes+" not found for service "+fservice+ " "  + fservice + ": "+context);
 				}
 				try
 				{

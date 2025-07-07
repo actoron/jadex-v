@@ -19,6 +19,7 @@ import jadex.bpmn.model.task.ITaskContext;
 import jadex.bpmn.model.task.annotation.Task;
 import jadex.bpmn.model.task.annotation.TaskProperty;
 import jadex.bpmn.model.task.annotation.TaskPropertyGui;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.collection.IndexMap;
 import jadex.common.SReflect;
@@ -30,9 +31,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
 import jadex.future.IntermediateDefaultResultListener;
-import jadex.model.IModelFeature;
 import jadex.model.modelinfo.IModelInfo;
-import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.impl.ServiceCallTask.ServiceCallTaskGui;
 
 /**
@@ -80,7 +79,7 @@ public class ServiceCallTask implements ITask
 		//String	rank	= (String)context.getPropertyValue(PROPERTY_RANKING);
 		String	resultparam	= null;
 		
-		String[] imports = process.getFeature(IModelFeature.class).getModel().getAllImports();
+		String[] imports = process.getFeature(IBpmnComponentFeature.class).getModel().getAllImports();
 		ClassLoader cl = process.getClass().getClassLoader();
 		
 		// Collect arguments and settings.
@@ -150,7 +149,7 @@ public class ServiceCallTask implements ITask
 		final String	fmethod	= method;
 		final String	fresultparam	= resultparam;
 		
-		Class<?> servicetype = process.getFeature(IBpmnRequiredServiceFeature.class).getServiceInfo(fservice).getType().getType(process.getClass().getClassLoader(), process.getFeature(IModelFeature.class).getModel().getAllImports());
+		Class<?> servicetype = process.getFeature(IBpmnRequiredServiceFeature.class).getServiceInfo(fservice).getType().getType(process.getClass().getClassLoader(), process.getFeature(IBpmnComponentFeature.class).getModel().getAllImports());
 		Method[] methods = servicetype.getMethods();
 		Method met = null;
 		for(Method meth : methods)
@@ -164,7 +163,7 @@ public class ServiceCallTask implements ITask
 		}
 		if(met==null)
 		{
-			ret.setException(new RuntimeException("SCT: "+ String.valueOf(process.getFeature(IModelFeature.class).getModel().getFilename()) + " Method "+fmethod+" not found for service "+fservice+": "+context));
+			ret.setException(new RuntimeException("SCT: "+ String.valueOf(process.getFeature(IBpmnComponentFeature.class).getModel().getFilename()) + " Method "+fmethod+" not found for service "+fservice+": "+context));
 			return ret;
 		}
 		final Method m = met;

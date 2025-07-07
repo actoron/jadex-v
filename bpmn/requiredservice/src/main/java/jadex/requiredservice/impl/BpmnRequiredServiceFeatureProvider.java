@@ -6,7 +6,6 @@ import jadex.bpmn.runtime.BpmnProcess;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.providedservice.IProvidedServiceFeature;
-import jadex.requiredservice.IRequiredServiceFeature;
 
 public class BpmnRequiredServiceFeatureProvider extends ComponentFeatureProvider<IBpmnRequiredServiceFeature> 
 {

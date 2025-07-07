@@ -18,7 +18,6 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
-import jadex.model.IModelFeature;
 
 /**
  *  Handles the transition of steps.
@@ -143,7 +142,7 @@ public class DefaultStepHandler implements IStepHandler
 //							}
 							
 							// Java-style "first matching handler" behavior
-							if(handler.getClazz() == null || SReflect.isSupertype(handler.getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IModelFeature.class).getModel().getAllImports()), ex.getClass()))
+							if(handler.getClazz() == null || SReflect.isSupertype(handler.getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IBpmnComponentFeature.class).getModel().getAllImports()), ex.getClass()))
 							{
 								next = handler;
 								break;
