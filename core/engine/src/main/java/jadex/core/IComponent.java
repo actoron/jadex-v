@@ -1,8 +1,8 @@
 package jadex.core;
 
 import java.lang.System.Logger;
+
 import jadex.core.impl.ValueProvider;
-import jadex.future.IFuture;
 
 /**
  *  Interface for a component.
@@ -38,6 +38,11 @@ public interface IComponent
 	 */
 	public IComponentHandle getComponentHandle();
 	
+	/**
+	 *  Check if the component is terminated.
+	 */
+	public boolean isTerminated();
+
 	/**
 	 *  Terminate the component.
 	 */

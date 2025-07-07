@@ -53,6 +53,9 @@ public class Component implements IComponent
 	
 	/** The last exception, if any. */
 	protected Exception	exception;
+
+	/** Is the component terminated? */
+	protected boolean terminated;
 	
 //	/** The value provider. */
 //	protected ValueProvider valueprovider;
@@ -244,11 +247,23 @@ public class Component implements IComponent
 	}
 	
 	/**
+	 *  Check if the component is terminated.
+	 */
+	public boolean isTerminated()
+	{
+		return terminated;
+	}
+	
+	/**
 	 *  Terminate the component.
 	 */
 	public void	terminate()
 	{
-		// TODO: avoid double termination
+		if(terminated)
+		{
+			throw new ComponentTerminatedException(id);
+		}
+		terminated	= true;
 		
 		// Terminate all features
 		// TODO: cleanup() may be called for some features without init() being called.
