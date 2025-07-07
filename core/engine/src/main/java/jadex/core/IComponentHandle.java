@@ -5,7 +5,6 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.common.NameValue;
-import jadex.core.impl.ComponentManager;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 
@@ -25,16 +24,6 @@ public interface IComponentHandle
 	 *  return The app id.
 	 */
 	public String getAppId();
-	
-	/**
-	 *  Get the component handle.
-	 *  @param The id of the component.
-	 *  @return The component handle.
-	 */
-	public default IComponentHandle getComponentHandle(ComponentIdentifier cid)
-	{
-		return ComponentManager.get().getComponent(cid).getComponentHandle();
-	}
 	
 	/**
 	 *  Terminate the component.

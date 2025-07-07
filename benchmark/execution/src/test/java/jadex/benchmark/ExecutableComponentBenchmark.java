@@ -19,7 +19,7 @@ public class ExecutableComponentBenchmark
 		{
 			Component	comp		= new Component(null, null, null);
 			comp.init();
-			comp.terminate().get();
+			comp.terminate();
 		});
 	}
 	
@@ -40,7 +40,7 @@ public class ExecutableComponentBenchmark
 		{
 			Component	comp		= new Component(null, null, null);
 			comp.init();
-			comp.terminate().get();
+			comp.terminate();
 		}
 	}
 }

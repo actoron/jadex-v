@@ -7,11 +7,11 @@ import java.util.List;
 
 import jadex.bpmn.model.MParameter;
 import jadex.bpmn.model.task.ITaskContext;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.bpmn.task.info.ParameterMetaInfo;
 import jadex.bpmn.task.info.TaskMetaInfo;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
-import jadex.model.IModelFeature;
 
 
 /**
@@ -38,7 +38,7 @@ public class InvokeMethodTask extends AbstractTask
 		if(context.hasParameterValue("param"))
 		{
 			params.add(context.getParameterValue("param"));
-			paramclasses.add(((MParameter)context.getModelElement().getParameters().get("param")).getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IModelFeature.class).getModel().getAllImports()));
+			paramclasses.add(((MParameter)context.getModelElement().getParameters().get("param")).getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IBpmnComponentFeature.class).getModel().getAllImports()));
 		}
 		for(int i=0; ; i++)
 		{

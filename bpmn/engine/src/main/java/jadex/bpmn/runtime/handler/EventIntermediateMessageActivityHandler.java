@@ -1,18 +1,13 @@
 package jadex.bpmn.runtime.handler;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import jadex.bpmn.model.MActivity;
 import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.common.IFilter;
-import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.future.IResultListener;
 
 //todo / delete!
 

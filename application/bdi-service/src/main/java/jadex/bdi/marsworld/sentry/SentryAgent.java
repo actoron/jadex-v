@@ -92,7 +92,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 			IVector2 mypos = outer.getMoveCapa().getMyself().getPosition();
 			Target nearest = null;
 			IVector2 npos = null;
-			for(Target so: outer.movecapa.mytargets)
+			for(Target so: outer.movecapa.getMyTargets())
 			{
 				if(so.getStatus()==Target.Status.Unknown)
 				{
@@ -147,7 +147,7 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 		public boolean checkDrop()
 		{
 			//System.out.println("check ndropping: "+this+" "+outer.getMoveCapa().isMissionend());
-			return outer.movecapa.missionend.get();
+			return outer.movecapa.isMissionEnd();
 		}
 		
 		/*@GoalFinished

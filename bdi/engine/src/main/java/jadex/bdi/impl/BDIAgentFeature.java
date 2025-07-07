@@ -20,9 +20,9 @@ import jadex.bdi.impl.goal.RGoal;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
+import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
-import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -97,13 +97,13 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	//-------- ILifecycle interface --------
 	
 	@Override
-	public void onStart()
+	public void init()
 	{
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener(/*rulesystem*/));
 	}
 		
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 		// Abort all plans (terminates wait futures if any)
 		// TODO: generic future handler to terminate any futures on component end

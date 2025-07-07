@@ -13,8 +13,8 @@ import java.util.Set;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.Component;
+import jadex.core.impl.ILifecycle;
 import jadex.execution.future.FutureFunctionality;
-import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFutureCommandResultListener;
@@ -108,7 +108,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	 *  Initialize the feature.
 	 */
 	@Override
-	public void	onStart()
+	public void	init()
 	{
 	}
 
@@ -116,7 +116,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	 *  Shutdown the feature.
 	 */
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 	}
 

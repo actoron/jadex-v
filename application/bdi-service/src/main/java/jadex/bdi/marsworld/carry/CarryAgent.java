@@ -38,7 +38,7 @@ public class CarryAgent extends BaseAgent implements ICarryService
 		@GoalDropCondition
 		public boolean checkDrop()
 		{
-			return movecapa.missionend.get();
+			return movecapa.isMissionEnd();
 		}
 
 		public Target getTarget()

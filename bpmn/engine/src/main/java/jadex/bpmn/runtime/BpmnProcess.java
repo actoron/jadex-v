@@ -10,8 +10,6 @@ import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ValueProvider;
 import jadex.future.IFuture;
-import jadex.model.IModelFeature;
-import jadex.model.impl.IInternalModelFeature;
 import jadex.model.modelinfo.IModelInfo;
 
 public class BpmnProcess extends Component
@@ -31,15 +29,6 @@ public class BpmnProcess extends Component
 	protected BpmnProcess(RBpmnProcess info, ComponentIdentifier cid, Application app)
 	{
 		super(info, cid, app);
-	}
-	
-	@Override
-	public void init()
-	{
-		super.init();
-		String	filename = ((RBpmnProcess)pojo).getFilename();
-		IModelInfo model = loadModel(filename);
-		((IInternalModelFeature)this.getFeature(IModelFeature.class)).setModel(model);
 	}
 	
 	public RBpmnProcess getPojo() 

@@ -1,5 +1,7 @@
 package jadex.core;
 
+import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import jadex.core.impl.Component;
@@ -7,6 +9,7 @@ import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
 import jadex.future.Future;
+import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 
 public interface IComponentFactory
@@ -18,24 +21,24 @@ public interface IComponentFactory
 	 */
 	public default IFuture<IComponentHandle> create(Object pojo)
 	{
-		return create(pojo, null);
-	}
-	
-	/**
-	 *  Create a component based on a pojo.
-	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generationm.
-	 *  @return The external access of the running component.
-	 */
-	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
-	{		
 		return create(pojo, null, null);
 	}
 	
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generationm.
+	 *  @param cid The component id or null for auto-generation.
+	 *  @return The external access of the running component.
+	 */
+	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
+	{		
+		return create(pojo, null, null);
+	}
+
+	/**
+	 *  Create a component based on a pojo.
+	 *  @param pojo The pojo.
+	 *  @param cid The component id or null for auto-generation.
 	 *  @param app The application context.
 	 *  @return The external access of the running component.
 	 */
@@ -97,19 +100,20 @@ public interface IComponentFactory
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generationm.
+	 *  @param cid The component id or null for auto-generation.
 	 *  @return The execution result.
 	 */
 	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid)
 	{
 		return run(pojo, cid, null);
 	}
-	
+
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generationm.
+	 *  @param cid The component id or null for auto-generation.
+	 *  @param app The application context.
 	 *  @return The execution result.
 	 */
 	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
@@ -133,49 +137,78 @@ public interface IComponentFactory
 	}
 	
 	/**
-	 *  Terminate a component with given id.
-	 *  @param cid The component id.
+	 *  Get all components.
+	 *  @return The component ids.
+	 */
+	public Set<ComponentIdentifier> getAllComponents();
+	
+	/**
+	 *  Terminate components
+	 *  @param cid The component ids or none for all components.
 	 */
 	// todo: return pojo as result (has results)
-	public default IFuture<Void> terminate(ComponentIdentifier cid)
+	public default IFuture<Void> terminate(ComponentIdentifier... cids)
 	{
-		IFuture<Void> ret;
+		Iterable<ComponentIdentifier>	iter;
 		
-		//System.out.println("terminate: "+cid+" comps: "+ComponentManager.get().getNumberOfComponents());
-		
-		try
+		if(cids==null || cids.length==0)
 		{
-			IComponent comp = ComponentManager.get().getComponent(cid);
-			if(comp!=null)
+			iter	= getAllComponents();
+		}
+		else
+		{
+			iter	= Arrays.asList(cids);
+		}
+		
+		FutureBarrier<Void> bar = new FutureBarrier<Void>();
+		for(ComponentIdentifier cid: iter)
+		{
+			try
 			{
+				IComponent comp = ComponentManager.get().getComponent(cid);
+				if(comp==null)
+				{
+					throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
+				}
 				IComponentHandle	exta = comp.getComponentHandle();
 				//ComponentManager.get().removeComponent(cid); // done in Component
 				if(Component.isExecutable())
 				{
 					// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
-					ret	= exta.scheduleStep(icomp ->
+					bar.add(exta.scheduleStep(icomp ->
 					{
 						icomp.terminate();
 						return (Void)null;
-					});
+					}));
 				}
 				else
 				{
 					// Hack!!! Concurrency issue?
-					ret	= comp.terminate();
+					comp.terminate();
 				}
 			}
-			else
+			catch(Exception e)
 			{
-				ret	= new Future<>(new ComponentNotFoundException(cid));
+				bar.add(new Future<>(e));
 			}
 		}
-		catch(Exception e)
+		return bar.waitFor();
+	}
+	
+	/**
+	 *  Get the component handle.
+	 *  @param cid The id of the component.
+	 *  @return The handle.
+	 *  @throws IllegalArgumentException when the component does not exist.
+	 */
+	public default IComponentHandle getComponentHandle(ComponentIdentifier cid)
+	{
+		IComponent comp = ComponentManager.get().getComponent(cid);
+		if(comp==null)
 		{
-			ret	= new Future<>(e);
+			throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
 		}
-		
-		return ret;
+		return comp.getComponentHandle();
 	}
 	
 	/**

@@ -14,7 +14,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.IRuntimeFeature;
 import jadex.core.impl.ComponentManager;
-import jadex.execution.impl.ILifecycle;
+import jadex.core.impl.ILifecycle;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.InjectionFeature;
 import jadex.providedservice.IMethodInvocationListener;
@@ -97,18 +97,14 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	
 	//-------- ILifecycle methods --------
 	
-	/**
-	 *  Called in order of features, after all features are instantiated.
-	 */
-	public void	onStart()
+	@Override
+	public void	init()
 	{
 		// NOP -> injection is done by extending injection feature in Provided2FeatureProvider
 	}
 	
-	/**
-	 *  Called in reverse order of features, when the component terminates.
-	 */
-	public void	onEnd()
+	@Override
+	public void	cleanup()
 	{
 		if(services!=null)
 		{

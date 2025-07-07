@@ -28,11 +28,6 @@ public interface IComponentLifecycleManager
 	 *  Create a component for a POJO
 	 */
 	public IFuture<IComponentHandle>	create(Object pojo, ComponentIdentifier cid, Application app);
-
-	/**
-	 *  Execute termination code for the given component
-	 */
-	public void terminate(IComponent component);
 	
 	/**
 	 *  Fetch the result(s) of the POJO.
@@ -63,15 +58,6 @@ public interface IComponentLifecycleManager
 		Future<T> ret = new Future<>();
 		create(pojo, cid, app).then(handle -> 
 		{
-			// all run components that push notify on results will automatically get terminated after first result.
-			handle.subscribeToResults()
-				.next(r -> 
-				{
-//					System.out.println("received: "+r);	
-					handle.terminate();
-				});
-//				.catchEx(e -> {})	// NOP on unsupported operation exception
-
 			handle.waitForTermination().then(Void -> 
 			{
 				handle.getResults().then(res->
@@ -89,6 +75,15 @@ public interface IComponentLifecycleManager
 				})
 				.catchEx(e -> ret.setException(e));
 			});
+
+			// all run components that push notify on results will automatically get terminated after first result.
+			handle.subscribeToResults()
+				.next(r -> 
+				{
+//					System.out.println("received: "+r);	
+					handle.terminate();
+				});
+//				.catchEx(e -> {})	// NOP on unsupported operation exception
 		})
 		.catchEx(e -> ret.setException(e));
 		

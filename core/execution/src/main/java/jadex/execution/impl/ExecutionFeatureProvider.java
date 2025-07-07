@@ -97,8 +97,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					// Extra init so component doesn't get added when just created as object
 					fself.init();
 					
-					startFeatures(fself);
-					
 					// run body and termination in same step as init
 					Object	result	= null;
 					Object	pojo	= fself.getPojo();
@@ -134,10 +132,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				catch(Exception e)
 				{
 					fself.result.setException(e);
-					if(!FastLambda.KEEPALIVE)
-					{
-						exe.scheduleStep((Runnable)() -> fself.terminate());
-					}
 				}
 				catch(StepAborted e)
 				{
@@ -165,19 +159,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				{
 					// Extra init so component doesn't get added when just created as object
 					component.init();
-										
-					startFeatures(component);
 					
 					// Make component available after init is complete
 					ret.setResult(component.getComponentHandle());
 				}
 				catch(Exception e)
 				{
-					if(ret.setExceptionIfUndone(e))
-					{
-						component.terminate();
-					}
-					else
+					if(!ret.setExceptionIfUndone(e))
 					{
 						SUtil.throwUnchecked(e);
 					}
@@ -196,23 +184,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			return ret;
 		}
 	}
-	
-	/**
-	 *  Start all features, i.e. thos that implement ILifecycle.
-	 */
-	protected <T extends Component> void startFeatures(T self)
-	{
-		for(Object feature:	self.getFeatures())
-		{
-			if(feature instanceof ILifecycle)
-			{
-				ILifecycle lfeature = (ILifecycle)feature;
-				//System.out.println("starting: "+lfeature);
-				lfeature.onStart();
-			}
-		}
-	}
-	
 	
 	@Override
 	public int	isCreator(Class<?> pojoclazz)
@@ -255,12 +226,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		}
 	
 		return ret;
-	}
-	
-	@Override
-	public void terminate(IComponent component) 
-	{
-		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
 	}
 	
 	protected static Map<ComponentIdentifier, IResultProvider>	results	= new WeakKeyValueMap<>();

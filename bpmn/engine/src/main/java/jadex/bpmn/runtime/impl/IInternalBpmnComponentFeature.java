@@ -23,11 +23,7 @@ public interface IInternalBpmnComponentFeature extends IBpmnComponentFeature
 	{
 		return (IInternalBpmnComponentFeature)IExecutionFeature.get().getComponent().getFeature(IBpmnComponentFeature.class);
 	}
-	
-	public void	init();
-	
-	public void	terminate();
-	
+		
 	/**
 	 *  Test if the given context variable is declared.
 	 *  @param name	The variable name.

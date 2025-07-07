@@ -65,7 +65,7 @@ public class IpcFeature implements IIpcFeature
 	/** Handler dealing with received messages. */
 	private Consumer<ReceivedMessage> rcbmsghandler = (rmsg) ->
 	{
-		IComponentHandle exta = ComponentManager.get().getComponent(rmsg.receiver()).getComponentHandle();
+		IComponentHandle exta = ComponentManager.get().getComponentHandle(rmsg.receiver());
 		exta.scheduleStep((comp) -> 
 		{
 			((MessageFeature) comp.getFeature(IMessageFeature.class)).externalMessageArrived(rmsg.origin(), rmsg.message);

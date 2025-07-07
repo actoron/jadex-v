@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jadex.core.impl.Component;
-import jadex.execution.impl.ILifecycle;
+import jadex.core.impl.ILifecycle;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
@@ -23,11 +23,13 @@ public class PublishServiceJettyFeature extends PublishServiceFeature implements
 		this.ports = new HashSet<Integer>();
 	}
     
-    public void	onStart()
+	@Override
+    public void	init()
     {
     }
     
-    public void	onEnd()
+	@Override
+    public void	cleanup()
     {
     	// Terminate all servers created by this component
     	ServerManager.getInstance().terminateServers(ports);
