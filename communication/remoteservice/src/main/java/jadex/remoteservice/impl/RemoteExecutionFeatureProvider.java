@@ -31,6 +31,6 @@ public class RemoteExecutionFeatureProvider extends ComponentFeatureProvider<IRe
 	@Override
 	public boolean isLazyFeature()
 	{
-		return true; // Lazy feature, so that it is only created when needed.
+		return false; // Must be non-lazy to hook into message feature.
 	}
 }

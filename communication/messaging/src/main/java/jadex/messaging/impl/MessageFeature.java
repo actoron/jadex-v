@@ -155,7 +155,7 @@ public class MessageFeature implements IMessageFeature
 				return;
 			}
 		}
-		
+
 		for (IMessageHandler handler : messagehandlers)
 		{
 			if (handler.isHandling(secinfos, msg))

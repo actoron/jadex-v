@@ -32,9 +32,6 @@ import jadex.serialization.SerializationServices;
  */
 public class IpcFeature implements IIpcFeature
 {
-	/** Name of the IPC/Socket directory. */
-	private static final String IPC_DIRECTORY_NAME = "jadexipc";
-	
 	/** Directory used for IPC. */
 	private Path socketdir;
 	
@@ -94,20 +91,15 @@ public class IpcFeature implements IIpcFeature
 	 */
 	public IpcFeature(GlobalProcessIdentifier gpid)
 	{
-		socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve(IPC_DIRECTORY_NAME);
-		
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> 
-		{
-			close();
-		}));
-		
+		socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve(IMessageFeature.COM_DIRECTORY_NAME);
+
 		this.gpid = gpid;
 		connections = new RwMapWrapper<>(new HashMap<>());
 		socketdir.toFile().mkdirs();
 		
 		File dir = socketdir.toFile();
 		if (!dir.isDirectory() || !dir.canRead() || !dir.canWrite())
-			throw new UncheckedIOException(new IOException("Cannot access socket directory: " + dir.getAbsolutePath()));
+			throw new UncheckedIOException(new IOException("Cannot access communcation directory: " + dir.getAbsolutePath()));
 	}
 	
 	/**

@@ -5,6 +5,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.messaging.IMessageFeature;
 import jadex.messaging.ISecurityFeature;
+import jadex.messaging.impl.security.SecurityFeature;
 
 /**
  *  Provider class for the message component feature.
@@ -28,7 +29,8 @@ public class MessageFeatureProvider extends ComponentFeatureProvider<IMessageFea
 	public IMessageFeature createFeatureInstance(Component self)
 	{
 		// Ensure availability of security&IPC
-		ComponentManager.get().getFeature(ISecurityFeature.class);
+		SecurityFeature sec = (SecurityFeature) ComponentManager.get().getFeature(ISecurityFeature.class);
+		sec.loadLocalGroup();
 		return new MessageFeature(self);
 	}
 	

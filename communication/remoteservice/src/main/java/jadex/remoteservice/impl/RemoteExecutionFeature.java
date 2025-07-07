@@ -100,7 +100,6 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	public RemoteExecutionFeature(Component component)
 	{
 		this.component = component;
-		
 		// Done in constructor, because onStart is not called for lazy features.
 		component.getFeature(IMessageFeature.class).addMessageHandler(new RxHandler());
 	}
@@ -132,7 +131,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	public <T> IFuture<T> execute(ComponentIdentifier target, IRemoteCommand<T> command, Class<? extends IFuture<T>> clazz, Long timeout)
 	{
 		final String rxid = command.getId();
-//		System.out.println(getComponent().getComponentIdentifier() + " sending remote command: "+command+", rxid="+rxid);
+		// System.out.println(component.getId() + " sending remote command: "+command+", rxid="+rxid);
 
 		// TODO: Merge with DecouplingInterceptor code.
 		@SuppressWarnings("unchecked")
@@ -271,7 +270,8 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	 *  @return	The result(s) of the method invocation, if any. Connects any futures involved.
 	 */
 	public <T> IFuture<T> executeRemoteMethod(RemoteReference ref, Method method, Object[] args)
-	{		ServiceCall invoc = ServiceCall.getNextInvocation();
+	{
+		ServiceCall invoc = ServiceCall.getNextInvocation();
 		// TODO: Implement timeout alternative
 		Map<String, Object>	nonfunc	= invoc!=null ? invoc.getProperties() : null;
 		CallAccess.resetNextInvocation();
@@ -350,7 +350,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 		public void handleMessage(ISecurityInfo secinfos, Object msg)
 		{
 			final String rxid = ((IIdSenderCommand) msg).getId();
-//			System.out.println(getComponent().getId() + " received remote command: "+msg+", rxid="+rxid);
+			//System.out.println(component.getId() + " received remote command: "+msg+", rxid="+rxid);
 			
 			if(msg instanceof IRemoteCommand)
 			{

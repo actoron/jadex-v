@@ -949,8 +949,8 @@ public class SSecurity
 		List<SecureRandom> prngs = new ArrayList<SecureRandom>();
 		
 		SP800SecureRandomBuilder builder = new SP800SecureRandomBuilder(esp);
-		AESEngine eng = new AESEngine();
-		prngs.add(builder.buildCTR(eng, 256, esp.get(256).getEntropy(), false));
+		//AESEngine eng = new AESEngine(); deprecated
+		//prngs.add(builder.buildCTR(eng, 256, esp.get(256).getEntropy(), false));
 //		System.out.println(prngs.get(prngs.size() - 1));
 		
 		Mac m = new HMac(new SHA512Digest());
@@ -1091,8 +1091,8 @@ public class SSecurity
 			pemwriter.writeObject(pki);
 			pemwriter.close();
 			
-			return new Tuple2<String, String>(new String(boscert.toByteArray(), SUtil.UTF8),
-											  new String(boskey.toByteArray(), SUtil.UTF8));
+			return new Tuple2<String, String>(boscert.toString(SUtil.UTF8),
+											  boskey.toString(SUtil.UTF8));
 		}
 		catch (Exception e)
 		{

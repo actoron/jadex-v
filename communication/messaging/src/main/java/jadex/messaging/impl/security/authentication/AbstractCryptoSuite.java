@@ -128,7 +128,7 @@ public abstract class AbstractCryptoSuite implements ICryptoSuite
 		{
 			for (String group : secinf.getSharedGroups())
 			{
-				if (!ISecurityFeature.UNRESTRICTED.equals(group))
+				if (!sec.getNodefaultAuthorizationGroups().contains(group))
 				{
 					fixedroles.add(SecurityFeature.TRUSTED);
 					break;
