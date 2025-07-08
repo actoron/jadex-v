@@ -21,7 +21,7 @@ public interface IComponentFactory
 	 */
 	public default IFuture<IComponentHandle> create(Object pojo)
 	{
-		return create(pojo, null, null);
+		return create(pojo, null);
 	}
 	
 	/**
@@ -93,7 +93,7 @@ public interface IComponentFactory
 	 */
 	public default <T> IFuture<T> run(Object pojo)
 	{
-		return run(pojo, null, null);
+		return run(pojo, null);
 	}
 	
 	/**
