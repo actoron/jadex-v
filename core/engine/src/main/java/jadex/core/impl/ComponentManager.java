@@ -158,7 +158,7 @@ public class ComponentManager implements IComponentManager
 	/** The components. */
 	private final Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
 	
-	/** The number of components per appid. */
+	/** The components per app id. */
 	private final Map<String, Set<ComponentIdentifier>> appcomps = new HashMap<>();
 	
 	/** Global counter for components in creation. */
@@ -838,7 +838,8 @@ public class ComponentManager implements IComponentManager
 			IComponent	old	= components.put(comp.getId(), comp);
 			if(old!=null)
 			{
-				ComponentManager.get().printComponents();
+				components.put(comp.getId(), old); // restore
+//				ComponentManager.get().printComponents();
 				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
 			}
 			
@@ -848,10 +849,10 @@ public class ComponentManager implements IComponentManager
 				first	= comp;
 			}
 			
-			// Increment component count for appid.
-			if(comp.getAppId()!=null)
+			// Add component to application, if any.
+			String appid = comp.getAppId();
+			if(appid!=null)
 			{
-				String appid = comp.getAppId();
 				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
 				if(appcompset==null)
 				{
