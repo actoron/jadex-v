@@ -36,6 +36,11 @@ import jadex.serialization.SerializationServices;
  */
 public class IpcFeature implements IIpcFeature
 {
+	/** Flag if the IpcFeature should attempt a clean up
+	 *  of the IPC directory on startup.
+	 */
+	public static boolean PERFORM_CLEANUP = true;
+
 	/** Subdirectory used for IPC FIFOs */
 	private static final String IPC_SUBDIR = "ipc";
 
@@ -130,6 +135,12 @@ public class IpcFeature implements IIpcFeature
 	{
 		close();
 		socketdir = dir;
+		socketdir.toFile().mkdirs();
+
+
+		File fdir = socketdir.toFile();
+		if (!fdir.isDirectory() || !fdir.canRead() || !fdir.canWrite())
+			throw new UncheckedIOException(new IOException("Cannot access communcation directory: " + fdir.getAbsolutePath()));
 		open();
 	}
 	
@@ -156,7 +167,7 @@ public class IpcFeature implements IIpcFeature
 	 */
 	public void open()
 	{
-		if (IIpcFeature.PERFORM_CLEANUP)
+		if (IpcFeature.PERFORM_CLEANUP)
 		{
 			File[] files = socketdir.toFile().listFiles();
 			Set<String> allpids = ProcessHandle.allProcesses().map(ProcessHandle::pid).map(String::valueOf).collect(Collectors.toSet());
