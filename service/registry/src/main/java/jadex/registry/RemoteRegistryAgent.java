@@ -1,14 +1,21 @@
 package jadex.registry;
 
 import java.lang.System.Logger.Level;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import jadex.collection.MultiCollection;
+import jadex.common.ClassInfo;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
+import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
@@ -19,7 +26,9 @@ import jadex.future.SubscriptionIntermediateDelegationFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.QueryEvent;
 import jadex.providedservice.impl.search.ServiceEvent;
@@ -27,6 +36,9 @@ import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceQueryInfo;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceCall;
+import jadex.providedservice.impl.service.ServiceIdentifier;
+import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
+import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
 
 
@@ -35,9 +47,17 @@ import jadex.requiredservice.ServiceNotFoundException;
  */
 public class RemoteRegistryAgent implements IRemoteRegistryService
 {
+	/** Connection delay*/
+    protected long delay = 10000;
+	
 	/** The agent. */
 	@Inject
 	protected IComponent agent;
+	
+	@Inject
+	protected IServiceIdentifier sid;
+	
+	protected long starttime = System.currentTimeMillis();
 	
 	/** The superpeer service registry */
 	protected IServiceRegistry serviceregistry = new ServiceRegistry();
@@ -51,6 +71,62 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	protected Set<SubscriptionIntermediateFuture<ComponentIdentifier>> reglisteners = new LinkedHashSet<>();
 	
 	protected Set<ComponentIdentifier> clients = new LinkedHashSet<>();
+	
+	protected List<String> coordinatornames = List.of(ICoordinatorService.getCoordinatorServiceNames());
+	
+	protected Map<String, ISubscriptionIntermediateFuture<Void>> coordinators = new HashMap<>();
+	
+	@OnStart
+    public void start() 
+    {
+		System.getLogger(getClass().getName()).log(Level.INFO, "Registry started: "+agent.getId());
+		
+		for(String coname: coordinatornames)
+			connectToCoordinator(coname);
+    }
+    
+    protected void connectToCoordinator(String coname)
+    {
+    	Runnable reconnect = () ->
+		{
+			System.getLogger(getClass().getName()).log(Level.INFO, "Reconnecting to coordinator: "+coname+" "+agent.getId());
+    		agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
+    			.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator(coname)))
+    			.printOnEx();
+		};
+    	
+    	ISubscriptionIntermediateFuture<Void> cosub = coordinators.get(coname);
+    	if(cosub!=null)
+    		cosub.terminate();    
+	
+    	ICoordinatorService coser = ICoordinatorService.getCoordinatorServiceProxy(agent, coname);
+    	
+    	if(coser==null)
+		{
+			System.out.println("Could not get coordinator service proxy: "+coname+" "+agent.getId());
+			reconnect.run();
+			return;
+		}
+    	
+    	System.out.println("Connecting to coordinator: "+agent.getId()+" "+coser);
+		
+    	cosub = coser.registerRegistry(sid, starttime);
+    	coordinators.put(coname, cosub);
+    	cosub.next(ignore ->
+    	{
+    		System.out.println("Connected to coordinator: "+agent.getId()+" "+coser);
+    	})
+    	.finished(Void ->
+        {
+        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
+        	reconnect.run();
+        })
+    	.catchEx(ex ->
+    	{
+    		System.out.println("Could not connect to coordinator: "+coser+" "+ex);
+    		reconnect.run();
+    	});
+    }
 	
 	/**
 	 *  Initiates the client registration procedure
@@ -72,7 +148,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 		// Listener notification as step to improve test behavior (e.g. AbstractSearchQueryTest)
 		agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
 		{
-			System.out.println(agent+": Initiated super peer connection with client "+client);//+" for network "+networkname);
+			System.out.println("Initiated registry connection with client "+agent+" "+client);//+" for network "+networkname);
 			for(SubscriptionIntermediateFuture<ComponentIdentifier> reglis: reglisteners)
 			{
 				System.getLogger(getClass().getName()).log(Level.INFO, "new connection: "+client);
@@ -86,7 +162,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 			public void terminated(Exception reason)
 			{
 				//System.out.println(agent+": Super peer connection with client "+client+" for network "+networkname+" terminated due to "+reason+(reason!=null?"/"+reason.getCause():""));
-				System.getLogger(getClass().getName()).log(Level.INFO, agent+": Super peer connection with client "+client+" terminated due to "+reason+(reason!=null?"/"+reason.getCause():""));
+				System.getLogger(getClass().getName()).log(Level.INFO, agent+": Registry connection with client "+client+" terminated due to "+reason+(reason!=null?"/"+reason.getCause():""));
 				// TODO: when connection is lost, remove all services and queries from client.
 				// FIXME: Terminate on error/timeout?
 				clients.remove(client);
@@ -118,11 +194,11 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 		{
 			public void execute(Object obj)
 			{
-				System.getLogger(getClass().getName()).log(Level.INFO, "Superpeer registry received client event: "+obj);
+				System.getLogger(getClass().getName()).log(Level.INFO, "Remote registry received client event: "+obj);
 				ServiceEvent event = (ServiceEvent) obj;
 				
 				//if(debug(event.getService()))
-					System.out.println(agent+" received client event: "+event);
+				System.out.println(agent+" received client event: "+event);
 					
 				// propagate service changes to the registry
 				dispatchEventToRegistry(serviceregistry, event);
@@ -140,6 +216,8 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	 */
 	public IFuture<IServiceIdentifier> searchService(ServiceQuery<?> query)
 	{
+		System.out.println("Remote registry searchService: "+query+" "+serviceregistry.getAllServices().size());
+		
 		IServiceIdentifier ret = serviceregistry.searchService(query);
 		/*if(ret == null)
 		{

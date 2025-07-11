@@ -1,24 +1,31 @@
 package jadex.requiredservice.impl;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import jadex.common.SReflect;
+import jadex.common.SUtil;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.IntermediateFuture;
 import jadex.future.TerminableIntermediateFuture;
+import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.ServiceQuery;
-import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.search.ServiceQuery.Multiplicity;
+import jadex.providedservice.impl.search.ServiceRegistry;
+import jadex.requiredservice.IRemoteServiceHandler;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
 
@@ -28,7 +35,7 @@ import jadex.requiredservice.ServiceNotFoundException;
 public class RequiredServiceFeature implements IRequiredServiceFeature
 {
 	/** The component. */
-	protected IComponent	self;
+	protected IComponent self;
 	
 	/**
 	 *  Create the injection feature.
@@ -90,19 +97,46 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 	@Override
 	public <T> IFuture<T> searchService(ServiceQuery<T> query)
 	{
-		Future<T>	ret	= new Future<>();
+		System.out.println("searchService: "+query);
+		
+		Future<T> ret = new Future<>();
 		
 		enhanceQuery(query, false);
-		IServiceIdentifier	sid	= ServiceRegistry.getRegistry().searchService(query);
+		IServiceIdentifier sid = ServiceRegistry.getRegistry().searchService(query);
 		if(sid==null)
 		{
-			// TODO: remote search
-			ret.setException(new ServiceNotFoundException(query));
+			if(getRemoteServiceHandler()!=null && isRemote(query))
+			{
+				System.out.println("searchService remote: "+query);
+				// Search remote service.
+				ITerminableFuture<IServiceIdentifier> fut = getRemoteServiceHandler().searchService(query);
+				fut.then(sid2 ->
+				{
+					if(sid2!=null)
+					{
+						System.out.println("searchService Found remote service: "+sid2);
+						@SuppressWarnings("unchecked")
+						T service = (T)getRemoteServiceHandler().getRemoteServiceProxy(self, sid2).get();
+						ret.setResult(service);
+					}
+					else
+					{
+						System.out.println("searchService no service: "+sid2);
+						ret.setException(new ServiceNotFoundException(query));
+					}
+				}).catchEx(ret);
+			}
+			else
+			{
+				System.out.println("searchService no remote handler: "+query);
+				ret.setException(new ServiceNotFoundException(query));
+			}
 		}
 		else
 		{
+			System.out.println("searchService found local service: "+query);
 			@SuppressWarnings("unchecked")
-			T	service	= (T)ServiceRegistry.getRegistry().getLocalService(sid);
+			T service = (T)ServiceRegistry.getRegistry().getLocalService(sid);
 			ret.setResult(service);
 		}
 		
@@ -121,17 +155,46 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		TerminableIntermediateFuture<T>	ret	= new TerminableIntermediateFuture<>();
 		
 		enhanceQuery(query, false);
-		Collection<IServiceIdentifier>	sids	= ServiceRegistry.getRegistry().searchServices(query);
+		Collection<IServiceIdentifier> sids = ServiceRegistry.getRegistry().searchServices(query);
 		for(IServiceIdentifier sid: sids)
 		{
 			@SuppressWarnings("unchecked")
-			T	service	= (T)ServiceRegistry.getRegistry().getLocalService(sid);
+			T service = (T)ServiceRegistry.getRegistry().getLocalService(sid);
 			ret.addIntermediateResult(service);
 		}
 		
-		// TODO: remote search
-		
-		ret.setFinished();
+		if(getRemoteServiceHandler()!=null && isRemote(query))
+		{
+			// Search remote service.
+			ITerminableIntermediateFuture<IServiceIdentifier> fut = getRemoteServiceHandler().searchServices(query);
+			fut.next(sid2 ->
+			{
+				if(sid2!=null)
+				{
+					// Found remote service.
+					@SuppressWarnings("unchecked")
+					T service = (T)getRemoteServiceHandler().getRemoteServiceProxy(self, sid2).get();
+					ret.addIntermediateResultIfUndone(service);
+				}
+			}).finished(x ->
+			{
+				ret.setFinishedIfUndone();
+			})
+			.catchEx(ex ->
+			{
+				if(!sids.isEmpty())
+					ret.setFinishedIfUndone();
+				else
+					ret.setException(new ServiceNotFoundException(query));
+			});
+		}
+		else
+		{
+			if(!sids.isEmpty())
+				ret.setFinishedIfUndone();
+			else
+				ret.setException(new ServiceNotFoundException(query));
+		}
 		
 		return ret;
 	}
@@ -159,7 +222,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		ISubscriptionIntermediateFuture<T> ret0	= (ISubscriptionIntermediateFuture)FutureFunctionality
 			// Component functionality as local registry pushes results on arbitrary thread.
-			.getDelegationFuture(localresults, new ComponentFutureFunctionality(self)
+			.getDelegationFuture(localresults, new ComponentFutureFunctionality(getComponent())
 		{
 			@Override
 			public Object handleIntermediateResult(Object result) throws Exception
@@ -212,7 +275,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 	{
 		// Set owner if not set
 		if(query.getOwner()==null)
-			query.setOwner(self.getId());
+			query.setOwner(getComponent().getId());
 		
 		if(query.getMultiplicity()==null)
 		{
@@ -268,5 +331,80 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		{
 			throw new UnsupportedOperationException(result.getClass().getName());
 		}
+	}
+	
+	protected IComponent getComponent()
+	{
+		return self;
+	}
+	
+	/**
+	 *  Create the user-facing object from the received search or query result.
+	 *  Result may be service object, service identifier (local or remote), or event.
+	 *  User object is either event or service (with or without required proxy).
+	 */
+	public IService getServiceProxy(IServiceIdentifier sid)
+	{
+		IService ret = null;
+		
+		// If service identifier -> find/create service object or proxy
+			
+		// Local component -> fetch local service object.
+		if(sid.getProviderId().getGlobalProcessIdentifier().equals(getComponent().getId().getGlobalProcessIdentifier()))
+		{
+			ret = ServiceRegistry.getRegistry().getLocalService(sid); 			
+		}
+		
+		// Remote component -> create remote proxy
+		else if(getRemoteServiceHandler()!=null)
+		{
+			//System.out.println("Creating remote service proxy for: "+sid+" "+getRemoteServiceHandler().getRemoteServiceProxy(self, sid));
+			
+			ret = getRemoteServiceHandler().getRemoteServiceProxy(self, sid).get();
+			
+			/*// public static IService createRemoteServiceProxy(IComponent localcomp, IServiceIdentifier remotesvc)
+			Class<?> handlercl = SReflect.findClass0("jadex.remoteservice.impl.RemoteMethodInvocationHandler", 
+				null, IComponentManager.get().getClassLoader());
+			if(handlercl==null)
+				throw new RuntimeException("Cannot create proxy for remote service without remote service feataure");
+			try
+			{
+				Method m = handlercl.getMethod("createRemoteServiceProxy", new Class[] {IComponent.class, IServiceIdentifier.class});
+				ret = (IService)m.invoke(m, new Object[] {getComponent(), sid});
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+				SUtil.rethrowAsUnchecked(e);
+			}*/
+		}
+		
+		// else service event -> just return event, as desired by user (specified in query return type)
+		
+		//if(ret!=null)
+		//	ret = addRequiredServiceProxy(ret, info);
+		
+		return ret;
+	}
+	
+	
+	public IRemoteServiceHandler getRemoteServiceHandler()
+	{
+		IRemoteServiceHandler handler = null;
+		try 
+		{
+			//Class<?> cl = SReflect.findClass("jadex.registry.IRegistryClientService", 
+			//	null, IComponentManager.get().getClassLoader());
+			//System.out.println("cl is: "+cl);
+			//handler = (IRemoteServiceHandler)self.getFeature(IRequiredServiceFeature.class).getLocalService(cl);
+			handler = (IRemoteServiceHandler)self.getFeature(IRequiredServiceFeature.class).getLocalService(IRemoteServiceHandler.class);
+			//System.out.println("found remote service handler: "+handler);
+		}
+		catch(Exception e) 
+		{
+			//System.out.println("No remote service handler found: "+e);
+			e.printStackTrace();
+		}
+		return handler;	
 	}
 }

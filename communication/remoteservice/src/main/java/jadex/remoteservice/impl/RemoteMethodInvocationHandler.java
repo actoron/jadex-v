@@ -254,7 +254,7 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 				}
 			});*/
 			// Use by non-component threads not allowed?
-			throw new IllegalStateException("Remote proxy used by non-component thread.");
+			throw new IllegalStateException("Remote proxy used by non-component thread: "+proxy+" "+method.getName()+" "+Thread.currentThread());
 		}
 		else
 		{

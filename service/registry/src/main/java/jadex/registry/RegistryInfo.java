@@ -24,4 +24,9 @@ public record RegistryInfo(IServiceIdentifier serviceid, long starttime) impleme
 	{
 		return Long.compare(starttime, o.starttime());
 	}
+	
+	public String toString() 
+	{
+		return "RegistryInfo("+serviceid+", "+starttime+")";
+	}
 }
