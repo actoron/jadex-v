@@ -37,7 +37,7 @@ import jadex.providedservice.impl.search.ServiceQueryInfo;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceCall;
 import jadex.providedservice.impl.service.ServiceIdentifier;
-import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
+import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
 
@@ -162,7 +162,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 			public void terminated(Exception reason)
 			{
 				//System.out.println(agent+": Super peer connection with client "+client+" for network "+networkname+" terminated due to "+reason+(reason!=null?"/"+reason.getCause():""));
-				System.getLogger(getClass().getName()).log(Level.INFO, agent+": Super peer connection with client "+client+" terminated due to "+reason+(reason!=null?"/"+reason.getCause():""));
+				System.getLogger(getClass().getName()).log(Level.INFO, agent+": Registry connection with client "+client+" terminated due to "+reason+(reason!=null?"/"+reason.getCause():""));
 				// TODO: when connection is lost, remove all services and queries from client.
 				// FIXME: Terminate on error/timeout?
 				clients.remove(client);

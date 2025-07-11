@@ -43,8 +43,7 @@ public class HelloPureAgent
 	 */
 	public static void main(String[] args) 
 	{
-		IComponentManager.get().create(new HelloPureAgent()).get();
-		System.out.println("after create");
+		IComponentManager.get().create(new HelloPureAgent());
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

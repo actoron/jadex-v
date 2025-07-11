@@ -2,16 +2,13 @@ package registry;
 
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
-import jadex.messaging.ISecurityFeature;
-import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
-import jadex.messaging.security.authentication.KeySecret;
-import jadex.registry.RegistryClientAgent;
+import jadex.providedservice.ServiceScope;
+import jadex.providedservice.annotation.ProvideService;
 
+@ProvideService(type=ITestService.class, scope=ServiceScope.HOST)
 public class ProviderAgent implements ITestService
 {
     @Inject
@@ -22,5 +19,4 @@ public class ProviderAgent implements ITestService
         System.out.println("Service Call Test getComponentName() called");
         return new Future<>(agent.getId());
     }
-    
 }

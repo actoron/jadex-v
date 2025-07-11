@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
@@ -21,6 +22,7 @@ import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.interceptors.DecouplingInterceptor;
@@ -97,18 +99,14 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	
 	//-------- ILifecycle methods --------
 	
-	/**
-	 *  Called in order of features, after all features are instantiated.
-	 */
-	public void	onStart()
+	@Override
+	public void	init()
 	{
 		// NOP -> injection is done by extending injection feature in Provided2FeatureProvider
 	}
 	
-	/**
-	 *  Called in reverse order of features, when the component terminates.
-	 */
-	public void	onEnd()
+	@Override
+	public void	cleanup()
 	{
 		if(services!=null)
 		{
@@ -200,9 +198,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	public void	addService(List<Object> parents, Object pojo, String name, Map<Class<?>, ProvideService> interfaces)
 	{
 		if(services==null)
-		{
 			services	= new LinkedHashMap<>();
-		}
 		
 		// May be added already due to first field service found and then service interface found again as extra object.
 		if(!services.containsKey(pojo))
@@ -214,9 +210,11 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 			// Create proxies for all implemented service interfaces.
 			for(Class<?> type: interfaces.keySet())
 			{
+				ProvideService ps = interfaces.get(type);
+				
 				// TODO: name given (i.e. field/method) and multiple interfaces
 				String	thename	= name!=null ? name : type.getSimpleName();  
-				IService	service	= createProvidedServiceProxy(pojo, thename, type);
+				IService	service	= createProvidedServiceProxy(pojo, thename, type, ps!=null? ps.tags(): null, ps!=null? ps.scope(): null);
 				lservices.add(service);
 			}
 			
@@ -246,10 +244,11 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	/**
 	 *  Create a standard service proxy for a provided service.
 	 */
-	protected IService	createProvidedServiceProxy(Object service, String name, Class<?> type)
+	protected IService	createProvidedServiceProxy(Object service, String name, Class<?> type, String[] tags, ServiceScope scope)
 	{
 		// Create proxy with handler
-		IServiceIdentifier	sid	= new ServiceIdentifier(self, type, name, null, false, null);
+		IServiceIdentifier sid = ServiceIdentifier.createServiceIdentifier(self, name, type, scope, tags==null? null: Set.of(tags));
+		
 		ServiceInvocationHandler handler	= new ServiceInvocationHandler(sid, service);		
 		IService	ret	= (IService)Proxy.newProxyInstance(IComponentManager.get().getClassLoader(), new Class[]{IService.class, type}, handler);
 		

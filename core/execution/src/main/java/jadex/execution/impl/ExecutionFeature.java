@@ -58,11 +58,19 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	AtomicInteger	threadcount	= new AtomicInteger();
 	boolean	failed	= false;
 	
+	
+	/**
+	 *  Create a new execution feature.
+	 *  @param self The component that is executing.
+	 */
+	public ExecutionFeature(Component self)
+	{
+		this.self = self;
+	}
+	
 	@Override
 	public IComponent getComponent()
 	{
-		if(self==null)
-			throw new IllegalStateException("Component can not be accessed in 'beforeCreation' bootstrapping.");
 		return self;
 	}
 	
@@ -895,7 +903,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			if(features[i] instanceof ILifecycle) 
 			{
 				ILifecycle lfeature = (ILifecycle)features[i];
-				lfeature.onEnd();
+				lfeature.cleanup();
 			}
 		}
 		

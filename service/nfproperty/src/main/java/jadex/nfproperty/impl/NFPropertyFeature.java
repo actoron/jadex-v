@@ -75,7 +75,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	}
 	
 	@Override
-	public void	onStart()
+	public void	init()
 	{
 //		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
 //		NFPropertyModel mymodel = (NFPropertyModel)model.getFeatureModel(INFPropertyFeature.class);
@@ -143,7 +143,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	/**
 	 *  Called when the feature is shutdowned.
 	 */
-	public void	onEnd()
+	public void	cleanup()
 	{
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		

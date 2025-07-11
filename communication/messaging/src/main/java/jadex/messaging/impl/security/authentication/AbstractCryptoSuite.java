@@ -9,9 +9,9 @@ import java.util.Set;
 import jadex.core.IComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.ISecurityFeature;
-import jadex.messaging.security.ICryptoSuite;
-import jadex.messaging.security.SecurityFeature;
-import jadex.messaging.security.SecurityInfo;
+import jadex.messaging.impl.security.ICryptoSuite;
+import jadex.messaging.impl.security.SecurityFeature;
+import jadex.messaging.impl.security.SecurityInfo;
 
 /**
  *  Abstract crypto suite class for handling message IDs / replays.

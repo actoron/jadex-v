@@ -28,8 +28,8 @@ import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceRegistry;
-import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 
 public class RegistryClientAgent implements IRegistryClientService 
 {
@@ -143,6 +143,7 @@ public class RegistryClientAgent implements IRegistryClientService
 	    	evalfut.then(a->
 	    	{
 	    		RegistryInfo ri = evaluateRegistries();
+	    		System.out.println("Registry reevaluation: "+agent.getId()+" "+ri);
 	    		
 	    		if (ri == null) 
 	    			return;
@@ -180,6 +181,8 @@ public class RegistryClientAgent implements IRegistryClientService
 
 		    		localquery.next(event ->
 		    		{
+		    			System.out.println("Registry client received service event from internal registry: "+agent.getId()+" "+event+" "+event.getService().getScope());
+		    			
 		    			if(ServiceScope.GLOBAL.equals(event.getService().getScope())
 		    				|| ServiceScope.HOST.equals(event.getService().getScope()))
 		    			{
@@ -187,8 +190,7 @@ public class RegistryClientAgent implements IRegistryClientService
 		    				{
 		    					try
     							{
-//	    							if(event.toString().indexOf("ITestService")!=-1)
-	    								System.out.println(agent+ " sending service event to registry "+registry+": "+event);
+	    							System.out.println("Registry client sending service event to registry "+registry+": "+event);
     								regsub.sendBackwardCommand(event);
     							}
     							catch (Exception e)
@@ -249,7 +251,7 @@ public class RegistryClientAgent implements IRegistryClientService
     	}
     	else if(registry==null)
     	{
-    		//System.out.println("registry not set, reevaluating registries");
+    		System.out.println("Registry client has no registry, reevaluating registries: "+agent.getId());
     		initRegistryReevaluation();
     	}
     	
@@ -293,7 +295,7 @@ public class RegistryClientAgent implements IRegistryClientService
 		{
 			System.out.println("RegistryClient: searching for service 2: "+agent.getId()+" "+query+" "+regser);
 			regser.searchService(query).delegateTo(ret);
-		}).catchEx(ret);
+		}).catchEx(ret).printOnEx();
 		return ret;
 	}
 	
@@ -337,9 +339,9 @@ public class RegistryClientAgent implements IRegistryClientService
 	 *  @param sid The service id.
 	 *  @return The service.
 	 */
-	public IService getRemoteServiceProxy(IServiceIdentifier sid)
+	public IFuture<IService> getRemoteServiceProxy(IComponent agent, IServiceIdentifier sid)
 	{
-		return RemoteMethodInvocationHandler.createRemoteServiceProxy((Component) agent, sid);
+		return new Future<>(RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, sid));
 	}
     
     @OnEnd

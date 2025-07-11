@@ -9,7 +9,7 @@ import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.core.impl.RuntimeFeatureProvider;
 import jadex.messaging.IIpcFeature;
 import jadex.messaging.ISecurityFeature;
-import jadex.messaging.security.SecurityFeature;
+import jadex.messaging.impl.security.SecurityFeature;
 
 public class SecurityFeatureProvider extends RuntimeFeatureProvider<ISecurityFeature>
 {

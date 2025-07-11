@@ -10,7 +10,7 @@ import org.bouncycastle.crypto.agreement.jpake.JPAKEPrimeOrderGroups;
 import jadex.common.Base64;
 import jadex.common.SAccess;
 import jadex.common.SUtil;
-import jadex.messaging.security.SSecurity;
+import jadex.messaging.impl.security.SSecurity;
 
 
 /**

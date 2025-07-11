@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import jadex.common.NameValue;
 import jadex.common.SUtil;
@@ -70,27 +69,10 @@ public class Component implements IComponent
 	protected static final String	GLOBALRUNNER_ID	= "__globalrunner__";
 		
 	/**
-	 *  Create a new component and instantiate all features (except lazy features).
-	 *  Uses an auto-generated component identifier.
-	 *  @param pojo	The pojo, if any.
-	 */
-	public Component(Object pojo)
-	{
-		this(pojo, null, null);
-	}
-	
-	/**
-	 *  Create a new component and instantiate all features (except lazy features).
-	 *  @param id	The id to use or null for an auto-generated id.
-	 *  @throws IllegalArgumentException when the id already exists. 
-	 */
-	public Component(Object pojo, ComponentIdentifier id)
-	{
-		this(pojo, id, null);
-	}
-	
-	/**
-	 *  Create a new component.
+	 *  Create a component object to be inited later
+	 *  @param pojo The pojo, if any.
+	 *  @param id The component id, or null for auto-generation.
+	 *  @param app The application context, if any.
 	 */
 	public Component(Object pojo, ComponentIdentifier id, Application app)
 	{
@@ -527,21 +509,23 @@ public class Component implements IComponent
 		return executable;
 	}
 	
-	public static <T extends Component> IFuture<IComponentHandle>	createComponent(Class<T> type, Supplier<T> creator)
+	/**
+	 *  Initialize a component and register it in the component manager.
+	 */
+	public static <T extends Component> IFuture<IComponentHandle>	createComponent(T component)
 	{
-		IBootstrapping	bootstrapping	= SComponentFeatureProvider.getBootstrapping(type);
+		IBootstrapping	bootstrapping	= SComponentFeatureProvider.getBootstrapping(component.getClass());
 		if(bootstrapping!=null)
 		{
-			return bootstrapping.bootstrap(type, creator);
+			return bootstrapping.bootstrap(component);
 		}
 		else
 		{
 			Future<IComponentHandle>	ret	= new Future<>();
 			try
 			{
-				T comp = creator.get();
-				comp.init();
-				ret.setResult(comp.getComponentHandle());
+				component.init();
+				ret.setResult(component.getComponentHandle());
 			}
 			catch(Exception e)
 			{

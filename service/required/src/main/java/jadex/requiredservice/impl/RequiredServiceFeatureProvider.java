@@ -39,6 +39,13 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 		return new RequiredServiceFeature(self);
 	}
 	
+	@Override
+	public boolean isLazyFeature()
+	{
+		// Only create feature when needed.
+		return true;
+	}
+	
 	//-------- augment injection feature with field injection --------
 	
 	@Override

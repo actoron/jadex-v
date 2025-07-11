@@ -23,11 +23,13 @@ public class PublishServiceJettyFeature extends PublishServiceFeature implements
 		this.ports = new HashSet<Integer>();
 	}
     
-    public void	onStart()
+	@Override
+    public void	init()
     {
     }
     
-    public void	onEnd()
+	@Override
+    public void	cleanup()
     {
     	// Terminate all servers created by this component
     	ServerManager.getInstance().terminateServers(ports);

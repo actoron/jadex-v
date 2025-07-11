@@ -239,20 +239,17 @@ public class BenchmarkHelper
 
 	/**
 	 *  Check if the benchmark should stop.
-	 *  Stops when the lowest three values are in 10% of the limit.
+	 *  Stops when the lowest n values are in 10% of the limit.
 	 */
 	private static boolean isStop(List<Long> vals, double limit)	throws IOException 
 	{
-		int n	= 2;	// How many values to compare
-		
-		// Do at least n runs
-		if(vals.size()<n)
+		if(vals.isEmpty())
 			return false;
 		
 		vals.sort((a,b) -> (int)(a-b));
 		
-		// Stop if improved
-		if(addToDB(vals.get(0), limit, false)<0)
+		// Stop if improved or same as best value
+		if(addToDB(vals.get(0), limit, false)<=0)
 		{
 			return true;
 		}
@@ -262,6 +259,12 @@ public class BenchmarkHelper
 			return false;
 		}
 		
+		int n	= 2;	// How many values to compare
+		
+		// Do at least n runs
+		if(vals.size()<n)
+			return false;
+				
 		// Compare lowest n values
 		double	min	= vals.get(0);
 		double	max	= vals.get(n-1);

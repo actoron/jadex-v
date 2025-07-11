@@ -44,7 +44,7 @@ public abstract class ComponentFeatureProvider<T extends IComponentFeature> exte
 	 *  and have the same {@link #getFeatureType()}.
 	 *  @return	True, if this implementation should be used and the other one ignored. 
 	 */
-	public boolean replacesFeatureProvider(ComponentFeatureProvider<T> provider)
+	public boolean replacesFeatureProvider(ComponentFeatureProvider<?> provider)
 	{
 		return false;
 	}

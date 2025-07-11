@@ -1,4 +1,3 @@
-jadex.bpmn.runtime.impl.BpmnProcessLifecycleFeatureProvider
 jadex.bpmn.runtime.impl.BpmnProcessFeatureProvider
 jadex.bpmn.runtime.impl.BpmnProcessModelFeatureProvider
 

@@ -1,5 +1,7 @@
 package jadex.registry;
 
+import java.util.Collection;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import jadex.common.ClassInfo;
@@ -47,17 +49,10 @@ public interface ICoordinatorService
     	String hostname = stok.nextToken();
     	ComponentIdentifier copid = new ComponentIdentifier(agentname, pid, hostname);
     	
-    	IServiceIdentifier rrsid = new ServiceIdentifier(
-			copid,//new ComponentIdentifier(IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME), // providerid
-			new ClassInfo(ICoordinatorService.class), //type
-			null, // supertypes
-			SReflect.getUnqualifiedClassName(ICoordinatorService.class),
-			//IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME, // sername
-			ServiceScope.GLOBAL, // scope
-			null, // networknames
-			true, // unrestricted
-			null); 
-		
+    	IServiceIdentifier rrsid = ServiceIdentifier.createServiceIdentifier(
+    		copid, ICoordinatorService.class, null, SReflect.getUnqualifiedClassName(ICoordinatorService.class),
+    		ServiceScope.GLOBAL, null, true, null);
+    			
     	// Can null when service is local and not available.
     	ICoordinatorService ret = (ICoordinatorService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(rrsid);
     	

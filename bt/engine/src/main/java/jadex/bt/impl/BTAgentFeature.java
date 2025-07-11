@@ -117,7 +117,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	}
 	
 	@Override
-	public void	onStart()
+	public void	init()
 	{
 		IBTProvider prov = (IBTProvider)getSelf().getPojo();
 		
@@ -154,7 +154,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	}
 	
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 		bt.abort(AbortMode.SUBTREE, NodeState.FAILED, context);
 	}

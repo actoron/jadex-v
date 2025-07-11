@@ -11,12 +11,11 @@ import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
-import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
-import jadex.messaging.security.authentication.KeySecret;
+import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
+import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.service.ServiceIdentifier;
-import jadex.remoteservices.impl.RemoteMethodInvocationHandler;
-import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 
 public class CallerAgent
 {

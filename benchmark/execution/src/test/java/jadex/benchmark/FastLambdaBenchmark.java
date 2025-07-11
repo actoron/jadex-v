@@ -40,7 +40,7 @@ public class FastLambdaBenchmark
 				};
 				// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
 				Future<IComponent>	res	= new Future<>();
-				Component.createComponent(FastLambda.class, () -> new FastLambda<>(body, res));
+				Component.createComponent(new FastLambda<>(body, null, null, res));
 				IComponent	thecomp	= res.get();
 				return () -> thecomp.getComponentHandle().terminate().get();
 			});

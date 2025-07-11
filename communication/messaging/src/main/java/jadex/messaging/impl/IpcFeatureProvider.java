@@ -7,7 +7,7 @@ import jadex.core.IRuntimeFeature;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.core.impl.RuntimeFeatureProvider;
 import jadex.messaging.IIpcFeature;
-import jadex.messaging.ipc.IpcStreamHandler;
+import jadex.messaging.impl.ipc.IpcFeature;
 
 public class IpcFeatureProvider extends RuntimeFeatureProvider<IIpcFeature>
 {
@@ -26,10 +26,10 @@ public class IpcFeatureProvider extends RuntimeFeatureProvider<IIpcFeature>
 	 */
 	public IIpcFeature createFeatureInstance()
 	{
-		IpcStreamHandler streamhandler = new IpcStreamHandler(GlobalProcessIdentifier.getSelf());
-		streamhandler.open();
+		IpcFeature ipcfeature = new IpcFeature(GlobalProcessIdentifier.getSelf());
+		ipcfeature.open();
 		
-		return streamhandler;
+		return ipcfeature;
 	}
 	
 	/**

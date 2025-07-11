@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.common.TimeoutException;
 import jadex.core.IComponentHandle;
-import jadex.core.impl.Component;
+import jadex.core.IComponentManager;
 import jadex.future.IFuture;
 import jadex.simulation.ISimulationFeature;
 import jadex.simulation.impl.MasterSimulationFeature;
@@ -40,7 +40,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testStopWhenIdle()
 	{
-		IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+		IComponentHandle	comp	= IComponentManager.get().create(null).get(TIMEOUT);
 		ISimulationFeature	sim	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 		sim.stop().get(TIMEOUT);
 		assertThrows(IllegalStateException.class, () -> sim.stop().get(TIMEOUT));
@@ -49,7 +49,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testStopWhenExecuting()
 	{
-		IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+		IComponentHandle	comp	= IComponentManager.get().create(null).get(TIMEOUT);
 		ISimulationFeature	sim	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 		boolean[]	run	= new boolean[]{true};
 		sim.scheduleStep(() ->
@@ -69,7 +69,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	public void	testInverseOrder()
 	{
 //		System.out.println("testInverseOrder");
-		IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+		IComponentHandle	comp	= IComponentManager.get().create(null).get(TIMEOUT);
 		ISimulationFeature	sim	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 		sim.stop().get(TIMEOUT);
 		List<String>	results	= new ArrayList<>();
@@ -83,7 +83,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 	@Test
 	public void	testStart()
 	{
-		IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+		IComponentHandle	comp	= IComponentManager.get().create(null).get(TIMEOUT);
 		ISimulationFeature	sim	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 		assertThrows(IllegalStateException.class, () -> sim.start());
 		sim.stop().get(TIMEOUT);
@@ -109,7 +109,7 @@ public class ParallelSimulationTest extends AbstractExecutionFeatureTest
 		for(int i=0; i<input.length; i++)
 		{
 			int num	= i;
-			IComponentHandle	comp	= Component.createComponent(Component.class, () -> new Component(this)).get(TIMEOUT);
+			IComponentHandle	comp	= IComponentManager.get().create(null).get(TIMEOUT);
 			sim[i]	= (ISimulationFeature)comp.scheduleStep(c->{return c.getFeature(IExecutionFeature.class);}).get(TIMEOUT);
 			if(i==0)
 			{

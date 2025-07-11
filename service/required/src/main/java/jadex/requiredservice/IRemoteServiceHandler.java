@@ -1,12 +1,17 @@
 package jadex.requiredservice;
 
+import jadex.core.IComponent;
+import jadex.core.annotation.NoCopy;
+import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
 
+@Service
 public interface IRemoteServiceHandler
 {
 	/**
@@ -14,7 +19,8 @@ public interface IRemoteServiceHandler
 	 *  @param sid The service id.
 	 *  @return The service.
 	 */
-	public IService getRemoteServiceProxy(IServiceIdentifier sid);
+	// Must NOT clone the component and service
+	public @NoCopy IFuture<IService> getRemoteServiceProxy(@NoCopy IComponent comp, IServiceIdentifier sid);
 	
 	/**
 	 *  Search for matching services using available remote information sources and provide first result.

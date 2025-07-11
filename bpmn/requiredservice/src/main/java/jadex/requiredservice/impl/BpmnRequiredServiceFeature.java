@@ -19,13 +19,13 @@ public class BpmnRequiredServiceFeature implements IBpmnRequiredServiceFeature, 
 	}
 	
 	@Override
-	public void onStart()
+	public void init()
 	{
 		this.model	= loadModel();
 	}
 	
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 		// NOP
 	}

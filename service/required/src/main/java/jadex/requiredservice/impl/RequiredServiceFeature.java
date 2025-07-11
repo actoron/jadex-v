@@ -116,7 +116,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 					{
 						System.out.println("searchService Found remote service: "+sid2);
 						@SuppressWarnings("unchecked")
-						T service = (T)getRemoteServiceHandler().getRemoteServiceProxy(sid2);
+						T service = (T)getRemoteServiceHandler().getRemoteServiceProxy(self, sid2).get();
 						ret.setResult(service);
 					}
 					else
@@ -173,7 +173,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 				{
 					// Found remote service.
 					@SuppressWarnings("unchecked")
-					T service = (T)getRemoteServiceHandler().getRemoteServiceProxy(sid2);
+					T service = (T)getRemoteServiceHandler().getRemoteServiceProxy(self, sid2).get();
 					ret.addIntermediateResultIfUndone(service);
 				}
 			}).finished(x ->
@@ -356,11 +356,14 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		}
 		
 		// Remote component -> create remote proxy
-		else
+		else if(getRemoteServiceHandler()!=null)
 		{
+			//System.out.println("Creating remote service proxy for: "+sid+" "+getRemoteServiceHandler().getRemoteServiceProxy(self, sid));
 			
-			// public static IService createRemoteServiceProxy(IComponent localcomp, IServiceIdentifier remotesvc)
-			Class<?> handlercl = SReflect.findClass0("jadex.remoteservices.impl.RemoteMethodInvocationHandler", 
+			ret = getRemoteServiceHandler().getRemoteServiceProxy(self, sid).get();
+			
+			/*// public static IService createRemoteServiceProxy(IComponent localcomp, IServiceIdentifier remotesvc)
+			Class<?> handlercl = SReflect.findClass0("jadex.remoteservice.impl.RemoteMethodInvocationHandler", 
 				null, IComponentManager.get().getClassLoader());
 			if(handlercl==null)
 				throw new RuntimeException("Cannot create proxy for remote service without remote service feataure");
@@ -373,7 +376,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 			{
 				e.printStackTrace();
 				SUtil.rethrowAsUnchecked(e);
-			}
+			}*/
 		}
 		
 		// else service event -> just return event, as desired by user (specified in query return type)
@@ -390,10 +393,11 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		IRemoteServiceHandler handler = null;
 		try 
 		{
-			Class<?> cl = SReflect.findClass("jadex.registry.IRegistryClientService", 
-				null, IComponentManager.get().getClassLoader());
+			//Class<?> cl = SReflect.findClass("jadex.registry.IRegistryClientService", 
+			//	null, IComponentManager.get().getClassLoader());
 			//System.out.println("cl is: "+cl);
-			handler = (IRemoteServiceHandler)self.getFeature(IRequiredServiceFeature.class).getLocalService(cl);
+			//handler = (IRemoteServiceHandler)self.getFeature(IRequiredServiceFeature.class).getLocalService(cl);
+			handler = (IRemoteServiceHandler)self.getFeature(IRequiredServiceFeature.class).getLocalService(IRemoteServiceHandler.class);
 			//System.out.println("found remote service handler: "+handler);
 		}
 		catch(Exception e) 

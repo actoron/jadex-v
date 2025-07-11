@@ -131,6 +131,13 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 		return new ProvidedServiceFeature(self);
 	}
 	
+	@Override
+	public boolean isLazyFeature()
+	{
+		// lazy, because it is only needed when a service is provided
+		return true;
+	}
+	
 	//-------- augment injection feature with new setup code --------
 	
 	@Override
@@ -176,7 +183,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 			if(!services.isEmpty())
 			{
 				// TODO: Service settings 
-//					if(getter.annotation() instanceof ProvideService)
+//				if(getter.annotation() instanceof ProvideService)
 				ret.add((comp, pojos, context, oldval) ->
 				{
 					ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);

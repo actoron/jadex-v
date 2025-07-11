@@ -34,8 +34,16 @@ public class AutostartFeature implements IAutostartFeature
 		{
 			try
 			{
+				String localname = null;
+				int idx = clname.indexOf(':');
+				if(idx > 0)
+				{
+					localname = clname.substring(0, idx);
+					clname = clname.substring(idx+1);
+				}
+				
 				Class<?> clazz = Class.forName(clname, false, cl);
-				IComponentManager.get().create(clazz.getDeclaredConstructor().newInstance()); // wait for component handle in loop?
+				IComponentManager.get().create(clazz.getDeclaredConstructor().newInstance(), localname); // wait for component handle in loop?
 			}
 			catch(Exception e)
 			{

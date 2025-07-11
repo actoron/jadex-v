@@ -1,2 +1,2 @@
-jadex.registry.RegistryClientAgent
-jadex.registry.RemoteRegistryAgent
+RegistryClient:jadex.registry.RegistryClientAgent
+RemoteRegistryAgent:jadex.registry.RemoteRegistryAgent

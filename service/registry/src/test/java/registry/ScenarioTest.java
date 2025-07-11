@@ -7,18 +7,15 @@ import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
-import jadex.execution.IExecutionFeature;
-import jadex.future.IFuture;
 import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
-import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
-import jadex.messaging.security.authentication.KeySecret;
+import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
+import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.registry.CoordinatorAgent;
 import jadex.registry.ICoordinatorService;
 import jadex.registry.RegistryClientAgent;
-import jadex.registry.RemoteRegistryAgent;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 public class ScenarioTest 

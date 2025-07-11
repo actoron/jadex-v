@@ -43,11 +43,12 @@ import jadex.common.Tuple3;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.ILifecycle;
 import jadex.future.IFuture;
 import jadex.model.IModelFeature;
 import jadex.rules.eca.RuleSystem;
 
-public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnComponentFeature
+public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnComponentFeature, ILifecycle
 {
 	
 //	/** Constant for step event. */
@@ -335,7 +336,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 	}
 	
 	@Override
-	public void terminate()
+	public void cleanup()
 	{
 		//System.out.println("todo: end: "+getComponent());
 		
