@@ -3,6 +3,9 @@ package jadex.messaging;
 import jadex.core.IRuntimeFeature;
 import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  *  Security is responsible for validating (remote) requests.
  */
@@ -65,6 +68,13 @@ public interface ISecurityFeature extends IRuntimeFeature
 	 *  @param asecret The secret.
 	 */
 	public void addGroup(String groupname, AbstractAuthenticationSecret asecret);
+
+	/**
+	 *  Get access to the stored groups.
+	 *
+	 *  @return The stored groups.
+	 */
+	public Map<String, List<AbstractAuthenticationSecret>> getGroups();
 
 	/**
 	 *  Remove a group.
