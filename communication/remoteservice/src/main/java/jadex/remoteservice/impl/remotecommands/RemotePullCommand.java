@@ -1,5 +1,6 @@
 package jadex.remoteservice.impl.remotecommands;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.IPullIntermediateFuture;
@@ -19,6 +20,15 @@ public class RemotePullCommand<T> extends AbstractIdSenderCommand implements IRe
 	 */
 	public RemotePullCommand()
 	{
+		super(null, null);
+	}
+
+	/**
+	 *  Create the command.
+	 */
+	public RemotePullCommand(String rxid, ComponentIdentifier sender)
+	{
+		super(rxid, sender);
 	}
 	
 	/**

@@ -1,5 +1,6 @@
 package jadex.remoteservice.impl.remotecommands;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -19,13 +20,15 @@ public class RemoteTerminationCommand<T> extends AbstractIdSenderCommand impleme
 	 */
 	public RemoteTerminationCommand()
 	{
+		super(null, null);
 	}
 	
 	/**
 	 *  Create the command.
 	 */
-	public RemoteTerminationCommand(Exception reason)
+	public RemoteTerminationCommand(String rxid, ComponentIdentifier sender, Exception reason)
 	{
+		super(rxid, sender);
 		this.reason = reason;
 	}
 	

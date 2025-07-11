@@ -147,19 +147,19 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 			@Override
 			public void handleTerminated(Exception reason)
 			{
-				sendRxMessage(target, new RemoteTerminationCommand<T>(reason));
+				sendRxMessage(target, new RemoteTerminationCommand<T>(rxid, component.getId(), reason));
 			}
 			
 			@Override
 			public void handlePull()
 			{
-				sendRxMessage(target, new RemotePullCommand<T>());
+				sendRxMessage(target, new RemotePullCommand<T>(rxid, component.getId()));
 			}
 			
 			@Override
 			public void handleBackwardCommand(Object info)
 			{
-				sendRxMessage(target, new RemoteBackwardCommand<T>(info));
+				sendRxMessage(target, new RemoteBackwardCommand<T>(rxid, component.getId(), info));
 //				// ignore backward failures and wait for forward failure (i.e. timeout)  
 //					.addResultListener(new IResultListener<Void>()
 //				{
@@ -298,6 +298,17 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	 */
 	protected IFuture<Void> sendRxMessage(ComponentIdentifier receiver, final Object msg)
 	{
+		if (msg instanceof IIdSenderCommand)
+		{
+			IIdSenderCommand idc = (IIdSenderCommand) msg;
+			if (idc.getSender() == null)
+			{
+				System.out.println("FAILE");
+				System.out.println(idc.getClass());
+				System.exit(0);
+			}
+		}
+
 		/*if(DEBUG)
 			header.put(RX_DEBUG, msg!=null ? msg.toString() : null);*/
 		
@@ -619,8 +630,19 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 			}
 
 			// Verify sender.
-			if (!secinfos.getSender().equals(msg.getSender().getGlobalProcessIdentifier()))
-				return false;
+			try {
+				if (!secinfos.getSender().equals(msg.getSender().getGlobalProcessIdentifier()))
+					return false;
+			}
+			catch (NullPointerException e)
+			{
+				System.out.println("NO! " + secinfos);
+				System.out.println(secinfos.getSender());
+				System.out.println(msg);
+				System.out.println(msg.getSender());
+				throw e;
+			}
+
 			
 			// Admin platforms (i.e. in possession  of our platform key) can do anything.
 			if(secinfos.getRoles().contains(ISecurityFeature.ADMIN))

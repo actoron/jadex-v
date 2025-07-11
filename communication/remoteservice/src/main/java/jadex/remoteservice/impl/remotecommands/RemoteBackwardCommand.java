@@ -1,5 +1,6 @@
 package jadex.remoteservice.impl.remotecommands;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.IBackwardCommandFuture;
 import jadex.future.IFuture;
@@ -20,13 +21,15 @@ public class RemoteBackwardCommand<T> extends AbstractIdSenderCommand implements
 	public RemoteBackwardCommand()
 	{
 		// Bean constructor
+		super(null, null);
 	}
 	
 	/**
 	 *  Create the command.
 	 */
-	public RemoteBackwardCommand(Object info)
+	public RemoteBackwardCommand(String rxid, ComponentIdentifier sender, Object info)
 	{
+		super(rxid, sender);
 		this.info = info;
 	}
 	

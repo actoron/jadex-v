@@ -16,13 +16,13 @@ public abstract class AbstractInternalRemoteCommand extends AbstractIdSenderComm
 	private Map<String, Object>	nonfunc;
 	
 	//-------- constructors --------
-	
+
 	/**
 	 *  Create a remote command.
 	 */
 	public AbstractInternalRemoteCommand()
 	{
-		// Bean constructor.
+		super(null, null);
 	}
 	
 	/**
@@ -30,8 +30,7 @@ public abstract class AbstractInternalRemoteCommand extends AbstractIdSenderComm
 	 */
 	public AbstractInternalRemoteCommand(String id,  ComponentIdentifier sender, Map<String, Object> nonfunc)
 	{
-		setId(id);
-		setSender(sender);
+		super(id, sender);
 		this.nonfunc	= nonfunc;
 	}
 
