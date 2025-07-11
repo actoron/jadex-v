@@ -16,6 +16,9 @@ public interface ISecurityFeature extends IRuntimeFeature
 
 	/** The admin role that is required by all jadex system services, e.g. CMS. */
 	public static final String ADMIN = "admin";
+
+	/** The local group and role for processes running on the same host. */
+	public static final String LOCAL_GROUP = "localgroup";
 	
 	//-------- message-level encryption/authentication -------
 	
@@ -62,7 +65,7 @@ public interface ISecurityFeature extends IRuntimeFeature
 	 *  @param asecret The secret.
 	 */
 	public void addGroup(String groupname, AbstractAuthenticationSecret asecret);
-	
+
 	/**
 	 *  Remove a group.
 	 * 
@@ -108,4 +111,23 @@ public interface ISecurityFeature extends IRuntimeFeature
 	 *  @param role The role name.
 	 */
 	public void removeRole(String entity, String role);
+
+	/**
+	 *  Marks a group as not part of the default authorization.
+	 *
+	 *  @param groupname The group name.
+	 */
+	public void addNoDefaultAuthorizationGroup(String groupname);
+
+	/**
+	 *  Unmarks a group as not part of the default authorization.
+	 *
+	 *  @param groupname The group name.
+	 */
+	public void removeNoDefaultAuthorizationGroup(String groupname);
+
+	/**
+	 *  Disable loading the local group. Must be invoked before messaging is used.
+	 */
+	public void disableLocalGroup();
 }

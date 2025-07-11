@@ -61,7 +61,7 @@ public class NFMethodPropTestAgent
 			long wab = (wa+wb)/2;
 			ret[2] = Math.abs(w-wab)/wab;
 
-			agent.terminate().get();
+			agent.terminate();
 			
 			return ret;
 		}).get();

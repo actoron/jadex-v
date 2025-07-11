@@ -10,6 +10,9 @@ import jadex.future.IFuture;
  */
 public interface IMessageFeature extends IComponentFeature
 {
+	/** Name of the Jadex communication directory. */
+	public static final String COM_DIRECTORY_NAME = "jadexcom";
+
 	/**
 	 *  Send a message.
 	 *  @param message	The message.

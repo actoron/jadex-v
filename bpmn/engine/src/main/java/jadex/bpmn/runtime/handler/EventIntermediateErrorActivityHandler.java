@@ -8,7 +8,6 @@ import jadex.common.IValueFetcher;
 import jadex.common.UnparsedExpression;
 import jadex.core.IComponent;
 import jadex.javaparser.IParsedExpression;
-import jadex.model.IModelFeature;
 
 /**
  *  On error end propagate an exception.

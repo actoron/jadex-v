@@ -17,7 +17,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.execution.impl.ILifecycle;
+import jadex.core.impl.ILifecycle;
 import jadex.future.DefaultResultListener;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;

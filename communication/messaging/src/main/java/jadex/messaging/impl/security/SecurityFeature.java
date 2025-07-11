@@ -1,13 +1,7 @@
 package jadex.messaging.impl.security;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
+import java.io.*;
+import java.nio.channels.FileLock;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
@@ -27,6 +21,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jadex.messaging.IMessageFeature;
+import jadex.messaging.impl.security.authentication.KeySecret;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
@@ -59,7 +55,8 @@ import jadex.serialization.ISerializationServices;
  */
 public class SecurityFeature implements ISecurityFeature
 {
-	
+	private static final String LOCAL_GROUP_KEYFILE = "localgroup.key";
+
 	/**
 	 *  Does some global initialization when the service is requested the first time.
 	 *  Replaces the SUtil default secure random with one that has higher performace.
@@ -161,9 +158,15 @@ public class SecurityFeature implements ISecurityFeature
 	
 	/** Last time cleanup duties were performed. */
 	protected volatile long lastcleanup;
+
+	/** Flag if local group loading is enabled. */
+	protected boolean localgroup = true;
 	
 	/** The list of group names (used by all service identifiers). */
 	protected Set<String> groupnames = new HashSet<>();
+
+	/** The list of group names excluded from default authorization. */
+	protected Set<String> nodefaultauthgroups = new HashSet<>(Arrays.asList(new String[] { ISecurityFeature.UNRESTRICTED }));
 	
 	public SecurityFeature(GlobalProcessIdentifier gpid, IIpcFeature ipc)
 	{
@@ -647,6 +650,49 @@ public class SecurityFeature implements ISecurityFeature
 			resetCryptoSuites();
 		}
 	}
+
+	/**
+	 *  Marks a group as not part of the default authorization.
+	 *
+	 *  @param groupname The group name.
+	 */
+	public void addNoDefaultAuthorizationGroup(String groupname)
+	{
+		synchronized (this)
+		{
+			nodefaultauthgroups.add(groupname);
+		}
+	}
+
+	/**
+	 *  Unmarks a group as not part of the default authorization.
+	 *
+	 *  @param groupname The group name.
+	 */
+	public void removeNoDefaultAuthorizationGroup(String groupname)
+	{
+		synchronized (this)
+		{
+			nodefaultauthgroups.remove(groupname);
+		}
+	}
+
+	/**
+	 *  Returns the groups excluded from default authorization.
+	 *  @return The groups excluded from default authorization.
+	 */
+	public Set<String> getNodefaultAuthorizationGroups()
+	{
+		return nodefaultauthgroups;
+	}
+
+	/**
+	 *  Disable loading the local group. Must be invoked before messaging is used.
+	 */
+	public void disableLocalGroup()
+	{
+		localgroup = false;
+	}
 	
 	/** 
 	 *  Adds an authority for authenticating platform names.
@@ -828,6 +874,93 @@ public class SecurityFeature implements ISecurityFeature
 			}
 			
 			refreshCryptosuiteRoles();
+		}
+	}
+
+	/**
+	 *  Loads the local group.
+	 */
+	public void loadLocalGroup()
+	{
+		if (localgroup)
+		{
+			String keyfileeof = "\n\n\n";
+
+			Path socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve(IMessageFeature.COM_DIRECTORY_NAME);
+			socketdir.toFile().mkdirs();
+
+			File dir = socketdir.toFile();
+			if (!dir.isDirectory() || !dir.canRead() || !dir.canWrite())
+				throw new UncheckedIOException(new IOException("Cannot access communcation directory: " + dir.getAbsolutePath()));
+
+			File localgroupfile = new File(dir.getAbsolutePath() + File.separator + LOCAL_GROUP_KEYFILE);
+
+			String key = null;
+			try
+			{
+				for (int i = 0; i < 10; ++i)
+				{
+					String lgcontent = new String(SUtil.readFile(localgroupfile), SUtil.UTF8);
+					if (lgcontent.endsWith(keyfileeof))
+					{
+						key = lgcontent.trim();
+						System.out.println("Using local group key " + key);
+						break;
+					}
+					SUtil.sleep(100);
+				}
+			} catch (Exception e)
+			{
+				// Empty key is enough to deal with this.
+			}
+
+			try
+			{
+				if (key == null)
+				{
+					boolean res = localgroupfile.createNewFile();
+
+					try (FileInputStream fis = new FileInputStream(localgroupfile);
+						 FileOutputStream fos = new FileOutputStream(localgroupfile))
+					{
+						try (FileLock fl = fos.getChannel().lock(0, Long.MAX_VALUE, false))
+						{
+							String lgcontent = "";
+							try
+							{
+								lgcontent = new String(SUtil.readFile(localgroupfile), SUtil.UTF8);
+							} catch (Exception e)
+							{
+								// It's just a check and allowed to fail.
+							}
+
+							if (!lgcontent.endsWith(keyfileeof))
+							{
+								key = KeySecret.createRandom().toString();
+								fos.write((key + keyfileeof).getBytes(SUtil.UTF8));
+								fos.flush();
+								System.out.println("Generated local group key " + key);
+							}
+						} catch (IOException e)
+						{
+							SUtil.rethrowAsUnchecked(e);
+						}
+					} catch (IOException e)
+					{
+						SUtil.rethrowAsUnchecked(e);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				System.out.println("FUIUUUUUUUUUUUUUUUUUUUCKAKKKK@!!!");
+				e.printStackTrace();
+				ComponentManager.get().getLogger(SecurityFeature.class).log(System.Logger.Level.WARNING,
+						"Failed to create local group key file, local group disabled: " + localgroupfile.getAbsolutePath());
+				return;
+			}
+
+			addGroup(ISecurityFeature.LOCAL_GROUP, KeySecret.fromString(key));
 		}
 	}
 	

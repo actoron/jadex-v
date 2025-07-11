@@ -21,7 +21,6 @@ import jadex.core.IComponent;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 import jadex.providedservice.annotation.Service;
 
 // todo
@@ -72,7 +71,7 @@ public class ProcessServiceInvocationHandler  implements InvocationHandler
 		this.instance	= instance;
 		
 		//MBpmnModel model = (MBpmnModel)instance.getModel().getRawModel();
-		MBpmnModel model = (MBpmnModel)instance.getFeature(IModelFeature.class).getModel().getRawModel();
+		MBpmnModel model = (MBpmnModel)instance.getFeature(IBpmnComponentFeature.class).getModel().getRawModel();
 		
 		MSubProcess proc = (MSubProcess)model.getActivityById(actid);
 		final Map<MSubProcess, List<MActivity>> evtsubstarts = model.getEventSubProcessStartEventMapping();

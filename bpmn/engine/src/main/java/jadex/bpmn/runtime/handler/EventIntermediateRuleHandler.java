@@ -1,25 +1,8 @@
 package jadex.bpmn.runtime.handler;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import jadex.bpmn.model.MActivity;
-import jadex.bpmn.model.MBpmnModel;
-import jadex.bpmn.runtime.impl.IInternalProcessEngineService;
 import jadex.bpmn.runtime.impl.ProcessThread;
-import jadex.common.IResultCommand;
-import jadex.common.UnparsedExpression;
-import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IComponentHandle;
-import jadex.future.ExceptionDelegationResultListener;
-import jadex.future.Future;
-import jadex.future.IFuture;
-import jadex.future.IResultListener;
-import jadex.javaparser.IParsedExpression;
-import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 
 // todo
 
@@ -48,7 +31,7 @@ public class EventIntermediateRuleHandler extends DefaultActivityHandler
 		Map<String, Object>	params	= null; 
 		if(upex!=null)
 		{
-			IParsedExpression	exp	= SJavaParser.parseExpression(upex, instance.getFeature(IModelFeature.class).getModel().getAllImports(), instance.getClass().getClassLoader());
+			IParsedExpression	exp	= SJavaParser.parseExpression(upex, instance.getFeature(IBpmnComponentFeature.class).getModel().getAllImports(), instance.getClass().getClassLoader());
 			for(String param: exp.getParameters())
 			{
 				Object	val	= thread.getParameterValue(param);
@@ -74,7 +57,7 @@ public class EventIntermediateRuleHandler extends DefaultActivityHandler
 //		System.out.println("Adding event matcher: "+instance.getComponentIdentifier());
 		
 		final ComponentIdentifier cid = instance.getId();
-		final IFuture<String>	fut	= ipes.addEventMatcher(eventtypes, fupex, instance.getFeature(IModelFeature.class).getModel().getAllImports(), fparams, true, new IResultCommand<IFuture<Void>, Object>()
+		final IFuture<String>	fut	= ipes.addEventMatcher(eventtypes, fupex, instance.getFeature(IBpmnComponentFeature.class).getModel().getAllImports(), fparams, true, new IResultCommand<IFuture<Void>, Object>()
 		{
 			public IFuture<Void> execute(final Object event)
 			{

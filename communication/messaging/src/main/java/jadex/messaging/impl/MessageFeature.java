@@ -62,7 +62,7 @@ public class MessageFeature implements IMessageFeature
 				if (GlobalProcessIdentifier.getSelf().pid().equals(receiver.getGlobalProcessIdentifier().pid()))
 				{
 					// Local message
-					IComponentHandle exta = ComponentManager.get().getComponent(receiver).getComponentHandle();
+					IComponentHandle exta = ComponentManager.get().getComponentHandle(receiver);
 					exta.scheduleStep((comp) ->
 					{
 						((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, message);
@@ -155,7 +155,7 @@ public class MessageFeature implements IMessageFeature
 				return;
 			}
 		}
-		
+
 		for (IMessageHandler handler : messagehandlers)
 		{
 			if (handler.isHandling(secinfos, msg))
@@ -199,7 +199,7 @@ public class MessageFeature implements IMessageFeature
 		if (GlobalProcessIdentifier.getSelf().equals(receiver.getGlobalProcessIdentifier()))
 		{
 			// Local message
-			IComponentHandle exta = ComponentManager.get().getComponent(receiver).getComponentHandle();
+			IComponentHandle exta = ComponentManager.get().getComponentHandle(receiver);
 			exta.scheduleStep((comp) ->
 			{
 				((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, tex);

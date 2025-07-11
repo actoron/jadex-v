@@ -1,4 +1,4 @@
-package jadex.execution.impl;
+package jadex.core.impl;
 
 /**
  *  Interface for features that need to perform init/shutdown code.

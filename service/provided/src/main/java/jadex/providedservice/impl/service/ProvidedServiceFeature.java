@@ -15,7 +15,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.IRuntimeFeature;
 import jadex.core.impl.ComponentManager;
-import jadex.execution.impl.ILifecycle;
+import jadex.core.impl.ILifecycle;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.InjectionFeature;
 import jadex.providedservice.IMethodInvocationListener;

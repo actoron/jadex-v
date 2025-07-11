@@ -43,7 +43,7 @@ public class TerminatorAgent
 				IService service = (IService)killlist.get(idx);
 				ComponentIdentifier victim = service.getServiceId().getProviderId();
 				
-				IComponentHandle access = agent.getComponentHandle(victim);
+				IComponentHandle access = agent.getApplication().getComponentHandle(victim);
 				access.scheduleStep(agent ->
 				{
 					System.out.println("killing: "+victim);

@@ -13,8 +13,6 @@ import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
-import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.impl.InjectionFeatureProvider;
@@ -59,13 +57,6 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 	{
 		return BTAgent.create(pojo, cid, app);
 	}
-	
-	@Override
-	public void terminate(IComponent component) 
-	{
-		((IInternalExecutionFeature)component.getFeature(IExecutionFeature.class)).terminate();
-	}
-	
 //	/**
 //	 *  Get the predecessors, i.e. features that should be inited first.
 //	 *  @return The predecessors.

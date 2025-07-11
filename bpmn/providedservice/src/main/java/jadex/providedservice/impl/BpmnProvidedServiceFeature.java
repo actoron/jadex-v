@@ -3,11 +3,11 @@ package jadex.providedservice.impl;
 import java.util.Collections;
 import java.util.Map;
 
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.common.IValueFetcher;
 import jadex.common.SUtil;
 import jadex.core.impl.Component;
 import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.impl.service.ProvidedServiceFeature;
 
@@ -23,7 +23,7 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 	{
 		super.init();
 		
-		IModelFeature	mf	= self.getFeature(IModelFeature.class);
+		IBpmnComponentFeature	mf	= self.getFeature(IBpmnComponentFeature.class);
 		ProvidedServiceModel	model	= loadModel();
 		if(model!=null)
 		{
@@ -39,7 +39,7 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 	
 	public ProvidedServiceModel loadModel()
 	{
-		IModelFeature	mf	= self.getFeature(IModelFeature.class);
+		IBpmnComponentFeature	mf	= self.getFeature(IBpmnComponentFeature.class);
 		ProvidedServiceModel mymodel = (ProvidedServiceModel)BpmnProvidedServiceLoader.readFeatureModel(mf.getModel());		
 		return mymodel;
 	}
@@ -58,16 +58,16 @@ public class BpmnProvidedServiceFeature	extends ProvidedServiceFeature
 //				fetcher.setValue("$servicename", info.getName());
 //				fetcher.setValue("$servicetype", info.getType().getType(component.getClassLoader(), component.getModel().getAllImports()));
 //				System.out.println("sertype: "+fetcher.fetchValue("$servicetype")+" "+info.getName());
-				ser = SJavaParser.getParsedValue(impl, self.getFeature(IModelFeature.class).getModel().getAllImports(), fetcher, self.getClass().getClassLoader());
+				ser = SJavaParser.getParsedValue(impl, self.getFeature(IBpmnComponentFeature.class).getModel().getAllImports(), fetcher, self.getClass().getClassLoader());
 //				System.out.println("added: "+ser+" "+model.getName());
 		}
 		else if(impl!=null && impl.getClazz()!=null)
 		{
-			if(impl.getClazz().getType(((Component)self).getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports())!=null)
+			if(impl.getClazz().getType(((Component)self).getClassLoader(), self.getFeature(IBpmnComponentFeature.class).getModel().getAllImports())!=null)
 			{
 				try
 				{
-					ser = impl.getClazz().getType(((Component)self).getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports()).getConstructor().newInstance();
+					ser = impl.getClazz().getType(((Component)self).getClassLoader(), self.getFeature(IBpmnComponentFeature.class).getModel().getAllImports()).getConstructor().newInstance();
 				}
 				catch(Exception e)
 				{

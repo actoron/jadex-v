@@ -4,6 +4,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 import jadex.core.ComponentTerminatedException;
+import jadex.core.impl.Component;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -50,7 +51,7 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	 */
 	public MasterSimulationFeature()
 	{
-		super(null);
+		super(new Component(null, null, null));
 	}
 	
 	public void scheduleStep(ExecutionFeature exe, Runnable r)
@@ -82,7 +83,7 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<>();
 		
-		if(terminated)
+		if(self.isTerminated())
 		{
 			ret.setException(new ComponentTerminatedException(self.getId()));
 			return ret;

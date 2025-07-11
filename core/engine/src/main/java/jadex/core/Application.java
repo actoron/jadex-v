@@ -1,6 +1,7 @@
 package jadex.core;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import jadex.core.impl.ComponentManager;
@@ -56,6 +57,12 @@ public class Application implements IComponentFactory
 	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
 	{		
 		return create(pojo, null, this);
+	}
+	
+	@Override
+	public Set<ComponentIdentifier> getAllComponents()
+	{
+		return ComponentManager.get().getAllComponents(this);
 	}
 	
 	@Override

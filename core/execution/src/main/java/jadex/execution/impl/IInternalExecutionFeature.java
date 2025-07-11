@@ -14,9 +14,4 @@ public interface IInternalExecutionFeature
 	 *  Remove a step listener.
 	 */
 	public void	removeStepListener(IStepListener lis);
-	
-	/**
-	 *  Terminate the feature.
-	 */
-	public void terminate();
 }

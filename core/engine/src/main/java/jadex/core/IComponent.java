@@ -1,8 +1,8 @@
 package jadex.core;
 
 import java.lang.System.Logger;
+
 import jadex.core.impl.ValueProvider;
-import jadex.future.IFuture;
 
 /**
  *  Interface for a component.
@@ -39,16 +39,14 @@ public interface IComponent
 	public IComponentHandle getComponentHandle();
 	
 	/**
-	 *  Get the component handle.
-	 *  @param cid The id of the component.
-	 *  @return The handle.
+	 *  Check if the component is terminated.
 	 */
-	public IComponentHandle getComponentHandle(ComponentIdentifier cid);
-	
+	public boolean isTerminated();
+
 	/**
 	 *  Terminate the component.
 	 */
-	public  IFuture<Void> terminate(ComponentIdentifier... cids);
+	public  void	terminate();
 	
 	/**
 	 *  Get the pojo.
