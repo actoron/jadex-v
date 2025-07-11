@@ -616,7 +616,7 @@ public class RequestManager
 		// solution: always create on container thread and remember
 		//final Map<String, Object> session = getSession(request, true);
 		final String sessionid = getSessionId(request);
-		if(sessionid==null && request.getRequestURI().indexOf("jadex.js")==-1)
+		if(sessionid==null && request.getRequestURI().indexOf("jadex.js")==-1 && ri.isSSERequest())
 			System.out.println("Call has no jadex session id, Jadex cookie missing: "+request.getRequestURL());
 		// todo: if missing generate one?! as it is cookie it would be used by further requests
 		
