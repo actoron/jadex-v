@@ -28,7 +28,7 @@ public class ServiceQuery<T>
 	
 	/** Default matching modes set the elements with OR semantics. */
 	public static final Map<String, Boolean> DEFAULT_MATCHINGMODES = SUtil.createHashMap(
-		new String[]{ServiceKeyExtractor.KEY_TYPE_TAGS, ServiceKeyExtractor.KEY_TYPE_NETWORKS}, 
+		new String[]{ServiceKeyExtractor.KEY_TYPE_TAGS, ServiceKeyExtractor.KEY_TYPE_GROUPS}, 
 		new Boolean[]{Boolean.FALSE, Boolean.FALSE});
 	
 	//-------- attributes --------
@@ -482,7 +482,7 @@ public class ServiceQuery<T>
 		assert !Arrays.equals(networknames, NETWORKS_NOT_SET) : "Problem: query not enhanced before processing.";
 	
 		if((unrestricted==null || Boolean.FALSE.equals(unrestricted)) && networknames != null && networknames.length > 0)
-			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_NETWORKS, networknames, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_NETWORKS)));
+			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_GROUPS, networknames, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_GROUPS)));
 		
 		return ret;
 	}

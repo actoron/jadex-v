@@ -1,5 +1,7 @@
 package jadex.requiredservice;
 
+import java.util.Set;
+
 import jadex.core.IComponent;
 import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
@@ -43,4 +45,10 @@ public interface IRemoteServiceHandler
 	 *  @return Future providing the corresponding services as intermediate results.
 	 */
 	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query);
+	
+	/**
+	 *  Get the security group names.
+	 *  @return The security group names.
+	 */
+	public Set<String> getGroupNames();
 }

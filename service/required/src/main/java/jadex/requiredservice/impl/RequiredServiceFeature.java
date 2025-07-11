@@ -1,15 +1,11 @@
 package jadex.requiredservice.impl;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import jadex.common.SReflect;
-import jadex.common.SUtil;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
@@ -295,15 +291,20 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 			}
 			else
 			{
-				System.out.println("todo: enhance sid with network names");
-				// Not unrestricted -> only find services from my local networks
-				//@SuppressWarnings("unchecked")
-				//Set<String> nnames = (Set<String>)Starter.getPlatformValue(getComponent().getId(), Starter.DATA_NETWORKNAMESCACHE);
-				//query.setNetworkNames(nnames!=null? nnames.toArray(new String[nnames.size()]): SUtil.EMPTY_STRING_ARRAY);
+				if(getRemoteServiceHandler()!=null)
+				{
+					// Remote -> use network names from remote service handler.
+					query.setNetworkNames(getRemoteServiceHandler().getGroupNames().toArray(new String[0]));
+				}
+				else
+				{
+					throw new RuntimeException("Cannot enhance query with network names, as no remote service handler is available. " +
+						"Please add the remote service feature to your component.");
+				}
 			}
 		}
 	}
-
+	
 	/**
 	 *  Check if a query is potentially remote.
 	 *  @return True, if scope is set to a remote scope (e.g. global or network).
@@ -352,7 +353,10 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		// Local component -> fetch local service object.
 		if(sid.getProviderId().getGlobalProcessIdentifier().equals(getComponent().getId().getGlobalProcessIdentifier()))
 		{
-			ret = ServiceRegistry.getRegistry().getLocalService(sid); 			
+			ret = ServiceRegistry.getRegistry().getLocalService(sid); 		
+			
+			if(ret==null)
+				System.out.println("Could not find local service for: "+sid+" "+ServiceRegistry.getRegistry().getAllServices());
 		}
 		
 		// Remote component -> create remote proxy

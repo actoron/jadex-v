@@ -40,8 +40,8 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/** The scope. */
 	protected ServiceScope scope;
 	
-	/** The network names (shared object with security service). */
-	protected Set<String> networknames;
+	/** The group names (shared object with security service). */
+	protected Set<String> groupnames;
 	
 	/** Is the service unrestricted. */
 	protected boolean unrestricted;
@@ -89,13 +89,13 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Create a new service identifier.
 	 */
 	private ServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, 
-		ServiceScope scope, Set<String> networknames, boolean unrestricted, Collection<String> tags)
+		ServiceScope scope, Set<String> groupnames, boolean unrestricted, Collection<String> tags)
 	{
 		this.providerid = providerid;
 		this.type	= type;
 		this.supertypes = supertypes;
 		this.servicename = servicename;
-		this.networknames = networknames;
+		this.groupnames = groupnames;
 		this.unrestricted = unrestricted;
 		this.tags = tags;
 		setScope(scope);
@@ -258,18 +258,18 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Get the network names.
 	 *  @return the network names
 	 */
-	public Set<String> getNetworkNames()
+	public Set<String> getGroupNames()
 	{
-		return networknames;
+		return groupnames;
 	}
 
 	/**
 	 *  Set the network names.
 	 *  @param networknames The network names to set
 	 */
-	public void setNetworkNames(Set<String> networknames)
+	public void setGroupNames(Set<String> groupnames)
 	{
-		this.networknames = networknames;
+		this.groupnames = groupnames;
 	}
 	
 	/**

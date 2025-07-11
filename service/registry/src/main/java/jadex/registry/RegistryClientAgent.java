@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
@@ -22,6 +23,7 @@ import jadex.future.TerminableIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
+import jadex.messaging.ISecurityFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
@@ -160,6 +162,7 @@ public class RegistryClientAgent implements IRegistryClientService
 	    		
 	    		// create service proxy for new registry
 	    	  	IRemoteRegistryService rreg = (IRemoteRegistryService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(ri.serviceid());
+	    	  	System.out.println("Service proxy is: "+rreg);
 	    	  	setRegistry(rreg);
 	    	  	
 	    		// connect to new registry
@@ -342,6 +345,17 @@ public class RegistryClientAgent implements IRegistryClientService
 	public IFuture<IService> getRemoteServiceProxy(IComponent agent, IServiceIdentifier sid)
 	{
 		return new Future<>(RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, sid));
+	}
+	
+	/**
+	 *  Get the security group names.
+	 *  @return The security group names.
+	 */
+	public Set<String> getGroupNames() 
+	{
+		ISecurityFeature secfeat = IComponentManager.get().getFeature(ISecurityFeature.class);
+		Set<String> groupnames = secfeat.getGroups().keySet();
+		return new HashSet<>(groupnames);
 	}
     
     @OnEnd
