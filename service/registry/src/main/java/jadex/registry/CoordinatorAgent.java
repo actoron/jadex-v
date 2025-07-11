@@ -43,6 +43,8 @@ public class CoordinatorAgent implements ICoordinatorService
 	 */
 	public ISubscriptionIntermediateFuture<Void> registerRegistry(IServiceIdentifier reg, long starttime)
 	{
+		System.out.println("Coordinator has new registry client:"+reg+" at "+Instant.ofEpochMilli(starttime));
+		
 		//final ComponentIdentifier caller = ServiceCall.getCurrentInvocation().getCaller();
 		RegistryInfo ri = new RegistryInfo(reg, starttime);
 		
