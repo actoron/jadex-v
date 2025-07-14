@@ -1429,9 +1429,12 @@ public class SecurityFeature implements ISecurityFeature
 		Set<String> pgroups = new HashSet<>();
 		if (annotationroles == null || annotationroles.length == 0)
 		{
-			synchronized (this)
+			if (defaultauthorization)
 			{
-				pgroups.addAll(groups.keySet());
+				synchronized (this)
+				{
+					pgroups.addAll(groups.keySet());
+				}
 			}
 		}
 		else
