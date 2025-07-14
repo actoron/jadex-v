@@ -123,6 +123,11 @@ public class ServiceIdentifier implements IServiceIdentifier
 		Security security = getSecurityLevel(provider, null, null);//info, serviceimpl, servicetype, null, null);
 		Set<String>	roles = ServiceIdentifier.getRoles(security, provider);
 		//ServiceScope scope = info!=null ? info.getScope() : null;
+
+		/*if(servicetype.toString().toLowerCase().indexOf("test")!=-1)
+		{
+			System.out.println("ServiceIdentifier: "+servicename+" "+groupnames);
+		}*/
 		
 		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope, roles,
 			roles!=null && roles.contains(Security.UNRESTRICTED), tags);

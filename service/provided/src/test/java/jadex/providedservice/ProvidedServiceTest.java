@@ -521,7 +521,7 @@ public class ProvidedServiceTest
 	protected static <T> T searchService(IComponentHandle handle, Class<T> type)
 	{
 		// Find service in registry
-		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setNetworkNames();
+		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setGroupNames();
 		IServiceIdentifier	sid	= ServiceRegistry.getRegistry().searchService(query);
 		assertNotNull(sid);
 		
@@ -535,7 +535,7 @@ public class ProvidedServiceTest
 	protected static <T> IServiceIdentifier searchSid0(IComponentHandle handle, Class<T> type)
 	{
 		// Find service in registry
-		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setNetworkNames();
+		ServiceQuery<T>	query	= new ServiceQuery<>(type).setOwner(handle.getId()).setGroupNames();
 		IServiceIdentifier	ret	= ServiceRegistry.getRegistry().searchService(query);
 //		System.out.println("search: "+handle.getId()+", "+type+", "+ret);
 		return ret;

@@ -177,7 +177,7 @@ public class RegistryClientAgent implements IRegistryClientService
 		    			.setEventMode()
 		    			.setOwner(agent.getId())
 		    			.setScope(ServiceScope.GLOBAL)
-		    			.setNetworkNames((String[])null);
+		    			.setGroupNames((String[])null);
 		    			//.setSearchStart(spid);	// Only find services that are visible to SP
 		    		
 		    		ISubscriptionIntermediateFuture<ServiceEvent> localquery = (ISubscriptionIntermediateFuture)ServiceRegistry.getRegistry().addQuery(lquery);									

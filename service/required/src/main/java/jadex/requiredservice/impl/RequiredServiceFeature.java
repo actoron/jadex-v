@@ -186,10 +186,10 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		}
 		else
 		{
-			if(!sids.isEmpty())
+			//if(!sids.isEmpty())
 				ret.setFinishedIfUndone();
-			else
-				ret.setException(new ServiceNotFoundException(query));
+			//else
+			//	ret.setException(new ServiceNotFoundException(query));
 		}
 		
 		return ret;
@@ -280,21 +280,21 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		}
 		
 		// Network names not set by user?
-		if(Arrays.equals(query.getNetworkNames(), ServiceQuery.NETWORKS_NOT_SET))
+		if(Arrays.equals(query.getGroupNames(), ServiceQuery.GROUPS_NOT_SET))
 		{
 			// Local or unrestricted?
 			if(!isRemote(query) || Boolean.TRUE.equals(query.isUnrestricted()))
 //				|| query.getServiceType()!=null && ServiceIdentifier.isUnrestricted(self, query.getServiceType().getType(self.getClassLoader()))) 
 			{
 				// Unrestricted -> Don't check networks.
-				query.setNetworkNames((String[])null);
+				query.setGroupNames((String[])null);
 			}
 			else
 			{
 				if(getRemoteServiceHandler()!=null)
 				{
 					// Remote -> use network names from remote service handler.
-					query.setNetworkNames(getRemoteServiceHandler().getGroupNames().toArray(new String[0]));
+					query.setGroupNames(getRemoteServiceHandler().getGroupNames().toArray(new String[0]));
 				}
 				else
 				{
@@ -303,6 +303,10 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 				}
 			}
 		}
+		
+		if(isRemote(query))
+			System.out.println("Query enhanced: "+query+" "+query.getGroupNames());
+		
 	}
 	
 	/**
@@ -407,7 +411,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		catch(Exception e) 
 		{
 			//System.out.println("No remote service handler found: "+e);
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return handler;	
 	}

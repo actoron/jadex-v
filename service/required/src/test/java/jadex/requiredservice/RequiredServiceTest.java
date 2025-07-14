@@ -164,6 +164,11 @@ public class RequiredServiceTest
 			provider2.scheduleStep(() -> null).get(TIMEOUT);
 			assertEquals(2, caller.scheduleStep(search).get(TIMEOUT).size());
 		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			throw new RuntimeException("Error during service search test", e);
+		}
 		finally
 		{
 			if(provider!=null)
