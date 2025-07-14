@@ -953,8 +953,6 @@ public class SecurityFeature implements ISecurityFeature
 			}
 			catch (Exception e)
 			{
-				System.out.println("FUIUUUUUUUUUUUUUUUUUUUCKAKKKK@!!!");
-				e.printStackTrace();
 				ComponentManager.get().getLogger(SecurityFeature.class).log(System.Logger.Level.WARNING,
 						"Failed to create local group key file, local group disabled: " + localgroupfile.getAbsolutePath());
 				return;
@@ -1419,6 +1417,34 @@ public class SecurityFeature implements ISecurityFeature
 		if(SUtil.DEBUG)
 			System.out.println("Security.initializeHandshake1 " + convid + " " + gpid + " -> " + remotegpid + " Phase: 0 Step: 0 "+initializingcryptosuites+" "+System.identityHashCode(initializingcryptosuites));
 		sendSecurityHandshakeMessage(remotegpid, ihm);
+	}
+
+	/**
+	 *  Returns the allowed access groups from a given set of roles of a Security annotation.
+	 *  @param annotationroles Roles specied in the Security annotation.
+	 *  @return Groups representing those roles.
+	 */
+	public Set<String> getPermittedGroups(String[] annotationroles)
+	{
+		Set<String> pgroups = new HashSet<>();
+		if (annotationroles == null || annotationroles.length == 0)
+		{
+			synchronized (this)
+			{
+				pgroups.addAll(groups.keySet());
+			}
+		}
+		else
+		{
+			Map<String, Set<String>> rrm = getReverseRoleMap();
+			for (String role : annotationroles)
+				pgroups.addAll(rrm.get(role));
+
+			// Remove local group
+			if (localgroup)
+				pgroups.remove(LOCAL_GROUP);
+		}
+		return pgroups;
 	}
 	
 	/**
