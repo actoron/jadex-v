@@ -49,9 +49,9 @@ public class Application implements IComponentFactory
 	}
 	
 	@Override
-	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
+	public IFuture<IComponentHandle> create(Object pojo, String localname)
 	{		
-		return create(pojo, cid, this);
+		return create(pojo, localname, this);
 	}
 	
 	@Override
