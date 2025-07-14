@@ -5,12 +5,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
+import jadex.core.IRuntimeFeature;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Security;
@@ -64,10 +67,10 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/**
 	 *  Create a new service identifier.
 	 */
-	private ServiceIdentifier(IComponent provider, Class<?> type, String servicename, ServiceScope scope, Set<String> networknames, Boolean unrestricted, Collection<String> tags)
+	private ServiceIdentifier(IComponent provider, Class<?> type, String servicename, ServiceScope scope, Set<String> groupnames, Boolean unrestricted, Collection<String> tags)
 	{
 		this(provider.getId(), new ClassInfo(type), getSuperClasses(type), servicename,
-			scope, networknames, unrestricted, tags);
+			scope, groupnames, unrestricted, tags);
 		
 		/*this.providerid = provider.getId();
 		this.type	= new ClassInfo(type);
@@ -129,8 +132,38 @@ public class ServiceIdentifier implements IServiceIdentifier
 			System.out.println("ServiceIdentifier: "+servicename+" "+groupnames);
 		}*/
 		
-		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope, roles,
+		System.out.println("Groups for service "+servicename+" "+getGroups(roles));
+		
+		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope, getGroups(roles),
 			roles!=null && roles.contains(Security.UNRESTRICTED), tags);
+	}
+	
+	protected static Set<String> getGroups(Set<String> roles)
+	{
+		Set<String> ret = null;
+		try
+		{
+			Class<? extends IRuntimeFeature> iface = SReflect.findClass("jadex.messaging.ISecurityFeature", null, IComponentManager.get().getClassLoader());
+			IRuntimeFeature feat = IComponentManager.get().getFeature(iface);
+			
+			/*if(roles==null || roles.isEmpty())
+			{
+				Method m = iface.getMethod("getGroups", new Class<?>[0]);
+				Map groups = (Map)m.invoke(feat, new Object[0]);
+				ret = groups.keySet();
+			}
+			else
+			{*/
+				Method m = iface.getMethod("getPermittedGroups", new Class<?>[] {Set.class});
+				ret = (Set<String>)m.invoke(feat, new Object[] {roles});
+			//}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		return ret;
 	}
 	
 	/**
