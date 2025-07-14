@@ -141,6 +141,7 @@ public class SCloner
 				}
 				catch (Exception e)
 				{
+					System.out.println("Error creating bean object: "+clazz+" "+c+" "+e);
 					throw SUtil.throwUnchecked(e);
 				}
 			}

@@ -33,7 +33,7 @@ public class ServiceKeyExtractor implements IKeyExtractor<IServiceIdentifier>
 	public static final String KEY_TYPE_SID = "serviceid";
 	
 	/** Key type for the networks. */
-	public static final String KEY_TYPE_NETWORKS = "networks";
+	public static final String KEY_TYPE_GROUPS = "groups";
 	
 	/** Key type for the unrestricted mode. */
 	public static final String KEY_TYPE_UNRESTRICTED = "unrestricted";

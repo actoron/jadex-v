@@ -183,7 +183,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 			if(!services.isEmpty())
 			{
 				// TODO: Service settings 
-//					if(getter.annotation() instanceof ProvideService)
+//				if(getter.annotation() instanceof ProvideService)
 				ret.add((comp, pojos, context, oldval) ->
 				{
 					ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);

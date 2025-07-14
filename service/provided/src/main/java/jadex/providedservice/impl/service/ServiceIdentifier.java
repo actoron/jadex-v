@@ -40,8 +40,8 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/** The scope. */
 	protected ServiceScope scope;
 	
-	/** The network names (shared object with security service). */
-	protected Set<String> networknames;
+	/** The group names (shared object with security service). */
+	protected Set<String> groupnames;
 	
 	/** Is the service unrestricted. */
 	protected boolean unrestricted;
@@ -64,16 +64,10 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/**
 	 *  Create a new service identifier.
 	 */
-	public ServiceIdentifier(IComponent provider, Class<?> type, String servicename, ServiceScope scope, Boolean unrestricted, Collection<String> tags)
+	private ServiceIdentifier(IComponent provider, Class<?> type, String servicename, ServiceScope scope, Set<String> networknames, Boolean unrestricted, Collection<String> tags)
 	{
-//		if(!type.isInterface())
-//		{
-//			System.out.println("dreck");
-//		}
-		
-		
 		this(provider.getId(), new ClassInfo(type), getSuperClasses(type), servicename,
-			scope, null, unrestricted, tags);
+			scope, networknames, unrestricted, tags);
 		
 		/*this.providerid = provider.getId();
 		this.type	= new ClassInfo(type);
@@ -94,14 +88,14 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/**
 	 *  Create a new service identifier.
 	 */
-	public ServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, 
-		ServiceScope scope, Set<String> networknames, boolean unrestricted, Collection<String> tags)
+	private ServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, 
+		ServiceScope scope, Set<String> groupnames, boolean unrestricted, Collection<String> tags)
 	{
 		this.providerid = providerid;
 		this.type	= type;
 		this.supertypes = supertypes;
 		this.servicename = servicename;
-		this.networknames = networknames;
+		this.groupnames = groupnames;
 		this.unrestricted = unrestricted;
 		this.tags = tags;
 		setScope(scope);
@@ -122,7 +116,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Create a new service identifier for the own component.
 	 */
 	public static IServiceIdentifier createServiceIdentifier(IComponent provider, String servicename, 
-		Class<?> servicetype, Class<?> serviceimpl, ServiceScope scope, Collection<String> tags)
+		Class<?> servicetype, ServiceScope scope, Collection<String> tags)
 	{
 //		if(servicetype.getName().indexOf("IServicePool")!=-1)
 //			System.out.println("sdjhvkl");
@@ -130,17 +124,18 @@ public class ServiceIdentifier implements IServiceIdentifier
 		Set<String>	roles = ServiceIdentifier.getRoles(security, provider);
 		//ServiceScope scope = info!=null ? info.getScope() : null;
 		
-		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope,
+		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope, roles,
 			roles!=null && roles.contains(Security.UNRESTRICTED), tags);
 	}
 	
 	/**
 	 *  Create a new service identifier for a potentially remote component.
-	 * /
-	public static ServiceIdentifier	createServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted)
+	 */
+	public static ServiceIdentifier	createServiceIdentifier(ComponentIdentifier providerid, Class<?> type, ClassInfo[] supertypes, 
+		String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted, Collection<String> tags)
 	{
-		return new ServiceIdentifier(providerid, type, supertypes, servicename, scope, networknames, unrestricted);
-	}*/
+		return new ServiceIdentifier(providerid, new ClassInfo(type), supertypes, servicename, scope, networknames, unrestricted, tags);
+	}
 	
 	/** The id counter. */
 	protected static long idcnt;
@@ -263,18 +258,18 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Get the network names.
 	 *  @return the network names
 	 */
-	public Set<String> getNetworkNames()
+	public Set<String> getGroupNames()
 	{
-		return networknames;
+		return groupnames;
 	}
 
 	/**
 	 *  Set the network names.
 	 *  @param networknames The network names to set
 	 */
-	public void setNetworkNames(Set<String> networknames)
+	public void setGroupNames(Set<String> groupnames)
 	{
-		this.networknames = networknames;
+		this.groupnames = groupnames;
 	}
 	
 	/**

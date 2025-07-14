@@ -1,13 +1,11 @@
-package jadex.remoteservicetest;
+package jadex.remoteservices;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import jadex.common.ClassInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
@@ -40,22 +38,18 @@ public class CallerAgent
 
         String servicename = System.getProperty("jadex.servicename");
 
-        //KeySecret secret = (KeySecret) AbstractAuthenticationSecret.fromString(System.getProperty("jadex.groupsecret"));
-        //ComponentManager.get().getFeature(ISecurityFeature.class).addGroup(ProviderAgent.GROUP_NAME, secret);
+        KeySecret secret = (KeySecret) AbstractAuthenticationSecret.fromString(System.getProperty("jadex.groupsecret"));
+        ComponentManager.get().getFeature(ISecurityFeature.class).addGroup(ProviderAgent.GROUP_NAME, secret);
 
         System.out.println("Provider: " + provider);
 
         System.out.println("Service Name: " + servicename);
 
         Set<String> groups = new HashSet<>();
-        ServiceIdentifier sid = ServiceIdentifier.createServiceIdentifier(provider, ITestService.class, null, servicename, ServiceScope.GLOBAL, groups, true, null);
-        //ServiceIdentifier sid = new ServiceIdentifier(provider, new ClassInfo(ITestService.class), null, servicename, ServiceScope.GLOBAL, groups, true, null);
+        ServiceIdentifier sid = new ServiceIdentifier(provider, new ClassInfo(ITestService.class), null, servicename, ServiceScope.GLOBAL, groups, true, null);
 
-        System.out.println("Creating service proxy...");
-
+        //todo: replace with? agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(
         ITestService service = (ITestService) RemoteMethodInvocationHandler.createRemoteServiceProxy((Component) agent, sid);
-
-        System.out.println("Calling service " + servicename + "... ");
 
         System.out.println("Service call result: " + service.getComponentName().get());
 
@@ -72,7 +66,7 @@ public class CallerAgent
 
     public static void main(String[] args)
     {
-        IComponentHandle handle = IComponentManager.get().create(new CallerAgent()).get();
-        handle.waitForTermination().get();
+        IComponentManager.get().create(new CallerAgent()).get();
+        IComponentManager.get().waitForLastComponentTerminated();
     }
 }

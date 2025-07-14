@@ -36,7 +36,9 @@ dependencies
     implementation 'org.activecomponents.jadex:injection:'+v
     implementation 'org.activecomponents.jadex:providedservice:'+v
     implementation 'org.activecomponents.jadex:requiredservice:'+v
+    implementation 'org.activecomponents.jadex:autostart:'+v
     implementation 'org.activecomponents.jadex:remoteservice:'+v
+    implementation 'org.activecomponents.jadex:messaging:'+v
 	
 	implementation 'net.cinnom:nano-cuckoo:1.0.0'	// required for sliding cuckoo filter
 	

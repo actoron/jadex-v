@@ -35,7 +35,7 @@ public class MessageFeatureProvider extends ComponentFeatureProvider<IMessageFea
 	}
 	
 	@Override
-	public Class<? extends Component> getRequiredComponentType() 
+	public Class<? extends Component> getRequiredComponentType()
 	{
 		return Component.class;
 	}

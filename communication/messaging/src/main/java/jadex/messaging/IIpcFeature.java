@@ -10,11 +10,6 @@ import jadex.core.IRuntimeFeature;
  */
 public interface IIpcFeature extends IRuntimeFeature
 {
-	/** Flag if the IpcFeature should attempt a clean up
-	 *  of the IPC directory on startup.
-	 */
-	public static boolean PERFORM_CLEANUP = true;
-
 	/**
 	 *  Sends a message to a component outside the current JVM.
 	 *  

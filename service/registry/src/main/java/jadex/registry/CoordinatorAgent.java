@@ -11,11 +11,12 @@ import jadex.core.IComponent;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.service.ServiceCall;
 
-public class RegistryCoordinatorAgent implements IRegistryCoordinatorService 
+public class CoordinatorAgent implements ICoordinatorService 
 {
 	/** The agent. */
 	@Inject
@@ -27,6 +28,12 @@ public class RegistryCoordinatorAgent implements IRegistryCoordinatorService
 	// registerRegistry() futures
 	protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> clientlisteners = new LinkedHashSet<>();
 
+	@OnStart
+	protected void onStart()
+	{
+		System.getLogger(getClass().getName()).log(Level.INFO, "Coordinator started at "+agent.getId());
+	}
+	
 	/**
 	 *  Initiates the client registration procedure
 	 *  (super peer will answer initially with an empty intermediate result,
@@ -36,6 +43,8 @@ public class RegistryCoordinatorAgent implements IRegistryCoordinatorService
 	 */
 	public ISubscriptionIntermediateFuture<Void> registerRegistry(IServiceIdentifier reg, long starttime)
 	{
+		System.out.println("Coordinator has new registry client:"+reg+" at "+Instant.ofEpochMilli(starttime));
+		
 		//final ComponentIdentifier caller = ServiceCall.getCurrentInvocation().getCaller();
 		RegistryInfo ri = new RegistryInfo(reg, starttime);
 		

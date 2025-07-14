@@ -3,6 +3,7 @@ package jadex.messaging.ipc;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import jadex.messaging.IIpcFeature;
 import jadex.messaging.impl.ipc.IpcFeature;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +30,7 @@ public class IpcTest
 	 */
 	public IpcTest()
 	{
+		IpcFeature.PERFORM_CLEANUP = false;
 		byte[] bytes = new byte[16];
 		SUtil.FAST_RANDOM.nextBytes(bytes);
 		
@@ -97,6 +99,7 @@ public class IpcTest
 	@Test
 	public void testSecurity() throws Exception
 	{
+
 		byte[] bmsg = "This is a test".getBytes(SUtil.UTF8);
 		
 		ComponentIdentifier cid1 = getIpcComponentTestId("test1");

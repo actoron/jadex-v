@@ -1,6 +1,7 @@
 package jadex.providedservice;
 
 import java.util.Collection;
+import java.util.Set;
 
 import jadex.common.ClassInfo;
 import jadex.core.ComponentIdentifier;
@@ -34,12 +35,6 @@ public interface IServiceIdentifier
 	 *  @return The service super types.
 	 */
 	public ClassInfo[] getServiceSuperTypes();
-
-	/** 
-	 *  Get the resource identifier.
-	 *  @return The resource identifier.
-	 * /
-	public IResourceIdentifier getResourceIdentifier();*/
 	
 	/**
 	 *  Get the visibility scope.
@@ -48,17 +43,17 @@ public interface IServiceIdentifier
 	public ServiceScope getScope();
 	
 	/**
-	 *  Get the (security) network names.
+	 *  Get the (security) group names.
 	 *  Determines how it is accessible.
-	 *  @return The network names.
-	 * /
-	public Set<String> getNetworkNames();*/
+	 *  @return The group names.
+	 */
+	public Set<String> getGroupNames();
 	
 	/**
 	 *  Check if the service has unrestricted access. 
 	 *  @return True, if it is unrestricted.
-	 * /
-	public boolean isUnrestricted();*/
+	 */
+	public boolean isUnrestricted();
 	
 	/**
 	 *  Get the service tags.

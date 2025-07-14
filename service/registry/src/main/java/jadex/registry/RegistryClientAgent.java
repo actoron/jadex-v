@@ -5,13 +5,11 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
-import jadex.common.ClassInfo;
-import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.core.IComponentManager;
+import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
@@ -25,13 +23,14 @@ import jadex.future.TerminableIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
+import jadex.messaging.ISecurityFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceRegistry;
-import jadex.providedservice.impl.service.ServiceIdentifier;
+import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 
 public class RegistryClientAgent implements IRegistryClientService 
@@ -48,7 +47,7 @@ public class RegistryClientAgent implements IRegistryClientService
 
     
     /** The connected coordinator service. */
-    protected IRegistryCoordinatorService coordinator;
+    protected ICoordinatorService coordinator;
 
     /** Subscription to coordinator. */
     protected ISubscriptionIntermediateFuture<CoordinatorServiceEvent> cosub;
@@ -67,99 +66,86 @@ public class RegistryClientAgent implements IRegistryClientService
     
     protected Set<QueryManager<?>> querymanagers = new HashSet<>();;
     
-    protected List<String> coordinatornames = List.of
-    (
-    	IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+"@global@www.actoron.com", 
-    	IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME+GlobalProcessIdentifier.getSelf()
-    );
-
+    protected List<String> coordinatornames = List.of(ICoordinatorService.getCoordinatorServiceNames());
+        
     @OnStart
     public void start() 
     {
+    	System.getLogger(getClass().getName()).log(Level.INFO, "Registry client started: "+agent.getId()+" "+coordinatornames);
     	connectToCoordinator(0);
     }
     
     protected void connectToCoordinator(int idx)
     {
-    	if(cosub!=null)
-    		cosub.terminate();    
-		
-		coordinator = getCoordinatorService(coordinatornames.get(idx));
-		
-    	cosub = coordinator.getRegistries();
-    	cosub.next(event ->
-    	{
-    		System.out.println("Received coordinator event: "+event);
-    		
-    		if(ServiceEvent.SERVICE_ADDED==event.getType()) 
-        	{
-    			registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
-        	}
-        	else if(ServiceEvent.SERVICE_REMOVED==event.getType())
-        	{
-        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
-        	}
-        	else if(ServiceEvent.SERVICE_CHANGED==event.getType())
-        	{
-        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
-        		registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
-        	}
-        	else
-        	{
-                System.getLogger(getClass().getName()).log(Level.WARNING, "Unknown event type: " + event);
-        	}
-    		
-    		initRegistryReevaluation();
-    	})
-    	.finished(Void ->
-        {
-        	cosub = null;
-        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
-        	agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
-        		.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator((idx+1)%coordinatornames.size())))
-        		.printOnEx();
-        })
-    	.catchEx(ex ->
-    	{
-    		cosub = null;
-    		System.out.println("Could not connect to coordinator: "+coordinator+" "+ex);
+    	Runnable reconnect = () ->
+		{
+			cosub = null;
     		agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
     			.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator((idx+1)%coordinatornames.size())))
     			.printOnEx();
-    	});
-    }
-    
-    protected IRegistryCoordinatorService getCoordinatorService(String name)
-    {
-    	StringTokenizer stok = new StringTokenizer(name, "@");
-    	String agentname = stok.nextToken();
-    	String pid = stok.nextToken();
-    	String hostname = stok.nextToken();
-    	ComponentIdentifier copid = new ComponentIdentifier(agentname, pid, hostname);
+		};
     	
-    	IServiceIdentifier rrsid = new ServiceIdentifier(
-			copid,//new ComponentIdentifier(IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME), // providerid
-			new ClassInfo(IRemoteRegistryService.class), //type
-			null, // supertypes
-			IRegistryCoordinatorService.REGISTRY_COORDINATOR_NAME, // sername
-			ServiceScope.GLOBAL, // scope
-			null, // networknames
-			true, // unrestricted
-			null); 
+    	if(cosub!=null)
+    		cosub.terminate();    
 		
-    	IRegistryCoordinatorService ret = (IRegistryCoordinatorService)RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, rrsid);
-		return ret;
+		coordinator = ICoordinatorService.getCoordinatorServiceProxy(agent, coordinatornames.get(idx));
+		
+		// Can happen in local case when service is not (yet) available.
+		if(coordinator==null)
+		{
+			System.out.println("Could not connect to local coordinator: "+coordinatornames.get(idx)+" "+agent.getId());
+			reconnect.run();
+		}
+		else
+		{
+	    	cosub = coordinator.getRegistries();
+	    	cosub.next(event ->
+	    	{
+	    		System.out.println("Client connected to coordinator: "+agent.getId()+" "+event);
+	    		
+	    		if(ServiceEvent.SERVICE_ADDED==event.getType()) 
+	        	{
+	    			registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
+	        	}
+	        	else if(ServiceEvent.SERVICE_REMOVED==event.getType())
+	        	{
+	        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
+	        	}
+	        	else if(ServiceEvent.SERVICE_CHANGED==event.getType())
+	        	{
+	        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
+	        		registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
+	        	}
+	        	else
+	        	{
+	                System.getLogger(getClass().getName()).log(Level.WARNING, "Unknown event type: " + event);
+	        	}
+	    		
+	    		initRegistryReevaluation();
+	    	})
+	    	.finished(Void ->
+	        {
+	        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
+	        	reconnect.run();
+	        })
+	    	.catchEx(ex ->
+	    	{
+	    		System.out.println("Could not connect to coordinator: "+coordinator+" "+ex);
+	    		reconnect.run();
+	    	});
+		}
     }
-
+   
     protected IFuture<Void> initRegistryReevaluation()
     {
-    	if(evalfut==null)
+    	if(evalfut==null || evalfut.isDone())
     	{
 	    	evalfut = agent.getFeature(IExecutionFeature.class).waitForDelay(5000);
 	    	
 	    	evalfut.then(a->
 	    	{
 	    		RegistryInfo ri = evaluateRegistries();
+	    		System.out.println("Registry reevaluation: "+agent.getId()+" "+ri);
 	    		
 	    		if (ri == null) 
 	    			return;
@@ -167,13 +153,16 @@ public class RegistryClientAgent implements IRegistryClientService
 	    		// check if current registry is still ok
 	    		if(registry!=null && ((IService)registry).getServiceId().equals(ri.serviceid()))
 	    			return;
+	    		
+	    		System.out.println("Found new best registry: "+ri);
 
 	    		// terminate old registry
 	    		if(regsub!=null)
 	    			regsub.terminate();
 	    		
 	    		// create service proxy for new registry
-	    	  	IRemoteRegistryService rreg = (IRemoteRegistryService)RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, ri.serviceid());
+	    	  	IRemoteRegistryService rreg = (IRemoteRegistryService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(ri.serviceid());
+	    	  	System.out.println("Service proxy is: "+rreg);
 	    	  	setRegistry(rreg);
 	    	  	
 	    		// connect to new registry
@@ -181,6 +170,8 @@ public class RegistryClientAgent implements IRegistryClientService
 	    		
 	    		regsub.next(x ->
 	    		{
+	    			System.out.println("Registry client successfully registered with registry: "+agent.getId()+" "+registry);
+	    			
 		    		// Local query uses registry directly (w/o feature) -> only service identifiers needed and also removed events
 		    		ServiceQuery<ServiceEvent> lquery = new ServiceQuery<>((Class<IServiceIdentifier>)null)
 		    			.setEventMode()
@@ -193,6 +184,8 @@ public class RegistryClientAgent implements IRegistryClientService
 
 		    		localquery.next(event ->
 		    		{
+		    			System.out.println("Registry client received service event from internal registry: "+agent.getId()+" "+event+" "+event.getService().getScope());
+		    			
 		    			if(ServiceScope.GLOBAL.equals(event.getService().getScope())
 		    				|| ServiceScope.HOST.equals(event.getService().getScope()))
 		    			{
@@ -200,8 +193,7 @@ public class RegistryClientAgent implements IRegistryClientService
 		    				{
 		    					try
     							{
-//	    							if(event.toString().indexOf("ITestService")!=-1)
-	    								System.out.println(agent+ " sending service event to registry "+registry+": "+event);
+	    							System.out.println("Registry client sending service event to registry "+registry+": "+event);
     								regsub.sendBackwardCommand(event);
     							}
     							catch (Exception e)
@@ -256,15 +248,23 @@ public class RegistryClientAgent implements IRegistryClientService
     		registryfut = new Future<>();
     	
     	if(registry!=null && !registryfut.isDone())
+    	{
+    		//System.out.println("registryfut set: "+registry);
     		registryfut.setResult(registry);
+    	}
     	else if(registry==null)
+    	{
+    		System.out.println("Registry client has no registry, reevaluating registries: "+agent.getId());
     		initRegistryReevaluation();
+    	}
     	
     	return registryfut;
     }
     
     protected void setRegistry(IRemoteRegistryService registry)
     {
+    	System.out.println("setRegistryService: "+agent.getId()+" "+registry);
+    	
     	this.registry = registry;
     	
     	for(QueryManager<?> qman: querymanagers)
@@ -272,6 +272,7 @@ public class RegistryClientAgent implements IRegistryClientService
     		qman.updateQuery();
     	}
     	
+    	//System.out.println("registryfut is: "+registryfut);
     	if(registryfut!=null)
     	{
     		if(registryfut.isDone())
@@ -291,11 +292,13 @@ public class RegistryClientAgent implements IRegistryClientService
 	 */
 	public <T> ITerminableFuture<IServiceIdentifier> searchService(ServiceQuery<T> query)
 	{
+		System.out.println("RegistryClient: searching for service 1: "+agent.getId()+" "+query);
 		TerminableFuture<IServiceIdentifier> ret = new TerminableFuture<>();
 		getRegistryService().then(regser ->
 		{
+			System.out.println("RegistryClient: searching for service 2: "+agent.getId()+" "+query+" "+regser);
 			regser.searchService(query).delegateTo(ret);
-		}).catchEx(ret);
+		}).catchEx(ret).printOnEx();
 		return ret;
 	}
 	
@@ -332,6 +335,27 @@ public class RegistryClientAgent implements IRegistryClientService
 		querymanagers.add(qman);
 		
 		return qman.getReturnFuture();
+	}
+	
+	/**
+	 *  Get a remote service proxy.
+	 *  @param sid The service id.
+	 *  @return The service.
+	 */
+	public IFuture<IService> getRemoteServiceProxy(IComponent agent, IServiceIdentifier sid)
+	{
+		return new Future<>(RemoteMethodInvocationHandler.createRemoteServiceProxy(agent, sid));
+	}
+	
+	/**
+	 *  Get the security group names.
+	 *  @return The security group names.
+	 */
+	public Set<String> getGroupNames() 
+	{
+		ISecurityFeature secfeat = IComponentManager.get().getFeature(ISecurityFeature.class);
+		Set<String> groupnames = secfeat.getGroups().keySet();
+		return new HashSet<>(groupnames);
 	}
     
     @OnEnd

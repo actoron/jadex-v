@@ -27,14 +27,14 @@ public interface IComponentFactory
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generation.
+	 *  @param cid The component id or null for auto-generationm.
 	 *  @return The external access of the running component.
 	 */
-	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
+	public default IFuture<IComponentHandle> create(Object pojo, String localname)
 	{		
-		return create(pojo, null, null);
+		return create(pojo, localname, null);
 	}
-
+	
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
@@ -42,11 +42,13 @@ public interface IComponentFactory
 	 *  @param app The application context.
 	 *  @return The external access of the running component.
 	 */
-	public default IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
+	public default IFuture<IComponentHandle> create(Object pojo, String localname, Application app)
 	{		
+		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(localname);
 		if(pojo==null)
 		{
 			// Plain component for null pojo
+			//return Component.createComponent(Component.class, () -> new Component(pojo, cid, app));
 			return Component.createComponent(new Component(pojo, cid, app));
 		}
 		else

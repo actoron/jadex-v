@@ -14,6 +14,12 @@ public abstract class AbstractIdSenderCommand implements IIdSenderCommand
     /** Sender of the command. */
     private ComponentIdentifier sender;
 
+    public AbstractIdSenderCommand(String rxid, ComponentIdentifier sender)
+    {
+        this.id = rxid;
+        this.sender = sender;
+    }
+
     /**
      *  Get the conversation ID of the command.
      *  @return The ID.

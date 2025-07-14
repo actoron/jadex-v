@@ -2,9 +2,11 @@ package jadex.remoteservice.impl;
 
 import jadex.common.ClassInfo;
 import jadex.common.SReflect;
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
@@ -252,7 +254,7 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 				}
 			});*/
 			// Use by non-component threads not allowed?
-			throw new IllegalStateException("Remote proxy used by non-component thread.");
+			throw new IllegalStateException("Remote proxy used by non-component thread: "+proxy+" "+method.getName()+" "+Thread.currentThread());
 		}
 		else
 		{
@@ -1193,6 +1195,10 @@ public class RemoteMethodInvocationHandler implements InvocationHandler, ISwitch
 	 */
 	public static IService createRemoteServiceProxy(IComponent localcomp, IServiceIdentifier remotesvc)
 	{
+		ComponentIdentifier remoteid = remotesvc.getProviderId();
+		if (GlobalProcessIdentifier.getSelf().equals(remoteid.getGlobalProcessIdentifier()))
+			throw new IllegalArgumentException("Cannot create remote service proxy for local service: " + remoteid);
+
 		ClassLoader cll = IComponentManager.get().getClassLoader();
 		Collection<Class<?>> interfaces	= new LinkedHashSet<>();
 		Class<?> cl = remotesvc.getServiceType().getType(cll);
