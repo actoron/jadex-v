@@ -24,7 +24,7 @@ public class ServiceQuery<T>
 	
 	/** Marker for networks not set. */
 	//Hack!!! should not be public??? 
-	public static final String[] NETWORKS_NOT_SET = new String[]{"__NETWORKS_NOT_SET__"};	// TODO: new String[0] for better performance, but unable to check remotely after marshalling!
+	public static final String[] GROUPS_NOT_SET = new String[]{"__GROUPS_NOT_SET__"};	// TODO: new String[0] for better performance, but unable to check remotely after marshalling!
 	
 	/** Default matching modes set the elements with OR semantics. */
 	public static final Map<String, Boolean> DEFAULT_MATCHINGMODES = SUtil.createHashMap(
@@ -52,7 +52,7 @@ public class ServiceQuery<T>
 	protected IServiceIdentifier serviceidentifier;
 	
 	/** The network names. */
-	protected String[] networknames;
+	protected String[] groupnames;
 	
 	/** Should the service be unrestricted. */
 	protected Boolean unrestricted;
@@ -136,7 +136,7 @@ public class ServiceQuery<T>
 		this.owner = owner;
 		
 		this.id = SUtil.createUniqueId();
-		this.networknames = NETWORKS_NOT_SET;
+		this.groupnames = GROUPS_NOT_SET;
 		
 		setScope(scope);
 	}
@@ -152,7 +152,7 @@ public class ServiceQuery<T>
 		this.servicetags = original.servicetags;
 		this.owner = original.owner;
 		this.id = original.id;
-		this.networknames = original.networknames;
+		this.groupnames = original.groupnames;
 		this.matchingmodes = original.matchingmodes;
 		//this.platform	= original.platform;
 		//this.searchstart	= original.searchstart;
@@ -479,10 +479,10 @@ public class ServiceQuery<T>
 		if(serviceidentifier != null)
 			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_SID, new String[]{serviceidentifier.toString()}, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_SID)));
 		
-		assert !Arrays.equals(networknames, NETWORKS_NOT_SET) : "Problem: query not enhanced before processing.";
+		assert !Arrays.equals(groupnames, GROUPS_NOT_SET) : "Problem: query not enhanced before processing.";
 	
-		if((unrestricted==null || Boolean.FALSE.equals(unrestricted)) && networknames != null && networknames.length > 0)
-			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_GROUPS, networknames, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_GROUPS)));
+		if((unrestricted==null || Boolean.FALSE.equals(unrestricted)) && groupnames != null && groupnames.length > 0)
+			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_GROUPS, groupnames, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_GROUPS)));
 		
 		return ret;
 	}
@@ -602,21 +602,21 @@ public class ServiceQuery<T>
 	
 	
 	/**
-	 *  Get the networknames.
-	 *  @return the networknames
+	 *  Get the group names.
+	 *  @return the group names
 	 */
-	public String[] getNetworkNames()
+	public String[] getGroupNames()
 	{
-		return networknames;
+		return groupnames;
 	}
 
 	/**
 	 *  Set the networknames.
 	 *  @param networknames The networknames to set
 	 */
-	public ServiceQuery<T> setNetworkNames(String... networknames)
+	public ServiceQuery<T> setGroupNames(String... groupnames)
 	{
-		this.networknames = networknames;
+		this.groupnames = groupnames;
 		return this;
 	}
 	
@@ -704,11 +704,11 @@ public class ServiceQuery<T>
 			ret.append("platform=");
 			ret.append(platform);
 		}*/
-		if(networknames!=null)
+		if(groupnames!=null)
 		{
 			ret.append(ret.length()==13?"":", ");
-			ret.append("networknames=");
-			ret.append(Arrays.toString(networknames));
+			ret.append("groupnames=");
+			ret.append(Arrays.toString(groupnames));
 		}
 
 		if(unrestricted!=null)
