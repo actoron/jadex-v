@@ -265,23 +265,29 @@ public class Component implements IComponent
 		}
 		terminated	= true;
 		
-		// Terminate all features
-		// TODO: cleanup() may be called for some features without init() being called.
-		// This complicated is because lazy features may be created during init() of other features.
-		Collection<IComponentFeature>	cfeatures	= getFeatures();
-		Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
-		for(int i=features.length-1; i>=0; i--)
+		// Terminate all features in reverse creation order.
+		if(features!=null)
 		{
-			if(features[i] instanceof ILifecycle) 
+			// Use getProviderListForComponent as it uses a cached array list
+			List<ComponentFeatureProvider<IComponentFeature>>	providers
+				= SComponentFeatureProvider.getProviderListForComponent(getClass());
+			// TODO: On Exception in feature init(), cleanup() may be called for some features without init() being called.
+			// Fixing this is complicated is because lazy features may be created during init() of other features.
+			for(int i=providers.size()-1; i>=0; i--)
 			{
-				ILifecycle lfeature = (ILifecycle)features[i];
-				try
+				ComponentFeatureProvider<IComponentFeature>	provider	= providers.get(i);
+				Object feature = features.get(provider.getFeatureType());
+				if(feature instanceof ILifecycle) 
 				{
-					lfeature.cleanup();
-				}
-				catch(Throwable t2)
-				{
-					System.getLogger(this.getClass().getName()).log(Level.WARNING, "Error terminating feature: "+lfeature, t2);
+					ILifecycle lfeature = (ILifecycle)feature;
+					try
+					{
+						lfeature.cleanup();
+					}
+					catch(Throwable t2)
+					{
+						System.getLogger(this.getClass().getName()).log(Level.WARNING, "Error terminating feature: "+lfeature, t2);
+					}
 				}
 			}
 		}
