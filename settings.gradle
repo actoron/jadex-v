@@ -180,7 +180,7 @@ includeBuild('service/registry') {}
 
 includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
-includeBuild('communication/remoteservices') {}
+includeBuild('communication/remoteservice') {}
 
 includeBuild('micro/lib'){name='libmicro'}
 

@@ -6,6 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import jadex.providedservice.ServiceScope;
+
 /**
  *  The value of a field marked with this annotation will be provided as service.
  *  A method marked with this annotation will get called to get and provide a service implementation.
@@ -18,5 +20,22 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ProvideService
 {
-	// TODO: settings (scope, tags, etc.)
+	/**
+	 *  The service type.
+	 *  @return The service type.
+	 */
+	Class<?> type() default Object.class;
+	
+	/**
+	 *  The service scope.
+	 *  @return The service scope.
+	 */
+	ServiceScope scope() default ServiceScope.VM;
+	
+	/**
+	 *  The service tags.
+	 *  @return The service tags.
+	 */
+	String[] tags() default {};
+	
 }

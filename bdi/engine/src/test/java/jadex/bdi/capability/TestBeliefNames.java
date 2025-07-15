@@ -288,7 +288,7 @@ public class TestBeliefNames
 			@Plan(trigger=@Trigger(goals=MyGoal.class))
 			class MyPlan
 			{
-				@PlanContextCondition(beliefs="belief")
+				@PlanContextCondition
 				boolean context()
 				{
 					return "initial".equals(belief.get());

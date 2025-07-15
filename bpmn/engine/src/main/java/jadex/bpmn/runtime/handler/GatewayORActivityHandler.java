@@ -12,7 +12,6 @@ import jadex.bpmn.runtime.impl.ProcessThreadValueFetcher;
 import jadex.common.IValueFetcher;
 import jadex.core.IComponent;
 import jadex.javaparser.IParsedExpression;
-import jadex.model.IModelFeature;
 
 
 /**

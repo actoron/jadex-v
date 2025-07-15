@@ -45,7 +45,6 @@ import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SimpleValueFetcher;
-import jadex.model.IModelFeature;
 
 /**
  *  Representation of a single control flow in a BPMN process instance,
@@ -161,7 +160,7 @@ public class ProcessThread	implements ITaskContext
 	public MBpmnModel getBpmnModel()
 	{
 		//return (MBpmnModel)instance.getModel().getRawModel();
-		return (MBpmnModel)instance.getFeature(IModelFeature.class).getModel().getRawModel();
+		return (MBpmnModel)instance.getFeature(IBpmnComponentFeature.class).getModel().getRawModel();
 	}
 	
 	/**
@@ -1130,7 +1129,7 @@ public class ProcessThread	implements ITaskContext
 						
 						// Test if parameter value type fits
 						MParameter mparam = de.getTarget().getParameters().get(de.getTargetParameter());
-						Class<?> mpclz = mparam.getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IModelFeature.class).getModel().getAllImports());
+						Class<?> mpclz = mparam.getClazz().getType(instance.getClass().getClassLoader(), instance.getFeature(IBpmnComponentFeature.class).getModel().getAllImports());
 						if(!SReflect.isSupertype(mpclz, value.getClass()))
 						{
 							// Autoconvert basic from string

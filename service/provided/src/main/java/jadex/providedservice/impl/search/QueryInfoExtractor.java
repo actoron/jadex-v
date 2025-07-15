@@ -149,8 +149,8 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 		}*/
 		else if (KEY_TYPE_NETWORKS.equals(keytype))
 		{
-			if (query.getNetworkNames() != null)
-				ret = new HashSet<>(Arrays.asList(query.getNetworkNames()));
+			if (query.getGroupNames() != null)
+				ret = new HashSet<>(Arrays.asList(query.getGroupNames()));
 		}
 //		else if(KEY_TYPE_ISREMOTE.equals(keytype))
 //		{

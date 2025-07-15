@@ -38,11 +38,11 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.IThrowingFunction;
+import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.future.FutureFunctionality;
 import jadex.execution.impl.ComponentTimerCreator;
 import jadex.execution.impl.IInternalExecutionFeature;
-import jadex.execution.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.FutureHelper;
 import jadex.future.IFuture;
@@ -117,7 +117,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	}
 	
 	@Override
-	public void	onStart()
+	public void	init()
 	{
 		IBTProvider prov = (IBTProvider)getSelf().getPojo();
 		
@@ -154,7 +154,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	}
 	
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 		bt.abort(AbortMode.SUBTREE, NodeState.FAILED, context);
 	}

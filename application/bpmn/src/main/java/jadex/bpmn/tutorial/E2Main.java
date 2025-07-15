@@ -2,7 +2,6 @@ package jadex.bpmn.tutorial;
 
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.RBpmnProcess;
-import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 
 /**

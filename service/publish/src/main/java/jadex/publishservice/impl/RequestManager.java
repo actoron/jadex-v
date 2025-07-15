@@ -616,8 +616,10 @@ public class RequestManager
 		// solution: always create on container thread and remember
 		//final Map<String, Object> session = getSession(request, true);
 		final String sessionid = getSessionId(request);
-		if(sessionid==null && request.getRequestURI().indexOf("jadex.js")==-1)
+		
+		if(sessionid==null && request.getRequestURI().indexOf("jadex.js")==-1 && ri.isSSERequest())
 			System.out.println("Call has no jadex session id, Jadex cookie missing: "+request.getRequestURL());
+		
 		// todo: if missing generate one?! as it is cookie it would be used by further requests
 		
 		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
@@ -1243,6 +1245,8 @@ public class RequestManager
 					String ah = request.getHeader("Accept");
 					if(ah!=null && ah.toLowerCase().indexOf(MediaType.SERVER_SENT_EVENTS)!=-1)
 					{
+						// todo: sessionid should be set by client! why created here?
+						
 						// Session can be null if no header is provided by client
 						String fsessionid = sessionid;
 						if(fsessionid==null)
@@ -2091,6 +2095,11 @@ public class RequestManager
 	public static Object convertJsonValue(String val, Class<?> type, ClassLoader cl, boolean tomap)
 	{
 		List<ITraverseProcessor> procs = null;
+
+		// Allow receiving raw JSON for lone String parameter methods, change parameter name?
+		if (tomap && String.class.equals(type))
+			return val;
+
 		if(tomap && SReflect.isSupertype(Map.class, type))
 			procs = JsonTraverser.nestedreadprocs;
 		return JsonTraverser.objectFromString(val.toString(), cl, null, type, procs);

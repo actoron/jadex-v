@@ -6,6 +6,8 @@ import jadex.core.IComponentFeature;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableIntermediateFuture;
+import jadex.providedservice.IService;
+import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.ServiceQuery;
 
 /**
@@ -94,4 +96,11 @@ public interface IRequiredServiceFeature extends IComponentFeature
 	 *  @return Future providing the corresponding services as intermediate results.
 	 */
 	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query);
+	
+	/**
+	 *  Get a service proxy for a service identifier.
+	 *  @param sid The service id.
+	 *  @return The service proxy.
+	 */
+	public IService getServiceProxy(IServiceIdentifier sid);
 }

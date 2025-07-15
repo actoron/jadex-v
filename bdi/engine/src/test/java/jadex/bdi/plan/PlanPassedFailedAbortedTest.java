@@ -37,7 +37,7 @@ public class PlanPassedFailedAbortedTest
 		@Plan(trigger=@Trigger(factchanged="bel"))
 		class TestPlan
 		{
-			@PlanContextCondition(beliefs="bel")
+			@PlanContextCondition
 			boolean context()
 			{
 				return bel.get()!=null;

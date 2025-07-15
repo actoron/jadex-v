@@ -46,7 +46,7 @@ public class GoalFlickerTest
 			@Goal
 			class FlickerGoal
 			{
-				@GoalContextCondition(beliefs="context")
+				@GoalContextCondition
 				boolean	context()
 				{
 					return context.get();
@@ -126,7 +126,7 @@ public class GoalFlickerTest
 			@Plan(trigger=@Trigger(goals=TopGoal.class))
 			class	TopPlan
 			{
-				@PlanContextCondition(beliefs="context")
+				@PlanContextCondition
 				boolean context()
 				{
 					return context.get();

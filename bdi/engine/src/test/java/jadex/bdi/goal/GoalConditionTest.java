@@ -271,7 +271,7 @@ public class GoalConditionTest
 			@Goal
 			class StartGoal	implements Supplier<String>
 			{
-				@GoalQueryCondition(beliefs="trigger")
+				@GoalQueryCondition
 				public String get()
 				{
 					return trigger.isEmpty() ? null : trigger.get(0);
@@ -312,7 +312,7 @@ public class GoalConditionTest
 			@Goal
 			class StartGoal
 			{
-				@GoalTargetCondition(beliefs="trigger")
+				@GoalTargetCondition
 				boolean targetCondition(String fact)
 				{
 					return "value".equals(fact) && trigger.contains("value");
@@ -356,7 +356,7 @@ public class GoalConditionTest
 			@Goal
 			class StartGoal	implements Supplier<String>
 			{
-				@GoalTargetCondition(beliefs="trigger")
+				@GoalTargetCondition
 				boolean targetCondition(String fact)
 				{
 					return "value".equals(fact) && trigger.contains("value");
@@ -407,7 +407,7 @@ public class GoalConditionTest
 			@Goal
 			class StartGoal
 			{
-				@GoalMaintainCondition(beliefs="trigger")
+				@GoalMaintainCondition
 				boolean maintainCondition()
 				{
 					return trigger.contains("value");
@@ -442,13 +442,13 @@ public class GoalConditionTest
 			@Goal(excludemode=ExcludeMode.WhenFailed)
 			class StartGoal
 			{
-				@GoalMaintainCondition(beliefs="trigger")
+				@GoalMaintainCondition
 				boolean maintainCondition()
 				{
 					return trigger.contains("value");
 				}
 				
-				@GoalTargetCondition(beliefs="trigger")
+				@GoalTargetCondition
 				boolean targetCondition()
 				{
 					return trigger.size()>1;
@@ -487,7 +487,7 @@ public class GoalConditionTest
 			@Goal
 			class ContextGoal
 			{
-				@GoalContextCondition(beliefs="context")
+				@GoalContextCondition
 				boolean	context(Boolean value)
 				{
 					// value is null on initial check (not triggered by belief change)
@@ -529,7 +529,7 @@ public class GoalConditionTest
 			@Goal
 			class DropGoal
 			{
-				@GoalDropCondition(beliefs="drop")
+				@GoalDropCondition
 				boolean	drop(Boolean value)
 				{
 					// value is null on initial check (not triggered by belief change)
@@ -590,7 +590,7 @@ public class GoalConditionTest
 			@Goal
 			class RecurGoal
 			{
-				@GoalRecurCondition(beliefs="recur")
+				@GoalRecurCondition
 				boolean	recur(Boolean value)
 				{
 					// value is null on initial check (not triggered by belief change)

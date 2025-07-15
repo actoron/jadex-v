@@ -41,7 +41,7 @@ public class PlanAtomicTest
 		@Plan(trigger=@Trigger(factadded="trigger"))
 		class AtomicPlan
 		{
-			@PlanContextCondition(beliefs="bel")
+			@PlanContextCondition
 			boolean context()
 			{
 				return bel.get();

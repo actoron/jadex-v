@@ -4,9 +4,6 @@ import jadex.bpmn.model.task.ITaskContext;
 import jadex.bpmn.model.task.annotation.Task;
 import jadex.bpmn.model.task.annotation.TaskParameter;
 import jadex.core.IComponent;
-import jadex.execution.IExecutionFeature;
-import jadex.future.DelegationResultListener;
-import jadex.future.Future;
 
 /**
  *  Execute an external step.

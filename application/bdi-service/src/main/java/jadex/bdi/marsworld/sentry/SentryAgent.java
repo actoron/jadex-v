@@ -86,13 +86,13 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 //			return ret;
 //		}
 
-		@GoalContextCondition(beliefs="movecapa.mytargets")
+		@GoalContextCondition
 		public boolean checkContext()
 		{
 			IVector2 mypos = outer.getMoveCapa().getMyself().getPosition();
 			Target nearest = null;
 			IVector2 npos = null;
-			for(Target so: outer.getMoveCapa().getMyTargets())
+			for(Target so: outer.movecapa.getMyTargets())
 			{
 				if(so.getStatus()==Target.Status.Unknown)
 				{
@@ -143,11 +143,11 @@ public class SentryAgent extends BaseAgent implements ITargetAnnouncementService
 			// == $goal.target
 		}
 		
-		@GoalDropCondition(beliefs="movecapa.missionend")
+		@GoalDropCondition
 		public boolean checkDrop()
 		{
 			//System.out.println("check ndropping: "+this+" "+outer.getMoveCapa().isMissionend());
-			return outer.getMoveCapa().isMissionend();
+			return outer.movecapa.isMissionEnd();
 		}
 		
 		/*@GoalFinished

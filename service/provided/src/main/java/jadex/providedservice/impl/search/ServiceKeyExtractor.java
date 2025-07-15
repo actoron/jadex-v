@@ -33,7 +33,7 @@ public class ServiceKeyExtractor implements IKeyExtractor<IServiceIdentifier>
 	public static final String KEY_TYPE_SID = "serviceid";
 	
 	/** Key type for the networks. */
-	public static final String KEY_TYPE_NETWORKS = "networks";
+	public static final String KEY_TYPE_GROUPS = "groups";
 	
 	/** Key type for the unrestricted mode. */
 	public static final String KEY_TYPE_UNRESTRICTED = "unrestricted";
@@ -131,16 +131,17 @@ public class ServiceKeyExtractor implements IKeyExtractor<IServiceIdentifier>
 		{
 			ret = new SetWrapper<String>(serv.toString());
 		}
-		/*else if(KEY_TYPE_NETWORKS.equals(keytype))
+		else if(KEY_TYPE_GROUPS.equals(keytype))
 		{
 			if(!serv.isUnrestricted())
 			{
-				if(serv.getNetworkNames()!=null)
+				if(serv.getGroupNames()!=null)
 				{
 					// Hack!!! service identifier should be immutable but isn't
-					synchronized(serv.getNetworkNames())
+					// todo: still the case???
+					synchronized(serv.getGroupNames())
 					{
-						ret	= new HashSet<String>(serv.getNetworkNames());
+						ret	= new HashSet<String>(serv.getGroupNames());
 					}
 				}
 				// else ret	= null;
@@ -151,7 +152,7 @@ public class ServiceKeyExtractor implements IKeyExtractor<IServiceIdentifier>
 		else if(KEY_TYPE_UNRESTRICTED.equals(keytype))
 		{
 			ret = new SetWrapper<String>(""+serv.isUnrestricted());
-		}*/
+		}
 		return ret;
 	}
 	

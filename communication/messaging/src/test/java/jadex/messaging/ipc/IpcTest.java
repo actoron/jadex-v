@@ -3,6 +3,8 @@ package jadex.messaging.ipc;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import jadex.messaging.IIpcFeature;
+import jadex.messaging.impl.ipc.IpcFeature;
 import org.junit.jupiter.api.Test;
 
 import jadex.common.SUtil;
@@ -10,10 +12,10 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.Future;
 import jadex.messaging.ISecurityFeature.DecodedMessage;
-import jadex.messaging.security.authentication.KeySecret;
-import jadex.messaging.security.authentication.PasswordSecret;
-import jadex.messaging.security.SSecurity;
-import jadex.messaging.security.SecurityFeature;
+import jadex.messaging.impl.security.authentication.KeySecret;
+import jadex.messaging.impl.security.authentication.PasswordSecret;
+import jadex.messaging.impl.security.SSecurity;
+import jadex.messaging.impl.security.SecurityFeature;
 
 /**
  *  Test for the IPC subsystem.
@@ -28,6 +30,7 @@ public class IpcTest
 	 */
 	public IpcTest()
 	{
+		IpcFeature.PERFORM_CLEANUP = false;
 		byte[] bytes = new byte[16];
 		SUtil.FAST_RANDOM.nextBytes(bytes);
 		
@@ -64,7 +67,7 @@ public class IpcTest
 	{
 		Future<Void> done1 = new Future<>();
 		ComponentIdentifier cid1 = getIpcComponentTestId("test1");
-		IpcStreamHandler ipc1 = getIpcStreamHandler(cid1);
+		IpcFeature ipc1 = getIpcStreamHandler(cid1);
 		ipc1.setReceivedMessageHandler((rcvmsg) -> 
 		{
 			System.out.println(cid1.getLocalName() + " received message from " + rcvmsg.origin() + ": " + new String(rcvmsg.message(), SUtil.UTF8));
@@ -73,7 +76,7 @@ public class IpcTest
 		
 		Future<Void> done2 = new Future<>();
 		ComponentIdentifier cid2 = getIpcComponentTestId("test2");
-		IpcStreamHandler ipc2 = getIpcStreamHandler(cid2);
+		IpcFeature ipc2 = getIpcStreamHandler(cid2);
 		ipc2.setReceivedMessageHandler((rcvmsg) -> 
 		{
 			System.out.println(cid2.getLocalName() + " received message from " + rcvmsg.origin() + ": " + new String(rcvmsg.message(), SUtil.UTF8));
@@ -96,13 +99,14 @@ public class IpcTest
 	@Test
 	public void testSecurity() throws Exception
 	{
+
 		byte[] bmsg = "This is a test".getBytes(SUtil.UTF8);
 		
 		ComponentIdentifier cid1 = getIpcComponentTestId("test1");
-		IpcStreamHandler ipc1 = getIpcStreamHandler(cid1);
+		IpcFeature ipc1 = getIpcStreamHandler(cid1);
 		
 		ComponentIdentifier cid2 = getIpcComponentTestId("test2");
-		IpcStreamHandler ipc2 = getIpcStreamHandler(cid2);
+		IpcFeature ipc2 = getIpcStreamHandler(cid2);
 		
 		SecurityFeature sec1 = new SecurityFeature(cid1.getGlobalProcessIdentifier(), ipc1);
 		SecurityFeature sec2 = new SecurityFeature(cid2.getGlobalProcessIdentifier(), ipc2);
@@ -129,9 +133,9 @@ public class IpcTest
 		System.out.println("Encrypted IPC works.");
 	}
 	
-	private IpcStreamHandler getIpcStreamHandler(ComponentIdentifier cid)
+	private IpcFeature getIpcStreamHandler(ComponentIdentifier cid)
 	{
-		IpcStreamHandler ipc = new IpcStreamHandler(cid.getGlobalProcessIdentifier());
+		IpcFeature ipc = new IpcFeature(cid.getGlobalProcessIdentifier());
 		ipc.setSocketDirectory(ipcdir);
 		ipc.open();
 		return ipc;

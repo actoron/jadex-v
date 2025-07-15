@@ -1,9 +1,9 @@
 package jadex.requiredservice.impl;
 
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.core.impl.Component;
-import jadex.execution.impl.ILifecycle;
+import jadex.core.impl.ILifecycle;
 import jadex.future.IFuture;
-import jadex.model.IModelFeature;
 import jadex.model.impl.AbstractModelLoader;
 import jadex.model.modelinfo.ModelInfo;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -19,21 +19,21 @@ public class BpmnRequiredServiceFeature implements IBpmnRequiredServiceFeature, 
 	}
 	
 	@Override
-	public void onStart()
+	public void init()
 	{
 		this.model	= loadModel();
 	}
 	
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 		// NOP
 	}
 	
 	public RequiredServiceModel loadModel()
 	{
-		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
-		final RequiredServiceModel mymodel = (RequiredServiceModel)BpmnRequiredServiceLoader.readFeatureModel(self.getFeature(IModelFeature.class).getModel());
+		ModelInfo model = (ModelInfo)self.getFeature(IBpmnComponentFeature.class).getModel();
+		final RequiredServiceModel mymodel = (RequiredServiceModel)BpmnRequiredServiceLoader.readFeatureModel(self.getFeature(IBpmnComponentFeature.class).getModel());
 		
 		if(mymodel!=null)
 		{
@@ -51,7 +51,7 @@ public class BpmnRequiredServiceFeature implements IBpmnRequiredServiceFeature, 
 	public IFuture<Object> getService(String service)
 	{
 		RequiredServiceInfo	info	= getServiceInfo(service);
-		Class<?>	type	= info.getType().getType(self.getClassLoader(), self.getFeature(IModelFeature.class).getModel().getAllImports());
+		Class<?>	type	= info.getType().getType(self.getClassLoader(), self.getFeature(IBpmnComponentFeature.class).getModel().getAllImports());
 		IRequiredServiceFeature	rsf	= self.getFeature(IRequiredServiceFeature.class);
 		@SuppressWarnings("unchecked")
 		IFuture<Object>	ret	= (IFuture<Object>)rsf.searchService(type);

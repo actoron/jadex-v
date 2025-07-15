@@ -6,18 +6,23 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.ConsoleHandler;
 
 import jadex.collection.RwMapWrapper;
 import jadex.common.IAutoLock;
 import jadex.common.SUtil;
+import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentListener;
@@ -147,16 +152,20 @@ public class ComponentManager implements IComponentManager
 	/** The component id number mode. */
 	private boolean cidnumbermode;
 	
-	// todo: avoid making these public!
-	
 	/** The component listeners. */
-	final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
+	private final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
 
 	/** The components. */
 	private final Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
 	
 	/** The number of components per appid. */
-	private final Map<String, Integer> appcompcnt = new HashMap<>();
+	private final Map<String, Set<ComponentIdentifier>> appcomps = new HashMap<>();
+	
+	/** Global counter for components in creation. */
+	private volatile int	creationcnt = 0;
+
+	/** App counters for components in creation. */
+	private final Map<String, Integer> appcreationcnt = new HashMap<>();
 
 	
 	/** Cache fore runtime features. */
@@ -841,9 +850,18 @@ public class ComponentManager implements IComponentManager
 			
 			// Increment component count for appid.
 			if(comp.getAppId()!=null)
-				incrementComponentCount(comp.getAppId());
+			{
+				String appid = comp.getAppId();
+				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
+				if(appcompset==null)
+				{
+					appcompset = new HashSet<ComponentIdentifier>();
+					appcomps.put(appid, appcompset);
+				}
+				appcompset.add(comp.getId());
+			}
 		}
-		notifyEventListener(COMPONENT_ADDED, comp.getId(), null);
+		notifyEventListener(COMPONENT_ADDED, comp.getId());
 	}
 	
 	/**
@@ -865,19 +883,27 @@ public class ComponentManager implements IComponentManager
 			IComponent comp = components.remove(cid);
 			if(comp==null)
 				throw new RuntimeException("Unknown component id: "+cid);
-			last = components.isEmpty();
+			last = creationcnt==0 && components.isEmpty();
+			
 			appid = comp.getAppId();
 			if(appid!=null)
 			{
-				decrementComponentCount(appid);
-				lastapp = getNumberOfComponents(appid)==0;
+				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
+				if(appcompset==null)
+					throw new RuntimeException("Unknown app id: "+appid);
+				appcompset.remove(cid);
+				if(appcompset.isEmpty())
+				{
+					appcomps.remove(appid);
+					lastapp = appcreationcnt.getOrDefault(appid, 0) <= 1;
+				}
 			}
 		}
-		notifyEventListener(COMPONENT_REMOVED, cid, null);
+		notifyEventListener(COMPONENT_REMOVED, cid);
 		if(lastapp)
-			notifyEventListener(COMPONENT_LASTREMOVEDAPP, cid, null);
+			notifyEventListener(COMPONENT_LASTREMOVEDAPP, cid);
 		if(last)
-			notifyEventListener(COMPONENT_LASTREMOVED, cid, appid);
+			notifyEventListener(COMPONENT_LASTREMOVED, cid);
 		//System.out.println("size: "+components.size()+" "+cid);
 	}
 
@@ -904,7 +930,7 @@ public class ComponentManager implements IComponentManager
 	
 	/**
 	 *  Get a running component.
-	 *  @throws IllegalArgumentException when the component does not exist.
+	 *  @return The component with the given id or null if not found.
 	 */
 	public IComponent getComponent(ComponentIdentifier cid)
 	{
@@ -934,7 +960,7 @@ public class ComponentManager implements IComponentManager
 	{
 		synchronized(components)
 		{
-			return appcompcnt.getOrDefault(appid, 0);
+			return appcomps.getOrDefault(appid, Collections.emptySet()).size();
 		}
 	}
 	
@@ -957,6 +983,15 @@ public class ComponentManager implements IComponentManager
 		}
 	}
 	
+	@Override
+	public Set<ComponentIdentifier> getAllComponents()
+	{
+		synchronized(components)
+		{
+			return new LinkedHashSet<ComponentIdentifier>(components.keySet());
+		}
+	}
+	
 	/**
 	 *  Set an application context for the components.
 	 *  @param appcontext The context.
@@ -976,7 +1011,7 @@ public class ComponentManager implements IComponentManager
 		return appcontext;
 	}*/
 	
-	public void notifyEventListener(String type, ComponentIdentifier cid, String appid)
+	public void notifyEventListener(String type, ComponentIdentifier cid)
 	{
 		Set<IComponentListener> mylisteners = null;
 		
@@ -998,10 +1033,9 @@ public class ComponentManager implements IComponentManager
 						fmylisteners.stream().forEach(lis -> lis.componentAdded(cid));
 					else if(COMPONENT_REMOVED.equals(type))
 						fmylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
-					else if(COMPONENT_LASTREMOVED.equals(type))
+					else if(COMPONENT_LASTREMOVED.equals(type)
+						|| COMPONENT_LASTREMOVEDAPP.equals(type))
 						fmylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
-					else if(COMPONENT_LASTREMOVEDAPP.equals(type))
-						fmylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid, appid));
 				};
 
 				getGlobalRunner().getComponentHandle().scheduleStep(notify);
@@ -1014,42 +1048,15 @@ public class ComponentManager implements IComponentManager
 						mylisteners.stream().forEach(lis -> lis.componentAdded(cid));
 					else if(COMPONENT_REMOVED.equals(type))
 						mylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
-					else if(COMPONENT_LASTREMOVED.equals(type))
+					else if(COMPONENT_LASTREMOVED.equals(type)
+						|| COMPONENT_LASTREMOVEDAPP.equals(type))
 						mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
-					else if(COMPONENT_LASTREMOVEDAPP.equals(type))
-						mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid, appid));
 				}
 				catch(Exception e)
 				{
 					getLogger(Object.class).log(Level.INFO, "Exception in event notification: "+SUtil.getExceptionStacktrace(e));
 				}
 			}
-		}
-	}
-	
-	public void incrementComponentCount(String appid) 
-	{
-		synchronized (components) 
-		{
-			appcompcnt.put(appid, appcompcnt.getOrDefault(appid, 0) + 1);
-			//System.out.println("inc: "+appid+" "+appcompcnt);
-		}
-	}
-
-	public void decrementComponentCount(String appid) 
-	{
-		synchronized (components) 
-		{
-			int count = appcompcnt.getOrDefault(appid, 0);
-			if (count <= 1) 
-			{
-				appcompcnt.remove(appid);
-			} 
-			else 
-			{
-				appcompcnt.put(appid, count - 1);
-		    }
-			//System.out.println("dec: "+appid+" "+appcompcnt);
 		}
 	}
 	
@@ -1081,28 +1088,152 @@ public class ComponentManager implements IComponentManager
 			{
 				if(globalrunner==null)
 				{
-					try
+					Component comp = new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID), null)
 					{
-						globalrunner	= SUtil.getExecutor().submit(() ->
+						public void handleException(Exception exception)
 						{
-							Component comp = new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID))
-							{
-								public void handleException(Exception exception)
-								{
-									globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
-								}
-							};
-							comp.init();
-							return comp;
-						}).get();
-					}
-					catch(Exception e)
-					{
-						SUtil.throwUnchecked(e);
-					}
+							globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
+						}
+					};
+					comp.init();
+					globalrunner = comp;
 				}
 			}
 		}
 		return globalrunner;
+	}
+	
+	@Override
+	public void waitForLastComponentTerminated()
+	{
+		doWaitForLastComponentTerminated(null);
+	}
+	
+	/**
+	 *  Wait for last global or application component to be terminated.
+	 * 	@param app The application to wait for, or null for global.
+	 */
+	public void	doWaitForLastComponentTerminated(Application app)
+	{
+		// Use reentrant lock/condition instead of synchronized/wait/notify to avoid pinning when using virtual threads.
+		ReentrantLock lock	= new ReentrantLock();
+		Condition	wait	= lock.newCondition();
+
+	    try 
+	    { 
+	    	lock.lock();
+	    	boolean dowait;
+		    //synchronized(ComponentManager.get().components) 
+		    synchronized(components)
+		    {
+		    	dowait = app==null
+		    		? creationcnt!=0 || getNumberOfComponents()!=0
+		    		: appcreationcnt.getOrDefault(app.getId(), 0)!=0 || getNumberOfComponents(app.getId())!=0;
+		        if(dowait) 
+		        {
+		        	String eventtype = app==null ? IComponentManager.COMPONENT_LASTREMOVED : IComponentManager.COMPONENT_LASTREMOVEDAPP;
+			        IComponentManager.get().addComponentListener(new IComponentListener() 
+			        {
+			            @Override
+			            public void lastComponentRemoved(ComponentIdentifier cid) 
+			            {
+			        	    try 
+			        	    { 
+			        	    	lock.lock();
+			        	    	IComponentManager.get().removeComponentListener(this, eventtype);
+			                    wait.signal();
+			                }
+			        	    finally
+			        	    {
+			        			lock.unlock();
+			        		}
+			            }
+			        }, eventtype);
+		        }
+		    }
+		    
+		    if(dowait)
+		    {
+		    	try 
+			    {
+			    	wait.await();
+			    } 
+			    catch(InterruptedException e) 
+			    {
+			        e.printStackTrace();
+			    }
+		    }
+	    }
+	    finally
+	    {
+			lock.unlock();
+		}
+	}
+
+	public void increaseCreating(Application app)
+	{
+		synchronized(components) 
+		{
+			creationcnt++;
+			if(app!=null)
+			{
+				appcreationcnt.put(app.getId(), appcreationcnt.getOrDefault(app.getId(), 0) + 1);
+			}
+		}
+	}
+	
+	public void decreaseCreating(ComponentIdentifier cid, Application app)
+	{
+		boolean last = false;
+		boolean lastapp = false;
+		
+		synchronized(components) 
+		{
+			creationcnt--;			
+			last = creationcnt==0 && getNumberOfComponents()==0;
+			
+			if(app!=null)
+			{
+				int cnt = appcreationcnt.getOrDefault(app.getId(), 0);
+				if(cnt <= 1) 
+				{
+					appcreationcnt.remove(app.getId());
+					lastapp = getNumberOfComponents(app.getId())==0;
+				} 
+				else 
+				{
+					appcreationcnt.put(app.getId(), cnt - 1);
+				}
+			}
+		}
+		
+		if(last)
+		{
+			notifyEventListener(IComponentManager.COMPONENT_LASTREMOVED, cid);
+		}
+		if(lastapp)
+		{
+			notifyEventListener(IComponentManager.COMPONENT_LASTREMOVEDAPP, cid);
+		}
+	}
+
+	/**
+	 *  Get all components of the given application.
+	 *  @return The set of all component ids belonging to the application.
+	 */
+	public Set<ComponentIdentifier> getAllComponents(Application application)
+	{
+		synchronized(components)
+		{
+			Set<ComponentIdentifier> ret = appcomps.get(application.getId());
+			if(ret==null)
+			{
+				return Collections.emptySet();
+			}
+			else
+			{
+				return new LinkedHashSet<ComponentIdentifier>(ret);
+			}
+		}
 	}
 }

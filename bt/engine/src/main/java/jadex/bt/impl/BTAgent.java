@@ -15,7 +15,7 @@ public class BTAgent extends Component
 	
 	public static IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		return Component.createComponent(BTAgent.class, () -> new BTAgent(pojo, cid, app));
+		return Component.createComponent(new BTAgent(pojo, cid, app));
 	}
 	
 	public BTAgent(Object pojo, ComponentIdentifier cid, Application app)

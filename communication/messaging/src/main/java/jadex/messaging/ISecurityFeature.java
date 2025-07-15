@@ -1,13 +1,16 @@
 package jadex.messaging;
 
 import jadex.core.IRuntimeFeature;
-import jadex.core.impl.GlobalProcessIdentifier;
-import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
+import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *  Security is responsible for validating (remote) requests.
  */
-public interface ISecurityFeature extends IRuntimeFeature
+public interface ISecurityFeature extends IRuntimeFeature 
 {
 	/** The unrestricted group and role (access is granted to all), e.g. used for chat. */
 	public static final String UNRESTRICTED = "unrestricted";
@@ -17,6 +20,9 @@ public interface ISecurityFeature extends IRuntimeFeature
 
 	/** The admin role that is required by all jadex system services, e.g. CMS. */
 	public static final String ADMIN = "admin";
+
+	/** The local group and role for processes running on the same host. */
+	public static final String LOCAL_GROUP = "localgroup";
 	
 	//-------- message-level encryption/authentication -------
 	
@@ -63,7 +69,14 @@ public interface ISecurityFeature extends IRuntimeFeature
 	 *  @param asecret The secret.
 	 */
 	public void addGroup(String groupname, AbstractAuthenticationSecret asecret);
-	
+
+	/**
+	 *  Get access to the stored groups.
+	 *
+	 *  @return The stored groups.
+	 */
+	public Map<String, List<AbstractAuthenticationSecret>> getGroups();
+
 	/**
 	 *  Remove a group.
 	 * 
@@ -109,4 +122,30 @@ public interface ISecurityFeature extends IRuntimeFeature
 	 *  @param role The role name.
 	 */
 	public void removeRole(String entity, String role);
+
+	/**
+	 *  Marks a group as not part of the default authorization.
+	 *
+	 *  @param groupname The group name.
+	 */
+	public void addNoDefaultAuthorizationGroup(String groupname);
+
+	/**
+	 *  Unmarks a group as not part of the default authorization.
+	 *
+	 *  @param groupname The group name.
+	 */
+	public void removeNoDefaultAuthorizationGroup(String groupname);
+
+	/**
+	 *  Disable loading the local group. Must be invoked before messaging is used.
+	 */
+	public void disableLocalGroup();
+	
+	/**
+	 *  Returns the allowed access groups from a given set of roles of a Security annotation.
+	 *  @param annotationroles Roles specied in the Security annotation.
+	 *  @return Groups representing those roles.
+	 */
+	public Set<String> getPermittedGroups(Set<String> annotationroles);
 }

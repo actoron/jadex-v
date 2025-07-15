@@ -42,12 +42,13 @@ import jadex.common.SUtil;
 import jadex.common.Tuple3;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
-import jadex.model.IModelFeature;
+import jadex.model.modelinfo.IModelInfo;
 import jadex.rules.eca.RuleSystem;
 
-public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnComponentFeature
+public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnComponentFeature, ILifecycle
 {
 	
 //	/** Constant for step event. */
@@ -153,12 +154,15 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 	
 	protected BpmnProcess self;
 	
+	protected IModelInfo	model;
+	
 	/**
 	 *  Factory method constructor for instance level.
 	 */
 	public BpmnProcessFeature(BpmnProcess self)
 	{
 		this.self	= self;
+		this.model	= BpmnProcess.loadModel(self.getPojo().getFilename());
 	}
 	
 	public BpmnProcess getComponent()
@@ -166,9 +170,15 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 		return (BpmnProcess)self;
 	}
 
-	public MBpmnModel getModel()
+//	public MBpmnModel getModel()
+//	{
+//		return (MBpmnModel)getComponent().getFeature(IBpmnComponentFeature.class).getModel().getRawModel();
+//	}
+	
+	@Override
+	public IModelInfo getModel()
 	{
-		return (MBpmnModel)getComponent().getFeature(IModelFeature.class).getModel().getRawModel();
+		return model;
 	}
 	
 	/**
@@ -272,27 +282,27 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
         }*/
         
         if(!found)
-        	startacts = getModel().getStartActivities();
+        	startacts = ((MBpmnModel)getModel().getRawModel()).getStartActivities();
         
         Set<MActivity> startevents = startacts!=null ? new HashSet<MActivity>(startacts) : new HashSet<MActivity>();
         if(trigger != null)
         {
-        	Map<String, MActivity> allacts = getModel().getAllActivities();
-        	triggeractivity = allacts.get(trigger.getSecondEntity());
-        	for(Map.Entry<String, MActivity> act : allacts.entrySet())
-        	{
-        		if(act instanceof MSubProcess)
-        		{
-        			MSubProcess subproc = (MSubProcess)act;
-        			if(subproc.getActivities() != null && subproc.getActivities().contains(triggeractivity));
-        			{
-        				triggersubproc = subproc;
-        				break;
-        			}
-        		}
-        	}
-        	
-        	startevents.add(triggeractivity);
+	        	Map<String, MActivity> allacts = ((MBpmnModel) getModel().getRawModel()).getAllActivities();
+	        	triggeractivity = allacts.get(trigger.getSecondEntity());
+	        	for(Map.Entry<String, MActivity> act : allacts.entrySet())
+	        	{
+	        		if(act instanceof MSubProcess)
+	        		{
+	        			MSubProcess subproc = (MSubProcess)act;
+	        			if(subproc.getActivities() != null && subproc.getActivities().contains(triggeractivity));
+	        			{
+	        				triggersubproc = subproc;
+	        				break;
+	        			}
+	        		}
+	        	}
+	        	
+	        	startevents.add(triggeractivity);
         }
         
         for(MActivity mact: startevents)
@@ -326,7 +336,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
         } 
         
         // Don't auto terminate when waiting for events.
-        if(getModel().getEventSubProcessStartEvents().isEmpty())
+        if(((MBpmnModel) getModel().getRawModel()).getEventSubProcessStartEvents().isEmpty())
         	getTopLevelThread().terminateOnEnd();
         
         //started = true;
@@ -335,7 +345,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 	}
 	
 	@Override
-	public void terminate()
+	public void cleanup()
 	{
 		//System.out.println("todo: end: "+getComponent());
 		

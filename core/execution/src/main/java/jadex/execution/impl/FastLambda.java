@@ -1,5 +1,7 @@
 package jadex.execution.impl;
 
+import jadex.core.Application;
+import jadex.core.ComponentIdentifier;
 import jadex.core.impl.Component;
 import jadex.future.Future;
 
@@ -16,9 +18,9 @@ public class FastLambda<T>	extends Component
 	/** The future to set the result on, if any. */
 	protected Future<T>	result;
 	
-	public FastLambda(Object body, Future<T> result)
+	public FastLambda(Object body, ComponentIdentifier cid, Application app, Future<T> result)
 	{
-		super(body);
+		super(body, cid, app);
 		this.result	= result;
 	}
 }

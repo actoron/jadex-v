@@ -9,7 +9,7 @@ import jadex.core.IRuntimeFeature;
  *  Runtime feature implementing IPC communication on the same host.
  */
 public interface IIpcFeature extends IRuntimeFeature
-{	
+{
 	/**
 	 *  Sends a message to a component outside the current JVM.
 	 *  

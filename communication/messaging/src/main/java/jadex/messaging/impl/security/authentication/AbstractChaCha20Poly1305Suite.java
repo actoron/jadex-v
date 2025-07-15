@@ -12,9 +12,6 @@ import java.util.logging.Logger;
 
 import jadex.common.SBinConv;
 import jadex.core.ComponentIdentifier;
-import jadex.messaging.security.authentication.AbstractAuthenticationSecret;
-import jadex.messaging.security.authentication.AbstractX509PemSecret;
-import jadex.messaging.security.authentication.X509PemStringsSecret;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.digests.Blake3Digest;
 import org.bouncycastle.crypto.modes.ChaCha20Poly1305;
@@ -26,10 +23,10 @@ import jadex.common.ByteArrayWrapper;
 import jadex.common.SUtil;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.ISecurityInfo;
-import jadex.messaging.security.SSecurity;
-import jadex.messaging.security.SecurityFeature;
-import jadex.messaging.security.handshake.BasicSecurityMessage;
-import jadex.messaging.security.handshake.InitialHandshakeFinalMessage;
+import jadex.messaging.impl.security.SSecurity;
+import jadex.messaging.impl.security.SecurityFeature;
+import jadex.messaging.impl.security.handshake.BasicSecurityMessage;
+import jadex.messaging.impl.security.handshake.InitialHandshakeFinalMessage;
 
 
 /**

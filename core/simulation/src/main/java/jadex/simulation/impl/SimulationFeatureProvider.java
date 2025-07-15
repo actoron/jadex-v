@@ -1,21 +1,21 @@
 package jadex.simulation.impl;
 
+import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
-import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.execution.impl.ExecutionFeatureProvider;
 
 public class SimulationFeatureProvider extends ExecutionFeatureProvider
 {
 	@Override
-	public boolean replacesFeatureProvider(ComponentFeatureProvider<IExecutionFeature> provider)
+	public boolean replacesFeatureProvider(ComponentFeatureProvider<?> provider)
 	{
 		return provider instanceof ExecutionFeatureProvider;
 	}
 	
 	@Override
-	protected ExecutionFeature doCreateFeatureInstance()
+	protected ExecutionFeature doCreateFeatureInstance(Component component)
 	{
-		return new SlaveSimulationFeature();
+		return new SlaveSimulationFeature(component);
 	}
 }

@@ -17,7 +17,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.execution.impl.ILifecycle;
+import jadex.core.impl.ILifecycle;
 import jadex.future.DefaultResultListener;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
@@ -75,7 +75,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	}
 	
 	@Override
-	public void	onStart()
+	public void	init()
 	{
 //		ModelInfo model = (ModelInfo)self.getFeature(IModelFeature.class).getModel();
 //		NFPropertyModel mymodel = (NFPropertyModel)model.getFeatureModel(INFPropertyFeature.class);
@@ -143,7 +143,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	/**
 	 *  Called when the feature is shutdowned.
 	 */
-	public void	onEnd()
+	public void	cleanup()
 	{
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		

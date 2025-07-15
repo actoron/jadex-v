@@ -5,9 +5,11 @@ import java.util.Set;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
 
 //@Security(roles=Security.UNRESTRICTED)	// Allow invocation and check in impl.
+@Service
 public interface IRemoteRegistryService
 {
 	/** Name of the remote registry component and service. */

@@ -1,22 +1,21 @@
 package jadex.providedservice.impl;
 
-import java.util.Set;
-
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
-import jadex.model.IModelFeature;
+import jadex.providedservice.IProvidedServiceFeature;
+import jadex.providedservice.impl.service.ProvidedServiceFeatureProvider;
 
-public class BpmnProvidedServiceFeatureProvider extends ComponentFeatureProvider<IBpmnProvidedServiceFeature> 
+public class BpmnProvidedServiceFeatureProvider extends ComponentFeatureProvider<IProvidedServiceFeature> 
 {
 	@Override
-	public Class<IBpmnProvidedServiceFeature> getFeatureType()
+	public Class<IProvidedServiceFeature> getFeatureType()
 	{
-		return IBpmnProvidedServiceFeature.class;
+		return IProvidedServiceFeature.class;
 	}
 
 	@Override
-	public IBpmnProvidedServiceFeature createFeatureInstance(Component self)
+	public IProvidedServiceFeature createFeatureInstance(Component self)
 	{
 		return new BpmnProvidedServiceFeature(self);
 	}
@@ -27,8 +26,9 @@ public class BpmnProvidedServiceFeatureProvider extends ComponentFeatureProvider
 		return BpmnProcess.class;
 	}
 	
-	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
+	@Override
+	public boolean replacesFeatureProvider(ComponentFeatureProvider<?> provider)
 	{
-		return Set.of(IModelFeature.class);
+		return provider instanceof ProvidedServiceFeatureProvider;
 	}
 }

@@ -44,14 +44,14 @@ public class FeatureTest
 	public void	testComponentLoading()
 	{
 		// Dummy component for feature loading.
-		doTestLoading(new Component(this), COMPONENT_FEATURE_TYPES);
+		doTestLoading(new Component(null, null, null), COMPONENT_FEATURE_TYPES);
 	}
 	
 	@Test
 	public void	testAgentLoading()
 	{
 		// Dummy agent component for feature loading.
-		doTestLoading(new SubComponent(this){}, AGENT_FEATURE_TYPES);
+		doTestLoading(new SubComponent(null, null, null){}, AGENT_FEATURE_TYPES);
 	}
 	
 	protected void	doTestLoading(Component comp, Class<? extends IComponentFeature>[] feature_types)
@@ -70,7 +70,7 @@ public class FeatureTest
 	public void testLazyFeature()
 	{
 		// Dummy component for feature loading.
-		Component	comp	= new Component(this);
+		Component	comp	= new Component(null, null, null);
 		comp.init();
 
 		// Lazy feature should not be found
@@ -87,7 +87,7 @@ public class FeatureTest
 	public void	testComponentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
-		Component	comp	= new Component(this);
+		Component	comp	= new Component(null, null, null);
 		comp.init();
 		
 		// IMjTestFeature1 feature should be replaced
@@ -100,7 +100,7 @@ public class FeatureTest
 	public void	testAgentFeatureReplacement()
 	{
 		// Dummy component for feature loading.
-		Component	comp	= new SubComponent(null){};
+		Component	comp	= new SubComponent(null, null, null){};
 		comp.init();
 		
 		// IMjTestFeature1 feature should be replaced
@@ -113,14 +113,14 @@ public class FeatureTest
 	public void testComponentOrdering()
 	{
 		// Dummy component for feature loading.
-		doTestOrdering(new Component(this), COMPONENT_FEATURE_TYPES);
+		doTestOrdering(new Component(null, null, null), COMPONENT_FEATURE_TYPES);
 	}
 		
 	@Test
 	public void testAgentOrdering()
 	{
 		// Dummy agent component for feature loading.
-		doTestOrdering(new SubComponent(null){}, AGENT_FEATURE_TYPES);
+		doTestOrdering(new SubComponent(null, null, null){}, AGENT_FEATURE_TYPES);
 	}
 		
 	protected void doTestOrdering(Component comp, Class<? extends IComponentFeature>[] feature_types)

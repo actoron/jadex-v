@@ -9,8 +9,8 @@ import java.util.Map;
 import jadex.common.NameValue;
 import jadex.core.IComponent;
 import jadex.core.ResultProvider;
+import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.ILifecycle;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
 
@@ -42,7 +42,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	//-------- lifecycle methods --------
 	
 	@Override
-	public void onStart()
+	public void init()
 	{
 		startPojo(model, Collections.singletonList(self.getPojo()), null);		
 	}
@@ -105,7 +105,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	}
 
 	@Override
-	public void onEnd()
+	public void cleanup()
 	{
 		if(extras!=null)
 		{

@@ -12,8 +12,6 @@ import jadex.bpmn.task.info.ParameterMetaInfo;
 import jadex.bpmn.task.info.TaskMetaInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.execution.IExecutionFeature;
-import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;

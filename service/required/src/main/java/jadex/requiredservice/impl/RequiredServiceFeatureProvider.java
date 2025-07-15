@@ -35,8 +35,15 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 	@Override
 	public IRequiredServiceFeature createFeatureInstance(Component self)
 	{
-//		System.out.println("created required service feature: "+self);
+		//System.out.println("created required service feature: "+self);
 		return new RequiredServiceFeature(self);
+	}
+	
+	@Override
+	public boolean isLazyFeature()
+	{
+		// Only create feature when needed.
+		return true;
 	}
 	
 	//-------- augment injection feature with field injection --------

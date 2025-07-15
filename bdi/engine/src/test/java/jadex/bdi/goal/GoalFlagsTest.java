@@ -45,7 +45,7 @@ public class GoalFlagsTest
 			@Goal(recur=true)
 			class MyGoal
 			{
-				@GoalTargetCondition(beliefs="cnt")
+				@GoalTargetCondition
 				boolean	target()
 				{
 					return cnt.get()>3;
@@ -147,7 +147,7 @@ public class GoalFlagsTest
 			@Goal(excludemode=ExcludeMode.Never)
 			class MyGoal
 			{
-				@GoalTargetCondition(beliefs="list")
+				@GoalTargetCondition
 				boolean	cond()
 				{
 					return list.size()>1;
@@ -182,7 +182,7 @@ public class GoalFlagsTest
 			@Goal(excludemode=ExcludeMode.WhenFailed)
 			class MyGoal1
 			{
-				@GoalTargetCondition(beliefs="list1")
+				@GoalTargetCondition
 				boolean	cond()
 				{
 					return list1.size()>1;
@@ -192,7 +192,7 @@ public class GoalFlagsTest
 			@Goal(excludemode=ExcludeMode.WhenFailed)
 			class MyGoal2
 			{
-				@GoalTargetCondition(beliefs="list2")
+				@GoalTargetCondition
 				boolean	cond()
 				{
 					return list2.size()>1;
@@ -241,7 +241,7 @@ public class GoalFlagsTest
 			@Goal(excludemode=ExcludeMode.WhenSucceeded)
 			class MyGoal1
 			{
-				@GoalTargetCondition(beliefs="list1")
+				@GoalTargetCondition
 				boolean	cond()
 				{
 					return list1.size()>1;
@@ -251,7 +251,7 @@ public class GoalFlagsTest
 			@Goal(excludemode=ExcludeMode.WhenSucceeded)
 			class MyGoal2
 			{
-				@GoalTargetCondition(beliefs="list2")
+				@GoalTargetCondition
 				boolean	cond()
 				{
 					return list2.size()>1;

@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import jadex.common.NameValue;
 import jadex.common.SUtil;
@@ -21,12 +20,10 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
-import jadex.core.IComponentManager;
 import jadex.core.IResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.Future;
-import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
@@ -56,6 +53,9 @@ public class Component implements IComponent
 	
 	/** The last exception, if any. */
 	protected Exception	exception;
+
+	/** Is the component terminated? */
+	protected boolean terminated;
 	
 //	/** The value provider. */
 //	protected ValueProvider valueprovider;
@@ -70,27 +70,10 @@ public class Component implements IComponent
 	protected static final String	GLOBALRUNNER_ID	= "__globalrunner__";
 		
 	/**
-	 *  Create a new component and instantiate all features (except lazy features).
-	 *  Uses an auto-generated component identifier.
-	 *  @param pojo	The pojo, if any.
-	 */
-	public Component(Object pojo)
-	{
-		this(pojo, null, null);
-	}
-	
-	/**
-	 *  Create a new component and instantiate all features (except lazy features).
-	 *  @param id	The id to use or null for an auto-generated id.
-	 *  @throws IllegalArgumentException when the id already exists. 
-	 */
-	public Component(Object pojo, ComponentIdentifier id)
-	{
-		this(pojo, id, null);
-	}
-	
-	/**
-	 *  Create a new component.
+	 *  Create a component object to be inited later
+	 *  @param pojo The pojo, if any.
+	 *  @param id The component id, or null for auto-generation.
+	 *  @param app The application context, if any.
 	 */
 	public Component(Object pojo, ComponentIdentifier id, Application app)
 	{
@@ -121,14 +104,34 @@ public class Component implements IComponent
 			= SComponentFeatureProvider.getProviderListForComponent(getClass());
 		if(!providers.isEmpty())
 		{
-			features = new LinkedHashMap<>(providers.size(), 1);
-			for(ComponentFeatureProvider<IComponentFeature> provider: providers)
+			try
 			{
-				if(!provider.isLazyFeature())
+				features = new LinkedHashMap<>(providers.size(), 1);
+				for(ComponentFeatureProvider<IComponentFeature> provider: providers)
 				{
-					IComponentFeature	feature	= provider.createFeatureInstance(this);
-					features.put(provider.getFeatureType(), feature);
+					if(!provider.isLazyFeature())
+					{
+						IComponentFeature	feature	= provider.createFeatureInstance(this);
+						features.put(provider.getFeatureType(), feature);
+					}
 				}
+
+				// Initialize all features, i.e. non-lazy ones that implement ILifecycle.
+				for(Object feature:	getFeatures())
+				{
+					if(feature instanceof ILifecycle)
+					{
+						ILifecycle lfeature = (ILifecycle)feature;
+						//System.out.println("starting: "+lfeature);
+						lfeature.init();
+					}
+				}
+			}
+			catch(Throwable t)
+			{
+				// If an exception occurs, remove the component from the manager.
+				terminate();
+				throw SUtil.throwUnchecked(t);
 			}
 		}
 	}
@@ -221,6 +224,14 @@ public class Component implements IComponent
 					@SuppressWarnings("unchecked")
 					Class<IComponentFeature> otype	= (Class<IComponentFeature>)rtype;
 					features.put(otype, ret);
+					
+					if(ret instanceof ILifecycle)
+					{
+						ILifecycle lfeature = (ILifecycle)ret;
+						//System.out.println("starting: "+lfeature);
+						lfeature.init();
+					}
+
 					return ret;
 				}
 				catch(Throwable t)
@@ -236,43 +247,50 @@ public class Component implements IComponent
 	}
 	
 	/**
+	 *  Check if the component is terminated.
+	 */
+	public boolean isTerminated()
+	{
+		return terminated;
+	}
+	
+	/**
 	 *  Terminate the component.
 	 */
-	public IFuture<Void> terminate(ComponentIdentifier... cids)
+	public void	terminate()
 	{
-		if(cids.length==0)
+		if(terminated)
 		{
-			if(!GLOBALRUNNER_ID.equals(id.getLocalName()))
-			{
-				ComponentManager.get().removeComponent(this.getId());
-			}
-			
-			if(getPojo()!=null)
-			{
-				IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(getPojo().getClass());
-				if(creator!=null)
-				{
-					creator.terminate(this);
-				}
-				else
-				{
-					throw new RuntimeException("Cannot terminate component of type: "+getClass());
-				}
-			}
-				
-			return IFuture.DONE;
+			throw new ComponentTerminatedException(id);
 		}
-		else
+		terminated	= true;
+		
+		// Terminate all features
+		// TODO: cleanup() may be called for some features without init() being called.
+		// This complicated is because lazy features may be created during init() of other features.
+		Collection<IComponentFeature>	cfeatures	= getFeatures();
+		Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
+		for(int i=features.length-1; i>=0; i--)
 		{
-			FutureBarrier<Void> bar = new FutureBarrier<Void>();
-			for(ComponentIdentifier cid: cids)
+			if(features[i] instanceof ILifecycle) 
 			{
-				bar.add(IComponentManager.get().terminate(cid));
+				ILifecycle lfeature = (ILifecycle)features[i];
+				try
+				{
+					lfeature.cleanup();
+				}
+				catch(Throwable t2)
+				{
+					System.getLogger(this.getClass().getName()).log(Level.WARNING, "Error terminating feature: "+lfeature, t2);
+				}
 			}
-			return bar.waitFor();
 		}
 		
-//		throw new UnsupportedOperationException("No termination code for component: "+getId());
+		// Remove the component from the manager.
+		if(!GLOBALRUNNER_ID.equals(this.id.getLocalName()))
+		{
+			ComponentManager.get().removeComponent(this.getId());
+		}
 	}
 	
 	/**
@@ -505,7 +523,7 @@ public class Component implements IComponent
 	public IComponentHandle getComponentHandle(ComponentIdentifier cid)
 	{
 		//return IComponent.getExternalComponentAccess(cid);
-		return ComponentManager.get().getComponent(cid).getComponentHandle();
+		return ComponentManager.get().getComponentHandle(cid);
 	}
 	
 	/**
@@ -527,21 +545,23 @@ public class Component implements IComponent
 		return executable;
 	}
 	
-	public static <T extends Component> IFuture<IComponentHandle>	createComponent(Class<T> type, Supplier<T> creator)
+	/**
+	 *  Initialize a component and register it in the component manager.
+	 */
+	public static <T extends Component> IFuture<IComponentHandle>	createComponent(T component)
 	{
-		IBootstrapping	bootstrapping	= SComponentFeatureProvider.getBootstrapping(type);
+		IBootstrapping	bootstrapping	= SComponentFeatureProvider.getBootstrapping(component.getClass());
 		if(bootstrapping!=null)
 		{
-			return bootstrapping.bootstrap(type, creator);
+			return bootstrapping.bootstrap(component);
 		}
 		else
 		{
 			Future<IComponentHandle>	ret	= new Future<>();
 			try
 			{
-				T comp = creator.get();
-				comp.init();
-				ret.setResult(comp.getComponentHandle());
+				component.init();
+				ret.setResult(component.getComponentHandle());
 			}
 			catch(Exception e)
 			{

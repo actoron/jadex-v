@@ -18,6 +18,13 @@ import jadex.publishservice.publish.annotation.Publish;
 
 public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProvider<IPublishServiceFeature>
 {
+	@Override
+	public boolean isLazyFeature()
+	{
+		// is lazy and triggered by injection
+		return true;
+	}
+	
 	//-------- injection model extension --------
 	
 	@Override

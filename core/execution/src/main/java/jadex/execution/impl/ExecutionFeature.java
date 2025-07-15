@@ -3,7 +3,6 @@ package jadex.execution.impl;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -27,10 +26,10 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
-import jadex.core.IComponentFeature;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
+import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.StepAborted;
 import jadex.execution.future.FutureFunctionality;
@@ -40,7 +39,7 @@ import jadex.future.ISuspendable;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 
-public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFeature
+public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFeature, ILifecycle
 {
 	/** Provide access to the execution feature when running inside a component. */
 	public static final ThreadLocal<ExecutionFeature>	LOCAL	= new ThreadLocal<>();
@@ -48,7 +47,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	private Queue<Runnable> steps;
 	protected volatile boolean executing;
 	protected volatile int	do_switch;
-	protected boolean terminated;
 //	protected ThreadRunner runner = null;
 	protected Component	self = null;
 	protected Object endstep = null;
@@ -58,11 +56,19 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	AtomicInteger	threadcount	= new AtomicInteger();
 	boolean	failed	= false;
 	
+	
+	/**
+	 *  Create a new execution feature.
+	 *  @param self The component that is executing.
+	 */
+	public ExecutionFeature(Component self)
+	{
+		this.self = self;
+	}
+	
 	@Override
 	public IComponent getComponent()
 	{
-		if(self==null)
-			throw new IllegalStateException("Component can not be accessed in 'beforeCreation' bootstrapping.");
 		return self;
 	}
 	
@@ -73,7 +79,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		boolean	setex	= false;
 		synchronized(ExecutionFeature.this)
 		{
-			if(terminated)
+			if(self.isTerminated())
 			{
 				if(r instanceof StepInfo)
 				{
@@ -117,7 +123,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		Future<T> ret = new Future<>();
 		
-		if(terminated)
+		if(self.isTerminated())
 		{
 			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
@@ -191,7 +197,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		Future<T> ret = new Future<>();
 		
-		if(terminated)
+		if(self.isTerminated())
 		{
 			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
@@ -245,7 +251,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		Future<T> ret = createStepFuture(step);
 		
-		if(terminated)
+		if(self.isTerminated())
 		{
 			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
@@ -292,7 +298,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		Future<T> ret = createStepFuture(step);
 		
-		if(terminated)
+		if(self.isTerminated())
 		{
 			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
@@ -410,7 +416,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<>();
 		
-		if(terminated)
+		if(self.isTerminated())
 		{
 			ret.setException(new ComponentTerminatedException(getComponent().getId()));
 			return ret;
@@ -581,7 +587,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 //				ScopedValue.where(LOCAL, MjExecutionFeature.this).run(()->
 //				{
 					boolean hasnext	= true;
-					while(hasnext && !terminated)
+					while(hasnext && !self.isTerminated())
 					{
 						Runnable	step;
 						synchronized(ExecutionFeature.this)
@@ -625,7 +631,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							}
 							
 							// Stop this thread, because there are no more steps -> set executing=false
-							else if(!terminated && steps==null)
+							else if(!self.isTerminated() && steps==null)
 							{
 								// decrement only if not resume step (otherwise decremented already)
 								if(!failed && threadcount.decrementAndGet()<0)
@@ -881,25 +887,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	}
 	
 	@Override
-	public void terminate()
+	public void init()
 	{
-		if(terminated)
-			return;
-		
+	}
+	
+	@Override
+	public void cleanup()
+	{
 		executeEndStep();
-		
-		Collection<IComponentFeature>	cfeatures	= self.getFeatures();
-		Object[]	features	= cfeatures.toArray(new Object[cfeatures.size()]);
-		for(int i=features.length-1; i>=0; i--)
-		{
-			if(features[i] instanceof ILifecycle) 
-			{
-				ILifecycle lfeature = (ILifecycle)features[i];
-				lfeature.onEnd();
-			}
-		}
-		
-		terminated = true;
 		
 		//System.out.println("terminate start: "+getComponent().getId()+" "+steps.size());
 		

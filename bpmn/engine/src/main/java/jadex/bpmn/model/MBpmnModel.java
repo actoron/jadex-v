@@ -4,7 +4,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +21,7 @@ import jadex.common.transformation.traverser.SCloner;
 import jadex.common.transformation.traverser.TraversedObjectsContext;
 import jadex.common.transformation.traverser.Traverser;
 import jadex.common.transformation.traverser.Traverser.MODE;
-import jadex.javaparser.SJavaParser;
 import jadex.model.ICacheableModel;
-import jadex.model.modelinfo.ConfigurationInfo;
-import jadex.model.modelinfo.IArgument;
 import jadex.model.modelinfo.IModelInfo;
 import jadex.model.modelinfo.ModelInfo;
 

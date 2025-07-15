@@ -45,10 +45,10 @@ public class ProducerAgent extends BaseAgent implements IProduceService
 			this.target = target;
 		}
 		
-		@GoalDropCondition(beliefs="movecapa.missionend")
+		@GoalDropCondition
 		public boolean checkDrop()
 		{
-			return movecapa.isMissionend();
+			return movecapa.isMissionEnd();
 		}
 
 		/**

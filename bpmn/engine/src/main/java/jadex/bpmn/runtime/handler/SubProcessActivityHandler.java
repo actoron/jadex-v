@@ -14,6 +14,7 @@ import jadex.bpmn.model.MParameter;
 import jadex.bpmn.model.MSubProcess;
 import jadex.bpmn.runtime.BpmnProcess;
 import jadex.bpmn.runtime.IActivityHandler;
+import jadex.bpmn.runtime.IBpmnComponentFeature;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.bpmn.runtime.impl.ProcessThreadValueFetcher;
@@ -25,10 +26,8 @@ import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
-import jadex.core.IComponentHandle;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
-import jadex.model.IModelFeature;
 
 // todo
 
@@ -212,7 +211,7 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 //				info.setParent(parent);
 			//IExternalAccess creator = parent == null ? instance.getExternalAccess() : instance.getExternalAccess(parent);
 			
-			/*String[] imps = instance.getFeature(IModelFeature.class).getModel().getAllImports();
+			/*String[] imps = instance.getFeature(IBpmnComponentFeature.class).getModel().getAllImports();
 			if(info.getImports()==null && imps!=null)
 				info.setImports(imps);
 			info.setFilename(file);	*/
@@ -408,7 +407,7 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 							{
 								trig = (String)act.getPropertyValueString(MActivity.RESULTTYPE);
 								String typename = (String)SJavaParser.parseExpression(act.getPropertyValue(MActivity.RESULTTYPE), 
-									thread.getInstance().getFeature(IModelFeature.class).getModel().getAllImports(), null)
+									thread.getInstance().getFeature(IBpmnComponentFeature.class).getModel().getAllImports(), null)
 									.getValue(thread.getInstance().getValueProvider().getFetcher());
 								Class<?> type = new ClassInfo(typename).getType(thread.getInstance().getClass().getClassLoader());
 								if(SReflect.isSupertype(type, value.getClass()))
