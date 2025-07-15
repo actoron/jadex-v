@@ -1769,7 +1769,9 @@ public class RequestManager
 			catch(Exception e)
 			{
 			}
-			
+
+			// TODO Hack for raw JSON to avoid converting later?
+			boolean rawjson = false;
 			if(bytes!=null && bytes.length>0)
 			{
 				String mime = SUtil.guessContentTypeByBytes(bytes);
@@ -1800,6 +1802,7 @@ public class RequestManager
 								if (String.class.equals(types[0]))
 								{
 									// Return raw JSON to parameter
+									rawjson = true;
 									inparamsmap.put("0", str);
 								}
 								else
@@ -1943,9 +1946,12 @@ public class RequestManager
 				targetparams = new Object[types.length];
 
 				Object[] inparams = generateInParameters(inparamsmap, pinfos, types);
-				for(int i = 0; i < inparams.length; i++)
+				if (!rawjson)
 				{
-					inparams[i] = convertParameter(sr, inparams[i], types[i]);
+					for (int i = 0; i < inparams.length; i++)
+					{
+						inparams[i] = convertParameter(sr, inparams[i], types[i]);
+					}
 				}
 				
 				for(int i = 0; i < targetparams.length && i < inparams.length; i++)
