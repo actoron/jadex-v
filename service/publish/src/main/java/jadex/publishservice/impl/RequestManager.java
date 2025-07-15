@@ -2095,6 +2095,11 @@ public class RequestManager
 	public static Object convertJsonValue(String val, Class<?> type, ClassLoader cl, boolean tomap)
 	{
 		List<ITraverseProcessor> procs = null;
+
+		// Allow receiving raw JSON.
+		if (String.class.equals(type))
+			return val;
+
 		if(tomap && SReflect.isSupertype(Map.class, type))
 			procs = JsonTraverser.nestedreadprocs;
 		return JsonTraverser.objectFromString(val.toString(), cl, null, type, procs);
