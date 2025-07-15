@@ -2096,8 +2096,8 @@ public class RequestManager
 	{
 		List<ITraverseProcessor> procs = null;
 
-		// Allow receiving raw JSON.
-		if (String.class.equals(type))
+		// Allow receiving raw JSON for lone String parameter methods, change parameter name?
+		if (tomap && String.class.equals(type))
 			return val;
 
 		if(tomap && SReflect.isSupertype(Map.class, type))
