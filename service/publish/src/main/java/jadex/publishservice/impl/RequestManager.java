@@ -1797,9 +1797,17 @@ public class RequestManager
 							// if is json object
 							if(str.trim().startsWith("{"))
 							{
-								// Map as first argument
-								Object arg0 = convertJsonValue(str, types[0], getClassLoader(), true);
-								inparamsmap.put("0", arg0);
+								if (String.class.equals(types[0]))
+								{
+									// Return raw JSON to parameter
+									inparamsmap.put("0", str);
+								}
+								else
+								{
+									// Map as first argument
+									Object arg0 = convertJsonValue(str, types[0], getClassLoader(), true);
+									inparamsmap.put("0", arg0);
+								}
 							}
 							else if(str.trim().startsWith("\""))
 							{
@@ -2095,10 +2103,6 @@ public class RequestManager
 	public static Object convertJsonValue(String val, Class<?> type, ClassLoader cl, boolean tomap)
 	{
 		List<ITraverseProcessor> procs = null;
-
-		// Allow receiving raw JSON for lone String parameter methods, change parameter name?
-		if (tomap && String.class.equals(type))
-			return val;
 
 		if(tomap && SReflect.isSupertype(Map.class, type))
 			procs = JsonTraverser.nestedreadprocs;
