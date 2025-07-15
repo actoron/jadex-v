@@ -36,18 +36,19 @@ public class SensorAgent implements ISensorAgent {
     }
 
     @Override
-    public IFuture<Void> deploy(HashMap<String, Object> info)
+    public IFuture<Void> deploy(String info)
     {
-        Map<String, Object> projectmap = (Map<String, Object>) info.get("project");
-        System.out.println("projectmap: " + projectmap);
-
-        info.entrySet().forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
-        System.out.println("agent: " + agent.getId().getLocalName());
-        Object projectRaw = info.get("project");
-        System.out.println("Project: " + projectRaw);
-
-        String nameSpace = (String) info.get("namespace");
-        System.out.println("Namespace: " + nameSpace);
+        System.out.println("deploy: " + info);
+//        Map<String, Object> projectmap = (Map<String, Object>) info.get("project");
+//        System.out.println("projectmap: " + projectmap);
+//
+//        info.entrySet().forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
+//        System.out.println("agent: " + agent.getId().getLocalName());
+//        Object projectRaw = info.get("project");
+//        System.out.println("Project: " + projectRaw);
+//
+//        String nameSpace = (String) info.get("namespace");
+//        System.out.println("Namespace: " + nameSpace);
 //        printMapRecursive(info, "");
         return IFuture.DONE;
     }

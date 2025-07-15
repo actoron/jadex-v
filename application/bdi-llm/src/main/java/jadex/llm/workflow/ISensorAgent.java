@@ -9,7 +9,7 @@ import java.util.HashMap;
 @Service
 public interface ISensorAgent
 {
-    public IFuture<Void> deploy(HashMap<String, Object> info);
+    public IFuture<Void> deploy(String info);
 }
 
 
