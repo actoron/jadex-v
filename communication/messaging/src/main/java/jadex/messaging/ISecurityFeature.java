@@ -5,11 +5,12 @@ import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *  Security is responsible for validating (remote) requests.
  */
-public interface ISecurityFeature extends IRuntimeFeature
+public interface ISecurityFeature extends IRuntimeFeature 
 {
 	/** The unrestricted group and role (access is granted to all), e.g. used for chat. */
 	public static final String UNRESTRICTED = "unrestricted";
@@ -140,4 +141,11 @@ public interface ISecurityFeature extends IRuntimeFeature
 	 *  Disable loading the local group. Must be invoked before messaging is used.
 	 */
 	public void disableLocalGroup();
+	
+	/**
+	 *  Returns the allowed access groups from a given set of roles of a Security annotation.
+	 *  @param annotationroles Roles specied in the Security annotation.
+	 *  @return Groups representing those roles.
+	 */
+	public Set<String> getPermittedGroups(Set<String> annotationroles);
 }

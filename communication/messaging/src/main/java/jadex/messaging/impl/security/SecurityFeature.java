@@ -48,12 +48,13 @@ import jadex.messaging.impl.security.handshake.InitialHandshakeMessage;
 import jadex.messaging.impl.security.handshake.InitialHandshakeReplyMessage;
 import jadex.messaging.impl.security.random.SecureThreadedRandom;
 import jadex.serialization.ISerializationServices;
+//import jadex.providedservice.impl.service.ISecurityHandler;
 
 /**
  *  Security functionality for active component communication.
  *  Performs authentication and 
  */
-public class SecurityFeature implements ISecurityFeature
+public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 {
 	private static final String LOCAL_GROUP_KEYFILE = "localgroup.key";
 
@@ -1424,14 +1425,17 @@ public class SecurityFeature implements ISecurityFeature
 	 *  @param annotationroles Roles specied in the Security annotation.
 	 *  @return Groups representing those roles.
 	 */
-	public Set<String> getPermittedGroups(String[] annotationroles)
+	public Set<String> getPermittedGroups(Set<String> annotationroles)
 	{
 		Set<String> pgroups = new HashSet<>();
-		if (annotationroles == null || annotationroles.length == 0)
+		if (annotationroles == null || annotationroles.size() == 0)
 		{
-			synchronized (this)
+			if (defaultauthorization)
 			{
-				pgroups.addAll(groups.keySet());
+				synchronized (this)
+				{
+					pgroups.addAll(groups.keySet());
+				}
 			}
 		}
 		else
