@@ -1397,8 +1397,8 @@ public class RequestManager
 	
 	protected synchronized void addConversation(String callid, ConversationInfo cinfo)
 	{
-		if(cinfo.getSessionId()==null)
-			throw new IllegalArgumentException();
+		//if(cinfo.getSessionId()==null)
+		//	throw new IllegalArgumentException();
 		conversationinfos.put(callid, cinfo);
 	}
 	
