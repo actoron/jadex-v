@@ -1769,7 +1769,9 @@ public class RequestManager
 			catch(Exception e)
 			{
 			}
-			
+
+			// TODO Hack for raw JSON to avoid converting later?
+			boolean rawjson = false;
 			if(bytes!=null && bytes.length>0)
 			{
 				String mime = SUtil.guessContentTypeByBytes(bytes);
@@ -1797,9 +1799,18 @@ public class RequestManager
 							// if is json object
 							if(str.trim().startsWith("{"))
 							{
-								// Map as first argument
-								Object arg0 = convertJsonValue(str, types[0], getClassLoader(), true);
-								inparamsmap.put("0", arg0);
+								if (String.class.equals(types[0]))
+								{
+									// Return raw JSON to parameter
+									rawjson = true;
+									inparamsmap.put("0", str);
+								}
+								else
+								{
+									// Map as first argument
+									Object arg0 = convertJsonValue(str, types[0], getClassLoader(), true);
+									inparamsmap.put("0", arg0);
+								}
 							}
 							else if(str.trim().startsWith("\""))
 							{
@@ -1935,9 +1946,12 @@ public class RequestManager
 				targetparams = new Object[types.length];
 
 				Object[] inparams = generateInParameters(inparamsmap, pinfos, types);
-				for(int i = 0; i < inparams.length; i++)
+				if (!rawjson)
 				{
-					inparams[i] = convertParameter(sr, inparams[i], types[i]);
+					for (int i = 0; i < inparams.length; i++)
+					{
+						inparams[i] = convertParameter(sr, inparams[i], types[i]);
+					}
 				}
 				
 				for(int i = 0; i < targetparams.length && i < inparams.length; i++)
@@ -2095,6 +2109,7 @@ public class RequestManager
 	public static Object convertJsonValue(String val, Class<?> type, ClassLoader cl, boolean tomap)
 	{
 		List<ITraverseProcessor> procs = null;
+
 		if(tomap && SReflect.isSupertype(Map.class, type))
 			procs = JsonTraverser.nestedreadprocs;
 		return JsonTraverser.objectFromString(val.toString(), cl, null, type, procs);
