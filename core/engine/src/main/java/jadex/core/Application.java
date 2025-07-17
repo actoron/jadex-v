@@ -51,14 +51,15 @@ public class Application implements IComponentFactory
 	@Override
 	public IFuture<IComponentHandle> create(Object pojo, String localname)
 	{		
-		return create(pojo, localname, this);
+		return ComponentManager.get().create(pojo, localname, this);
 	}
 	
 	@Override
-	public <T> IFuture<T> run(Object pojo, ComponentIdentifier cid)
+	public <T> IFuture<T> run(Object pojo, String localname)
 	{
-		return run(pojo, cid, this);
+		return ComponentManager.get().run(pojo, localname, this);
 	}
+
 	
 	@Override
 	public Set<ComponentIdentifier> getAllComponents()

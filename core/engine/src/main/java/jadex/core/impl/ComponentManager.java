@@ -25,6 +25,7 @@ import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
 import jadex.core.IComponentListener;
 import jadex.core.IComponentManager;
 import jadex.core.IRuntimeFeature;
@@ -821,6 +822,64 @@ public class ComponentManager implements IComponentManager
 		}
 
 		return ret;
+	}
+	
+	/**
+	 *  Create a component based on a pojo.
+	 *  @param pojo The pojo.
+	 *  @param cid The component id or null for auto-generation.
+	 *  @param app The application context.
+	 *  @return The external access of the running component.
+	 */
+	public IFuture<IComponentHandle> create(Object pojo, String localname, Application app)
+	{		
+		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(localname);
+		if(pojo==null)
+		{
+			// Plain component for null pojo
+			//return Component.createComponent(Component.class, () -> new Component(pojo, cid, app));
+			return Component.createComponent(new Component(pojo, cid, app));
+		}
+		else
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
+			{
+				return creator.create(pojo, cid, app);
+			}
+			else
+			{
+				return new Future<>(new RuntimeException("Could not create component: "+pojo));
+			}
+		}
+	}
+	
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The pojo.
+	 *  @param localname The component id or null for auto-generationm.
+	 *  @param app The application context.
+	 *  @return The execution result.
+	 */
+	public <T> IFuture<T> run(Object pojo, String localname, Application app)
+	{
+		if(pojo==null)
+		{
+			return new Future<>(new UnsupportedOperationException("No null pojo allowed for run()."));
+		}
+		else
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
+			{
+				return creator.run(pojo, localname==null ? null : new ComponentIdentifier(localname), app);
+			}
+			else
+			{
+				return new Future<>(new RuntimeException("Could not create component: "+pojo));
+			}
+		}
 	}
 	
 	/**
