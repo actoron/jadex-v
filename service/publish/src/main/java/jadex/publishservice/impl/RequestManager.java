@@ -39,7 +39,7 @@ import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.STransformation;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.Traverser;
-import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
@@ -52,8 +52,8 @@ import jadex.javaparser.SJavaParser;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.service.ServiceCall;
-import jadex.publishservice.impl.RequestManager.ResponseInfo;
 import jadex.publishservice.impl.RequestManager.MappingInfo.HttpMethod;
+import jadex.publishservice.impl.RequestManager.ResponseInfo;
 import jadex.publishservice.publish.IAsyncContextInfo;
 import jadex.publishservice.publish.PathManager;
 import jadex.publishservice.publish.annotation.ParametersMapper;
@@ -869,9 +869,9 @@ public class RequestManager
 					//	System.out.println("call 2: "+request);
 
 					// Get provider of service and check access
-					IComponent comp = ComponentManager.get().getComponent(service.getServiceId().getProviderId());
+					IComponentHandle comp = ComponentManager.get().getComponentHandle(service.getServiceId().getProviderId());
 					
-					comp.getComponentHandle().scheduleStep(agent ->
+					comp.scheduleStep(agent ->
 					{
 						// Inject caller meta info
 						Map<String, String> callerinfos = extractCallerValues(request);
