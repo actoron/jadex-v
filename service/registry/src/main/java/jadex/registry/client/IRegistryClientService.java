@@ -1,4 +1,4 @@
-package jadex.registry;
+package jadex.registry.client;
 
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;

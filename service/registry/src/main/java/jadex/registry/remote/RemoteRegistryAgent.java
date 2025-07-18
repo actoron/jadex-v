@@ -1,4 +1,4 @@
-package jadex.registry;
+package jadex.registry.remote;
 
 import java.lang.System.Logger.Level;
 import java.util.HashMap;
@@ -37,6 +37,7 @@ import jadex.providedservice.impl.search.ServiceQueryInfo;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceCall;
 import jadex.providedservice.impl.service.ServiceIdentifier;
+import jadex.registry.coordinator.ICoordinatorService;
 import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;

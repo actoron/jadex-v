@@ -13,9 +13,10 @@ import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret
 import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.registry.CoordinatorAgent;
-import jadex.registry.ICoordinatorService;
-import jadex.registry.RegistryClientAgent;
+import jadex.registry.client.RegistryClientAgent;
+import jadex.registry.coordinator.CoordinatorAgent;
+import jadex.registry.coordinator.ICoordinatorService;
+import jadex.registry.remote.RemoteRegistryAgent;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 public class ScenarioTest 
@@ -30,9 +31,13 @@ public class ScenarioTest
 	    // Setup first runtime with coordinator, remote registry, reg client and provider agent
 
 	    IComponentManager man = IComponentManager.get();
-		man.create(new CoordinatorAgent(), ICoordinatorService.REGISTRY_COORDINATOR_NAME).get();
+		
+	    man.create(new CoordinatorAgent(), ICoordinatorService.REGISTRY_COORDINATOR_NAME).get();
+		
 		//man.create(new RemoteRegistryAgent(), "RemoteRegistry").get();
+		
 		//man.create(new RegistryClientAgent(), "RegistryClient").get();
+		
 		man.create(new ProviderAgent(), "Provider").get();
 	    
 		String coname = man.run(agent ->

@@ -1,4 +1,4 @@
-package jadex.registry;
+package jadex.registry.remote;
 
 import java.util.Set;
 

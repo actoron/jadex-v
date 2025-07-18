@@ -1,4 +1,4 @@
-package jadex.registry;
+package jadex.registry.coordinator;
 
 import java.lang.System.Logger.Level;
 import java.time.Instant;
@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import jadex.common.SGUI;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -15,8 +16,12 @@ import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.service.ServiceCall;
+import jadex.publishservice.IPublishServiceFeature;
+import jadex.publishservice.publish.annotation.Publish;
+import jakarta.ws.rs.GET;
 
-public class CoordinatorAgent implements ICoordinatorService 
+@Publish(publishid="http://localhost:8081/${cid}/coordinatorapi", publishtarget = ICoordinatorGuiService.class)
+public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiService
 {
 	/** The agent. */
 	@Inject
@@ -27,11 +32,20 @@ public class CoordinatorAgent implements ICoordinatorService
 	
 	// registerRegistry() futures
 	protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> clientlisteners = new LinkedHashSet<>();
+	
+	protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> uilisteners = new LinkedHashSet<>();
 
 	@OnStart
 	protected void onStart()
 	{
 		System.getLogger(getClass().getName()).log(Level.INFO, "Coordinator started at "+agent.getId());
+		
+		IPublishServiceFeature ps = agent.getFeature(IPublishServiceFeature.class);
+		ps.publishResources("http://localhost:8081/${cid}", "jadex/registry/coordinator/ui");
+		
+		String url = "http://localhost:8081/"+agent.getId().getLocalName();
+		System.out.println("open in browser: "+url);
+		SGUI.openInBrowser(url);
 	}
 	
 	/**
@@ -97,6 +111,36 @@ public class CoordinatorAgent implements ICoordinatorService
 			CoordinatorServiceEvent rse = new CoordinatorServiceEvent(reg.serviceid(), ServiceEvent.SERVICE_ADDED, reg.starttime());
 			ret.addIntermediateResult(rse);
 		});
+		
+		return ret;
+	}
+	
+	/**
+	 *  Subscribe to coordinator updates.
+	 */
+	@GET
+	public ISubscriptionIntermediateFuture<CoordinatorServiceEvent> subscribe()
+	{
+		SubscriptionIntermediateFuture<CoordinatorServiceEvent> ret = new SubscriptionIntermediateFuture<>();
+
+		ret.setTerminationCommand(ex ->
+		{
+			System.getLogger(getClass().getName()).log(Level.INFO, agent+": Coordinator UI connection terminated due to "+ex);
+			uilisteners.remove(ret);
+		});
+		
+		for(RegistryInfo reg: registries)
+		{
+			CoordinatorServiceEvent rse = new CoordinatorServiceEvent(reg.serviceid(), ServiceEvent.SERVICE_ADDED, reg.starttime());
+			ret.addIntermediateResult(rse);
+		}
+		if(registries.isEmpty())
+		{
+			// If no registries are known, send an empty event
+			ret.addIntermediateResult(new CoordinatorServiceEvent(null, ServiceEvent.SERVICE_ADDED, 0));
+		}
+		
+		uilisteners.add(ret);
 		
 		return ret;
 	}

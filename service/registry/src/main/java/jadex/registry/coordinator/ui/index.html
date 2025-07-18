@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Coordinator UI</title>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+		<script src="coordinatorapi/jadex.js"></script>
+		
+		<script type="module">
+			import CoordinatorApp from './CoordinatorApp.js';
+			import { BaseElement } from './BaseElement.js';
+
+			BaseElement.setAppClass(CoordinatorApp);
+			
+			console.log("Coordinator UI starting");
+
+			function restart()
+			{
+				subscribeToCoordinator();
+				
+				//update();
+			}
+		
+			document.addEventListener("DOMContentLoaded", function() 
+			{
+				restart();
+			});
+			
+			function subscribeToCoordinator()
+			{
+ 				console.log("coordinator subscription starting");
+				jadex.getIntermediate("coordinatorapi/subscribe", res =>
+				{
+                    console.log("coordinator subscription result: ", res.data);
+					
+					var event = res.data;
+					if(event.type === 0)
+                    {
+						//var app = CoordinatorApp.getInstance(); 
+                        CoordinatorApp.getInstance().addRegistry(event);
+                    }
+                    else if(event.type === 1)
+                    {
+                        CoordinatorApp.getInstance().removeRegistry(event);
+                    }
+                    else if(event.type === 2)
+                    {
+                    	CoordinatorApp.getInstance().removeRegistry(event);
+                    	CoordinatorApp.getInstance().addRegistry(event);
+                    }
+                    else
+                    {
+                    	console.log("Unknown event type: " + event.type);
+                    }
+				}, ex =>
+				{
+					console.log("subscription error: "+ex);
+				}); 
+		    }
+		</script>
+	</head>
+	
+	<body>
+		<h1>Coordinator UI</h1>
+		<registry-table>
+            <!-- Registries will be dynamically added here -->
+    	</registry-table>  
+    	<script src="RegistryTableElement.js" type="module"></script>
+	</body>
+</html>
