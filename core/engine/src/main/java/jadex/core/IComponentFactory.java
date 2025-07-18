@@ -6,8 +6,6 @@ import java.util.concurrent.Callable;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.SComponentFeatureProvider;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -27,42 +25,12 @@ public interface IComponentFactory
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generationm.
+	 *  @param localname The component id or null for auto-generationm.
 	 *  @return The external access of the running component.
 	 */
 	public default IFuture<IComponentHandle> create(Object pojo, String localname)
 	{		
-		return create(pojo, localname, null);
-	}
-	
-	/**
-	 *  Create a component based on a pojo.
-	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generation.
-	 *  @param app The application context.
-	 *  @return The external access of the running component.
-	 */
-	public default IFuture<IComponentHandle> create(Object pojo, String localname, Application app)
-	{		
-		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(localname);
-		if(pojo==null)
-		{
-			// Plain component for null pojo
-			//return Component.createComponent(Component.class, () -> new Component(pojo, cid, app));
-			return Component.createComponent(new Component(pojo, cid, app));
-		}
-		else
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
-			if(creator!=null)
-			{
-				return creator.create(pojo, cid, app);
-			}
-			else
-			{
-				return new Future<>(new RuntimeException("Could not create component: "+pojo));
-			}
-		}
+		return ComponentManager.get().create(pojo, localname, null);
 	}
 	
 	/**
@@ -95,49 +63,21 @@ public interface IComponentFactory
 	 */
 	public default <T> IFuture<T> run(Object pojo)
 	{
-		return run(pojo, null, null);
+		return run(pojo, null);
 	}
 	
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generation.
+	 *  @param localname The component id or null for auto-generationm.
 	 *  @return The execution result.
 	 */
-	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid)
+	public default <T> IFuture<T> run(Object pojo, String localname)
 	{
-		return run(pojo, cid, null);
+		return ComponentManager.get().run(pojo, localname, null);
 	}
 
-	/**
-	 *  Usage of components as functions that terminate after execution.
-	 *  Create a component based on a function.
-	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generation.
-	 *  @param app The application context.
-	 *  @return The execution result.
-	 */
-	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
-	{
-		if(pojo==null)
-		{
-			return new Future<>(new UnsupportedOperationException("No null pojo allowed for run()."));
-		}
-		else
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
-			if(creator!=null)
-			{
-				return creator.run(pojo, cid, app);
-			}
-			else
-			{
-				return new Future<>(new RuntimeException("Could not create component: "+pojo));
-			}
-		}
-	}
-	
 	/**
 	 *  Get all components.
 	 *  @return The component ids.

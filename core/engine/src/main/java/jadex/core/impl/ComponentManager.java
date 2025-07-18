@@ -25,6 +25,7 @@ import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
 import jadex.core.IComponentListener;
 import jadex.core.IComponentManager;
 import jadex.core.IRuntimeFeature;
@@ -158,7 +159,10 @@ public class ComponentManager implements IComponentManager
 	/** The components. */
 	private final Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
 	
-	/** The number of components per appid. */
+	/** The daemon components. */
+	private final Map<ComponentIdentifier, IComponent> daemons = new LinkedHashMap<ComponentIdentifier, IComponent>();
+	
+	/** The components per app id. */
 	private final Map<String, Set<ComponentIdentifier>> appcomps = new HashMap<>();
 	
 	/** Global counter for components in creation. */
@@ -824,6 +828,64 @@ public class ComponentManager implements IComponentManager
 	}
 	
 	/**
+	 *  Create a component based on a pojo.
+	 *  @param pojo The pojo.
+	 *  @param cid The component id or null for auto-generation.
+	 *  @param app The application context.
+	 *  @return The external access of the running component.
+	 */
+	public IFuture<IComponentHandle> create(Object pojo, String localname, Application app)
+	{		
+		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(localname);
+		if(pojo==null)
+		{
+			// Plain component for null pojo
+			//return Component.createComponent(Component.class, () -> new Component(pojo, cid, app));
+			return Component.createComponent(new Component(pojo, cid, app));
+		}
+		else
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
+			{
+				return creator.create(pojo, cid, app);
+			}
+			else
+			{
+				return new Future<>(new RuntimeException("Could not create component: "+pojo));
+			}
+		}
+	}
+	
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The pojo.
+	 *  @param localname The component id or null for auto-generationm.
+	 *  @param app The application context.
+	 *  @return The execution result.
+	 */
+	public <T> IFuture<T> run(Object pojo, String localname, Application app)
+	{
+		if(pojo==null)
+		{
+			return new Future<>(new UnsupportedOperationException("No null pojo allowed for run()."));
+		}
+		else
+		{
+			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
+			if(creator!=null)
+			{
+				return creator.run(pojo, localname==null ? null : new ComponentIdentifier(localname), app);
+			}
+			else
+			{
+				return new Future<>(new RuntimeException("Could not create component: "+pojo));
+			}
+		}
+	}
+	
+	/**
 	 *  Add a component.
 	 *  @param comp The component.
 	 */
@@ -833,34 +895,54 @@ public class ComponentManager implements IComponentManager
 		if(getLogger().isLoggable(Level.INFO))
 			getLogger().log(Level.INFO, "Component created: "+comp.getId());
 		
-		synchronized(components)
+		if(comp.getPojo() instanceof IDaemonComponent)
 		{
-			IComponent	old	= components.put(comp.getId(), comp);
-			if(old!=null)
+			// Daemon component
+			synchronized(daemons)
 			{
-				ComponentManager.get().printComponents();
-				throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
-			}
-			
-			// Hack. remember first component for fetching informative name.
-			if(first==null)
-			{
-				first	= comp;
-			}
-			
-			// Increment component count for appid.
-			if(comp.getAppId()!=null)
-			{
-				String appid = comp.getAppId();
-				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
-				if(appcompset==null)
+				IComponent	old	= daemons.put(comp.getId(), comp);
+				if(old!=null)
 				{
-					appcompset = new HashSet<ComponentIdentifier>();
-					appcomps.put(appid, appcompset);
+					daemons.put(comp.getId(), old); // restore
+					throw new IllegalArgumentException("Daemon component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
 				}
-				appcompset.add(comp.getId());
+			}
+			//System.out.println("added daemon: "+comp.getId());
+		}
+		else
+		{
+			synchronized(components)
+			{
+				IComponent	old	= components.put(comp.getId(), comp);
+				if(old!=null)
+				{
+					components.put(comp.getId(), old); // restore
+	//				ComponentManager.get().printComponents();
+					throw new IllegalArgumentException("Component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
+				}
+				
+				// Hack. remember first component for fetching informative name.
+				if(first==null)
+				{
+					first	= comp;
+				}
+				
+				// Add component to application, if any.
+				String appid = comp.getAppId();
+				if(appid!=null)
+				{
+					Set<ComponentIdentifier> appcompset = appcomps.get(appid);
+					if(appcompset==null)
+					{
+						appcompset = new HashSet<ComponentIdentifier>();
+						appcomps.put(appid, appcompset);
+					}
+					appcompset.add(comp.getId());
+				}
 			}
 		}
+		
+		// TODO: Added event for daemon components?
 		notifyEventListener(COMPONENT_ADDED, comp.getId());
 	}
 	
@@ -868,43 +950,62 @@ public class ComponentManager implements IComponentManager
 	 *  Remove a component.
 	 *  @param cid The component id.
 	 */
-	public void removeComponent(ComponentIdentifier cid)
+	public void removeComponent(IComponent comp)
 	{
+		ComponentIdentifier cid = comp.getId();
 		if(getLogger().isLoggable(Level.INFO))
 			getLogger().log(Level.INFO, "Component removed: "+cid);
 		//System.out.println("Component removed: "+cid);
 		
 		//System.out.println("removing: "+cid);
-		boolean last;
-		boolean lastapp = false;
-		String appid = null;
-		synchronized(components)
+		if(comp.getPojo() instanceof IDaemonComponent)
 		{
-			IComponent comp = components.remove(cid);
-			if(comp==null)
-				throw new RuntimeException("Unknown component id: "+cid);
-			last = creationcnt==0 && components.isEmpty();
-			
-			appid = comp.getAppId();
-			if(appid!=null)
+			// Daemon component
+			synchronized(daemons)
 			{
-				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
-				if(appcompset==null)
-					throw new RuntimeException("Unknown app id: "+appid);
-				appcompset.remove(cid);
-				if(appcompset.isEmpty())
+				IComponent old = daemons.remove(comp.getId());
+				if(old==null)
 				{
-					appcomps.remove(appid);
-					lastapp = appcreationcnt.getOrDefault(appid, 0) <= 1;
+					throw new RuntimeException("Unknown daemon component id: "+cid);
 				}
 			}
 		}
-		notifyEventListener(COMPONENT_REMOVED, cid);
-		if(lastapp)
-			notifyEventListener(COMPONENT_LASTREMOVEDAPP, cid);
-		if(last)
-			notifyEventListener(COMPONENT_LASTREMOVED, cid);
+		else
+		{
+			boolean last;
+			boolean lastapp = false;
+			String appid = null;
+			synchronized(components)
+			{
+				IComponent old = components.remove(cid);
+				if(old==null)
+				{
+					throw new RuntimeException("Unknown component id: "+cid);
+				}
+				last = creationcnt==0 && components.isEmpty();
+				
+				appid = comp.getAppId();
+				if(appid!=null)
+				{
+					Set<ComponentIdentifier> appcompset = appcomps.get(appid);
+					if(appcompset==null)
+						throw new RuntimeException("Unknown app id: "+appid);
+					appcompset.remove(cid);
+					if(appcompset.isEmpty())
+					{
+						appcomps.remove(appid);
+						lastapp = appcreationcnt.getOrDefault(appid, 0) <= 1;
+					}
+				}
+			}
+			if(lastapp)
+				notifyEventListener(COMPONENT_LASTREMOVEDAPP, cid);
+			if(last)
+				notifyEventListener(COMPONENT_LASTREMOVED, cid);
+		}
 		//System.out.println("size: "+components.size()+" "+cid);
+
+		notifyEventListener(COMPONENT_REMOVED, comp.getId());
 	}
 
 	// Caching for small speedup (detected in PlainComponentBenchmark)
@@ -934,10 +1035,19 @@ public class ComponentManager implements IComponentManager
 	 */
 	public IComponent getComponent(ComponentIdentifier cid)
 	{
+		IComponent comp = null;
 		synchronized(components)
 		{
-			return components.get(cid);
+			comp	= components.get(cid);
 		}
+		if(comp==null)
+		{
+			synchronized(daemons)
+			{
+				comp	= daemons.get(cid);
+			}
+		}
+		return comp;
 	}
 	
 	/**
@@ -1088,7 +1198,7 @@ public class ComponentManager implements IComponentManager
 			{
 				if(globalrunner==null)
 				{
-					Component comp = new Component(null, new ComponentIdentifier(Component.GLOBALRUNNER_ID), null)
+					Component comp = new Component(new IDaemonComponent(){}, new ComponentIdentifier("__globalrunner__"), null)
 					{
 						public void handleException(Exception exception)
 						{

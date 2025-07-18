@@ -48,16 +48,18 @@ public class Application implements IComponentFactory
 		return secret;
 	}
 	
-	/**
-	 *  Create a component based on a pojo.
-	 *  @param pojo The pojo.
-	 *  @param cid The component id.
-	 *  @return The external access of the running component.
-	 */
-	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid)
+	@Override
+	public IFuture<IComponentHandle> create(Object pojo, String localname)
 	{		
-		return create(pojo, null, this);
+		return ComponentManager.get().create(pojo, localname, this);
 	}
+	
+	@Override
+	public <T> IFuture<T> run(Object pojo, String localname)
+	{
+		return ComponentManager.get().run(pojo, localname, this);
+	}
+
 	
 	@Override
 	public Set<ComponentIdentifier> getAllComponents()
