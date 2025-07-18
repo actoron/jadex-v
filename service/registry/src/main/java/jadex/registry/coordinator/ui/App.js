@@ -18,8 +18,6 @@ class App
 		return this.instance;
 	}
 	
-	
-
 	addListener(listener) 
 	{
 		this.#listeners.push(listener);
