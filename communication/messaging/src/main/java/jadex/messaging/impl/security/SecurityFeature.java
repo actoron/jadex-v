@@ -386,15 +386,18 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 			
 			if (cleartext == null)
 			{
-				List<ExpiringCryptoSuite> explist = expiringcryptosuites.get(sender);
-				if (explist != null)
+				try (IAutoLock l = expiringcryptosuites.readLock())
 				{
-					for (ExpiringCryptoSuite exp : explist)
+					List<ExpiringCryptoSuite> explist = expiringcryptosuites.get(sender);
+					if (explist != null)
 					{
-						cs = exp.suite();
-						cleartext = cs.decryptAndAuth(message);
-						if (cleartext != null)
-							break;
+						for (ExpiringCryptoSuite exp : explist)
+						{
+							cs = exp.suite();
+							cleartext = cs.decryptAndAuth(message);
+							if (cleartext != null)
+								break;
+						}
 					}
 				}
 			}
