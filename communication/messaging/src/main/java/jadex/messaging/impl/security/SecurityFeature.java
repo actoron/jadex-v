@@ -142,14 +142,14 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 	protected Map<String, Class<?>> allowedcryptosuites = new LinkedHashMap<String, Class<?>>();
 	
 	/** CryptoSuites currently initializing, value=Handshake state. */
-	protected Map<GlobalProcessIdentifier, HandshakeState> initializingcryptosuites = new HashMap<>();
+	protected RwMapWrapper<GlobalProcessIdentifier, HandshakeState> initializingcryptosuites = new RwMapWrapper<>(new HashMap<>());
 	
 	/** CryptoSuites currently in use. */
 	// TODO: Expiration / configurable LRU required to mitigate DOS attacks.
 	protected RwMapWrapper<GlobalProcessIdentifier, ICryptoSuite> currentcryptosuites = new RwMapWrapper<>(new HashMap<>());
 	
 	/** CryptoSuites that are expiring with expiration time. */
-	protected Map<GlobalProcessIdentifier, List<ExpiringCryptoSuite>> expiringcryptosuites = new HashMap<>();
+	protected RwMapWrapper<GlobalProcessIdentifier, List<ExpiringCryptoSuite>> expiringcryptosuites = new RwMapWrapper<>(new HashMap<>());
 	
 	/** Map of entities and associated roles. */
 	protected Map<String, Set<String>> roles = new HashMap<String, Set<String>>();
@@ -1127,7 +1127,7 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 		secinf.setMappedRoles(siroles);
 	}
 	
-	/**
+	/*
 	 *  Checks receiver authorization and, if so, encrypts the message. Otherwise, an exception is issued.
 	 *  
 	 *  @param receiver Receive ID. 
@@ -1178,23 +1178,36 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 	{
 		// Note: Must have write lock.
 		long time = System.currentTimeMillis();
-		
-		for (Iterator<Map.Entry<GlobalProcessIdentifier, HandshakeState>> it = initializingcryptosuites.entrySet().iterator(); it.hasNext(); )
+
+		boolean hasexpiredsuites = false;
+		Predicate<Map.Entry<GlobalProcessIdentifier, HandshakeState>> ishsexpired = ent -> time > ent.getValue().getExpirationTime();
+		try (IAutoLock l = initializingcryptosuites.readLock())
 		{
-			Map.Entry<GlobalProcessIdentifier, HandshakeState> entry = it.next();
-			if (time > entry.getValue().getExpirationTime())
+			hasexpiredsuites = initializingcryptosuites.entrySet().stream().anyMatch(ishsexpired);
+		}
+
+		if (hasexpiredsuites)
+		{
+			try (IAutoLock l = initializingcryptosuites.writeLock())
 			{
-				entry.getValue().getResultFuture().setException(new TimeoutException("Handshake timed out with platform: " + entry.getKey()));
-				//System.out.println("Removing handshake data: "+entry.getKey());
-				it.remove();
+				for (Iterator<Map.Entry<GlobalProcessIdentifier, HandshakeState>> it = initializingcryptosuites.entrySet().iterator(); it.hasNext(); )
+				{
+					Map.Entry<GlobalProcessIdentifier, HandshakeState> entry = it.next();
+					if (time > entry.getValue().getExpirationTime())
+					{
+						entry.getValue().getResultFuture().setException(new TimeoutException("Handshake timed out with platform: " + entry.getKey()));
+						//System.out.println("Removing handshake data: "+entry.getKey());
+						it.remove();
+					}
+				}
 			}
 		}
-		
+
 		// Check for expired suites.
 		// This is a two-step process because suites have a long lifespan after handshake,
 		// i.e. typically there are no expired suites. In order to optimize locking, we
 		// first check whether it is even worth to acquire a write lock by checking with a read lock.
-		boolean hasexpiredsuites = false;
+		hasexpiredsuites = false;
 		Predicate<Map.Entry<GlobalProcessIdentifier, ICryptoSuite>> isexpired = ent -> (ent.getValue().isExpiring() || (ent.getValue().getCreationTime() + sessionkeylifetime) < time);
 		
 		// Individual locks required because fast path does not lock the global lock.
@@ -1212,17 +1225,32 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 				currentcryptosuites.entrySet().stream().filter(isexpired).map(e -> e.getKey()).collect(Collectors.toList()).forEach(this::expireCryptosuite);
 			}
 		}
-		
-		for (GlobalProcessIdentifier gpid : expiringcryptosuites.keySet())
+
+		hasexpiredsuites = false;
+
+		Predicate<Map.Entry<GlobalProcessIdentifier, List<ExpiringCryptoSuite>>> islisthsexpired = ent ->
+				ent.getValue().stream().anyMatch((exp) -> time > exp.timeofexpiration());
+		try (IAutoLock l = expiringcryptosuites.readLock())
 		{
-			List<ExpiringCryptoSuite> explist = expiringcryptosuites.get(gpid);
-			for (ExpiringCryptoSuite exp : explist)
+			hasexpiredsuites = expiringcryptosuites.entrySet().stream().anyMatch(islisthsexpired);
+		}
+
+		if (hasexpiredsuites)
+		{
+			try (IAutoLock l = expiringcryptosuites.writeLock())
 			{
-				if (time > exp.timeofexpiration())
+				for (GlobalProcessIdentifier gpid : expiringcryptosuites.keySet())
 				{
-					explist.remove(exp);
-					if (explist.isEmpty())
-						expiringcryptosuites.remove(gpid);
+					List<ExpiringCryptoSuite> explist = expiringcryptosuites.get(gpid);
+					for (ExpiringCryptoSuite exp : explist)
+					{
+						if (time > exp.timeofexpiration())
+						{
+							explist.remove(exp);
+							if (explist.isEmpty())
+								expiringcryptosuites.remove(gpid);
+						}
+					}
 				}
 			}
 		}
