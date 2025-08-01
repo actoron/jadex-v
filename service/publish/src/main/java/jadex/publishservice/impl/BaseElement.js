@@ -1,5 +1,3 @@
-import App from './App.js';
-
 export class BaseElement extends HTMLElement 
 {
 	static appclass = null;

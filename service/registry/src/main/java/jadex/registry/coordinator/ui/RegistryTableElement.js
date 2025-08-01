@@ -1,4 +1,4 @@
-import BaseElement from './BaseElement.js';
+import BaseElement from './coordinatorapi/BaseElement.js';
 
 export class RegistryTableElement extends BaseElement 
 {
