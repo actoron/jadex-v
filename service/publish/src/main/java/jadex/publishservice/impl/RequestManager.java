@@ -3585,9 +3585,13 @@ public class RequestManager
 			ret.append("\n");
 			ret.append("<head>");
 			ret.append("\n");
+			ret.append("<style type=\"text/css\">>");
 			ret.append(stylecss);
+			ret.append("</style>");
 			ret.append("\n");
+			ret.append("<script type=\"text/javascript\">");
 			ret.append(functionsjs);
+			ret.append("</script>");
 			ret.append("\n");
 			ret.append("<script src=\"jadex.js\" type=\"text/javascript\"/></script>");
 			ret.append("</head>");
