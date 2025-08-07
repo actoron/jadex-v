@@ -618,9 +618,12 @@ public class RequestManager
 		//final Map<String, Object> session = getSession(request, true);
 		final String sessionid = getSessionId(request);
 		
-		if(sessionid==null && request.getRequestURI().indexOf(".js")==-1 && ri.isSSERequest())
+		if(sessionid==null && ri.isSSERequest() 
+			&& request.getRequestURI().indexOf(".js")==-1 
+			&& request.getRequestURI().indexOf(".css")==-1)
+		{
 			System.out.println("Call has no jadex session id, Jadex cookie missing: "+request.getRequestURL());
-		
+		}
 		// todo: if missing generate one?! as it is cookie it would be used by further requests
 		
 		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
@@ -840,8 +843,23 @@ public class RequestManager
 				if(methodname.endsWith(".js"))
 				{
 					ri.addResultType("application/javascript");
-					loadJS(methodname).then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
+					loadResource(methodname).then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
 				}
+				else if(methodname.endsWith(".css"))
+				{
+					ri.addResultType("text/css");
+					loadResource(methodname).then(css -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(css)));
+				}
+				/*else if(methodname.endsWith(".html"))
+				{
+					ri.addResultType("text/html");
+					loadHTML(methodname).then(html -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(html)));
+				}
+				else if(methodname.endsWith(".js.map"))
+				{
+					ri.addResultType("application/javascript");
+					loadJS(methodname).then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
+				}*/
 				else if(mis!=null && mis.size()>0)
 				{
 					//if(request.toString().indexOf("gen")!=-1)
@@ -3809,7 +3827,7 @@ public class RequestManager
 
 			ret.append("<div id=\"result\"></div>");
 
-			ret.append("<div class=\"powered\"> <span class=\"powered\">powered by</span> <span class=\"jadex\">");
+			ret.append("<div class=\"powered stripes\"> <span class=\"powered\">powered by</span> <span class=\"jadex\">");
 			// Add Jadex version header, if enabled
 			/*if(Boolean.TRUE.equals(Starter.getPlatformArgument(component.getId(), "showversion")))
 			{
@@ -3817,9 +3835,9 @@ public class RequestManager
 			}
 			else
 			{*/
-				ret.append("Jadex Active Components");				
+				ret.append("Actoron");				
 			//}
-			ret.append("</span> <a class=\"jadexurl\" href=\"http://www.activecomponents.org\">http://www.activecomponents.org</a> </div>\n");
+			ret.append("</span> <a class=\"jadexurl\" href=\"http://www.actoron.com\">http://www.actoron.com</a> </div>\n");
 		}
 		catch(Exception e)
 		{
@@ -3878,8 +3896,8 @@ public class RequestManager
 			sc = new Scanner(is);
 			stylecss = sc.useDelimiter("\\A").next();
 
-			String stripes = SUtil.loadBinary(getPath()+"jadex_stripes.png");
-			stylecss = stylecss.replace("$stripes", stripes);
+			//String stripes = SUtil.loadBinary(getPath()+"jadex_stripes.png");
+			//stylecss = stylecss.replace("$stripes", stripes);
 
 			// System.out.println(functionsjs);
 		}
@@ -4003,9 +4021,9 @@ public class RequestManager
 	 *  Load jadex.js
 	 *  @return The text from the file.
 	 */
-	public IFuture<byte[]> loadJS(String name)
+	public IFuture<byte[]> loadResource(String name)
 	{
-		System.out.println("Loading JS: "+name+" "+getPath()+name);
+		//System.out.println("Loading JS: "+name+" "+getPath()+name);
 		try
 		{
 			InputStream is = SUtil.getResource0(getPath()+name, getClassLoader());

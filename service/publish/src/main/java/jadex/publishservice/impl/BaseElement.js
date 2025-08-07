@@ -21,14 +21,24 @@ export class BaseElement extends HTMLElement
 
 		this.listener = (type, value) => this.appChanged(type, value);
 
-		this.loadStyle("style.css")
-		.then(() => {
-			this.stylesLoaded = true;
-			this.update();
-		})
-		.catch(err => {
+		this.loadDefaultStyle()
+	    .then(() => 
+		{
+        	this.stylesLoaded = true;
+        	this.update();
+        	console.log("Style loaded successfully.");
+       	})
+       	.catch(err => 
+		{
+        	console.warn("Style not loaded or not found:", err);
 			this.setError(err);
-		});
+        	this.stylesLoaded = true;
+       	});
+	}
+	
+	loadDefaultStyle() 
+	{
+	    return this.loadStyle("./style.css");
 	}
 
 	connectedCallback() 
@@ -43,9 +53,10 @@ export class BaseElement extends HTMLElement
 		this.app.removeListener(this.listener);
 	}
 
-	appChanged(type, value) 
+	// To be overridden by subclasses
+	appChanged(type, value)
 	{
-		// To be overridden by subclasses
+		this.update();
 	}
 
 	update() 
@@ -96,6 +107,8 @@ export class BaseElement extends HTMLElement
 		{
 			const response = await fetch(url);
 			const css = await response.text();
+			if(css === "")
+                console.log(`Style file ${url} is empty / not found.`);
 			return this.addStyle(css);
 		} 
 		catch (err) 
@@ -108,7 +121,8 @@ export class BaseElement extends HTMLElement
 	{
 		const sheet = new CSSStyleSheet();
 		sheet.replaceSync(css);
-		this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, sheet];
+		//this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, sheet];
+		this.shadowRoot.adoptedStyleSheets = [sheet];
 		return sheet;
 	}
 
