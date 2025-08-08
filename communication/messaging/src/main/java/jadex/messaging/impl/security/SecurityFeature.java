@@ -1242,18 +1242,13 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 		{
 			try (IAutoLock l = expiringcryptosuites.writeLock())
 			{
-				for (GlobalProcessIdentifier gpid : expiringcryptosuites.keySet())
+				for (Iterator<Map.Entry<GlobalProcessIdentifier, List<ExpiringCryptoSuite>>> it = expiringcryptosuites.entrySet().iterator(); it.hasNext(); )
 				{
-					List<ExpiringCryptoSuite> explist = expiringcryptosuites.get(gpid);
-					for (ExpiringCryptoSuite exp : explist)
-					{
-						if (time > exp.timeofexpiration())
-						{
-							explist.remove(exp);
-							if (explist.isEmpty())
-								expiringcryptosuites.remove(gpid);
-						}
-					}
+					Map.Entry<GlobalProcessIdentifier, List<ExpiringCryptoSuite>> entry = it.next();
+					List<ExpiringCryptoSuite> explist = entry.getValue();
+                    explist.removeIf(exp -> time > exp.timeofexpiration());
+					if (explist.isEmpty())
+						it.remove();
 				}
 			}
 		}
