@@ -1,11 +1,11 @@
-package jadex.registry;
+package jadex.registry.coordinator;
 
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.ServiceEvent;
 
 public class CoordinatorServiceEvent extends ServiceEvent 
 {
-    private final long starttime;
+    private long starttime;
 
     public CoordinatorServiceEvent(IServiceIdentifier id, int type, long starttime) 
     {
@@ -17,4 +17,9 @@ public class CoordinatorServiceEvent extends ServiceEvent
     {
         return starttime;
     }
+
+	public void setStartTime(long starttime) 
+	{
+		this.starttime = starttime;
+	}
 }

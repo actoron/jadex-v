@@ -1,4 +1,4 @@
-package jadex.registry;
+package jadex.registry.coordinator;
 
 import jadex.providedservice.IServiceIdentifier;
 

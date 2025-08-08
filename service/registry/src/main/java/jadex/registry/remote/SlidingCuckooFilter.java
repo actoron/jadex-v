@@ -1,4 +1,4 @@
-package jadex.registry;
+package jadex.registry.remote;
 
 import jadex.common.SUtil;
 import net.cinnom.nanocuckoo.ConcurrentSwapSafety;

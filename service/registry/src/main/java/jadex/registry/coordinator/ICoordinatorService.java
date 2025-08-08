@@ -1,4 +1,4 @@
-package jadex.registry;
+package jadex.registry.coordinator;
 
 import java.util.Collection;
 import java.util.Set;
