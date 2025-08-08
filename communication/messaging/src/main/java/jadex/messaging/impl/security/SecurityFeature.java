@@ -908,7 +908,6 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 					if (lgcontent.endsWith(keyfileeof))
 					{
 						key = lgcontent.trim();
-						System.out.println("Using local group key " + key);
 						break;
 					}
 					SUtil.sleep(100);
@@ -943,7 +942,6 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 								key = KeySecret.createRandom().toString();
 								fos.write((key + keyfileeof).getBytes(SUtil.UTF8));
 								fos.flush();
-								System.out.println("Generated local group key " + key);
 							}
 						} catch (IOException e)
 						{
