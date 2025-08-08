@@ -34,8 +34,8 @@ import jadex.registry.coordinator.CoordinatorServiceEvent;
 import jadex.registry.coordinator.ICoordinatorService;
 import jadex.registry.coordinator.RegistryInfo;
 import jadex.registry.remote.IRemoteRegistryService;
-import jadex.registry.remote.SlidingCuckooFilter;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.impl.SlidingCuckooFilter;
 import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 
 public class RegistryClientAgent implements IRegistryClientService 
@@ -103,7 +103,7 @@ public class RegistryClientAgent implements IRegistryClientService
 		}
 		else
 		{
-	    	cosub = coordinator.getRegistries();
+	    	cosub = coordinator.subscribe();//getRegistries();
 	    	cosub.next(event ->
 	    	{
 	    		System.out.println("Client connected to coordinator: "+agent.getId()+" "+event);
@@ -297,11 +297,11 @@ public class RegistryClientAgent implements IRegistryClientService
 	 */
 	public <T> ITerminableFuture<IServiceIdentifier> searchService(ServiceQuery<T> query)
 	{
-		System.out.println("RegistryClient: searching for service 1: "+agent.getId()+" "+query);
+		//System.out.println("RegistryClient: searching for service 1: "+agent.getId()+" "+query);
 		TerminableFuture<IServiceIdentifier> ret = new TerminableFuture<>();
 		getRegistryService().then(regser ->
 		{
-			System.out.println("RegistryClient: searching for service 2: "+agent.getId()+" "+query+" "+regser);
+			//System.out.println("RegistryClient: searching for service 2: "+agent.getId()+" "+query+" "+regser);
 			regser.searchService(query).delegateTo(ret);
 		}).catchEx(ret).printOnEx();
 		return ret;

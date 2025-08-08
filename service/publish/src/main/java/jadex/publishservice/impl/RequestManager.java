@@ -2399,7 +2399,7 @@ public class RequestManager
 	            ? new ArrayList<>(ri.getResultTypes())
 	            : new ArrayList<>();
 	    
-	    System.out.println("mimetypes start: "+serverPreference);
+	    //System.out.println("mimetypes start: "+serverPreference);
 
 	    // If the result is a JAX-RS Response, apply its headers/status and extract its media type
 	    if (ri.getResult() instanceof Response) 
@@ -2486,7 +2486,7 @@ public class RequestManager
 	        ret = serverPreference;
 	    }
 	    
-	    System.out.println("mimetypes end: "+ret);
+	    //System.out.println("mimetypes end: "+ret);
 	    
 	    return ret;
 	}
@@ -2525,7 +2525,7 @@ public class RequestManager
 				|| ((IAsyncContextInfo)ri.getRequest().getAttribute(IAsyncContextInfo.ASYNC_CONTEXT_INFO))==null // can null after timeout
 				|| ((IAsyncContextInfo)ri.getRequest().getAttribute(IAsyncContextInfo.ASYNC_CONTEXT_INFO)).isComplete())
 			{
-				System.out.println("sse http result: "+ri.getRequest()+" "+ri.getResult());
+				//System.out.println("sse http result: "+ri.getRequest()+" "+ri.getResult());
 				//if(ri.getResult()!=null && ri.getResult().toString().indexOf("isTrusted")!=-1)
 				//	System.out.println("sse result: "+ri.isSSERequest()+" "+ri.getRequest()+" "+ri.getResult());
 				
@@ -2565,7 +2565,7 @@ public class RequestManager
 			// Send normal http response
 			else
 			{
-				System.out.println("normal http result: "+ri.getRequest()+" "+ri.getResult()+" "+ri.getResultTypes());
+				//System.out.println("normal http result: "+ri.getRequest()+" "+ri.getResult()+" "+ri.getResultTypes());
 				
 				// result is byte[] send directly
 				if(ri.getResult() instanceof byte[])

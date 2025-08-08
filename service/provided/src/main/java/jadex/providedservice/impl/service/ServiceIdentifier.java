@@ -132,7 +132,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 			System.out.println("ServiceIdentifier: "+servicename+" "+groupnames);
 		}*/
 		
-		System.out.println("Groups for service "+servicename+" "+getGroups(roles));
+		//System.out.println("Groups for service "+servicename+" "+getGroups(roles));
 		
 		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope, getGroups(roles),
 			roles!=null && roles.contains(Security.UNRESTRICTED), tags);

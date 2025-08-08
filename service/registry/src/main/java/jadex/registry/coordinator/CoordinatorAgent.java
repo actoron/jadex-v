@@ -20,7 +20,7 @@ import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
 import jakarta.ws.rs.GET;
 
-@Publish(publishid="http://localhost:8081/${cid}/coordinatorapi", publishtarget = ICoordinatorGuiService.class)
+@Publish(publishid="http://${host}:${port}/${cid}/coordinatorapi", publishtarget = ICoordinatorGuiService.class)
 public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiService
 {
 	/** The agent. */
@@ -31,9 +31,30 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 	protected Set<RegistryInfo> registries = new HashSet<>();
 	
 	// registerRegistry() futures
-	protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> clientlisteners = new LinkedHashSet<>();
+	protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> listeners = new LinkedHashSet<>();
 	
-	protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> uilisteners = new LinkedHashSet<>();
+	//protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> uilisteners = new LinkedHashSet<>();
+	
+	protected String host;
+	
+	protected int port;
+	
+	/**
+	 *  Creates a new coordinator agent.
+	 *  
+	 *  @param host The host name.
+	 *  @param port The port number.
+	 */
+	public CoordinatorAgent(String host, int port)
+	{
+		this.host = host;
+		this.port = port;
+	}
+	
+	public CoordinatorAgent()
+	{
+		this("localhost", 8081);
+	}
 
 	@OnStart
 	protected void onStart()
@@ -41,9 +62,9 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 		System.getLogger(getClass().getName()).log(Level.INFO, "Coordinator started at "+agent.getId());
 		
 		IPublishServiceFeature ps = agent.getFeature(IPublishServiceFeature.class);
-		ps.publishResources("http://localhost:8081/${cid}", "jadex/registry/coordinator/ui");
+		ps.publishResources("http://${host}:${port}/${cid}", "jadex/registry/coordinator/ui");
 		
-		String url = "http://localhost:8081/"+agent.getId().getLocalName();
+		String url = "http://"+host+":"+port+"/"+agent.getId().getLocalName();
 		System.out.println("open in browser: "+url);
 		SGUI.openInBrowser(url);
 	}
@@ -65,7 +86,7 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 		// notify clients
 		CoordinatorServiceEvent sa = new CoordinatorServiceEvent(reg, registries.contains(ri)? 
 			ServiceEvent.SERVICE_CHANGED: ServiceEvent.SERVICE_ADDED, starttime);
-		clientlisteners.stream().forEach(lis ->
+		listeners.stream().forEach(lis ->
 		{
 			lis.addIntermediateResultIfUndone(sa);
 		});
@@ -80,7 +101,7 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 			
 			// notify clients
 			CoordinatorServiceEvent sr = new CoordinatorServiceEvent(ri.serviceid(), ServiceEvent.SERVICE_REMOVED, ri.starttime());
-			clientlisteners.stream().forEach(lis ->
+			listeners.stream().forEach(lis ->
 			{
 				lis.addIntermediateResultIfUndone(sr);
 			});
@@ -93,7 +114,7 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 	}
 	
 	// called by clients
-	public ISubscriptionIntermediateFuture<CoordinatorServiceEvent> getRegistries()
+	/*public ISubscriptionIntermediateFuture<CoordinatorServiceEvent> getRegistries()
 	{
 		final ComponentIdentifier caller = ServiceCall.getCurrentInvocation().getCaller();
 		SubscriptionIntermediateFuture<CoordinatorServiceEvent> ret = new SubscriptionIntermediateFuture<>();
@@ -113,7 +134,7 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 		});
 		
 		return ret;
-	}
+	}*/
 	
 	/**
 	 *  Subscribe to coordinator updates.
@@ -121,26 +142,30 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 	@GET
 	public ISubscriptionIntermediateFuture<CoordinatorServiceEvent> subscribe()
 	{
+		final ComponentIdentifier caller = ServiceCall.getCurrentInvocation().getCaller();
+		
 		SubscriptionIntermediateFuture<CoordinatorServiceEvent> ret = new SubscriptionIntermediateFuture<>();
+		listeners.add(ret);
 
 		ret.setTerminationCommand(ex ->
 		{
 			System.getLogger(getClass().getName()).log(Level.INFO, agent+": Coordinator UI connection terminated due to "+ex);
-			uilisteners.remove(ret);
+			listeners.remove(ret);
 		});
+		
+		System.out.println("subscribed to coordinator initial values "+caller+" "+registries);
 		
 		for(RegistryInfo reg: registries)
 		{
 			CoordinatorServiceEvent rse = new CoordinatorServiceEvent(reg.serviceid(), ServiceEvent.SERVICE_ADDED, reg.starttime());
 			ret.addIntermediateResult(rse);
 		}
+		
 		if(registries.isEmpty())
 		{
 			// If no registries are known, send an empty event
 			ret.addIntermediateResult(new CoordinatorServiceEvent(null, ServiceEvent.SERVICE_ADDED, 0));
 		}
-		
-		uilisteners.add(ret);
 		
 		return ret;
 	}

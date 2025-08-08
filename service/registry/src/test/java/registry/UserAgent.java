@@ -12,6 +12,7 @@ import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.ServiceNotFoundException;
 
 public class UserAgent 
 {
@@ -38,8 +39,11 @@ public class UserAgent
 				});
 			}).catchEx(ex -> 
 			{
-				ex.printStackTrace();
-				System.err.println("Error calling service: " + ex.getMessage());
+				//ex.printStackTrace();
+				if(!(ex instanceof ServiceNotFoundException))
+					System.err.println("Error calling service: " + ex.getMessage());
+				else
+					System.out.println("ITestService not found, retrying...");
 			});
 			
 			agent.getFeature(IExecutionFeature.class).waitForDelay(5000).get();

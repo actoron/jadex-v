@@ -218,7 +218,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	public IFuture<IServiceIdentifier> searchService(ServiceQuery<?> query)
 	{
 		//if(serviceregistry.getAllServices().size()>0)
-		System.out.println("Remote registry searchService: "+query+" "+serviceregistry.getAllServices());
+		//System.out.println("Remote registry searchService: "+query+" "+serviceregistry.getAllServices());
 		
 		IServiceIdentifier ret = serviceregistry.searchService(query);
 		/*if(ret == null)

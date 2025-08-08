@@ -15,6 +15,7 @@ import jadex.providedservice.ServiceScope;
 import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jakarta.ws.rs.GET;
 
 @Service
 public interface ICoordinatorService 
@@ -38,7 +39,10 @@ public interface ICoordinatorService
 	public ISubscriptionIntermediateFuture<Void> registerRegistry(IServiceIdentifier reg, long starttime);
 	
 
-	public ISubscriptionIntermediateFuture<CoordinatorServiceEvent> getRegistries();
+	//public ISubscriptionIntermediateFuture<CoordinatorServiceEvent> getRegistries();
+	
+	@GET
+	public ISubscriptionIntermediateFuture<CoordinatorServiceEvent> subscribe();
 	
 	
 	public static ICoordinatorService getCoordinatorServiceProxy(IComponent agent, String name)
