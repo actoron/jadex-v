@@ -908,7 +908,6 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 					if (lgcontent.endsWith(keyfileeof))
 					{
 						key = lgcontent.trim();
-						System.out.println("Using local group key " + key);
 						break;
 					}
 					SUtil.sleep(100);
@@ -943,7 +942,6 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 								key = KeySecret.createRandom().toString();
 								fos.write((key + keyfileeof).getBytes(SUtil.UTF8));
 								fos.flush();
-								System.out.println("Generated local group key " + key);
 							}
 						} catch (IOException e)
 						{
@@ -1242,18 +1240,13 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 		{
 			try (IAutoLock l = expiringcryptosuites.writeLock())
 			{
-				for (GlobalProcessIdentifier gpid : expiringcryptosuites.keySet())
+				for (Iterator<Map.Entry<GlobalProcessIdentifier, List<ExpiringCryptoSuite>>> it = expiringcryptosuites.entrySet().iterator(); it.hasNext(); )
 				{
-					List<ExpiringCryptoSuite> explist = expiringcryptosuites.get(gpid);
-					for (ExpiringCryptoSuite exp : explist)
-					{
-						if (time > exp.timeofexpiration())
-						{
-							explist.remove(exp);
-							if (explist.isEmpty())
-								expiringcryptosuites.remove(gpid);
-						}
-					}
+					Map.Entry<GlobalProcessIdentifier, List<ExpiringCryptoSuite>> entry = it.next();
+					List<ExpiringCryptoSuite> explist = entry.getValue();
+                    explist.removeIf(exp -> time > exp.timeofexpiration());
+					if (explist.isEmpty())
+						it.remove();
 				}
 			}
 		}

@@ -1,4 +1,4 @@
-package jadex.registry;
+package jadex.registry.client;
 
 import java.lang.System.Logger.Level;
 import java.util.HashSet;
@@ -30,6 +30,11 @@ import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceRegistry;
+import jadex.registry.coordinator.CoordinatorServiceEvent;
+import jadex.registry.coordinator.ICoordinatorService;
+import jadex.registry.coordinator.RegistryInfo;
+import jadex.registry.remote.IRemoteRegistryService;
+import jadex.registry.remote.SlidingCuckooFilter;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 

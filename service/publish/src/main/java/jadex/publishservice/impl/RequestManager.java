@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -617,9 +618,12 @@ public class RequestManager
 		//final Map<String, Object> session = getSession(request, true);
 		final String sessionid = getSessionId(request);
 		
-		if(sessionid==null && request.getRequestURI().indexOf("jadex.js")==-1 && ri.isSSERequest())
+		if(sessionid==null && ri.isSSERequest() 
+			&& request.getRequestURI().indexOf(".js")==-1 
+			&& request.getRequestURI().indexOf(".css")==-1)
+		{
 			System.out.println("Call has no jadex session id, Jadex cookie missing: "+request.getRequestURL());
-		
+		}
 		// todo: if missing generate one?! as it is cookie it would be used by further requests
 		
 		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
@@ -836,10 +840,26 @@ public class RequestManager
 				Collection<MappingInfo> mis = pm!=null? pm.getElementsForPath(methodname): new ArrayList<MappingInfo>();
 				List<Map<String, String>> bindings = mis.stream().map(x -> pm.getBindingsForPath(fmn)).collect(Collectors.toList());
 				
-				if(methodname.endsWith("jadex.js"))
+				if(methodname.endsWith(".js"))
 				{
-					loadJadexJS().then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
+					ri.addResultType("application/javascript");
+					loadResource(methodname).then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
 				}
+				else if(methodname.endsWith(".css"))
+				{
+					ri.addResultType("text/css");
+					loadResource(methodname).then(css -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(css)));
+				}
+				/*else if(methodname.endsWith(".html"))
+				{
+					ri.addResultType("text/html");
+					loadHTML(methodname).then(html -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(html)));
+				}
+				else if(methodname.endsWith(".js.map"))
+				{
+					ri.addResultType("application/javascript");
+					loadJS(methodname).then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
+				}*/
 				else if(mis!=null && mis.size()>0)
 				{
 					//if(request.toString().indexOf("gen")!=-1)
@@ -2267,9 +2287,9 @@ public class RequestManager
 			return;
 		}
 		
-		List<String> sr = writeResponseHeader(ri);
+		List<String> negotiatedtypes = writeResponseHeader(ri);
 		
-		writeResponseContent(ri.setResultTypes(sr));
+		writeResponseContent(ri.setResultTypes(negotiatedtypes));
 		
 		// remove conversation only  (otherwise ongoing)
 		if(ri.isFinished() && ri.getCallid()!=null && conversationinfos.get(ri.getCallid())!=null && !conversationinfos.get(ri.getCallid()).isIntermediateFuture())
@@ -2278,18 +2298,21 @@ public class RequestManager
 			//System.out.println("remove conversation: "+ri.getCallid());
 		}
 	}
-
+	
 	/**
 	 *
-	 */
+	 * /
 	//protected List<String> writeResponseHeader(Object ret, int status, String callid, MappingInfo mi, 
 	//	HttpServletRequest request, HttpServletResponse response, boolean fin, Integer max)
 	protected List<String> writeResponseHeader(ResponseInfo ri)
 	{
+		// server indicated mimetypes
 		List<String> sr = ri.getResultTypes();
 		if(sr==null)
 			sr = new ArrayList<String>();
 		//List<String> sr = null;
+		
+		System.out.println("mimetypes start: "+sr);
 
 		if(ri.getResult() instanceof Response)
 		{
@@ -2338,7 +2361,7 @@ public class RequestManager
 			 * if(sr.size()==0) {
 			 * System.out.println("found no acceptable return types."); } else {
 			 * System.out.println("acceptable return types: "+sr+" ("+cl+")"); }
-			 */
+			 * /
 
 			if(ri.getCallid() != null)
 			{
@@ -2363,8 +2386,109 @@ public class RequestManager
 			//if(Boolean.TRUE.equals(Starter.getPlatformArgument(component.getId(), "showversion")))
 			//	ri.getResponse().addHeader(HEADER_JADEX_VERSION, VersionInfo.getInstance().toString());				
 		}
+		
+		System.out.println("mimetypes end: "+sr);
 
 		return sr;
+	}*/
+	
+	protected List<String> writeResponseHeader(ResponseInfo ri) 
+	{
+	    // Start with server preference / existing result types (ordered fallback)
+	    List<String> serverPreference = ri.getResultTypes() != null
+	            ? new ArrayList<>(ri.getResultTypes())
+	            : new ArrayList<>();
+	    
+	    System.out.println("mimetypes start: "+serverPreference);
+
+	    // If the result is a JAX-RS Response, apply its headers/status and extract its media type
+	    if (ri.getResult() instanceof Response) 
+	    {
+	        Response resp = (Response) ri.getResult();
+	        ri.getResponse().setStatus(resp.getStatus());
+	        for (String name : resp.getStringHeaders().keySet()) 
+	        {
+	            ri.getResponse().addHeader(name, resp.getHeaderString(name));
+	        }
+	        ri.setResult(resp.getEntity());
+
+	        if (resp.getMediaType() != null) {
+	            // Prefer the explicitly set media type from Response
+	            String explicit = resp.getMediaType().toString();
+	            ri.getResultTypes().clear();
+	            ri.getResultTypes().add(explicit);
+	            ri.getResponse().setContentType(explicit);
+	            // still add other headers like CORS / callid below
+	        }
+	    } 
+	    else 
+	    {
+	        // status from ResponseInfo if provided
+	        if (ri.getStatus() > 0) 
+	        {
+	            ri.getResponse().setStatus(ri.getStatus());
+	        }
+
+	        // Raw Accept header string
+	        String rawAccept = ri.getRequest().getHeader("Accept");
+	        // Mapping produced types (explicit capabilities)
+	        List<String> mappingProduced = ri.getMappingInfo() == null
+	                ? Collections.emptyList()
+	                : ri.getMappingInfo().getProducedMediaTypes();
+
+	        // Negotiate content type: prefer mappingProduced ∩ client Accept, then serverPreference
+	        Optional<String> chosen = ContentNegotiator.negotiate(
+	                rawAccept,
+	                mappingProduced,
+	                serverPreference
+	        );
+
+	        if (chosen.isPresent()) 
+	        {
+	            String contentType = chosen.get();
+	            ri.getResponse().setContentType(contentType);
+	            // update result types to reflect final choice
+	            ri.setResultTypes(List.of(contentType));
+	        } 
+	        else 
+	        {
+	            // No acceptable type: leave it to caller to handle 406 or default behavior
+	            ri.setResultTypes(Collections.emptyList());
+	        }
+
+	        // Call ID headers
+	        if (ri.getCallid() != null) 
+	        {
+	            if (ri.isFinished()) 
+	            {
+	                ri.getResponse().addHeader(HEADER_JADEX_CALLFINISHED, ri.getCallid());
+	            } 
+	            else 
+	            {
+	                ri.getResponse().addHeader(HEADER_JADEX_CALLID, ri.getCallid());
+	            }
+	            if (ri.getMax() != null) 
+	            {
+	                ri.getResponse().addHeader(HEADER_JADEX_MAX, "" + ri.getMax());
+	            }
+	        }
+
+	        setCORSHeader(ri.getResponse());
+	        setNoCachingHeader(ri.getResponse());
+	    }
+	    
+	    // Version header etc. can be added here if needed
+
+	    // Return the (possibly updated) result types
+	    List<String> ret = ri.getResultTypes();
+	    if (ret == null || ret.isEmpty()) {
+	        // fallback: use what was negotiated earlier (e.g., from serverPreference) if present
+	        ret = serverPreference;
+	    }
+	    
+	    System.out.println("mimetypes end: "+ret);
+	    
+	    return ret;
 	}
 
 	/**
@@ -2401,6 +2525,7 @@ public class RequestManager
 				|| ((IAsyncContextInfo)ri.getRequest().getAttribute(IAsyncContextInfo.ASYNC_CONTEXT_INFO))==null // can null after timeout
 				|| ((IAsyncContextInfo)ri.getRequest().getAttribute(IAsyncContextInfo.ASYNC_CONTEXT_INFO)).isComplete())
 			{
+				System.out.println("sse http result: "+ri.getRequest()+" "+ri.getResult());
 				//if(ri.getResult()!=null && ri.getResult().toString().indexOf("isTrusted")!=-1)
 				//	System.out.println("sse result: "+ri.isSSERequest()+" "+ri.getRequest()+" "+ri.getResult());
 				
@@ -2440,7 +2565,7 @@ public class RequestManager
 			// Send normal http response
 			else
 			{
-				//System.out.println("http result: "+ri.getRequest()+" "+ri.getResult());
+				System.out.println("normal http result: "+ri.getRequest()+" "+ri.getResult()+" "+ri.getResultTypes());
 				
 				// result is byte[] send directly
 				if(ri.getResult() instanceof byte[])
@@ -3264,6 +3389,14 @@ public class RequestManager
 			return this;
 		}
 		
+		public ResponseInfo addResultType(String resulttype) 
+		{
+			if(this.resulttypes == null)
+				this.resulttypes = new ArrayList<>();
+			this.resulttypes.add(resulttype);
+			return this;
+		}
+		
 		/**
 		 *  Check if it is a SSE request.
 		 *  @return True, if is sse request.
@@ -3470,9 +3603,13 @@ public class RequestManager
 			ret.append("\n");
 			ret.append("<head>");
 			ret.append("\n");
+			ret.append("<style type=\"text/css\">>");
 			ret.append(stylecss);
+			ret.append("</style>");
 			ret.append("\n");
+			ret.append("<script type=\"text/javascript\">");
 			ret.append(functionsjs);
+			ret.append("</script>");
 			ret.append("\n");
 			ret.append("<script src=\"jadex.js\" type=\"text/javascript\"/></script>");
 			ret.append("</head>");
@@ -3690,7 +3827,7 @@ public class RequestManager
 
 			ret.append("<div id=\"result\"></div>");
 
-			ret.append("<div class=\"powered\"> <span class=\"powered\">powered by</span> <span class=\"jadex\">");
+			ret.append("<div class=\"powered stripes\"> <span class=\"powered\">powered by</span> <span class=\"jadex\">");
 			// Add Jadex version header, if enabled
 			/*if(Boolean.TRUE.equals(Starter.getPlatformArgument(component.getId(), "showversion")))
 			{
@@ -3698,9 +3835,9 @@ public class RequestManager
 			}
 			else
 			{*/
-				ret.append("Jadex Active Components");				
+				ret.append("Actoron");				
 			//}
-			ret.append("</span> <a class=\"jadexurl\" href=\"http://www.activecomponents.org\">http://www.activecomponents.org</a> </div>\n");
+			ret.append("</span> <a class=\"jadexurl\" href=\"http://www.actoron.com\">http://www.actoron.com</a> </div>\n");
 		}
 		catch(Exception e)
 		{
@@ -3759,8 +3896,8 @@ public class RequestManager
 			sc = new Scanner(is);
 			stylecss = sc.useDelimiter("\\A").next();
 
-			String stripes = SUtil.loadBinary(getPath()+"jadex_stripes.png");
-			stylecss = stylecss.replace("$stripes", stripes);
+			//String stripes = SUtil.loadBinary(getPath()+"jadex_stripes.png");
+			//stylecss = stylecss.replace("$stripes", stripes);
 
 			// System.out.println(functionsjs);
 		}
@@ -3884,11 +4021,14 @@ public class RequestManager
 	 *  Load jadex.js
 	 *  @return The text from the file.
 	 */
-	public IFuture<byte[]> loadJadexJS()
+	public IFuture<byte[]> loadResource(String name)
 	{
+		//System.out.println("Loading JS: "+name+" "+getPath()+name);
 		try
 		{
-			InputStream is = SUtil.getResource0(getPath()+"jadex.js", getClassLoader());
+			InputStream is = SUtil.getResource0(getPath()+name, getClassLoader());
+			//sc = new Scanner(is);
+			//functionsjs = sc.useDelimiter("\\A").next();
 			//String mt = SUtil.guessContentTypeByFilename(filename);
 			
 			byte[] data = SUtil.readStream(is);
@@ -3897,6 +4037,7 @@ public class RequestManager
 		}
 		catch(Exception e)
 		{
+			e.printStackTrace();
 			return new Future<byte[]>(e);
 		}
 	}

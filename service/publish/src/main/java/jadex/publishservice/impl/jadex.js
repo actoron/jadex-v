@@ -466,7 +466,7 @@
 					//terminated = true;
 					var r = reason==null? 'true': reason;
 					
-					console.log("terminating request: "+path);
+					//console.log("terminating request: "+path+" "+callid);
 					
 					var headers = 
 					{
