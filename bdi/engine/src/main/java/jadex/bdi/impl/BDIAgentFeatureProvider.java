@@ -24,9 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -34,6 +32,7 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
 import jadex.bdi.ICapability;
@@ -585,7 +584,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								{
 									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
 									Field f	= SReflect.getField(ownerclazz, name);
-									if(f.getType().equals(Val.class) && lastdyn!=null)
+									if(f.getType().equals(Dyn.class) && lastdyn!=null)
 									{
 //										System.out.println("\tRemembering lambda for Val: "+f+", "+lastdyn);
 										synchronized(dynbelmethods)
@@ -609,7 +608,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 //							System.out.println("\tVisiting method call: "+callee);
 							addMethodAccess(method, callee);
 							
-							// Remember call() from Callable object for next Val constructor.
+							// Remember call() from Callable object for next Dyn constructor.
 							if("<init>".equals(name))
 							{
 								try
@@ -627,9 +626,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								}
 							}
 							
-							// Only remember lambda when followed by a Val constructor
+							// Only remember lambda when followed by a Dyn constructor
 							// to store dependency on next putfield.
-							else if(!"jadex/bdi/Val.<init>(Ljava/util/concurrent/Callable;)V".equals(callee))
+							else if(!"jadex/bdi/Dyn.<init>(Ljava/util/concurrent/Callable;)V".equals(callee))
 							{
 								lastdyn	= null;
 							}
@@ -644,7 +643,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 //								System.out.println("\tVisiting lambda call: "+callee);
 								addMethodAccess(method, callee);
 								
-								// Remember lambda for next Val constructor.
+								// Remember lambda for next Dyn constructor.
 								lastdyn	= callee;
 							}
 							// else Do we need to handle other cases?
@@ -1808,7 +1807,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	{
 		Class<?>	type	= f.getType();
 		
-		if(SReflect.isSupertype(Val.class, type) || SReflect.isSupertype(Collection.class, type))
+		if(SReflect.isSupertype(Dyn.class, type)
+			||SReflect.isSupertype(Val.class, type)
+			|| SReflect.isSupertype(Collection.class, type))
 		{
 			if(f.getGenericType() instanceof ParameterizedType)
 			{
@@ -1888,8 +1889,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		EventType fchev = new EventType(ChangeEvent.FACTCHANGED, name);
 //		EventType bchev = new EventType(ChangeEvent.BELIEFCHANGED, name);
 		
-		// Val belief
-		if(Val.class.equals(f.getType()))
+		// Dynamic belief (Dyn object)
+		if(Dyn.class.equals(f.getType()))
 		{
 			// Throw change events when dependent beliefs change.
 			List<String>	deps	= null;
@@ -1924,17 +1925,17 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					try
 					{
 						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
+						Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
 						rs.getRulebase().addRule(new Rule<Void>(
 							"DependenBeliefChange_"+name,	// Rule Name
 							ICondition.TRUE_CONDITION,	// Condition -> true
 							new IAction<Void>()	// Action -> throw change event
 							{
-								Object	oldvalue	= value.get();
+								Object	oldvalue	= dyn.get();
 								@Override
 								public IFuture<Void>	execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 								{
-									Object	newvalue	= value.get();
+									Object	newvalue	= dyn.get();
 									if(!SUtil.equals(oldval, newvalue))
 									{
 										rs.addEvent(new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, null)));
@@ -1953,7 +1954,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				});
 			}
 			
-			// Init Val on agent start
+			// Init Dyn on agent start
 			ret.add((comp, pojos, context, dummy) ->
 			{
 				// TODO: check if dependent beliefs are only added to dynamic val
@@ -1961,13 +1962,12 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				try
 				{
 					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-					Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
-					if(value==null)
+					Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
+					if(dyn==null)
 					{
-						value	= new Val<Object>((Object)null);
-						setter.invoke(pojos.get(pojos.size()-1), value);
+						throw new RuntimeException("Dynamic belief field is null: "+f);
 					}
-					initVal(value, (oldval, newval) ->
+					DynValHelper.initDyn(dyn, comp, (oldval, newval) ->
 					{
 						try
 						{
@@ -1981,35 +1981,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							throw SUtil.throwUnchecked(t);
 						}
-					}, belief.updaterate()>0);
-					
-					if(belief.updaterate()>0)
-					{
-						Val<Object>	fvalue	= value;
-						// Call inner dynamic explicitly as Val.get() doesn't call it when update rate is present
-						Callable<Object>	dynamic	= getDynamic(fvalue);
-						IExecutionFeature	exe	= comp.getFeature(IExecutionFeature.class);
-						Consumer<Void>	update	= new Consumer<Void>()
-						{
-							Consumer<Void>	update	= this;
-							@Override
-							public void accept(Void t)
-							{
-								try
-								{
-									doSet(fvalue, dynamic.call());
-									exe.waitForDelay(belief.updaterate()).then(update);
-								}
-								catch(Exception e)
-								{
-									SUtil.throwUnchecked(e);
-								}
-							}
-						};
-						// Must happen after injections but before on start
-						update.accept(null);
-					}
-					
+					});
+										
 					return null;
 				}
 				catch(Throwable t)
@@ -2024,13 +1997,47 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			{
 				throw new UnsupportedOperationException("Dependent beliefs are only support for (dynamic) Val beliefs: "+f);
 			}
-			else if(belief.updaterate()>0)
-			{
-				throw new UnsupportedOperationException("Update rate is only support for (dynamic) Val beliefs: "+f);
-			}
 		
+			// Val belief
+			if(Val.class.equals(f.getType()))
+			{				
+				// Init Val on agent start
+				ret.add((comp, pojos, context, dummy) ->
+				{
+					try
+					{
+						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
+						if(value==null)
+						{
+							value	= new Val<Object>((Object)null);
+							setter.invoke(pojos.get(pojos.size()-1), value);
+						}
+						DynValHelper.initVal(value, (oldval, newval) ->
+						{
+							try
+							{
+//								publishToolBeliefEvent(mbel);	// TODO
+								// TODO: support belief vs fact changed!?
+//								Event ev = new Event(bchev, new ChangeInfo<Object>(newval, oldval, null));
+								Event ev = new Event(fchev, new ChangeInfo<Object>(newval, oldval, null));
+								rs.addEvent(ev);
+							}
+							catch(Throwable t)
+							{
+								throw SUtil.throwUnchecked(t);
+							}
+						});						
+						return null;
+					}
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				});
+			}
 			// List belief
-			if(List.class.equals(f.getType()))
+			else if(List.class.equals(f.getType()))
 			{
 				ret.add((comp, pojos, context, oldval) ->
 				{
@@ -2157,68 +2164,5 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 		}
-	}
-	
-	//-------- Val helper --------
-	
-	static MethodHandle	init;
-	static MethodHandle	doset;
-	static MethodHandle	dynamic;
-	{
-		try
-		{
-			Method	m	= Val.class.getDeclaredMethod("init", BiConsumer.class, boolean.class);
-			m.setAccessible(true);
-			init	= MethodHandles.lookup().unreflect(m);
-
-			m	= Val.class.getDeclaredMethod("doSet", Object.class);
-			m.setAccessible(true);
-			doset	= MethodHandles.lookup().unreflect(m);
-			
-			Field	f	= Val.class.getDeclaredField("dynamic");
-			f.setAccessible(true);
-			dynamic	= MethodHandles.lookup().unreflectGetter(f);
-		}
-		catch(Exception e)
-		{
-			SUtil.throwUnchecked(e);
-		}
-	}
-	
-	protected static void	initVal(Val<Object> val, BiConsumer<Object, Object> changehandler, boolean updaterate)
-	{
-		try
-		{
-			init.invoke(val, changehandler, updaterate);
-		}
-		catch(Throwable t)
-		{
-			SUtil.throwUnchecked(t);
-		}
-	}
-	
-	protected static void	doSet(Val<Object> val, Object value)
-	{
-		try
-		{
-			doset.invoke(val, value);
-		}
-		catch(Throwable t)
-		{
-			SUtil.throwUnchecked(t);
-		}
-	}
-
-	
-	protected static Callable<Object>	getDynamic(Val<Object> val)
-	{
-		try
-		{
-			return (Callable<Object>) dynamic.invoke(val);
-		}
-		catch(Throwable t)
-		{
-			throw SUtil.throwUnchecked(t);
-		}
-	}
+	}	
 }

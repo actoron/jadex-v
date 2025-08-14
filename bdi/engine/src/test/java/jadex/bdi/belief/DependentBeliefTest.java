@@ -2,6 +2,7 @@ package jadex.bdi.belief;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.Dyn;
 import jadex.bdi.TestHelper;
 import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
@@ -26,9 +27,8 @@ public class DependentBeliefTest
 			return belief.get();
 		}
 		
-		// TODO: dynamic belief
 		@Belief
-		Val<Boolean> dynamicBelief = new Val<>(() -> belief.get());
+		Dyn<Boolean> dynamicBelief = new Dyn<>(() -> belief.get());
 		
 		@Goal
 		class MyGoal

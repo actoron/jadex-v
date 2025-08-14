@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
+import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
 import jadex.bdi.PlanFailureException;
@@ -82,8 +83,8 @@ public class CleanerAgent
 	private Val<Cleaner> self = new Val<Cleaner>((Cleaner)null);
 	
 	/** Day or night?. Use updaterate to re-check every second. */
-	@Belief(updaterate=1000)
-	private Val<Boolean> daytime = new Val<>(() -> getEnvironment().isDaytime().get());
+	@Belief
+	private Dyn<Boolean> daytime = new Dyn<>(() -> getEnvironment().isDaytime().get()).setUpdateRate(1000);
 	
 	private boolean	sensorgui	= true;
 	

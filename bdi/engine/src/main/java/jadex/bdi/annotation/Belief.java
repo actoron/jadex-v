@@ -30,9 +30,10 @@ public @interface Belief
 //	 */
 //	public RawEvent[] rawevents() default {};
 	
-	/**
-	 *  An update rate > 0 causes the belief to be reevaluated periodically.
-	 *  Supported for Val beliefs.
-	 */
-	public long	updaterate() default 0;
+	// Moved into Dyn object
+//	/**
+//	 *  An update rate > 0 causes the belief to be reevaluated periodically.
+//	 *  Supported for Val beliefs.
+//	 */
+//	public long	updaterate() default 0;
 }

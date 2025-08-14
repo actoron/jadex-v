@@ -3,7 +3,6 @@ package jadex.bdi.belief;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -18,6 +17,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
 import jadex.bdi.TestHelper;
@@ -78,7 +78,7 @@ public class BeliefTest
 		}};
 		
 		@Belief
-		Val<Integer>	dynamicbelief	= new Val<>(new Callable<Integer>()
+		Dyn<Integer>	dynamicbelief	= new Dyn<>(new Callable<Integer>()
 		{
 			@Override
 			public Integer call() throws Exception
@@ -86,10 +86,10 @@ public class BeliefTest
 				return valbelief.get()+1;
 			}
 		});
-//		Val<Integer>	dynamicbelief	= new Val<>(()->valbelief.get()+1);
+//		Dyn<Integer>	dynamicbelief	= new Dyn<>(()->valbelief.get()+1);
 
-		@Belief(updaterate = 1000)
-		Val<Long>	updatebelief	= new Val<>(()->System.currentTimeMillis());
+		@Belief//(updaterate = 1000)
+		Dyn<Long>	updatebelief	= new Dyn<>(()->System.currentTimeMillis()).setUpdateRate(1000);
 	}
 	
 	public static class Bean
@@ -247,7 +247,7 @@ public class BeliefTest
 		Future<Integer>	firstfut	= new Future<>();
 		Future<IEvent>	changedfut	= new Future<>();
 		Future<Integer>	secondfut	= new Future<>();
-		Future<Void>	exfut	= new Future<>();
+//		Future<Void>	exfut	= new Future<>();	// no more set() method for dynamic belief
 		
 		exta.scheduleStep(() ->
 		{
@@ -255,20 +255,20 @@ public class BeliefTest
 			firstfut.setResult(pojo.dynamicbelief.get());
 			pojo.valbelief.set(2);
 			secondfut.setResult(pojo.dynamicbelief.get());
-			try
-			{
-				pojo.dynamicbelief.set(3);
-				exfut.setResult(null);
-			}
-			catch(Exception e)
-			{
-				exfut.setException(e);
-			}
+//			try
+//			{
+//				pojo.dynamicbelief.set(3);
+//				exfut.setResult(null);
+//			}
+//			catch(Exception e)
+//			{
+//				exfut.setException(e);
+//			}
 		});
 		
 		assertEquals(2, firstfut.get(TestHelper.TIMEOUT));
 		assertEquals(3, secondfut.get(TestHelper.TIMEOUT));
-		assertThrows(IllegalStateException.class, ()->exfut.get(TestHelper.TIMEOUT));
+//		assertThrows(IllegalStateException.class, ()->exfut.get(TestHelper.TIMEOUT));
 		checkEventInfo(changedfut, 2, 3, null);
 	}
 	
