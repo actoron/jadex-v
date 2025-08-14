@@ -6,8 +6,8 @@ import java.util.function.BiConsumer;
 import jadex.bdi.impl.DynValHelper;
 
 /**
- *  Wrapper for belief values.
- *  Generates appropriate rule events on changes.
+ *  Wrapper for observable values.
+ *  Generates appropriate events on changes.
  */
 public class Val<T>
 {
@@ -16,14 +16,16 @@ public class Val<T>
 	/** The current value. */
 	T	value;
 	
+	/** The property change listener for the value, if bean. */
 	PropertyChangeListener	listener;
 	
 	//-------- fields set on init --------
 	
+	/** The change handler gets called after any change with old and new value. */
 	BiConsumer<T, T>	changehandler;
 	
 	/**
-	 *  Create belief value with a given value.
+	 *  Create an observable with a given value.
 	 */
 	public Val(T value)
 	{
@@ -31,9 +33,7 @@ public class Val<T>
 	}
 	
 	/**
-	 *  Called on agent init.
-	 *  @param changehandler	The change handler gets called after any change with old and new value.
-	 *  @param updaterate	Flag to indicate that the value is externally updated.
+	 *  Called on component init.
 	 */
 	void	init(BiConsumer<T, T> changehandler)
 	{

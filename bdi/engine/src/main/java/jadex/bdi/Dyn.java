@@ -12,7 +12,7 @@ import jadex.execution.IExecutionFeature;
 
 /**
  *  Wrapper for a dynamic value.
- *  Generates appropriate rule events on changes.
+ *  Generates appropriate events on changes.
  *  Supports dynamic values that are updated on every access or periodically.
  */
 public class Dyn<T>
@@ -41,7 +41,7 @@ public class Dyn<T>
 	BiConsumer<T, T>	changehandler;
 	
 	/**
-	 *  Create belief value with a dynamic function.
+	 *  Create an observable value with a dynamic function.
 	 */
 	public Dyn(Callable<T> dynamic)
 	{
@@ -90,9 +90,7 @@ public class Dyn<T>
 	}
 	
 	/**
-	 *  Called on agent init.
-	 *  @param changehandler	The change handler gets called after any change with old and new value.
-	 *  @param updaterate	Flag to indicate that the value is externally updated.
+	 *  Called on component init.
 	 */
 	void	init(IComponent comp, BiConsumer<T, T> changehandler)
 	{

@@ -14,8 +14,8 @@ import jadex.common.SUtil;
 import jadex.core.IComponent;
 
 /**
- *  Helper class for dynamic values.
- *  Provides access to non-user methods.
+ *  Helper class for observable values.
+ *  Provides common methods and access to non-user methods.
  */
 public class DynValHelper
 {

@@ -1957,8 +1957,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// Init Dyn on agent start
 			ret.add((comp, pojos, context, dummy) ->
 			{
-				// TODO: check if dependent beliefs are only added to dynamic val
-				
 				try
 				{
 					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
