@@ -14,6 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -77,15 +78,15 @@ public class BeliefTest
 		}};
 		
 		@Belief
-//		Val<Integer>	dynamicbelief	= new Val<>(new Callable<Integer>()
-//		{
-//			@Override
-//			public Integer call() throws Exception
-//			{
-//				return valbelief.get()+1;
-//			}
-//		});
-		Val<Integer>	dynamicbelief	= new Val<>(()->valbelief.get()+1);
+		Val<Integer>	dynamicbelief	= new Val<>(new Callable<Integer>()
+		{
+			@Override
+			public Integer call() throws Exception
+			{
+				return valbelief.get()+1;
+			}
+		});
+//		Val<Integer>	dynamicbelief	= new Val<>(()->valbelief.get()+1);
 
 		@Belief(updaterate = 1000)
 		Val<Long>	updatebelief	= new Val<>(()->System.currentTimeMillis());

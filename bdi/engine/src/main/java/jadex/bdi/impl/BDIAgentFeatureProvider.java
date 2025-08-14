@@ -609,9 +609,27 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 //							System.out.println("\tVisiting method call: "+callee);
 							addMethodAccess(method, callee);
 							
+							// Remember call() from Callable object for next Val constructor.
+							if("<init>".equals(name))
+							{
+								try
+								{
+									Class<?> calleeclazz = Class.forName(owner.replace('/', '.'));
+									if(SReflect.isSupertype(Callable.class, calleeclazz))
+									{
+										lastdyn	= methodToAsmDesc(calleeclazz.getMethod("call"));
+//										System.out.println("\tRemembering call(): "+lastdyn);
+									}
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+							}
+							
 							// Only remember lambda when followed by a Val constructor
 							// to store dependency on next putfield.
-							if(!"jadex/bdi/Val.<init>(Ljava/util/concurrent/Callable;)V".equals(callee))
+							else if(!"jadex/bdi/Val.<init>(Ljava/util/concurrent/Callable;)V".equals(callee))
 							{
 								lastdyn	= null;
 							}
@@ -1306,9 +1324,16 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 */
 	protected static List<String> findDependentBeliefs(Class<?> baseclazz, List<Class<?>> parentclazzes, Method method)	throws IOException
 	{
-		String	desc	= method.getDeclaringClass().getName().replace('.', '/')
+		return findDependentBeliefs(baseclazz, parentclazzes, methodToAsmDesc(method));
+	}
+	
+	/**
+	 *  Convert method to ASM descriptor.
+	 */
+	protected static String methodToAsmDesc(Method method)
+	{
+		return method.getDeclaringClass().getName().replace('.', '/')
 			+ "." + org.objectweb.asm.commons.Method.getMethod(method).toString();
-		return findDependentBeliefs(baseclazz, parentclazzes, desc);
 	}
 		
 	/**
