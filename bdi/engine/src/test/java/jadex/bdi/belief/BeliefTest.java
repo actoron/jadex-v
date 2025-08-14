@@ -76,7 +76,7 @@ public class BeliefTest
 			put("2", "wto");
 		}};
 		
-		@Belief(beliefs="valbelief")
+		@Belief
 //		Val<Integer>	dynamicbelief	= new Val<>(new Callable<Integer>()
 //		{
 //			@Override

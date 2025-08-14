@@ -498,6 +498,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/** The field accesses by method. */
 	protected static final Map<String, Set<Field>>	accessedfields	= new LinkedHashMap<>();
 	
+	/** The code executed for a dynamic belief. */
+	protected static final Map<Field, String>	dynbelmethods	= new LinkedHashMap<>();
+	
 	/** The method accesses by method. */
 	protected static final Map<String, Set<String>>	accessedmethods	= new LinkedHashMap<>();
 	
@@ -518,6 +521,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			ClassReader	cr	= new ClassReader(pojoclazz.getName());
 			cr.accept(new ClassVisitor(Opcodes.ASM9)
 			{
+				String	lastdyn	= null;
+				
 				@Override
 				public void visitInnerClass(String name, String outerName, String innerName, int access)
 				{
@@ -572,6 +577,29 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 									SUtil.throwUnchecked(e);
 								}
 			                }
+			                
+			                else if(opcode==Opcodes.PUTFIELD)
+			                {
+//			                	System.out.println("\tVisiting field write: "+owner+"."+name+"; "+lastdyn);
+								try
+								{
+									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
+									Field f	= SReflect.getField(ownerclazz, name);
+									if(f.getType().equals(Val.class) && lastdyn!=null)
+									{
+//										System.out.println("\tRemembering lambda for Val: "+f+", "+lastdyn);
+										synchronized(dynbelmethods)
+										{
+											dynbelmethods.put(f, lastdyn);
+										}
+									}
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+			                }
+			                
 			                super.visitFieldInsn(opcode, owner, name, descriptor);
 			            }
 						
@@ -580,6 +608,13 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							String	callee	= owner+"."+name+descriptor;
 //							System.out.println("\tVisiting method call: "+callee);
 							addMethodAccess(method, callee);
+							
+							// Only remember lambda when followed by a Val constructor
+							// to store dependency on next putfield.
+							if(!"jadex/bdi/Val.<init>(Ljava/util/concurrent/Callable;)V".equals(callee))
+							{
+								lastdyn	= null;
+							}
 						}
 						
 						public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments)
@@ -588,8 +623,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							{
 								Handle handle	= (Handle)bootstrapMethodArguments[1];
 								String	callee	= handle.getOwner()+"."+handle.getName()+handle.getDesc();
-	//							System.out.println("\tVisiting lambda call: "+callee);
+//								System.out.println("\tVisiting lambda call: "+callee);
 								addMethodAccess(method, callee);
+								
+								// Remember lambda for next Val constructor.
+								lastdyn	= callee;
 							}
 							// else Do we need to handle other cases?
 						}
@@ -1270,8 +1308,16 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	{
 		String	desc	= method.getDeclaringClass().getName().replace('.', '/')
 			+ "." + org.objectweb.asm.commons.Method.getMethod(method).toString();
-//		System.out.println("Finding beliefs accessed in method: "+desc+", "+method);
+		return findDependentBeliefs(baseclazz, parentclazzes, desc);
+	}
 		
+	/**
+	 *  Scan byte code to find beliefs that are accessed in the method.
+	 *  @param baseclazz	The goal or plan class.
+	 */
+	protected static List<String> findDependentBeliefs(Class<?> baseclazz, List<Class<?>> parentclazzes, String desc)	throws IOException
+	{
+//		System.out.println("Finding beliefs accessed in method: "+desc);
 		// Find all method calls
 		List<String>	calls	= new ArrayList<>();
 		calls.add(desc);
@@ -1821,9 +1867,30 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		if(Val.class.equals(f.getType()))
 		{
 			// Throw change events when dependent beliefs change.
-			if(belief.beliefs().length>0)
+			List<String>	deps	= null;
+			if(belief.beliefs().length!=0)
 			{
-				List<String>	deps	= addPrefix(capaprefix, belief.beliefs());
+				deps	= addPrefix(capaprefix, belief.beliefs());
+			}
+			else
+			{
+				String dyn = null;
+				synchronized(dynbelmethods)
+				{
+					if(dynbelmethods.containsKey(f))
+					{
+						dyn	= dynbelmethods.get(f);
+					}
+				}
+				
+				if(dyn!=null)
+				{
+					deps	= findDependentBeliefs(pojoclazzes.get(0), pojoclazzes, dyn);
+				}
+			}
+			
+			if(deps!=null && deps.size()>0)	// size may be null for belief with update rate
+			{
 				List<EventType>	events	= getTriggerEvents(pojoclazzes, deps, deps, deps, new Class[0], name);
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 				

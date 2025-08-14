@@ -117,7 +117,7 @@ public class TestBeliefNames
 			@Belief
 			Val<String>	belief	= new Val<>("initial");
 			
-			@Belief(beliefs="belief")
+			@Belief
 			Val<String>	dep	= new Val<>(() -> belief.get());
 		}
 		
