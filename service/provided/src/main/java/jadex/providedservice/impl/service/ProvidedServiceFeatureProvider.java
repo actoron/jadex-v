@@ -19,6 +19,7 @@ import jadex.injection.impl.InjectionModel.Getter;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.annotation.InjectServiceIdentifier;
 import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.annotation.Service;
 
@@ -160,9 +161,31 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 						return ((IService)service).getServiceId();
 					};
 				}
+				
+				// Multiple provided services
 				else if(!services.isEmpty())
 				{
-					throw new RuntimeException("Cannot inject IServiceIdentifier for multi-type service: "+pojotypes.get(pojotypes.size()-1));
+					if(annotation instanceof InjectServiceIdentifier
+						|| !((InjectServiceIdentifier)annotation).value().equals(Object.class))
+					{
+						if(services.containsKey(((InjectServiceIdentifier)annotation).value()))
+						{
+							ret	= (comp, pojos, context, oldval) ->
+							{
+								ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
+								Object	service	= feature.getProvidedService(((InjectServiceIdentifier)annotation).value());
+								return ((IService)service).getServiceId();
+							};
+						}
+						else
+						{
+							throw new RuntimeException("Cannot inject IServiceIdentifier for unknown provided service type: "+((InjectServiceIdentifier)annotation).value());
+						}
+					}
+					else
+					{
+						throw new RuntimeException("Cannot inject IServiceIdentifier for multi-type service: "+pojotypes.get(pojotypes.size()-1));
+					}
 				}
 				else
 				{
@@ -170,7 +193,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				}
 			}
 			return ret;
-		}, Inject.class);
+		}, Inject.class, InjectServiceIdentifier.class);
 		
 		
 		// Provide services from class (do pre-inject so SID injection works, hack?)
