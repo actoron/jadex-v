@@ -4,6 +4,7 @@ import java.beans.PropertyChangeListener;
 import java.util.function.BiConsumer;
 
 import jadex.bdi.impl.DynValHelper;
+import jadex.common.SUtil;
 
 /**
  *  Wrapper for observable values.
@@ -38,6 +39,7 @@ public class Val<T>
 	void	init(BiConsumer<T, T> changehandler)
 	{
 		this.changehandler	= changehandler;
+		DynValHelper.updateListener(value, null, listener, changehandler);
 	}
 	
 	/**
@@ -69,7 +71,18 @@ public class Val<T>
 		T	old	= this.value;
 		this.value	= value;
 		
-		listener	= DynValHelper.updateValue(value, old, listener, () -> changehandler);
+		if(changehandler!=null)
+		{
+			if(old!=value)
+			{
+				listener	= DynValHelper.updateListener(value, old, listener, changehandler);
+			}
+			
+			if(!SUtil.equals(old, value))
+			{
+				changehandler.accept(old, value);
+			}
+		}
 	}
 	
 	@Override

@@ -97,6 +97,7 @@ public class Dyn<T>
 	{
 		this.comp	= comp;
 		this.changehandler	= changehandler;
+		DynValHelper.updateListener(value, null, listener, changehandler);
 		
 		// Set update rate to start periodic updates.
 		setUpdateRate(updaterate);
@@ -129,7 +130,18 @@ public class Dyn<T>
 		T	old	= this.value;
 		this.value	= value;
 		
-		listener	= DynValHelper.updateValue(value, old, listener, ()->changehandler);
+		if(changehandler!=null)
+		{
+			if(old!=value)
+			{
+				listener	= DynValHelper.updateListener(value, old, listener, changehandler);
+			}
+			
+			if(!SUtil.equals(old, value))
+			{
+				changehandler.accept(old, value);
+			}
+		}
 	}
 	
 	@Override
