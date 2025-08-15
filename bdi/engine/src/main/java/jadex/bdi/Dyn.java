@@ -50,16 +50,17 @@ public class Dyn<T>
 	
 	/**
 	 *  Set the update rate.
+	 *  @param updaterate	The update rate in millis, or 0 for no periodic updates.
 	 */
 	public Dyn<T>	setUpdateRate(long updaterate)
 	{
 		this.updaterate	= updaterate;
+		// Increment the modcount to "cancel" old timers.
+		int fmodcount	= ++modcount;
 		
 		// When already inited -> start periodic updates.
 		if(updaterate>0 && comp!=null)
 		{
-			// Increment the modcount to "cancel" old timers.
-			int fmodcount	= ++modcount;
 			IExecutionFeature	exe	= comp.getFeature(IExecutionFeature.class);
 			Consumer<Void>	update	= new Consumer<Void>()
 			{
