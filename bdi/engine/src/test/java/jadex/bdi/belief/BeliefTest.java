@@ -58,7 +58,7 @@ public class BeliefTest
 		Val<Integer>	valbelief	= new Val<>(1);
 		
 		@Belief
-		Val<Bean>	valbeanbelief	= new Val<>(null);
+		Val<Bean>	valbeanbelief	= new Val<>(new Bean(1));
 		
 		@Belief
 		Bean	beanbelief	= new Bean(1);
@@ -106,6 +106,10 @@ public class BeliefTest
 		{
 			pcs.addPropertyChangeListener(pcl);
 		}
+		public void	removePropertyChangeListener(PropertyChangeListener pcl)
+		{
+			pcs.removePropertyChangeListener(pcl);
+		}
 		
 		public void setValue(int value)
 		{
@@ -152,20 +156,37 @@ public class BeliefTest
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
 		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		// Test delayed set after init.
+		
+		// Test immediate set of bean before init.
+		Future<IEvent>	fut1	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			pojo.valbeanbelief.set(new Bean(1));
+			addEventListenerRule(fut1, ChangeEvent.FACTCHANGED, "valbeanbelief");
+			pojo.valbeanbelief.get().setValue(2);
 			return null;
 		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(fut1, null, pojo.valbeanbelief.get(), null);
 		
-		Future<IEvent>	fut	= new Future<>();
+		// Test delayed set of bean after init.
+		Future<IEvent>	fut2	= new Future<>();
+		Bean	old = pojo.valbeanbelief.get();
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(fut, ChangeEvent.FACTCHANGED, "valbeanbelief");
-			pojo.valbeanbelief.get().setValue(2);
-		});
-		checkEventInfo(fut, null, pojo.valbeanbelief.get(), null);
+			addEventListenerRule(fut2, ChangeEvent.FACTCHANGED, "valbeanbelief");
+			pojo.valbeanbelief.set(new Bean(2));
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(fut2, old, pojo.valbeanbelief.get(), null);
+		
+		// Test delayed set of bean property after init.
+		Future<IEvent>	fut3	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(fut3, ChangeEvent.FACTCHANGED, "valbeanbelief");
+			pojo.valbeanbelief.get().setValue(3);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(fut3, null, pojo.valbeanbelief.get(), null);
 	}
 
 	@Test
@@ -388,6 +409,8 @@ public class BeliefTest
 	
 	//-------- helper methods --------
 	
+	static int	rulecnt	= 0;
+	
 	/**
 	 *  Add a rule that sets the event into a future.
 	 *  Must be called on agent thread.
@@ -397,7 +420,7 @@ public class BeliefTest
 		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
 			.getFeature(IBDIAgentFeature.class);
 		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
-			"EventListenerRule"+Arrays.toString(events),	// Rule Name
+			"EventListenerRule"+Arrays.toString(events)+"_"+rulecnt++,	// Rule Name
 			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
 			(event, rule, context, condresult) -> {fut.setResultIfUndone(event); return IFuture.DONE;}, // Action -> set future
 			new EventType[] {new EventType(events)}	// Trigger Event(s)

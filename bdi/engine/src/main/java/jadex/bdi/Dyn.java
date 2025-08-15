@@ -129,7 +129,7 @@ public class Dyn<T>
 		T	old	= this.value;
 		this.value	= value;
 		
-		listener	= DynValHelper.updateValue(value, old, listener, changehandler);
+		listener	= DynValHelper.updateValue(value, old, listener, ()->changehandler);
 	}
 	
 	@Override

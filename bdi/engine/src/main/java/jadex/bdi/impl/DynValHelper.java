@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import jadex.bdi.Dyn;
 import jadex.bdi.Val;
@@ -29,7 +30,7 @@ public class DynValHelper
 	 *  @param changehandler	The change handler gets called after any change with old and new value.
 	 *  @return	The (new) property change listener.
 	 */
-	public static <T> PropertyChangeListener	updateValue(T value, T old, PropertyChangeListener listener, BiConsumer<T, T> changehandler)
+	public static <T> PropertyChangeListener	updateValue(T value, T old, PropertyChangeListener listener, Supplier<BiConsumer<T, T>> changehandler)
 	{
 		// Remove  bean listener from old value, if any.
 		if(old!=null && listener!=null)
@@ -40,6 +41,11 @@ public class DynValHelper
 				if(remover!=null)
 				{
 					remover.invoke(old, listener);
+				}
+				else
+				{
+					System.getLogger(DynValHelper.class.getName())
+						.log(System.Logger.Level.WARNING, "No removePropertyChangeListener() in: " + old.getClass().getName()+". May lead to outdated events being processed.");
 				}
 			}
 			catch(Throwable e)
@@ -61,9 +67,12 @@ public class DynValHelper
 					{
 						listener	= event ->
 						{
-							if(changehandler!=null)
+							if(changehandler.get()!=null)
 							{
-								changehandler.accept(null, value);
+								// Use evnt source to get new value even if listener is reused.
+								@SuppressWarnings("unchecked")
+								T source	= (T)event.getSource();
+								changehandler.get().accept(null, source);
 							}
 						};
 					}
@@ -77,9 +86,9 @@ public class DynValHelper
 			}
 		}
 		
-		if(changehandler!=null && !SUtil.equals(old, value))
+		if(changehandler.get()!=null && !SUtil.equals(old, value))
 		{
-			changehandler.accept(old, value);
+			changehandler.get().accept(old, value);
 		}
 		
 		return listener;
