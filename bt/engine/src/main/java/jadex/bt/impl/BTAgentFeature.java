@@ -695,15 +695,15 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		
 		if(val instanceof List && !(val instanceof jadex.collection.ListWrapper))
 		{
-			val = new ListWrapper((List<?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev));
+			val = new ListWrapper((List<?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev), IExecutionFeature.get().getComponent());
 		}
 		else if(val instanceof Set && !(val instanceof jadex.collection.SetWrapper))
 		{
-			val = new SetWrapper((Set<?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev));
+			val = new SetWrapper((Set<?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev), IExecutionFeature.get().getComponent());
 		}
 		else if(val instanceof Map && !(val instanceof jadex.collection.MapWrapper))
 		{
-			val = new MapWrapper((Map<?,?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev));
+			val = new MapWrapper((Map<?,?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev), IExecutionFeature.get().getComponent());
 		}
 		
 		return val;

@@ -2,10 +2,10 @@ package jadex.bdi;
 
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import jadex.bdi.impl.DynValHelper;
+import jadex.collection.IEventPublisher;
+import jadex.collection.SPropertyChange;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -38,7 +38,7 @@ public class Dyn<T>
 	IComponent	comp;
 	
 	/** The change handler gets called after any change with old and new value. */
-	BiConsumer<T, T>	changehandler;
+	IEventPublisher	changehandler;
 	
 	/**
 	 *  Create an observable value with a dynamic function.
@@ -93,11 +93,10 @@ public class Dyn<T>
 	/**
 	 *  Called on component init.
 	 */
-	void	init(IComponent comp, BiConsumer<T, T> changehandler)
+	void	init(IComponent comp, IEventPublisher changehandler)
 	{
 		this.comp	= comp;
 		this.changehandler	= changehandler;
-		DynValHelper.updateListener(value, null, listener, changehandler);
 		
 		// Set update rate to start periodic updates.
 		setUpdateRate(updaterate);
@@ -134,12 +133,12 @@ public class Dyn<T>
 		{
 			if(old!=value)
 			{
-				listener	= DynValHelper.updateListener(value, old, listener, changehandler);
+				listener	= SPropertyChange.updateListener(old, value, listener, comp, changehandler);
 			}
 			
 			if(!SUtil.equals(old, value))
 			{
-				changehandler.accept(old, value);
+				changehandler.entryChanged(comp, old, value, -1);
 			}
 		}
 	}

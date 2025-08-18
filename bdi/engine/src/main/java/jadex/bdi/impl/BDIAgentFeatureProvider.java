@@ -71,15 +71,17 @@ import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.MethodPlanBody;
 import jadex.bdi.impl.plan.RPlan;
-import jadex.bdi.impl.wrappers.ListWrapper;
-import jadex.bdi.impl.wrappers.MapWrapper;
-import jadex.bdi.impl.wrappers.SetWrapper;
+import jadex.collection.IEventPublisher;
+import jadex.collection.ListWrapper;
+import jadex.collection.MapWrapper;
+import jadex.collection.SetWrapper;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
+import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
@@ -675,7 +677,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Add capability prefix to belief references.
 	 */
-	protected List<String>	addPrefix(String capaprefix, String[] beliefs)
+	protected static List<String>	addPrefix(String capaprefix, String[] beliefs)
 	{
 		List<String>	ret	= new ArrayList<>(beliefs.length);
 		for(String belief: beliefs)
@@ -1764,7 +1766,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Get rule events that trigger the plan, if any.
 	 */
-	protected List<EventType> getTriggerEvents(List<Class<?>> pojoclazzes, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, String element)
+	protected static List<EventType> getTriggerEvents(List<Class<?>> pojoclazzes, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, String element)
 	{
 		List<EventType>	events	= null;
 		if(factadded.size()>0
@@ -1876,7 +1878,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Check various options for a field belief.
 	 */
-	protected void addBeliefField(List<Class<?>> pojoclazzes, String capaprefix, Field f, List<IInjectionHandle> ret) throws Exception
+	protected static void addBeliefField(List<Class<?>> pojoclazzes, String capaprefix, Field f, List<IInjectionHandle> ret) throws Exception
 	{
 		Belief	belief	= f.getAnnotation(Belief.class);
 		String	name	= capaprefix+f.getName();
@@ -1888,6 +1890,58 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		EventType remev = new EventType(ChangeEvent.FACTREMOVED, name);
 		EventType fchev = new EventType(ChangeEvent.FACTCHANGED, name);
 //		EventType bchev = new EventType(ChangeEvent.BELIEFCHANGED, name);
+		
+		IEventPublisher	evpub	= new IEventPublisher()
+		{
+			@Override
+			public void entryAdded(Object context, Object key, Object value)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, key));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryAdded(Object context, Object value, Integer index)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, index));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryChanged(Object context, Object key, Object oldvalue, Object newvalue)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, key));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryChanged(Object context, Object oldvalue, Object newvalue, Integer index)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, index));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryRemoved(Object context, Object key, Object value)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, key));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryRemoved(Object context, Object value, Integer index)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, index));
+				rs.addEvent(ev);
+			}
+		};
+
 		
 		// Dynamic belief (Dyn object)
 		if(Dyn.class.equals(f.getType()))
@@ -1953,33 +2007,18 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					}
 				});
 			}
-			
+
 			// Init Dyn on agent start
 			ret.add((comp, pojos, context, dummy) ->
 			{
 				try
 				{
-					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
 					Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
 					if(dyn==null)
 					{
 						throw new RuntimeException("Dynamic belief field is null: "+f);
 					}
-					DynValHelper.initDyn(dyn, comp, (oldval, newval) ->
-					{
-						try
-						{
-//							publishToolBeliefEvent(mbel);	// TODO
-							// TODO: support belief vs fact changed!?
-//							Event ev = new Event(bchev, new ChangeInfo<Object>(newval, oldval, null));
-							Event ev = new Event(fchev, new ChangeInfo<Object>(newval, oldval, null));
-							rs.addEvent(ev);
-						}
-						catch(Throwable t)
-						{
-							throw SUtil.throwUnchecked(t);
-						}
-					});
+					DynValHelper.initDyn(dyn, comp, evpub);
 										
 					return null;
 				}
@@ -2004,28 +2043,13 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				{
 					try
 					{
-						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
 						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
 						if(value==null)
 						{
 							value	= new Val<Object>((Object)null);
 							setter.invoke(pojos.get(pojos.size()-1), value);
 						}
-						DynValHelper.initVal(value, (oldval, newval) ->
-						{
-							try
-							{
-//								publishToolBeliefEvent(mbel);	// TODO
-								// TODO: support belief vs fact changed!?
-//								Event ev = new Event(bchev, new ChangeInfo<Object>(newval, oldval, null));
-								Event ev = new Event(fchev, new ChangeInfo<Object>(newval, oldval, null));
-								rs.addEvent(ev);
-							}
-							catch(Throwable t)
-							{
-								throw SUtil.throwUnchecked(t);
-							}
-						});						
+						DynValHelper.initVal(value, comp, evpub);						
 						return null;
 					}
 					catch(Throwable t)
@@ -2046,7 +2070,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new ArrayList<>();
 						}
-						value	= new ListWrapper<Object>(value, comp, addev, remev, fchev);
+						value	= new ListWrapper<>(value, evpub, comp);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -2069,7 +2093,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new LinkedHashSet<>();
 						}
-						value	= new SetWrapper<Object>(value, comp, addev, remev, fchev);
+						value	= new SetWrapper<>(value, evpub, comp);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -2092,7 +2116,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new LinkedHashMap<>();
 						}
-						value	= new MapWrapper<Object, Object>(value, comp, addev, remev, fchev);
+						value	= new MapWrapper<>(value, evpub, comp);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}

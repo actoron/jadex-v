@@ -1,10 +1,11 @@
 package jadex.bdi;
 
 import java.beans.PropertyChangeListener;
-import java.util.function.BiConsumer;
 
-import jadex.bdi.impl.DynValHelper;
+import jadex.collection.IEventPublisher;
+import jadex.collection.SPropertyChange;
 import jadex.common.SUtil;
+import jadex.core.IComponent;
 
 /**
  *  Wrapper for observable values.
@@ -22,8 +23,11 @@ public class Val<T>
 	
 	//-------- fields set on init --------
 	
+	/** The component. */
+	IComponent	comp;
+	
 	/** The change handler gets called after any change with old and new value. */
-	BiConsumer<T, T>	changehandler;
+	IEventPublisher	changehandler;
 	
 	/**
 	 *  Create an observable with a given value.
@@ -36,10 +40,11 @@ public class Val<T>
 	/**
 	 *  Called on component init.
 	 */
-	void	init(BiConsumer<T, T> changehandler)
+	void	init(IComponent comp, IEventPublisher changehandler)
 	{
+		this.comp	= comp;
 		this.changehandler	= changehandler;
-		DynValHelper.updateListener(value, null, listener, changehandler);
+		this.listener	= SPropertyChange.updateListener(null, value, listener, comp, changehandler);
 	}
 	
 	/**
@@ -75,12 +80,12 @@ public class Val<T>
 		{
 			if(old!=value)
 			{
-				listener	= DynValHelper.updateListener(value, old, listener, changehandler);
+				listener	= SPropertyChange.updateListener(old, value, listener, comp, changehandler);
 			}
 			
 			if(!SUtil.equals(old, value))
 			{
-				changehandler.accept(old, value);
+				changehandler.entryChanged(comp, old, value, null);
 			}
 		}
 	}
