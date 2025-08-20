@@ -1,7 +1,6 @@
 package jadex.bdi.impl;
 
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.lang.annotation.Annotation;
@@ -74,6 +73,7 @@ import jadex.bdi.impl.plan.RPlan;
 import jadex.collection.IEventPublisher;
 import jadex.collection.ListWrapper;
 import jadex.collection.MapWrapper;
+import jadex.collection.SPropertyChange;
 import jadex.collection.SetWrapper;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
@@ -2127,63 +2127,58 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				});
 			}
 			
+			// Last resort -> Bean belief
+			// Check if addPropertyChangeListener() method exists
+			else if(SPropertyChange.getAdder(f.getType())!=null)
+			{
+				ret.add((comp, pojos, context, oldval) ->
+				{
+					try
+					{
+						Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
+						if(bean!=null)
+						{
+							RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+							rs.observeObject(bean, true, false, new IResultCommand<>()
+							{
+								final IResultCommand<IFuture<Void>, PropertyChangeEvent> self = this;
+								public IFuture<Void> execute(final PropertyChangeEvent event)
+								{
+									final Future<Void> ret = new Future<Void>();
+									try
+									{
+	//									publishToolBeliefEvent(mbel);	// TODO
+										Event ev = new Event(fchev, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
+										rs.addEvent(ev);
+									}
+									catch(Exception e)
+									{
+										if(!(e instanceof ComponentTerminatedException))
+											System.err.println("Ex in observe: "+SUtil.getExceptionStacktrace(e));
+										Object val = event.getSource();
+										rs.unobserveObject(val, self);
+										ret.setResult(null);
+									}
+									return ret;
+								}
+							});
+						}
+						else
+						{
+							System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
+						}
+						return null;
+					}
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				});
+			}
 			else
 			{
-				// Last resort -> Bean belief
-				try
-				{
-					// Check if method exists
-					f.getType().getMethod("addPropertyChangeListener", PropertyChangeListener.class);
-					
-					ret.add((comp, pojos, context, oldval) ->
-					{
-						try
-						{
-							Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
-							if(bean!=null)
-							{
-								RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-								rs.observeObject(bean, true, false, new IResultCommand<>()
-								{
-									final IResultCommand<IFuture<Void>, PropertyChangeEvent> self = this;
-									public IFuture<Void> execute(final PropertyChangeEvent event)
-									{
-										final Future<Void> ret = new Future<Void>();
-										try
-										{
-		//									publishToolBeliefEvent(mbel);	// TODO
-											Event ev = new Event(fchev, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
-											rs.addEvent(ev);
-										}
-										catch(Exception e)
-										{
-											if(!(e instanceof ComponentTerminatedException))
-												System.err.println("Ex in observe: "+SUtil.getExceptionStacktrace(e));
-											Object val = event.getSource();
-											rs.unobserveObject(val, self);
-											ret.setResult(null);
-										}
-										return ret;
-									}
-								});
-							}
-							else
-							{
-								System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
-							}
-							return null;
-						}
-						catch(Throwable t)
-						{
-							throw SUtil.throwUnchecked(t);
-						}
-					});
-				}
-				catch(NoSuchMethodException e)
-				{
-					// No belief options match ->
-					throw new UnsupportedOperationException("Cannot use as belief: "+f);
-				}
+				// No belief options match ->
+				throw new UnsupportedOperationException("Cannot use as belief: "+f);
 			}
 		}
 	}	
