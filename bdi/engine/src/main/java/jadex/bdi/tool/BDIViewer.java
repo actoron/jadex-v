@@ -20,6 +20,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
 import jadex.bdi.Val;
@@ -219,7 +220,12 @@ public class BDIViewer extends JFrame
     	}
     	Object	value	= getFieldValue(name, pojo);
     	
-    	if(value instanceof Val<?>)
+    	if(value instanceof Dyn<?>)
+    	{
+    		value	= ((Dyn<?>) value).get();
+    	}
+    	
+    	else if(value instanceof Val<?>)
     	{
     		value	= ((Val<?>) value).get();
     	}

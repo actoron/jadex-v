@@ -1,7 +1,10 @@
 package jadex.collection;
 
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Iterator;
+
+import jadex.common.SUtil;
 
 /**
  *  Wrapper for collections. Creates rule events on add/remove/change operation calls.
@@ -14,23 +17,38 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	/** The event publisher. */
 	protected IEventPublisher publisher;
 	
+	/** The context, if any. */
+	protected Object context;
+		
+	/** Cached property change listener, if any. */
+	protected PropertyChangeListener	listener;
+	
 	/**
 	 *  Create a new wrapper.
 	 *  @param delegate The delegate.
 	 */
 	public CollectionWrapper(Collection<T> delegate)
 	{
-		this(delegate, null);
+		this(delegate, null, null);
 	}
 	
 	/**
 	 *  Create a new wrapper.
 	 *  @param delegate The delegate.
 	 */
-	public CollectionWrapper(Collection<T> delegate, IEventPublisher publisher)
+	public CollectionWrapper(Collection<T> delegate, IEventPublisher publisher, Object context)
 	{
 		this.delegate = delegate;
 		this.publisher = publisher;
+		this.context = context;
+		
+		if(publisher!=null)
+		{
+			for(T entry: delegate)
+			{
+				entryAdded(entry, null);
+			}
+		}
 	}
 	
 	public IEventPublisher getEventPublisher()
@@ -99,7 +117,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		boolean ret = delegate.add(e);
 		if(ret)
 		{
-			entryAdded(e, -1);
+			entryAdded(e, null);
 //			observeValue(e);
 //			getRuleSystem().addEvent(new Event(addevent, new ChangeInfo<T>(e, null, delegate.size())));
 //			getRuleSystem().addEvent(new Event(addevent, new CollectionEntry<T>(e, null, delegate.size())));
@@ -116,7 +134,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		boolean ret = delegate.remove(o);
 		if(ret)
 		{
-			entryRemoved((T)o, -1);
+			entryRemoved((T)o, null);
 //			unobserveValue(o);
 //			getRuleSystem().addEvent(new Event(remevent, new ChangeInfo<T>(null, (T)o, null)));
 //			publishToolBeliefEvent();
@@ -142,7 +160,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			for(T t: c)
 			{
-				entryAdded(t, -1);
+				entryAdded(t, null);
 //				observeValue(t);
 //				getRuleSystem().addEvent(new Event(addevent, new ChangeInfo<T>(t, null, null)));
 //				publishToolBeliefEvent();
@@ -161,7 +179,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			for(Object t: c)
 			{
-				entryRemoved((T)t, -1);
+				entryRemoved((T)t, null);
 //				unobserveValue(t);
 //				getRuleSystem().addEvent(new Event(remevent, new ChangeInfo<T>((T)t, null, null)));
 //				publishToolBeliefEvent();
@@ -188,7 +206,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		delegate.clear();
 		for(Object t: clone)
 		{
-			entryRemoved((T)t, -1);
+			entryRemoved((T)t, null);
 //			unobserveValue(t);
 //			getRuleSystem().addEvent(new Event(addevent, new ChangeInfo<Object>(null, t, null)));
 //			publishToolBeliefEvent();
@@ -324,24 +342,36 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	/**
 	 *  An entry was added to the collection.
 	 */
-	protected void entryAdded(T value, int index)
+	protected void entryAdded(T value, Integer index)
 	{
-		publisher.entryAdded(value, index);
+		listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+		
+		publisher.entryAdded(context, value, index);
 	}
 	
 	/**
 	 *  An entry was removed from the collection.
 	 */
-	protected void entryRemoved(T value, int index)
+	protected void entryRemoved(T value, Integer index)
 	{
-		publisher.entryRemoved(value, index);
+		listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+		
+		publisher.entryRemoved(context, value, index);
 	}
 	
 	/**
 	 *  An entry was changed in the collection.
 	 */
-	protected void entryChanged(T oldvalue, T newvalue, int index)
+	protected void entryChanged(T oldvalue, T newvalue, Integer index)
 	{
-		publisher.entryChanged(oldvalue, newvalue, index);
+		if(oldvalue!=newvalue)
+		{
+			listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
+		}
+		
+		if(!SUtil.equals(oldvalue, newvalue))
+		{
+			publisher.entryChanged(context, oldvalue, newvalue, index);
+		}
 	}
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
 import jadex.bdi.ICapability;
@@ -117,8 +118,8 @@ public class TestBeliefNames
 			@Belief
 			Val<String>	belief	= new Val<>("initial");
 			
-			@Belief(beliefs="belief")
-			Val<String>	dep	= new Val<>(() -> belief.get());
+			@Belief
+			Dyn<String>	dep	= new Dyn<>(() -> belief.get());
 		}
 		
 		@BDIAgent

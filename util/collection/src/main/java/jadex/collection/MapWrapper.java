@@ -1,8 +1,11 @@
 package jadex.collection;
 
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
+import jadex.common.SUtil;
 
 /**
  * 	Wrap a map and call template methods on modification.
@@ -17,6 +20,12 @@ public class MapWrapper<T, E> implements Map<T, E>
 	/** The event publisher. */
 	protected IEventPublisher publisher;
 	
+	/** The context, if any. */
+	protected Object context;
+	
+	/** Cached property change listener, if any. */
+	protected PropertyChangeListener	listener;
+	
 	//-------- constructors --------
 	
 	/**
@@ -24,16 +33,25 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	public MapWrapper(Map<T, E> delegate)
 	{
-		this(delegate, null);
+		this(delegate, null, null);
 	}
 	
 	/**
 	 *  Create a new collection wrapper.
 	 */
-	public MapWrapper(Map<T, E> delegate, IEventPublisher publisher)
+	public MapWrapper(Map<T, E> delegate, IEventPublisher publisher, Object context)
 	{
 		this.delegate = delegate;
 		this.publisher = publisher;
+		this.context = context;
+
+		if(publisher!=null)
+		{
+			for(Map.Entry<T,E> entry: delegate.entrySet())
+			{
+				entryAdded(entry.getKey(), entry.getValue());
+			}
+		}
 	}
 	
 	public Map<T, E> getDelegate()
@@ -207,7 +225,9 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	protected void entryAdded(T key, E value)
 	{
-		publisher.entryAdded(key, value);
+		listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+		
+		publisher.entryAdded(context, key, value);
 	}
 	
 	/**
@@ -215,7 +235,9 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	protected void entryRemoved(T key, E value)
 	{
-		publisher.entryRemoved(key, value);
+		listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+
+		publisher.entryRemoved(context, key, value);
 	}
 	
 	/**
@@ -223,7 +245,15 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	protected void entryChanged(T key, E oldvalue, E newvalue)
 	{
-		publisher.entryChanged(key, oldvalue, newvalue);
+		if(oldvalue!=newvalue)
+		{
+			listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
+		}
+		
+		if(!SUtil.equals(oldvalue, newvalue))
+		{
+			publisher.entryChanged(context, key, oldvalue, newvalue);
+		}
 	}
 
 	/**

@@ -24,9 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -34,6 +32,7 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
 import jadex.bdi.ICapability;
@@ -72,15 +71,17 @@ import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.MethodPlanBody;
 import jadex.bdi.impl.plan.RPlan;
-import jadex.bdi.impl.wrappers.ListWrapper;
-import jadex.bdi.impl.wrappers.MapWrapper;
-import jadex.bdi.impl.wrappers.SetWrapper;
+import jadex.collection.IEventPublisher;
+import jadex.collection.ListWrapper;
+import jadex.collection.MapWrapper;
+import jadex.collection.SetWrapper;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
+import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
@@ -498,6 +499,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/** The field accesses by method. */
 	protected static final Map<String, Set<Field>>	accessedfields	= new LinkedHashMap<>();
 	
+	/** The code executed for a dynamic belief. */
+	protected static final Map<Field, String>	dynbelmethods	= new LinkedHashMap<>();
+	
 	/** The method accesses by method. */
 	protected static final Map<String, Set<String>>	accessedmethods	= new LinkedHashMap<>();
 	
@@ -518,6 +522,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			ClassReader	cr	= new ClassReader(pojoclazz.getName());
 			cr.accept(new ClassVisitor(Opcodes.ASM9)
 			{
+				String	lastdyn	= null;
+				
 				@Override
 				public void visitInnerClass(String name, String outerName, String innerName, int access)
 				{
@@ -572,6 +578,29 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 									SUtil.throwUnchecked(e);
 								}
 			                }
+			                
+			                else if(opcode==Opcodes.PUTFIELD)
+			                {
+//			                	System.out.println("\tVisiting field write: "+owner+"."+name+"; "+lastdyn);
+								try
+								{
+									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
+									Field f	= SReflect.getField(ownerclazz, name);
+									if(f.getType().equals(Dyn.class) && lastdyn!=null)
+									{
+//										System.out.println("\tRemembering lambda for Val: "+f+", "+lastdyn);
+										synchronized(dynbelmethods)
+										{
+											dynbelmethods.put(f, lastdyn);
+										}
+									}
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+			                }
+			                
 			                super.visitFieldInsn(opcode, owner, name, descriptor);
 			            }
 						
@@ -580,6 +609,31 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							String	callee	= owner+"."+name+descriptor;
 //							System.out.println("\tVisiting method call: "+callee);
 							addMethodAccess(method, callee);
+							
+							// Remember call() from Callable object for next Dyn constructor.
+							if("<init>".equals(name))
+							{
+								try
+								{
+									Class<?> calleeclazz = Class.forName(owner.replace('/', '.'));
+									if(SReflect.isSupertype(Callable.class, calleeclazz))
+									{
+										lastdyn	= methodToAsmDesc(calleeclazz.getMethod("call"));
+//										System.out.println("\tRemembering call(): "+lastdyn);
+									}
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+							}
+							
+							// Only remember lambda when followed by a Dyn constructor
+							// to store dependency on next putfield.
+							else if(!"jadex/bdi/Dyn.<init>(Ljava/util/concurrent/Callable;)V".equals(callee))
+							{
+								lastdyn	= null;
+							}
 						}
 						
 						public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments)
@@ -588,8 +642,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							{
 								Handle handle	= (Handle)bootstrapMethodArguments[1];
 								String	callee	= handle.getOwner()+"."+handle.getName()+handle.getDesc();
-	//							System.out.println("\tVisiting lambda call: "+callee);
+//								System.out.println("\tVisiting lambda call: "+callee);
 								addMethodAccess(method, callee);
+								
+								// Remember lambda for next Dyn constructor.
+								lastdyn	= callee;
 							}
 							// else Do we need to handle other cases?
 						}
@@ -620,7 +677,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Add capability prefix to belief references.
 	 */
-	protected List<String>	addPrefix(String capaprefix, String[] beliefs)
+	protected static List<String>	addPrefix(String capaprefix, String[] beliefs)
 	{
 		List<String>	ret	= new ArrayList<>(beliefs.length);
 		for(String belief: beliefs)
@@ -1268,10 +1325,25 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 */
 	protected static List<String> findDependentBeliefs(Class<?> baseclazz, List<Class<?>> parentclazzes, Method method)	throws IOException
 	{
-		String	desc	= method.getDeclaringClass().getName().replace('.', '/')
+		return findDependentBeliefs(baseclazz, parentclazzes, methodToAsmDesc(method));
+	}
+	
+	/**
+	 *  Convert method to ASM descriptor.
+	 */
+	protected static String methodToAsmDesc(Method method)
+	{
+		return method.getDeclaringClass().getName().replace('.', '/')
 			+ "." + org.objectweb.asm.commons.Method.getMethod(method).toString();
-//		System.out.println("Finding beliefs accessed in method: "+desc+", "+method);
+	}
 		
+	/**
+	 *  Scan byte code to find beliefs that are accessed in the method.
+	 *  @param baseclazz	The goal or plan class.
+	 */
+	protected static List<String> findDependentBeliefs(Class<?> baseclazz, List<Class<?>> parentclazzes, String desc)	throws IOException
+	{
+//		System.out.println("Finding beliefs accessed in method: "+desc);
 		// Find all method calls
 		List<String>	calls	= new ArrayList<>();
 		calls.add(desc);
@@ -1694,7 +1766,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Get rule events that trigger the plan, if any.
 	 */
-	protected List<EventType> getTriggerEvents(List<Class<?>> pojoclazzes, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, String element)
+	protected static List<EventType> getTriggerEvents(List<Class<?>> pojoclazzes, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, String element)
 	{
 		List<EventType>	events	= null;
 		if(factadded.size()>0
@@ -1737,7 +1809,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	{
 		Class<?>	type	= f.getType();
 		
-		if(SReflect.isSupertype(Val.class, type) || SReflect.isSupertype(Collection.class, type))
+		if(SReflect.isSupertype(Dyn.class, type)
+			||SReflect.isSupertype(Val.class, type)
+			|| SReflect.isSupertype(Collection.class, type))
 		{
 			if(f.getGenericType() instanceof ParameterizedType)
 			{
@@ -1804,7 +1878,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Check various options for a field belief.
 	 */
-	protected void addBeliefField(List<Class<?>> pojoclazzes, String capaprefix, Field f, List<IInjectionHandle> ret) throws Exception
+	protected static void addBeliefField(List<Class<?>> pojoclazzes, String capaprefix, Field f, List<IInjectionHandle> ret) throws Exception
 	{
 		Belief	belief	= f.getAnnotation(Belief.class);
 		String	name	= capaprefix+f.getName();
@@ -1817,13 +1891,86 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		EventType fchev = new EventType(ChangeEvent.FACTCHANGED, name);
 //		EventType bchev = new EventType(ChangeEvent.BELIEFCHANGED, name);
 		
-		// Val belief
-		if(Val.class.equals(f.getType()))
+		IEventPublisher	evpub	= new IEventPublisher()
+		{
+			@Override
+			public void entryAdded(Object context, Object key, Object value)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, key));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryAdded(Object context, Object value, Integer index)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, index));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryChanged(Object context, Object key, Object oldvalue, Object newvalue)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, key));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryChanged(Object context, Object oldvalue, Object newvalue, Integer index)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, index));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryRemoved(Object context, Object key, Object value)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, key));
+				rs.addEvent(ev);
+			}
+			
+			@Override
+			public void entryRemoved(Object context, Object value, Integer index)
+			{
+				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, index));
+				rs.addEvent(ev);
+			}
+		};
+
+		
+		// Dynamic belief (Dyn object)
+		if(Dyn.class.equals(f.getType()))
 		{
 			// Throw change events when dependent beliefs change.
-			if(belief.beliefs().length>0)
+			List<String>	deps	= null;
+			if(belief.beliefs().length!=0)
 			{
-				List<String>	deps	= addPrefix(capaprefix, belief.beliefs());
+				deps	= addPrefix(capaprefix, belief.beliefs());
+			}
+			else
+			{
+				String dyn = null;
+				synchronized(dynbelmethods)
+				{
+					if(dynbelmethods.containsKey(f))
+					{
+						dyn	= dynbelmethods.get(f);
+					}
+				}
+				
+				if(dyn!=null)
+				{
+					deps	= findDependentBeliefs(pojoclazzes.get(0), pojoclazzes, dyn);
+				}
+			}
+			
+			if(deps!=null && deps.size()>0)	// size may be null for belief with update rate
+			{
 				List<EventType>	events	= getTriggerEvents(pojoclazzes, deps, deps, deps, new Class[0], name);
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 				
@@ -1832,17 +1979,17 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					try
 					{
 						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
+						Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
 						rs.getRulebase().addRule(new Rule<Void>(
 							"DependenBeliefChange_"+name,	// Rule Name
 							ICondition.TRUE_CONDITION,	// Condition -> true
 							new IAction<Void>()	// Action -> throw change event
 							{
-								Object	oldvalue	= value.get();
+								Object	oldvalue	= dyn.get();
 								@Override
 								public IFuture<Void>	execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 								{
-									Object	newvalue	= value.get();
+									Object	newvalue	= dyn.get();
 									if(!SUtil.equals(oldval, newvalue))
 									{
 										rs.addEvent(new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, null)));
@@ -1860,64 +2007,19 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					}
 				});
 			}
-			
-			// Init Val on agent start
+
+			// Init Dyn on agent start
 			ret.add((comp, pojos, context, dummy) ->
 			{
-				// TODO: check if dependent beliefs are only added to dynamic val
-				
 				try
 				{
-					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-					Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
-					if(value==null)
+					Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
+					if(dyn==null)
 					{
-						value	= new Val<Object>((Object)null);
-						setter.invoke(pojos.get(pojos.size()-1), value);
+						throw new RuntimeException("Dynamic belief field is null: "+f);
 					}
-					initVal(value, (oldval, newval) ->
-					{
-						try
-						{
-//							publishToolBeliefEvent(mbel);	// TODO
-							// TODO: support belief vs fact changed!?
-//							Event ev = new Event(bchev, new ChangeInfo<Object>(newval, oldval, null));
-							Event ev = new Event(fchev, new ChangeInfo<Object>(newval, oldval, null));
-							rs.addEvent(ev);
-						}
-						catch(Throwable t)
-						{
-							throw SUtil.throwUnchecked(t);
-						}
-					}, belief.updaterate()>0);
-					
-					if(belief.updaterate()>0)
-					{
-						Val<Object>	fvalue	= value;
-						// Call inner dynamic explicitly as Val.get() doesn't call it when update rate is present
-						Callable<Object>	dynamic	= getDynamic(fvalue);
-						IExecutionFeature	exe	= comp.getFeature(IExecutionFeature.class);
-						Consumer<Void>	update	= new Consumer<Void>()
-						{
-							Consumer<Void>	update	= this;
-							@Override
-							public void accept(Void t)
-							{
-								try
-								{
-									doSet(fvalue, dynamic.call());
-									exe.waitForDelay(belief.updaterate()).then(update);
-								}
-								catch(Exception e)
-								{
-									SUtil.throwUnchecked(e);
-								}
-							}
-						};
-						// Must happen after injections but before on start
-						update.accept(null);
-					}
-					
+					DynValHelper.initDyn(dyn, comp, evpub);
+										
 					return null;
 				}
 				catch(Throwable t)
@@ -1932,13 +2034,32 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			{
 				throw new UnsupportedOperationException("Dependent beliefs are only support for (dynamic) Val beliefs: "+f);
 			}
-			else if(belief.updaterate()>0)
-			{
-				throw new UnsupportedOperationException("Update rate is only support for (dynamic) Val beliefs: "+f);
-			}
 		
+			// Val belief
+			if(Val.class.equals(f.getType()))
+			{				
+				// Init Val on agent start
+				ret.add((comp, pojos, context, dummy) ->
+				{
+					try
+					{
+						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
+						if(value==null)
+						{
+							value	= new Val<Object>((Object)null);
+							setter.invoke(pojos.get(pojos.size()-1), value);
+						}
+						DynValHelper.initVal(value, comp, evpub);						
+						return null;
+					}
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				});
+			}
 			// List belief
-			if(List.class.equals(f.getType()))
+			else if(List.class.equals(f.getType()))
 			{
 				ret.add((comp, pojos, context, oldval) ->
 				{
@@ -1949,7 +2070,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new ArrayList<>();
 						}
-						value	= new ListWrapper<Object>(value, comp, addev, remev, fchev);
+						value	= new ListWrapper<>(value, evpub, comp);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -1972,7 +2093,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new LinkedHashSet<>();
 						}
-						value	= new SetWrapper<Object>(value, comp, addev, remev, fchev);
+						value	= new SetWrapper<>(value, evpub, comp);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -1995,7 +2116,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new LinkedHashMap<>();
 						}
-						value	= new MapWrapper<Object, Object>(value, comp, addev, remev, fchev);
+						value	= new MapWrapper<>(value, evpub, comp);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -2065,68 +2186,5 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 		}
-	}
-	
-	//-------- Val helper --------
-	
-	static MethodHandle	init;
-	static MethodHandle	doset;
-	static MethodHandle	dynamic;
-	{
-		try
-		{
-			Method	m	= Val.class.getDeclaredMethod("init", BiConsumer.class, boolean.class);
-			m.setAccessible(true);
-			init	= MethodHandles.lookup().unreflect(m);
-
-			m	= Val.class.getDeclaredMethod("doSet", Object.class);
-			m.setAccessible(true);
-			doset	= MethodHandles.lookup().unreflect(m);
-			
-			Field	f	= Val.class.getDeclaredField("dynamic");
-			f.setAccessible(true);
-			dynamic	= MethodHandles.lookup().unreflectGetter(f);
-		}
-		catch(Exception e)
-		{
-			SUtil.throwUnchecked(e);
-		}
-	}
-	
-	protected static void	initVal(Val<Object> val, BiConsumer<Object, Object> changehandler, boolean updaterate)
-	{
-		try
-		{
-			init.invoke(val, changehandler, updaterate);
-		}
-		catch(Throwable t)
-		{
-			SUtil.throwUnchecked(t);
-		}
-	}
-	
-	protected static void	doSet(Val<Object> val, Object value)
-	{
-		try
-		{
-			doset.invoke(val, value);
-		}
-		catch(Throwable t)
-		{
-			SUtil.throwUnchecked(t);
-		}
-	}
-
-	
-	protected static Callable<Object>	getDynamic(Val<Object> val)
-	{
-		try
-		{
-			return (Callable<Object>) dynamic.invoke(val);
-		}
-		catch(Throwable t)
-		{
-			throw SUtil.throwUnchecked(t);
-		}
-	}
+	}	
 }
