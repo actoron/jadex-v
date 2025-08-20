@@ -132,6 +132,9 @@ public class RequestManager
 	/** Http header for the Jadex version. */
 	public static final String HEADER_JADEX_VERSION = "x-jadex-version";
 
+	/** Client identifier. */
+	public static final String HEADER_JADEX_SESSIONID = "x-jadex-sessionid";
+	
 	/** Http header for the call id (req and resp). */
 	public static final String HEADER_JADEX_CALLID = "x-jadex-callid";
 
@@ -272,7 +275,7 @@ public class RequestManager
 		conversationinfos = new LinkedHashMap<String, ConversationInfo>();
 		sseevents = new ArrayList<SSEEvent>();
 		sseinfos = new HashMap<String, RequestManager.SSEInfo>();
-		//sessions = new LeaseTimeMap<String, Map<String,Object>>(1000*60*20); // 20 min session timeout
+		//ses = new LeaseTimeMap<String, Map<String,Object>>(1000*60*20); // 20 min session timeout
 		//sessions = new PassiveLeaseTimeMap<String, Map<String,Object>>(1000*60*1); // 20 min session timeout
 		sessions = new HashMap<String, Map<String,Object>>();
 		
@@ -504,6 +507,7 @@ public class RequestManager
 		
 		if(session==null && create)
 		{
+			System.out.println("created session: "+sessionid);
 			session = new HashMap<String, Object>();
 			sessions.put(sessionid, session);
 		}
@@ -520,14 +524,38 @@ public class RequestManager
 		return session!=null? (AsyncContext)session.get("sse"): null;
 	}
 	
-	public synchronized void putSSEContextInSession(String sessionid, AsyncContext context)
+	public synchronized AsyncContext putSSEContextInSession(String sessionid, AsyncContext context) 
 	{
-		setInSession(sessionid, "sse", context);
+		AsyncContext ret = null;
+		
+	    Object existing = getFromSession(sessionid, "sse");
+
+	    if (existing != null && existing instanceof AsyncContext) 
+	    {
+	        ret = (AsyncContext) existing;
+
+	        if (ret.getRequest().isAsyncStarted()) 
+	            System.out.println("Warning: Multiple active SSE connections for session: " + sessionid);
+	    }
+
+	    setInSession(sessionid, "sse", context);
+	    
+	    return ret;
+	}
+	
+	public synchronized Object getFromSession(String sessionid, String name)
+	{
+		Map<String, Object> session = sessions.get(sessionid);
+		if(session==null)
+			return null;
+		Object value = session.get(name);
+		return value;
 	}
 	
 	public synchronized void setInSession(String sessionid, String name, Object value)
 	{
 		getSession(sessionid, true).put(name, value);
+		System.out.println("setting in session: "+sessionid+" "+name+"="+value);
 	}
 	
 	public synchronized Map<String, Object> getSession(String sessionid)
@@ -537,7 +565,7 @@ public class RequestManager
 	
 	public synchronized void putSession(String sessionid, Map<String, Object> session)
 	{
-		if(SUtil.DEBUG)
+		//if(SUtil.DEBUG)
 			System.out.println("adding session: "+sessionid+" "+session);
 		sessions.put(sessionid, session);
 	}
@@ -549,35 +577,38 @@ public class RequestManager
 			System.out.println("removing session: "+sessionid+" "+session);
 	}
 	
-	/**
-	 *  Get a session id.
-	 *  @param request The request
-	 *  @return The session id.
-	 */
-	public static String getSessionId(HttpServletRequest request)
+	public static String getSessionId(HttpServletRequest request) 
 	{
-		String cookie = request.getHeader("cookie");
-		String id = null;
-		
-		if(cookie!=null)
-		{
-			StringTokenizer stok = new StringTokenizer(cookie, ";");
-			while(stok.hasMoreTokens())
-			{
-				String c = stok.nextToken();
-
-				int del = c.indexOf("=");
-				String name = c.substring(0, del).trim();
-				
-				if("jadex".equals(name))
-				{
-					id = c.substring(del+1, c.length()).trim();
-					break;
-				}
-			}
-		}
-		
-		return id;
+	    String id = null;
+	    
+	    // 1) Query-Param
+	    id = request.getParameter(HEADER_JADEX_SESSIONID);
+	    if (id != null && !id.isEmpty()) 
+	        return id;
+	    
+	    // 2) Header
+	    id = request.getHeader(HEADER_JADEX_SESSIONID);
+	    if (id != null && !id.isEmpty()) 
+	        return id;
+	    
+	    // 2) Cookie (cookies are not used currently)
+	    /*String cookie = request.getHeader("cookie");
+	    if (cookie != null) 
+	    {
+	        StringTokenizer stok = new StringTokenizer(cookie, ";");
+	        while (stok.hasMoreTokens()) 
+	        {
+	            String c = stok.nextToken();
+	            int del = c.indexOf("=");
+	            String name = c.substring(0, del).trim();
+	            if ("jadex".equals(name)) 
+	            {
+	                id = c.substring(del + 1).trim();
+	                break;
+	            }
+	        }
+	    }*/
+	    return id;
 	}
 		
 	/**
@@ -616,15 +647,21 @@ public class RequestManager
 		// https://stackoverflow.com/questions/14139753/httpservletrequest-getsessiontrue-thread-safe
 		// solution: always create on container thread and remember
 		//final Map<String, Object> session = getSession(request, true);
-		final String sessionid = getSessionId(request);
+		String sessionid = getSessionId(request);
 		
 		if(sessionid==null && ri.isSSERequest() 
 			&& request.getRequestURI().indexOf(".js")==-1 
 			&& request.getRequestURI().indexOf(".css")==-1)
 		{
-			System.out.println("Call has no jadex session id, Jadex cookie missing: "+request.getRequestURL());
+			System.out.println("Call has no jadex session id: "+request.getRequestURI());
 		}
-		// todo: if missing generate one?! as it is cookie it would be used by further requests
+		
+		// sessionid can be missing if client just sends a REST request instead of a jadex.js request
+		
+		// Session can be null if no header is provided by client
+		if(sessionid==null)
+			sessionid = SUtil.createUniqueId();
+		final String fsessionid = sessionid;
 		
 		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
 		//System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
@@ -872,8 +909,8 @@ public class RequestManager
 					
 					//System.out.println("handleRequest: "+mi.getMethod());
 					
-					//if(mi.getMethod().toString().indexOf("Display")!=-1)
-					//	System.out.println("heeereeee");
+					//if(mi.getMethod().toString().indexOf("subscribe")!=-1)
+					//	System.out.println("subscribe");
 					
 					//if(mi.getMethod().toString().indexOf("isAvailable")!=-1)
 					//	System.out.println("params: "+Arrays.toString(params));
@@ -920,7 +957,7 @@ public class RequestManager
 	
 									final Method method = mi.getMethod();
 									
-									//System.out.println("request: "+request.getRequestURL()+" "+fcallid+" "+method.getName()+" "+Arrays.toString(params));
+									System.out.println("request: "+request.getRequestURL()+" "+fcallid+" "+method.getName()+" "+Arrays.toString(params)+" "+service);
 									
 									//if(request.toString().indexOf("generateArea")!=-1)
 									//	System.out.println("call 4: "+request);
@@ -979,7 +1016,7 @@ public class RequestManager
 			
 											public void intermediateResultAvailable(Object result)
 											{
-												//System.out.println("intermediate: "+result);
+												System.out.println("intermediate: "+result);
 												
 												handleResult(result, null, null, null);
 											}
@@ -1057,7 +1094,10 @@ public class RequestManager
 												
 												//final Map<String, Object> session = getSession(sessionid, true);
 												//AsyncContext ctx = (AsyncContext)session.get("sse");
-												AsyncContext ctx = getSSEContextFromSession(sessionid);
+												
+												AsyncContext ctx = getSSEContextFromSession(fsessionid);
+												System.out.println("AsyncContext from session: "+ctx+" "+fsessionid);
+
 												if(ctx!=null)
 												{
 													ri.setRequest((HttpServletRequest)ctx.getRequest());
@@ -1065,7 +1105,7 @@ public class RequestManager
 												}
 												else
 												{
-													System.out.println("No sse connection, delay sending: "+result+" "+sessionid);
+													System.out.println("No sse connection, delay sending: "+result+" "+fsessionid);
 													addSSEEvent(createSSEEvent(ri));
 													return;
 												}
@@ -1073,10 +1113,11 @@ public class RequestManager
 												if(mycinfo!=null && mycinfo.isTerminated())
 												{
 													// nop -> ignore late results (i.e. when terminated due to browser offline).
-													//System.out.println("ignoring late result: "+result);
+													System.out.println("ignoring late result: "+result);
 												}
 												else
 												{
+													System.out.println("write response from handleRes: "+ri.getResult());
 													writeResponse(ri);
 												}
 												
@@ -1265,28 +1306,36 @@ public class RequestManager
 					String ah = request.getHeader("Accept");
 					if(ah!=null && ah.toLowerCase().indexOf(MediaType.SERVER_SENT_EVENTS)!=-1)
 					{
-						// todo: sessionid should be set by client! why created here?
-						
-						// Session can be null if no header is provided by client
-						String fsessionid = sessionid;
-						if(fsessionid==null)
-							fsessionid = SUtil.createUniqueId();
-						
 						// SSE flag in session 
 						//getSession(fsessionid, true).put("sse", request.getAsyncContext());
-						putSSEContextInSession(fsessionid, request.getAsyncContext());
+						
+						AsyncContext oldctx = putSSEContextInSession(fsessionid, request.getAsyncContext());
+						if (oldctx != null && oldctx.getRequest().isAsyncStarted()) 
+						{
+						    try 
+						    {
+						        oldctx.complete(); 
+						    } 
+						    catch (Exception e) 
+						    {
+						    	System.out.println("Error completing old SSE context: " + e.getMessage());
+						    }
+						}
+						
 						//setInSession(fsessionid, "sse", request.getAsyncContext());
 						response.addHeader(HEADER_JADEX_CALLID, ri.getCallid());
+						response.addHeader("Connection", "keep-alive"); 
 						response.setContentType(MediaType.SERVER_SENT_EVENTS+"; charset=utf-8");
 					    response.setCharacterEncoding("UTF-8");
 					    response.setStatus(HttpServletResponse.SC_OK);
 						//out.write("data: {'a': 'a'}\n\n");
 						response.flushBuffer();
-					    //System.out.println("sse connection saved: "+request.getAsyncContext()+" "+fsessionid+" "+getSessionId(request));
+					    
+						System.out.println("sse connection saved: "+request.getAsyncContext()+" "+fsessionid+" "+getSessionId(request));
 					    
 					    sendDelayedSSEEvents(getSession(fsessionid, true));
 					}
-					else
+					else if(service!=null)
 					{
 						response.setContentType(MediaType.TEXT_HTML+"; charset=utf-8");
 						String info = getServiceInfo(service, getServletUrl(request), pm);
@@ -1296,6 +1345,15 @@ public class RequestManager
 						complete(request, response);
 						
 						//System.out.println("info site sent");
+					}
+					else
+					{
+						response.setContentType(MediaType.TEXT_PLAIN+"; charset=utf-8");
+						out.write("No service found for: "+methodname);
+						response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+						complete(request, response);
+						
+						System.out.println("No service found for: "+methodname);
 					}
 				}
 			}
@@ -1317,7 +1375,8 @@ public class RequestManager
 			if(curtime - sseinfo.getLastCheck() > CONVERSATION_TIMEOUT)  
 			{ 
 				System.out.println("sse source does not respond, removing: "+sessionid);
-				List<ConversationInfo> cinfos = conversationinfos.values().stream().filter(info -> info.getSessionId()==sessionid).collect(Collectors.toList());
+				List<ConversationInfo> cinfos = conversationinfos.values().stream().filter(
+					info -> info.getSessionId().equals(sessionid)).collect(Collectors.toList());
 				cinfos.forEach(cinfo ->
 				{
 					System.out.println("Conversation timed out: "+cinfo.getCallId());
@@ -2284,6 +2343,10 @@ public class RequestManager
 				// should delete sse in session?!
 				System.out.println("SSE source is offline"+ri.callid);
 			}
+			else
+			{
+				System.out.println("Response already written: "+ri.getRequest().getRequestURI()+" "+ri.getCallid());
+			}
 			return;
 		}
 		
@@ -2291,11 +2354,11 @@ public class RequestManager
 		
 		writeResponseContent(ri.setResultTypes(negotiatedtypes));
 		
-		// remove conversation only  (otherwise ongoing)
+		// remove conversation only (otherwise ongoing)
 		if(ri.isFinished() && ri.getCallid()!=null && conversationinfos.get(ri.getCallid())!=null && !conversationinfos.get(ri.getCallid()).isIntermediateFuture())
 		{
 			conversationinfos.remove(ri.getCallid());
-			//System.out.println("remove conversation: "+ri.getCallid());
+			System.out.println("remove conversation: "+ri.getCallid());
 		}
 	}
 	
@@ -2547,7 +2610,7 @@ public class RequestManager
 					String ret = createSSEJson(event);
 					out.write(ret);				
 					//System.out.println(ri.getResponse().getHeader("Content-Type"));
-					//System.out.println("used sse channel flush: "+ri.getRequest().getAsyncContext());
+					System.out.println("used sse channel: "+ri.getRequest().getAsyncContext()+" "+ret);
 					ri.getResponse().getWriter().flush();
 					ri.getResponse().flushBuffer();
 					//System.out.println(ri.getResponse());
@@ -4023,7 +4086,14 @@ public class RequestManager
 	 */
 	public IFuture<byte[]> loadResource(String name)
 	{
-		//System.out.println("Loading JS: "+name+" "+getPath()+name);
+		int fidx = name.lastIndexOf("/");
+		int lidx = name.lastIndexOf("/");
+		if(fidx!=lidx)
+		{
+			System.out.println("Loading resource: "+name+" "+getPath()+name);
+			name = name.substring(lidx);
+		}
+		
 		try
 		{
 			InputStream is = SUtil.getResource0(getPath()+name, getClassLoader());
@@ -4037,9 +4107,11 @@ public class RequestManager
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			System.out.println("Error loading resource: "+getPath()+"  ---  "+name+" "+e);
+			//e.printStackTrace();
 			return new Future<byte[]>(e);
 		}
+		
 	}
 	
 	/**

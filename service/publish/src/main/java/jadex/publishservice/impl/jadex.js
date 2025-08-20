@@ -13,6 +13,8 @@
     }
 })(this, function () 
 {
+	const SESSIONID = "x-jadex-sessionid";
+	
 	var Jadex = 
 	{
 		baseurl: 'events',
@@ -27,15 +29,19 @@
 
 			console.log("jadex init running: "+this.getPath());
 			
-			var self = this;
-			
+			//var self = this;
 			// create/set cookie for unique id for 
-			var cookie = self.getCookie("jadex");
+			/*var cookie = self.getCookie("jadex");
 			if(!cookie)
 			{
 				var id = self.generateUUID();
 				self.setCookie("jadex", id);
 				console.log("created Jadex cookie: "+id);
+			}*/
+			
+			// create sessionid for client identification
+			if (!sessionStorage.getItem(SESSIONID)) {
+			    sessionStorage.setItem(SESSIONID, this.generateUUID());
 			}
 			
 			console.log("jadex event source: "+this.baseurl);
@@ -47,11 +53,25 @@
 		{
 			let self = this;
 			
-  			this.source = new EventSource(this.baseurl);
+			if (this.source) 
+			{
+				try 
+				{
+			    	this.source.close();
+			    } 
+				catch(e) 
+				{
+			    	console.warn("Error closing old EventSource", e);
+			    }
+			}
+			
+			let id = sessionStorage.getItem(SESSIONID);
+			console.log("connectToEventSource: "+this.baseurl + "?"+SESSIONID+"=" + id);
+  			this.source = new EventSource(this.baseurl + "?"+SESSIONID+"=" + id);
   
   			this.source.addEventListener('open', function(e) 
 			{
-				console.log('see connection established: '+self.baseurl);
+				console.log('see connection established: ' + self.baseurl + "?"+SESSIONID+"=" + id);
 			}, false);
 			
 			this.source.onmessage = function(event) 
@@ -88,7 +108,8 @@
 		
 		processEvent: function(event, cnt)
 		{
-			//console.log("message received: "+JSON.stringify(event.data));
+			//console.log("event received: "+JSON.stringify(event.data));
+			
 			var self = this;
 			
 			var sseevent = event.data!=null? JSON.parse(event.data): null;
@@ -104,7 +125,8 @@
 					{
 						'x-jadex-callid': callid, 
 						'x-jadex-ssealive': "true", 
-						'cache-control': 'no-cache, no-store'
+						'cache-control': 'no-cache, no-store',
+						[SESSIONID]: sessionStorage.getItem(SESSIONID)
 					};
 					
 					fetch(self.getPath()+"/ssealive", {method: 'UPDATE', headers: headers})
@@ -140,7 +162,8 @@
 						{
 							'x-jadex-callid': callid, 
 							'x-jadex-alive': "true", 
-							'cache-control': 'no-cache, no-store'
+							'cache-control': 'no-cache, no-store',
+							[SESSIONID]: sessionStorage.getItem(SESSIONID)
 						};
 						/*axios.get(cinfo[3], {headers}, this.transform)
 						.then(x =>
@@ -175,6 +198,8 @@
 			}
 			else
 			{
+				console.log("event received: "+JSON.stringify(event.data));
+				
 				// [callback, errhandler]
 				var cb = self.conversations[event.lastEventId];
 				if(cb!=null)
@@ -289,6 +314,7 @@
 				var callid = resp.headers["x-jadex-callid"];
 				var max = resp.headers["x-jadex-max"];
 				var sse = resp.data=="sse";
+				
 				if(fini!=null && callid==null)
 					callid = fini;
 				//console.log("call sse:"+sse+" "+resp.data);
@@ -385,7 +411,8 @@
 			{
 				'x-jadex-callid': callid, 
 				'cache-control': 'no-cache, no-store', 
-				"x-jadex-sse": true
+				"x-jadex-sse": true,
+				[SESSIONID]: sessionStorage.getItem(SESSIONID)
 			};
 			/*axios.get(path, {headers: headers}, this.transform)
 			//axios.get(path, {cancelToken: call.token, headers: headers}, this.transform)
@@ -473,7 +500,8 @@
 						'x-jadex-callid': callid, 
 						'x-jadex-terminate': r, 
 						'cache-control': 'no-cache, no-store', 
-						"x-jadex-sse": true
+						"x-jadex-sse": true,
+						[SESSIONID]: sessionStorage.getItem(SESSIONID)
 					};
 					
 					//axios.get(path, {headers}, this.transform)
@@ -547,7 +575,7 @@
 			    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
 		},
 		
-		getCookie: function(cname)
+		/*getCookie: function(cname)
 		{
 			cname=cname+"=";
 			var ret=undefined;
@@ -583,7 +611,7 @@
 				console.log("cookie was not set: "+cookval);
 			else if(document.cookie.length>0)
 				console.log("cookie set: "+cookval); 
-		}
+		}*/
 	};
 	Jadex.init();
 	window.jadex = Jadex;

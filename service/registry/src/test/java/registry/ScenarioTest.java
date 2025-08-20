@@ -48,6 +48,7 @@ public class ScenarioTest
 		
 	    List<String> jvmargs = new ArrayList<>();
         jvmargs.add("-Djadex.groupsecret=" + secret.toString());
+        jvmargs.add("-Dport=" + 8082);
         jvmargs.add("-D"+ICoordinatorService.COORDINATOR_SERVICE_NAMES+"=" + coname);
         SUtil.getExecutor().execute(() ->
         {

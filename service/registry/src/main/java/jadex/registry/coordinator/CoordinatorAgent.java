@@ -20,7 +20,7 @@ import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
 import jakarta.ws.rs.GET;
 
-@Publish(publishid="http://${host}:${port}/${cid}/coordinatorapi", publishtarget = ICoordinatorGuiService.class)
+@Publish(publishid="http://${host}:${port}/${cid}/api", publishtarget = ICoordinatorGuiService.class)
 public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiService
 {
 	/** The agent. */
@@ -32,8 +32,6 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 	
 	// registerRegistry() futures
 	protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> listeners = new LinkedHashSet<>();
-	
-	//protected Set<SubscriptionIntermediateFuture<CoordinatorServiceEvent>> uilisteners = new LinkedHashSet<>();
 	
 	protected String host;
 	
@@ -84,6 +82,7 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 		RegistryInfo ri = new RegistryInfo(reg, starttime);
 		
 		// notify clients
+		System.out.println("Coordinator sending new registry info to clients: "+ri+" "+listeners.size());
 		CoordinatorServiceEvent sa = new CoordinatorServiceEvent(reg, registries.contains(ri)? 
 			ServiceEvent.SERVICE_CHANGED: ServiceEvent.SERVICE_ADDED, starttime);
 		listeners.stream().forEach(lis ->
@@ -113,29 +112,6 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 		return ret;
 	}
 	
-	// called by clients
-	/*public ISubscriptionIntermediateFuture<CoordinatorServiceEvent> getRegistries()
-	{
-		final ComponentIdentifier caller = ServiceCall.getCurrentInvocation().getCaller();
-		SubscriptionIntermediateFuture<CoordinatorServiceEvent> ret = new SubscriptionIntermediateFuture<>();
-		clientlisteners.add(ret);
-		
-		ret.setTerminationCommand(ex ->
-		{
-			// on termination of registry 
-			System.getLogger(getClass().getName()).log(Level.INFO, agent+": Coordinator connection with client "+caller+" terminated due to "+ex);
-			clientlisteners.remove(ret);
-		});
-		
-		registries.stream().forEach(reg ->
-		{
-			CoordinatorServiceEvent rse = new CoordinatorServiceEvent(reg.serviceid(), ServiceEvent.SERVICE_ADDED, reg.starttime());
-			ret.addIntermediateResult(rse);
-		});
-		
-		return ret;
-	}*/
-	
 	/**
 	 *  Subscribe to coordinator updates.
 	 */
@@ -153,7 +129,7 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 			listeners.remove(ret);
 		});
 		
-		System.out.println("subscribed to coordinator initial values "+caller+" "+registries);
+		System.out.println("subscribed to coordinator initial values "+caller+" "+registries.size()+" "+listeners.size());
 		
 		for(RegistryInfo reg: registries)
 		{
@@ -164,7 +140,7 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 		if(registries.isEmpty())
 		{
 			// If no registries are known, send an empty event
-			ret.addIntermediateResult(new CoordinatorServiceEvent(null, ServiceEvent.SERVICE_ADDED, 0));
+			ret.addIntermediateResult(new CoordinatorServiceEvent(null, ServiceEvent.UNKNOWN, 0));
 		}
 		
 		return ret;

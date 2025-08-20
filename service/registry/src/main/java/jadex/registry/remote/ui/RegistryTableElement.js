@@ -1,5 +1,4 @@
 import BaseElement from './api/BaseElement.js';
-import CoordinatorApp from './CoordinatorApp.js';
 
 export class RegistryTableElement extends BaseElement 
 {
@@ -7,6 +6,9 @@ export class RegistryTableElement extends BaseElement
 	refreshRate = 10;
 	callid = null;
 	connected = false;
+	
+	services = [];
+	queries = [];
 	
     constructor() 
     {
@@ -17,7 +19,7 @@ export class RegistryTableElement extends BaseElement
 	{
 		super.connectedCallback();
 		
-		this.subscribeToCoordinator();
+		this.subscribeToRegistry();
 		
 		this.startAutoRefresh();
 	}
@@ -36,31 +38,45 @@ export class RegistryTableElement extends BaseElement
 			jadex.terminateCall(this.callid);
 	}
 	
-	subscribeToCoordinator()
+	subscribeToRegistry()
 	{
 		let self = this;
 		
-		CoordinatorApp.getInstance().clearRegistries();
+		this.clearServices();
+		this.clearQueries();
 		
 		this.unsubscribeFromCoordinator();
 		
-		console.log("coordinator subscription starting");
+		console.log("registry subscription starting");
 		
 		this.callid = jadex.getIntermediate("api/subscribe", res =>
 		{
 			self.setConnectionStatus(true);
 			
-            console.log("coordinator subscription result: ", res.data);
+            console.log("registry subscription result: ", res.data);
 			
-			// must save events due to start time?! save in other form?
 			var event = res.data;
 			if(event.type === 0)
             {
-                CoordinatorApp.getInstance().addRegistry(event);
+				if(event.query!=null)
+				{
+				    self.addQuery(event.query);
+				}
+				else
+				{
+					self.addQuery(event.service);
+				}
             }
             else if(event.type === 1)
             {
-                CoordinatorApp.getInstance().removeRegistry(event);
+				if(event.query!=null)
+				{
+				    self.removeQuery(event.query);
+				}
+				else
+				{
+					self.removeQuery(event.service);
+				}
             }
             else
             {
@@ -72,6 +88,43 @@ export class RegistryTableElement extends BaseElement
 			console.log("subscription error: "+ex);
 		}); 
     }
+	
+	addService(s) 
+  	{
+    	this.services.push(s);
+		this.update();
+  	}
+  
+  	removeService(s) 
+  	{
+		// todo: providerId and serviceName should be unique, so we can use them to remove the service
+    	this.services = this.services.filter(ser =>  ser.serviceName !== s.serviceName);
+		this.update();
+  	}
+
+	clearServices()
+	{
+		this.services = [];
+		this.update();	
+	}
+	
+	addQuery(q) 
+  	{
+    	this.queries.push(q);
+		this.update();
+  	}
+  
+  	removeQuery(q) 
+  	{
+    	this.queries = this.queries.filter(qu =>  q.id !== qu.id);
+		this.update();
+  	}
+
+	clearQueries()
+	{
+		this.queries = [];
+		this.update();	
+	}
 	
 	setConnectionStatus(connected)
 	{
@@ -163,7 +216,7 @@ export class RegistryTableElement extends BaseElement
 	getHTML() 
     {
     	//console.log("RegistryTableElement.getHTML() called");
-        var regs = this.getApp().getRegistries();
+		
 		return `
 			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 		    <style>
@@ -374,30 +427,55 @@ export class RegistryTableElement extends BaseElement
 	  							<button data-val="10" onclick="this.getRootNode().host.startAutoRefresh(10); this.getRootNode().host.update()">10s</button>
 	  							<button data-val="30" onclick="this.getRootNode().host.startAutoRefresh(30); this.getRootNode().host.update()">30s</button>
 	  						</span>
-							<button class="icon-button" title="Reconnect" onclick="this.getRootNode().host.subscribeToCoordinator()">
+							<button class="icon-button" title="Reconnect" onclick="this.getRootNode().host.subscribeToRegistry()">
 								<i class="fas fa-plug-circle-bolt"></i>
 							</button>
 						</div>
 					</div>
 				</div>
+				
 			    <table class="styled-table">
 			        <thead>
 			            <tr>
 			                <th>Name</th>
-			                <th>Start time</th>
-							<th>Uptime</th>
+							<th>Owner</th>
 			                <th>Groups</th>
 			                <th>Unrestricted</th>
 			            </tr>
 			        </thead>
 			        <tbody>
-			            ${regs.map(c => `
+			            ${this.services.map(s => `
 			                <tr>
-			                    <td>${c?.service?.providerId}</td>
-			                    <td>${this.formatDate(c?.startTime)}</td>
-								<td>${this.computeUptime(c?.startTime)}</td>
-			                    <td>${c?.service?.groupNames?.map(g => `${g}`).join(' ') || ''}</td>
-			                    <td>${c?.service?.unrestricted ? 'Yes' : 'No'}</td>
+			                    <td>${s.providerId}</td>
+								<td>${s.providerId}</td>
+			                    <td>${s.groupNames?.map(g => `${g}`).join(' ') || ''}</td>
+			                    <td>${s.unrestricted ? 'Yes' : 'No'}</td>
+			                </tr>`).join('')}
+			        </tbody>
+			    </table>
+				
+				<table class="styled-table">
+			        <thead>
+			            <tr>
+			                <th>Type</th>
+			                <th>Owner</th>
+							<th>Tags</th>
+							<th>Scope</th>
+							<th>Multiplicity</th>
+			                <th>Groups</th>
+			                <th>Unrestricted</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			            ${this.queries.map(q => `
+			                <tr>
+								<td>${q.type || 'n/a'}</td>
+			                    <td>${q.providerId}</td>
+								<td>${q.tags?.map(g => `${t}`).join(' ') || ''}</td>
+								<td>${q.scope}</td>
+								<td>${q.multiplicity}</td>
+			                    <td>${q.groupNames?.map(g => `${g}`).join(' ') || ''}</td>
+			                    <td>${q.unrestricted ? 'Yes' : 'No'}</td>
 			                </tr>`).join('')}
 			        </tbody>
 			    </table>
@@ -406,5 +484,5 @@ export class RegistryTableElement extends BaseElement
     }
 }
 
-if(customElements.get('registry-table') === undefined)
-	customElements.define('registry-table', RegistryTableElement);
+if(customElements.get('reg-table') === undefined)
+	customElements.define('reg-table', RegistryTableElement);

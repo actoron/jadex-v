@@ -1,2 +1,2 @@
-RegistryClient:jadex.registry.client.RegistryClientAgent
-RemoteRegistry:jadex.registry.remote.RemoteRegistryAgent
+RegistryClient | jadex.registry.client.RegistryClientAgent
+| $port!=null ? $port : 8081 | jadex.registry.remote.RemoteRegistryAgent

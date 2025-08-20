@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>Coordinator UI</title>
+		<title>Registry UI</title>
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 		
@@ -11,19 +11,19 @@
 		<script src="./api/jadex.js"></script>
 		
 		<script type="module">
-			import CoordinatorApp from './CoordinatorApp.js';
+			import App from './api/App.js';
 			import { BaseElement } from './api/BaseElement.js';
 
-			BaseElement.setAppClass(CoordinatorApp);
+			BaseElement.setAppClass(App);
 		</script>
 	</head>
 	
 	<body>
 		<div class="container">
-			<h1>Coordinator UI</h1>
-			<registry-table>
+			<h1>App UI</h1>
+			<reg-table>
 	            <!-- Registries will be dynamically added here -->
-	    	</registry-table>  
+	    	</reg-table>  
 	    </div>
     	
     	<div class="powered stripes"> 
