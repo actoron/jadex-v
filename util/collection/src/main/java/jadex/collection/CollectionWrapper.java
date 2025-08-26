@@ -23,24 +23,28 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	/** Cached property change listener, if any. */
 	protected PropertyChangeListener	listener;
 	
+	/** Observe inner values. */
+	protected boolean	observeinner;
+	
 	/**
 	 *  Create a new wrapper.
 	 *  @param delegate The delegate.
 	 */
 	public CollectionWrapper(Collection<T> delegate)
 	{
-		this(delegate, null, null);
+		this(delegate, null, null, false);
 	}
 	
 	/**
 	 *  Create a new wrapper.
 	 *  @param delegate The delegate.
 	 */
-	public CollectionWrapper(Collection<T> delegate, IEventPublisher publisher, Object context)
+	public CollectionWrapper(Collection<T> delegate, IEventPublisher publisher, Object context, boolean observeinner)
 	{
 		this.delegate = delegate;
 		this.publisher = publisher;
 		this.context = context;
+		this.observeinner = observeinner;
 		
 		if(publisher!=null)
 		{
@@ -344,7 +348,10 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	 */
 	protected void entryAdded(T value, Integer index)
 	{
-		listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+		if(observeinner)
+		{
+			listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+		}
 		
 		publisher.entryAdded(context, value, index);
 	}
@@ -354,7 +361,10 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	 */
 	protected void entryRemoved(T value, Integer index)
 	{
-		listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+		if(observeinner)
+		{
+			listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+		}
 		
 		publisher.entryRemoved(context, value, index);
 	}
@@ -364,7 +374,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	 */
 	protected void entryChanged(T oldvalue, T newvalue, Integer index)
 	{
-		if(oldvalue!=newvalue)
+		if(observeinner && oldvalue!=newvalue)
 		{
 			listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
 		}

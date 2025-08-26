@@ -3,6 +3,7 @@ package jadex.bdi.belief;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -26,6 +27,7 @@ import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.ChangeEvent;
+import jadex.common.TimeoutException;
 import jadex.common.Tuple2;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -59,6 +61,9 @@ public class BeliefTest
 		
 		@Belief
 		Val<Bean>	valbeanbelief	= new Val<>(new Bean(1));
+		
+		@Belief(observeinner=false)
+		Val<Bean>	silentvalbeanbelief	= new Val<>(new Bean(1));
 		
 		@Belief
 		Bean	beanbelief	= new Bean(1);
@@ -187,6 +192,34 @@ public class BeliefTest
 			return null;
 		}).get(TestHelper.TIMEOUT);
 		checkEventInfo(fut3, null, pojo.valbeanbelief.get(), null);
+	}
+	
+	@Test
+	public void testSilentValBeanBelief()
+	{
+		BeliefTestAgent	pojo	= new BeliefTestAgent();
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+				
+		// Test set of val to new bean.
+		Future<IEvent>	fut2	= new Future<>();
+		Bean	old = pojo.silentvalbeanbelief.get();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(fut2, ChangeEvent.FACTCHANGED, "silentvalbeanbelief");
+			pojo.silentvalbeanbelief.set(new Bean(2));
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(fut2, old, pojo.silentvalbeanbelief.get(), null);
+		
+		// Test set of bean property.
+		Future<IEvent>	fut3	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(fut3, ChangeEvent.FACTCHANGED, "silentvalbeanbelief");
+			pojo.silentvalbeanbelief.get().setValue(3);
+			return null;
+		});
+		assertThrows(TimeoutException.class, () -> fut3.get(500)); // No event should be generated
 	}
 
 	@Test

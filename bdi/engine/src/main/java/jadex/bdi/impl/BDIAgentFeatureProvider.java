@@ -1882,6 +1882,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	{
 		Belief	belief	= f.getAnnotation(Belief.class);
 		String	name	= capaprefix+f.getName();
+		boolean observeinner	= belief.observeinner();
 		
 		f.setAccessible(true);
 		MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(f);
@@ -2018,7 +2019,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					{
 						throw new RuntimeException("Dynamic belief field is null: "+f);
 					}
-					DynValHelper.initDyn(dyn, comp, evpub);
+					DynValHelper.initDyn(dyn, comp, evpub, observeinner);
 										
 					return null;
 				}
@@ -2049,7 +2050,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							value	= new Val<Object>((Object)null);
 							setter.invoke(pojos.get(pojos.size()-1), value);
 						}
-						DynValHelper.initVal(value, comp, evpub);						
+						DynValHelper.initVal(value, comp, evpub, observeinner);						
 						return null;
 					}
 					catch(Throwable t)
@@ -2070,7 +2071,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new ArrayList<>();
 						}
-						value	= new ListWrapper<>(value, evpub, comp);
+						value	= new ListWrapper<>(value, evpub, comp, observeinner);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -2093,7 +2094,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new LinkedHashSet<>();
 						}
-						value	= new SetWrapper<>(value, evpub, comp);
+						value	= new SetWrapper<>(value, evpub, comp, observeinner);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -2116,7 +2117,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new LinkedHashMap<>();
 						}
-						value	= new MapWrapper<>(value, evpub, comp);
+						value	= new MapWrapper<>(value, evpub, comp, observeinner);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}

@@ -15,7 +15,7 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public ListWrapper(List<T> delegate)
 	{
-		this(delegate, null, null);
+		super(delegate);
 	}
 	
 
@@ -23,9 +23,9 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 *  Create a new wrapper.
 	 *  @param delegate The delegate.
 	 */
-	public ListWrapper(List<T> delegate, IEventPublisher publisher, Object context)
+	public ListWrapper(List<T> delegate, IEventPublisher publisher, Object context, boolean observeinner)
 	{
-		super(delegate, publisher, context);
+		super(delegate, publisher, context, observeinner);
 	}
 	
 	/**

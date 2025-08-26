@@ -29,6 +29,9 @@ public class Val<T>
 	/** The change handler gets called after any change with old and new value. */
 	IEventPublisher	changehandler;
 	
+	/** Observe changes of inner values (e.g. collections or beans). */
+	boolean	observeinner;
+	
 	/**
 	 *  Create an observable with a given value.
 	 */
@@ -40,11 +43,16 @@ public class Val<T>
 	/**
 	 *  Called on component init.
 	 */
-	void	init(IComponent comp, IEventPublisher changehandler)
+	void	init(IComponent comp, IEventPublisher changehandler, boolean observeinner)
 	{
 		this.comp	= comp;
 		this.changehandler	= changehandler;
-		this.listener	= SPropertyChange.updateListener(null, value, listener, comp, changehandler);
+		this.observeinner	= observeinner;
+		
+		if(observeinner)
+		{
+			this.listener	= SPropertyChange.updateListener(null, value, listener, comp, changehandler);
+		}
 	}
 	
 	/**
@@ -78,7 +86,7 @@ public class Val<T>
 		
 		if(changehandler!=null)
 		{
-			if(old!=value)
+			if(observeinner && old!=value)
 			{
 				listener	= SPropertyChange.updateListener(old, value, listener, comp, changehandler);
 			}

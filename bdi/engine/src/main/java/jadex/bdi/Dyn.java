@@ -40,6 +40,9 @@ public class Dyn<T>
 	/** The change handler gets called after any change with old and new value. */
 	IEventPublisher	changehandler;
 	
+	/** Observe changes of inner values (e.g. collections or beans). */
+	boolean	observeinner;
+	
 	/**
 	 *  Create an observable value with a dynamic function.
 	 */
@@ -93,10 +96,11 @@ public class Dyn<T>
 	/**
 	 *  Called on component init.
 	 */
-	void	init(IComponent comp, IEventPublisher changehandler)
+	void	init(IComponent comp, IEventPublisher changehandler, boolean observeinner)
 	{
 		this.comp	= comp;
 		this.changehandler	= changehandler;
+		this.observeinner	= observeinner;
 		
 		// Set update rate to start periodic updates.
 		setUpdateRate(updaterate);
@@ -131,7 +135,7 @@ public class Dyn<T>
 		
 		if(changehandler!=null)
 		{
-			if(old!=value)
+			if(observeinner && old!=value)
 			{
 				listener	= SPropertyChange.updateListener(old, value, listener, comp, changehandler);
 			}
