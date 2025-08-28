@@ -350,6 +350,18 @@ public class BeliefTest
 		assertEquals(firstfut.get(TestHelper.TIMEOUT), secondfut.get(TestHelper.TIMEOUT));
 		assertNotEquals(firstfut.get(TestHelper.TIMEOUT), thirdfut.get(TestHelper.TIMEOUT));
 		changedfut.get(TestHelper.TIMEOUT);	// Check if event was generated
+		
+		// Test changing update rate while running.
+		Future<Long>	fourthfut	= new Future<>();
+		Future<Long>	fifthfut	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			pojo.updatebelief.setUpdateRate(5000);
+			fourthfut.setResult(pojo.updatebelief.get());
+			IExecutionFeature.get().waitForDelay(1500).get();
+			fifthfut.setResult(pojo.updatebelief.get());
+		});
+		assertEquals(fourthfut.get(TestHelper.TIMEOUT), fifthfut.get(TestHelper.TIMEOUT));
 	}
 	
 	@Test

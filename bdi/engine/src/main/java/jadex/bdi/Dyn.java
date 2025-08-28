@@ -53,6 +53,8 @@ public class Dyn<T>
 	
 	/**
 	 *  Set the update rate.
+	 *  Starts periodic updates when > 0, i.e. the first update happens immediately and then every updaterate millis.
+	 *  When 0 or less, no periodic updates are done and the value is evaluated on every get() call (default).
 	 *  @param updaterate	The update rate in millis, or 0 for no periodic updates.
 	 */
 	public Dyn<T>	setUpdateRate(long updaterate)
@@ -108,6 +110,8 @@ public class Dyn<T>
 	
 	/**
 	 *  Get the current value.
+	 *  Gets the dynamic value on every call when no update rate is set.
+	 *  When an update rate is set, the last updated value is returned.
 	 */
 	public T get()
 	{
