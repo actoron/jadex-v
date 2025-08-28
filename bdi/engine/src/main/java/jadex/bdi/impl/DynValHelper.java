@@ -24,7 +24,7 @@ public class DynValHelper
 	{
 		try
 		{
-			Method	m	= Dyn.class.getDeclaredMethod("init", IComponent.class, IEventPublisher.class, boolean.class);
+			Method	m	= Dyn.class.getDeclaredMethod("init", IComponent.class, IEventPublisher.class);
 			m.setAccessible(true);
 			dyn_init	= MethodHandles.lookup().unreflect(m);
 		}
@@ -37,11 +37,11 @@ public class DynValHelper
 	/**
 	 *  Call protected init method of Dyn.
 	 */
-	protected static void	initDyn(Dyn<Object> dyn, IComponent comp, IEventPublisher changehandler, boolean observeinner)
+	protected static void	initDyn(Dyn<Object> dyn, IComponent comp, IEventPublisher changehandler)
 	{
 		try
 		{
-			dyn_init.invoke(dyn, comp, changehandler, observeinner);
+			dyn_init.invoke(dyn, comp, changehandler);
 		}
 		catch(Throwable t)
 		{
@@ -57,7 +57,7 @@ public class DynValHelper
 	{
 		try
 		{
-			Method	m	= Val.class.getDeclaredMethod("init", IComponent.class, IEventPublisher.class, boolean.class);
+			Method	m	= Val.class.getDeclaredMethod("init", IComponent.class, IEventPublisher.class);
 			m.setAccessible(true);
 			val_init	= MethodHandles.lookup().unreflect(m);
 		}
@@ -70,11 +70,11 @@ public class DynValHelper
 	/**
 	 *  Call protected init method of Val.
 	 */
-	protected static void	initVal(Val<Object> val, IComponent comp, IEventPublisher changehandler, boolean observeinner)
+	protected static void	initVal(Val<Object> val, IComponent comp, IEventPublisher changehandler)
 	{
 		try
 		{
-			val_init.invoke(val, comp, changehandler, observeinner);
+			val_init.invoke(val, comp, changehandler);
 		}
 		catch(Throwable t)
 		{

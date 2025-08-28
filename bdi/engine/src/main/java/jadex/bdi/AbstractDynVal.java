@@ -12,13 +12,34 @@ import jadex.core.IComponent;
  */
 public class AbstractDynVal<T>
 {
+	/**
+	 *  The observation mode for inner values.
+	 */
+	public enum ObservationMode
+	{
+		/** Do not publish change events. */
+		NONE,
+		
+		/** Publish events only when replacing the whole stored object. */
+		VALUE,
+		
+		/** When the stored object is a collection/map, publish add/remove/change events. */
+		COLLECTION,
+		
+		/** Default.
+		 *  When the stored object is a bean, publish property change events.
+		 *  Also publishes add/remove/change events when the stored object is a collection/map.
+		 *  When a collection/map contains beans as values, property changes are published as generic change of the whole value. */
+		COLLECTION_AND_BEAN
+	}
+	
+	
+	//-------- fields set during runtime --------
+	
 	/** The last value. */
 	T	value;
 	
-	/** The property change listener for the value, if bean. */
-	PropertyChangeListener	listener;
-	
-	//-------- fields set on init --------
+	//-------- fields only set on init --------
 	
 	/** The component. */
 	IComponent	comp;
@@ -27,16 +48,20 @@ public class AbstractDynVal<T>
 	IEventPublisher	changehandler;
 	
 	/** Observe changes of inner values (e.g. collections or beans). */
-	boolean	observeinner;	
+	ObservationMode	mode	= ObservationMode.COLLECTION_AND_BEAN;
+	
+	/** The (cached) property change listener for the value, if bean.
+	 *  Created on first use. */
+	PropertyChangeListener	listener;
+	
 	
 	/**
 	 *  Called on component init.
 	 */
-	void	init(IComponent comp, IEventPublisher changehandler, boolean observeinner)
+	void	init(IComponent comp, IEventPublisher changehandler)
 	{
 		this.comp	= comp;
 		this.changehandler	= changehandler;
-		this.observeinner	= observeinner;
 	}
 	
 	/**
@@ -65,10 +90,36 @@ public class AbstractDynVal<T>
 				observeNewValue(old, value);
 			}
 			
-			if(!SUtil.equals(old, value))
+			if(mode!=ObservationMode.NONE && !SUtil.equals(old, value))
 			{
 				changehandler.entryChanged(comp, old, value, null);
 			}
+		}
+	}
+	
+	/**
+	 *  Set the observation mode for inner values.
+	 *  Default is COLLECTION_AND_BEAN.
+	 */
+	public void setObservationMode(ObservationMode mode)
+	{
+		if(this.mode!=mode)
+		{
+			if(changehandler!=null)
+			{
+				if(this.mode==ObservationMode.COLLECTION_AND_BEAN)
+				{
+					// Remove old listener
+					observeNewValue(value, null);
+				}
+				
+				else if(mode==ObservationMode.COLLECTION_AND_BEAN)
+				{
+					// Add new listener
+					observeNewValue(null, value);
+				}
+			}
+			this.mode	= mode;
 		}
 	}
 
@@ -78,7 +129,7 @@ public class AbstractDynVal<T>
 	 */
 	void observeNewValue(T old, T value) 
 	{
-		if(observeinner)
+		if(mode==ObservationMode.COLLECTION_AND_BEAN)
 		{
 			listener	= SPropertyChange.updateListener(old, value, listener, comp, changehandler);
 		}

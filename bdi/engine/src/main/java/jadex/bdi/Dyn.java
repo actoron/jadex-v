@@ -80,9 +80,9 @@ public class Dyn<T>	extends AbstractDynVal<T>
 	 *  Called on component init.
 	 */
 	@Override
-	void	init(IComponent comp, IEventPublisher changehandler, boolean observeinner)
+	void	init(IComponent comp, IEventPublisher changehandler)
 	{
-		super.init(comp, changehandler, observeinner);
+		super.init(comp, changehandler);
 		
 		// Set update rate to start periodic updates.
 		setUpdateRate(updaterate);

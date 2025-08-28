@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.bdi.AbstractDynVal.ObservationMode;
 import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
@@ -61,9 +62,6 @@ public class BeliefTest
 		
 		@Belief
 		Val<Bean>	valbeanbelief	= new Val<>(new Bean(1));
-		
-		@Belief(observeinner=false)
-		Val<Bean>	silentvalbeanbelief	= new Val<>(new Bean(1));
 		
 		@Belief
 		Bean	beanbelief	= new Bean(1);
@@ -192,34 +190,51 @@ public class BeliefTest
 			return null;
 		}).get(TestHelper.TIMEOUT);
 		checkEventInfo(fut3, null, pojo.valbeanbelief.get(), "value");
-	}
-	
-	@Test
-	public void testSilentValBeanBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-				
-		// Test set of val to new bean.
-		Future<IEvent>	fut2	= new Future<>();
-		Bean	old = pojo.silentvalbeanbelief.get();
+		
+		// Test observation mode VALUE only.
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(fut2, ChangeEvent.FACTCHANGED, "silentvalbeanbelief");
-			pojo.silentvalbeanbelief.set(new Bean(2));
+			pojo.valbeanbelief.setObservationMode(ObservationMode.VALUE);
 			return null;
 		}).get(TestHelper.TIMEOUT);
-		checkEventInfo(fut2, old, pojo.silentvalbeanbelief.get(), null);
 		
-		// Test set of bean property.
-		Future<IEvent>	fut3	= new Future<>();
+		// Test set of val to new bean (should throw event).
+		Future<IEvent>	fut4	= new Future<>();
+		Bean	old2 = pojo.valbeanbelief.get();
 		exta.scheduleStep(() ->
 		{
-			addEventListenerRule(fut3, ChangeEvent.FACTCHANGED, "silentvalbeanbelief");
-			pojo.silentvalbeanbelief.get().setValue(3);
+			addEventListenerRule(fut4, ChangeEvent.FACTCHANGED, "valbeanbelief");
+			pojo.valbeanbelief.set(new Bean(4));
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(fut4, old2, pojo.valbeanbelief.get(), null);
+		
+		// Test set of bean property (should not throw event).
+		Future<IEvent>	fut5	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(fut5, ChangeEvent.FACTCHANGED, "valbeanbelief");
+			pojo.valbeanbelief.get().setValue(5);
 			return null;
 		});
-		assertThrows(TimeoutException.class, () -> fut3.get(500)); // No event should be generated
+		assertThrows(TimeoutException.class, () -> fut5.get(500)); // No event should be generated
+		
+		// Test observation mode NONE.
+		exta.scheduleStep(() ->
+		{
+			pojo.valbeanbelief.setObservationMode(ObservationMode.NONE);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		
+		// Test set of val to new bean (should not throw event).
+		Future<IEvent>	fut6	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(fut6, ChangeEvent.FACTCHANGED, "valbeanbelief");
+			pojo.valbeanbelief.set(new Bean(6));
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertThrows(TimeoutException.class, () -> fut6.get(500)); // No event should be generated
 	}
 
 	@Test

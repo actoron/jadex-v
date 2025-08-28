@@ -13,11 +13,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Belief
 {
-	/**
-	 *  Observe changes of inner values as well (e.g. beans in collections).
-	 */
-	public boolean	observeinner() default true;
-	
 //	/**
 //	 *  A dynamic belief reevaluated on every access.
 //	 *  Relevant only for bytecode-enhanced field beliefs.
