@@ -1895,50 +1895,26 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		IEventPublisher	evpub	= new IEventPublisher()
 		{
 			@Override
-			public void entryAdded(Object context, Object key, Object value)
+			public void entryAdded(Object context, Object value, Object info)
 			{
 				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, key));
+				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
 				rs.addEvent(ev);
 			}
 			
 			@Override
-			public void entryAdded(Object context, Object value, Integer index)
+			public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
 			{
 				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, index));
+				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
 				rs.addEvent(ev);
 			}
 			
 			@Override
-			public void entryChanged(Object context, Object key, Object oldvalue, Object newvalue)
+			public void entryRemoved(Object context, Object value, Object info)
 			{
 				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, key));
-				rs.addEvent(ev);
-			}
-			
-			@Override
-			public void entryChanged(Object context, Object oldvalue, Object newvalue, Integer index)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, index));
-				rs.addEvent(ev);
-			}
-			
-			@Override
-			public void entryRemoved(Object context, Object key, Object value)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, key));
-				rs.addEvent(ev);
-			}
-			
-			@Override
-			public void entryRemoved(Object context, Object value, Integer index)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, index));
+				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
 				rs.addEvent(ev);
 			}
 		};

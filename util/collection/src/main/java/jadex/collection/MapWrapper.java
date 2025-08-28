@@ -234,7 +234,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 			listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
 		}
 		
-		publisher.entryAdded(context, key, value);
+		publisher.entryAdded(context, value, key);
 	}
 	
 	/**
@@ -247,7 +247,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 			listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
 		}
 
-		publisher.entryRemoved(context, key, value);
+		publisher.entryRemoved(context, value, key);
 	}
 	
 	/**
@@ -262,7 +262,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		
 		if(!SUtil.equals(oldvalue, newvalue))
 		{
-			publisher.entryChanged(context, key, oldvalue, newvalue);
+			publisher.entryChanged(context, oldvalue, newvalue, key);
 		}
 	}
 

@@ -7,31 +7,26 @@ public interface IEventPublisher
 {
 	/**
 	 *  An entry was added to the collection.
+	 *  @param context The context object, e.g. the component.
+	 *  @param value The added value.
+	 *  @param info Additional information, e.g. the key in a map or index in a list.
 	 */
-	public void entryAdded(Object context, Object value, Integer index);
+	public void entryAdded(Object context, Object value, Object info);
 	
 	/**
 	 *  An entry was removed from the collection.
+	 *  @param context The context object, e.g. the component.
+	 *  @param value The removed value.
+	 *  @param info Additional information, e.g. the key in a map or index in a list.
 	 */
-	public void entryRemoved(Object context, Object value, Integer index);
+	public void entryRemoved(Object context, Object value, Object info);
 	
 	/**
 	 *  An entry was changed in the collection.
+	 *  @param context The context object, e.g. the component.
+	 *  @param oldvalue The old value.
+	 *  @param newvalue The new value.
+	 *  @param info Additional information, e.g. the key in a map or index in a list.
 	 */
-	public void entryChanged(Object context, Object oldvalue, Object newvalue, Integer index);
-	
-	/**
-	 *  An entry was added to the map.
-	 */
-	public void	entryAdded(Object context, Object key, Object value);
-	
-	/**
-	 *  An entry was removed from the map.
-	 */
-	public void	entryRemoved(Object context, Object key, Object value);
-	
-	/**
-	 *  An entry was changed in the map.
-	 */
-	public void	entryChanged(Object context, Object key, Object oldvalue, Object newvalue);
+	public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info);
 }
