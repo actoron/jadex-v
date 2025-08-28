@@ -153,7 +153,7 @@ public class BeliefTest
 			pojo.beanbelief.setValue(2);
 		});
 		
-		checkEventInfo(fut, 1, 2, null);
+		checkEventInfo(fut, null, pojo.beanbelief, "value");
 	}
 
 	@Test
@@ -162,7 +162,7 @@ public class BeliefTest
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
 		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		
-		// Test immediate set of bean before init.
+		// Test immediate set of bean before init, i.e. observe initial bean.
 		Future<IEvent>	fut1	= new Future<>();
 		exta.scheduleStep(() ->
 		{
@@ -170,7 +170,7 @@ public class BeliefTest
 			pojo.valbeanbelief.get().setValue(2);
 			return null;
 		}).get(TestHelper.TIMEOUT);
-		checkEventInfo(fut1, null, pojo.valbeanbelief.get(), null);
+		checkEventInfo(fut1, null, pojo.valbeanbelief.get(), "value");
 		
 		// Test delayed set of bean after init.
 		Future<IEvent>	fut2	= new Future<>();
@@ -183,7 +183,7 @@ public class BeliefTest
 		}).get(TestHelper.TIMEOUT);
 		checkEventInfo(fut2, old, pojo.valbeanbelief.get(), null);
 		
-		// Test delayed set of bean property after init.
+		// Test set property of changed bean.
 		Future<IEvent>	fut3	= new Future<>();
 		exta.scheduleStep(() ->
 		{
@@ -191,7 +191,7 @@ public class BeliefTest
 			pojo.valbeanbelief.get().setValue(3);
 			return null;
 		}).get(TestHelper.TIMEOUT);
-		checkEventInfo(fut3, null, pojo.valbeanbelief.get(), null);
+		checkEventInfo(fut3, null, pojo.valbeanbelief.get(), "value");
 	}
 	
 	@Test

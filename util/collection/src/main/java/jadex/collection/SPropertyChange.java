@@ -63,7 +63,7 @@ public class SPropertyChange
 						listener	= event ->
 						{
 							// Use event source to get new value even if listener is reused.
-							publisher.entryChanged(context, null, event.getSource(), null);
+							publisher.entryChanged(context, null, event.getSource(), event.getPropertyName());
 						};
 					}
 					adder.invoke(value, listener);

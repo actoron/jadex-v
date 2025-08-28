@@ -1,6 +1,5 @@
 package jadex.bdi.impl;
 
-import java.beans.PropertyChangeEvent;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.lang.annotation.Annotation;
@@ -75,19 +74,16 @@ import jadex.collection.ListWrapper;
 import jadex.collection.MapWrapper;
 import jadex.collection.SPropertyChange;
 import jadex.collection.SetWrapper;
-import jadex.common.IResultCommand;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
@@ -2115,30 +2111,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
 						if(bean!=null)
 						{
-							RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-							rs.observeObject(bean, true, false, new IResultCommand<>()
-							{
-								final IResultCommand<IFuture<Void>, PropertyChangeEvent> self = this;
-								public IFuture<Void> execute(final PropertyChangeEvent event)
-								{
-									final Future<Void> ret = new Future<Void>();
-									try
-									{
-	//									publishToolBeliefEvent(mbel);	// TODO
-										Event ev = new Event(fchev, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
-										rs.addEvent(ev);
-									}
-									catch(Exception e)
-									{
-										if(!(e instanceof ComponentTerminatedException))
-											System.err.println("Ex in observe: "+SUtil.getExceptionStacktrace(e));
-										Object val = event.getSource();
-										rs.unobserveObject(val, self);
-										ret.setResult(null);
-									}
-									return ret;
-								}
-							});
+							SPropertyChange.updateListener(null, bean, null, comp, evpub);
 						}
 						else
 						{
