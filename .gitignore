@@ -34,3 +34,4 @@ startHelloWorld.sh
 /benchmark/.venv
 /bdi/engine - Kopie
 /application/bdi-service/.lwjgl/
+.vscode/settings.json
