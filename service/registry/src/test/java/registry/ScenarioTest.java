@@ -16,7 +16,6 @@ import jadex.providedservice.IServiceIdentifier;
 import jadex.registry.client.RegistryClientAgent;
 import jadex.registry.coordinator.CoordinatorAgent;
 import jadex.registry.coordinator.ICoordinatorService;
-import jadex.registry.remote.RemoteRegistryAgent;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 public class ScenarioTest 
@@ -71,6 +70,10 @@ public class ScenarioTest
         });
 		
 		man.waitForLastComponentTerminated();
+
+		// todo:
+		// add/check global queries
+		// let one of the remote registries terminate and check if other takes over
 	}
 	
 	@OnStart

@@ -433,7 +433,7 @@
 		    {
 		        if(!response.ok)
 		        	throw new Error("HTTP Error: " + response.status);
-		        return response.json(); 
+				return self.safeJson(response);
 		    })
 		    .then(function (data) 
 		    {
@@ -512,7 +512,8 @@
 				    {
 				        if(!response.ok)
 				            throw new Error("HTTP Error: " + response.status);
-				        return response.json();
+				        //return response.json();
+						return self.safeJson(response);
 				    })
 				    .then(resolve)
 				    .catch(errhandler);
@@ -544,7 +545,8 @@
 						    {
 						        if(!response.ok)
 						            throw new Error("HTTP Error: " + response.status);
-						        return response.json();
+						        //return response.json();
+								return self.safeJson(response);
 						    })
 						    .then(resolve)
 						    .catch(reject);
@@ -574,6 +576,26 @@
 			return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
 			    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
 		},
+
+		safeJson(response) 
+		{
+			return response.text().then(text => 
+			{
+				if (!text || text.trim().length === 0) 
+				{
+					return null; 
+				}
+				try 
+				{
+					return JSON.parse(text);
+				} 
+				catch (e) 
+				{
+					console.error("No valid json", text);
+					throw new Error("Invalid JSON: " + e.message);
+				}
+			});
+		}
 		
 		/*getCookie: function(cname)
 		{

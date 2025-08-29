@@ -164,6 +164,8 @@ export class RegistryTableElement extends BaseElement
     {
     	//console.log("RegistryTableElement.getHTML() called");
         var regs = this.getApp().getRegistries();
+		regs.sort((a, b) => (a?.startTime ?? 0) - (b?.startTime ?? 0));
+		const oldestreg = regs[0];
 		return `
 			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 		    <style>
@@ -356,6 +358,16 @@ export class RegistryTableElement extends BaseElement
 				.status-overlay:hover .status-panel {
 					display: block;
 				}
+
+				.oldest-label {
+					font-size: 0.7em;
+					color: #666;
+					margin-left: 4px;
+				}
+				.highlight-oldest {
+					/*background-color: #fff59d; */
+					/*font-weight: bold;*/
+				}
 			</style>
 			<div>
 				<div class="status-overlay ${this.connected ? 'online' : 'offline'}">
@@ -391,14 +403,17 @@ export class RegistryTableElement extends BaseElement
 			            </tr>
 			        </thead>
 			        <tbody>
-			            ${regs.map(c => `
-			                <tr>
-			                    <td>${c?.service?.providerId}</td>
-			                    <td>${this.formatDate(c?.startTime)}</td>
+			            ${regs.map(c => {
+							const isoldest = c === oldestreg;
+							return `
+							<tr class="${isoldest ? 'highlight-oldest' : ''}">
+								<td>${c?.service?.providerId} ${isoldest ? '&#127775; <span class="oldest-label">(longest running)</span>' : ''}</td>
+								<td>${this.formatDate(c?.startTime)}</td>
 								<td>${this.computeUptime(c?.startTime)}</td>
-			                    <td>${c?.service?.groupNames?.map(g => `${g}`).join(' ') || ''}</td>
-			                    <td>${c?.service?.unrestricted ? 'Yes' : 'No'}</td>
-			                </tr>`).join('')}
+								<td>${c?.service?.groupNames?.map(g => `${g}`).join(' ') || ''}</td>
+								<td>${c?.service?.unrestricted ? 'Yes' : 'No'}</td>
+							</tr>`;
+						}).join('')}
 			        </tbody>
 			    </table>
 			</div>

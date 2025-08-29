@@ -64,7 +64,7 @@ export class RegistryTableElement extends BaseElement
 				}
 				else
 				{
-					self.addQuery(event.service);
+					self.addService(event.service);
 				}
             }
             else if(event.type === 1)
@@ -75,7 +75,7 @@ export class RegistryTableElement extends BaseElement
 				}
 				else
 				{
-					self.removeQuery(event.service);
+					self.removeService(event.service);
 				}
             }
             else
@@ -433,11 +433,14 @@ export class RegistryTableElement extends BaseElement
 						</div>
 					</div>
 				</div>
-				
+
+				<h3>Services</h3>
 			    <table class="styled-table">
 			        <thead>
 			            <tr>
 			                <th>Name</th>
+							<th>Type</th>
+							<th>Scope</th>
 							<th>Owner</th>
 			                <th>Groups</th>
 			                <th>Unrestricted</th>
@@ -446,14 +449,17 @@ export class RegistryTableElement extends BaseElement
 			        <tbody>
 			            ${this.services.map(s => `
 			                <tr>
-			                    <td>${s.providerId}</td>
+			                    <td>${s.serviceName}</td>
+								<td>${s.serviceType.value}</td>
+								<td>${s.scope.value}</td>
 								<td>${s.providerId}</td>
 			                    <td>${s.groupNames?.map(g => `${g}`).join(' ') || ''}</td>
 			                    <td>${s.unrestricted ? 'Yes' : 'No'}</td>
 			                </tr>`).join('')}
 			        </tbody>
 			    </table>
-				
+
+				<h3>Queries</h3>
 				<table class="styled-table">
 			        <thead>
 			            <tr>
