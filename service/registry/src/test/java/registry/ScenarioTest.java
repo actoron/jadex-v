@@ -3,6 +3,8 @@ package registry;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
@@ -22,6 +24,12 @@ public class ScenarioTest
 {
 	public static String GROUPNAME = "mygroup";
 	
+	@Test
+	public void dummyTest()
+	{
+		// Dummy test to avoid gradle hanging
+	}
+
 	public static void main(String[] args) 
 	{
 		KeySecret secret = KeySecret.createRandom();
