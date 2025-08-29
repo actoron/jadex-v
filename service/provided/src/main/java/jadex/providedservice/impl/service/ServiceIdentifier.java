@@ -132,7 +132,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 			System.out.println("ServiceIdentifier: "+servicename+" "+groupnames);
 		}*/
 		
-		System.out.println("Groups for service "+servicename+" "+getGroups(roles));
+		//System.out.println("Groups for service "+servicename+" "+getGroups(roles));
 		
 		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope, getGroups(roles),
 			roles!=null && roles.contains(Security.UNRESTRICTED), tags);
@@ -160,7 +160,8 @@ public class ServiceIdentifier implements IServiceIdentifier
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			//e.printStackTrace();
+			System.out.println("Error while getting groups, no security feature available: " + e.getMessage());
 		}
 		
 		return ret;
@@ -384,7 +385,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  @param provider	The component that owns the service.
 	 *  @return The roles, if any or null, if none given or sec==null.
 	 */
-	public static Set<String>	getRoles(Security sec, IComponent provider)
+	public static Set<String> getRoles(Security sec, IComponent provider)
 	{
 		Set<String>	ret	= null;
 		String[]	roles	= sec!=null ? sec.roles() : null;

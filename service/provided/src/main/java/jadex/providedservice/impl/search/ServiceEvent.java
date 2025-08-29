@@ -8,11 +8,15 @@ import jadex.providedservice.IServiceIdentifier;
 public class ServiceEvent
 {
 	/** Service was added event. */
+	public static final int UNKNOWN = -1;
+	
+	/** Service was added event. */
 	public static final int SERVICE_ADDED = 0;
 	
 	/** Service was removed event. */
 	public static final int SERVICE_REMOVED = 1;
 	
+	// todo: remove!
 	/** Service changed. */
 	public static final int SERVICE_CHANGED = 2;
 	

@@ -31,6 +31,8 @@ dependencies
 	implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation 'org.activecomponents.jadex:logbase:'+v 
 	
+	implementation 'net.cinnom:nano-cuckoo:1.0.0'	// required for sliding cuckoo filter
+	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'

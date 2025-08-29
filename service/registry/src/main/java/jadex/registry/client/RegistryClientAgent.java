@@ -34,8 +34,8 @@ import jadex.registry.coordinator.CoordinatorServiceEvent;
 import jadex.registry.coordinator.ICoordinatorService;
 import jadex.registry.coordinator.RegistryInfo;
 import jadex.registry.remote.IRemoteRegistryService;
-import jadex.registry.remote.SlidingCuckooFilter;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.impl.SlidingCuckooFilter;
 import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 
 public class RegistryClientAgent implements IRegistryClientService 
@@ -103,28 +103,33 @@ public class RegistryClientAgent implements IRegistryClientService
 		}
 		else
 		{
-	    	cosub = coordinator.getRegistries();
+	    	cosub = coordinator.subscribe();//getRegistries();
 	    	cosub.next(event ->
 	    	{
 	    		System.out.println("Client connected to coordinator: "+agent.getId()+" "+event);
 	    		
-	    		if(ServiceEvent.SERVICE_ADDED==event.getType()) 
-	        	{
-	    			registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
-	        	}
-	        	else if(ServiceEvent.SERVICE_REMOVED==event.getType())
-	        	{
-	        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
-	        	}
-	        	else if(ServiceEvent.SERVICE_CHANGED==event.getType())
-	        	{
-	        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
-	        		registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
-	        	}
-	        	else
-	        	{
-	                System.getLogger(getClass().getName()).log(Level.WARNING, "Unknown event type: " + event);
-	        	}
+	    		if(event.getService()!=null)
+	    		{
+	    			System.out.println("Received coordinator event: "+event.getType()+" "+event.getService()+" "+event.getService().getScope());
+	    		
+		    		if(ServiceEvent.SERVICE_ADDED==event.getType()) 
+		        	{
+		    			registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
+		        	}
+		        	else if(ServiceEvent.SERVICE_REMOVED==event.getType())
+		        	{
+		        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
+		        	}
+		        	else if(ServiceEvent.SERVICE_CHANGED==event.getType())
+		        	{
+		        		registries.removeIf(ri -> ri.serviceid().equals(event.getService()));
+		        		registries.add(new RegistryInfo(event.getService(), event.getStartTime()));
+		        	}
+		        	else
+		        	{
+		                System.getLogger(getClass().getName()).log(Level.WARNING, "Unknown event type: " + event);
+		        	}
+	    		}
 	    		
 	    		initRegistryReevaluation();
 	    	})
@@ -159,16 +164,25 @@ public class RegistryClientAgent implements IRegistryClientService
 	    		if(registry!=null && ((IService)registry).getServiceId().equals(ri.serviceid()))
 	    			return;
 	    		
-	    		System.out.println("Found new best registry: "+ri);
+	    		//System.out.println("Found new best registry: "+ri);
 
 	    		// terminate old registry
 	    		if(regsub!=null)
 	    			regsub.terminate();
 	    		
 	    		// create service proxy for new registry
-	    	  	IRemoteRegistryService rreg = (IRemoteRegistryService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(ri.serviceid());
-	    	  	System.out.println("Service proxy is: "+rreg);
-	    	  	setRegistry(rreg);
+	    		try
+	    		{
+	    			IRemoteRegistryService rreg = (IRemoteRegistryService)agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(ri.serviceid());
+	    			//System.out.println("Service proxy is: "+rreg);
+	    			setRegistry(rreg);
+	    		}
+	    		catch(Exception e)
+	    		{
+	    			System.out.println("Could not create service proxy for registry: "+ri.serviceid()+" "+e);
+	    			initRegistryReevaluation();
+	    			return;
+	    		}
 	    	  	
 	    		// connect to new registry
 	    		regsub = registry.registerClient();
@@ -189,7 +203,7 @@ public class RegistryClientAgent implements IRegistryClientService
 
 		    		localquery.next(event ->
 		    		{
-		    			System.out.println("Registry client received service event from internal registry: "+agent.getId()+" "+event+" "+event.getService().getScope());
+		    			//System.out.println("Registry client received service event from internal registry: "+agent.getId()+" "+event+" "+event.getService().getScope());
 		    			
 		    			if(ServiceScope.GLOBAL.equals(event.getService().getScope())
 		    				|| ServiceScope.HOST.equals(event.getService().getScope()))
@@ -297,11 +311,11 @@ public class RegistryClientAgent implements IRegistryClientService
 	 */
 	public <T> ITerminableFuture<IServiceIdentifier> searchService(ServiceQuery<T> query)
 	{
-		System.out.println("RegistryClient: searching for service 1: "+agent.getId()+" "+query);
+		//System.out.println("RegistryClient: searching for service 1: "+agent.getId()+" "+query);
 		TerminableFuture<IServiceIdentifier> ret = new TerminableFuture<>();
 		getRegistryService().then(regser ->
 		{
-			System.out.println("RegistryClient: searching for service 2: "+agent.getId()+" "+query+" "+regser);
+			//System.out.println("RegistryClient: searching for service 2: "+agent.getId()+" "+query+" "+regser);
 			regser.searchService(query).delegateTo(ret);
 		}).catchEx(ret).printOnEx();
 		return ret;

@@ -1,4 +1,4 @@
-import App from './coordinatorapi/App.js';
+import App from './api/App.js';
 
 class CoordinatorApp extends App
 {
@@ -16,7 +16,8 @@ class CoordinatorApp extends App
   
   	removeRegistry(r) 
   	{
-    	this.registries = this.registries.filter(reg => r.cid !== reg.id);
+		// todo: use also providerid
+    	this.registries = this.registries.filter(reg => r.serviceName !== reg.serviceName);
     	this.notify("registries", this.registries);
   	}
 

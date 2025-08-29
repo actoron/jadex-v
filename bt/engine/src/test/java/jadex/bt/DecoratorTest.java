@@ -193,7 +193,7 @@ public class DecoratorTest
 		    new Thread(() -> 
 		    {
 		    	SUtil.sleep(1000);
-                ret.setResult(NodeState.SUCCEEDED);
+                ret.setResultIfUndone(NodeState.SUCCEEDED);
 		    }).start();
 		    return ret;
 		}));
@@ -203,7 +203,7 @@ public class DecoratorTest
 		
 		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
-	    fut.setResult(null); // time elapsed
+	    fut.setResultIfUndone(null); // time elapsed
 	    
         NodeState state = res.get();
         

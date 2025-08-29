@@ -6,16 +6,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 import jadex.collection.MultiCollection;
-import jadex.common.ClassInfo;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
-import jadex.common.SReflect;
+import jadex.common.SGUI;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
-import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
@@ -27,6 +24,8 @@ import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
+import jadex.providedservice.IProvidedServiceFeature;
+import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.IServiceRegistry;
@@ -36,17 +35,18 @@ import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceQueryInfo;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceCall;
-import jadex.providedservice.impl.service.ServiceIdentifier;
+import jadex.publishservice.IPublishServiceFeature;
+import jadex.publishservice.publish.annotation.Publish;
 import jadex.registry.coordinator.ICoordinatorService;
-import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
-import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
+import jakarta.ws.rs.GET;
 
 
 /**
  *  Registry collects services from client and answers search requests and queries.
  */
-public class RemoteRegistryAgent implements IRemoteRegistryService
+@Publish(publishid="http://${host}:${port}/${cid}/api", publishtarget = IRemoteRegistryGuiService.class)
+public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegistryGuiService
 {
 	/** Connection delay*/
     protected long delay = 10000;
@@ -55,8 +55,8 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	@Inject
 	protected IComponent agent;
 	
-	@Inject
-	protected IServiceIdentifier sid;
+	//@Inject
+	//protected IServiceIdentifier sid;
 	
 	protected long starttime = System.currentTimeMillis();
 	
@@ -77,19 +77,82 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	
 	protected Map<String, ISubscriptionIntermediateFuture<Void>> coordinators = new HashMap<>();
 	
+	protected Set<SubscriptionIntermediateFuture<RegistryEvent>> listeners = new LinkedHashSet<>();
+	
+	protected String host;
+	
+	protected int port;
+	
+	/**
+	 *  Creates a new registry agent.
+	 */
+	public RemoteRegistryAgent()
+	{
+		this("localhost", 8081);
+	}
+	
+	/**
+	 *  Creates a new registry agent.
+	 *  
+	 *  @param host The host name.
+	 *  @param port The port number.
+	 */
+	public RemoteRegistryAgent(int port)
+	{
+		this("localhost", port);
+	}
+	
+	/**
+	 *  Creates a new registry agent.
+	 *  
+	 *  @param host The host name.
+	 *  @param port The port number.
+	 */
+	public RemoteRegistryAgent(String host, int port)
+	{
+		this.host = host;
+		this.port = port;
+	}
+	
 	@OnStart
     public void start() 
     {
-		System.getLogger(getClass().getName()).log(Level.INFO, "Registry started: "+agent.getId());
+		//System.out.println("Remote registry started: "+agent.getId());
+		System.getLogger(getClass().getName()).log(Level.INFO, "RemoteRegistry started: "+agent.getId());
+
+		// Local query uses registry directly (w/o feature) -> only service identifiers needed and also removed events
+		/*ServiceQuery<ServiceEvent> lquery = new ServiceQuery<>((Class<IServiceIdentifier>)null)
+			.setEventMode();
+		
+		ISubscriptionIntermediateFuture<ServiceEvent> localquery = (ISubscriptionIntermediateFuture)ServiceRegistry.getRegistry().addQuery(lquery);									
+		localquery.next(event ->
+		{
+			System.getLogger(getClass().getName()).log(Level.INFO, "Local query event: "+event);
+		});*/
+
+		serviceregistry.subscribeToQueries().next(event ->
+		{
+			System.getLogger(getClass().getName()).log(Level.INFO, "Local query event: "+event);
+
+			dispatchEvent(event);
+		});
 		
 		for(String coname: coordinatornames)
 			connectToCoordinator(coname);
+		
+		IPublishServiceFeature ps = agent.getFeature(IPublishServiceFeature.class);
+		ps.publishResources("http://${host}:${port}/${cid}", "jadex/registry/remote/ui");
+		
+		String url = "http://"+host+":"+port+"/"+agent.getId().getLocalName();
+		System.out.println("open in browser: "+url);
+		SGUI.openInBrowser(url);
     }
     
     protected void connectToCoordinator(String coname)
     {
     	Runnable reconnect = () ->
 		{
+			//System.out.println("Reconnecting to coordinator: "+coname+" "+agent.getId());
 			System.getLogger(getClass().getName()).log(Level.INFO, "Reconnecting to coordinator: "+coname+" "+agent.getId());
     		agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
     			.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator(coname)))
@@ -111,7 +174,9 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
     	
     	System.out.println("Connecting to coordinator: "+agent.getId()+" "+coser);
 		
-    	cosub = coser.registerRegistry(sid, starttime);
+    	IRemoteRegistryService ser = agent.getFeature(IProvidedServiceFeature.class).getProvidedService(IRemoteRegistryService.class);
+    	
+    	cosub = coser.registerRegistry(((IService)ser).getServiceId(), starttime);
     	coordinators.put(coname, cosub);
     	cosub.next(ignore ->
     	{
@@ -218,7 +283,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	public IFuture<IServiceIdentifier> searchService(ServiceQuery<?> query)
 	{
 		//if(serviceregistry.getAllServices().size()>0)
-		System.out.println("Remote registry searchService: "+query+" "+serviceregistry.getAllServices());
+		//System.out.println("Remote registry searchService: "+query+" "+serviceregistry.getAllServices());
 		
 		IServiceIdentifier ret = serviceregistry.searchService(query);
 		/*if(ret == null)
@@ -376,16 +441,20 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 			case ServiceEvent.SERVICE_ADDED:
 				System.out.println("Remote Registry adding service: " + event.getService().getServiceType()+" "+event.getService().getGroupNames());
 				registry.addService(event.getService());
+				dispatchEvent(event);
 //				if(event.toString().indexOf("ITestService")!=-1)
 //					System.out.println(agent+" added service: " + event.getService());
+
 				break;
 				
 			case ServiceEvent.SERVICE_CHANGED:
 				registry.updateService(event.getService());
+				dispatchEvent(event);
 				break;
 				
 			case ServiceEvent.SERVICE_REMOVED:
 				registry.removeService(event.getService());
+				dispatchEvent(event);
 				break;
 				
 			default:
@@ -422,8 +491,78 @@ public class RemoteRegistryAgent implements IRemoteRegistryService
 	public ISubscriptionIntermediateFuture<QueryEvent> subscribeToQueries()
 	{
 		ISubscriptionIntermediateFuture<QueryEvent>	fut	= serviceregistry.subscribeToQueries();
-		SubscriptionIntermediateDelegationFuture<QueryEvent> ret = new SubscriptionIntermediateDelegationFuture<QueryEvent>(fut);
+		//SubscriptionIntermediateDelegationFuture<QueryEvent> ret = new SubscriptionIntermediateDelegationFuture<QueryEvent>(fut);
 		//SFuture.avoidCallTimeouts(ret, agent);
+		return fut;
+	}
+	
+	/**
+	 *  Subscribe to coordinator updates.
+	 */
+	@GET
+	public ISubscriptionIntermediateFuture<RegistryEvent> subscribe()
+	{
+		final ComponentIdentifier caller = ServiceCall.getCurrentInvocation().getCaller();
+		
+		SubscriptionIntermediateFuture<RegistryEvent> ret = new SubscriptionIntermediateFuture<>();
+		listeners.add(ret);
+
+		ret.setTerminationCommand(ex ->
+		{
+			System.getLogger(getClass().getName()).log(Level.INFO, agent+": Coordinator UI connection terminated due to "+ex);
+			listeners.remove(ret);
+		});
+		
+		
+		Set<IServiceIdentifier> services = serviceregistry.getAllServices();
+		Set<ServiceQueryInfo<?>> queries = serviceregistry.getAllQueries();
+	
+		System.out.println("subscribed to registry, initial values "+caller+" "+listeners.size()+" "+services+" "+queries);
+
+		for(IServiceIdentifier sid: services)
+		{
+			RegistryEvent event = new RegistryEvent(sid, ServiceEvent.SERVICE_ADDED);
+			ret.addIntermediateResult(event);
+		}
+		
+		for(ServiceQueryInfo<?> query: queries)
+		{
+			RegistryEvent event = new RegistryEvent(query.getQuery(), ServiceEvent.SERVICE_ADDED);
+			ret.addIntermediateResult(event);
+		}
+		
+		if(services.isEmpty() && queries.isEmpty())
+		{
+			// If empty, send an empty event
+			RegistryEvent event = new RegistryEvent((IServiceIdentifier)null, ServiceEvent.UNKNOWN);
+			ret.addIntermediateResult(event);
+		}
+		
 		return ret;
 	}
+
+	protected void dispatchEvent(ServiceEvent event)
+	{
+		dispatchEvent(new RegistryEvent(event));
+	}
+
+	protected void dispatchEvent(QueryEvent event)
+	{
+		dispatchEvent(new RegistryEvent(event));
+	}
+
+	protected void dispatchEvent(RegistryEvent event)
+	{
+		//System.out.println("remote registry dispatching event: "+event+" "+listeners.size());
+		for(SubscriptionIntermediateFuture<RegistryEvent> lis: listeners)
+		{
+			lis.addIntermediateResultIfUndone(event);
+		}
+	}
+	
+	/*public static void main(String[] args) 
+	{
+		IComponentManager.get().create(new RemoteRegistryAgent()).get();
+		IComponentManager.get().waitForLastComponentTerminated();
+	}*/
 }
