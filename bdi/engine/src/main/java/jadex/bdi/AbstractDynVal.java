@@ -18,19 +18,22 @@ public class AbstractDynVal<T>
 	public enum ObservationMode
 	{
 		/** Do not publish change events. */
-		NONE,
+		OFF,
 		
 		/** Publish events only when replacing the whole stored object. */
-		VALUE,
+		ON_SET_VALUE,
 		
 		/** When the stored object is a collection/map, publish add/remove/change events. */
-		COLLECTION,
+		ON_COLLECTION_CHANGE,
+		
+		/** When the stored object is a bean, publish property change events. */
+		ON_BEAN_CHANGE,
 		
 		/** Default.
 		 *  When the stored object is a bean, publish property change events.
 		 *  Also publishes add/remove/change events when the stored object is a collection/map.
 		 *  When a collection/map contains beans as values, property changes are published as generic change of the whole value. */
-		COLLECTION_AND_BEAN
+		ON_ALL_CHANGES,
 	}
 	
 	
@@ -48,7 +51,7 @@ public class AbstractDynVal<T>
 	IEventPublisher	changehandler;
 	
 	/** Observe changes of inner values (e.g. collections or beans). */
-	ObservationMode	mode	= ObservationMode.COLLECTION_AND_BEAN;
+	ObservationMode	mode	= ObservationMode.ON_ALL_CHANGES;
 	
 	/** The (cached) property change listener for the value, if bean.
 	 *  Created on first use. */
@@ -90,7 +93,7 @@ public class AbstractDynVal<T>
 				observeNewValue(old, value);
 			}
 			
-			if(mode!=ObservationMode.NONE && !SUtil.equals(old, value))
+			if(mode!=ObservationMode.OFF && !SUtil.equals(old, value))
 			{
 				changehandler.entryChanged(comp, old, value, null);
 			}
@@ -107,19 +110,20 @@ public class AbstractDynVal<T>
 		{
 			if(changehandler!=null)
 			{
-				if(this.mode==ObservationMode.COLLECTION_AND_BEAN)
-				{
-					// Remove old listener
-					observeNewValue(value, null);
-				}
+				// Remove old listeners if any.
+				observeNewValue(value, null);
 				
-				else if(mode==ObservationMode.COLLECTION_AND_BEAN)
-				{
-					// Add new listener
-					observeNewValue(null, value);
-				}
+				// Set new mode after removing old listener but before adding new listener
+				// for proper functioning of observeNewValue().
+				this.mode	= mode;
+				
+				// Add new listener if any.
+				observeNewValue(null, value);
 			}
-			this.mode	= mode;
+			else
+			{
+				this.mode	= mode;
+			}
 		}
 	}
 
@@ -129,7 +133,7 @@ public class AbstractDynVal<T>
 	 */
 	void observeNewValue(T old, T value) 
 	{
-		if(mode==ObservationMode.COLLECTION_AND_BEAN)
+		if(mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES)
 		{
 			listener	= SPropertyChange.updateListener(old, value, listener, comp, changehandler);
 		}

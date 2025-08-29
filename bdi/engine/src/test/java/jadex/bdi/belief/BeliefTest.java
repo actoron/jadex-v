@@ -191,10 +191,10 @@ public class BeliefTest
 		}).get(TestHelper.TIMEOUT);
 		checkEventInfo(fut3, null, pojo.valbeanbelief.get(), "value");
 		
-		// Test observation mode VALUE only.
+		// Test observation mode ON_SET_VALUE only.
 		exta.scheduleStep(() ->
 		{
-			pojo.valbeanbelief.setObservationMode(ObservationMode.VALUE);
+			pojo.valbeanbelief.setObservationMode(ObservationMode.ON_SET_VALUE);
 			return null;
 		}).get(TestHelper.TIMEOUT);
 		
@@ -219,10 +219,10 @@ public class BeliefTest
 		});
 		assertThrows(TimeoutException.class, () -> fut5.get(500)); // No event should be generated
 		
-		// Test observation mode NONE.
+		// Test observation mode OFF.
 		exta.scheduleStep(() ->
 		{
-			pojo.valbeanbelief.setObservationMode(ObservationMode.NONE);
+			pojo.valbeanbelief.setObservationMode(ObservationMode.OFF);
 			return null;
 		}).get(TestHelper.TIMEOUT);
 		
@@ -235,6 +235,24 @@ public class BeliefTest
 			return null;
 		}).get(TestHelper.TIMEOUT);
 		assertThrows(TimeoutException.class, () -> fut6.get(500)); // No event should be generated
+		
+		// Test setting observation mode back to BEAN.
+		exta.scheduleStep(() ->
+		{
+			pojo.valbeanbelief.setObservationMode(ObservationMode.ON_BEAN_CHANGE);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		
+		// Test set property changed bean.
+		Future<IEvent>	fut7	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(fut7, ChangeEvent.FACTCHANGED, "valbeanbelief");
+			pojo.valbeanbelief.get().setValue(7);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(fut7, null, pojo.valbeanbelief.get(), "value");
+
 	}
 
 	@Test
