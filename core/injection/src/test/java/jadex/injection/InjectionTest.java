@@ -84,8 +84,12 @@ public class InjectionTest
 			}
 		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
-		
-		// Check if exception is injected
+	}
+	
+	@Test
+	public void testExceptionInjection()
+	{
+		// Check if exception is injected on end
 		SUtil.runWithoutOutErr(() ->
 		{
 			Future<Exception>	exfut	= new Future<>();
@@ -108,13 +112,34 @@ public class InjectionTest
 				@Inject
 				public void	injectMe(Exception e)
 				{
-					// System.out.println("injected: "+e);
+					System.out.println("injected: "+e);
 				}
 				
 			}).get(TIMEOUT);
 			assertInstanceOf(RuntimeException.class, exfut.get(TIMEOUT));
 			assertEquals("test", exfut.get(TIMEOUT).getMessage());
 		});
+		
+		// Check if exception can be handled by @Inject method
+		Future<Exception>	exfut	= new Future<>();
+		IComponentManager.get().create(new Object()
+		{
+			@OnStart
+			public void	start(IExecutionFeature exe)
+			{
+				// Do in extra step because method injection registration is done after onStart.
+				exe.scheduleStep((Runnable)() -> {throw new RuntimeException("test");});
+			}
+			
+			// TODO: fail on unknown inject method?
+			@Inject
+			public void	handleException(Exception e)
+			{
+				exfut.setResult(e);
+			}
+		}).get(TIMEOUT);
+		assertInstanceOf(RuntimeException.class, exfut.get(TIMEOUT));
+		assertEquals("test", exfut.get(TIMEOUT).getMessage());
 	}
 	
 	@Test

@@ -205,8 +205,8 @@ public class InjectionModel
 										{
 											throw new RuntimeException("Conflicting method injections: "+injection+", "+test);
 										}
+										injection	= test;
 									}
-									injection	= test;
 								}
 								
 								if(injection!=null)

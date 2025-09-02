@@ -1,5 +1,7 @@
 package jadex.injection.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,9 +12,11 @@ import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
+import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
@@ -101,6 +105,38 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		InjectionModel.addValueFetcher(
 			(comptypes, valuetype, anno) -> Exception.class.equals(valuetype) ? ((self, pojo, context, oldval) -> self.getException()) : null,
 			Inject.class);
+		
+		// Add exception handler for @Inject methods with exception parameter
+		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers) -> 
+		{
+			boolean	found	= false;
+			List<IInjectionHandle>	preparams	= new ArrayList<>();
+			for(int i=0; i<method.getParameterCount(); i++)
+			{
+				if(Exception.class.equals(method.getParameterTypes()[i]))
+				{
+					found	= true;
+					preparams.add((self, pojos, context, oldval) -> context);
+				}
+				else
+				{
+					preparams.add(null);
+				}
+			}
+			
+			if(found)
+			{
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, pojotypes, contextfetchers, preparams);
+				return (comp, pojos, context, oldvale) ->
+				{
+					IErrorHandlingFeature	errh	= IComponentManager.get().getFeature(IErrorHandlingFeature.class);
+					errh.addExceptionHandler(comp.getId(), Exception.class, false, (exception, component) 					
+						-> invocation.apply(comp, pojos, exception, null));
+					return null;
+				};
+			}
+			return null;
+		}, Inject.class);
 	}
 
 	/**
