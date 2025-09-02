@@ -49,6 +49,11 @@ public interface IComponent
 	public  void	terminate();
 	
 	/**
+	 *  Get the last exception, if any.
+	 */
+	public Exception getException();
+	
+	/**
 	 *  Get the pojo.
 	 *  @return The pojo.
 	 */

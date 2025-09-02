@@ -2,6 +2,7 @@ package jadex.injection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import jadex.benchmark.BenchmarkHelper;
+import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -82,6 +84,37 @@ public class InjectionTest
 			}
 		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
+		
+		// Check if exception is injected
+		SUtil.runWithoutOutErr(() ->
+		{
+			Future<Exception>	exfut	= new Future<>();
+			IComponentManager.get().create(new Object()
+			{
+				@OnStart
+				public void	start()
+				{
+					throw new RuntimeException("test");
+				}
+				
+				@OnEnd
+				public void	end(Exception e)
+				{
+					exfut.setResult(e);
+				}
+				
+				// TODO: Inject exception?
+				// TODO: fail on unknown inject method?
+				@Inject
+				public void	injectMe(Exception e)
+				{
+					// System.out.println("injected: "+e);
+				}
+				
+			}).get(TIMEOUT);
+			assertInstanceOf(RuntimeException.class, exfut.get(TIMEOUT));
+			assertEquals("test", exfut.get(TIMEOUT).getMessage());
+		});
 	}
 	
 	@Test

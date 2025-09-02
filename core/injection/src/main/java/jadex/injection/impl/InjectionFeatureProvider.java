@@ -96,6 +96,11 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)valuetype;
 			return self.getFeature((Class<IComponentFeature>)feature);
 		}): null, Inject.class);
+
+		// Inject exception if any
+		InjectionModel.addValueFetcher(
+			(comptypes, valuetype, anno) -> Exception.class.equals(valuetype) ? ((self, pojo, context, oldval) -> self.getException()) : null,
+			Inject.class);
 	}
 
 	/**
