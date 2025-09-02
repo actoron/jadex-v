@@ -63,7 +63,7 @@ public class SPropertyChange
 						listener	= event ->
 						{
 							// Use event source to get new value even if listener is reused.
-							publisher.entryChanged(context, null, event.getSource(), null);
+							publisher.entryChanged(context, null, event.getSource(), event.getPropertyName());
 						};
 					}
 					adder.invoke(value, listener);
@@ -90,7 +90,7 @@ public class SPropertyChange
 	/**
 	 *  Get method handle to add change listener or null, if method not present.
 	 */
-	static MethodHandle	getAdder(Class<?> clazz)
+	public static MethodHandle	getAdder(Class<?> clazz)
 	{
 		synchronized(adders)
 		{
@@ -119,7 +119,7 @@ public class SPropertyChange
 	/**
 	 *  Get method handle to remove change listener or null, if method not present.
 	 */
-	static MethodHandle	getRemover(Class<?> clazz)
+	public static MethodHandle	getRemover(Class<?> clazz)
 	{
 		synchronized(removers)
 		{

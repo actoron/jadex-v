@@ -663,8 +663,8 @@ public class RequestManager
 			sessionid = SUtil.createUniqueId();
 		final String fsessionid = sessionid;
 		
-		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
-		//System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
+		//if(request.getRequestURI().indexOf("subscribe")!=-1)
+		//	System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
 		//System.out.println("handleRequest: "+request.getRequestURI());
 		
 		getAsyncContextInfo(request); // ensure async request processing
@@ -876,7 +876,9 @@ public class RequestManager
 				
 				Collection<MappingInfo> mis = pm!=null? pm.getElementsForPath(methodname): new ArrayList<MappingInfo>();
 				List<Map<String, String>> bindings = mis.stream().map(x -> pm.getBindingsForPath(fmn)).collect(Collectors.toList());
-				
+
+				//System.out.println("handleRequest: "+request.getPathInfo()+" "+methodname+" "+mis.size()+" "+bindings);
+
 				if(methodname.endsWith(".js"))
 				{
 					ri.addResultType("application/javascript");
@@ -1344,7 +1346,7 @@ public class RequestManager
 						response.setStatus(HttpServletResponse.SC_OK);
 						complete(request, response);
 						
-						//System.out.println("info site sent");
+						System.out.println("info site sent: "+request.getPathInfo());
 					}
 					else
 					{
@@ -4659,6 +4661,9 @@ public class RequestManager
 		reta.setResult(ret.size() > 0 ? ret : natret);
 			
 		//return reta;
+
+		//System.out.println("evaluated mapping for service: "+sid+" -> "+(ret.size() > 0 ? ret : natret));
+
 		return ret.size() > 0 ? ret : natret;
 	}
 }

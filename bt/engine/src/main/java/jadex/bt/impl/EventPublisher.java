@@ -187,67 +187,36 @@ public class EventPublisher implements IEventPublisher
 	/**
 	 *  An entry was added to the collection.
 	 */
-	public void entryAdded(Object context, Object value, Integer index)
+	public void entryAdded(Object context, Object value, Object info)
 	{
 //		unobserveValue(ret);
 		observeValue(value);
-		getRuleSystem().addEvent(new Event(getAddEvent(), new ChangeInfo<Object>(value, null, index)));
+		getRuleSystem().addEvent(new Event(getAddEvent(), new ChangeInfo<Object>(value, null, info)));
 		//publishToolBeliefEvent();
 	}
 	
 	/**
 	 *  An entry was removed from the collection.
 	 */
-	public void entryRemoved(Object context, Object value, Integer index)
+	public void entryRemoved(Object context, Object value, Object info)
 	{
 		unobserveValue(value);
 //		observeValue(value);
-		getRuleSystem().addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(value, null, index)));
+		getRuleSystem().addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(value, null, info)));
 		//publishToolBeliefEvent();
 	}
 	
 	/**
 	 *  An entry was changed in the collection.
 	 */
-	public void entryChanged(Object context, Object oldvalue, Object newvalue, Integer index)
+	public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
 	{
 		if(oldvalue!=newvalue)
 		{
 			unobserveValue(oldvalue);
 			observeValue(newvalue);
 		}
-		getRuleSystem().addEvent(new Event(getChangeEvent(), new ChangeInfo<Object>(newvalue, oldvalue,  index)));
-		//publishToolBeliefEvent();
-	}
-	
-	/**
-	 *  An entry was added to the map.
-	 */
-	public void	entryAdded(Object context, Object key, Object value)
-	{
-		observeValue(value);
-		getRuleSystem().addEvent(new Event(getAddEvent(), new ChangeInfo<Object>(value, null, key)));
-		//publishToolBeliefEvent();
-	}
-	
-	/**
-	 *  An entry was removed from the map.
-	 */
-	public void	entryRemoved(Object context, Object key, Object value)
-	{
-		unobserveValue(value);
-		getRuleSystem().addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(value, null, key)));
-		//publishToolBeliefEvent();
-	}
-	
-	/**
-	 *  An entry was changed in the map.
-	 */
-	public void	entryChanged(Object context, Object key, Object oldvalue, Object newvalue)
-	{
-		unobserveValue(oldvalue);
-		observeValue(newvalue);
-		getRuleSystem().addEvent(new Event(getChangeEvent(), new ChangeInfo<Object>(newvalue, oldvalue, key)));
+		getRuleSystem().addEvent(new Event(getChangeEvent(), new ChangeInfo<Object>(newvalue, oldvalue,  info)));
 		//publishToolBeliefEvent();
 	}
 }

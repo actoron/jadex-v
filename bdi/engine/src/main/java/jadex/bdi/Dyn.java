@@ -1,11 +1,9 @@
 package jadex.bdi;
 
-import java.beans.PropertyChangeListener;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import jadex.collection.IEventPublisher;
-import jadex.collection.SPropertyChange;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -15,7 +13,7 @@ import jadex.execution.IExecutionFeature;
  *  Generates appropriate events on changes.
  *  Supports dynamic values that are updated on every access or periodically.
  */
-public class Dyn<T>
+public class Dyn<T>	extends AbstractDynVal<T>
 {
 	/** The dynamic value provider. */
 	final Callable<T>	dynamic;
@@ -25,20 +23,6 @@ public class Dyn<T>
 	
 	/** Counter to be incremented whenever a new update rate is set. */
 	int	modcount;
-
-	/** The last value (when using update rate). */
-	T	value;
-	
-	/** The property change listener for the value, if bean. */
-	PropertyChangeListener	listener;
-	
-	//-------- fields set on init --------
-	
-	/** The component. */
-	IComponent	comp;
-	
-	/** The change handler gets called after any change with old and new value. */
-	IEventPublisher	changehandler;
 	
 	/**
 	 *  Create an observable value with a dynamic function.
@@ -50,6 +34,8 @@ public class Dyn<T>
 	
 	/**
 	 *  Set the update rate.
+	 *  Starts periodic updates when > 0, i.e. the first update happens immediately and then every updaterate millis.
+	 *  When 0 or less, no periodic updates are done and the value is evaluated on every get() call (default).
 	 *  @param updaterate	The update rate in millis, or 0 for no periodic updates.
 	 */
 	public Dyn<T>	setUpdateRate(long updaterate)
@@ -93,10 +79,10 @@ public class Dyn<T>
 	/**
 	 *  Called on component init.
 	 */
+	@Override
 	void	init(IComponent comp, IEventPublisher changehandler)
 	{
-		this.comp	= comp;
-		this.changehandler	= changehandler;
+		super.init(comp, changehandler);
 		
 		// Set update rate to start periodic updates.
 		setUpdateRate(updaterate);
@@ -104,7 +90,10 @@ public class Dyn<T>
 	
 	/**
 	 *  Get the current value.
+	 *  Gets the dynamic value on every call when no update rate is set.
+	 *  When an update rate is set, the last updated value is returned.
 	 */
+	@Override
 	public T get()
 	{
 		T ret = null;
@@ -119,33 +108,4 @@ public class Dyn<T>
 		
 		return ret;
 	}
-	
-	/**
-	 *  Set the value and throw the event.
-	 *  Used e.g. for update rate.
-	 */
-	void doSet(T value)
-	{
-		T	old	= this.value;
-		this.value	= value;
-		
-		if(changehandler!=null)
-		{
-			if(old!=value)
-			{
-				listener	= SPropertyChange.updateListener(old, value, listener, comp, changehandler);
-			}
-			
-			if(!SUtil.equals(old, value))
-			{
-				changehandler.entryChanged(comp, old, value, -1);
-			}
-		}
-	}
-	
-	@Override
-	public String toString()
-	{
-		return String.valueOf(get());
-	}	
 }

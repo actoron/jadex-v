@@ -1,7 +1,5 @@
 package jadex.bdi.impl;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.lang.annotation.Annotation;
@@ -74,20 +72,18 @@ import jadex.bdi.impl.plan.RPlan;
 import jadex.collection.IEventPublisher;
 import jadex.collection.ListWrapper;
 import jadex.collection.MapWrapper;
+import jadex.collection.SPropertyChange;
 import jadex.collection.SetWrapper;
-import jadex.common.IResultCommand;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
@@ -1894,50 +1890,26 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		IEventPublisher	evpub	= new IEventPublisher()
 		{
 			@Override
-			public void entryAdded(Object context, Object key, Object value)
+			public void entryAdded(Object context, Object value, Object info)
 			{
 				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, key));
+				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
 				rs.addEvent(ev);
 			}
 			
 			@Override
-			public void entryAdded(Object context, Object value, Integer index)
+			public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
 			{
 				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, index));
+				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
 				rs.addEvent(ev);
 			}
 			
 			@Override
-			public void entryChanged(Object context, Object key, Object oldvalue, Object newvalue)
+			public void entryRemoved(Object context, Object value, Object info)
 			{
 				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, key));
-				rs.addEvent(ev);
-			}
-			
-			@Override
-			public void entryChanged(Object context, Object oldvalue, Object newvalue, Integer index)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, index));
-				rs.addEvent(ev);
-			}
-			
-			@Override
-			public void entryRemoved(Object context, Object key, Object value)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, key));
-				rs.addEvent(ev);
-			}
-			
-			@Override
-			public void entryRemoved(Object context, Object value, Integer index)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, index));
+				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
 				rs.addEvent(ev);
 			}
 		};
@@ -2070,7 +2042,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new ArrayList<>();
 						}
-						value	= new ListWrapper<>(value, evpub, comp);
+						value	= new ListWrapper<>(value, evpub, comp, true);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -2093,7 +2065,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new LinkedHashSet<>();
 						}
-						value	= new SetWrapper<>(value, evpub, comp);
+						value	= new SetWrapper<>(value, evpub, comp, true);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -2116,7 +2088,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							value	= new LinkedHashMap<>();
 						}
-						value	= new MapWrapper<>(value, evpub, comp);
+						value	= new MapWrapper<>(value, evpub, comp, true);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 						return null;
 					}
@@ -2127,63 +2099,35 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				});
 			}
 			
+			// Last resort -> Bean belief
+			// Check if addPropertyChangeListener() method exists
+			else if(SPropertyChange.getAdder(f.getType())!=null)
+			{
+				ret.add((comp, pojos, context, oldval) ->
+				{
+					try
+					{
+						Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
+						if(bean!=null)
+						{
+							SPropertyChange.updateListener(null, bean, null, comp, evpub);
+						}
+						else
+						{
+							System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
+						}
+						return null;
+					}
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				});
+			}
 			else
 			{
-				// Last resort -> Bean belief
-				try
-				{
-					// Check if method exists
-					f.getType().getMethod("addPropertyChangeListener", PropertyChangeListener.class);
-					
-					ret.add((comp, pojos, context, oldval) ->
-					{
-						try
-						{
-							Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
-							if(bean!=null)
-							{
-								RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-								rs.observeObject(bean, true, false, new IResultCommand<>()
-								{
-									final IResultCommand<IFuture<Void>, PropertyChangeEvent> self = this;
-									public IFuture<Void> execute(final PropertyChangeEvent event)
-									{
-										final Future<Void> ret = new Future<Void>();
-										try
-										{
-		//									publishToolBeliefEvent(mbel);	// TODO
-											Event ev = new Event(fchev, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
-											rs.addEvent(ev);
-										}
-										catch(Exception e)
-										{
-											if(!(e instanceof ComponentTerminatedException))
-												System.err.println("Ex in observe: "+SUtil.getExceptionStacktrace(e));
-											Object val = event.getSource();
-											rs.unobserveObject(val, self);
-											ret.setResult(null);
-										}
-										return ret;
-									}
-								});
-							}
-							else
-							{
-								System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
-							}
-							return null;
-						}
-						catch(Throwable t)
-						{
-							throw SUtil.throwUnchecked(t);
-						}
-					});
-				}
-				catch(NoSuchMethodException e)
-				{
-					// No belief options match ->
-					throw new UnsupportedOperationException("Cannot use as belief: "+f);
-				}
+				// No belief options match ->
+				throw new UnsupportedOperationException("Cannot use as belief: "+f);
 			}
 		}
 	}	

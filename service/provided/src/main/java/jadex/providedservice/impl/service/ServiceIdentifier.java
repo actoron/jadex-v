@@ -385,7 +385,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  @param provider	The component that owns the service.
 	 *  @return The roles, if any or null, if none given or sec==null.
 	 */
-	public static Set<String>	getRoles(Security sec, IComponent provider)
+	public static Set<String> getRoles(Security sec, IComponent provider)
 	{
 		Set<String>	ret	= null;
 		String[]	roles	= sec!=null ? sec.roles() : null;

@@ -20,8 +20,8 @@ public class SetWrapper <T> extends CollectionWrapper<T> implements Set<T>
 	 *  Create a new wrapper.
 	 *  @param delegate The delegate.
 	 */
-	public SetWrapper(Set<T> delegate, IEventPublisher publisher, Object context)
+	public SetWrapper(Set<T> delegate, IEventPublisher publisher, Object context, boolean observeinner)
 	{
-		super(delegate, publisher, context);
+		super(delegate, publisher, context, observeinner);
 	}
 }
