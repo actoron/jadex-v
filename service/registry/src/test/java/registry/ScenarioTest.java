@@ -6,9 +6,12 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import jadex.common.SUtil;
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
+import jadex.errorhandling.IErrorHandlingFeature;
+import jadex.execution.IExecutionFeature;
 import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
@@ -18,6 +21,7 @@ import jadex.providedservice.IServiceIdentifier;
 import jadex.registry.client.RegistryClientAgent;
 import jadex.registry.coordinator.CoordinatorAgent;
 import jadex.registry.coordinator.ICoordinatorService;
+import jadex.registry.remote.IRemoteRegistryService;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 public class ScenarioTest 
@@ -32,8 +36,21 @@ public class ScenarioTest
 
 	public static void main(String[] args) 
 	{
+		// Runtime 1:
+		// coordinator, remote registry, registry client, provider
+
+		// Runtime 2:
+		// remote registry, registry client, user
+
+
 		KeySecret secret = KeySecret.createRandom();
 	    IComponentManager.get().getFeature(ISecurityFeature.class).addGroup(GROUPNAME, secret);
+
+		IComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (e,c) ->
+		{
+			System.out.println("Exception in component "+c.getId()+": "+e);
+			e.printStackTrace();
+		});
 
 	    // Setup first runtime with coordinator, remote registry, reg client and provider agent
 
@@ -46,6 +63,35 @@ public class ScenarioTest
 		//man.create(new RegistryClientAgent(), "RegistryClient").get();
 		
 		man.create(new ProviderAgent(), "Provider").get();
+
+		man.run(agent ->
+		{
+			System.out.println("Destroyer agent started: " + agent.getId());
+
+			agent.getFeature(IExecutionFeature.class).waitForDelay(30000).get();
+
+			IRemoteRegistryService ser = agent.getFeature(IRequiredServiceFeature.class).getLocalService(IRemoteRegistryService.class);
+			
+			try
+			{
+				if(ser!=null)
+				{
+					ComponentIdentifier rrcid = ((IService)ser).getServiceId().getProviderId();
+					System.out.println("Destroyer agent terminates local remote registry: "+rrcid);
+					IComponentManager.get().terminate(rrcid).get();
+				}
+				else
+				{
+					System.out.println("Destroyer agent could not get remote registry service.");
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+
+			return null;
+		});
 	    
 		String coname = man.run(agent ->
 		{

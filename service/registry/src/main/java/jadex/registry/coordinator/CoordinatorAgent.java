@@ -76,13 +76,13 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 	 */
 	public ISubscriptionIntermediateFuture<Void> registerRegistry(IServiceIdentifier reg, long starttime)
 	{
-		System.out.println("Coordinator has new registry client:"+reg+" at "+Instant.ofEpochMilli(starttime));
+		System.out.println("Co has new registry client:"+reg+" at "+Instant.ofEpochMilli(starttime));
 		
 		//final ComponentIdentifier caller = ServiceCall.getCurrentInvocation().getCaller();
 		RegistryInfo ri = new RegistryInfo(reg, starttime);
 		
 		// notify clients
-		System.out.println("Coordinator sending new registry info to clients: "+ri+" "+listeners.size());
+		System.out.println("Co sending new registry info to clients: "+ri+" "+listeners.size());
 		CoordinatorServiceEvent sa = new CoordinatorServiceEvent(reg, registries.contains(ri)? 
 			ServiceEvent.SERVICE_CHANGED: ServiceEvent.SERVICE_ADDED, starttime);
 		listeners.stream().forEach(lis ->
@@ -95,7 +95,9 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 		SubscriptionIntermediateFuture<Void> ret = new SubscriptionIntermediateFuture<>(ex ->
 		{
 			// on termination of registry 
-			System.getLogger(getClass().getName()).log(Level.INFO, agent+": Super peer connection with registry "+reg+" terminated due to "+ex);
+			System.out.println(agent+": Co connection with registry "+reg+" terminated due to "+ex);
+
+			System.getLogger(getClass().getName()).log(Level.INFO, agent+": Co connection with registry "+reg+" terminated due to "+ex);
 			registries.remove(ri);
 			
 			// notify clients
@@ -125,11 +127,11 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 
 		ret.setTerminationCommand(ex ->
 		{
-			System.getLogger(getClass().getName()).log(Level.INFO, agent+": Coordinator UI connection terminated due to "+ex);
+			System.getLogger(getClass().getName()).log(Level.INFO, agent+": Co UI connection terminated due to "+ex);
 			listeners.remove(ret);
 		});
 		
-		System.out.println("subscribed to coordinator initial values "+caller+" "+registries.size()+" "+listeners.size());
+		System.out.println("Co initial values "+caller+" "+registries.size()+" "+listeners.size());
 		
 		for(RegistryInfo reg: registries)
 		{

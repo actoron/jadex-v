@@ -97,8 +97,7 @@ export class RegistryTableElement extends BaseElement
   
   	removeService(s) 
   	{
-		// todo: providerId and serviceName should be unique, so we can use them to remove the service
-    	this.services = this.services.filter(ser =>  ser.serviceName !== s.serviceName);
+    	this.services = this.services.filter(ser =>  ser.serviceName !== s.serviceName || ser.providerId !== s.providerId);
 		this.update();
   	}
 

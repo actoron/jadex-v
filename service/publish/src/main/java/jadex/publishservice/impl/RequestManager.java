@@ -1098,7 +1098,7 @@ public class RequestManager
 												//AsyncContext ctx = (AsyncContext)session.get("sse");
 												
 												AsyncContext ctx = getSSEContextFromSession(fsessionid);
-												System.out.println("AsyncContext from session: "+ctx+" "+fsessionid);
+												//System.out.println("AsyncContext from session: "+ctx+" "+fsessionid);
 
 												if(ctx!=null)
 												{
@@ -2612,7 +2612,7 @@ public class RequestManager
 					String ret = createSSEJson(event);
 					out.write(ret);				
 					//System.out.println(ri.getResponse().getHeader("Content-Type"));
-					System.out.println("used sse channel: "+ri.getRequest().getAsyncContext()+" "+ret);
+					//System.out.println("used sse channel: "+ri.getRequest().getAsyncContext()+" "+ret);
 					ri.getResponse().getWriter().flush();
 					ri.getResponse().flushBuffer();
 					//System.out.println(ri.getResponse());
