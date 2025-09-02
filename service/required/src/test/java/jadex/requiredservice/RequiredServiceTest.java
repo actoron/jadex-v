@@ -37,7 +37,7 @@ import jadex.requiredservice.annotation.InjectService.Mode;
  */
 public class RequiredServiceTest
 {
-	public static final long	TIMEOUT	= -1;
+	public static final long	TIMEOUT	= 10000;
 	
 	//-------- test interfaces --------
 	
