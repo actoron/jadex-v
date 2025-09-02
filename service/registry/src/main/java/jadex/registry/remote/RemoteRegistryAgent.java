@@ -226,10 +226,10 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 	public ISubscriptionIntermediateFuture<Void> registerClient(ComponentIdentifier client)//String networkname)
 	{
 		// todo: seems not to work in remote cases!
-		//final ComponentIdentifier client = ServiceCall.getCurrentInvocation().getCaller();
+		final ComponentIdentifier client2 = ServiceCall.getCurrentInvocation().getCaller();
 
 		clients.add(client);
-		System.getLogger(getClass().getName()).log(Level.INFO, "RR Client added: "+client+" "+agent.getId());//+" "+networkname);
+		System.getLogger(getClass().getName()).log(Level.INFO, "RR Client added: "+client+" "+agent.getId()+" "+client2);//+" "+networkname);
 		
 		// Listener notification as step to improve test behavior (e.g. AbstractSearchQueryTest)
 		/*agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
