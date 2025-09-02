@@ -109,14 +109,20 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		// Add exception handler for @Inject methods with exception parameter
 		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers) -> 
 		{
-			boolean	found	= false;
 			List<IInjectionHandle>	preparams	= new ArrayList<>();
+			Class<? extends Exception> type	= null;
 			for(int i=0; i<method.getParameterCount(); i++)
 			{
-				if(Exception.class.equals(method.getParameterTypes()[i]))
+				if(SReflect.isSupertype(Exception.class, method.getParameterTypes()[i]))
 				{
-					found	= true;
+					if(type!=null)
+					{
+						throw new UnsupportedOperationException("Only one exception parameter allowed: "+method);
+					}
 					preparams.add((self, pojos, context, oldval) -> context);
+					@SuppressWarnings("unchecked")
+					Class<? extends Exception> type0	= (Class<? extends Exception>) method.getParameterTypes()[i];
+					type	= type0;
 				}
 				else
 				{
@@ -124,13 +130,14 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 				}
 			}
 			
-			if(found)
+			if(type!=null)
 			{
+				Class<? extends Exception> ftype	= type;
 				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, pojotypes, contextfetchers, preparams);
 				return (comp, pojos, context, oldvale) ->
 				{
 					IErrorHandlingFeature	errh	= IComponentManager.get().getFeature(IErrorHandlingFeature.class);
-					errh.addExceptionHandler(comp.getId(), Exception.class, false, (exception, component) 					
+					errh.addExceptionHandler(comp.getId(), ftype, false, (exception, component) 					
 						-> invocation.apply(comp, pojos, exception, null));
 					return null;
 				};

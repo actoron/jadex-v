@@ -106,40 +106,58 @@ public class InjectionTest
 				{
 					exfut.setResult(e);
 				}
-				
-				// TODO: Inject exception?
-				// TODO: fail on unknown inject method?
-				@Inject
-				public void	injectMe(Exception e)
-				{
-					System.out.println("injected: "+e);
-				}
-				
 			}).get(TIMEOUT);
 			assertInstanceOf(RuntimeException.class, exfut.get(TIMEOUT));
 			assertEquals("test", exfut.get(TIMEOUT).getMessage());
 		});
 		
 		// Check if exception can be handled by @Inject method
-		Future<Exception>	exfut	= new Future<>();
-		IComponentManager.get().create(new Object()
+		SUtil.runWithoutOutErr(() ->
 		{
-			@OnStart
-			public void	start(IExecutionFeature exe)
+			Future<Exception>	exfut1	= new Future<>();
+			Future<Exception>	exfut2	= new Future<>();
+			Future<Exception>	exfut3	= new Future<>();
+			IComponentManager.get().create(new Object()
 			{
-				// Do in extra step because method injection registration is done after onStart.
-				exe.scheduleStep((Runnable)() -> {throw new RuntimeException("test");});
-			}
-			
-			// TODO: fail on unknown inject method?
-			@Inject
-			public void	handleException(Exception e)
-			{
-				exfut.setResult(e);
-			}
-		}).get(TIMEOUT);
-		assertInstanceOf(RuntimeException.class, exfut.get(TIMEOUT));
-		assertEquals("test", exfut.get(TIMEOUT).getMessage());
+				@OnStart
+				public void	start(IExecutionFeature exe)
+				{
+					// Do in extra step because method injection registration is done after onStart.
+					exe.scheduleStep((Runnable)() -> {throw new IllegalCallerException("test1");});
+					exe.scheduleStep((Runnable)() -> {throw new IllegalStateException("test2");});
+					
+					// TODO: currently only RuntimeException and its subclasses are passed to exception handler
+					// (see ExecutionFeature.java:186) -> SUtil.throwUnchecked(e);
+	//				exe.scheduleStep((IThrowingConsumer<IComponent>)c -> {throw new Exception("test3");});
+					exe.scheduleStep((Runnable)()->{throw new IllegalArgumentException("test3");});
+				}
+				
+				// TODO: fail on unknown inject method?
+				@Inject
+				public void	handleException(IllegalCallerException e)
+				{
+					exfut1.setResult(e);
+				}
+				
+				@Inject
+				public void	handleException(IllegalStateException e)
+				{
+					exfut2.setResult(e);
+				}
+				
+				@OnEnd
+				public void	end(Exception e)
+				{
+					exfut3.setResult(e);
+				}
+			}).get(TIMEOUT);
+			assertInstanceOf(IllegalCallerException.class, exfut1.get(TIMEOUT));
+			assertEquals("test1", exfut1.get(TIMEOUT).getMessage());
+			assertInstanceOf(IllegalStateException.class, exfut2.get(TIMEOUT));
+			assertEquals("test2", exfut2.get(TIMEOUT).getMessage());
+			assertInstanceOf(IllegalArgumentException.class, exfut3.get(TIMEOUT));
+			assertEquals("test3", exfut3.get(TIMEOUT).getMessage());
+		});
 	}
 	
 	@Test
