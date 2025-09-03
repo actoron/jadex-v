@@ -300,6 +300,8 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	 */
 	protected IFuture<Void> sendRxMessage(ComponentIdentifier receiver, final Object msg)
 	{
+		System.out.println("Sending RX message: "+msg+" to "+receiver);
+
 		if (msg instanceof IIdSenderCommand)
 		{
 			IIdSenderCommand idc = (IIdSenderCommand) msg;
@@ -363,7 +365,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 		public void handleMessage(ISecurityInfo secinfos, Object msg)
 		{
 			final String rxid = ((IIdSenderCommand) msg).getId();
-			//System.out.println(component.getId() + " received remote command: "+msg+", rxid="+rxid);
+			System.out.println(component.getId() + " received remote command: "+msg+", rxid="+rxid);
 			
 			if(msg instanceof IRemoteCommand)
 			{

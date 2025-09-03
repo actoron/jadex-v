@@ -9,9 +9,11 @@ import java.util.Set;
 import jadex.common.SGUI;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.impl.IDaemonComponent;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.ServiceEvent;
@@ -21,7 +23,7 @@ import jadex.publishservice.publish.annotation.Publish;
 import jakarta.ws.rs.GET;
 
 @Publish(publishid="http://${host}:${port}/${cid}/api", publishtarget = ICoordinatorGuiService.class)
-public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiService
+public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiService, IDaemonComponent
 {
 	/** The agent. */
 	@Inject
@@ -65,6 +67,12 @@ public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiSer
 		String url = "http://"+host+":"+port+"/"+agent.getId().getLocalName();
 		System.out.println("open in browser: "+url);
 		SGUI.openInBrowser(url);
+	}
+
+	@OnEnd
+	public void end()
+	{
+		System.out.println("Co terminated: "+agent.getId());
 	}
 	
 	/**

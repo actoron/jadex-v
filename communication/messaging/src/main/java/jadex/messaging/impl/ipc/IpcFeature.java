@@ -69,12 +69,19 @@ public class IpcFeature implements IIpcFeature
 	
 	/** Handler dealing with received messages. */
 	private Consumer<ReceivedMessage> rcbmsghandler = (rmsg) ->
-	{
-		IComponentHandle exta = ComponentManager.get().getComponentHandle(rmsg.receiver());
-		exta.scheduleStep((comp) -> 
+	{	
+		try
 		{
-			((MessageFeature) comp.getFeature(IMessageFeature.class)).externalMessageArrived(rmsg.origin(), rmsg.message);
-		});
+			IComponentHandle exta = ComponentManager.get().getComponentHandle(rmsg.receiver());
+			exta.scheduleStep((comp) -> 
+			{
+				((MessageFeature) comp.getFeature(IMessageFeature.class)).externalMessageArrived(rmsg.origin(), rmsg.message);
+			});
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	};
 	
 	/**
@@ -102,6 +109,8 @@ public class IpcFeature implements IIpcFeature
 	 */
 	public void sendMessage(ComponentIdentifier receiver, byte[] message)
 	{
+		//System.out.println("IPC sending message: "+message+" to "+receiver);
+
 		if (gpid.host().equals(receiver.getGlobalProcessIdentifier().host()))
 		{
 			ScheduledMessage smsg = new ScheduledMessage(receiver, message);
@@ -111,6 +120,7 @@ public class IpcFeature implements IIpcFeature
 				connection = connections.get(receiver.getGlobalProcessIdentifier().pid());
 				if (connection != null)
 				{
+					//System.out.println("IPC sending to1 "+receiver.getGlobalProcessIdentifier().pid());
 					connection.add(smsg);
 					return;
 				}
@@ -118,10 +128,12 @@ public class IpcFeature implements IIpcFeature
 			}
 			
 			connection = connect(receiver.getGlobalProcessIdentifier().pid());
+			//System.out.println("IPC sending to2 "+receiver.getGlobalProcessIdentifier().pid());
 			connection.add(smsg);
 		}
 		else
 		{
+			throw new UnsupportedOperationException("Remote messaging not supported yet.");
 			// TODO: Remote
 		}
 	}
@@ -289,6 +301,7 @@ public class IpcFeature implements IIpcFeature
 					
 					while(true)
 					{
+						//System.out.println("IPC sending to "+remotepid);
 						ScheduledMessage smsg = fqueue.poll(connectiontimeout, TimeUnit.MILLISECONDS);
 						if (smsg != null)
 						{
@@ -307,6 +320,7 @@ public class IpcFeature implements IIpcFeature
 				}
 				catch (Exception e)
 				{
+					e.printStackTrace();
 					connections.remove(remotepid, fqueue);
 					if (!fqueue.isEmpty())
 					{
@@ -381,6 +395,7 @@ public class IpcFeature implements IIpcFeature
 			}
 			catch (Exception e)
 			{
+				e.printStackTrace();
 				SUtil.close(is);
 			}
 		});

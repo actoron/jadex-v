@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
+import jadex.core.impl.IDaemonComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
@@ -38,7 +39,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.impl.SlidingCuckooFilter;
 import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 
-public class RegistryClientAgent implements IRegistryClientService 
+public class RegistryClientAgent implements IRegistryClientService, IDaemonComponent
 {
 	/** Connection delay*/
     protected long delay = 10000;
@@ -79,7 +80,13 @@ public class RegistryClientAgent implements IRegistryClientService
     	System.getLogger(getClass().getName()).log(Level.INFO, "Registry client started: "+agent.getId()+" "+coordinatornames);
     	connectToCoordinator(0);
     }
-    
+
+	@OnEnd
+	public void end()
+	{
+		System.out.println("Cl terminated: "+agent.getId());
+	}
+
     protected void connectToCoordinator(int idx)
     {
     	Runnable reconnect = () ->
@@ -201,7 +208,7 @@ public class RegistryClientAgent implements IRegistryClientService
 
 	    		regsub.next(x ->
 	    		{
-	    			System.out.println("Registry client successfully registered with registry: "+agent.getId()+" "+registry);
+	    			System.out.println("Cl Registry client successfully registered with registry: "+agent.getId()+" "+registry);
 	    			
 					for(QueryManager<?> qman: querymanagers)
 					{
@@ -253,7 +260,9 @@ public class RegistryClientAgent implements IRegistryClientService
 	    		});
 	    		
 	    		evalfut = null;
-	    		
+
+	    	}).then(res -> {
+	    		System.out.println("Cl registry reevaluation finished: "+agent.getId()+" "+registry);
 	    	}).printOnEx();
     	}
     	
