@@ -16,6 +16,7 @@ import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingConsumer;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.injection.annotation.Inject;
@@ -123,18 +124,15 @@ public class InjectionTest
 				public void	start(IExecutionFeature exe)
 				{
 					// Do in extra step because method injection registration is done after onStart.
-					exe.scheduleStep((Runnable)() -> {throw new IllegalCallerException("test1");});
+					exe.scheduleStep((Runnable)() -> {throw new RuntimeException("test1");});
 					exe.scheduleStep((Runnable)() -> {throw new IllegalStateException("test2");});
 					
-					// TODO: currently only RuntimeException and its subclasses are passed to exception handler
-					// (see ExecutionFeature.java:186) -> SUtil.throwUnchecked(e);
-	//				exe.scheduleStep((IThrowingConsumer<IComponent>)c -> {throw new Exception("test3");});
-					exe.scheduleStep((Runnable)()->{throw new IllegalArgumentException("test3");});
+					exe.scheduleStep((IThrowingConsumer<IComponent>)c -> {throw new Exception("test3");});
 				}
 				
 				// TODO: fail on unknown inject method?
 				@Inject
-				public void	handleException(IllegalCallerException e)
+				public void	handleException(RuntimeException e)
 				{
 					exfut1.setResult(e);
 				}
@@ -151,11 +149,11 @@ public class InjectionTest
 					exfut3.setResult(e);
 				}
 			}).get(TIMEOUT);
-			assertInstanceOf(IllegalCallerException.class, exfut1.get(TIMEOUT));
+			assertInstanceOf(RuntimeException.class, exfut1.get(TIMEOUT));
 			assertEquals("test1", exfut1.get(TIMEOUT).getMessage());
 			assertInstanceOf(IllegalStateException.class, exfut2.get(TIMEOUT));
 			assertEquals("test2", exfut2.get(TIMEOUT).getMessage());
-			assertInstanceOf(IllegalArgumentException.class, exfut3.get(TIMEOUT));
+			assertInstanceOf(Exception.class, exfut3.get(TIMEOUT));
 			assertEquals("test3", exfut3.get(TIMEOUT).getMessage());
 		});
 	}
