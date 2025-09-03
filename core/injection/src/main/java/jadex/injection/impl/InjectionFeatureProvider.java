@@ -21,6 +21,7 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.InjectException;
 
 /**
  *  Injection feature provider.
@@ -107,7 +108,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			Inject.class);
 		
 		// Add exception handler for @Inject methods with exception parameter
-		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers) -> 
+		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers, anno) -> 
 		{
 			List<IInjectionHandle>	preparams	= new ArrayList<>();
 			Class<? extends Exception> type	= null;
@@ -132,18 +133,19 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			
 			if(type!=null)
 			{
+				boolean exactmatch	= anno instanceof InjectException && ((InjectException)anno).exactmatch();
 				Class<? extends Exception> ftype	= type;
 				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, pojotypes, contextfetchers, preparams);
 				return (comp, pojos, context, oldvale) ->
 				{
 					IErrorHandlingFeature	errh	= IComponentManager.get().getFeature(IErrorHandlingFeature.class);
-					errh.addExceptionHandler(comp.getId(), ftype, false, (exception, component) 					
+					errh.addExceptionHandler(comp.getId(), ftype, exactmatch, (exception, component) 					
 						-> invocation.apply(comp, pojos, exception, null));
 					return null;
 				};
 			}
 			return null;
-		}, Inject.class);
+		}, Inject.class, InjectException.class);
 	}
 
 	/**

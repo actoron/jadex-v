@@ -20,6 +20,7 @@ import jadex.core.IThrowingConsumer;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.InjectException;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.impl.IInjectionHandle;
@@ -156,6 +157,36 @@ public class InjectionTest
 			assertInstanceOf(Exception.class, exfut3.get(TIMEOUT));
 			assertEquals("test3", exfut3.get(TIMEOUT).getMessage());
 		});
+		
+		// Check exact match
+		Future<Exception>	exfut1	= new Future<>();
+		Future<Exception>	exfut2	= new Future<>();
+		IComponentManager.get().create(new Object()
+		{
+			@OnStart
+			public void	start(IExecutionFeature exe)
+			{
+				// Do in extra step because method injection registration is done after onStart.
+				exe.scheduleStep((Runnable)() -> {throw new RuntimeException("test1");});
+				exe.scheduleStep((Runnable)() -> {throw new IllegalStateException("test2");});
+			}
+			
+			@InjectException(exactmatch=true)
+			public void	handleException(RuntimeException e)
+			{
+				exfut1.setResult(e);
+			}
+			
+			@Inject
+			public void	handleException(Exception e)
+			{
+				exfut2.setResult(e);
+			}
+		}).get(TIMEOUT);
+		assertInstanceOf(RuntimeException.class, exfut1.get(TIMEOUT));
+		assertEquals("test1", exfut1.get(TIMEOUT).getMessage());
+		assertInstanceOf(IllegalStateException.class, exfut2.get(TIMEOUT));
+		assertEquals("test2", exfut2.get(TIMEOUT).getMessage());
 	}
 	
 	@Test
@@ -242,7 +273,7 @@ public class InjectionTest
 	public void	testBlockingStart()
 	{
 		// Also tests method injection.
-		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers) ->
+		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers, anno) ->
 		{
 			if(method.getName().equals("injectMe"))
 			{

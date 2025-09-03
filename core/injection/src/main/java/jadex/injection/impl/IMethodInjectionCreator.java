@@ -18,9 +18,11 @@ public interface IMethodInjectionCreator
 	 *  					The fetcher is for the last pojo in the list.
 	 *  @param method	The method to be invoked.
 	 *  @param contextfetchers	The context specific value fetchers.
+	 *  @param annotation	The annotation to be handled.
 	 *  
 	 *  @return An injection handle or null, when this creator doesn't match.
 	 */
 	public IInjectionHandle	getInjectionHandle(List<Class<?>> pojotypes, Method method,
-		Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers);
+		Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers,
+		Annotation annotation);
 }
