@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
+import jadex.core.impl.IDaemonComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
@@ -38,7 +39,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.impl.SlidingCuckooFilter;
 import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
 
-public class RegistryClientAgent implements IRegistryClientService 
+public class RegistryClientAgent implements IRegistryClientService, IDaemonComponent
 {
 	/** Connection delay*/
     protected long delay = 10000;

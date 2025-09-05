@@ -547,6 +547,12 @@ public class Component implements IComponent
 	 */
 	public static <T extends Component> IFuture<IComponentHandle>	createComponent(T component)
 	{
+		if (!(component instanceof IDaemonComponent))
+		{
+			ComponentManager man = ComponentManager.get();
+			man.initializeFeatures();
+		}
+
 		IBootstrapping	bootstrapping	= SComponentFeatureProvider.getBootstrapping(component.getClass());
 		if(bootstrapping!=null)
 		{

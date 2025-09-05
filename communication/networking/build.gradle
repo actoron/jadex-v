@@ -1,0 +1,43 @@
+plugins 
+{
+    id 'java-library'
+}
+
+description = 'Jadex networking service'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.17'
+}
+
+repositories
+{
+    mavenCentral()
+}
+
+dependencies
+		{
+			def v = System.getProperty('JADEX_VERSION')?:'+'
+			implementation 'org.activecomponents.jadex:common:'+v
+			implementation 'org.activecomponents.jadex:collection:'+v
+			implementation 'org.activecomponents.jadex:future:'+v
+			implementation 'org.activecomponents.jadex:bytecode:'+v
+			implementation 'org.activecomponents.jadex:core:'+v
+			implementation 'org.activecomponents.jadex:execution:'+v
+			implementation 'org.activecomponents.jadex:injection:'+v
+			implementation 'org.activecomponents.jadex:providedservice:'+v
+			implementation 'org.activecomponents.jadex:messaging:'+v
+		}
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}
