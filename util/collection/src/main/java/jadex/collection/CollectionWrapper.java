@@ -63,6 +63,13 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	public void setEventPublisher(IEventPublisher publisher)
 	{
 		this.publisher = publisher;
+		if(observeinner)
+		{
+			for(T entry: delegate)
+			{
+				listener = SPropertyChange.updateListener(entry, null, listener, context, publisher);
+			}
+		}
 	}
 
 	

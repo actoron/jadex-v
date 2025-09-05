@@ -71,6 +71,13 @@ public class MapWrapper<T, E> implements Map<T, E>
 	public void setEventPublisher(IEventPublisher publisher)
 	{
 		this.publisher = publisher;
+		if(observeinner)
+		{
+			for(E entry: delegate.values())
+			{
+				listener = SPropertyChange.updateListener(entry, null, listener, context, publisher);
+			}
+		}
 	}
 
 	

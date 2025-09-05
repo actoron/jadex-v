@@ -79,7 +79,16 @@ public class BeliefTest
 		List<String>	listbelief	= new ArrayList<>(Arrays.asList(new String[]{"1", "2"}));
 		
 		@Belief
+//		todo test set mode at runtime
 		Val<List<String>>	vallistbelief	= new Val<>(new ArrayList<>(Arrays.asList(new String[]{"1", "2"})));
+		
+		@Belief
+//		todo test
+		Val<List<Bean>>	vallistbeanbelief	= new Val<>(new ArrayList<>(Arrays.asList(new Bean[]{new Bean(1), new Bean(2)})));
+		
+		@Belief
+//		todo test
+		List<Bean>	listbeanbelief	= new ArrayList<>(Arrays.asList(new Bean[]{new Bean(1), new Bean(2)}));
 		
 		@Belief
 		Set<String>	setbelief	= new LinkedHashSet<>(Arrays.asList(new String[]{"1", "3"}));
