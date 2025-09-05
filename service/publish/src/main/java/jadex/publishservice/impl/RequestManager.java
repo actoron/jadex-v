@@ -1018,7 +1018,7 @@ public class RequestManager
 			
 											public void intermediateResultAvailable(Object result)
 											{
-												System.out.println("intermediate: "+result);
+												//System.out.println("intermediate: "+result);
 												
 												handleResult(result, null, null, null);
 											}
@@ -1031,6 +1031,7 @@ public class RequestManager
 			
 											public void finished()
 											{
+												//System.out.println("intermediate finished");
 												// maps will be cleared when processing fin
 												// element in writeResponse
 												handleResult(FINISHED, null, null, null);
@@ -1048,7 +1049,7 @@ public class RequestManager
 											protected void handleResult(Object result, Throwable exception, Object command, Integer max)
 											{
 												//if(result!=null)
-												//	System.out.println("handleResult: "+result);
+													//System.out.println("handleResult: "+result);
 												
 												//if(max!=null)
 												//if(command==null)
@@ -1098,7 +1099,7 @@ public class RequestManager
 												//AsyncContext ctx = (AsyncContext)session.get("sse");
 												
 												AsyncContext ctx = getSSEContextFromSession(fsessionid);
-												System.out.println("AsyncContext from session: "+ctx+" "+fsessionid);
+												//System.out.println("AsyncContext from session: "+ctx+" "+fsessionid);
 
 												if(ctx!=null)
 												{
@@ -1119,7 +1120,7 @@ public class RequestManager
 												}
 												else
 												{
-													System.out.println("write response from handleRes: "+ri.getResult());
+													//System.out.println("write response from handleRes: "+ri.getResult());
 													writeResponse(ri);
 												}
 												
@@ -2360,7 +2361,7 @@ public class RequestManager
 		if(ri.isFinished() && ri.getCallid()!=null && conversationinfos.get(ri.getCallid())!=null && !conversationinfos.get(ri.getCallid()).isIntermediateFuture())
 		{
 			conversationinfos.remove(ri.getCallid());
-			System.out.println("remove conversation: "+ri.getCallid());
+			//System.out.println("remove conversation: "+ri.getCallid());
 		}
 	}
 	
@@ -2612,7 +2613,7 @@ public class RequestManager
 					String ret = createSSEJson(event);
 					out.write(ret);				
 					//System.out.println(ri.getResponse().getHeader("Content-Type"));
-					System.out.println("used sse channel: "+ri.getRequest().getAsyncContext()+" "+ret);
+					//System.out.println("used sse channel: "+ri.getRequest().getAsyncContext()+" "+ret);
 					ri.getResponse().getWriter().flush();
 					ri.getResponse().flushBuffer();
 					//System.out.println(ri.getResponse());

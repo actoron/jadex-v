@@ -17,7 +17,9 @@ class CoordinatorApp extends App
   	removeRegistry(r) 
   	{
 		// todo: use also providerid
-    	this.registries = this.registries.filter(reg => r.serviceName !== reg.serviceName);
+    	this.registries = this.registries.filter(reg => 
+			r.service.serviceName !== reg.service.serviceName || 
+			r.service.providerId !== reg.service.providerId);
     	this.notify("registries", this.registries);
   	}
 
