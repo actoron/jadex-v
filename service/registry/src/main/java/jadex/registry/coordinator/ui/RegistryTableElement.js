@@ -69,7 +69,8 @@ export class RegistryTableElement extends BaseElement
 		}, ex =>
 		{
 			self.setConnectionStatus(false);
-			console.log("subscription error: "+ex);
+			console.log("ui subscription error with agent, reconnect in 5 seconds: "+ex);
+			setTimeout(() => self.subscribeToCoordinator(), 5000);
 		}); 
     }
 	

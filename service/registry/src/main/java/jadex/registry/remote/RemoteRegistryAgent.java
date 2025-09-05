@@ -150,6 +150,11 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 		SGUI.openInBrowser(url);
     }
 
+	/**
+	 *  todo:
+	 *  - graceful termination: auto terminate agent futures?!
+	 *  - vm termination: runtime pinger 
+	 */
 	@OnEnd
 	public void end()
 	{
@@ -159,12 +164,9 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 			cosub.terminate();
 		coordinators.clear();
 		
-		/*for(SubscriptionIntermediateFuture<RegistryEvent> lis: listeners)
+		for(SubscriptionIntermediateFuture<RegistryEvent> lis: listeners)
 			lis.terminate();
 		listeners.clear();
-		
-		clientqueries.clear();
-		clients.clear();*/
 	}
     
     protected void connectToCoordinator(String coname)

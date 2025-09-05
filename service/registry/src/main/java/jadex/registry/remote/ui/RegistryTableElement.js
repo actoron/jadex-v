@@ -84,8 +84,9 @@ export class RegistryTableElement extends BaseElement
             }
 		}, ex =>
 		{
-			self.setConnectionStatus(false);
-			console.log("subscription error: "+ex);
+			self.setConnectionStatus(false);	
+			console.log("ui subscription error with agent, reconnect in 5 seconds: "+ex);
+			setTimeout(() => self.subscribeToRegistry(), 5000);
 		}); 
     }
 	
@@ -474,11 +475,11 @@ export class RegistryTableElement extends BaseElement
 			        <tbody>
 			            ${this.queries.map(q => `
 			                <tr>
-								<td>${q.type || 'n/a'}</td>
+								<td>${q.serviceType.value || 'n/a'}</td>
 			                    <td>${q.providerId}</td>
 								<td>${q.tags?.map(g => `${t}`).join(' ') || ''}</td>
-								<td>${q.scope}</td>
-								<td>${q.multiplicity}</td>
+								<td>${q.scope?.value}</td>
+								<td>${q.multiplicity?.from+" "+q.multiplicity?.to}</td>
 			                    <td>${q.groupNames?.map(g => `${g}`).join(' ') || ''}</td>
 			                    <td>${q.unrestricted ? 'Yes' : 'No'}</td>
 			                </tr>`).join('')}

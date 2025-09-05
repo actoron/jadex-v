@@ -46,11 +46,11 @@ public class ScenarioTest
 		KeySecret secret = KeySecret.createRandom();
 	    IComponentManager.get().getFeature(ISecurityFeature.class).addGroup(GROUPNAME, secret);
 
-		IComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (e,c) ->
+		/*IComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (e,c) ->
 		{
 			System.out.println("Exception in component "+c.getId()+": "+e);
 			e.printStackTrace();
-		});
+		});*/
 
 	    // Setup first runtime with coordinator, remote registry, reg client and provider agent
 
@@ -62,7 +62,8 @@ public class ScenarioTest
 		
 		//man.create(new RegistryClientAgent(), "RegistryClient").get();
 		
-		man.create(new ProviderAgent(), "Provider").get();
+		//man.create(new ProviderAgent(), "Provider").get();
+		man.create(new ProviderAgent(5000)).get();
 
 		man.run(agent ->
 		{
