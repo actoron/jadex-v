@@ -35,6 +35,8 @@ public class JsonNestedMapProcessor extends JsonMapProcessor
 	{
 		Class<?> valclazz = val!=null? val.getClass(): null;
 		if(JsonObject.class.equals(valclazz))
+			valclazz = Map.class;
+		else
 			valclazz = null;
 		return valclazz;
 	}

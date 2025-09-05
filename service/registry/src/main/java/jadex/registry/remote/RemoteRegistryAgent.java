@@ -13,6 +13,7 @@ import jadex.common.IFilter;
 import jadex.common.SGUI;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.impl.IDaemonComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
@@ -46,7 +47,7 @@ import jakarta.ws.rs.GET;
  *  Registry collects services from client and answers search requests and queries.
  */
 @Publish(publishid="http://${host}:${port}/${cid}/api", publishtarget = IRemoteRegistryGuiService.class)
-public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegistryGuiService
+public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegistryGuiService, IDaemonComponent
 {
 	/** Connection delay*/
     protected long delay = 10000;

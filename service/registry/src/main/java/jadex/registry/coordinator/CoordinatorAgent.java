@@ -9,6 +9,7 @@ import java.util.Set;
 import jadex.common.SGUI;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
+import jadex.core.impl.IDaemonComponent;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
@@ -21,7 +22,7 @@ import jadex.publishservice.publish.annotation.Publish;
 import jakarta.ws.rs.GET;
 
 @Publish(publishid="http://${host}:${port}/${cid}/api", publishtarget = ICoordinatorGuiService.class)
-public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiService
+public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiService, IDaemonComponent
 {
 	/** The agent. */
 	@Inject
