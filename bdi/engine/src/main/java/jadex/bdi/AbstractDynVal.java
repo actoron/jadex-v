@@ -159,26 +159,50 @@ public class AbstractDynVal<T>
 		// Start observing new list
 		if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof List<?>)
 		{
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			T t	= (T)(new ListWrapper((List<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
-			value	= t;
-			this.value	= value;
+			if(value instanceof ListWrapper<?>)
+			{
+				// Already wrapped, just update the event publisher and component.
+				((ListWrapper<?>)value).setEventPublisher(changehandler);
+			}
+			else
+			{
+				@SuppressWarnings({ "unchecked", "rawtypes" })
+				T t	= (T)(new ListWrapper((List<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
+				value	= t;
+				this.value	= value;
+			}
 		}
 		// Start observing new set
 		else if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof Set<?>)
 		{
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			T t	= (T)(new SetWrapper((Set<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
-			value	= t;
-			this.value	= value;
+			if(value instanceof SetWrapper<?>)
+			{
+				// Already wrapped, just update the event publisher and component.
+				((SetWrapper<?>)value).setEventPublisher(changehandler);
+			}
+			else
+			{
+				@SuppressWarnings({ "unchecked", "rawtypes" })
+				T t	= (T)(new SetWrapper((Set<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
+				value	= t;
+				this.value	= value;
+			}
 		}
 		// Start observing new map
 		else if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof java.util.Map<?,?>)
 		{
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			T t	= (T)(new MapWrapper((java.util.Map<?,?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
-			value	= t;
-			this.value	= value;
+			if(value instanceof MapWrapper<?,?>)
+			{
+				// Already wrapped, just update the event publisher and component.
+				((MapWrapper<?,?>)value).setEventPublisher(changehandler);
+			}
+			else
+			{
+				@SuppressWarnings({ "unchecked", "rawtypes" })
+				T t	= (T)(new MapWrapper((java.util.Map<?,?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
+				value	= t;
+				this.value	= value;
+			}
 		}
 		// Start observing new bean, if any
 		else if(mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES)
