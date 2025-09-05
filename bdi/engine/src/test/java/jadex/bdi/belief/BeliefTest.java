@@ -292,7 +292,7 @@ public class BeliefTest
 		checkEventInfo(removedfut, null, "2", 1);
 	}
 
-//	@Test
+	@Test
 	public void testValListBelief()
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
