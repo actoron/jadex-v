@@ -13,7 +13,7 @@ if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 
 java
 {
-	sourceCompatibility = '1.17'
+	sourceCompatibility = '1.21'
 }
 
 task plot(type : PythonTask)
