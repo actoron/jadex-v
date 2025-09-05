@@ -518,7 +518,6 @@ public class ComponentManager implements IComponentManager
 	    }
 
 	    RuntimeFeatureProvider<IRuntimeFeature> prov = it.next();
-	    System.out.println("init next: "+prov.getFeatureType());
 	    awaitFeature(prov.getFeatureType()).then(res ->
 	    {
 	    	initNextFeature(it, chain);
