@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -63,11 +64,22 @@ public class BeliefTest
 		@Belief
 		Val<Bean>	valbeanbelief	= new Val<>(new Bean(1));
 		
+		// Test that nested generic types work
+		@Belief
+		Val<Supplier<String>>	valsupplierbelief	= new Val<>(()->"1");
+		
+		// Test that nested generic types work
+		@Belief
+		Val<List<Supplier<String>>>	vallistsupplierbelief	= new Val<>(null);
+		
 		@Belief
 		Bean	beanbelief	= new Bean(1);
 		
 		@Belief
 		List<String>	listbelief	= new ArrayList<>(Arrays.asList(new String[]{"1", "2"}));
+		
+		@Belief
+		Val<List<String>>	vallistbelief	= new Val<>(new ArrayList<>(Arrays.asList(new String[]{"1", "2"})));
 		
 		@Belief
 		Set<String>	setbelief	= new LinkedHashSet<>(Arrays.asList(new String[]{"1", "3"}));
@@ -272,6 +284,31 @@ public class BeliefTest
 			pojo.listbelief.set(1, "3");
 			pojo.listbelief.add(1, "2");
 			pojo.listbelief.remove(1);
+
+		});
+		
+		checkEventInfo(changedfut, "2", "3", 1);
+		checkEventInfo(addedfut, null, "2", 1);
+		checkEventInfo(removedfut, null, "2", 1);
+	}
+
+	@Test
+	public void testValListBelief()
+	{
+		BeliefTestAgent	pojo	= new BeliefTestAgent();
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		Future<IEvent>	changedfut	= new Future<>();
+		Future<IEvent>	addedfut	= new Future<>();
+		Future<IEvent>	removedfut	= new Future<>();
+		
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "vallistbelief");
+			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "vallistbelief");
+			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "vallistbelief");
+			pojo.vallistbelief.get().set(1, "3");
+			pojo.vallistbelief.get().add(1, "2");
+			pojo.vallistbelief.get().remove(1);
 
 		});
 		

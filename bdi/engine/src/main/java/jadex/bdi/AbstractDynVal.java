@@ -1,9 +1,15 @@
 package jadex.bdi;
 
 import java.beans.PropertyChangeListener;
+import java.util.List;
+import java.util.Set;
 
+import jadex.collection.CollectionWrapper;
 import jadex.collection.IEventPublisher;
+import jadex.collection.ListWrapper;
+import jadex.collection.MapWrapper;
 import jadex.collection.SPropertyChange;
+import jadex.collection.SetWrapper;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 
@@ -133,9 +139,50 @@ public class AbstractDynVal<T>
 	 */
 	void observeNewValue(T old, T value) 
 	{
-		if(mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES)
+		// Stop observing old collection
+		if(old instanceof CollectionWrapper<?>)
 		{
-			listener	= SPropertyChange.updateListener(old, value, listener, comp, changehandler);
+			((CollectionWrapper<?>)old).setEventPublisher(null);
+		}
+		// Stop observing old map
+		else if(old instanceof MapWrapper<?,?>)
+		{
+			((MapWrapper<?,?>)old).setEventPublisher(null);
+		}
+		// Stop observing old bean, if any
+		else
+		{
+			listener	= SPropertyChange.updateListener(old, null, listener, comp, changehandler);
+		}
+		
+		// Start observing new list
+		if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof List<?>)
+		{
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			T t	= (T)(new ListWrapper((List<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
+			value	= t;
+			this.value	= value;
+		}
+		// Start observing new set
+		else if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof Set<?>)
+		{
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			T t	= (T)(new SetWrapper((Set<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
+			value	= t;
+			this.value	= value;
+		}
+		// Start observing new map
+		else if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof java.util.Map<?,?>)
+		{
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			T t	= (T)(new MapWrapper((java.util.Map<?,?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
+			value	= t;
+			this.value	= value;
+		}
+		// Start observing new bean, if any
+		else if(mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES)
+		{
+			listener	= SPropertyChange.updateListener(null, value, listener, comp, changehandler);
 		}
 	}
 	

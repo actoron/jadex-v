@@ -1803,28 +1803,42 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 */
 	protected void	addBeliefType(List<Class<?>> pojoclazzes, String capaprefix, Field f)
 	{
-		Class<?>	type	= f.getType();
+		Class<?>	clazz	= f.getType();
+		Type		gtype	= f.getGenericType();
 		
-		if(SReflect.isSupertype(Dyn.class, type)
-			||SReflect.isSupertype(Val.class, type)
-			|| SReflect.isSupertype(Collection.class, type))
+		if(SReflect.isSupertype(Dyn.class, clazz)
+			||SReflect.isSupertype(Val.class, clazz))
 		{
-			if(f.getGenericType() instanceof ParameterizedType)
+			if(gtype instanceof ParameterizedType)
 			{
-				ParameterizedType	generic	= (ParameterizedType)((Type)f.getGenericType());
-				type	= (Class<?>) generic.getActualTypeArguments()[0];
+				ParameterizedType	generic	= (ParameterizedType)gtype;
+				gtype	= generic.getActualTypeArguments()[0];
+				clazz	= getRawClass(gtype);
 			}
 			else
 			{
 				throw new RuntimeException("Belief does not define generic value type: "+f);
 			}
 		}
-		else if(SReflect.isSupertype(Map.class, type))
+		
+		if(SReflect.isSupertype(Collection.class, clazz))
 		{
-			if(f.getGenericType() instanceof ParameterizedType)
+			if(gtype instanceof ParameterizedType)
 			{
-				ParameterizedType	generic	= (ParameterizedType)((Type)f.getGenericType());
-				type	= (Class<?>) generic.getActualTypeArguments()[1];
+				ParameterizedType	generic	= (ParameterizedType)gtype;
+				clazz	= getRawClass(generic.getActualTypeArguments()[0]);
+			}
+			else
+			{
+				throw new RuntimeException("Belief does not define generic value type: "+f);
+			}
+		}
+		else if(SReflect.isSupertype(Map.class, clazz))
+		{
+			if(gtype instanceof ParameterizedType)
+			{
+				ParameterizedType	generic	= (ParameterizedType)gtype;
+				clazz	= getRawClass(generic.getActualTypeArguments()[1]);
 			}
 			else
 			{
@@ -1833,7 +1847,23 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		}
 		
 		String	name	= capaprefix+f.getName();
-		BDIModel.getModel(pojoclazzes.get(0)).addBelief(name, type, f);
+		BDIModel.getModel(pojoclazzes.get(0)).addBelief(name, clazz, f);
+	}
+	
+	protected static Class<?> getRawClass(Type type)
+	{
+		if(type instanceof Class<?>)
+		{
+			return (Class<?>)type;
+		}
+		else if(type instanceof ParameterizedType)
+		{
+			return (Class<?>)((ParameterizedType)type).getRawType();
+		}
+		else
+		{
+			throw new RuntimeException("Cannot get raw class of type: "+type);
+		}
 	}
 	
 	/**

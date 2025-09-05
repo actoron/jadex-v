@@ -14,9 +14,10 @@ import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
 import jadex.common.transformation.BasicTypeConverter;
 import jadex.core.IComponentManager;
+import jadex.core.impl.ILifecycle;
 import jadex.javaparser.SJavaParser;
 
-public class AutostartFeature implements IAutostartFeature
+public class AutostartFeature implements IAutostartFeature, ILifecycle
 {
 	private static BasicTypeConverter converter = new BasicTypeConverter();
 	
@@ -48,71 +49,7 @@ public class AutostartFeature implements IAutostartFeature
 	
 	public AutostartFeature()
 	{
-		//System.out.println("created: "+this);
 
-		ClassLoader cl = IComponentManager.get().getClassLoader();
-		
-		// init auto startup components
-		
-		//Iterator<IAutostart> it = ServiceLoader.load(IAutostart.class, cl).iterator();
-
-		List<String> names = findServiceClassNames(IAutostartManual.class);
-		List<String> aunames = findServiceClassNames(IAutostartGenerated.class);
-		names.addAll(aunames);
-		
-		System.getLogger(this.getClass().getName()).log(Level.INFO, "Found autostart agents: "+names.size()+" "+names);
-		//System.out.println("found autostart agents: "+names);
-		
-		for (String entry : names) 
-		{
-	        try 
-	        {
-	            String localName = null;
-	            String argsString = null;
-	            String className = null;
-
-	            // Split max. in 3 parts: localName|args|className
-	            
-	            String[] parts = entry.split("\\|", -1);
-	            if (parts.length == 1) 
-	            {
-	                className = parts[0].trim();
-	            } 
-	            else if (parts.length == 2) 
-	            {
-	                localName = emptyToNull(parts[0]);
-	                className = parts[1].trim();
-	            } 
-	            else if (parts.length >= 3) 
-	            {
-	                localName = emptyToNull(parts[0]);
-	                argsString = emptyToNull(parts[1]);
-	                className = parts[2].trim();
-	            }
-
-	            Class<?> clazz = Class.forName(className, false, cl);
-
-	            Object instance;
-	            if (argsString != null) 
-	            {
-	                Object[] args = parseExpressions(argsString);
-	                instance = createInstanceWithArgs(clazz, args, fetcher);
-	            } 
-	            else 
-	            {
-	                instance = clazz.getDeclaredConstructor().newInstance();
-	            }
-
-	            IComponentManager.get()
-	                .create(instance, localName)
-	                .get();
-	        } 
-	        catch (Exception e) 
-	        {
-	            System.getLogger(getClass().getName()).log(Level.ERROR, "Could not create autostart component: " + entry + " " + e.getMessage());
-	            e.printStackTrace();
-	        }
-	    }
 	}
 
 	protected static String emptyToNull(String s) 
@@ -226,5 +163,81 @@ public class AutostartFeature implements IAutostartFeature
 			e.printStackTrace();
 		}
 	    return names;
+	}
+
+	@Override
+	public void init()
+	{
+		//System.out.println("created: "+this);
+
+		ClassLoader cl = IComponentManager.get().getClassLoader();
+
+		// init auto startup components
+
+		//Iterator<IAutostart> it = ServiceLoader.load(IAutostart.class, cl).iterator();
+
+		List<String> names = findServiceClassNames(IAutostartManual.class);
+		List<String> aunames = findServiceClassNames(IAutostartGenerated.class);
+		names.addAll(aunames);
+
+		System.getLogger(this.getClass().getName()).log(Level.INFO, "Found autostart agents: "+names.size()+" "+names);
+		//System.out.println("found autostart agents: "+names);
+
+		for (String entry : names)
+		{
+			try
+			{
+				String localName = null;
+				String argsString = null;
+				String className = null;
+
+				// Split max. in 3 parts: localName|args|className
+
+				String[] parts = entry.split("\\|", -1);
+				if (parts.length == 1)
+				{
+					className = parts[0].trim();
+				}
+				else if (parts.length == 2)
+				{
+					localName = emptyToNull(parts[0]);
+					className = parts[1].trim();
+				}
+				else if (parts.length >= 3)
+				{
+					localName = emptyToNull(parts[0]);
+					argsString = emptyToNull(parts[1]);
+					className = parts[2].trim();
+				}
+
+				Class<?> clazz = Class.forName(className, false, cl);
+
+				Object instance;
+				if (argsString != null)
+				{
+					Object[] args = parseExpressions(argsString);
+					instance = createInstanceWithArgs(clazz, args, fetcher);
+				}
+				else
+				{
+					instance = clazz.getDeclaredConstructor().newInstance();
+				}
+
+				IComponentManager.get()
+						.create(instance, localName)
+						.get();
+			}
+			catch (Exception e)
+			{
+				System.getLogger(getClass().getName()).log(Level.ERROR, "Could not create autostart component: " + entry + " " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Override
+	public void cleanup()
+	{
+
 	}
 }

@@ -3,6 +3,7 @@ package jadex.injection;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,9 +17,11 @@ import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingConsumer;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.InjectException;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.impl.IInjectionHandle;
@@ -92,7 +95,9 @@ public class InjectionTest
 		// Check if exception is injected on end
 		SUtil.runWithoutOutErr(() ->
 		{
-			Future<Exception>	exfut	= new Future<>();
+			Future<Exception>	exfut01	= new Future<>();
+			Future<Exception>	exfut02	= new Future<>();
+			Future<Exception>	exfut03	= new Future<>();
 			IComponentManager.get().create(new Object()
 			{
 				@OnStart
@@ -104,42 +109,103 @@ public class InjectionTest
 				@OnEnd
 				public void	end(Exception e)
 				{
-					exfut.setResult(e);
+					exfut01.setResult(e);
 				}
 				
-				// TODO: Inject exception?
-				// TODO: fail on unknown inject method?
-				@Inject
-				public void	injectMe(Exception e)
+				@OnEnd
+				public void	end(RuntimeException e)
 				{
-					System.out.println("injected: "+e);
+					exfut02.setResult(e);
 				}
 				
+				// When no matching exception type, null is injected.
+				@OnEnd
+				public void	end(UnsupportedOperationException e)
+				{
+					exfut03.setResult(e);
+				}
 			}).get(TIMEOUT);
-			assertInstanceOf(RuntimeException.class, exfut.get(TIMEOUT));
-			assertEquals("test", exfut.get(TIMEOUT).getMessage());
+			assertInstanceOf(RuntimeException.class, exfut01.get(TIMEOUT));
+			assertEquals("test", exfut01.get(TIMEOUT).getMessage());
+			assertInstanceOf(RuntimeException.class, exfut02.get(TIMEOUT));
+			assertEquals("test", exfut02.get(TIMEOUT).getMessage());
+			assertNull(exfut03.get(TIMEOUT));
 		});
 		
 		// Check if exception can be handled by @Inject method
-		Future<Exception>	exfut	= new Future<>();
+		SUtil.runWithoutOutErr(() ->
+		{
+			Future<Exception>	exfut1	= new Future<>();
+			Future<Exception>	exfut2	= new Future<>();
+			Future<Exception>	exfut3	= new Future<>();
+			IComponentManager.get().create(new Object()
+			{
+				@OnStart
+				public void	start(IExecutionFeature exe)
+				{
+					// Do in extra step because method injection registration is done after onStart.
+					exe.scheduleStep((Runnable)() -> {throw new RuntimeException("test1");});
+					exe.scheduleStep((Runnable)() -> {throw new IllegalStateException("test2");});
+					
+					exe.scheduleStep((IThrowingConsumer<IComponent>)c -> {throw new Exception("test3");});
+				}
+				
+				// TODO: fail on unknown inject method?
+				@Inject
+				public void	handleException(RuntimeException e)
+				{
+					exfut1.setResult(e);
+				}
+				
+				@Inject
+				public void	handleException(IllegalStateException e)
+				{
+					exfut2.setResult(e);
+				}
+				
+				@OnEnd
+				public void	end(Exception e)
+				{
+					exfut3.setResult(e);
+				}
+			}).get(TIMEOUT);
+			assertInstanceOf(RuntimeException.class, exfut1.get(TIMEOUT));
+			assertEquals("test1", exfut1.get(TIMEOUT).getMessage());
+			assertInstanceOf(IllegalStateException.class, exfut2.get(TIMEOUT));
+			assertEquals("test2", exfut2.get(TIMEOUT).getMessage());
+			assertInstanceOf(Exception.class, exfut3.get(TIMEOUT));
+			assertEquals("test3", exfut3.get(TIMEOUT).getMessage());
+		});
+		
+		// Check exact match
+		Future<Exception>	exfut1	= new Future<>();
+		Future<Exception>	exfut2	= new Future<>();
 		IComponentManager.get().create(new Object()
 		{
 			@OnStart
 			public void	start(IExecutionFeature exe)
 			{
 				// Do in extra step because method injection registration is done after onStart.
-				exe.scheduleStep((Runnable)() -> {throw new RuntimeException("test");});
+				exe.scheduleStep((Runnable)() -> {throw new RuntimeException("test1");});
+				exe.scheduleStep((Runnable)() -> {throw new IllegalStateException("test2");});
 			}
 			
-			// TODO: fail on unknown inject method?
+			@InjectException(exactmatch=true)
+			public void	handleException(RuntimeException e)
+			{
+				exfut1.setResult(e);
+			}
+			
 			@Inject
 			public void	handleException(Exception e)
 			{
-				exfut.setResult(e);
+				exfut2.setResult(e);
 			}
 		}).get(TIMEOUT);
-		assertInstanceOf(RuntimeException.class, exfut.get(TIMEOUT));
-		assertEquals("test", exfut.get(TIMEOUT).getMessage());
+		assertInstanceOf(RuntimeException.class, exfut1.get(TIMEOUT));
+		assertEquals("test1", exfut1.get(TIMEOUT).getMessage());
+		assertInstanceOf(IllegalStateException.class, exfut2.get(TIMEOUT));
+		assertEquals("test2", exfut2.get(TIMEOUT).getMessage());
 	}
 	
 	@Test
@@ -226,7 +292,7 @@ public class InjectionTest
 	public void	testBlockingStart()
 	{
 		// Also tests method injection.
-		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers) ->
+		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers, anno) ->
 		{
 			if(method.getName().equals("injectMe"))
 			{

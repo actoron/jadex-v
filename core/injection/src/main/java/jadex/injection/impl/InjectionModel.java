@@ -198,7 +198,7 @@ public class InjectionModel
 								IInjectionHandle injection	= null;
 								for(IMethodInjectionCreator check: minjections.get(anno))
 								{
-									IInjectionHandle	test	= check.getInjectionHandle(classes, method, contextfetchers);
+									IInjectionHandle	test	= check.getInjectionHandle(classes, method, contextfetchers, method.getAnnotation(anno));
 									if(test!=null)
 									{
 										if(injection!=null)

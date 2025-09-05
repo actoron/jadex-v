@@ -127,6 +127,7 @@ public class ComponentManager implements IComponentManager
 	{
 		if(instance == null)
 		{
+			boolean init = false;
 			synchronized(ComponentManager.class)
 			{
 				if(instance == null)
@@ -171,8 +172,10 @@ public class ComponentManager implements IComponentManager
 	/** App counters for components in creation. */
 	private final Map<String, Integer> appcreationcnt = new HashMap<>();
 
+	/** Cache for runtime features in configuration mode (before the start of the first component). */
+	protected volatile Map<Class<? extends IRuntimeFeature>, Future<? extends IRuntimeFeature>> featureconfigurationcache = new HashMap<>();
 	
-	/** Cache fore runtime features. */
+	/** Cache for runtime features. */
 	protected RwMapWrapper<Class<? extends IRuntimeFeature>, Future<? extends IRuntimeFeature>> featurecache = new RwMapWrapper<>(new HashMap<>());
 	
 	public void addComponentListener(IComponentListener listener, String... types)
@@ -301,18 +304,49 @@ public class ComponentManager implements IComponentManager
 	{
 		//System.out.println("awaitFeature: "+featuretype+" "+featurecache.keySet()+" "+this);
 
-		Future<T> ret;
+		Future<T> ret = null;
 
-		try (IAutoLock l = featurecache.writeLock())
+		// We need to hold the cache reference for synchonize later
+		boolean noconf = true;
+		Map<Class<? extends IRuntimeFeature>, Future<? extends IRuntimeFeature>> concache = featureconfigurationcache;
+		if (concache != null)
 		{
-			@SuppressWarnings("unchecked")
-			Future<T> existing = (Future<T>)featurecache.get(featuretype);
-			if(existing != null)
-				return existing;
+			synchronized (concache)
+			{
+				if (featureconfigurationcache != null)
+				{
+					noconf = false;
 
-			ret = new Future<>();
-			featurecache.put(featuretype, ret);
-			//System.out.println("awaitFeature2: "+featuretype+" "+featurecache.keySet());
+					Future<T> existing = (Future<T>) featureconfigurationcache.get(featuretype);
+					if (existing != null)
+						return existing;
+
+					ret = new Future<>();
+					featureconfigurationcache.put(featuretype, ret);
+				}
+			}
+		}
+
+		if (noconf)
+		{
+			try (IAutoLock l = featurecache.readLock())
+			{
+				Future<T> existing = (Future<T>) featurecache.get(featuretype);
+				if (existing != null)
+					return existing;
+			}
+
+			try (IAutoLock l = featurecache.writeLock())
+			{
+				@SuppressWarnings("unchecked")
+				Future<T> existing = (Future<T>) featurecache.get(featuretype);
+				if (existing != null)
+					return existing;
+
+				ret = new Future<>();
+				featurecache.put(featuretype, ret);
+				//System.out.println("awaitFeature2: "+featuretype+" "+featurecache.keySet());
+			}
 		}
 
 		/*Timer t = new Timer();
@@ -329,16 +363,22 @@ public class ComponentManager implements IComponentManager
 			}
 		}, 5000);*/
 
+		Future<T> fret = ret;
+		boolean fnoconf = noconf;
 		createFeature(featuretype).then(feature ->
 		{
 			if (feature != null)
 			{
 				//System.out.println("await feature, created feature: "+feature+" "+featurecache.keySet());
-				ret.setResult(feature);
+
+				if (fnoconf && feature instanceof ILifecycle)
+					((ILifecycle) feature).init();
+
+				fret.setResult(feature);
 			}
 			else
 			{
-				ret.setException(new RuntimeException("Feature was declared but could not be created: " + featuretype));
+				fret.setException(new RuntimeException("Feature was declared but could not be created: " + featuretype));
 			}
 		}).catchEx(ret);
 
@@ -478,7 +518,6 @@ public class ComponentManager implements IComponentManager
 	    }
 
 	    RuntimeFeatureProvider<IRuntimeFeature> prov = it.next();
-	    //System.out.println("init next: "+prov.getFeatureType());
 	    awaitFeature(prov.getFeatureType()).then(res ->
 	    {
 	    	initNextFeature(it, chain);
@@ -533,7 +572,7 @@ public class ComponentManager implements IComponentManager
 	/**
 	 *  Test if a feature is present.
 	 *
-	 *  @param featuretype Requested runtime feature type.
+	 *  @param type Requested runtime feature type.
 	 *  @return True, if the feature is present, i.e. created.
 	 * /
 	public boolean isFeatureKnown(Class<?> featuretype)
@@ -830,12 +869,15 @@ public class ComponentManager implements IComponentManager
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generation.
+	 *  @param localname The component local name or null for auto-generation.
 	 *  @param app The application context.
 	 *  @return The external access of the running component.
 	 */
 	public IFuture<IComponentHandle> create(Object pojo, String localname, Application app)
-	{		
+	{
+		if (!(pojo instanceof IDaemonComponent))
+			initializeFeatures();
+
 		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(localname);
 		if(pojo==null)
 		{
@@ -867,6 +909,9 @@ public class ComponentManager implements IComponentManager
 	 */
 	public <T> IFuture<T> run(Object pojo, String localname, Application app)
 	{
+		if (!(pojo instanceof IDaemonComponent))
+			initializeFeatures();
+
 		if(pojo==null)
 		{
 			return new Future<>(new UnsupportedOperationException("No null pojo allowed for run()."));
@@ -948,7 +993,7 @@ public class ComponentManager implements IComponentManager
 	
 	/**
 	 *  Remove a component.
-	 *  @param cid The component id.
+	 *  @param comp The component.
 	 */
 	public void removeComponent(IComponent comp)
 	{
@@ -1343,6 +1388,32 @@ public class ComponentManager implements IComponentManager
 			else
 			{
 				return new LinkedHashSet<ComponentIdentifier>(ret);
+			}
+		}
+	}
+
+	/**
+	 *  Initializes configured runtime features before first component starts.
+	 */
+	public void initializeFeatures()
+	{
+		// We need to hold the cache reference for synchonize later
+		Map<Class<? extends IRuntimeFeature>, Future<? extends IRuntimeFeature>> concache = featureconfigurationcache;
+		if (concache != null)
+		{
+			synchronized (concache)
+			{
+				if (featureconfigurationcache != null)
+				{
+					featureconfigurationcache = null;
+					for (Map.Entry<Class<? extends IRuntimeFeature>, Future<? extends IRuntimeFeature>> entry : concache.entrySet())
+					{
+						if (entry.getValue().get() instanceof ILifecycle)
+							((ILifecycle) entry.getValue().get()).init();
+
+						featurecache.put(entry.getKey(), entry.getValue());
+					}
+				}
 			}
 		}
 	}

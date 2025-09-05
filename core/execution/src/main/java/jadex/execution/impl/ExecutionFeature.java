@@ -183,7 +183,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			catch(Exception e)
 			{
-				SUtil.rethrowAsUnchecked(e);
+				self.handleException(e);
 			}
 		});
 	}

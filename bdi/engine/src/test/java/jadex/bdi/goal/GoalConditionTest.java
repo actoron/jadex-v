@@ -427,6 +427,8 @@ public class GoalConditionTest
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
 		handle.scheduleStep(() -> pojo.trigger.removeFirst()).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
 	}
 
@@ -611,13 +613,22 @@ public class GoalConditionTest
 		
 		GoalRecurAgent	pojo	= new GoalRecurAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new RecurGoal()));
+		Future<Void>	goaldispatched	= new Future<>();
+		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp ->
+		{
+			IFuture<Void> ret	= comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new RecurGoal());
+			goaldispatched.setResult(null);
+			return ret;
+		});
+		goaldispatched.get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertFalse(goalfut.isDone()); // Should be paused
 		assertEquals(1, pojo.plancnt);
 		
 		handle.scheduleStep(() -> {pojo.recur.set(false); return null;}).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertFalse(goalfut.isDone()); // Should still be paused
@@ -626,7 +637,30 @@ public class GoalConditionTest
 		handle.scheduleStep(() -> {pojo.recur.set(true); return null;}).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertFalse(goalfut.isDone()); // Should still be paused
 		assertEquals(2, pojo.plancnt);
+	}
+
+	public static void main(String[] args) throws Exception
+	{
+		for(;;)
+		{
+			GoalConditionTest	test	= new GoalConditionTest();
+			test.testConstructorCreationCondition();
+			test.testMethodCreationCondition();
+			test.testBooleanMethodCreationCondition();
+			test.testNoPlanProceduralQueryGoal();
+			test.testProceduralQueryGoal();
+			test.testQueryCondition();
+			test.testTargetCondition();
+			test.testTargetWithResult();
+			test.testMaintainCondition();
+			test.testMaintainTargetCondition();
+			test.testContextCondition();
+			test.testDropCondition();
+			test.testRecurCondition();
+//			System.out.println("----");
+		}
 	}
 }
