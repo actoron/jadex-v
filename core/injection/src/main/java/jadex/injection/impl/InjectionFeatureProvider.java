@@ -102,10 +102,13 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			return self.getFeature((Class<IComponentFeature>)feature);
 		}): null, Inject.class);
 
-		// Inject exception if any
-		InjectionModel.addValueFetcher(
-			(comptypes, valuetype, anno) -> Exception.class.equals(valuetype) ? ((self, pojo, context, oldval) -> self.getException()) : null,
-			Inject.class);
+		// Inject exception if matching
+		InjectionModel.addValueFetcher((comptypes, valuetype, anno) ->
+			(valuetype instanceof Class) && SReflect.isSupertype(Exception.class, (Class<?>) valuetype) ? ((self, pojo, context, oldval) ->
+		{
+			return self.getException()!=null && SReflect.isSupertype((Class<?>)valuetype, self.getException().getClass())
+				? self.getException() : null;
+		}) : null, Inject.class);
 		
 		// Add exception handler for @Inject methods with exception parameter
 		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers, anno) -> 

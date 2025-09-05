@@ -3,6 +3,7 @@ package jadex.injection;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -94,7 +95,9 @@ public class InjectionTest
 		// Check if exception is injected on end
 		SUtil.runWithoutOutErr(() ->
 		{
-			Future<Exception>	exfut	= new Future<>();
+			Future<Exception>	exfut01	= new Future<>();
+			Future<Exception>	exfut02	= new Future<>();
+			Future<Exception>	exfut03	= new Future<>();
 			IComponentManager.get().create(new Object()
 			{
 				@OnStart
@@ -106,11 +109,27 @@ public class InjectionTest
 				@OnEnd
 				public void	end(Exception e)
 				{
-					exfut.setResult(e);
+					exfut01.setResult(e);
+				}
+				
+				@OnEnd
+				public void	end(RuntimeException e)
+				{
+					exfut02.setResult(e);
+				}
+				
+				// When no matching exception type, null is injected.
+				@OnEnd
+				public void	end(UnsupportedOperationException e)
+				{
+					exfut03.setResult(e);
 				}
 			}).get(TIMEOUT);
-			assertInstanceOf(RuntimeException.class, exfut.get(TIMEOUT));
-			assertEquals("test", exfut.get(TIMEOUT).getMessage());
+			assertInstanceOf(RuntimeException.class, exfut01.get(TIMEOUT));
+			assertEquals("test", exfut01.get(TIMEOUT).getMessage());
+			assertInstanceOf(RuntimeException.class, exfut02.get(TIMEOUT));
+			assertEquals("test", exfut02.get(TIMEOUT).getMessage());
+			assertNull(exfut03.get(TIMEOUT));
 		});
 		
 		// Check if exception can be handled by @Inject method

@@ -101,6 +101,7 @@ public class GoalFlickerTest
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		assertEquals(1, executions.size());
 //		System.out.println();
 
@@ -159,5 +160,16 @@ public class GoalFlickerTest
 			handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class)
 					.dispatchTopLevelGoal(pojo.new TopGoal())).get(TestHelper.TIMEOUT));
 		assertEquals(0, executions.size());
+	}
+
+	public static void main(String[] args)
+	{
+		for(;;)
+		{
+//			System.out.println("Test run...");
+			GoalFlickerTest	test	= new GoalFlickerTest();
+			test.testContextFlickering();
+			test.testSubgoalFlickering();
+		}
 	}
 }
