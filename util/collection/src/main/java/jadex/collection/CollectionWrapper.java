@@ -60,6 +60,12 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		return this.publisher;
 	}
 	
+	public void setEventPublisher(IEventPublisher publisher)
+	{
+		this.publisher = publisher;
+	}
+
+	
 	public Collection<T> getDelegate()
 	{
 		return this.delegate;
