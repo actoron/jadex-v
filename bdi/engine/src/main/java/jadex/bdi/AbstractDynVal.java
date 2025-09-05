@@ -161,11 +161,12 @@ public class AbstractDynVal<T>
 		{
 			if(value instanceof ListWrapper<?>)
 			{
-				// Already wrapped, just update the event publisher and component.
+				// Already wrapped, just update the event publisher.
 				((ListWrapper<?>)value).setEventPublisher(changehandler);
 			}
 			else
 			{
+				// Wrap the list.
 				@SuppressWarnings({ "unchecked", "rawtypes" })
 				T t	= (T)(new ListWrapper((List<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
 				value	= t;
@@ -177,11 +178,12 @@ public class AbstractDynVal<T>
 		{
 			if(value instanceof SetWrapper<?>)
 			{
-				// Already wrapped, just update the event publisher and component.
+				// Already wrapped, just update the event publisher.
 				((SetWrapper<?>)value).setEventPublisher(changehandler);
 			}
 			else
 			{
+				// Wrap the set.
 				@SuppressWarnings({ "unchecked", "rawtypes" })
 				T t	= (T)(new SetWrapper((Set<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
 				value	= t;
@@ -193,11 +195,12 @@ public class AbstractDynVal<T>
 		{
 			if(value instanceof MapWrapper<?,?>)
 			{
-				// Already wrapped, just update the event publisher and component.
+				// Already wrapped, just update the event publisher.
 				((MapWrapper<?,?>)value).setEventPublisher(changehandler);
 			}
 			else
 			{
+				// Wrap the map.
 				@SuppressWarnings({ "unchecked", "rawtypes" })
 				T t	= (T)(new MapWrapper((java.util.Map<?,?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
 				value	= t;
