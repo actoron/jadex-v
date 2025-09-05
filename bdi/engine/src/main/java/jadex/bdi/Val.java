@@ -39,4 +39,14 @@ public class Val<T>	extends AbstractDynVal<T>
 		
 		doSet(value);
 	}
+	
+	/**
+	 *  Set the observation mode for inner values.
+	 *  Default is COLLECTION_AND_BEAN.
+	 */
+	public Val<T> setObservationMode(ObservationMode mode)
+	{
+		super.setObservationMode(mode);
+		return this;
+	}
 }

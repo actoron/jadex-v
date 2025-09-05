@@ -110,7 +110,7 @@ public class AbstractDynVal<T>
 	 *  Set the observation mode for inner values.
 	 *  Default is COLLECTION_AND_BEAN.
 	 */
-	public void setObservationMode(ObservationMode mode)
+	public AbstractDynVal<T> setObservationMode(ObservationMode mode)
 	{
 		if(this.mode!=mode)
 		{
@@ -131,6 +131,7 @@ public class AbstractDynVal<T>
 				this.mode	= mode;
 			}
 		}
+		return this;
 	}
 
 	/**

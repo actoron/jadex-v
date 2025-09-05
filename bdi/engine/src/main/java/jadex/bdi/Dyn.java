@@ -77,6 +77,16 @@ public class Dyn<T>	extends AbstractDynVal<T>
 	}
 	
 	/**
+	 *  Set the observation mode for inner values.
+	 *  Default is COLLECTION_AND_BEAN.
+	 */
+	public Dyn<T> setObservationMode(ObservationMode mode)
+	{
+		super.setObservationMode(mode);
+		return this;
+	}
+	
+	/**
 	 *  Called on component init.
 	 */
 	@Override
