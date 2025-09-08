@@ -129,13 +129,8 @@ public class AbstractDynVal<T>
 						return this;
 					}
 					
-					// Currently observing and switching to observing
-					else if((this.mode==ObservationMode.ON_COLLECTION_CHANGE || this.mode==ObservationMode.ON_ALL_CHANGES)
-						&& (mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES))
-					{
-						this.mode	= mode;
-						return this;
-					}
+					// Changes between ON_COLLECTION_CHANGE and ON_ALL_CHANGES need to be handled below
+					// to add/remove listeners for beans contained in the collection/map.
 				}
 				else
 				{
