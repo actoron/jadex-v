@@ -1,7 +1,9 @@
 package jadex.bdi;
 
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jadex.collection.CollectionWrapper;
@@ -114,8 +116,45 @@ public class AbstractDynVal<T>
 	{
 		if(this.mode!=mode)
 		{
-			if(changehandler!=null)
+			if(value!=null && changehandler!=null)
 			{
+				// Handle NOP cases for speed
+				if(value instanceof Collection || value instanceof Map)
+				{
+					// Not currently observing collection and not switching to observing
+					if((this.mode==ObservationMode.OFF || this.mode==ObservationMode.ON_SET_VALUE || this.mode==ObservationMode.ON_BEAN_CHANGE)
+						&& (mode==ObservationMode.OFF || mode==ObservationMode.ON_SET_VALUE || mode==ObservationMode.ON_BEAN_CHANGE))
+					{
+						this.mode	= mode;
+						return this;
+					}
+					
+					// Currently observing and switching to observing
+					else if((this.mode==ObservationMode.ON_COLLECTION_CHANGE || this.mode==ObservationMode.ON_ALL_CHANGES)
+						&& (mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES))
+					{
+						this.mode	= mode;
+						return this;
+					}
+				}
+				else
+				{
+					// Not currently observing bean and not switching to observing
+					if((this.mode==ObservationMode.OFF || this.mode==ObservationMode.ON_SET_VALUE || this.mode==ObservationMode.ON_COLLECTION_CHANGE)
+						&& (mode==ObservationMode.OFF || mode==ObservationMode.ON_SET_VALUE || mode==ObservationMode.ON_COLLECTION_CHANGE))
+					{
+						this.mode	= mode;
+						return this;
+					}
+					// Currently observing and switching to observing
+					else if((this.mode==ObservationMode.ON_BEAN_CHANGE || this.mode==ObservationMode.ON_ALL_CHANGES)
+						&& (mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES))
+					{
+						this.mode	= mode;
+						return this;
+					}
+				}
+				
 				// Remove old listeners if any.
 				observeNewValue(value, null);
 				
@@ -202,7 +241,7 @@ public class AbstractDynVal<T>
 			{
 				// Wrap the map.
 				@SuppressWarnings({ "unchecked", "rawtypes" })
-				T t	= (T)(new MapWrapper((java.util.Map<?,?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
+				T t	= (T)(new MapWrapper((Map<?,?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
 				value	= t;
 				this.value	= value;
 			}
