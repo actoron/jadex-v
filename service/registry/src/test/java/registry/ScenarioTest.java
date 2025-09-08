@@ -104,6 +104,9 @@ public class ScenarioTest
         jvmargs.add("-Djadex.groupsecret=" + secret.toString());
         jvmargs.add("-Dport=" + 8082);
         jvmargs.add("-D"+ICoordinatorService.COORDINATOR_SERVICE_NAMES+"=" + coname);
+
+		//jvmargs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
+		
         SUtil.getExecutor().execute(() ->
         {
             Process subproc = SUtil.runJvmSubprocess(UserAgent.class, jvmargs, null, true);
