@@ -60,10 +60,10 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		return this.publisher;
 	}
 	
-	public void setEventPublisher(IEventPublisher publisher)
+	public void setEventPublisher(IEventPublisher publisher, boolean observeinner)
 	{
 		// Unregister old publisher
-		if(this.publisher!=null && observeinner)
+		if(this.publisher!=null && this.observeinner)
 		{
 			for(T entry: delegate)
 			{
@@ -73,6 +73,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		}
 		
 		this.publisher = publisher;
+		this.observeinner = observeinner;
 		
 		// Register new publisher
 		if(this.publisher!=null && observeinner)
@@ -372,26 +373,32 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	 *  An entry was added to the collection.
 	 */
 	protected void entryAdded(T value, Integer index)
-	{
-		if(observeinner)
+	{		
+		if(publisher!=null)
 		{
-			listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+			if(observeinner)
+			{
+				listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+			}
+			
+			publisher.entryAdded(context, value, index);
 		}
-		
-		publisher.entryAdded(context, value, index);
 	}
 	
 	/**
 	 *  An entry was removed from the collection.
 	 */
 	protected void entryRemoved(T value, Integer index)
-	{
-		if(observeinner)
+	{		
+		if(publisher!=null)
 		{
-			listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+			if(observeinner)
+			{
+				listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+			}
+			
+			publisher.entryRemoved(context, value, index);
 		}
-		
-		publisher.entryRemoved(context, value, index);
 	}
 	
 	/**
@@ -399,14 +406,17 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	 */
 	protected void entryChanged(T oldvalue, T newvalue, Integer index)
 	{
-		if(observeinner && oldvalue!=newvalue)
+		if(publisher!=null)
 		{
-			listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
-		}
-		
-		if(!SUtil.equals(oldvalue, newvalue))
-		{
-			publisher.entryChanged(context, oldvalue, newvalue, index);
+			if(observeinner && oldvalue!=newvalue)
+			{
+				listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
+			}
+			
+			if(!SUtil.equals(oldvalue, newvalue))
+			{
+				publisher.entryChanged(context, oldvalue, newvalue, index);
+			}
 		}
 	}
 }

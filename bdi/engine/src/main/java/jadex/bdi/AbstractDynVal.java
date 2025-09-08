@@ -177,12 +177,12 @@ public class AbstractDynVal<T>
 		// Stop observing old collection
 		if(old instanceof CollectionWrapper<?>)
 		{
-			((CollectionWrapper<?>)old).setEventPublisher(null);
+			((CollectionWrapper<?>)old).setEventPublisher(null, false);
 		}
 		// Stop observing old map
 		else if(old instanceof MapWrapper<?,?>)
 		{
-			((MapWrapper<?,?>)old).setEventPublisher(null);
+			((MapWrapper<?,?>)old).setEventPublisher(null, false);
 		}
 		// Stop observing old bean, if any
 		else
@@ -196,7 +196,7 @@ public class AbstractDynVal<T>
 			if(value instanceof ListWrapper<?>)
 			{
 				// Already wrapped, just update the event publisher.
-				((ListWrapper<?>)value).setEventPublisher(changehandler);
+				((ListWrapper<?>)value).setEventPublisher(changehandler, mode==ObservationMode.ON_ALL_CHANGES);
 			}
 			else
 			{
@@ -213,7 +213,7 @@ public class AbstractDynVal<T>
 			if(value instanceof SetWrapper<?>)
 			{
 				// Already wrapped, just update the event publisher.
-				((SetWrapper<?>)value).setEventPublisher(changehandler);
+				((SetWrapper<?>)value).setEventPublisher(changehandler, mode==ObservationMode.ON_ALL_CHANGES);
 			}
 			else
 			{
@@ -230,7 +230,7 @@ public class AbstractDynVal<T>
 			if(value instanceof MapWrapper<?,?>)
 			{
 				// Already wrapped, just update the event publisher.
-				((MapWrapper<?,?>)value).setEventPublisher(changehandler);
+				((MapWrapper<?,?>)value).setEventPublisher(changehandler, mode==ObservationMode.ON_ALL_CHANGES);
 			}
 			else
 			{

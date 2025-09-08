@@ -1,6 +1,7 @@
 package jadex.bdi.belief;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,6 +37,8 @@ import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IntermediateFuture;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IEvent;
@@ -306,10 +309,11 @@ public class BeliefTest
 	{
 		BeliefTestAgent	pojo	= new BeliefTestAgent();
 		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		Future<IEvent>	changedfut	= new Future<>();
-		Future<IEvent>	addedfut	= new Future<>();
-		Future<IEvent>	removedfut	= new Future<>();
+		IntermediateFuture<IEvent>	changedfut	= new IntermediateFuture<>();
+		IntermediateFuture<IEvent>	addedfut	= new IntermediateFuture<>();
+		IntermediateFuture<IEvent>	removedfut	= new IntermediateFuture<>();
 		
+		// Check if events are generated.
 		exta.scheduleStep(() ->
 		{
 			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "vallistbelief");
@@ -320,10 +324,35 @@ public class BeliefTest
 			pojo.vallistbelief.get().remove(1);
 
 		});
-		
 		checkEventInfo(changedfut, "2", "3", 1);
 		checkEventInfo(addedfut, null, "2", 1);
 		checkEventInfo(removedfut, null, "2", 1);
+		
+		// Check if no events are generated after setting observation mode to OFF.
+		exta.scheduleStep(() ->
+		{
+			pojo.vallistbelief.setObservationMode(ObservationMode.OFF);
+			pojo.vallistbelief.get().add(1, "2");
+			pojo.vallistbelief.get().set(1, "3");
+			pojo.vallistbelief.get().remove(1);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertFalse(changedfut.hasNextIntermediateResult(100, true));
+		assertFalse(addedfut.hasNextIntermediateResult(100, true));
+		assertFalse(removedfut.hasNextIntermediateResult(100, true));
+		
+		// Check if events are generated after resetting observation mode.
+		exta.scheduleStep(() ->
+		{
+			pojo.vallistbelief.setObservationMode(ObservationMode.ON_COLLECTION_CHANGE);
+			pojo.vallistbelief.get().add(1, "2");
+			pojo.vallistbelief.get().set(1, "3");
+			pojo.vallistbelief.get().remove(1);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(changedfut, "2", "3", 1);
+		checkEventInfo(addedfut, null, "2", 1);
+		checkEventInfo(removedfut, null, "3", 1);
 	}
 
 	@Test
@@ -552,11 +581,40 @@ public class BeliefTest
 	}
 	
 	/**
+	 *  Add a rule that adds the event into a future.
+	 *  Must be called on agent thread.
+	 */
+	public static void	addEventListenerRule(IntermediateFuture<IEvent> fut, String... events)
+	{
+		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
+			.getFeature(IBDIAgentFeature.class);
+		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
+			"EventListenerRule"+Arrays.toString(events)+"_"+rulecnt++,	// Rule Name
+			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
+			(event, rule, context, condresult) -> {fut.addIntermediateResultIfUndone(event); return IFuture.DONE;}, // Action -> set future
+			new EventType[] {new EventType(events)}	// Trigger Event(s)
+		));
+	}
+	
+	/**
 	 *  Check if old/new value and info match expectations.
 	 */
-	public static void checkEventInfo(Future<IEvent> fut, Object oldval, Object newval, Object info)
+	public static void checkEventInfo(IFuture<IEvent> fut, Object oldval, Object newval, Object info)
 	{
 		IEvent	event	= fut.get(TestHelper.TIMEOUT);
+		@SuppressWarnings("unchecked")
+		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
+		assertEquals(oldval, ci.getOldValue(), "old value");
+		assertEquals(newval, ci.getValue(), "new value");
+		assertEquals(info, ci.getInfo(), "info");
+	}
+	
+	/**
+	 *  Check if old/new value and info match expectations.
+	 */
+	public static void checkEventInfo(IIntermediateFuture<IEvent> fut, Object oldval, Object newval, Object info)
+	{
+		IEvent	event	= fut.getNextIntermediateResult(TestHelper.TIMEOUT);
 		@SuppressWarnings("unchecked")
 		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
 		assertEquals(oldval, ci.getOldValue(), "old value");

@@ -68,10 +68,10 @@ public class MapWrapper<T, E> implements Map<T, E>
 		return publisher;
 	}
 	
-	public void setEventPublisher(IEventPublisher publisher)
+	public void setEventPublisher(IEventPublisher publisher, boolean observeinner)
 	{
 		// Unregister old publisher
-		if(this.publisher!=null && observeinner)
+		if(this.publisher!=null && this.observeinner)
 		{
 			for(E entry: delegate.values())
 			{
@@ -81,6 +81,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		}
 		
 		this.publisher = publisher;
+		this.observeinner = observeinner;
 		
 		// Register new publisher
 		if(this.publisher!=null && observeinner)
@@ -254,25 +255,31 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	protected void entryAdded(T key, E value)
 	{
-		if(observeinner)
+		if(publisher!=null)
 		{
-			listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
-		}
+			if(observeinner)
+			{
+				listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+			}
 		
-		publisher.entryAdded(context, value, key);
+			publisher.entryAdded(context, value, key);
+		}
 	}
 	
 	/**
 	 *  An entry was removed from the map.
 	 */
 	protected void entryRemoved(T key, E value)
-	{
-		if(observeinner)
+	{		
+		if(publisher!=null)
 		{
-			listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+			if(observeinner)
+			{
+				listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+			}
+			
+			publisher.entryRemoved(context, value, key);
 		}
-
-		publisher.entryRemoved(context, value, key);
 	}
 	
 	/**
@@ -280,14 +287,17 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	protected void entryChanged(T key, E oldvalue, E newvalue)
 	{
-		if(observeinner && oldvalue!=newvalue)
+		if(publisher!=null)
 		{
-			listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
-		}
-		
-		if(!SUtil.equals(oldvalue, newvalue))
-		{
-			publisher.entryChanged(context, oldvalue, newvalue, key);
+			if(observeinner && oldvalue!=newvalue)
+			{
+				listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
+			}
+			
+			if(!SUtil.equals(oldvalue, newvalue))
+			{
+				publisher.entryChanged(context, oldvalue, newvalue, key);
+			}
 		}
 	}
 
