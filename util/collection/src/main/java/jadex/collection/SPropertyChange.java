@@ -21,9 +21,10 @@ public class SPropertyChange
 	 *  @param listener	The (cached) property change listener to add/remove.
 	 *  @param context	The context for the publisher, e.g. the component.
 	 *  @param publisher	The publisher (if any) gets called with entryChanged(): null -> new value.
+	 *  @param source The source object for the event (if null, the value is used). No property name is given when source!=null.
 	 *  @return	The (new) property change listener to be cached for subsequent calls.
 	 */
-	public static <T> PropertyChangeListener	updateListener(T old, T value, PropertyChangeListener listener, Object context, IEventPublisher publisher)
+	public static <T> PropertyChangeListener	updateListener(T old, T value, PropertyChangeListener listener, Object context, IEventPublisher publisher, Object source)
 	{
 		// Remove  bean listener from old value, if any.
 		if(old!=null && listener!=null)
@@ -63,7 +64,7 @@ public class SPropertyChange
 						listener	= event ->
 						{
 							// Use event source to get new value even if listener is reused.
-							publisher.entryChanged(context, null, event.getSource(), event.getPropertyName());
+							publisher.entryChanged(context, null, source!=null ? source : event.getSource(), source!=null ? null : event.getPropertyName());
 						};
 					}
 					adder.invoke(value, listener);

@@ -187,7 +187,7 @@ public class AbstractDynVal<T>
 		// Stop observing old bean, if any
 		else
 		{
-			listener	= SPropertyChange.updateListener(old, null, listener, comp, changehandler);
+			listener	= SPropertyChange.updateListener(old, null, listener, comp, changehandler, null);
 		}
 		
 		// Start observing new list
@@ -244,7 +244,7 @@ public class AbstractDynVal<T>
 		// Start observing new bean, if any
 		else if(mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES)
 		{
-			listener	= SPropertyChange.updateListener(null, value, listener, comp, changehandler);
+			listener	= SPropertyChange.updateListener(null, value, listener, comp, changehandler, null);
 		}
 	}
 	

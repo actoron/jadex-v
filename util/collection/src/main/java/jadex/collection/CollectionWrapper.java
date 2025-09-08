@@ -67,7 +67,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			for(T entry: delegate)
 			{
-				listener = SPropertyChange.updateListener(entry, null, listener, context, this.publisher);
+				listener = SPropertyChange.updateListener(entry, null, listener, context, this.publisher, this);
 			}
 			listener = null;
 		}
@@ -80,7 +80,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			for(T entry: delegate)
 			{
-				listener = SPropertyChange.updateListener(null, entry, listener, context, publisher);
+				listener = SPropertyChange.updateListener(null, entry, listener, context, publisher, this);
 			}
 		}
 	}
@@ -378,7 +378,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			if(observeinner)
 			{
-				listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+				listener = SPropertyChange.updateListener(null, value, listener, context, publisher, this);
 			}
 			
 			publisher.entryAdded(context, value, index);
@@ -394,7 +394,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			if(observeinner)
 			{
-				listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+				listener = SPropertyChange.updateListener(value, null, listener, context, publisher, this);
 			}
 			
 			publisher.entryRemoved(context, value, index);
@@ -410,7 +410,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			if(observeinner && oldvalue!=newvalue)
 			{
-				listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
+				listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher, this);
 			}
 			
 			if(!SUtil.equals(oldvalue, newvalue))

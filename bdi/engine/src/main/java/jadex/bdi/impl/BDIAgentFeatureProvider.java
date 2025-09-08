@@ -2140,7 +2140,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
 						if(bean!=null)
 						{
-							SPropertyChange.updateListener(null, bean, null, comp, evpub);
+							SPropertyChange.updateListener(null, bean, null, comp, evpub, null);
 						}
 						else
 						{

@@ -75,7 +75,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		{
 			for(E entry: delegate.values())
 			{
-				listener = SPropertyChange.updateListener(entry, null, listener, context, this.publisher);
+				listener = SPropertyChange.updateListener(entry, null, listener, context, this.publisher, this);
 			}
 			listener = null;
 		}
@@ -88,7 +88,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		{
 			for(E entry: delegate.values())
 			{
-				listener = SPropertyChange.updateListener(null, entry, listener, context, publisher);
+				listener = SPropertyChange.updateListener(null, entry, listener, context, publisher, this);
 			}
 		}
 	}
@@ -259,7 +259,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		{
 			if(observeinner)
 			{
-				listener = SPropertyChange.updateListener(null, value, listener, context, publisher);
+				listener = SPropertyChange.updateListener(null, value, listener, context, publisher, this);
 			}
 		
 			publisher.entryAdded(context, value, key);
@@ -275,7 +275,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		{
 			if(observeinner)
 			{
-				listener = SPropertyChange.updateListener(value, null, listener, context, publisher);
+				listener = SPropertyChange.updateListener(value, null, listener, context, publisher, this);
 			}
 			
 			publisher.entryRemoved(context, value, key);
@@ -291,7 +291,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		{
 			if(observeinner && oldvalue!=newvalue)
 			{
-				listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher);
+				listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher, this);
 			}
 			
 			if(!SUtil.equals(oldvalue, newvalue))

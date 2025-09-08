@@ -65,7 +65,7 @@ public class BeliefTest
 		Val<Integer>	valbelief	= new Val<>(1);
 		
 		@Belief
-		Val<Bean>	valbeanbelief	= new Val<>(new Bean(1));
+		Val<Bean>	valbeanbelief	= new Val<>(new Bean(0));
 		
 		// Test that nested generic types work
 		@Belief
@@ -82,15 +82,12 @@ public class BeliefTest
 		List<String>	listbelief	= new ArrayList<>(Arrays.asList(new String[]{"1", "2"}));
 		
 		@Belief
-//		todo test set mode at runtime
 		Val<List<String>>	vallistbelief	= new Val<>(new ArrayList<>(Arrays.asList(new String[]{"1", "2"})));
 		
 		@Belief
-//		todo test
 		Val<List<Bean>>	vallistbeanbelief	= new Val<>(new ArrayList<>(Arrays.asList(new Bean[]{new Bean(1), new Bean(2)})));
 		
 		@Belief
-//		todo test
 		List<Bean>	listbeanbelief	= new ArrayList<>(Arrays.asList(new Bean[]{new Bean(1), new Bean(2)}));
 		
 		@Belief
@@ -144,6 +141,21 @@ public class BeliefTest
 			this.value = value;
 			pcs.firePropertyChange("value", oldvalue, value);
 		}
+		
+		public String toString()
+		{
+			return Integer.toString(value);
+		}
+		
+		public int hashCode()
+		{
+			return 31+value;
+		}
+		
+		public boolean equals(Object o)
+		{
+			return o instanceof Bean && ((Bean)o).value==value;
+		}
 	}
 	
 	@Test
@@ -189,7 +201,7 @@ public class BeliefTest
 		exta.scheduleStep(() ->
 		{
 			addEventListenerRule(fut1, ChangeEvent.FACTCHANGED, "valbeanbelief");
-			pojo.valbeanbelief.get().setValue(2);
+			pojo.valbeanbelief.get().setValue(1);
 			return null;
 		}).get(TestHelper.TIMEOUT);
 		checkEventInfo(fut1, null, pojo.valbeanbelief.get(), "value");
@@ -302,6 +314,117 @@ public class BeliefTest
 		checkEventInfo(changedfut, "2", "3", 1);
 		checkEventInfo(addedfut, null, "2", 1);
 		checkEventInfo(removedfut, null, "2", 1);
+	}
+
+	@Test
+	public void testListBeanBelief()
+	{
+		BeliefTestAgent	pojo	= new BeliefTestAgent();
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		
+		// Check list events
+		Future<IEvent>	changedfut	= new Future<>();
+		Future<IEvent>	addedfut	= new Future<>();
+		Future<IEvent>	removedfut	= new Future<>();
+		Bean[] removedbean	= new Bean[1];
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "listbeanbelief");
+			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "listbeanbelief");
+			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "listbeanbelief");
+			pojo.listbeanbelief.set(1, new Bean(3));
+			pojo.listbeanbelief.add(1, new Bean(2));
+			removedbean[0]	= pojo.listbeanbelief.remove(1);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(changedfut, new Bean(2), new Bean(3), 1);
+		checkEventInfo(addedfut, null, new Bean(2), 1);
+		checkEventInfo(removedfut, null, new Bean(2), 1);
+		
+		// Check no event on change of removed bean
+		Future<IEvent>	changedfut2	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut2, ChangeEvent.FACTCHANGED, "listbeanbelief");
+			removedbean[0].setValue(4);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertThrows(TimeoutException.class, () -> changedfut2.get(100)); // No event should be generated
+		
+		// Check bean property change events
+		Future<IEvent>	changedfut3	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut3, ChangeEvent.FACTCHANGED, "listbeanbelief");
+			pojo.listbeanbelief.get(1).setValue(4);
+		});
+		checkEventInfo(changedfut3, null, Arrays.asList(new Bean(1), new Bean(4)), null);
+	}
+
+	@Test
+	public void testValListBeanBelief()
+	{
+		BeliefTestAgent	pojo	= new BeliefTestAgent();
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		
+		// Check list events
+		Future<IEvent>	changedfut	= new Future<>();
+		Future<IEvent>	addedfut	= new Future<>();
+		Future<IEvent>	removedfut	= new Future<>();
+		Bean[] removedbean	= new Bean[1];
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "vallistbeanbelief");
+			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "vallistbeanbelief");
+			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "vallistbeanbelief");
+			pojo.vallistbeanbelief.get().set(1, new Bean(3));
+			pojo.vallistbeanbelief.get().add(1, new Bean(2));
+			removedbean[0]	= pojo.vallistbeanbelief.get().remove(1);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		checkEventInfo(changedfut, new Bean(2), new Bean(3), 1);
+		checkEventInfo(addedfut, null, new Bean(2), 1);
+		checkEventInfo(removedfut, null, new Bean(2), 1);
+		
+		// Check no event on change of removed bean
+		Future<IEvent>	changedfut2	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut2, ChangeEvent.FACTCHANGED, "vallistbeanbelief");
+			removedbean[0].setValue(4);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertThrows(TimeoutException.class, () -> changedfut2.get(100)); // No event should be generated
+		
+		// Check bean property change events
+		Future<IEvent>	changedfut3	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut3, ChangeEvent.FACTCHANGED, "vallistbeanbelief");
+			pojo.vallistbeanbelief.get().get(1).setValue(4);
+		});
+		checkEventInfo(changedfut3, null, Arrays.asList(new Bean(1), new Bean(4)), null);
+		
+		// Check turning off bean property change events
+		Future<IEvent>	changedfut4	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut4, ChangeEvent.FACTCHANGED, "vallistbeanbelief");
+			pojo.vallistbeanbelief.setObservationMode(ObservationMode.ON_COLLECTION_CHANGE);
+			pojo.vallistbeanbelief.get().get(1).setValue(5);
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertThrows(TimeoutException.class, () -> changedfut4.get(100)); // No event should be generated
+		
+		// Check turning back on bean property change events
+		Future<IEvent>	changedfut5	= new Future<>();
+		exta.scheduleStep(() ->
+		{
+			addEventListenerRule(changedfut5, ChangeEvent.FACTCHANGED, "vallistbeanbelief");
+			pojo.vallistbeanbelief.setObservationMode(ObservationMode.ON_ALL_CHANGES);
+			pojo.vallistbeanbelief.get().get(1).setValue(6);
+		});
+		checkEventInfo(changedfut5, null, Arrays.asList(new Bean(1), new Bean(6)), null);
 	}
 
 	@Test
