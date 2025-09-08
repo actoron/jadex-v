@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import jadex.common.ICommand;
+import jadex.common.TimeoutException;
 
 /**
  *  Default implementation of an intermediate future.
@@ -583,12 +584,17 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
     	    	   	icallers.remove(caller);
     			}
     			// else already resumed.
+    			
+    	    	ret	= hasNextIntermediateResult(timeout, realtime);
     		}
+    		catch(TimeoutException e)
+			{
+				ret	= false;
+			}
     		finally
     		{
     			caller.getLock().unlock();
     		}
-	    	ret	= hasNextIntermediateResult(timeout, realtime);
     	}
     	
     	return ret;
