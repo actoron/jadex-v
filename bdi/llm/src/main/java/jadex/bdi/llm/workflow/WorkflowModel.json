@@ -1,0 +1,81 @@
+{
+  "workflow": {
+    "id": "workflow_git_comment_check",
+    "name": "Comment Validation",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "sensor",
+        "name": "Webhook Listener",
+        "properties": {
+          "eventprovidertag": "push",
+          "source": "GitLab"
+        }
+      },
+      {
+        "id": "n2",
+        "type": "transformer",
+        "name": "Webhook Payload Transformer",
+        "properties": {
+        }
+      },
+      {
+        "id": "n3",
+        "type": "processor",
+        "name": "Prepare push request context",
+        "properties": {
+        }
+      },
+      {
+        "id": "n4",
+        "type": "query",
+        "query": "diff_overview",
+        "name": "Diff Overview",
+        "properties": {
+          "endpoint": "https://gitlab.example.com/api/v4/projects/{project_id}/repository/commits/{id}/diff"
+        }
+      },
+      {
+        "id": "n5",
+        "type": "query",
+        "query": "changed_files",
+        "name": "Changed Files",
+        "properties": {
+          "endpoint": "https://gitlab.example.com/api/v4/projects/{project_id}/repository/files/{file_path}"
+        }
+      },
+      {
+        "id": "n6",
+        "type": "transformer",
+        "name": "Validate Comments",
+        "properties": {
+          "waitFor": ["diff_overview", "changed_files"]
+        }
+      },
+      {
+        "id": "n7",
+        "type": "transformer",
+        "name": "Get Changed Files",
+        "properties": {
+        }
+      },
+      {
+        "id": "n8",
+        "type": "processor",
+        "name": "Validate Comments",
+        "properties": {
+        }
+      }
+    ],
+    "connections": [
+      { "id": "c1", "start": "n1", "end": "n2" },
+      { "id": "c2", "start": "n2", "end": "n3" },
+      { "id": "c3", "start": "n3", "end": "n4" },
+      { "id": "c4", "start": "n3", "end": "n5" },
+      { "id": "c5", "start": "n4", "end": "n6" },
+      { "id": "c6", "start": "n5", "end": "n7" },
+      { "id": "c7", "start": "n6", "end": "n8" },
+      { "id": "c8", "start": "n7", "end": "n8" }
+    ]
+  }
+}

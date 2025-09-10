@@ -83,15 +83,20 @@ public class JsonArrayProcessor extends AbstractJsonProcessor
 		if(idx!=null)
 			context.addKnownObject(ret, idx.asInt());
 		
-		Class<?> ccl = ret.getClass().getComponentType();
+		Class<?> ccl = compclazz != null? ret.getClass().getComponentType() : null;
 			
 		for(int i=0; i<array.size(); i++)
 		{
 			Object val = array.get(i);
+			//System.out.println("val class: " + val != null? val.getClass() : "null");
 			Object newval = traverser.doTraverse(val, ccl, conversionprocessors, processors, converter, mode, targetcl, context);
+			//System.out.println("newval class: " + newval != null? newval.getClass() : "null");
 			if(newval != Traverser.IGNORE_RESULT && newval!=val)
 			{
-				Array.set(ret, i, traverser.convertBasicType(converter, newval, compclazz, targetcl, context));	
+				if (newval != null && SReflect.isBasicType(newval.getClass()))
+					Array.set(ret, i, traverser.convertBasicType(converter, newval, compclazz, targetcl, context));
+				else
+					Array.set(ret, i, newval);
 				//Array.set(ret, i, JsonBeanProcessor.convertBasicType(newval, clazz));	
 			}
 		}

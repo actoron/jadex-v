@@ -4247,6 +4247,72 @@ public class SUtil
 	{
 		return Integer.toHexString(ch).toUpperCase(Locale.ENGLISH);
 	}
+
+	/**
+	 *  Converts a nested Map JSON object to a nice string representation.
+	 * @param map Tje nested Json map.
+	 * @param level The indentation level.
+	 */
+	public static String jsonMapToString(Map<String, Object> map, int level) {
+		StringBuilder ret = new StringBuilder();
+		for (Map.Entry<String, Object> entry : map.entrySet()) {
+			for (int i = 0; i < level; i++)
+				ret.append("\t");
+			if (entry.getValue() == null) {
+				ret.append(entry.getKey() + ": null\n");
+			}
+			else if (entry.getValue() instanceof Map) {
+				ret.append(entry.getKey() + ": {\n");
+				ret.append(jsonMapToString((Map<String, Object>) entry.getValue(), level + 1) + "\n");
+				for (int i = 0; i < level; i++)
+					ret.append("\t");
+				ret.append("}\n");
+			} else if (entry.getValue().getClass().isArray()) {
+				ret.append(entry.getKey() + ": [\n");
+				ret.append(jsonArrayToString((Object[]) entry.getValue(), level + 1) + "\n");
+				for (int i = 0; i < level; i++)
+					ret.append("\t");
+				ret.append("]\n");
+			}
+			else {
+				ret.append(entry.getKey() + ": " + entry.getValue() + "\n");
+			}
+		}
+		return ret.toString();
+	}
+
+	/**
+	 *  Converts a JSON array to a nice string representation.
+	 * @param array The Json array.
+	 * @param level The indentation level.
+	 */
+	public static String jsonArrayToString(Object[] array, int level) {
+		StringBuilder ret = new StringBuilder();
+		for (Object value : array) {
+			for (int i = 0; i < level; i++)
+				ret.append("\t");
+			if (value == null) {
+				ret.append("null\n");
+			}
+			else if (value instanceof Map) {
+				ret.append("{\n");
+				ret.append(jsonMapToString((Map<String, Object>) value, level + 1) + "\n");
+				for (int i = 0; i < level; i++)
+					ret.append("\t");
+				ret.append("}\n");
+			} else if (value.getClass().isArray()) {
+				ret.append("[\n");
+				ret.append(jsonArrayToString((Object[]) value, level + 1) + "\n");
+				for (int i = 0; i < level; i++)
+					ret.append("\t");
+				ret.append("]\n");
+			}
+			else {
+				ret.append(value + "\n");
+			}
+		}
+		return ret.toString();
+	}
 	
 	/**
 	 *  Convert a byte array to a string representation.

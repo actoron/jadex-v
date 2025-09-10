@@ -6,19 +6,23 @@ public class PushEvent
 
     private String projecturl;
 
-    public String getProjectname() {
+    public PushEvent() {
+
+    }
+
+    public String getProjectName() {
         return projectname;
     }
 
-    public void setProjectname(String projectname) {
+    public void setProjectName(String projectname) {
         this.projectname = projectname;
     }
 
-    public String getProjecturl() {
+    public String getProjectUrl() {
         return projecturl;
     }
 
-    public void setProjecturl(String projecturl) {
+    public void setProjectUrl(String projecturl) {
         this.projecturl = projecturl;
     }
 

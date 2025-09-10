@@ -1,13 +1,12 @@
 package jadex.llm.workflow;
 
 import jadex.bdi.llm.workflow.IJsonEventProvider;
-import jadex.bdi.llm.workflow.ReceivingJsonSensorAgent;
-import jadex.core.IComponentManager;
+import jadex.bdi.llm.workflow.IncomingRestSensorAgent;
 import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 
-public class GitlabPushEventAgent extends ReceivingJsonSensorAgent
+public class GitlabPushEventAgent extends IncomingRestSensorAgent
 {
     public GitlabPushEventAgent()
     {
@@ -23,7 +22,4 @@ public class GitlabPushEventAgent extends ReceivingJsonSensorAgent
         System.out.println("Tags: " + service.getServiceId().getTags());
         //ps.publishResources("http://localhost:5000/", "jadex/bdi-llm/workflow");
     }
-
-
-
 }

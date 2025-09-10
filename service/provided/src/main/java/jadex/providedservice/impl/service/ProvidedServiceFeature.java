@@ -2,13 +2,9 @@ package jadex.providedservice.impl.service;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import jadex.common.IValueFetcher;
 import jadex.common.MethodInfo;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
@@ -18,6 +14,7 @@ import jadex.core.impl.ComponentManager;
 import jadex.core.impl.ILifecycle;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.InjectionFeature;
+import jadex.javaparser.SJavaParser;
 import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
@@ -246,6 +243,18 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	 */
 	protected IService	createProvidedServiceProxy(Object service, String name, Class<?> type, String[] tags, ServiceScope scope)
 	{
+		IValueFetcher fetcher = new IValueFetcher() {
+			@Override
+			public Object fetchValue(String name) {
+				if ("$pojo".equals(name)) {
+					return self.getPojo();
+				}
+				return null;
+			}
+		};
+		if (tags != null)
+			tags = Arrays.stream(tags).map((input) -> (String) SJavaParser.evaluateExpression(input, fetcher)).toArray(String[]::new);
+
 		// Create proxy with handler
 		IServiceIdentifier sid = ServiceIdentifier.createServiceIdentifier(self, name, type, scope, tags==null? null: Set.of(tags));
 		

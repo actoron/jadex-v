@@ -1,6 +1,5 @@
 package jadex.bdi.llm.workflow;
 
-
 import jadex.future.IFuture;
 import jadex.providedservice.annotation.Service;
 

@@ -1,31 +1,28 @@
 package jadex.bdi.llm.workflow;
 
+import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
-import jadex.micro.annotation.Agent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JsonExctractorAgent<T> {
+public class JsonMapExtractorAgent<T> {
 
     @Inject
     private IComponent component;
 
     private String sensortag;
 
-    private Class<?> resultclass;
-
     private List<JsonMapping> mappings;
 
-    public JsonExctractorAgent(String sensortag, Class<?> resultclass, List<JsonMapping> mappings) {
+    public JsonMapExtractorAgent(String sensortag, List<JsonMapping> mappings) {
         this.sensortag = sensortag;
-        this.resultclass = resultclass;
         this.mappings = mappings;
     }
 
@@ -35,38 +32,31 @@ public class JsonExctractorAgent<T> {
         ServiceQuery<IJsonEventProvider> query = new ServiceQuery<>(IJsonEventProvider.class);
         query.setServiceTags(new String[] { sensortag }, component).setMultiplicity(ServiceQuery.Multiplicity.ONE);
         reqfeat.addQuery(query).next((sensoragent) -> {
-            System.out.println("sensoragent: " + sensoragent);
+            System.out.println("extractoragent result: " + sensoragent);
             sensoragent.subscribe().next(this::processPushEvent);
         });
     }
 
     public void processPushEvent(Map<String, Object> event)
     {
-        System.out.println("event: " + event);
-        Object result = null;
+        //System.out.println("event: " + event);
+        Map<String, Object> result = new HashMap<>();
         try
         {
-            Constructor<?> c = resultclass.getConstructor();
-            result = c.newInstance();
-
             for (JsonMapping mapping : mappings)
             {
                 String[] jsonpath = mapping.jsonsource().split("\\.");
                 String[] objpath = mapping.javatarget().split("\\.");
 
-                Object targetobject = result;
+                Map<String, Object> targetobject = result;
                 for (int i = 0; i < objpath.length - 1; i++)
                 {
                     String objname = objpath[i];
-                    objname = objname.substring(0, 1).toUpperCase() + objname.substring(1);
-                    Method subobjgetter = targetobject.getClass().getMethod("get" + objname);
-                    Object subobj = subobjgetter.invoke(targetobject);
+                    Map<String, Object> subobj = (Map<String, Object>) targetobject.get(objname);
                     if (subobj == null)
                     {
-                        Class<?> subobjclass = subobjgetter.getReturnType();
-                        Constructor<?> subobjconstructor = subobjclass.getConstructor();
-                        subobj = subobjconstructor.newInstance();
-                        targetobject.getClass().getMethod("set" + objname, subobjclass).invoke(targetobject, subobj);
+                        subobj = new HashMap<>();
+                        targetobject.put(objname, subobj);
                     }
                     targetobject = subobj;
                 }
@@ -78,17 +68,22 @@ public class JsonExctractorAgent<T> {
                     jsonvalue = ((Map<String, Object>) jsonvalue).get(jsonname);
                 }
 
-                targetobject.getClass().getMethod("set" + objpath[objpath.length - 1], jsonvalue.getClass()).invoke(targetobject, jsonvalue);
+                String objname = objpath[objpath.length - 1];
+                targetobject.put(objname, jsonvalue);
             }
 
         }
         catch (Exception e)
         {
             e.printStackTrace();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
 
-        System.out.println("result: " + result);
+        System.out.println("Map Result: " + result);
     }
+
+
 
     public record JsonMapping(String javatarget, String jsonsource) {};
 }
