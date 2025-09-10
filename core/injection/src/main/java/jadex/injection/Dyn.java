@@ -1,4 +1,4 @@
-package jadex.bdi;
+package jadex.injection;
 
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;

@@ -1,4 +1,4 @@
-package jadex.bdi;
+package jadex.injection;
 
 import jadex.collection.IEventPublisher;
 import jadex.core.IComponent;

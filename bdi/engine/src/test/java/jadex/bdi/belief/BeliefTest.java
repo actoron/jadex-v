@@ -20,12 +20,9 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bdi.AbstractDynVal.ObservationMode;
-import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.impl.BDIAgentFeature;
@@ -39,6 +36,9 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
 import jadex.future.IntermediateFuture;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
+import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IEvent;
@@ -113,7 +113,10 @@ public class BeliefTest
 //		Dyn<Integer>	dynamicbelief	= new Dyn<>(()->valbelief.get()+1);
 
 		@Belief//(updaterate = 1000)
-		Dyn<Long>	updatebelief	= new Dyn<>(()->System.currentTimeMillis()).setUpdateRate(1000);
+		Dyn<Long>	updatebelief	= new Dyn<>(()->System.currentTimeMillis())
+			.setUpdateRate(1000)
+			// Test if byte code can be analyzed when also calling setObservationMode
+			.setObservationMode(ObservationMode.ON_ALL_CHANGES);
 	}
 	
 	public static class Bean

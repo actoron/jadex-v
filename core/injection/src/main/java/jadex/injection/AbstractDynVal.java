@@ -1,4 +1,4 @@
-package jadex.bdi;
+package jadex.injection;
 
 import java.beans.PropertyChangeListener;
 import java.util.Collection;

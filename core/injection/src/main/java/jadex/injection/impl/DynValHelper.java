@@ -1,14 +1,14 @@
-package jadex.bdi.impl;
+package jadex.injection.impl;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 
-import jadex.bdi.Dyn;
-import jadex.bdi.Val;
 import jadex.collection.IEventPublisher;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 
 /**
  *  Helper class for observable values.

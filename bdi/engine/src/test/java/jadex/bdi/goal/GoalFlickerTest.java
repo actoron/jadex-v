@@ -12,7 +12,6 @@ import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
@@ -25,6 +24,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
+import jadex.injection.Val;
 
 /**
  *  Test means-end reasoning (i.e. plan action removal)

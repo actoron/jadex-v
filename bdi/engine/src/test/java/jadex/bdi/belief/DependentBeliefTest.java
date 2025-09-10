@@ -2,14 +2,14 @@ package jadex.bdi.belief;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.bdi.Dyn;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.core.IComponentManager;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 
 /**
  *  Test that belief dependencies are automatically detected.

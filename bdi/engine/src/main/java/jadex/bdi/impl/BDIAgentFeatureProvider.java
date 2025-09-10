@@ -30,13 +30,11 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
 import jadex.bdi.ICapability;
 import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
 import jadex.bdi.annotation.Deliberation;
@@ -70,10 +68,6 @@ import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.MethodPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.collection.IEventPublisher;
-import jadex.collection.ListWrapper;
-import jadex.collection.MapWrapper;
-import jadex.collection.SPropertyChange;
-import jadex.collection.SetWrapper;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
@@ -85,6 +79,9 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
+import jadex.injection.AbstractDynVal.ObservationMode;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.IValueFetcherCreator;
@@ -495,7 +492,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/** The field accesses by method. */
 	protected static final Map<String, Set<Field>>	accessedfields	= new LinkedHashMap<>();
 	
-	/** The code executed for a dynamic belief. */
+	/** The code executed for a dynamic belief, i.e. the Callable.call() method descriptor. */
 	protected static final Map<Field, String>	dynbelmethods	= new LinkedHashMap<>();
 	
 	/** The method accesses by method. */
@@ -584,7 +581,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 									Field f	= SReflect.getField(ownerclazz, name);
 									if(f.getType().equals(Dyn.class) && lastdyn!=null)
 									{
-//										System.out.println("\tRemembering lambda for Val: "+f+", "+lastdyn);
+//										System.out.println("\tRemembering lambda for Dyn: "+f+", "+lastdyn);
 										synchronized(dynbelmethods)
 										{
 											dynbelmethods.put(f, lastdyn);
@@ -606,6 +603,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 //							System.out.println("\tVisiting method call: "+callee);
 							addMethodAccess(method, callee);
 							
+							String	dynclazz	= Dyn.class.getName().replace(".", "/");
+							String	obsclazz	= ObservationMode.class.getName().replace(".", "/");
+							
 							// Remember call() from Callable object for next Dyn constructor.
 							if("<init>".equals(name))
 							{
@@ -626,8 +626,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							
 							// Only remember lambda when followed by a Dyn constructor
 							// to store dependency on next putfield.
-							else if(!"jadex/bdi/Dyn.<init>(Ljava/util/concurrent/Callable;)V".equals(callee))
+							else if(!callee.equals(dynclazz+".<init>(Ljava/util/concurrent/Callable;)V")
+								&&  !callee.equals(dynclazz+".setUpdateRate(J)L"+dynclazz+";")
+								&&  !callee.equals(dynclazz+".setObservationMode(L"+obsclazz+";)L"+dynclazz+";"))
 							{
+//								System.out.println("\tForgetting lambda due to: "+callee);
 								lastdyn	= null;
 							}
 						}
@@ -1906,12 +1909,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 */
 	protected static void addBeliefField(List<Class<?>> pojoclazzes, String capaprefix, Field f, List<IInjectionHandle> ret) throws Exception
 	{
-		Belief	belief	= f.getAnnotation(Belief.class);
 		String	name	= capaprefix+f.getName();
 		
-		f.setAccessible(true);
-		MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(f);
-		MethodHandle	setter	= MethodHandles.lookup().unreflectSetter(f);
 		EventType addev = new EventType(ChangeEvent.FACTADDED, name);
 		EventType remev = new EventType(ChangeEvent.FACTREMOVED, name);
 		EventType fchev = new EventType(ChangeEvent.FACTCHANGED, name);
@@ -1945,36 +1944,37 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		};
 
 		
-		// Dynamic belief (Dyn object)
+		// Dependent belief (Dyn object with Callable that accesses other dynamic values)
 		if(Dyn.class.equals(f.getType()))
 		{
 			// Throw change events when dependent beliefs change.
 			List<String>	deps	= null;
-			if(belief.beliefs().length!=0)
+			String callable = null;
+			synchronized(dynbelmethods)
 			{
-				deps	= addPrefix(capaprefix, belief.beliefs());
+				if(dynbelmethods.containsKey(f))
+				{
+					callable	= dynbelmethods.get(f);
+				}
+			}
+			
+			if(callable!=null)
+			{
+				deps	= findDependentBeliefs(pojoclazzes.get(0), pojoclazzes, callable);
 			}
 			else
 			{
-				String dyn = null;
-				synchronized(dynbelmethods)
-				{
-					if(dynbelmethods.containsKey(f))
-					{
-						dyn	= dynbelmethods.get(f);
-					}
-				}
-				
-				if(dyn!=null)
-				{
-					deps	= findDependentBeliefs(pojoclazzes.get(0), pojoclazzes, dyn);
-				}
+				throw new UnsupportedOperationException("Cannot determine Callable.call() implementation for dynamic value: "+f);
 			}
 			
 			if(deps!=null && deps.size()>0)	// size may be null for belief with update rate
 			{
 				List<EventType>	events	= getTriggerEvents(pojoclazzes, deps, deps, deps, new Class[0], name);
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+				
+				f.setAccessible(true);
+				MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(f);
+
 				
 				ret.add((comp, pojos, context, oldval) ->
 				{
@@ -2009,156 +2009,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					}
 				});
 			}
-
-			// Init Dyn on agent start
-			ret.add((comp, pojos, context, dummy) ->
-			{
-				try
-				{
-					Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
-					if(dyn==null)
-					{
-						throw new RuntimeException("Dynamic belief field is null: "+f);
-					}
-					DynValHelper.initDyn(dyn, comp, evpub);
-										
-					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
-			});
 		}
-		else
-		{
-			if(belief.beliefs().length>0)
-			{
-				throw new UnsupportedOperationException("Dependent beliefs are only support for (dynamic) Val beliefs: "+f);
-			}
 		
-			// Val belief
-			if(Val.class.equals(f.getType()))
-			{				
-				// Init Val on agent start
-				ret.add((comp, pojos, context, dummy) ->
-				{
-					try
-					{
-						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(value==null)
-						{
-							value	= new Val<Object>((Object)null);
-							setter.invoke(pojos.get(pojos.size()-1), value);
-						}
-						DynValHelper.initVal(value, comp, evpub);						
-						return null;
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				});
-			}
-			// List belief
-			else if(List.class.equals(f.getType()))
-			{
-				ret.add((comp, pojos, context, oldval) ->
-				{
-					try
-					{
-						List<Object>	value	= (List<Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(value==null)
-						{
-							value	= new ArrayList<>();
-						}
-						value	= new ListWrapper<>(value, evpub, comp, true);
-						setter.invoke(pojos.get(pojos.size()-1), value);
-						return null;
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				});
-			}
-			
-			// Set belief
-			else if(Set.class.equals(f.getType()))
-			{
-				ret.add((comp, pojos, context, oldval) ->
-				{
-					try
-					{
-						Set<Object>	value	= (Set<Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(value==null)
-						{
-							value	= new LinkedHashSet<>();
-						}
-						value	= new SetWrapper<>(value, evpub, comp, true);
-						setter.invoke(pojos.get(pojos.size()-1), value);
-						return null;
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				});
-			}
-			
-			// Map belief
-			else if(Map.class.equals(f.getType()))
-			{
-				ret.add((comp, pojos, context, oldval) ->
-				{
-					try
-					{
-						Map<Object, Object>	value	= (Map<Object, Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(value==null)
-						{
-							value	= new LinkedHashMap<>();
-						}
-						value	= new MapWrapper<>(value, evpub, comp, true);
-						setter.invoke(pojos.get(pojos.size()-1), value);
-						return null;
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				});
-			}
-			
-			// Last resort -> Bean belief
-			// Check if addPropertyChangeListener() method exists
-			else if(SPropertyChange.getAdder(f.getType())!=null)
-			{
-				ret.add((comp, pojos, context, oldval) ->
-				{
-					try
-					{
-						Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
-						if(bean!=null)
-						{
-							SPropertyChange.updateListener(null, bean, null, comp, evpub, null);
-						}
-						else
-						{
-							System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
-						}
-						return null;
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				});
-			}
-			else
-			{
-				// No belief options match ->
-				throw new UnsupportedOperationException("Cannot use as belief: "+f);
-			}
+		IInjectionHandle handle = InjectionModel.createDynamicValueInit(f, evpub);
+		if(handle==null)
+		{
+			// No options match ->
+			throw new UnsupportedOperationException("Cannot use as belief: "+f);
 		}
+		ret.add(handle);
 	}	
 }

@@ -6,7 +6,6 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 
 import jadex.bdi.ICapability;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
@@ -14,6 +13,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.bdi.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 

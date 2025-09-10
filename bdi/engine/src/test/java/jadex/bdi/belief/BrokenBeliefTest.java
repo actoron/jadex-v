@@ -2,8 +2,6 @@ package jadex.bdi.belief;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgent;
@@ -19,15 +17,6 @@ public class BrokenBeliefTest
 	@Test
 	public void	testObjectField()
 	{
-//		IComponentHandle	handle	= IComponentManager.get().create(new IBDIAgent()
-//		{
-//			@Belief
-//			Object	broken;
-//		}).get(TestHelper.TIMEOUT);
-//		
-//		SUtil.runWithoutOutErr(
-//			() -> assertThrows(ComponentTerminatedException.class,
-//				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
 		assertThrows(UnsupportedOperationException.class,
 			() -> IComponentManager.get().create(new IBDIAgent()
 		{
@@ -36,27 +25,28 @@ public class BrokenBeliefTest
 		}).get(TestHelper.TIMEOUT));
 	}
 
-	@Test
-	public void	testDependentBeliefs()
-	{
-//		IComponentHandle	handle	=
-//			IComponentManager.get().create(new IBDIAgent()
-//			{
-//				@Belief(beliefs = "dummy")
-//				Map<Object, Object>	broken;
-//			}).get(TestHelper.TIMEOUT);
-//
-//		SUtil.runWithoutOutErr(
-//			() -> assertThrows(ComponentTerminatedException.class,
-//				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
-		
-		assertThrows(UnsupportedOperationException.class,
-			() -> IComponentManager.get().create(new IBDIAgent()
-		{
-			@Belief(beliefs = "dummy")
-			Map<Object, Object>	broken;
-		}).get(TestHelper.TIMEOUT));
-	}
+	// No more beliefs on @Belief annotation
+//	@Test
+//	public void	testDependentBeliefs()
+//	{
+////		IComponentHandle	handle	=
+////			IComponentManager.get().create(new IBDIAgent()
+////			{
+////				@Belief(beliefs = "dummy")
+////				Map<Object, Object>	broken;
+////			}).get(TestHelper.TIMEOUT);
+////
+////		SUtil.runWithoutOutErr(
+////			() -> assertThrows(ComponentTerminatedException.class,
+////				() -> handle.scheduleStep(() -> {return null;}).get(TestHelper.TIMEOUT)));
+//		
+//		assertThrows(UnsupportedOperationException.class,
+//			() -> IComponentManager.get().create(new IBDIAgent()
+//		{
+//			@Belief(beliefs = "dummy")
+//			Map<Object, Object>	broken;
+//		}).get(TestHelper.TIMEOUT));
+//	}
 	
 	// No more update rate on @Belief annotation
 //	@Test

@@ -20,10 +20,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
-import jadex.bdi.Val;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
 import jadex.bdi.impl.plan.RPlan;
@@ -33,6 +31,8 @@ import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 
 @SuppressWarnings("serial")
 public class BDIViewer extends JFrame 

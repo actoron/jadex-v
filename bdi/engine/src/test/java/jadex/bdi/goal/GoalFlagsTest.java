@@ -14,7 +14,6 @@ import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.PlanFailureException;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.ExcludeMode;
@@ -25,6 +24,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.IntermediateFuture;
+import jadex.injection.Val;
 
 /**
  *  Test various goal flags.
