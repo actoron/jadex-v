@@ -219,8 +219,8 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 		    		ServiceQuery<ServiceEvent> lquery = new ServiceQuery<>((Class<IServiceIdentifier>)null)
 		    			.setEventMode()
 		    			.setOwner(agent.getId())
-		    			.setScope(ServiceScope.GLOBAL)
-		    			.setGroupNames((String[])null);
+		    			.setScope(ServiceScope.GLOBAL);
+		    			//.setGroupNames();
 		    			//.setSearchStart(spid);	// Only find services that are visible to SP
 		    		
 		    		ISubscriptionIntermediateFuture<ServiceEvent> localquery = (ISubscriptionIntermediateFuture)ServiceRegistry.getRegistry().addQuery(lquery);									
@@ -241,7 +241,7 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
     							}
     							catch (Exception e)
     							{
-    								e.printStackTrace();
+    								//e.printStackTrace();
     								initRegistryReevaluation();
     							}
 		    				});
