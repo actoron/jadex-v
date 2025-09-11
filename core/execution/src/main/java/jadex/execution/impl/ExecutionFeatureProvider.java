@@ -257,7 +257,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		return rp.subscribeToResults();
 	}
 
-	public static void	addResult(ComponentIdentifier id, String name, Object value)
+	public static void	setResult(ComponentIdentifier id, String name, Object value)
 	{
 		IResultProvider	rp;
 		synchronized(results)
@@ -269,7 +269,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				results.put(id, rp);
 			}
 		}
-		rp.addResult(name, value);
+		rp.setResult(name, value);
 	}
 
 	public static void addResultHandler(ComponentIdentifier id, IResultProvider provider)

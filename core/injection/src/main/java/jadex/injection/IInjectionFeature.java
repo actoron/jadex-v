@@ -8,9 +8,9 @@ import jadex.core.IComponentFeature;
 public interface IInjectionFeature extends IComponentFeature
 {
 	/**
-	 *  Add a result.
+	 *  Set a result.
 	 *  Also notifies result subscribers, if any.
 	 */
-	public void addResult(String name, Object value);
+	public void setResult(String name, Object value);
 
 }

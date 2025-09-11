@@ -121,10 +121,10 @@ public class RBpmnProcess extends ResultProvider
 		return !onlydeclared.contains(name);
 	}
 	
-	public void addResult(String name, Object value)
+	public void setResult(String name, Object value)
 	{
 		onlydeclared.remove(name);
-		super.addResult(name, value);
+		super.setResult(name, value);
 	}
 	
 	/**

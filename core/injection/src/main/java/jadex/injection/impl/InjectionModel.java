@@ -266,7 +266,6 @@ public class InjectionModel
 			{
 				if(results==null)
 				{
-					// TODO: also @Provide!???
 					List<Getter>	fetchers = getGetters(classes, ProvideResult.class, contextfetchers);
 					
 					if(fetchers==null)

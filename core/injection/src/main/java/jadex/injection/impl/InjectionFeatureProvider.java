@@ -1,10 +1,12 @@
 package jadex.injection.impl;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jadex.collection.IEventPublisher;
 import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.core.Application;
@@ -22,6 +24,7 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.InjectException;
+import jadex.injection.annotation.ProvideResult;
 
 /**
  *  Injection feature provider.
@@ -150,55 +153,55 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			return null;
 		}, Inject.class, InjectException.class);
 		
-//		// Add init code for dynamic values
-//		InjectionModel.addPostInject((pojotypes, path, contextfetchers) -> 
-//		{
-//			List<IInjectionHandle>	ret	= new ArrayList<>();
-//			Class<?> pojoclazz	= pojotypes.get(pojotypes.size()-1);
-//			for(Field f: InjectionModel.findFields(pojoclazz, ProvideResult.class))
-//			{
-//				// prepend path names.
-//				String	name	= f.getName();
-//				if(path!=null)
-//				{
-//					for(String entry: path.reversed())
-//					{
-//						name	= entry+"."+name;
-//					}
-//				}
-//				String	fname	= name;
-//				
-//				IEventPublisher	publisher	= new IEventPublisher()
-//				{
-//					@Override
-//					public void entryAdded(Object context, Object value, Object info)
-//					{
-//						IComponent	comp	= (IComponent)context;
-//						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addResult(fname, value);
-//					}
-//
-//					@Override
-//					public void entryRemoved(Object context, Object value, Object info)
-//					{
-//						// NOP
-//					}
-//
-//					@Override
-//					public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
-//					{
-//						IComponent	comp	= (IComponent)context;
-//						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addResult(fname, newvalue);
-//					}
-//				};
-//				
-//				IInjectionHandle	handle	= InjectionModel.createDynamicValueInit(f, publisher);
-//				if(handle!=null)
-//				{
-//					ret.add(handle);
-//				}
-//			}
-//			return ret;
-//		});
+		// Add init code for dynamic values
+		InjectionModel.addPostInject((pojotypes, path, contextfetchers) -> 
+		{
+			List<IInjectionHandle>	ret	= new ArrayList<>();
+			Class<?> pojoclazz	= pojotypes.get(pojotypes.size()-1);
+			for(Field f: InjectionModel.findFields(pojoclazz, ProvideResult.class))
+			{
+				// prepend path names.
+				String	name	= f.getName();
+				if(path!=null)
+				{
+					for(String entry: path.reversed())
+					{
+						name	= entry+"."+name;
+					}
+				}
+				String	fname	= name;
+				
+				IEventPublisher	publisher	= new IEventPublisher()
+				{
+					@Override
+					public void entryAdded(Object context, Object value, Object info)
+					{
+						IComponent	comp	= (IComponent)context;
+						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(fname, value);
+					}
+
+					@Override
+					public void entryRemoved(Object context, Object value, Object info)
+					{
+						// NOP
+					}
+
+					@Override
+					public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
+					{
+						IComponent	comp	= (IComponent)context;
+						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(fname, newvalue);
+					}
+				};
+				
+				IInjectionHandle	handle	= InjectionModel.createDynamicValueInit(f, publisher);
+				if(handle!=null)
+				{
+					ret.add(handle);
+				}
+			}
+			return ret;
+		});
 	}
 
 	/**

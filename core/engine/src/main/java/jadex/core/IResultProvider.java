@@ -14,7 +14,7 @@ public interface IResultProvider
 	public abstract Map<String, Object> getResultMap();
 	public abstract List<SubscriptionIntermediateFuture<NameValue>> getResultSubscribers();
 	
-	public default void	addResult(String name, Object value)
+	public default void	setResult(String name, Object value)
 	{
 		synchronized(this)
 		{

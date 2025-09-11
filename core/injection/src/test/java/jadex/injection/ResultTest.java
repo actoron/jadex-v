@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +42,7 @@ public class ResultTest
 			@OnStart
 			void start(IInjectionFeature feature)
 			{
-				feature.addResult("result", "success");
+				feature.setResult("result", "success");
 			}
 		});
 		assertEquals("success", fut.get(TIMEOUT));
@@ -166,13 +167,13 @@ public class ResultTest
 			@OnStart
 			void start(IInjectionFeature feature)
 			{
-				feature.addResult("start", "startvalue");
+				feature.setResult("start", "startvalue");
 			}
 			
 			@OnEnd
 			void end(IInjectionFeature feature)
 			{
-				feature.addResult("end", "endvalue");
+				feature.setResult("end", "endvalue");
 			}
 		}).get(TIMEOUT);
 		
@@ -220,13 +221,12 @@ public class ResultTest
 	public void	testNoCopyGetResults()
 	{
 		List<String>	value	= Collections.singletonList("hello");
-		
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+		class NoCopyPojo implements Supplier<List<String>>
 		{
 			@ProvideResult
 			@NoCopy
 			List<String>	field	= value;
-			
+
 			// Method annotation
 			@ProvideResult
 			@NoCopy
@@ -234,17 +234,27 @@ public class ResultTest
 			{
 				return value;
 			}
-			
+
 			// Return type annotation
 			@ProvideResult
 			protected	@NoCopy	List<String>	method2()
 			{
 				return value;
 			}
-		}).get(TIMEOUT);
+
+			// Get access to internal field (wrapped by ListWrapper due to dynamic value)
+			@Override
+			public List<String> get()
+			{
+				return field;
+			}
+		}
+		
+		NoCopyPojo	pojo	= new NoCopyPojo();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TIMEOUT);
 		
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("field"));
-		assertSame(value, handle.getResults().get(TIMEOUT).get("field"));
+		assertSame(pojo.get(), handle.getResults().get(TIMEOUT).get("field"));
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("method1"));
 		assertSame(value, handle.getResults().get(TIMEOUT).get("method1"));
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("method2"));

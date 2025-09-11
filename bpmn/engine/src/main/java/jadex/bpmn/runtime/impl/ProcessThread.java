@@ -1171,7 +1171,7 @@ public class ProcessThread	implements ITaskContext
 						// Result data edge
 						//instance.getFeature(IArgumentsResultsFeature.class).getResults().put(de.getTargetParameter(), value);
 						RBpmnProcess pojo = (RBpmnProcess)((BpmnProcess)instance).getPojo();
-						pojo.addResult(de.getTargetParameter(), value);
+						pojo.setResult(de.getTargetParameter(), value);
 					}
 					else
 					{

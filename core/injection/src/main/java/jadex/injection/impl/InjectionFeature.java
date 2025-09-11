@@ -139,19 +139,30 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	//-------- IInjectionFeature interface --------
 	
 	@Override
-	public void addResult(String name, Object value)
+	public void setResult(String name, Object value)
 	{
 		if(rp==null)
 		{
 			rp	= new ResultProvider();
 		}
-		rp.addResult(name, value);
+		rp.setResult(name, value);
 	}
 	
 	//-------- internal methods (to be used by other features) --------
 	
 	/**
-	 *  Get the results as annotated with Provide or ProvideResult.
+	 *  Notify about a result, i.e. a change in a dynamic result field.
+	 */
+	public void notifyResult(String name, Object value)
+	{
+		if(rp!=null)
+		{
+			rp.notifyResult(name, value);
+		}
+	}
+	
+	/**
+	 *  Get the results as annotated with ProvideResult.
 	 */
 	public Map<String, Object>	getResults()
 	{
