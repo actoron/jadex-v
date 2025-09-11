@@ -149,6 +149,56 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			}
 			return null;
 		}, Inject.class, InjectException.class);
+		
+//		// Add init code for dynamic values
+//		InjectionModel.addPostInject((pojotypes, path, contextfetchers) -> 
+//		{
+//			List<IInjectionHandle>	ret	= new ArrayList<>();
+//			Class<?> pojoclazz	= pojotypes.get(pojotypes.size()-1);
+//			for(Field f: InjectionModel.findFields(pojoclazz, ProvideResult.class))
+//			{
+//				// prepend path names.
+//				String	name	= f.getName();
+//				if(path!=null)
+//				{
+//					for(String entry: path.reversed())
+//					{
+//						name	= entry+"."+name;
+//					}
+//				}
+//				String	fname	= name;
+//				
+//				IEventPublisher	publisher	= new IEventPublisher()
+//				{
+//					@Override
+//					public void entryAdded(Object context, Object value, Object info)
+//					{
+//						IComponent	comp	= (IComponent)context;
+//						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addResult(fname, value);
+//					}
+//
+//					@Override
+//					public void entryRemoved(Object context, Object value, Object info)
+//					{
+//						// NOP
+//					}
+//
+//					@Override
+//					public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
+//					{
+//						IComponent	comp	= (IComponent)context;
+//						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addResult(fname, newvalue);
+//					}
+//				};
+//				
+//				IInjectionHandle	handle	= InjectionModel.createDynamicValueInit(f, publisher);
+//				if(handle!=null)
+//				{
+//					ret.add(handle);
+//				}
+//			}
+//			return ret;
+//		});
 	}
 
 	/**
