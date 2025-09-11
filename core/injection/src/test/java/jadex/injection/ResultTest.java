@@ -188,7 +188,7 @@ public class ResultTest
 		handle.terminate().get(TIMEOUT);
 		
 		res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new ResultEvent("end", "endvalue"), res);
+		assertEquals(new ResultEvent(Type.CHANGED, "end", "endvalue", null, null), res);
 	}
 	
 	/**

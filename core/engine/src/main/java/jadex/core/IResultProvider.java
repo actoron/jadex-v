@@ -16,11 +16,12 @@ public interface IResultProvider
 	
 	public default void	setResult(String name, Object value)
 	{
+		Object	old;
 		synchronized(this)
 		{
-			getResultMap().put(name, value);
+			old	= getResultMap().put(name, value);
 		}
-		notifyResult(new ResultEvent(name, value));
+		notifyResult(new ResultEvent(Type.CHANGED, name, value, old, null));
 	}
 	
 	public default void notifyResult(ResultEvent event)

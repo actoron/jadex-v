@@ -27,12 +27,4 @@ public record ResultEvent(Type type, String name, Object value, Object oldvalue,
 		/** A result was changed in total or a change occurred in a bean/collection/map. */
 		CHANGED
 	}
-	
-	/**
-	 *  Default constructor for a Type.CHANGED event with only name and value.
-	 */
-	public ResultEvent(String name, Object value)
-	{
-		this(Type.CHANGED, name, value, null, null);
-	}
 }
