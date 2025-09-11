@@ -24,6 +24,7 @@ import jadex.future.SubscriptionIntermediateDelegationFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
@@ -70,7 +71,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 	protected MultiCollection<ComponentIdentifier, ServiceQueryInfo<?>> clientqueries = new MultiCollection<>();
 	
 	// getRegisteredClients() futures
-	protected Set<SubscriptionIntermediateFuture<ComponentIdentifier>> reglisteners = new LinkedHashSet<>();
+	//protected Set<SubscriptionIntermediateFuture<ComponentIdentifier>> reglisteners = new LinkedHashSet<>();
 	
 	protected Set<ComponentIdentifier> clients = new LinkedHashSet<>();
 	
@@ -133,7 +134,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 
 		serviceregistry.subscribeToQueries().next(event ->
 		{
-			System.getLogger(getClass().getName()).log(Level.INFO, "Local query event: "+event);
+			System.getLogger(getClass().getName()).log(Level.INFO, "RR Local query event: "+event);
 
 			dispatchEvent(event);
 		});
@@ -148,13 +149,32 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 		System.out.println("open in browser: "+url);
 		SGUI.openInBrowser(url);
     }
+
+	/**
+	 *  todo:
+	 *  - graceful termination: auto terminate agent futures?!
+	 *  - vm termination: runtime pinger 
+	 */
+	@OnEnd
+	public void end()
+	{
+		System.out.println("RR terminated: "+agent.getId());
+
+		for(ISubscriptionIntermediateFuture<Void> cosub: coordinators.values())
+			cosub.terminate();
+		coordinators.clear();
+		
+		for(SubscriptionIntermediateFuture<RegistryEvent> lis: listeners)
+			lis.terminate();
+		listeners.clear();
+	}
     
     protected void connectToCoordinator(String coname)
     {
     	Runnable reconnect = () ->
 		{
 			//System.out.println("Reconnecting to coordinator: "+coname+" "+agent.getId());
-			System.getLogger(getClass().getName()).log(Level.INFO, "Reconnecting to coordinator: "+coname+" "+agent.getId());
+			System.getLogger(getClass().getName()).log(Level.INFO, "RR reconnecting to coordinator: "+coname+" "+agent.getId());
     		agent.getFeature(IExecutionFeature.class).waitForDelay(delay)
     			.then(x -> agent.getFeature(IExecutionFeature.class).scheduleStep(() -> connectToCoordinator(coname)))
     			.printOnEx();
@@ -168,12 +188,12 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
     	
     	if(coser==null)
 		{
-			System.out.println("Could not get coordinator service proxy: "+coname+" "+agent.getId());
+			System.out.println("RR could not get coordinator service proxy: "+coname+" "+agent.getId());
 			reconnect.run();
 			return;
 		}
     	
-    	System.out.println("Connecting to coordinator: "+agent.getId()+" "+coser);
+    	System.out.println("RR connecting to coordinator: "+agent.getId()+" "+coser);
 		
     	IRemoteRegistryService ser = agent.getFeature(IProvidedServiceFeature.class).getProvidedService(IRemoteRegistryService.class);
     	
@@ -181,16 +201,16 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
     	coordinators.put(coname, cosub);
     	cosub.next(ignore ->
     	{
-    		System.out.println("Connected to coordinator: "+agent.getId()+" "+coser);
+    		System.out.println("RR connected to coordinator: "+agent.getId()+" "+coser);
     	})
     	.finished(Void ->
         {
-        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
+        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": RR subscription to coordinator finished.");
         	reconnect.run();
         })
     	.catchEx(ex ->
     	{
-    		System.out.println("Could not connect to coordinator: "+coser+" "+ex);
+    		System.out.println("RR could not connect to coordinator: "+coser+" "+ex);
     		reconnect.run();
     	});
     }
@@ -206,14 +226,16 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 	 */
 	// TODO: replace internal commands with typed channel (i.e. bidirectional / reverse subscription future)
 	// TODO: network name required for server?
-	public ISubscriptionIntermediateFuture<Void> registerClient()//String networkname)
+	public ISubscriptionIntermediateFuture<Void> registerClient(ComponentIdentifier client)//String networkname)
 	{
-		final ComponentIdentifier client = ServiceCall.getCurrentInvocation().getCaller();
+		// todo: seems not to work in remote cases!
+		final ComponentIdentifier client2 = ServiceCall.getCurrentInvocation().getCaller();
+
 		clients.add(client);
-		System.getLogger(getClass().getName()).log(Level.INFO, "Client added: "+client);//+" "+networkname);
+		System.getLogger(getClass().getName()).log(Level.INFO, "RR Client added: "+client+" "+agent.getId()+" "+client2);//+" "+networkname);
 		
 		// Listener notification as step to improve test behavior (e.g. AbstractSearchQueryTest)
-		agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
+		/*agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
 		{
 			System.out.println("Initiated registry connection with client "+agent+" "+client);//+" for network "+networkname);
 			for(SubscriptionIntermediateFuture<ComponentIdentifier> reglis: reglisteners)
@@ -221,7 +243,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 				System.getLogger(getClass().getName()).log(Level.INFO, "new connection: "+client);
 				reglis.addIntermediateResult(client);
 			}
-		});
+		});*/
 		
 		SubscriptionIntermediateFuture<Void> ret = new SubscriptionIntermediateFuture<>(new TerminationCommand()
 		{
@@ -248,6 +270,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 		//SFuture.avoidCallTimeouts(ret, agent);
 		
 		// Initial register-ok response
+		System.out.println("RR sending initial register-ok to client: "+agent+" "+client);
 		ret.addIntermediateResult(null);
 		
 		// TODO: listen for changes and add new services locally.
@@ -261,17 +284,18 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 		{
 			public void execute(Object obj)
 			{
-				System.getLogger(getClass().getName()).log(Level.INFO, "Remote registry received client event: "+obj);
+				System.getLogger(getClass().getName()).log(Level.INFO, "RR received client event: "+obj);
 				ServiceEvent event = (ServiceEvent) obj;
 				
 				//if(debug(event.getService()))
-				System.out.println(agent+" received client event: "+event);
+				System.out.println(agent+" RR received client event: "+event);
 					
 				// propagate service changes to the registry
 				dispatchEventToRegistry(serviceregistry, event);
 			}
 		});
 		
+		System.out.println("RR registered client end: "+agent+" "+client);
 		return ret;
 	}
 	
@@ -440,7 +464,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 		switch(event.getType())
 		{
 			case ServiceEvent.SERVICE_ADDED:
-				System.out.println("Remote Registry adding service: " + event.getService().getServiceType()+" "+event.getService().getGroupNames());
+				System.out.println("RR adding service: " + event.getService().getServiceType()+" "+event.getService().getGroupNames());
 				registry.addService(event.getService());
 				dispatchEvent(event);
 //				if(event.toString().indexOf("ITestService")!=-1)
@@ -467,7 +491,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 		
 	/**
 	 *  Get the clients that are currently registered to super peer.
-	 */
+	 * /
 	public ISubscriptionIntermediateFuture<ComponentIdentifier> getRegisteredClients()
 	{
 		SubscriptionIntermediateFuture<ComponentIdentifier> reglis = new SubscriptionIntermediateFuture<>();
@@ -483,7 +507,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 		
 		//SFuture.avoidCallTimeouts(reglis, agent);
 		return reglis;
-	}
+	}*/
 
 	/**
 	 *  Get registered queries.
@@ -518,7 +542,7 @@ public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegis
 		Set<IServiceIdentifier> services = serviceregistry.getAllServices();
 		Set<ServiceQueryInfo<?>> queries = serviceregistry.getAllQueries();
 	
-		System.out.println("subscribed to registry, initial values "+caller+" "+listeners.size()+" "+services+" "+queries);
+		System.out.println("RR subscribed to internal registry, initial values "+caller+" "+listeners.size()+" "+services+" "+queries);
 
 		for(IServiceIdentifier sid: services)
 		{

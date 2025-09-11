@@ -1,7 +1,6 @@
 package jadex.bdi.hellopure;
 
 import jadex.bdi.PlanFailureException;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
@@ -11,6 +10,7 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentManager;
 import jadex.future.IFuture;
+import jadex.injection.Val;
 import jadex.injection.annotation.OnStart;
 
 /**

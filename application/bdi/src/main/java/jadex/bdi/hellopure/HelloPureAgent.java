@@ -1,6 +1,5 @@
 package jadex.bdi.hellopure;
 
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
@@ -8,6 +7,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
+import jadex.injection.Val;
 import jadex.injection.annotation.OnStart;
 
 /**

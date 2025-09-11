@@ -1032,7 +1032,17 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		catch(Exception e)
 		{
-			self.handleException(e);
+			// Handler might be user code and thus might throw exceptions itself.
+			try
+			{
+				self.handleException(e);
+			}
+			catch(Exception e2)
+			{
+				System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
+				e2.printStackTrace();
+				self.terminate();
+			}
 		}
 		catch(Throwable t)
 		{
@@ -1040,9 +1050,23 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			RuntimeException ex = new RuntimeException("Exception in step", t);//.printStackTrace();
 //			ex.printStackTrace();
 			if(self!=null)
-				self.handleException(ex);
+			{
+				// Handler might be user code and thus might throw exceptions itself.
+				try
+				{
+					self.handleException(ex);
+				}
+				catch(Exception e2)
+				{
+					System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
+					e2.printStackTrace();
+					self.terminate();
+				}
+			}
 			else
+			{
 				throw t;
+			}
 		}
 		
 		afterStep();

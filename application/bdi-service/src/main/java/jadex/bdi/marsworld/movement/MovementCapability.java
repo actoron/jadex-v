@@ -3,7 +3,6 @@ package jadex.bdi.marsworld.movement;
 import java.util.ArrayList;
 import java.util.List;
 
-import jadex.bdi.Dyn;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
@@ -19,6 +18,7 @@ import jadex.core.IComponent;
 import jadex.environment.Environment;
 import jadex.environment.SpaceObject;
 import jadex.execution.IExecutionFeature;
+import jadex.injection.Dyn;
 import jadex.injection.annotation.Inject;
 import jadex.math.IVector2;
 

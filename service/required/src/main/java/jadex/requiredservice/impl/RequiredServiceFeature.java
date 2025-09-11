@@ -209,7 +209,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 	@Override
 	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query)
 	{
-		final ISubscriptionIntermediateFuture<T> ret[] = new ISubscriptionIntermediateFuture[1];
+		final ISubscriptionIntermediateFuture<T> ret[] = new ISubscriptionIntermediateFuture[2];
 		
 		enhanceQuery(query, true);
 		

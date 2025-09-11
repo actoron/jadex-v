@@ -2,6 +2,7 @@ package jadex.registry.remote;
 
 import java.util.Set;
 
+import jadex.core.ComponentIdentifier;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.providedservice.IServiceIdentifier;
@@ -42,7 +43,7 @@ public interface IRemoteRegistryService
 	 */
 	// TODO: replace internal commands with typed channel (i.e. bidirectional / reverse subscription future), first step terminable tuple2 future?
 	// TODO: network name required for server?
-	public ISubscriptionIntermediateFuture<Void> registerClient();//String networkname);
+	public ISubscriptionIntermediateFuture<Void> registerClient(ComponentIdentifier client);//String networkname); // todo: remove explicit client
 	
 	/**
 	 *  Add a service query to the registry.

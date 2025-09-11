@@ -1,4 +1,4 @@
-package jadex.bdi;
+package jadex.injection;
 
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -73,6 +73,16 @@ public class Dyn<T>	extends AbstractDynVal<T>
 			update.accept(null);
 		}
 		
+		return this;
+	}
+	
+	/**
+	 *  Set the observation mode for inner values.
+	 *  Default is COLLECTION_AND_BEAN.
+	 */
+	public Dyn<T> setObservationMode(ObservationMode mode)
+	{
+		super.setObservationMode(mode);
 		return this;
 	}
 	

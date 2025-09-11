@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  *  An annotated field generates events on value changes.
- *  Supports List, Set, Map, Bean (with property change listeners), Val.
+ *  Supports List, Set, Map, Bean (with property change listeners), Dyn, Val.
  */
 @Target({ElementType.FIELD})//, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -19,11 +19,11 @@ public @interface Belief
 //	 */
 //	public boolean dynamic() default false;
 	
-	/**
-	 *  A dynamic belief is automatically updated when other beliefs change.
-	 *  Supported for Val beliefs.
-	 */
-	public String[] beliefs() default {};
+//	/**
+//	 *  A dynamic belief is automatically updated when other beliefs change.
+//	 *  Supported for Val beliefs.
+//	 */
+//	public String[] beliefs() default {};
 
 //	/**
 //	 *  The events this belief should react to.

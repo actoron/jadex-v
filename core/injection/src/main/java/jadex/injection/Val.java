@@ -1,4 +1,4 @@
-package jadex.bdi;
+package jadex.injection;
 
 import jadex.collection.IEventPublisher;
 import jadex.core.IComponent;
@@ -38,5 +38,15 @@ public class Val<T>	extends AbstractDynVal<T>
 			throw new IllegalStateException("Wrapper not inited. Missing annotation?");
 		
 		doSet(value);
+	}
+	
+	/**
+	 *  Set the observation mode for inner values.
+	 *  Default is COLLECTION_AND_BEAN.
+	 */
+	public Val<T> setObservationMode(ObservationMode mode)
+	{
+		super.setObservationMode(mode);
+		return this;
 	}
 }

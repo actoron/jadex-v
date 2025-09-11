@@ -30,6 +30,7 @@ public class RemoteIntermediateResultCommand<T>	extends AbstractResultCommand
 	{
 		super(id, sender, nonfunc);
 		this.result = result;
+		System.out.println("RemoteIntermediateResultCommand created: "+sender+" "+result);
 	}
 	
 	/**
@@ -41,6 +42,7 @@ public class RemoteIntermediateResultCommand<T>	extends AbstractResultCommand
 	@SuppressWarnings("unchecked")
 	public void	doExecute(IComponent component, IFuture<?> future, ISecurityInfo secinf)
 	{
+		System.out.println(component.getId() + " received intermediate result: "+result);
 		((IntermediateFuture<T>)future).addIntermediateResult(result);
 	}
 	

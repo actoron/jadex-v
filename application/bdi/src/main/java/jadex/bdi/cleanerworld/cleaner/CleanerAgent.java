@@ -8,11 +8,9 @@ import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
-import jadex.bdi.Dyn;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
 import jadex.bdi.PlanFailureException;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
@@ -45,6 +43,8 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;

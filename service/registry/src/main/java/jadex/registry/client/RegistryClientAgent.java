@@ -80,7 +80,13 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
     	System.getLogger(getClass().getName()).log(Level.INFO, "Registry client started: "+agent.getId()+" "+coordinatornames);
     	connectToCoordinator(0);
     }
-    
+
+	@OnEnd
+	public void end()
+	{
+		System.out.println("Cl terminated: "+agent.getId());
+	}
+
     protected void connectToCoordinator(int idx)
     {
     	Runnable reconnect = () ->
@@ -99,7 +105,7 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 		// Can happen in local case when service is not (yet) available.
 		if(coordinator==null)
 		{
-			System.out.println("Could not connect to local coordinator: "+coordinatornames.get(idx)+" "+agent.getId());
+			System.out.println("Cl Could not connect to local coordinator: "+coordinatornames.get(idx)+" "+agent.getId());
 			reconnect.run();
 		}
 		else
@@ -107,11 +113,11 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 	    	cosub = coordinator.subscribe();//getRegistries();
 	    	cosub.next(event ->
 	    	{
-	    		System.out.println("Client connected to coordinator: "+agent.getId()+" "+event);
+	    		System.out.println("Cl Client connected to coordinator: "+agent.getId()+" "+event);
 	    		
 	    		if(event.getService()!=null)
 	    		{
-	    			System.out.println("Received coordinator event: "+event.getType()+" "+event.getService()+" "+event.getService().getScope());
+	    			System.out.println("Cl Received coordinator event: "+event.getType()+" "+event.getService()+" "+event.getService().getScope());
 	    		
 		    		if(ServiceEvent.SERVICE_ADDED==event.getType()) 
 		        	{
@@ -136,7 +142,7 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 	    	})
 	    	.finished(Void ->
 	        {
-	        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Subscription to coordinator finished.");
+	        	System.getLogger(getClass().getName()).log(Level.INFO, agent + ": Cl Subscription to coordinator finished.");
 	        	reconnect.run();
 	        })
 	    	.catchEx(ex ->
@@ -156,7 +162,7 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 	    	evalfut.then(a->
 	    	{
 	    		RegistryInfo ri = evaluateRegistries();
-	    		System.out.println("Registry reevaluation: "+agent.getId()+" "+ri);
+	    		System.out.println("Cl Registry reevaluation: "+agent.getId()+" "+ri);
 	    		
 	    		if (ri == null) 
 	    			return;
@@ -169,8 +175,19 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 
 	    		// terminate old registry
 	    		if(regsub!=null)
-	    			regsub.terminate();
-	    		
+				{
+					try
+					{
+						// todo
+						// Throws component terminated exception when old registry cannot be scheduled anymore.
+						regsub.terminate();
+					}
+					catch(Exception e)
+					{
+						System.out.println("Cl Error terminating registry subscription: "+e);
+					}
+				}
+
 	    		// create service proxy for new registry
 	    		try
 	    		{
@@ -180,31 +197,37 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 	    		}
 	    		catch(Exception e)
 	    		{
-	    			System.out.println("Could not create service proxy for registry: "+ri.serviceid()+" "+e);
+	    			System.out.println("Cl Could not create service proxy for registry: "+ri.serviceid()+" "+e);
 	    			initRegistryReevaluation();
 	    			return;
 	    		}
-	    	  	
-	    		// connect to new registry
-	    		regsub = registry.registerClient();
-	    		
+				
+				// connect to new registry
+				System.out.println("Cl Registry client connecting to registry: "+agent.getId()+" "+registry);
+	    		regsub = registry.registerClient(agent.getId());
+
 	    		regsub.next(x ->
 	    		{
-	    			System.out.println("Registry client successfully registered with registry: "+agent.getId()+" "+registry);
+	    			System.out.println("Cl Registry client successfully registered with registry: "+agent.getId()+" "+registry);
 	    			
+					for(QueryManager<?> qman: querymanagers)
+					{
+						qman.updateQuery();
+					}
+
 		    		// Local query uses registry directly (w/o feature) -> only service identifiers needed and also removed events
 		    		ServiceQuery<ServiceEvent> lquery = new ServiceQuery<>((Class<IServiceIdentifier>)null)
 		    			.setEventMode()
 		    			.setOwner(agent.getId())
-		    			.setScope(ServiceScope.GLOBAL)
-		    			.setGroupNames((String[])null);
+		    			.setScope(ServiceScope.GLOBAL);
+		    			//.setGroupNames();
 		    			//.setSearchStart(spid);	// Only find services that are visible to SP
 		    		
 		    		ISubscriptionIntermediateFuture<ServiceEvent> localquery = (ISubscriptionIntermediateFuture)ServiceRegistry.getRegistry().addQuery(lquery);									
 
 		    		localquery.next(event ->
 		    		{
-		    			//System.out.println("Registry client received service event from internal registry: "+agent.getId()+" "+event+" "+event.getService().getScope());
+		    			System.out.println("Cl received service event from internal registry: "+agent.getId()+" "+event+" "+event.getService().getScope());
 		    			
 		    			if(ServiceScope.GLOBAL.equals(event.getService().getScope())
 		    				|| ServiceScope.HOST.equals(event.getService().getScope()))
@@ -213,29 +236,33 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 		    				{
 		    					try
     							{
-	    							System.out.println("Registry client sending service event to registry "+registry+": "+event);
+	    							System.out.println("Cl sending service event to registry "+registry+": "+event);
     								regsub.sendBackwardCommand(event);
     							}
     							catch (Exception e)
     							{
-    								e.printStackTrace();
+    								//e.printStackTrace();
     								initRegistryReevaluation();
     							}
 		    				});
 	    				}
 		    		}).finished(result ->
 		    		{
-		    			System.out.println("Service event query finished!?: "+result);
+		    			System.out.println("Cl service event query finished!?: "+result);
 	    				// Should not happen?
 	    				assert false;
 		    		}).catchEx(ex ->
 		    		{
+						//ex.printStackTrace();
+						System.out.println("Cl registry connection error, reevaluating registries: "+agent.getId()+ex);
 		    			assert ex instanceof FutureTerminatedException : ex;
 		    		});
 	    		});
 	    		
 	    		evalfut = null;
-	    		
+
+	    	}).then(res -> {
+	    		System.out.println("Cl registry reevaluation finished: "+agent.getId()+" "+registry);
 	    	}).printOnEx();
     	}
     	
@@ -255,7 +282,7 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
     	
     	if(sorted.isEmpty()) 
     	{
-    	    System.getLogger(getClass().getName()).log(Level.WARNING, "No registries available for evaluation.");
+    	    System.getLogger(getClass().getName()).log(Level.WARNING, "Cl no registries available for evaluation.");
     	    return null;
     	}
     	
@@ -274,7 +301,7 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
     	}
     	else if(registry==null)
     	{
-    		System.out.println("Registry client has no registry, reevaluating registries: "+agent.getId());
+    		System.out.println("Cl Registry client has no registry, reevaluating registries: "+agent.getId());
     		initRegistryReevaluation();
     	}
     	
@@ -283,14 +310,9 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
     
     protected void setRegistry(IRemoteRegistryService registry)
     {
-    	System.out.println("setRegistryService: "+agent.getId()+" "+registry);
+    	System.out.println("Cl setRegistryService: "+agent.getId()+" "+registry);
     	
     	this.registry = registry;
-    	
-    	for(QueryManager<?> qman: querymanagers)
-    	{
-    		qman.updateQuery();
-    	}
     	
     	//System.out.println("registryfut is: "+registryfut);
     	if(registryfut!=null)
@@ -379,26 +401,23 @@ public class RegistryClientAgent implements IRegistryClientService, IDaemonCompo
 	}
     
     @OnEnd
-    public void stop() 
+    public void stop()//Exception ex) 
     {
+		/*if(ex!=null)
+		{
+			System.out.println("Registry client terminated with exception: "+agent.getId()+" "+ex);
+			ex.printStackTrace();
+		}*/
+
     	if (regsub != null) 
-        {
             regsub.terminate();
-            regsub = null;
-        }
     	
         if (cosub != null) 
-        {
             cosub.terminate();
-            cosub = null;
-        }
         
         for(QueryManager<?> qman: querymanagers)
-        {
         	qman.getReturnFuture().terminate();
-        }
         
-        registries.clear();
     }
     
     /**
