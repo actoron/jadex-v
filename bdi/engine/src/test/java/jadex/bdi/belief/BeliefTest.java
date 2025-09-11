@@ -22,6 +22,7 @@ import jadex.bdi.impl.ChangeEvent;
 import jadex.common.Tuple2;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.ResultEvent.Type;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
@@ -238,12 +239,12 @@ public class BeliefTest	extends AbstractDynamicValueTest
 	static int	rulecnt	= 0;
 	
 	@Override
-	public void	addEventListener(Future<Object> fut, ChangeType type, String name)
+	public void	addEventListener(Future<Object> fut, Type type, String name)
 	{
 		String	bditype =
-			(type==ChangeType.CHANGED ? ChangeEvent.FACTCHANGED :
-			(type==ChangeType.ADDED ? ChangeEvent.FACTADDED :
-			(type==ChangeType.REMOVED ? ChangeEvent.FACTREMOVED : null)));
+			(type==Type.CHANGED ? ChangeEvent.FACTCHANGED :
+			(type==Type.ADDED ? ChangeEvent.FACTADDED :
+			(type==Type.REMOVED ? ChangeEvent.FACTREMOVED : null)));
 		String	events[]	= new String[] {bditype, name};
 		
 		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
@@ -257,12 +258,12 @@ public class BeliefTest	extends AbstractDynamicValueTest
 	}
 	
 	@Override
-	public void	addEventListener(IntermediateFuture<Object> fut, ChangeType type, String name)
+	public void	addEventListener(IntermediateFuture<Object> fut, Type type, String name)
 	{
 		String	bditype =
-				(type==ChangeType.CHANGED ? ChangeEvent.FACTCHANGED :
-				(type==ChangeType.ADDED ? ChangeEvent.FACTADDED :
-				(type==ChangeType.REMOVED ? ChangeEvent.FACTREMOVED : null)));
+				(type==Type.CHANGED ? ChangeEvent.FACTCHANGED :
+				(type==Type.ADDED ? ChangeEvent.FACTADDED :
+				(type==Type.REMOVED ? ChangeEvent.FACTREMOVED : null)));
 		String	events[]	= new String[] {bditype, name};
 		
 		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()

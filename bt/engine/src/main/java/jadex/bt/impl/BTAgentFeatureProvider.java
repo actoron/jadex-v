@@ -4,12 +4,12 @@ import java.util.Map;
 
 import jadex.bt.IBTAgentFeature;
 import jadex.bt.IBTProvider;
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
+import jadex.core.ResultEvent;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -75,7 +75,7 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 	}
 	
 	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults(IComponent comp)
 	{
 		// Hack!? delegate result handling to injection feature.
 		return new InjectionFeatureProvider().subscribeToResults(comp);

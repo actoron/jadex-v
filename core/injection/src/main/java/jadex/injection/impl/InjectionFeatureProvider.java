@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import jadex.collection.IEventPublisher;
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
@@ -15,6 +14,8 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.ResultEvent;
+import jadex.core.ResultEvent.Type;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -63,7 +64,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	}
 	
 	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
+	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults(IComponent component)
 	{
 		return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).subscribeToResults();
 	}
@@ -177,20 +178,21 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 					public void entryAdded(Object context, Object value, Object info)
 					{
 						IComponent	comp	= (IComponent)context;
-						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(fname, value);
+						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.ADDED, fname, value, null, info));
 					}
 
 					@Override
 					public void entryRemoved(Object context, Object value, Object info)
 					{
-						// NOP
+						IComponent	comp	= (IComponent)context;
+						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.REMOVED, fname, value, null, info));
 					}
 
 					@Override
 					public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
 					{
 						IComponent	comp	= (IComponent)context;
-						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(fname, newvalue);
+						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.CHANGED, fname, newvalue, oldvalue, info));
 					}
 				};
 				

@@ -10,7 +10,6 @@ import java.util.concurrent.Callable;
 
 import jadex.collection.WeakKeyValueMap;
 import jadex.common.IFilter;
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.transformation.traverser.FilterProcessor;
@@ -24,6 +23,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
+import jadex.core.ResultEvent;
 import jadex.core.ResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
@@ -242,7 +242,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}
 	
 	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults(IComponent comp)
 	{
 		IResultProvider	rp;
 		synchronized(results)

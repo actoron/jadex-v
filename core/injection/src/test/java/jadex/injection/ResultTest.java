@@ -13,10 +13,11 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.common.NameValue;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.ResultEvent;
+import jadex.core.ResultEvent.Type;
 import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -29,7 +30,7 @@ import jadex.injection.annotation.ProvideResult;
  */
 public class ResultTest
 {
-	public static final long	TIMEOUT	= 10000;
+	public static final long	TIMEOUT	= -1;
 	
 	/**
 	 *  Test manually adding result.
@@ -177,15 +178,17 @@ public class ResultTest
 			}
 		}).get(TIMEOUT);
 		
-		ISubscriptionIntermediateFuture<NameValue>	sub	= handle.subscribeToResults();
+		ISubscriptionIntermediateFuture<ResultEvent>	sub	= handle.subscribeToResults();
 		
-		NameValue	res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new NameValue("start", "startvalue"), res);
+		// Subscribe is executed after OnStart and thus gives event type INITIAL
+		ResultEvent	res	= sub.getNextIntermediateResult(TIMEOUT);
+		assertEquals(new ResultEvent(Type.INITIAL, "start", "startvalue", null, null), res);
+//		assertEquals(new ResultEvent("start", "startvalue"), res);
 		
 		handle.terminate().get(TIMEOUT);
 		
 		res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new NameValue("end", "endvalue"), res);
+		assertEquals(new ResultEvent("end", "endvalue"), res);
 	}
 	
 	/**

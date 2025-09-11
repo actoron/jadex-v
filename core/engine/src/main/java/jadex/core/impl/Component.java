@@ -12,7 +12,6 @@ import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import jadex.common.NameValue;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
@@ -21,6 +20,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IResultProvider;
+import jadex.core.ResultEvent;
 import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.Future;
@@ -618,23 +618,23 @@ public class Component implements IComponent
 	 *  Schedules to the component, if not terminated.
 	 *  @throws UnsupportedOperationException when subscription is not supported
 	 */
-	public static ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	public static ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults(IComponent comp)
 	{
 		if(isExecutable())
 		{
-			SubscriptionIntermediateFuture<NameValue>	ret	= new SubscriptionIntermediateFuture<>();
+			SubscriptionIntermediateFuture<ResultEvent>	ret	= new SubscriptionIntermediateFuture<>();
 			
 			@SuppressWarnings("rawtypes")
-			Callable	call	= new Callable<ISubscriptionIntermediateFuture<NameValue>>()
+			Callable	call	= new Callable<ISubscriptionIntermediateFuture<ResultEvent>>()
 			{
-				public ISubscriptionIntermediateFuture<NameValue>	call()
+				public ISubscriptionIntermediateFuture<ResultEvent>	call()
 				{
 					return doSubscribeToResults(comp);
 				}
 			};
 
 			@SuppressWarnings("unchecked")
-			ISubscriptionIntermediateFuture<NameValue>	fut	= (ISubscriptionIntermediateFuture<NameValue>)
+			ISubscriptionIntermediateFuture<ResultEvent>	fut	= (ISubscriptionIntermediateFuture<ResultEvent>)
 				comp.getComponentHandle().scheduleAsyncStep(call);
 			fut.next(res -> ret.addIntermediateResult(res))
 				.catchEx(e ->
@@ -662,9 +662,9 @@ public class Component implements IComponent
 	 *  To be called on component thread, if any.
 	 *  @throws UnsupportedOperationException when subscription is not supported
 	 */
-	public static ISubscriptionIntermediateFuture<NameValue> doSubscribeToResults(IComponent component)
+	public static ISubscriptionIntermediateFuture<ResultEvent> doSubscribeToResults(IComponent component)
 	{
-		ISubscriptionIntermediateFuture<NameValue>	ret	= null;
+		ISubscriptionIntermediateFuture<ResultEvent>	ret	= null;
 		boolean done = false;
 		
 		if(component.getPojo() instanceof IResultProvider)
@@ -743,7 +743,7 @@ public class Component implements IComponent
 		}
 
 		@Override
-		public ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+		public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults()
 		{
 			return Component.subscribeToResults(Component.this);
 		}

@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import jadex.common.NameValue;
 import jadex.common.SAccess;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
@@ -20,6 +19,7 @@ import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
+import jadex.core.ResultEvent;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
@@ -72,7 +72,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults()
 	{
 		return Component.subscribeToResults(comp);
 	}

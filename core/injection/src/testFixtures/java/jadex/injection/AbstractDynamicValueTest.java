@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import jadex.common.TimeoutException;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.ResultEvent.Type;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -36,11 +37,6 @@ public abstract class AbstractDynamicValueTest
 {
 	long	TIMEOUT	= 10000;
 	
-	public enum ChangeType
-	{
-		CHANGED, ADDED, REMOVED
-	}
-
 	public static abstract class AbstractDynamicValueTestAgent
 	{
 		public AbstractDynamicValueTestAgent()
@@ -162,7 +158,7 @@ public abstract class AbstractDynamicValueTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut, ChangeType.CHANGED, "val");
+			addEventListener(fut, Type.CHANGED, "val");
 			pojo.getVal().set(2);
 		});
 		
@@ -178,7 +174,7 @@ public abstract class AbstractDynamicValueTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut, ChangeType.CHANGED, "bean");
+			addEventListener(fut, Type.CHANGED, "bean");
 			pojo.getBean().setValue(2);
 		});
 		
@@ -195,7 +191,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	fut1	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut1, ChangeType.CHANGED, "valbean");
+			addEventListener(fut1, Type.CHANGED, "valbean");
 			pojo.getValBean().get().setValue(1);
 			return null;
 		}).get(TIMEOUT);
@@ -206,7 +202,7 @@ public abstract class AbstractDynamicValueTest
 		Bean	old = pojo.getValBean().get();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut2, ChangeType.CHANGED, "valbean");
+			addEventListener(fut2, Type.CHANGED, "valbean");
 			pojo.getValBean().set(new Bean(2));
 			return null;
 		}).get(TIMEOUT);
@@ -216,7 +212,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	fut3	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut3, ChangeType.CHANGED, "valbean");
+			addEventListener(fut3, Type.CHANGED, "valbean");
 			pojo.getValBean().get().setValue(3);
 			return null;
 		}).get(TIMEOUT);
@@ -234,7 +230,7 @@ public abstract class AbstractDynamicValueTest
 		Bean	old2 = pojo.getValBean().get();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut4, ChangeType.CHANGED, "valbean");
+			addEventListener(fut4, Type.CHANGED, "valbean");
 			pojo.getValBean().set(new Bean(4));
 			return null;
 		}).get(TIMEOUT);
@@ -244,7 +240,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	fut5	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut5, ChangeType.CHANGED, "valbean");
+			addEventListener(fut5, Type.CHANGED, "valbean");
 			pojo.getValBean().get().setValue(5);
 			return null;
 		});
@@ -261,7 +257,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	fut6	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut6, ChangeType.CHANGED, "valbean");
+			addEventListener(fut6, Type.CHANGED, "valbean");
 			pojo.getValBean().set(new Bean(6));
 			return null;
 		}).get(TIMEOUT);
@@ -278,7 +274,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	fut7	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(fut7, ChangeType.CHANGED, "valbean");
+			addEventListener(fut7, Type.CHANGED, "valbean");
 			pojo.getValBean().get().setValue(7);
 			return null;
 		}).get(TIMEOUT);
@@ -297,9 +293,9 @@ public abstract class AbstractDynamicValueTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut, ChangeType.CHANGED, "list");
-			addEventListener(addedfut, ChangeType.ADDED, "list");
-			addEventListener(removedfut, ChangeType.REMOVED, "list");
+			addEventListener(changedfut, Type.CHANGED, "list");
+			addEventListener(addedfut, Type.ADDED, "list");
+			addEventListener(removedfut, Type.REMOVED, "list");
 			pojo.getList().set(1, "3");
 			pojo.getList().add(1, "2");
 			pojo.getList().remove(1);
@@ -324,9 +320,9 @@ public abstract class AbstractDynamicValueTest
 		Bean[] removedbean	= new Bean[1];
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut, ChangeType.CHANGED, "listbean");
-			addEventListener(addedfut, ChangeType.ADDED, "listbean");
-			addEventListener(removedfut, ChangeType.REMOVED, "listbean");
+			addEventListener(changedfut, Type.CHANGED, "listbean");
+			addEventListener(addedfut, Type.ADDED, "listbean");
+			addEventListener(removedfut, Type.REMOVED, "listbean");
 			pojo.getListBean().set(1, new Bean(3));
 			pojo.getListBean().add(1, new Bean(2));
 			removedbean[0]	= pojo.getListBean().remove(1);
@@ -340,7 +336,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	changedfut2	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut2, ChangeType.CHANGED, "listbean");
+			addEventListener(changedfut2, Type.CHANGED, "listbean");
 			removedbean[0].setValue(4);
 			return null;
 		}).get(TIMEOUT);
@@ -350,7 +346,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	changedfut3	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut3, ChangeType.CHANGED, "listbean");
+			addEventListener(changedfut3, Type.CHANGED, "listbean");
 			pojo.getListBean().get(1).setValue(4);
 		});
 		checkEventInfo(changedfut3, null, Arrays.asList(new Bean(1), new Bean(4)), null);
@@ -369,9 +365,9 @@ public abstract class AbstractDynamicValueTest
 		Bean[] removedbean	= new Bean[1];
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut, ChangeType.CHANGED, "vallistbean");
-			addEventListener(addedfut, ChangeType.ADDED, "vallistbean");
-			addEventListener(removedfut, ChangeType.REMOVED, "vallistbean");
+			addEventListener(changedfut, Type.CHANGED, "vallistbean");
+			addEventListener(addedfut, Type.ADDED, "vallistbean");
+			addEventListener(removedfut, Type.REMOVED, "vallistbean");
 			pojo.getValListBean().get().set(1, new Bean(3));
 			pojo.getValListBean().get().add(1, new Bean(2));
 			removedbean[0]	= pojo.getValListBean().get().remove(1);
@@ -385,7 +381,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	changedfut2	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut2, ChangeType.CHANGED, "vallistbean");
+			addEventListener(changedfut2, Type.CHANGED, "vallistbean");
 			removedbean[0].setValue(4);
 			return null;
 		}).get(TIMEOUT);
@@ -395,7 +391,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	changedfut3	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut3, ChangeType.CHANGED, "vallistbean");
+			addEventListener(changedfut3, Type.CHANGED, "vallistbean");
 			pojo.getValListBean().get().get(1).setValue(4);
 		});
 		checkEventInfo(changedfut3, null, Arrays.asList(new Bean(1), new Bean(4)), null);
@@ -404,7 +400,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	changedfut4	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut4, ChangeType.CHANGED, "vallistbean");
+			addEventListener(changedfut4, Type.CHANGED, "vallistbean");
 			pojo.getValListBean().setObservationMode(ObservationMode.ON_COLLECTION_CHANGE);
 			pojo.getValListBean().get().get(1).setValue(5);
 			return null;
@@ -415,7 +411,7 @@ public abstract class AbstractDynamicValueTest
 		Future<Object>	changedfut5	= new Future<>();
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut5, ChangeType.CHANGED, "vallistbean");
+			addEventListener(changedfut5, Type.CHANGED, "vallistbean");
 			pojo.getValListBean().setObservationMode(ObservationMode.ON_ALL_CHANGES);
 			pojo.getValListBean().get().get(1).setValue(6);
 		});
@@ -434,9 +430,9 @@ public abstract class AbstractDynamicValueTest
 		// Check if events are generated.
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut, ChangeType.CHANGED, "vallist");
-			addEventListener(addedfut, ChangeType.ADDED, "vallist");
-			addEventListener(removedfut, ChangeType.REMOVED, "vallist");
+			addEventListener(changedfut, Type.CHANGED, "vallist");
+			addEventListener(addedfut, Type.ADDED, "vallist");
+			addEventListener(removedfut, Type.REMOVED, "vallist");
 			pojo.getValList().get().set(1, "3");
 			pojo.getValList().get().add(1, "2");
 			pojo.getValList().get().remove(1);
@@ -483,8 +479,8 @@ public abstract class AbstractDynamicValueTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListener(addedfut, ChangeType.ADDED, "set");
-			addEventListener(removedfut, ChangeType.REMOVED, "set");
+			addEventListener(addedfut, Type.ADDED, "set");
+			addEventListener(removedfut, Type.REMOVED, "set");
 			pojo.getSet().add("2");
 			pojo.getSet().remove("2");
 
@@ -505,9 +501,9 @@ public abstract class AbstractDynamicValueTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut, ChangeType.CHANGED, "map");
-			addEventListener(addedfut, ChangeType.ADDED, "map");
-			addEventListener(removedfut, ChangeType.REMOVED, "map");
+			addEventListener(changedfut, Type.CHANGED, "map");
+			addEventListener(addedfut, Type.ADDED, "map");
+			addEventListener(removedfut, Type.REMOVED, "map");
 			pojo.getMap().put("2", "two");
 			pojo.getMap().put("3", "three");
 			pojo.getMap().remove("2");
@@ -530,7 +526,7 @@ public abstract class AbstractDynamicValueTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut, ChangeType.CHANGED, "dynamic");
+			addEventListener(changedfut, Type.CHANGED, "dynamic");
 			firstfut.setResult(pojo.getDynamic().get());
 			pojo.getVal().set(2);
 			secondfut.setResult(pojo.getDynamic().get());
@@ -554,7 +550,7 @@ public abstract class AbstractDynamicValueTest
 		
 		exta.scheduleStep(() ->
 		{
-			addEventListener(changedfut, ChangeType.CHANGED, "update");
+			addEventListener(changedfut, Type.CHANGED, "update");
 			firstfut.setResult(pojo.getUpdate().get());
 			IExecutionFeature.get().waitForDelay(500).get();
 			secondfut.setResult(pojo.getUpdate().get());
@@ -591,13 +587,13 @@ public abstract class AbstractDynamicValueTest
 	 *  Add a handler that sets the event into a future.
 	 *  Called on agent thread.
 	 */
-	public abstract void	addEventListener(Future<Object> fut, ChangeType type, String name);
+	public abstract void	addEventListener(Future<Object> fut, Type type, String name);
 	
 	/**
 	 *  Add a handler that adds the event into a future.
 	 *  Called on agent thread.
 	 */
-	public abstract void	addEventListener(IntermediateFuture<Object> fut, ChangeType type, String name);
+	public abstract void	addEventListener(IntermediateFuture<Object> fut, Type type, String name);
 		
 	/**
 	 *  Check if old/new value and info match expectations.

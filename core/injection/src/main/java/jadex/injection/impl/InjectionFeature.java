@@ -6,8 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import jadex.common.NameValue;
 import jadex.core.IComponent;
+import jadex.core.ResultEvent;
 import jadex.core.ResultProvider;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
@@ -153,11 +153,11 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	/**
 	 *  Notify about a result, i.e. a change in a dynamic result field.
 	 */
-	public void notifyResult(String name, Object value)
+	public void notifyResult(ResultEvent event)
 	{
 		if(rp!=null)
 		{
-			rp.notifyResult(name, value);
+			rp.notifyResult(event);
 		}
 	}
 	
@@ -223,7 +223,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	/**
 	 *  Subscribe to results of the component.
 	 */
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults()
 	{
 		if(rp==null)
 		{

@@ -21,11 +21,11 @@ import jadex.bpmn.runtime.impl.ProcessThreadValueFetcher;
 import jadex.common.ClassInfo;
 import jadex.common.IResultCommand;
 import jadex.common.IValueFetcher;
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.ResultEvent;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
 
@@ -220,9 +220,9 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 
 			SubprocessResultHandler handler = new SubprocessResultHandler(thread, activity);	
 			
-			Consumer<NameValue> handleresult = new Consumer<>()
+			Consumer<ResultEvent> handleresult = new Consumer<>()
 			{
-				public void accept(NameValue result)
+				public void accept(ResultEvent result)
 				{
 					if(activity.getParameters()!=null && activity.getParameters().get(result.name())!=null)
 					{
@@ -269,7 +269,7 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 				}
 			}).then(results ->
 			{
-				for(NameValue result: results)
+				for(ResultEvent result: results)
 					handleresult.accept(result);
 				finishedhandler.accept(null);
 			});

@@ -5,14 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.common.NameValue;
+import jadex.core.ResultEvent.Type;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 
 public interface IResultProvider 
 {
 	public abstract Map<String, Object> getResultMap();
-	public abstract List<SubscriptionIntermediateFuture<NameValue>> getResultSubscribers();
+	public abstract List<SubscriptionIntermediateFuture<ResultEvent>> getResultSubscribers();
 	
 	public default void	setResult(String name, Object value)
 	{
@@ -20,16 +20,16 @@ public interface IResultProvider
 		{
 			getResultMap().put(name, value);
 		}
-		notifyResult(name, value);
+		notifyResult(new ResultEvent(name, value));
 	}
 	
-	public default void notifyResult(String name, Object value)
+	public default void notifyResult(ResultEvent event)
 	{
-		List<SubscriptionIntermediateFuture<NameValue>> subs = null;
+		List<SubscriptionIntermediateFuture<ResultEvent>> subs = null;
 		synchronized(this)
 		{
 			if(getResultSubscribers()!=null)
-				subs = new ArrayList<SubscriptionIntermediateFuture<NameValue>>(getResultSubscribers());
+				subs = new ArrayList<SubscriptionIntermediateFuture<ResultEvent>>(getResultSubscribers());
 		}
 		if(subs!=null)
 		{
@@ -37,14 +37,14 @@ public interface IResultProvider
 			{
 				//System.out.println("sub: "+name+" "+value);
 				//if(checkNotify(name, value))
-				sub.addIntermediateResult(new NameValue(name, value));
+				sub.addIntermediateResult(event);
 			});
 		}
 	}
 	
-	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+	public default ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults()
 	{
-		SubscriptionIntermediateFuture<NameValue> ret;
+		SubscriptionIntermediateFuture<ResultEvent> ret;
 		Map<String, Object> res = null;
 		
 		synchronized(this)
@@ -68,7 +68,7 @@ public interface IResultProvider
 			res.entrySet().stream().forEach(e -> 
 			{
 				if(checkInitialNotify(e.getKey(), e.getValue()))
-					ret.addIntermediateResult(new NameValue(e.getKey(), e.getValue()));
+					ret.addIntermediateResult(new ResultEvent(Type.INITIAL,	e.getKey(), e.getValue(), null, null));
 			});
 		}
 		
