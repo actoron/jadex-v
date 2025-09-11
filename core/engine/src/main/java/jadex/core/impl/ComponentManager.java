@@ -6,6 +6,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1405,14 +1406,17 @@ public class ComponentManager implements IComponentManager
 			{
 				if (featureconfigurationcache != null)
 				{
-					featureconfigurationcache = null;
+					ArrayList<ILifecycle> initlist = new ArrayList<>();
 					for (Map.Entry<Class<? extends IRuntimeFeature>, Future<? extends IRuntimeFeature>> entry : concache.entrySet())
 					{
 						if (entry.getValue().get() instanceof ILifecycle)
-							((ILifecycle) entry.getValue().get()).init();
+							initlist.add((ILifecycle) entry.getValue().get());
 
 						featurecache.put(entry.getKey(), entry.getValue());
 					}
+					featureconfigurationcache = null;
+					for (ILifecycle lfeat : initlist)
+						lfeat.init();
 				}
 			}
 		}
