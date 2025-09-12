@@ -137,7 +137,6 @@ public class ResultTest
 			}
 		}).get(TIMEOUT);
 		
-		@SuppressWarnings("serial")
 		Map<String, Object>	expected	= new LinkedHashMap<>()
 		{
 			{
