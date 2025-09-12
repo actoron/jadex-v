@@ -124,12 +124,6 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 		public Dyn<Long> getUpdate() { return update; }
 	}
 	
-	@Override
-	public void testDynamic()
-	{
-		// TODO: support dependencies between results
-	}
-	
 	//-------- helper methods --------
 	
 	@Override

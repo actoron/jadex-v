@@ -1740,7 +1740,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								public IFuture<Void>	execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 								{
 									Object	newvalue	= dyn.get();
-									if(!SUtil.equals(oldval, newvalue))
+									if(!SUtil.equals(oldvalue, newvalue))
 									{
 										rs.addEvent(new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, null)));
 									}

@@ -1,13 +1,18 @@
 package jadex.injection.impl;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import jadex.collection.IEventPublisher;
 import jadex.common.SReflect;
+import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -22,6 +27,7 @@ import jadex.core.impl.IComponentLifecycleManager;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.injection.Dyn;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.InjectException;
@@ -195,6 +201,61 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.CHANGED, fname, newvalue, oldvalue, info));
 					}
 				};
+				
+				// Dependent result (Dyn object with Callable that accesses other dynamic values)
+				if(Dyn.class.equals(f.getType()))
+				{
+					// Throw change events when dependent results change.
+					// TODO: nested names for fields from sub-objects (e.g. service)
+					Set<String> deps = new HashSet<>(InjectionModel.findDependentFields(f).stream().map(dep -> dep.getName()).toList());
+					
+					
+					if(deps!=null && deps.size()>0)	// size may be null for result with update rate
+					{
+						try
+						{
+							f.setAccessible(true);
+							MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(f);
+							
+							ret.add((comp, pojos, context, oldval) ->
+							{
+								try
+								{
+									Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
+									InjectionFeature in	= ((InjectionFeature)comp.getFeature(IInjectionFeature.class));
+									
+									in.subscribeToResults()
+										.next(new Consumer<ResultEvent>()
+									{
+										Object	oldvalue	= dyn.get();
+										
+										public void accept(ResultEvent result)
+										{
+											if(deps.contains(result.name()))
+											{
+												Object	newvalue	= dyn.get();
+												if(!SUtil.equals(oldvalue, newvalue))
+												{
+													in.notifyResult(new ResultEvent(Type.CHANGED, fname, newvalue, oldvalue, null));
+												}
+												oldvalue	= newvalue;										
+											}
+										}
+									});
+									return null;
+								}
+								catch(Throwable t)
+								{
+									throw SUtil.throwUnchecked(t);
+								}
+							});
+						}
+						catch(Throwable t)
+						{
+							throw SUtil.throwUnchecked(t);
+						}
+					}
+				}
 				
 				IInjectionHandle	handle	= InjectionModel.createDynamicValueInit(f, publisher);
 				if(handle!=null)
