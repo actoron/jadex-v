@@ -1,6 +1,5 @@
 package jadex.injection.impl;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -368,6 +367,8 @@ public class InjectionModel
 	 */
 	protected static void scanClass(Class<?> pojoclazz)
 	{
+		// TODO: skip already scanned classes (e.g. due to common superclass)
+		
 		if(pojoclazz.getName().contains("$$Lambda"))
 		{
 			return;	// Skip lambda classes
