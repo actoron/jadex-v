@@ -29,6 +29,11 @@ dependencies
 	implementation 'org.activecomponents.jadex:core:'+v
 	implementation 'org.activecomponents.jadex:execution:'+v
 	
+	implementation 'org.ow2.asm:asm:9.8'
+	implementation 'org.ow2.asm:asm-tree:9.8'
+	implementation 'org.ow2.asm:asm-util:9.8'
+	implementation 'org.ow2.asm:asm-commons:9.8'
+	
 	testFixturesImplementation 'org.activecomponents.jadex:common:'+v
 	testFixturesImplementation 'org.activecomponents.jadex:core:'+v
 	testFixturesImplementation 'org.activecomponents.jadex:execution:'+v

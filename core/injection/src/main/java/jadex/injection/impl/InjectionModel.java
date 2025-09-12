@@ -1,5 +1,6 @@
 package jadex.injection.impl;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -21,16 +22,25 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import jadex.collection.IEventPublisher;
 import jadex.collection.ListWrapper;
 import jadex.collection.MapWrapper;
 import jadex.collection.SPropertyChange;
 import jadex.collection.SetWrapper;
+import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.execution.impl.ExecutionFeatureProvider;
+import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.injection.Dyn;
 import jadex.injection.Val;
 import jadex.injection.annotation.OnEnd;
@@ -83,6 +93,8 @@ public class InjectionModel
 		this.classes	= classes;
 		this.path	= path;
 		this.contextfetchers	= contextfetchers;
+		
+		scanClass(classes.get(classes.size()-1));
 	}
 	
 	//-------- handles for lifecycle phases --------
@@ -340,6 +352,296 @@ public class InjectionModel
 			}
 			return model;
 		}
+	}
+	
+	/** The field accesses by method. */
+	protected static final Map<String, Set<Field>>	accessedfields	= new LinkedHashMap<>();
+	
+	/** The code executed for a Dyn value, i.e. the Callable.call() method descriptor. */
+	protected static final Map<Field, String>	dynmethods	= new LinkedHashMap<>();
+	
+	/** The method accesses by method. */
+	protected static final Map<String, Set<String>>	accessedmethods	= new LinkedHashMap<>();
+	
+	/**
+	 *  Scan a class for method and field accesses.
+	 */
+	protected static void scanClass(Class<?> pojoclazz)
+	{
+		if(pojoclazz.getName().contains("$$Lambda"))
+		{
+			return;	// Skip lambda classes
+		}
+		
+		if(pojoclazz.getSuperclass()!=null && !Object.class.equals(pojoclazz.getSuperclass()))
+		{
+			// Scan superclass first.
+			scanClass(pojoclazz.getSuperclass());
+		}
+		
+		String	pojoclazzname	= pojoclazz.getName().replace('.', '/');
+		try
+		{
+//			System.out.println("Scanning class: "+pojoclazzname);
+			ClassReader	cr	= new ClassReader(pojoclazz.getName());
+			cr.accept(new ClassVisitor(Opcodes.ASM9)
+			{
+				String	lastdyn	= null;
+				
+				@Override
+				public void visitInnerClass(String name, String outerName, String innerName, int access)
+				{
+					// visitInnerClass also called for non-inner classes, wtf?
+					if(!name.equals(pojoclazzname) && name.startsWith(pojoclazzname))
+					{
+//						System.out.println("Visiting inner class: "+name);
+						try
+						{
+							Class<?> innerclazz = Class.forName(name.replace('/', '.'));
+							scanClass(innerclazz);
+						}
+						catch(ClassNotFoundException e)
+						{
+							SUtil.throwUnchecked(e);
+						}
+					}
+
+					super.visitInnerClass(name, outerName, innerName, access);
+				}
+				
+				@Override
+				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions)
+				{
+					String	method	= pojoclazz.getName().replace('.', '/') +"."+name+desc; 
+//					System.out.println("Visiting method: "+method);
+					return new MethodVisitor(Opcodes.ASM9)
+					{
+			            @Override
+			            public void visitFieldInsn(int opcode, String owner, String name, String descriptor)
+			            {
+			                if(opcode==Opcodes.GETFIELD)
+			                {
+//			                	System.out.println("\tVisiting field access: "+owner+"."+name);
+								try
+								{
+									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
+									Field f	= SReflect.getField(ownerclazz, name);
+									synchronized(accessedfields)
+									{
+										Set<Field>	fields	= accessedfields.get(method);
+										if(fields==null)
+										{
+											fields	= new LinkedHashSet<>();
+											accessedfields.put(method, fields);
+										}
+										fields.add(f);
+									}
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+			                }
+			                
+			                else if(opcode==Opcodes.PUTFIELD)
+			                {
+//			                	System.out.println("\tVisiting field write: "+owner+"."+name+"; "+lastdyn);
+								try
+								{
+									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
+									Field f	= SReflect.getField(ownerclazz, name);
+									if(f.getType().equals(Dyn.class) && lastdyn!=null)
+									{
+//										System.out.println("\tRemembering lambda for Dyn: "+f+", "+lastdyn);
+										synchronized(dynmethods)
+										{
+											dynmethods.put(f, lastdyn);
+										}
+									}
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+			                }
+			                
+			                super.visitFieldInsn(opcode, owner, name, descriptor);
+			            }
+						
+						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface)
+						{
+							String	callee	= owner+"."+name+descriptor;
+//							System.out.println("\tVisiting method call: "+callee);
+							addMethodAccess(method, callee);
+							
+							String	dynclazz	= Dyn.class.getName().replace(".", "/");
+							String	obsclazz	= ObservationMode.class.getName().replace(".", "/");
+							
+							// Remember call() from Callable object for next Dyn constructor.
+							if("<init>".equals(name))
+							{
+								try
+								{
+									Class<?> calleeclazz = Class.forName(owner.replace('/', '.'));
+									if(SReflect.isSupertype(Callable.class, calleeclazz))
+									{
+										lastdyn	= methodToAsmDesc(calleeclazz.getMethod("call"));
+//										System.out.println("\tRemembering call(): "+lastdyn);
+									}
+								}
+								catch(Exception e)
+								{
+									SUtil.throwUnchecked(e);
+								}
+							}
+							
+							// Only remember lambda when followed by a Dyn constructor
+							// to store dependency on next putfield.
+							else if(!callee.equals(dynclazz+".<init>(Ljava/util/concurrent/Callable;)V")
+								&&  !callee.equals(dynclazz+".setUpdateRate(J)L"+dynclazz+";")
+								&&  !callee.equals(dynclazz+".setObservationMode(L"+obsclazz+";)L"+dynclazz+";"))
+							{
+//								System.out.println("\tForgetting lambda due to: "+callee);
+								lastdyn	= null;
+							}
+						}
+						
+						public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments)
+						{
+							if(bootstrapMethodArguments.length>=2 && (bootstrapMethodArguments[1] instanceof Handle))
+							{
+								Handle handle	= (Handle)bootstrapMethodArguments[1];
+								String	callee	= handle.getOwner()+"."+handle.getName()+handle.getDesc();
+//								System.out.println("\tVisiting lambda call: "+callee);
+								addMethodAccess(method, callee);
+								
+								// Remember lambda for next Dyn constructor.
+								lastdyn	= callee;
+							}
+							// else Do we need to handle other cases?
+						}
+						
+						void addMethodAccess(String caller, String callee)
+						{
+							synchronized(accessedmethods)
+							{
+								Set<String>	methods	= accessedmethods.get(caller);
+								if(methods==null)
+								{
+									methods	= new LinkedHashSet<>();
+									accessedmethods.put(method, methods);
+								}
+								methods.add(callee);
+							}
+						}
+					};
+				}
+			}, 0);
+		}
+		catch(IOException e)
+		{
+			SUtil.throwUnchecked(e);
+		}
+	}
+	
+	/**
+	 *  Convert method to ASM descriptor.
+	 */
+	protected static String methodToAsmDesc(Method method)
+	{
+		return method.getDeclaringClass().getName().replace('.', '/')
+			+ "." + org.objectweb.asm.commons.Method.getMethod(method).toString();
+	}
+	
+	/**
+	 *  Scan byte code to find beliefs that are accessed in the method.
+	 */
+	public static List<Field> findDependentFields(Method method)
+	{
+		return findDependentFields(methodToAsmDesc(method));
+	}
+	
+	public static List<Field> findDependentFields(Field f)
+	{
+		List<Field>	ret;
+		String callable = null;
+		synchronized(dynmethods)
+		{
+			if(dynmethods.containsKey(f))
+			{
+				callable	= dynmethods.get(f);
+			}
+		}
+		
+		if(callable!=null)
+		{
+			ret	= findDependentFields(callable);
+		}
+		else
+		{
+			throw new UnsupportedOperationException("Cannot determine Callable.call() implementation for dynamic value: "+f);
+		}
+		return ret;
+	}	
+
+	
+	/**
+	 *  Scan byte code to find fields that are accessed in the method.
+	 *  @param baseclazz	The goal or plan class.
+	 */
+	public static List<Field> findDependentFields(String desc)
+	{
+//		System.out.println("Finding fields accessed in method: "+desc);
+		// Find all method calls
+		List<String>	calls	= new ArrayList<>();
+		calls.add(desc);
+		synchronized(accessedmethods)
+		{
+			for(int i=0; i<calls.size(); i++)
+			{
+				String call	= calls.get(i);
+				if(accessedmethods.containsKey(call))
+				{
+					// Add all sub-methods
+					for(String subcall: accessedmethods.get(call))
+					{
+						if(!calls.contains(subcall))
+						{
+							calls.add(subcall);
+						}
+					}
+				}
+			}
+		}
+		
+		// Find all accessed fields
+		List<Field>	deps	= new ArrayList<>();
+		synchronized(accessedfields)
+		{
+			for(String desc0: calls)
+			{
+				if(accessedfields.containsKey(desc0))
+				{
+					for(Field f: accessedfields.get(desc0))
+					{
+//						System.out.println("Found field access in method: "+f+", "+method);
+						deps.add(f);
+//						String dep	= model.getBeliefName(f);
+//						if(dep!=null)
+//						{
+////							System.out.println("Found belief access in method: "+dep+", "+method);
+//							deps.add(dep);
+//						}
+					}
+				}
+//				else
+//				{
+//					System.out.println("No belief access found in method: "+desc0);
+//				}
+			}
+		}
+		
+		return deps;
 	}
 	
 	/**

@@ -1,6 +1,5 @@
 package jadex.bdi.impl;
 
-import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
@@ -21,14 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
@@ -79,7 +71,6 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
-import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.injection.Dyn;
 import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
@@ -233,8 +224,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			BDIModel	model	= BDIModel.getModel(pojoclazzes.get(0));
 			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
 			
-			scanClass(pojoclazz);
-
 			
 			// Add dummy for outmost capability (i.e. agent)
 			if(pojoclazzes.size()==1)
@@ -489,189 +478,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		});
 	}
 
-	/** The field accesses by method. */
-	protected static final Map<String, Set<Field>>	accessedfields	= new LinkedHashMap<>();
-	
-	/** The code executed for a dynamic belief, i.e. the Callable.call() method descriptor. */
-	protected static final Map<Field, String>	dynbelmethods	= new LinkedHashMap<>();
-	
-	/** The method accesses by method. */
-	protected static final Map<String, Set<String>>	accessedmethods	= new LinkedHashMap<>();
-	
-	/**
-	 *  Scan a class for method and field accesses.
-	 */
-	protected static void scanClass(Class<?> pojoclazz)
-	{
-		if(pojoclazz.getSuperclass()!=null && !Object.class.equals(pojoclazz.getSuperclass()))
-		{
-			// Scan superclass first.
-			scanClass(pojoclazz.getSuperclass());
-		}
-		
-		String	pojoclazzname	= pojoclazz.getName().replace('.', '/');
-		try
-		{
-			ClassReader	cr	= new ClassReader(pojoclazz.getName());
-			cr.accept(new ClassVisitor(Opcodes.ASM9)
-			{
-				String	lastdyn	= null;
-				
-				@Override
-				public void visitInnerClass(String name, String outerName, String innerName, int access)
-				{
-					// visitInnerClass also called for non-inner classes, wtf?
-					if(!name.equals(pojoclazzname) && name.startsWith(pojoclazzname))
-					{
-//						System.out.println("Visiting inner class: "+name);
-						try
-						{
-							Class<?> innerclazz = Class.forName(name.replace('/', '.'));
-							scanClass(innerclazz);
-						}
-						catch(ClassNotFoundException e)
-						{
-							SUtil.throwUnchecked(e);
-						}
-					}
-
-					super.visitInnerClass(name, outerName, innerName, access);
-				}
-				
-				@Override
-				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions)
-				{
-					String	method	= pojoclazz.getName().replace('.', '/') +"."+name+desc; 
-//					System.out.println("Visiting method: "+method);
-					return new MethodVisitor(Opcodes.ASM9)
-					{
-			            @Override
-			            public void visitFieldInsn(int opcode, String owner, String name, String descriptor)
-			            {
-			                if(opcode==Opcodes.GETFIELD)
-			                {
-//			                	System.out.println("\tVisiting field access: "+owner+"."+name);
-								try
-								{
-									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
-									Field f	= SReflect.getField(ownerclazz, name);
-									synchronized(accessedfields)
-									{
-										Set<Field>	fields	= accessedfields.get(method);
-										if(fields==null)
-										{
-											fields	= new LinkedHashSet<>();
-											accessedfields.put(method, fields);
-										}
-										fields.add(f);
-									}
-								}
-								catch(Exception e)
-								{
-									SUtil.throwUnchecked(e);
-								}
-			                }
-			                
-			                else if(opcode==Opcodes.PUTFIELD)
-			                {
-//			                	System.out.println("\tVisiting field write: "+owner+"."+name+"; "+lastdyn);
-								try
-								{
-									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
-									Field f	= SReflect.getField(ownerclazz, name);
-									if(f.getType().equals(Dyn.class) && lastdyn!=null)
-									{
-//										System.out.println("\tRemembering lambda for Dyn: "+f+", "+lastdyn);
-										synchronized(dynbelmethods)
-										{
-											dynbelmethods.put(f, lastdyn);
-										}
-									}
-								}
-								catch(Exception e)
-								{
-									SUtil.throwUnchecked(e);
-								}
-			                }
-			                
-			                super.visitFieldInsn(opcode, owner, name, descriptor);
-			            }
-						
-						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface)
-						{
-							String	callee	= owner+"."+name+descriptor;
-//							System.out.println("\tVisiting method call: "+callee);
-							addMethodAccess(method, callee);
-							
-							String	dynclazz	= Dyn.class.getName().replace(".", "/");
-							String	obsclazz	= ObservationMode.class.getName().replace(".", "/");
-							
-							// Remember call() from Callable object for next Dyn constructor.
-							if("<init>".equals(name))
-							{
-								try
-								{
-									Class<?> calleeclazz = Class.forName(owner.replace('/', '.'));
-									if(SReflect.isSupertype(Callable.class, calleeclazz))
-									{
-										lastdyn	= methodToAsmDesc(calleeclazz.getMethod("call"));
-//										System.out.println("\tRemembering call(): "+lastdyn);
-									}
-								}
-								catch(Exception e)
-								{
-									SUtil.throwUnchecked(e);
-								}
-							}
-							
-							// Only remember lambda when followed by a Dyn constructor
-							// to store dependency on next putfield.
-							else if(!callee.equals(dynclazz+".<init>(Ljava/util/concurrent/Callable;)V")
-								&&  !callee.equals(dynclazz+".setUpdateRate(J)L"+dynclazz+";")
-								&&  !callee.equals(dynclazz+".setObservationMode(L"+obsclazz+";)L"+dynclazz+";"))
-							{
-//								System.out.println("\tForgetting lambda due to: "+callee);
-								lastdyn	= null;
-							}
-						}
-						
-						public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments)
-						{
-							if(bootstrapMethodArguments.length>=2 && (bootstrapMethodArguments[1] instanceof Handle))
-							{
-								Handle handle	= (Handle)bootstrapMethodArguments[1];
-								String	callee	= handle.getOwner()+"."+handle.getName()+handle.getDesc();
-//								System.out.println("\tVisiting lambda call: "+callee);
-								addMethodAccess(method, callee);
-								
-								// Remember lambda for next Dyn constructor.
-								lastdyn	= callee;
-							}
-							// else Do we need to handle other cases?
-						}
-						
-						void addMethodAccess(String caller, String callee)
-						{
-							synchronized(accessedmethods)
-							{
-								Set<String>	methods	= accessedmethods.get(caller);
-								if(methods==null)
-								{
-									methods	= new LinkedHashSet<>();
-									accessedmethods.put(method, methods);
-								}
-								methods.add(callee);
-							}
-						}
-					};
-				}
-			}, 0);
-		}
-		catch(IOException e)
-		{
-			SUtil.throwUnchecked(e);
-		}
-	}
 	
 	/**
 	 *  Add capability prefix to belief references.
@@ -977,7 +783,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			Method	contextmethod	= InjectionModel.findMethods(planclazz, PlanContextCondition.class).get(0);
 			PlanContextCondition	contextanno	= contextmethod.getAnnotation(PlanContextCondition.class);
 			List<String>	beliefs	= contextanno.beliefs().length>0 ? addPrefix(capaprefix, contextanno.beliefs())
-				: findDependentBeliefs(planclazz, parentclazzes, contextmethod);
+				: findDependentBeliefs(parentclazzes, contextmethod);
 			
 			// Create events
 			if(beliefs.size()>0)
@@ -1027,6 +833,42 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		}
 	}
 	
+	/**
+	 *  Find beliefs that are used in the given method.
+	 */
+	protected List<String>	findDependentBeliefs(List<Class<?>> parentclazzes, Method method)
+	{
+		List<Field>	deps	= InjectionModel.findDependentFields(method);
+		return findDependentBeliefs(parentclazzes, deps);
+	}
+	
+	/**
+	 *  Find beliefs that are used in the callable of the given Dyn field.
+	 */
+	protected static List<String> findDependentBeliefs(List<Class<?>> parentclazzes, Field f)
+	{
+		List<Field>	deps	= InjectionModel.findDependentFields(f);
+		return findDependentBeliefs(parentclazzes, deps);
+	}
+
+	/**
+	 *  Find beliefs that correspond to the given fields, if any.
+	 */
+	protected static List<String> findDependentBeliefs(List<Class<?>> parentclazzes, List<Field> deps)
+	{
+		List<String>	ret	= new ArrayList<>();
+		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
+		for(Field f: deps)
+		{
+			String	beliefname	= model.getBeliefName(f);
+			if(beliefname!=null)
+			{
+				ret.add(beliefname);
+			}
+		}
+		return ret;
+	}
+
 	/**
 	 *  Add required code to handle a goal class.
 	 */
@@ -1140,7 +982,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalContextCondition"+(++numcreations)+"_"+goalname;
 			GoalContextCondition	context	= method.getAnnotation(GoalContextCondition.class);
 			List<String>	beliefs	= context.beliefs().length>0 ? addPrefix(capaprefix, context.beliefs())
-				: findDependentBeliefs(goalclazz, parentclazzes, method);
+				: findDependentBeliefs(parentclazzes, method);
 			String	condname	= "context";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createContextCondition(goalclazz, aevents, handle, rulename);
 			
@@ -1155,7 +997,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalDropCondition"+(++numcreations)+"_"+goalname;
 			GoalDropCondition	drop	= method.getAnnotation(GoalDropCondition.class);
 			List<String>	beliefs	= drop.beliefs().length>0 ? addPrefix(capaprefix, drop.beliefs())
-					: findDependentBeliefs(goalclazz, parentclazzes, method);
+					: findDependentBeliefs(parentclazzes, method);
 			String	condname	= "drop";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createDropCondition(goalclazz, aevents, handle, rulename);
 			
@@ -1170,7 +1012,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalRecurCondition"+(++numcreations)+"_"+goalname;
 			GoalRecurCondition	recur	= method.getAnnotation(GoalRecurCondition.class);
 			List<String>	beliefs	= recur.beliefs().length>0 ? addPrefix(capaprefix, recur.beliefs())
-					: findDependentBeliefs(goalclazz, parentclazzes, method);
+					: findDependentBeliefs(parentclazzes, method);
 			String	condname	= "recur";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createRecurCondition(goalclazz, aevents, handle, rulename);
 			
@@ -1185,7 +1027,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalQueryCondition"+(++numcreations)+"_"+goalname;
 			GoalQueryCondition	query	= method.getAnnotation(GoalQueryCondition.class);
 			List<String>	beliefs	= query.beliefs().length>0 ? addPrefix(capaprefix, query.beliefs())
-					: findDependentBeliefs(goalclazz, parentclazzes, method);
+					: findDependentBeliefs(parentclazzes, method);
 			String	condname	= "query";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createQueryCondition(goalclazz, aevents, handle, rulename);
 			
@@ -1200,7 +1042,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalTargetCondition"+(++numcreations)+"_"+goalname;
 			GoalTargetCondition	target	= method.getAnnotation(GoalTargetCondition.class);
 			List<String>	beliefs	= target.beliefs().length>0 ? addPrefix(capaprefix, target.beliefs())
-					: findDependentBeliefs(goalclazz, parentclazzes, method);
+					: findDependentBeliefs(parentclazzes, method);
 			String	condname	= "target";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createTargetCondition(goalclazz, aevents, handle, rulename);
 			
@@ -1214,7 +1056,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		{
 			GoalMaintainCondition	maintain	= method.getAnnotation(GoalMaintainCondition.class);
 			List<String>	beliefs	= maintain.beliefs().length>0 ? addPrefix(capaprefix, maintain.beliefs())
-					: findDependentBeliefs(goalclazz, parentclazzes, method);
+					: findDependentBeliefs(parentclazzes, method);
 			List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], goalname);
 			if(events!=null && events.size()>0)
 			{
@@ -1316,83 +1158,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		MGoal mgoal	= new MGoal(!querycondmethods.isEmpty(), !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), !recurcondmethods.isEmpty(),
 			anno, parentclazzes, aplbuild, selectcandidate, instanceinhibs);
 		model.addGoal(goalclazz, mgoal);
-	}
-
-	/**
-	 *  Scan byte code to find beliefs that are accessed in the method.
-	 *  @param baseclazz	The goal or plan class.
-	 */
-	protected static List<String> findDependentBeliefs(Class<?> baseclazz, List<Class<?>> parentclazzes, Method method)	throws IOException
-	{
-		return findDependentBeliefs(baseclazz, parentclazzes, methodToAsmDesc(method));
-	}
-	
-	/**
-	 *  Convert method to ASM descriptor.
-	 */
-	protected static String methodToAsmDesc(Method method)
-	{
-		return method.getDeclaringClass().getName().replace('.', '/')
-			+ "." + org.objectweb.asm.commons.Method.getMethod(method).toString();
-	}
-		
-	/**
-	 *  Scan byte code to find beliefs that are accessed in the method.
-	 *  @param baseclazz	The goal or plan class.
-	 */
-	protected static List<String> findDependentBeliefs(Class<?> baseclazz, List<Class<?>> parentclazzes, String desc)	throws IOException
-	{
-//		System.out.println("Finding beliefs accessed in method: "+desc);
-		// Find all method calls
-		List<String>	calls	= new ArrayList<>();
-		calls.add(desc);
-		synchronized(accessedmethods)
-		{
-			for(int i=0; i<calls.size(); i++)
-			{
-				String call	= calls.get(i);
-				if(accessedmethods.containsKey(call))
-				{
-					// Add all sub-methods
-					for(String subcall: accessedmethods.get(call))
-					{
-						if(!calls.contains(subcall))
-						{
-							calls.add(subcall);
-						}
-					}
-				}
-			}
-		}
-		
-		// Find all accessed fields
-		List<String>	deps	= new ArrayList<>();
-		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
-		synchronized(accessedfields)
-		{
-			for(String desc0: calls)
-			{
-				if(accessedfields.containsKey(desc0))
-				{
-					for(Field f: accessedfields.get(desc0))
-					{
-//						System.out.println("Found field access in method: "+f+", "+method);
-						String dep	= model.getBeliefName(f);
-						if(dep!=null)
-						{
-//							System.out.println("Found belief access in method: "+dep+", "+method);
-							deps.add(dep);
-						}
-					}
-				}
-//				else
-//				{
-//					System.out.println("No belief access found in method: "+desc0);
-//				}
-			}
-		}
-		
-		return deps;
 	}
 
 	protected void addCondition(List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
@@ -1948,24 +1713,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		if(Dyn.class.equals(f.getType()))
 		{
 			// Throw change events when dependent beliefs change.
-			List<String>	deps	= null;
-			String callable = null;
-			synchronized(dynbelmethods)
-			{
-				if(dynbelmethods.containsKey(f))
-				{
-					callable	= dynbelmethods.get(f);
-				}
-			}
-			
-			if(callable!=null)
-			{
-				deps	= findDependentBeliefs(pojoclazzes.get(0), pojoclazzes, callable);
-			}
-			else
-			{
-				throw new UnsupportedOperationException("Cannot determine Callable.call() implementation for dynamic value: "+f);
-			}
+			List<String> deps = findDependentBeliefs(pojoclazzes, f);
 			
 			if(deps!=null && deps.size()>0)	// size may be null for belief with update rate
 			{
@@ -2018,5 +1766,5 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			throw new UnsupportedOperationException("Cannot use as belief: "+f);
 		}
 		ret.add(handle);
-	}	
+	}
 }
