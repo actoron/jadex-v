@@ -36,11 +36,8 @@ dependencies
     implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation 'org.activecomponents.jadex:serialization:'+v
 	
-	api 'org.eclipse.jetty:jetty-server:11.0.6'
-	api 'org.eclipse.jetty.websocket:websocket-jetty-server:11.0.6'
-	
-	// force using newer asm version (HACK!?)
-	implementation 'org.ow2.asm:asm:9.8'
+	api 'org.eclipse.jetty:jetty-server:11.0.26'
+	api 'org.eclipse.jetty.websocket:websocket-jetty-server:11.0.26'
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
