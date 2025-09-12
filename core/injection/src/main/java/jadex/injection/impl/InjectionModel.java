@@ -382,7 +382,6 @@ public class InjectionModel
 		String	pojoclazzname	= pojoclazz.getName().replace('.', '/');
 		try
 		{
-//			System.out.println("Scanning class: "+pojoclazzname);
 			ClassReader	cr	= new ClassReader(pojoclazz.getName());
 			cr.accept(new ClassVisitor(Opcodes.ASM9)
 			{
@@ -538,9 +537,10 @@ public class InjectionModel
 				}
 			}, 0);
 		}
-		catch(IOException e)
+		catch(Exception e)
 		{
-			SUtil.throwUnchecked(e);
+			System.err.println("WARNING: Exception scanning class "+pojoclazzname+": "+e);
+//			SUtil.throwUnchecked(e);
 		}
 	}
 	
