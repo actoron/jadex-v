@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
@@ -291,6 +292,40 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				// Add types to model first for cross-dependencies.
 				addBeliefType(pojoclazzes, capaprefix, f);
 			}
+			
+			Function<String, IEventPublisher>	evpub	= name -> new IEventPublisher()
+			{
+				EventType addev = new EventType(ChangeEvent.FACTADDED, name);
+				EventType remev = new EventType(ChangeEvent.FACTREMOVED, name);
+				EventType fchev = new EventType(ChangeEvent.FACTCHANGED, name);
+//				EventType bchev = new EventType(ChangeEvent.BELIEFCHANGED, name);
+				
+				@Override
+				public void entryAdded(Object context, Object value, Object info)
+				{
+					RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+					Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
+					rs.addEvent(ev);
+				}
+				
+				@Override
+				public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
+				{
+					RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+					Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
+					rs.addEvent(ev);
+				}
+				
+				@Override
+				public void entryRemoved(Object context, Object value, Object info)
+				{
+					RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+					Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
+					rs.addEvent(ev);
+				}
+			};
+			InjectionModel.addDynamicValueInits(pojoclazzes, path, ret, evpub, Belief.class, true);
+			// TODO: generic dependency handling
 			for(Field f: InjectionModel.findFields(pojoclazz, Belief.class))
 			{
 				try
@@ -479,100 +514,40 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			if(pojoclazz.isAnnotationPresent(Goal.class))
 			{
 				// Init dynamic parameter values
-				for(Field f: InjectionModel.findFields(pojoclazz, GoalParameter.class))
+				evpub	= name -> new IEventPublisher()
 				{
-					String	name	= capaprefix+pojoclazz.getName()+"."+f.getName();
-					
 					EventType addev = new EventType(ChangeEvent.VALUEADDED, name);
 					EventType remev = new EventType(ChangeEvent.VALUEREMOVED, name);
 					EventType fchev = new EventType(ChangeEvent.VALUECHANGED, name);
 					
-					IEventPublisher	evpub	= new IEventPublisher()
+					@Override
+					public void entryAdded(Object context, Object value, Object info)
 					{
-						@Override
-						public void entryAdded(Object context, Object value, Object info)
-						{
-							RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-							Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
-							rs.addEvent(ev);
-						}
-						
-						@Override
-						public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
-						{
-							RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-							Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
-							rs.addEvent(ev);
-						}
-						
-						@Override
-						public void entryRemoved(Object context, Object value, Object info)
-						{
-							RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-							Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
-							rs.addEvent(ev);
-						}
-					};
-			
-					
-//					// Dependent belief (Dyn object with Callable that accesses other dynamic values)
-//					if(Dyn.class.equals(f.getType()))
-//					{
-//						// Throw change events when dependent beliefs change.
-//						List<String> deps = findDependentBeliefs(pojoclazzes, f);
-//						
-//						if(deps!=null && deps.size()>0)	// size may be null for belief with update rate
-//						{
-//							List<EventType>	events	= getTriggerEvents(pojoclazzes, deps, deps, deps, new Class[0], name);
-//							EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-//							
-//							f.setAccessible(true);
-//							MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(f);
-		//	
-//							
-//							ret.add((comp, pojos, context, oldval) ->
-//							{
-//								try
-//								{
-//									RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-//									Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
-//									rs.getRulebase().addRule(new Rule<Void>(
-//										"DependenBeliefChange_"+name,	// Rule Name
-//										ICondition.TRUE_CONDITION,	// Condition -> true
-//										new IAction<Void>()	// Action -> throw change event
-//										{
-//											Object	oldvalue	= dyn.get();
-//											@Override
-//											public IFuture<Void>	execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-//											{
-//												Object	newvalue	= dyn.get();
-//												if(!SUtil.equals(oldvalue, newvalue))
-//												{
-//													rs.addEvent(new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, null)));
-//												}
-//												oldvalue	= newvalue;
-//												return IFuture.DONE;
-//											}								
-//										},
-//										aevents));	// Trigger Event(s)
-//									return null;
-//								}
-//								catch(Throwable t)
-//								{
-//									throw SUtil.throwUnchecked(t);
-//								}
-//							});
-//						}
-//					}
-					
-					IInjectionHandle handle = InjectionModel.createDynamicValueInit(f, evpub);
-					if(handle==null)
-					{
-						// No options match ->
-						throw new UnsupportedOperationException("Cannot use as goal parameter: "+f);
+						RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
+						rs.addEvent(ev);
 					}
-					ret.add(handle);
-				}				
+					
+					@Override
+					public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
+					{
+						RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
+						rs.addEvent(ev);
+					}
+					
+					@Override
+					public void entryRemoved(Object context, Object value, Object info)
+					{
+						RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
+						rs.addEvent(ev);
+					}
+				};
+				// Add goal to path
+				List<String>	goalpath	= path==null ? new ArrayList<>() : new ArrayList<>(path);
+				goalpath.add(pojoclazz.getName());
+				InjectionModel.addDynamicValueInits(pojoclazzes, goalpath, ret, evpub, GoalParameter.class, true);
 			}
 			
 			return ret;
@@ -1797,40 +1772,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 */
 	protected static void addBeliefField(List<Class<?>> pojoclazzes, String capaprefix, Field f, List<IInjectionHandle> ret) throws Exception
 	{
-		String	name	= capaprefix+f.getName();
-		
-		EventType addev = new EventType(ChangeEvent.FACTADDED, name);
-		EventType remev = new EventType(ChangeEvent.FACTREMOVED, name);
+		String	name	= capaprefix+f.getName();		
 		EventType fchev = new EventType(ChangeEvent.FACTCHANGED, name);
-//		EventType bchev = new EventType(ChangeEvent.BELIEFCHANGED, name);
-		
-		IEventPublisher	evpub	= new IEventPublisher()
-		{
-			@Override
-			public void entryAdded(Object context, Object value, Object info)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
-				rs.addEvent(ev);
-			}
-			
-			@Override
-			public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
-				rs.addEvent(ev);
-			}
-			
-			@Override
-			public void entryRemoved(Object context, Object value, Object info)
-			{
-				RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
-				rs.addEvent(ev);
-			}
-		};
-
 		
 		// Dependent belief (Dyn object with Callable that accesses other dynamic values)
 		if(Dyn.class.equals(f.getType()))
@@ -1881,13 +1824,5 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				});
 			}
 		}
-		
-		IInjectionHandle handle = InjectionModel.createDynamicValueInit(f, evpub);
-		if(handle==null)
-		{
-			// No options match ->
-			throw new UnsupportedOperationException("Cannot use as belief: "+f);
-		}
-		ret.add(handle);
 	}
 }

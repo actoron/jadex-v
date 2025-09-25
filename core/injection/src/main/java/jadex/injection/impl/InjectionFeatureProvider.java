@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import jadex.collection.IEventPublisher;
 import jadex.common.SReflect;
@@ -164,6 +165,34 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		InjectionModel.addPostInject((pojotypes, path, contextfetchers) -> 
 		{
 			List<IInjectionHandle>	ret	= new ArrayList<>();
+			
+			// Init dynamic values
+			Function<String, IEventPublisher>	publisher	= name -> new IEventPublisher()
+			{
+				@Override
+				public void entryAdded(Object context, Object value, Object info)
+				{
+					IComponent	comp	= (IComponent)context;
+					((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.ADDED, name, value, null, info));
+				}
+
+				@Override
+				public void entryRemoved(Object context, Object value, Object info)
+				{
+					IComponent	comp	= (IComponent)context;
+					((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.REMOVED, name, value, null, info));
+				}
+
+				@Override
+				public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
+				{
+					IComponent	comp	= (IComponent)context;
+					((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.CHANGED, name, newvalue, oldvalue, info));
+				}
+			};
+			InjectionModel.addDynamicValueInits(pojotypes, path, ret, publisher, ProvideResult.class, false);
+			
+			// TODO: generic dependency handling
 			Class<?> pojoclazz	= pojotypes.get(pojotypes.size()-1);
 			for(Field f: InjectionModel.findFields(pojoclazz, ProvideResult.class))
 			{
@@ -178,29 +207,6 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 				}
 				String	fname	= name;
 				
-				IEventPublisher	publisher	= new IEventPublisher()
-				{
-					@Override
-					public void entryAdded(Object context, Object value, Object info)
-					{
-						IComponent	comp	= (IComponent)context;
-						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.ADDED, fname, value, null, info));
-					}
-
-					@Override
-					public void entryRemoved(Object context, Object value, Object info)
-					{
-						IComponent	comp	= (IComponent)context;
-						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.REMOVED, fname, value, null, info));
-					}
-
-					@Override
-					public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
-					{
-						IComponent	comp	= (IComponent)context;
-						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.CHANGED, fname, newvalue, oldvalue, info));
-					}
-				};
 				
 				// Dependent result (Dyn object with Callable that accesses other dynamic values)
 				if(Dyn.class.equals(f.getType()))
@@ -255,12 +261,6 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 							throw SUtil.throwUnchecked(t);
 						}
 					}
-				}
-				
-				IInjectionHandle	handle	= InjectionModel.createDynamicValueInit(f, publisher);
-				if(handle!=null)
-				{
-					ret.add(handle);
 				}
 			}
 			return ret;

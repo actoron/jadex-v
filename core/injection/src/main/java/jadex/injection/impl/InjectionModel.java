@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -731,6 +732,35 @@ public class InjectionModel
 		}
 		
 		return handles;
+	}
+	
+	/**
+	 *  Add init codes for dynamic values, if any.
+	 *  @param pojoclazzes	The class hierarchy of component pojo plus subobjects, if any.
+	 *  @param path	The path from the component pojo to the innermost pojo as a list of field names.
+	 *  @param ret		The list to add the init codes to.
+	 *  @param evpub	The event publisher to use for change events (name -> publisher).
+	 *  @param anno		The annotation to search for or null for all fields.
+	 *  @param required	Whether a field type must be a supported dynamic value (Dyn, Val, List, Set, Map, Bean).
+	 *  					When false, only fields with a supported type are added.
+	 */
+	public static void addDynamicValueInits(List<Class<?>> pojoclazzes, List<String> path, List<IInjectionHandle> ret, Function<String, IEventPublisher> evpub, Class<? extends Annotation> anno, boolean required)
+	{
+		Class<?>		pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
+		String	prefix	= path==null ? "" : path.stream().map(entry -> entry+"." ).reduce("", (a,b) -> a+b);
+		for(Field f: anno!=null ? findFields(pojoclazz, anno)
+				: Arrays.asList(SReflect.getAllFields(pojoclazz)))
+		{
+			IInjectionHandle	init	= createDynamicValueInit(f, evpub.apply(prefix+f.getName()));
+			if(init!=null)
+			{
+				ret.add(init);
+			}
+			else if(required)
+			{
+				throw new UnsupportedOperationException("Field is not a supported dynamic value type (Dyn, Val, List, Set, Map, Bean): "+f);
+			}
+		}
 	}
 
 	/**
