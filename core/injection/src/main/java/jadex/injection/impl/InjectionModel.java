@@ -798,7 +798,7 @@ public class InjectionModel
 					{
 						throw new RuntimeException("Dynamic value field is null: "+f);
 					}
-					DynValHelper.initDyn(dyn, comp, evpub);
+					DynValHelper.init(dyn, comp, evpub);
 										
 					return null;
 				}
@@ -823,7 +823,7 @@ public class InjectionModel
 						value	= new Val<Object>((Object)null);
 						setter.invoke(pojos.get(pojos.size()-1), value);
 					}
-					DynValHelper.initVal(value, comp, evpub);						
+					DynValHelper.init(value, comp, evpub);						
 					return null;
 				}
 				catch(Throwable t)

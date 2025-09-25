@@ -7,26 +7,22 @@ import java.lang.reflect.Method;
 import jadex.collection.IEventPublisher;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
-import jadex.injection.Dyn;
-import jadex.injection.Val;
+import jadex.injection.AbstractDynVal;
 
 /**
- *  Helper class for observable values.
- *  Provides common methods and access to non-user methods.
+ *  Helper class for accessing internal Dyn/Val methods.
  */
 public class DynValHelper
 {
-	//-------- Dyn-initialization --------
-	
 	/** Protected init method. */
-	static MethodHandle	dyn_init;
+	static MethodHandle	init;
 	static
 	{
 		try
 		{
-			Method	m	= Dyn.class.getDeclaredMethod("init", IComponent.class, IEventPublisher.class);
+			Method	m	= AbstractDynVal.class.getDeclaredMethod("init", IComponent.class, IEventPublisher.class);
 			m.setAccessible(true);
-			dyn_init	= MethodHandles.lookup().unreflect(m);
+			init	= MethodHandles.lookup().unreflect(m);
 		}
 		catch(Exception e)
 		{
@@ -35,46 +31,13 @@ public class DynValHelper
 	}
 	
 	/**
-	 *  Call protected init method of Dyn.
+	 *  Call protected init method..
 	 */
-	protected static void	initDyn(Dyn<Object> dyn, IComponent comp, IEventPublisher changehandler)
+	protected static void	init(AbstractDynVal<Object> dynval, IComponent comp, IEventPublisher changehandler)
 	{
 		try
 		{
-			dyn_init.invoke(dyn, comp, changehandler);
-		}
-		catch(Throwable t)
-		{
-			SUtil.throwUnchecked(t);
-		}
-	}
-	
-	//-------- Val-initialization --------
-	
-	/** Protected init method. */
-	static MethodHandle	val_init;
-	static
-	{
-		try
-		{
-			Method	m	= Val.class.getDeclaredMethod("init", IComponent.class, IEventPublisher.class);
-			m.setAccessible(true);
-			val_init	= MethodHandles.lookup().unreflect(m);
-		}
-		catch(Exception e)
-		{
-			SUtil.throwUnchecked(e);
-		}
-	}
-	
-	/**
-	 *  Call protected init method of Val.
-	 */
-	protected static void	initVal(Val<Object> val, IComponent comp, IEventPublisher changehandler)
-	{
-		try
-		{
-			val_init.invoke(val, comp, changehandler);
+			init.invoke(dynval, comp, changehandler);
 		}
 		catch(Throwable t)
 		{
