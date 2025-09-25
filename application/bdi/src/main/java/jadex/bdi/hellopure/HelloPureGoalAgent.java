@@ -5,6 +5,7 @@ import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
@@ -26,7 +27,7 @@ public class HelloPureGoalAgent
 	@Goal
 	public class HelloGoal
 	{
-//		@GoalParameter
+		@GoalParameter
 		protected Val<String> text;
 		
 		@GoalCreationCondition(factchanged="sayhello")
@@ -35,7 +36,7 @@ public class HelloPureGoalAgent
 			this.text	= new Val<>(text);
 		}
 		
-		@GoalTargetCondition//(parameters="text")
+		@GoalTargetCondition(parameters="text")
 		public boolean checkTarget()
 		{
 			System.out.println("checkTarget: "+text);
@@ -87,7 +88,7 @@ public class HelloPureGoalAgent
 	 */
 	public static void main(String[] args) 
 	{
-		IComponentManager.get().create(new HelloPureGoalAgent());
+		IComponentManager.get().create(new HelloPureGoalAgent()).get();
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

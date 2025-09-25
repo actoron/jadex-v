@@ -37,6 +37,7 @@ import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
 import jadex.bdi.annotation.GoalInhibit;
 import jadex.bdi.annotation.GoalMaintainCondition;
+import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalQueryCondition;
 import jadex.bdi.annotation.GoalRecurCondition;
 import jadex.bdi.annotation.GoalSelectCandidate;
@@ -366,7 +367,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							addPrefix(capaprefix, trigger.factadded()),
 							addPrefix(capaprefix, trigger.factremoved()),
 							addPrefix(capaprefix, trigger.factchanged()),
-							trigger.goalfinisheds(), plan.impl().getName());
+							trigger.goalfinisheds(), null, plan.impl().getName());
 						if((events!=null && events.size()>0) || trigger.goals().length>0)
 						{
 							throw new UnsupportedOperationException("External Plan must not define its own trigger: "+plan.impl());
@@ -474,6 +475,106 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 			
+			// If goal -> init parameters
+			if(pojoclazz.isAnnotationPresent(Goal.class))
+			{
+				// Init dynamic parameter values
+				for(Field f: InjectionModel.findFields(pojoclazz, GoalParameter.class))
+				{
+					String	name	= capaprefix+pojoclazz.getName()+"."+f.getName();
+					
+					EventType addev = new EventType(ChangeEvent.VALUEADDED, name);
+					EventType remev = new EventType(ChangeEvent.VALUEREMOVED, name);
+					EventType fchev = new EventType(ChangeEvent.VALUECHANGED, name);
+					
+					IEventPublisher	evpub	= new IEventPublisher()
+					{
+						@Override
+						public void entryAdded(Object context, Object value, Object info)
+						{
+							RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+							Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
+							rs.addEvent(ev);
+						}
+						
+						@Override
+						public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
+						{
+							RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+							Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
+							rs.addEvent(ev);
+						}
+						
+						@Override
+						public void entryRemoved(Object context, Object value, Object info)
+						{
+							RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
+							Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
+							rs.addEvent(ev);
+						}
+					};
+			
+					
+//					// Dependent belief (Dyn object with Callable that accesses other dynamic values)
+//					if(Dyn.class.equals(f.getType()))
+//					{
+//						// Throw change events when dependent beliefs change.
+//						List<String> deps = findDependentBeliefs(pojoclazzes, f);
+//						
+//						if(deps!=null && deps.size()>0)	// size may be null for belief with update rate
+//						{
+//							List<EventType>	events	= getTriggerEvents(pojoclazzes, deps, deps, deps, new Class[0], name);
+//							EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+//							
+//							f.setAccessible(true);
+//							MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(f);
+		//	
+//							
+//							ret.add((comp, pojos, context, oldval) ->
+//							{
+//								try
+//								{
+//									RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+//									Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
+//									rs.getRulebase().addRule(new Rule<Void>(
+//										"DependenBeliefChange_"+name,	// Rule Name
+//										ICondition.TRUE_CONDITION,	// Condition -> true
+//										new IAction<Void>()	// Action -> throw change event
+//										{
+//											Object	oldvalue	= dyn.get();
+//											@Override
+//											public IFuture<Void>	execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+//											{
+//												Object	newvalue	= dyn.get();
+//												if(!SUtil.equals(oldvalue, newvalue))
+//												{
+//													rs.addEvent(new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, null)));
+//												}
+//												oldvalue	= newvalue;
+//												return IFuture.DONE;
+//											}								
+//										},
+//										aevents));	// Trigger Event(s)
+//									return null;
+//								}
+//								catch(Throwable t)
+//								{
+//									throw SUtil.throwUnchecked(t);
+//								}
+//							});
+//						}
+//					}
+					
+					IInjectionHandle handle = InjectionModel.createDynamicValueInit(f, evpub);
+					if(handle==null)
+					{
+						// No options match ->
+						throw new UnsupportedOperationException("Cannot use as goal parameter: "+f);
+					}
+					ret.add(handle);
+				}				
+			}
+			
 			return ret;
 		});
 	}
@@ -549,7 +650,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			addPrefix(capaprefix, trigger.factadded()),
 			addPrefix(capaprefix, trigger.factremoved()),
 			addPrefix(capaprefix, trigger.factchanged()),
-			trigger.goalfinisheds(), planname);
+			trigger.goalfinisheds(), null, planname);
 		if(events!=null && events.size()>0)
 		{
 			EventType[]	aevents	= events.toArray(new EventType[events.size()]);
@@ -788,7 +889,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// Create events
 			if(beliefs.size()>0)
 			{
-				List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class[0], planname);
+				List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class[0], null, planname);
 				// Convert to array
 				EventType[]	cevents	= events.toArray(new EventType[events.size()]);
 				// In extra on start, add rule to check condition when event happens.  
@@ -890,7 +991,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			List<String>	factchangeds	= addPrefix(capaprefix, creation.factchanged());
 			
 			// TODO: find beliefs of all capabilities!?
-			List<EventType>	events	= getTriggerEvents(parentclazzes, factaddeds, factremoveds, factchangeds, new Class<?>[0], goalname);
+			List<EventType>	events	= getTriggerEvents(parentclazzes, factaddeds, factremoveds, factchangeds, new Class<?>[0], null, goalname);
 			if(events!=null && events.size()>0)
 			{
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
@@ -983,10 +1084,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			GoalContextCondition	context	= method.getAnnotation(GoalContextCondition.class);
 			List<String>	beliefs	= context.beliefs().length>0 ? addPrefix(capaprefix, context.beliefs())
 				: findDependentBeliefs(parentclazzes, method);
+			List<String>	parameters = addPrefix(capaprefix+goalname+".", context.parameters());
 			String	condname	= "context";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createContextCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, true);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, parameters, condname, creator, true);
 		}
 		
 		// Add drop condition rules
@@ -998,10 +1100,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			GoalDropCondition	drop	= method.getAnnotation(GoalDropCondition.class);
 			List<String>	beliefs	= drop.beliefs().length>0 ? addPrefix(capaprefix, drop.beliefs())
 					: findDependentBeliefs(parentclazzes, method);
+			List<String>	parameters = addPrefix(capaprefix+goalname+".", drop.parameters());
 			String	condname	= "drop";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createDropCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, true);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, parameters, condname, creator, true);
 		}
 		
 		// Add recur condition rules
@@ -1013,10 +1116,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			GoalRecurCondition	recur	= method.getAnnotation(GoalRecurCondition.class);
 			List<String>	beliefs	= recur.beliefs().length>0 ? addPrefix(capaprefix, recur.beliefs())
 					: findDependentBeliefs(parentclazzes, method);
+			List<String>	parameters = addPrefix(capaprefix+goalname+".", recur.parameters());
 			String	condname	= "recur";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createRecurCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, true);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, parameters, condname, creator, true);
 		}
 		
 		// Add query condition rules
@@ -1028,10 +1132,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			GoalQueryCondition	query	= method.getAnnotation(GoalQueryCondition.class);
 			List<String>	beliefs	= query.beliefs().length>0 ? addPrefix(capaprefix, query.beliefs())
 					: findDependentBeliefs(parentclazzes, method);
+			List<String>	parameters = addPrefix(capaprefix+goalname+".", query.parameters());
 			String	condname	= "query";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createQueryCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, false);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, parameters, condname, creator, false);
 		}
 		
 		// Add target condition rules
@@ -1043,10 +1148,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			GoalTargetCondition	target	= method.getAnnotation(GoalTargetCondition.class);
 			List<String>	beliefs	= target.beliefs().length>0 ? addPrefix(capaprefix, target.beliefs())
 					: findDependentBeliefs(parentclazzes, method);
+			List<String>	parameters = addPrefix(capaprefix+goalname+".", target.parameters());
 			String	condname	= "target";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createTargetCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, condname, creator, true);
+			addCondition(parentclazzes, ret, contextfetchers, goalname, method, beliefs, parameters, condname, creator, true);
 		}
 
 		// Add maintain condition rules
@@ -1057,7 +1163,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			GoalMaintainCondition	maintain	= method.getAnnotation(GoalMaintainCondition.class);
 			List<String>	beliefs	= maintain.beliefs().length>0 ? addPrefix(capaprefix, maintain.beliefs())
 					: findDependentBeliefs(parentclazzes, method);
-			List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], goalname);
+			List<String>	parameters = addPrefix(capaprefix+goalname+".", maintain.parameters());
+			List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], parameters, goalname);
 			if(events!=null && events.size()>0)
 			{
 				// Add fetcher for belief value.
@@ -1162,10 +1269,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 
 	protected void addCondition(List<Class<?>> parentclazzes, List<IInjectionHandle> ret,
 			Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers, String goalname,
-			Method method, List<String> beliefs, String condname,
+			Method method, List<String> beliefs, List<String> parameters, String condname,
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle> creator, boolean bool)
 	{
-		List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], goalname);
+		List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], parameters, goalname);
 		if(events!=null && events.size()>0)
 		{
 			// check for boolean method
@@ -1529,14 +1636,16 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 
 	/**
 	 *  Get rule events that trigger the plan, if any.
+	 * @param parameters TODO
 	 */
-	protected static List<EventType> getTriggerEvents(List<Class<?>> pojoclazzes, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, String element)
+	protected static List<EventType> getTriggerEvents(List<Class<?>> pojoclazzes, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, List<String> parameters, String element)
 	{
 		List<EventType>	events	= null;
 		if(factadded.size()>0
 			|| factremoved.size()>0
 			|| factchanged.size()>0
-			|| goalfinished.length>0)
+			|| goalfinished.length>0
+			|| parameters!=null)
 		{
 			events	= new ArrayList<>(4);
 			
@@ -1559,6 +1668,20 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			for(Class<?> goaltype: goalfinished)
 			{
 				events.add(new EventType(ChangeEvent.GOALDROPPED, goaltype.getName()));
+			}
+			
+			// Add parameter change trigger events.
+			if(parameters!=null)
+			{
+				for(String param: parameters)
+				{
+					// TODO:
+//					// call getBeliefType to check that belief exists (throws exception if not).
+//					getBeliefType(pojoclazzes, param, element);
+					events.add(new EventType(ChangeEvent.VALUEADDED, param));
+					events.add(new EventType(ChangeEvent.VALUEREMOVED, param));
+					events.add(new EventType(ChangeEvent.VALUECHANGED, param));
+				}
 			}
 		}
 		return events;
@@ -1717,7 +1840,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			
 			if(deps!=null && deps.size()>0)	// size may be null for belief with update rate
 			{
-				List<EventType>	events	= getTriggerEvents(pojoclazzes, deps, deps, deps, new Class[0], name);
+				List<EventType>	events	= getTriggerEvents(pojoclazzes, deps, deps, deps, new Class[0], null, name);
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 				
 				f.setAccessible(true);

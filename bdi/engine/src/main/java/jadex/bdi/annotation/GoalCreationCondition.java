@@ -53,11 +53,6 @@ public @interface GoalCreationCondition
 //	public String[] beliefs() default {};
 //	
 //	/**
-//	 *  The parameters this condition should react to.
-//	 */
-//	public String[] parameters() default {};
-//	
-//	/**
 //	 *  The events this condition should react to.
 //	 */
 //	public RawEvent[] rawevents() default {};
