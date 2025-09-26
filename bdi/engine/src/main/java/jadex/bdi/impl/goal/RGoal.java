@@ -413,7 +413,6 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	{
 		adopted	= true;
 		
-		// TODO: handle goal parameters
 			
 		((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).addGoal(this, contextfetchers);
 		

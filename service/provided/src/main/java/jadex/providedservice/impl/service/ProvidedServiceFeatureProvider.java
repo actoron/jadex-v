@@ -193,21 +193,19 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				}
 			}
 			return ret;
-		}, Inject.class, InjectServiceIdentifier.class);
-		
-		
-		// Provide services from class (do pre-inject so SID injection works, hack?)
-		InjectionModel.addPreInject((pojoclazzes, path, contextfetchers) ->
+		}, Inject.class, InjectServiceIdentifier.class);		
+			
+		InjectionModel.addExtraCode(model ->
 		{
-			List<IInjectionHandle>	ret	= new ArrayList<>();
+			// Provide services from class (do pre-inject so SID injection works, hack?)
 			
 			// find interfaces with service annotation on pojo
-			Map<Class<?>, ProvideService> services = findServiceInterfaces(pojoclazzes.get(pojoclazzes.size()-1));
+			Map<Class<?>, ProvideService> services = findServiceInterfaces(model.getPojoClazz());
 			if(!services.isEmpty())
 			{
 				// TODO: Service settings 
 //				if(getter.annotation() instanceof ProvideService)
-				ret.add((comp, pojos, context, oldval) ->
+				model.addPreInject((comp, pojos, context, oldval) ->
 				{
 					ProvidedServiceFeature	feature	= (ProvidedServiceFeature)comp.getFeature(IProvidedServiceFeature.class);
 					feature.addService(pojos, pojos.get(pojos.size()-1), null, services);
@@ -215,16 +213,10 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 				});
 			}
 			
-			return ret;
-		});
-			
-		// Provide services from field and method annotations
-		InjectionModel.addPostInject((pojoclazzes, path, contextfetchers) ->
-		{
-			List<IInjectionHandle>	ret	= new ArrayList<>();
+			// Provide services from field and method annotations
 			
 			// find fields/methods with provided service anno.
-			List<Getter>	getters	= InjectionModel.getGetters(pojoclazzes, ProvideService.class, contextfetchers);
+			List<Getter>	getters	= model.getGetters(ProvideService.class);
 			if(getters!=null)
 			{
 				for(Getter getter: getters)
@@ -241,7 +233,7 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 					
 					// TODO: Service settings 
 //						if(getter.annotation() instanceof ProvideService)
-					ret.add((comp, pojos, context, oldval) ->
+					model.addPostInject((comp, pojos, context, oldval) ->
 					{
 						Object value	= getter.fetcher().apply(comp, pojos, context, null);
 						if(value==null)
@@ -254,8 +246,6 @@ public class ProvidedServiceFeatureProvider extends ComponentFeatureProvider<IPr
 					});
 				}
 			}
-
-			return ret;
 		});
 	}
 }

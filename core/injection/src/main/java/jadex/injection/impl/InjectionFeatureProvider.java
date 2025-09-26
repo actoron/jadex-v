@@ -122,7 +122,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		}) : null, Inject.class);
 		
 		// Add exception handler for @Inject methods with exception parameter
-		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers, anno) -> 
+		InjectionModel.addMethodInjection((model, method, anno) -> 
 		{
 			List<IInjectionHandle>	preparams	= new ArrayList<>();
 			Class<? extends Exception> type	= null;
@@ -149,7 +149,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			{
 				boolean exactmatch	= anno instanceof InjectException && ((InjectException)anno).exactmatch();
 				Class<? extends Exception> ftype	= type;
-				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, pojotypes, contextfetchers, preparams);
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, model.getPojoClazzes(), model.getContextFetchers(), preparams);
 				return (comp, pojos, context, oldvale) ->
 				{
 					IErrorHandlingFeature	errh	= IComponentManager.get().getFeature(IErrorHandlingFeature.class);
@@ -162,10 +162,8 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		}, Inject.class, InjectException.class);
 		
 		// Add init code for dynamic values
-		InjectionModel.addPostInject((pojotypes, path, contextfetchers) -> 
+		InjectionModel.addExtraCode(model -> 
 		{
-			List<IInjectionHandle>	ret	= new ArrayList<>();
-			
 			// Init dynamic values
 			Function<String, IEventPublisher>	publisher	= name -> new IEventPublisher()
 			{
@@ -190,17 +188,16 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 					((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(new ResultEvent(Type.CHANGED, name, newvalue, oldvalue, info));
 				}
 			};
-			InjectionModel.addDynamicValueInits(pojotypes, path, ret, publisher, ProvideResult.class, false);
+			model.addDynamicValueInits(publisher, ProvideResult.class, false);
 			
 			// TODO: generic dependency handling
-			Class<?> pojoclazz	= pojotypes.get(pojotypes.size()-1);
-			for(Field f: InjectionModel.findFields(pojoclazz, ProvideResult.class))
+			for(Field f: model.findFields(ProvideResult.class))
 			{
 				// prepend path names.
 				String	name	= f.getName();
-				if(path!=null)
+				if(model.getPath()!=null)
 				{
-					for(String entry: path.reversed())
+					for(String entry: model.getPath().reversed())
 					{
 						name	= entry+"."+name;
 					}
@@ -223,7 +220,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 							f.setAccessible(true);
 							MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(f);
 							
-							ret.add((comp, pojos, context, oldval) ->
+							model.addPostInject((comp, pojos, context, oldval) ->
 							{
 								try
 								{
@@ -263,7 +260,6 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 					}
 				}
 			}
-			return ret;
 		});
 	}
 

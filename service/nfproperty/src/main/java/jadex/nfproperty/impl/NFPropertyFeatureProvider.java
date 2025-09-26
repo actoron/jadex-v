@@ -2,8 +2,6 @@ package jadex.nfproperty.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,7 +9,6 @@ import java.util.Set;
 import jadex.common.MethodInfo;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
-import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
 import jadex.injection.impl.InjectionModel.Getter;
 import jadex.nfproperty.INFProperty;
@@ -60,13 +57,10 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 	@Override
 	public void init()
 	{
-		InjectionModel.addPostInject((pojoclazzes, path, contextfetchers)->
+		InjectionModel.addExtraCode(model->
 		{
-			List<IInjectionHandle>	ret	= new ArrayList<>();
-			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
-			
 			// Add component properties
-			Class<?>	test	= pojoclazz;
+			Class<?>	test	= model.getPojoClazz();
 			while(test!=null)
 			{
 				if(test.isAnnotationPresent(NFProperties.class))
@@ -76,7 +70,7 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 					
 					for(NFPropertyInfo nfprop: nfprops)
 					{
-						ret.add((comp, pojos, context, oldval) ->
+						model.addPostInject((comp, pojos, context, oldval) ->
 						{
 							Class<?> clazz = nfprop.getClazz().getType(pojos.get(pojos.size()-1).getClass().getClassLoader());
 							INFProperty<?, ?> nfp = AbstractNFProperty.createProperty(clazz, comp, null, null, nfprop.getParameters());
@@ -91,10 +85,10 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 			}
 			
 			// Add properties for interfaces with service annotation on pojo
-			addServicePropertyInjections(pojoclazz, ret);
+			addServicePropertyInjections(model, model.getPojoClazz());
 			
 			// Add properties for fields/methods with provided service anno.
-			List<Getter>	getters	= InjectionModel.getGetters(Collections.singletonList(pojoclazz), ProvideService.class, contextfetchers);
+			List<Getter>	getters	= model.getGetters(ProvideService.class);
 			if(getters!=null)
 			{
 				for(Getter getter: getters)
@@ -103,18 +97,16 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 						? ((Method)getter.member()).getReturnType()
 						: ((Field)getter.member()).getType();
 					
-					addServicePropertyInjections(clazz, ret);
+					addServicePropertyInjections(model, clazz);
 				}
 			}
-			
-			return ret;
 		});
 	}
 	
 	/**
 	 *  Add properties injections for the given service pojo clazz. 
 	 */
-	protected static void addServicePropertyInjections(Class<?> pojoclazz, List<IInjectionHandle> ret)
+	protected static void addServicePropertyInjections(InjectionModel model, Class<?> pojoclazz)
 	{
 		Map<Class<?>, ProvideService> services = ProvidedServiceFeatureProvider.findServiceInterfaces(pojoclazz);
 		
@@ -125,7 +117,7 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 			// Properties on service
 			if(nfps.get(null)!=null)
 			{
-				ret.add((comp, pojos, context, oldval) ->
+				model.addPostInject((comp, pojos, context, oldval) ->
 				{
 					IService	ser	= (IService)comp.getFeature(IProvidedServiceFeature.class).getProvidedService(service);
 					// TODO: wait for future
@@ -139,7 +131,7 @@ public class NFPropertyFeatureProvider extends ComponentFeatureProvider<INFPrope
 			{
 				if(entry!=null)
 				{
-					ret.add((comp, pojos, context, oldval) ->
+					model.addPostInject((comp, pojos, context, oldval) ->
 					{
 						IService	ser	= (IService)comp.getFeature(IProvidedServiceFeature.class).getProvidedService(service);
 						// TODO: wait for future

@@ -1,8 +1,8 @@
 package jadex.injection.impl;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,8 +25,8 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	/** The model caching all invocation stuff. */
 	protected InjectionModel	model;
 	
-	/** Managed extra objects (e.g. services implemented as separate class). */
-	protected List<List<Object>>	extras;
+	/** Managed extra objects (e.g. services implemented as separate class). List of pojo hierarchy -> context. */
+	protected Map<List<Object>, Object>	extras;
 	
 	protected ResultProvider	rp;
 	
@@ -52,36 +52,45 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 */
 	protected void startPojo(InjectionModel model, List<Object> pojos, Object context)
 	{
-		if(model.getPreInject()!=null)
+		for(IInjectionHandle handle: model.getPreInject())
 		{
-			model.getPreInject().apply(self, pojos, context, null);
+			handle.apply(self, pojos, context, null);
 		}
 
-		if(model.getFieldInjections()!=null)
+		for(IInjectionHandle handle: model.getFieldInjections())
 		{
-			model.getFieldInjections().apply(self, pojos, context, null);
+			handle.apply(self, pojos, context, null);
 		}
 		
-		if(model.getPostInject()!=null)
+		for(IInjectionHandle handle: model.getPostInject())
 		{
-			model.getPostInject().apply(self, pojos, context, null);
+			handle.apply(self, pojos, context, null);
 		}
 
 		// Hack!!! Start async when component pojo to allow agents with never ending main loops (e.g. quiz, simple cleaner, ...)
 		if(pojos.size()==1)
 		{
-			if(model.getOnStart()!=null)
+			if(!model.getOnStart().isEmpty())
 			{
-				// TODO: wait for future return value?
+				// TODO: wait for future return values?
 				self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-					model.getOnStart().apply(self, pojos, context, null));
+				{
+					for(IInjectionHandle handle: model.getOnStart())
+					{
+						handle.apply(self, pojos, context, null);
+					}
+				});
 			}
 
-			if(model.getMethodInjections()!=null)
+			if(!model.getMethodInjections().isEmpty())
 			{
-				// TODO: wait for future return value?
 				self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-					model.getMethodInjections().apply(self, pojos, context, null));
+				{
+					for(IInjectionHandle handle: model.getMethodInjections())
+					{
+						handle.apply(self, pojos, context, null);
+					}
+				});
 			}
 		}
 		
@@ -89,17 +98,21 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		else
 		{
 			// Schedule method injections first, in case OnStart blocks
-			if(model.getMethodInjections()!=null)
+			if(!model.getMethodInjections().isEmpty())
 			{
-				// TODO: wait for future return value?
 				self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-					model.getMethodInjections().apply(self, pojos, context, null));
+				{
+					for(IInjectionHandle handle: model.getMethodInjections())
+					{
+						handle.apply(self, pojos, context, null);
+					}
+				});
 			}
 			
-			if(model.getOnStart()!=null)
+			// TODO: wait for future return values?
+			for(IInjectionHandle handle: model.getOnStart())
 			{
-				// TODO: wait for future return value?
-				model.getOnStart().apply(self, pojos, context, null);
+				handle.apply(self, pojos, context, null);
 			}
 		}
 	}
@@ -109,13 +122,10 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	{
 		if(extras!=null)
 		{
-			for(List<Object> pojos: extras)
+			for(List<Object> pojos: extras.keySet())
 			{
 				InjectionModel	model	= InjectionModel.get(pojos, null, null);
-				if(model.getOnEnd()!=null)
-				{	
-					model.getOnEnd().apply(self, pojos, null, null);
-				}
+				endPojo(model, pojos, extras.get(pojos));
 			}
 		}
 		
@@ -169,39 +179,13 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		Map<String, Object> ret	= null;
 		if(extras!=null)
 		{
-			// Go backwards through list so outer objects overwrite conflicting results of inner objects.
-			for(List<Object> pojos: extras.reversed())
+			for(List<Object> pojos: extras.keySet())
 			{
 				InjectionModel	model	= InjectionModel.get(pojos, null, null);
-				if(model.getResultsFetcher()!=null)
-				{
-					@SuppressWarnings("unchecked")
-					Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, pojos, null, null);
-					if(ret==null)
-					{
-						ret	= results;
-					}
-					else
-					{
-						ret.putAll(results);
-					}
-				}
+				ret = addResults(model, pojos, ret);
 			}
 		}
-		
-		if(model.getResultsFetcher()!=null)
-		{
-			@SuppressWarnings("unchecked")
-			Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, Collections.singletonList(self.getPojo()), null, null);
-			if(ret==null)
-			{
-				ret	= results;
-			}
-			else
-			{
-				ret.putAll(results);
-			}
-		}
+		ret = addResults(model, Collections.singletonList(self.getPojo()), ret);
 		
 		// Add manually added results last -> manual overwrites annotation, if any.
 		if(rp!=null)
@@ -217,6 +201,28 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			}			
 		}
 		
+		return ret;
+	}
+
+	/**
+	 *  Add results from the given model and pojo list to the given map.
+	 *  @return	The updated map.
+	 */
+	protected Map<String, Object> addResults(InjectionModel model, List<Object> pojos, Map<String, Object> ret)
+	{
+		if(model.getResultsFetcher()!=null)
+		{
+			@SuppressWarnings("unchecked")
+			Map<String, Object>	results	= (Map<String, Object>) model.getResultsFetcher().apply(self, pojos, null, null);
+			if(ret==null)
+			{
+				ret	= results;
+			}
+			else
+			{
+				ret.putAll(results);
+			}
+		}
 		return ret;
 	}
 	
@@ -247,13 +253,14 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 */
 	public void	addExtraObject(List<Object> pojos, List<String> path, Object context, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
+		InjectionModel	model	= InjectionModel.get(pojos, path, contextfetchers);
+		
 		if(extras==null)
 		{
-			extras	= new ArrayList<List<Object>>(4);
+			extras	= new LinkedHashMap<>();
 		}
-		extras.add(pojos);
+		extras.put(pojos, context);
 		
-		InjectionModel	model	= InjectionModel.get(pojos, path, contextfetchers);
 		startPojo(model, pojos, context);
 	}
 
@@ -269,13 +276,13 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 */
 	public void	removeExtraObject(List<Object> pojos, Object context)
 	{
-		InjectionModel	model	= InjectionModel.get(pojos, null, null);
-		if(extras!=null)
+		// Might be called before added for removePlan when plan fails due to model not loadable.
+		if(extras!=null && extras.containsKey(pojos))
 		{
 			extras.remove(pojos);
+			InjectionModel	model	= InjectionModel.get(pojos, null, null);
+			endPojo(model, pojos, context);
 		}
-		
-		endPojo(model, pojos, context);
 	}
 	
 	/**
@@ -283,11 +290,11 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 */
 	protected void endPojo(InjectionModel model, List<Object> pojos, Object context)
 	{
-		if(model.getOnEnd()!=null)
+		// TODO: wait for future return values?
+		for(IInjectionHandle handle: model.getOnEnd())
 		{
-			// TODO: wait for future return value?
 //			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				model.getOnEnd().apply(self, pojos, context, null);
+				handle.apply(self, pojos, context, null);
 		}
 	}
 }

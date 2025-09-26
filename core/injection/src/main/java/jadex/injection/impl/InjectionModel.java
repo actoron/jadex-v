@@ -13,7 +13,6 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -52,277 +51,503 @@ import jadex.injection.annotation.ProvideResult;
  */
 public class InjectionModel
 {
-	static IInjectionHandle	NULL	= (self, pojos, context, oldval) -> null;
-	
 	/** The pojo classes as a hierarchy of component pojo plus subobjects, if any.
 	 *  The model is for the last pojo in the list. */
-	protected List<Class<?>>	classes;
+	protected final List<Class<?>>	pojoclazzes;
 	
 	/** Optional path name(s) if this model is a named subobject (e.g. capability). */
-	protected List<String>	path;
+	protected final List<String>	path;
 	
 	/** The context specific value fetchers. */
-	protected Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers;
+	protected final Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers;
+	
+	/** Flag to prevent changing the model after creation. */
+	protected boolean	inited	= false;
 	
 	/** Code to run on component start before field injections. */
-	protected volatile IInjectionHandle	preinject;
+	protected final List<IInjectionHandle>	preinject	= new ArrayList<>();
 	
 	/** Field injections on component start. */
-	protected volatile IInjectionHandle	fields;
+	protected final List<IInjectionHandle>	fields	= new ArrayList<>();
 	
 	/** Code to run on component start after field injections. */
-	protected volatile IInjectionHandle	postinject;
+	protected final List<IInjectionHandle>	postinject	= new ArrayList<>();
 	
 	/** User code to run on component start. */
-	protected volatile IInjectionHandle	onstart;
+	protected final List<IInjectionHandle>	onstart;
 	
 	/** Method injections to be initialized after component start. */
-	protected volatile IInjectionHandle	methods;
+	protected final List<IInjectionHandle>	methods	= new ArrayList<>();
 	
 	/** User code to run on component end. */
-	protected volatile IInjectionHandle	onend;
+	protected final List<IInjectionHandle>	onend;
 	
 	/** Code to fetch component results. */
-	protected volatile IInjectionHandle	results;
+	protected final IInjectionHandle	results;
+	
+	//-------- init --------
 	
 	/**
 	 *  Create injection model for given stack of pojo classes.
 	 */
 	protected InjectionModel(List<Class<?>> classes, List<String> path, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
-		this.classes	= classes;
+		this.pojoclazzes	= classes;
 		this.path	= path;
 		this.contextfetchers	= contextfetchers;
 		
+		// Scan class for resolving dynamic value dependencies.
 		scanClass(classes.get(classes.size()-1));
+		
+		// Initialize fetchers and injections.
+		for(IExtraCodeCreator extra: EXTRA_CODE_CREATORS)
+		{
+			extra.addExtraCode(this);
+		}
+		initFieldInjections();
+		initMethodInjections();
+		onstart	= createMethodInvocations(OnStart.class);
+		onend	= createMethodInvocations(OnEnd.class);
+		results	= createResultsFetcher();
+		
+		// make model read-only
+		inited	= true;
 	}
 	
-	//-------- handles for lifecycle phases --------
+	/**
+	 *  Init the field injection handles.
+	 */
+	protected void	initFieldInjections()
+	{
+		assert !inited;
+		
+		Map<Field, IInjectionHandle>	allfields	= new LinkedHashMap<>();
+		
+		// Search in global fetchers.
+		synchronized(FETCHERS)
+		{
+			addValueFetchers(allfields, FETCHERS);
+		}
+		
+		// Search in local fetchers.
+		if(contextfetchers!=null)
+		{
+			addValueFetchers(allfields, contextfetchers);
+		}
+		
+		for(Field f: allfields.keySet())
+		{
+			if(allfields.get(f)==null)
+			{
+				throw new UnsupportedOperationException("Cannot inject "+f);
+			}
+			else
+			{
+				fields.add(allfields.get(f));
+			}
+		}
+	}
 	
 	/**
-	 *  Get the field injection handles.
+	 *  Add method injections to run after component start.
 	 */
-	public IInjectionHandle	getFieldInjections()
+	protected void	initMethodInjections()
 	{
-		if(fields==null)
+		assert !inited;
+		synchronized(METHOD_INJECTIONS)
 		{
-			synchronized(this)
+			for(Class<? extends Annotation> anno: METHOD_INJECTIONS.keySet())
 			{
-				if(fields==null)
+				for(Method method: InjectionModel.findMethods(pojoclazzes.get(pojoclazzes.size()-1), anno))
 				{
-					Map<Field, IInjectionHandle>	allfields	= new LinkedHashMap<>();
-					
-					// Search in global fetchers.
-					synchronized(fetchers)
+					IInjectionHandle injection	= null;
+					for(IMethodInjectionCreator check: METHOD_INJECTIONS.get(anno))
 					{
-						addValueFetchers(classes, allfields, fetchers);
-					}
-					
-					// Search in local fetchers.
-					if(contextfetchers!=null)
-					{
-						addValueFetchers(classes, allfields, contextfetchers);
-					}
-					
-					for(Field f: allfields.keySet())
-					{
-						if(allfields.get(f)==null)
+						IInjectionHandle	test	= check.getInjectionHandle(this, method, method.getAnnotation(anno));
+						if(test!=null)
 						{
-							throw new UnsupportedOperationException("Cannot inject "+f);
-						}
-					}
-					
-					fields	= unifyHandles(allfields.values());					
-				}
-			}
-		}
-		
-		return fields==NULL ? null : fields;
-	}
-	
-	/**
-	 * Get the code to run on component start.
-	 */
-	public IInjectionHandle getOnStart()
-	{
-		if(onstart==null)
-		{
-			synchronized(this)
-			{
-				if(onstart==null)
-				{
-					onstart	= unifyHandles(getMethodInvocations(OnStart.class));
-				}
-			}
-		}
-		
-		return onstart==NULL ? null : onstart;
-	}
-
-	/**
-	 * Get external code to run before field injections.
-	 */
-	public IInjectionHandle getPreInject()
-	{
-		if(preinject==null)
-		{
-			synchronized(this)
-			{
-				if(preinject==null)
-				{
-					preinject	= unifyHandles(getPreInjectHandles(classes, path, contextfetchers));
-				}
-			}
-		}
-		
-		return preinject==NULL ? null : preinject;
-	}
-
-	/**
-	 * Get external code to run after field injections.
-	 */
-	public IInjectionHandle getPostInject()
-	{
-		if(postinject==null)
-		{
-			synchronized(this)
-			{
-				if(postinject==null)
-				{
-					postinject	= unifyHandles(getPostInjectHandles(classes, path, contextfetchers));
-				}
-			}
-		}
-		
-		return postinject==NULL ? null : postinject;
-	}
-
-	/**
-	 * Get method injections to run after component start.
-	 */
-	public IInjectionHandle getMethodInjections()
-	{
-		if(methods==null)
-		{
-			synchronized(this)
-			{
-				if(methods==null)
-				{
-					List<IInjectionHandle>	ret	= new ArrayList<>();
-					synchronized(minjections)
-					{
-						for(Class<? extends Annotation> anno: minjections.keySet())
-						{
-							for(Method method: InjectionModel.findMethods(classes.get(classes.size()-1), anno))
+							if(injection!=null)
 							{
-								IInjectionHandle injection	= null;
-								for(IMethodInjectionCreator check: minjections.get(anno))
-								{
-									IInjectionHandle	test	= check.getInjectionHandle(classes, method, contextfetchers, method.getAnnotation(anno));
-									if(test!=null)
-									{
-										if(injection!=null)
-										{
-											throw new RuntimeException("Conflicting method injections: "+injection+", "+test);
-										}
-										injection	= test;
-									}
-								}
-								
-								if(injection!=null)
-								{
-									ret.add(injection);	
-								}
-								else
-								{
-									throw new UnsupportedOperationException("Cannot inject "+method);
-								}
+								throw new RuntimeException("Conflicting method injections: "+injection+", "+test);
 							}
+							injection	= test;
 						}
 					}
-					methods	= unifyHandles(ret);
+					
+					if(injection!=null)
+					{
+						methods.add(injection);	
+					}
+					else
+					{
+						throw new UnsupportedOperationException("Cannot inject "+method);
+					}
 				}
 			}
 		}
-		
-		return methods==NULL ? null : methods;
-	}
-
-	/**
-	 * Get the code to run on component end.
-	 */
-	public IInjectionHandle getOnEnd()
-	{
-		if(onend==null)
-		{
-			synchronized(this)
-			{
-				if(onend==null)
-				{
-					onend	= unifyHandles(getMethodInvocations(OnEnd.class));
-				}
-			}
-		}
-		
-		return onend==NULL ? null : onend;
 	}
 	
 	/**
 	 *  Get the fetcher to retrieve current component results.
 	 */
-	public IInjectionHandle getResultsFetcher()
+	protected IInjectionHandle	createResultsFetcher()
 	{
-		if(results==null)
+		assert !inited;
+		IInjectionHandle	results	= null;
+		
+		List<Getter>	fetchers = getGetters(ProvideResult.class);
+		
+		if(fetchers!=null)
 		{
-			synchronized(this)
+			// Find names for getters
+			Map<String, Tuple2<IInjectionHandle, Annotation[]>>	ffetchers	= new LinkedHashMap<>();
+			for(Getter fetcher: fetchers)
 			{
-				if(results==null)
+				String name	= fetcher.annotation() instanceof ProvideResult && ! "".equals(((ProvideResult)fetcher.annotation()).value())
+					? ((ProvideResult)fetcher.annotation()).value()
+					: fetcher.member() instanceof Method && fetcher.member().getName().startsWith("get")
+						? fetcher.member().getName().substring(3).toLowerCase()
+						: fetcher.member().getName();
+				Annotation[]	annos	= fetcher.member() instanceof Method
+					? (Annotation[])SUtil.joinArrays(((Method)fetcher.member()).getAnnotations(),
+						((Method)fetcher.member()).getAnnotatedReturnType().getAnnotations())
+					: ((Field)fetcher.member()).getAnnotations();
+				ffetchers.put(name, new Tuple2<>(fetcher.fetcher(), annos));
+			}
+			
+			// New handle to apply all getters
+			results	= (comp, pojos, context, oldval) ->
+			{
+				Map<String, Object>	ret	= new LinkedHashMap<>();
+				for(String name: ffetchers.keySet())
 				{
-					List<Getter>	fetchers = getGetters(classes, ProvideResult.class, contextfetchers);
-					
-					if(fetchers==null)
+					ret.put(name, ExecutionFeatureProvider.copyVal(ffetchers.get(name).getFirstEntity().apply(comp, pojos, context, null), ffetchers.get(name).getSecondEntity()));
+				}
+				return ret;
+			};
+		}
+		return results;
+	}
+	
+	/**
+	 *  Add value fetchers for fields.
+	 */
+	protected void addValueFetchers(Map<Field, IInjectionHandle> allfields,
+			Map<Class<? extends Annotation>, List<IValueFetcherCreator>> fetchers)
+	{
+		for(Class<? extends Annotation> anno: fetchers.keySet())
+		{
+			List<Field> fields = findFields(anno);
+			
+			for(Field field: fields)
+			{
+				// TODO: do we want to check this?
+//				if(allfields.containsKey(field))
+//				{
+//					throw new RuntimeException("Multiple Inject annotations on field: "+field);
+//				}
+				if(!allfields.containsKey(field))
+				{
+					allfields.put(field, null);
+				}
+				
+				try
+				{
+					IInjectionHandle	fetcher	= null;
+					for(IValueFetcherCreator check: fetchers.get(anno))
 					{
-						results	= NULL;
-					}
-					else
-					{
-						// Find names for getters
-						Map<String, Tuple2<IInjectionHandle, Annotation[]>>	ffetchers	= new LinkedHashMap<>();
-						for(Getter fetcher: fetchers)
+						IInjectionHandle	test	= check.getValueFetcher(pojoclazzes, field.getGenericType(), field.getAnnotation(anno));
+						if(test!=null)
 						{
-							String name	= fetcher.annotation() instanceof ProvideResult && ! "".equals(((ProvideResult)fetcher.annotation()).value())
-								? ((ProvideResult)fetcher.annotation()).value()
-								: fetcher.member() instanceof Method && fetcher.member().getName().startsWith("get")
-									? fetcher.member().getName().substring(3).toLowerCase()
-									: fetcher.member().getName();
-							Annotation[]	annos	= fetcher.member() instanceof Method
-								? (Annotation[])SUtil.joinArrays(((Method)fetcher.member()).getAnnotations(),
-									((Method)fetcher.member()).getAnnotatedReturnType().getAnnotations())
-								: ((Field)fetcher.member()).getAnnotations();
-							ffetchers.put(name, new Tuple2<>(fetcher.fetcher(), annos));
+							if(fetcher!=null && fetcher!=test)	// TODO: why duplicate of fetcher in bdi marsworld
+							{
+								throw new RuntimeException("Conflicting field injections: "+field+", "+fetcher.getClass()+", "+test.getClass());
+							}
+							fetcher	= test;
+						}
+					}
+							
+					if(fetcher!=null)
+					{
+						if(allfields.get(field)!=null)
+						{
+							throw new UnsupportedOperationException("Multiple value fetchers for field: "+field);
 						}
 						
-						// New handle to apply all getters
-						results	= (comp, pojos, context, oldval) ->
-						{
-							Map<String, Object>	ret	= new LinkedHashMap<>();
-							for(String name: ffetchers.keySet())
+						field.setAccessible(true);
+						MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(field);
+						MethodHandle	setter	= MethodHandles.lookup().unreflectSetter(field);
+						final IInjectionHandle	ffetcher	= fetcher;
+						allfields.put(field, (self, pojos, context, oldval) -> {
+							try
 							{
-								ret.put(name, ExecutionFeatureProvider.copyVal(ffetchers.get(name).getFirstEntity().apply(comp, pojos, context, null), ffetchers.get(name).getSecondEntity()));
+								oldval	= getter.invoke(pojos.get(pojos.size()-1));
+								Object[]	args	= new Object[]{pojos.get(pojos.size()-1), ffetcher.apply(self, pojos, context, oldval)};
+								return setter.invokeWithArguments(args);
 							}
-							return ret;
-						};
+							catch(Throwable e)
+							{
+								// Rethrow user exception
+								throw SUtil.throwUnchecked(e);
+							}
+						});			
 					}
+				}
+				catch(Exception e)
+				{
+					SUtil.throwUnchecked(e);
 				}
 			}
 		}
-		return results==NULL ? null : results;
+	}
+	
+	/**
+	 *  Get all invocation handles for methods with given annotation.
+	 */
+	protected List<IInjectionHandle>	createMethodInvocations(Class<? extends Annotation> annotation)
+	{
+		List<IInjectionHandle>	handles	= new ArrayList<>();
+		
+		List<Method> methods = findMethods(pojoclazzes.get(pojoclazzes.size()-1), annotation);
+		for(Method method: methods)
+		{
+			handles.add(createMethodInvocation(method, pojoclazzes, contextfetchers, null));
+		}
+		
+		return handles;
+	}
+	
+	//-------- internal getters for injection feature at runtime --------
+	
+	/**
+	 *  Get the field injections to run on component start.
+	 */
+	protected List<IInjectionHandle> getFieldInjections()
+	{
+		assert inited;
+		return fields;
+	}
+	
+	/**
+	 *  Get the method injections to run after component start.
+	 */
+	protected List<IInjectionHandle> getMethodInjections()
+	{
+		assert inited;
+		return methods;
+	}
+	
+	/**
+	 *  Get the code to run on component start.
+	 */
+	protected List<IInjectionHandle> getOnStart()
+	{
+		assert inited;
+		return onstart;
 	}
 
-	//-------- static part --------
+	/**
+	 *  Get external code to run before field injections.
+	 */
+	protected List<IInjectionHandle> getPreInject()
+	{
+		assert inited;
+		return preinject;
+	}
+
+	/**
+	 *  Get external code to run after field injections.
+	 */
+	protected List<IInjectionHandle> getPostInject()
+	{
+		assert inited;
+		return postinject;
+	}
+
+	/**
+	 *  Get the code to run on component end.
+	 */
+	protected List<IInjectionHandle> getOnEnd()
+	{
+		assert inited;
+		return onend;
+	}
+	
+	/**
+	 *  Get the code to fetch component results.
+	 */
+	protected IInjectionHandle getResultsFetcher()
+	{
+		assert inited;
+		return results;
+	}
+
+	//-------- getters/setters/helpers for use during model init --------
+	
+	/**
+	 *  Get the pojo classes as a hierarchy of component pojo plus subobjects, if any.
+	 */
+	public List<Class<?>> getPojoClazzes()
+	{
+		return pojoclazzes;
+	}
+	
+	/**
+	 *  Get the innermost pojo class, i.e. the class reresented by this model.
+	 */
+	public Class<?> getPojoClazz()
+	{
+		return pojoclazzes.get(pojoclazzes.size()-1);
+	}
+	
+	/**
+	 *  Get the path name(s) if this model is a named subobject (e.g. capability).
+	 */
+	public List<String> getPath()
+	{
+		return path;
+	}
+	
+	/**
+	 *  Get the context specific value fetchers.
+	 */
+	public Map<Class<? extends Annotation>,List<IValueFetcherCreator>> getContextFetchers()
+	{
+		return contextfetchers;
+	}
+	
+	/**
+	 *  Add pre-field-injection code.
+	 */
+	public void	addPreInject(IInjectionHandle handle)
+	{
+		assert !inited;
+		preinject.add(handle);
+	}
+
+	/**
+	 *  Add post-field-injection code.
+	 */
+	public void	addPostInject(IInjectionHandle handle)
+	{
+		assert !inited;
+		postinject.add(handle);
+	}
+
+	/**
+	 *  Add init codes for dynamic values, if any.
+	 *  @param pojoclazzes	The class hierarchy of component pojo plus subobjects, if any.
+	 *  @param path	The path from the component pojo to the innermost pojo as a list of field names.
+	 *  @param ret		The list to add the init codes to.
+	 *  @param evpub	The event publisher to use for change events (name -> publisher).
+	 *  @param anno		The annotation to search for or null for all fields.
+	 *  @param required	Whether a field type must be a supported dynamic value (Dyn, Val, List, Set, Map, Bean).
+	 *  					When false, only fields with a supported type are added.
+	 */
+	public void	addDynamicValueInits(Function<String, IEventPublisher> evpub, Class<? extends Annotation> anno, boolean required)
+	{
+		assert !inited;
+		String	prefix	= path==null ? "" : path.stream().map(entry -> entry+"." ).reduce("", (a,b) -> a+b);
+		for(Field f: anno!=null ? findFields(anno)
+				: Arrays.asList(SReflect.getAllFields(getPojoClazz())))
+		{
+			IInjectionHandle	init	= createDynamicValueInit(f, evpub.apply(prefix+f.getName()));
+			if(init!=null)
+			{
+				// Add init after field injections as e.g. Dyn value may access injected field.
+				postinject.add(init);
+			}
+			else if(required)
+			{
+				throw new UnsupportedOperationException("Field is not a supported dynamic value type (Dyn, Val, List, Set, Map, Bean): "+f);
+			}
+		}
+	}
+	
+	/**
+	 *  Helper method to find all direct and inherited fields with the given annotation.
+	 *  Fields are returned in order: subclass first, then superclass.
+	 */
+	public List<Field> findFields(Class<? extends Annotation> annotation)
+	{
+		List<Field>	allfields	= new ArrayList<>();
+		Class<?> myclazz	= getPojoClazz();
+		while(myclazz!=null)
+		{
+			for(Field field: myclazz.getDeclaredFields())
+			{
+				if(field.isAnnotationPresent(annotation))
+				{
+					if((field.getModifiers() & Modifier.STATIC)!=0)
+					{
+						throw new RuntimeException("Fields with @"+annotation.getSimpleName()+" must not be static: "+field);
+					}
+					allfields.add(field);
+				}
+			}
+			myclazz	= myclazz.getSuperclass();
+		}
+		return allfields;
+	}
+	
+	/**
+	 *  Generic object to get a value from a field or method.
+	 */
+	public record Getter(Member member, Annotation annotation, IInjectionHandle fetcher) {}
+	
+	/**
+	 *  Get value fetchers, that fetch the value of an annotated field.
+	 *  The fetchers provide the result as FieldValue record.
+	 */
+	public List<Getter>	getGetters(Class<? extends Annotation> anno)
+	{
+		List<Getter>	fetchers	= null;
+		for(Field field: findFields(anno))
+		{
+			if(fetchers==null)
+			{
+				fetchers	= new ArrayList<>(4);
+			}
+			try
+			{
+				field.setAccessible(true);
+				MethodHandle	get	= MethodHandles.lookup().unreflectGetter(field);
+				fetchers.add(new Getter(field, field.getAnnotation(anno), (comp, pojos, context, oldval) ->
+				{
+					try
+					{
+						return get.invoke(pojos.get(pojos.size()-1));
+					}
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				}));
+			}
+			catch(Exception e)
+			{
+				SUtil.throwUnchecked(e);
+			}
+		}
+
+		for(Method method: findMethods(getPojoClazz(), anno))
+		{
+			if(fetchers==null)
+			{
+				fetchers	= new ArrayList<>(4);
+			}
+			
+			fetchers.add(new Getter(method, method.getAnnotation(anno),
+				createMethodInvocation(method, getPojoClazzes(), getContextFetchers(), null)));
+		}
+
+		return fetchers;
+	}
+	
+	//-------- model cache --------
 	
 	/** The model cache. */
-	protected static Map<List<Class<?>>, InjectionModel>	cache	= new LinkedHashMap<>();
+	protected static Map<List<Class<?>>, InjectionModel>	MODEL_CACHE	= new LinkedHashMap<>();
 	
 	/**
 	 *  Get the model for a stack of pojo objects.
@@ -342,26 +567,28 @@ public class InjectionModel
 	 */
 	public static InjectionModel	getStatic(List<Class<?>> key, List<String> path, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
-		synchronized(cache)
+		synchronized(MODEL_CACHE)
 		{
-			InjectionModel model	= cache.get(key);
+			InjectionModel model	= MODEL_CACHE.get(key);
 			if(model==null)
 			{
 				model	= new InjectionModel(key, path, contextfetchers);
-				cache.put(key, model);
+				MODEL_CACHE.put(key, model);
 			}
 			return model;
 		}
 	}
 	
+	//-------- dependency scanning --------
+	
 	/** The field accesses by method. */
-	protected static final Map<String, Set<Field>>	accessedfields	= new LinkedHashMap<>();
+	protected static final Map<String, Set<Field>>	ACCESSED_FIELDS	= new LinkedHashMap<>();
 	
 	/** The code executed for a Dyn value, i.e. the Callable.call() method descriptor. */
-	protected static final Map<Field, String>	dynmethods	= new LinkedHashMap<>();
+	protected static final Map<Field, String>	DYN_METHODS	= new LinkedHashMap<>();
 	
 	/** The method accesses by method. */
-	protected static final Map<String, Set<String>>	accessedmethods	= new LinkedHashMap<>();
+	protected static final Map<String, Set<String>>	ACCESSED_METHODS	= new LinkedHashMap<>();
 	
 	/**
 	 *  Scan a class for method and field accesses.
@@ -427,13 +654,13 @@ public class InjectionModel
 								{
 									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
 									Field f	= SReflect.getField(ownerclazz, name);
-									synchronized(accessedfields)
+									synchronized(ACCESSED_FIELDS)
 									{
-										Set<Field>	fields	= accessedfields.get(method);
+										Set<Field>	fields	= ACCESSED_FIELDS.get(method);
 										if(fields==null)
 										{
 											fields	= new LinkedHashSet<>();
-											accessedfields.put(method, fields);
+											ACCESSED_FIELDS.put(method, fields);
 										}
 										fields.add(f);
 									}
@@ -454,9 +681,9 @@ public class InjectionModel
 									if(f.getType().equals(Dyn.class) && lastdyn!=null)
 									{
 //										System.out.println("\tRemembering lambda for Dyn: "+f+", "+lastdyn);
-										synchronized(dynmethods)
+										synchronized(DYN_METHODS)
 										{
-											dynmethods.put(f, lastdyn);
+											DYN_METHODS.put(f, lastdyn);
 										}
 									}
 								}
@@ -524,13 +751,13 @@ public class InjectionModel
 						
 						void addMethodAccess(String caller, String callee)
 						{
-							synchronized(accessedmethods)
+							synchronized(ACCESSED_METHODS)
 							{
-								Set<String>	methods	= accessedmethods.get(caller);
+								Set<String>	methods	= ACCESSED_METHODS.get(caller);
 								if(methods==null)
 								{
 									methods	= new LinkedHashSet<>();
-									accessedmethods.put(method, methods);
+									ACCESSED_METHODS.put(method, methods);
 								}
 								methods.add(callee);
 							}
@@ -567,11 +794,11 @@ public class InjectionModel
 	{
 		List<Field>	ret;
 		String callable = null;
-		synchronized(dynmethods)
+		synchronized(DYN_METHODS)
 		{
-			if(dynmethods.containsKey(f))
+			if(DYN_METHODS.containsKey(f))
 			{
-				callable	= dynmethods.get(f);
+				callable	= DYN_METHODS.get(f);
 			}
 		}
 		
@@ -597,15 +824,15 @@ public class InjectionModel
 		// Find all method calls
 		List<String>	calls	= new ArrayList<>();
 		calls.add(desc);
-		synchronized(accessedmethods)
+		synchronized(ACCESSED_METHODS)
 		{
 			for(int i=0; i<calls.size(); i++)
 			{
 				String call	= calls.get(i);
-				if(accessedmethods.containsKey(call))
+				if(ACCESSED_METHODS.containsKey(call))
 				{
 					// Add all sub-methods
-					for(String subcall: accessedmethods.get(call))
+					for(String subcall: ACCESSED_METHODS.get(call))
 					{
 						if(!calls.contains(subcall))
 						{
@@ -618,13 +845,13 @@ public class InjectionModel
 		
 		// Find all accessed fields
 		List<Field>	deps	= new ArrayList<>();
-		synchronized(accessedfields)
+		synchronized(ACCESSED_FIELDS)
 		{
 			for(String desc0: calls)
 			{
-				if(accessedfields.containsKey(desc0))
+				if(ACCESSED_FIELDS.containsKey(desc0))
 				{
-					for(Field f: accessedfields.get(desc0))
+					for(Field f: ACCESSED_FIELDS.get(desc0))
 					{
 //						System.out.println("Found field access in method: "+f+", "+method);
 						deps.add(f);
@@ -645,131 +872,14 @@ public class InjectionModel
 		
 		return deps;
 	}
-	
-	/**
-	 *  Add value fetchers for fields.
-	 */
-	protected static void addValueFetchers(List<Class<?>> classes, Map<Field, IInjectionHandle> allfields,
-			Map<Class<? extends Annotation>, List<IValueFetcherCreator>> fetchers)
-	{
-		for(Class<? extends Annotation> anno: fetchers.keySet())
-		{
-			List<Field> fields = findFields(classes.get(classes.size()-1), anno);
-			
-			for(Field field: fields)
-			{
-				// TODO: do we want to check this?
-//				if(allfields.containsKey(field))
-//				{
-//					throw new RuntimeException("Multiple Inject annotations on field: "+field);
-//				}
-				if(!allfields.containsKey(field))
-				{
-					allfields.put(field, null);
-				}
-				
-				try
-				{
-					IInjectionHandle	fetcher	= null;
-					for(IValueFetcherCreator check: fetchers.get(anno))
-					{
-						IInjectionHandle	test	= check.getValueFetcher(classes, field.getGenericType(), field.getAnnotation(anno));
-						if(test!=null)
-						{
-							if(fetcher!=null && fetcher!=test)	// TODO: why duplicate of fetcher in bdi marsworld
-							{
-								throw new RuntimeException("Conflicting field injections: "+field+", "+fetcher.getClass()+", "+test.getClass());
-							}
-							fetcher	= test;
-						}
-					}
-							
-					if(fetcher!=null)
-					{
-						if(allfields.get(field)!=null)
-						{
-							throw new UnsupportedOperationException("Multiple value fetchers for field: "+field);
-						}
-						
-						field.setAccessible(true);
-						MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(field);
-						MethodHandle	setter	= MethodHandles.lookup().unreflectSetter(field);
-						final IInjectionHandle	ffetcher	= fetcher;
-						allfields.put(field, (self, pojos, context, oldval) -> {
-							try
-							{
-								oldval	= getter.invoke(pojos.get(pojos.size()-1));
-								Object[]	args	= new Object[]{pojos.get(pojos.size()-1), ffetcher.apply(self, pojos, context, oldval)};
-								return setter.invokeWithArguments(args);
-							}
-							catch(Throwable e)
-							{
-								// Rethrow user exception
-								throw SUtil.throwUnchecked(e);
-							}
-						});			
-					}
-				}
-				catch(Exception e)
-				{
-					SUtil.throwUnchecked(e);
-				}
-			}
-		}
-	}
-	
-	/**
-	 *  Get all invocation handles for methods with given annotation.
-	 */
-	protected List<IInjectionHandle>	getMethodInvocations(Class<? extends Annotation> annotation)
-	{
-		List<IInjectionHandle>	handles	= new ArrayList<>();
 		
-		List<Method> methods = findMethods(classes.get(classes.size()-1), annotation);
-		for(Method method: methods)
-		{
-			handles.add(createMethodInvocation(method, classes, contextfetchers, null));
-		}
-		
-		return handles;
-	}
-	
-	/**
-	 *  Add init codes for dynamic values, if any.
-	 *  @param pojoclazzes	The class hierarchy of component pojo plus subobjects, if any.
-	 *  @param path	The path from the component pojo to the innermost pojo as a list of field names.
-	 *  @param ret		The list to add the init codes to.
-	 *  @param evpub	The event publisher to use for change events (name -> publisher).
-	 *  @param anno		The annotation to search for or null for all fields.
-	 *  @param required	Whether a field type must be a supported dynamic value (Dyn, Val, List, Set, Map, Bean).
-	 *  					When false, only fields with a supported type are added.
-	 */
-	public static void addDynamicValueInits(List<Class<?>> pojoclazzes, List<String> path, List<IInjectionHandle> ret, Function<String, IEventPublisher> evpub, Class<? extends Annotation> anno, boolean required)
-	{
-		Class<?>		pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
-		String	prefix	= path==null ? "" : path.stream().map(entry -> entry+"." ).reduce("", (a,b) -> a+b);
-		for(Field f: anno!=null ? findFields(pojoclazz, anno)
-				: Arrays.asList(SReflect.getAllFields(pojoclazz)))
-		{
-			IInjectionHandle	init	= createDynamicValueInit(f, evpub.apply(prefix+f.getName()));
-			if(init!=null)
-			{
-				ret.add(init);
-			}
-			else if(required)
-			{
-				throw new UnsupportedOperationException("Field is not a supported dynamic value type (Dyn, Val, List, Set, Map, Bean): "+f);
-			}
-		}
-	}
-
 	/**
 	 *  Get the init code for a field containing a dynamic value (Dyn, Val, List, Set, Map, Bean).
 	 *  @param f	The field.
 	 *  @param evpub	The event publisher to use for change events.
 	 *  @return The init code or null, if the field type is not supported.
 	 */
-	public static IInjectionHandle	createDynamicValueInit(Field f, IEventPublisher evpub)
+	protected static IInjectionHandle	createDynamicValueInit(Field f, IEventPublisher evpub)
 	{
 		IInjectionHandle	ret = null;
 		MethodHandle	getter;
@@ -929,121 +1039,6 @@ public class InjectionModel
 		return ret;
 	}
 
-	/**
-	 *  Combine potentially multiple handles to one.
-	 *  Only useful when the return value does not matter.
-	 * 	@param handles A potentially empty list of handles or NULL.
-	 */
-	protected static IInjectionHandle	unifyHandles(Collection<IInjectionHandle> handles)
-	{
-		IInjectionHandle ret;
-		
-		// No handles
-		if(handles.isEmpty())
-		{
-			ret	= NULL;
-		}
-		
-		// Single handle
-		else if(handles.size()==1)
-		{
-			ret	= handles.iterator().next();
-		}
-		
-		// Multiple handles
-		else
-		{
-			ret	= (self, pojos, context, oldval) ->
-			{
-				for(IInjectionHandle handle: handles)
-					handle.apply(self, pojos, context, null);
-				return null;
-			};
-		}
-		
-		return ret;
-	}
-	
-	/**
-	 *  Generic object to get a value from a field or method.
-	 */
-	public record Getter(Member member, Annotation annotation, IInjectionHandle fetcher) {}
-	
-	/**
-	 *  Get value fetchers, that fetch the value of an annotated field.
-	 *  The fetchers provide the result as FieldValue record.
-	 */
-	public static List<Getter> getGetters(List<Class<?>> classes, Class<? extends Annotation> anno,
-		Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
-	{
-		List<Getter>	fetchers	= null;
-		for(Field field: findFields(classes.get(classes.size()-1), anno))
-		{
-			if(fetchers==null)
-			{
-				fetchers	= new ArrayList<>(4);
-			}
-			try
-			{
-				field.setAccessible(true);
-				MethodHandle	get	= MethodHandles.lookup().unreflectGetter(field);
-				fetchers.add(new Getter(field, field.getAnnotation(anno), (comp, pojos, context, oldval) ->
-				{
-					try
-					{
-						return get.invoke(pojos.get(pojos.size()-1));
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				}));
-			}
-			catch(Exception e)
-			{
-				SUtil.throwUnchecked(e);
-			}
-		}
-
-		for(Method method: findMethods(classes.get(classes.size()-1), anno))
-		{
-			if(fetchers==null)
-			{
-				fetchers	= new ArrayList<>(4);
-			}
-			
-			fetchers.add(new Getter(method, method.getAnnotation(anno),
-				createMethodInvocation(method, classes, contextfetchers, null)));
-		}
-
-		return fetchers;
-	}
-	
-	/**
-	 *  Helper method to find all direct and inherited fields with the given annotation.
-	 *  Fields are returned in order: subclass first, then superclass.
-	 */
-	public static List<Field> findFields(Class<?> clazz, Class<? extends Annotation> annotation)
-	{
-		List<Field>	allfields	= new ArrayList<>();
-		Class<?> myclazz	= clazz;
-		while(myclazz!=null)
-		{
-			for(Field field: myclazz.getDeclaredFields())
-			{
-				if(field.isAnnotationPresent(annotation))
-				{
-					if((field.getModifiers() & Modifier.STATIC)!=0)
-					{
-						throw new RuntimeException("Fields with @"+annotation.getSimpleName()+" must not be static: "+field);
-					}
-					allfields.add(field);
-				}
-			}
-			myclazz	= myclazz.getSuperclass();
-		}
-		return allfields;
-	}
 	
 	/**
 	 *  Helper method to find all constructors with the given annotation.
@@ -1198,11 +1193,11 @@ public class InjectionModel
 					if(fetcher==null)
 					{
 						Set<IValueFetcherCreator>	tried	= new HashSet<IValueFetcherCreator>();
-						synchronized(fetchers)
+						synchronized(FETCHERS)
 						{
-							for(Class<? extends Annotation> anno: fetchers.keySet())
+							for(Class<? extends Annotation> anno: FETCHERS.keySet())
 							{
-								for(IValueFetcherCreator check: fetchers.get(anno))
+								for(IValueFetcherCreator check: FETCHERS.get(anno))
 								{
 									if(tried.contains(check))
 									{
@@ -1369,7 +1364,7 @@ public class InjectionModel
 	//-------- extension points --------
 	
 	/** The supported parameter/field injections (i.e class -> value). */
-	protected static Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fetchers	= new LinkedHashMap<>();
+	protected static Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	FETCHERS	= new LinkedHashMap<>();
 	
 	/**
 	 *  Add a parameter/field injection (i.e field/parameter type -> value fetcher).
@@ -1384,15 +1379,15 @@ public class InjectionModel
 			throw new IllegalArgumentException("Missing annotation type(s).");
 		}
 		
-		synchronized(fetchers)
+		synchronized(FETCHERS)
 		{
 			for(Class<? extends Annotation> anno: annos)
 			{
-				List<IValueFetcherCreator>	list	= fetchers.get(anno);
+				List<IValueFetcherCreator>	list	= FETCHERS.get(anno);
 				if(list==null)
 				{
 					list	= new ArrayList<>(1);
-					fetchers.put(anno, list);
+					FETCHERS.put(anno, list);
 				}
 				list.add(fetcher);
 			}
@@ -1400,58 +1395,19 @@ public class InjectionModel
 	}
 	
 	
-	/** Other features can add their handles that get executed before field injections. */
-	protected static List<IExtraCodeCreator>	pre_inject	= Collections.synchronizedList(new ArrayList<>());
+	/** Add e.g. pre/post inject code handles to model. */
+	protected static List<IExtraCodeCreator>	EXTRA_CODE_CREATORS	= Collections.synchronizedList(new ArrayList<>());
 	
 	/**
-	 * Other features can add their handles that get executed before field injections.
+	 *  Add e.g. pre/post inject code handles to model.
 	 */
-	protected static List<IInjectionHandle>	getPreInjectHandles(List<Class<?>> pojoclazzes, List<String> path, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
+	public static void	addExtraCode(IExtraCodeCreator extra)
 	{
-		List<IInjectionHandle>	ret	= new ArrayList<>();
-		for(IExtraCodeCreator extra: pre_inject)
-		{
-			ret.addAll(extra.getExtraCode(pojoclazzes, path, contextfetchers));
-		}
-		return ret;
+		EXTRA_CODE_CREATORS.add(extra);
 	}
-
-	/**
-	 * Other features can add their handles that get executed before field injections.
-	 */
-	public static void	addPreInject(IExtraCodeCreator extra)
-	{
-		pre_inject.add(extra);
-	}
-	
-	
-	/** Other features can add their handles that get executed after field injection and before @OnStart methods. */
-	protected static List<IExtraCodeCreator>	post_inject	= Collections.synchronizedList(new ArrayList<>());
-	
-	/**
-	 * Other features can add their handles that get executed after field injection and before @OnStart methods.
-	 */
-	protected static List<IInjectionHandle>	getPostInjectHandles(List<Class<?>> pojoclazzes, List<String> path, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers)
-	{
-		List<IInjectionHandle>	ret	= new ArrayList<>();
-		for(IExtraCodeCreator extra: post_inject)
-		{
-			ret.addAll(extra.getExtraCode(pojoclazzes, path, contextfetchers));
-		}
-		return ret;
-	}
-
-	/**
-	 * Other features can add their handles that get executed after field injection and before @OnStart methods.
-	 */
-	public static void	addPostInject(IExtraCodeCreator extra)
-	{
-		post_inject.add(extra);
-	}
-	
 	
 	/** The supported method injections (i.e method -> injection handle). */
-	protected static Map<Class<? extends Annotation>, List<IMethodInjectionCreator>>	minjections	= new LinkedHashMap<>();
+	protected static Map<Class<? extends Annotation>, List<IMethodInjectionCreator>>	METHOD_INJECTIONS	= new LinkedHashMap<>();
 
 	/**
 	 *  Add a method injections (i.e annotation -> method -> injection handle).
@@ -1465,15 +1421,15 @@ public class InjectionModel
 			throw new IllegalArgumentException("Missing annotation type(s).");
 		}
 		
-		synchronized(minjections)
+		synchronized(METHOD_INJECTIONS)
 		{
 			for(Class<? extends Annotation> anno: annos)
 			{
-				List<IMethodInjectionCreator>	list	= minjections.get(anno);
+				List<IMethodInjectionCreator>	list	= METHOD_INJECTIONS.get(anno);
 				if(list==null)
 				{
 					list	= new ArrayList<>(1);
-					minjections.put(anno, list);
+					METHOD_INJECTIONS.put(anno, list);
 				}
 				list.add(minjection);
 			}

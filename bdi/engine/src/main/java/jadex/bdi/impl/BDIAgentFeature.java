@@ -379,7 +379,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		}
 		typedgoals.add(rgoal);
 		
-		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), null, rgoal, contextfetchers);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), rgoal.getMGoal().path(), rgoal, contextfetchers);
 	}
 	
 	/**
