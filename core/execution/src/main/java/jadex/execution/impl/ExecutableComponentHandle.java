@@ -19,7 +19,7 @@ import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
-import jadex.core.ResultEvent;
+import jadex.core.ChangeEvent;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
@@ -72,7 +72,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults()
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults()
 	{
 		return Component.subscribeToResults(comp);
 	}

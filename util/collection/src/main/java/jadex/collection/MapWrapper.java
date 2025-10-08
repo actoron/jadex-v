@@ -1,11 +1,8 @@
 package jadex.collection;
 
-import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-
-import jadex.common.SUtil;
 
 /**
  * 	Wrap a map and call template methods on modification.
@@ -17,18 +14,6 @@ public class MapWrapper<T, E> implements Map<T, E>
 	/** The delegate map. */
 	protected Map<T, E> delegate;
 	
-	/** The event publisher. */
-	protected IEventPublisher publisher;
-	
-	/** The context, if any. */
-	protected Object context;
-	
-	/** Cached property change listener, if any. */
-	protected PropertyChangeListener	listener;
-	
-	/** Observe inner values. */
-	protected boolean	observeinner;
-	
 	//-------- constructors --------
 	
 	/**
@@ -36,64 +21,14 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	public MapWrapper(Map<T, E> delegate)
 	{
-		this(delegate, null, null, false);
-	}
-	
-	/**
-	 *  Create a new collection wrapper.
-	 */
-	public MapWrapper(Map<T, E> delegate, IEventPublisher publisher, Object context, boolean observeinner)
-	{
 		this.delegate = delegate;
-		this.publisher = publisher;
-		this.context = context;
-		this.observeinner = observeinner;
-
-		if(publisher!=null)
-		{
-			for(Map.Entry<T,E> entry: delegate.entrySet())
-			{
-				entryAdded(entry.getKey(), entry.getValue());
-			}
-		}
 	}
 	
 	public Map<T, E> getDelegate()
 	{
 		return delegate;
 	}
-	
-	public IEventPublisher getEventPublisher()
-	{
-		return publisher;
-	}
-	
-	public void setEventPublisher(IEventPublisher publisher, boolean observeinner)
-	{
-		// Unregister old publisher
-		if(this.publisher!=null && this.observeinner)
-		{
-			for(E entry: delegate.values())
-			{
-				listener = SPropertyChange.updateListener(entry, null, listener, context, this.publisher, this);
-			}
-			listener = null;
-		}
 		
-		this.publisher = publisher;
-		this.observeinner = observeinner;
-		
-		// Register new publisher
-		if(this.publisher!=null && observeinner)
-		{
-			for(E entry: delegate.values())
-			{
-				listener = SPropertyChange.updateListener(null, entry, listener, context, publisher, this);
-			}
-		}
-	}
-
-	
 	//-------- Map interface --------
 	
 	/** 
@@ -145,7 +80,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		E ret = delegate.put(key, value);
 		if(contained)
 		{
-			entryChanged(key, ret, value);
+			entryChanged(key, value, ret);
 		}
 		else
 		{
@@ -255,15 +190,6 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	protected void entryAdded(T key, E value)
 	{
-		if(publisher!=null)
-		{
-			if(observeinner)
-			{
-				listener = SPropertyChange.updateListener(null, value, listener, context, publisher, this);
-			}
-		
-			publisher.entryAdded(context, value, key);
-		}
 	}
 	
 	/**
@@ -271,34 +197,13 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	protected void entryRemoved(T key, E value)
 	{		
-		if(publisher!=null)
-		{
-			if(observeinner)
-			{
-				listener = SPropertyChange.updateListener(value, null, listener, context, publisher, this);
-			}
-			
-			publisher.entryRemoved(context, value, key);
-		}
 	}
 	
 	/**
 	 *  An entry was changed in the map.
 	 */
-	protected void entryChanged(T key, E oldvalue, E newvalue)
+	protected void entryChanged(T key, E value, E oldvalue)
 	{
-		if(publisher!=null)
-		{
-			if(observeinner && oldvalue!=newvalue)
-			{
-				listener = SPropertyChange.updateListener(oldvalue, newvalue, listener, context, publisher, this);
-			}
-			
-			if(!SUtil.equals(oldvalue, newvalue))
-			{
-				publisher.entryChanged(context, oldvalue, newvalue, key);
-			}
-		}
 	}
 
 	/**

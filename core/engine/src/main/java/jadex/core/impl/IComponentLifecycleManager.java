@@ -6,7 +6,7 @@ import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.ResultEvent;
+import jadex.core.ChangeEvent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -41,7 +41,7 @@ public interface IComponentLifecycleManager
 	 *  Listen to results of the pojo.
 	 *  @throws UnsupportedOperationException when subscription is not supported
 	 */
-	public default ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults(IComponent component)
+	public default ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent component)
 	{
 		return new SubscriptionIntermediateFuture<>(new UnsupportedOperationException());
 	}

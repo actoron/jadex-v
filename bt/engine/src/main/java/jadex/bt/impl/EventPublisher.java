@@ -3,7 +3,6 @@ package jadex.bt.impl;
 import java.beans.PropertyChangeEvent;
 import java.lang.System.Logger.Level;
 
-import jadex.collection.IEventPublisher;
 import jadex.common.IResultCommand;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
@@ -19,7 +18,7 @@ import jadex.rules.eca.RuleSystem;
 /**
  *  Helper object for publishing change events (beliefs, parameters).
  */
-public class EventPublisher implements IEventPublisher
+public class EventPublisher
 {
 	/** The agent interpreter. */
 	protected IComponent agent;
@@ -187,7 +186,7 @@ public class EventPublisher implements IEventPublisher
 	/**
 	 *  An entry was added to the collection.
 	 */
-	public void entryAdded(Object context, Object value, Object info)
+	public void entryAdded(Object value, Object info)
 	{
 //		unobserveValue(ret);
 		observeValue(value);
@@ -198,7 +197,7 @@ public class EventPublisher implements IEventPublisher
 	/**
 	 *  An entry was removed from the collection.
 	 */
-	public void entryRemoved(Object context, Object value, Object info)
+	public void entryRemoved(Object value, Object info)
 	{
 		unobserveValue(value);
 //		observeValue(value);
@@ -209,7 +208,7 @@ public class EventPublisher implements IEventPublisher
 	/**
 	 *  An entry was changed in the collection.
 	 */
-	public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
+	public void entryChanged(Object oldvalue, Object newvalue, Object info)
 	{
 		if(oldvalue!=newvalue)
 		{

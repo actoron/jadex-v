@@ -10,8 +10,8 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.core.IComponentManager;
-import jadex.core.ResultEvent;
-import jadex.core.ResultEvent.Type;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
@@ -136,7 +136,7 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 	public void	addEventListener(Future<Object> fut, Type type, String name)
 	{
 		// Subscribe to results and filter for the correct name/type.
-		ISubscriptionIntermediateFuture<ResultEvent>	sub	= 
+		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= 
 			((InjectionFeature) IComponentManager.get().getCurrentComponent().getFeature(IInjectionFeature.class))
 				.subscribeToResults();
 		sub.next(res ->
@@ -152,7 +152,7 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 	public void	addEventListener(IntermediateFuture<Object> fut, Type type, String name)
 	{
 		// Subscribe to results and filter for the correct name/type.
-		ISubscriptionIntermediateFuture<ResultEvent>	sub	= 
+		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= 
 			((InjectionFeature) IComponentManager.get().getCurrentComponent().getFeature(IInjectionFeature.class))
 				.subscribeToResults();
 		sub.next(res ->
@@ -167,7 +167,7 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 	@Override
 	public void checkEventInfo(IFuture<Object> fut, Object oldval, Object newval, Object info)
 	{
-		ResultEvent	event	= (ResultEvent) fut.get(TIMEOUT);
+		ChangeEvent	event	= (ChangeEvent) fut.get(TIMEOUT);
 		assertEquals(oldval, event.oldvalue(), "old value");
 		assertEquals(newval, event.value(), "new value");
 		assertEquals(info, event.info(), "info");			
@@ -176,7 +176,7 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 	@Override
 	public void checkEventInfo(IIntermediateFuture<Object> fut, Object oldval, Object newval, Object info)
 	{
-		ResultEvent	event	= (ResultEvent) fut.getNextIntermediateResult(TIMEOUT);
+		ChangeEvent	event	= (ChangeEvent) fut.getNextIntermediateResult(TIMEOUT);
 		assertEquals(oldval, event.oldvalue(), "old value");
 		assertEquals(newval, event.value(), "new value");
 		assertEquals(info, event.info(), "info");			

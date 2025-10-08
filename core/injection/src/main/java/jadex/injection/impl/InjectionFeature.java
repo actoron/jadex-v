@@ -3,15 +3,20 @@ package jadex.injection.impl;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import jadex.common.SUtil;
+import jadex.core.ChangeEvent;
+import jadex.core.IChangeListener;
 import jadex.core.IComponent;
-import jadex.core.ResultEvent;
 import jadex.core.ResultProvider;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.injection.Dyn;
 import jadex.injection.IInjectionFeature;
 
 /**
@@ -27,6 +32,9 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	
 	/** Managed extra objects (e.g. services implemented as separate class). List of pojo hierarchy -> context. */
 	protected Map<List<Object>, Object>	extras;
+	
+	/** Listeners for dynamic value changes. */
+	protected Map<String, Set<IChangeListener>>	listeners;
 	
 	protected ResultProvider	rp;
 	
@@ -158,16 +166,87 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		rp.setResult(name, value);
 	}
 	
+	@Override
+	public void addListener(String name, IChangeListener listener)
+	{
+		if(listeners==null)
+		{
+			listeners	= new LinkedHashMap<>();
+		}
+		Set<IChangeListener>	set	= listeners.get(name);
+		if(set==null)
+		{
+			set	= new LinkedHashSet<>();
+			listeners.put(name, set);
+		}
+		set.add(listener);
+	}
+	
 	//-------- internal methods (to be used by other features) --------
 	
 	/**
 	 *  Notify about a result, i.e. a change in a dynamic result field.
 	 */
-	public void notifyResult(ResultEvent event)
+	public void notifyResult(ChangeEvent event)
 	{
 		if(rp!=null)
 		{
 			rp.notifyResult(event);
+		}
+	}
+	
+	/**
+	 *  Notify about a change in a dynamic field.
+	 */
+	public void valueChanged(ChangeEvent event)
+	{
+		// Generic handlers for e.g. sending result events.
+		Set<Class<? extends Annotation>> kinds	= model.getDynamicValueKinds(event.name());
+		for(Class<? extends Annotation> kind: kinds)
+		{
+			IChangeHandler	handler	= InjectionModel.getChangeHandler(kind);
+			if(handler!=null)
+			{
+				handler.handleChange(self, event);
+			}
+		}
+		
+		// Value specific listeners.
+		if(listeners!=null)
+		{
+			Set<IChangeListener>	set	= listeners.get(event.name());
+			if(set!=null)
+			{
+				for(IChangeListener l: set)
+				{
+					l.valueChanged(event);
+				}
+			}
+		}
+	}
+	
+	/**
+	 *  Add dependencies between dynamic values.
+	 */
+	public void	addDependencies(Dyn<?> dyn, String name, List<String> dependencies)
+	{
+		for(String dep: dependencies)
+		{
+			addListener(dep, new IChangeListener()
+			{
+				Object	oldvalue	= dyn.get();
+
+				@Override
+				public void valueChanged(ChangeEvent event)
+				{
+					Object	newvalue	= dyn.get();
+					if(!SUtil.equals(oldvalue, newvalue))
+					{
+						InjectionFeature.this.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, name, newvalue, oldvalue, null));
+					}
+					oldvalue	= newvalue;
+				}
+			});
 		}
 	}
 	
@@ -229,7 +308,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	/**
 	 *  Subscribe to results of the component.
 	 */
-	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults()
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults()
 	{
 		if(rp==null)
 		{

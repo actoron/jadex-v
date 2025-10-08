@@ -6,7 +6,7 @@ import java.lang.reflect.Proxy;
 import jadex.common.ErrorException;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.execution.StepAborted;
+import jadex.core.impl.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.providedservice.impl.service.CallAccess;

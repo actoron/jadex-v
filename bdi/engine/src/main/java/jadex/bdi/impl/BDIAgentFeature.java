@@ -111,7 +111,16 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		{
 			for(RPlan plan: plans.toArray(new RPlan[plans.size()]))
 			{
-				plan.abort();
+				try
+				{
+					plan.abort();
+				}
+				catch(PlanAborted pe)
+				{
+					// Ignore when terminate() is called from plan itself
+					// StepAborted is thrown in Component.terminate() after termination is done
+					// so plan is no longer executed.
+				}
 			}
 		}
 	}

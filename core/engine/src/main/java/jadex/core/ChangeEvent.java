@@ -1,14 +1,14 @@
 package jadex.core;
 
 /**
- *  Event indicating that a result change occurred.
- *  @param type The type of event.
- *  @param name The name of the result.
- *  @param value The new value of the result.
- *  @param oldvalue The old value of the result, if any.
+ *  Event indicating that a change occurred.
+ *  @param type The kind of event.
+ *  @param name The name of the changed element.
+ *  @param value The changed (or added/removed) value.
+ *  @param oldvalue The old value, if any.
  *  @param info Additional information (list index, map key), if available.
  */
-public record ResultEvent(Type type, String name, Object value, Object oldvalue, Object info)
+public record ChangeEvent(Type type, String name, Object value, Object oldvalue, Object info)
 {
 	/**
 	 *  The kind of event that occurred.

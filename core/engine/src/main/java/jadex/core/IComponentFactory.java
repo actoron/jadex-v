@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
+import jadex.core.impl.StepAborted;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -119,7 +120,14 @@ public interface IComponentFactory
 					// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
 					bar.add(exta.scheduleStep(icomp ->
 					{
-						icomp.terminate();
+						try
+						{
+							icomp.terminate();
+						}
+						catch(StepAborted e)
+						{
+							// Skip abortion of user code when called from outside.
+						}
 						return (Void)null;
 					}));
 				}

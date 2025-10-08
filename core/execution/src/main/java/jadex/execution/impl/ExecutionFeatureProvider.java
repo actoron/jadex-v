@@ -23,7 +23,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
-import jadex.core.ResultEvent;
+import jadex.core.ChangeEvent;
 import jadex.core.ResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
@@ -31,9 +31,9 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
+import jadex.core.impl.StepAborted;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
-import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -242,7 +242,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}
 	
 	@Override
-	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults(IComponent comp)
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
 	{
 		IResultProvider	rp;
 		synchronized(results)

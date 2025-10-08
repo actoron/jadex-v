@@ -9,7 +9,7 @@ import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.ResultEvent;
+import jadex.core.ChangeEvent;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
@@ -75,7 +75,7 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 	}
 	
 	@Override
-	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults(IComponent comp)
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
 	{
 		// Hack!? delegate result handling to injection feature.
 		return new InjectionFeatureProvider().subscribeToResults(comp);

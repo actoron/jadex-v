@@ -9,6 +9,7 @@ import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.IFuture;
 import jadex.injection.Val;
@@ -83,12 +84,22 @@ public class HelloPureGoalAgent
 		return IFuture.DONE;
 	}
 	
+	@Plan(trigger=@Trigger(goalfinisheds=HelloGoal.class))
+	protected void finished(HelloGoal goal, IComponent comp)
+	{
+		System.out.println("finished: "+goal.getText());
+		comp.terminate();
+		
+		// This should not be called anymore as component is terminated.
+		System.out.println("after terminate");
+	}
+	
 	/**
 	 *  Start a platform and the example.
 	 */
 	public static void main(String[] args) 
 	{
-		IComponentManager.get().create(new HelloPureGoalAgent()).get();
+		IComponentManager.get().create(new HelloPureGoalAgent());
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

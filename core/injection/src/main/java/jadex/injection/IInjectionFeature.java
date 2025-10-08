@@ -1,5 +1,6 @@
 package jadex.injection;
 
+import jadex.core.IChangeListener;
 import jadex.core.IComponentFeature;
 
 /**
@@ -12,5 +13,10 @@ public interface IInjectionFeature extends IComponentFeature
 	 *  Also notifies result subscribers, if any.
 	 */
 	public void setResult(String name, Object value);
-
+	
+	/**
+	 *  Add a change listener for a dynamic value.
+	 *  @param name		The fully qualified name of the dynamic value.
+	 */
+	public void addListener(String name, IChangeListener listener);
 }

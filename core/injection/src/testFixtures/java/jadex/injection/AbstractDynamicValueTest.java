@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import jadex.common.TimeoutException;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.ResultEvent.Type;
+import jadex.core.ChangeEvent.Type;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;

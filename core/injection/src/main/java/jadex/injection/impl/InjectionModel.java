@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.function.Function;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -29,11 +28,6 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import jadex.collection.IEventPublisher;
-import jadex.collection.ListWrapper;
-import jadex.collection.MapWrapper;
-import jadex.collection.SPropertyChange;
-import jadex.collection.SetWrapper;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
@@ -41,6 +35,7 @@ import jadex.core.IComponent;
 import jadex.execution.impl.ExecutionFeatureProvider;
 import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.injection.Dyn;
+import jadex.injection.IInjectionFeature;
 import jadex.injection.Val;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
@@ -74,16 +69,22 @@ public class InjectionModel
 	protected final List<IInjectionHandle>	postinject	= new ArrayList<>();
 	
 	/** User code to run on component start. */
-	protected final List<IInjectionHandle>	onstart;
+	protected List<IInjectionHandle>	onstart;
 	
 	/** Method injections to be initialized after component start. */
 	protected final List<IInjectionHandle>	methods	= new ArrayList<>();
 	
 	/** User code to run on component end. */
-	protected final List<IInjectionHandle>	onend;
+	protected List<IInjectionHandle>	onend;
 	
 	/** Code to fetch component results. */
-	protected final IInjectionHandle	results;
+	protected IInjectionHandle	results;
+	
+	/** Fully qualified name of dynamic values (field -> name). */
+	protected final Map<Field, String>	dynvals	= new LinkedHashMap<>();
+	
+	/** The kinds of a dynamic value, e.g. result or belief (name -> kinds). */
+	protected final Map<String, Set<Class<? extends Annotation>>>	dynvalkinds	= new LinkedHashMap<>();
 	
 	//-------- init --------
 	
@@ -95,9 +96,15 @@ public class InjectionModel
 		this.pojoclazzes	= classes;
 		this.path	= path;
 		this.contextfetchers	= contextfetchers;
-		
+	}
+	
+	/**
+	 *  Init the model after creation.
+	 */
+	protected void init()
+	{
 		// Scan class for resolving dynamic value dependencies.
-		scanClass(classes.get(classes.size()-1));
+		scanClass(pojoclazzes.get(pojoclazzes.size()-1));
 		
 		// Initialize fetchers and injections.
 		for(IExtraCodeCreator extra: EXTRA_CODE_CREATORS)
@@ -436,32 +443,93 @@ public class InjectionModel
 
 	/**
 	 *  Add init codes for dynamic values, if any.
-	 *  @param pojoclazzes	The class hierarchy of component pojo plus subobjects, if any.
-	 *  @param path	The path from the component pojo to the innermost pojo as a list of field names.
-	 *  @param ret		The list to add the init codes to.
-	 *  @param evpub	The event publisher to use for change events (name -> publisher).
-	 *  @param anno		The annotation to search for or null for all fields.
-	 *  @param required	Whether a field type must be a supported dynamic value (Dyn, Val, List, Set, Map, Bean).
-	 *  					When false, only fields with a supported type are added.
+	 *  @param anno	The annotation to look for on a field or null for checking all fields.
+	 *  @param required	If true, all fields with the annotation must be a supported dynamic value type.
 	 */
-	public void	addDynamicValueInits(Function<String, IEventPublisher> evpub, Class<? extends Annotation> anno, boolean required)
+	public void	addDynamicValueInits(Class<? extends Annotation> anno, boolean required)
 	{
 		assert !inited;
 		String	prefix	= path==null ? "" : path.stream().map(entry -> entry+"." ).reduce("", (a,b) -> a+b);
-		for(Field f: anno!=null ? findFields(anno)
-				: Arrays.asList(SReflect.getAllFields(getPojoClazz())))
+		
+		List<Field>	fields	= anno!=null ? findFields(anno)
+			: Arrays.asList(SReflect.getAllFields(getPojoClazz()));
+		
+		// First add all fields to root model to handle cross-dependencies.
+		for(Field f: fields)
 		{
-			IInjectionHandle	init	= createDynamicValueInit(f, evpub.apply(prefix+f.getName()));
-			if(init!=null)
+			if(isDynamicValue(f))
 			{
-				// Add init after field injections as e.g. Dyn value may access injected field.
-				postinject.add(init);
+				getRootModel().addDynamicField(f, prefix+f.getName(), anno);
 			}
 			else if(required)
 			{
 				throw new UnsupportedOperationException("Field is not a supported dynamic value type (Dyn, Val, List, Set, Map, Bean): "+f);
 			}
 		}
+		
+		// Now create inits for all fields.
+		for(Field f: fields)
+		{
+			// Only add init code on first call, e.g. when field is marked as belief and result at the same time.
+			if(isDynamicValue(f) && getRootModel().getDynamicValueKinds(prefix+f.getName()).size()==1)
+			{
+				IInjectionHandle	init	= createDynamicValueInit(f);
+				if(init!=null)
+				{
+					// Add init after field injections as e.g. Dyn value may access injected field.
+					postinject.add(init);
+				}
+			}
+		}
+	}
+	
+	/**
+	 *  Get the root model for the component pojo.
+	 */
+	public InjectionModel	getRootModel()
+	{
+		if(pojoclazzes.size()>1)
+		{
+			return getStatic(pojoclazzes.subList(0, 1), null, null);
+		}
+		else
+		{
+			return this;
+		}
+	}
+	
+	/**
+	 *  Add a dynamic value field to the model.
+	 */
+	protected void	addDynamicField(Field f, String name, Class<? extends Annotation> kind)
+	{
+		// Called after init, e.g. when goal is dispatched for the first time
+//		assert !inited;
+		dynvals.put(f, name);
+		
+		Set<Class<? extends Annotation>>	kinds	= dynvalkinds.get(name);
+		if(kinds==null)
+		{
+			kinds	= new LinkedHashSet<>();
+			dynvalkinds.put(name, kinds);
+		}
+		kinds.add(kind);
+	}
+	
+	/**
+	 *  Get the kinds for a dynamic value name.
+	 */
+	public Set<Class<? extends Annotation>>	getDynamicValueKinds(String name)
+	{
+		return dynvalkinds.get(name);
+	}
+	
+	/**
+	 *  Get the name of a dynamic value field.
+	 */
+	public String	getDynamicFieldName(Field f)
+	{
+		return dynvals.get(f);
 	}
 	
 	/**
@@ -567,16 +635,25 @@ public class InjectionModel
 	 */
 	public static InjectionModel	getStatic(List<Class<?>> key, List<String> path, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
 	{
+		boolean init	= false;
+		InjectionModel	model;
 		synchronized(MODEL_CACHE)
 		{
-			InjectionModel model	= MODEL_CACHE.get(key);
+			model	= MODEL_CACHE.get(key);
 			if(model==null)
 			{
 				model	= new InjectionModel(key, path, contextfetchers);
 				MODEL_CACHE.put(key, model);
+				init	= true;
 			}
-			return model;
 		}
+		
+		if(init)
+		{
+			model.init();
+		}
+		
+		return model;
 	}
 	
 	//-------- dependency scanning --------
@@ -785,14 +862,14 @@ public class InjectionModel
 	/**
 	 *  Scan byte code to find beliefs that are accessed in the method.
 	 */
-	public static List<Field> findDependentFields(Method method)
+	public List<String> findDependentFields(Method method)
 	{
 		return findDependentFields(methodToAsmDesc(method));
 	}
 	
-	public static List<Field> findDependentFields(Field f)
+	public List<String> findDependentFields(Field f)
 	{
-		List<Field>	ret;
+		List<String>	ret;
 		String callable = null;
 		synchronized(DYN_METHODS)
 		{
@@ -818,7 +895,7 @@ public class InjectionModel
 	 *  Scan byte code to find fields that are accessed in the method.
 	 *  @param baseclazz	The goal or plan class.
 	 */
-	public static List<Field> findDependentFields(String desc)
+	public List<String> findDependentFields(String desc)
 	{
 //		System.out.println("Finding fields accessed in method: "+desc);
 		// Find all method calls
@@ -843,8 +920,8 @@ public class InjectionModel
 			}
 		}
 		
-		// Find all accessed fields
-		List<Field>	deps	= new ArrayList<>();
+		// Find all accessed fields by fully qualified name
+		List<String>	deps	= new ArrayList<>();
 		synchronized(ACCESSED_FIELDS)
 		{
 			for(String desc0: calls)
@@ -854,187 +931,211 @@ public class InjectionModel
 					for(Field f: ACCESSED_FIELDS.get(desc0))
 					{
 //						System.out.println("Found field access in method: "+f+", "+method);
-						deps.add(f);
-//						String dep	= model.getBeliefName(f);
-//						if(dep!=null)
-//						{
-////							System.out.println("Found belief access in method: "+dep+", "+method);
-//							deps.add(dep);
-//						}
+						String dep	= getRootModel().getDynamicFieldName(f);
+						if(dep!=null)
+						{
+//							System.out.println("Found dynamic field access in method: "+dep+", "+method);
+							deps.add(dep);
+						}
 					}
 				}
 //				else
 //				{
-//					System.out.println("No belief access found in method: "+desc0);
+//					System.out.println("No field access found in method: "+desc0);
 //				}
 			}
 		}
 		
 		return deps;
 	}
-		
+
+	/**
+	 *  Check if the field contains a dynamic value (Dyn, Val, List, Set, Map, Bean).
+	 */
+	protected static boolean	isDynamicValue(Field f)
+	{
+		return Dyn.class.equals(f.getType())
+			|| Val.class.equals(f.getType())
+			|| List.class.equals(f.getType())
+			|| Set.class.equals(f.getType())
+			|| Map.class.equals(f.getType())
+			|| SPropertyChange.getAdder(f.getType())!=null;
+	}
+	
 	/**
 	 *  Get the init code for a field containing a dynamic value (Dyn, Val, List, Set, Map, Bean).
 	 *  @param f	The field.
 	 *  @param evpub	The event publisher to use for change events.
 	 *  @return The init code or null, if the field type is not supported.
 	 */
-	protected static IInjectionHandle	createDynamicValueInit(Field f, IEventPublisher evpub)
+	protected IInjectionHandle	createDynamicValueInit(Field f)
 	{
 		IInjectionHandle	ret = null;
-		MethodHandle	getter;
-		MethodHandle	setter;
-		try
-		{
-			f.setAccessible(true);
-			getter	= MethodHandles.lookup().unreflectGetter(f);
-			setter	= MethodHandles.lookup().unreflectSetter(f);
-		}
-		catch(Exception e)
-		{
-			throw SUtil.throwUnchecked(e);
-		}
+		String	name	= getRootModel().getDynamicFieldName(f);
 		
-		// Dynamic belief (Dyn object)
-		if(Dyn.class.equals(f.getType()))
+		if(name!=null)
 		{
-			// Init Dyn on agent start
-			ret	= (comp, pojos, context, dummy) ->
+			MethodHandle	getter;
+			MethodHandle	setter;
+			try
 			{
-				try
+				f.setAccessible(true);
+				getter	= MethodHandles.lookup().unreflectGetter(f);
+				setter	= MethodHandles.lookup().unreflectSetter(f);
+			}
+			catch(Exception e)
+			{
+				throw SUtil.throwUnchecked(e);
+			}
+			
+			// Dynamic belief (Dyn object)
+			if(Dyn.class.equals(f.getType()))
+			{
+				List<String>	deps	= findDependentFields(f);
+				
+				// Init Dyn on agent start
+				ret	= (comp, pojos, context, dummy) ->
 				{
-					Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
-					if(dyn==null)
+					try
 					{
-						throw new RuntimeException("Dynamic value field is null: "+f);
+						Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
+						if(dyn==null)
+						{
+							throw new RuntimeException("Dynamic value field is null: "+f);
+						}
+						DynValHelper.init(dyn, comp, name);
+						
+						if(!deps.isEmpty())
+						{
+							((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addDependencies(dyn, name, deps);
+						}
+											
+						return null;
 					}
-					DynValHelper.init(dyn, comp, evpub);
-										
-					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
-			};
-		}
-		
-		// Val belief
-		else if(Val.class.equals(f.getType()))
-		{				
-			// Init Val on agent start
-			ret	= (comp, pojos, context, dummy) ->
-			{
-				try
-				{
-					Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
-					if(value==null)
+					catch(Throwable t)
 					{
-						value	= new Val<Object>((Object)null);
+						throw SUtil.throwUnchecked(t);
+					}
+				};
+			}
+			
+			// Val belief
+			else if(Val.class.equals(f.getType()))
+			{				
+				// Init Val on agent start
+				ret	= (comp, pojos, context, dummy) ->
+				{
+					try
+					{
+						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
+						if(value==null)
+						{
+							value	= new Val<Object>((Object)null);
+							setter.invoke(pojos.get(pojos.size()-1), value);
+						}
+						DynValHelper.init(value, comp, name);						
+						return null;
+					}
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				};
+			}
+			// List belief
+			else if(List.class.equals(f.getType()))
+			{
+				ret	= (comp, pojos, context, oldval) ->
+				{
+					try
+					{
+						List<Object>	value	= (List<Object>)getter.invoke(pojos.get(pojos.size()-1));
+						if(value==null)
+						{
+							value	= new ArrayList<>();
+						}
+						value	= new ListWrapper<>(comp, name , ObservationMode.ON_ALL_CHANGES, value);
 						setter.invoke(pojos.get(pojos.size()-1), value);
+						return null;
 					}
-					DynValHelper.init(value, comp, evpub);						
-					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
-			};
-		}
-		// List belief
-		else if(List.class.equals(f.getType()))
-		{
-			ret	= (comp, pojos, context, oldval) ->
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				};
+			}
+			
+			// Set belief
+			else if(Set.class.equals(f.getType()))
 			{
-				try
+				ret	= (comp, pojos, context, oldval) ->
 				{
-					List<Object>	value	= (List<Object>)getter.invoke(pojos.get(pojos.size()-1));
-					if(value==null)
+					try
 					{
-						value	= new ArrayList<>();
+						Set<Object>	value	= (Set<Object>)getter.invoke(pojos.get(pojos.size()-1));
+						if(value==null)
+						{
+							value	= new LinkedHashSet<>();
+						}
+						value	= new SetWrapper<>(comp, name , ObservationMode.ON_ALL_CHANGES, value);
+						setter.invoke(pojos.get(pojos.size()-1), value);
+						return null;
 					}
-					value	= new ListWrapper<>(value, evpub, comp, true);
-					setter.invoke(pojos.get(pojos.size()-1), value);
-					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
-			};
-		}
-		
-		// Set belief
-		else if(Set.class.equals(f.getType()))
-		{
-			ret	= (comp, pojos, context, oldval) ->
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				};
+			}
+			
+			// Map belief
+			else if(Map.class.equals(f.getType()))
 			{
-				try
+				ret	= (comp, pojos, context, oldval) ->
 				{
-					Set<Object>	value	= (Set<Object>)getter.invoke(pojos.get(pojos.size()-1));
-					if(value==null)
+					try
 					{
-						value	= new LinkedHashSet<>();
+						Map<Object, Object>	value	= (Map<Object, Object>)getter.invoke(pojos.get(pojos.size()-1));
+						if(value==null)
+						{
+							value	= new LinkedHashMap<>();
+						}
+						value	= new MapWrapper<>(comp, name , ObservationMode.ON_ALL_CHANGES, value);
+						setter.invoke(pojos.get(pojos.size()-1), value);
+						return null;
 					}
-					value	= new SetWrapper<>(value, evpub, comp, true);
-					setter.invoke(pojos.get(pojos.size()-1), value);
-					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
-			};
-		}
-		
-		// Map belief
-		else if(Map.class.equals(f.getType()))
-		{
-			ret	= (comp, pojos, context, oldval) ->
+					catch(Throwable t)
+					{
+						throw SUtil.throwUnchecked(t);
+					}
+				};
+			}
+			
+			// Last resort -> Bean belief
+			// Check if addPropertyChangeListener() method exists
+			else if(SPropertyChange.getAdder(f.getType())!=null)
 			{
-				try
+				ret	= (comp, pojos, context, oldval) ->
 				{
-					Map<Object, Object>	value	= (Map<Object, Object>)getter.invoke(pojos.get(pojos.size()-1));
-					if(value==null)
+					try
 					{
-						value	= new LinkedHashMap<>();
+						Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
+						if(bean!=null)
+						{
+							SPropertyChange.updateListener(bean, null, null, comp, name, null);
+						}
+						else
+						{
+							System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
+						}
+						return null;
 					}
-					value	= new MapWrapper<>(value, evpub, comp, true);
-					setter.invoke(pojos.get(pojos.size()-1), value);
-					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
-			};
-		}
-		
-		// Last resort -> Bean belief
-		// Check if addPropertyChangeListener() method exists
-		else if(SPropertyChange.getAdder(f.getType())!=null)
-		{
-			ret	= (comp, pojos, context, oldval) ->
-			{
-				try
-				{
-					Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
-					if(bean!=null)
+					catch(Throwable t)
 					{
-						SPropertyChange.updateListener(null, bean, null, comp, evpub, null);
+						throw SUtil.throwUnchecked(t);
 					}
-					else
-					{
-						System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
-					}
-					return null;
-				}
-				catch(Throwable t)
-				{
-					throw SUtil.throwUnchecked(t);
-				}
-			};
+				};
+			}
 		}
 		return ret;
 	}
@@ -1433,6 +1534,33 @@ public class InjectionModel
 				}
 				list.add(minjection);
 			}
+		}
+	}
+	
+	/** Generic engine specific handlers for dynamic value kinds (anno or null -> handler). */
+	protected static Map<Class<? extends Annotation>, IChangeHandler>	DYNAMIC_VALUE_KINDS	= new LinkedHashMap<>();
+	
+	/**
+	 *  Set the handler for a kind of dynamic value (e.g. result or belief).
+	 *  @param kind	The annotation (or null for all supported fields) to mark a dynamic value as a specific kind.
+	 *  @param handler The change handler.
+	 */
+	public static void	setChangeHandler(Class<? extends Annotation> kind, IChangeHandler handler)
+	{
+		synchronized(DYNAMIC_VALUE_KINDS)
+		{
+			DYNAMIC_VALUE_KINDS.put(kind, handler);
+		}
+	}
+	
+	/**
+	 *  Get the handler for a kind of dynamic value.
+	 */
+	protected static IChangeHandler	getChangeHandler(Class<? extends Annotation> kind)
+	{
+		synchronized(DYNAMIC_VALUE_KINDS)
+		{
+			return DYNAMIC_VALUE_KINDS.get(kind);
 		}
 	}
 }

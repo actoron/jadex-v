@@ -19,7 +19,7 @@ import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.ChangeEvent;
 import jadex.common.Tuple2;
 import jadex.core.IComponentManager;
-import jadex.core.ResultEvent.Type;
+import jadex.core.ChangeEvent.Type;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;

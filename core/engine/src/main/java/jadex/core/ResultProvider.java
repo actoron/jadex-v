@@ -9,7 +9,7 @@ import jadex.future.SubscriptionIntermediateFuture;
 
 public class ResultProvider implements IResultProvider
 {
-	protected List<SubscriptionIntermediateFuture<ResultEvent>> resultsubscribers = new ArrayList<>();
+	protected List<SubscriptionIntermediateFuture<ChangeEvent>> resultsubscribers = new ArrayList<>();
 	protected Map<String, Object> results = new LinkedHashMap<String, Object>();
 	
 	public Map<String, Object> getResultMap()
@@ -17,7 +17,7 @@ public class ResultProvider implements IResultProvider
 		return results;
 	}
 	
-	public List<SubscriptionIntermediateFuture<ResultEvent>> getResultSubscribers()
+	public List<SubscriptionIntermediateFuture<ChangeEvent>> getResultSubscribers()
 	{
 		return resultsubscribers;
 	}

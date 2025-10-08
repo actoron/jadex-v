@@ -10,7 +10,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IBeliefListener;
@@ -61,12 +59,11 @@ import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.MethodPlanBody;
 import jadex.bdi.impl.plan.RPlan;
-import jadex.collection.IEventPublisher;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
@@ -82,10 +79,7 @@ import jadex.injection.impl.InjectionModel;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
-import jadex.rules.eca.IAction;
 import jadex.rules.eca.ICondition;
-import jadex.rules.eca.IEvent;
-import jadex.rules.eca.IRule;
 import jadex.rules.eca.Rule;
 import jadex.rules.eca.RuleSystem;
 
@@ -290,50 +284,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				addBeliefType(model, capaprefix, f);
 			}
 			
-			Function<String, IEventPublisher>	evpub	= name -> new IEventPublisher()
-			{
-				EventType addev = new EventType(ChangeEvent.FACTADDED, name);
-				EventType remev = new EventType(ChangeEvent.FACTREMOVED, name);
-				EventType fchev = new EventType(ChangeEvent.FACTCHANGED, name);
-//				EventType bchev = new EventType(ChangeEvent.BELIEFCHANGED, name);
-				
-				@Override
-				public void entryAdded(Object context, Object value, Object info)
-				{
-					RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-					Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
-					rs.addEvent(ev);
-				}
-				
-				@Override
-				public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
-				{
-					RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-					Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
-					rs.addEvent(ev);
-				}
-				
-				@Override
-				public void entryRemoved(Object context, Object value, Object info)
-				{
-					RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-					Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
-					rs.addEvent(ev);
-				}
-			};
-			imodel.addDynamicValueInits(evpub, Belief.class, true);
-			// TODO: generic dependency handling
-			for(Field f: imodel.findFields(Belief.class))
-			{
-				try
-				{
-					addBeliefField(imodel, capaprefix, f);
-				}
-				catch(Exception e)
-				{
-					SUtil.throwUnchecked(e);
-				}
-			}
+			imodel.addDynamicValueInits(Belief.class, true);
 			
 			// Manage plan methods.
 			for(Method m: InjectionModel.findMethods(imodel.getPojoClazz(), Plan.class))
@@ -508,42 +459,40 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 			
 			// If goal -> init parameters
-			if(pojoclazz.isAnnotationPresent(Goal.class))
+			if(pojoclazz.isAnnotationPresent(Goal.class)
+				// Skip if @Goal is placed on agent for external goals.
+				&& pojoclazz.getAnnotation(Goal.class).impl().equals(Object.class))
 			{
-				// Init dynamic parameter values
-				evpub	= name -> new IEventPublisher()
-				{
-					EventType addev = new EventType(ChangeEvent.VALUEADDED, name);
-					EventType remev = new EventType(ChangeEvent.VALUEREMOVED, name);
-					EventType fchev = new EventType(ChangeEvent.VALUECHANGED, name);
-					
-					@Override
-					public void entryAdded(Object context, Object value, Object info)
-					{
-						RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						Event ev = new Event(addev, new ChangeInfo<Object>(value, null, info));
-						rs.addEvent(ev);
-					}
-					
-					@Override
-					public void entryChanged(Object context, Object oldvalue, Object newvalue, Object info)
-					{
-						RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						Event ev = new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, info));
-						rs.addEvent(ev);
-					}
-					
-					@Override
-					public void entryRemoved(Object context, Object value, Object info)
-					{
-						RuleSystem	rs	= ((BDIAgentFeature) ((IComponent) context).getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						Event ev = new Event(remev, new ChangeInfo<Object>(value, null, info));
-						rs.addEvent(ev);
-					}
-				};
-				// Add goal to path
-				imodel.addDynamicValueInits(evpub, GoalParameter.class, true);
+				imodel.addDynamicValueInits(GoalParameter.class, true);
 			}
+		});
+
+		// Add generic belief event to rule system forwarding
+		InjectionModel.setChangeHandler(Belief.class, (comp, event) ->
+		{
+			String	typename	=
+					event.type()==Type.ADDED ? 		ChangeEvent.FACTADDED :
+					event.type()==Type.REMOVED ?	ChangeEvent.FACTREMOVED :
+				/*	event.type()==Type.CHANGED ?*/	ChangeEvent.FACTCHANGED ;
+				
+				EventType	type	= new EventType(typename, event.name());
+				Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
+				RuleSystem	rs	= ((BDIAgentFeature) comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				rs.addEvent(ev);
+		});
+
+		// Add generic goal parameter event to rule system forwarding
+		InjectionModel.setChangeHandler(GoalParameter.class, (comp, event) ->
+		{
+			String	typename	=
+					event.type()==Type.ADDED ? 		ChangeEvent.VALUEADDED :
+					event.type()==Type.REMOVED ?	ChangeEvent.VALUEREMOVED :
+				/*	event.type()==Type.CHANGED ?*/	ChangeEvent.VALUECHANGED ;
+				
+				EventType	type	= new EventType(typename, event.name());
+				Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
+				RuleSystem	rs	= ((BDIAgentFeature) comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+				rs.addEvent(ev);
 		});
 	}
 
@@ -853,7 +802,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			Method	contextmethod	= InjectionModel.findMethods(planclazz, PlanContextCondition.class).get(0);
 			PlanContextCondition	contextanno	= contextmethod.getAnnotation(PlanContextCondition.class);
 			List<String>	beliefs	= contextanno.beliefs().length>0 ? addPrefix(capaprefix, contextanno.beliefs())
-				: findDependentBeliefs(parentclazzes, contextmethod);
+					: imodel.findDependentFields(contextmethod);
 			
 			// Create events
 			if(beliefs.size()>0)
@@ -903,42 +852,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		}
 	}
 	
-	/**
-	 *  Find beliefs that are used in the given method.
-	 */
-	protected List<String>	findDependentBeliefs(List<Class<?>> parentclazzes, Method method)
-	{
-		List<Field>	deps	= InjectionModel.findDependentFields(method);
-		return findDependentBeliefs(parentclazzes, deps);
-	}
-	
-	/**
-	 *  Find beliefs that are used in the callable of the given Dyn field.
-	 */
-	protected static List<String> findDependentBeliefs(List<Class<?>> parentclazzes, Field f)
-	{
-		List<Field>	deps	= InjectionModel.findDependentFields(f);
-		return findDependentBeliefs(parentclazzes, deps);
-	}
-
-	/**
-	 *  Find beliefs that correspond to the given fields, if any.
-	 */
-	protected static List<String> findDependentBeliefs(List<Class<?>> parentclazzes, List<Field> deps)
-	{
-		List<String>	ret	= new ArrayList<>();
-		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));
-		for(Field f: deps)
-		{
-			String	beliefname	= model.getBeliefName(f);
-			if(beliefname!=null)
-			{
-				ret.add(beliefname);
-			}
-		}
-		return ret;
-	}
-
 	/**
 	 *  Add required code to handle a goal class.
 	 */
@@ -1052,7 +965,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalContextCondition"+(++numcreations)+"_"+goalname;
 			GoalContextCondition	context	= method.getAnnotation(GoalContextCondition.class);
 			List<String>	beliefs	= context.beliefs().length>0 ? addPrefix(capaprefix, context.beliefs())
-				: findDependentBeliefs(parentclazzes, method);
+				: imodel.findDependentFields(method);
 			List<String>	parameters = addPrefix(capaprefix+goalname+".", context.parameters());
 			String	condname	= "context";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createContextCondition(goalclazz, aevents, handle, rulename);
@@ -1068,7 +981,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalDropCondition"+(++numcreations)+"_"+goalname;
 			GoalDropCondition	drop	= method.getAnnotation(GoalDropCondition.class);
 			List<String>	beliefs	= drop.beliefs().length>0 ? addPrefix(capaprefix, drop.beliefs())
-					: findDependentBeliefs(parentclazzes, method);
+					: imodel.findDependentFields(method);
 			List<String>	parameters = addPrefix(capaprefix+goalname+".", drop.parameters());
 			String	condname	= "drop";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createDropCondition(goalclazz, aevents, handle, rulename);
@@ -1084,7 +997,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalRecurCondition"+(++numcreations)+"_"+goalname;
 			GoalRecurCondition	recur	= method.getAnnotation(GoalRecurCondition.class);
 			List<String>	beliefs	= recur.beliefs().length>0 ? addPrefix(capaprefix, recur.beliefs())
-					: findDependentBeliefs(parentclazzes, method);
+					: imodel.findDependentFields(method);
 			List<String>	parameters = addPrefix(capaprefix+goalname+".", recur.parameters());
 			String	condname	= "recur";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createRecurCondition(goalclazz, aevents, handle, rulename);
@@ -1100,7 +1013,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalQueryCondition"+(++numcreations)+"_"+goalname;
 			GoalQueryCondition	query	= method.getAnnotation(GoalQueryCondition.class);
 			List<String>	beliefs	= query.beliefs().length>0 ? addPrefix(capaprefix, query.beliefs())
-					: findDependentBeliefs(parentclazzes, method);
+					: imodel.findDependentFields(method);
 			List<String>	parameters = addPrefix(capaprefix+goalname+".", query.parameters());
 			String	condname	= "query";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createQueryCondition(goalclazz, aevents, handle, rulename);
@@ -1116,7 +1029,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			String	rulename	= "GoalTargetCondition"+(++numcreations)+"_"+goalname;
 			GoalTargetCondition	target	= method.getAnnotation(GoalTargetCondition.class);
 			List<String>	beliefs	= target.beliefs().length>0 ? addPrefix(capaprefix, target.beliefs())
-					: findDependentBeliefs(parentclazzes, method);
+					: imodel.findDependentFields(method);
 			List<String>	parameters = addPrefix(capaprefix+goalname+".", target.parameters());
 			String	condname	= "target";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createTargetCondition(goalclazz, aevents, handle, rulename);
@@ -1131,7 +1044,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		{
 			GoalMaintainCondition	maintain	= method.getAnnotation(GoalMaintainCondition.class);
 			List<String>	beliefs	= maintain.beliefs().length>0 ? addPrefix(capaprefix, maintain.beliefs())
-					: findDependentBeliefs(parentclazzes, method);
+					: imodel.findDependentFields(method);
 			List<String>	parameters = addPrefix(capaprefix+goalname+".", maintain.parameters());
 			List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], parameters, goalname);
 			if(events!=null && events.size()>0)
@@ -1667,7 +1580,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	protected void	addBeliefType(BDIModel model, String capaprefix, Field f)
 	{
 		Class<?>	clazz	= f.getType();
-		Type		gtype	= f.getGenericType();
+		java.lang.reflect.Type		gtype	= f.getGenericType();
 		
 		if(SReflect.isSupertype(Dyn.class, clazz)
 			||SReflect.isSupertype(Val.class, clazz))
@@ -1713,7 +1626,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		model.addBelief(name, clazz, f);
 	}
 	
-	protected static Class<?> getRawClass(Type type)
+	protected static Class<?> getRawClass(java.lang.reflect.Type type)
 	{
 		if(type instanceof Class<?>)
 		{
@@ -1762,64 +1675,5 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		
 		// TODO: more checks?
 		// TODO: test cases for checks?
-	}
-	
-	/**
-	 *  Check various options for a field belief.
-	 */
-	protected static void addBeliefField(InjectionModel model, String capaprefix, Field f) throws Exception
-	{
-		String	name	= capaprefix+f.getName();		
-		EventType fchev = new EventType(ChangeEvent.FACTCHANGED, name);
-		
-		// Dependent belief (Dyn object with Callable that accesses other dynamic values)
-		if(Dyn.class.equals(f.getType()))
-		{
-			// Throw change events when dependent beliefs change.
-			List<String> deps = findDependentBeliefs(model.getPojoClazzes(), f);
-			
-			if(deps!=null && deps.size()>0)	// size may be null for belief with update rate
-			{
-				List<EventType>	events	= getTriggerEvents(model.getPojoClazzes(), deps, deps, deps, new Class[0], null, name);
-				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-				
-				f.setAccessible(true);
-				MethodHandle	getter	= MethodHandles.lookup().unreflectGetter(f);
-
-				
-				model.addPostInject((comp, pojos, context, oldval) ->
-				{
-					try
-					{
-						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
-						rs.getRulebase().addRule(new Rule<Void>(
-							"DependenBeliefChange_"+name,	// Rule Name
-							ICondition.TRUE_CONDITION,	// Condition -> true
-							new IAction<Void>()	// Action -> throw change event
-							{
-								Object	oldvalue	= dyn.get();
-								@Override
-								public IFuture<Void>	execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-								{
-									Object	newvalue	= dyn.get();
-									if(!SUtil.equals(oldvalue, newvalue))
-									{
-										rs.addEvent(new Event(fchev, new ChangeInfo<Object>(newvalue, oldvalue, null)));
-									}
-									oldvalue	= newvalue;
-									return IFuture.DONE;
-								}								
-							},
-							aevents));	// Trigger Event(s)
-						return null;
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				});
-			}
-		}
 	}
 }

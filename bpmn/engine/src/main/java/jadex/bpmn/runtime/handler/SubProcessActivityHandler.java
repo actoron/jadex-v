@@ -25,7 +25,7 @@ import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
-import jadex.core.ResultEvent;
+import jadex.core.ChangeEvent;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
 
@@ -220,9 +220,9 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 
 			SubprocessResultHandler handler = new SubprocessResultHandler(thread, activity);	
 			
-			Consumer<ResultEvent> handleresult = new Consumer<>()
+			Consumer<ChangeEvent> handleresult = new Consumer<>()
 			{
-				public void accept(ResultEvent result)
+				public void accept(ChangeEvent result)
 				{
 					if(activity.getParameters()!=null && activity.getParameters().get(result.name())!=null)
 					{
@@ -269,7 +269,7 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 				}
 			}).then(results ->
 			{
-				for(ResultEvent result: results)
+				for(ChangeEvent result: results)
 					handleresult.accept(result);
 				finishedhandler.accept(null);
 			});

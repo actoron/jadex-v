@@ -686,6 +686,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	}
 	
 	// Wrap collections of multi vals (if not already a wrapper)
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Object wrapMultiValue(Object val, String fieldname)
 	{
 		// Wrap collections of multi beliefs (if not already a wrapper)
@@ -693,17 +694,76 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		EventType remev = new EventType(VALUEREMOVED, fieldname);
 		EventType chev = new EventType(PROPERTYCHANGED, fieldname);
 		
+		EventPublisher	evpub	= new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev);
+		
 		if(val instanceof List && !(val instanceof jadex.collection.ListWrapper))
 		{
-			val = new ListWrapper((List<?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev), IExecutionFeature.get().getComponent(), true);
+			val = new ListWrapper((List<?>)val)
+			{
+				@Override
+				protected void entryAdded(Object value, Integer index)
+				{
+					evpub.entryAdded(value, index);
+				}
+				
+				@Override
+				protected void entryRemoved(Object value, Integer index)
+				{
+					evpub.entryRemoved(value, index);
+				}
+				
+				@Override
+				protected void entryChanged(Object value, Object oldvalue, Integer index)
+				{
+					evpub.entryChanged(oldvalue, value, index);
+				}
+			};
 		}
 		else if(val instanceof Set && !(val instanceof jadex.collection.SetWrapper))
 		{
-			val = new SetWrapper((Set<?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev), IExecutionFeature.get().getComponent(), true);
+			val = new SetWrapper((Set<?>)val)
+			{
+				@Override
+				protected void entryAdded(Object value, Integer index)
+				{
+					evpub.entryAdded(value, index);
+				}
+				
+				@Override
+				protected void entryRemoved(Object value, Integer index)
+				{
+					evpub.entryRemoved(value, index);
+				}
+				
+				@Override
+				protected void entryChanged(Object value, Object oldvalue, Integer index)
+				{
+					evpub.entryChanged(oldvalue, value, index);
+				}
+			};
 		}
 		else if(val instanceof Map && !(val instanceof jadex.collection.MapWrapper))
 		{
-			val = new MapWrapper((Map<?,?>)val, new EventPublisher(IExecutionFeature.get().getComponent(), addev, remev, chev), IExecutionFeature.get().getComponent(), true);
+			val = new MapWrapper((Map<?,?>)val)
+			{
+				@Override
+				protected void entryAdded(Object key, Object value)
+				{
+					evpub.entryAdded(value, key);
+				}
+				
+				@Override
+				protected void entryRemoved(Object key, Object value)
+				{
+					evpub.entryRemoved(value, key);
+				}
+				
+				@Override
+				protected void entryChanged(Object key, Object value, Object oldvalue)
+				{
+					evpub.entryChanged(oldvalue, value, key);
+				}
+			};
 		}
 		
 		return val;

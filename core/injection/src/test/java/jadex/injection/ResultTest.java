@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Test;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.ResultEvent;
-import jadex.core.ResultEvent.Type;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -177,17 +177,17 @@ public class ResultTest
 			}
 		}).get(TIMEOUT);
 		
-		ISubscriptionIntermediateFuture<ResultEvent>	sub	= handle.subscribeToResults();
+		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= handle.subscribeToResults();
 		
 		// Subscribe is executed after OnStart and thus gives event type INITIAL
-		ResultEvent	res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new ResultEvent(Type.INITIAL, "start", "startvalue", null, null), res);
+		ChangeEvent	res	= sub.getNextIntermediateResult(TIMEOUT);
+		assertEquals(new ChangeEvent(Type.INITIAL, "start", "startvalue", null, null), res);
 //		assertEquals(new ResultEvent("start", "startvalue"), res);
 		
 		handle.terminate().get(TIMEOUT);
 		
 		res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new ResultEvent(Type.CHANGED, "end", "endvalue", null, null), res);
+		assertEquals(new ChangeEvent(Type.CHANGED, "end", "endvalue", null, null), res);
 	}
 	
 	/**

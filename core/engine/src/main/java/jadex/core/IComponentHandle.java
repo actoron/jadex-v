@@ -118,5 +118,5 @@ public interface IComponentHandle
 	 *  Listen to results of the component.
 	 *  @throws UnsupportedOperationException when subscription is not supported
 	 */
-	public ISubscriptionIntermediateFuture<ResultEvent> subscribeToResults();
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults();
 }
