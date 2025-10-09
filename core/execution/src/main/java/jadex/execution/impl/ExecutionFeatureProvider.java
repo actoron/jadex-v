@@ -126,7 +126,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 
 					if(!FastLambda.KEEPALIVE)
 					{
-						exe.scheduleStep((Runnable)() -> fself.terminate());
+						exe.scheduleStep((Runnable)() -> fself.doTerminate());
 					}
 				}
 				catch(Exception e)

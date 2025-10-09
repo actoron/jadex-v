@@ -1041,6 +1041,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			{
 				System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
 				e2.printStackTrace();
+				
+				// user terminate throws StepAborted so afterStep() is not called.
 				self.terminate();
 			}
 		}
@@ -1060,6 +1062,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				{
 					System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
 					e2.printStackTrace();
+					
+					// user terminate throws StepAborted so afterStep() is not called.
 					self.terminate();
 				}
 			}

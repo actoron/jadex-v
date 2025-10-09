@@ -124,14 +124,7 @@ public class Component implements IComponent
 			catch(Throwable t)
 			{
 				// If an exception occurs, remove the component from the manager.
-				try
-				{
-					terminate();
-				}
-				catch(StepAborted e)
-				{
-					// Skip abortion of user code to throw original exception.
-				}
+				doTerminate();
 				throw SUtil.throwUnchecked(t);
 			}
 		}
@@ -256,9 +249,24 @@ public class Component implements IComponent
 	}
 	
 	/**
-	 *  Terminate the component.
+	 *  Terminate the component when called from user step.
+	 *  Aborts current step after terminate is finished.
 	 */
 	public void	terminate()
+	{
+		doTerminate();
+
+		// If running on execution feature -> abort component step to avoid further user code being called.
+		if(ComponentManager.get().getCurrentComponent()==this)
+		{
+			throw new StepAborted(getId());
+		}
+	}
+	
+	/**
+	 *  Terminate the component.
+	 */
+	public void	doTerminate()
 	{
 		if(terminated)
 		{
@@ -295,12 +303,6 @@ public class Component implements IComponent
 		
 		// Remove the component from the manager.
 		ComponentManager.get().removeComponent(this);
-		
-		// If running on execution feature -> abort component step to avoid further user code being called.
-//		if(ComponentManager.get().getCurrentComponent()==this)
-//		{
-//			throw new StepAborted(getId());
-//		}
 	}
 	
 	/**

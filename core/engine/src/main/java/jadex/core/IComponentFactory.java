@@ -98,6 +98,10 @@ public interface IComponentFactory
 		{
 			iter	= getAllComponents();
 		}
+		else if(cids.length==1)
+		{
+			return doTerminate(cids[0]);
+		}
 		else
 		{
 			iter	= Arrays.asList(cids);
@@ -106,43 +110,53 @@ public interface IComponentFactory
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		for(ComponentIdentifier cid: iter)
 		{
-			try
+			IFuture<Void>	fut	= doTerminate(cid);
+			if(fut!=null)
 			{
-				IComponent comp = ComponentManager.get().getComponent(cid);
-				if(comp==null)
-				{
-					throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
-				}
-				IComponentHandle	exta = comp.getComponentHandle();
-				//ComponentManager.get().removeComponent(cid); // done in Component
-				if(Component.isExecutable())
-				{
-					// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
-					bar.add(exta.scheduleStep(icomp ->
-					{
-						try
-						{
-							icomp.terminate();
-						}
-						catch(StepAborted e)
-						{
-							// Skip abortion of user code when called from outside.
-						}
-						return (Void)null;
-					}));
-				}
-				else
-				{
-					// Hack!!! Concurrency issue?
-					comp.terminate();
-				}
-			}
-			catch(Exception e)
-			{
-				bar.add(new Future<>(e));
+				bar.add(fut);
 			}
 		}
 		return bar.waitFor();
+	}
+
+	private static IFuture<Void>	doTerminate(ComponentIdentifier cid)
+	{
+		try
+		{
+			IComponent comp = ComponentManager.get().getComponent(cid);
+			if(comp==null)
+			{
+				throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
+			}
+			IComponentHandle	exta = comp.getComponentHandle();
+			//ComponentManager.get().removeComponent(cid); // done in Component
+			if(Component.isExecutable())
+			{
+				// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
+				return exta.scheduleStep(icomp ->
+				{
+					try
+					{
+						((Component)icomp).doTerminate();
+					}
+					catch(StepAborted e)
+					{
+						// Skip abortion of user code when called from outside.
+					}
+					return (Void)null;
+				});
+			}
+			else
+			{
+				// Hack!!! Concurrency issue?
+				((Component)comp).doTerminate();
+				return null;
+			}
+		}
+		catch(Exception e)
+		{
+			return new Future<>(e);
+		}
 	}
 	
 	/**
