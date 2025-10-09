@@ -111,10 +111,7 @@ public interface IComponentFactory
 		for(ComponentIdentifier cid: iter)
 		{
 			IFuture<Void>	fut	= doTerminate(cid);
-			if(fut!=null)
-			{
-				bar.add(fut);
-			}
+			bar.add(fut);
 		}
 		return bar.waitFor();
 	}
@@ -150,7 +147,7 @@ public interface IComponentFactory
 			{
 				// Hack!!! Concurrency issue?
 				((Component)comp).doTerminate();
-				return null;
+				return IFuture.DONE;
 			}
 		}
 		catch(Exception e)
