@@ -166,7 +166,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	 */
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
-		// Make sure feature is last in liost, because it starts user code that might not return.
+		// Make sure feature is last in list, because it starts user code that might not return.
 		all.remove(getFeatureType());
 		return all;
 	}

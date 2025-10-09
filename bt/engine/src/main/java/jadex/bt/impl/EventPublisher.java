@@ -132,23 +132,6 @@ public class EventPublisher
 
 	/**
 	 * 
-	 */
-	public void observeValue(final Object val)
-	{
-		if(val!=null)
-			getRuleSystem().observeObject(val, true, false, eventadder);
-	}
-
-	/**
-	 * 
-	 */
-	public void unobserveValue(Object val)
-	{
-		getRuleSystem().unobserveObject(val, eventadder);
-	}
-	
-	/**
-	 * 
 	 * /
 	public void publishToolBeliefEvent()//String evtype)
 	{
@@ -188,8 +171,6 @@ public class EventPublisher
 	 */
 	public void entryAdded(Object value, Object info)
 	{
-//		unobserveValue(ret);
-		observeValue(value);
 		getRuleSystem().addEvent(new Event(getAddEvent(), new ChangeInfo<Object>(value, null, info)));
 		//publishToolBeliefEvent();
 	}
@@ -199,8 +180,6 @@ public class EventPublisher
 	 */
 	public void entryRemoved(Object value, Object info)
 	{
-		unobserveValue(value);
-//		observeValue(value);
 		getRuleSystem().addEvent(new Event(getRemEvent(), new ChangeInfo<Object>(value, null, info)));
 		//publishToolBeliefEvent();
 	}
@@ -210,11 +189,6 @@ public class EventPublisher
 	 */
 	public void entryChanged(Object oldvalue, Object newvalue, Object info)
 	{
-		if(oldvalue!=newvalue)
-		{
-			unobserveValue(oldvalue);
-			observeValue(newvalue);
-		}
 		getRuleSystem().addEvent(new Event(getChangeEvent(), new ChangeInfo<Object>(newvalue, oldvalue,  info)));
 		//publishToolBeliefEvent();
 	}

@@ -4,7 +4,6 @@ import java.lang.System.Logger.Level;
 
 import jadex.bt.IBTProvider;
 import jadex.bt.NodeListener;
-import jadex.bt.Val;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.TriggerDecorator;
@@ -17,6 +16,7 @@ import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.TerminableFuture;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.logger.ILoggingFeature;
