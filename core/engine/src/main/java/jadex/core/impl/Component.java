@@ -297,10 +297,10 @@ public class Component implements IComponent
 		ComponentManager.get().removeComponent(this);
 		
 		// If running on execution feature -> abort component step to avoid further user code being called.
-		if(ComponentManager.get().getCurrentComponent()==this)
-		{
-			throw new StepAborted(getId());
-		}
+//		if(ComponentManager.get().getCurrentComponent()==this)
+//		{
+//			throw new StepAborted(getId());
+//		}
 	}
 	
 	/**
