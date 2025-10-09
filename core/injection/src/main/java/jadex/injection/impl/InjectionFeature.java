@@ -370,10 +370,13 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	protected void endPojo(InjectionModel model, List<Object> pojos, Object context)
 	{
 		// TODO: wait for future return values?
-		for(IInjectionHandle handle: model.getOnEnd())
+		if(model.getOnEnd()!=null)	// May be null when exception in model init()
 		{
-//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
-				handle.apply(self, pojos, context, null);
+			for(IInjectionHandle handle: model.getOnEnd())
+			{
+	//			self.getFeature(IExecutionFeature.class).scheduleStep((Runnable)()->
+					handle.apply(self, pojos, context, null);
+			}
 		}
 	}
 }

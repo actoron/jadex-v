@@ -646,11 +646,12 @@ public class InjectionModel
 				MODEL_CACHE.put(key, model);
 				init	= true;
 			}
-		}
-		
-		if(init)
-		{
-			model.init();
+			
+			// Init in synchronized to avoid second component accessing model before init is complete
+			if(init)
+			{
+				model.init();
+			}
 		}
 		
 		return model;
@@ -679,7 +680,8 @@ public class InjectionModel
 			return;	// Skip lambda classes
 		}
 		
-		if(pojoclazz.getSuperclass()!=null && !Object.class.equals(pojoclazz.getSuperclass()))
+		// Skip java.lang for e.g. inner enums
+		if(pojoclazz.getSuperclass()!=null && !"java.lang".equals(pojoclazz.getSuperclass().getPackageName()))
 		{
 			// Scan superclass first.
 			scanClass(pojoclazz.getSuperclass());
