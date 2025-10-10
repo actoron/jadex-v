@@ -33,8 +33,9 @@ public class Val<T>	extends AbstractDynVal<T>
 	 */
 	public void	set(T value)
 	{
-		if(comp==null)
-			throw new IllegalStateException("Wrapper not inited. Missing annotation?");
+		// Support builder pattern for POJO, see BT UniversityAgent
+//		if(comp==null)
+//			throw new IllegalStateException("Wrapper not inited. Missing annotation?");
 		
 		doSet(value);
 	}

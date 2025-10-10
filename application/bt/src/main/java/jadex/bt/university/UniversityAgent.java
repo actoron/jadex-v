@@ -46,6 +46,18 @@ public class UniversityAgent implements IBTProvider
 		this.waiting	= new Val<>(waiting);
 	}
 	
+	public UniversityAgent setRaining(boolean raining)
+	{
+		this.raining.set(raining);
+		return this;
+	}
+	
+	public UniversityAgent setWaiting(boolean waiting)
+	{
+		this.waiting.set(waiting);
+		return this;
+	}
+	
 	public Node<IComponent> createBehaviorTree()
 	{
 		// train
@@ -148,7 +160,7 @@ public class UniversityAgent implements IBTProvider
 		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(Level.INFO);
 
 		// raining, waiting
-		IComponentManager.get().create(new UniversityAgent(false, false));
+		IComponentManager.get().create(new UniversityAgent().setRaining(false).setWaiting(true));
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }
