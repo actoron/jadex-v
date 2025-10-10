@@ -446,7 +446,7 @@ public class InjectionModel
 	 *  @param anno	The annotation to look for on a field or null for checking all fields.
 	 *  @param required	If true, all fields with the annotation must be a supported dynamic value type.
 	 */
-	public void	addDynamicValueInits(Class<? extends Annotation> anno, boolean required)
+	public void	addDynamicValues(Class<? extends Annotation> anno, boolean required)
 	{
 		assert !inited;
 		String	prefix	= path==null ? "" : path.stream().map(entry -> entry+"." ).reduce("", (a,b) -> a+b);
@@ -457,7 +457,7 @@ public class InjectionModel
 		// First add all fields to root model to handle cross-dependencies.
 		for(Field f: fields)
 		{
-			if(isDynamicValue(f))
+			if(isDynamicValue(f.getType()))
 			{
 				getRootModel().addDynamicField(f, prefix+f.getName(), anno);
 			}
@@ -471,7 +471,7 @@ public class InjectionModel
 		for(Field f: fields)
 		{
 			// Only add init code on first call, e.g. when field is marked as belief and result at the same time.
-			if(isDynamicValue(f) && getRootModel().getDynamicValueKinds(prefix+f.getName()).size()==1)
+			if(isDynamicValue(f.getType()) && getRootModel().getDynamicValueKinds(prefix+f.getName()).size()==1)
 			{
 				IInjectionHandle	init	= createDynamicValueInit(f);
 				if(init!=null)
@@ -954,14 +954,14 @@ public class InjectionModel
 	/**
 	 *  Check if the field contains a dynamic value (Dyn, Val, List, Set, Map, Bean).
 	 */
-	protected static boolean	isDynamicValue(Field f)
+	protected static boolean	isDynamicValue(Class<?> type)
 	{
-		return Dyn.class.equals(f.getType())
-			|| Val.class.equals(f.getType())
-			|| List.class.equals(f.getType())
-			|| Set.class.equals(f.getType())
-			|| Map.class.equals(f.getType())
-			|| SPropertyChange.getAdder(f.getType())!=null;
+		return Dyn.class.equals(type)
+			|| Val.class.equals(type)
+			|| List.class.equals(type)
+			|| Set.class.equals(type)
+			|| Map.class.equals(type)
+			|| SPropertyChange.getAdder(type)!=null;
 	}
 	
 	/**

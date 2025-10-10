@@ -284,7 +284,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				addBeliefType(model, capaprefix, f);
 			}
 			
-			imodel.addDynamicValueInits(Belief.class, true);
+			imodel.addDynamicValues(Belief.class, true);
 			
 			// Manage plan methods.
 			for(Method m: InjectionModel.findMethods(imodel.getPojoClazz(), Plan.class))
@@ -463,7 +463,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				// Skip if @Goal is placed on agent for external goals.
 				&& pojoclazz.getAnnotation(Goal.class).impl().equals(Object.class))
 			{
-				imodel.addDynamicValueInits(GoalParameter.class, true);
+				imodel.addDynamicValues(GoalParameter.class, true);
 			}
 		});
 

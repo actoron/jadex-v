@@ -94,7 +94,7 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 		{
 			if(isCreator(model.getPojoClazz())>0)
 			{
-				model.addDynamicValueInits(null, false);
+				model.addDynamicValues(null, false);
 				
 				model.addPostInject((self, pojos, context, oldval) ->
 				{
@@ -107,14 +107,14 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 		InjectionModel.setChangeHandler(null, (comp, event) ->
 		{
 			String	typename	=
-					event.type()==Type.ADDED ? 		BTAgentFeature.VALUEADDED :
-					event.type()==Type.REMOVED ?	BTAgentFeature.VALUEREMOVED :
-				/*	event.type()==Type.CHANGED ?*/	BTAgentFeature.PROPERTYCHANGED ;
+				event.type()==Type.ADDED ? 		BTAgentFeature.VALUEADDED :
+				event.type()==Type.REMOVED ?	BTAgentFeature.VALUEREMOVED :
+			/*	event.type()==Type.CHANGED ?*/	BTAgentFeature.PROPERTYCHANGED ;
 				
-				EventType	type	= new EventType(typename, event.name());
-				Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
-				RuleSystem	rs	= ((BTAgentFeature) comp.getFeature(IBTAgentFeature.class)).getRuleSystem();
-				rs.addEvent(ev);
+			EventType	type	= new EventType(typename, event.name());
+			Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
+			RuleSystem	rs	= ((BTAgentFeature) comp.getFeature(IBTAgentFeature.class)).getRuleSystem();
+			rs.addEvent(ev);
 		});
 	}
 }

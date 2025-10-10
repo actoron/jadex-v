@@ -40,8 +40,10 @@ public class UniversityAgent implements IBTProvider
 	
 	public UniversityAgent(boolean raining, boolean waiting)
 	{
-		this.raining.set(raining);
-		this.waiting.set(waiting);
+//		this.raining.set(raining);
+//		this.waiting.set(waiting);
+		this.raining	= new Val<>(raining);
+		this.waiting	= new Val<>(waiting);
 	}
 	
 	public Node<IComponent> createBehaviorTree()

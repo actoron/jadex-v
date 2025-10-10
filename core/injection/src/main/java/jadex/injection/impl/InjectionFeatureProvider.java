@@ -152,12 +152,11 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		}, Inject.class, InjectException.class);
 		
 		// Add handler for dynamic values marked as result.
-		InjectionModel.setChangeHandler(ProvideResult.class,
-			(comp, event) -> ((InjectionFeature)comp.getFeature(IInjectionFeature.class))
-				.notifyResult(event));
+		InjectionModel.setChangeHandler(ProvideResult.class, (comp, event)
+			-> ((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(event));
 		
 		// Init dynamic values on component start.
-		InjectionModel.addExtraCode(model -> model.addDynamicValueInits(ProvideResult.class, false));
+		InjectionModel.addExtraCode(model -> model.addDynamicValues(ProvideResult.class, false));
 	}
 
 	/**
