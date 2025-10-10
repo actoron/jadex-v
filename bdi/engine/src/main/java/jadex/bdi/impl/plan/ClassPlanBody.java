@@ -9,6 +9,7 @@ import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.PlanAborted;
 import jadex.bdi.impl.plan.RPlan.PlanLifecycleState;
 import jadex.common.SUtil;
+import jadex.core.impl.StepAborted;
 import jadex.future.IFuture;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.IValueFetcherCreator;
@@ -144,6 +145,14 @@ public class ClassPlanBody implements IPlanBody
 		{
 			next = PlanLifecycleState.ABORTING;
 		}
+		
+		// Thrown in Component.terminate()
+		catch(StepAborted e)
+		{
+			// TODO: testcases if this is right
+			next = PlanLifecycleState.ABORTING;
+		}
+		
 		catch(Exception e)
 		{
 			rplan.setException(e);
