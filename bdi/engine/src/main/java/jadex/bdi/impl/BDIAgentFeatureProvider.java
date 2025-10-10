@@ -432,9 +432,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 			
 			
-			// If outmost pojo (agent) -> start deliberation after all rules are added.
-			if(imodel.getPojoClazzes().size()==1)
+			// Outmost pojo (agent)
+			if(imodel==imodel.getRootModel())
 			{
+				// Start deliberation after all rules are added.
 				if(!model.getGoaltypes().isEmpty())
 				{
 					boolean	usedelib	= false;
@@ -456,6 +457,34 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						return null;
 					});
 				}
+				
+				// Add generic belief event to rule system forwarding
+				imodel.addChangeHandler(Belief.class, (comp, event) ->
+				{
+					String	typename	=
+							event.type()==Type.ADDED ? 		ChangeEvent.FACTADDED :
+							event.type()==Type.REMOVED ?	ChangeEvent.FACTREMOVED :
+						/*	event.type()==Type.CHANGED ?*/	ChangeEvent.FACTCHANGED ;
+						
+						EventType	type	= new EventType(typename, event.name());
+						Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
+						RuleSystem	rs	= ((BDIAgentFeature) comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						rs.addEvent(ev);
+				});
+
+				// Add generic goal parameter event to rule system forwarding
+				imodel.addChangeHandler(GoalParameter.class, (comp, event) ->
+				{
+					String	typename	=
+							event.type()==Type.ADDED ? 		ChangeEvent.VALUEADDED :
+							event.type()==Type.REMOVED ?	ChangeEvent.VALUEREMOVED :
+						/*	event.type()==Type.CHANGED ?*/	ChangeEvent.VALUECHANGED ;
+						
+						EventType	type	= new EventType(typename, event.name());
+						Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
+						RuleSystem	rs	= ((BDIAgentFeature) comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
+						rs.addEvent(ev);
+				});
 			}
 			
 			// If goal -> init parameters
@@ -465,34 +494,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			{
 				imodel.addDynamicValues(GoalParameter.class, true);
 			}
-		});
-
-		// Add generic belief event to rule system forwarding
-		InjectionModel.setChangeHandler(Belief.class, (comp, event) ->
-		{
-			String	typename	=
-					event.type()==Type.ADDED ? 		ChangeEvent.FACTADDED :
-					event.type()==Type.REMOVED ?	ChangeEvent.FACTREMOVED :
-				/*	event.type()==Type.CHANGED ?*/	ChangeEvent.FACTCHANGED ;
-				
-				EventType	type	= new EventType(typename, event.name());
-				Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
-				RuleSystem	rs	= ((BDIAgentFeature) comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				rs.addEvent(ev);
-		});
-
-		// Add generic goal parameter event to rule system forwarding
-		InjectionModel.setChangeHandler(GoalParameter.class, (comp, event) ->
-		{
-			String	typename	=
-					event.type()==Type.ADDED ? 		ChangeEvent.VALUEADDED :
-					event.type()==Type.REMOVED ?	ChangeEvent.VALUEREMOVED :
-				/*	event.type()==Type.CHANGED ?*/	ChangeEvent.VALUECHANGED ;
-				
-				EventType	type	= new EventType(typename, event.name());
-				Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
-				RuleSystem	rs	= ((BDIAgentFeature) comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				rs.addEvent(ev);
 		});
 	}
 

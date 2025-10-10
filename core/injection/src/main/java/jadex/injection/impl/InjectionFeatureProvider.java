@@ -20,6 +20,7 @@ import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
+import jadex.injection.annotation.DynamicValue;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.InjectException;
 import jadex.injection.annotation.ProvideResult;
@@ -151,12 +152,19 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			return null;
 		}, Inject.class, InjectException.class);
 		
-		// Add handler for dynamic values marked as result.
-		InjectionModel.setChangeHandler(ProvideResult.class, (comp, event)
-			-> ((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(event));
-		
 		// Init dynamic values on component start.
-		InjectionModel.addExtraCode(model -> model.addDynamicValues(ProvideResult.class, false));
+		InjectionModel.addExtraCode(model ->
+		{
+			model.addDynamicValues(DynamicValue.class, true);
+			model.addDynamicValues(ProvideResult.class, false);
+			
+			// Add handler for dynamic values marked with @ProvideResult.
+			if(model==model.getRootModel())
+			{
+				model.addChangeHandler(ProvideResult.class, (comp, event)
+					-> ((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(event));
+			}
+		});
 	}
 
 	/**

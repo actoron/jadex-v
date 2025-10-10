@@ -204,10 +204,13 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		Set<Class<? extends Annotation>> kinds	= model.getDynamicValueKinds(event.name());
 		for(Class<? extends Annotation> kind: kinds)
 		{
-			IChangeHandler	handler	= InjectionModel.getChangeHandler(kind);
-			if(handler!=null)
+			List<IChangeHandler>	handlers	= model.getChangeHandlers(kind);
+			if(handlers!=null)
 			{
-				handler.handleChange(self, event);
+				for(IChangeHandler handler: handlers)
+				{
+					handler.handleChange(self, event);
+				}
 			}
 		}
 		

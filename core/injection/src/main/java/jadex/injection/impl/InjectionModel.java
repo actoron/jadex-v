@@ -86,6 +86,11 @@ public class InjectionModel
 	/** The kinds of a dynamic value, e.g. result or belief (name -> kinds). */
 	protected final Map<String, Set<Class<? extends Annotation>>>	dynvalkinds	= new LinkedHashMap<>();
 	
+	/** Generic engine specific handlers for dynamic value kinds (anno or null -> list(handler)). */
+	protected Map<Class<? extends Annotation>, List<IChangeHandler>>	dynvalhandlers	= new LinkedHashMap<>();
+	
+
+	
 	//-------- init --------
 	
 	/**
@@ -481,6 +486,36 @@ public class InjectionModel
 				}
 			}
 		}
+	}
+	
+	
+	/**
+	 *  Set the handler for a kind of dynamic value (e.g. result or belief).
+	 *  @param kind	The annotation (or null for all supported fields) to mark a dynamic value as a specific kind.
+	 *  @param handler The change handler.
+	 */
+	public void	addChangeHandler(Class<? extends Annotation> kind, IChangeHandler handler)
+	{
+		if(this!=getRootModel())
+		{
+			throw new UnsupportedOperationException("Change handlers must be added to root model.");
+		}
+		
+		List<IChangeHandler>	handlers	= dynvalhandlers.get(kind);
+		if(handlers==null)
+		{
+			handlers	= new ArrayList<>();
+			dynvalhandlers.put(kind, handlers);
+		}
+		handlers.add(handler);
+	}
+	
+	/**
+	 *  Get the handler for a kind of dynamic value.
+	 */
+	protected List<IChangeHandler>	getChangeHandlers(Class<? extends Annotation> kind)
+	{
+		return dynvalhandlers.get(kind);
 	}
 	
 	/**
@@ -1536,33 +1571,6 @@ public class InjectionModel
 				}
 				list.add(minjection);
 			}
-		}
-	}
-	
-	/** Generic engine specific handlers for dynamic value kinds (anno or null -> handler). */
-	protected static Map<Class<? extends Annotation>, IChangeHandler>	DYNAMIC_VALUE_KINDS	= new LinkedHashMap<>();
-	
-	/**
-	 *  Set the handler for a kind of dynamic value (e.g. result or belief).
-	 *  @param kind	The annotation (or null for all supported fields) to mark a dynamic value as a specific kind.
-	 *  @param handler The change handler.
-	 */
-	public static void	setChangeHandler(Class<? extends Annotation> kind, IChangeHandler handler)
-	{
-		synchronized(DYNAMIC_VALUE_KINDS)
-		{
-			DYNAMIC_VALUE_KINDS.put(kind, handler);
-		}
-	}
-	
-	/**
-	 *  Get the handler for a kind of dynamic value.
-	 */
-	protected static IChangeHandler	getChangeHandler(Class<? extends Annotation> kind)
-	{
-		synchronized(DYNAMIC_VALUE_KINDS)
-		{
-			return DYNAMIC_VALUE_KINDS.get(kind);
 		}
 	}
 }
