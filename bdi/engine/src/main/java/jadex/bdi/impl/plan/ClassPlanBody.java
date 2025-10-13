@@ -149,8 +149,9 @@ public class ClassPlanBody implements IPlanBody
 		// Thrown in Component.terminate()
 		catch(StepAborted e)
 		{
-			// TODO: testcases if this is right
-			next = PlanLifecycleState.ABORTING;
+			// Pass on to stop current thread.
+			// Aborted code (if any) has already been called in BDIAgent.terminate()
+			throw e;
 		}
 		
 		catch(Exception e)
@@ -211,6 +212,14 @@ public class ClassPlanBody implements IPlanBody
 //		}
 		
 //		return ret;
+	}
+	
+	@Override
+	public void callAborted(RPlan rplan)
+	{
+		rplan.setLifecycleState(PlanLifecycleState.ABORTING);
+		internalInvokePart(rplan, aborted);
+		rplan.setLifecycleState(PlanLifecycleState.ABORTED);
 	}
 	
 	/**

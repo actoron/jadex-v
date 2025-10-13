@@ -101,9 +101,15 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener(/*rulesystem*/));
 	}
-		
+	
 	@Override
 	public void cleanup()
+	{
+		// plan abort moved to overridden BDIAgent.terminate()
+		// to call abort() before onend() for plans
+	}
+	
+	protected void	abortPlans()
 	{
 		// Abort all plans (terminates wait futures if any)
 		// TODO: generic future handler to terminate any futures on component end
@@ -111,16 +117,10 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		{
 			for(RPlan plan: plans.toArray(new RPlan[plans.size()]))
 			{
-				try
-				{
-					plan.abort();
-				}
-				catch(PlanAborted pe)
-				{
-					// Ignore when terminate() is called from plan itself
-					// StepAborted is thrown in Component.terminate() after termination is done
-					// so plan is no longer executed.
-				}
+				plan.abort();
+				// call aborted explicitly, because any wakeup code from plan.abort()
+				// is cancelled by execution feature with StepAborted
+				plan.getBody().callAborted(plan);
 			}
 		}
 	}
