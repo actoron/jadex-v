@@ -110,11 +110,8 @@ public class PlanInjectionTest
 			}
 		}
 		
-		IComponentHandle	handle	= IComponentManager.get().create(new BrokenGoalInjectionAgent()).get(TestHelper.TIMEOUT);
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(UnsupportedOperationException.class,
-				() -> handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class)
-					.dispatchTopLevelGoal(new BrokenGoalInjectionAgent.MyGoal())).get(TestHelper.TIMEOUT)));
+		assertThrows(UnsupportedOperationException.class,
+			() -> IComponentManager.get().create(new BrokenGoalInjectionAgent()).get(TestHelper.TIMEOUT));
 	}
 	
 	/**

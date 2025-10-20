@@ -653,16 +653,18 @@ public class InjectionModel
 	protected static Map<List<Class<?>>, InjectionModel>	MODEL_CACHE	= new LinkedHashMap<>();
 	
 	/**
-	 *  Get the model for a stack of pojo objects.
+	 *  Helper to get the model at runtime for a stack of pojo objects.
+	 *  Requires that the model exists.
 	 */
-	public static InjectionModel	get(List<Object> pojos, List<String> path, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public static InjectionModel	get(List<Object> pojos)
 	{
+		
 		List<Class<?>>	key	= new ArrayList<Class<?>>(pojos.size());
 		for(Object pojo: pojos)
 		{
 			key.add(pojo!=null ? pojo.getClass() : Object.class);
 		}
-		return getStatic(key, path, contextfetchers);
+		return getStatic(key, null, null);
 	}
 	
 	/**

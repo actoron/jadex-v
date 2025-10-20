@@ -255,7 +255,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							Object	capa	= getter.invoke(pojos.get(pojos.size()-1));
 							List<Object>	mypojos	= new ArrayList<>(pojos);
 							mypojos.add(capa);
-							((BDIAgentFeature)self.getFeature(IBDIAgentFeature.class)).addCapability(mypojos, capanames);
+							((BDIAgentFeature)self.getFeature(IBDIAgentFeature.class)).addCapability(mypojos);
 							return null;
 						}
 						catch(Throwable t)
@@ -770,16 +770,26 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		String	planname	= planclazz.getName();
 		List<Class<?>>	parentclazzes	= imodel.getPojoClazzes();
 		
+		List<Class<?>>	planclazzes	= new ArrayList<>(parentclazzes);
+		planclazzes.add(planclazz);
+		
+		List<String>	path	= imodel.getPath()!=null ? new ArrayList<>(imodel.getPath()) : new ArrayList<>();
+		path.add(planname);
+
+		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers
+			= createContextFetchers(parentclazzes,
+				new Class<?>[][]{trigger.goals(), trigger.goalfinisheds()},
+				planname, true, imodel.getContextFetchers(),
+				addPrefix(capaprefix, trigger.factadded()),
+				addPrefix(capaprefix, trigger.factremoved()),
+				addPrefix(capaprefix, trigger.factchanged()));
+
+		// Pre-initialize goal pojo model
+		InjectionModel.getStatic(planclazzes, path, contextfetchers);
+		
 		// Inform user when no trigger is defined
 		checkPlanDefinition(trigger, planname);
 		
-		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers
-			= createContextFetchers(parentclazzes,
-			new Class<?>[][]{trigger.goals(), trigger.goalfinisheds()},
-			planname, true, imodel.getContextFetchers(),
-			addPrefix(capaprefix, trigger.factadded()),
-			addPrefix(capaprefix, trigger.factremoved()),
-			addPrefix(capaprefix, trigger.factchanged()));
 		IInjectionHandle	precondition	= createMethodInvocation(planclazz, parentclazzes, PlanPrecondition.class, contextfetchers, Boolean.class);
 		IInjectionHandle	contextcondition	= createMethodInvocation(planclazz, parentclazzes, PlanContextCondition.class, contextfetchers, Boolean.class);
 		IInjectionHandle	constructor	= null;
@@ -858,6 +868,17 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		String	goalname	= goalclazz.getName();
 		List<Class<?>>	parentclazzes	= imodel.getPojoClazzes();
 		
+		List<Class<?>>	goalclazzes	= new ArrayList<>(parentclazzes);
+		goalclazzes.add(goalclazz);
+		
+		List<String>	path	= imodel.getPath()!=null ? new ArrayList<>(imodel.getPath()) : new ArrayList<>();
+		path.add(goalname);
+		
+		// Pre-initialize goal pojo model
+		// TODO: contextfetchers
+		InjectionModel.getStatic(goalclazzes, path, null);
+		
+		
 		// Add rules to trigger creation condition for annotated constructors and methods
 		List<Executable>	executables	= new ArrayList<>(4);
 		executables.addAll(InjectionModel.findConstructors(goalclazz, GoalCreationCondition.class));
@@ -906,7 +927,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								Object	pojogoal	= handle.apply(comp, pojos, new ChangeEvent<Object>(event), null);
 								if(pojogoal!=null)	// For method, check if no goal is created
 								{
-									RGoal	rgoal	= new RGoal(pojogoal, null, comp, fcontextfetchers);
+									RGoal	rgoal	= new RGoal(pojogoal, null, comp);
 									rgoal.adopt();
 								}
 								return IFuture.DONE;
@@ -935,7 +956,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								if(Boolean.TRUE.equals(value))
 								{
 									Object	pojogoal	= constructor.apply(comp, pojos, change, null);
-									RGoal	rgoal	= new RGoal(pojogoal, null, comp, fcontextfetchers);
+									RGoal	rgoal	= new RGoal(pojogoal, null, comp);
 									rgoal.adopt();
 								}
 								return IFuture.DONE;
@@ -1122,10 +1143,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		IInjectionHandle	aplbuild	= createMethodInvocation(goalclazz, parentclazzes, GoalAPLBuild.class, imodel.getContextFetchers(), Collection.class);
 		IInjectionHandle	selectcandidate = createGoalSelectCandidateMethod(goalclazz, parentclazzes, imodel.getContextFetchers());
 
-		List<String>	path	= imodel.getPath()!=null ? new ArrayList<>(imodel.getPath()) : new ArrayList<>();
-		path.add(goalname);
 		MGoal mgoal	= new MGoal(!querycondmethods.isEmpty(), !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), !recurcondmethods.isEmpty(),
-			anno, parentclazzes, path, aplbuild, selectcandidate, instanceinhibs);
+			anno, parentclazzes, aplbuild, selectcandidate, instanceinhibs);
 		
 		// BDI model is for outmost pojo.
 		BDIModel	model	= BDIModel.getModel(parentclazzes.get(0));

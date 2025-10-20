@@ -635,7 +635,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //	{
 //		final Future<E> ret = new Future<E>();
 		
-		final RGoal rgoal = new RGoal(goal, this, comp, null);
+		final RGoal rgoal = new RGoal(goal, this, comp);
 		
 //		final ResumeCommand<E> rescom = new ResumeCommand<E>(ret, false);
 ////		setResumeCommand(rescom);

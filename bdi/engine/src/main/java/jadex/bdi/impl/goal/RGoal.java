@@ -1,9 +1,6 @@
 package jadex.bdi.impl.goal;
 
 import java.lang.System.Logger.Level;
-import java.lang.annotation.Annotation;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -21,7 +18,6 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
-import jadex.injection.impl.IValueFetcherCreator;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.RuleSystem;
@@ -60,8 +56,6 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	
 	protected MGoal	mgoal;
 	
-	protected Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers;
-	
 	/** Set to true when goal is added to agent.
 	 *  Used to check if goal needs to be removed when dropped. */
 	// TODO: better way? -> cf. GoalFlickerTest
@@ -81,7 +75,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 *  @param pojo	The pojo goal.
 	 *  @param parant	The Plan (if subgoal) or null.
 	 */
-	public RGoal(/*MGoal mgoal, */Object pojogoal, RPlan parent, IComponent comp, Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers/*, Map<String, Object> vals, ICandidateInfo candidate*/)
+	public RGoal(Object pojogoal, RPlan parent, IComponent comp)
 	{
 		// Hack!!! set parent pojos (i.e. capability) later.
 		super(pojogoal, comp, null);
@@ -89,7 +83,6 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		this.processingstate = GoalProcessingState.IDLE;
 		this.comp	= comp;
 		this.parentplan	= parent;
-		this.contextfetchers	= contextfetchers;
 		
 		this.mgoal	= ((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).getModel().getGoalInfo(pojogoal.getClass());
 		if(mgoal==null)
@@ -407,14 +400,13 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	
 	/**
 	 *  Adopt a goal.
-	 *  @param contextfetchers For injecting event values when triggered by a creation condition, null otherwise.
 	 */
 	public void	adopt()
 	{
 		adopted	= true;
 		
 			
-		((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).addGoal(this, contextfetchers);
+		((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).addGoal(this);
 		
 		setLifecycleState(RGoal.GoalLifecycleState.ADOPTED);
 	}

@@ -132,7 +132,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		{
 			for(List<Object> pojos: extras.keySet())
 			{
-				InjectionModel	model	= InjectionModel.get(pojos, null, null);
+				InjectionModel	model	= InjectionModel.get(pojos);
 				endPojo(model, pojos, extras.get(pojos));
 			}
 		}
@@ -263,7 +263,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		{
 			for(List<Object> pojos: extras.keySet())
 			{
-				InjectionModel	model	= InjectionModel.get(pojos, null, null);
+				InjectionModel	model	= InjectionModel.get(pojos);
 				ret = addResults(model, pojos, ret);
 			}
 		}
@@ -324,18 +324,14 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 *  Add an extra pojo to be managed.
 	 *  E.g. inject fields in service impl, call OnStart/End methods.
 	 *  
-	 *  @param pojos	The actual pojo objects as a hierachy of component pojo plus subobjects.
+	 *  @param pojos	The actual pojo objects as a hierarchy of component pojo plus subobjects.
 	 *  				The injection is for the last pojo in the list.
 	 *  
-	 *  @param context	Optional path information, e.g. name of subcapability(s).
-	 *  
 	 *  @param context	Optional local context of the pojo (e.g. rplan for a plan pojo).
-	 *  
-	 *  @param contextfetchers	Local fetchers, if any.
 	 */
-	public void	addExtraObject(List<Object> pojos, List<String> path, Object context, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public void	addExtraObject(List<Object> pojos, Object context)
 	{
-		InjectionModel	model	= InjectionModel.get(pojos, path, contextfetchers);
+		InjectionModel	model	= InjectionModel.get(pojos);
 		
 		if(extras==null)
 		{
@@ -362,7 +358,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		if(extras!=null && extras.containsKey(pojos))
 		{
 			extras.remove(pojos);
-			InjectionModel	model	= InjectionModel.get(pojos, null, null);
+			InjectionModel	model	= InjectionModel.get(pojos);
 			endPojo(model, pojos, context);
 		}
 	}

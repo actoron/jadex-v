@@ -145,7 +145,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	@Override
 	public ITerminableFuture<Void> dispatchTopLevelGoal(Object goal)
 	{
-		final RGoal rgoal = new RGoal(goal, null, self, null);
+		final RGoal rgoal = new RGoal(goal, null, self);
 		
 		// Adopt directly (no schedule step)
 		// TODO: why step for subgoal and not for top-level!?
@@ -357,7 +357,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		
 		if(rplan.getPojo()!=null)
 		{
-			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos(), null, rplan, contextfetchers);
+			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos(), rplan);
 		}
 	}
 	
@@ -392,7 +392,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	 *  Add a Goal.
 	 *  Called when the goal is adopted.
 	 */
-	public void addGoal(RGoal rgoal, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public void addGoal(RGoal rgoal)
 	{		
 		if(goals==null)
 		{
@@ -406,7 +406,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		}
 		typedgoals.add(rgoal);
 		
-		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), rgoal.getMGoal().path(), rgoal, contextfetchers);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), rgoal);
 	}
 	
 	/**
@@ -585,7 +585,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/**
 	 *  Add a capability.
 	 */
-	protected void	addCapability(List<Object> pojos, List<String> path)
+	protected void	addCapability(List<Object> pojos)
 	{
 		// Add to known sub-objects
 		List<Class<?>>	pojoclazzes	= new ArrayList<>();
@@ -600,7 +600,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		// TODO: support multiple instances of same capability?
 		capabilities.put(pojoclazzes, pojos);
 		
-		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, path, null, null);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null);
 	}
 	
 	public List<Object> getCapability(List<Class<?>> parentclazzes)

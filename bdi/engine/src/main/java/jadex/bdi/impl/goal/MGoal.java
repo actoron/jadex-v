@@ -15,7 +15,6 @@ import jadex.injection.impl.IInjectionHandle;
  *  @param annotation goal flags.
  */ 
 public record MGoal(boolean query, boolean target, boolean maintain, boolean recur, Goal annotation,
-	List<Class<?>> parentclazzes, List<String> path,
-	IInjectionHandle aplbuild, IInjectionHandle selectcandidate, Map<Class<?>, IInjectionHandle> instanceinhibs)
+	List<Class<?>> parentclazzes, IInjectionHandle aplbuild, IInjectionHandle selectcandidate, Map<Class<?>, IInjectionHandle> instanceinhibs)
 {
 }

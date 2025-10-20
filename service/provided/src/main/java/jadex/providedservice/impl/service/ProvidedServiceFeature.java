@@ -224,7 +224,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 			{
 				List<Object>	pojos	= new ArrayList<>(parents);
 				pojos.add(pojo);
-				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null, null, null);
+				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null);
 			}
 			
 			// Finally make the services publicly available
