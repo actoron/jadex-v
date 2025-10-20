@@ -17,6 +17,7 @@ import jadex.bdi.IGoal;
 import jadex.bdi.IGoal.GoalLifecycleState;
 import jadex.bdi.impl.goal.EasyDeliberationStrategy;
 import jadex.bdi.impl.goal.RGoal;
+import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
@@ -50,7 +51,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	protected RuleSystem	rulesystem;
 	
 	/** The currently running plans. */
-	protected Set<RPlan>	plans;
+	protected Map<IPlanBody, Set<RPlan>>	plans;
 	
 	/** The currently adopted goals. */
 	protected Map<Class<?>, Set<RGoal>>	goals;
@@ -113,14 +114,20 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 		// Abort all plans (terminates wait futures if any)
 		// TODO: generic future handler to terminate any futures on component end
-		if(plans!=null && !plans.isEmpty())
+		if(plans!=null)
 		{
-			for(RPlan plan: plans.toArray(new RPlan[plans.size()]))
+			for(Set<RPlan> planset: plans.values())
 			{
-				plan.abort();
-				// call aborted explicitly, because any wakeup code from plan.abort()
-				// is cancelled by execution feature with StepAborted
-				plan.getBody().callAborted(plan);
+				if(!planset.isEmpty())
+				{
+					for(RPlan plan: planset.toArray(new RPlan[planset.size()]))
+					{
+						plan.abort();
+						// call aborted explicitly, because any wakeup code from plan.abort()
+						// is cancelled by execution feature with StepAborted
+						plan.getBody().callAborted(plan);
+					}
+				}
 			}
 		}
 	}
@@ -338,9 +345,15 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{		
 		if(plans==null)
 		{
-			plans	= new LinkedHashSet<>();
+			plans	= new LinkedHashMap<>();
 		}
-		plans.add(rplan);
+		Set<RPlan>	planset	= plans.get(rplan.getBody());
+		if(planset==null)
+		{
+			planset	= new LinkedHashSet<>();
+			plans.put(rplan.getBody(), planset);
+		}
+		planset.add(rplan);
 		
 		if(rplan.getPojo()!=null)
 		{
@@ -351,7 +364,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/**
 	 *  Get the plans, if any.
 	 */
-	public Set<RPlan>	getPlans()
+	public Map<IPlanBody, Set<RPlan>>	getPlans()
 	{
 		return plans;
 	}
@@ -361,7 +374,12 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	 */
 	public void removePlan(RPlan rplan)
 	{
-		plans.remove(rplan);
+		Set<RPlan>	planset	= plans.get(rplan.getBody());
+		if(planset!=null)
+		{
+			planset.remove(rplan);
+			// Do not remove set to avoid continuous recreation if a plan gets executed repeatedly.
+		}
 
 		if(rplan.getPojo()!=null)
 		{
