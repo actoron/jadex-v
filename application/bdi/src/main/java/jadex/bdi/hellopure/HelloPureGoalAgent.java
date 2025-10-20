@@ -37,7 +37,7 @@ public class HelloPureGoalAgent
 			this.text	= new Val<>(text);
 		}
 		
-		@GoalTargetCondition(parameters="text")
+		@GoalTargetCondition
 		public boolean checkTarget()
 		{
 			System.out.println("checkTarget: "+text);

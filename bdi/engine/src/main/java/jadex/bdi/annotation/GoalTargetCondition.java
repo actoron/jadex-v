@@ -12,16 +12,16 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GoalTargetCondition
 {
-	/**
-	 *  The beliefs this condition should react to.
-	 */
-	public String[] beliefs() default {};
-	
-	/**
-	 *  The parameters this condition should react to.
-	 */
-	public String[] parameters() default {};
-	
+//	/**
+//	 *  The beliefs this condition should react to.
+//	 */
+//	public String[] beliefs() default {};
+//	
+//	/**
+//	 *  The parameters this condition should react to.
+//	 */
+//	public String[] parameters() default {};
+//	
 //	/**
 //	 *  The events this condition should react to.
 //	 */

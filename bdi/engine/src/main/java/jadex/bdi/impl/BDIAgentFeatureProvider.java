@@ -64,6 +64,7 @@ import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentIdentifier;
+import jadex.core.IChangeListener;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
@@ -71,10 +72,12 @@ import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.injection.Dyn;
+import jadex.injection.IInjectionFeature;
 import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.IValueFetcherCreator;
+import jadex.injection.impl.InjectionFeature;
 import jadex.injection.impl.InjectionModel;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
@@ -801,39 +804,33 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		{
 			// createMethodInvocation(..) guarantees that a single method exists.
 			Method	contextmethod	= InjectionModel.findMethods(planclazz, PlanContextCondition.class).get(0);
-			PlanContextCondition	contextanno	= contextmethod.getAnnotation(PlanContextCondition.class);
-			List<String>	beliefs	= contextanno.beliefs().length>0 ? addPrefix(capaprefix, contextanno.beliefs())
-					: imodel.findDependentFields(contextmethod);
+			List<String>	dynvals	= imodel.findDependentFields(contextmethod);
 			
-			// Create events
-			if(beliefs.size()>0)
+			// Create event listeners on start
+			if(dynvals.size()>0)
 			{
-				List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class[0], null, planname);
-				// Convert to array
-				EventType[]	cevents	= events.toArray(new EventType[events.size()]);
 				// In extra on start, add rule to check condition when event happens.  
 				imodel.addPostInject((comp, pojos, context, oldval) ->
 				{
-					RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-					rs.getRulebase().addRule(new Rule<Void>(
-						"PlanContextCondition_"+planname,	// Rule Name
-						ICondition.TRUE_CONDITION,	// Condition -> true
-						(event, rule, context2, condresult) ->
+					IChangeListener	listener	= event -> 
+					{
+						Map<IPlanBody, Set<RPlan>>	plans	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getPlans();
+						if(plans!=null && plans.containsKey(planbody))
 						{
-							Set<RPlan>	plans	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getPlans();
-							if(plans!=null)
+							for(RPlan rplan: plans.get(planbody))
 							{
-								for(RPlan rplan: plans)
+								if(!planbody.checkContextCondition(rplan))
 								{
-									if(!planbody.checkContextCondition(rplan))
-									{
-										rplan.abort();
-									}
+									rplan.abort();
 								}
 							}
-							return IFuture.DONE;
-						},
-						cevents));	// Trigger Event(s)
+						}
+					};
+					
+					for(String dynval: dynvals)
+					{
+						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addListener(dynval, listener);
+					}
 					return null;
 				});
 			}
@@ -964,14 +961,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		for(Method method: contextcondmethods)
 		{
 			String	rulename	= "GoalContextCondition"+(++numcreations)+"_"+goalname;
-			GoalContextCondition	context	= method.getAnnotation(GoalContextCondition.class);
-			List<String>	beliefs	= context.beliefs().length>0 ? addPrefix(capaprefix, context.beliefs())
-				: imodel.findDependentFields(method);
-			List<String>	parameters = addPrefix(capaprefix+goalname+".", context.parameters());
+			List<String>	beliefs	= imodel.findDependentFields(method);
 			String	condname	= "context";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createContextCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(imodel, goalname, method, beliefs, parameters, condname, creator, true);
+			addCondition(imodel, goalname, method, beliefs, beliefs, condname, creator, true);
 		}
 		
 		// Add drop condition rules
@@ -980,14 +974,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		for(Method method: dropcondmethods)
 		{
 			String	rulename	= "GoalDropCondition"+(++numcreations)+"_"+goalname;
-			GoalDropCondition	drop	= method.getAnnotation(GoalDropCondition.class);
-			List<String>	beliefs	= drop.beliefs().length>0 ? addPrefix(capaprefix, drop.beliefs())
-					: imodel.findDependentFields(method);
-			List<String>	parameters = addPrefix(capaprefix+goalname+".", drop.parameters());
+			List<String>	beliefs	= imodel.findDependentFields(method);
 			String	condname	= "drop";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createDropCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(imodel, goalname, method, beliefs, parameters, condname, creator, true);
+			addCondition(imodel, goalname, method, beliefs, beliefs, condname, creator, true);
 		}
 		
 		// Add recur condition rules
@@ -996,14 +987,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		for(Method method: recurcondmethods)
 		{
 			String	rulename	= "GoalRecurCondition"+(++numcreations)+"_"+goalname;
-			GoalRecurCondition	recur	= method.getAnnotation(GoalRecurCondition.class);
-			List<String>	beliefs	= recur.beliefs().length>0 ? addPrefix(capaprefix, recur.beliefs())
-					: imodel.findDependentFields(method);
-			List<String>	parameters = addPrefix(capaprefix+goalname+".", recur.parameters());
+			List<String>	beliefs	= imodel.findDependentFields(method);
 			String	condname	= "recur";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createRecurCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(imodel, goalname, method, beliefs, parameters, condname, creator, true);
+			addCondition(imodel, goalname, method, beliefs, beliefs, condname, creator, true);
 		}
 		
 		// Add query condition rules
@@ -1012,14 +1000,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		for(Method method: querycondmethods)
 		{
 			String	rulename	= "GoalQueryCondition"+(++numcreations)+"_"+goalname;
-			GoalQueryCondition	query	= method.getAnnotation(GoalQueryCondition.class);
-			List<String>	beliefs	= query.beliefs().length>0 ? addPrefix(capaprefix, query.beliefs())
-					: imodel.findDependentFields(method);
-			List<String>	parameters = addPrefix(capaprefix+goalname+".", query.parameters());
+			List<String>	beliefs	= imodel.findDependentFields(method);
 			String	condname	= "query";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createQueryCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(imodel, goalname, method, beliefs, parameters, condname, creator, false);
+			addCondition(imodel, goalname, method, beliefs, beliefs, condname, creator, false);
 		}
 		
 		// Add target condition rules
@@ -1028,14 +1013,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		for(Method method: targetcondmethods)
 		{
 			String	rulename	= "GoalTargetCondition"+(++numcreations)+"_"+goalname;
-			GoalTargetCondition	target	= method.getAnnotation(GoalTargetCondition.class);
-			List<String>	beliefs	= target.beliefs().length>0 ? addPrefix(capaprefix, target.beliefs())
-					: imodel.findDependentFields(method);
-			List<String>	parameters = addPrefix(capaprefix+goalname+".", target.parameters());
+			List<String>	beliefs	= imodel.findDependentFields(method);
 			String	condname	= "target";
 			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createTargetCondition(goalclazz, aevents, handle, rulename);
 			
-			addCondition(imodel, goalname, method, beliefs, parameters, condname, creator, true);
+			addCondition(imodel, goalname, method, beliefs, beliefs, condname, creator, true);
 		}
 
 		// Add maintain condition rules
@@ -1043,11 +1025,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		numcreations	= 0;
 		for(Method method: maintaincondmethods)
 		{
-			GoalMaintainCondition	maintain	= method.getAnnotation(GoalMaintainCondition.class);
-			List<String>	beliefs	= maintain.beliefs().length>0 ? addPrefix(capaprefix, maintain.beliefs())
-					: imodel.findDependentFields(method);
-			List<String>	parameters = addPrefix(capaprefix+goalname+".", maintain.parameters());
-			List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], parameters, goalname);
+			List<String>	beliefs	= imodel.findDependentFields(method);
+			List<EventType>	events	= getTriggerEvents(parentclazzes, beliefs, beliefs, beliefs, new Class<?>[0], beliefs, goalname);
 			if(events!=null && events.size()>0)
 			{
 				// Add fetcher for belief value.

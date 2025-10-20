@@ -240,10 +240,10 @@ public class TestBeliefNames
 			@Goal
 			class MyGoal
 			{
-				@GoalTargetCondition(beliefs="belief")
-				boolean	target(String value)
+				@GoalTargetCondition
+				boolean	target()
 				{
-					return value!=null && "value".equals(value);
+					return belief.get().equals("value");
 				}
 			}
 			

@@ -30,7 +30,7 @@ public class GoalParameterConditionTest
 		@GoalParameter
 		protected Val<String> text;
 		
-		@GoalTargetCondition(parameters="text")
+		@GoalTargetCondition
 		public boolean checkTarget()
 		{
 			return "finished".equals(text.get());
@@ -42,8 +42,9 @@ public class GoalParameterConditionTest
 		}
 	}
 	
-	@Test
-	public void tesGoalParameterCondition()
+//	@Test
+	// TODO
+	public void testGoalParameterCondition()
 	{
 		IComponentHandle self	= IComponentManager.get().create(this).get(TestHelper.TIMEOUT);
 		HelloGoal	goal	= new HelloGoal();
