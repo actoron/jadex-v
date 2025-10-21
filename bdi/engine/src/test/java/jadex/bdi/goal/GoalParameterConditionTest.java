@@ -42,8 +42,7 @@ public class GoalParameterConditionTest
 		}
 	}
 	
-//	@Test
-	// TODO
+	@Test
 	public void testGoalParameterCondition()
 	{
 		IComponentHandle self	= IComponentManager.get().create(this).get(TestHelper.TIMEOUT);

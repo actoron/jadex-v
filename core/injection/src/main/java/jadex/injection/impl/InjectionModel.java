@@ -10,9 +10,11 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -46,6 +48,16 @@ import jadex.injection.annotation.ProvideResult;
  */
 public class InjectionModel
 {
+	/**
+	 *  Meta information for a dynamic value field.
+	 *  
+	 *  @param field	The field.
+	 *  @param name	The fully qualified name.
+	 *  @param type	The value type (e.g. inner generic type of List).
+	 *  @param kinds	The detected dynamic value annotations for the field.
+	 */
+	public static record MDynVal(Field field, String name, Class<?> type, Set<Class<? extends Annotation>> kinds) {}
+	
 	/** The pojo classes as a hierarchy of component pojo plus subobjects, if any.
 	 *  The model is for the last pojo in the list. */
 	protected final List<Class<?>>	pojoclazzes;
@@ -80,11 +92,11 @@ public class InjectionModel
 	/** Code to fetch component results. */
 	protected IInjectionHandle	results;
 	
-	/** Fully qualified name of dynamic values (field -> name). */
-	protected final Map<Field, String>	dynvals	= new LinkedHashMap<>();
+	/** Dynamic values (field -> dynval info). */
+	protected final Map<Field, MDynVal>	dynvals_by_field	= new LinkedHashMap<>();
 	
-	/** The kinds of a dynamic value, e.g. result or belief (name -> kinds). */
-	protected final Map<String, Set<Class<? extends Annotation>>>	dynvalkinds	= new LinkedHashMap<>();
+	/** Dynamic values (name -> dynval info). */
+	protected final Map<String, MDynVal>	dynvals_by_name	= new LinkedHashMap<>();
 	
 	/** Generic engine specific handlers for dynamic value kinds (anno or null -> list(handler)). */
 	protected Map<Class<? extends Annotation>, List<IChangeHandler>>	dynvalhandlers	= new LinkedHashMap<>();
@@ -476,9 +488,10 @@ public class InjectionModel
 		for(Field f: fields)
 		{
 			// Only add init code on first call, e.g. when field is marked as belief and result at the same time.
-			if(isDynamicValue(f.getType()) && getRootModel().getDynamicValueKinds(prefix+f.getName()).size()==1)
+			MDynVal	mdynval	= getRootModel().getDynamicValue(f);
+			if(isDynamicValue(f.getType()) && mdynval.kinds().size()==1)
 			{
-				IInjectionHandle	init	= createDynamicValueInit(f);
+				IInjectionHandle	init	= createDynamicValueInit(mdynval);
 				if(init!=null)
 				{
 					// Add init after field injections as e.g. Dyn value may access injected field.
@@ -536,35 +549,37 @@ public class InjectionModel
 	/**
 	 *  Add a dynamic value field to the model.
 	 */
-	protected void	addDynamicField(Field f, String name, Class<? extends Annotation> kind)
+	protected void	addDynamicField(Field field, String name, Class<? extends Annotation> kind)
 	{
-		// Called after init, e.g. when goal is dispatched for the first time
+		// Called after init, e.g. when provided service impl pojo is added during on start 
 //		assert !inited;
-		dynvals.put(f, name);
 		
-		Set<Class<? extends Annotation>>	kinds	= dynvalkinds.get(name);
-		if(kinds==null)
+		MDynVal	mdynval	= dynvals_by_field.get(field);
+		if(mdynval==null)
 		{
-			kinds	= new LinkedHashSet<>();
-			dynvalkinds.put(name, kinds);
+			Class<?>	type	= getValueType(field);
+			mdynval	= new MDynVal(field, name, type, new LinkedHashSet<>());
+			dynvals_by_field.put(field, mdynval);
+			dynvals_by_name.put(name, mdynval);
 		}
-		kinds.add(kind);
+		
+		mdynval.kinds().add(kind);
 	}
 	
 	/**
-	 *  Get the kinds for a dynamic value name.
+	 *  Get the meta info of a dynamic value field, if any.
 	 */
-	public Set<Class<? extends Annotation>>	getDynamicValueKinds(String name)
+	public MDynVal	getDynamicValue(Field f)
 	{
-		return dynvalkinds.get(name);
+		return dynvals_by_field.get(f);
 	}
 	
 	/**
-	 *  Get the name of a dynamic value field.
+	 *  Get the meta info of a dynamic value field, if any.
 	 */
-	public String	getDynamicFieldName(Field f)
+	public MDynVal	getDynamicValue(String name)
 	{
-		return dynvals.get(f);
+		return dynvals_by_name.get(name);
 	}
 	
 	/**
@@ -932,7 +947,6 @@ public class InjectionModel
 	
 	/**
 	 *  Scan byte code to find fields that are accessed in the method.
-	 *  @param baseclazz	The goal or plan class.
 	 */
 	public List<String> findDependentFields(String desc)
 	{
@@ -970,11 +984,11 @@ public class InjectionModel
 					for(Field f: ACCESSED_FIELDS.get(desc0))
 					{
 //						System.out.println("Found field access in method: "+f+", "+method);
-						String dep	= getRootModel().getDynamicFieldName(f);
+						MDynVal dep	= getRootModel().getDynamicValue(f);
 						if(dep!=null)
 						{
 //							System.out.println("Found dynamic field access in method: "+dep+", "+method);
-							deps.add(dep);
+							deps.add(dep.name());
 						}
 					}
 				}
@@ -1002,15 +1016,83 @@ public class InjectionModel
 	}
 	
 	/**
+	 *  Get the value type for a dynamic value field
+	 */
+	protected Class<?>	getValueType(Field f)
+	{
+		Class<?>	ret	= f.getType();
+		java.lang.reflect.Type		gtype	= f.getGenericType();
+		
+		if(SReflect.isSupertype(Dyn.class, ret)
+			||SReflect.isSupertype(Val.class, ret))
+		{
+			if(gtype instanceof ParameterizedType)
+			{
+				ParameterizedType	generic	= (ParameterizedType)gtype;
+				gtype	= generic.getActualTypeArguments()[0];
+				ret	= getRawClass(gtype);
+			}
+			else
+			{
+				throw new RuntimeException("Dynamic value field does not define generic value type: "+f);
+			}
+		}
+		
+		if(SReflect.isSupertype(Collection.class, ret))
+		{
+			if(gtype instanceof ParameterizedType)
+			{
+				ParameterizedType	generic	= (ParameterizedType)gtype;
+				ret	= getRawClass(generic.getActualTypeArguments()[0]);
+			}
+			else
+			{
+				throw new RuntimeException("Dynamic value field does not define generic value type: "+f);
+			}
+		}
+		else if(SReflect.isSupertype(Map.class, ret))
+		{
+			if(gtype instanceof ParameterizedType)
+			{
+				ParameterizedType	generic	= (ParameterizedType)gtype;
+				ret	= getRawClass(generic.getActualTypeArguments()[1]);
+			}
+			else
+			{
+				throw new RuntimeException("Dynamic value field does not define generic value type: "+f);
+			}
+		}
+		
+		return ret;
+	}
+	
+	protected static Class<?> getRawClass(java.lang.reflect.Type type)
+	{
+		if(type instanceof Class<?>)
+		{
+			return (Class<?>)type;
+		}
+		else if(type instanceof ParameterizedType)
+		{
+			return (Class<?>)((ParameterizedType)type).getRawType();
+		}
+		else
+		{
+			throw new RuntimeException("Cannot get raw class of type: "+type);
+		}
+	}
+	
+	/**
 	 *  Get the init code for a field containing a dynamic value (Dyn, Val, List, Set, Map, Bean).
 	 *  @param f	The field.
 	 *  @param evpub	The event publisher to use for change events.
 	 *  @return The init code or null, if the field type is not supported.
 	 */
-	protected IInjectionHandle	createDynamicValueInit(Field f)
+	protected IInjectionHandle	createDynamicValueInit(MDynVal mdynval)
 	{
 		IInjectionHandle	ret = null;
-		String	name	= getRootModel().getDynamicFieldName(f);
+		Field	f	= mdynval.field();
+		String	name	= mdynval.name();
 		
 		if(name!=null)
 		{

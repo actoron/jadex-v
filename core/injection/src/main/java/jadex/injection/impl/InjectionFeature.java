@@ -201,7 +201,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	public void valueChanged(ChangeEvent event)
 	{
 		// Generic handlers for e.g. sending result events.
-		Set<Class<? extends Annotation>> kinds	= model.getDynamicValueKinds(event.name());
+		Set<Class<? extends Annotation>> kinds	= model.getDynamicValue(event.name()).kinds();
 		for(Class<? extends Annotation> kind: kinds)
 		{
 			List<IChangeHandler>	handlers	= model.getChangeHandlers(kind);
