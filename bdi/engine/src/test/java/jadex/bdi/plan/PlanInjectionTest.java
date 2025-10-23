@@ -20,7 +20,6 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
-import jadex.common.SUtil;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;

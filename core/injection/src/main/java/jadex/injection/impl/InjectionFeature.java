@@ -185,6 +185,14 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	//-------- internal methods (to be used by other features) --------
 	
 	/**
+	 *  Get the underlying model.
+	 */
+	public InjectionModel	getModel()
+	{
+		return model;
+	}
+	
+	/**
 	 *  Notify about a result, i.e. a change in a dynamic result field.
 	 */
 	public void notifyResult(ChangeEvent event)

@@ -567,6 +567,14 @@ public class InjectionModel
 	}
 	
 	/**
+	 *  Get the dynamic values.
+	 */
+	public Collection<MDynVal>	getDynamicValues()
+	{
+		return dynvals_by_name.values();
+	}
+	
+	/**
 	 *  Get the meta info of a dynamic value field, if any.
 	 */
 	public MDynVal	getDynamicValue(Field f)

@@ -6,6 +6,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,8 +26,8 @@ import javax.swing.table.DefaultTableModel;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
+import jadex.bdi.annotation.Belief;
 import jadex.bdi.impl.BDIAgentFeature;
-import jadex.bdi.impl.BDIModel;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.collection.CollectionWrapper;
@@ -36,7 +37,11 @@ import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IThrowingFunction;
 import jadex.injection.Dyn;
+import jadex.injection.IInjectionFeature;
 import jadex.injection.Val;
+import jadex.injection.impl.InjectionFeature;
+import jadex.injection.impl.InjectionModel;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 @SuppressWarnings("serial")
 public class BDIViewer extends JFrame 
@@ -156,9 +161,18 @@ public class BDIViewer extends JFrame
        		return allplans.toArray(new RPlan[allplans.size()]);
        	}).get());
        	
-       	refreshBeliefsTable(beliefModel, agent.scheduleStep((IThrowingFunction<IComponent, String[]>)a -> 
+       	refreshBeliefsTable(beliefModel, agent.scheduleStep((IThrowingFunction<IComponent, List<String>>)a -> 
        	{
-       		return ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getModel().getBeliefNames().toArray(new String[0]);
+       		List<String>	beliefnames	= new ArrayList<>();
+       		Collection<MDynVal>	mdynvals	= ((InjectionFeature) a.getFeature(IInjectionFeature.class)).getModel().getDynamicValues();
+       		for(MDynVal mdynval: mdynvals)
+       		{
+       			if(mdynval.kinds().contains(Belief.class))
+       			{
+       				beliefnames.add(mdynval.name());
+       			}
+       		}
+       		return beliefnames;
        	}).get());
     }
 
@@ -196,7 +210,7 @@ public class BDIViewer extends JFrame
         }
     }
 
-    private void refreshBeliefsTable(DefaultTableModel model, String[] beliefs) 
+    private void refreshBeliefsTable(DefaultTableModel model, List<String> beliefs) 
     {
         model.setRowCount(0);
         for (String belief : beliefs) 
@@ -205,8 +219,8 @@ public class BDIViewer extends JFrame
             {
 //            	Object val= belief.getValue();
 //            	return new BeliefValue(val, val.toString());
-            	BDIModel	bdimodel	= ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getModel();
-            	Class<?>	type	= bdimodel.getBeliefType(belief);
+            	InjectionModel	imodel	= ((InjectionFeature)a.getFeature(IInjectionFeature.class)).getModel();
+            	Class<?>	type	= imodel.getDynamicValue(belief).type();
             	Object	value	= getBeliefValue(belief, a.getPojo());
             	return new BeliefInfo(type, value);
             }).get();

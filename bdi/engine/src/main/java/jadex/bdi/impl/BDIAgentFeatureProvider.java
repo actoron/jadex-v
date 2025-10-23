@@ -71,9 +71,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
-import jadex.injection.Dyn;
 import jadex.injection.IInjectionFeature;
-import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.IValueFetcherCreator;
@@ -281,13 +279,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 			
-			// Manage belief fields.
-			for(Field f: imodel.findFields(Belief.class))
-			{
-				// Add types to model first for cross-dependencies.
-				addBeliefType(model, capaprefix, f);
-			}
-			
 			imodel.addDynamicValues(Belief.class, true);
 			
 			// Manage plan methods.
@@ -350,7 +341,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					if(plan.impl().isAnnotationPresent(Plan.class))
 					{
 						Trigger	trigger	= plan.impl().getAnnotation(Plan.class).trigger();
-						List<EventType>	events	= getCreationTriggerEvents(imodel.getPojoClazzes(),
+						List<EventType>	events	= getCreationTriggerEvents(imodel,
 							addPrefix(capaprefix, trigger.factadded()),
 							addPrefix(capaprefix, trigger.factremoved()),
 							addPrefix(capaprefix, trigger.factchanged()),
@@ -539,13 +530,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		Trigger	trigger	= anno.trigger();
 		String	planname	= m.getDeclaringClass().getName()+"."+m.getName();
 		
+		List<String>	deps	= addPrefix(capaprefix, trigger.factadded());
+		deps.addAll(addPrefix(capaprefix, trigger.factremoved()));
+		deps.addAll(addPrefix(capaprefix, trigger.factchanged()));
+
 		Map<Class<? extends Annotation>, List<IValueFetcherCreator>>	contextfetchers
-			= createContextFetchers(imodel.getPojoClazzes(),
+			= createContextFetchers(imodel,
 			new Class<?>[][] {trigger.goals(), trigger.goalfinisheds()},
-			planname, true, imodel.getContextFetchers(),
-			addPrefix(capaprefix, trigger.factadded()),
-			addPrefix(capaprefix, trigger.factremoved()),
-			addPrefix(capaprefix, trigger.factchanged()));
+			planname, true, deps);
 		IInjectionHandle	planhandle	= InjectionModel.createMethodInvocation(m, imodel.getPojoClazzes(), contextfetchers, null);
 		IPlanBody	planbody	= new MethodPlanBody(contextfetchers, planhandle);
 		
@@ -568,7 +560,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	protected void addEventTriggerRule(InjectionModel imodel, String capaprefix, Trigger trigger,
 			IPlanBody planbody, String planname)
 	{
-		List<EventType> events = getCreationTriggerEvents(imodel.getPojoClazzes(),
+		List<EventType> events = getCreationTriggerEvents(imodel,
 			addPrefix(capaprefix, trigger.factadded()),
 			addPrefix(capaprefix, trigger.factremoved()),
 			addPrefix(capaprefix, trigger.factchanged()),
@@ -602,10 +594,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Create contextfetchers for triggering events.
 	 */
-	@SafeVarargs
 	protected static Map<Class<? extends Annotation>, List<IValueFetcherCreator>> createContextFetchers(
-		List<Class<?>> pojoclazzes, Class<?>[][] goalevents, String element, boolean plan,
-		Map<Class<? extends Annotation>, List<IValueFetcherCreator>> contextfetchers, List<String>... beliefevents)
+		InjectionModel imodel, Class<?>[][] goalevents, String element, boolean plan, List<String> dynvals)
 	{
 		List<IValueFetcherCreator>	lcreators	= null;
 		
@@ -699,16 +689,13 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			});
 		}
 		
-		// Add fetchers for belief events.
-		Set<Class<?>>	belieftypes	= new LinkedHashSet<>();
-		for(List<String> beliefs: beliefevents)
+		// Add fetchers for dynamic value change events.
+		Set<Class<?>>	dynvaltypes	= new LinkedHashSet<>();
+		for(String dynval: dynvals)
 		{
-			for(String belief: beliefs)
-			{
-				belieftypes.add(getValueType(pojoclazzes, belief, element));
-			}
+			dynvaltypes.add(getValueType(imodel, dynval, element));
 		}
-		for(Class<?> belieftype: belieftypes)
+		for(Class<?> dynvaltype: dynvaltypes)
 		{
 			if(lcreators==null)
 			{
@@ -716,7 +703,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			}
 			lcreators.add((pojotypes, valuetype, annotation) -> 
 			{
-				if(valuetype instanceof Class<?> && SReflect.isSupertype((Class<?>) valuetype, belieftype))
+				if(valuetype instanceof Class<?> && SReflect.isSupertype((Class<?>) valuetype, dynvaltype))
 				{
 					if(plan)
 					{
@@ -745,6 +732,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		}
 		
 		// Add/copy new fetcher creators
+		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers
+			= imodel.getContextFetchers();
 		if(lcreators!=null)
 		{
 			contextfetchers	= contextfetchers==null ? new LinkedHashMap<>() : new LinkedHashMap<>(contextfetchers);			
@@ -777,13 +766,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		List<String>	path	= imodel.getPath()!=null ? new ArrayList<>(imodel.getPath()) : new ArrayList<>();
 		path.add(planname);
 
+		List<String>	deps	= addPrefix(capaprefix, trigger.factadded());
+		deps.addAll(addPrefix(capaprefix, trigger.factremoved()));
+		deps.addAll(addPrefix(capaprefix, trigger.factchanged()));
+		
 		Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	contextfetchers
-			= createContextFetchers(parentclazzes,
+			= createContextFetchers(imodel,
 				new Class<?>[][]{trigger.goals(), trigger.goalfinisheds()},
-				planname, true, imodel.getContextFetchers(),
-				addPrefix(capaprefix, trigger.factadded()),
-				addPrefix(capaprefix, trigger.factremoved()),
-				addPrefix(capaprefix, trigger.factchanged()));
+				planname, true, deps);
 
 		// Pre-initialize goal pojo model
 		InjectionModel.getStatic(planclazzes, path, contextfetchers);
@@ -892,17 +882,21 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			List<String>	factremoveds	= addPrefix(capaprefix, creation.factremoved());
 			List<String>	factchangeds	= addPrefix(capaprefix, creation.factchanged());
 			
+			List<String>	deps	= new ArrayList<>();
+			deps.addAll(factaddeds);
+			deps.addAll(factremoveds);
+			deps.addAll(factchangeds);
+			
 			// TODO: find beliefs of all capabilities!?
-			List<EventType>	events	= getCreationTriggerEvents(parentclazzes, factaddeds, factremoveds, factchangeds, new Class<?>[0], goalname);
+			List<EventType>	events	= getCreationTriggerEvents(imodel, factaddeds, factremoveds, factchangeds, new Class<?>[0], goalname);
 			if(events!=null && events.size()>0)
 			{
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 				
 				// Add fetcher for belief value.
-				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes,
+				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(imodel,
 					new Class<?>[][] {},
-					goalname, false, imodel.getContextFetchers(),
-					factaddeds, factremoveds, factchangeds);
+					goalname, false, deps);
 				
 				// check for static
 				if(executable instanceof Method && !Modifier.isStatic(executable.getModifiers()))
@@ -1042,14 +1036,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		numcreations	= 0;
 		for(Method method: maintaincondmethods)
 		{
-			List<String>	beliefs	= imodel.findDependentFields(method);
+			List<String>	dynvals	= imodel.findDependentFields(method);
 			List<EventType>	events	= getConditionTriggerEvents(imodel, method);
 			if(events!=null && events.size()>0)
 			{
 				// Add fetcher for belief value.
-				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes,
+				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(imodel,
 					new Class<?>[][] {},
-					goalname, false, imodel.getContextFetchers(), beliefs);
+					goalname, false, dynvals);
 				
 				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
 				
@@ -1163,9 +1157,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 				
 				// Add fetcher for belief value.
-				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(parentclazzes,
+				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(imodel,
 					new Class<?>[][] {},
-					goalname, false, imodel.getContextFetchers(), fields);
+					goalname, false, fields);
 				
 				IInjectionHandle	handle0	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
 				IInjectionHandle	handle	= (self, pojos, context, oldval) ->
@@ -1518,7 +1512,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	/**
 	 *  Get rule events that trigger the plan/goal, if any.
 	 */
-	protected static List<EventType> getCreationTriggerEvents(List<Class<?>> pojoclazzes, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, String element)
+	protected static List<EventType> getCreationTriggerEvents(InjectionModel imodel, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, String element)
 	{
 		List<EventType>	events	= null;
 		if(factadded.size()>0
@@ -1538,7 +1532,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				for(String dep: tevents.get(tevent))
 				{
 					// call getBeliefType to check that belief exists (throws exception if not).
-					getValueType(pojoclazzes, dep, element);
+					getValueType(imodel, dep, element);
 					events.add(new EventType(tevent, dep));
 				}
 			}
@@ -1575,84 +1569,13 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	}
 
 	/**
-	 *  Add a belief to the model for static type checking. 
-	 *  For set/list use the inner element type.
-	 *  For map use the value type.
-	 */
-	protected void	addBeliefType(BDIModel model, String capaprefix, Field f)
-	{
-		Class<?>	clazz	= f.getType();
-		java.lang.reflect.Type		gtype	= f.getGenericType();
-		
-		if(SReflect.isSupertype(Dyn.class, clazz)
-			||SReflect.isSupertype(Val.class, clazz))
-		{
-			if(gtype instanceof ParameterizedType)
-			{
-				ParameterizedType	generic	= (ParameterizedType)gtype;
-				gtype	= generic.getActualTypeArguments()[0];
-				clazz	= getRawClass(gtype);
-			}
-			else
-			{
-				throw new RuntimeException("Belief does not define generic value type: "+f);
-			}
-		}
-		
-		if(SReflect.isSupertype(Collection.class, clazz))
-		{
-			if(gtype instanceof ParameterizedType)
-			{
-				ParameterizedType	generic	= (ParameterizedType)gtype;
-				clazz	= getRawClass(generic.getActualTypeArguments()[0]);
-			}
-			else
-			{
-				throw new RuntimeException("Belief does not define generic value type: "+f);
-			}
-		}
-		else if(SReflect.isSupertype(Map.class, clazz))
-		{
-			if(gtype instanceof ParameterizedType)
-			{
-				ParameterizedType	generic	= (ParameterizedType)gtype;
-				clazz	= getRawClass(generic.getActualTypeArguments()[1]);
-			}
-			else
-			{
-				throw new RuntimeException("Belief does not define generic value type: "+f);
-			}
-		}
-		
-		String	name	= capaprefix+f.getName();
-		model.addBelief(name, clazz, f);
-	}
-	
-	protected static Class<?> getRawClass(java.lang.reflect.Type type)
-	{
-		if(type instanceof Class<?>)
-		{
-			return (Class<?>)type;
-		}
-		else if(type instanceof ParameterizedType)
-		{
-			return (Class<?>)((ParameterizedType)type).getRawType();
-		}
-		else
-		{
-			throw new RuntimeException("Cannot get raw class of type: "+type);
-		}
-	}
-	
-	/**
 	 *  Get the type of a dynamic value field.
 	 *  For set/list return the inner element type.
 	 *  For map return the value type.
 	 */
-	protected static Class<?>	getValueType(List<Class<?>> pojoclazzes, String dep, String element)
+	protected static Class<?>	getValueType(InjectionModel imodel, String dep, String element)
 	{
-		InjectionModel	model	= InjectionModel.getStatic(pojoclazzes.subList(0, 1), null, null);
-		MDynVal	mdynval	= model.getDynamicValue(dep);
+		MDynVal	mdynval	= imodel.getRootModel().getDynamicValue(dep);
 		if(mdynval==null)
 		{
 			throw new RuntimeException("Triggering value '"+dep+"' not found for: "+element+" (maybe missing annotation?)");

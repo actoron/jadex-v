@@ -21,6 +21,7 @@ import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
@@ -207,42 +208,30 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 //		String fname = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
 		
-		if(model.getBeliefType(name)==null)
+		InjectionFeature	feat	= ((InjectionFeature)self.getFeature(IInjectionFeature.class));
+		if(feat.getModel().getDynamicValue(name)==null)
 		{
 			throw new IllegalArgumentException("No such belief: "+name);
 		}
 		
-		List<EventType> events = new ArrayList<EventType>();
-		events.add(new EventType(new String[]{ChangeEvent.FACTCHANGED, name}));
-		events.add(new EventType(new String[]{ChangeEvent.FACTADDED, name}));
-		events.add(new EventType(new String[]{ChangeEvent.FACTREMOVED, name}));
-
-		String rulename = name+"_belief_listener_"+System.identityHashCode(listener);
-		Rule<Void> rule = new Rule<Void>(rulename, 
-			ICondition.TRUE_CONDITION, new IAction<Void>()
+		feat.addListener(name, event ->
 		{
-			public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+			// TODO: change to change event directly 
+			@SuppressWarnings("unchecked")
+			ChangeInfo<T>	info	= new ChangeInfo<T>((T)event.value(), (T)event.oldvalue(), event.info());
+			if(event.type()==Type.ADDED)
 			{
-				@SuppressWarnings("unchecked")
-				ChangeInfo<T>	info	= (ChangeInfo<T>)event.getContent();
-				
-				if(ChangeEvent.FACTADDED.equals(event.getType().getType(0)))
-				{
-					listener.factAdded(info);
-				}
-				else if(ChangeEvent.FACTREMOVED.equals(event.getType().getType(0)))
-				{
-					listener.factRemoved(info);
-				}
-				else if(ChangeEvent.FACTCHANGED.equals(event.getType().getType(0)))
-				{
-					listener.factChanged(info);
-				}
-				return IFuture.DONE;
+				listener.factAdded(info);
+			}
+			else if(event.type()==Type.REMOVED)
+			{
+				listener.factRemoved(info);
+			}
+			else if(event.type()==Type.CHANGED)
+			{
+				listener.factChanged(info);
 			}
 		});
-		rule.setEvents(events);
-		getRuleSystem().getRulebase().addRule(rule);
 	}
 	
 	@Override
