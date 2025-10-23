@@ -17,6 +17,7 @@ import jadex.bdi.IGoal;
 import jadex.bdi.IGoal.GoalLifecycleState;
 import jadex.bdi.impl.goal.EasyDeliberationStrategy;
 import jadex.bdi.impl.goal.RGoal;
+import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
@@ -50,7 +51,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	protected RuleSystem	rulesystem;
 	
 	/** The currently running plans. */
-	protected Set<RPlan>	plans;
+	protected Map<IPlanBody, Set<RPlan>>	plans;
 	
 	/** The currently adopted goals. */
 	protected Map<Class<?>, Set<RGoal>>	goals;
@@ -101,17 +102,32 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BDIStepListener(/*rulesystem*/));
 	}
-		
+	
 	@Override
 	public void cleanup()
 	{
+		// plan abort moved to overridden BDIAgent.terminate()
+		// to call abort() before onend() for plans
+	}
+	
+	protected void	abortPlans()
+	{
 		// Abort all plans (terminates wait futures if any)
 		// TODO: generic future handler to terminate any futures on component end
-		if(plans!=null && !plans.isEmpty())
+		if(plans!=null)
 		{
-			for(RPlan plan: plans.toArray(new RPlan[plans.size()]))
+			for(Set<RPlan> planset: plans.values())
 			{
-				plan.abort();
+				if(!planset.isEmpty())
+				{
+					for(RPlan plan: planset.toArray(new RPlan[planset.size()]))
+					{
+						plan.abort();
+						// call aborted explicitly, because any wakeup code from plan.abort()
+						// is cancelled by execution feature with StepAborted
+						plan.getBody().callAborted(plan);
+					}
+				}
 			}
 		}
 	}
@@ -129,7 +145,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	@Override
 	public ITerminableFuture<Void> dispatchTopLevelGoal(Object goal)
 	{
-		final RGoal rgoal = new RGoal(goal, null, self, null);
+		final RGoal rgoal = new RGoal(goal, null, self);
 		
 		// Adopt directly (no schedule step)
 		// TODO: why step for subgoal and not for top-level!?
@@ -329,20 +345,26 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{		
 		if(plans==null)
 		{
-			plans	= new LinkedHashSet<>();
+			plans	= new LinkedHashMap<>();
 		}
-		plans.add(rplan);
+		Set<RPlan>	planset	= plans.get(rplan.getBody());
+		if(planset==null)
+		{
+			planset	= new LinkedHashSet<>();
+			plans.put(rplan.getBody(), planset);
+		}
+		planset.add(rplan);
 		
 		if(rplan.getPojo()!=null)
 		{
-			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos(), null, rplan, contextfetchers);
+			((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rplan.getAllPojos(), rplan);
 		}
 	}
 	
 	/**
 	 *  Get the plans, if any.
 	 */
-	public Set<RPlan>	getPlans()
+	public Map<IPlanBody, Set<RPlan>>	getPlans()
 	{
 		return plans;
 	}
@@ -352,7 +374,12 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	 */
 	public void removePlan(RPlan rplan)
 	{
-		plans.remove(rplan);
+		Set<RPlan>	planset	= plans.get(rplan.getBody());
+		if(planset!=null)
+		{
+			planset.remove(rplan);
+			// Do not remove set to avoid continuous recreation if a plan gets executed repeatedly.
+		}
 
 		if(rplan.getPojo()!=null)
 		{
@@ -365,7 +392,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	 *  Add a Goal.
 	 *  Called when the goal is adopted.
 	 */
-	public void addGoal(RGoal rgoal, Map<Class<? extends Annotation>,List<IValueFetcherCreator>> contextfetchers)
+	public void addGoal(RGoal rgoal)
 	{		
 		if(goals==null)
 		{
@@ -379,7 +406,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		}
 		typedgoals.add(rgoal);
 		
-		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), null, rgoal, contextfetchers);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(rgoal.getAllPojos(), rgoal);
 	}
 	
 	/**
@@ -558,7 +585,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	/**
 	 *  Add a capability.
 	 */
-	protected void	addCapability(List<Object> pojos, List<String> path)
+	protected void	addCapability(List<Object> pojos)
 	{
 		// Add to known sub-objects
 		List<Class<?>>	pojoclazzes	= new ArrayList<>();
@@ -573,7 +600,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		// TODO: support multiple instances of same capability?
 		capabilities.put(pojoclazzes, pojos);
 		
-		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, path, null, null);
+		((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null);
 	}
 	
 	public List<Object> getCapability(List<Class<?>> parentclazzes)

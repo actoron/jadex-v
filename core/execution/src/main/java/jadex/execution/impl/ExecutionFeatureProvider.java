@@ -10,7 +10,6 @@ import java.util.concurrent.Callable;
 
 import jadex.collection.WeakKeyValueMap;
 import jadex.common.IFilter;
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.transformation.traverser.FilterProcessor;
@@ -24,6 +23,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
+import jadex.core.ChangeEvent;
 import jadex.core.ResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
@@ -31,9 +31,9 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
+import jadex.core.impl.StepAborted;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
-import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -126,7 +126,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 
 					if(!FastLambda.KEEPALIVE)
 					{
-						exe.scheduleStep((Runnable)() -> fself.terminate());
+						exe.scheduleStep((Runnable)() -> fself.doTerminate());
 					}
 				}
 				catch(Exception e)
@@ -242,7 +242,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}
 	
 	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
 	{
 		IResultProvider	rp;
 		synchronized(results)
@@ -257,7 +257,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		return rp.subscribeToResults();
 	}
 
-	public static void	addResult(ComponentIdentifier id, String name, Object value)
+	public static void	setResult(ComponentIdentifier id, String name, Object value)
 	{
 		IResultProvider	rp;
 		synchronized(results)
@@ -269,7 +269,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				results.put(id, rp);
 			}
 		}
-		rp.addResult(name, value);
+		rp.setResult(name, value);
 	}
 
 	public static void addResultHandler(ComponentIdentifier id, IResultProvider provider)

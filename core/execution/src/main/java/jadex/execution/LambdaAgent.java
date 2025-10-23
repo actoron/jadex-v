@@ -85,7 +85,7 @@ public class LambdaAgent //extends Component
 			{
 				addResultHandler(comp);
 				Object	result	= body.call();
-				addResult(comp, result);
+				setResult(comp, result);
 			});
 		});
 		return ret;
@@ -103,7 +103,7 @@ public class LambdaAgent //extends Component
 			{
 				addResultHandler(comp);
 				Object	result	= body.apply(comp);
-				addResult(comp, result);
+				setResult(comp, result);
 			});
 		});
 		return ret;
@@ -187,10 +187,10 @@ public class LambdaAgent //extends Component
 		}
 	}
 	
-	private static <T> void addResult(IComponent comp, Object result)	
+	private static <T> void setResult(IComponent comp, Object result)	
 	{
 		Object	pojo	= comp.getPojo();
-		ExecutionFeatureProvider.addResult(comp.getId(), "result",
+		ExecutionFeatureProvider.setResult(comp.getId(), "result",
 			ExecutionFeatureProvider.copyVal(result, ExecutionFeatureProvider.getAnnos(pojo.getClass())));
 	}
 }

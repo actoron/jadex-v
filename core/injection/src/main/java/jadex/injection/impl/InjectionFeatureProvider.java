@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.core.Application;
+import jadex.core.ChangeEvent;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
@@ -20,8 +20,10 @@ import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
+import jadex.injection.annotation.DynamicValue;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.InjectException;
+import jadex.injection.annotation.ProvideResult;
 
 /**
  *  Injection feature provider.
@@ -60,7 +62,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	}
 	
 	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent component)
 	{
 		return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).subscribeToResults();
 	}
@@ -111,7 +113,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 		}) : null, Inject.class);
 		
 		// Add exception handler for @Inject methods with exception parameter
-		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers, anno) -> 
+		InjectionModel.addMethodInjection((model, method, anno) -> 
 		{
 			List<IInjectionHandle>	preparams	= new ArrayList<>();
 			Class<? extends Exception> type	= null;
@@ -138,7 +140,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			{
 				boolean exactmatch	= anno instanceof InjectException && ((InjectException)anno).exactmatch();
 				Class<? extends Exception> ftype	= type;
-				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, pojotypes, contextfetchers, preparams);
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, model.getPojoClazzes(), model.getContextFetchers(), preparams);
 				return (comp, pojos, context, oldvale) ->
 				{
 					IErrorHandlingFeature	errh	= IComponentManager.get().getFeature(IErrorHandlingFeature.class);
@@ -149,6 +151,20 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			}
 			return null;
 		}, Inject.class, InjectException.class);
+		
+		// Init dynamic values on component start.
+		InjectionModel.addExtraCode(model ->
+		{
+			model.addDynamicValues(DynamicValue.class, true);
+			model.addDynamicValues(ProvideResult.class, false);
+			
+			// Add handler for dynamic values marked with @ProvideResult.
+			if(model==model.getRootModel())
+			{
+				model.addChangeHandler(ProvideResult.class, (comp, event)
+					-> ((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(event));
+			}
+		});
 	}
 
 	/**
@@ -157,7 +173,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	 */
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
-		// Make sure feature is last in liost, because it starts user code that might not return.
+		// Make sure feature is last in list, because it starts user code that might not return.
 		all.remove(getFeatureType());
 		return all;
 	}

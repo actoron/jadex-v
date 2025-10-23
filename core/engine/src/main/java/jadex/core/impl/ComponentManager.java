@@ -844,12 +844,12 @@ public class ComponentManager implements IComponentManager
 				MethodHandle	getlocal	= MethodHandles.lookup().unreflectGetter(flocal);
 				LOCAL	= (ThreadLocal<Object>)getlocal.invoke();
 				GET_COMPONENT	= MethodHandles.lookup().unreflect(cexe.getMethod("getComponent"));
-				HANDLES_INITED	= true;
 			}
 			catch(Throwable e)
 			{
 				// If no exe feature in classpath -> fail and never try again.
 			}
+			HANDLES_INITED	= true;
 		}
 		
 		if(LOCAL!=null)

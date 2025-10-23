@@ -1,4 +1,4 @@
-package jadex.collection;
+package jadex.injection.impl;
 
 import java.beans.PropertyChangeListener;
 import java.lang.invoke.MethodHandle;
@@ -8,40 +8,45 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import jadex.common.SUtil;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
+import jadex.core.IComponent;
+import jadex.injection.IInjectionFeature;
 
 /**
- *  Helper class for observable values for property change listener management.
+ *  Helper class for dynamic values for property change listener management.
  */
 public class SPropertyChange
 {
 	/**
 	 *  Add/remove the property change listener.
-	 *  @param old	The old value, if any.
-	 *  @param value	The new value, if any.
+	 *  @param newbean	The new value, if any. The listener is added to it, if value is bean.
+	 *  @param oldbean	The old value, if any. The listener is removed from it, if value is bean.
 	 *  @param listener	The (cached) property change listener to add/remove.
-	 *  @param context	The context for the publisher, e.g. the component.
-	 *  @param publisher	The publisher (if any) gets called with entryChanged(): null -> new value.
-	 *  @param source The source object for the event (if null, the value is used). No property name is given when source!=null.
+	 *  @param comp	The component.
+	 *  @param name	The fully qualified name of the dynamic value.
+	 *  @param source	The source object for the event (if null, the bean is used). No property name is given when source!=null.
+	 *  				This enables also observing beans in collections/maps.
 	 *  @return	The (new) property change listener to be cached for subsequent calls.
 	 */
-	public static <T> PropertyChangeListener	updateListener(T old, T value, PropertyChangeListener listener, Object context, IEventPublisher publisher, Object source)
+	public static <T> PropertyChangeListener	updateListener(T newbean, T oldbean, PropertyChangeListener listener, IComponent comp, String name, Object source)
 	{
 		// Remove  bean listener from old value, if any.
-		if(old!=null && listener!=null)
+		if(oldbean!=null && listener!=null)
 		{
 			try
 			{
-				MethodHandle	remover	= getRemover(old.getClass());
+				MethodHandle	remover	= getRemover(oldbean.getClass());
 				if(remover!=null)
 				{
-					remover.invoke(old, listener);
+					remover.invoke(oldbean, listener);
 				}
 				
 				// Listener added, but no remove method found.
-				else if(getAdder(old.getClass())!=null)
+				else if(getAdder(oldbean.getClass())!=null)
 				{
 					System.getLogger(SPropertyChange.class.getName())
-						.log(System.Logger.Level.WARNING, "No removePropertyChangeListener() in: " + old.getClass().getName()+". May lead to outdated events being processed.");
+						.log(System.Logger.Level.WARNING, "No removePropertyChangeListener() in: " + oldbean.getClass().getName()+". May lead to outdated events being processed.");
 				}
 			}
 			catch(Throwable e)
@@ -52,22 +57,26 @@ public class SPropertyChange
 		}
 		
 		// Add bean listener to new value
-		if(value!=null && publisher!=null)
+		if(newbean!=null)
 		{
 			try
 			{
-				MethodHandle	adder	= SPropertyChange.getAdder(value.getClass());
+				MethodHandle	adder	= SPropertyChange.getAdder(newbean.getClass());
 				if(adder!=null)
 				{
 					if(listener==null)
 					{
 						listener	= event ->
 						{
-							// Use event source to get new value even if listener is reused.
-							publisher.entryChanged(context, null, source!=null ? source : event.getSource(), source!=null ? null : event.getPropertyName());
+							// When observing collection/map, use source as changed value. 
+							Object	newvalue	= source!=null ? source : event.getSource();
+							Object info	= source!=null ? null : event.getPropertyName();
+							
+							((InjectionFeature)comp.getFeature(IInjectionFeature.class))
+								.valueChanged(new ChangeEvent(Type.CHANGED, name, newvalue, null, info));
 						};
 					}
-					adder.invoke(value, listener);
+					adder.invoke(newbean, listener);
 				}
 			}
 			catch(Throwable e)

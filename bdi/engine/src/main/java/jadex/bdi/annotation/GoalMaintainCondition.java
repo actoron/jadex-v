@@ -12,10 +12,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GoalMaintainCondition
 {
-	/**
-	 *  The events this condition should react to.
-	 */
-	public String[] beliefs() default {};
+//	/**
+//	 *  The events this condition should react to.
+//	 */
+//	public String[] beliefs() default {};
 //	
 //	/**
 //	 *  The parameters this condition should react to.

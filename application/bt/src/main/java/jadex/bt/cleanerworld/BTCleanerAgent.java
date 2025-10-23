@@ -11,7 +11,6 @@ import java.util.Set;
 import javax.swing.SwingUtilities;
 
 import jadex.bt.IBTProvider;
-import jadex.bt.Val;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.cleanerworld.environment.Chargingstation;
 import jadex.bt.cleanerworld.environment.Cleaner;
@@ -47,6 +46,8 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
@@ -80,7 +81,7 @@ public class BTCleanerAgent implements IBTProvider
 	protected Val<Cleaner> self = null;
 		
 	/** Day or night?. Use updaterate to re-check every second. */
-	protected Val<Boolean> daytime = new Val<Boolean>(() -> getEnvironment().isDaytime().get(), 1000);
+	protected Dyn<Boolean> daytime = new Dyn<Boolean>(() -> getEnvironment().isDaytime().get()).setUpdateRate(1000);
 	
 	//protected Val<Double> chargestate = new Val<Double>(() -> ((Cleaner)getEnvironment().getSpaceObject(getSelf().getId()).get()).getChargestate(), 1000);
 	

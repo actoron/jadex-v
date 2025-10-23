@@ -5,31 +5,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.common.NameValue;
+import jadex.core.ChangeEvent.Type;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 
 public interface IResultProvider 
 {
 	public abstract Map<String, Object> getResultMap();
-	public abstract List<SubscriptionIntermediateFuture<NameValue>> getResultSubscribers();
+	public abstract List<SubscriptionIntermediateFuture<ChangeEvent>> getResultSubscribers();
 	
-	public default void	addResult(String name, Object value)
+	public default void	setResult(String name, Object value)
 	{
+		Object	old;
 		synchronized(this)
 		{
-			getResultMap().put(name, value);
+			old	= getResultMap().put(name, value);
 		}
-		notifyResult(name, value);
+		notifyResult(new ChangeEvent(Type.CHANGED, name, value, old, null));
 	}
 	
-	public default void notifyResult(String name, Object value)
+	public default void notifyResult(ChangeEvent event)
 	{
-		List<SubscriptionIntermediateFuture<NameValue>> subs = null;
+		List<SubscriptionIntermediateFuture<ChangeEvent>> subs = null;
 		synchronized(this)
 		{
 			if(getResultSubscribers()!=null)
-				subs = new ArrayList<SubscriptionIntermediateFuture<NameValue>>(getResultSubscribers());
+				subs = new ArrayList<SubscriptionIntermediateFuture<ChangeEvent>>(getResultSubscribers());
 		}
 		if(subs!=null)
 		{
@@ -37,14 +38,14 @@ public interface IResultProvider
 			{
 				//System.out.println("sub: "+name+" "+value);
 				//if(checkNotify(name, value))
-				sub.addIntermediateResult(new NameValue(name, value));
+				sub.addIntermediateResult(event);
 			});
 		}
 	}
 	
-	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+	public default ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults()
 	{
-		SubscriptionIntermediateFuture<NameValue> ret;
+		SubscriptionIntermediateFuture<ChangeEvent> ret;
 		Map<String, Object> res = null;
 		
 		synchronized(this)
@@ -68,7 +69,7 @@ public interface IResultProvider
 			res.entrySet().stream().forEach(e -> 
 			{
 				if(checkInitialNotify(e.getKey(), e.getValue()))
-					ret.addIntermediateResult(new NameValue(e.getKey(), e.getValue()));
+					ret.addIntermediateResult(new ChangeEvent(Type.INITIAL,	e.getKey(), e.getValue(), null, null));
 			});
 		}
 		

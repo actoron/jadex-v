@@ -427,7 +427,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 		{
 			if(isres)
 			{
-				getComponent().getPojo().addResult(name, value);
+				getComponent().getPojo().setResult(name, value);
 			}
 			else
 			{
@@ -473,7 +473,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 			{
 				// Trigger event notification
 				//getComponent().getFeature(IArgumentsResultsFeature.class).getResults().put(name, coll);
-				getComponent().getPojo().addResult(name, coll);
+				getComponent().getPojo().setResult(name, coll);
 			}
 //				else
 //				{

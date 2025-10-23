@@ -1,4 +1,4 @@
-package jadex.bdi.plan;
+package jadex.bdi.goal;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

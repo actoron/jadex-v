@@ -4,7 +4,6 @@ import java.lang.System.Logger.Level;
 
 import jadex.bt.IBTProvider;
 import jadex.bt.NodeListener;
-import jadex.bt.Val;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.TriggerDecorator;
@@ -17,6 +16,7 @@ import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.TerminableFuture;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.logger.ILoggingFeature;
@@ -40,8 +40,22 @@ public class UniversityAgent implements IBTProvider
 	
 	public UniversityAgent(boolean raining, boolean waiting)
 	{
+//		this.raining.set(raining);
+//		this.waiting.set(waiting);
+		this.raining	= new Val<>(raining);
+		this.waiting	= new Val<>(waiting);
+	}
+	
+	public UniversityAgent setRaining(boolean raining)
+	{
 		this.raining.set(raining);
+		return this;
+	}
+	
+	public UniversityAgent setWaiting(boolean waiting)
+	{
 		this.waiting.set(waiting);
+		return this;
 	}
 	
 	public Node<IComponent> createBehaviorTree()
@@ -146,7 +160,7 @@ public class UniversityAgent implements IBTProvider
 		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(Level.INFO);
 
 		// raining, waiting
-		IComponentManager.get().create(new UniversityAgent(false, false));
+		IComponentManager.get().create(new UniversityAgent().setRaining(false).setWaiting(true));
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

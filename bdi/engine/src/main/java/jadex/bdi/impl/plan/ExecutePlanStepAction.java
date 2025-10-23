@@ -104,6 +104,11 @@ public class ExecutePlanStepAction implements Runnable
 //				System.out.println("execute: "+rplan.getComponent().getPojo()+"; "+this);
 				
 				rplan.getBody().executePlan(rplan);
+				
+				if(rplan.isTerminate())
+				{
+					rplan.getComponent().terminate();
+				}
 //				if(ret!=null)
 //				{
 //					ret.addResultListener(new IResultListener<Object>()

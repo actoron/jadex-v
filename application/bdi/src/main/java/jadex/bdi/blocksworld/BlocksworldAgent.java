@@ -9,6 +9,7 @@ import javax.swing.SwingUtilities;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
@@ -62,7 +63,7 @@ public class BlocksworldAgent
 	public class ClearGoal
 	{
 		/** The block. */
-//		@GoalParameter//TODO
+		@GoalParameter
 		protected Block block;
 
 		/**
@@ -77,7 +78,7 @@ public class BlocksworldAgent
 		 * 
 		 * @return True, if clear.
 		 */
-		@GoalTargetCondition(beliefs="blocks")	// HACK!!! should be @GoalParameter
+		@GoalTargetCondition
 		public boolean checkClear()
 		{
 //			System.out.println("clear target condition for: "+block+" "+block.isClear());
@@ -107,6 +108,7 @@ public class BlocksworldAgent
 	public class StackGoal
 	{
 		/** The block. */
+		@GoalParameter
 		protected Block block;
 		
 		/** The target. */
@@ -121,7 +123,7 @@ public class BlocksworldAgent
 			this.target = target;
 		}
 
-		@GoalTargetCondition(beliefs="blocks")// HACK!!! should be @GoalParameter
+		@GoalTargetCondition
 		public boolean checkOn()
 		{
 //			System.out.println("stack target condition for: "+block+" "+target+" "+block.getLower().equals(target));
@@ -151,6 +153,7 @@ public class BlocksworldAgent
 	public class ConfigureGoal
 	{
 		/** The block. */
+		@GoalParameter
 		protected Table configuration;
 		
 		/** The target. */
@@ -165,7 +168,7 @@ public class BlocksworldAgent
 			this.blocks = blocks;
 		}
 
-		@GoalTargetCondition(beliefs="blocks")// HACK!!! should be @GoalParameter
+		@GoalTargetCondition
 		public boolean checkConfiguration()
 		{
 //			System.out.println("check configure goal: "+table.configurationEquals(configuration));

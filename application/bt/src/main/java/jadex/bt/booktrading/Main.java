@@ -33,5 +33,7 @@ public class Main
 				new Order("Harry Potter", 60000, 15, 9, false),
 				new Order("Agents in the real world", 60000, 100, 60, false)
 			}));
+		
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

@@ -5,6 +5,9 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -24,6 +27,7 @@ import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
+import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.collection.CollectionWrapper;
 import jadex.collection.MapWrapper;
@@ -140,8 +144,16 @@ public class BDIViewer extends JFrame
        	
        	refreshPlansTable(planModel, agent.scheduleStep((IThrowingFunction<IComponent, RPlan[]>)a -> 
        	{
-       		Set<RPlan>	plans	= ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getPlans();
-       		return plans!=null ? plans.toArray(new RPlan[0]) : new RPlan[0];
+       		List<RPlan>	allplans	= new ArrayList<>();
+       		Map<IPlanBody, Set<RPlan>>	plans	= ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getPlans();
+       		if(plans!=null)
+       		{
+       			for(Set<RPlan> planset: plans.values())
+       			{
+       				allplans.addAll(planset);
+       			}
+       		}
+       		return allplans.toArray(new RPlan[allplans.size()]);
        	}).get());
        	
        	refreshBeliefsTable(beliefModel, agent.scheduleStep((IThrowingFunction<IComponent, String[]>)a -> 

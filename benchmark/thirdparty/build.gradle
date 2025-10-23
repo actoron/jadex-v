@@ -18,9 +18,11 @@ java
 repositories
 {
     mavenCentral()
-    maven {
-        url "https://repo.akka.io/maven"
-    }
+    
+    // No longer working out of the box :-(
+//    maven {
+//        url "https://repo.akka.io/maven"
+//    }
 }
 
 dependencies
@@ -38,9 +40,9 @@ dependencies
     implementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
     
     // Akka
-	implementation 'com.typesafe.akka:akka-actor-typed_2.13:2.9.3'
-	implementation 'ch.qos.logback:logback-classic:1.2.13'
-	//testImplementation 'com.typesafe.akka:akka-actor-testkit-typed_2.13:2.9.3'
+	//implementation 'com.typesafe.akka:akka-actor-typed_2.13:2.9.3'
+	//implementation 'ch.qos.logback:logback-classic:1.2.13'
+	////testImplementation 'com.typesafe.akka:akka-actor-testkit-typed_2.13:2.9.3'
 	
 	// JADE
 	//implementation 'com.tilab.jade:jade:4.5.0'
@@ -52,6 +54,14 @@ dependencies
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 	// required for gradle 9!? https://docs.gradle.org/8.7/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+    test {
+        java {
+            exclude '**/akka/*'
+        }
+    }
 }
 
 test {

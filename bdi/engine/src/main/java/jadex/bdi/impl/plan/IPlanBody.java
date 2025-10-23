@@ -33,5 +33,13 @@ public interface IPlanBody
 	public default boolean	checkContextCondition(RPlan rplan)
 	{
 		return true;
-	}	
+	}
+	
+	/**
+	 *  Call @PlanAborted code, if any.
+	 *  Used in BDIAgent.terminate() to ensure aborted code being called before @OnEnd.
+	 */
+	public default void	callAborted(RPlan rplan)
+	{
+	}
 }

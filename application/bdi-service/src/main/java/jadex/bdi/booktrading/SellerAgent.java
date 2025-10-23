@@ -19,6 +19,7 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
 import jadex.bdi.annotation.GoalDropCondition;
+import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
@@ -99,7 +100,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 	@Goal(recur=true, recurdelay=10000/*, unique=true*/)
 	public class SellBook implements INegotiationGoal
 	{
-//		@GoalParameter
+		@GoalParameter
 		protected Order order;
 
 		/**
@@ -120,13 +121,13 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent
 			return order;
 		}
 		
-		@GoalDropCondition(/*parameters="order"*/beliefs="orders")
+		@GoalDropCondition
 		public boolean checkDrop()
 		{
 			return order.getState().equals(Order.FAILED);
 		}
 		
-		@GoalTargetCondition(/*parameters="order"*/beliefs="orders")
+		@GoalTargetCondition
 		public boolean checkTarget()
 		{
 			return Order.DONE.equals(order.getState());

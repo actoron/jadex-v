@@ -1,19 +1,17 @@
 package jadex.injection;
 
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import jadex.collection.CollectionWrapper;
-import jadex.collection.IEventPublisher;
-import jadex.collection.ListWrapper;
-import jadex.collection.MapWrapper;
-import jadex.collection.SPropertyChange;
-import jadex.collection.SetWrapper;
 import jadex.common.SUtil;
+import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
+import jadex.injection.impl.InjectionFeature;
+import jadex.injection.impl.ListWrapper;
+import jadex.injection.impl.MapWrapper;
+import jadex.injection.impl.SPropertyChange;
+import jadex.injection.impl.SetWrapper;
 
 /**
  *  Common base class for observable values.
@@ -41,7 +39,15 @@ public class AbstractDynVal<T>
 		 *  When the stored object is a bean, publish property change events.
 		 *  Also publishes add/remove/change events when the stored object is a collection/map.
 		 *  When a collection/map contains beans as values, property changes are published as generic change of the whole value. */
-		ON_ALL_CHANGES,
+		ON_ALL_CHANGES;
+		
+		/**
+		 * Check if a single bean value should be observed.
+		 */
+		boolean	isObserveBean()
+		{
+			return this==ON_BEAN_CHANGE || this==ON_ALL_CHANGES;
+		}
 	}
 	
 	
@@ -50,14 +56,6 @@ public class AbstractDynVal<T>
 	/** The last value. */
 	T	value;
 	
-	//-------- fields only set on init --------
-	
-	/** The component. */
-	IComponent	comp;
-	
-	/** The change handler gets called after any change with old and new value. */
-	IEventPublisher	changehandler;
-	
 	/** Observe changes of inner values (e.g. collections or beans). */
 	ObservationMode	mode	= ObservationMode.ON_ALL_CHANGES;
 	
@@ -65,14 +63,22 @@ public class AbstractDynVal<T>
 	 *  Created on first use. */
 	PropertyChangeListener	listener;
 	
+	//-------- fields set on init --------
+	
+	/** The component. */
+	IComponent	comp;
+	
+	/** The fully qualified name of the value. */
+	String	name;
+	
 	
 	/**
 	 *  Called on component init.
 	 */
-	void	init(IComponent comp, IEventPublisher changehandler)
+	void	init(IComponent comp, String name)
 	{
 		this.comp	= comp;
-		this.changehandler	= changehandler;
+		this.name	= name;
 	}
 	
 	/**
@@ -94,7 +100,7 @@ public class AbstractDynVal<T>
 		T	old	= this.value;
 		this.value	= value;
 		
-		if(changehandler!=null)
+		if(comp!=null)
 		{
 			if(old!=value)
 			{
@@ -103,7 +109,8 @@ public class AbstractDynVal<T>
 			
 			if(mode!=ObservationMode.OFF && !SUtil.equals(old, value))
 			{
-				changehandler.entryChanged(comp, old, value, null);
+				((InjectionFeature)comp.getFeature(IInjectionFeature.class))
+					.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, name, value, old, null));
 			}
 		}
 	}
@@ -116,55 +123,41 @@ public class AbstractDynVal<T>
 	{
 		if(this.mode!=mode)
 		{
-			if(value!=null && changehandler!=null)
+			if(value!=null && comp!=null)
 			{
-				// Handle NOP cases for speed
-				if(value instanceof Collection || value instanceof Map)
+				if(value instanceof ListWrapper<?>)
 				{
-					// Not currently observing collection and not switching to observing
-					if((this.mode==ObservationMode.OFF || this.mode==ObservationMode.ON_SET_VALUE || this.mode==ObservationMode.ON_BEAN_CHANGE)
-						&& (mode==ObservationMode.OFF || mode==ObservationMode.ON_SET_VALUE || mode==ObservationMode.ON_BEAN_CHANGE))
-					{
-						this.mode	= mode;
-						return this;
-					}
-					
-					// Changes between ON_COLLECTION_CHANGE and ON_ALL_CHANGES need to be handled below
-					// to add/remove listeners for beans contained in the collection/map.
+					((ListWrapper<?>)value).setObservationMode(mode);
+				}
+				else if(value instanceof SetWrapper<?>)
+				{
+					((SetWrapper<?>)value).setObservationMode(mode);
+				}
+				else if(value instanceof MapWrapper<?,?>)
+				{
+					((MapWrapper<?,?>)value).setObservationMode(mode);
 				}
 				else
 				{
-					// Not currently observing bean and not switching to observing
-					if((this.mode==ObservationMode.OFF || this.mode==ObservationMode.ON_SET_VALUE || this.mode==ObservationMode.ON_COLLECTION_CHANGE)
-						&& (mode==ObservationMode.OFF || mode==ObservationMode.ON_SET_VALUE || mode==ObservationMode.ON_COLLECTION_CHANGE))
+					// Change from non-observing to observing.
+					if(!this.mode.isObserveBean() && mode.isObserveBean())
 					{
-						this.mode	= mode;
-						return this;
+						// Register listener, if entry is bean.
+						listener	= SPropertyChange.updateListener(value, null, listener, comp, name, null);
 					}
-					// Currently observing and switching to observing
-					else if((this.mode==ObservationMode.ON_BEAN_CHANGE || this.mode==ObservationMode.ON_ALL_CHANGES)
-						&& (mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES))
+					
+					// Change from observing to non-observing.
+					else if(this.mode.isObserveBean() && !mode.isObserveBean())
 					{
-						this.mode	= mode;
-						return this;
+						// Unregister listener, if entry is bean.
+						listener	= SPropertyChange.updateListener(null, value, listener, comp, name, null);
 					}
 				}
-				
-				// Remove old listeners if any.
-				observeNewValue(value, null);
-				
-				// Set new mode after removing old listener but before adding new listener
-				// for proper functioning of observeNewValue().
-				this.mode	= mode;
-				
-				// Add new listener if any.
-				observeNewValue(null, value);
 			}
-			else
-			{
-				this.mode	= mode;
-			}
+
+			this.mode	= mode;
 		}
+		
 		return this;
 	}
 
@@ -174,77 +167,77 @@ public class AbstractDynVal<T>
 	 */
 	void observeNewValue(T old, T value) 
 	{
-		// Stop observing old collection
-		if(old instanceof CollectionWrapper<?>)
+		// Stop observing old list
+		if(old instanceof ListWrapper<?>)
 		{
-			((CollectionWrapper<?>)old).setEventPublisher(null, false);
+			((ListWrapper<?>)old).setObservationMode(ObservationMode.OFF);
 		}
+		
+		// Stop observing old SET
+		else if(old instanceof SetWrapper<?>)
+		{
+			((SetWrapper<?>)old).setObservationMode(ObservationMode.OFF);
+		}
+		
 		// Stop observing old map
 		else if(old instanceof MapWrapper<?,?>)
 		{
-			((MapWrapper<?,?>)old).setEventPublisher(null, false);
+			((MapWrapper<?,?>)old).setObservationMode(ObservationMode.OFF);
 		}
+		
 		// Stop observing old bean, if any
 		else
 		{
-			listener	= SPropertyChange.updateListener(old, null, listener, comp, changehandler, null);
+			listener	= SPropertyChange.updateListener(null, old, listener, comp, name, null);
 		}
 		
+		
 		// Start observing new list
-		if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof List<?>)
+		if(value instanceof ListWrapper<?>)
 		{
-			if(value instanceof ListWrapper<?>)
-			{
-				// Already wrapped, just update the event publisher.
-				((ListWrapper<?>)value).setEventPublisher(changehandler, mode==ObservationMode.ON_ALL_CHANGES);
-			}
-			else
-			{
-				// Wrap the list.
-				@SuppressWarnings({ "unchecked", "rawtypes" })
-				T t	= (T)(new ListWrapper((List<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
-				value	= t;
-				this.value	= value;
-			}
+			throw new IllegalStateException("Value is already wrapped: "+value);
 		}
+		else if(value instanceof List<?>)
+		{
+			// Wrap the list.
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			T t	= (T)(new ListWrapper(comp, name, mode, (List<?>)value));
+			value	= t;
+			this.value	= value;
+		}
+		
 		// Start observing new set
-		else if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof Set<?>)
+		else if(value instanceof SetWrapper<?>)
 		{
-			if(value instanceof SetWrapper<?>)
-			{
-				// Already wrapped, just update the event publisher.
-				((SetWrapper<?>)value).setEventPublisher(changehandler, mode==ObservationMode.ON_ALL_CHANGES);
-			}
-			else
-			{
-				// Wrap the set.
-				@SuppressWarnings({ "unchecked", "rawtypes" })
-				T t	= (T)(new SetWrapper((Set<?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
-				value	= t;
-				this.value	= value;
-			}
+			throw new IllegalStateException("Value is already wrapped: "+value);
 		}
+		else if(value instanceof List<?>)
+		{
+			// Wrap the list.
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			T t	= (T)(new ListWrapper(comp, name, mode, (List<?>)value));
+			value	= t;
+			this.value	= value;
+		}
+		
 		// Start observing new map
-		else if((mode==ObservationMode.ON_COLLECTION_CHANGE || mode==ObservationMode.ON_ALL_CHANGES) && value instanceof java.util.Map<?,?>)
+		else if(value instanceof MapWrapper<?, ?>)
 		{
-			if(value instanceof MapWrapper<?,?>)
-			{
-				// Already wrapped, just update the event publisher.
-				((MapWrapper<?,?>)value).setEventPublisher(changehandler, mode==ObservationMode.ON_ALL_CHANGES);
-			}
-			else
-			{
-				// Wrap the map.
-				@SuppressWarnings({ "unchecked", "rawtypes" })
-				T t	= (T)(new MapWrapper((Map<?,?>)value, changehandler, comp, mode==ObservationMode.ON_ALL_CHANGES));
-				value	= t;
-				this.value	= value;
-			}
+			throw new IllegalStateException("Value is already wrapped: "+value);
 		}
+		else if(value instanceof Map<?, ?>)
+		{
+			// Wrap the list.
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			T t	= (T)(new MapWrapper(comp, name, mode, (Map<?, ?>)value));
+			value	= t;
+			this.value	= value;
+		}
+		
 		// Start observing new bean, if any
 		else if(mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES)
 		{
-			listener	= SPropertyChange.updateListener(null, value, listener, comp, changehandler, null);
+			listener	= SPropertyChange.updateListener(value, null, listener, comp, name, null);
 		}
 	}
 	

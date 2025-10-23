@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import jadex.common.NameValue;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 
@@ -119,5 +118,5 @@ public interface IComponentHandle
 	 *  Listen to results of the component.
 	 *  @throws UnsupportedOperationException when subscription is not supported
 	 */
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults();
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults();
 }
