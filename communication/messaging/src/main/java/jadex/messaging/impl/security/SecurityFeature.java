@@ -33,9 +33,11 @@ import jadex.common.Tuple2;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.execution.IExecutionFeature;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.IResultListener;
 import jadex.messaging.IIpcFeature;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
@@ -1489,6 +1491,46 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 		ISerializationServices.get().encode(baos, ComponentManager.get().getClassLoader(), message);
 		ipc.sendMessage(secid, baos.toByteArray());
 	}
+
+	/**
+	 *  Request reencryption by source.
+	 *  
+	 *  @param source Source of the content.
+	 *  @param content The encrypted content.
+	 *  @return Reply of decryption request, may be exception.
+	 */
+	/*protected IFuture<byte[]> requestReencryption(String platformname, byte[] content)
+	{
+		//if(debug)
+			//System.out.println("reencryption: "+platformname+" "+Arrays.hashCode(content) + " " + currentcryptosuites.get(platformname));
+		expireCryptosuite(platformname);
+		
+		ReencryptionRequest req = new ReencryptionRequest();
+		req.setContent(content);
+		
+		Future<byte[]> ret = new Future<>();
+		ComponentIdentifier source = new ComponentIdentifier("security@" + platformname);
+		agent.getFeature(IMessageFeature.class).sendMessageAndWait(source, req)
+			.addResultListener(agent.getFeature(IExecutionFeature.class).createResultListener(new IResultListener<Object>()
+		{
+			public void resultAvailable(Object result)
+			{
+				if (result instanceof byte[])
+					ret.setResult((byte[]) result);
+				else if (result instanceof Exception)
+					exceptionOccurred((Exception) result);
+				else
+					ret.setException(new IllegalArgumentException("Received unknown reply: " + result));
+			}
+			
+			public void exceptionOccurred(Exception exception)
+			{
+				ret.setException(exception);
+			}
+		}));
+		
+		return ret;
+	}*/
 	
 	//-------- Message Handling -------
 	
