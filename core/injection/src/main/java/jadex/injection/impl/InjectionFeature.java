@@ -182,6 +182,29 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		set.add(listener);
 	}
 	
+	@Override
+	public void removeListener(String name, IChangeListener listener)
+	{
+		if(listeners!=null)
+		{
+			Set<IChangeListener>	set	= listeners.get(name);
+			if(set!=null)
+			{
+				set.remove(listener);
+				
+				// Do some cleanup to speedup valueChanged()
+				if(set.isEmpty())
+				{
+					listeners.remove(name);
+					if(listeners.isEmpty())
+					{
+						listeners	= null;
+					}
+				}
+			}
+		}
+	}
+	
 	//-------- internal methods (to be used by other features) --------
 	
 	/**

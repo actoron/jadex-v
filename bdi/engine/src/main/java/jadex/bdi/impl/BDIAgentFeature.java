@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IBeliefListener;
 import jadex.bdi.IGoal;
 import jadex.bdi.IGoal.GoalLifecycleState;
 import jadex.bdi.impl.goal.EasyDeliberationStrategy;
@@ -21,7 +20,7 @@ import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
-import jadex.core.ChangeEvent.Type;
+import jadex.core.IChangeListener;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
@@ -31,7 +30,6 @@ import jadex.future.ITerminableFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionFeature;
-import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
 import jadex.rules.eca.ICondition;
@@ -202,44 +200,18 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		return ret;
 	}
 	
+	//-------- ICapability interface --------
 	
 	@Override
-	public <T> void addBeliefListener(String name, IBeliefListener<T> listener)
+	public <T> void addChangeListener(String name, IChangeListener listener)
 	{
-//		String fname = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
-		
-		InjectionFeature	feat	= ((InjectionFeature)self.getFeature(IInjectionFeature.class));
-		if(feat.getModel().getDynamicValue(name)==null)
-		{
-			throw new IllegalArgumentException("No such belief: "+name);
-		}
-		
-		feat.addListener(name, event ->
-		{
-			// TODO: change to change event directly 
-			@SuppressWarnings("unchecked")
-			ChangeInfo<T>	info	= new ChangeInfo<T>((T)event.value(), (T)event.oldvalue(), event.info());
-			if(event.type()==Type.ADDED)
-			{
-				listener.factAdded(info);
-			}
-			else if(event.type()==Type.REMOVED)
-			{
-				listener.factRemoved(info);
-			}
-			else if(event.type()==Type.CHANGED)
-			{
-				listener.factChanged(info);
-			}
-		});
+		self.getFeature(IInjectionFeature.class).addListener(name, listener);
 	}
 	
 	@Override
-	public <T> void removeBeliefListener(String name, IBeliefListener<T> listener)
+	public <T> void removeChangeListener(String name, IChangeListener listener)
 	{
-//		name = bdimodel.getCapability().getBeliefReferences().containsKey(name) ? bdimodel.getCapability().getBeliefReferences().get(name) : name;
-		String rulename = name+"_belief_listener_"+System.identityHashCode(listener);
-		getRuleSystem().getRulebase().removeRule(rulename);
+		self.getFeature(IInjectionFeature.class).removeListener(name, listener);
 	}
 	
 	//-------- internal methods --------

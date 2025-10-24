@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IBeliefListener;
 import jadex.bdi.ICapability;
 import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
@@ -190,15 +189,15 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						return new ICapability()
 						{
 							@Override
-							public <T> void addBeliefListener(String name, IBeliefListener<T> listener)
+							public void addChangeListener(String name, IChangeListener listener)
 							{
-								feat.addBeliefListener(prefix+name, listener);
+								feat.addChangeListener(prefix+name, listener);
 							}
 							
 							@Override
-							public <T> void removeBeliefListener(String name, IBeliefListener<T> listener)
+							public void removeChangeListener(String name, IChangeListener listener)
 							{
-								feat.removeBeliefListener(prefix+name, listener);
+								feat.removeChangeListener(prefix+name, listener);
 							}
 						};
 					};

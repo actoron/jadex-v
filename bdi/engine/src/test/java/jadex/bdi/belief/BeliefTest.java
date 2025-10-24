@@ -13,16 +13,16 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IBeliefListener;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.ChangeEvent;
 import jadex.common.Tuple2;
+import jadex.core.ChangeEvent.Type;
+import jadex.core.IChangeListener;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.ChangeEvent.Type;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
@@ -150,12 +150,15 @@ public class BeliefTest	extends AbstractDynamicValueTest
 		List<String>	facts	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("val", new IBeliefListener<Integer>()
+				.addChangeListener("val", new IChangeListener()
 			{
 				@Override
-				public void factChanged(ChangeInfo<Integer> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					facts.add(info.getOldValue()+":"+info.getValue());
+					if(event.type()==Type.CHANGED)
+					{
+						facts.add(event.oldvalue()+":"+event.value());
+					}
 				}
 			});
 			
@@ -171,18 +174,19 @@ public class BeliefTest	extends AbstractDynamicValueTest
 		List<String>	changes	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("set", new IBeliefListener<String>()
+				.addChangeListener("set", new IChangeListener()
 			{
 				@Override
-				public void	factAdded(ChangeInfo<String> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					changes.add("a:"+info.getValue());
-				}
-				
-				@Override
-				public void	factRemoved(ChangeInfo<String> info)
-				{
-					changes.add("r:"+info.getValue());
+					if(event.type()==Type.ADDED)
+					{
+						changes.add("a:"+event.value());
+					}
+					else if(event.type()==Type.REMOVED)
+					{
+						changes.add("r:"+event.value());
+					}
 				}
 			});
 			
@@ -198,24 +202,23 @@ public class BeliefTest	extends AbstractDynamicValueTest
 		List<String>	mchanges	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("map", new IBeliefListener<String>()
+				.addChangeListener("map", new IChangeListener()
 			{
 				@Override
-				public void	factChanged(ChangeInfo<String> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					mchanges.add("c:"+info.getInfo()+";"+info.getValue());
-				}
-				
-				@Override
-				public void	factAdded(ChangeInfo<String> info)
-				{
-					mchanges.add("a:"+info.getInfo()+";"+info.getValue());
-				}
-					
-				@Override
-				public void	factRemoved(ChangeInfo<String> info)
-				{
-					mchanges.add("r:"+info.getInfo()+";"+info.getValue());
+					if(event.type()==Type.CHANGED)
+					{
+						mchanges.add("c:"+event.info()+";"+event.value());
+					}
+					else if(event.type()==Type.ADDED)
+					{
+						mchanges.add("a:"+event.info()+";"+event.value());
+					}
+					else if(event.type()==Type.REMOVED)
+					{
+						mchanges.add("r:"+event.info()+";"+event.value());
+					}
 				}
 			});
 			

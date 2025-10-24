@@ -19,4 +19,10 @@ public interface IInjectionFeature extends IComponentFeature
 	 *  @param name		The fully qualified name of the dynamic value.
 	 */
 	public void addListener(String name, IChangeListener listener);
+	
+	/**
+	 *  Remove a change listener for a dynamic value.
+	 *  @param name		The fully qualified name of the dynamic value.
+	 */
+	public void removeListener(String name, IChangeListener listener);
 }

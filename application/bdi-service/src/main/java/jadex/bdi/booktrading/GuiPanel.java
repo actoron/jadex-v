@@ -45,11 +45,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IBeliefListener;
 import jadex.common.SGUI;
+import jadex.core.ChangeEvent;
+import jadex.core.IChangeListener;
 import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
-import jadex.rules.eca.ChangeInfo;
 
 /**
  *  The gui allows to add and delete buy or sell orders and shows open and
@@ -251,44 +251,26 @@ public class GuiPanel extends JPanel
 
 		agent.scheduleStep(ia ->
 		{
-				ia.getFeature(IBDIAgentFeature.class).addBeliefListener("orders", new IBeliefListener<Object>()
+			ia.getFeature(IBDIAgentFeature.class).addChangeListener("orders", new IChangeListener()
+			{
+				@Override
+				public void valueChanged(ChangeEvent event)
 				{
-					public void factRemoved(ChangeInfo<Object> info)
-					{
-						refresh();
-					}
-					
-					public void factChanged(ChangeInfo<Object> info)
-					{
-						refresh();
-					}
-					
-					public void factAdded(ChangeInfo<Object> info)
-					{
-						refresh();
-					}
-				});
+					refresh();
+				}
+			});
 		});
 		
 		agent.scheduleStep(ia ->
 		{
-				ia.getFeature(IBDIAgentFeature.class).addBeliefListener("reports", new IBeliefListener<Object>()
+			ia.getFeature(IBDIAgentFeature.class).addChangeListener("reports", new IChangeListener()
+			{
+				@Override
+				public void valueChanged(ChangeEvent event)
 				{
-					public void factRemoved(ChangeInfo<Object> info)
-					{
-						refreshDetails();
-					}
-					
-					public void factChanged(ChangeInfo<Object> info)
-					{
-						refreshDetails();
-					}
-					
-					public void factAdded(ChangeInfo<Object> info)
-					{
-						refreshDetails();
-					}
-				});
+					refreshDetails();
+				}
+			});
 		});
 		table.addMouseListener(new MouseAdapter()
 		{
