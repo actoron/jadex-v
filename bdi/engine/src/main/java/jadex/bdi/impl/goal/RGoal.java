@@ -315,7 +315,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 				public void resultAvailable(Void result)
 				{
 					setProcessingState(GoalProcessingState.IDLE);
-					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, modelname}), RGoal.this));
+//					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, modelname}), RGoal.this));
 				}
 				
 				@Override

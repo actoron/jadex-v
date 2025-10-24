@@ -429,7 +429,9 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 			rule.setEvents(events);
 			rulesystem.getRulebase().addRule(rule);
 			
-			events = BDIAgentFeature.getGoalEvents();
+			events = new ArrayList<EventType>();
+			events.add(new EventType(new String[]{ChangeEvent.GOALACTIVE, EventType.MATCHALL}));
+			events.add(new EventType(new String[]{ChangeEvent.GOALINPROCESS, EventType.MATCHALL}));
 			rule = new Rule<Void>("goal_addinhibitor", 
 				new ICondition()
 				{
@@ -440,7 +442,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 						EventType type = event.getType();
 						RGoal goal = (RGoal)event.getContent();
 						ret = ChangeEvent.GOALACTIVE.equals(type.getType(0)) && RGoal.GoalProcessingState.INPROCESS.equals(goal.getProcessingState())
-							|| (ChangeEvent.GOALINPROCESS.equals(type.getType(0)) && RGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState()));
+							|| ChangeEvent.GOALINPROCESS.equals(type.getType(0)) && RGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState());
 //								return ret? ICondition.TRUE: ICondition.FALSE;
 						return new Future<Tuple2<Boolean,Object>>(ret? ICondition.TRUE: ICondition.FALSE);
 					}
@@ -455,29 +457,11 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 			rule.setEvents(events);
 			rulesystem.getRulebase().addRule(rule);
 			
+			events = new ArrayList<EventType>();
+			events.add(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, EventType.MATCHALL}));
 			rule = new Rule<Void>("goal_removeinhibitor", 
-				new ICondition()
-				{
-					public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
-					{
-//							if(getComponentIdentifier().getName().indexOf("Ambu")!=-1)
-//								System.out.println("remin");
-						
-						// return true when other goal is active and inprocess
-						boolean ret = false;
-						EventType type = event.getType();
-						if(event.getContent() instanceof RGoal)
-						{
-							RGoal goal = (RGoal)event.getContent();
-							ret = ChangeEvent.GOALSUSPENDED.equals(type.getType(0)) 
-								|| ChangeEvent.GOALOPTION.equals(type.getType(0))
-//									|| ChangeEvent.GOALDROPPED.equals(type.getType(0)) 
-								|| !RGoal.GoalProcessingState.INPROCESS.equals(goal.getProcessingState());
-						}
-//								return ret? ICondition.TRUE: ICondition.FALSE;
-						return new Future<Tuple2<Boolean,Object>>(ret? ICondition.TRUE: ICondition.FALSE);
-					}
-				}, new IAction<Void>()
+				ICondition.TRUE_CONDITION,
+				new IAction<Void>()
 			{
 				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
 				{
@@ -502,45 +486,6 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 			});
 		rule.addEvent(new EventType(new String[]{ChangeEvent.GOALOPTION, EventType.MATCHALL}));
 		rulesystem.getRulebase().addRule(rule);
-	}
-	
-	/**
-	 *  Create goal events for a goal name. creates
-	 *  goaladopted, goaldropped
-	 *  goaloption, goalactive, goalsuspended
-	 *  goalinprocess, goalnotinprocess
-	 *  events.
-	 */
-	public static List<EventType> getGoalEvents(/*MGoal mgoal*/)
-	{
-		List<EventType> events = new ArrayList<EventType>();
-//		if(mgoal==null)
-		{
-			events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, EventType.MATCHALL}));
-			events.add(new EventType(new String[]{ChangeEvent.GOALDROPPED, EventType.MATCHALL}));
-			
-			events.add(new EventType(new String[]{ChangeEvent.GOALOPTION, EventType.MATCHALL}));
-			events.add(new EventType(new String[]{ChangeEvent.GOALACTIVE, EventType.MATCHALL}));
-			events.add(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, EventType.MATCHALL}));
-			
-			events.add(new EventType(new String[]{ChangeEvent.GOALINPROCESS, EventType.MATCHALL}));
-			events.add(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, EventType.MATCHALL}));
-		}
-//		else
-//		{
-//			String name = mgoal.getName();
-//			events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, name}));
-//			events.add(new EventType(new String[]{ChangeEvent.GOALDROPPED, name}));
-//			
-//			events.add(new EventType(new String[]{ChangeEvent.GOALOPTION, name}));
-//			events.add(new EventType(new String[]{ChangeEvent.GOALACTIVE, name}));
-//			events.add(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, name}));
-//			
-//			events.add(new EventType(new String[]{ChangeEvent.GOALINPROCESS, name}));
-//			events.add(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, name}));
-//		}
-		
-		return events;
 	}
 	
 	/**
