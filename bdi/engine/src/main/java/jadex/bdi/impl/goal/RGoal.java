@@ -11,7 +11,7 @@ import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
-import jadex.bdi.impl.ChangeEvent;
+import jadex.bdi.impl.BDIRuleEventType;
 import jadex.bdi.impl.IDeliberationStrategy;
 import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.RPlan;
@@ -254,7 +254,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			setLifecycleState(GoalLifecycleState.OPTION);
 			IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
 			delstr.goalIsAdopted(this);
-			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALADOPTED, modelname}), this));
+			getRuleSystem().addEvent(new Event(new EventType(new String[]{BDIRuleEventType.GOALADOPTED, modelname}), this));
 		}
 		else if(GoalLifecycleState.ACTIVE.equals(lifecyclestate))
 		{
@@ -462,7 +462,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		{
 			for(ICandidateInfo cand: cands)
 			{
-				RPlan	rplan	= cand.createPlan(getComponent(), new Event(new EventType(ChangeEvent.GOALDROPPED), this));
+				RPlan	rplan	= cand.createPlan(getComponent(), new Event(new EventType(BDIRuleEventType.GOALDROPPED), this));
 				if(cand.getBody().checkPrecondition(rplan))
 				{
 					comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));

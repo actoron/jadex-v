@@ -3,7 +3,7 @@ package jadex.bdi.impl;
 /**
  *  Event types that are used in BDI rule system.
  */
-public class ChangeEvent
+public class BDIRuleEventType
 {
 	/** Event type that a fact has been added. */
 	public static final String FACTADDED = "factadded";

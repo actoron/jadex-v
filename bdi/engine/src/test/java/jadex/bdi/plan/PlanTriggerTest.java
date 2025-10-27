@@ -17,7 +17,7 @@ import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.impl.ChangeEvent;
+import jadex.bdi.impl.BDIRuleEventType;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
@@ -127,7 +127,7 @@ public class PlanTriggerTest
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
 		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
-		checkGoalEventInfo(pojo.goalfinished, ChangeEvent.GOALDROPPED, PlanTriggerTestAgent.MyGoal.class);
+		checkGoalEventInfo(pojo.goalfinished, BDIRuleEventType.GOALDROPPED, PlanTriggerTestAgent.MyGoal.class);
 	}
 
 	/**

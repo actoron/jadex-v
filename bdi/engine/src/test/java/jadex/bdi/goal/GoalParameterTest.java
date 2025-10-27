@@ -16,7 +16,7 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.goal.GoalParameterTest.GoalParameterTestAgent.MyGoal;
 import jadex.bdi.impl.BDIAgentFeature;
-import jadex.bdi.impl.ChangeEvent;
+import jadex.bdi.impl.BDIRuleEventType;
 import jadex.common.Tuple2;
 import jadex.core.IComponentManager;
 import jadex.core.ChangeEvent.Type;
@@ -189,9 +189,9 @@ public class GoalParameterTest	extends AbstractDynamicValueTest
 	public void	addEventListener(Future<Object> fut, Type type, String name)
 	{
 		String	bditype =
-			(type==Type.CHANGED ? ChangeEvent.VALUECHANGED :
-			(type==Type.ADDED ? ChangeEvent.VALUEADDED :
-			(type==Type.REMOVED ? ChangeEvent.VALUEREMOVED : null)));
+			(type==Type.CHANGED ? BDIRuleEventType.VALUECHANGED :
+			(type==Type.ADDED ? BDIRuleEventType.VALUEADDED :
+			(type==Type.REMOVED ? BDIRuleEventType.VALUEREMOVED : null)));
 		String	events[]	= new String[] {bditype, MyGoal.class.getName()+"."+name};
 		
 		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
@@ -208,9 +208,9 @@ public class GoalParameterTest	extends AbstractDynamicValueTest
 	public void	addEventListener(IntermediateFuture<Object> fut, Type type, String name)
 	{
 		String	bditype =
-				(type==Type.CHANGED ? ChangeEvent.VALUECHANGED :
-				(type==Type.ADDED ? ChangeEvent.VALUEADDED :
-				(type==Type.REMOVED ? ChangeEvent.VALUEREMOVED : null)));
+				(type==Type.CHANGED ? BDIRuleEventType.VALUECHANGED :
+				(type==Type.ADDED ? BDIRuleEventType.VALUEADDED :
+				(type==Type.REMOVED ? BDIRuleEventType.VALUEREMOVED : null)));
 			String	events[]	= new String[] {bditype, MyGoal.class.getName()+"."+name};
 		
 		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()

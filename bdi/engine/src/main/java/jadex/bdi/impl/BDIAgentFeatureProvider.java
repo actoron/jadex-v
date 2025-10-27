@@ -428,9 +428,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				imodel.addChangeHandler(Belief.class, (comp, event) ->
 				{
 					String	typename	=
-							event.type()==Type.ADDED ? 		ChangeEvent.FACTADDED :
-							event.type()==Type.REMOVED ?	ChangeEvent.FACTREMOVED :
-						/*	event.type()==Type.CHANGED ?*/	ChangeEvent.FACTCHANGED ;
+							event.type()==Type.ADDED ? 		BDIRuleEventType.FACTADDED :
+							event.type()==Type.REMOVED ?	BDIRuleEventType.FACTREMOVED :
+						/*	event.type()==Type.CHANGED ?*/	BDIRuleEventType.FACTCHANGED ;
 						
 						EventType	type	= new EventType(typename, event.name());
 						Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
@@ -442,9 +442,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				imodel.addChangeHandler(GoalParameter.class, (comp, event) ->
 				{
 					String	typename	=
-							event.type()==Type.ADDED ? 		ChangeEvent.VALUEADDED :
-							event.type()==Type.REMOVED ?	ChangeEvent.VALUEREMOVED :
-						/*	event.type()==Type.CHANGED ?*/	ChangeEvent.VALUECHANGED ;
+							event.type()==Type.ADDED ? 		BDIRuleEventType.VALUEADDED :
+							event.type()==Type.REMOVED ?	BDIRuleEventType.VALUEREMOVED :
+						/*	event.type()==Type.CHANGED ?*/	BDIRuleEventType.VALUECHANGED ;
 						
 						EventType	type	= new EventType(typename, event.name());
 						Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
@@ -1066,7 +1066,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					
 					// In extra on start, add rule to create goal when event happens.  
 					String	rulename	= "GoalMaintainCondition"+(++numcreations)+"_"+goalname;
-					events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
+					events.add(new EventType(new String[]{BDIRuleEventType.GOALADOPTED, goalname}));
 					EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 					imodel.addPostInject(createMaintainCondition(goalclazz, aevents, handle, rulename));
 				}
@@ -1159,7 +1159,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// check for boolean method
 			if(!bool || SReflect.isSupertype(Boolean.class, method.getReturnType()))
 			{
-				events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, goalname}));
+				events.add(new EventType(new String[]{BDIRuleEventType.GOALADOPTED, goalname}));
 				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
 				
 				// Add fetcher for belief value.
@@ -1501,9 +1501,9 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			
 			// Add fact trigger events.
 			Map<String, List<String>>	tevents	= new LinkedHashMap<>();
-			tevents.put(ChangeEvent.FACTADDED, factadded);
-			tevents.put(ChangeEvent.FACTREMOVED, factremoved);
-			tevents.put(ChangeEvent.FACTCHANGED, factchanged);
+			tevents.put(BDIRuleEventType.FACTADDED, factadded);
+			tevents.put(BDIRuleEventType.FACTREMOVED, factremoved);
+			tevents.put(BDIRuleEventType.FACTCHANGED, factchanged);
 			for(String tevent: tevents.keySet())
 			{
 				for(String dep: tevents.get(tevent))
@@ -1529,12 +1529,12 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		List<String>	fields	= model.findDependentFields(method);
 		for(String field: fields)
 		{
-			events.add(new EventType(ChangeEvent.FACTADDED, field));
-			events.add(new EventType(ChangeEvent.FACTREMOVED, field));
-			events.add(new EventType(ChangeEvent.FACTCHANGED, field));
-			events.add(new EventType(ChangeEvent.VALUEADDED, field));
-			events.add(new EventType(ChangeEvent.VALUEREMOVED, field));
-			events.add(new EventType(ChangeEvent.VALUECHANGED, field));
+			events.add(new EventType(BDIRuleEventType.FACTADDED, field));
+			events.add(new EventType(BDIRuleEventType.FACTREMOVED, field));
+			events.add(new EventType(BDIRuleEventType.FACTCHANGED, field));
+			events.add(new EventType(BDIRuleEventType.VALUEADDED, field));
+			events.add(new EventType(BDIRuleEventType.VALUEREMOVED, field));
+			events.add(new EventType(BDIRuleEventType.VALUECHANGED, field));
 		}
 		return events;
 	}
