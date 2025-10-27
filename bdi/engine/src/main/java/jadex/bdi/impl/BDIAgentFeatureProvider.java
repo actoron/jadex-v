@@ -628,8 +628,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							// Both triggers -> need to check reason type.
 							return (comp, pojos, context, oldval) ->
 							{
-								return ((IPlan)context).getReason() instanceof ChangeEvent<?> 
-									? ((IGoal) ((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getPojo()
+								return ((IPlan)context).getReason() instanceof Event 
+									? ((IGoal) ((Event)((IPlan)context).getReason()).getContent()).getPojo()
 									: ((IGoal) ((IPlan)context).getReason()).getPojo();
 							};
 						}
@@ -642,7 +642,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					else
 					{
 						// Only goal finished triggers
-						return (comp, pojos, context, oldval) -> ((IGoal) ((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getPojo();
+						return (comp, pojos, context, oldval) -> ((IGoal) ((Event)((IPlan)context).getReason()).getContent()).getPojo();
 					}
 				}
 				else
@@ -668,8 +668,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							// Both triggers -> need to check reason type.
 							return (comp, pojos, context, oldval) ->
 							{
-								return ((IPlan)context).getReason() instanceof ChangeEvent<?> 
-									? ((ChangeEvent<?>)((IPlan)context).getReason()).getValue()
+								return ((IPlan)context).getReason() instanceof Event 
+									? ((Event)((IPlan)context).getReason()).getContent()
 									: ((IPlan)context).getReason();
 							};
 						}
@@ -682,7 +682,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					else
 					{
 						// Only goal finished triggers
-						return (comp, pojos, context, oldval) -> ((ChangeEvent<?>)((IPlan)context).getReason()).getValue();
+						return (comp, pojos, context, oldval) -> ((Event)((IPlan)context).getReason()).getContent();
 					}
 				}
 				else
@@ -722,7 +722,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							// Support fact injection in conditions but inject null, when triggered by goal (hack!?)
 							// e.g. goal-adopted triggers initial check of target condition.
-							Object	value	= ((ChangeEvent<?>)context).getValue();
+							Object	value	= ((Event)context).getContent();
 							return value instanceof ChangeInfo<?> ? ((ChangeInfo<?>)value).getValue() : null;
 						};
 					}
@@ -926,7 +926,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							ICondition.TRUE_CONDITION,	// Condition -> true
 							(event, rule, context2, condresult) ->
 							{
-								Object	pojogoal	= handle.apply(comp, pojos, new ChangeEvent<Object>(event), null);
+								Object	pojogoal	= handle.apply(comp, pojos, event, null);
 								if(pojogoal!=null)	// For method, check if no goal is created
 								{
 									RGoal	rgoal	= new RGoal(pojogoal, null, comp);
@@ -953,11 +953,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							ICondition.TRUE_CONDITION,	// Condition -> true
 							(event, rule, context2, condresult) ->
 							{
-								ChangeEvent<?>	change	= new ChangeEvent<Object>(event);
-								Boolean	value	= (Boolean)handle.apply(comp, pojos, change, null);
+								Boolean	value	= (Boolean)handle.apply(comp, pojos, event, null);
 								if(Boolean.TRUE.equals(value))
 								{
-									Object	pojogoal	= constructor.apply(comp, pojos, change, null);
+									Object	pojogoal	= constructor.apply(comp, pojos, event, null);
 									RGoal	rgoal	= new RGoal(pojogoal, null, comp);
 									rgoal.adopt();
 								}
@@ -1250,16 +1249,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
-						ChangeEvent<Object>	ce	= null;
 						for(RGoal goal: goals)
 						{
 							if(RGoal.GoalLifecycleState.SUSPENDED.equals(goal.getLifecycleState()))
 							{	
-								if(ce==null)
-								{
-									ce	= new ChangeEvent<Object>(event);
-								}
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
 								if(Boolean.TRUE.equals(value))
 								{
 									goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
@@ -1268,11 +1262,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							else if(!RGoal.GoalLifecycleState.DROPPING.equals(goal.getLifecycleState())
 								  && !RGoal.GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()))
 							{	
-								if(ce==null)
-								{
-									ce	= new ChangeEvent<Object>(event);
-								}
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
 								if(!Boolean.TRUE.equals(value))
 								{
 									goal.setLifecycleState(RGoal.GoalLifecycleState.SUSPENDED);
@@ -1304,16 +1294,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
-						ChangeEvent<Object>	ce	= null;
 						for(RGoal goal: goals)
 						{
 							if(!goal.isFinished())
 							{
-								if(ce==null)
-								{
-									ce	= new ChangeEvent<Object>(event);
-								}
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
 								if(value!=null)
 								{
 									goal.queryConditionTriggered(value);
@@ -1345,16 +1330,11 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
-						ChangeEvent<Object>	ce	= null;
 						for(RGoal goal: goals)
 						{
 							if(!goal.isFinished())
 							{
-								if(ce==null)
-								{
-									ce	= new ChangeEvent<Object>(event);
-								}
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
 								if(Boolean.TRUE.equals(value))
 								{
 									goal.targetConditionTriggered(/*event, rule, context2*/);
@@ -1386,17 +1366,12 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
-						ChangeEvent<Object>	ce	= null;
 						for(RGoal goal: goals)
 						{
 							if(!RGoal.GoalLifecycleState.DROPPING.equals(goal.getLifecycleState())
 								 && !RGoal.GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()))
 							{
-								if(ce==null)
-								{
-									ce	= new ChangeEvent<Object>(event);
-								}
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
 								if(Boolean.TRUE.equals(value))
 								{
 									goal.drop();
@@ -1428,17 +1403,12 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
 					if(goals!=null)
 					{
-						ChangeEvent<Object>	ce	= null;
 						for(RGoal goal: goals)
 						{
 							if(RGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState())
 								&& RGoal.GoalProcessingState.PAUSED.equals(goal.getProcessingState()))
 							{
-								if(ce==null)
-								{
-									ce	= new ChangeEvent<Object>(event);
-								}
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), ce, null);
+								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
 								if(Boolean.TRUE.equals(value))
 								{
 									goal.setTriedPlans(null);
@@ -1474,7 +1444,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					{
 						for(RGoal goal: goals)
 						{
-							Boolean	value	= (Boolean)conditionmethod.apply(comp, goal.getAllPojos(), new ChangeEvent<Object>(event), null);
+							Boolean	value	= (Boolean)conditionmethod.apply(comp, goal.getAllPojos(), event, null);
 							if(!Boolean.TRUE.equals(value))
 							{
 								goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
