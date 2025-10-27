@@ -10,6 +10,7 @@ import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.ChangeEvent;
+import jadex.bdi.impl.IDeliberationStrategy;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -216,12 +217,16 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		// If now is inprocess -> start processing
 		if(GoalProcessingState.INPROCESS.equals(processingstate))
 		{
-			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALINPROCESS, modelname}), this));
+//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALINPROCESS, modelname}), this));
 			comp.getFeature(IExecutionFeature.class).scheduleStep(new FindApplicableCandidatesAction(this));
+			IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
+			delstr.goalIsActive(this);
 		}
 		else
 		{
-			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, modelname}), this));
+//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, modelname}), this));
+			IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
+			delstr.goalIsNotActive(this);
 		}
 	}
 	
@@ -244,13 +249,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		if(GoalLifecycleState.ADOPTED.equals(lifecyclestate))
 		{
 			setLifecycleState(GoalLifecycleState.OPTION);
+			IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
+			delstr.goalIsAdopted(this);
 			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALADOPTED, modelname}), this));
 		}
 		else if(GoalLifecycleState.ACTIVE.equals(lifecyclestate))
 		{
 			mrcycle++;
 			
-			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALACTIVE, modelname}), this));
+//			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALACTIVE, modelname}), this));
 
 			// start means-end reasoning unless maintain goal
 			if(!mgoal.maintain())
@@ -292,8 +299,14 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 				@Override
 				public void resultAvailable(Void result)
 				{
-					setProcessingState(GoalProcessingState.IDLE);
-					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALOPTION, modelname}), RGoal.this));
+					// If still in same lifecycle state (goal might be reactivated to to plan abortion? cf GoalFlickerTest!?)
+					if(GoalLifecycleState.OPTION.equals(getLifecycleState()))
+					{
+						setProcessingState(GoalProcessingState.IDLE);
+	//					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALOPTION, modelname}), RGoal.this));
+						IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
+						delstr.goalIsOption(RGoal.this);
+					}
 				}
 				
 				@Override
@@ -314,7 +327,11 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 				@Override
 				public void resultAvailable(Void result)
 				{
-					setProcessingState(GoalProcessingState.IDLE);
+					// If still in same lifecycle state (goal might be reactivated to to plan abortion? cf GoalFlickerTest!?)
+					if(GoalLifecycleState.SUSPENDED.equals(getLifecycleState()))
+					{
+						setProcessingState(GoalProcessingState.IDLE);
+					}
 //					getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALSUSPENDED, modelname}), RGoal.this));
 				}
 				
@@ -352,6 +369,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			if(adopted)
 			{
 				((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).removeGoal(this);
+				IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
+				delstr.goalIsDropped(this);
 				getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, modelname}), this));
 			}
 			

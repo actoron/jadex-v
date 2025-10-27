@@ -13,29 +13,20 @@ import java.util.function.Supplier;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
-import jadex.bdi.IGoal.GoalLifecycleState;
 import jadex.bdi.impl.goal.EasyDeliberationStrategy;
 import jadex.bdi.impl.goal.RGoal;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
-import jadex.common.SUtil;
-import jadex.common.Tuple2;
 import jadex.core.IChangeListener;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionFeature;
-import jadex.rules.eca.EventType;
-import jadex.rules.eca.IAction;
-import jadex.rules.eca.ICondition;
 import jadex.rules.eca.IEvent;
-import jadex.rules.eca.IRule;
-import jadex.rules.eca.Rule;
 import jadex.rules.eca.RuleSystem;
 
 public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
@@ -57,6 +48,9 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	
 	/** The capabilities. */
 	protected Map<List<Class<?>>, List<Object>>	capabilities;
+	
+	/** The deliberation strategy, if any (null if no goals in model). */
+	protected IDeliberationStrategy delstr;
 	
 	/**
 	 *  Create the feature.
@@ -224,72 +218,6 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 		return this.rulesystem;
 	}
 	
-	//-------- helper classes --------
-	
-	/**
-	 *  Condition for checking the lifecycle state of a goal.
-	 */
-	public static class LifecycleStateCondition implements ICondition
-	{
-		/** The allowed states. */
-		protected Set<GoalLifecycleState> states;
-		
-		/** The flag if state is allowed or disallowed. */
-		protected boolean allowed;
-		
-		/**
-		 *  Create a new condition.
-		 */
-		public LifecycleStateCondition(GoalLifecycleState state)
-		{
-			this(SUtil.createHashSet(new GoalLifecycleState[]{state}));
-		}
-		
-		/**
-		 *  Create a new condition.
-		 */
-		public LifecycleStateCondition(Set<GoalLifecycleState> states)
-		{
-			this(states, true);
-		}
-		
-		/**
-		 *  Create a new condition.
-		 */
-		public LifecycleStateCondition(GoalLifecycleState state, boolean allowed)
-		{
-			this(SUtil.createHashSet(new GoalLifecycleState[]{state}), allowed);
-		}
-		
-		/**
-		 *  Create a new condition.
-		 */
-		public LifecycleStateCondition(Set<GoalLifecycleState> states, boolean allowed)
-		{
-			this.states = states;
-			this.allowed = allowed;
-		}
-		
-		/**
-		 *  Evaluate the condition.
-		 */
-		public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
-		{
-			RGoal goal = (RGoal)event.getContent();
-			boolean ret = states.contains(goal.getLifecycleState());
-			if(!allowed)
-				ret = !ret;
-//				return ret? ICondition.TRUE: ICondition.FALSE;
-			
-//			if(ret && goal.getLifecycleState()==GoalLifecycleState.OPTION)
-//			{
-//				System.out.println("dfol");
-//			}
-			
-			return new Future<Tuple2<Boolean,Object>>(ret? ICondition.TRUE: ICondition.FALSE);
-		}
-	}
-	
 	/**
 	 *  Get the model.
 	 */
@@ -385,108 +313,7 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 		goals.get(rgoal.getPojo().getClass()).remove(rgoal);
 		((InjectionFeature)self.getFeature(IInjectionFeature.class)).removeExtraObject(rgoal.getAllPojos(), rgoal);
-	}
-	
-	/**
-	 *  Start deliberation in extra step otherwise model might not be inited.
-	 *  (BDI feature onStart is executed before injection feature) 
-	 */
-	public void	startDeliberation(boolean usedelib)
-	{
-		// Initiate goal deliberation
-		final IDeliberationStrategy delstr = new EasyDeliberationStrategy();
-		delstr.init();
-		
-		if(usedelib)
-		{
-			List<EventType> events = new ArrayList<EventType>();
-			events.add(new EventType(new String[]{ChangeEvent.GOALADOPTED, EventType.MATCHALL}));
-			Rule<Void> rule = new Rule<Void>("goal_addinitialinhibitors", 
-				ICondition.TRUE_CONDITION, new IAction<Void>()
-			{
-				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-				{
-					// create the complete inhibitorset for a newly adopted goal
-					RGoal goal = (RGoal)event.getContent();
-					return delstr.goalIsAdopted(goal);
-				}
-			});
-			rule.setEvents(events);
-			rulesystem.getRulebase().addRule(rule);
-			
-			events = new ArrayList<EventType>();
-			events.add(new EventType(new String[]{ChangeEvent.GOALDROPPED, EventType.MATCHALL}));
-			rule = new Rule<Void>("goal_removegoalfromdelib", 
-				ICondition.TRUE_CONDITION, new IAction<Void>()
-			{
-				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-				{
-					// Remove a goal completely from 
-					RGoal goal = (RGoal)event.getContent();
-					return delstr.goalIsDropped(goal);
-				}
-			});
-			rule.setEvents(events);
-			rulesystem.getRulebase().addRule(rule);
-			
-			events = new ArrayList<EventType>();
-			events.add(new EventType(new String[]{ChangeEvent.GOALACTIVE, EventType.MATCHALL}));
-			events.add(new EventType(new String[]{ChangeEvent.GOALINPROCESS, EventType.MATCHALL}));
-			rule = new Rule<Void>("goal_addinhibitor", 
-				new ICondition()
-				{
-					public IFuture<Tuple2<Boolean, Object>> evaluate(IEvent event)
-					{
-						// return true when other goal is active and inprocess
-						boolean ret = false;
-						EventType type = event.getType();
-						RGoal goal = (RGoal)event.getContent();
-						ret = ChangeEvent.GOALACTIVE.equals(type.getType(0)) && RGoal.GoalProcessingState.INPROCESS.equals(goal.getProcessingState())
-							|| ChangeEvent.GOALINPROCESS.equals(type.getType(0)) && RGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState());
-//								return ret? ICondition.TRUE: ICondition.FALSE;
-						return new Future<Tuple2<Boolean,Object>>(ret? ICondition.TRUE: ICondition.FALSE);
-					}
-				}, new IAction<Void>()
-			{
-				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-				{
-					RGoal goal = (RGoal)event.getContent();
-					return delstr.goalIsActive(goal);
-				}
-			});
-			rule.setEvents(events);
-			rulesystem.getRulebase().addRule(rule);
-			
-			events = new ArrayList<EventType>();
-			events.add(new EventType(new String[]{ChangeEvent.GOALNOTINPROCESS, EventType.MATCHALL}));
-			rule = new Rule<Void>("goal_removeinhibitor", 
-				ICondition.TRUE_CONDITION,
-				new IAction<Void>()
-			{
-				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-				{
-					// Remove inhibitions of this goal 
-					RGoal goal = (RGoal)event.getContent();
-					return delstr.goalIsNotActive(goal);
-				}
-			});
-			rule.setEvents(events);
-			rulesystem.getRulebase().addRule(rule);
-		}
-
-		Rule<Void> rule = new Rule<Void>("goal_activate", 
-			new LifecycleStateCondition(RGoal.GoalLifecycleState.OPTION),
-			new IAction<Void>()
-			{
-				public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-				{
-					RGoal goal = (RGoal)event.getContent();				
-					return delstr.goalIsOption(goal);							
-				}
-			});
-		rule.addEvent(new EventType(new String[]{ChangeEvent.GOALOPTION, EventType.MATCHALL}));
-		rulesystem.getRulebase().addRule(rule);
-	}
+	}	
 	
 	/**
 	 *  Add a capability.
@@ -512,5 +339,15 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	public List<Object> getCapability(List<Class<?>> parentclazzes)
 	{
 		return parentclazzes.size()==1 ? Collections.singletonList(self.getPojo()) : capabilities.get(parentclazzes);
+	}
+
+	public IDeliberationStrategy getDeliberationStrategy()
+	{
+		if(delstr==null)
+		{
+			this.delstr = new EasyDeliberationStrategy();
+			delstr.init();
+		}
+		return delstr;
 	}
 }

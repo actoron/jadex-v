@@ -27,7 +27,6 @@ import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
-import jadex.bdi.annotation.Deliberation;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalAPLBuild;
 import jadex.bdi.annotation.GoalContextCondition;
@@ -429,29 +428,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			// Outmost pojo (agent)
 			if(imodel==imodel.getRootModel())
 			{
-				// Start deliberation after all rules are added.
-				if(!model.getGoaltypes().isEmpty())
-				{
-					boolean	usedelib	= false;
-					for(Class<?> goaltype: model.getGoaltypes())
-					{
-						Deliberation	delib	= model.getGoalInfo(goaltype).annotation().deliberation();
-						usedelib	= delib.inhibits().length>0 || delib.cardinalityone() || model.getGoalInfo(goaltype).instanceinhibs()!=null;
-						if(usedelib)
-						{
-							break;
-						}
-					}
-					
-					// If no delib -> still start strategy for simple option->active rule.
-					boolean	fusedelib	= usedelib;
-					imodel.addPostInject((comp, pojos, context, oldval) ->
-					{
-						((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).startDeliberation(fusedelib);
-						return null;
-					});
-				}
-				
 				// Add generic belief event to rule system forwarding
 				imodel.addChangeHandler(Belief.class, (comp, event) ->
 				{

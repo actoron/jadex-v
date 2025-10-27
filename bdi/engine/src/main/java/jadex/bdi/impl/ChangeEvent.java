@@ -40,11 +40,11 @@ public class ChangeEvent<T>
 	public static final String GOALDROPPED = "goaldropped";
 
 	
-	/** Event type that a goal has been added. */
-	public static final String GOALACTIVE = "goaladopted"; // goaladopted?! or goalactive
+//	/** Event type that a goal has been added. */
+//	public static final String GOALACTIVE = "goaladopted"; // goaladopted?! or goalactive
 	
-	/** Event type that a goal has been optionized. */
-	public static final String GOALOPTION = "goaloption";
+//	/** Event type that a goal has been optionized. */
+//	public static final String GOALOPTION = "goaloption";
 	
 //	/** Event type that a goal has been suspended. */
 //	public static final String GOALSUSPENDED = "goalsuspended";
@@ -53,11 +53,11 @@ public class ChangeEvent<T>
 ////	public static final String GOALACTIVE = "goalactive";
 //	
 
-	/** Event type that a goal has been added. */
-	public static final String GOALINPROCESS = "goalinprocess";
+//	/** Event type that a goal has been added. */
+//	public static final String GOALINPROCESS = "goalinprocess";
 	
-	/** Event type that a goal has been removed. */
-	public static final String GOALNOTINPROCESS = "goalnotinprocess";
+//	/** Event type that a goal has been removed. */
+//	public static final String GOALNOTINPROCESS = "goalnotinprocess";
 
 ////	/** Event type that a goal has been added. */
 ////	public static final String GOALINHIBITED = "goalinhibited";
