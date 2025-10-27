@@ -339,12 +339,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					if(plan.impl().isAnnotationPresent(Plan.class))
 					{
 						Trigger	trigger	= plan.impl().getAnnotation(Plan.class).trigger();
-						List<EventType>	events	= getCreationTriggerEvents(imodel,
-							addPrefix(capaprefix, trigger.factadded()),
-							addPrefix(capaprefix, trigger.factremoved()),
-							addPrefix(capaprefix, trigger.factchanged()),
-							trigger.goalfinisheds(), plan.impl().getName());
-						if((events!=null && events.size()>0) || trigger.goals().length>0)
+						if(trigger.factadded().length>0 || trigger.factremoved().length>0 || trigger.factchanged().length>0
+							|| trigger.goals().length>0 || trigger.goalfinisheds().length>0)
 						{
 							throw new UnsupportedOperationException("External Plan must not define its own trigger: "+plan.impl());
 						}
@@ -522,10 +518,14 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		addEventTriggerRule(imodel, capaprefix, trigger, planbody, planname);
 		
 		// Add plan to BDI model for lookup during means-end reasoning (i.e. APL build)
+		BDIModel	model	= BDIModel.getModel(imodel.getPojoClazzes().get(0));
 		for(Class<?> goaltype: trigger.goals())
 		{
-			BDIModel	model	= BDIModel.getModel(imodel.getPojoClazzes().get(0));
 			model.addPlanforGoal(goaltype, imodel.getPojoClazzes(), planname, planbody);
+		}
+		for(Class<?> goaltype: trigger.goalfinisheds())
+		{
+			model.addPlanforGoalFinished(goaltype, imodel.getPojoClazzes(), planname, planbody);
 		}
 	}
 
@@ -535,34 +535,62 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	protected void addEventTriggerRule(InjectionModel imodel, String capaprefix, Trigger trigger,
 			IPlanBody planbody, String planname)
 	{
-		List<EventType> events = getCreationTriggerEvents(imodel,
-			addPrefix(capaprefix, trigger.factadded()),
-			addPrefix(capaprefix, trigger.factremoved()),
-			addPrefix(capaprefix, trigger.factchanged()),
-			trigger.goalfinisheds(), planname);
-		if(events!=null && events.size()>0)
+		if(trigger.factadded().length>0 || trigger.factremoved().length>0 || trigger.factchanged().length>0)
 		{
-			EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-			// In extra on start, add rule to run plan when event happens.  
-			imodel.addPostInject((comp, pojos, context, oldval) ->
+			// Create name->eventtypes map
+			Map<String, Set<Type>>	events	= new LinkedHashMap<>();
+			for(String added: addPrefix(capaprefix, trigger.factadded()))
 			{
-				RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-				rs.getRulebase().addRule(new Rule<Void>(
-					"TriggerPlan_"+planname,	// Rule Name
-					ICondition.TRUE_CONDITION,	// Condition -> true
-					(event, rule, context2, condresult) ->
+				Set<Type>	types	= events.get(added);
+				if(types==null)
+				{
+					types 	= new LinkedHashSet<>();
+					events.put(added, types);
+				}
+				types.add(Type.ADDED);
+			}
+			for(String added: addPrefix(capaprefix, trigger.factremoved()))
+			{
+				Set<Type>	types	= events.get(added);
+				if(types==null)
+				{
+					types 	= new LinkedHashSet<>();
+					events.put(added, types);
+				}
+				types.add(Type.REMOVED);
+			}
+			for(String added: addPrefix(capaprefix, trigger.factchanged()))
+			{
+				Set<Type>	types	= events.get(added);
+				if(types==null)
+				{
+					types 	= new LinkedHashSet<>();
+					events.put(added, types);
+				}
+				types.add(Type.CHANGED);
+			}
+			
+			// On start, add listener for each name
+			for(String name: events.keySet())
+			{
+				Set<Type>	types	= events.get(name);
+				imodel.addPostInject((comp, pojos, context, oldval) ->
+				{
+					comp.getFeature(IInjectionFeature.class).addListener(name, event ->
 					{
-						// Action -> start plan
-						RPlan	rplan	= new RPlan(null, planname, new ChangeEvent<Object>(event), planbody, comp, pojos);
-						if(planbody.checkPrecondition(rplan))
+						if(types.contains(event.type()))
 						{
-							comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));
+							// Action -> start plan
+							RPlan	rplan	= new RPlan(null, planname, event, planbody, comp, pojos);
+							if(planbody.checkPrecondition(rplan))
+							{
+								comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));
+							}					
 						}
-						return IFuture.DONE;
-					},
-					aevents));	// Trigger Event(s)
-				return null;
-			});
+					});
+					return null;
+				});
+			}
 		}
 	}
 
@@ -684,7 +712,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					{
 						return (comp, pojos, context, oldval) ->
 						{
-							return ((ChangeInfo<?>)((ChangeEvent<?>)((IPlan)context).getReason()).getValue()).getValue();
+							return ((jadex.core.ChangeEvent)((IPlan)context).getReason()).value();
 						};
 					}
 					// else goal condition -> context is goal or change event.
@@ -823,6 +851,10 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		for(Class<?> goaltype: trigger.goals())
 		{
 			model.addPlanforGoal(goaltype, parentclazzes, planname, planbody);
+		}
+		for(Class<?> goaltype: trigger.goalfinisheds())
+		{
+			model.addPlanforGoalFinished(goaltype, parentclazzes, planname, planbody);
 		}
 	}
 	
@@ -1510,12 +1542,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					getValueType(imodel, dep, element);
 					events.add(new EventType(tevent, dep));
 				}
-			}
-			
-			// Add goal finished trigger events.
-			for(Class<?> goaltype: goalfinished)
-			{
-				events.add(new EventType(ChangeEvent.GOALDROPPED, goaltype.getName()));
 			}
 		}
 		return events;

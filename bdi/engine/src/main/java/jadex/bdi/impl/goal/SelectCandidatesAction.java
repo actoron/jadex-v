@@ -77,7 +77,7 @@ public class SelectCandidatesAction implements Runnable
 				{
 					try
 					{
-						RPlan rplan = (RPlan)ca.createPlan(element);
+						RPlan rplan = (RPlan)ca.createPlan(element.getComponent(), element);
 						element.getComponent().getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));
 					}
 					catch(final Exception e)

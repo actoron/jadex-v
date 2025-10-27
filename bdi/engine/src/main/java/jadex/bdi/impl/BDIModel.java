@@ -24,6 +24,9 @@ public class BDIModel
 	/** The plans that are triggered by an instance of the element class (e.g. goal). */
 	protected Map<Class<?>, List<ICandidateInfo>>	triggeredplans	= new LinkedHashMap<>();
 	
+	/** The plans that are triggered by a finished goal. */
+	protected Map<Class<?>, List<ICandidateInfo>>	finishedplans	= new LinkedHashMap<>();
+	
 	/** The known goals (goal pojoclazz -> goal annotation for meta info). */
 	protected Map<Class<?>, MGoal>	goals	= new LinkedHashMap<>();
 	
@@ -69,6 +72,29 @@ public class BDIModel
 		{
 			goalplans	= new ArrayList<>(4);
 			triggeredplans.put(goalpojoclazz, goalplans);
+		}
+		goalplans.add(new APL.MPlanCandidate(planparents, planname, body));
+	}
+	
+	/**
+	 *  Get plans that are triggered by finished goals of given pojo class.
+	 */
+	public List<ICandidateInfo> getGoalFinishedPlans(Class<?> elementclass)
+	{
+		
+		return finishedplans.get(elementclass);
+	}
+	
+	/**
+	 *  Add a plan to the model.
+	 */
+	protected void	addPlanforGoalFinished(Class<?> goalpojoclazz, List<Class<?>> planparents, String planname, IPlanBody body)
+	{
+		List<ICandidateInfo>	goalplans	= finishedplans.get(goalpojoclazz);
+		if(goalplans==null)
+		{
+			goalplans	= new ArrayList<>(4);
+			finishedplans.put(goalpojoclazz, goalplans);
 		}
 		goalplans.add(new APL.MPlanCandidate(planparents, planname, body));
 	}

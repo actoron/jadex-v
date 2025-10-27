@@ -1,6 +1,7 @@
 package jadex.bdi.impl.goal;
 
 import java.lang.System.Logger.Level;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -9,8 +10,10 @@ import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
 import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.BDIModel;
 import jadex.bdi.impl.ChangeEvent;
 import jadex.bdi.impl.IDeliberationStrategy;
+import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -371,7 +374,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 				((BDIAgentFeature)getComponent().getFeature(IBDIAgentFeature.class)).removeGoal(this);
 				IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
 				delstr.goalIsDropped(this);
-				getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALDROPPED, modelname}), this));
+				
+				triggerFinishedPlans();
 			}
 			
 			if(finished!=null)
@@ -445,6 +449,26 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			ret	= IFuture.DONE;
 		}
 		return ret;
+	}
+	
+	/**
+	 *  Check if plans need to be executed when goal is finished.
+	 */
+	protected void triggerFinishedPlans()
+	{
+		BDIModel model	= ((BDIAgentFeature) getComponent().getFeature(IBDIAgentFeature.class)).getModel();
+		List<ICandidateInfo>	cands	= model.getGoalFinishedPlans(getPojo().getClass());
+		if(cands!=null)
+		{
+			for(ICandidateInfo cand: cands)
+			{
+				RPlan	rplan	= cand.createPlan(getComponent(), new Event(new EventType(ChangeEvent.GOALDROPPED), this));
+				if(cand.getBody().checkPrecondition(rplan))
+				{
+					comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));
+				}
+			}
+		}
 	}
 	
 	/**

@@ -18,13 +18,13 @@ public record ChangeEvent(Type type, String name, Object value, Object oldvalue,
 		/** Initial event containing the current value at listener registration. */
 		INITIAL,
 		
-		/** A new result was added to a collection/map. */
+		/** A new value was added to a collection/map. */
 		ADDED,
 		
-		/** A result was removed from a collection/map. */
+		/** A value was removed from a collection/map. */
 		REMOVED,
 		
-		/** A result was changed in total or a change occurred in a bean/collection/map. */
+		/** A value was changed in total or a change occurred in a bean/collection/map. */
 		CHANGED
 	}
 }
