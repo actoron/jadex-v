@@ -111,7 +111,9 @@ public class Component implements IComponent
 				}
 
 				// Initialize all features, i.e. non-lazy ones that implement ILifecycle.
-				for(Object feature:	getFeatures())
+				// Use toArray() to avoid concurrent modification
+				// when some feature init depends on another lazy feature
+				for(Object feature:	getFeatures().toArray())
 				{
 					if(feature instanceof ILifecycle)
 					{
