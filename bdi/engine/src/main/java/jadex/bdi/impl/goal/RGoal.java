@@ -13,6 +13,8 @@ import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
 import jadex.bdi.impl.BDIRuleEventType;
 import jadex.bdi.impl.IDeliberationStrategy;
+import jadex.bdi.impl.PlanAborted;
+import jadex.bdi.impl.goal.MGoal.IGoalConditionAction;
 import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.core.IComponent;
@@ -22,6 +24,8 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.injection.impl.InjectionFeature;
+import jadex.injection.impl.InjectionFeature.ErrorHolder;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.RuleSystem;
@@ -251,10 +255,31 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		
 		if(GoalLifecycleState.ADOPTED.equals(lifecyclestate))
 		{
-			setLifecycleState(GoalLifecycleState.OPTION);
-			IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
-			delstr.goalIsAdopted(this);
-			getRuleSystem().addEvent(new Event(new EventType(new String[]{BDIRuleEventType.GOALADOPTED, modelname}), this));
+			// Check relevant conditions initially
+			for(IGoalConditionAction cond: mgoal.query())
+			{
+				cond.execute(getComponent(), null, this);
+			}
+			for(IGoalConditionAction cond: mgoal.target())
+			{
+				cond.execute(getComponent(), null, this);
+			}
+			for(IGoalConditionAction cond: mgoal.drop())
+			{
+				cond.execute(getComponent(), null, this);
+			}
+			for(IGoalConditionAction cond: mgoal.context())
+			{
+				cond.execute(getComponent(), null, this);
+			}
+			
+			if(GoalLifecycleState.ADOPTED.equals(getLifecycleState()))
+			{
+				IDeliberationStrategy	delstr	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getDeliberationStrategy();
+				delstr.goalIsAdopted(this);
+				setLifecycleState(GoalLifecycleState.OPTION);
+//				getRuleSystem().addEvent(new Event(new EventType(new String[]{BDIRuleEventType.GOALADOPTED, modelname}), this));
+			}
 		}
 		else if(GoalLifecycleState.ACTIVE.equals(lifecyclestate))
 		{
@@ -263,7 +288,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //			getRuleSystem().addEvent(new Event(new EventType(new String[]{ChangeEvent.GOALACTIVE, modelname}), this));
 
 			// start means-end reasoning unless maintain goal
-			if(!mgoal.maintain())
+			if(mgoal.maintain().isEmpty())
 			{
 				// Check for result if procedural query goal.
 				Object	result	= null;
@@ -288,9 +313,15 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 					setProcessingState(GoalProcessingState.INPROCESS);
 				}
 			}
+			
+			// If maintain goal -> set to idle first and check condition, which might set it to in process
 			else
 			{
 				setProcessingState(GoalProcessingState.IDLE);
+				for(IGoalConditionAction cond: mgoal.maintain())
+				{
+					cond.execute(getComponent(), null, this);
+				}
 			}
 		}
 		
@@ -442,7 +473,24 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		IFuture<Void>	ret;
 		if(childplan!=null)
 		{
-			ret	= childplan.abort();
+			// If currently processing change events -> throw PlanAborted later after all listeners are done.
+			ErrorHolder	holder	= InjectionFeature.LISTENER_ERROR.get();
+			if(holder!=null)
+			{
+				try
+				{
+					ret	= childplan.abort();
+				}
+				catch(PlanAborted pa)
+				{
+					holder.error	= pa;
+					ret	= IFuture.DONE;
+				}
+			}
+			else
+			{
+				ret	= childplan.abort();
+			}
 		}
 		else
 		{
@@ -667,7 +715,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 					setProcessingState(GoalProcessingState.PAUSED);
 					
 					// Auto-recur, when no recur condition defined.
-					if(!getMGoal().recur())
+					if(getMGoal().recur().isEmpty())
 					{
 						Runnable	step	= () ->
 						{
@@ -724,7 +772,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public boolean isRecur()
 	{
-		return mgoal.annotation().recur() || mgoal.recur();
+		return mgoal.annotation().recur() || !mgoal.recur().isEmpty();
 	}
 	
 	/**
@@ -732,7 +780,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 	 */
 	public boolean isDeclarative()
 	{
-		return mgoal.query() || mgoal.target() || mgoal.maintain(); 
+		return !mgoal.query().isEmpty() || !mgoal.target().isEmpty() || !mgoal.maintain().isEmpty(); 
 	}
 	
 	/**
@@ -924,7 +972,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 			result	= ((Supplier<?>)getPojo()).get();
 		}
 		
-		if(mgoal.maintain())
+		// If has maintain condidtion -> move to idle
+		if(!mgoal.maintain().isEmpty())
 		{
 			// Change maintain goal rule so it does not consider target condition triggered unless we move from false to true (not just true to true)
 			if(GoalProcessingState.INPROCESS.equals(getProcessingState()))
@@ -964,6 +1013,8 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 				});
 			}
 		}
+		
+		// No maintain condition -> goal finished
 		else
 		{
 			setProcessingState(IGoal.GoalProcessingState.SUCCEEDED);

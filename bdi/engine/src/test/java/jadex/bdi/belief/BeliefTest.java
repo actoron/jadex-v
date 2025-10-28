@@ -16,9 +16,7 @@ import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.impl.BDIAgentFeature;
-import jadex.bdi.impl.BDIRuleEventType;
-import jadex.common.Tuple2;
+import jadex.core.ChangeEvent;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.IChangeListener;
 import jadex.core.IComponentHandle;
@@ -31,10 +29,6 @@ import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.injection.AbstractDynamicValueTest;
 import jadex.injection.Dyn;
 import jadex.injection.Val;
-import jadex.rules.eca.ChangeInfo;
-import jadex.rules.eca.EventType;
-import jadex.rules.eca.IEvent;
-import jadex.rules.eca.Rule;
 
 /**
  *  Test events from all kinds of beliefs.
@@ -244,60 +238,46 @@ public class BeliefTest	extends AbstractDynamicValueTest
 	@Override
 	public void	addEventListener(Future<Object> fut, Type type, String name)
 	{
-		String	bditype =
-			(type==Type.CHANGED ? BDIRuleEventType.FACTCHANGED :
-			(type==Type.ADDED ? BDIRuleEventType.FACTADDED :
-			(type==Type.REMOVED ? BDIRuleEventType.FACTREMOVED : null)));
-		String	events[]	= new String[] {bditype, name};
-		
-		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
+		IBDIAgentFeature	feat	= IComponentManager.get().getCurrentComponent()
 			.getFeature(IBDIAgentFeature.class);
-		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
-			"EventListenerRule"+Arrays.toString(events)+"_"+rulecnt++,	// Rule Name
-			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
-			(event, rule, context, condresult) -> {fut.setResultIfUndone(event); return IFuture.DONE;}, // Action -> set future
-			new EventType[] {new EventType(events)}	// Trigger Event(s)
-		));
+		feat.addChangeListener(name, event ->
+		{
+			if(type==event.type())
+			{
+				fut.setResultIfUndone(event);
+			}
+		});
 	}
 	
 	@Override
 	public void	addEventListener(IntermediateFuture<Object> fut, Type type, String name)
 	{
-		String	bditype =
-				(type==Type.CHANGED ? BDIRuleEventType.FACTCHANGED :
-				(type==Type.ADDED ? BDIRuleEventType.FACTADDED :
-				(type==Type.REMOVED ? BDIRuleEventType.FACTREMOVED : null)));
-		String	events[]	= new String[] {bditype, name};
-		
-		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
+		IBDIAgentFeature	feat	= IComponentManager.get().getCurrentComponent()
 			.getFeature(IBDIAgentFeature.class);
-		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
-			"EventListenerRule"+Arrays.toString(events)+"_"+rulecnt++,	// Rule Name
-			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
-			(event, rule, context, condresult) -> {fut.addIntermediateResultIfUndone(event); return IFuture.DONE;}, // Action -> set future
-			new EventType[] {new EventType(events)}	// Trigger Event(s)
-		));
+		feat.addChangeListener(name, event ->
+		{
+			if(type==event.type())
+			{
+				fut.addIntermediateResultIfUndone(event);
+			}
+		});
 	}
 	
 	@Override
 	public void checkEventInfo(IFuture<Object> fut, Object oldval, Object newval, Object info)
 	{
-		IEvent	event	= (IEvent) fut.get(TestHelper.TIMEOUT);
-		@SuppressWarnings("unchecked")
-		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
-		assertEquals(oldval, ci.getOldValue(), "old value");
-		assertEquals(newval, ci.getValue(), "new value");
-		assertEquals(info, ci.getInfo(), "info");
+		ChangeEvent	event	= (ChangeEvent) fut.get(TestHelper.TIMEOUT);
+		assertEquals(oldval, event.oldvalue(), "old value");
+		assertEquals(newval, event.value(), "new value");
+		assertEquals(info, event.info(), "info");
 	}
 	
 	@Override
 	public void checkEventInfo(IIntermediateFuture<Object> fut, Object oldval, Object newval, Object info)
 	{
-		IEvent	event	= (IEvent) fut.getNextIntermediateResult(TestHelper.TIMEOUT);
-		@SuppressWarnings("unchecked")
-		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
-		assertEquals(oldval, ci.getOldValue(), "old value");
-		assertEquals(newval, ci.getValue(), "new value");
-		assertEquals(info, ci.getInfo(), "info");
+		ChangeEvent	event	= (ChangeEvent) fut.getNextIntermediateResult(TestHelper.TIMEOUT);
+		assertEquals(oldval, event.oldvalue(), "old value");
+		assertEquals(newval, event.value(), "new value");
+		assertEquals(info, event.info(), "info");
 	}
 }

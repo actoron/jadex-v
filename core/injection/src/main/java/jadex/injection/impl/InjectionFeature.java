@@ -1,5 +1,6 @@
 package jadex.injection.impl;
 
+import java.lang.System.Logger.Level;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -226,43 +227,70 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		}
 	}
 	
+	/** Holder to pass error to listener processing. */
+	public static class ErrorHolder { public Error error; }
+	/** Allow checking if currently in listener processing to postpone errors like BDI PlanAborted.*/
+	public static ThreadLocal<ErrorHolder>	LISTENER_ERROR	= new ThreadLocal<>();
+	
 	/**
 	 *  Notify about a change in a dynamic field.
 	 */
 	public void valueChanged(ChangeEvent event)
 	{
-		// Generic handlers for e.g. sending result events.
-		Set<Class<? extends Annotation>> kinds	= model.getDynamicValue(event.name()).kinds();
-		for(Class<? extends Annotation> kind: kinds)
+		ErrorHolder	holder	= new ErrorHolder();
+		try
 		{
-			List<IChangeHandler>	handlers	= model.getChangeHandlers(kind);
-			if(handlers!=null)
+			LISTENER_ERROR.set(holder);
+			
+			// Generic handlers for e.g. sending result events.
+			Set<Class<? extends Annotation>> kinds	= model.getDynamicValue(event.name()).kinds();
+			for(Class<? extends Annotation> kind: kinds)
 			{
-				for(IChangeHandler handler: handlers)
+				List<IChangeHandler>	handlers	= model.getChangeHandlers(kind);
+				if(handlers!=null)
 				{
-					handler.handleChange(self, event);
+					for(IChangeHandler handler: handlers)
+					{
+						handler.handleChange(self, event);
+					}
+				}
+			}
+			
+			// Value specific listeners.
+			if(listeners!=null)
+			{
+				Set<IChangeListener>	set	= listeners.get(event.name());
+				if(set!=null)
+				{
+					for(IChangeListener l: set)
+					{
+						try
+						{
+							l.valueChanged(event);
+						}
+						catch(Exception ex)
+						{
+							self.getLogger().log(Level.WARNING, "Exception in "+event.name()+" listener: "+l+", "+ex);
+						}
+					}
 				}
 			}
 		}
-		
-		// Value specific listeners.
-		if(listeners!=null)
+		finally
 		{
-			Set<IChangeListener>	set	= listeners.get(event.name());
-			if(set!=null)
-			{
-				for(IChangeListener l: set)
-				{
-					l.valueChanged(event);
-				}
-			}
+			LISTENER_ERROR.remove();
+		}
+		
+		if(holder.error!=null)
+		{
+			throw holder.error;
 		}
 	}
 	
 	/**
 	 *  Add dependencies between dynamic values.
 	 */
-	public void	addDependencies(Dyn<?> dyn, String name, List<String> dependencies)
+	public void	addDependencies(Dyn<?> dyn, String name, Set<String> dependencies)
 	{
 		for(String dep: dependencies)
 		{

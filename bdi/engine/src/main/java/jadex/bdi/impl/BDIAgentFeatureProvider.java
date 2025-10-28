@@ -19,7 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.ICapability;
@@ -51,6 +51,7 @@ import jadex.bdi.annotation.Plans;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.impl.goal.MGoal;
+import jadex.bdi.impl.goal.MGoal.IGoalConditionAction;
 import jadex.bdi.impl.goal.RGoal;
 import jadex.bdi.impl.plan.ClassPlanBody;
 import jadex.bdi.impl.plan.ExecutePlanStepAction;
@@ -60,6 +61,7 @@ import jadex.bdi.impl.plan.RPlan;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
+import jadex.core.ChangeEvent;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IChangeListener;
@@ -76,12 +78,7 @@ import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionFeature;
 import jadex.injection.impl.InjectionModel;
 import jadex.injection.impl.InjectionModel.MDynVal;
-import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
-import jadex.rules.eca.EventType;
-import jadex.rules.eca.ICondition;
-import jadex.rules.eca.Rule;
-import jadex.rules.eca.RuleSystem;
 
 /**
  *  Handle BDI agent creation etc.
@@ -420,39 +417,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 				}
 			}
 			
-			
-			// Outmost pojo (agent)
-			if(imodel==imodel.getRootModel())
-			{
-				// Add generic belief event to rule system forwarding
-				imodel.addChangeHandler(Belief.class, (comp, event) ->
-				{
-					String	typename	=
-							event.type()==Type.ADDED ? 		BDIRuleEventType.FACTADDED :
-							event.type()==Type.REMOVED ?	BDIRuleEventType.FACTREMOVED :
-						/*	event.type()==Type.CHANGED ?*/	BDIRuleEventType.FACTCHANGED ;
-						
-						EventType	type	= new EventType(typename, event.name());
-						Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
-						RuleSystem	rs	= ((BDIAgentFeature) comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						rs.addEvent(ev);
-				});
-
-				// Add generic goal parameter event to rule system forwarding
-				imodel.addChangeHandler(GoalParameter.class, (comp, event) ->
-				{
-					String	typename	=
-							event.type()==Type.ADDED ? 		BDIRuleEventType.VALUEADDED :
-							event.type()==Type.REMOVED ?	BDIRuleEventType.VALUEREMOVED :
-						/*	event.type()==Type.CHANGED ?*/	BDIRuleEventType.VALUECHANGED ;
-						
-						EventType	type	= new EventType(typename, event.name());
-						Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
-						RuleSystem	rs	= ((BDIAgentFeature) comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						rs.addEvent(ev);
-				});
-			}
-			
 			// If goal -> init parameters
 			if(pojoclazz.isAnnotationPresent(Goal.class)
 				// Skip if @Goal is placed on agent for external goals.
@@ -501,7 +465,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		Trigger	trigger	= anno.trigger();
 		String	planname	= m.getDeclaringClass().getName()+"."+m.getName();
 		
-		List<String>	deps	= addPrefix(capaprefix, trigger.factadded());
+		Set<String>	deps	= new LinkedHashSet<>();
+		deps.addAll(addPrefix(capaprefix, trigger.factadded()));
 		deps.addAll(addPrefix(capaprefix, trigger.factremoved()));
 		deps.addAll(addPrefix(capaprefix, trigger.factchanged()));
 
@@ -598,7 +563,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	 *  Create contextfetchers for triggering events.
 	 */
 	protected static Map<Class<? extends Annotation>, List<IValueFetcherCreator>> createContextFetchers(
-		InjectionModel imodel, Class<?>[][] goalevents, String element, boolean plan, List<String> dynvals)
+		InjectionModel imodel, Class<?>[][] goalevents, String element, boolean plan, Set<String> dynvals)
 	{
 		List<IValueFetcherCreator>	lcreators	= null;
 		
@@ -722,8 +687,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 						{
 							// Support fact injection in conditions but inject null, when triggered by goal (hack!?)
 							// e.g. goal-adopted triggers initial check of target condition.
-							Object	value	= ((Event)context).getContent();
-							return value instanceof ChangeInfo<?> ? ((ChangeInfo<?>)value).getValue() : null;
+							return context instanceof ChangeEvent ? ((ChangeEvent)context).value() : null;
 						};
 					}
 				}
@@ -769,7 +733,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		List<String>	path	= imodel.getPath()!=null ? new ArrayList<>(imodel.getPath()) : new ArrayList<>();
 		path.add(planname);
 
-		List<String>	deps	= addPrefix(capaprefix, trigger.factadded());
+		Set<String>	deps	= new LinkedHashSet<>();
+		deps.addAll(addPrefix(capaprefix, trigger.factadded()));
 		deps.addAll(addPrefix(capaprefix, trigger.factremoved()));
 		deps.addAll(addPrefix(capaprefix, trigger.factchanged()));
 		
@@ -808,7 +773,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		{
 			// createMethodInvocation(..) guarantees that a single method exists.
 			Method	contextmethod	= InjectionModel.findMethods(planclazz, PlanContextCondition.class).get(0);
-			List<String>	dynvals	= imodel.findDependentFields(contextmethod);
+			Set<String>	dynvals	= imodel.findDependentFields(contextmethod);
 			
 			// Create event listeners on start
 			if(dynvals.size()>0)
@@ -877,54 +842,49 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		InjectionModel.getStatic(goalclazzes, path, null);
 		
 		
-		// Add rules to trigger creation condition for annotated constructors and methods
+		// Add listeners to trigger creation condition for annotated constructors and methods
 		List<Executable>	executables	= new ArrayList<>(4);
 		executables.addAll(InjectionModel.findConstructors(goalclazz, GoalCreationCondition.class));
 		executables.addAll(InjectionModel.findMethods(goalclazz, GoalCreationCondition.class));
-		int	numcreations	= 0;
 		for(Executable executable: executables)
 		{
 			GoalCreationCondition	creation	= executable.getAnnotation(GoalCreationCondition.class);
+			
+			// check for static
+			if(executable instanceof Method && !Modifier.isStatic(executable.getModifiers()))
+			{
+				throw new UnsupportedOperationException("Goal creation condition method must be static: "+executable);
+			}
+			
 			List<String>	factaddeds	= addPrefix(capaprefix, creation.factadded());
 			List<String>	factremoveds	= addPrefix(capaprefix, creation.factremoved());
 			List<String>	factchangeds	= addPrefix(capaprefix, creation.factchanged());
 			
-			List<String>	deps	= new ArrayList<>();
+			// Add fetcher for belief values.
+			Set<String>	deps	= new LinkedHashSet<>();
 			deps.addAll(factaddeds);
 			deps.addAll(factremoveds);
-			deps.addAll(factchangeds);
-			
-			// TODO: find beliefs of all capabilities!?
-			List<EventType>	events	= getCreationTriggerEvents(imodel, factaddeds, factremoveds, factchangeds, new Class<?>[0], goalname);
-			if(events!=null && events.size()>0)
+			deps.addAll(factchangeds);			
+			Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(imodel,
+				new Class<?>[][] {},
+				goalname, false, deps);
+								
+			IInjectionHandle	handle	= InjectionModel.createMethodInvocation(executable, parentclazzes, fcontextfetchers, null);
+				
+			// Constructor or method returning goal object
+			if(executable instanceof Constructor<?> || goalclazz.equals(((Method)executable).getReturnType()))
 			{
-				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-				
-				// Add fetcher for belief value.
-				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(imodel,
-					new Class<?>[][] {},
-					goalname, false, deps);
-				
-				// check for static
-				if(executable instanceof Method && !Modifier.isStatic(executable.getModifiers()))
+				// In extra on start, add rule to create goal when event happens.  
+				imodel.addPostInject((comp, pojos, context, oldval) ->
 				{
-					throw new UnsupportedOperationException("Goal creation condition method must be static: "+executable);
-				}
-				
-				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(executable, parentclazzes, fcontextfetchers, null);
-				String	rulename	= "GoalCreationCondition"+(++numcreations)+"_"+goalname;
-				
-				// Constructor or method returning goal object
-				if(executable instanceof Constructor<?> || goalclazz.equals(((Method)executable).getReturnType()))
-				{
-					// In extra on start, add rule to create goal when event happens.  
-					imodel.addPostInject((comp, pojos, context, oldval) ->
+					IInjectionFeature inj	=	comp.getFeature(IInjectionFeature.class);
+					for(String dynval: deps)
 					{
-						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						rs.getRulebase().addRule(new Rule<Void>(
-							rulename,	// Rule Name
-							ICondition.TRUE_CONDITION,	// Condition -> true
-							(event, rule, context2, condresult) ->
+						inj.addListener(dynval, event ->
+						{
+							if(event.type()==Type.ADDED && factaddeds.contains(dynval)
+								|| event.type()==Type.REMOVED && factremoveds.contains(dynval)
+								|| event.type()==Type.CHANGED && factchangeds.contains(dynval))
 							{
 								Object	pojogoal	= handle.apply(comp, pojos, event, null);
 								if(pojogoal!=null)	// For method, check if no goal is created
@@ -932,26 +892,29 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 									RGoal	rgoal	= new RGoal(pojogoal, null, comp);
 									rgoal.adopt();
 								}
-								return IFuture.DONE;
-							},
-							aevents));	// Trigger Event(s)
-						return null;
-					});
-				}
+							}
+						});
+					}
+					return null;
+				});
+			}
 				
-				// boolean method
-				else if(SReflect.isSupertype(Boolean.class, ((Method)executable).getReturnType()))
+			// boolean method
+			else if(SReflect.isSupertype(Boolean.class, ((Method)executable).getReturnType()))
+			{
+				IInjectionHandle	constructor	= InjectionModel.findViableConstructor(goalclazz, parentclazzes, fcontextfetchers);
+				
+				// In extra on start, add rule to create goal when event happens.  
+				imodel.addPostInject((comp, pojos, context, oldval) ->
 				{
-					IInjectionHandle	constructor	= InjectionModel.findViableConstructor(goalclazz, parentclazzes, fcontextfetchers);
-					
-					// In extra on start, add rule to create goal when event happens.  
-					imodel.addPostInject((comp, pojos, context, oldval) ->
+					IInjectionFeature inj	=	comp.getFeature(IInjectionFeature.class);
+					for(String dynval: deps)
 					{
-						RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-						rs.getRulebase().addRule(new Rule<Void>(
-							rulename,	// Rule Name
-							ICondition.TRUE_CONDITION,	// Condition -> true
-							(event, rule, context2, condresult) ->
+						inj.addListener(dynval, event ->
+						{
+							if(event.type()==Type.ADDED && factaddeds.contains(dynval)
+								|| event.type()==Type.REMOVED && factremoveds.contains(dynval)
+								|| event.type()==Type.CHANGED && factchangeds.contains(dynval))
 							{
 								Boolean	value	= (Boolean)handle.apply(comp, pojos, event, null);
 								if(Boolean.TRUE.equals(value))
@@ -960,124 +923,82 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 									RGoal	rgoal	= new RGoal(pojogoal, null, comp);
 									rgoal.adopt();
 								}
-								return IFuture.DONE;
-							},
-							aevents));	// Trigger Event(s)
-						return null;
-					});
-				}
-				else
-				{
-					throw new UnsupportedOperationException("Goal creation condition method must return boolean or goal object: "+executable);
-				}
+							}
+						});
+					}
+					return null;
+				});
 			}
 			else
 			{
-				throw new UnsupportedOperationException("Creation condition must specify at least one trigger belief: "+executable);
+				throw new UnsupportedOperationException("Goal creation condition method must return boolean or goal object: "+executable);
 			}
 		}
 		
 		// Add context condition rules
 		List<Method>	contextcondmethods	= InjectionModel.findMethods(goalclazz, GoalContextCondition.class);
-		numcreations	= 0;
+		List<IGoalConditionAction>	contextactions	= new ArrayList<>();
 		for(Method method: contextcondmethods)
 		{
-			String	rulename	= "GoalContextCondition"+(++numcreations)+"_"+goalname;
-			String	condname	= "context";
-			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createContextCondition(goalclazz, aevents, handle, rulename);
-			
-			addCondition(imodel, goalname, method, condname, creator, true);
+			IGoalConditionAction	action	= addCondition(imodel, goalclazz, method, "context",
+				handle -> createContextCondition(handle), true);
+			contextactions.add(action);
 		}
-		
+
 		// Add drop condition rules
 		List<Method>	dropcondmethods	= InjectionModel.findMethods(goalclazz, GoalDropCondition.class);
-		numcreations	= 0;
+		List<IGoalConditionAction>	dropactions	= new ArrayList<>();
 		for(Method method: dropcondmethods)
 		{
-			String	rulename	= "GoalDropCondition"+(++numcreations)+"_"+goalname;
-			String	condname	= "drop";
-			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createDropCondition(goalclazz, aevents, handle, rulename);
-			
-			addCondition(imodel, goalname, method, condname, creator, true);
+			IGoalConditionAction	action	= addCondition(imodel, goalclazz, method, "drop",
+				handle -> createDropCondition(handle), true);
+			dropactions.add(action);
 		}
 		
 		// Add recur condition rules
 		List<Method>	recurcondmethods	= InjectionModel.findMethods(goalclazz, GoalRecurCondition.class);
-		numcreations	= 0;
+		List<IGoalConditionAction>	recuractions	= new ArrayList<>();
 		for(Method method: recurcondmethods)
 		{
-			String	rulename	= "GoalRecurCondition"+(++numcreations)+"_"+goalname;
-			String	condname	= "recur";
-			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createRecurCondition(goalclazz, aevents, handle, rulename);
-			
-			addCondition(imodel, goalname, method, condname, creator, true);
+			IGoalConditionAction	action	= addCondition(imodel, goalclazz, method, "recur",
+				handle -> createRecurCondition(handle), true);
+			recuractions.add(action);
 		}
 		
 		// Add query condition rules
 		List<Method>	querycondmethods	= InjectionModel.findMethods(goalclazz, GoalQueryCondition.class);
-		numcreations	= 0;
+		List<IGoalConditionAction>	queryactions	= new ArrayList<>();
 		for(Method method: querycondmethods)
 		{
-			String	rulename	= "GoalQueryCondition"+(++numcreations)+"_"+goalname;
-			String	condname	= "query";
-			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createQueryCondition(goalclazz, aevents, handle, rulename);
-			
-			addCondition(imodel, goalname, method, condname, creator, false);
+			IGoalConditionAction	action	= addCondition(imodel, goalclazz, method, "query",
+				handle -> createQueryCondition(handle), false);
+			queryactions.add(action);
 		}
 		
 		// Add target condition rules
 		List<Method>	targetcondmethods	= InjectionModel.findMethods(goalclazz, GoalTargetCondition.class);
-		numcreations	= 0;
+		List<IGoalConditionAction>	targetactions	= new ArrayList<>();
 		for(Method method: targetcondmethods)
 		{
-			String	rulename	= "GoalTargetCondition"+(++numcreations)+"_"+goalname;
-			String	condname	= "target";
-			BiFunction<EventType[], IInjectionHandle, IInjectionHandle>	creator	= (aevents, handle) -> createTargetCondition(goalclazz, aevents, handle, rulename);
-			
-			addCondition(imodel, goalname, method, condname, creator, true);
+			IGoalConditionAction	action	= addCondition(imodel, goalclazz, method, "target",
+				handle -> createTargetCondition(handle), true);
+			targetactions.add(action);
 		}
-
+		
 		// Add maintain condition rules
 		List<Method>	maintaincondmethods	= InjectionModel.findMethods(goalclazz, GoalMaintainCondition.class);
-		numcreations	= 0;
+		List<IGoalConditionAction>	maintainactions	= new ArrayList<>();
 		for(Method method: maintaincondmethods)
 		{
-			List<String>	dynvals	= imodel.findDependentFields(method);
-			List<EventType>	events	= getConditionTriggerEvents(imodel, method);
-			if(events!=null && events.size()>0)
+			IGoalConditionAction	action	= addCondition(imodel, goalclazz, method, "maintain",
+				handle -> createMaintainCondition(handle), true);
+			maintainactions.add(action);
+			
+			// If no separate target condition -> add maintain as target.
+			if(targetcondmethods.isEmpty())
 			{
-				// Add fetcher for belief value.
-				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(imodel,
-					new Class<?>[][] {},
-					goalname, false, dynvals);
-				
-				IInjectionHandle	handle	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
-				
-				// check for boolean method
-				if(SReflect.isSupertype(Boolean.class, method.getReturnType()))
-				{
-					// If no separate target condition -> add maintain as target.
-					if(targetcondmethods.isEmpty())
-					{
-						String	rulename	= "GoalMaintainTargetCondition"+(++numcreations)+"_"+goalname;
-						EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-						imodel.addPostInject(createTargetCondition(goalclazz, aevents, handle, rulename));						
-					}
-					
-					// In extra on start, add rule to create goal when event happens.  
-					String	rulename	= "GoalMaintainCondition"+(++numcreations)+"_"+goalname;
-					events.add(new EventType(new String[]{BDIRuleEventType.GOALADOPTED, goalname}));
-					EventType[]	aevents	= events.toArray(new EventType[events.size()]);
-					imodel.addPostInject(createMaintainCondition(goalclazz, aevents, handle, rulename));
-				}
-				else
-				{
-					throw new UnsupportedOperationException("Goal maintain condition method must return boolean: "+method);
-				}
-			}
-			else
-			{
-				throw new UnsupportedOperationException("Goal maintain condition must specify at least one trigger belief: "+method);
+				addCondition(imodel, goalclazz, method, "maintain",
+					handle -> createTargetCondition(handle), true);
 			}
 		}
 		
@@ -1139,7 +1060,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		IInjectionHandle	aplbuild	= createMethodInvocation(goalclazz, parentclazzes, GoalAPLBuild.class, imodel.getContextFetchers(), Collection.class);
 		IInjectionHandle	selectcandidate = createGoalSelectCandidateMethod(goalclazz, parentclazzes, imodel.getContextFetchers());
 
-		MGoal mgoal	= new MGoal(!querycondmethods.isEmpty(), !targetcondmethods.isEmpty(), !maintaincondmethods.isEmpty(), !recurcondmethods.isEmpty(),
+		MGoal mgoal	= new MGoal(queryactions, targetactions, maintainactions, recuractions, contextactions, dropactions,
 			anno, parentclazzes, aplbuild, selectcandidate, instanceinhibs);
 		
 		// BDI model is for outmost pojo.
@@ -1147,25 +1068,22 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		model.addGoal(goalclazz, mgoal);
 	}
 
-	protected void addCondition(InjectionModel imodel, String goalname,
+	protected IGoalConditionAction	addCondition(InjectionModel imodel, Class<?> goalclazz,
 			Method method, String condname,
-			BiFunction<EventType[], IInjectionHandle, IInjectionHandle> creator, boolean bool)
+			Function<IInjectionHandle, IGoalConditionAction> creator, boolean bool)
 	{
-		List<String>	fields	= imodel.findDependentFields(method);
-		List<Class<?>>	parentclazzes	= imodel.getPojoClazzes();
-		List<EventType>	events	= getConditionTriggerEvents(imodel, method);
-		if(events!=null && events.size()>0)
+		Set<String>	fields	= imodel.findDependentFields(method);
+		if(!fields.isEmpty())
 		{
 			// check for boolean method
 			if(!bool || SReflect.isSupertype(Boolean.class, method.getReturnType()))
 			{
-				events.add(new EventType(new String[]{BDIRuleEventType.GOALADOPTED, goalname}));
-				EventType[]	aevents	= events.toArray(new EventType[events.size()]);
+				List<Class<?>>	parentclazzes	= imodel.getPojoClazzes();
 				
-				// Add fetcher for belief value.
+				// Add fetcher for field value types.
 				Map<Class<? extends Annotation>,List<IValueFetcherCreator>>	fcontextfetchers	= createContextFetchers(imodel,
 					new Class<?>[][] {},
-					goalname, false, fields);
+					goalclazz.getName(), false, fields);
 				
 				IInjectionHandle	handle0	= InjectionModel.createMethodInvocation(method, parentclazzes, fcontextfetchers, null);
 				IInjectionHandle	handle	= (self, pojos, context, oldval) ->
@@ -1190,8 +1108,33 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					}
 				};
 				
-				// In extra on start, add rule to suspend goal when event happens.  
-				imodel.addPostInject(creator.apply(aevents, handle));
+				IGoalConditionAction	action	= creator.apply(handle);
+				
+				// On start, add listeners to execute condition action on events.
+				imodel.addPostInject((self, pojos, context, oldval) ->
+				{
+					IInjectionFeature	inj	= self.getFeature(IInjectionFeature.class);
+					BDIAgentFeature bdi	= (BDIAgentFeature) self.getFeature(IBDIAgentFeature.class);
+					IChangeListener	listener	= event ->
+					{
+						Set<RGoal>	rgoals	= bdi.doGetGoals(goalclazz);
+						if(rgoals!=null)
+						{
+							// TODO: only execute for matching instance on parameter change.
+							for(RGoal rgoal: rgoals)
+							{
+								action.execute(self, event, rgoal);
+							}
+						}
+					};
+					for(String dynval: fields)
+					{
+						inj.addListener(dynval, listener);
+					}
+					return null;
+				});
+				
+				return action;
 			}
 			else
 			{
@@ -1233,228 +1176,120 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 	}
 
 	/**
-	 *  Create a handle that adds a context condition rule for a goal type.
+	 *  Create context condition action.
 	 */
-	protected IInjectionHandle createContextCondition(Class<?> goalclazz, EventType[] aevents,
-		IInjectionHandle conditionmethod, String rulename)
+	protected IGoalConditionAction createContextCondition(IInjectionHandle conditionmethod)
 	{
-		return (comp, pojos, context, oldval) ->
+		return (comp, event, goal) ->
 		{
-			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-			rs.getRulebase().addRule(new Rule<Void>(
-				rulename,	// Rule Name
-				ICondition.TRUE_CONDITION,	// Condition -> true
-				(event, rule, context2, condresult) ->
+			if(RGoal.GoalLifecycleState.SUSPENDED.equals(goal.getLifecycleState()))
+			{	
+				Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
+				if(Boolean.TRUE.equals(value))
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
-					if(goals!=null)
-					{
-						for(RGoal goal: goals)
-						{
-							if(RGoal.GoalLifecycleState.SUSPENDED.equals(goal.getLifecycleState()))
-							{	
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
-								if(Boolean.TRUE.equals(value))
-								{
-									goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
-								}
-							}
-							else if(!RGoal.GoalLifecycleState.DROPPING.equals(goal.getLifecycleState())
-								  && !RGoal.GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()))
-							{	
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
-								if(!Boolean.TRUE.equals(value))
-								{
-									goal.setLifecycleState(RGoal.GoalLifecycleState.SUSPENDED);
-								}
-							}
-						}
-					}
-					return IFuture.DONE;
-				},
-				aevents));	// Trigger Event(s)
-			return null;
+					goal.setLifecycleState(RGoal.GoalLifecycleState.OPTION);
+				}
+			}
+			else if(!RGoal.GoalLifecycleState.DROPPING.equals(goal.getLifecycleState())
+				  && !RGoal.GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()))
+			{	
+				Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
+				if(!Boolean.TRUE.equals(value))
+				{
+					goal.setLifecycleState(RGoal.GoalLifecycleState.SUSPENDED);
+				}
+			}
 		};
 	}
 
 	/**
-	 *  Create a handle that adds a query condition rule for a goal type.
+	 *  Create query condition action.
 	 */
-	protected IInjectionHandle createQueryCondition(Class<?> goalclazz, EventType[] aevents,
-		IInjectionHandle conditionmethod, String rulename)
+	protected IGoalConditionAction createQueryCondition(IInjectionHandle conditionmethod)
 	{
-		return (comp, pojos, context, oldval) ->
+		return (comp, event, goal) ->
 		{
-			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-			rs.getRulebase().addRule(new Rule<Void>(
-				rulename,	// Rule Name
-				ICondition.TRUE_CONDITION,	// Condition -> true
-				(event, rule, context2, condresult) ->
+			if(!goal.isFinished())
+			{
+				Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
+				if(value!=null)
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
-					if(goals!=null)
-					{
-						for(RGoal goal: goals)
-						{
-							if(!goal.isFinished())
-							{
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
-								if(value!=null)
-								{
-									goal.queryConditionTriggered(value);
-								}
-							}
-						}
-					}
-					return IFuture.DONE;
-				},
-				aevents));	// Trigger Event(s)
-			return null;
+					goal.queryConditionTriggered(value);
+				}
+			}
 		};
 	}
 
 	/**
-	 *  Create a handle that adds a target condition rule for a goal type.
+	 *  Create target condition action
 	 */
-	protected IInjectionHandle createTargetCondition(Class<?> goalclazz, EventType[] aevents,
-		IInjectionHandle conditionmethod, String rulename)
+	protected IGoalConditionAction createTargetCondition(IInjectionHandle conditionmethod)
 	{
-		return (comp, pojos, context, oldval) ->
+		return (comp, event, goal) ->
 		{
-			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-			rs.getRulebase().addRule(new Rule<Void>(
-				rulename,	// Rule Name
-				ICondition.TRUE_CONDITION,	// Condition -> true
-				(event, rule, context2, condresult) ->
+			if(!goal.isFinished())
+			{
+				Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
+				if(Boolean.TRUE.equals(value))
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
-					if(goals!=null)
-					{
-						for(RGoal goal: goals)
-						{
-							if(!goal.isFinished())
-							{
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
-								if(Boolean.TRUE.equals(value))
-								{
-									goal.targetConditionTriggered(/*event, rule, context2*/);
-								}
-							}
-						}
-					}
-					return IFuture.DONE;
-				},
-				aevents));	// Trigger Event(s)
-			return null;
+					goal.targetConditionTriggered(/*event, rule, context2*/);
+				}
+			}
 		};
 	}
 
 	/**
-	 *  Create a handle that adds a drop condition rule for a goal type.
+	 *  Create drop condition action.
 	 */
-	protected IInjectionHandle createDropCondition(Class<?> goalclazz, EventType[] aevents,
-		IInjectionHandle conditionmethod, String rulename)
+	protected IGoalConditionAction createDropCondition(IInjectionHandle conditionmethod)
 	{
-		return (comp, pojos, context, oldval) ->
+		return (comp, event, goal) ->
 		{
-			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-			rs.getRulebase().addRule(new Rule<Void>(
-				rulename,	// Rule Name
-				ICondition.TRUE_CONDITION,	// Condition -> true
-				(event, rule, context2, condresult) ->
+			if(!RGoal.GoalLifecycleState.DROPPING.equals(goal.getLifecycleState())
+				 && !RGoal.GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()))
+			{
+				Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
+				if(Boolean.TRUE.equals(value))
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
-					if(goals!=null)
-					{
-						for(RGoal goal: goals)
-						{
-							if(!RGoal.GoalLifecycleState.DROPPING.equals(goal.getLifecycleState())
-								 && !RGoal.GoalLifecycleState.DROPPED.equals(goal.getLifecycleState()))
-							{
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
-								if(Boolean.TRUE.equals(value))
-								{
-									goal.drop();
-								}
-							}
-						}
-					}
-					return IFuture.DONE;
-				},
-				aevents));	// Trigger Event(s)
-			return null;
+					goal.drop();
+				}
+			}
 		};
 	}
 
 	/**
-	 *  Create a handle that adds a drop condition rule for a goal type.
+	 *  Create a recur condition action.
 	 */
-	protected IInjectionHandle createRecurCondition(Class<?> goalclazz, EventType[] aevents,
-		IInjectionHandle conditionmethod, String rulename)
+	protected IGoalConditionAction createRecurCondition(IInjectionHandle conditionmethod)
 	{
-		return (comp, pojos, context, oldval) ->
+		return (comp, event, goal) ->
 		{
-			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-			rs.getRulebase().addRule(new Rule<Void>(
-				rulename,	// Rule Name
-				ICondition.TRUE_CONDITION,	// Condition -> true
-				(event, rule, context2, condresult) ->
+			if(RGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState())
+				&& RGoal.GoalProcessingState.PAUSED.equals(goal.getProcessingState()))
+			{
+				Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
+				if(Boolean.TRUE.equals(value))
 				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
-					if(goals!=null)
-					{
-						for(RGoal goal: goals)
-						{
-							if(RGoal.GoalLifecycleState.ACTIVE.equals(goal.getLifecycleState())
-								&& RGoal.GoalProcessingState.PAUSED.equals(goal.getProcessingState()))
-							{
-								Object	value	= conditionmethod.apply(comp, goal.getAllPojos(), event, null);
-								if(Boolean.TRUE.equals(value))
-								{
-									goal.setTriedPlans(null);
-									goal.setApplicablePlanList(null);
-									goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
-								}
-							}
-						}
-					}
-					return IFuture.DONE;
-				},
-				aevents));	// Trigger Event(s)
-			return null;
+					goal.setTriedPlans(null);
+					goal.setApplicablePlanList(null);
+					goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
+				}
+			}
 		};
 	}
 	
 	/**
 	 *  Create a handle that adds a maintain condition rule for a goal type.
 	 */
-	protected IInjectionHandle createMaintainCondition(Class<?> goalclazz, EventType[] aevents,
-		IInjectionHandle conditionmethod, String rulename)
+	protected IGoalConditionAction createMaintainCondition(IInjectionHandle conditionmethod)
 	{
-		return (comp, pojos, context, oldval) ->
+		return (comp, event, goal) ->
 		{
-			RuleSystem	rs	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-			rs.getRulebase().addRule(new Rule<Void>(
-				rulename,	// Rule Name
-				ICondition.TRUE_CONDITION,	// Condition -> true
-				(event, rule, context2, condresult) ->
-				{
-					Set<RGoal>	goals	= ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).doGetGoals(goalclazz);
-					if(goals!=null)
-					{
-						for(RGoal goal: goals)
-						{
-							Boolean	value	= (Boolean)conditionmethod.apply(comp, goal.getAllPojos(), event, null);
-							if(!Boolean.TRUE.equals(value))
-							{
-								goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
-							}
-						}
-					}
-					return IFuture.DONE;
-				},
-				aevents));	// Trigger Event(s)
-			return null;
+			Boolean	value	= (Boolean)conditionmethod.apply(comp, goal.getAllPojos(), event, null);
+			if(!Boolean.TRUE.equals(value))
+			{
+				goal.setProcessingState(RGoal.GoalProcessingState.INPROCESS);
+			}
 		};
 	}
 	
@@ -1484,59 +1319,6 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			throw new UnsupportedOperationException("Multiple @"+anno.getSimpleName()+" annotations: "+methods);
 		}
 		return ret;
-	}
-
-	/**
-	 *  Get rule events that trigger the plan/goal, if any.
-	 */
-	protected static List<EventType> getCreationTriggerEvents(InjectionModel imodel, List<String> factadded, List<String> factremoved, List<String> factchanged, Class<?>[] goalfinished, String element)
-	{
-		List<EventType>	events	= null;
-		if(factadded.size()>0
-			|| factremoved.size()>0
-			|| factchanged.size()>0
-			|| goalfinished.length>0)
-		{
-			events	= new ArrayList<>(4);
-			
-			// Add fact trigger events.
-			Map<String, List<String>>	tevents	= new LinkedHashMap<>();
-			tevents.put(BDIRuleEventType.FACTADDED, factadded);
-			tevents.put(BDIRuleEventType.FACTREMOVED, factremoved);
-			tevents.put(BDIRuleEventType.FACTCHANGED, factchanged);
-			for(String tevent: tevents.keySet())
-			{
-				for(String dep: tevents.get(tevent))
-				{
-					// call getBeliefType to check that belief exists (throws exception if not).
-					getValueType(imodel, dep, element);
-					events.add(new EventType(tevent, dep));
-				}
-			}
-		}
-		return events;
-	}
-	
-	/**
-	 *  Get rule events that trigger a condition, if any.
-	 */
-	protected static List<EventType> getConditionTriggerEvents(InjectionModel model, Method method)
-	{
-		List<EventType>	events	= new ArrayList<>(4);
-		
-		// Hack!!! just add all events
-		// TODO switch to change listener instead of rule base
-		List<String>	fields	= model.findDependentFields(method);
-		for(String field: fields)
-		{
-			events.add(new EventType(BDIRuleEventType.FACTADDED, field));
-			events.add(new EventType(BDIRuleEventType.FACTREMOVED, field));
-			events.add(new EventType(BDIRuleEventType.FACTCHANGED, field));
-			events.add(new EventType(BDIRuleEventType.VALUEADDED, field));
-			events.add(new EventType(BDIRuleEventType.VALUEREMOVED, field));
-			events.add(new EventType(BDIRuleEventType.VALUECHANGED, field));
-		}
-		return events;
 	}
 
 	/**
@@ -1571,5 +1353,5 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 		
 		// TODO: more checks?
 		// TODO: test cases for checks?
-	}
+	}	
 }

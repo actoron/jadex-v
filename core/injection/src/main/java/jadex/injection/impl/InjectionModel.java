@@ -924,14 +924,14 @@ public class InjectionModel
 	/**
 	 *  Scan byte code to find beliefs that are accessed in the method.
 	 */
-	public List<String> findDependentFields(Method method)
+	public Set<String> findDependentFields(Method method)
 	{
 		return findDependentFields(methodToAsmDesc(method));
 	}
 	
-	public List<String> findDependentFields(Field f)
+	public Set<String> findDependentFields(Field f)
 	{
-		List<String>	ret;
+		Set<String>	ret;
 		String callable = null;
 		synchronized(DYN_METHODS)
 		{
@@ -956,7 +956,7 @@ public class InjectionModel
 	/**
 	 *  Scan byte code to find fields that are accessed in the method.
 	 */
-	public List<String> findDependentFields(String desc)
+	public Set<String> findDependentFields(String desc)
 	{
 //		System.out.println("Finding fields accessed in method: "+desc);
 		// Find all method calls
@@ -982,7 +982,7 @@ public class InjectionModel
 		}
 		
 		// Find all accessed fields by fully qualified name
-		List<String>	deps	= new ArrayList<>();
+		Set<String>	deps	= new LinkedHashSet<>();
 		synchronized(ACCESSED_FIELDS)
 		{
 			for(String desc0: calls)
@@ -1120,7 +1120,7 @@ public class InjectionModel
 			// Dynamic belief (Dyn object)
 			if(Dyn.class.equals(f.getType()))
 			{
-				List<String>	deps	= findDependentFields(f);
+				Set<String>	deps	= findDependentFields(f);
 				
 				// Init Dyn on agent start
 				ret	= (comp, pojos, context, dummy) ->
