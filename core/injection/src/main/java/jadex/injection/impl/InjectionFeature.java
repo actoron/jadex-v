@@ -227,63 +227,50 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		}
 	}
 	
-	/** Holder to pass error to listener processing. */
-	public static class ErrorHolder { public Error error; }
-	/** Allow checking if currently in listener processing to postpone errors like BDI PlanAborted.*/
-	public static ThreadLocal<ErrorHolder>	LISTENER_ERROR	= new ThreadLocal<>();
-	
 	/**
 	 *  Notify about a change in a dynamic field.
 	 */
 	public void valueChanged(ChangeEvent event)
 	{
-		ErrorHolder	holder	= new ErrorHolder();
-		try
+		// Generic handlers for e.g. sending result events.
+		Set<Class<? extends Annotation>> kinds	= model.getDynamicValue(event.name()).kinds();
+		for(Class<? extends Annotation> kind: kinds)
 		{
-			LISTENER_ERROR.set(holder);
-			
-			// Generic handlers for e.g. sending result events.
-			Set<Class<? extends Annotation>> kinds	= model.getDynamicValue(event.name()).kinds();
-			for(Class<? extends Annotation> kind: kinds)
+			List<IChangeHandler>	handlers	= model.getChangeHandlers(kind);
+			if(handlers!=null)
 			{
-				List<IChangeHandler>	handlers	= model.getChangeHandlers(kind);
-				if(handlers!=null)
+				for(IChangeHandler handler: handlers)
 				{
-					for(IChangeHandler handler: handlers)
+					try
 					{
 						handler.handleChange(self, event);
 					}
-				}
-			}
-			
-			// Value specific listeners.
-			if(listeners!=null)
-			{
-				Set<IChangeListener>	set	= listeners.get(event.name());
-				if(set!=null)
-				{
-					for(IChangeListener l: set)
+					catch(Exception ex)
 					{
-						try
-						{
-							l.valueChanged(event);
-						}
-						catch(Exception ex)
-						{
-							self.getLogger().log(Level.WARNING, "Exception in "+event.name()+" listener: "+l+", "+ex);
-						}
+						self.getLogger().log(Level.WARNING, "Exception in "+event.name()+" handler: "+handler+", "+ex);
 					}
 				}
 			}
 		}
-		finally
-		{
-			LISTENER_ERROR.remove();
-		}
 		
-		if(holder.error!=null)
+		// Value specific listeners.
+		if(listeners!=null)
 		{
-			throw holder.error;
+			Set<IChangeListener>	set	= listeners.get(event.name());
+			if(set!=null)
+			{
+				for(IChangeListener l: set)
+				{
+					try
+					{
+						l.valueChanged(event);
+					}
+					catch(Exception ex)
+					{
+						self.getLogger().log(Level.WARNING, "Exception in "+event.name()+" listener: "+l+", "+ex);
+					}
+				}
+			}
 		}
 	}
 	

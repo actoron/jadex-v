@@ -13,7 +13,6 @@ import jadex.bdi.IPlan.GoalFinishedEvent;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
 import jadex.bdi.impl.IDeliberationStrategy;
-import jadex.bdi.impl.PlanAborted;
 import jadex.bdi.impl.goal.MGoal.IGoalConditionAction;
 import jadex.bdi.impl.plan.ExecutePlanStepAction;
 import jadex.bdi.impl.plan.RPlan;
@@ -24,8 +23,6 @@ import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
-import jadex.injection.impl.InjectionFeature;
-import jadex.injection.impl.InjectionFeature.ErrorHolder;
 
 /**
  *  Goal instance implementation.
@@ -470,24 +467,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		IFuture<Void>	ret;
 		if(childplan!=null)
 		{
-			// If currently processing change events -> throw PlanAborted later after all listeners are done.
-			ErrorHolder	holder	= InjectionFeature.LISTENER_ERROR.get();
-			if(holder!=null)
-			{
-				try
-				{
-					ret	= childplan.abort();
-				}
-				catch(PlanAborted pa)
-				{
-					holder.error	= pa;
-					ret	= IFuture.DONE;
-				}
-			}
-			else
-			{
-				ret	= childplan.abort();
-			}
+			ret	= childplan.abort();
 		}
 		else
 		{
