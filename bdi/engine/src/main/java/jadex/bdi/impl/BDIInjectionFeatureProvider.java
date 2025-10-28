@@ -1,5 +1,7 @@
 package jadex.bdi.impl;
 
+import java.util.Set;
+
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentHandle;
@@ -49,5 +51,13 @@ public class BDIInjectionFeatureProvider extends ComponentFeatureProvider<IInjec
 	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return null;
+	}
+	
+	@Override
+	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
+	{
+		// Make sure feature is last in list, because it starts user code that might not return.
+		all.remove(getFeatureType());
+		return all;
 	}
 }
