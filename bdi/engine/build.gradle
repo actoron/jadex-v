@@ -33,7 +33,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:classreader:'+v
 	//implementation 'org.activecomponents.jadex:bytecode:'+v
-	implementation 'org.activecomponents.jadex:eca:'+v
 	
 	testImplementation testFixtures('org.activecomponents.jadex:injection:'+v)
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'

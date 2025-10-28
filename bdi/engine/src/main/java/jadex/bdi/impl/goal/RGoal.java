@@ -9,9 +9,9 @@ import jadex.bdi.GoalDroppedException;
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
+import jadex.bdi.IPlan.GoalFinishedEvent;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
-import jadex.bdi.impl.BDIRuleEventType;
 import jadex.bdi.impl.IDeliberationStrategy;
 import jadex.bdi.impl.PlanAborted;
 import jadex.bdi.impl.goal.MGoal.IGoalConditionAction;
@@ -26,9 +26,6 @@ import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 import jadex.injection.impl.InjectionFeature;
 import jadex.injection.impl.InjectionFeature.ErrorHolder;
-import jadex.rules.eca.Event;
-import jadex.rules.eca.EventType;
-import jadex.rules.eca.RuleSystem;
 
 /**
  *  Goal instance implementation.
@@ -510,7 +507,7 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 		{
 			for(ICandidateInfo cand: cands)
 			{
-				RPlan	rplan	= cand.createPlan(getComponent(), new Event(new EventType(BDIRuleEventType.GOALDROPPED), this));
+				RPlan	rplan	= cand.createPlan(getComponent(), new GoalFinishedEvent(this));
 				if(cand.getBody().checkPrecondition(rplan))
 				{
 					comp.getFeature(IExecutionFeature.class).scheduleStep(new ExecutePlanStepAction(rplan));
@@ -1286,14 +1283,6 @@ public class RGoal extends /*RFinishableElement*/RProcessableElement implements 
 //		this.candidate = candidate;
 //	}
 	
-	/**
-	 *  Get the rule system.
-	 */
-	protected RuleSystem	getRuleSystem()
-	{
-		return ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getRuleSystem();
-	}
-
 	@Override
 	public String toString()
 	{

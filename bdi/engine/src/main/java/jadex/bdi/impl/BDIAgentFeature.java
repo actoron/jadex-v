@@ -21,13 +21,10 @@ import jadex.core.IChangeListener;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.IInternalExecutionFeature;
-import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionFeature;
-import jadex.rules.eca.IEvent;
-import jadex.rules.eca.RuleSystem;
 
 public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 {
@@ -36,9 +33,6 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	
 	/** The BDI model. */
 	protected BDIModel	model;
-	
-	/** The rule system. */
-	protected RuleSystem	rulesystem;
 	
 	/** The currently running plans. */
 	protected Map<IPlanBody, Set<RPlan>>	plans;
@@ -59,33 +53,6 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	{
 		this.self	= self;
 		this.model	= BDIModel.getModel(self.getPojo().getClass());
-		// TODO: true in old version but processEvents called for belief write!?
-		this.rulesystem	= new RuleSystem(self, false)
-		{
-			@Override
-			public IFuture<Void> addEvent(IEvent event)
-			{
-				// Avoid plan self-abort inside event processing
-				RPlan	rplan	= RPlan.RPLANS.get();
-				if(rplan!=null && !rplan.isAtomic())
-				{
-					try
-					{
-						rplan.startAtomic();
-						return super.addEvent(event);
-					}
-					finally
-					{
-						rplan.endAtomic();
-					}
-				}
-				
-				else
-				{
-					return super.addEvent(event);
-				}
-			}
-		};
 	}
 	
 	//-------- ILifecycle interface --------
@@ -209,14 +176,6 @@ public class BDIAgentFeature implements IBDIAgentFeature, ILifecycle
 	}
 	
 	//-------- internal methods --------
-	
-	/**
-	 *  Get the rule system.
-	 */
-	public RuleSystem	getRuleSystem()
-	{
-		return this.rulesystem;
-	}
 	
 	/**
 	 *  Get the model.

@@ -1,7 +1,6 @@
 package jadex.bdi.plan;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,20 +10,19 @@ import org.junit.jupiter.api.Test;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
+import jadex.bdi.IPlan.GoalFinishedEvent;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
-import jadex.bdi.impl.BDIRuleEventType;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.future.Future;
-import jadex.rules.eca.Event;
 
 /**
  *  Test all kinds of plan triggers
@@ -41,7 +39,7 @@ public class PlanTriggerTest
 		Future<jadex.core.ChangeEvent>	changed	= new Future<>();
 		Future<jadex.core.ChangeEvent>	removed	= new Future<>();
 		Future<IGoal>	goal	= new Future<>();
-		Future<Event>	goalfinished	= new Future<>();
+		Future<GoalFinishedEvent>	goalfinished	= new Future<>();
 		
 		@Goal
 		class MyGoal{}
@@ -73,7 +71,7 @@ public class PlanTriggerTest
 		@Plan(trigger=@Trigger(goalfinisheds=MyGoal.class))
 		void goalFinishedPlan(IPlan plan)
 		{
-			goalfinished.setResult((Event) plan.getReason());
+			goalfinished.setResult((GoalFinishedEvent) plan.getReason());
 		}
 	}
 	
@@ -127,7 +125,7 @@ public class PlanTriggerTest
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
 		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
-		checkGoalEventInfo(pojo.goalfinished, BDIRuleEventType.GOALDROPPED, PlanTriggerTestAgent.MyGoal.class);
+		checkGoalEventInfo(pojo.goalfinished, PlanTriggerTestAgent.MyGoal.class);
 	}
 
 	/**
@@ -156,12 +154,10 @@ public class PlanTriggerTest
 	/**
 	 *  Check if old/new value and info match expectations.
 	 */
-	public static void checkGoalEventInfo(Future<Event> fut, String type, Class<?> pojoclass)
+	public static void checkGoalEventInfo(Future<GoalFinishedEvent> fut, Class<?> pojoclass)
 	{
-		Event	event	= fut.get(TestHelper.TIMEOUT);
-		assertEquals(type, event.getType().getType(0), "type");
-		assertInstanceOf(IGoal.class, event.getContent());
-		assertEquals(pojoclass, ((IGoal)event.getContent()).getPojo().getClass(), "pojo");
+		GoalFinishedEvent	event	= fut.get(TestHelper.TIMEOUT);
+		assertEquals(pojoclass, event.goal().getPojo().getClass(), "pojo");
 	}
 }
 

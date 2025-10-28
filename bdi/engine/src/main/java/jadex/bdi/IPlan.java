@@ -10,6 +10,11 @@ import jadex.future.ITerminableFuture;
 public interface IPlan// extends IParameterElement, IFinishableElement<Object>  // todo: do not extend IParameterElement in case of non bdiv3x
 {
 	/**
+	 *  Plan reason when triggered for goal finished event.
+	 */
+	public static record GoalFinishedEvent(IGoal goal) {}
+	
+	/**
 	 *  Get the id.
 	 */
 	public String getId();

@@ -25,6 +25,7 @@ import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.ICapability;
 import jadex.bdi.IGoal;
 import jadex.bdi.IPlan;
+import jadex.bdi.IPlan.GoalFinishedEvent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
 import jadex.bdi.annotation.Goal;
@@ -78,7 +79,6 @@ import jadex.injection.impl.IValueFetcherCreator;
 import jadex.injection.impl.InjectionFeature;
 import jadex.injection.impl.InjectionModel;
 import jadex.injection.impl.InjectionModel.MDynVal;
-import jadex.rules.eca.Event;
 
 /**
  *  Handle BDI agent creation etc.
@@ -593,8 +593,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							// Both triggers -> need to check reason type.
 							return (comp, pojos, context, oldval) ->
 							{
-								return ((IPlan)context).getReason() instanceof Event 
-									? ((IGoal) ((Event)((IPlan)context).getReason()).getContent()).getPojo()
+								return ((IPlan)context).getReason() instanceof GoalFinishedEvent 
+									? ((IGoal) ((GoalFinishedEvent)((IPlan)context).getReason()).goal()).getPojo()
 									: ((IGoal) ((IPlan)context).getReason()).getPojo();
 							};
 						}
@@ -607,7 +607,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					else
 					{
 						// Only goal finished triggers
-						return (comp, pojos, context, oldval) -> ((IGoal) ((Event)((IPlan)context).getReason()).getContent()).getPojo();
+						return (comp, pojos, context, oldval) -> ((IGoal) ((GoalFinishedEvent)((IPlan)context).getReason()).goal()).getPojo();
 					}
 				}
 				else
@@ -633,8 +633,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 							// Both triggers -> need to check reason type.
 							return (comp, pojos, context, oldval) ->
 							{
-								return ((IPlan)context).getReason() instanceof Event 
-									? ((Event)((IPlan)context).getReason()).getContent()
+								return ((IPlan)context).getReason() instanceof GoalFinishedEvent 
+									? ((GoalFinishedEvent)((IPlan)context).getReason()).goal()
 									: ((IPlan)context).getReason();
 							};
 						}
@@ -647,7 +647,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					else
 					{
 						// Only goal finished triggers
-						return (comp, pojos, context, oldval) -> ((Event)((IPlan)context).getReason()).getContent();
+						return (comp, pojos, context, oldval) -> ((GoalFinishedEvent)((IPlan)context).getReason()).goal();
 					}
 				}
 				else
