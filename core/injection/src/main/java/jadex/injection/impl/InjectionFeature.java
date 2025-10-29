@@ -279,23 +279,24 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	 */
 	public void	addDependencies(Dyn<?> dyn, String name, Set<String> dependencies)
 	{
+		IChangeListener	listener	= new IChangeListener()
+		{
+			Object	oldvalue	= dyn.get();
+
+			@Override
+			public void valueChanged(ChangeEvent event)
+			{
+				Object	newvalue	= dyn.get();
+				if(!SUtil.equals(oldvalue, newvalue))
+				{
+					InjectionFeature.this.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, name, newvalue, oldvalue, null));
+				}
+				oldvalue	= newvalue;
+			}
+		};
 		for(String dep: dependencies)
 		{
-			addListener(dep, new IChangeListener()
-			{
-				Object	oldvalue	= dyn.get();
-
-				@Override
-				public void valueChanged(ChangeEvent event)
-				{
-					Object	newvalue	= dyn.get();
-					if(!SUtil.equals(oldvalue, newvalue))
-					{
-						InjectionFeature.this.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, name, newvalue, oldvalue, null));
-					}
-					oldvalue	= newvalue;
-				}
-			});
+			addListener(dep, listener);
 		}
 	}
 	
