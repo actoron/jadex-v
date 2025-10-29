@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  *  and the goal creation process.
  *  
  *  1) The simplest way is to annotate the constructor of a goal class.
- *  You need to add names of beliefs, parameters or raw events that should trigger
+ *  You need to add names of beliefs that should trigger
  *  the creation of a new goal instance. For example, if a specified belief is
  *  not null / or a belief set does contain elements, the value will be injected
  *  into the constructor, if applicable, and the goal will be instantiated.
@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
  *  Here you can use arbitrarily complex java code to decide,
  *  if a goal should be created. In addition, the interpreter will
  *  try to auto-detect beliefs, used as part of the condition code,
- *  so you normally do not need to specify the condition events manually.   
+ *  so you might not need to specify the condition events manually.   
  * 
  *  3) Instead of returning a boolean value, a static method may also return
  *  an object of the goal type. This provides the most flexibility as it allows
@@ -46,14 +46,4 @@ public @interface GoalCreationCondition
 	 *  The fact changed belief names, i.e. the goal will be created whenever a fact of a given belief (set) changes.
 	 */
 	public String[] factchanged() default {};
-	
-//	/**
-//	 *  The events this condition should react to.
-//	 */
-//	public String[] beliefs() default {};
-//	
-//	/**
-//	 *  The events this condition should react to.
-//	 */
-//	public RawEvent[] rawevents() default {};
 }

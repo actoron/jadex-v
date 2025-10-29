@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  For method that is called when plan succeeds.
+ *  Annotation for a method to be called when the plan succeeds.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

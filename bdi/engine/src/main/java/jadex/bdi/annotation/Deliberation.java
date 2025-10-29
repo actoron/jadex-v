@@ -20,7 +20,7 @@ public @interface Deliberation
 	public boolean cardinalityone() default false;
 	
 	/**
-	 *  The inhibited goal.
+	 *  When this goal is active, inhibit all goals of the given type.  
 	 */
 	public Class<?>[] inhibits() default {};
 	

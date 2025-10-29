@@ -6,25 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ *  Annotation for a method to indicate that a goal should be processed repeatedly,
+ *  whenever the return value becomes false.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GoalMaintainCondition
 {
-//	/**
-//	 *  The events this condition should react to.
-//	 */
-//	public String[] beliefs() default {};
-//	
-//	/**
-//	 *  The parameters this condition should react to.
-//	 */
-//	public String[] parameters() default {};
-//	
-//	/**
-//	 *  The events this condition should react to.
-//	 */
-//	public RawEvent[] rawevents() default {};
 }
-

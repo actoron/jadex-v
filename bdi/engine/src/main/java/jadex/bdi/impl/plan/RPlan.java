@@ -1,13 +1,13 @@
 package jadex.bdi.impl.plan;
 
+import java.lang.System.Logger.Level;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import jadex.bdi.GoalFailureException;
+import jadex.bdi.BDIFailureException;
 import jadex.bdi.IPlan;
-import jadex.bdi.PlanFailureException;
 import jadex.bdi.impl.PlanAborted;
 import jadex.bdi.impl.RElement;
 import jadex.bdi.impl.goal.AdoptGoalAction;
@@ -333,10 +333,9 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		this.exception = e;
 
 		// Print exception, when relevant for user. 
-		if(!(e instanceof GoalFailureException)
-			&& !(e instanceof PlanFailureException))
+		if(!(e instanceof BDIFailureException))
 		{
-			System.err.println("Plan '"+getId()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
+			getComponent().getLogger().log(Level.WARNING, "Plan '"+getId()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
 		}
 	}
 	
@@ -1207,7 +1206,6 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/**
 	 *  Check if currently inside Atomic block.
 	 */
-	@Override
 	public boolean	isAtomic()
 	{
 		return atomic;
