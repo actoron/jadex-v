@@ -861,7 +861,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			List<String>	factchangeds	= addPrefix(capaprefix, creation.factchanged());
 			
 			// Add fetcher for belief values.
-			Set<String>	deps	= new LinkedHashSet<>();
+			Set<String>	autodeps	= executable instanceof Method ? imodel.getRootModel().findDependentFields((Method) executable) : new LinkedHashSet<>();
+			Set<String> deps	= new LinkedHashSet<>(autodeps);
 			deps.addAll(factaddeds);
 			deps.addAll(factremoveds);
 			deps.addAll(factchangeds);			
@@ -882,7 +883,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					{
 						inj.addListener(dynval, event ->
 						{
-							if(event.type()==Type.ADDED && factaddeds.contains(dynval)
+							if(autodeps.contains(dynval)
+								|| event.type()==Type.ADDED && factaddeds.contains(dynval)
 								|| event.type()==Type.REMOVED && factremoveds.contains(dynval)
 								|| event.type()==Type.CHANGED && factchangeds.contains(dynval))
 							{
@@ -912,7 +914,8 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 					{
 						inj.addListener(dynval, event ->
 						{
-							if(event.type()==Type.ADDED && factaddeds.contains(dynval)
+							if(autodeps.contains(dynval)
+								|| event.type()==Type.ADDED && factaddeds.contains(dynval)
 								|| event.type()==Type.REMOVED && factremoveds.contains(dynval)
 								|| event.type()==Type.CHANGED && factchangeds.contains(dynval))
 							{
