@@ -852,7 +852,7 @@ public class InjectionModel
 									Class<?> calleeclazz = Class.forName(owner.replace('/', '.'));
 									if(SReflect.isSupertype(Callable.class, calleeclazz))
 									{
-										lastdyn	= methodToAsmDesc(calleeclazz.getMethod("call"));
+										lastdyn	= executableToAsmDesc(calleeclazz.getMethod("call"));
 //										System.out.println("\tRemembering call(): "+lastdyn);
 									}
 								}
@@ -913,20 +913,28 @@ public class InjectionModel
 	}
 	
 	/**
-	 *  Convert method to ASM descriptor.
+	 *  Convert method/constructor to ASM descriptor.
 	 */
-	protected static String methodToAsmDesc(Method method)
+	protected static String executableToAsmDesc(Executable executable)
 	{
-		return method.getDeclaringClass().getName().replace('.', '/')
-			+ "." + org.objectweb.asm.commons.Method.getMethod(method).toString();
+		if(executable instanceof Method)
+		{
+			return executable.getDeclaringClass().getName().replace('.', '/')
+				+ "." + org.objectweb.asm.commons.Method.getMethod((Method) executable).toString();
+		}
+		else
+		{
+			return executable.getDeclaringClass().getName().replace('.', '/')
+					+ "." + org.objectweb.asm.commons.Method.getMethod((Constructor<?>) executable).toString();			
+		}
 	}
 	
 	/**
-	 *  Scan byte code to find beliefs that are accessed in the method.
+	 *  Scan byte code to find beliefs that are accessed in the method/constructor.
 	 */
-	public Set<String> findDependentFields(Method method)
+	public Set<String> findDependentFields(Executable executable)
 	{
-		return findDependentFields(methodToAsmDesc(method));
+		return findDependentFields(executableToAsmDesc(executable));
 	}
 	
 	public Set<String> findDependentFields(Field f)

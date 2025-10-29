@@ -861,7 +861,7 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 			List<String>	factchangeds	= addPrefix(capaprefix, creation.factchanged());
 			
 			// Add fetcher for belief values.
-			Set<String>	autodeps	= executable instanceof Method ? imodel.getRootModel().findDependentFields((Method) executable) : new LinkedHashSet<>();
+			Set<String>	autodeps	= imodel.getRootModel().findDependentFields(executable);
 			Set<String> deps	= new LinkedHashSet<>(autodeps);
 			deps.addAll(factaddeds);
 			deps.addAll(factremoveds);

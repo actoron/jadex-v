@@ -271,8 +271,7 @@ public class GoalConditionTest
 		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
 	}
 
-//	@Test
-//	TODO
+	@Test
 	public void	testDependentConstructorCreationCondition()
 	{
 		@BDIAgent
