@@ -27,10 +27,10 @@ public class DynBytecodeAnalysisTest
 		Val<String>	getVal(){return val;}
 		
 		// Test method reference
-//		@DynamicValue
-//		Dyn<String>	dyn1	= new Dyn<>(val::get);
-//		@DynamicValue
-//		Dyn<String>	dyn2	= new Dyn<>(getVal()::get);
+		@DynamicValue
+		Dyn<String>	dyn1	= new Dyn<>(val::get);
+		@DynamicValue
+		Dyn<String>	dyn2	= new Dyn<>(getVal()::get);
 
 		// Test lambda
 		@DynamicValue
@@ -46,20 +46,22 @@ public class DynBytecodeAnalysisTest
 		Dyn<String>	dyn6	= new Dyn<>(new Callable<>()
 			{public String call() throws Exception {return getVal().get();}});
 		
-//		@DynamicValue
-//		Dyn<String>	dyn7	= new Dyn<>(createInnerCallable());
-//		Callable<String>	createInnerCallable() {return val::get;}
+		// Test callable creation in extra method
+		@DynamicValue
+		Dyn<String>	dyn7	= new Dyn<>(createInnerCallable());
+		Callable<String>	createInnerCallable() {return val::get;}
 		
+//		// Test callable creation in extra method from non-pojo (not scanned by default) extra class
 //		@DynamicValue
 //		Dyn<String>	dyn8	= new Dyn<>(createOuterCallable(this));
 	}
-	static Callable<String>	createOuterCallable(DynPojo pojo) {return pojo.val::get;}
+//	static Callable<String>	createOuterCallable(DynPojo pojo) {return pojo.val::get;}
 	
 	@Test
 	public void	testDependencies()
 	{
 		// Initialize feature providers
-		IComponentManager.get().create(new DynPojo()).get(10000);
+		IComponentManager.get().create(new DynPojo()).get(-1);
 		
 		for(int i=1; i<=8; i++)
 		{

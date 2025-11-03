@@ -719,21 +719,33 @@ public class InjectionModel
 	
 	//-------- dependency scanning --------
 	
-	/** The field accesses by method. */
+	/** The field accesses by method or Dyn field (asm method desc/dyn field.toString() -> set<field>). */
 	protected static final Map<String, Set<Field>>	ACCESSED_FIELDS	= new LinkedHashMap<>();
 	
-	/** The code executed for a Dyn value, i.e. the Callable.call() method descriptor. */
-	protected static final Map<Field, String>	DYN_METHODS	= new LinkedHashMap<>();
-	
-	/** The method accesses by method. */
+	/** The method accesses by method Dyn field (asm method desc/dyn field.toString() -> set<asm method desc>). */
 	protected static final Map<String, Set<String>>	ACCESSED_METHODS	= new LinkedHashMap<>();
+	
+	protected static final ThreadLocal<Set<Class<?>>>	SCANNED_CLASSES	= new ThreadLocal<>();
 	
 	/**
 	 *  Scan a class for method and field accesses.
 	 */
 	protected static void scanClass(Class<?> pojoclazz)
 	{
-		// TODO: skip already scanned classes (e.g. due to common superclass)
+		// Skip already scanned classes -> use thread local instead of static set,
+		// because two models of different components might initialize concurrently
+		// and refer to the same (e.g. super) classes.
+		Set<Class<?>>	scanned	= SCANNED_CLASSES.get();
+		if(scanned==null)
+		{
+			scanned	= new LinkedHashSet<>();
+			SCANNED_CLASSES.set(scanned);
+		}
+		else if(scanned.contains(pojoclazz))
+		{
+			return;
+		}
+		scanned.add(pojoclazz);
 		
 		if(pojoclazz.getName().contains("$$Lambda"))
 		{
@@ -753,7 +765,9 @@ public class InjectionModel
 			ClassReader	cr	= new ClassReader(pojoclazz.getName());
 			cr.accept(new ClassVisitor(Opcodes.ASM9)
 			{
-				String	lastdyn	= null;
+				// Remember stuff after Dyn NEW but before Dyn field assignment.
+				Set<Field>	dynfields	= null;
+				Set<String>	dynmethods	= null;
 				
 				@Override
 				public void visitInnerClass(String name, String outerName, String innerName, int access)
@@ -783,6 +797,18 @@ public class InjectionModel
 //					System.out.println("Visiting method: "+method);
 					return new MethodVisitor(Opcodes.ASM9)
 					{
+						@Override
+						public void visitTypeInsn(int opcode, String type)
+						{
+							// Start of Dyn init code
+							if(opcode==Opcodes.NEW && "jadex/injection/Dyn".equals(type))
+							{
+								dynfields	= new LinkedHashSet<>();
+								dynmethods	= new LinkedHashSet<>();
+							}
+							super.visitTypeInsn(opcode, type);
+						}
+						
 			            @Override
 			            public void visitFieldInsn(int opcode, String owner, String name, String descriptor)
 			            {
@@ -793,15 +819,12 @@ public class InjectionModel
 								{
 									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
 									Field f	= SReflect.getField(ownerclazz, name);
-									synchronized(ACCESSED_FIELDS)
+									addFieldAccess(method, f);
+									
+									// When inside Dyn creation -> remember field dependency
+									if(dynfields!=null)
 									{
-										Set<Field>	fields	= ACCESSED_FIELDS.get(method);
-										if(fields==null)
-										{
-											fields	= new LinkedHashSet<>();
-											ACCESSED_FIELDS.put(method, fields);
-										}
-										fields.add(f);
+										dynfields.add(f);
 									}
 								}
 								catch(Exception e)
@@ -815,14 +838,33 @@ public class InjectionModel
 //			                	System.out.println("\tVisiting field write: "+owner+"."+name+"; "+lastdyn);
 								try
 								{
+									// End of Dyn init code? (when writing a Dyn field)
 									Class<?> ownerclazz = Class.forName(owner.replace('/', '.'));
 									Field f	= SReflect.getField(ownerclazz, name);
-									if(f.getType().equals(Dyn.class) && lastdyn!=null)
+									if(f.getType().equals(Dyn.class))
 									{
-//										System.out.println("\tRemembering lambda for Dyn: "+f+", "+lastdyn);
-										synchronized(DYN_METHODS)
+										if(dynfields!=null && dynmethods!=null)
 										{
-											DYN_METHODS.put(f, lastdyn);
+//											System.out.println("\tRemembering deps for Dyn: "+f);
+//											System.out.println("\t\tFields: "+dynfields);
+//											System.out.println("\t\tMethods: "+dynmethods);
+											
+											for(Field dep: dynfields)
+											{
+												addFieldAccess(f.toString(), dep);
+											}
+											for(String dep: dynmethods)
+											{
+												addMethodAccess(f.toString(), dep);
+											}
+											
+											dynfields	= null;
+											dynmethods	= null;
+										}
+										// this$0 means innerclass of Dyn itself
+										else if(!"this$0".equals(f.getName()))
+										{
+											throw new UnsupportedOperationException("Cannot determine dependencies for field: "+f);
 										}
 									}
 								}
@@ -834,42 +876,37 @@ public class InjectionModel
 			                
 			                super.visitFieldInsn(opcode, owner, name, descriptor);
 			            }
-						
+
 						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface)
 						{
 							String	callee	= owner+"."+name+descriptor;
 //							System.out.println("\tVisiting method call: "+callee);
 							addMethodAccess(method, callee);
 							
-							String	dynclazz	= Dyn.class.getName().replace(".", "/");
-							String	obsclazz	= ObservationMode.class.getName().replace(".", "/");
-							
-							// Remember call() from Callable object for next Dyn constructor.
-							if("<init>".equals(name))
+							// When inside Dyn creation -> remember method dependency
+							if(dynmethods!=null)
 							{
+								dynmethods.add(callee);
+								
 								try
 								{
 									Class<?> calleeclazz = Class.forName(owner.replace('/', '.'));
-									if(SReflect.isSupertype(Callable.class, calleeclazz))
+//									scanClass(calleeclazz);	// Force scanning of external classes for dyn creation
+									// TODO: force scanning of everything!?
+								
+									// Remember call() from Callable object for next Dyn field write.
+									if("<init>".equals(name))
 									{
-										lastdyn	= executableToAsmDesc(calleeclazz.getMethod("call"));
-//										System.out.println("\tRemembering call(): "+lastdyn);
+										if(SReflect.isSupertype(Callable.class, calleeclazz))
+										{
+											dynmethods.add(executableToAsmDesc(calleeclazz.getMethod("call")));
+										}
 									}
 								}
 								catch(Exception e)
 								{
 									SUtil.throwUnchecked(e);
 								}
-							}
-							
-							// Only remember lambda when followed by a Dyn constructor
-							// to store dependency on next putfield.
-							else if(!callee.equals(dynclazz+".<init>(Ljava/util/concurrent/Callable;)V")
-								&&  !callee.equals(dynclazz+".setUpdateRate(J)L"+dynclazz+";")
-								&&  !callee.equals(dynclazz+".setObservationMode(L"+obsclazz+";)L"+dynclazz+";"))
-							{
-//								System.out.println("\tForgetting lambda due to: "+callee);
-								lastdyn	= null;
 							}
 						}
 						
@@ -881,13 +918,30 @@ public class InjectionModel
 								String	callee	= handle.getOwner()+"."+handle.getName()+handle.getDesc();
 //								System.out.println("\tVisiting lambda call: "+callee);
 								addMethodAccess(method, callee);
-								
-								// Remember lambda for next Dyn constructor.
-								lastdyn	= callee;
+
+								// When inside Dyn creation -> remember method dependency
+								if(dynmethods!=null)
+								{
+									dynmethods.add(callee);
+								}
 							}
 							// else Do we need to handle other cases?
 						}
 						
+						void addFieldAccess(String method, Field f)
+						{
+							synchronized(ACCESSED_FIELDS)
+							{
+								Set<Field>	fields	= ACCESSED_FIELDS.get(method);
+								if(fields==null)
+								{
+									fields	= new LinkedHashSet<>();
+									ACCESSED_FIELDS.put(method, fields);
+								}
+								fields.add(f);
+							}
+						}
+
 						void addMethodAccess(String caller, String callee)
 						{
 							synchronized(ACCESSED_METHODS)
@@ -896,7 +950,7 @@ public class InjectionModel
 								if(methods==null)
 								{
 									methods	= new LinkedHashSet<>();
-									ACCESSED_METHODS.put(method, methods);
+									ACCESSED_METHODS.put(caller, methods);
 								}
 								methods.add(callee);
 							}
@@ -930,34 +984,19 @@ public class InjectionModel
 	}
 	
 	/**
-	 *  Scan byte code to find beliefs that are accessed in the method/constructor.
+	 *  Scan byte code to find dynamic value fields that are accessed in the method/constructor.
 	 */
 	public Set<String> findDependentFields(Executable executable)
 	{
 		return findDependentFields(executableToAsmDesc(executable));
 	}
 	
+	/**
+	 *  Scan byte code to find dynamic value fields that are accessed in the Callable of a Dyn field.
+	 */	
 	public Set<String> findDependentFields(Field f)
 	{
-		Set<String>	ret;
-		String callable = null;
-		synchronized(DYN_METHODS)
-		{
-			if(DYN_METHODS.containsKey(f))
-			{
-				callable	= DYN_METHODS.get(f);
-			}
-		}
-		
-		if(callable!=null)
-		{
-			ret	= findDependentFields(callable);
-		}
-		else
-		{
-			throw new UnsupportedOperationException("Cannot determine Callable.call() implementation for dynamic value: "+f);
-		}
-		return ret;
+		return findDependentFields(f.toString());
 	}	
 
 	
