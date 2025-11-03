@@ -1,19 +1,23 @@
 package jadex.bt.decorators;
 
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import jadex.bt.impl.BTAgentFeature;
+import jadex.bt.impl.BTAgentFeatureProvider;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ICommand;
 import jadex.common.ITriFunction;
-import jadex.common.SUtil;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.ITimerCreator;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
+import jadex.injection.IInjectionFeature;
+import jadex.injection.impl.InjectionFeature;
+import jadex.injection.impl.InjectionModel;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
 import jadex.rules.eca.ICondition;
@@ -50,6 +54,14 @@ public class ConditionalDecorator<T> extends Decorator<T>
 	
 	public ConditionalDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
 	{
+		String	name	= condition.getClass().getName().substring(0, condition.getClass().getName().indexOf('/'));
+		String	method	= BTAgentFeatureProvider.NAMES.get(name);
+		if(method==null)
+		{
+			
+		}
+		InjectionModel	model	= ((InjectionFeature)BTAgentFeature.get().getSelf().getFeature(IInjectionFeature.class)).getModel();
+		Set<String>	deps	= model.getRootModel().findDependentFields(method);
 		// must use fromCallable() to avoid direct condition evaluation!
 		//this.condition = (event, state, context) -> new Future<>(condition.apply(event, state, context));
 		this.condition = (event, state, context) -> fromCallable(() -> condition.apply(event, state, context));
