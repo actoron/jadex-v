@@ -247,7 +247,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 					}
 					catch(Exception ex)
 					{
-						self.getLogger().log(Level.WARNING, "Exception in "+event.name()+" handler: "+handler+", "+ex);
+						self.getLogger().log(Level.WARNING, "Exception in '"+event.name()+"' handler: "+handler+", "+ex);
 					}
 				}
 			}
@@ -267,7 +267,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 					}
 					catch(Exception ex)
 					{
-						self.getLogger().log(Level.WARNING, "Exception in "+event.name()+" listener: "+l+", "+ex);
+						self.getLogger().log(Level.WARNING, "Exception in '"+event.name()+"' listener: "+l+", "+ex);
 					}
 				}
 			}
