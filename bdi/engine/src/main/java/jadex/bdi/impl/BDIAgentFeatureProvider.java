@@ -888,11 +888,18 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								|| event.type()==Type.REMOVED && factremoveds.contains(dynval)
 								|| event.type()==Type.CHANGED && factchangeds.contains(dynval))
 							{
-								Object	pojogoal	= handle.apply(comp, pojos, event, null);
-								if(pojogoal!=null)	// For method, check if no goal is created
+								try
 								{
-									RGoal	rgoal	= new RGoal(pojogoal, null, comp);
-									rgoal.adopt();
+									Object	pojogoal	= handle.apply(comp, pojos, event, null);
+									if(pojogoal!=null)	// For method, check if no goal is created
+									{
+										RGoal	rgoal	= new RGoal(pojogoal, null, comp);
+										rgoal.adopt();
+									}
+								}
+								catch(Exception e)
+								{
+									comp.getLogger().log(Level.WARNING, "Exception in creation condition: "+executable+", "+e);
 								}
 							}
 						});
@@ -919,12 +926,19 @@ public class BDIAgentFeatureProvider extends ComponentFeatureProvider<IBDIAgentF
 								|| event.type()==Type.REMOVED && factremoveds.contains(dynval)
 								|| event.type()==Type.CHANGED && factchangeds.contains(dynval))
 							{
-								Boolean	value	= (Boolean)handle.apply(comp, pojos, event, null);
-								if(Boolean.TRUE.equals(value))
+								try
 								{
-									Object	pojogoal	= constructor.apply(comp, pojos, event, null);
-									RGoal	rgoal	= new RGoal(pojogoal, null, comp);
-									rgoal.adopt();
+									Boolean	value	= (Boolean)handle.apply(comp, pojos, event, null);
+									if(Boolean.TRUE.equals(value))
+									{
+										Object	pojogoal	= constructor.apply(comp, pojos, event, null);
+										RGoal	rgoal	= new RGoal(pojogoal, null, comp);
+										rgoal.adopt();
+									}
+								}
+								catch(Exception e)
+								{
+									comp.getLogger().log(Level.WARNING, "Exception in creation condition: "+executable+", "+e);
 								}
 							}
 						});
