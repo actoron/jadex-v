@@ -1,5 +1,7 @@
 package jadex.bt.decorators;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -54,14 +56,15 @@ public class ConditionalDecorator<T> extends Decorator<T>
 	
 	public ConditionalDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
 	{
-		String	name	= condition.getClass().getName().substring(0, condition.getClass().getName().indexOf('/'));
-		String	method	= BTAgentFeatureProvider.NAMES.get(name);
-		if(method==null)
-		{
-			
-		}
-		InjectionModel	model	= ((InjectionFeature)BTAgentFeature.get().getSelf().getFeature(IInjectionFeature.class)).getModel();
-		Set<String>	deps	= model.getRootModel().findDependentFields(method);
+		// TODO: delete bytebuggy approach?
+//		String	name	= condition.getClass().getName().substring(0, condition.getClass().getName().indexOf('/'));
+//		String	method	= BTAgentFeatureProvider.NAMES.get(name);
+//		if(method==null)
+//		{
+//			
+//		}
+//		InjectionModel	model	= ((InjectionFeature)BTAgentFeature.get().getSelf().getFeature(IInjectionFeature.class)).getModel();
+//		Set<String>	deps	= model.getRootModel().findDependentFields(method);
 		// must use fromCallable() to avoid direct condition evaluation!
 		//this.condition = (event, state, context) -> new Future<>(condition.apply(event, state, context));
 		this.condition = (event, state, context) -> fromCallable(() -> condition.apply(event, state, context));
@@ -129,7 +132,27 @@ public class ConditionalDecorator<T> extends Decorator<T>
 
 	public EventType[] getEvents() 
 	{
-		return events;
+		// Auto-detect events if not explicitly set.
+//		if(this.events==null)
+//		{
+//			// index-1, because node itself is its first decorator!?
+//			int index	= getNode().getDecorators().indexOf(this)-1;
+//			String	method	= BTAgentFeatureProvider.DECORATOR_CONDITIONS.get(BTAgentFeature.get().getSelf().getPojo().getClass()).get(getNode().getName()).get(index);
+//			InjectionModel	model	= ((InjectionFeature)BTAgentFeature.get().getSelf().getFeature(IInjectionFeature.class)).getModel();
+//			Set<String>	deps	= model.getRootModel().findDependentFields(method);
+//			System.out.println("getEvents() for "+getNode().getName()+"["+index+"]: "+deps);
+//			
+//			List<EventType>	events	= new ArrayList<>();
+//			for(String dep: deps)
+//			{
+//				events.add(new EventType(BTAgentFeature.VALUEADDED, dep));
+//				events.add(new EventType(BTAgentFeature.VALUEREMOVED, dep));
+//				events.add(new EventType(BTAgentFeature.VALUECHANGED, dep));
+//			}
+//			this.events	= events.toArray(new EventType[events.size()]);
+//		}
+		
+		return this.events;
 	}
 
 	/*public ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<NodeState>> getCondition() 

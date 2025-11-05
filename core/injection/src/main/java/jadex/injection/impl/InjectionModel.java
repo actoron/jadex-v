@@ -969,7 +969,7 @@ public class InjectionModel
 	/**
 	 *  Convert method/constructor to ASM descriptor.
 	 */
-	protected static String executableToAsmDesc(Executable executable)
+	public static String executableToAsmDesc(Executable executable)
 	{
 		if(executable instanceof Method)
 		{

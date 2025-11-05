@@ -35,6 +35,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:eca:'+v
 	
 	implementation 'org.ow2.asm:asm:9.9'
+	implementation 'org.ow2.asm:asm-commons:9.9'
 
 	implementation 'net.bytebuddy:byte-buddy:1.17.8'
 	implementation 'net.bytebuddy:byte-buddy-agent:1.17.8'
