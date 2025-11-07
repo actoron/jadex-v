@@ -11,21 +11,9 @@ import jadex.rules.eca.EventType;
 
 public class SuccessDecorator<T> extends ConditionalDecorator<T>
 {
-	@Override
-	public SuccessDecorator<T> setAsyncCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition)
+	public SuccessDecorator()
 	{
-		return (SuccessDecorator<T>)super.setAsyncCondition(condition);
-	}
-	
-	@Override
-	public SuccessDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
-	{
-		return (SuccessDecorator<T>)super.setCondition(condition);
-	}
-	
-	public SuccessDecorator<T> observeCondition(EventType[] events)
-	{
-		super.observeCondition(events, (event, rule, context, condresult) -> // action
+		this.action	= (event, rule, context, condresult) -> // action
 		{
 			//System.out.println("success condition triggered: "+event);
 			
@@ -40,9 +28,25 @@ public class SuccessDecorator<T> extends ConditionalDecorator<T>
 			}
 			
 			return IFuture.DONE;
-		});
-		
-		return this;
+		};
+	}
+	
+	@Override
+	public SuccessDecorator<T> setAsyncCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition)
+	{
+		return (SuccessDecorator<T>)super.setAsyncCondition(condition);
+	}
+	
+	@Override
+	public SuccessDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
+	{
+		return (SuccessDecorator<T>)super.setCondition(condition);
+	}
+	
+	@Override
+	public SuccessDecorator<T> setEvents(EventType... events)
+	{
+		return (SuccessDecorator<T>) super.setEvents(events);
 	}
 	
 	@Override

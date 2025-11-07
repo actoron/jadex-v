@@ -68,11 +68,11 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 		sellbooks.setKeepRunning(true);
 		sellbooks.addDecorator(new ChildCreationDecorator<IComponent>()
 			.setCondition((node, state, context) -> true)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "mprops")})
+			.setEvents(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "mprops")})
 			.setChildCreator((event) -> createMakeProposalAction((MakeProposal)event.value())));
 		sellbooks.addDecorator(new ChildCreationDecorator<IComponent>()
 			.setCondition((node, state, context) -> true)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "tasks")})
+			.setEvents(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "tasks")})
 			.setChildCreator((event) -> createExecuteTaskAction((ExecuteTask)event.value())));
 		// add a repeat decorator that keeps the node running for ever
 		// must add an event as rulebase checks and throws exception when rule without 

@@ -16,28 +16,9 @@ import jadex.rules.eca.EventType;
 
 public class TriggerDecorator<T> extends ConditionalDecorator<T>
 {
-	protected ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition;
-	
-	public TriggerDecorator<T> setAsyncCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition)
+	public TriggerDecorator()
 	{
-		return (TriggerDecorator<T>)super.setAsyncCondition(condition);
-	}
-	
-	public TriggerDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
-	{
-		return (TriggerDecorator<T>)super.setCondition(condition);
-	}
-	
-	@Override
-	public IFuture<NodeState> beforeExecute(Event event, NodeState state, ExecutionContext<T> context) 
-	{
-		return null; // trigger is never checked on node execution (then it is already triggered)
-		// otherwise e.g. in cleaner it would stop loading shortly over trigger battery level
-	}
-	
-	public TriggerDecorator<T> observeCondition(EventType[] events)
-	{
-		super.observeCondition(events, (event, rule, context, condresult) -> // action
+		this.action	= (event, rule, context, condresult) -> // action
 		{
 			System.getLogger(getClass().getName()).log(Level.INFO, "trigger condition triggered: "+event+" "+this);
 			//System.out.println("trigger condition triggered: "+event);
@@ -72,9 +53,31 @@ public class TriggerDecorator<T> extends ConditionalDecorator<T>
 			}
 			
 			return IFuture.DONE;
-		});
-		
-		return this;
+		};
+	}
+	
+	public TriggerDecorator<T> setAsyncCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition)
+	{
+		return (TriggerDecorator<T>)super.setAsyncCondition(condition);
+	}
+	
+	public TriggerDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
+	{
+		return (TriggerDecorator<T>)super.setCondition(condition);
+	}
+	
+	@Override
+	public TriggerDecorator<T> setEvents(EventType... events)
+	{
+		return (TriggerDecorator<T>) super.setEvents(events);
+	}
+	
+	
+	@Override
+	public IFuture<NodeState> beforeExecute(Event event, NodeState state, ExecutionContext<T> context) 
+	{
+		return null; // trigger is never checked on node execution (then it is already triggered)
+		// otherwise e.g. in cleaner it would stop loading shortly over trigger battery level
 	}
 	
 	@Override

@@ -7,7 +7,6 @@ import jadex.bt.NodeListener;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.TriggerDecorator;
-import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
@@ -20,7 +19,6 @@ import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.logger.ILoggingFeature;
-import jadex.rules.eca.EventType;
 
 public class UniversityAgent implements IBTProvider
 {
@@ -82,7 +80,8 @@ public class UniversityAgent implements IBTProvider
 		//train.setTriggerCondition((node, execontext) -> raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
 		//train.setTriggerCondition((node, execontext) -> raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
 		train.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> raining.get())
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "raining")}));
+//			.setEvents(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "raining")})
+			);
 		
 		// take tram always
 		ActionNode<IComponent> tram = new ActionNode<>("tram");
@@ -115,7 +114,8 @@ public class UniversityAgent implements IBTProvider
 		//walk.setTrigger(null, new EventType[]{new EventType("raining", BTAgentFeature.VALUECHANGED)});
 		//walk.setTriggerCondition((node, execontext) -> !raining.get(), new EventType[]{new EventType("raining", BTAgentFeature.PROPERTYCHANGED)});
 		walk.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> !raining.get())
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "raining")}));
+//			.setEvents(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "raining")})
+			);
 		
 		SelectorNode<IComponent> sel = new SelectorNode<>("gotouni");
 		sel.addChild(train).addChild(tram).addChild(walk);

@@ -62,7 +62,7 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 		ParallelNode<IComponent> buybooks = new ParallelNode<>("buybooks");
 		buybooks.addDecorator(new ChildCreationDecorator<IComponent>()
 			.setCondition((node, state, context) -> true)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "orders")})
+			.setEvents(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "orders")})
 			.setChildCreator((event) -> createPurchaseAction((Order)event.value())));
 		return buybooks;
 	}
@@ -157,7 +157,7 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 		
 		purchasebook.addDecorator(new FailureDecorator<IComponent>()
 			.setCondition((node, state, context) -> order.getState().equals(Order.FAILED))
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "orders", "state")}));
+			.setEvents(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "orders", "state")}));
 		purchasebook.addDecorator(new RetryDecorator<IComponent>(5000));
 		
 		return purchasebook;

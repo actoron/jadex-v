@@ -1,7 +1,6 @@
 package jadex.bt.impl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,13 +38,6 @@ import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.RuleSystem;
-import net.bytebuddy.agent.ByteBuddyAgent;
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.agent.builder.AgentBuilder.LambdaInstrumentationStrategy;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.utility.JavaModule;
 
 public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFeature> implements IComponentLifecycleManager
 {
