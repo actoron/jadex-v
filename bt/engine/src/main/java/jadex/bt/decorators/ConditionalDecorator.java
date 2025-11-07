@@ -129,26 +129,60 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		// Auto-detect events if not explicitly set.
 		if(this.events==null)
 		{
-			// index-1, because node itself is its first decorator!?
-			int index	= getNode().getDecorators().indexOf(this)-1;
-			String	method	= BTAgentFeatureProvider.DECORATOR_CONDITIONS.get(BTAgentFeature.get().getSelf().getPojo().getClass()).get(getNode().getName()).get(index);
-			InjectionModel	model	= ((InjectionFeature)BTAgentFeature.get().getSelf().getFeature(IInjectionFeature.class)).getModel();
-			Set<String>	deps	= model.getRootModel().findDependentFields(method);
-//			System.out.println("getEvents() for "+getNode().getName()+"["+index+"]: "+deps);
-			
 			List<EventType>	events	= new ArrayList<>();
-			for(String dep: deps)
+			
+			String	method	= getConditionMethod();
+			if(method!=null)
 			{
-				events.add(new EventType(BTAgentFeature.VALUEADDED, dep));
-				events.add(new EventType(BTAgentFeature.VALUEREMOVED, dep));
-				events.add(new EventType(BTAgentFeature.VALUECHANGED, dep));
+				InjectionModel	model	= ((InjectionFeature)BTAgentFeature.get().getSelf().getFeature(IInjectionFeature.class)).getModel();
+				Set<String>	deps	= model.getRootModel().findDependentFields(method);
+//				System.out.println("getEvents() for "+this+": "+deps);
+				
+				for(String dep: deps)
+				{
+					events.add(new EventType(BTAgentFeature.VALUEADDED, dep));
+					events.add(new EventType(BTAgentFeature.VALUEREMOVED, dep));
+					events.add(new EventType(BTAgentFeature.VALUECHANGED, dep));
+				}
 			}
+			else
+			{
+				throw new UnsupportedOperationException("Event auto-detect failed for "+getNode());
+			}
+			
 			this.events	= events.toArray(new EventType[events.size()]);
 		}
 		
 		return this.events;
 	}
 
+	/**
+	 *  Get the method descriptor for the condition of the decorator.
+	 *  @return null when not found (i.e. when auto-detect didn't work).
+	 */
+	protected String	getConditionMethod()
+	{
+		String	ret	= null;
+		
+		// index-1, because node itself is its first decorator!?
+		int index	= getNode().getDecorators().indexOf(this)-1;
+		if(index>=0)
+		{
+			synchronized(BTAgentFeatureProvider.DECORATOR_CONDITIONS)
+			{
+				List<String>	conditions	= BTAgentFeatureProvider.DECORATOR_CONDITIONS
+					.get(BTAgentFeature.get().getSelf().getPojo().getClass())
+					.get(getNode().getName());
+				if(conditions!=null && conditions.size()>index)
+				{
+					ret	= conditions.get(index);
+				}
+			}
+		}
+		
+		return ret;
+	}
+	
 	/*public ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<NodeState>> getCondition() 
 	{
 		return function;
