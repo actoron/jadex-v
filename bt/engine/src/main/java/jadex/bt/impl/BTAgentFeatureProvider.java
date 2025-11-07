@@ -161,6 +161,13 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 			}
 			SCANNED_CLASSES.add(scanclazz);
 			
+			// Skip java.lang for e.g. inner enums
+			if(scanclazz.getSuperclass()!=null && !"java.lang".equals(scanclazz.getSuperclass().getPackageName()))
+			{
+				// Scan superclass first.
+				scanClazz(baseclazz, scanclazz.getSuperclass());
+			}
+			
 			Map<String, List<String>>	decorator_conditions;
 			synchronized(DECORATOR_CONDITIONS)
 			{
