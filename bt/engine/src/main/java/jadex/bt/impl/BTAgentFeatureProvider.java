@@ -144,8 +144,8 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 	/** pojoclazz -> (node_name -> list of asm method desc (or null if no condition for a decorator)). */
 	public static final Map<Class<?>, Map<String, List<String>>>	DECORATOR_CONDITIONS	= new LinkedHashMap<>();
 	
-	/** Classes already scanned. */
-	Set<Class<?>>	SCANNED_CLASSES	= new LinkedHashSet<>();
+	/** Classes already scanned for baseclazz. */
+	Map<Class<?>, Set<Class<?>>>	SCANNED_CLASSES	= new LinkedHashMap<>();
 	
 	/**
 	 *  Scan the scanclazz for actions and their decorators.
@@ -155,11 +155,17 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 	{
 		synchronized(SCANNED_CLASSES)
 		{
-			if(SCANNED_CLASSES.contains(scanclazz))
+			Set<Class<?>>	scanned	= SCANNED_CLASSES.get(baseclazz);
+			if(scanned==null)
+			{
+				scanned	= new LinkedHashSet<>();
+				SCANNED_CLASSES.put(baseclazz, scanned);
+			}
+			else if(scanned.contains(scanclazz))
 			{
 				return;
 			}
-			SCANNED_CLASSES.add(scanclazz);
+			scanned.add(scanclazz);
 			
 			// Skip java.lang for e.g. inner enums
 			if(scanclazz.getSuperclass()!=null && !"java.lang".equals(scanclazz.getSuperclass().getPackageName()))
