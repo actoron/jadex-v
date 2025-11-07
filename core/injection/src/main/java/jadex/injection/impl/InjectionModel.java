@@ -54,9 +54,10 @@ public class InjectionModel
 	 *  @param field	The field.
 	 *  @param name	The fully qualified name.
 	 *  @param type	The value type (e.g. inner generic type of List).
+	 *  @param multi	True if it is a List/Set/Map (i.e. throws added/removed events).
 	 *  @param kinds	The detected dynamic value annotations for the field.
 	 */
-	public static record MDynVal(Field field, String name, Class<?> type, Set<Class<? extends Annotation>> kinds) {}
+	public static record MDynVal(Field field, String name, Class<?> type, boolean multi, Set<Class<? extends Annotation>> kinds) {}
 	
 	/** The pojo classes as a hierarchy of component pojo plus subobjects, if any.
 	 *  The model is for the last pojo in the list. */
@@ -558,7 +559,8 @@ public class InjectionModel
 		if(mdynval==null)
 		{
 			Class<?>	type	= getValueType(field);
-			mdynval	= new MDynVal(field, name, type, new LinkedHashSet<>());
+			boolean	multi	= isMulti(field);
+			mdynval	= new MDynVal(field, name, type, multi, new LinkedHashSet<>());
 			dynvals_by_field.put(field, mdynval);
 			dynvals_by_name.put(name, mdynval);
 		}
@@ -1119,6 +1121,33 @@ public class InjectionModel
 		}
 		
 		return ret;
+	}
+	
+	/**
+	 *  Check if its a List/Set/Map.
+	 */
+	protected boolean	isMulti(Field f)
+	{
+		Class<?>	ret	= f.getType();
+		java.lang.reflect.Type		gtype	= f.getGenericType();
+		
+		if(SReflect.isSupertype(Dyn.class, ret)
+			||SReflect.isSupertype(Val.class, ret))
+		{
+			if(gtype instanceof ParameterizedType)
+			{
+				ParameterizedType	generic	= (ParameterizedType)gtype;
+				gtype	= generic.getActualTypeArguments()[0];
+				ret	= getRawClass(gtype);
+			}
+			else
+			{
+				throw new RuntimeException("Dynamic value field does not define generic value type: "+f);
+			}
+		}
+		
+		return  SReflect.isSupertype(Collection.class, ret)
+			||SReflect.isSupertype(Map.class, ret);
 	}
 	
 	protected static Class<?> getRawClass(java.lang.reflect.Type type)

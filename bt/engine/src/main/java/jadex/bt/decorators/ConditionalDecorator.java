@@ -140,8 +140,11 @@ public class ConditionalDecorator<T> extends Decorator<T>
 				
 				for(String dep: deps)
 				{
-					events.add(new EventType(BTAgentFeature.VALUEADDED, dep));
-					events.add(new EventType(BTAgentFeature.VALUEREMOVED, dep));
+					if(model.getRootModel().getDynamicValue(dep).multi())
+					{
+						events.add(new EventType(BTAgentFeature.VALUEADDED, dep));
+						events.add(new EventType(BTAgentFeature.VALUEREMOVED, dep));
+					}
 					events.add(new EventType(BTAgentFeature.VALUECHANGED, dep));
 				}
 			}
