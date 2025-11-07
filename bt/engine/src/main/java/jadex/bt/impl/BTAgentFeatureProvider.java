@@ -331,74 +331,75 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 	}
 	
 	//-------- instrumentation-based lambda mapping (non-working due to ByteBuggy ;-P) --------
+	// cf. https://github.com/raphw/byte-buddy/issues/1869
 
-	/** Mapping from runtime (i.e. proxy class) name to bytecode (i.e. static method) name. */
-	public static Map<String, String>	NAMES	= Collections.synchronizedMap(new LinkedHashMap<>());
-	
-	/** Get the ASM descpriptor of the code of a lambda object. */
-	public static String	getASMMethodDescFromLambda(Object lambda)
-	{
-		String	clazzname	= lambda.getClass().getName();
-		// Strip ID extension
-		clazzname	= clazzname.substring(0, clazzname.indexOf('/'));
-		return NAMES.get(clazzname);
-	}
-
-	/**
-	 *  Install a class loader interceptor
-	 *  to generate a mapping from runtime (i.e. proxy class) name
-	 *  to bytecode (i.e. static method) name.
-	 *  The static method name is required to find dependencies (dynamic values),
-	 *  but at runtime only the proxy class name is available.
-	 */
-	public static void installLambdaMapper()
-	{
-		new AgentBuilder.Default()
-			.with(LambdaInstrumentationStrategy.ENABLED)
-			.type(ElementMatchers.nameContains("$$Lambda$"))
-			.and(ElementMatchers.not(ElementMatchers.nameContains("org.lwjgl.")))
-			.transform((builder, typeDescription, classLoader, module, protectionDomain) ->
-			{
-//				System.out.println("Transform: "+typeDescription.getName());
-				return builder;
-			})
-			.with(new AgentBuilder.Listener.Adapter()
-			{
-				@Override
-				public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module,
-						boolean loaded, DynamicType dynamicType)
-				{
-//					System.out.println("======== "+typeDescription);
-					ClassReader	cr	= new ClassReader(dynamicType.getBytes());
-					cr.accept(new ClassVisitor(Opcodes.ASM9)
-					{
-						@Override
-						public MethodVisitor visitMethod(int access, String methodname, String desc, String signature, String[] exceptions)
-						{
-//							System.out.println("=== "+methodname);
-						    return new MethodVisitor(Opcodes.ASM9)
-						    {
-								public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface)
-								{
-									// Skip all method calls that are not the lambda target
-									if(!methodname.equals("get$Lambda") && !methodname.startsWith("<"))
-									{
-//										System.out.println("runtime: "+typeDescription.getName());
-//										System.out.println("name: "+owner+"."+name+descriptor);
-										String runtime_name	= typeDescription.getName();
-										owner	= owner.replace('/', '.');
-										// Might not be same owner, e.g. when using my_obj::myMethod notation
-//										if(owner.equals(runtime_name.substring(0, runtime_name.indexOf("$$Lambda$"))))
-										{
-								        	NAMES.put(runtime_name, owner+"."+name+descriptor);
-										}
-									}
-								}
-						    };
-						}
-					}, 0);
-				}
-			})
-			.installOn(ByteBuddyAgent.install());
-	}
+//	/** Mapping from runtime (i.e. proxy class) name to bytecode (i.e. static method) name. */
+//	public static Map<String, String>	NAMES	= Collections.synchronizedMap(new LinkedHashMap<>());
+//	
+//	/** Get the ASM descpriptor of the code of a lambda object. */
+//	public static String	getASMMethodDescFromLambda(Object lambda)
+//	{
+//		String	clazzname	= lambda.getClass().getName();
+//		// Strip ID extension
+//		clazzname	= clazzname.substring(0, clazzname.indexOf('/'));
+//		return NAMES.get(clazzname);
+//	}
+//
+//	/**
+//	 *  Install a class loader interceptor
+//	 *  to generate a mapping from runtime (i.e. proxy class) name
+//	 *  to bytecode (i.e. static method) name.
+//	 *  The static method name is required to find dependencies (dynamic values),
+//	 *  but at runtime only the proxy class name is available.
+//	 */
+//	public static void installLambdaMapper()
+//	{
+//		new AgentBuilder.Default()
+//			.with(LambdaInstrumentationStrategy.ENABLED)
+//			.type(ElementMatchers.nameContains("$$Lambda$"))
+//			.and(ElementMatchers.not(ElementMatchers.nameContains("org.lwjgl.")))
+//			.transform((builder, typeDescription, classLoader, module, protectionDomain) ->
+//			{
+////				System.out.println("Transform: "+typeDescription.getName());
+//				return builder;
+//			})
+//			.with(new AgentBuilder.Listener.Adapter()
+//			{
+//				@Override
+//				public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module,
+//						boolean loaded, DynamicType dynamicType)
+//				{
+////					System.out.println("======== "+typeDescription);
+//					ClassReader	cr	= new ClassReader(dynamicType.getBytes());
+//					cr.accept(new ClassVisitor(Opcodes.ASM9)
+//					{
+//						@Override
+//						public MethodVisitor visitMethod(int access, String methodname, String desc, String signature, String[] exceptions)
+//						{
+////							System.out.println("=== "+methodname);
+//						    return new MethodVisitor(Opcodes.ASM9)
+//						    {
+//								public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface)
+//								{
+//									// Skip all method calls that are not the lambda target
+//									if(!methodname.equals("get$Lambda") && !methodname.startsWith("<"))
+//									{
+////										System.out.println("runtime: "+typeDescription.getName());
+////										System.out.println("name: "+owner+"."+name+descriptor);
+//										String runtime_name	= typeDescription.getName();
+//										owner	= owner.replace('/', '.');
+//										// Might not be same owner, e.g. when using my_obj::myMethod notation
+////										if(owner.equals(runtime_name.substring(0, runtime_name.indexOf("$$Lambda$"))))
+//										{
+//								        	NAMES.put(runtime_name, owner+"."+name+descriptor);
+//										}
+//									}
+//								}
+//						    };
+//						}
+//					}, 0);
+//				}
+//			})
+//			.installOn(ByteBuddyAgent.install());
+//	}
 }
