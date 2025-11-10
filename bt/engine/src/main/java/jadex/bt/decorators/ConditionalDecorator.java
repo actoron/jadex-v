@@ -144,9 +144,8 @@ public class ConditionalDecorator<T> extends Decorator<T>
 				
 				for(String dep: deps)
 				{
-					events.add(new ChangeEvent(
-						// type null -> match all types when multi
-						model.getRootModel().getDynamicValue(dep).multi() ? null : Type.CHANGED, dep));
+					// type null -> always match all types (added/removed are never thrown for scalar values anyways). 
+					events.add(new ChangeEvent(null, dep));
 				}
 			}
 			else
