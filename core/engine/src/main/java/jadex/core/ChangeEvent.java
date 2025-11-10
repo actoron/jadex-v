@@ -11,6 +11,22 @@ package jadex.core;
 public record ChangeEvent(Type type, String name, Object value, Object oldvalue, Object info)
 {
 	/**
+	 *  Create event template for matching.
+	 */
+	public ChangeEvent(Type type, String name)
+	{
+		this(type, name, null, null, null);
+	}
+
+	/**
+	 *  Create event template for matching.
+	 */
+	public ChangeEvent(Type type, String name, Object info)
+	{
+		this(type, name, null, null, info);
+	}
+	
+	/**
 	 *  The kind of event that occurred.
 	 */
 	public enum Type

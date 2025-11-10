@@ -15,18 +15,17 @@ import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.common.ITriFunction;
-import jadex.common.Tuple2;
+import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.impl.ComponentTimerCreator;
 import jadex.execution.impl.IInternalExecutionFeature;
-import jadex.future.Future;
 import jadex.future.FutureHelper;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
-import jadex.rules.eca.Rule;
+import jadex.injection.IInjectionFeature;
 import jadex.rules.eca.RuleEvent;
 import jadex.rules.eca.RuleSystem;
 
@@ -207,7 +206,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 			
 			for(ConditionalDecorator<IComponent> deco: cdecos)
 			{
-				if(deco.getAction()==null || deco.getEvents()==null || deco.getEvents().length==0)
+				if(deco.getAction()==null || deco.getEvents()==null || deco.getEvents().isEmpty())
 				{
 					if(deco.getCondition()!=null)
 					{
@@ -217,48 +216,97 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 				}
 				else
 				{
-					//System.out.println("rulename: "+deco.toString()+"_"+node.getId());
-					rulesystem.getRulebase().addRule(new Rule<Void>(
-						deco.toString()+"_"+node.getId(), 
-						e -> // condition
+					IInjectionFeature	inj	= getSelf().getFeature(IInjectionFeature.class);
+					for(ChangeEvent	event_template: deco.getEvents())
+					{
+						inj.addListener(event_template.name(), e ->
 						{
-							Future<Tuple2<Boolean, Object>> ret = new Future<>();
-							if(deco.getCondition()!=null)
+							if((event_template.type()==null || event_template.type()==e.type())
+								&& (event_template.info()==null || event_template.info().equals(e.info())))
 							{
-								NodeContext<IComponent> context = node.getNodeContext(getExecutionContext());
-								ITriFunction<Event, NodeState, ExecutionContext<IComponent>, IFuture<Boolean>> cond = deco.getCondition();
-								IFuture<Boolean> fut = cond.apply(new Event(e.getType().toString(), e.getContent()), context!=null? context.getState(): NodeState.IDLE, getExecutionContext());
-								fut.then(triggered ->
+								if(deco.getCondition()!=null)
 								{
-									ret.setResult(new Tuple2<>(triggered, null));
-								}).catchEx(ex -> 
+									NodeContext<IComponent> context = node.getNodeContext(getExecutionContext());
+									ITriFunction<Event, NodeState, ExecutionContext<IComponent>, IFuture<Boolean>> cond = deco.getCondition();
+									IFuture<Boolean> fut = cond.apply(new Event(e.type().toString(), e.value()), context!=null? context.getState(): NodeState.IDLE, getExecutionContext());
+									fut.then(triggered ->
+									{
+										if(triggered)
+										{
+											deco.getAction().accept(e);
+										}
+									}).catchEx(ex -> 
+									{
+										System.getLogger(getClass().getName()).log(Level.WARNING, "Exception in condition: "+ex);
+									});
+								}
+								else if(deco.getFunction()!=null)
 								{
-									ret.setResult(new Tuple2<>(false, null));
-								});
+									NodeContext<IComponent> context = node.getNodeContext(getExecutionContext());
+									ITriFunction<Event, NodeState, ExecutionContext<IComponent>, IFuture<NodeState>> cond = deco.getFunction();
+									IFuture<NodeState> fut = cond.apply(new Event(e.type().toString(), e.value()), context!=null? context.getState(): NodeState.IDLE, getExecutionContext());
+									fut.then(state ->
+									{
+										boolean	triggered	= deco.mapToBoolean(state);
+										if(triggered)
+										{
+											deco.getAction().accept(e);
+										}
+									}).catchEx(ex -> 
+									{
+										System.getLogger(getClass().getName()).log(Level.WARNING, "Exception in condition: "+ex);
+									});
+								}
+								else
+								{
+									System.getLogger(getClass().getName()).log(Level.WARNING, "Rule without condition: "+deco);
+								}
 							}
-							else if(deco.getFunction()!=null)
-							{
-								NodeContext<IComponent> context = node.getNodeContext(getExecutionContext());
-								ITriFunction<Event, NodeState, ExecutionContext<IComponent>, IFuture<NodeState>> cond = deco.getFunction();
-								IFuture<NodeState> fut = cond.apply(new Event(e.getType().toString(), e.getContent()), context!=null? context.getState(): NodeState.IDLE, getExecutionContext());
-								fut.then(state ->
-								{
-									ret.setResult(new Tuple2<>(deco.mapToBoolean(state), null));
-								}).catchEx(ex -> 
-								{
-									ret.setResult(new Tuple2<>(false, null));
-								});
-							}
-							else
-							{
-								System.getLogger(getClass().getName()).log(Level.WARNING, "Rule without condition: "+deco);
-								//System.out.println("Rule without condition: "+deco);
-								ret.setResult(new Tuple2<>(false, null));
-							}
-							return ret;
-						}, 
-						deco.getAction(), deco.getEvents() // trigger events
-					));
+						});
+					}
+					
+//					//System.out.println("rulename: "+deco.toString()+"_"+node.getId());
+//					rulesystem.getRulebase().addRule(new Rule<Void>(
+//						deco.toString()+"_"+node.getId(), 
+//						e -> // condition
+//						{
+//							Future<Tuple2<Boolean, Object>> ret = new Future<>();
+//							if(deco.getCondition()!=null)
+//							{
+//								NodeContext<IComponent> context = node.getNodeContext(getExecutionContext());
+//								ITriFunction<Event, NodeState, ExecutionContext<IComponent>, IFuture<Boolean>> cond = deco.getCondition();
+//								IFuture<Boolean> fut = cond.apply(new Event(e.getType().toString(), e.getContent()), context!=null? context.getState(): NodeState.IDLE, getExecutionContext());
+//								fut.then(triggered ->
+//								{
+//									ret.setResult(new Tuple2<>(triggered, null));
+//								}).catchEx(ex -> 
+//								{
+//									ret.setResult(new Tuple2<>(false, null));
+//								});
+//							}
+//							else if(deco.getFunction()!=null)
+//							{
+//								NodeContext<IComponent> context = node.getNodeContext(getExecutionContext());
+//								ITriFunction<Event, NodeState, ExecutionContext<IComponent>, IFuture<NodeState>> cond = deco.getFunction();
+//								IFuture<NodeState> fut = cond.apply(new Event(e.getType().toString(), e.getContent()), context!=null? context.getState(): NodeState.IDLE, getExecutionContext());
+//								fut.then(state ->
+//								{
+//									ret.setResult(new Tuple2<>(deco.mapToBoolean(state), null));
+//								}).catchEx(ex -> 
+//								{
+//									ret.setResult(new Tuple2<>(false, null));
+//								});
+//							}
+//							else
+//							{
+//								System.getLogger(getClass().getName()).log(Level.WARNING, "Rule without condition: "+deco);
+//								//System.out.println("Rule without condition: "+deco);
+//								ret.setResult(new Tuple2<>(false, null));
+//							}
+//							return ret;
+//						}, 
+//						deco.getAction(), deco.getEvents() // trigger events
+//					));
 				}
 			}
 		});

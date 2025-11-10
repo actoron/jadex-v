@@ -9,8 +9,8 @@ import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ITriFunction;
+import jadex.core.ChangeEvent;
 import jadex.future.IFuture;
-import jadex.rules.eca.EventType;
 
 public class ChildCreationDecorator<T> extends ConditionalDecorator<T>
 {
@@ -18,12 +18,12 @@ public class ChildCreationDecorator<T> extends ConditionalDecorator<T>
 	
 	public ChildCreationDecorator()
 	{
-		this.action	= (event, rule, context, condresult) -> // action
+		this.action	= event ->
 		{
 			System.getLogger(getClass().getName()).log(Level.INFO, "child creation condition triggered: "+event);
 			//System.out.println("child creation condition triggered: "+event);
 			
-			Event e = new Event(event);
+			Event e = new Event(event.type().name()+"."+event.name(), event.value());
 			Node<T> child = creator.apply(e);
 			
 			CompositeNode<T> node = (CompositeNode<T>)getNode();
@@ -31,8 +31,6 @@ public class ChildCreationDecorator<T> extends ConditionalDecorator<T>
 			child.addDecorator(new RemoveDecorator<T>());
 			
 			node.addChild(child, e, getExecutionContext());
-			
-			return IFuture.DONE;
 		};
 	}
 	
@@ -49,7 +47,7 @@ public class ChildCreationDecorator<T> extends ConditionalDecorator<T>
 	}
 	
 	@Override
-	public ChildCreationDecorator<T> setEvents(EventType... events)
+	public ChildCreationDecorator<T> setEvents(ChangeEvent... events)
 	{
 		return (ChildCreationDecorator<T>) super.setEvents(events);
 	}

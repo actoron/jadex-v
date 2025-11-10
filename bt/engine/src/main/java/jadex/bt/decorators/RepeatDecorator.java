@@ -170,30 +170,31 @@ public class RepeatDecorator<T> extends ConditionalDecorator<T>
 					}
 					else
 					{
-						IFuture<Void> condfut = waitForCondition(e -> 
-		            	{
-		            		Future<Tuple2<Boolean, Object>> cret = new Future<>();
-		            		IFuture<Boolean> fut = getCondition().apply(new Event(e.getType().toString(), e.getContent()), 
-		            			node.getNodeContext(getExecutionContext()).getState(), getExecutionContext());
-		    				fut.then(triggered2 ->
-		    				{
-		    					cret.setResult(new Tuple2<>(triggered2, null));
-		    				}).catchEx(ex -> 
-		    				{
-		    					cret.setResult(new Tuple2<>(false, null));
-		    				});
-		        			return cret;
-		            	}, getEvents(), getTimeout(), execontext);
-		            	
-		            	condfut.then(Void -> 
-		                {
-		                	repeat.run();
-		                }).catchEx(e -> 
-		                {
-		                    e.printStackTrace();
-		                    getNode().reset(execontext, true);
-		                    ret.setResultIfUndone(NodeState.FAILED);
-		                });
+						// TODO
+//						IFuture<Void> condfut = waitForCondition(e -> 
+//		            	{
+//		            		Future<Tuple2<Boolean, Object>> cret = new Future<>();
+//		            		IFuture<Boolean> fut = getCondition().apply(new Event(e.getType().toString(), e.getContent()), 
+//		            			node.getNodeContext(getExecutionContext()).getState(), getExecutionContext());
+//		    				fut.then(triggered2 ->
+//		    				{
+//		    					cret.setResult(new Tuple2<>(triggered2, null));
+//		    				}).catchEx(ex -> 
+//		    				{
+//		    					cret.setResult(new Tuple2<>(false, null));
+//		    				});
+//		        			return cret;
+//		            	}, getEvents(), getTimeout(), execontext);
+//		            	
+//		            	condfut.then(Void -> 
+//		                {
+//		                	repeat.run();
+//		                }).catchEx(e -> 
+//		                {
+//		                    e.printStackTrace();
+//		                    getNode().reset(execontext, true);
+//		                    ret.setResultIfUndone(NodeState.FAILED);
+//		                });
 					}
 				}).catchEx(ex -> 
 				{

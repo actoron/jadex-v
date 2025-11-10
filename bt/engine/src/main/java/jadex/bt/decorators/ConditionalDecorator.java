@@ -1,9 +1,11 @@
 package jadex.bt.decorators;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.impl.BTAgentFeatureProvider;
@@ -12,6 +14,8 @@ import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ICommand;
 import jadex.common.ITriFunction;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.ITimerCreator;
 import jadex.future.Future;
@@ -32,8 +36,8 @@ public class ConditionalDecorator<T> extends Decorator<T>
 	protected ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<NodeState>> function;
 	protected ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition;
 	
-	protected EventType[] events;
-	protected IAction<Void> action;
+	protected List<ChangeEvent> events;
+	protected Consumer<ChangeEvent> action;
 
 	public ConditionalDecorator<T> setAsyncFunction(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<NodeState>> execute)
 	{
@@ -107,13 +111,13 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		}
 	}
 	
-	public ConditionalDecorator<T> setEvents(EventType... events) 
+	public ConditionalDecorator<T> setEvents(ChangeEvent... events) 
 	{
-		this.events = events;
+		this.events = Arrays.asList(events);
 		return this;
 	}
 
-	public ConditionalDecorator<T> setAction(IAction<Void> action) 
+	public ConditionalDecorator<T> setAction(Consumer<ChangeEvent> action) 
 	{
 		this.action = action;
 		return this;
@@ -124,12 +128,12 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		return (ExecutionContext)BTAgentFeature.get().getExecutionContext(); // todo: remove cast hack
 	}
 
-	public EventType[] getEvents() 
+	public List<ChangeEvent> getEvents() 
 	{
 		// Auto-detect events if not explicitly set.
 		if(this.events==null)
 		{
-			List<EventType>	events	= new ArrayList<>();
+			this.events	= new ArrayList<>();
 			
 			String	method	= getConditionMethod();
 			if(method!=null)
@@ -140,12 +144,9 @@ public class ConditionalDecorator<T> extends Decorator<T>
 				
 				for(String dep: deps)
 				{
-					if(model.getRootModel().getDynamicValue(dep).multi())
-					{
-						events.add(new EventType(BTAgentFeature.VALUEADDED, dep));
-						events.add(new EventType(BTAgentFeature.VALUEREMOVED, dep));
-					}
-					events.add(new EventType(BTAgentFeature.VALUECHANGED, dep));
+					events.add(new ChangeEvent(
+						// type null -> match all types when multi
+						model.getRootModel().getDynamicValue(dep).multi() ? null : Type.CHANGED, dep));
 				}
 			}
 			else
@@ -153,7 +154,6 @@ public class ConditionalDecorator<T> extends Decorator<T>
 				throw new UnsupportedOperationException("Event auto-detect failed for "+getNode());
 			}
 			
-			this.events	= events.toArray(new EventType[events.size()]);
 		}
 		
 		return this.events;
@@ -191,7 +191,7 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		return function;
 	}*/
 
-	public IAction<Void> getAction() 
+	public Consumer<ChangeEvent> getAction() 
 	{
 		return action;
 	}

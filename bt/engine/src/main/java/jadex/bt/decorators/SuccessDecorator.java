@@ -6,14 +6,14 @@ import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ITriFunction;
+import jadex.core.ChangeEvent;
 import jadex.future.IFuture;
-import jadex.rules.eca.EventType;
 
 public class SuccessDecorator<T> extends ConditionalDecorator<T>
 {
 	public SuccessDecorator()
 	{
-		this.action	= (event, rule, context, condresult) -> // action
+		this.action	= event ->
 		{
 			//System.out.println("success condition triggered: "+event);
 			
@@ -27,7 +27,6 @@ public class SuccessDecorator<T> extends ConditionalDecorator<T>
 				System.getLogger(getClass().getName()).log(Level.INFO, "success condition triggered but node not active: "+event);
 			}
 			
-			return IFuture.DONE;
 		};
 	}
 	
@@ -44,7 +43,7 @@ public class SuccessDecorator<T> extends ConditionalDecorator<T>
 	}
 	
 	@Override
-	public SuccessDecorator<T> setEvents(EventType... events)
+	public SuccessDecorator<T> setEvents(ChangeEvent... events)
 	{
 		return (SuccessDecorator<T>) super.setEvents(events);
 	}
