@@ -1,19 +1,29 @@
 package jadex.bt.decorators;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 import jadex.bt.impl.BTAgentFeature;
+import jadex.bt.impl.BTAgentFeatureProvider;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ICommand;
 import jadex.common.ITriFunction;
-import jadex.common.SUtil;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.ITimerCreator;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
+import jadex.injection.IInjectionFeature;
+import jadex.injection.impl.InjectionFeature;
+import jadex.injection.impl.InjectionModel;
 import jadex.rules.eca.EventType;
 import jadex.rules.eca.IAction;
 import jadex.rules.eca.ICondition;
@@ -26,8 +36,8 @@ public class ConditionalDecorator<T> extends Decorator<T>
 	protected ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<NodeState>> function;
 	protected ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition;
 	
-	protected EventType[] events;
-	protected IAction<Void> action;
+	protected List<ChangeEvent> events;
+	protected Consumer<ChangeEvent> action;
 
 	public ConditionalDecorator<T> setAsyncFunction(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<NodeState>> execute)
 	{
@@ -50,6 +60,15 @@ public class ConditionalDecorator<T> extends Decorator<T>
 	
 	public ConditionalDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
 	{
+		// TODO: delete bytebuggy approach?
+//		String	name	= condition.getClass().getName().substring(0, condition.getClass().getName().indexOf('/'));
+//		String	method	= BTAgentFeatureProvider.NAMES.get(name);
+//		if(method==null)
+//		{
+//			
+//		}
+//		InjectionModel	model	= ((InjectionFeature)BTAgentFeature.get().getSelf().getFeature(IInjectionFeature.class)).getModel();
+//		Set<String>	deps	= model.getRootModel().findDependentFields(method);
 		// must use fromCallable() to avoid direct condition evaluation!
 		//this.condition = (event, state, context) -> new Future<>(condition.apply(event, state, context));
 		this.condition = (event, state, context) -> fromCallable(() -> condition.apply(event, state, context));
@@ -92,19 +111,13 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		}
 	}
 	
-	public void observeCondition(EventType[] events, IAction<Void> action)
+	public ConditionalDecorator<T> setEvents(ChangeEvent... events) 
 	{
-		this.events = events;
-		this.action = action;
-	}
-	
-	public ConditionalDecorator<T> setEvents(EventType[] events) 
-	{
-		this.events = events;
+		this.events = Arrays.asList(events);
 		return this;
 	}
 
-	public ConditionalDecorator<T> setAction(IAction<Void> action) 
+	public ConditionalDecorator<T> setAction(Consumer<ChangeEvent> action) 
 	{
 		this.action = action;
 		return this;
@@ -115,17 +128,69 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		return (ExecutionContext)BTAgentFeature.get().getExecutionContext(); // todo: remove cast hack
 	}
 
-	public EventType[] getEvents() 
+	public List<ChangeEvent> getEvents() 
 	{
-		return events;
+		// Auto-detect events if not explicitly set.
+		if(this.events==null)
+		{
+			this.events	= new ArrayList<>();
+			
+			String	method	= getConditionMethod();
+			if(method!=null)
+			{
+				InjectionModel	model	= ((InjectionFeature)BTAgentFeature.get().getSelf().getFeature(IInjectionFeature.class)).getModel();
+				Set<String>	deps	= model.getRootModel().findDependentFields(method);
+//				System.out.println("getEvents() for "+this+": "+deps);
+				
+				for(String dep: deps)
+				{
+					// type null -> always match all types (added/removed are never thrown for scalar values anyways). 
+					events.add(new ChangeEvent(null, dep));
+				}
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Event auto-detect failed for "+getNode());
+			}
+			
+		}
+		
+		return this.events;
 	}
 
+	/**
+	 *  Get the method descriptor for the condition of the decorator.
+	 *  @return null when not found (i.e. when auto-detect didn't work).
+	 */
+	protected String	getConditionMethod()
+	{
+		String	ret	= null;
+		
+		// index-1, because node itself is its first decorator!?
+		int index	= getNode().getDecorators().indexOf(this)-1;
+		if(index>=0)
+		{
+			synchronized(BTAgentFeatureProvider.DECORATOR_CONDITIONS)
+			{
+				List<String>	conditions	= BTAgentFeatureProvider.DECORATOR_CONDITIONS
+					.get(BTAgentFeature.get().getSelf().getPojo().getClass())
+					.get(getNode().getName());
+				if(conditions!=null && conditions.size()>index)
+				{
+					ret	= conditions.get(index);
+				}
+			}
+		}
+		
+		return ret;
+	}
+	
 	/*public ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<NodeState>> getCondition() 
 	{
 		return function;
 	}*/
 
-	public IAction<Void> getAction() 
+	public Consumer<ChangeEvent> getAction() 
 	{
 		return action;
 	}

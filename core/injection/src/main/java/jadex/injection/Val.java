@@ -1,6 +1,5 @@
 package jadex.injection;
 
-import jadex.collection.IEventPublisher;
 import jadex.core.IComponent;
 
 /**
@@ -21,9 +20,9 @@ public class Val<T>	extends AbstractDynVal<T>
 	 *  Called on component init.
 	 */
 	@Override
-	void	init(IComponent comp, IEventPublisher changehandler)
+	void	init(IComponent comp, String name)
 	{
-		super.init(comp, changehandler);
+		super.init(comp, name);
 		
 		observeNewValue(null, value);
 	}
@@ -34,8 +33,9 @@ public class Val<T>	extends AbstractDynVal<T>
 	 */
 	public void	set(T value)
 	{
-		if(changehandler==null)
-			throw new IllegalStateException("Wrapper not inited. Missing annotation?");
+		// Support builder pattern for POJO, see BT UniversityAgent
+//		if(comp==null)
+//			throw new IllegalStateException("Wrapper not inited. Missing annotation?");
 		
 		doSet(value);
 	}

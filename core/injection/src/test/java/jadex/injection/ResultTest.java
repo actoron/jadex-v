@@ -9,13 +9,15 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.common.NameValue;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -28,7 +30,7 @@ import jadex.injection.annotation.ProvideResult;
  */
 public class ResultTest
 {
-	public static final long	TIMEOUT	= 10000;
+	public static final long	TIMEOUT	= -1;
 	
 	/**
 	 *  Test manually adding result.
@@ -41,7 +43,7 @@ public class ResultTest
 			@OnStart
 			void start(IInjectionFeature feature)
 			{
-				feature.addResult("result", "success");
+				feature.setResult("result", "success");
 			}
 		});
 		assertEquals("success", fut.get(TIMEOUT));
@@ -135,7 +137,6 @@ public class ResultTest
 			}
 		}).get(TIMEOUT);
 		
-		@SuppressWarnings("serial")
 		Map<String, Object>	expected	= new LinkedHashMap<>()
 		{
 			{
@@ -166,25 +167,27 @@ public class ResultTest
 			@OnStart
 			void start(IInjectionFeature feature)
 			{
-				feature.addResult("start", "startvalue");
+				feature.setResult("start", "startvalue");
 			}
 			
 			@OnEnd
 			void end(IInjectionFeature feature)
 			{
-				feature.addResult("end", "endvalue");
+				feature.setResult("end", "endvalue");
 			}
 		}).get(TIMEOUT);
 		
-		ISubscriptionIntermediateFuture<NameValue>	sub	= handle.subscribeToResults();
+		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= handle.subscribeToResults();
 		
-		NameValue	res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new NameValue("start", "startvalue"), res);
+		// Subscribe is executed after OnStart and thus gives event type INITIAL
+		ChangeEvent	res	= sub.getNextIntermediateResult(TIMEOUT);
+		assertEquals(new ChangeEvent(Type.INITIAL, "start", "startvalue", null, null), res);
+//		assertEquals(new ResultEvent("start", "startvalue"), res);
 		
 		handle.terminate().get(TIMEOUT);
 		
 		res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new NameValue("end", "endvalue"), res);
+		assertEquals(new ChangeEvent(Type.CHANGED, "end", "endvalue", null, null), res);
 	}
 	
 	/**
@@ -220,13 +223,12 @@ public class ResultTest
 	public void	testNoCopyGetResults()
 	{
 		List<String>	value	= Collections.singletonList("hello");
-		
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+		class NoCopyPojo implements Supplier<List<String>>
 		{
 			@ProvideResult
 			@NoCopy
 			List<String>	field	= value;
-			
+
 			// Method annotation
 			@ProvideResult
 			@NoCopy
@@ -234,17 +236,27 @@ public class ResultTest
 			{
 				return value;
 			}
-			
+
 			// Return type annotation
 			@ProvideResult
 			protected	@NoCopy	List<String>	method2()
 			{
 				return value;
 			}
-		}).get(TIMEOUT);
+
+			// Get access to internal field (wrapped by ListWrapper due to dynamic value)
+			@Override
+			public List<String> get()
+			{
+				return field;
+			}
+		}
+		
+		NoCopyPojo	pojo	= new NoCopyPojo();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TIMEOUT);
 		
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("field"));
-		assertSame(value, handle.getResults().get(TIMEOUT).get("field"));
+		assertSame(pojo.get(), handle.getResults().get(TIMEOUT).get("field"));
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("method1"));
 		assertSame(value, handle.getResults().get(TIMEOUT).get("method1"));
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("method2"));

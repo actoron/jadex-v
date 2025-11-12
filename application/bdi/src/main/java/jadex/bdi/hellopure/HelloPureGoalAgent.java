@@ -5,9 +5,11 @@ import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalCreationCondition;
+import jadex.bdi.annotation.GoalParameter;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.IFuture;
 import jadex.injection.Val;
@@ -26,7 +28,7 @@ public class HelloPureGoalAgent
 	@Goal
 	public class HelloGoal
 	{
-//		@GoalParameter
+		@GoalParameter
 		protected Val<String> text;
 		
 		@GoalCreationCondition(factchanged="sayhello")
@@ -35,7 +37,7 @@ public class HelloPureGoalAgent
 			this.text	= new Val<>(text);
 		}
 		
-		@GoalTargetCondition//(parameters="text")
+		@GoalTargetCondition
 		public boolean checkTarget()
 		{
 			System.out.println("checkTarget: "+text);
@@ -80,6 +82,16 @@ public class HelloPureGoalAgent
 	{
 		System.out.println("3: "+goal.getText());
 		return IFuture.DONE;
+	}
+	
+	@Plan(trigger=@Trigger(goalfinisheds=HelloGoal.class))
+	protected void finished(HelloGoal goal, IComponent comp)
+	{
+		System.out.println("finished: "+goal.getText());
+		comp.terminate();
+		
+		// This should not be called anymore as component is terminated.
+		System.out.println("after terminate");
 	}
 	
 	/**

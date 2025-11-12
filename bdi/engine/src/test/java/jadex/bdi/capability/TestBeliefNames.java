@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IBeliefListener;
 import jadex.bdi.ICapability;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
@@ -21,6 +20,8 @@ import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanContextCondition;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.ChangeEvent;
+import jadex.core.IChangeListener;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -28,7 +29,6 @@ import jadex.future.IFuture;
 import jadex.injection.Dyn;
 import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
-import jadex.rules.eca.ChangeInfo;
 
 /**
  *  Check scoped belief naming.
@@ -56,13 +56,13 @@ public class TestBeliefNames
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(comp ->
 		{
-			comp.getFeature(IBDIAgentFeature.class).addBeliefListener("capa.belief",
-				new IBeliefListener<String>()
+			comp.getFeature(IBDIAgentFeature.class).addChangeListener("capa.belief",
+				new IChangeListener()
 			{
 				@Override
-				public void factChanged(ChangeInfo<String> change)
+				public void valueChanged(ChangeEvent event)
 				{
-					result.setResult(change.getValue());
+					result.setResult((String) event.value());					
 				}
 			});
 			pojo.capa.belief.set("value");
@@ -95,13 +95,13 @@ public class TestBeliefNames
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(comp ->
 		{
-			pojo.capa.capa.addBeliefListener("belief",
-				new IBeliefListener<String>()
+			pojo.capa.capa.addChangeListener("belief",
+				new IChangeListener()
 			{
 				@Override
-				public void factChanged(ChangeInfo<String> change)
+				public void valueChanged(ChangeEvent event)
 				{
-					result.setResult(change.getValue());
+					result.setResult((String) event.value());
 				}
 			});
 			pojo.capa.belief.set("value");
@@ -134,13 +134,13 @@ public class TestBeliefNames
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(comp ->
 		{
-			comp.getFeature(IBDIAgentFeature.class).addBeliefListener("capa.dep",
-				new IBeliefListener<String>()
+			comp.getFeature(IBDIAgentFeature.class).addChangeListener("capa.dep",
+				new IChangeListener()
 			{
 				@Override
-				public void factChanged(ChangeInfo<String> change)
+				public void valueChanged(ChangeEvent event)
 				{
-					result.setResult(change.getValue());
+					result.setResult((String) event.value());
 				}
 			});
 			pojo.capa.belief.set("value");
@@ -240,10 +240,10 @@ public class TestBeliefNames
 			@Goal
 			class MyGoal
 			{
-				@GoalTargetCondition(beliefs="belief")
-				boolean	target(String value)
+				@GoalTargetCondition
+				boolean	target()
 				{
-					return value!=null && "value".equals(value);
+					return belief.get().equals("value");
 				}
 			}
 			

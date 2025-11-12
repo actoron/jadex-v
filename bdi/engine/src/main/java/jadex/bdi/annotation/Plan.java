@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  *	Plans are started for events or goals.
- *  Can be modeled as methods of the agent or as separate class with extra body method.
+ *  Can be modeled as methods of the agent or as inner or separate class with extra body method.
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

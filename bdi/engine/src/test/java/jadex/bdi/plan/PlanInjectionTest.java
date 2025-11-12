@@ -20,7 +20,6 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
-import jadex.common.SUtil;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -110,11 +109,8 @@ public class PlanInjectionTest
 			}
 		}
 		
-		IComponentHandle	handle	= IComponentManager.get().create(new BrokenGoalInjectionAgent()).get(TestHelper.TIMEOUT);
-		SUtil.runWithoutOutErr(
-			() -> assertThrows(UnsupportedOperationException.class,
-				() -> handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class)
-					.dispatchTopLevelGoal(new BrokenGoalInjectionAgent.MyGoal())).get(TestHelper.TIMEOUT)));
+		assertThrows(UnsupportedOperationException.class,
+			() -> IComponentManager.get().create(new BrokenGoalInjectionAgent()).get(TestHelper.TIMEOUT));
 	}
 	
 	/**

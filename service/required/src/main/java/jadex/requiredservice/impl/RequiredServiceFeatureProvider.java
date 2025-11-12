@@ -131,7 +131,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 		}, InjectService.class, Inject.class);
 		
 		// Single service method parameter.
-		InjectionModel.addMethodInjection((classes, method, contextfetchers, anno) ->
+		InjectionModel.addMethodInjection((model, method, anno) ->
 		{
 			IInjectionHandle	ret	= null;
 			
@@ -165,7 +165,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 						preparams.add((self, pojos, context, oldval) -> context);
 					}
 				}
-				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, classes, contextfetchers, preparams);
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, model.getPojoClazzes(), model.getContextFetchers(), preparams);
 				
 				Class<?>	fservice	= service;
 				ret	= (self, pojos, context, oldval) ->

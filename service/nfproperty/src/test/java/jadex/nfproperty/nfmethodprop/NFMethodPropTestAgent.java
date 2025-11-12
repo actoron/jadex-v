@@ -10,6 +10,7 @@ import jadex.common.MethodInfo;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.impl.StepAborted;
 import jadex.injection.annotation.Inject;
 import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.sensor.service.ExecutionTimeProperty;
@@ -61,7 +62,14 @@ public class NFMethodPropTestAgent
 			long wab = (wa+wb)/2;
 			ret[2] = Math.abs(w-wab)/wab;
 
-			agent.terminate();
+			try
+			{
+				agent.terminate();
+			}
+			catch(StepAborted e)
+			{
+				// Hack!!! step should not return after component termination.
+			}
 			
 			return ret;
 		}).get();

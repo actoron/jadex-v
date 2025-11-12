@@ -13,13 +13,12 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IBeliefListener;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.impl.BDIAgentFeature;
-import jadex.bdi.impl.ChangeEvent;
-import jadex.common.Tuple2;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
+import jadex.core.IChangeListener;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -30,10 +29,6 @@ import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.injection.AbstractDynamicValueTest;
 import jadex.injection.Dyn;
 import jadex.injection.Val;
-import jadex.rules.eca.ChangeInfo;
-import jadex.rules.eca.EventType;
-import jadex.rules.eca.IEvent;
-import jadex.rules.eca.Rule;
 
 /**
  *  Test events from all kinds of beliefs.
@@ -149,12 +144,15 @@ public class BeliefTest	extends AbstractDynamicValueTest
 		List<String>	facts	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("val", new IBeliefListener<Integer>()
+				.addChangeListener("val", new IChangeListener()
 			{
 				@Override
-				public void factChanged(ChangeInfo<Integer> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					facts.add(info.getOldValue()+":"+info.getValue());
+					if(event.type()==Type.CHANGED)
+					{
+						facts.add(event.oldvalue()+":"+event.value());
+					}
 				}
 			});
 			
@@ -170,18 +168,19 @@ public class BeliefTest	extends AbstractDynamicValueTest
 		List<String>	changes	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("set", new IBeliefListener<String>()
+				.addChangeListener("set", new IChangeListener()
 			{
 				@Override
-				public void	factAdded(ChangeInfo<String> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					changes.add("a:"+info.getValue());
-				}
-				
-				@Override
-				public void	factRemoved(ChangeInfo<String> info)
-				{
-					changes.add("r:"+info.getValue());
+					if(event.type()==Type.ADDED)
+					{
+						changes.add("a:"+event.value());
+					}
+					else if(event.type()==Type.REMOVED)
+					{
+						changes.add("r:"+event.value());
+					}
 				}
 			});
 			
@@ -197,24 +196,23 @@ public class BeliefTest	extends AbstractDynamicValueTest
 		List<String>	mchanges	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("map", new IBeliefListener<String>()
+				.addChangeListener("map", new IChangeListener()
 			{
 				@Override
-				public void	factChanged(ChangeInfo<String> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					mchanges.add("c:"+info.getInfo()+";"+info.getValue());
-				}
-				
-				@Override
-				public void	factAdded(ChangeInfo<String> info)
-				{
-					mchanges.add("a:"+info.getInfo()+";"+info.getValue());
-				}
-					
-				@Override
-				public void	factRemoved(ChangeInfo<String> info)
-				{
-					mchanges.add("r:"+info.getInfo()+";"+info.getValue());
+					if(event.type()==Type.CHANGED)
+					{
+						mchanges.add("c:"+event.info()+";"+event.value());
+					}
+					else if(event.type()==Type.ADDED)
+					{
+						mchanges.add("a:"+event.info()+";"+event.value());
+					}
+					else if(event.type()==Type.REMOVED)
+					{
+						mchanges.add("r:"+event.info()+";"+event.value());
+					}
 				}
 			});
 			
@@ -238,62 +236,48 @@ public class BeliefTest	extends AbstractDynamicValueTest
 	static int	rulecnt	= 0;
 	
 	@Override
-	public void	addEventListener(Future<Object> fut, ChangeType type, String name)
+	public void	addEventListener(Future<Object> fut, Type type, String name)
 	{
-		String	bditype =
-			(type==ChangeType.CHANGED ? ChangeEvent.FACTCHANGED :
-			(type==ChangeType.ADDED ? ChangeEvent.FACTADDED :
-			(type==ChangeType.REMOVED ? ChangeEvent.FACTREMOVED : null)));
-		String	events[]	= new String[] {bditype, name};
-		
-		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
+		IBDIAgentFeature	feat	= IComponentManager.get().getCurrentComponent()
 			.getFeature(IBDIAgentFeature.class);
-		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
-			"EventListenerRule"+Arrays.toString(events)+"_"+rulecnt++,	// Rule Name
-			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
-			(event, rule, context, condresult) -> {fut.setResultIfUndone(event); return IFuture.DONE;}, // Action -> set future
-			new EventType[] {new EventType(events)}	// Trigger Event(s)
-		));
+		feat.addChangeListener(name, event ->
+		{
+			if(type==event.type())
+			{
+				fut.setResultIfUndone(event);
+			}
+		});
 	}
 	
 	@Override
-	public void	addEventListener(IntermediateFuture<Object> fut, ChangeType type, String name)
+	public void	addEventListener(IntermediateFuture<Object> fut, Type type, String name)
 	{
-		String	bditype =
-				(type==ChangeType.CHANGED ? ChangeEvent.FACTCHANGED :
-				(type==ChangeType.ADDED ? ChangeEvent.FACTADDED :
-				(type==ChangeType.REMOVED ? ChangeEvent.FACTREMOVED : null)));
-		String	events[]	= new String[] {bditype, name};
-		
-		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
+		IBDIAgentFeature	feat	= IComponentManager.get().getCurrentComponent()
 			.getFeature(IBDIAgentFeature.class);
-		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
-			"EventListenerRule"+Arrays.toString(events)+"_"+rulecnt++,	// Rule Name
-			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
-			(event, rule, context, condresult) -> {fut.addIntermediateResultIfUndone(event); return IFuture.DONE;}, // Action -> set future
-			new EventType[] {new EventType(events)}	// Trigger Event(s)
-		));
+		feat.addChangeListener(name, event ->
+		{
+			if(type==event.type())
+			{
+				fut.addIntermediateResultIfUndone(event);
+			}
+		});
 	}
 	
 	@Override
 	public void checkEventInfo(IFuture<Object> fut, Object oldval, Object newval, Object info)
 	{
-		IEvent	event	= (IEvent) fut.get(TestHelper.TIMEOUT);
-		@SuppressWarnings("unchecked")
-		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
-		assertEquals(oldval, ci.getOldValue(), "old value");
-		assertEquals(newval, ci.getValue(), "new value");
-		assertEquals(info, ci.getInfo(), "info");
+		ChangeEvent	event	= (ChangeEvent) fut.get(TestHelper.TIMEOUT);
+		assertEquals(oldval, event.oldvalue(), "old value");
+		assertEquals(newval, event.value(), "new value");
+		assertEquals(info, event.info(), "info");
 	}
 	
 	@Override
 	public void checkEventInfo(IIntermediateFuture<Object> fut, Object oldval, Object newval, Object info)
 	{
-		IEvent	event	= (IEvent) fut.getNextIntermediateResult(TestHelper.TIMEOUT);
-		@SuppressWarnings("unchecked")
-		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
-		assertEquals(oldval, ci.getOldValue(), "old value");
-		assertEquals(newval, ci.getValue(), "new value");
-		assertEquals(info, ci.getInfo(), "info");
+		ChangeEvent	event	= (ChangeEvent) fut.getNextIntermediateResult(TestHelper.TIMEOUT);
+		assertEquals(oldval, event.oldvalue(), "old value");
+		assertEquals(newval, event.value(), "new value");
+		assertEquals(info, event.info(), "info");
 	}
 }

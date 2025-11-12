@@ -3,7 +3,6 @@ package jadex.injection;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
-import jadex.collection.IEventPublisher;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -90,9 +89,9 @@ public class Dyn<T>	extends AbstractDynVal<T>
 	 *  Called on component init.
 	 */
 	@Override
-	void	init(IComponent comp, IEventPublisher changehandler)
+	void	init(IComponent comp, String name)
 	{
-		super.init(comp, changehandler);
+		super.init(comp, name);
 		
 		// Set update rate to start periodic updates.
 		setUpdateRate(updaterate);

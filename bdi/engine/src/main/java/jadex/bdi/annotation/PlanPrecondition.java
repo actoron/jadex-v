@@ -6,8 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  Note that the plan precondition is executed before a plan is scheduled for execution.
- *  Hence it does not need triggering events.
+ *  Annotation for a method to be checked before a plan is executed.
+ *  The method should return a boolean.
+ *  If the method returns false, the plan is not selected/executed.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

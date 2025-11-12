@@ -33,12 +33,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:classreader:'+v
 	//implementation 'org.activecomponents.jadex:bytecode:'+v
-	implementation 'org.activecomponents.jadex:eca:'+v
-	
-	implementation 'org.ow2.asm:asm:9.8'
-	implementation 'org.ow2.asm:asm-tree:9.8'
-	implementation 'org.ow2.asm:asm-util:9.8'
-	implementation 'org.ow2.asm:asm-commons:9.8'
 	
 	testImplementation testFixtures('org.activecomponents.jadex:injection:'+v)
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'

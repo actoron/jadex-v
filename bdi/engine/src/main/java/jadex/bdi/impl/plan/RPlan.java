@@ -1,13 +1,13 @@
 package jadex.bdi.impl.plan;
 
+import java.lang.System.Logger.Level;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import jadex.bdi.GoalFailureException;
+import jadex.bdi.BDIFailureException;
 import jadex.bdi.IPlan;
-import jadex.bdi.PlanFailureException;
 import jadex.bdi.impl.PlanAborted;
 import jadex.bdi.impl.RElement;
 import jadex.bdi.impl.goal.AdoptGoalAction;
@@ -108,13 +108,16 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	protected boolean atomic;
 	
 	/** The finished future (if finishing or finished). */
-	public Future<Void>	finished;
+	protected Future<Void>	finished;
 	
 	/** The wait future (if currently waiting). */
-	public Future<?>	waitfuture;
+	protected Future<?>	waitfuture;
 	
 	/** The blocked suspendable (if currently waiting). */
-	public ISuspendable	waitsus;
+	protected ISuspendable	waitsus;
+
+	/** Flag to indicate terminate() was called in plan step. */
+	protected boolean terminate;
 	
 //	/**
 //	 *  Create a new rplan based on an mplan.
@@ -330,10 +333,9 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 		this.exception = e;
 
 		// Print exception, when relevant for user. 
-		if(!(e instanceof GoalFailureException)
-			&& !(e instanceof PlanFailureException))
+		if(!(e instanceof BDIFailureException))
 		{
-			System.err.println("Plan '"+getId()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
+			getComponent().getLogger().log(Level.WARNING, "Plan '"+getId()+"' threw exception: "+SUtil.getExceptionStacktrace(e));
 		}
 	}
 	
@@ -632,7 +634,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //	{
 //		final Future<E> ret = new Future<E>();
 		
-		final RGoal rgoal = new RGoal(goal, this, comp, null);
+		final RGoal rgoal = new RGoal(goal, this, comp);
 		
 //		final ResumeCommand<E> rescom = new ResumeCommand<E>(ret, false);
 ////		setResumeCommand(rescom);
@@ -1204,7 +1206,6 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	/**
 	 *  Check if currently inside Atomic block.
 	 */
-	@Override
 	public boolean	isAtomic()
 	{
 		return atomic;
@@ -1280,7 +1281,7 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 //	}
 //	
 	
-	protected IPlanBody getBody()
+	public IPlanBody getBody()
 	{
 		return body;
 	}
@@ -1360,5 +1361,22 @@ public class RPlan extends RElement/*extends RParameterElement*/ implements IPla
 	public String toString()
 	{
 		return super.toString() + ", reason="+getReason();
+	}
+
+	/**
+	 *  Flag to indicate terminate() was called in plan step. 
+	 *  Ensures proper sequence of @PlanAborted and @OnEnd
+	 */
+	public void setTerminate(boolean terminate)
+	{
+		this.terminate	= terminate;
+	}
+	
+	/**
+	 *  Get the terminate flag.
+	 */
+	public boolean	isTerminate()
+	{
+		return this.terminate;
 	}
 }

@@ -176,6 +176,143 @@ public class GoalConditionTest
 		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
 		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
 	}
+	
+	@Test
+	public void	testDependentMethodCreationCondition()
+	{
+		@BDIAgent
+		class GoalCreationAgent
+		{
+			Future<String>	created	= new Future<>();
+			Future<String>	processed	= new Future<>();
+			
+			@Belief
+			Val<String> trigger	= new Val<>("");
+			
+			@Goal
+			class StartGoal
+			{
+				String	param;
+				
+				@GoalCreationCondition
+				static StartGoal condition(GoalCreationAgent agent)
+				{
+					return "value".equals(agent.trigger.get())
+						? agent.new StartGoal(agent.trigger.get()) : null;
+				}
+				
+				public StartGoal(String param)
+				{
+					this.param	= param;
+					created.setResult(param);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				processed.setResult(goal.param);
+			}
+		}
+		
+		GoalCreationAgent	pojo	= new GoalCreationAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> {pojo.trigger.set("wrong"); return null;}).get(TestHelper.TIMEOUT);
+		assertFalse(pojo.created.isDone());
+		handle.scheduleStep(() -> {pojo.trigger.set("value"); return null;}).get(TestHelper.TIMEOUT);
+		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
+		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
+	}
+
+	@Test
+	public void	testDependentBooleanCreationCondition()
+	{
+		@BDIAgent
+		class GoalCreationAgent
+		{
+			Future<String>	created	= new Future<>();
+			Future<String>	processed	= new Future<>();
+			
+			@Belief
+			Val<String> trigger	= new Val<>("");
+			
+			@Goal
+			class StartGoal
+			{
+				String	param;
+				
+				@GoalCreationCondition
+				static boolean condition(GoalCreationAgent agent)
+				{
+					return "value".equals(agent.trigger.get());
+				}
+				
+				@SuppressWarnings("unused")
+				public StartGoal()
+				{
+					this.param	= trigger.get();
+					created.setResult(param);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				processed.setResult(goal.param);
+			}
+		}
+		
+		GoalCreationAgent	pojo	= new GoalCreationAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> {pojo.trigger.set("wrong"); return null;}).get(TestHelper.TIMEOUT);
+		assertFalse(pojo.created.isDone());
+		handle.scheduleStep(() -> {pojo.trigger.set("value"); return null;}).get(TestHelper.TIMEOUT);
+		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
+		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
+	}
+
+	@Test
+	public void	testDependentConstructorCreationCondition()
+	{
+		@BDIAgent
+		class GoalCreationAgent
+		{
+			Future<String>	created	= new Future<>();
+			Future<String>	processed	= new Future<>();
+			
+			@Belief
+			Val<String> trigger	= new Val<>("");
+			
+			@Goal
+			class StartGoal
+			{
+				String	param;
+				
+				@GoalCreationCondition
+				public StartGoal()
+				{
+					this.param	= trigger.get();
+					if(!"value".equals(param))
+						throw new IllegalArgumentException("Goal suppports only \"value\".");
+					created.setResult(param);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				processed.setResult(goal.param);
+			}
+		}
+		
+		GoalCreationAgent	pojo	= new GoalCreationAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> {pojo.trigger.set("wrong"); return null;}).get(TestHelper.TIMEOUT);
+		assertFalse(pojo.created.isDone());
+		handle.scheduleStep(() -> {pojo.trigger.set("value"); return null;}).get(TestHelper.TIMEOUT);
+		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
+		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
+	}
 
 	@Test
 	public void	testNoPlanProceduralQueryGoal()

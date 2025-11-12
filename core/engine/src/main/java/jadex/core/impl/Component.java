@@ -12,7 +12,6 @@ import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import jadex.common.NameValue;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
@@ -21,6 +20,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IResultProvider;
+import jadex.core.ChangeEvent;
 import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.Future;
@@ -111,7 +111,9 @@ public class Component implements IComponent
 				}
 
 				// Initialize all features, i.e. non-lazy ones that implement ILifecycle.
-				for(Object feature:	getFeatures())
+				// Use toArray() to avoid concurrent modification
+				// when some feature init depends on another lazy feature
+				for(Object feature:	getFeatures().toArray())
 				{
 					if(feature instanceof ILifecycle)
 					{
@@ -124,7 +126,7 @@ public class Component implements IComponent
 			catch(Throwable t)
 			{
 				// If an exception occurs, remove the component from the manager.
-				terminate();
+				doTerminate();
 				throw SUtil.throwUnchecked(t);
 			}
 		}
@@ -249,9 +251,24 @@ public class Component implements IComponent
 	}
 	
 	/**
-	 *  Terminate the component.
+	 *  Terminate the component when called from user step.
+	 *  Aborts current step after terminate is finished.
 	 */
 	public void	terminate()
+	{
+		doTerminate();
+
+		// If running on execution feature -> abort component step to avoid further user code being called.
+		if(ComponentManager.get().getCurrentComponent()==this)
+		{
+			throw new StepAborted(getId());
+		}
+	}
+	
+	/**
+	 *  Terminate the component.
+	 */
+	public void	doTerminate()
 	{
 		if(terminated)
 		{
@@ -618,23 +635,23 @@ public class Component implements IComponent
 	 *  Schedules to the component, if not terminated.
 	 *  @throws UnsupportedOperationException when subscription is not supported
 	 */
-	public static ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
+	public static ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
 	{
 		if(isExecutable())
 		{
-			SubscriptionIntermediateFuture<NameValue>	ret	= new SubscriptionIntermediateFuture<>();
+			SubscriptionIntermediateFuture<ChangeEvent>	ret	= new SubscriptionIntermediateFuture<>();
 			
 			@SuppressWarnings("rawtypes")
-			Callable	call	= new Callable<ISubscriptionIntermediateFuture<NameValue>>()
+			Callable	call	= new Callable<ISubscriptionIntermediateFuture<ChangeEvent>>()
 			{
-				public ISubscriptionIntermediateFuture<NameValue>	call()
+				public ISubscriptionIntermediateFuture<ChangeEvent>	call()
 				{
 					return doSubscribeToResults(comp);
 				}
 			};
 
 			@SuppressWarnings("unchecked")
-			ISubscriptionIntermediateFuture<NameValue>	fut	= (ISubscriptionIntermediateFuture<NameValue>)
+			ISubscriptionIntermediateFuture<ChangeEvent>	fut	= (ISubscriptionIntermediateFuture<ChangeEvent>)
 				comp.getComponentHandle().scheduleAsyncStep(call);
 			fut.next(res -> ret.addIntermediateResult(res))
 				.catchEx(e ->
@@ -662,9 +679,9 @@ public class Component implements IComponent
 	 *  To be called on component thread, if any.
 	 *  @throws UnsupportedOperationException when subscription is not supported
 	 */
-	public static ISubscriptionIntermediateFuture<NameValue> doSubscribeToResults(IComponent component)
+	public static ISubscriptionIntermediateFuture<ChangeEvent> doSubscribeToResults(IComponent component)
 	{
-		ISubscriptionIntermediateFuture<NameValue>	ret	= null;
+		ISubscriptionIntermediateFuture<ChangeEvent>	ret	= null;
 		boolean done = false;
 		
 		if(component.getPojo() instanceof IResultProvider)
@@ -743,7 +760,7 @@ public class Component implements IComponent
 		}
 
 		@Override
-		public ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+		public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults()
 		{
 			return Component.subscribeToResults(Component.this);
 		}

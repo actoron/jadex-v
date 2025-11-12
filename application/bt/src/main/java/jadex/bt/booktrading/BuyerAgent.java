@@ -19,12 +19,13 @@ import jadex.bt.booktrading.gui.Gui;
 import jadex.bt.decorators.ChildCreationDecorator;
 import jadex.bt.decorators.FailureDecorator;
 import jadex.bt.decorators.RetryDecorator;
-import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.nodes.ParallelNode;
 import jadex.common.Tuple2;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -37,7 +38,6 @@ import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.rules.eca.EventType;
 
 public class BuyerAgent implements INegotiationAgent, IBTProvider
 {
@@ -62,7 +62,7 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 		ParallelNode<IComponent> buybooks = new ParallelNode<>("buybooks");
 		buybooks.addDecorator(new ChildCreationDecorator<IComponent>()
 			.setCondition((node, state, context) -> true)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "orders")})
+			.setEvents(new ChangeEvent(Type.ADDED, "orders"))
 			.setChildCreator((event) -> createPurchaseAction((Order)event.value())));
 		return buybooks;
 	}
@@ -157,7 +157,7 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 		
 		purchasebook.addDecorator(new FailureDecorator<IComponent>()
 			.setCondition((node, state, context) -> order.getState().equals(Order.FAILED))
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "orders", "state")}));
+			.setEvents(new ChangeEvent(Type.CHANGED, "orders", "state")));
 		purchasebook.addDecorator(new RetryDecorator<IComponent>(5000));
 		
 		return purchasebook;

@@ -91,15 +91,15 @@ public class PlanConditionTest
 		class ContextPlan
 		{
 			@PlanContextCondition
-			boolean context()
+			boolean context(/*PlanTriggerEvent mytrigger, String fact, ConditionTriggerEvent event*/)
 			{
 				return bel.get();
 			}
 			
 			@PlanBody
-			void body(IPlan plan, String fact)
+			void body(IPlan plan, String fact/*, PlanTriggerEvent mytrigger*/)
 			{
-				if("go".equals(fact))
+				if("go".equals(fact/*mytrigger.event().value()*/))
 				{
 					// Trigger self-abort
 					bel.set(false);

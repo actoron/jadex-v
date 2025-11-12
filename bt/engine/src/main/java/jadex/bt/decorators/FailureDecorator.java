@@ -7,26 +7,14 @@ import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.ITriFunction;
+import jadex.core.ChangeEvent;
 import jadex.future.IFuture;
-import jadex.rules.eca.EventType;
 
 public class FailureDecorator <T> extends ConditionalDecorator<T>
 {
-	@Override
-	public FailureDecorator<T> setAsyncCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition)
+	public FailureDecorator()
 	{
-		return (FailureDecorator<T>)super.setAsyncCondition(condition);
-	}
-	
-	@Override
-	public FailureDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
-	{
-		return (FailureDecorator<T>)super.setCondition(condition);
-	}
-	
-	public FailureDecorator<T> observeCondition(EventType[] events)
-	{
-		super.observeCondition(events, (event, rule, context, condresult) -> // action
+		this.action	= event ->
 		{
 			//System.out.println("failure condition triggered: "+event);
 			
@@ -39,9 +27,25 @@ public class FailureDecorator <T> extends ConditionalDecorator<T>
 			{
 				System.getLogger(getClass().getName()).log(Level.INFO, "failure condition triggered, but node not active: "+event);
 			}
-			return IFuture.DONE;
-		});
-		return this;
+		};
+	}
+	
+	@Override
+	public FailureDecorator<T> setAsyncCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition)
+	{
+		return (FailureDecorator<T>)super.setAsyncCondition(condition);
+	}
+	
+	@Override
+	public FailureDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
+	{
+		return (FailureDecorator<T>)super.setCondition(condition);
+	}
+	
+	@Override
+	public FailureDecorator<T> setEvents(ChangeEvent... events)
+	{
+		return (FailureDecorator<T>) super.setEvents(events);
 	}
 	
 	@Override

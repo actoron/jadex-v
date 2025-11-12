@@ -1,4 +1,4 @@
-package jadex.execution;
+package jadex.core.impl;
 
 import jadex.core.ComponentIdentifier;
 
@@ -9,12 +9,6 @@ import jadex.core.ComponentIdentifier;
 public class StepAborted extends Error 
 {
 	ComponentIdentifier	cid;
-	
-	public StepAborted()
-	{
-		this(IExecutionFeature.isAnyComponentThread() ?
-			IExecutionFeature.get().getComponent().getId(): null);
-	}
 	
 	public StepAborted(ComponentIdentifier cid)
 	{

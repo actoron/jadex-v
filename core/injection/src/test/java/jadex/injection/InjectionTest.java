@@ -292,13 +292,13 @@ public class InjectionTest
 	public void	testBlockingStart()
 	{
 		// Also tests method injection.
-		InjectionModel.addMethodInjection((pojotypes, method, contextfetchers, anno) ->
+		InjectionModel.addMethodInjection((model, method, anno) ->
 		{
 			if(method.getName().equals("injectMe"))
 			{
 				List<IInjectionHandle>	preparams	= new ArrayList<>();
 				preparams.add((self, pojos, context, oldval) -> context);
-				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, pojotypes, contextfetchers, preparams);
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, model.getPojoClazzes(), model.getContextFetchers(), preparams);
 				return (comp, pojos, context, oldvale) ->
 				{
 					comp.getFeature(IExecutionFeature.class).waitForDelay(500).then(v ->

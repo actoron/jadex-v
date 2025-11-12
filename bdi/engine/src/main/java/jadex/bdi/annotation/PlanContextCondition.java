@@ -7,19 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  *  A condition to be monitored while the plan is running.
- *  The plan is aborted when the condition become sinvalid.
+ *  The plan is aborted when the condition becomes invalid.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PlanContextCondition
 {
-	/**
-	 *  The events this condition should react to.
-	 */
-	public String[] beliefs() default {};
-	
-//	/**
-//	 *  The events this condition should react to.
-//	 */
-//	public RawEvent[] rawevents() default {};
 }

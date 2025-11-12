@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 import jadex.core.IComponent;
-import jadex.execution.IExecutionFeature;
 import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
@@ -17,7 +16,6 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.IntermediateFuture;
-import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminableIntermediateFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
@@ -209,6 +207,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 	@Override
 	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query)
 	{
+		@SuppressWarnings("unchecked")
 		final ISubscriptionIntermediateFuture<T> ret[] = new ISubscriptionIntermediateFuture[2];
 		
 		enhanceQuery(query, true);

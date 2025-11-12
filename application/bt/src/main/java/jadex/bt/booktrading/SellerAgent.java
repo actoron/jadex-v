@@ -16,11 +16,12 @@ import jadex.bt.booktrading.domain.NegotiationReport;
 import jadex.bt.booktrading.domain.Order;
 import jadex.bt.booktrading.gui.Gui;
 import jadex.bt.decorators.ChildCreationDecorator;
-import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.nodes.ParallelNode;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
@@ -30,7 +31,6 @@ import jadex.future.TerminableFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
-import jadex.rules.eca.EventType;
 
 public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvider
 {
@@ -68,11 +68,11 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 		sellbooks.setKeepRunning(true);
 		sellbooks.addDecorator(new ChildCreationDecorator<IComponent>()
 			.setCondition((node, state, context) -> true)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "mprops")})
+			.setEvents(new ChangeEvent(Type.ADDED, "mprops"))
 			.setChildCreator((event) -> createMakeProposalAction((MakeProposal)event.value())));
 		sellbooks.addDecorator(new ChildCreationDecorator<IComponent>()
 			.setCondition((node, state, context) -> true)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "tasks")})
+			.setEvents(new ChangeEvent(Type.ADDED, "tasks"))
 			.setChildCreator((event) -> createExecuteTaskAction((ExecuteTask)event.value())));
 		// add a repeat decorator that keeps the node running for ever
 		// must add an event as rulebase checks and throws exception when rule without 

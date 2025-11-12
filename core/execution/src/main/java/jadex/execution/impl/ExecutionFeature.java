@@ -30,8 +30,8 @@ import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
 import jadex.core.impl.ILifecycle;
+import jadex.core.impl.StepAborted;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.StepAborted;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -1041,6 +1041,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			{
 				System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
 				e2.printStackTrace();
+				
+				// user terminate throws StepAborted so afterStep() is not called.
 				self.terminate();
 			}
 		}
@@ -1060,6 +1062,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				{
 					System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
 					e2.printStackTrace();
+					
+					// user terminate throws StepAborted so afterStep() is not called.
 					self.terminate();
 				}
 			}

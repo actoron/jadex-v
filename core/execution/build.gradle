@@ -36,7 +36,7 @@ dependencies
 	testFixturesImplementation 'org.activecomponents.jadex:future:'+v
 	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
-	implementation 'net.bytebuddy:byte-buddy:1.16.1'
+	implementation 'net.bytebuddy:byte-buddy:1.17.8'
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
