@@ -13,8 +13,8 @@ import java.lang.annotation.Target;
 public @interface ResultMapper
 {
 	/**
-	 *  The mapper.
+	 *  The value as a class.
 	 */
-	public Value value();
+	public Class<?> value() default Object.class;
 }
 

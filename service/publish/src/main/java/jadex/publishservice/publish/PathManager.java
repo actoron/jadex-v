@@ -33,7 +33,26 @@ public class PathManager<T>
 		this.pathparts = new ArrayList<>();
 		this.addedpaths = new HashMap<>();
 	}
-	
+
+	/**
+	 *  Get all added paths.
+	 *  @return The paths.
+	 */
+	public Collection<String> getPaths()
+	{
+		return new HashSet<>(addedpaths.values());
+	}
+
+	/**
+	 *  Checks whether a path is contained.
+	 *  @param path The path.
+	 *  @return True, if contained.
+	 */
+	public boolean contains(String path)
+	{
+		return addedpaths.containsValue(path);
+	}
+
 	/**
 	 *  Adds a new info.
 	 *  @param path The path.

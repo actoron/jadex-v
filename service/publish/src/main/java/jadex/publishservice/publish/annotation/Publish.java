@@ -13,6 +13,11 @@ import java.lang.annotation.Target;
 public @interface Publish
 {
 	/**
+	 *  Automapping flag, if true the methods are automatically mapped.
+	 */
+	public boolean automapping() default true;
+
+	/**
 	 *  The publishing id, e.g. url or name.
 	 */
 	public String publishid();
@@ -33,22 +38,22 @@ public @interface Publish
 	public String publishtagetname() default "";
 	
 	/**
-	 *  The scope user to find the publish service.
-	 * /
-	public ServiceScope publishscope() default ServiceScope.PLATFORM;
-	
-	/**
-	 *  Flag if the service should be published to multiple locations.
-	 * /
-	public boolean multi() default false;
-	
-	/**
 	 * The mapping information (e.g. annotated interface). 
 	 */ 
 	public Class<?> mapping() default Object.class;
 	
-	/**
+	/* *
 	 *  Additional mapping properties. 
 	 * /
 	public NameValue[] properties() default {};*/
+
+	/* *
+	 *  The scope user to find the publish service.
+	 * /
+	public ServiceScope publishscope() default ServiceScope.PLATFORM;*/
+	
+	/* *
+	 *  Flag if the service should be published to multiple locations.
+	 * /
+	public boolean multi() default false;*/
 }

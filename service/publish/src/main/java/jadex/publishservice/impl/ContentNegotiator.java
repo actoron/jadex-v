@@ -58,12 +58,12 @@ public class ContentNegotiator
     }
 
     /**
-     * Negotiates the best media type given:
+     *  Negotiates the best media type given:
      *  - rawAcceptHeader: the raw Accept header string from client
      *  - mappingProduced: media types the endpoint declares it can produce
      *  - serverPreference: fallback/order preference among candidates (can be null)
      *
-     * Returns the chosen media type, or empty if none is acceptable (i.e., should be 406).
+     *  Returns the chosen media type, or empty if none is acceptable (i.e., should be 406).
      */
     public static Optional<String> negotiate(String rawAcceptHeader, Collection<String> mappingProduced, List<String> serverPreference) 
     {

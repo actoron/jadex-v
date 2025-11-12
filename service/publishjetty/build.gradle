@@ -1,7 +1,7 @@
 plugins 
 {
     id 'java-library'
-    
+    id 'java-test-fixtures'
 }
 
 description = 'Publish service feature for Jetty'
@@ -39,7 +39,32 @@ dependencies
 	api 'org.eclipse.jetty:jetty-server:11.0.6'
 	api 'org.eclipse.jetty.websocket:websocket-jetty-server:11.0.6'
 	
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.15.2'
+
+    testImplementation(testFixtures("org.activecomponents.jadex:publishservice:"+v))
+    testImplementation(testFixtures(project))
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+}
+
+sourceSets {
+    testFixtures {
+        java.srcDirs = ['src/testFixtures/java']
+        resources.srcDirs = ['src/testFixtures/resources']
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    test {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    classpath += sourceSets.testFixtures.output + sourceSets.testFixtures.runtimeClasspath
 }
 
 task copyDependencies {
@@ -65,3 +90,20 @@ processResources
         include '**/.system'
     }
 }
+
+/*tasks.named('test', Test).configure {
+    useJUnitPlatform()
+
+    // Füge die eigenen main-Klassen *zum* vorhandenen classpath hinzu (sicher)
+    // (wir setzen nicht komplett neu, sondern erweitern)
+    classpath = files(sourceSets.main.output) + classpath
+
+    // VM-Debug args (optional)
+    jvmArgs += ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005']
+
+    doFirst {
+        println "\n=== FINAL TEST CLASS PATH (${classpath.files.size()} entries) ==="
+        classpath.files.each { println "  $it" }
+        println "==============================================\n"
+    }
+}*/
