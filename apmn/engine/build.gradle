@@ -3,7 +3,7 @@ plugins
 	id 'java-library'
 }
 
-description = 'Opmn execution'
+description = 'Apmn execution'
 
 group = 'org.activecomponents.jadex'
 
