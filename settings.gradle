@@ -190,6 +190,7 @@ includeBuild('bdi/llm') {}
 includeBuild('model/model') {name='model'}
 
 includeBuild('bpmn/engine') {name='bpmn'}
+includeBuild('opmn/engine') {name='opmn'}
 includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
 includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
 
