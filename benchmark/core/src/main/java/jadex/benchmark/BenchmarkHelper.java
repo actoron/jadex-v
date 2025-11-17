@@ -13,6 +13,7 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
+import jadex.common.OperatingSystemMXBeanFacade;
 import jadex.common.SUtil;
 import jadex.core.IComponentManager;
 import jadex.logger.ILoggingFeature;
@@ -27,6 +28,8 @@ public class BenchmarkHelper
 {
 	// Check execution environment
 	static final String	EXEC_ENV	= SUtil.isGradle() ? "gradle" : "ide";
+	
+	static final boolean	use_mxbean = OperatingSystemMXBeanFacade.getProcessCpuTime()>0;
 
 	static
 	{
@@ -184,10 +187,10 @@ public class BenchmarkHelper
 				{
 					for(int i=0; i<warmups; i++)
 						code.run();
-					long	start	= System.nanoTime();
+					long	start	= use_mxbean ? OperatingSystemMXBeanFacade.getProcessCpuTime(): System.nanoTime();
 					for(int i=0; i<runs; i++)
 						code.run();
-					long	end	= System.nanoTime();
+					long	end	= use_mxbean ? OperatingSystemMXBeanFacade.getProcessCpuTime(): System.nanoTime();
 					
 					took	+= (end-start)/runs;
 
