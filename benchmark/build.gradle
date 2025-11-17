@@ -28,9 +28,9 @@ task purge(type: Delete)
 //        include '**/.benchmark*/BT*Agent*Time*'
 //        include '**/.benchmark*/*Cleaner*Memory*'
 //        include '**/.benchmark*/*PlainComponent*Memory*'
-        //include 'nix'
+        include 'nix'
 		// purge all time benchmarks
-        include '**/.benchmark*/*Time*'
+        //include '**/.benchmark*/*Time*'
 		// purge all
         //include '**/.benchmark*/*'
     }
