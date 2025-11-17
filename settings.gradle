@@ -174,7 +174,7 @@ includeBuild('core/autostart'){name='autostart'}
 includeBuild('service/provided') {}
 includeBuild('service/required') {}
 includeBuild('service/publish') {}
-includeBuild('service/publishjetty') {}
+includeBuild('service/publishjetty') {name='publishjetty'}
 includeBuild('service/nfproperty') {}
 includeBuild('service/registry') {}
 

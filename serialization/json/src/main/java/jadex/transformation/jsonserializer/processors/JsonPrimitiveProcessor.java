@@ -94,8 +94,23 @@ public class JsonPrimitiveProcessor implements ITraverseProcessor
 			}
 			else 
 			{
-				// todo: default?
 				ret = val.asDouble();
+				try 
+				{
+					long num = val.asLong();
+					if (num <= Integer.MAX_VALUE && num >= Integer.MIN_VALUE) 
+					{
+						ret = (int) num;
+					} 
+					else 
+					{
+						ret = num;
+					}
+				} 
+				catch (Exception e) 
+				{
+					ret = val.asDouble();
+				}
 			}
 		}
 		else if(val.isBoolean())

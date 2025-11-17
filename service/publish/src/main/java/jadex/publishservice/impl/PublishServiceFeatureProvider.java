@@ -101,7 +101,8 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 		if(pt==null && !p.publishtarget().equals(Object.class))
 			pt = SReflect.getClassName(p.publishtarget());
 		
-		PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), pt, Object.class.equals(p.mapping())? null: p.mapping());
+		PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), pt, 
+			Object.class.equals(p.mapping())? null: p.mapping(), p.automapping());
 		return pi;
 	}
 }
