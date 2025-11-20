@@ -13,7 +13,7 @@ public class Val<T>	extends AbstractDynVal<T>
 	 */
 	public Val(T value)
 	{
-		doSet(value);
+		doSet(value, true);
 	}
 	
 	/**
@@ -37,7 +37,7 @@ public class Val<T>	extends AbstractDynVal<T>
 //		if(comp==null)
 //			throw new IllegalStateException("Wrapper not inited. Missing annotation?");
 		
-		doSet(value);
+		doSet(value, false);
 	}
 	
 	/**

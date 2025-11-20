@@ -39,6 +39,18 @@ public class Dyn<T>	extends AbstractDynVal<T>
 	 */
 	public Dyn<T>	setUpdateRate(long updaterate)
 	{
+		return doSetUpdateRate(updaterate, false);
+	}
+	
+	/**
+	 *  Set the update rate.
+	 *  Starts periodic updates when > 0, i.e. the first update happens immediately and then every updaterate millis.
+	 *  When 0 or less, no periodic updates are done and the value is evaluated on every get() call (default).
+	 *  @param updaterate	The update rate in millis, or 0 for no periodic updates.
+	 *  @param initing	When initing, no event is generated on first (immediate) update. (hack!?)
+	 */
+	Dyn<T>	doSetUpdateRate(long updaterate, boolean initing)
+	{
 		this.updaterate	= updaterate;
 		// Increment the modcount to "cancel" old timers.
 		int fmodcount	= ++modcount;
@@ -47,9 +59,9 @@ public class Dyn<T>	extends AbstractDynVal<T>
 		if(updaterate>0 && comp!=null)
 		{
 			IExecutionFeature	exe	= comp.getFeature(IExecutionFeature.class);
-			Consumer<Void>	update	= new Consumer<Void>()
+			new Consumer<Void>()
 			{
-				Consumer<Void>	update	= this;
+				boolean _initing	= initing;
 				@Override
 				public void accept(Void t)
 				{
@@ -58,8 +70,9 @@ public class Dyn<T>	extends AbstractDynVal<T>
 					{
 						try
 						{
-							doSet(dynamic.call());
-							exe.waitForDelay(updaterate).then(update);
+							doSet(dynamic.call(), _initing);
+							_initing	= false;
+							exe.waitForDelay(updaterate).then(this);
 						}
 						catch(Exception e)
 						{
@@ -67,9 +80,9 @@ public class Dyn<T>	extends AbstractDynVal<T>
 						}
 					}
 				}
-			};
+			}
 			// Must happen after injections but before on start
-			update.accept(null);
+			.accept(null);
 		}
 		
 		return this;
@@ -94,7 +107,7 @@ public class Dyn<T>	extends AbstractDynVal<T>
 		super.init(comp, name);
 		
 		// Set update rate to start periodic updates.
-		setUpdateRate(updaterate);
+		doSetUpdateRate(updaterate, true);
 	}
 	
 	/**

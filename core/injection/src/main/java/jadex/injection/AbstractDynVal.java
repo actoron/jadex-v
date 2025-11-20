@@ -94,8 +94,10 @@ public class AbstractDynVal<T>
 	/**
 	 *  Set the value and throw the event.
 	 *  Used e.g. for update rate.
+	 *  @param value	The new value.
+	 *  @param initing	When initing, no value changed event is generated. (hack!?)
 	 */
-	void doSet(T value)
+	void doSet(T value, boolean initing)
 	{
 		T	old	= this.value;
 		this.value	= value;
@@ -107,7 +109,7 @@ public class AbstractDynVal<T>
 				observeNewValue(old, value);
 			}
 			
-			if(mode!=ObservationMode.OFF && !SUtil.equals(old, value))
+			if(!initing && mode!=ObservationMode.OFF && !SUtil.equals(old, value))
 			{
 				((InjectionFeature)comp.getFeature(IInjectionFeature.class))
 					.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, name, value, old, null));
