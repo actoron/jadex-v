@@ -221,6 +221,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 					{
 						inj.addListener(event_template.name(), e ->
 						{
+//							System.out.println("event: "+e);
 							if((event_template.type()==null || event_template.type()==e.type())
 								&& (event_template.info()==null || event_template.info().equals(e.info())))
 							{
@@ -254,7 +255,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 										}
 									}).catchEx(ex -> 
 									{
-										System.getLogger(getClass().getName()).log(Level.WARNING, "Exception in condition: "+ex);
+										System.getLogger(getClass().getName()).log(Level.WARNING, "Exception in function: "+ex);
 									});
 								}
 								else
