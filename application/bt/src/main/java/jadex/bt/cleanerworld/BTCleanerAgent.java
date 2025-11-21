@@ -173,7 +173,7 @@ public class BTCleanerAgent implements IBTProvider
 		//findstation.setSuccessCondition((node, execontext) -> stations.size()>0, 
 		//	new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "stations")});
 		findstation.addDecorator(new SuccessDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).internalGetStations().size()>0)
-			.setEvents(new ChangeEvent(Type.ADDED, "stations"))
+//			.setEvents(new ChangeEvent(Type.ADDED, "stations"))
 			.setDetails("stations.size()>0"));
 		findstation.addDecorator(new RetryDecorator<IComponent>());
 		
@@ -272,7 +272,7 @@ public class BTCleanerAgent implements IBTProvider
 		}));
 		
 		findwastebin.addDecorator(new SuccessDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).internalGetWastebins().size()>0)
-			.setEvents(new ChangeEvent(Type.ADDED, "wastebins"))
+//			.setEvents(new ChangeEvent(Type.ADDED, "wastebins"))
 			.setDetails("wastebins.size()>0"));
 		//findwastebin.setSuccessCondition((node, execontext) -> wastebins.size()>0, 
 		//	new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "wastebins")});
@@ -345,10 +345,10 @@ public class BTCleanerAgent implements IBTProvider
 		//patrolwalk.setTriggerCondition((node, execontext) -> !daytime.get(), new EventType[]{
 		//	new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		patrolwalk.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> !getPojo(context).internalIsDaytime())
-			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"))
+//			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"))
 			.setDetails("!daytime.get()"));
 		patrolwalk.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).internalIsDaytime())
-			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"))
+//			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"))
 			.setDetails("daytime.get()"));
 		patrolwalk.addDecorator(new RepeatDecorator<IComponent>());
 					
@@ -364,7 +364,7 @@ public class BTCleanerAgent implements IBTProvider
 			.setDetails("getChargestate()>0.8"));
 		loadbattery.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).getChargestate()<0.8)
 			//.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "chargestate")}));
-			.setEvents(new ChangeEvent(Type.CHANGED, "self"))
+//			.setEvents(new ChangeEvent(Type.CHANGED, "self"))
 			.setDetails("getChargestate()<0.8"));
 			//.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "self", "chargestate")}));
 		
@@ -385,6 +385,7 @@ public class BTCleanerAgent implements IBTProvider
 		//	new EventType(BTAgentFeature.VALUEADDED, "wastes"), new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		collectwaste.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> 
 			(getPojo(context).internalGetWastes().size()>0 || getPojo(context).getSelf().getCarriedWaste()!=null) && getPojo(context).internalIsDaytime())
+			// TODO: event auto detection includes 'self' -> condition triggers on charge state updsate and breaks loading :-( 
 			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"), new ChangeEvent(Type.ADDED, "wastes"))
 			.setDetails("(wastes.size()>0 || getSelf().getCarriedWaste()!=null) && daytime.get()"));
 		collectwaste.addDecorator(new RetryDecorator<IComponent>(0));
