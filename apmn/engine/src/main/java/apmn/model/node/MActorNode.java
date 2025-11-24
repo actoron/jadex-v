@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Class representing the top of the node hierarchy of ABPMN.
  */
-public class MActorNode extends MNode
+public abstract class MActorNode extends MNode
 {
 
 }

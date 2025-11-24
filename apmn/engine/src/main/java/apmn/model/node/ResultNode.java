@@ -16,4 +16,9 @@ public class ResultNode extends MNode
     {
         this.results = results;
     }
+
+    @Override
+    public void execute() {
+
+    }
 }
