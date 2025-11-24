@@ -17,6 +17,8 @@ public class NodeContext<T>
 {
 	protected NodeState state;
 	
+	protected NodeState abortstate;
+	
 	/** Flag indicating that node was finished in before state. In that case node and after decos must not be executed. */
 	protected boolean finishedinbefore;
 	
@@ -130,6 +132,7 @@ public class NodeContext<T>
 	
 	public NodeState getState()
 	{
+		
 		return state;
 	}
 	
@@ -138,6 +141,17 @@ public class NodeContext<T>
 		this.state = state;
 	}
 
+	public NodeState getAbortState()
+	{
+		
+		return abortstate;
+	}
+	
+	public void setAbortState(NodeState state)
+	{
+		this.abortstate = state;
+	}
+	
 	public AbortMode getAborted() 
 	{
 		return aborted;

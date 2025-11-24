@@ -422,7 +422,7 @@ public abstract class Node<T> implements IDecorator<T>
     		return IFuture.DONE;
 
     	context.setAborted(abortmode);
-    	//context.setState(state);
+    	context.setAbortState(state);
        	
     	if(AbortMode.SELF==abortmode)
     	{

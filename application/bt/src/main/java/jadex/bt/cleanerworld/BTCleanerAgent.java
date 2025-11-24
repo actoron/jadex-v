@@ -385,7 +385,7 @@ public class BTCleanerAgent implements IBTProvider
 		//	new EventType(BTAgentFeature.VALUEADDED, "wastes"), new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		collectwaste.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> 
 			(getPojo(context).internalGetWastes().size()>0 || getPojo(context).getSelf().getCarriedWaste()!=null) && getPojo(context).internalIsDaytime())
-			// TODO: event auto detection includes 'self' -> condition triggers on charge state updsate and breaks loading :-( 
+			// TODO: event auto detection includes 'self' -> condition triggers on charge state update and breaks loading :-( 
 			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"), new ChangeEvent(Type.ADDED, "wastes"))
 			.setDetails("(wastes.size()>0 || getSelf().getCarriedWaste()!=null) && daytime.get()"));
 		collectwaste.addDecorator(new RetryDecorator<IComponent>(0));
