@@ -93,6 +93,7 @@ public class NodeContext<T>
 		finishedinbefore = false;
 		
 		aborted = null;
+		abortstate	= null;
 		if(all)
 		{
 			// This can be ok, if the future is held outside and finished afterwards
@@ -139,6 +140,7 @@ public class NodeContext<T>
 	public void setState(NodeState state)
 	{
 		this.state = state;
+		this.abortstate	= null;
 	}
 
 	public NodeState getAbortState()
