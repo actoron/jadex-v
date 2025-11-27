@@ -32,8 +32,6 @@ import jadex.bt.nodes.SelectorNode;
 import jadex.bt.nodes.SequenceNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.tool.BTViewer;
-import jadex.core.ChangeEvent;
-import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.environment.Environment;
@@ -82,6 +80,9 @@ public class BTCleanerAgent implements IBTProvider
 		
 	/** Day or night?. Use updaterate to re-check every second. */
 	protected Dyn<Boolean> daytime = new Dyn<Boolean>(() -> getEnvironment().isDaytime().get()).setUpdateRate(1000);
+	
+	/** Currently loading? .*/
+	protected boolean loading;
 	
 	//protected Val<Double> chargestate = new Val<Double>(() -> ((Cleaner)getEnvironment().getSpaceObject(getSelf().getId()).get()).getChargestate(), 1000);
 	
@@ -200,9 +201,19 @@ public class BTCleanerAgent implements IBTProvider
 			Chargingstation station = (Chargingstation)findClosestElement(getPojo(agent).internalGetStations(), getPojo(agent).getSelf().getLocation());
 			//System.out.println("Load at station: "+agent.getId()+" "+getPojo(agent).getSelf().getCarriedWaste()+" "+station);
 			System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "Load at station: "+agent.getId()+" "+getPojo(agent).getSelf().getCarriedWaste()+" "+station);
+			getPojo(agent).setLoading(true);
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().loadBattery((Cleaner)getPojo(agent).getSelf(), station);
 			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate loadBattery"); fut.terminate();});
-			fut.then(Void -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "loaded battery"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
+			fut.then(Void ->
+			{
+				System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "loaded battery");
+				getPojo(agent).setLoading(false);
+				ret.setResultIfUndone(NodeState.SUCCEEDED);
+			}).catchEx(ex -> 
+			{
+				getPojo(agent).setLoading(false);
+				ret.setResultIfUndone(NodeState.FAILED);
+			});
 			return ret;
 		}));
 		
@@ -384,9 +395,10 @@ public class BTCleanerAgent implements IBTProvider
 		//collectwaste.setTriggerCondition((node, execontext) -> wastes.size()>0 && (getSelf().getCarriedWaste()==null || daytime.get()), new EventType[]{
 		//	new EventType(BTAgentFeature.VALUEADDED, "wastes"), new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		collectwaste.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> 
-			(getPojo(context).internalGetWastes().size()>0 || getPojo(context).getSelf().getCarriedWaste()!=null) && getPojo(context).internalIsDaytime())
-			// TODO: event auto detection includes 'self' -> condition triggers on charge state update and breaks loading :-( 
-			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"), new ChangeEvent(Type.ADDED, "wastes"))
+			(getPojo(context).internalGetWastes().size()>0 || getPojo(context).getSelf().getCarriedWaste()!=null)
+			&& getPojo(context).internalIsDaytime()
+			&& !getPojo(context).isLoading())
+//			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"), new ChangeEvent(Type.ADDED, "wastes"))
 			.setDetails("(wastes.size()>0 || getSelf().getCarriedWaste()!=null) && daytime.get()"));
 		collectwaste.addDecorator(new RetryDecorator<IComponent>(0));
 		
@@ -561,6 +573,22 @@ public class BTCleanerAgent implements IBTProvider
 	public IFuture<IVector2> getTarget() 
 	{
 		return getEnvironment().getMoveTarget(getSelf());
+	}
+	
+	/**
+	 *  Check loading state , e.g. for inhibiting collect waste.
+	 */
+	public boolean isLoading()
+	{
+		return loading;
+	}
+
+	/**
+	 *  Set loading state , e.g. for inhibiting collect waste.
+	 */
+	public void setLoading(boolean loading)
+	{
+		this.loading	= loading;
 	}
 	
 	public static void main(String[] args)
