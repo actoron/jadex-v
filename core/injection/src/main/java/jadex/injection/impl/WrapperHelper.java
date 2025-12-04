@@ -108,6 +108,8 @@ public class WrapperHelper<T>
 			((InjectionFeature)comp.getFeature(IInjectionFeature.class))
 				.valueChanged(new ChangeEvent(Type.ADDED, name, value, null, info));
 		}
+
+		//System.out.println("entry added: "+value+" to "+name+" mode="+mode);
 	}
 
 	/**

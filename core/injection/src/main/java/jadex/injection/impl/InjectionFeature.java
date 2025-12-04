@@ -263,6 +263,8 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 				{
 					try
 					{
+						//if(event.type()==ChangeEvent.Type.CHANGED)
+						//	System.out.println("value changed: "+self.getId().getLocalName()+" "+event.name()+" "+event.info()+" "+event.value());
 						l.valueChanged(event);
 					}
 					catch(Exception ex)

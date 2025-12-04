@@ -16,6 +16,9 @@ public record ChangeEvent(Type type, String name, Object value, Object oldvalue,
 	public ChangeEvent(Type type, String name)
 	{
 		this(type, name, null, null, null);
+
+		if("orders".equals(name))
+			System.out.println("created change event for orders: "+this);
 	}
 
 	/**
@@ -24,6 +27,9 @@ public record ChangeEvent(Type type, String name, Object value, Object oldvalue,
 	public ChangeEvent(Type type, String name, Object info)
 	{
 		this(type, name, null, null, info);
+
+		if("orders".equals(name))
+			System.out.println("created change event for orders.state: "+type);
 	}
 	
 	/**

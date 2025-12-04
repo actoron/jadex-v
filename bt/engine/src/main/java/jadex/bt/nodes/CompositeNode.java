@@ -36,15 +36,19 @@ public abstract class CompositeNode<T> extends Node<T>
         boolean removed = children.remove(child);
         child.setParent(null);
     	//System.out.println("removing child: "+child+" "+removed);
+        //Thread.dumpStack();
         notifyChildChanged(child, false, null);
         return this;
     }
     
     public CompositeNode<T> addChild(Node<T> child, Event event, ExecutionContext<T> execontext) 
     {
-    	addChild(child);
+    	//addChild(child); // throws already event
     	//newChildAdded(child, event, execontext);
+        children.add(child);
+        child.setParent(this);
         notifyChildChanged(child, true, execontext);
+        //System.out.println("added child: "+child+" to "+this);
     	return this;
     }
     

@@ -137,7 +137,7 @@ public class TestParallelNode
     }
 
     @Test
-    public void testParallelAbort() 
+    public void testParallelAbortFailure() 
     {
     	ActionNode<Object> action1 = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
         {
@@ -166,5 +166,37 @@ public class TestParallelNode
 
         NodeState state = ret.get();
         assertEquals(NodeState.FAILED, state, "node state");
+    }
+
+    @Test
+    public void testParallelAbortSuccess() 
+    {
+    	ActionNode<Object> action1 = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
+        {
+            System.out.println("Action 1 running...");
+            return new TerminableFuture<>();
+            // Simulate a running action
+        }));
+
+    	ActionNode<Object> action2 = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
+        {
+            System.out.println("Action 2 running...");
+            return new TerminableFuture<>();
+            // Simulate a running action
+        }));
+
+        CompositeNode<Object> parallel = new ParallelNode<>()
+        	.setSuccessMode(ParallelNode.ResultMode.ON_ALL)
+            .setFailureMode(ParallelNode.ResultMode.ON_ONE)
+            .addChild(action1).addChild(action2);
+        
+        Event event = new Event("start", null);
+        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        IFuture<NodeState> ret = parallel.execute(event, context);
+
+        parallel.abort(AbortMode.SELF, NodeState.SUCCEEDED, context);
+
+        NodeState state = ret.get();
+        assertEquals(NodeState.SUCCEEDED, state, "node state");
     }
 }

@@ -128,7 +128,7 @@ public class BDIViewer extends JFrame
         return table;
     }
 
-    private void startAutoRefresh() 
+    private Timer startAutoRefresh() 
     {
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(new TimerTask() 
@@ -139,6 +139,8 @@ public class BDIViewer extends JFrame
                 SwingUtilities.invokeLater(BDIViewer.this::refreshTables);
             }
         }, 0, 100);
+        
+        return timer;
     }
 
     private void refreshTables() 

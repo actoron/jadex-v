@@ -12,6 +12,7 @@ import jadex.bt.nodes.CompositeNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
+import jadex.bt.nodes.SelectorNode;
 import jadex.bt.nodes.SequenceNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.common.SUtil;
@@ -101,7 +102,7 @@ public class TestSequenceNode
 	}
 	
 	@Test
-	public void testSequenceAbort() 
+	public void testSequenceAbortFail() 
 	{
 	    Node<Object> findres = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
 	    {
@@ -121,6 +122,36 @@ public class TestSequenceNode
 	    NodeState state = ret.get();
 	    assertEquals(state, NodeState.FAILED, "node state");
 	}
+
+	@Test
+    public void testSequenceAbortSuccess() 
+    {
+    	ActionNode<Object> action1 = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
+        {
+            System.out.println("Action 1 running...");
+            return new TerminableFuture<>();
+            // Simulate a running action
+        }));
+
+    	ActionNode<Object> action2 = new ActionNode<>(new TerminableUserAction<>((event, context) -> 
+        {
+            System.out.println("Action 2 running...");
+            return new TerminableFuture<>();
+            // Simulate a running action
+        }));
+
+        CompositeNode<Object> seq = new SequenceNode<>()
+            .addChild(action1).addChild(action2);
+        
+        Event event = new Event("start", null);
+        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        IFuture<NodeState> ret = seq.execute(event, context);
+
+        seq.abort(AbortMode.SELF, NodeState.SUCCEEDED, context);
+
+        NodeState state = ret.get();
+        assertEquals(NodeState.SUCCEEDED, state, "node state");
+    }
 	
 	@Test
 	public void testSequenceWithRunningNode() 

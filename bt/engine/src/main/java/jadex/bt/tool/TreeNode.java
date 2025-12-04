@@ -59,7 +59,7 @@ public class TreeNode
     	this.name = node.getName();
     	this.type = node.getType();
     	this.id = node.getId();
-    	
+    
 		if(node instanceof CompositeNode<?>)
 		{
 			List<Node<?>> childs = new ArrayList<Node<?>>();
@@ -69,6 +69,7 @@ public class TreeNode
 				addChild(new TreeNode(child, context));
 			}
 		}
+		//System.out.println("nodes size: "+this.getNodeCount()+" "+node);
 		
 		List<IDecorator<?>> decos = (List)node.getDecorators();
 		for(IDecorator<?> deco: decos)
@@ -197,6 +198,16 @@ public class TreeNode
 	public TreeNode getChild(int idx)
 	{
 		return children.get(idx);
+	}
+
+	public int getNodeCount()
+	{
+		int cnt = 1;
+		for(TreeNode child: children)
+		{
+			cnt += child.getNodeCount();
+		}
+		return cnt;
 	}
 
 	public List<DecoratorInfo> getDecorators() 

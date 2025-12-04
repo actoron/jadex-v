@@ -54,6 +54,8 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	
 	/** The rule system. */
 	protected RuleSystem rulesystem;
+
+
 	
 	public static BTAgentFeature get()
 	{
@@ -221,7 +223,8 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 					{
 						inj.addListener(event_template.name(), e ->
 						{
-//							System.out.println("event: "+e);
+							//System.out.println("event: "+e+" "+e.hashCode());
+
 							if((event_template.type()==null || event_template.type()==e.type())
 								&& (event_template.info()==null || event_template.info().equals(e.info())))
 							{
@@ -236,6 +239,11 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 										{
 											deco.getAction().accept(e);
 										}
+										//else
+										//{
+											//System.out.println("condition not triggered: "+deco+" "+e);
+											//IFuture<Boolean> fut2 = cond.apply(new Event(e.type().toString(), e.value()), context!=null? context.getState(): NodeState.IDLE, getExecutionContext());
+										//}
 									}).catchEx(ex -> 
 									{
 										System.getLogger(getClass().getName()).log(Level.WARNING, "Exception in condition: "+ex);
@@ -371,8 +379,8 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 			
 			call.then(state -> 
 			{
-				System.getLogger(this.getClass().getName()).log(Level.INFO, "final state: "+context+" "+state);
-				//System.out.println("final state: "+context+" "+state);
+				//System.getLogger(this.getClass().getName()).log(Level.INFO, "final state: "+context+" "+state);
+				System.out.println("final state: "+context+" "+state);
 				
 				IComponentManager.get().terminate(getSelf().getId());
 				

@@ -1,6 +1,7 @@
 package jadex.bt.nodes;
 
 import java.lang.System.Logger.Level;
+import java.util.Map;
 
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node.AbortMode;
@@ -67,29 +68,40 @@ public class SelectorNode<T> extends CompositeNode<T>
     
     protected void handleResult(Event event, NodeState state, Future<NodeState> ret, ExecutionContext<T> context) 
     {
-    	if(state==NodeState.SUCCEEDED)
-    	{
-    		//System.out.println("selected succeeded: "+this);
-    		getLogger().log(Level.INFO, "selected succeeded: "+this);
-    		ret.setResult(NodeState.SUCCEEDED);
-    	}
-    	else if(state==NodeState.FAILED)
-    	{
-    		if(getNodeContext(context).getAborted()!=null)
-    		{
-    			//System.out.println("ignoring abort return of children: "+this+" "+state);
-    			getLogger().log(Level.INFO, "ignoring abort return of children: "+this+" "+state);
-    			ret.setResult(NodeState.FAILED);
-    		}
-    		else
-    		{
-    			executeNextChild(event, ret, context);
-    		}
-    	}
-    	else
-    	{
-    		getLogger().log(java.lang.System.Logger.Level.WARNING, "received non final state: "+state);
-    	}
+    	if(ret.isDone())
+		{
+    		return;
+		}
+		else if(context.getNodeContext(this).getAbortState()!=null)
+		{
+			ret.setResultIfUndone(context.getNodeContext(this).getAbortState());
+		}
+		else
+		{
+			if(state==NodeState.SUCCEEDED)
+			{
+				//System.out.println("selected succeeded: "+this);
+				getLogger().log(Level.INFO, "selected succeeded: "+this);
+				ret.setResult(NodeState.SUCCEEDED);
+			}
+			else if(state==NodeState.FAILED)
+			{
+				if(getNodeContext(context).getAborted()!=null)
+				{
+					//System.out.println("ignoring abort return of children: "+this+" "+state);
+					getLogger().log(Level.INFO, "ignoring abort return of children: "+this+" "+state);
+					ret.setResult(NodeState.FAILED);
+				}
+				else
+				{
+					executeNextChild(event, ret, context);
+				}
+			}
+			else
+			{
+				getLogger().log(java.lang.System.Logger.Level.WARNING, "received non final state: "+state);
+			}
+		}
     }
     
     @Override

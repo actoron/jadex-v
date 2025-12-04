@@ -72,22 +72,34 @@ public class SequenceNode<T> extends CompositeNode<T>
     
     protected void handleResult(Event event, NodeState state, Future<NodeState> ret, ExecutionContext<T> context) 
     {
-    	//System.out.println("seq node, child finished with: "+this+" "+state);
+    	System.out.println("seq node, child finished with: "+this+" "+state);
     	getLogger().log(Level.INFO, "seq node, child finished with: "+this+" "+state);
-    	
-    	if(state==NodeState.FAILED)
-    	{
-    		//if(this.toString().indexOf("load")!=-1 || toString().indexOf("findst")!=-1)
-    		//	System.out.println("seq node child failed: "+state);
 
-    		ret.setResult(NodeState.FAILED);
-    	}
-    	else if(state==NodeState.SUCCEEDED)
-    	{
-    		//System.out.println("seq node, child success, next: "+this+" "+state);
-    		getLogger().log(Level.INFO, "seq node, child success, next: "+this+" "+state);
-    		executeNextChild(event, context).delegateTo(ret);
-    	}
+		if(ret.isDone())
+		{
+    		return;
+		}
+		else if(context.getNodeContext(this).getAbortState()!=null)
+		{
+			System.out.println("seq node, abort state detected: "+this+" "+context.getNodeContext(this).getAbortState()	);
+			ret.setResultIfUndone(context.getNodeContext(this).getAbortState());
+		}
+		else
+		{
+			if(state==NodeState.FAILED)
+			{
+				//if(this.toString().indexOf("load")!=-1 || toString().indexOf("findst")!=-1)
+					System.out.println("seq node child failed: "+state);
+
+				ret.setResult(NodeState.FAILED);
+			}
+			else if(state==NodeState.SUCCEEDED)
+			{
+				System.out.println("seq node, child success, next: "+this+" "+state);
+				getLogger().log(Level.INFO, "seq node, child success, next: "+this+" "+state);
+				executeNextChild(event, context).delegateTo(ret);
+			}
+		}
     } 
     
     public int getCurrentChildCount(ExecutionContext<T> context)

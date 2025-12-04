@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import jadex.bt.IBTProvider;
 import jadex.bt.actions.TerminableUserAction;
@@ -23,6 +24,7 @@ import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.nodes.ParallelNode;
+import jadex.bt.tool.BTViewer;
 import jadex.common.Tuple2;
 import jadex.core.ChangeEvent;
 import jadex.core.ChangeEvent.Type;
@@ -48,9 +50,11 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 	
 	protected List<Order> orders = new ArrayList<Order>();
 	
-	protected Future<Gui> gui;
+	//protected Future<Gui> gui;
 	
 	protected Order[] ios;
+
+	//protected BTViewer btviewer;
 	
 	public BuyerAgent(Order[] ios)
 	{
@@ -157,7 +161,8 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 		
 		purchasebook.addDecorator(new FailureDecorator<IComponent>()
 			.setCondition((node, state, context) -> order.getState().equals(Order.FAILED))
-			.setEvents(new ChangeEvent(Type.CHANGED, "orders", "state")));
+			.setEvents(new ChangeEvent(Type.CHANGED, "orders")));
+			//.setEvents(new ChangeEvent(Type.CHANGED, "orders", "state")));
 		purchasebook.addDecorator(new RetryDecorator<IComponent>(5000));
 		
 		return purchasebook;
@@ -190,12 +195,12 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 			}
 		}
 		
-		gui	= new Future<>();
 		SwingUtilities.invokeLater(()->
 		{
 			try
 			{
-				gui.setResult(new Gui(agent.getComponentHandle()));
+				new Gui(agent.getComponentHandle(), 10000);
+				new BTViewer(agent.getComponentHandle(), 0).setVisible(true);
 			}
 			catch(ComponentTerminatedException cte)
 			{
@@ -207,10 +212,20 @@ public class BuyerAgent implements INegotiationAgent, IBTProvider
 	 *  Called when agent terminates.
 	 */
 	@OnEnd
-	public void shutdown()
+	public void shutdown(Exception ex)
 	{
-		if(gui!=null)
-			gui.then(thegui -> SwingUtilities.invokeLater(()->thegui.dispose()));
+		System.out.println("Buyer agent terminating: "+agent.getId()+" "+ex);
+		if(ex!=null)
+			ex.printStackTrace();
+
+		/*if(btviewer!=null)
+		{
+			SwingUtilities.invokeLater(() -> 
+			{
+				//System.out.println("Disposing btviewer... "+agent.getId().getLocalName()+" "+btviewer);
+				btviewer.dispose();
+			});
+		}*/
 	}
 	
 	public IComponent getAgent()

@@ -485,7 +485,7 @@ public class BTCleanerAgent implements IBTProvider
 		if(ui)
 		{
 			new SensorGui(agent.getComponentHandle()).setVisible(true);
-			SwingUtilities.invokeLater(() -> new BTViewer(agent.getComponentHandle()).setVisible(true));
+			SwingUtilities.invokeLater(() -> new BTViewer(agent.getComponentHandle(), 0).setVisible(true));
 		}
 	}
 	

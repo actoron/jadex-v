@@ -170,7 +170,7 @@ public class DecoratorTest
 	    
         NodeState state = res.get();
         
-        System.out.println("state: "+state);
+        //System.out.println("state: "+state);
 		
 		assertEquals(NodeState.SUCCEEDED, state);
 	}
@@ -238,7 +238,9 @@ public class DecoratorTest
 	    
         NodeState state = res.get();
         
-        System.out.println("state: "+state);
+        //System.out.println("state: "+state);
+
+		comp.terminate().get();
 		
 		assertEquals(NodeState.SUCCEEDED, state);
 	}
@@ -254,7 +256,7 @@ public class DecoratorTest
 		    new Thread(() -> 
 		    {
 		    	SUtil.sleep(10000);
-                ret.setResult(NodeState.SUCCEEDED);
+                ret.setResultIfUndone(NodeState.SUCCEEDED);
 		    }).start();
 		    return ret;
 		}));
@@ -269,7 +271,9 @@ public class DecoratorTest
 	    
         NodeState state = res.get();
         
-        System.out.println("state: "+state);
+        //System.out.println("state: "+state);
+
+		comp.terminate().get();
 		
 		assertEquals(NodeState.FAILED, state);
 	}

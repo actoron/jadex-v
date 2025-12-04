@@ -170,6 +170,8 @@ public class InjectionModel
 				fields.add(allfields.get(f));
 			}
 		}
+
+		//System.out.println("XXX: "+fields.size()+" field injections for "+getPojoClazz().getName());
 	}
 	
 	/**
