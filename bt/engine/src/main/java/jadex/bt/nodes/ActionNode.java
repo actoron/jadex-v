@@ -67,14 +67,17 @@ public class ActionNode<T> extends Node<T>
 		   			//System.out.println("exception in action: "+e);
 		   			getLogger().log(Level.ERROR, "exception in action: "+e);
 		   		}
-		   		ret.setResultIfUndone(NodeState.FAILED);
+		   		
+		   		NodeState	abortstate	= context.getNodeContext(ActionNode.this).getAbortState();
+		   		ret.setResultIfUndone(abortstate!=null ? abortstate : NodeState.FAILED);
 			});
     	}
     	catch(Exception e)
     	{
      		//System.out.println("exception in action: "+e);
      		getLogger().log(Level.ERROR, "exception in action: "+e);
-    		ret.setResultIfUndone(NodeState.FAILED);
+	   		NodeState	abortstate	= context.getNodeContext(ActionNode.this).getAbortState();
+	   		ret.setResultIfUndone(abortstate!=null ? abortstate : NodeState.FAILED);
     	}
     	
     	//ret.then(ns -> System.out.println("action node fini: "+this+" "+ns)).printOnEx();

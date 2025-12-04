@@ -1210,6 +1210,8 @@ public class InjectionModel
 						}
 						DynValHelper.init(dyn, comp, name);
 						
+						// Strip self-dependency (if present) to break loops 
+						deps.remove(name);
 						if(!deps.isEmpty())
 						{
 							((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addDependencies(dyn, name, deps);
