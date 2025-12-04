@@ -30,8 +30,6 @@ public class NodeContext<T>
 	// signals when abort is done
 	protected IFuture<Void> abortfuture;
 	
-	protected NodeState abortstate;
-
 	protected long timeout = 0;
 	
 	protected long repeatdelay = 0;
@@ -145,17 +143,6 @@ public class NodeContext<T>
 	{
 		this.state = state;
 		this.abortstate	= null;
-	}
-
-	public NodeState getAbortState()
-	{
-		
-		return abortstate;
-	}
-	
-	public void setAbortState(NodeState state)
-	{
-		this.abortstate = state;
 	}
 
 	public NodeState getAbortState()
