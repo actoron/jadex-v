@@ -112,7 +112,7 @@ public class TestConditionAbort
 
             try
             {
-                CompositeNode<IComponent> root = (CompositeNode<IComponent>)nodetype.getConstructors()[0].newInstance();
+                CompositeNode<IComponent> root = (CompositeNode<IComponent>)nodetype.getDeclaredConstructor().newInstance();
                 root.addChild(action1).addChild(action2);
 
                 if(success)
