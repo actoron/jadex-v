@@ -1,9 +1,11 @@
 package jadex.bt;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.decorators.FailureDecorator;
@@ -23,6 +25,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.impl.ComponentTimerCreator;
 import jadex.future.TerminableFuture;
 import jadex.injection.Dyn;
 import jadex.injection.annotation.OnEnd;
@@ -80,6 +83,30 @@ public class TestConditionAbort
         }
 
         @Override
+        public ExecutionContext<IComponent> createExecutionContext(IComponent component)
+        {
+            ExecutionContext<IComponent> exe = new ExecutionContext<IComponent>(component, new ComponentTimerCreator());
+
+            exe.addNodeListener("root", new NodeListener<IComponent>()
+            {
+                @Override
+                public void onSucceeded(Node<IComponent> node, ExecutionContext<IComponent> context) 
+                {
+                    //System.out.println("succeeded");
+                    finalstate = true;
+                }
+                
+                public void onFailed(Node<IComponent> node, ExecutionContext<IComponent> context) 
+                {
+                    //System.out.println("failed");
+                    finalstate = false;
+                }
+            });
+
+            return exe;
+        }
+
+        @Override
         public Node<IComponent> createBehaviorTree()
         {
             ActionNode<IComponent> action1 = new ActionNode<>(new TerminableUserAction<>((event, agent) -> 
@@ -113,6 +140,7 @@ public class TestConditionAbort
             try
             {
                 CompositeNode<IComponent> root = (CompositeNode<IComponent>)nodetype.getDeclaredConstructor().newInstance();
+                root.setName("root");
                 root.addChild(action1).addChild(action2);
 
                 if(success)
@@ -136,22 +164,6 @@ public class TestConditionAbort
                         .setEvents(new ChangeEvent(Type.CHANGED, "curtime")));
                 }
 
-                root.addNodeListener(new NodeListener<IComponent>()
-                {
-                    @Override
-                    public void onSucceeded(Node<IComponent> node, ExecutionContext<IComponent> context) 
-                    {
-                        //System.out.println("succeeded");
-                        finalstate = true;
-                    }
-                    
-                    public void onFailed(Node<IComponent> node, ExecutionContext<IComponent> context) 
-                    {
-                        //System.out.println("failed");
-                        finalstate = false;
-                    }
-                });
-
                 return root;
             }
             catch(Exception e)
@@ -174,6 +186,7 @@ public class TestConditionAbort
        
         Boolean finalstate = (Boolean)comp.getResults().get().get("finalstate");
 
+        assertNotNull(finalstate);
         assertTrue(finalstate);
     }
 
@@ -189,6 +202,7 @@ public class TestConditionAbort
         Boolean finalstate = (Boolean)comp.getResults().get().get("finalstate");
         System.out.println("finalstate: "+finalstate);
 
+        assertNotNull(finalstate);
         assertFalse(finalstate);
     }
 
@@ -203,6 +217,7 @@ public class TestConditionAbort
        
         Boolean finalstate = (Boolean)comp.getResults().get().get("finalstate");
 
+        assertNotNull(finalstate);
         assertTrue(finalstate);
     }
 
@@ -219,6 +234,7 @@ public class TestConditionAbort
         System.out.println("finalstate: "+finalstate);
 
         // should succeed as condition triggers after first action ends
+        assertNotNull(finalstate);
         assertTrue(finalstate);
     }
 
@@ -234,6 +250,7 @@ public class TestConditionAbort
         System.out.println("finalstate: "+finalstate);
 
         // should fail as condition triggers before first action ends
+        assertNotNull(finalstate);
         assertFalse(finalstate);
     }
 
@@ -248,6 +265,7 @@ public class TestConditionAbort
        
         Boolean finalstate = (Boolean)comp.getResults().get().get("finalstate");
 
+        assertNotNull(finalstate);
         assertTrue(finalstate);
     }
 
@@ -263,6 +281,7 @@ public class TestConditionAbort
         Boolean finalstate = (Boolean)comp.getResults().get().get("finalstate");
         System.out.println("finalstate: "+finalstate);
 
+        assertNotNull(finalstate);
         assertTrue(finalstate);
     }
 
@@ -278,6 +297,7 @@ public class TestConditionAbort
         Boolean finalstate = (Boolean)comp.getResults().get().get("finalstate");
         System.out.println("finalstate: "+finalstate);
 
+        assertNotNull(finalstate);
         assertFalse(finalstate);  
     }
 
@@ -285,12 +305,12 @@ public class TestConditionAbort
     {
         TestConditionAbort test = new TestConditionAbort();
 
-        for(int i=0; i<100; i++)
-        {
+        //for(int i=0; i<100; i++)
+        //{
             System.out.println("...........................");
-            System.out.println("Test run "+i+":");
+            //System.out.println("Test run "+i+":");
             test.testAbortFailureSel2();
-        }
+        //}
        
 
         System.out.println("TestConditionAbort finished.");

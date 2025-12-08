@@ -83,7 +83,8 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		this.bt = prov.createBehaviorTree();
 		//System.out.println("createBehaviorTree");
 		
-		this.context = createExecutionContext();
+		this.context = prov.createExecutionContext(self);
+		//new ExecutionContext<IComponent>(self, new ComponentTimerCreator());//createExecutionContext();
 		
 		this.rulesystem = new RuleSystem(self.getPojo(), true);
 		//System.out.println("createRuleSystem");
@@ -355,13 +356,13 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		}*/
 	}
 	
-	protected ExecutionContext<IComponent> createExecutionContext()
+	/*protected ExecutionContext<IComponent> createExecutionContext()
 	{
 		ExecutionContext<IComponent> ret = new ExecutionContext<IComponent>();
 		ret.setUserContext(self);
 		ret.setTimerCreator(new ComponentTimerCreator());
 		return ret;
-	}
+	}*/
 	
 	public ExecutionContext<IComponent> getExecutionContext()
 	{
@@ -371,10 +372,12 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	public void executeBehaviorTree(Node<IComponent> node, Event event)
 	{
 		// new execution
-		if(context==null || context.getRootCall()==null || context.getRootCall().isDone())
+		if(context.getRootCall()==null || context.getRootCall().isDone())
 		{
-			context = createExecutionContext();
-			
+			if(context.getRootCall()!=null && context.getRootCall().isDone())
+				context.reset();
+			//context = createExecutionContext();
+
 			IFuture<NodeState> call = bt.execute(event!=null? event: new Event("start", null), context);
 			
 			call.then(state -> 

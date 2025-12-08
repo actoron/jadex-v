@@ -27,17 +27,17 @@ public abstract class CompositeNode<T> extends Node<T>
     {
         children.add(child);
         child.setParent(this);
-        notifyChildChanged(child, true, null);
+        //notifyChildChanged(child, true, null);
         return this;
     }
     
-    public CompositeNode<T> removeChild(Node<T> child) 
+    public CompositeNode<T> removeChild(Node<T> child, ExecutionContext<T> execontext) 
     {
         boolean removed = children.remove(child);
         child.setParent(null);
     	//System.out.println("removing child: "+child+" "+removed);
         //Thread.dumpStack();
-        notifyChildChanged(child, false, null);
+        execontext.notifyChildChanged(this, child, false);
         return this;
     }
     
@@ -47,7 +47,7 @@ public abstract class CompositeNode<T> extends Node<T>
     	//newChildAdded(child, event, execontext);
         children.add(child);
         child.setParent(this);
-        notifyChildChanged(child, true, execontext);
+        execontext.notifyChildChanged(this, child, true);
         //System.out.println("added child: "+child+" to "+this);
     	return this;
     }

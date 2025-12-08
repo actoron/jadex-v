@@ -24,7 +24,7 @@ public class RemoveDecorator<T> extends Decorator<T>
 			CompositeNode<T> parent = (CompositeNode<T>)getNode().getParent();
 			if(parent!=null)
 			{
-				parent.removeChild(this.getNode());
+				parent.removeChild(this.getNode(), context);
 			}
 			else
 			{

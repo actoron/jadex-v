@@ -56,11 +56,7 @@ public abstract class Node<T> implements IDecorator<T>
 	
 	protected Node<T> parent;
 	
-	protected List<IDecorator<T>> decorators = new ArrayList<>();
-	
-	protected List<INodeListener<T>> listeners = new ArrayList<>();
-	
-	
+	protected List<IDecorator<T>> decorators = new ArrayList<>();	
 	
 	public abstract IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context);
 	
@@ -324,14 +320,14 @@ public abstract class Node<T> implements IDecorator<T>
 			//System.out.println("node fini: "+state+" "+this+" "+ret);
 			getLogger().log(Level.INFO, "node fini: "+state+" "+Node.this+" "+ret);
 			context.setState(state);
-			notifyFinished(state, execontext);
+			execontext.notifyFinished(this, state);
 			
 		}).catchEx(ex -> 
 		{
 			//System.out.println("node fini failed: "+ex+" "+this);
 			getLogger().log(Level.INFO, "node fini failed: "+ex+" "+Node.this);
 			context.setState(NodeState.FAILED);
-			notifyFinished(NodeState.FAILED, execontext);
+			execontext.notifyFinished(this, NodeState.FAILED);
 		});
 
 	    return ret; 
@@ -520,40 +516,6 @@ public abstract class Node<T> implements IDecorator<T>
     public int getActiveChildCount(ExecutionContext<T> execontext)
     {
     	return 0;
-    }
-    
-    public void addNodeListener(INodeListener<T> listener) 
-    {
-        listeners.add(listener);
-    }
-
-    public void removeNodeListener(INodeListener<T> listener) 
-    {
-        listeners.remove(listener);
-    }
-    
-    protected void notifyFinished(NodeState state, ExecutionContext<T> context)
-    {
-    	if(listeners!=null && listeners.size()>0)
-    	{
-    		if(NodeState.SUCCEEDED==state)
-    			listeners.stream().forEach(l -> l.onSucceeded(this, context));
-    		else if(NodeState.FAILED==state)
-    			listeners.stream().forEach(l -> l.onFailed(this, context));
-    		//else
-    			//listeners.stream().forEach(l -> l.onStateChange(this, state, context));
-    	}
-    }
-    
-    protected void notifyChildChanged(Node<T> child, boolean added, ExecutionContext<T> context)
-    {
-    	if(listeners!=null && listeners.size()>0)
-    	{
-    		if(added)
-    			listeners.stream().forEach(l -> l.onChildAdded(this, child, context));
-    		else 
-    			listeners.stream().forEach(l -> l.onChildRemoved(this, child, context));
-    	}
     }
     
 	@Override
