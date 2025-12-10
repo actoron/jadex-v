@@ -109,7 +109,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		if(setex)
 		{
-			((StepInfo)r).getFuture().setException(new ComponentTerminatedException(getComponent().getId()));
+			try
+			{
+				((StepInfo)r).getFuture().setException(new ComponentTerminatedException(getComponent().getId()));
+			}
+			catch(Exception e)
+			{
+				handleException(e);
+			}
 		}
 		
 		if(startnew)
@@ -152,17 +159,17 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			catch(StepAborted t)
 			{
-				ret.setException(new RuntimeException("Error in step", t));
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
 				// Pass abort error to thread runner main loop
 				throw t;
 			}
 			catch(Exception e)
 			{
-				ret.setException(e);
+				ret.setExceptionIfUndone(e);
 			}
 			catch(Throwable t)
 			{
-				ret.setException(new RuntimeException("Error in step", t));
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
 			}
 		}, ret));
 		return ret;
@@ -226,17 +233,17 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			catch(StepAborted t)
 			{
-				ret.setException(new RuntimeException("Error in step", t));
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
 				// Pass abort error to thread runner main loop
 				throw t;
 			}
 			catch(Exception e)
 			{
-				ret.setException(e);
+				ret.setExceptionIfUndone(e);
 			}
 			catch(Throwable t)
 			{
-				ret.setException(new RuntimeException("Error in step", t));
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
 			}
 		}, ret));
 		return ret;
@@ -273,17 +280,17 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			catch(StepAborted t)
 			{
-				ret.setException(new RuntimeException("Error in step", t));
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
 				// Pass abort error to thread runner main loop
 				throw t;
 			}
 			catch(Exception e)
 			{
-				ret.setException(e);
+				ret.setExceptionIfUndone(e);
 			}
 			catch(Throwable t)
 			{
-				ret.setException(new RuntimeException("Error in step", t));
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
 			}
 		}, ret));
 		return ret;
@@ -320,17 +327,17 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			catch(StepAborted t)
 			{
-				ret.setException(new RuntimeException("Error in step", t));
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
 				// Pass abort error to thread runner main loop
 				throw t;
 			}
 			catch(Exception e)
 			{
-				ret.setException(e);
+				ret.setExceptionIfUndone(e);
 			}
 			catch(Throwable t)
 			{
-				ret.setException(new RuntimeException("Error in step", t));
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
 			}
 		}, ret));
 		
@@ -1032,40 +1039,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		catch(Exception e)
 		{
-			// Handler might be user code and thus might throw exceptions itself.
-			try
-			{
-				self.handleException(e);
-			}
-			catch(Exception e2)
-			{
-				System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
-				e2.printStackTrace();
-				
-				// user terminate throws StepAborted so afterStep() is not called.
-				self.terminate();
-			}
+			handleException(e);
 		}
 		catch(Throwable t)
 		{
-			// Print and otherwise ignore any other exceptions
 			RuntimeException ex = new RuntimeException("Exception in step", t);//.printStackTrace();
-//			ex.printStackTrace();
 			if(self!=null)
 			{
-				// Handler might be user code and thus might throw exceptions itself.
-				try
-				{
-					self.handleException(ex);
-				}
-				catch(Exception e2)
-				{
-					System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
-					e2.printStackTrace();
-					
-					// user terminate throws StepAborted so afterStep() is not called.
-					self.terminate();
-				}
+				handleException(ex);
 			}
 			else
 			{
@@ -1074,6 +1055,26 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		
 		afterStep();
+	}
+	
+	/**
+	 *  Handle exception in user code.
+	 */
+	protected void handleException(Exception e)
+	{
+		// Handler might be user code and thus might throw exceptions itself.
+		try
+		{
+			self.handleException(e);
+		}
+		catch(Exception e2)
+		{
+			System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
+			e2.printStackTrace();
+			
+			// user terminate throws StepAborted so afterStep() is not called.
+			self.terminate();
+		}
 	}
 	
 	class StepInfo implements Runnable
