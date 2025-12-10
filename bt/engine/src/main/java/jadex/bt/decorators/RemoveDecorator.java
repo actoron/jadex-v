@@ -18,9 +18,20 @@ public class RemoveDecorator<T> extends Decorator<T>
 	@Override
 	public IFuture<NodeState> afterExecute(Event event, NodeState state, ExecutionContext<T> context)
 	{
-		//System.out.println("after rem deco: "+getNode());
+		//System.out.println("after rem deco: "+getNode()+" "+hashCode()+" "+state+" "+event);
 		if(state == NodeState.SUCCEEDED || state == NodeState.FAILED) 
-			((CompositeNode<T>)getNode().getParent()).removeChild(this.getNode());
+		{
+			CompositeNode<T> parent = (CompositeNode<T>)getNode().getParent();
+			if(parent!=null)
+			{
+				parent.removeChild(this.getNode(), context);
+			}
+			else
+			{
+				// Multiple invocations possible due to reexecute of a node.
+				//System.out.println("no parent to remove from: "+getNode()+" "+hashCode());
+			}
+		}
 		return null;
 	}
 }

@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import jadex.bt.INodeListener;
 import jadex.bt.decorators.Decorator;
 import jadex.bt.decorators.IDecorator;
+import jadex.bt.decorators.RemoveDecorator;
 import jadex.bt.impl.Event;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
@@ -55,11 +56,7 @@ public abstract class Node<T> implements IDecorator<T>
 	
 	protected Node<T> parent;
 	
-	protected List<IDecorator<T>> decorators = new ArrayList<>();
-	
-	protected List<INodeListener<T>> listeners = new ArrayList<>();
-	
-	
+	protected List<IDecorator<T>> decorators = new ArrayList<>();	
 	
 	public abstract IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context);
 	
@@ -130,6 +127,22 @@ public abstract class Node<T> implements IDecorator<T>
 		deco.setNode(this);
 		deco.setWrapped(decorators.get(decorators.size()-1));
 		decorators.add(deco);
+		//if(deco instanceof RemoveDecorator)
+		//{
+			//System.out.println("added remove deco: "+this+" "+deco.hashCode()+" "+this.hashCode());
+			//Thread.dumpStack();
+		//}
+		/*int cnt = 0;
+		for(IDecorator<T> d: decorators)
+		{
+			if(d instanceof RemoveDecorator)
+				cnt++;
+		}
+		if(cnt>1)
+		{
+			System.out.println("multiple remove decos: "+this+" "+cnt);
+			//Thread.dumpStack();
+		}*/
 	}
 	
 	/*
@@ -230,12 +243,16 @@ public abstract class Node<T> implements IDecorator<T>
         return ret;
 	}*/
 	
-	public final IFuture<NodeState> execute(Event event, ExecutionContext<T> execontext) {
+	public final IFuture<NodeState> execute(Event event, ExecutionContext<T> execontext) 
+	{
 	    Future<NodeState> ret = new Future<NodeState>();
 	    
 	    Future<NodeState> innerFuture = new Future<NodeState>();
 
-	    if (execontext == null) {
+		//System.out.println("node start: "+this);
+
+	    if (execontext == null) 
+		{
 	        ret.setException(new RuntimeException("execution context must not null: " + this));
 	        return ret;
 	    }
@@ -252,7 +269,8 @@ public abstract class Node<T> implements IDecorator<T>
 	            return;
 	        }
 
-	        getLogger().log(Level.INFO, "execute newly called: " + Node.this);
+	        //System.out.println("execute newly called: " + Node.this);
+			getLogger().log(Level.INFO, "execute newly called: " + Node.this);
 	        context.setCallFuture(innerFuture);
 	        context.setState(NodeState.RUNNING);
 
@@ -297,12 +315,29 @@ public abstract class Node<T> implements IDecorator<T>
 	        doexe.run();
 	    }
 
-	    return ret;  // Gebe das äußere Future zurück
+		ret.then(state -> 
+		{
+			//System.out.println("node fini: "+state+" "+this+" "+ret);
+			getLogger().log(Level.INFO, "node fini: "+state+" "+Node.this+" "+ret);
+			context.setState(state);
+			execontext.notifyFinished(this, state);
+			
+		}).catchEx(ex -> 
+		{
+			//System.out.println("node fini failed: "+ex+" "+this);
+			getLogger().log(Level.INFO, "node fini failed: "+ex+" "+Node.this);
+			context.setState(NodeState.FAILED);
+			execontext.notifyFinished(this, NodeState.FAILED);
+		});
+
+	    return ret; 
 	}
 	
 	public IFuture<NodeState> reexecute(Event event, ExecutionContext<T> execontext) 
 	{
 		Future<NodeState> ret = new Future<>();
+
+		//System.out.println("node reexecute: "+this);
 		
 		if(execontext==null)
 		{
@@ -422,7 +457,8 @@ public abstract class Node<T> implements IDecorator<T>
     		return IFuture.DONE;
 
     	context.setAborted(abortmode);
-    	context.setAbortState(state);
+		context.setAbortState(state);
+    	//context.setState(state);
        	
     	if(AbortMode.SELF==abortmode)
     	{
@@ -480,40 +516,6 @@ public abstract class Node<T> implements IDecorator<T>
     public int getActiveChildCount(ExecutionContext<T> execontext)
     {
     	return 0;
-    }
-    
-    public void addNodeListener(INodeListener<T> listener) 
-    {
-        listeners.add(listener);
-    }
-
-    public void removeNodeListener(INodeListener<T> listener) 
-    {
-        listeners.remove(listener);
-    }
-    
-    protected void notifyFinished(NodeState state, ExecutionContext<T> context)
-    {
-    	if(listeners!=null && listeners.size()>0)
-    	{
-    		if(NodeState.SUCCEEDED==state)
-    			listeners.stream().forEach(l -> l.onSucceeded(this, context));
-    		else if(NodeState.FAILED==state)
-    			listeners.stream().forEach(l -> l.onFailed(this, context));
-    		//else
-    			//listeners.stream().forEach(l -> l.onStateChange(this, state, context));
-    	}
-    }
-    
-    protected void notifyChildChanged(Node<T> child, boolean added, ExecutionContext<T> context)
-    {
-    	if(listeners!=null && listeners.size()>0)
-    	{
-    		if(added)
-    			listeners.stream().forEach(l -> l.onChildAdded(this, child, context));
-    		else 
-    			listeners.stream().forEach(l -> l.onChildRemoved(this, child, context));
-    	}
     }
     
 	@Override

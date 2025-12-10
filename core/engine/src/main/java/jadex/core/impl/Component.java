@@ -594,7 +594,7 @@ public class Component implements IComponent
 	@Override
 	public String toString() 
 	{
-		return "Component [id=" + id + "]";
+		return "Component [id=" + id + " "+(pojo!=null? pojo.getClass().getSimpleName() : "no-pojo")+"]";
 	}
 		
 	/**

@@ -54,6 +54,8 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	
 	/** The rule system. */
 	protected RuleSystem rulesystem;
+
+
 	
 	public static BTAgentFeature get()
 	{
@@ -81,7 +83,8 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		this.bt = prov.createBehaviorTree();
 		//System.out.println("createBehaviorTree");
 		
-		this.context = createExecutionContext();
+		this.context = prov.createExecutionContext(self);
+		//new ExecutionContext<IComponent>(self, new ComponentTimerCreator());//createExecutionContext();
 		
 		this.rulesystem = new RuleSystem(self.getPojo(), true);
 		//System.out.println("createRuleSystem");
@@ -221,7 +224,8 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 					{
 						inj.addListener(event_template.name(), e ->
 						{
-//							System.out.println("event: "+e);
+							//System.out.println("event: "+e+" "+e.hashCode());
+
 							if((event_template.type()==null || event_template.type()==e.type())
 								&& (event_template.info()==null || event_template.info().equals(e.info())))
 							{
@@ -236,6 +240,11 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 										{
 											deco.getAction().accept(e);
 										}
+										//else
+										//{
+											//System.out.println("condition not triggered: "+deco+" "+e);
+											//IFuture<Boolean> fut2 = cond.apply(new Event(e.type().toString(), e.value()), context!=null? context.getState(): NodeState.IDLE, getExecutionContext());
+										//}
 									}).catchEx(ex -> 
 									{
 										System.getLogger(getClass().getName()).log(Level.WARNING, "Exception in condition: "+ex);
@@ -347,13 +356,13 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		}*/
 	}
 	
-	protected ExecutionContext<IComponent> createExecutionContext()
+	/*protected ExecutionContext<IComponent> createExecutionContext()
 	{
 		ExecutionContext<IComponent> ret = new ExecutionContext<IComponent>();
 		ret.setUserContext(self);
 		ret.setTimerCreator(new ComponentTimerCreator());
 		return ret;
-	}
+	}*/
 	
 	public ExecutionContext<IComponent> getExecutionContext()
 	{
@@ -363,16 +372,18 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	public void executeBehaviorTree(Node<IComponent> node, Event event)
 	{
 		// new execution
-		if(context==null || context.getRootCall()==null || context.getRootCall().isDone())
+		if(context.getRootCall()==null || context.getRootCall().isDone())
 		{
-			context = createExecutionContext();
-			
+			if(context.getRootCall()!=null && context.getRootCall().isDone())
+				context.reset();
+			//context = createExecutionContext();
+
 			IFuture<NodeState> call = bt.execute(event!=null? event: new Event("start", null), context);
 			
 			call.then(state -> 
 			{
-				System.getLogger(this.getClass().getName()).log(Level.INFO, "final state: "+context+" "+state);
-				//System.out.println("final state: "+context+" "+state);
+				//System.getLogger(this.getClass().getName()).log(Level.INFO, "final state: "+context+" "+state);
+				System.out.println("final state: "+context+" "+state);
 				
 				IComponentManager.get().terminate(getSelf().getId());
 				

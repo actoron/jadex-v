@@ -21,6 +21,7 @@ public class FailureDecorator <T> extends ConditionalDecorator<T>
 			if(getNode().getNodeContext(getExecutionContext())!=null)
 			{
 				System.getLogger(getClass().getName()).log(Level.INFO, "failure condition triggered: "+event);
+				//System.out.println("failure condition triggered: "+event);
 				getNode().abort(AbortMode.SELF, NodeState.FAILED, getExecutionContext());
 			}
 			else

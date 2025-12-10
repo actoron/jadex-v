@@ -31,7 +31,7 @@ public class UniversityAgent implements IBTProvider
 	
 	/** Belief if wait time is not too long. Set through an agent argument. */
 	protected Val<Boolean> waiting = new Val<>(true);
-	
+
 	public UniversityAgent()
 	{
 	}
@@ -54,6 +54,27 @@ public class UniversityAgent implements IBTProvider
 	{
 		this.waiting.set(waiting);
 		return this;
+	}
+
+	public ExecutionContext<IComponent> createExecutionContext(IComponent component)
+	{
+		ExecutionContext<IComponent> exe = new ExecutionContext<IComponent>(component, null);
+
+		exe.addNodeListener("gotouni", new NodeListener<IComponent>()
+		{
+			@Override
+			public void onSucceeded(Node<IComponent> node, ExecutionContext<IComponent> context) 
+			{
+				System.out.println("Reached uni: "+agent.getId().getLocalName());
+			}
+			
+			public void onFailed(Node<IComponent> node, ExecutionContext<IComponent> context) 
+			{
+				System.out.println("Could not reach uni: "+agent.getId().getLocalName());
+			}
+		});
+
+		return exe;
 	}
 	
 	public Node<IComponent> createBehaviorTree()
@@ -119,20 +140,6 @@ public class UniversityAgent implements IBTProvider
 		
 		SelectorNode<IComponent> sel = new SelectorNode<>("gotouni");
 		sel.addChild(train).addChild(tram).addChild(walk);
-		
-		sel.addNodeListener(new NodeListener<IComponent>()
-		{
-			@Override
-			public void onSucceeded(Node<IComponent> node, ExecutionContext<IComponent> context) 
-			{
-				System.out.println("Reached uni");
-			}
-			
-			public void onFailed(Node<IComponent> node, ExecutionContext<IComponent> context) 
-			{
-				System.out.println("Could not reach uni");
-			}
-		});
 
 		/*ActionNode<IComponent> finish = new ActionNode<>("finish");
 		finish.setAction(new UserAction<IComponent>((e, agent) ->

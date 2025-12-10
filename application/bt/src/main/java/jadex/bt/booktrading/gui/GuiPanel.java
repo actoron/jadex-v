@@ -16,13 +16,14 @@ import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JButton;
@@ -37,6 +38,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -128,7 +130,9 @@ public class GuiPanel extends JPanel
 			}
 			else if(column == 3)
 			{
-				value = order.getDeadline();
+				Instant deadline = order.getDeadline().toInstant();
+				long left = Duration.between(Instant.now(), deadline).getSeconds();
+				value= Math.max(0, left);
 			}
 			else if(column == 4)
 			{
@@ -151,17 +155,59 @@ public class GuiPanel extends JPanel
 
 	/**
 	 *  Shows the gui, and updates it when beliefs change.
+	 * /
+	public GuiPanel(final IComponentHandle agent)
+	{
+		this(agent, -1);
+	}*/
+
+	/**
+	 *  Shows the gui, and updates it when beliefs change.
 	 */
-	public GuiPanel(final IComponentHandle agent)//, final boolean buy)
+	public GuiPanel(final IComponentHandle agent, long closedelay)//, final boolean buy)
 	{
 		setLayout(new BorderLayout());
-		
 		
 		this.agent = agent;
 		final boolean buy = isBuyer(agent);
 		
-		agent.waitForTermination().then(found -> getFrame().dispose()).catchEx(ex -> getFrame().dispose());
-		
+		Timer timer = new Timer(1000, e -> 
+		{
+			try 
+			{
+				refresh();
+				refreshDetails();
+			}
+			catch (Exception ex) 
+			{
+				//System.out.println("gui timer stopped: "+agent.getId());
+				((Timer)e.getSource()).stop();
+			}
+		});
+		timer.start();
+
+		if(closedelay >= 0)
+		{
+			Runnable dispose = () -> 
+			{
+				Timer t = new Timer((int)closedelay, e -> 
+				{
+					getFrame().dispose();
+					if(timer!=null)
+						timer.stop();
+				});
+				t.setRepeats(false);
+				t.start();
+			};
+			agent.waitForTermination().then(found ->
+			{
+				dispose.run();
+			}).catchEx(ex -> 
+			{
+				dispose.run();
+			});
+		}
+			
 		if(buy)
 		{
 			itemlabel = " Books to buy ";
@@ -308,7 +354,7 @@ public class GuiPanel extends JPanel
 			});
 		});*/
 		
-		Timer timer = new Timer();
+		/*Timer timer = new Timer();
 		TimerTask tt = new TimerTask() {
 			
 			@Override
@@ -333,7 +379,7 @@ public class GuiPanel extends JPanel
 				});
 			}
 		};
-		timer.schedule(tt, 1000, 1000);
+		timer.schedule(tt, 1000, 1000);*/
 		
 		table.addMouseListener(new MouseAdapter()
 		{
@@ -550,6 +596,13 @@ public class GuiPanel extends JPanel
 			INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
 
 			final List<Order> aorders = ag.getOrders();
+
+			/*System.out.println("REFRESH of agent: "+agent.getId()+" orders: "+aorders);
+			for(Order o: aorders)
+			{
+				System.out.println("order agent: "+o+" "+o.hashCode());
+			}*/
+
 			SwingUtilities.invokeLater(new Runnable()
 			{
 				public void run()
@@ -565,6 +618,26 @@ public class GuiPanel extends JPanel
 					}
 					items.fireTableDataChanged();
 					
+					restoreSelections(table, sels);
+
+					/*for(Order o: orders)
+					{
+						System.out.println("order gui: "+o+" "+o.hashCode());
+					}*/
+				}
+			});
+
+			return null;
+		})
+		.catchEx(ex -> 
+		{
+			System.out.println("Exception during GUI refresh: "+ex);
+			SwingUtilities.invokeLater(new Runnable()
+			{
+				public void run()
+				{
+					List<Integer> sels = saveSelections(table);
+					items.fireTableDataChanged();
 					restoreSelections(table, sels);
 				}
 			});
@@ -678,9 +751,9 @@ public class GuiPanel extends JPanel
 			Dimension labeldim = new JLabel("Preset orders ").getPreferredSize();
 			int row = 0;
 			GridBagConstraints leftcons = new GridBagConstraints(0, 0, 1, 1, 0, 0,
-					GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(1, 1, 1, 1), 0, 0);
+				GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(1, 1, 1, 1), 0, 0);
 			GridBagConstraints rightcons = new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 0,
-					GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(1, 1, 1, 1), 0, 0);
+				GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(1, 1, 1, 1), 0, 0);
 
 			leftcons.gridy = rightcons.gridy = row++;
 			label = new JLabel("Preset orders");

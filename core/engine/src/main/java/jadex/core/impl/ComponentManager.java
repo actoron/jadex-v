@@ -1029,6 +1029,7 @@ public class ComponentManager implements IComponentManager
 					throw new RuntimeException("Unknown component id: "+cid);
 				}
 				last = creationcnt==0 && components.isEmpty();
+				//System.out.println("removeComponent: last="+last+" "+components.size()+" "+creationcnt+" "+components);
 				
 				appid = comp.getAppId();
 				if(appid!=null)
@@ -1169,6 +1170,8 @@ public class ComponentManager implements IComponentManager
 	
 	public void notifyEventListener(String type, ComponentIdentifier cid)
 	{
+		//System.out.println("ComponentManager notify event listener: "+type+" "+cid);
+
 		Set<IComponentListener> mylisteners = null;
 		
 		synchronized(listeners)
@@ -1293,6 +1296,7 @@ public class ComponentManager implements IComponentManager
 			            @Override
 			            public void lastComponentRemoved(ComponentIdentifier cid) 
 			            {
+							//System.out.println("Notified last component removed: "+cid);
 			        	    try 
 			        	    { 
 			        	    	lock.lock();

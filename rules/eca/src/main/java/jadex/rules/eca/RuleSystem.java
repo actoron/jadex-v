@@ -136,12 +136,12 @@ public class RuleSystem
 			//if(event.getType().getType(0).indexOf("factadded")!=-1)// && event.getType().getType(1).indexOf("mybean")!=-1)
 //				&& event.getType().getType(1).indexOf("Ambu")!=-1)
 			//	System.out.println("proc ev: "+event);
-				
+			
+			//if(event.getType().getType(1).indexOf("orders")!=-1)
+			//	System.out.println("rules: "+rules+" for event: "+event);
+
 			List<IRule<?>> rules = rulebase.getRules(event.getType());
 			
-			//if(event.getType().getType(1).indexOf("mytargets")!=-1)
-			//	System.out.println("rules: "+rules);
-				
 			if(rules!=null)
 			{
 				IRule<?>[] rs = rules.toArray(new IRule<?>[rules.size()]);

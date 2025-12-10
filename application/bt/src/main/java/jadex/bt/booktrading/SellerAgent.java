@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import jadex.bt.IBTProvider;
 import jadex.bt.actions.TerminableUserAction;
@@ -16,10 +17,12 @@ import jadex.bt.booktrading.domain.NegotiationReport;
 import jadex.bt.booktrading.domain.Order;
 import jadex.bt.booktrading.gui.Gui;
 import jadex.bt.decorators.ChildCreationDecorator;
+import jadex.bt.decorators.FailureDecorator;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.nodes.ParallelNode;
+import jadex.bt.tool.BTViewer;
 import jadex.core.ChangeEvent;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentTerminatedException;
@@ -56,6 +59,8 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 	protected Future<Gui> gui;
 	
 	protected Order[] ios;
+
+	protected BTViewer btviewer;
 	
 	public SellerAgent(Order[] ios)
 	{
@@ -65,7 +70,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 	public Node<IComponent> createBehaviorTree()
 	{
 		ParallelNode<IComponent> sellbooks = new ParallelNode<>("sellbooks");
-		sellbooks.setKeepRunning(true);
+		sellbooks.setKeepRunning(true); // do not terminate when no children
 		sellbooks.addDecorator(new ChildCreationDecorator<IComponent>()
 			.setCondition((node, state, context) -> true)
 			.setEvents(new ChangeEvent(Type.ADDED, "mprops"))
@@ -74,6 +79,29 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 			.setCondition((node, state, context) -> true)
 			.setEvents(new ChangeEvent(Type.ADDED, "tasks"))
 			.setChildCreator((event) -> createExecuteTaskAction((ExecuteTask)event.value())));
+		sellbooks.addDecorator(new FailureDecorator<IComponent>()
+			.setCondition((node, state, context) -> 
+			{
+				System.out.println("sellbooks failure check: "+orders.size());
+				if(orders.isEmpty())
+					return false;
+
+				boolean done = true;
+
+				for(Order order: orders)
+				{
+					if(order.getState().equals(Order.OPEN))
+					{
+						done = false;
+						break;
+					}
+				}
+				System.out.println("sellbooks finish check: "+done);
+				return done;
+			})
+			.setEvents(new ChangeEvent(Type.CHANGED, "orders")));
+			//.setEvents(new ChangeEvent(Type.CHANGED, "orders", "state")));
+		
 		// add a repeat decorator that keeps the node running for ever
 		// must add an event as rulebase checks and throws exception when rule without 
 		//sellbooks.addDecorator(new RepeatDecorator<IComponent>((e, s, c) -> new Future<Boolean>(false))
@@ -258,7 +286,8 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 		{
 			try
 			{
-				gui.setResult(new Gui(agent.getComponentHandle()));
+				new Gui(agent.getComponentHandle(), 10000);
+				new BTViewer(agent.getComponentHandle(), 0).setVisible(true);; 
 			}
 			catch(ComponentTerminatedException cte)
 			{
@@ -270,10 +299,18 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 	 *  Called when agent terminates.
 	 */
 	@OnEnd
-	public void shutdown()
+	public void shutdown(IComponent agent, Exception ex)
 	{
-		if(gui!=null)
-			gui.then(thegui -> SwingUtilities.invokeLater(()->thegui.dispose()));
+		System.out.println("Seller agent terminating: "+agent.getId()+" "+ex);
+		
+		/*if(btviewer!=null)
+		{
+			SwingUtilities.invokeLater(() -> 
+			{
+				//System.out.println("Disposing btviewer... "+agent.getId().getLocalName()+" "+btviewer);
+				btviewer.dispose();
+			});
+		}*/
 	}
 	
 	protected long getTime()
@@ -307,6 +344,7 @@ public class SellerAgent implements IBuyBookService, INegotiationAgent, IBTProvi
 	public void createOrder(Order order)
 	{
 		orders.add(order);
+		System.out.println("order created: "+orders.size()+" "+order);
 	}
 	
 	public List<Order> getOrders()
