@@ -109,14 +109,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		if(setex)
 		{
-			try
-			{
-				((StepInfo)r).getFuture().setException(new ComponentTerminatedException(getComponent().getId()));
-			}
-			catch(Exception e)
-			{
-				handleException(e);
-			}
+			((StepInfo)r).getFuture().setExceptionIfUndone(new ComponentTerminatedException(getComponent().getId()));
 		}
 		
 		if(startnew)
@@ -157,19 +150,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					}
 				}
 			}
-			catch(StepAborted t)
-			{
-				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
-				// Pass abort error to thread runner main loop
-				throw t;
-			}
-			catch(Exception e)
-			{
-				ret.setExceptionIfUndone(e);
-			}
 			catch(Throwable t)
 			{
-				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
+				handleStepException(t, ret);
 			}
 		}, ret));
 		return ret;
@@ -188,9 +171,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			{
 				step.accept(self);
 			}
-			catch(Exception e)
+			catch(Throwable t)
 			{
-				self.handleException(e);
+				handleStepException(t, null);
 			}
 		});
 	}
@@ -231,19 +214,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					}
 				}
 			}
-			catch(StepAborted t)
-			{
-				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
-				// Pass abort error to thread runner main loop
-				throw t;
-			}
-			catch(Exception e)
-			{
-				ret.setExceptionIfUndone(e);
-			}
 			catch(Throwable t)
 			{
-				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
+				handleStepException(t, ret);
 			}
 		}, ret));
 		return ret;
@@ -278,19 +251,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					resfut.delegateTo(ret);
 				}
 			}
-			catch(StepAborted t)
-			{
-				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
-				// Pass abort error to thread runner main loop
-				throw t;
-			}
-			catch(Exception e)
-			{
-				ret.setExceptionIfUndone(e);
-			}
 			catch(Throwable t)
 			{
-				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
+				handleStepException(t, ret);
 			}
 		}, ret));
 		return ret;
@@ -325,19 +288,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					resfut.delegateTo(ret);
 				}
 			}
-			catch(StepAborted t)
-			{
-				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
-				// Pass abort error to thread runner main loop
-				throw t;
-			}
-			catch(Exception e)
-			{
-				ret.setExceptionIfUndone(e);
-			}
 			catch(Throwable t)
 			{
-				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
+				handleStepException(t, ret);
 			}
 		}, ret));
 		
@@ -803,38 +756,45 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			if(!aborted)
 			{
-				scheduleStep((Runnable)() ->
+				try
 				{
-					try
+					scheduleStep((Runnable)() ->
 					{
-						lock.lock();
-						// Only wake up if still waiting for same future (invalid resume might be called from outdated future after timeout already occurred).
-						if(future==this.future)
+						try
 						{
-							synchronized(ExecutionFeature.this)
+							lock.lock();
+							// Only wake up if still waiting for same future (invalid resume might be called from outdated future after timeout already occurred).
+							if(future==this.future)
 							{
-								// Force this thread (or another) to end execution
-								// Can be two resume() of different threads before any threads end,
-								// thus a counter is needed.
-								do_switch++;
+								synchronized(ExecutionFeature.this)
+								{
+									// Force this thread (or another) to end execution
+									// Can be two resume() of different threads before any threads end,
+									// thus a counter is needed.
+									do_switch++;
+								}
+								if(!failed && threadcount.decrementAndGet()<0)
+								{
+									failed	= true;
+									throw new IllegalStateException("Threadcount<0");
+								}
+								wait.signal();
+								
+								// Abort this step to skip afterStep() call, because other thread is already running now.
+								// Use null because code is used in bootstrapping before getComponent() is available
+								throw new StepAborted(null);
 							}
-							if(!failed && threadcount.decrementAndGet()<0)
-							{
-								failed	= true;
-								throw new IllegalStateException("Threadcount<0");
-							}
-							wait.signal();
-							
-							// Abort this step to skip afterStep() call, because other thread is already running now.
-							// Use null because code is used in bootstrapping before getComponent() is available
-							throw new StepAborted(null);
 						}
-					}
-					finally
-					{
-						lock.unlock();
-					}
-				});
+						finally
+						{
+							lock.unlock();
+						}
+					});
+				}
+				catch(ComponentTerminatedException cte)
+				{
+					// ignore outdated resume -> future will be aborted on terminate
+				}
 			}
 		}
 		
@@ -1032,26 +992,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				System.out.println("nullstep");
 			step.run();
 		}
-		catch(StepAborted t)
-		{
-			// Pass abort error to thread runner main loop
-			throw t;
-		}
-		catch(Exception e)
-		{
-			handleException(e);
-		}
 		catch(Throwable t)
 		{
-			RuntimeException ex = new RuntimeException("Exception in step", t);//.printStackTrace();
-			if(self!=null)
-			{
-				handleException(ex);
-			}
-			else
-			{
-				throw t;
-			}
+			handleStepException(t, null);
 		}
 		
 		afterStep();
@@ -1059,25 +1002,63 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	
 	/**
 	 *  Handle exception in user code.
+	 *  Set exception in result future if possible and otherwise handle on component level.
+	 *  
+	 *  @param t	The throwable.
+	 *  @param ret	The result future of the step, if any.
 	 */
-	protected void handleException(Exception e)
+	protected void handleStepException(Throwable t, Future<?> ret)
 	{
-		// Handler might be user code and thus might throw exceptions itself.
-		try
+		if(t instanceof StepAborted)
 		{
-			self.handleException(e);
-		}
-		catch(Exception e2)
-		{
-			System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
-			e2.printStackTrace();
+			if(ret!=null)
+			{
+				// Undone, because, exception might occur in listener after future is set
+				ret.setExceptionIfUndone(new RuntimeException("Error in step", t));
+			}
 			
-			// user terminate throws StepAborted so afterStep() is not called.
-			self.terminate();
+			// Pass abort error to thread runner main loop
+			throw (StepAborted)t;
 		}
+		else
+		{
+			boolean handled	= false;
+			Exception ex	= t instanceof Exception ? (Exception) t : new RuntimeException("Error in step", t);
+			
+			if(ret!=null)
+			{
+				// Undone, because, exception might occur in listener after future is set
+				handled	= ret.setExceptionIfUndone(ex);
+			}
+
+			if(!handled)
+			{
+				// TODO: why can be null?
+				if(self!=null)
+				{
+					// Handler might be user code and thus might throw exceptions itself.
+					try
+					{
+						self.handleException(ex);
+					}
+					catch(Exception e2)
+					{
+						System.out.println("Exception in user code of component; component will be terminated: "+self.getId());
+						e2.printStackTrace();
+						
+						// user terminate throws StepAborted so afterStep() is not called.
+						self.terminate();
+					}
+				}
+				else
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+			}
+		}		
 	}
 	
-	class StepInfo implements Runnable
+	static class StepInfo implements Runnable
 	{
 		Runnable step;
 		Future<?> future;
@@ -1101,7 +1082,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		@Override
 		public void run()
 		{
-//			doRun(step);
 			step.run();
 		}
 	}
