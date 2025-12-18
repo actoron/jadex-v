@@ -83,7 +83,8 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		this.bt = prov.createBehaviorTree();
 		//System.out.println("createBehaviorTree");
 		
-		this.context = prov.createExecutionContext(self);
+		this.context = prov.createExecutionContext(self, bt);
+		//System.out.println("Created context: "+context.hashCode()+" "+getSelf().getId());
 		//new ExecutionContext<IComponent>(self, new ComponentTimerCreator());//createExecutionContext();
 		
 		this.rulesystem = new RuleSystem(self.getPojo(), true);
@@ -94,7 +95,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BTStepListener());
 		//System.out.println("createStepLis");
 		
-		initRulesystem();
+		//initRulesystem(); is done in createExecutionContext now
 		
 		//System.out.println("init rule system: "+IExecutionFeature.get().getComponent());
 		
@@ -118,7 +119,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		bt.abort(AbortMode.SUBTREE, NodeState.FAILED, context);
 	}
 	
-	protected void initRulesystem()
+	/*protected void initRulesystem()
 	{
 		Collection<Node<IComponent>> nodes = new ArrayList<>();
 		bt.collectNodes(nodes);
@@ -200,7 +201,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 					
 					return stepret[0];
 				});
-			}*/
+			}* /
 			
 			List<ConditionalDecorator<IComponent>> cdecos = node.getDecorators().stream()
 				.filter(deco -> deco instanceof ConditionalDecorator)
@@ -320,7 +321,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 				}
 			}
 		});
-	}
+	}*/
 	
 	protected static void executeRulesystem()
 	{
@@ -375,7 +376,7 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		if(context.getRootCall()==null || context.getRootCall().isDone())
 		{
 			if(context.getRootCall()!=null && context.getRootCall().isDone())
-				context.reset();
+				context.reset(node.getRoot());
 			//context = createExecutionContext();
 
 			IFuture<NodeState> call = bt.execute(event!=null? event: new Event("start", null), context);

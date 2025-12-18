@@ -394,16 +394,17 @@ public abstract class Node<T> implements IDecorator<T>
     		throw new NullPointerException();
     	NodeContext<T> ret = execontext.getNodeContext(this);
     	if(ret==null)
-    	{
+			throw new NullPointerException("No node context for node: "+this);
+    	/*{
     		ret = createNodeContext();
     		ret.setNodeid(getId());
     		//System.out.println("created node context for: "+this);
     		execontext.setNodeContext(this, ret);
-    	}
+    	}*/
     	return ret;
     }
     
-    protected NodeContext<T> createNodeContext()
+    public NodeContext<T> createNodeContext()
     {
     	return new NodeContext<T>();
     }
@@ -435,7 +436,8 @@ public abstract class Node<T> implements IDecorator<T>
     	
        	IFuture<Void> ret = internalAbort(abortmode, state, execontext);
         
-       	context.setAbortFuture(ret);
+       	//context.setAbortFuture(ret);
+		setAbortFuture(ret, context);
     	
     	ret.then(Void -> 
     	{
@@ -517,6 +519,12 @@ public abstract class Node<T> implements IDecorator<T>
     {
     	return 0;
     }
+
+	// todo: kind of hack to be able to override what is done when abort future is set, see parallelnode
+	public void setAbortFuture(IFuture<Void> abortfuture, NodeContext<T> context) 
+	{
+		context.setAbortFuture(abortfuture);
+	}
     
 	@Override
 	public int hashCode() 
@@ -536,6 +544,26 @@ public abstract class Node<T> implements IDecorator<T>
 		@SuppressWarnings("unchecked")
 		Node<T> other = (Node<T>)obj;
 		return id == other.id;
+	}
+
+	public List<String> getDetailsShort(ExecutionContext<T> context)
+	{
+		List<String> ret = new ArrayList<>();
+		NodeContext<T> nc = getNodeContext(context);
+		
+		if(nc.isFinishedInBefore())
+			ret.add("finished in before: true");
+		if(nc.getAborted()!=null)
+		{
+			ret.add("aborted: "+nc.getAborted());
+			ret.add("abort done: "+nc.getAbortFuture().isDone());
+		}
+		//if(this instanceof IIndexContext)
+		//	ret.add("index: "+((IIndexContext)this).getIndex());
+		if(nc.getCallFuture()!=null)
+			ret.add("call done: "+nc.getCallFuture().isDone());
+		
+		return ret;
 	}
 
 	@Override

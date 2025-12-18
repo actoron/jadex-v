@@ -28,7 +28,7 @@ public class TestActionNode
             return new TerminableFuture<>(NodeState.SUCCEEDED);
         }));
 
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(an);
         Event event = new Event("start", null);
         IFuture<NodeState> ret = an.execute(event, context);
 
@@ -46,7 +46,7 @@ public class TestActionNode
         }));
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(an);
         IFuture<NodeState> ret = an.execute(event, context);
 
         NodeState state = ret.get();
@@ -64,7 +64,7 @@ public class TestActionNode
         }));
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(an);
         IFuture<NodeState> ret = an.execute(event, context);
 
         an.abort(AbortMode.SELF, NodeState.FAILED, context);
@@ -82,7 +82,7 @@ public class TestActionNode
         }));
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(an);
         IFuture<NodeState> ret = an.execute(event, context);
 
         NodeState state = ret.get();
@@ -113,7 +113,7 @@ public class TestActionNode
         }));
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(an);
         IFuture<NodeState> ret = an.execute(event, context);
 
         an.abort(AbortMode.SELF, NodeState.FAILED, context);

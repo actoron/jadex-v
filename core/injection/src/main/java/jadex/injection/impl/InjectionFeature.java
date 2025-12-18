@@ -256,10 +256,11 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		// Value specific listeners.
 		if(listeners!=null)
 		{
-			Set<IChangeListener>	set	= listeners.get(event.name());
+			Set<IChangeListener> set = listeners.get(event.name());
 			if(set!=null)
 			{
-				for(IChangeListener l: set)
+				IChangeListener[] lis = set.toArray(new IChangeListener[set.size()]);
+				for(IChangeListener l: lis)
 				{
 					try
 					{

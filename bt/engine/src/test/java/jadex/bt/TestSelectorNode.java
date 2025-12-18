@@ -38,7 +38,7 @@ public class TestSelectorNode
         CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysSucceed).addChild(alwaysFail);
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(selector);
         IFuture<NodeState> ret = selector.execute(event, context);
 
         NodeState state = ret.get();
@@ -63,7 +63,7 @@ public class TestSelectorNode
         CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysFail).addChild(alwaysSucceed);
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(selector);
         IFuture<NodeState> ret = selector.execute(event, context);
 
         NodeState state = ret.get();
@@ -92,7 +92,7 @@ public class TestSelectorNode
         CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysFail1).addChild(alwaysFail2);
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(selector);
         IFuture<NodeState> ret = selector.execute(event, context);
 
         NodeState state = ret.get();
@@ -120,7 +120,7 @@ public class TestSelectorNode
         CompositeNode<Object> selector = new SelectorNode<>().addChild(alwaysFail).addChild(alwaysSucceed);
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(selector);
         IFuture<NodeState> ret = selector.execute(event, context);
 
         selector.abort(AbortMode.SELF, NodeState.FAILED, context);
@@ -150,7 +150,7 @@ public class TestSelectorNode
             .addChild(action1).addChild(action2);
         
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(sel);
         IFuture<NodeState> ret = sel.execute(event, context);
 
         sel.abort(AbortMode.SELF, NodeState.SUCCEEDED, context);

@@ -14,6 +14,8 @@ import jadex.future.IFuture;
  */
 public class SequenceNode<T> extends CompositeNode<T>
 {
+	private static final String KEY_INDEX = "index";
+
 	public SequenceNode()
 	{
 	}
@@ -28,6 +30,7 @@ public class SequenceNode<T> extends CompositeNode<T>
     {
     	//Thread.dumpStack();
     	//System.out.println("seq node, internal exe: "+this+" "+state+" "+getNodeContext(context).getIndex());
+		setIndex(-1, context);
     	return executeNextChild(event, context);
     }
     
@@ -35,15 +38,15 @@ public class SequenceNode<T> extends CompositeNode<T>
     {
     	Future<NodeState> ret = new Future<>();
     	
-    	getNodeContext(context).incIndex();
+    	incIndex(context);
     	//System.out.println("sequence executing child: "+getNodeContext(context).getIndex());
-  		getLogger().log(Level.INFO, "sequence executing child: "+this+" "+getNodeContext(context).getIndex());
+  		getLogger().log(Level.INFO, "sequence executing child: "+this+" "+getIndex(context));
 
     	
-    	if(getNodeContext(context).getIndex() < getChildCount()) 
+    	if(getIndex(context) < getChildCount(context)) 
     	{
-            getLogger().log(Level.INFO, "sequence child is: "+getChild(getNodeContext(context).getIndex()));
-            IFuture<NodeState> child = getChild(getNodeContext(context).getIndex()).execute(event, context);
+            getLogger().log(Level.INFO, "sequence child is: "+getChild(getIndex(context), context));
+            IFuture<NodeState> child = getChild(getIndex(context), context).execute(event, context);
             
             if(child.isDone())
             {
@@ -54,7 +57,7 @@ public class SequenceNode<T> extends CompositeNode<T>
             	child.then(res -> handleResult(event, res, ret, context)).catchEx(ex -> handleResult(event, NodeState.FAILED, ret, context));
             }
         }
-    	else if(getChildCount()==0 || getChildCount()==getNodeContext(context).getIndex())
+    	else if(getChildCount(context)==0 || getChildCount(context)==getIndex(context))
     	{
     		//System.out.println("sequence succeeded: "+this);
      		getLogger().log(Level.INFO, "sequence succeeded: "+this);
@@ -72,7 +75,7 @@ public class SequenceNode<T> extends CompositeNode<T>
     
     protected void handleResult(Event event, NodeState state, Future<NodeState> ret, ExecutionContext<T> context) 
     {
-    	System.out.println("seq node, child finished with: "+this+" "+state);
+    	//System.out.println("seq node, child finished with: "+this+" "+state);
     	getLogger().log(Level.INFO, "seq node, child finished with: "+this+" "+state);
 
 		if(ret.isDone())
@@ -104,55 +107,40 @@ public class SequenceNode<T> extends CompositeNode<T>
     
     public int getCurrentChildCount(ExecutionContext<T> context)
     {
-    	return getNodeContext(context).getIndex();
+    	return getIndex(context);
     }
     
-    @Override
-    public SequenceNodeContext<T> getNodeContext(ExecutionContext<T> execontext) 
-    {
-    	return (SequenceNodeContext<T>)super.getNodeContext(execontext);
-    }
-    
-    @Override
-    protected NodeContext<T> createNodeContext() 
-    {
-    	return new SequenceNodeContext<T>();
-    }
-    
-    @Override
+    /*@Override
     public NodeContext<T> copyNodeContext(NodeContext<T> src)
     {
     	SequenceNodeContext<T> ret = (SequenceNodeContext<T>)super.copyNodeContext(src);
     	ret.setIndex(((SequenceNodeContext<T>)src).getIndex());
 		return ret;
-    }
+    }*/
     
     @Override
     public void reset(ExecutionContext<T> context, Boolean all) 
     {
     	super.reset(context, all);
-    	getNodeContext(context).setIndex(-1);
+    	setIndex(-1, context);
     	//System.out.println("sequence node after reset = " + getNodeContext(context).getIndex()+" "+this);
-    	System.getLogger(SequenceNode.class.getName()).log(Level.INFO, "sequence node after reset = " + getNodeContext(context).getIndex()+" "+this);
+    	System.getLogger(SequenceNode.class.getName()).log(Level.INFO, "sequence node after reset = " + getIndex(context)+" "+this);
     }
-    
-    public static class SequenceNodeContext<T> extends NodeContext<T> implements IIndexContext
-    {
-    	protected int idx = -1;
 
-		public int getIndex() 
-		{
-			return idx;
-		}
+	public int getIndex(ExecutionContext<T> context) 
+	{
+	    Integer val = (Integer) context.getNodeContext(this).getValue("index");
+	    return val != null ? val : -1;
+	}
 
-		public void setIndex(int idx) 
-		{
-			this.idx = idx;
-		}
-		
-		public void incIndex()
-		{
-			idx++;
-		}
-    }
+	public void setIndex(int idx, ExecutionContext<T> context) 
+	{
+		context.getNodeContext(this).setValue(KEY_INDEX, idx);	
+	}
+	
+	public void incIndex(ExecutionContext<T> context)
+	{
+		Integer idx = getIndex(context);
+		setIndex(idx+1, context);
+	}
 }

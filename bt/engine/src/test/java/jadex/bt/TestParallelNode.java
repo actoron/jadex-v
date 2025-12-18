@@ -39,7 +39,7 @@ public class TestParallelNode
             .addChild(action1).addChild(action2);
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(parallel);
         IFuture<NodeState> ret = parallel.execute(event, context);
 
         NodeState state = ret.get();
@@ -67,7 +67,7 @@ public class TestParallelNode
         	.addChild(action1).addChild(action2);
 
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(parallel);
         IFuture<NodeState> ret = parallel.execute(event, context);
 
         NodeState state = ret.get();
@@ -96,7 +96,7 @@ public class TestParallelNode
             .addChild(action1).addChild(action2);
         
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(parallel);
         IFuture<NodeState> ret = parallel.execute(event, context);
 
         NodeState state = ret.get();
@@ -129,7 +129,7 @@ public class TestParallelNode
         	.addChild(action1).addChild(action2);
         
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(parallel);
         IFuture<NodeState> ret = parallel.execute(event, context);
 
         NodeState state = ret.get();
@@ -159,7 +159,7 @@ public class TestParallelNode
             .addChild(action1).addChild(action2);
         
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(parallel);
         IFuture<NodeState> ret = parallel.execute(event, context);
 
         parallel.abort(AbortMode.SELF, NodeState.FAILED, context);
@@ -191,7 +191,7 @@ public class TestParallelNode
             .addChild(action1).addChild(action2);
         
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(parallel);
         IFuture<NodeState> ret = parallel.execute(event, context);
 
         parallel.abort(AbortMode.SELF, NodeState.SUCCEEDED, context);

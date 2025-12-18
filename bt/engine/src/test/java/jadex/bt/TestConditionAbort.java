@@ -10,6 +10,7 @@ import org.junit.jupiter.api.parallel.Execution;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.decorators.FailureDecorator;
 import jadex.bt.decorators.SuccessDecorator;
+import jadex.bt.impl.ComponentConditionObserver;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.CompositeNode;
 import jadex.bt.nodes.Node;
@@ -83,9 +84,9 @@ public class TestConditionAbort
         }
 
         @Override
-        public ExecutionContext<IComponent> createExecutionContext(IComponent component)
+        public ExecutionContext<IComponent> createExecutionContext(IComponent component, Node<IComponent> root)
         {
-            ExecutionContext<IComponent> exe = new ExecutionContext<IComponent>(component, new ComponentTimerCreator());
+            ExecutionContext<IComponent> exe = new ExecutionContext<IComponent>(component, new ComponentTimerCreator(), root, new ComponentConditionObserver<>());
 
             exe.addNodeListener("root", new NodeListener<IComponent>()
             {

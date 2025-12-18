@@ -7,6 +7,7 @@ import jadex.bt.NodeListener;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.decorators.TriggerDecorator;
+import jadex.bt.impl.ComponentConditionObserver;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
@@ -14,6 +15,7 @@ import jadex.bt.nodes.SelectorNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.execution.impl.ComponentTimerCreator;
 import jadex.future.TerminableFuture;
 import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
@@ -56,9 +58,9 @@ public class UniversityAgent implements IBTProvider
 		return this;
 	}
 
-	public ExecutionContext<IComponent> createExecutionContext(IComponent component)
+	public ExecutionContext<IComponent> createExecutionContext(IComponent component, Node<IComponent> root)
 	{
-		ExecutionContext<IComponent> exe = new ExecutionContext<IComponent>(component, null);
+		ExecutionContext<IComponent> exe = new ExecutionContext<IComponent>(component, new ComponentTimerCreator(), root, new ComponentConditionObserver<>());
 
 		exe.addNodeListener("gotouni", new NodeListener<IComponent>()
 		{

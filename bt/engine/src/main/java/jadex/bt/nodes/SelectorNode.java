@@ -38,17 +38,17 @@ public class SelectorNode<T> extends CompositeNode<T>
     
     protected void executeNextChild(Event event, Future<NodeState> ret, ExecutionContext<T> context)
     {
-   		getNodeContext(context).incIndex();
+   		incIndex(context);
     	 
-    	if(getNodeContext(context).getIndex() < getChildCount()) 
+    	if(getIndex(context) < getChildCount(context)) 
     	{
     		//System.out.println("Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
-      		getLogger().log(Level.INFO, "Selector exeuting child: "+this+" "+getNodeContext(context).getIndex()+" "+getChild(getNodeContext(context).getIndex()));
+      		getLogger().log(Level.INFO, "Selector exeuting child: "+this+" "+getIndex(context)+" "+getChild(getIndex(context), context));
 
        		//if(getChild(getNodeContext(context).getIndex()).toString().indexOf("collect")!=-1)
     		//	System.out.println("collectwaste");
       		
-    		IFuture<NodeState> child = getChild(getNodeContext(context).getIndex()).execute(event, context);
+    		IFuture<NodeState> child = getChild(getIndex(context), context).execute(event, context);
             
             if(child.isDone())
             {
@@ -108,54 +108,23 @@ public class SelectorNode<T> extends CompositeNode<T>
     public void reset(ExecutionContext<T> context, Boolean all) 
     {
     	super.reset(context, all);
-    	getNodeContext(context).setIndex(-1);
+    	setIndex(-1, context);
     	//System.out.println("selector node after reset = " + getNodeContext(context).getIndex()+" "+this);
-      	System.getLogger(SelectorNode.class.getName()).log(Level.INFO, "selector node after reset = " + getNodeContext(context).getIndex()+" "+this);
+      	System.getLogger(SelectorNode.class.getName()).log(Level.INFO, "selector node after reset = " + getIndex(context)+" "+this);
     }
     
     public int getCurrentChildCount(ExecutionContext<T> context)
     {
-    	return getNodeContext(context).getIndex();
+    	return getIndex(context);
     }
     
-    @Override
-    public SelectorNodeContext<T> getNodeContext(ExecutionContext<T> execontext) 
-    {
-    	return (SelectorNodeContext<T>)super.getNodeContext(execontext);
-    }
-    
-    protected NodeContext<T> createNodeContext() 
-    {
-    	return new SelectorNodeContext<T>();
-    }
-    
-    @Override
+    /*@Override
     public NodeContext<T> copyNodeContext(NodeContext<T> src)
     {
     	SelectorNodeContext<T> ret = (SelectorNodeContext<T>)super.copyNodeContext(src);
     	ret.setIndex(((SelectorNodeContext<T>)src).getIndex());
 		return ret;
-    }
-    
-    public static class SelectorNodeContext<T> extends NodeContext<T> implements IIndexContext
-    {
-    	protected int idx = -1;
+    } */ 
 
-		public int getIndex() 
-		{
-			return idx;
-		}
-
-		public void setIndex(int idx) 
-		{
-			this.idx = idx;
-		}
-		
-		public void incIndex()
-		{
-			idx++;
-		}
-		
-		
-    }
+	
 }

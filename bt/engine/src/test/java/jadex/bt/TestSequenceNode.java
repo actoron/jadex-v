@@ -46,7 +46,7 @@ public class TestSequenceNode
 		CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres).addChild(collectres).addChild(drivehome);
 		
 		Event event = new Event("start", null);
-		ExecutionContext<Object> context = new ExecutionContext<Object>();
+		ExecutionContext<Object> context = new ExecutionContext<Object>(sequence);
 		IFuture<NodeState> ret = sequence.execute(event, context);
 		
 		NodeState state = ret.get();
@@ -79,7 +79,7 @@ public class TestSequenceNode
 		CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres).addChild(collectres).addChild(drivehome);
 		
 		Event event = new Event("start", null);
-		ExecutionContext<Object> context = new ExecutionContext<Object>();
+		ExecutionContext<Object> context = new ExecutionContext<Object>(sequence);
 		IFuture<NodeState> ret = sequence.execute(event, context);
 		
 		NodeState state = ret.get();
@@ -94,7 +94,7 @@ public class TestSequenceNode
 	    SequenceNode<Object> sequence = new SequenceNode<>();
 	    
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(sequence);
 	    IFuture<NodeState> ret = sequence.execute(event, context);
 	    
 	    NodeState state = ret.get();
@@ -114,7 +114,7 @@ public class TestSequenceNode
 	    CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres);
 	    
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(sequence);
 	    IFuture<NodeState> ret = sequence.execute(event, context);
 	    
 	    sequence.abort(AbortMode.SELF, NodeState.FAILED, context);
@@ -144,7 +144,7 @@ public class TestSequenceNode
             .addChild(action1).addChild(action2);
         
         Event event = new Event("start", null);
-        ExecutionContext<Object> context = new ExecutionContext<Object>();
+        ExecutionContext<Object> context = new ExecutionContext<Object>(seq);
         IFuture<NodeState> ret = seq.execute(event, context);
 
         seq.abort(AbortMode.SELF, NodeState.SUCCEEDED, context);
@@ -167,7 +167,7 @@ public class TestSequenceNode
 	    CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres);
 	    
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(sequence);
 	    IFuture<NodeState> ret = sequence.execute(event, context);
 	    
 	    assertFalse(ret.isDone(), "sequence state");
@@ -191,7 +191,7 @@ public class TestSequenceNode
 	    CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres);
 	    
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(sequence);
 	    IFuture<NodeState> ret = sequence.execute(event, context);
 	    
 	    NodeState state = ret.get();
@@ -210,7 +210,7 @@ public class TestSequenceNode
 	    CompositeNode<Object> sequence = new SequenceNode<>().addChild(findres);
 	    
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(sequence);
 	    IFuture<NodeState> ret = sequence.execute(event, context);
 	    
 	    NodeState state = ret.get();

@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import jadex.bt.impl.Event;
-import jadex.bt.nodes.SequenceNode.SequenceNodeContext;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.future.Future;
@@ -66,7 +65,7 @@ public class ParallelNode<T> extends CompositeNode<T>
 		
 		// Child can be directly be activated in parallel node
 		//System.out.println("newChildAdded: "+getChildCount()+" "+getChildren());
-		ParallelNodeContext<T> context = getNodeContext(execontext);
+		NodeContext<T> context = getNodeContext(execontext);
 			
 		// If execution is ongoing, abort children, reset this node, and reexecute
         Future<NodeState> call = context.getCallFuture();
@@ -75,7 +74,7 @@ public class ParallelNode<T> extends CompositeNode<T>
         	//System.out.println("execute again called: "+this+" "+ret+" "+context.isRepeat());
    			getLogger().log(Level.INFO, "execute new child: "+this+" "+context.getState());
         	
-   			executeChild(child, event, context.getResults(), execontext, context.getInternalCall());
+   			executeChild(child, event, getRuntimeInfo(execontext).getResults(), execontext, getRuntimeInfo(execontext).getInternalCall());
         }
         else
         {
@@ -89,13 +88,15 @@ public class ParallelNode<T> extends CompositeNode<T>
     {
         Map<Node<T>, IFuture<NodeState>> results = new LinkedHashMap<>();
     	Future<NodeState> ret = new Future<>();
-    	ParallelNodeContext<T> context = getNodeContext(execontext);
-    	context.setInternalCall(ret);
-    	context.setResults(results);
+    	NodeContext<T> context = getNodeContext(execontext);
+		getRuntimeInfo(execontext).setInternalCall(ret);
+		getRuntimeInfo(execontext).setResults(results);
+    	//context.setInternalCall(ret);
+    	//context.setResults(results);
     	
-        for(int i=0; i<getChildCount(); i++) 
+        for(int i=0; i<getChildCount(execontext); i++) 
         {
-        	if(executeChild(getChild(i), event, results, execontext, ret))
+        	if(executeChild(getChild(i, execontext), event, results, execontext, ret))
         		break;
         }
 		executeAbortWait(context).then(abortstate -> handleFinish(abortstate, ret, results, execontext));
@@ -103,10 +104,11 @@ public class ParallelNode<T> extends CompositeNode<T>
         return ret;
     }
 
-	protected IFuture<NodeState> executeAbortWait(ParallelNodeContext<T> context)
+	protected IFuture<NodeState> executeAbortWait(NodeContext<T> context)
 	{
 		Future<NodeState> ret = new Future<>();
-		context.setAbortWait(ret);
+		//context.setAbortWait(ret);
+		getRuntimeInfo(context).setAbortWait(ret);
 		return ret;
 	} 
 
@@ -126,7 +128,7 @@ public class ParallelNode<T> extends CompositeNode<T>
          		ret = true;
          	}
          	
-         	state = checkFinished(results);
+         	state = checkFinished(results, context);
          	if(state!=null)
          	{
          		handleFinish(state, fut, results, context);
@@ -144,36 +146,37 @@ public class ParallelNode<T> extends CompositeNode<T>
     	return !keeprunning && (failmode==ResultMode.ON_ONE && NodeState.FAILED==state || successmode==ResultMode.ON_ONE && NodeState.SUCCEEDED==state);
     }
     
-    protected NodeState checkFinished(Map<Node<T>, IFuture<NodeState>> results)
+    protected NodeState checkFinished(Map<Node<T>, IFuture<NodeState>> results, ExecutionContext<T> execontext)
     {
     	if(isKeepRunning())
     		return null;
     	
-    	if(checkSuccess(results))
+    	if(checkSuccess(results, execontext))
     		return NodeState.SUCCEEDED;
-    	else if(checkFailure(results))
+    	else if(checkFailure(results, execontext))
     		return NodeState.FAILED;
     	return null;
     }
     
-    protected boolean checkSuccess(Map<Node<T>, IFuture<NodeState>> results)
+    protected boolean checkSuccess(Map<Node<T>, IFuture<NodeState>> results, ExecutionContext<T> execontext)
     {
     	boolean ret = false;
-    	if(ResultMode.ON_ALL==successmode && results.size()==getChildCount())
+    	if(ResultMode.ON_ALL==successmode && results.size()==getChildCount(execontext))
     		ret = results.values().stream().allMatch(result -> result.isDone() && result.get()==NodeState.SUCCEEDED);
     	return ret;
     }
     
-    protected boolean checkFailure(Map<Node<T>, IFuture<NodeState>> results)
+    protected boolean checkFailure(Map<Node<T>, IFuture<NodeState>> results, ExecutionContext<T> execontext)
     {
     	boolean ret = false;
-    	if(ResultMode.ON_ALL==failmode && results.size()==getChildCount())
+    	if(ResultMode.ON_ALL==failmode && results.size()==getChildCount(execontext))
     		ret = results.values().stream().allMatch(result -> result.isDone() && result.get()==NodeState.FAILED);
     	return ret;
     }
     
     protected void handleFinish(NodeState state, Future<NodeState> ret, Map<Node<T>, IFuture<NodeState>> results, ExecutionContext<T> context)
     {
+		System.out.println("handleFinish: "+this+" "+state+" "+context.getNodeContext(this).getAbortState());
     	if(ret.isDone())
 		{
     		return;
@@ -184,7 +187,6 @@ public class ParallelNode<T> extends CompositeNode<T>
 		}
 		else
 		{
-
 			for(Entry<Node<T>, IFuture<NodeState>> entry: results.entrySet()) 
 			{
 				if(!entry.getValue().isDone())
@@ -206,7 +208,7 @@ public class ParallelNode<T> extends CompositeNode<T>
         } 
         else 
         {
-            NodeState finstate = checkFinished(results);
+            NodeState finstate = checkFinished(results, context);
             if(finstate != null)
                 handleFinish(finstate, ret, results, context);
         }
@@ -215,30 +217,41 @@ public class ParallelNode<T> extends CompositeNode<T>
     public int getCurrentChildCount(ExecutionContext<T> context)
     {
     	// hmmm?!
-    	return getChildCount();
+    	return getChildCount(context);
     }
     
-    @Override
-    public ParallelNodeContext<T> getNodeContext(ExecutionContext<T> execontext) 
-    {
-    	return (ParallelNodeContext<T>)super.getNodeContext(execontext);
-    }
-    
-    protected NodeContext<T> createNodeContext()
-    {
-    	return new ParallelNodeContext<T>();
-    }
-    
-    @Override
+    /*@Override
     public NodeContext<T> copyNodeContext(NodeContext<T> src)
     {
     	ParallelNodeContext<T> ret = (ParallelNodeContext<T>)super.copyNodeContext(src);
     	ret.setInternalCall(((ParallelNodeContext<T>)src).getInternalCall());
     	ret.setResults(((ParallelNodeContext<T>)src).getResults());
 		return ret;
+    }*/
+
+	public boolean hasIndex()
+    {
+    	return false;
     }
-    
-    public static class ParallelNodeContext<T> extends NodeContext<T>
+
+	public RuntimeInfo<T> getRuntimeInfo(ExecutionContext<T> execontext)
+	{
+		return getRuntimeInfo(getNodeContext(execontext));
+	}
+
+	public RuntimeInfo<T> getRuntimeInfo(NodeContext<T> nc)
+	{
+		RuntimeInfo<T> ret = (RuntimeInfo<T>)nc.getValue("runtimeinfo");
+		if(ret==null)
+		{
+			ret = new RuntimeInfo<T>();
+			nc.setValue("runtimeinfo", ret);
+		}
+		return ret;
+	}
+
+
+    public static class RuntimeInfo<T>
     {
     	protected Future<NodeState> internalcall;
     	protected Map<Node<T>, IFuture<NodeState>> results;
@@ -274,13 +287,14 @@ public class ParallelNode<T> extends CompositeNode<T>
 		{
 			this.abortwait = abortwait;	
 		}
-
-		public NodeContext<T> setAbortFuture(IFuture<Void> abortfuture) 
-		{
-			super.setAbortFuture(abortfuture);
-			abortwait.setResultIfUndone(getAbortState());
-			return this;
-		}
     }
+
+	public void setAbortFuture(IFuture<Void> abortfuture, NodeContext<T> context) 
+	{
+		super.setAbortFuture(abortfuture, context);
+		Future<NodeState> aw = getRuntimeInfo(context).getAbortWait();
+		if(aw!=null)
+			aw.setResultIfUndone(context.getAbortState());
+	}
 }
 
