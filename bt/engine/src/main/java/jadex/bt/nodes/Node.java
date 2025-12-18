@@ -7,11 +7,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import jadex.bt.INodeListener;
 import jadex.bt.decorators.Decorator;
 import jadex.bt.decorators.IDecorator;
-import jadex.bt.decorators.RemoveDecorator;
 import jadex.bt.impl.Event;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
@@ -62,12 +59,12 @@ public abstract class Node<T> implements IDecorator<T>
 	
 	public Node()
 	{
-		decorators.add(this);
+		this(null);
 	}
 	
 	public Node(String name)
 	{
-		this();
+		decorators.add(this);
 		this.name = name;
 	}
 	
@@ -437,7 +434,7 @@ public abstract class Node<T> implements IDecorator<T>
        	IFuture<Void> ret = internalAbort(abortmode, state, execontext);
         
        	//context.setAbortFuture(ret);
-		setAbortFuture(ret, context);
+		setAbortFuture(ret, execontext);
     	
     	ret.then(Void -> 
     	{
@@ -521,9 +518,9 @@ public abstract class Node<T> implements IDecorator<T>
     }
 
 	// todo: kind of hack to be able to override what is done when abort future is set, see parallelnode
-	public void setAbortFuture(IFuture<Void> abortfuture, NodeContext<T> context) 
+	public void setAbortFuture(IFuture<Void> abortfuture, ExecutionContext<T> context) 
 	{
-		context.setAbortFuture(abortfuture);
+		getNodeContext(context).setAbortFuture(abortfuture);
 	}
     
 	@Override

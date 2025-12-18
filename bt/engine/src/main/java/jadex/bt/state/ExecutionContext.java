@@ -130,7 +130,7 @@ public class ExecutionContext<T> implements ITimerContext
 			if(listeners.size()>0)
 			{
 				getNodeContext(node).setConditionListeners(listeners);
-				System.out.println("observing conditions for node: "+node+" "+listeners.size());
+				//System.out.println("observing conditions for node: "+node+" "+listeners.size());
 			}
 		}
 	}

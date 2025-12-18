@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import jadex.bt.IChildTraversalStrategy;
 import jadex.bt.impl.Event;
 import jadex.bt.state.ExecutionContext;
 import jadex.future.FutureBarrier;
@@ -12,18 +13,26 @@ import jadex.future.IFuture;
 
 public abstract class CompositeNode<T> extends Node<T>
 {
-    private static final String KEY_INDEX = "index";
     private static final String KEY_CHILDREN = "children";
 
     private List<Node<T>> children = new ArrayList<>();
+
+    private IChildTraversalStrategy<T> strategy;
     
     public CompositeNode()
     {
+        this(null);
     }
     
     public CompositeNode(String name)
     {
+    	this(name, null);
+    }
+
+    public CompositeNode(String name, IChildTraversalStrategy<T> strategy)
+    {
     	super(name);
+        this.strategy = strategy==null? new DefaultChildTraversalStrategy<>(): strategy;
     }
      
     public CompositeNode<T> addChild(Node<T> child) 
@@ -77,11 +86,11 @@ public abstract class CompositeNode<T> extends Node<T>
     	System.out.println("child added: "+this+" "+child);
     }*/
     
-    public Node<T> getChild(int n, ExecutionContext<T> execontext)
+    /*public Node<T> getChild(int n, ExecutionContext<T> execontext)
     {
     	//return children.get(n);
         return getChildren(execontext).get(n);
-    }
+    }*/
     
     public List<Node<T>> getChildren(ExecutionContext<T> execontext)
     {
@@ -102,8 +111,6 @@ public abstract class CompositeNode<T> extends Node<T>
         return getChildren(execontext).size();
     	//return children.size();
     }
-    
-    public abstract int getCurrentChildCount(ExecutionContext<T> context);
     
     @Override
     public IFuture<Void> internalAbort(AbortMode abortmode, NodeState state, ExecutionContext<T> context) 
@@ -166,33 +173,11 @@ public abstract class CompositeNode<T> extends Node<T>
 	{
 		List<String> ret = super.getDetailsShort(context); 
 		
-		if(hasIndex())
-			ret.add("index: "+getIndex(context));
+		//if(hasIndex())
+		//	ret.add("index: "+getIndex(context));
 		
 		return ret;
-	}
-
-    public boolean hasIndex()
-    {
-    	return true;
     }
-
-    public int getIndex(ExecutionContext<T> context) 
-	{
-	    Integer val = (Integer) context.getNodeContext(this).getValue(KEY_INDEX);
-	    return val != null ? val : -1;
-	}
-
-	public void setIndex(int idx, ExecutionContext<T> context) 
-	{
-		context.getNodeContext(this).setValue(KEY_INDEX, idx);	
-	}
-	
-	public void incIndex(ExecutionContext<T> context)
-	{
-		Integer idx = getIndex(context);
-		setIndex(idx+1, context);
-	}
 
     public List<Node<T>> addDynamicChild(Node<T> child, ExecutionContext<T> context) 
 	{
@@ -219,5 +204,10 @@ public abstract class CompositeNode<T> extends Node<T>
     {
         List<Node<T>> children = (List<Node<T>>)context.getNodeContext(this).getValue(KEY_CHILDREN);
         return children!=null? children: Collections.EMPTY_LIST;
+    }
+
+    public IChildTraversalStrategy<T> getStrategy()
+    {
+        return strategy;
     }
 }

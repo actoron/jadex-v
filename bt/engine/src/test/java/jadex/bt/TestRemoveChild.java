@@ -52,7 +52,7 @@ public class TestRemoveChild
                 System.out.println("Items: "+items);
             }
 
-            agent.getFeature(IExecutionFeature.class).waitForDelay(2000).get();
+            agent.getFeature(IExecutionFeature.class).waitForDelay(10000).get();
 
             finalstate = items.isEmpty();
             System.out.println("Final state: "+finalstate);

@@ -199,4 +199,11 @@ public class TestParallelNode
         NodeState state = ret.get();
         assertEquals(NodeState.SUCCEEDED, state, "node state");
     }
+
+    public static void main(String[] args) 
+    {
+        TestParallelNode test = new TestParallelNode();
+
+        test.testParallelOneFails();
+    }
 }

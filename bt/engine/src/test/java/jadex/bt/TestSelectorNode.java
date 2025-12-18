@@ -1,6 +1,13 @@
 package jadex.bt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +19,7 @@ import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.nodes.ParallelNode;
+import jadex.bt.nodes.RandomChildTraversalStrategy;
 import jadex.bt.nodes.SelectorNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.future.Future;
@@ -158,4 +166,48 @@ public class TestSelectorNode
         NodeState state = ret.get();
         assertEquals(NodeState.SUCCEEDED, state, "node state");
     }
+
+    @Test
+    public void testSelectorRandomTraversalProperties()
+    {
+        int seed = 1337;
+
+        List<Integer> executed = new ArrayList<>();
+
+        Node<Object> a = new ActionNode<>(new TerminableUserAction<>((e, x) ->
+        {
+            executed.add(1);
+            return new TerminableFuture<>(NodeState.FAILED);
+        }));
+
+        Node<Object> b = new ActionNode<>(new TerminableUserAction<>((e, x) ->
+        {
+            executed.add(2);
+            return new TerminableFuture<>(NodeState.FAILED);
+        }));
+
+        Node<Object> c = new ActionNode<>(new TerminableUserAction<>((e, x) ->
+        {
+            executed.add(3);
+            return new TerminableFuture<>(NodeState.FAILED);
+        }));
+
+        CompositeNode<Object> selector = new SelectorNode<>("selector-random",
+            new RandomChildTraversalStrategy<>(seed))
+            .addChild(a)
+            .addChild(b)
+            .addChild(c);
+
+        ExecutionContext<Object> ctx = new ExecutionContext<>(selector);
+        NodeState state = selector.execute(new Event("start", null), ctx).get();
+
+        assertEquals(NodeState.FAILED, state);
+        
+        List<Integer> expected = new ArrayList<>(List.of(1, 2, 3));
+        Collections.shuffle(expected, new Random(seed));
+
+        assertEquals(3, executed.size());
+        assertEquals(expected, executed);
+    }
+
 }
