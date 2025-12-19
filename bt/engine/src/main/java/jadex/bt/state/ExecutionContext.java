@@ -58,7 +58,12 @@ public class ExecutionContext<T> implements ITimerContext
 
 	protected void createNodeContexts(Node<T> node)
 	{
-		createNodeContext(node);
+		List<List<Tuple2<String, IChangeListener>>> lis = observeConditions(node);
+		if(lis.size()>0)
+		{
+			//createNodeContext(node);
+			node.getNodeContext(this).setConditionListeners(lis);
+		}
 
 		if(node instanceof CompositeNode<T> composite)
 		{
@@ -67,18 +72,22 @@ public class ExecutionContext<T> implements ITimerContext
 				createNodeContexts(child);
 			}
 		}
-
-		observeConditions(node);
 	}
 
-	public void createNodeContext(Node<T> node)
+	public NodeContext<T> createNodeContext(Node<T> node)
 	{
 		NodeContext<T> nc = node.createNodeContext();
 		nc.setNodeid(node.getId());
 		nodestates.put(node, nc);
+		return nc;
 	}
 
-	public void observeConditions(Node<T> node)
+	/**
+	 *  Observe the conditions of a node from conditional decorators.
+	 *  @param node the node.
+	 *  @return True, if conditions are observed.
+	 */
+	public List<List<Tuple2<String, IChangeListener>>> observeConditions(Node<T> node)
 	{
 		List<List<Tuple2<String, IChangeListener>>> listeners = new ArrayList<>();
 
@@ -125,14 +134,16 @@ public class ExecutionContext<T> implements ITimerContext
 				}
 
 				listeners.add(observer.observeCondition(deco.getEvents(), (ITriFunction)condition, deco.getAction(), node, this));
-			}	
-
-			if(listeners.size()>0)
-			{
-				getNodeContext(node).setConditionListeners(listeners);
-				//System.out.println("observing conditions for node: "+node+" "+listeners.size());
-			}
+			}				
 		}
+
+		if(listeners.size()>0)
+		{
+			//getNodeContext(node).setConditionListeners(listeners);
+			//System.out.println("observing conditions for node: "+node+" "+listeners.size());
+		}
+
+		return listeners;
 	}
 
 	public void unobserveConditions(Node<T> node)

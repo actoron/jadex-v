@@ -682,7 +682,9 @@ public class GuiPanel extends JPanel
 						}
 					}
 				});
-			});
+
+				return null;
+			}).catchEx(ex ->{System.out.println("Ex in refresh: "+ex);});
 		}
 	}
 

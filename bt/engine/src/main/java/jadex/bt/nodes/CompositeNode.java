@@ -181,11 +181,11 @@ public abstract class CompositeNode<T> extends Node<T>
 
     public List<Node<T>> addDynamicChild(Node<T> child, ExecutionContext<T> context) 
 	{
-	    List<Node<T>> children = (List<Node<T>>)context.getNodeContext(this).getValue(KEY_CHILDREN);
+	    List<Node<T>> children = (List<Node<T>>)getNodeContext(context).getValue(KEY_CHILDREN);
         if(children==null)
         {
             children = new ArrayList<Node<T>>();
-            context.getNodeContext(this).setValue(KEY_CHILDREN, children);
+            getNodeContext(context).setValue(KEY_CHILDREN, children);
         }
         children.add(child);
 	    return children;
@@ -194,7 +194,7 @@ public abstract class CompositeNode<T> extends Node<T>
     public boolean removeDynamicChild(Node<T> child, ExecutionContext<T> context) 
 	{
         boolean removed = false;
-	    List<Node<T>> children = (List<Node<T>>)context.getNodeContext(this).getValue(KEY_CHILDREN);
+	    List<Node<T>> children = (List<Node<T>>)getNodeContext(context).getValue(KEY_CHILDREN);
         if(children!=null)
             removed = children.remove(child);
 	    return removed;
@@ -202,7 +202,7 @@ public abstract class CompositeNode<T> extends Node<T>
 
     public List<Node<T>> getDynamicChildren(ExecutionContext<T> context)
     {
-        List<Node<T>> children = (List<Node<T>>)context.getNodeContext(this).getValue(KEY_CHILDREN);
+        List<Node<T>> children = (List<Node<T>>)getNodeContext(context).getValue(KEY_CHILDREN);
         return children!=null? children: Collections.EMPTY_LIST;
     }
 

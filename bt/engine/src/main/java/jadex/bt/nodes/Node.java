@@ -390,6 +390,11 @@ public abstract class Node<T> implements IDecorator<T>
     	if(execontext==null)
     		throw new NullPointerException();
     	NodeContext<T> ret = execontext.getNodeContext(this);
+
+		if(ret==null)
+		{
+			ret = execontext.createNodeContext(this);
+		}
     	if(ret==null)
 			throw new NullPointerException("No node context for node: "+this);
     	/*{
@@ -406,13 +411,13 @@ public abstract class Node<T> implements IDecorator<T>
     	return new NodeContext<T>();
     }
     
-    public NodeContext<T> copyNodeContext(NodeContext<T> src)
+    /*public NodeContext<T> copyNodeContext(NodeContext<T> src)
     {
 		NodeContext<T> ret = createNodeContext();
 		ret.setCallFuture(src.getCallFuture());
 		ret.setNodeid(src.getNodeid());
 		return ret;
-    }
+    }*/
     
     /*public void abort(AbortMode abortmode, ExecutionContext<T> execontext)
     {
