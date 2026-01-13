@@ -44,8 +44,18 @@ public interface IComponentHandle
 	/**
 	 *  Schedule a step to be run on the component.
 	 *  @param step	A step that is executed via the {@link Runnable#run()} method.
+	 *  @return	A future indicating that the step was executed.
 	 */
-	public default void scheduleStep(Runnable step)
+	public default IFuture<Void> scheduleStep(Runnable step)
+	{
+		return scheduleStep(() -> { step.run(); return null; } );
+	}
+	
+	/**
+	 *  Schedule a step to be run on the component.
+	 *  @param step	A step that is executed via the {@link Runnable#run()} method.
+	 */
+	public default void scheduleStep_old(Runnable step)
 	{
 		throw new UnsupportedOperationException("Missing execution feature");
 	}
@@ -61,11 +71,21 @@ public interface IComponentHandle
 	}
 	
 	/**
+	 *  Schedule a step to be run on the component.
+	 *  @param step	A step that is executed via the {@link IThrowingConsumer#accept()} method.
+	 *  @return	A future indicating that the step was executed.
+	 */
+	public default IFuture<Void> scheduleStep(IThrowingConsumer<IComponent> step)
+	{
+		return scheduleStep(comp -> { step.accept(comp); return null; } );
+	}
+	
+	/**
 	 *  Schedule a step that provides a result.
 	 *  @param step	A step that is executed via the {@link IThrowingConsumer#accept()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public default void scheduleStep(IThrowingConsumer<IComponent> step)
+	public default void scheduleStep_old(IThrowingConsumer<IComponent> step)
 	{
 		throw new UnsupportedOperationException("Missing execution feature");
 	}

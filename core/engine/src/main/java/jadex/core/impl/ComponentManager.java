@@ -1197,7 +1197,8 @@ public class ComponentManager implements IComponentManager
 						fmylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
 				};
 
-				getGlobalRunner().getComponentHandle().scheduleStep(notify);
+				getGlobalRunner().getComponentHandle().scheduleStep(notify)
+					.catchEx(ex -> ((Component) getGlobalRunner()).handleException(ex));
 			}
 			else
 			{
