@@ -197,7 +197,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 			        	//System.out.println("scheduled on agent: "+getId());
 			        	else if(method.getReturnType().equals(void.class))
 			        	{
-			        		scheduleStep((Runnable)() -> invokeMethod(comp, pojo, myargs, method, next));
+			        		scheduleStep_old((Runnable)() -> invokeMethod(comp, pojo, myargs, method, next));
 			        	}
 			        	else 
 			        	{
@@ -260,7 +260,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public void scheduleStep(Runnable step) 
+	public void scheduleStep_old(Runnable step) 
 	{
 		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}
@@ -272,7 +272,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public void scheduleStep(IThrowingConsumer<IComponent> step)
+	public void scheduleStep_old(IThrowingConsumer<IComponent> step)
 	{
 		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}

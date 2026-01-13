@@ -105,7 +105,7 @@ public abstract class AbstractExecutionFeatureTest
 		// Test executing a simple fire-and-forget step (Runnable implementation).
 		Future<Boolean>	result	= new Future<>();
 		Runnable	step	= () -> result.setResult(true);
-		comp.scheduleStep(step);
+		comp.scheduleStep(step).get(TIMEOUT);
 		assertTrue(result.get(TIMEOUT), "Wrong step result.");
 	}
 	
@@ -150,7 +150,7 @@ public abstract class AbstractExecutionFeatureTest
 		});
 		// Test that blocked step can be woken up by another step,
 		// i.e., that a new thread was used to wake up the blocked thread.
-		comp.scheduleStep(() -> blocker.setResult(true));
+		comp.scheduleStep(() -> blocker.setResult(true)).get(TIMEOUT);
 		assertTrue(result.get(TIMEOUT), "Wrong step result.");
 	}
 	
@@ -162,7 +162,7 @@ public abstract class AbstractExecutionFeatureTest
 		Future<Boolean>	blocker	= new Future<>();
 		IFuture<Boolean>	result1	= comp.scheduleStep(() -> blocker.get());
 		IFuture<Boolean>	result2	= comp.scheduleStep(() -> blocker.get());
-		comp.scheduleStep(() -> blocker.setResult(true));
+		comp.scheduleStep(() -> blocker.setResult(true)).get(TIMEOUT);
 		assertTrue(result1.get(TIMEOUT), "Wrong step result.");
 		assertTrue(result2.get(TIMEOUT), "Wrong step result.");
 	}

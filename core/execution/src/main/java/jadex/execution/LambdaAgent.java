@@ -66,8 +66,16 @@ public class LambdaAgent //extends Component
 		ret.then(handle -> {
 			handle.scheduleStep(comp ->
 			{
-				addResultHandler(comp);
-				body.run();
+				try
+				{
+					addResultHandler(comp);
+					body.run();
+				}
+				catch(Exception e)
+				{
+					// Force exception handling inside component and not in scheduleStep() return future.
+					((Component)comp).handleException(e);
+				}
 			});
 		});
 		return ret;
@@ -83,9 +91,17 @@ public class LambdaAgent //extends Component
 		ret.then(handle -> {
 			handle.scheduleStep(comp ->
 			{
-				addResultHandler(comp);
-				Object	result	= body.call();
-				setResult(comp, result);
+				try
+				{
+					addResultHandler(comp);
+					Object	result	= body.call();
+					setResult(comp, result);
+				}
+				catch(Exception e)
+				{
+					// Force exception handling inside component and not in scheduleStep() return future.
+					((Component)comp).handleException(e);
+				}
 			});
 		});
 		return ret;
@@ -101,9 +117,17 @@ public class LambdaAgent //extends Component
 		ret.then(handle -> {
 			handle.scheduleStep(comp ->
 			{
-				addResultHandler(comp);
-				Object	result	= body.apply(comp);
-				setResult(comp, result);
+				try
+				{
+					addResultHandler(comp);
+					Object	result	= body.apply(comp);
+					setResult(comp, result);
+				}
+				catch(Exception e)
+				{
+					// Force exception handling inside component and not in scheduleStep() return future.
+					((Component)comp).handleException(e);
+				}
 			});
 		});
 		return ret;
@@ -119,8 +143,16 @@ public class LambdaAgent //extends Component
 		ret.then(handle -> {
 			handle.scheduleStep(comp ->
 			{
-				addResultHandler(comp);
-				body.accept(comp);
+				try
+				{
+					addResultHandler(comp);
+					body.accept(comp);
+				}
+				catch(Exception e)
+				{
+					// Force exception handling inside component and not in scheduleStep() return future.
+					((Component)comp).handleException(e);
+				}
 			});
 		});
 		return ret;
