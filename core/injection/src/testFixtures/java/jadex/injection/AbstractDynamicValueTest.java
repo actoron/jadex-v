@@ -160,7 +160,7 @@ public abstract class AbstractDynamicValueTest
 		{
 			addEventListener(fut, Type.CHANGED, "val");
 			pojo.getVal().set(2);
-		});
+		}).get(TIMEOUT);
 		
 		checkEventInfo(fut, 1, 2, null);
 	}
@@ -176,7 +176,7 @@ public abstract class AbstractDynamicValueTest
 		{
 			addEventListener(fut, Type.CHANGED, "bean");
 			pojo.getBean().setValue(2);
-		});
+		}).get(TIMEOUT);
 		
 		checkEventInfo(fut, null, pojo.getBean(), "value");
 	}
@@ -300,7 +300,7 @@ public abstract class AbstractDynamicValueTest
 			pojo.getList().add(1, "2");
 			pojo.getList().remove(1);
 
-		});
+		}).get(TIMEOUT);
 		
 		checkEventInfo(changedfut, "2", "3", 1);
 		checkEventInfo(addedfut, null, "2", 1);
@@ -348,7 +348,7 @@ public abstract class AbstractDynamicValueTest
 		{
 			addEventListener(changedfut3, Type.CHANGED, "listbean");
 			pojo.getListBean().get(1).setValue(4);
-		});
+		}).get(TIMEOUT);
 		checkEventInfo(changedfut3, null, Arrays.asList(new Bean(1), new Bean(4)), null);
 	}
 
@@ -393,7 +393,7 @@ public abstract class AbstractDynamicValueTest
 		{
 			addEventListener(changedfut3, Type.CHANGED, "vallistbean");
 			pojo.getValListBean().get().get(1).setValue(4);
-		});
+		}).get(TIMEOUT);
 		checkEventInfo(changedfut3, null, Arrays.asList(new Bean(1), new Bean(4)), null);
 		
 		// Check turning off bean property change events
@@ -414,7 +414,7 @@ public abstract class AbstractDynamicValueTest
 			addEventListener(changedfut5, Type.CHANGED, "vallistbean");
 			pojo.getValListBean().setObservationMode(ObservationMode.ON_ALL_CHANGES);
 			pojo.getValListBean().get().get(1).setValue(6);
-		});
+		}).get(TIMEOUT);
 		checkEventInfo(changedfut5, null, Arrays.asList(new Bean(1), new Bean(6)), null);
 	}
 
@@ -437,7 +437,7 @@ public abstract class AbstractDynamicValueTest
 			pojo.getValList().get().add(1, "2");
 			pojo.getValList().get().remove(1);
 
-		});
+		}).get(TIMEOUT);
 		checkEventInfo(changedfut, "2", "3", 1);
 		checkEventInfo(addedfut, null, "2", 1);
 		checkEventInfo(removedfut, null, "2", 1);
@@ -484,7 +484,7 @@ public abstract class AbstractDynamicValueTest
 			pojo.getSet().add("2");
 			pojo.getSet().remove("2");
 
-		});
+		}).get(TIMEOUT);
 		
 		checkEventInfo(addedfut, null, "2", null);
 		checkEventInfo(removedfut, null, "2", null);
@@ -508,7 +508,7 @@ public abstract class AbstractDynamicValueTest
 			pojo.getMap().put("3", "three");
 			pojo.getMap().remove("2");
 
-		});
+		}).get(TIMEOUT);
 		
 		checkEventInfo(changedfut, "wto", "two", "2");
 		checkEventInfo(addedfut, null, "three", "3");
@@ -530,7 +530,7 @@ public abstract class AbstractDynamicValueTest
 			firstfut.setResult(pojo.getDynamic().get());
 			pojo.getVal().set(2);
 			secondfut.setResult(pojo.getDynamic().get());
-		});
+		}).get(TIMEOUT);
 		
 		assertEquals(2, firstfut.get(TIMEOUT));
 		assertEquals(3, secondfut.get(TIMEOUT));
@@ -556,7 +556,7 @@ public abstract class AbstractDynamicValueTest
 			secondfut.setResult(pojo.getUpdate().get());
 			IExecutionFeature.get().waitForDelay(1000).get();
 			thirdfut.setResult(pojo.getUpdate().get());
-		});
+		}).get(TIMEOUT);
 		
 		assertNotNull(firstfut.get(TIMEOUT));
 		assertEquals(firstfut.get(TIMEOUT), secondfut.get(TIMEOUT));
@@ -572,7 +572,7 @@ public abstract class AbstractDynamicValueTest
 			fourthfut.setResult(pojo.getUpdate().get());
 			IExecutionFeature.get().waitForDelay(1500).get();
 			fifthfut.setResult(pojo.getUpdate().get());
-		});
+		}).get(TIMEOUT);
 		assertEquals(fourthfut.get(TIMEOUT), fifthfut.get(TIMEOUT));
 	}
 	

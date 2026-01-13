@@ -37,9 +37,9 @@ public class DoubleAnnotationTest
 		Future<String>	value	= new Future<>();
 		handle.scheduleStep((IThrowingConsumer<IComponent>)	comp ->
 			comp.getFeature(IInjectionFeature.class).addListener("val", event ->
-				value.setResult((String) event.value())));
+				value.setResult((String) event.value()))).get(TIMEOUT);
 		
-		handle.scheduleStep((IThrowingConsumer<IComponent>)	comp -> val.set("test"));
+		handle.scheduleStep((IThrowingConsumer<IComponent>)	comp -> val.set("test")).get(TIMEOUT);
 		
 		assertEquals("test", value.get(TIMEOUT));
 		assertEquals("test", result.get(TIMEOUT));
