@@ -9,8 +9,8 @@ import jadex.future.SubscriptionIntermediateFuture;
 
 public class ResultProvider implements IResultProvider
 {
-	protected List<SubscriptionIntermediateFuture<ChangeEvent>> resultsubscribers = new ArrayList<>();
-	protected Map<String, Object> results = new LinkedHashMap<String, Object>();
+	protected List<SubscriptionIntermediateFuture<ChangeEvent>> resultsubscribers = new ArrayList<>(1);
+	protected Map<String, Object> results = new LinkedHashMap<String, Object>(2);
 	
 	public Map<String, Object> getResultMap()
 	{
