@@ -1,6 +1,7 @@
 package jadex.injection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -13,11 +14,11 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.ChangeEvent;
-import jadex.core.ChangeEvent.Type;
 import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -30,7 +31,7 @@ import jadex.injection.annotation.ProvideResult;
  */
 public class ResultTest
 {
-	public static final long	TIMEOUT	= -1;
+	public static final long	TIMEOUT	= 10000;
 	
 	/**
 	 *  Test manually adding result.
@@ -188,6 +189,8 @@ public class ResultTest
 		
 		res	= sub.getNextIntermediateResult(TIMEOUT);
 		assertEquals(new ChangeEvent(Type.CHANGED, "end", "endvalue", null, null), res);
+		
+		assertFalse(sub.hasNextIntermediateResult(TIMEOUT, true));
 	}
 	
 	/**

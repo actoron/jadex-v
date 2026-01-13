@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import jadex.common.SReflect;
 import jadex.core.Application;
@@ -64,7 +65,19 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	@Override
 	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent component)
 	{
-		return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).subscribeToResults();
+		// Not called on component thread -> schedule as step.
+		@SuppressWarnings("rawtypes")
+		Callable	call	= new Callable<ISubscriptionIntermediateFuture<ChangeEvent>>()
+		{
+			public ISubscriptionIntermediateFuture<ChangeEvent>	call()
+			{
+				return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).subscribeToResults();
+			}
+		};
+		@SuppressWarnings("unchecked")
+		ISubscriptionIntermediateFuture<ChangeEvent>	ret	= (ISubscriptionIntermediateFuture<ChangeEvent>)
+			component.getComponentHandle().scheduleAsyncStep(call);
+		return ret;
 	}
 	
 	@Override

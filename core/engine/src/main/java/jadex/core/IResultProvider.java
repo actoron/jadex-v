@@ -11,8 +11,39 @@ import jadex.future.SubscriptionIntermediateFuture;
 
 public interface IResultProvider 
 {
+	/** Simple state holder for finished handling. */
+	public static class	Finished {boolean finished; Exception exception;}
+	
+	/** Get the finished state holder. */
+	public abstract Finished getFinishedState();
+	
 	public abstract Map<String, Object> getResultMap();
 	public abstract List<SubscriptionIntermediateFuture<ChangeEvent>> getResultSubscribers();
+	
+	/**
+	 *  Terminate all active subscriptions.
+	 */
+	public default void	setFinished(Exception e)
+	{
+		List<SubscriptionIntermediateFuture<ChangeEvent>>	subs;
+		synchronized(this)
+		{
+			getFinishedState().finished	= true;
+			getFinishedState().exception	= e;
+			subs	= new ArrayList<>(getResultSubscribers());
+		}
+		for(SubscriptionIntermediateFuture<ChangeEvent> sub: subs)
+		{
+			if(e==null)
+			{
+				sub.setFinished();
+			}
+			else
+			{
+				sub.setException(e);
+			}			
+		}
+	}
 	
 	public default void	setResult(String name, Object value)
 	{
@@ -47,21 +78,26 @@ public interface IResultProvider
 	{
 		SubscriptionIntermediateFuture<ChangeEvent> ret;
 		Map<String, Object> res = null;
+		boolean	finished;
 		
 		synchronized(this)
 		{
 			res = new HashMap<String, Object>(getResultMap());
 			ret = new SubscriptionIntermediateFuture<>();
+			finished	= getFinishedState().finished;
 			
-			getResultSubscribers().add(ret);
-			
-			ret.setTerminationCommand(ex ->
+			if(!finished)
 			{
-				synchronized(this)
+				getResultSubscribers().add(ret);
+				
+				ret.setTerminationCommand(ex ->
 				{
-					getResultSubscribers().remove(ret);
-				}
-			});
+					synchronized(this)
+					{
+						getResultSubscribers().remove(ret);
+					}
+				});
+			}
 		}
 		
 		if(res!=null)
@@ -71,6 +107,17 @@ public interface IResultProvider
 				if(checkInitialNotify(e.getKey(), e.getValue()))
 					ret.addIntermediateResult(new ChangeEvent(Type.INITIAL,	e.getKey(), e.getValue(), null, null));
 			});
+		}
+		if(finished)
+		{
+			if(getFinishedState().exception==null)
+			{
+				ret.setFinished();
+			}
+			else
+			{
+				ret.setException(getFinishedState().exception);
+			}
 		}
 		
 		return ret;

@@ -283,6 +283,22 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			results.put(id, provider);
 		}
 	}
+	
+	/**
+	 *  Terminate all result subscriptions.
+	 */
+	public static void	finishResults(ComponentIdentifier id, Exception e)
+	{
+		IResultProvider	rp;
+		synchronized(results)
+		{
+			rp = results.get(id);
+		}
+		if(rp!=null)
+		{
+			rp.setFinished(e);
+		}
+	}
 
 	/**
 	 *  Helper to skip NoCopy objects while cloning. 

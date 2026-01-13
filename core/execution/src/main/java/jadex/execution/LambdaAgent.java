@@ -62,21 +62,20 @@ public class LambdaAgent //extends Component
 	 */
 	public static IFuture<IComponentHandle>	create(Runnable body, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle> ret = Component.createComponent(new Component(body, cid, app));
+		Component	comp	= new Component(body, cid, app);
+		IFuture<IComponentHandle> ret = Component.createComponent(comp);
 		ret.then(handle -> {
-			handle.scheduleStep(comp ->
+			// No handle.scheduleStep(), because ret.setResult() is called on compoennt thread.
+			try
 			{
-				try
-				{
-					addResultHandler(comp);
-					body.run();
-				}
-				catch(Exception e)
-				{
-					// Force exception handling inside component and not in scheduleStep() return future.
-					((Component)comp).handleException(e);
-				}
-			});
+				addResultHandler(comp);
+				body.run();
+			}
+			catch(Exception e)
+			{
+				// Force exception handling inside component and not in scheduleStep() return future.
+				((Component)comp).handleException(e);
+			}
 		});
 		return ret;
 	}
@@ -87,22 +86,21 @@ public class LambdaAgent //extends Component
 	 */
 	public static IFuture<IComponentHandle>	create(Callable<?> body, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle> ret = Component.createComponent(new Component(body, cid, app));
+		Component	comp	= new Component(body, cid, app);
+		IFuture<IComponentHandle> ret = Component.createComponent(comp);
 		ret.then(handle -> {
-			handle.scheduleStep(comp ->
+			// No handle.scheduleStep(), because ret.setResult() is called on compoennt thread.
+			try
 			{
-				try
-				{
-					addResultHandler(comp);
-					Object	result	= body.call();
-					setResult(comp, result);
-				}
-				catch(Exception e)
-				{
-					// Force exception handling inside component and not in scheduleStep() return future.
-					((Component)comp).handleException(e);
-				}
-			});
+				addResultHandler(comp);
+				Object	result	= body.call();
+				setResult(comp, result);
+			}
+			catch(Exception e)
+			{
+				// Force exception handling inside component and not in scheduleStep() return future.
+				((Component)comp).handleException(e);
+			}
 		});
 		return ret;
 	}
@@ -113,22 +111,21 @@ public class LambdaAgent //extends Component
 	 */
 	public static IFuture<IComponentHandle>	create(IThrowingFunction<IComponent, ?> body, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle> ret = Component.createComponent(new Component(body, cid, app));
+		Component	comp	= new Component(body, cid, app);
+		IFuture<IComponentHandle> ret = Component.createComponent(comp);
 		ret.then(handle -> {
-			handle.scheduleStep(comp ->
+			// No handle.scheduleStep(), because ret.setResult() is called on compoennt thread.
+			try
 			{
-				try
-				{
-					addResultHandler(comp);
-					Object	result	= body.apply(comp);
-					setResult(comp, result);
-				}
-				catch(Exception e)
-				{
-					// Force exception handling inside component and not in scheduleStep() return future.
-					((Component)comp).handleException(e);
-				}
-			});
+				addResultHandler(comp);
+				Object	result	= body.apply(comp);
+				setResult(comp, result);
+			}
+			catch(Exception e)
+			{
+				// Force exception handling inside component and not in scheduleStep() return future.
+				((Component)comp).handleException(e);
+			}
 		});
 		return ret;
 	}
@@ -139,21 +136,20 @@ public class LambdaAgent //extends Component
 	 */
 	public static <T> IFuture<IComponentHandle> create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle> ret = Component.createComponent(new Component(body, cid, app));
+		Component	comp	= new Component(body, cid, app);
+		IFuture<IComponentHandle> ret = Component.createComponent(comp);
 		ret.then(handle -> {
-			handle.scheduleStep(comp ->
+			// No handle.scheduleStep(), because ret.setResult() is called on compoennt thread.
+			try
 			{
-				try
-				{
-					addResultHandler(comp);
-					body.accept(comp);
-				}
-				catch(Exception e)
-				{
-					// Force exception handling inside component and not in scheduleStep() return future.
-					((Component)comp).handleException(e);
-				}
-			});
+				addResultHandler(comp);
+				body.accept(comp);
+			}
+			catch(Exception e)
+			{
+				// Force exception handling inside component and not in scheduleStep() return future.
+				((Component)comp).handleException(e);
+			}
 		});
 		return ret;
 	}

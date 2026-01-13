@@ -140,6 +140,10 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		
 		endPojo(model, Collections.singletonList(self.getPojo()), null);
 		
+		if(rp!=null)
+		{
+			rp.setFinished(self.getException());
+		}
 		// Notify on end -> conflict with terminate() in IComponentFactory.run(Object)
 //		// Inform result subscribers, if any
 //		if(rp!=null)

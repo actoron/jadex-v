@@ -931,6 +931,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 		}
 		
+		// Terminate result subscriptions.
+		ExecutionFeatureProvider.finishResults(self.getId(), self.getException());
+		
 		//System.out.println("terminate end");
 	}
 	

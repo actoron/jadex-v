@@ -8,19 +8,18 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import jadex.common.SUtil;
 import jadex.core.Application;
+import jadex.core.ChangeEvent;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
 import jadex.core.IResultProvider;
-import jadex.core.ChangeEvent;
 import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.Future;
@@ -637,38 +636,39 @@ public class Component implements IComponent
 	 */
 	public static ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
 	{
-		if(isExecutable())
-		{
-			SubscriptionIntermediateFuture<ChangeEvent>	ret	= new SubscriptionIntermediateFuture<>();
-			
-			@SuppressWarnings("rawtypes")
-			Callable	call	= new Callable<ISubscriptionIntermediateFuture<ChangeEvent>>()
-			{
-				public ISubscriptionIntermediateFuture<ChangeEvent>	call()
-				{
-					return doSubscribeToResults(comp);
-				}
-			};
-
-			@SuppressWarnings("unchecked")
-			ISubscriptionIntermediateFuture<ChangeEvent>	fut	= (ISubscriptionIntermediateFuture<ChangeEvent>)
-				comp.getComponentHandle().scheduleAsyncStep(call);
-			fut.next(res -> ret.addIntermediateResult(res))
-				.catchEx(e ->
-				{
-					if(e instanceof ComponentTerminatedException)
-					{
-						// -> ignore (no more results available)
-					}
-					else
-					{
-						ret.setException(e);
-					}
-				});
-			
-			return ret;
-		}
-		else
+		// ResultProvider is thread safe -> no need to schedule step
+//		if(isExecutable())
+//		{
+//			SubscriptionIntermediateFuture<ChangeEvent>	ret	= new SubscriptionIntermediateFuture<>();
+//			
+//			@SuppressWarnings("rawtypes")
+//			Callable	call	= new Callable<ISubscriptionIntermediateFuture<ChangeEvent>>()
+//			{
+//				public ISubscriptionIntermediateFuture<ChangeEvent>	call()
+//				{
+//					return doSubscribeToResults(comp);
+//				}
+//			};
+//
+//			@SuppressWarnings("unchecked")
+//			ISubscriptionIntermediateFuture<ChangeEvent>	fut	= (ISubscriptionIntermediateFuture<ChangeEvent>)
+//				comp.getComponentHandle().scheduleAsyncStep(call);
+//			fut.next(res -> ret.addIntermediateResult(res))
+//				.catchEx(e ->
+//				{
+//					if(e instanceof ComponentTerminatedException)
+//					{
+//						// -> ignore (no more results available)
+//					}
+//					else
+//					{
+//						ret.setException(e);
+//					}
+//				});
+//			
+//			return ret;
+//		}
+//		else
 		{
 			return Component.doSubscribeToResults(comp);
 		}
