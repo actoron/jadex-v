@@ -173,7 +173,7 @@ public class SComponentFeatureProvider
 						}
 						else if(!prov1.replacesFeatureProvider(prov2))
 						{
-							throw new RuntimeException("Conflicting creators with priority "+prio+": "+ret+", "+creator);
+							throw new UnsupportedOperationException("Conflicting creators with priority "+prio+": "+ret+", "+creator);
 						}
 					}
 					else if(newprio>prio)
