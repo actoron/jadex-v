@@ -6,11 +6,9 @@ import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
-import jadex.execution.impl.ExecutionFeatureProvider;
 import jadex.execution.impl.FastLambda;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -57,101 +55,39 @@ public class LambdaAgent //extends Component
 	}
 	
 	/**
-	 *  Create a fire-and-forget component.
+	 *  Create a component with a body.
 	 *  @param body	The code to be executed in the new component.
 	 */
 	public static IFuture<IComponentHandle>	create(Runnable body, ComponentIdentifier cid, Application app)
 	{
-		Component	comp	= new Component(body, cid, app);
-		IFuture<IComponentHandle> ret = Component.createComponent(comp);
-		ret.then(handle -> {
-			// No handle.scheduleStep(), because ret.setResult() is called on compoennt thread.
-			try
-			{
-				addResultHandler(comp);
-				body.run();
-			}
-			catch(Exception e)
-			{
-				// Force exception handling inside component and not in scheduleStep() return future.
-				((Component)comp).handleException(e);
-			}
-		});
-		return ret;
+		return Component.createComponent(new Component(body, cid, app));
 	}
 	
 	/**
-	 *  Create a component and receive a result, when the body finishes.
+	 *  Create a component with a body.
 	 *  @param body	The code to be executed in the new component.
 	 */
 	public static IFuture<IComponentHandle>	create(Callable<?> body, ComponentIdentifier cid, Application app)
 	{
-		Component	comp	= new Component(body, cid, app);
-		IFuture<IComponentHandle> ret = Component.createComponent(comp);
-		ret.then(handle -> {
-			// No handle.scheduleStep(), because ret.setResult() is called on compoennt thread.
-			try
-			{
-				addResultHandler(comp);
-				Object	result	= body.call();
-				setResult(comp, result);
-			}
-			catch(Exception e)
-			{
-				// Force exception handling inside component and not in scheduleStep() return future.
-				((Component)comp).handleException(e);
-			}
-		});
-		return ret;
+		return Component.createComponent(new Component(body, cid, app));
 	}
 	
 	/**
-	 *  Create a component and receive a result, when the body finishes.
+	 *  Create a component with a body.
 	 *  @param body	The code to be executed in the new component.
 	 */
 	public static IFuture<IComponentHandle>	create(IThrowingFunction<IComponent, ?> body, ComponentIdentifier cid, Application app)
 	{
-		Component	comp	= new Component(body, cid, app);
-		IFuture<IComponentHandle> ret = Component.createComponent(comp);
-		ret.then(handle -> {
-			// No handle.scheduleStep(), because ret.setResult() is called on compoennt thread.
-			try
-			{
-				addResultHandler(comp);
-				Object	result	= body.apply(comp);
-				setResult(comp, result);
-			}
-			catch(Exception e)
-			{
-				// Force exception handling inside component and not in scheduleStep() return future.
-				((Component)comp).handleException(e);
-			}
-		});
-		return ret;
+		return Component.createComponent(new Component(body, cid, app));
 	}
 	
 	/**
-	 *  Create a component and receive a result, when the body finishes.
+	 *  Create a component with a body.
 	 *  @param body	The code to be executed in the new component.
 	 */
 	public static <T> IFuture<IComponentHandle> create(IThrowingConsumer<IComponent> body, ComponentIdentifier cid, Application app)
 	{
-		Component	comp	= new Component(body, cid, app);
-		IFuture<IComponentHandle> ret = Component.createComponent(comp);
-		ret.then(handle -> {
-			// No handle.scheduleStep(), because ret.setResult() is called on compoennt thread.
-			try
-			{
-				addResultHandler(comp);
-				body.accept(comp);
-			}
-			catch(Exception e)
-			{
-				// Force exception handling inside component and not in scheduleStep() return future.
-				((Component)comp).handleException(e);
-			}
-		});
-		return ret;
+		return Component.createComponent(new Component(body, cid, app));
 	}
 	
 	//-------- Fast Lambda methods --------
@@ -202,23 +138,5 @@ public class LambdaAgent //extends Component
 		Future<Void>	ret	= new Future<>();
 		Component.createComponent(new FastLambda<>(body, cid, app, ret));
 		return ret;
-	}
-	
-	//-------- result handling --------
-
-	private static <T> void addResultHandler(IComponent comp)
-	{
-		Object	pojo	= comp.getPojo();
-		if(pojo instanceof IResultProvider)
-		{
-			ExecutionFeatureProvider.addResultHandler(comp.getId(), (IResultProvider)pojo);
-		}
-	}
-	
-	private static <T> void setResult(IComponent comp, Object result)	
-	{
-		Object	pojo	= comp.getPojo();
-		ExecutionFeatureProvider.setResult(comp.getId(), "result",
-			ExecutionFeatureProvider.copyVal(result, ExecutionFeatureProvider.getAnnos(pojo.getClass())));
 	}
 }

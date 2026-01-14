@@ -31,6 +31,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
+import jadex.core.impl.SComponentFeatureProvider;
 import jadex.core.impl.StepAborted;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
@@ -160,6 +161,74 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					// Extra init so component doesn't get added when just created as object
 					component.init();
 					
+					// if lambda agent -> schedule body step before making the component handle available
+					Object	pojo		= component.getPojo();
+					if(pojo!=null && SComponentFeatureProvider.getCreator(pojo.getClass())==this)
+					{
+						if(pojo instanceof IResultProvider)
+						{
+							addResultHandler(component.getId(), (IResultProvider)pojo);
+						}
+						
+						Runnable	step;
+						if(pojo instanceof Callable)
+						{
+							step	= () ->
+							{
+								try
+								{
+									Object	result	= ((Callable<?>)pojo).call();
+									setResult(component, result);
+								}
+								catch(Exception e)
+								{
+									// Force exception handling inside component and not in scheduleStep() return future.
+									component.handleException(e);
+								}
+							};
+						}
+						else if(pojo instanceof IThrowingFunction)
+						{
+							step	= () ->
+							{
+								try
+								{
+									@SuppressWarnings("unchecked")
+									IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
+									Object result	= itf.apply(component);							
+									setResult(component, result);
+								}
+								catch(Exception e)
+								{
+									// Force exception handling inside component and not in scheduleStep() return future.
+									component.handleException(e);
+								}
+							};
+						}
+						else if(pojo instanceof Runnable)
+						{
+							step		= (Runnable) pojo;					
+						}
+						else //if(pojo instanceof IThrowingConsumer)
+						{
+							step	= () ->
+							{
+								try
+								{
+									@SuppressWarnings("unchecked")
+									IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+									itc.accept(component);							
+								}
+								catch(Exception e)
+								{
+									// Force exception handling inside component and not in scheduleStep() return future.
+									component.handleException(e);
+								}
+							};
+						}
+						component.getFeature(IExecutionFeature.class).scheduleStep(step);
+					}
+					
 					// Make component available after init is complete
 					ret.setResult(component.getComponentHandle());
 				}
@@ -257,7 +326,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		return rp.subscribeToResults();
 	}
 
-	public static void	setResult(ComponentIdentifier id, String name, Object value)
+	private static void	setResult(ComponentIdentifier id, String name, Object value)
 	{
 		IResultProvider	rp;
 		synchronized(results)
@@ -272,7 +341,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		rp.setResult(name, value);
 	}
 
-	public static void addResultHandler(ComponentIdentifier id, IResultProvider provider)
+	private static void addResultHandler(ComponentIdentifier id, IResultProvider provider)
 	{
 		synchronized(results)
 		{
@@ -282,6 +351,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			}
 			results.put(id, provider);
 		}
+	}
+
+	private static <T> void setResult(IComponent comp, Object result)	
+	{
+		Object	pojo	= comp.getPojo();
+		ExecutionFeatureProvider.setResult(comp.getId(), "result",
+			ExecutionFeatureProvider.copyVal(result, ExecutionFeatureProvider.getAnnos(pojo.getClass())));
 	}
 	
 	/**
