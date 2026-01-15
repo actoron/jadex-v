@@ -162,6 +162,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					component.init();
 					
 					// if lambda agent -> schedule body step before making the component handle available
+					// cf. ResultTest.testSubscriptionAfterTerminate()
 					Object	pojo		= component.getPojo();
 					if(pojo!=null && SComponentFeatureProvider.getCreator(pojo.getClass())==this)
 					{
