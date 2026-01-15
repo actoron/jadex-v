@@ -80,8 +80,6 @@ public interface IResultProvider
 		{
 			subs.forEach(sub -> 
 			{
-//				System.out.println("sub: "+sub+", "+event);
-				//if(checkNotify(name, value))
 				sub.addIntermediateResult(event);
 			});
 		}
