@@ -48,11 +48,24 @@ public interface IResultProvider
 	public default void	setResult(String name, Object value)
 	{
 		Object	old;
+		List<SubscriptionIntermediateFuture<ChangeEvent>> subs = null;
 		synchronized(this)
 		{
 			old	= getResultMap().put(name, value);
+			if(getResultSubscribers()!=null)
+			{
+				subs = new ArrayList<SubscriptionIntermediateFuture<ChangeEvent>>(getResultSubscribers());
+			}
 		}
-		notifyResult(new ChangeEvent(Type.CHANGED, name, value, old, null));
+		
+		if(subs!=null)
+		{
+			ChangeEvent	event	= new ChangeEvent(Type.CHANGED, name, value, old, null);
+			subs.forEach(sub -> 
+			{
+				sub.addIntermediateResult(event);
+			});
+		}
 	}
 	
 	public default void notifyResult(ChangeEvent event)
@@ -67,7 +80,7 @@ public interface IResultProvider
 		{
 			subs.forEach(sub -> 
 			{
-				//System.out.println("sub: "+name+" "+value);
+//				System.out.println("sub: "+sub+", "+event);
 				//if(checkNotify(name, value))
 				sub.addIntermediateResult(event);
 			});
@@ -105,7 +118,9 @@ public interface IResultProvider
 			res.entrySet().stream().forEach(e -> 
 			{
 				if(checkInitialNotify(e.getKey(), e.getValue()))
+				{
 					ret.addIntermediateResult(new ChangeEvent(Type.INITIAL,	e.getKey(), e.getValue(), null, null));
+				}
 			});
 		}
 		if(finished)
