@@ -165,6 +165,7 @@ includeBuild('serialization/json') {}
 
 includeBuild('core/engine') {}
 includeBuild('core/featuretest') {}
+includeBuild('core/result') {}
 includeBuild('core/execution') {}
 includeBuild('core/simulation') {}
 includeBuild('core/injection'){name='injection'}

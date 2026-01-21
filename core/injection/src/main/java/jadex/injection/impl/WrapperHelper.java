@@ -10,6 +10,7 @@ import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.injection.IInjectionFeature;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 /**
  *  Transform changes to change events.
@@ -19,8 +20,8 @@ public class WrapperHelper<T>
 	/** The component.*/
 	IComponent	comp;
 	
-	/** The fully qualified name of the dynamic value. */
-	String name;
+	/** The model element of the dynamic value. */
+	MDynVal mdynval;
 	
 	/** The current observation mode. */
 	ObservationMode	mode;
@@ -38,14 +39,14 @@ public class WrapperHelper<T>
 	/**
 	 *  Create a wrapper.
 	 *  @param comp The component.
-	 *  @param name The fully qualified name of the dynamic value.
+	 *  @param mdynval The fully qualified name of the dynamic value.
 	 *  @param mode The observation mode.
 	 *  @param delegate The observed map.
 	 */
-	public WrapperHelper(IComponent comp, String name, ObservationMode mode, Map<?, T> delegate)
+	public WrapperHelper(IComponent comp, MDynVal mdynval, ObservationMode mode, Map<?, T> delegate)
 	{
 		// Use the map values as entries to observe as beans.
-		this(comp, name, mode, delegate.values());
+		this(comp, mdynval, mode, delegate.values());
 		// Use the map as source for events.
 		this.source	= delegate;
 	}
@@ -53,14 +54,14 @@ public class WrapperHelper<T>
 	/**
 	 *  Create a wrapper.
 	 *  @param comp The component.
-	 *  @param name The fully qualified name of the dynamic value.
+	 *  @param mdynval The model element of the dynamic value.
 	 *  @param mode The observation mode.
 	 *  @param delegate The observed collection.
 	 */
-	public WrapperHelper(IComponent comp, String name, ObservationMode mode, Collection<T> delegate)
+	public WrapperHelper(IComponent comp, MDynVal mdynval, ObservationMode mode, Collection<T> delegate)
 	{
 		this.comp	= comp;
-		this.name	= name;
+		this.mdynval	= mdynval;
 		this.mode	= mode;
 		this.values	= delegate;
 		this.source	= delegate;
@@ -74,7 +75,7 @@ public class WrapperHelper<T>
 			for(T entry: values)
 			{
 				// Register listener, if entry is bean.
-				listener	= SPropertyChange.updateListener(entry, null, listener, comp, name, source);
+				listener	= SPropertyChange.updateListener(entry, null, listener, comp, mdynval, source);
 			}
 		}
 		
@@ -84,7 +85,7 @@ public class WrapperHelper<T>
 			for(T entry: values)
 			{
 				// Unregister listener, if entry is bean.
-				listener	= SPropertyChange.updateListener(null, entry, listener, comp, name, source);
+				listener	= SPropertyChange.updateListener(null, entry, listener, comp, mdynval, source);
 			}
 		}
 		
@@ -100,13 +101,13 @@ public class WrapperHelper<T>
 		if(mode==ObservationMode.ON_ALL_CHANGES)
 		{
 			// Register listener, if entry is bean.
-			listener	= SPropertyChange.updateListener(value, null, listener, comp, name, source);
+			listener	= SPropertyChange.updateListener(value, null, listener, comp, mdynval, source);
 		}
 		
 		if(mode==ObservationMode.ON_ALL_CHANGES || mode==ObservationMode.ON_COLLECTION_CHANGE)
 		{
 			((InjectionFeature)comp.getFeature(IInjectionFeature.class))
-				.valueChanged(new ChangeEvent(Type.ADDED, name, value, null, info));
+				.valueChanged(new ChangeEvent(Type.ADDED, mdynval.name(), value, null, info), mdynval.field().getAnnotations());
 		}
 
 		//System.out.println("entry added: "+value+" to "+name+" mode="+mode);
@@ -120,13 +121,13 @@ public class WrapperHelper<T>
 		if(mode==ObservationMode.ON_ALL_CHANGES)
 		{
 			// Unregister listener, if entry is bean.
-			listener	= SPropertyChange.updateListener(null, value, listener, comp, name, source);
+			listener	= SPropertyChange.updateListener(null, value, listener, comp, mdynval, source);
 		}
 		
 		if(mode==ObservationMode.ON_ALL_CHANGES || mode==ObservationMode.ON_COLLECTION_CHANGE)
 		{
 			((InjectionFeature)comp.getFeature(IInjectionFeature.class))
-				.valueChanged(new ChangeEvent(Type.REMOVED, name, value, null, info));
+				.valueChanged(new ChangeEvent(Type.REMOVED, mdynval.name(), value, null, info), mdynval.field().getAnnotations());
 		}
 	}
 	
@@ -140,14 +141,14 @@ public class WrapperHelper<T>
 			if(mode==ObservationMode.ON_ALL_CHANGES)
 			{
 				// (Un-)Register listener, if values are bean.
-				listener	= SPropertyChange.updateListener(value, oldvalue, listener, comp, name, source);
+				listener	= SPropertyChange.updateListener(value, oldvalue, listener, comp, mdynval, source);
 			}
 			
 			if(!SUtil.equals(value, oldvalue) && 
 			   (mode==ObservationMode.ON_ALL_CHANGES || mode==ObservationMode.ON_COLLECTION_CHANGE))
 			{
 				((InjectionFeature)comp.getFeature(IInjectionFeature.class))
-					.valueChanged(new ChangeEvent(Type.CHANGED, name, value, oldvalue, info));
+					.valueChanged(new ChangeEvent(Type.CHANGED, mdynval.name(), value, oldvalue, info), mdynval.field().getAnnotations());
 			}
 		}
 	}

@@ -7,16 +7,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import jadex.core.ResultProvider;
 
-
-public class RBpmnProcess extends ResultProvider
+public class RBpmnProcess
 {
 	protected String filename;
 	
 	protected Map<String, Object> args;
 	
-	protected Set<String> onlydeclared = new HashSet<>();
+	/** Context parameters with one of these names will be set as result. */
+	protected Set<String> resultnames = new HashSet<>();
 	
 	/**
 	 *  Builder pattern constructor.
@@ -87,21 +86,11 @@ public class RBpmnProcess extends ResultProvider
 	}
 	
 	/**
-	 *  Get the result value.
-	 *  @return the value or null, if not set.
-	 */
-	public Object getResult(String name)
-	{
-		return results.get(name); 
-	}
-	
-	/**
 	 *  Declare a result value.
 	 */
 	public RBpmnProcess	declareResult(String name)
 	{
-		results.put(name, null);
-		onlydeclared.add(name);
+		resultnames.add(name);
 		return this;
 	}
 	
@@ -110,32 +99,9 @@ public class RBpmnProcess extends ResultProvider
 	 */
 	public boolean hasDeclaredResult(String name)
 	{
-		return results.containsKey(name);
+		return resultnames.contains(name);
 	}
 	
-	/**
-	 *  Do not notify the pure declarations.
-	 */
-	public boolean checkInitialNotify(String name, Object value)
-	{
-		return !onlydeclared.contains(name);
-	}
-	
-	public void setResult(String name, Object value)
-	{
-		onlydeclared.remove(name);
-		super.setResult(name, value);
-	}
-	
-	/**
-	 *  Get the results copy.
-	 *  @return The results.
-	 */
-	public Map<String, Object> getResults()
-	{
-		return new HashMap<>(results); 
-	}
-
 	/**
 	 *  Get a string representation.
 	 */

@@ -30,11 +30,13 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import jadex.collection.CollectionWrapper;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
-import jadex.execution.impl.ExecutionFeatureProvider;
+import jadex.core.impl.Component;
+import jadex.injection.AbstractDynVal;
 import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.injection.Dyn;
 import jadex.injection.IInjectionFeature;
@@ -247,7 +249,25 @@ public class InjectionModel
 				Map<String, Object>	ret	= new LinkedHashMap<>();
 				for(String name: ffetchers.keySet())
 				{
-					ret.put(name, ExecutionFeatureProvider.copyVal(ffetchers.get(name).getFirstEntity().apply(comp, pojos, context, null), ffetchers.get(name).getSecondEntity()));
+					// Unwrap dynamic values
+					Object	value	= ffetchers.get(name).getFirstEntity().apply(comp, pojos, context, null);
+					if(value instanceof AbstractDynVal<?>)
+					{
+						value	= ((AbstractDynVal<?>)value).get();
+					}
+					
+					// TODO: should keep wrappers if annotated with NoCopy?
+					// No else to unwrap collection in val as well
+					if(value instanceof CollectionWrapper<?>)
+					{
+						value	= ((CollectionWrapper<?>)value).getDelegate();
+					}
+					else if(value instanceof jadex.collection.MapWrapper<?, ?>)
+					{
+						value	= ((jadex.collection.MapWrapper<?, ?>)value).getDelegate();
+					}
+					
+					ret.put(name, Component.copyVal(value, ffetchers.get(name).getSecondEntity()));
 				}
 				return ret;
 			};
@@ -1178,171 +1198,168 @@ public class InjectionModel
 		Field	f	= mdynval.field();
 		String	name	= mdynval.name();
 		
-		if(name!=null)
+		MethodHandle	getter;
+		MethodHandle	setter;
+		try
 		{
-			MethodHandle	getter;
-			MethodHandle	setter;
-			try
-			{
-				f.setAccessible(true);
-				getter	= MethodHandles.lookup().unreflectGetter(f);
-				setter	= MethodHandles.lookup().unreflectSetter(f);
-			}
-			catch(Exception e)
-			{
-				throw SUtil.throwUnchecked(e);
-			}
+			f.setAccessible(true);
+			getter	= MethodHandles.lookup().unreflectGetter(f);
+			setter	= MethodHandles.lookup().unreflectSetter(f);
+		}
+		catch(Exception e)
+		{
+			throw SUtil.throwUnchecked(e);
+		}
+		
+		// Dynamic belief (Dyn object)
+		if(Dyn.class.equals(f.getType()))
+		{
+			Set<String>	deps	= findDependentFields(f);
 			
-			// Dynamic belief (Dyn object)
-			if(Dyn.class.equals(f.getType()))
+			// Init Dyn on agent start
+			ret	= (comp, pojos, context, dummy) ->
 			{
-				Set<String>	deps	= findDependentFields(f);
-				
-				// Init Dyn on agent start
-				ret	= (comp, pojos, context, dummy) ->
+				try
 				{
-					try
+					Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
+					if(dyn==null)
 					{
-						Dyn<Object>	dyn	= (Dyn<Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(dyn==null)
-						{
-							throw new RuntimeException("Dynamic value field is null: "+f);
-						}
-						DynValHelper.init(dyn, comp, name);
-						
-						// Strip self-dependency (if present) to break loops 
-						deps.remove(name);
-						if(!deps.isEmpty())
-						{
-							((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addDependencies(dyn, name, deps);
-						}
-											
-						return null;
+						throw new RuntimeException("Dynamic value field is null: "+f);
 					}
-					catch(Throwable t)
+					DynValHelper.init(dyn, comp, mdynval);
+					
+					// Strip self-dependency (if present) to break loops 
+					deps.remove(name);
+					if(!deps.isEmpty())
 					{
-						throw SUtil.throwUnchecked(t);
+						((InjectionFeature)comp.getFeature(IInjectionFeature.class)).addDependencies(dyn, mdynval, deps);
 					}
-				};
-			}
-			
-			// Val belief
-			else if(Val.class.equals(f.getType()))
-			{				
-				// Init Val on agent start
-				ret	= (comp, pojos, context, dummy) ->
+										
+					return null;
+				}
+				catch(Throwable t)
 				{
-					try
-					{
-						Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(value==null)
-						{
-							value	= new Val<Object>((Object)null);
-							setter.invoke(pojos.get(pojos.size()-1), value);
-						}
-						DynValHelper.init(value, comp, name);						
-						return null;
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				};
-			}
-			// List belief
-			else if(List.class.equals(f.getType()))
+					throw SUtil.throwUnchecked(t);
+				}
+			};
+		}
+		
+		// Val belief
+		else if(Val.class.equals(f.getType()))
+		{				
+			// Init Val on agent start
+			ret	= (comp, pojos, context, dummy) ->
 			{
-				ret	= (comp, pojos, context, oldval) ->
+				try
 				{
-					try
+					Val<Object>	value	= (Val<Object>)getter.invoke(pojos.get(pojos.size()-1));
+					if(value==null)
 					{
-						List<Object>	value	= (List<Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(value==null)
-						{
-							value	= new ArrayList<>();
-						}
-						value	= new ListWrapper<>(comp, name , ObservationMode.ON_ALL_CHANGES, value);
+						value	= new Val<Object>((Object)null);
 						setter.invoke(pojos.get(pojos.size()-1), value);
-						return null;
 					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				};
-			}
-			
-			// Set belief
-			else if(Set.class.equals(f.getType()))
-			{
-				ret	= (comp, pojos, context, oldval) ->
+					DynValHelper.init(value, comp, mdynval);						
+					return null;
+				}
+				catch(Throwable t)
 				{
-					try
-					{
-						Set<Object>	value	= (Set<Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(value==null)
-						{
-							value	= new LinkedHashSet<>();
-						}
-						value	= new SetWrapper<>(comp, name , ObservationMode.ON_ALL_CHANGES, value);
-						setter.invoke(pojos.get(pojos.size()-1), value);
-						return null;
-					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				};
-			}
-			
-			// Map belief
-			else if(Map.class.equals(f.getType()))
+					throw SUtil.throwUnchecked(t);
+				}
+			};
+		}
+		// List belief
+		else if(List.class.equals(f.getType()))
+		{
+			ret	= (comp, pojos, context, oldval) ->
 			{
-				ret	= (comp, pojos, context, oldval) ->
+				try
 				{
-					try
+					List<Object>	value	= (List<Object>)getter.invoke(pojos.get(pojos.size()-1));
+					if(value==null)
 					{
-						Map<Object, Object>	value	= (Map<Object, Object>)getter.invoke(pojos.get(pojos.size()-1));
-						if(value==null)
-						{
-							value	= new LinkedHashMap<>();
-						}
-						value	= new MapWrapper<>(comp, name , ObservationMode.ON_ALL_CHANGES, value);
-						setter.invoke(pojos.get(pojos.size()-1), value);
-						return null;
+						value	= new ArrayList<>();
 					}
-					catch(Throwable t)
-					{
-						throw SUtil.throwUnchecked(t);
-					}
-				};
-			}
-			
-			// Last resort -> Bean belief
-			// Check if addPropertyChangeListener() method exists
-			else if(SPropertyChange.getAdder(f.getType())!=null)
+					value	= new ListWrapper<>(comp, mdynval , ObservationMode.ON_ALL_CHANGES, value);
+					setter.invoke(pojos.get(pojos.size()-1), value);
+					return null;
+				}
+				catch(Throwable t)
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+			};
+		}
+		
+		// Set belief
+		else if(Set.class.equals(f.getType()))
+		{
+			ret	= (comp, pojos, context, oldval) ->
 			{
-				ret	= (comp, pojos, context, oldval) ->
+				try
 				{
-					try
+					Set<Object>	value	= (Set<Object>)getter.invoke(pojos.get(pojos.size()-1));
+					if(value==null)
 					{
-						Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
-						if(bean!=null)
-						{
-							SPropertyChange.updateListener(bean, null, null, comp, name, null);
-						}
-						else
-						{
-							System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
-						}
-						return null;
+						value	= new LinkedHashSet<>();
 					}
-					catch(Throwable t)
+					value	= new SetWrapper<>(comp, mdynval , ObservationMode.ON_ALL_CHANGES, value);
+					setter.invoke(pojos.get(pojos.size()-1), value);
+					return null;
+				}
+				catch(Throwable t)
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+			};
+		}
+		
+		// Map belief
+		else if(Map.class.equals(f.getType()))
+		{
+			ret	= (comp, pojos, context, oldval) ->
+			{
+				try
+				{
+					Map<Object, Object>	value	= (Map<Object, Object>)getter.invoke(pojos.get(pojos.size()-1));
+					if(value==null)
 					{
-						throw SUtil.throwUnchecked(t);
+						value	= new LinkedHashMap<>();
 					}
-				};
-			}
+					value	= new MapWrapper<>(comp, mdynval, ObservationMode.ON_ALL_CHANGES, value);
+					setter.invoke(pojos.get(pojos.size()-1), value);
+					return null;
+				}
+				catch(Throwable t)
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+			};
+		}
+		
+		// Last resort -> Bean belief
+		// Check if addPropertyChangeListener() method exists
+		else if(SPropertyChange.getAdder(f.getType())!=null)
+		{
+			ret	= (comp, pojos, context, oldval) ->
+			{
+				try
+				{
+					Object	bean	= getter.invoke(pojos.get(pojos.size()-1));
+					if(bean!=null)
+					{
+						SPropertyChange.updateListener(bean, null, null, comp, mdynval, null);
+					}
+					else
+					{
+						System.err.println("Warning: bean is null and will not be observed (use Val<> for delayed setting): "+f);
+					}
+					return null;
+				}
+				catch(Throwable t)
+				{
+					throw SUtil.throwUnchecked(t);
+				}
+			};
 		}
 		return ret;
 	}

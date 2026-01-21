@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.injection.AbstractDynVal;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 /**
  *  Helper class for accessing internal Dyn/Val methods.
@@ -19,7 +20,7 @@ public class DynValHelper
 	{
 		try
 		{
-			Method	m	= AbstractDynVal.class.getDeclaredMethod("init", IComponent.class, String.class);
+			Method	m	= AbstractDynVal.class.getDeclaredMethod("init", IComponent.class, MDynVal.class);
 			m.setAccessible(true);
 			init	= MethodHandles.lookup().unreflect(m);
 		}
@@ -32,11 +33,11 @@ public class DynValHelper
 	/**
 	 *  Call protected init method..
 	 */
-	protected static void	init(AbstractDynVal<Object> dynval, IComponent comp, String name)
+	protected static void	init(AbstractDynVal<Object> dynval, IComponent comp, MDynVal mdynval)
 	{
 		try
 		{
-			init.invoke(dynval, comp, name);
+			init.invoke(dynval, comp, mdynval);
 		}
 		catch(Throwable t)
 		{

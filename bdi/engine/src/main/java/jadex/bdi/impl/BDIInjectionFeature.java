@@ -1,5 +1,7 @@
 package jadex.bdi.impl;
 
+import java.lang.annotation.Annotation;
+
 import jadex.bdi.impl.plan.RPlan;
 import jadex.core.ChangeEvent;
 import jadex.injection.impl.InjectionFeature;
@@ -18,7 +20,7 @@ public class BDIInjectionFeature extends InjectionFeature
 	}
 	
 	@Override
-	public void valueChanged(ChangeEvent event)
+	public void valueChanged(ChangeEvent event, Annotation... annos)
 	{
 		// Avoid plan self-abort inside event processing
 		RPlan	rplan	= RPlan.RPLANS.get();
@@ -27,7 +29,7 @@ public class BDIInjectionFeature extends InjectionFeature
 			try
 			{
 				rplan.startAtomic();
-				super.valueChanged(event);
+				super.valueChanged(event, annos);
 			}
 			finally
 			{
@@ -37,7 +39,7 @@ public class BDIInjectionFeature extends InjectionFeature
 		
 		else
 		{
-			super.valueChanged(event);
+			super.valueChanged(event, annos);
 		}
 	}
 }

@@ -128,7 +128,6 @@ public class ComponentManager implements IComponentManager
 	{
 		if(instance == null)
 		{
-			boolean init = false;
 			synchronized(ComponentManager.class)
 			{
 				if(instance == null)
@@ -318,6 +317,7 @@ public class ComponentManager implements IComponentManager
 				{
 					noconf = false;
 
+					@SuppressWarnings("unchecked")
 					Future<T> existing = (Future<T>) featureconfigurationcache.get(featuretype);
 					if (existing != null)
 						return existing;
@@ -332,6 +332,7 @@ public class ComponentManager implements IComponentManager
 		{
 			try (IAutoLock l = featurecache.readLock())
 			{
+				@SuppressWarnings("unchecked")
 				Future<T> existing = (Future<T>) featurecache.get(featuretype);
 				if (existing != null)
 					return existing;

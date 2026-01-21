@@ -42,6 +42,7 @@ import jadex.common.transformation.BasicTypeConverter;
 import jadex.common.transformation.IObjectStringConverter;
 import jadex.common.transformation.IStringObjectConverter;
 import jadex.core.IComponent;
+import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SimpleValueFetcher;
@@ -1170,8 +1171,7 @@ public class ProcessThread	implements ITaskContext
 					{
 						// Result data edge
 						//instance.getFeature(IArgumentsResultsFeature.class).getResults().put(de.getTargetParameter(), value);
-						RBpmnProcess pojo = (RBpmnProcess)((BpmnProcess)instance).getPojo();
-						pojo.setResult(de.getTargetParameter(), value);
+						Component.setResult(instance, de.getTargetParameter(), value);
 					}
 					else
 					{

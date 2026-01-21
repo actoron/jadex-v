@@ -8,6 +8,7 @@ import jadex.common.SUtil;
 import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
 import jadex.injection.impl.InjectionFeature;
+import jadex.injection.impl.InjectionModel.MDynVal;
 import jadex.injection.impl.ListWrapper;
 import jadex.injection.impl.MapWrapper;
 import jadex.injection.impl.SPropertyChange;
@@ -68,17 +69,17 @@ public class AbstractDynVal<T>
 	/** The component. */
 	IComponent	comp;
 	
-	/** The fully qualified name of the value. */
-	String	name;
+	/** The model element of the value. */
+	MDynVal	mdynval;
 	
 	
 	/**
 	 *  Called on component init.
 	 */
-	void	init(IComponent comp, String name)
+	void	init(IComponent comp, MDynVal mdynval)
 	{
 		this.comp	= comp;
-		this.name	= name;
+		this.mdynval	= mdynval;
 	}
 	
 	/**
@@ -112,7 +113,7 @@ public class AbstractDynVal<T>
 			if(!initing && mode!=ObservationMode.OFF && !SUtil.equals(old, value))
 			{
 				((InjectionFeature)comp.getFeature(IInjectionFeature.class))
-					.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, name, value, old, null));
+					.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, mdynval.name(), value, old, null), mdynval.field().getAnnotations());
 			}
 		}
 	}
@@ -145,14 +146,14 @@ public class AbstractDynVal<T>
 					if(!this.mode.isObserveBean() && mode.isObserveBean())
 					{
 						// Register listener, if entry is bean.
-						listener	= SPropertyChange.updateListener(value, null, listener, comp, name, null);
+						listener	= SPropertyChange.updateListener(value, null, listener, comp, mdynval, null);
 					}
 					
 					// Change from observing to non-observing.
 					else if(this.mode.isObserveBean() && !mode.isObserveBean())
 					{
 						// Unregister listener, if entry is bean.
-						listener	= SPropertyChange.updateListener(null, value, listener, comp, name, null);
+						listener	= SPropertyChange.updateListener(null, value, listener, comp, mdynval, null);
 					}
 				}
 			}
@@ -190,7 +191,7 @@ public class AbstractDynVal<T>
 		// Stop observing old bean, if any
 		else
 		{
-			listener	= SPropertyChange.updateListener(null, old, listener, comp, name, null);
+			listener	= SPropertyChange.updateListener(null, old, listener, comp, mdynval, null);
 		}
 		
 		
@@ -203,7 +204,7 @@ public class AbstractDynVal<T>
 		{
 			// Wrap the list.
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			T t	= (T)(new ListWrapper(comp, name, mode, (List<?>)value));
+			T t	= (T)(new ListWrapper(comp, mdynval, mode, (List<?>)value));
 			value	= t;
 			this.value	= value;
 		}
@@ -217,7 +218,7 @@ public class AbstractDynVal<T>
 		{
 			// Wrap the list.
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			T t	= (T)(new ListWrapper(comp, name, mode, (List<?>)value));
+			T t	= (T)(new ListWrapper(comp, mdynval, mode, (List<?>)value));
 			value	= t;
 			this.value	= value;
 		}
@@ -231,7 +232,7 @@ public class AbstractDynVal<T>
 		{
 			// Wrap the list.
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			T t	= (T)(new MapWrapper(comp, name, mode, (Map<?, ?>)value));
+			T t	= (T)(new MapWrapper(comp, mdynval, mode, (Map<?, ?>)value));
 			value	= t;
 			this.value	= value;
 		}
@@ -239,7 +240,7 @@ public class AbstractDynVal<T>
 		// Start observing new bean, if any
 		else if(mode==ObservationMode.ON_BEAN_CHANGE || mode==ObservationMode.ON_ALL_CHANGES)
 		{
-			listener	= SPropertyChange.updateListener(value, null, listener, comp, name, null);
+			listener	= SPropertyChange.updateListener(value, null, listener, comp, mdynval, null);
 		}
 	}
 	

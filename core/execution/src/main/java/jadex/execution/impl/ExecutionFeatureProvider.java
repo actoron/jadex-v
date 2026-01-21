@@ -2,30 +2,18 @@ package jadex.execution.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import jadex.collection.WeakKeyValueMap;
-import jadex.common.IFilter;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.common.transformation.traverser.FilterProcessor;
-import jadex.common.transformation.traverser.ITraverseProcessor;
-import jadex.common.transformation.traverser.SCloner;
-import jadex.common.transformation.traverser.Traverser;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
-import jadex.core.ChangeEvent;
-import jadex.core.ResultProvider;
-import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
@@ -37,7 +25,6 @@ import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
 
 public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
@@ -123,7 +110,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					
 					// TODO: unify with LambdaAgent result handle?
-					fself.result.setResult(copyVal(result, getAnnos(pojo.getClass())));
+					fself.result.setResult(Component.copyVal(result, getAnnos(pojo.getClass())));
 
 					if(!FastLambda.KEEPALIVE)
 					{
@@ -166,11 +153,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					Object	pojo		= component.getPojo();
 					if(pojo!=null && SComponentFeatureProvider.getCreator(pojo.getClass())==this)
 					{
-						if(pojo instanceof IResultProvider)
-						{
-							addResultHandler(component.getId(), (IResultProvider)pojo);
-						}
-						
 						Runnable	step;
 						if(pojo instanceof Callable)
 						{
@@ -179,7 +161,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								try
 								{
 									Object	result	= ((Callable<?>)pojo).call();
-									setResult(component, result);
+									Component.setResult(component, "result", result, getAnnos(pojo.getClass()));
 								}
 								catch(Exception e)
 								{
@@ -197,7 +179,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									@SuppressWarnings("unchecked")
 									IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
 									Object result	= itf.apply(component);							
-									setResult(component, result);
+									Component.setResult(component, "result", result);
 								}
 								catch(Exception e)
 								{
@@ -296,130 +278,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		}
 	
 		return ret;
-	}
-	
-	protected static Map<ComponentIdentifier, IResultProvider>	results	= new WeakKeyValueMap<>();
-	
-	@Override
-	public Map<String, Object> getResults(IComponent comp)
-	{
-		IResultProvider	rp;
-		synchronized(results)
-		{
-			rp = results.get(comp.getId());
-		}
-		return rp==null ? null : rp.getResultMap();
-	}
-	
-	@Override
-	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
-	{
-		IResultProvider	rp;
-		synchronized(results)
-		{
-			rp = results.get(comp.getId());
-			if(rp==null)
-			{
-				rp	= new ResultProvider();
-				results.put(comp.getId(), rp);
-			}
-		}
-		return rp.subscribeToResults();
-	}
-
-	private static void	setResult(ComponentIdentifier id, String name, Object value)
-	{
-		IResultProvider	rp;
-		synchronized(results)
-		{
-			rp = results.get(id);
-			if(rp==null)
-			{
-				rp	= new ResultProvider();
-				results.put(id, rp);
-			}
-		}
-		rp.setResult(name, value);
-	}
-
-	private static void addResultHandler(ComponentIdentifier id, IResultProvider provider)
-	{
-		synchronized(results)
-		{
-			if(results.containsKey(id))
-			{
-				throw new IllegalStateException("Result provider already added: "+results.get(id)+", "+provider);
-			}
-			results.put(id, provider);
-		}
-	}
-
-	private static <T> void setResult(IComponent comp, Object result)	
-	{
-		Object	pojo	= comp.getPojo();
-		ExecutionFeatureProvider.setResult(comp.getId(), "result",
-			ExecutionFeatureProvider.copyVal(result, ExecutionFeatureProvider.getAnnos(pojo.getClass())));
-	}
-	
-	/**
-	 *  Terminate all result subscriptions.
-	 */
-	public static void	finishResults(ComponentIdentifier id, Exception e)
-	{
-		IResultProvider	rp;
-		synchronized(results)
-		{
-			rp = results.get(id);
-		}
-		if(rp!=null)
-		{
-			rp.setFinished(e);
-		}
-	}
-
-	/**
-	 *  Helper to skip NoCopy objects while cloning. 
-	 */
-	protected static List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
-	{
-		procs.add(procs.size()-1, new FilterProcessor(new IFilter<Object>()
-		{
-			public boolean filter(Object object)
-			{
-				return isNoCopy(object);
-			}
-		}));
-	}
-	
-	/**
-	 *  Helper method to check if a value doesn't need copying in component methods
-	 */
-	public static Object copyVal(Object val, Annotation... annos)
-	{
-		return isNoCopy(val, annos) ? val : SCloner.clone(val, procs);
-	}
-	
-	/**
-	 *  Helper method to check if a value doesn't need copying in component methods
-	 */
-	public static boolean isNoCopy(Object val, Annotation... annos)
-	{
-		if(val==null || val.getClass().isAnnotationPresent(NoCopy.class))
-		{
-			return true;
-		}
-		else
-		{
-			for(Annotation anno: annos)
-			{
-				if(anno instanceof NoCopy)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+	}	
 	
 	protected static Map<Class<?>, Annotation[]>	ANNOS	= new LinkedHashMap<>();
 	

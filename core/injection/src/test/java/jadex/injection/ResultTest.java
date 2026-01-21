@@ -6,11 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,7 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.annotation.ProvideResult;
+import jadex.result.IResultFeature;
 
 /**
  *  Test handling of results in injection feature.
@@ -42,7 +44,7 @@ public class ResultTest
 		IFuture<String>	fut	= IComponentManager.get().run(new Object()
 		{
 			@OnStart
-			void start(IInjectionFeature feature)
+			void start(IResultFeature feature)
 			{
 				feature.setResult("result", "success");
 			}
@@ -166,13 +168,13 @@ public class ResultTest
 		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 		{
 			@OnStart
-			void start(IInjectionFeature feature)
+			void start(IResultFeature feature)
 			{
 				feature.setResult("start", "startvalue");
 			}
 			
 			@OnEnd
-			void end(IInjectionFeature feature)
+			void end(IResultFeature feature)
 			{
 				feature.setResult("end", "endvalue");
 			}
@@ -226,7 +228,7 @@ public class ResultTest
 	public void	testNoCopyGetResults()
 	{
 		List<String>	value	= Collections.singletonList("hello");
-		class NoCopyPojo implements Supplier<List<String>>
+		class NoCopyPojo
 		{
 			@ProvideResult
 			@NoCopy
@@ -246,23 +248,110 @@ public class ResultTest
 			{
 				return value;
 			}
-
-			// Get access to internal field (wrapped by ListWrapper due to dynamic value)
-			@Override
-			public List<String> get()
-			{
-				return field;
-			}
 		}
 		
 		NoCopyPojo	pojo	= new NoCopyPojo();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TIMEOUT);
 		
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("field"));
-		assertSame(pojo.get(), handle.getResults().get(TIMEOUT).get("field"));
+		assertSame(value, handle.getResults().get(TIMEOUT).get("field"));
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("method1"));
 		assertSame(value, handle.getResults().get(TIMEOUT).get("method1"));
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("method2"));
 		assertSame(value, handle.getResults().get(TIMEOUT).get("method2"));
+	}
+	
+	@Test
+	public void	testCopyDynamic()
+	{
+		List<String>	value1	= new ArrayList<>();
+		value1.add("Hello");
+		
+		class TestNoCopyDynamic
+		{
+			@ProvideResult
+			Val<List<String>>	result	= new Val<>(value1);
+		}
+		TestNoCopyDynamic	pojo	= new TestNoCopyDynamic();
+		IComponentHandle	comp	= IComponentManager.get().create(pojo).get(TIMEOUT);
+		
+		// Test initial value event
+		ISubscriptionIntermediateFuture<ChangeEvent>	fut	= comp.subscribeToResults();
+		Object	result1	= 	fut.getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value1, result1);
+		assertNotSame(value1, result1);
+		
+		// Test changed value event
+		List<String>	value2	= new ArrayList<>();
+		value2.add("world");
+		comp.scheduleStep(() -> pojo.result.set(value2)).get(TIMEOUT);
+		Object	result2	= 	fut.getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value2, result2);
+		assertNotSame(value2, result2);
+	}
+	
+	@Test
+	public void	testNoCopyDynamic()
+	{
+		List<String>	value1	= new ArrayList<>();
+		value1.add("Hello");
+		
+		class TestNoCopyDynamic
+		{
+			@ProvideResult
+			@NoCopy
+			// Also tests unwrapping val and wrapper
+			Val<List<String>>	result	= new Val<>(value1);
+		}
+		TestNoCopyDynamic	pojo	= new TestNoCopyDynamic();
+		IComponentHandle	comp	= IComponentManager.get().create(pojo).get(TIMEOUT);
+		
+		// Test initial value event
+		ISubscriptionIntermediateFuture<ChangeEvent>	fut	= comp.subscribeToResults();
+		Object	result1	= 	fut.getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value1, result1);
+		assertSame(value1, result1);
+		
+		// Test changed value event
+		List<String>	value2	= new ArrayList<>();
+		value2.add("world");
+		comp.scheduleStep(() -> pojo.result.set(value2)).get(TIMEOUT);
+		Object	result2	= 	fut.getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value2, result2);
+		assertSame(value2, result2);
+	}
+	
+	@Test
+	public void	testLambdaResult()
+	{
+		IComponentHandle	comp	= IComponentManager.get().create(new Callable<String>()
+		{
+			@ProvideResult
+			String	hello	= "Hello";
+			
+			@OnStart
+			void	start(IResultFeature res)
+			{
+				res.setResult("world", "world");
+			}
+			
+			@Override
+			public String call()
+			{
+				return "!";
+			}
+		}).get(TIMEOUT);
+		
+		ISubscriptionIntermediateFuture<ChangeEvent>	fut	= comp.subscribeToResults();
+		assertEquals("Hello", fut.getNextIntermediateResult(TIMEOUT).value());
+		assertEquals("world", fut.getNextIntermediateResult(TIMEOUT).value());
+		assertEquals("!", fut.getNextIntermediateResult(TIMEOUT).value());
+		
+		Map<String, Object>	results	= new LinkedHashMap<>();
+		results.put("hello", "Hello");
+		results.put("world", "world");
+		results.put("result", "!");
+		assertEquals(results, comp.getResults().get(TIMEOUT));
+		
 	}
 }

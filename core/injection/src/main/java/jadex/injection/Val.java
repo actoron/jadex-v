@@ -1,6 +1,7 @@
 package jadex.injection;
 
 import jadex.core.IComponent;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 /**
  *  Wrapper for observable values.
@@ -20,9 +21,9 @@ public class Val<T>	extends AbstractDynVal<T>
 	 *  Called on component init.
 	 */
 	@Override
-	void	init(IComponent comp, String name)
+	void	init(IComponent comp, MDynVal mdynval)
 	{
-		super.init(comp, name);
+		super.init(comp, mdynval);
 		
 		observeNewValue(null, value);
 	}

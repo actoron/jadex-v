@@ -2,16 +2,23 @@ package jadex.core.impl;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
+import jadex.common.IFilter;
 import jadex.common.SUtil;
+import jadex.common.transformation.traverser.FilterProcessor;
+import jadex.common.transformation.traverser.ITraverseProcessor;
+import jadex.common.transformation.traverser.SCloner;
+import jadex.common.transformation.traverser.Traverser;
 import jadex.core.Application;
 import jadex.core.ChangeEvent;
 import jadex.core.ComponentIdentifier;
@@ -19,7 +26,6 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
-import jadex.core.IResultProvider;
 import jadex.core.annotation.NoCopy;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.Future;
@@ -64,6 +70,9 @@ public class Component implements IComponent
 		
 	/** The is the external access executable, i.e. is scheduleStep allowed?. */
 	protected static boolean executable;
+	
+	/** Access to result feature, if any. */
+	protected static IResultManager resultmanager;
 	
 	/**
 	 *  Create a component object to be inited later
@@ -598,146 +607,156 @@ public class Component implements IComponent
 		
 	/**
 	 *  Fetch the result(s) of the Component.
-	 *  Schedules to the component, if not terminated.
+	 *  Can be called from outside.
+	 *  @throws UnsupportedOperationException when results are not supported.
 	 */
 	public static IFuture<Map<String, Object>> getResults(IComponent comp)
 	{
-		Future<Map<String, Object>>	ret	= new Future<>();
-		
-		if(isExecutable())
+		if(resultmanager!=null)
 		{
-			comp.getComponentHandle().scheduleStep(() -> doGetResults(comp))
-				.then(results -> ret.setResult(results))
-				.catchEx(e ->
-				{
-					if(e instanceof ComponentTerminatedException)
-					{
-						// When terminated, don't schedule.
-						ret.setResult(Component.doGetResults(comp));
-					}
-					else
-					{
-						ret.setException(e);
-					}
-				});
+			return resultmanager.getResults(comp);
 		}
 		else
 		{
-			ret.setResult(Component.doGetResults(comp));
+			return new Future<>(new UnsupportedOperationException("No result feature available."));
 		}
-		
-		return ret;
 	}
 	
 	/**
 	 *  Listen to results of the component.
-	 *  Schedules to the component, if not terminated.
-	 *  @throws UnsupportedOperationException when subscription is not supported
+	 *  Can be called from outside.
+	 *  @throws UnsupportedOperationException when results are not supported.
 	 */
 	public static ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
 	{
-		// ResultProvider is thread safe -> no need to schedule step
-//		if(isExecutable())
-//		{
-//			SubscriptionIntermediateFuture<ChangeEvent>	ret	= new SubscriptionIntermediateFuture<>();
-//			
-//			@SuppressWarnings("rawtypes")
-//			Callable	call	= new Callable<ISubscriptionIntermediateFuture<ChangeEvent>>()
-//			{
-//				public ISubscriptionIntermediateFuture<ChangeEvent>	call()
-//				{
-//					return doSubscribeToResults(comp);
-//				}
-//			};
-//
-//			@SuppressWarnings("unchecked")
-//			ISubscriptionIntermediateFuture<ChangeEvent>	fut	= (ISubscriptionIntermediateFuture<ChangeEvent>)
-//				comp.getComponentHandle().scheduleAsyncStep(call);
-//			fut.next(res -> ret.addIntermediateResult(res))
-//				.catchEx(e ->
-//				{
-//					if(e instanceof ComponentTerminatedException)
-//					{
-//						// -> ignore (no more results available)
-//					}
-//					else
-//					{
-//						ret.setException(e);
-//					}
-//				});
-//			
-//			return ret;
-//		}
-//		else
+		if(resultmanager!=null)
 		{
-			return Component.doSubscribeToResults(comp);
+			return resultmanager.subscribeToResults(comp);
+		}
+		else
+		{
+			return new SubscriptionIntermediateFuture<>(new UnsupportedOperationException("No result feature available."));
 		}
 	}
 	
 	/**
-	 *  Listen to results of the pojo.
-	 *  To be called on component thread, if any.
-	 *  @throws UnsupportedOperationException when subscription is not supported
+	 *  Set a result of a component.
+	 *  Should be called on component thread.
 	 */
-	public static ISubscriptionIntermediateFuture<ChangeEvent> doSubscribeToResults(IComponent component)
+	public static void setResult(IComponent comp, String name, Object value, Annotation... annos)
 	{
-		ISubscriptionIntermediateFuture<ChangeEvent>	ret	= null;
-		boolean done = false;
+		if(resultmanager!=null)
+		{
+			resultmanager.setResult(comp, name, value, isNoCopy(value, annos));
+		}
+		else
+		{
+			throw new UnsupportedOperationException("No result feature available.");
+		}
+	}
+	
+	/**
+	 *  Notify about result changes of a component.
+	 *  Should be called on component thread.
+	 */
+	public static void notifyResult(IComponent comp, ChangeEvent event, Annotation... annos)
+	{
+		if(resultmanager!=null)
+		{
+			resultmanager.notifyResult(comp, event, isNoCopy(event.value(), annos));
+		}
+		else
+		{
+			throw new UnsupportedOperationException("No result feature available.");
+		}
+	}
+	
+	/**
+	 *  Provide access to engine-managed results.
+	 *  Should be called on component thread.
+	 *  The supplier should always provide a fresh map with copies of values as needed.
+	 */
+	public static void	setResultSupplier(IComponent comp, Supplier<Map<String, Object>> resultsupplier)
+	{
+		if(resultmanager!=null)
+		{
+			resultmanager.setResultSupplier(comp, resultsupplier);
+		}
+		else
+		{
+			throw new UnsupportedOperationException("No result feature available.");
+		}
+	}
+	
+	/**
+	 *  Set the result manager.
+	 */
+	public static void setResultManager(IResultManager resultmanager)
+	{
+		Component.resultmanager = resultmanager;
+	}
 		
-		if(component.getPojo() instanceof IResultProvider)
-		{
-			IResultProvider rp = (IResultProvider)component.getPojo();
-			ret = rp.subscribeToResults();
-			done = true;
-		}
-		else if(component.getPojo()!=null)
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
-			if(creator!=null)
-			{
-				ret = creator.subscribeToResults(component);
-				done = true;
-			}
-		}
-		if(!done)
-		{
-			ret	= new SubscriptionIntermediateFuture<>(new UnsupportedOperationException("Could not get results: "+component.getPojo()));
-		}
-		
-		return ret;
+	public static boolean isResultsSupported()
+	{
+		return resultmanager!=null;
 	}
 
 	/**
-	 *  Extract the results from a pojo.
-	 *  To be called on component thread, if any.
-	 *  @return The result map.
+	 *  Helper to skip NoCopy objects while cloning. 
 	 */
-	public static Map<String, Object> doGetResults(IComponent component)
+	protected static List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
 	{
-		Map<String, Object> ret = new HashMap<>();
-		boolean done = false;
-		
-		if(component.getPojo() instanceof IResultProvider)
+		procs.add(procs.size()-1, new FilterProcessor(new IFilter<Object>()
 		{
-			IResultProvider rp = (IResultProvider)component.getPojo();
-			ret = new HashMap<String, Object>(rp.getResultMap());
-			done = true;
-		}
-		else if(component.getPojo()!=null)
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(component.getPojo().getClass());
-			if(creator!=null)
+			public boolean filter(Object object)
 			{
-				ret = creator.getResults(component);
-				done = true;
+				return isNoCopy(object);
+			}
+		}));
+	}
+	
+	/**
+	 *  Helper method to check if a value doesn't need copying in component methods
+	 */
+	public static <T> T copyVal(T val, Annotation... annos)
+	{
+		if(isNoCopy(val, annos))
+		{
+			return val;
+		}
+		else
+		{
+			 @SuppressWarnings("unchecked")
+			 T ret	= (T) SCloner.clone(val, procs);
+			 return ret;
+		}
+	}
+	
+	/**
+	 *  Helper method to check if a value doesn't need copying in component methods
+	 */
+	public static boolean isNoCopy(Object val, Annotation... annos)
+	{
+		if(val==null || val.getClass().isAnnotationPresent(NoCopy.class))
+		{
+			return true;
+		}
+		else
+		{
+			for(Annotation anno: annos)
+			{
+				if(anno instanceof NoCopy)
+				{
+					return true;
+				}
 			}
 		}
-		if(!done)
-			throw new UnsupportedOperationException("Could not get results: "+component.getPojo());
-		
-		return ret;
+		return false;
 	}
-
+	
+	/**
+	 *  Basic implementation of IComponentHandle.
+	 */
 	@NoCopy
 	public class BasicComponentHandle implements IComponentHandle
 	{

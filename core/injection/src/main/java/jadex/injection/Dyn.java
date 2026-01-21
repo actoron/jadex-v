@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 /**
  *  Wrapper for a dynamic value.
@@ -102,9 +103,9 @@ public class Dyn<T>	extends AbstractDynVal<T>
 	 *  Called on component init.
 	 */
 	@Override
-	void	init(IComponent comp, String name)
+	void	init(IComponent comp, MDynVal mdynval)
 	{
-		super.init(comp, name);
+		super.init(comp, mdynval);
 		
 		// Set update rate to start periodic updates.
 		doSetUpdateRate(updaterate, true);

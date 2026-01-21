@@ -9,12 +9,6 @@ import jadex.core.IComponentFeature;
 public interface IInjectionFeature extends IComponentFeature
 {
 	/**
-	 *  Set a result.
-	 *  Also notifies result subscribers, if any.
-	 */
-	public void setResult(String name, Object value);
-	
-	/**
 	 *  Add a change listener for a dynamic value.
 	 *  @param name		The fully qualified name of the dynamic value.
 	 */

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -32,7 +33,13 @@ public class DoubleAnnotationTest
 		
 		Future<String>	result	= new Future<>();		
 		handle.subscribeToResults().next(event ->
-			result.setResult((String) event.value()));
+		{
+			// Ignore initial event
+			if(event.type()!=Type.INITIAL)
+			{
+				result.setResult((String) event.value());
+			}
+		});
 		
 		Future<String>	value	= new Future<>();
 		handle.scheduleStep((IThrowingConsumer<IComponent>)	comp ->

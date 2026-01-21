@@ -22,10 +22,10 @@ import jadex.common.ClassInfo;
 import jadex.common.IResultCommand;
 import jadex.common.IValueFetcher;
 import jadex.common.SReflect;
+import jadex.core.ChangeEvent;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
-import jadex.core.ChangeEvent;
 import jadex.javaparser.IParsedExpression;
 import jadex.javaparser.SJavaParser;
 
@@ -252,29 +252,29 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 			
 			
 			RBpmnProcess sub = new RBpmnProcess(file);
-			sub.subscribeToResults().next(result -> handleresult.accept(result)
-			).finished(res -> finishedhandler.accept(res)
-			).catchEx(exception ->
-			{
-				//System.out.println("ex: "+exception);
-				// Hack!!! Ignore exception, when component already terminated.
-				if(!(exception instanceof ComponentTerminatedException)
-					|| !instance.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
+			BpmnProcess.create(sub).then(handle -> handle.subscribeToResults()
+				.next(result -> handleresult.accept(result)
+				).finished(res -> finishedhandler.accept(res)
+				).catchEx(exception ->
 				{
-//					System.out.println("end2: "+instance.getComponentIdentifier()+" "+file+" "+exception);
-//					exception.printStackTrace();
-					thread.setNonWaiting();
-					thread.setException(exception);
-					getBpmnFeature(instance).step(activity, instance, thread, null);
-				}
-			}).then(results ->
-			{
-				for(ChangeEvent result: results)
-					handleresult.accept(result);
-				finishedhandler.accept(null);
-			});
+					//System.out.println("ex: "+exception);
+					// Hack!!! Ignore exception, when component already terminated.
+					if(!(exception instanceof ComponentTerminatedException)
+						|| !instance.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
+					{
+	//					System.out.println("end2: "+instance.getComponentIdentifier()+" "+file+" "+exception);
+	//					exception.printStackTrace();
+						thread.setNonWaiting();
+						thread.setException(exception);
+						getBpmnFeature(instance).step(activity, instance, thread, null);
+					}
+				}).then(results ->
+				{
+					for(ChangeEvent result: results)
+						handleresult.accept(result);
+					finishedhandler.accept(null);
+				}));
 			
-			BpmnProcess.create(sub);
 			
 			/*creator.createComponentWithEvents(info)
 				.addResultListener(instance.getFeature(IExecutionFeature.class).createResultListener(new IntermediateEmptyResultListener<CMSStatusEvent>()

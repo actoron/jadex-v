@@ -9,9 +9,10 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import jadex.core.IComponentManager;
 import jadex.core.ChangeEvent;
 import jadex.core.ChangeEvent.Type;
+import jadex.core.IComponentManager;
+import jadex.core.annotation.NoCopy;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFuture;
@@ -19,7 +20,8 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.IntermediateFuture;
 import jadex.injection.AbstractDynVal.ObservationMode;
 import jadex.injection.annotation.ProvideResult;
-import jadex.injection.impl.InjectionFeature;
+import jadex.result.IResultFeature;
+import jadex.result.impl.ResultFeature;
 
 /**
  *  Test events from all kinds of dynamic results.
@@ -36,6 +38,7 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 		public void initVal(Val<Integer> ini) { val=ini; }
 		
 		@ProvideResult
+		@NoCopy
 		Val<Bean>	valbean;
 		@Override
 		public Val<Bean> getValBean() { return valbean; }
@@ -55,6 +58,7 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 		public Val<List<Supplier<String>>> getValListSupplier() { return vallistsupplier; }
 		
 		@ProvideResult
+		@NoCopy
 		Bean	bean;
 		@Override
 		public Bean getBean() { return bean; }
@@ -76,6 +80,7 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 		public void initValList(Val<List<String>> ini) { vallist=ini; }
 		
 		@ProvideResult
+		@NoCopy
 		Val<List<Bean>>	vallistbean;
 		@Override
 		public Val<List<Bean>> getValListBean() { return vallistbean; }
@@ -83,6 +88,7 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 		public void initValListBean(Val<List<Bean>> ini) { vallistbean=ini; }
 		
 		@ProvideResult
+		@NoCopy
 		List<Bean>	listbean;
 		@Override
 		public List<Bean> getListBean() { return listbean; }
@@ -137,8 +143,8 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 	{
 		// Subscribe to results and filter for the correct name/type.
 		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= 
-			((InjectionFeature) IComponentManager.get().getCurrentComponent().getFeature(IInjectionFeature.class))
-				.subscribeToResults();
+			((ResultFeature) IComponentManager.get().getCurrentComponent()
+				.getFeature(IResultFeature.class)).subscribeToResults();
 		sub.next(res ->
 		{
 			if(type==res.type() && name.equals(res.name()))
@@ -153,8 +159,8 @@ public class DynamicResultTest	extends AbstractDynamicValueTest
 	{
 		// Subscribe to results and filter for the correct name/type.
 		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= 
-			((InjectionFeature) IComponentManager.get().getCurrentComponent().getFeature(IInjectionFeature.class))
-				.subscribeToResults();
+			((ResultFeature) IComponentManager.get().getCurrentComponent()
+				.getFeature(IResultFeature.class)).subscribeToResults();
 		sub.next(res ->
 		{
 			if(type==res.type() && name.equals(res.name()))

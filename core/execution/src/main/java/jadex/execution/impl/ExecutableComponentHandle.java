@@ -138,19 +138,19 @@ public class ExecutableComponentHandle implements IComponentHandle
 
 					for(int p = 0; p < ptypes.length; p++)
 					{
-						myargs.add(ExecutionFeatureProvider.copyVal(args[p], pannos[p]));
+						myargs.add(Component.copyVal(args[p], pannos[p]));
 					}
 					
 					FutureFunctionality func = new ComponentFutureFunctionality(caller)
 					{							
 						public Object handleResult(Object val) throws Exception
 						{
-							return ExecutionFeatureProvider.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
+							return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
 						}
 						
 						public Object handleIntermediateResult(Object val) throws Exception
 						{
-							return ExecutionFeatureProvider.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
+							return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
 						}
 					};
 					

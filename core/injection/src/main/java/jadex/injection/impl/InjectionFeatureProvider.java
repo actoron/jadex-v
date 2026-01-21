@@ -2,13 +2,10 @@ package jadex.injection.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import jadex.common.SReflect;
 import jadex.core.Application;
-import jadex.core.ChangeEvent;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
@@ -19,7 +16,6 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.annotation.DynamicValue;
 import jadex.injection.annotation.Inject;
@@ -54,30 +50,6 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return Component.createComponent(new Component(pojo, cid, app));
-	}
-
-	@Override
-	public Map<String, Object> getResults(IComponent component)
-	{
-		return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).getResults();
-	}
-	
-	@Override
-	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent component)
-	{
-		// Not called on component thread -> schedule as step.
-		@SuppressWarnings("rawtypes")
-		Callable	call	= new Callable<ISubscriptionIntermediateFuture<ChangeEvent>>()
-		{
-			public ISubscriptionIntermediateFuture<ChangeEvent>	call()
-			{
-				return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).subscribeToResults();
-			}
-		};
-		@SuppressWarnings("unchecked")
-		ISubscriptionIntermediateFuture<ChangeEvent>	ret	= (ISubscriptionIntermediateFuture<ChangeEvent>)
-			component.getComponentHandle().scheduleAsyncStep(call);
-		return ret;
 	}
 	
 	@Override
@@ -171,13 +143,25 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			model.addDynamicValues(DynamicValue.class, true);
 			model.addDynamicValues(ProvideResult.class, false);
 			
-			// Add handler for dynamic values marked with @ProvideResult.
-			if(model==model.getRootModel())
+			if(Component.isResultsSupported())
 			{
-				model.addChangeHandler(ProvideResult.class, (comp, event)
-					-> ((InjectionFeature)comp.getFeature(IInjectionFeature.class)).notifyResult(event));
+				// Add handler for dynamic values marked with @ProvideResult.
+				if(model==model.getRootModel())
+				{
+					model.addChangeHandler(ProvideResult.class, (comp, event, annos)
+						-> Component.notifyResult(comp, event, annos));
+				}
+
+				model.addPostInject((self, pojos, context, oldval) ->
+				{
+					Component.setResultSupplier(self, () ->
+					{
+						return ((InjectionFeature) self.getFeature(IInjectionFeature.class)).getResults();
+					});
+					return null;
+				}); 
 			}
-		});
+		});		
 	}
 
 	/**

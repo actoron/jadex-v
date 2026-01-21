@@ -1,8 +1,7 @@
 package jadex.core;
 
 /**
- *  Marker interface for a Jadex features that are globally available
- *  in the JVM-Runtime, accessible via ComponentManager.getFeature().
+ *  Marker interface for Jadex features that are created as part of a component instance.
  */
 public interface IComponentFeature 
 {

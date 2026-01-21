@@ -12,6 +12,7 @@ import jadex.core.ChangeEvent;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.injection.IInjectionFeature;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 /**
  *  Helper class for dynamic values for property change listener management.
@@ -24,12 +25,12 @@ public class SPropertyChange
 	 *  @param oldbean	The old value, if any. The listener is removed from it, if value is bean.
 	 *  @param listener	The (cached) property change listener to add/remove.
 	 *  @param comp	The component.
-	 *  @param name	The fully qualified name of the dynamic value.
+	 *  @param mdynval	The model element of the dynamic value.
 	 *  @param source	The source object for the event (if null, the bean is used). No property name is given when source!=null.
 	 *  				This enables also observing beans in collections/maps.
 	 *  @return	The (new) property change listener to be cached for subsequent calls.
 	 */
-	public static <T> PropertyChangeListener	updateListener(T newbean, T oldbean, PropertyChangeListener listener, IComponent comp, String name, Object source)
+	public static <T> PropertyChangeListener	updateListener(T newbean, T oldbean, PropertyChangeListener listener, IComponent comp, MDynVal mdynval, Object source)
 	{
 		// Remove  bean listener from old value, if any.
 		if(oldbean!=null && listener!=null)
@@ -73,7 +74,7 @@ public class SPropertyChange
 							Object info	= source!=null ? null : event.getPropertyName();
 							
 							((InjectionFeature)comp.getFeature(IInjectionFeature.class))
-								.valueChanged(new ChangeEvent(Type.CHANGED, name, newvalue, null, info));
+								.valueChanged(new ChangeEvent(Type.CHANGED, mdynval.name(), newvalue, null, info), mdynval.field().getAnnotations());
 						};
 					}
 					adder.invoke(newbean, listener);

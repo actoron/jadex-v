@@ -4,6 +4,7 @@ import java.util.List;
 
 import jadex.core.IComponent;
 import jadex.injection.AbstractDynVal.ObservationMode;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 /**
  *  Transform changes to change events.
@@ -16,13 +17,13 @@ public class ListWrapper<T> extends jadex.collection.ListWrapper<T>
 	/**
 	 *  Create a wrapper.
 	 *  @param comp The component.
-	 *  @param name The fully qualified name of the dynamic value.
+	 *  @param mdynval The model element of the dynamic value.
 	 *  @param delegate The delegate map.
 	 */
-	public ListWrapper(IComponent comp, String name, ObservationMode mode, List<T> delegate)
+	public ListWrapper(IComponent comp, MDynVal mdynval, ObservationMode mode, List<T> delegate)
 	{
 		super(delegate);
-		this.helper	= new WrapperHelper<T>(comp, name, mode, delegate);
+		this.helper	= new WrapperHelper<T>(comp, mdynval, mode, delegate);
 	}
 	
 	@Override

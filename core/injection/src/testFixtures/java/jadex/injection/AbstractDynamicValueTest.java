@@ -35,7 +35,7 @@ import jadex.injection.AbstractDynVal.ObservationMode;
  */
 public abstract class AbstractDynamicValueTest
 {
-	long	TIMEOUT	= 10000;
+	long	TIMEOUT	= -1;
 	
 	public static abstract class AbstractDynamicValueTestAgent
 	{

@@ -4,6 +4,7 @@ import java.util.Map;
 
 import jadex.core.IComponent;
 import jadex.injection.AbstractDynVal.ObservationMode;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 /**
  *  Transform changes to change events.
@@ -16,13 +17,13 @@ public class MapWrapper<T, E> extends jadex.collection.MapWrapper<T, E>
 	/**
 	 *  Create a wrapper.
 	 *  @param comp The component.
-	 *  @param name The fully qualified name of the dynamic value.
+	 *  @param mdynval The model element of the dynamic value.
 	 *  @param delegate The delegate map.
 	 */
-	public MapWrapper(IComponent comp, String name, ObservationMode mode, Map<T, E> delegate)
+	public MapWrapper(IComponent comp, MDynVal mdynval, ObservationMode mode, Map<T, E> delegate)
 	{
 		super(delegate);
-		this.helper	= new WrapperHelper<E>(comp, name, mode, delegate);
+		this.helper	= new WrapperHelper<E>(comp, mdynval, mode, delegate);
 	}
 
 	@Override

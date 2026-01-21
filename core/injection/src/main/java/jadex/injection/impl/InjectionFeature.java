@@ -13,12 +13,11 @@ import jadex.common.SUtil;
 import jadex.core.ChangeEvent;
 import jadex.core.IChangeListener;
 import jadex.core.IComponent;
-import jadex.core.ResultProvider;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
-import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.Dyn;
 import jadex.injection.IInjectionFeature;
+import jadex.injection.impl.InjectionModel.MDynVal;
 
 /**
  *  Component feature allowing e.g. @OnStart methods and field injections.
@@ -36,8 +35,6 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	
 	/** Listeners for dynamic value changes. */
 	protected Map<String, Set<IChangeListener>>	listeners;
-	
-	protected ResultProvider	rp;
 	
 	/**
 	 *  Create the injection feature.
@@ -139,37 +136,9 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 		}
 		
 		endPojo(model, Collections.singletonList(self.getPojo()), null);
-		
-		if(rp!=null)
-		{
-			rp.setFinished(self.getException());
-		}
-		// Notify on end -> conflict with terminate() in IComponentFactory.run(Object)
-//		// Inform result subscribers, if any
-//		if(rp!=null)
-//		{
-//			Map<String, Object>	results	= getResults();
-//			if(results!=null)
-//			{
-//				for(String name: results.keySet())
-//				{
-//					rp.addResult(name, results.get(name));
-//				}
-//			}
-//		}
 	}
 	
 	//-------- IInjectionFeature interface --------
-	
-	@Override
-	public void setResult(String name, Object value)
-	{
-		if(rp==null)
-		{
-			rp	= new ResultProvider();
-		}
-		rp.setResult(name, value);
-	}
 	
 	@Override
 	public void addListener(String name, IChangeListener listener)
@@ -221,20 +190,9 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	}
 	
 	/**
-	 *  Notify about a result, i.e. a change in a dynamic result field.
-	 */
-	public void notifyResult(ChangeEvent event)
-	{
-		if(rp!=null)
-		{
-			rp.notifyResult(event);
-		}
-	}
-	
-	/**
 	 *  Notify about a change in a dynamic field.
 	 */
-	public void valueChanged(ChangeEvent event)
+	public void valueChanged(ChangeEvent event, Annotation... annos)
 	{
 		// Generic handlers for e.g. sending result events.
 		Set<Class<? extends Annotation>> kinds	= model.getDynamicValue(event.name()).kinds();
@@ -247,7 +205,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 				{
 					try
 					{
-						handler.handleChange(self, event);
+						handler.handleChange(self, event, annos);
 					}
 					catch(Exception ex)
 					{
@@ -284,7 +242,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 	/**
 	 *  Add dependencies between dynamic values.
 	 */
-	public void	addDependencies(Dyn<?> dyn, String name, Set<String> dependencies)
+	public void	addDependencies(Dyn<?> dyn, MDynVal mdynval, Set<String> dependencies)
 	{
 		IChangeListener	listener	= new IChangeListener()
 		{
@@ -296,7 +254,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 				Object	newvalue	= dyn.get();
 				if(!SUtil.equals(oldvalue, newvalue))
 				{
-					InjectionFeature.this.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, name, newvalue, oldvalue, null));
+					InjectionFeature.this.valueChanged(new ChangeEvent(ChangeEvent.Type.CHANGED, mdynval.name(), newvalue, oldvalue, null), mdynval.field().getAnnotations());
 				}
 				oldvalue	= newvalue;
 			}
@@ -321,22 +279,7 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 				ret = addResults(model, pojos, ret);
 			}
 		}
-		ret = addResults(model, Collections.singletonList(self.getPojo()), ret);
-		
-		// Add manually added results last -> manual overwrites annotation, if any.
-		if(rp!=null)
-		{
-			Map<String, Object>	results	= rp.getResultMap();
-			if(ret==null)
-			{
-				ret	= results;
-			}
-			else
-			{
-				ret.putAll(results);
-			}			
-		}
-		
+		ret = addResults(model, Collections.singletonList(self.getPojo()), ret);		
 		return ret;
 	}
 
@@ -360,18 +303,6 @@ public class InjectionFeature implements IInjectionFeature, ILifecycle
 			}
 		}
 		return ret;
-	}
-	
-	/**
-	 *  Subscribe to results of the component.
-	 */
-	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults()
-	{
-		if(rp==null)
-		{
-			rp	= new ResultProvider();
-		}
-		return rp.subscribeToResults();
 	}
 	
 	/**

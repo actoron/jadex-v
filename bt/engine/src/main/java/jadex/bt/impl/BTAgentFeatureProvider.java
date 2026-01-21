@@ -22,17 +22,13 @@ import jadex.common.ITriFunction;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
-import jadex.core.ChangeEvent;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.injection.impl.InjectionFeatureProvider;
 import jadex.injection.impl.InjectionModel;
 import jadex.rules.eca.ChangeInfo;
 import jadex.rules.eca.Event;
@@ -90,20 +86,6 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 //	}
 	
 	@Override
-	public Map<String, Object> getResults(IComponent comp)
-	{
-		// Hack!? delegate result handling to injection feature.
-		return new InjectionFeatureProvider().getResults(comp);
-	}
-	
-	@Override
-	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
-	{
-		// Hack!? delegate result handling to injection feature.
-		return new InjectionFeatureProvider().subscribeToResults(comp);
-	}
-	
-	@Override
 	public void init()
 	{
 //		// Todo: make this configurable?
@@ -117,7 +99,7 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 				
 				// Consider all fields as potentially dynamic values
 				model.addDynamicValues(null, false);
-				model.addChangeHandler(null, (comp, event) ->
+				model.addChangeHandler(null, (comp, event, annos) ->
 				{
 					String	typename	=
 						event.type()==Type.ADDED ? 		BTAgentFeature.VALUEADDED :
