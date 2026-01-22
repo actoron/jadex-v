@@ -249,7 +249,7 @@ public class RequiredServiceTest
 				service.sayHello("world")
 					.then(hello -> fut.setResult(IComponentManager.get().getCurrentComponent().getId()))
 					.catchEx(e -> fut.setException(e));
-			});
+			}).get(TIMEOUT);
 			assertEquals(caller.getId(), fut.get(TIMEOUT));
 		}
 		finally
