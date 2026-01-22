@@ -89,7 +89,7 @@ public class PlanSubgoalTest
 		// Drop top-level goal and check if sub plan is aborted.
 		@SuppressWarnings("serial")
 		class MyException extends RuntimeException{};
-		handle.scheduleStep(() -> topfut.terminate(new MyException()));
+		handle.scheduleStep(() -> topfut.terminate(new MyException())).get(TestHelper.TIMEOUT);
 		agent.aborted.get(TestHelper.TIMEOUT);
 		
 //		assertThrows(GoalDroppedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));

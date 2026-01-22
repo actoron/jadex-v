@@ -80,7 +80,7 @@ public class PlanTriggerTest
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
 		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		agent.scheduleStep(() -> pojo.bel.add(0, "new fact"));
+		agent.scheduleStep(() -> pojo.bel.add(0, "new fact")).get(TestHelper.TIMEOUT);
 		checkEventInfo(pojo.added, "bel", Type.ADDED, null, "new fact", 0);
 	}
 	
@@ -93,7 +93,7 @@ public class PlanTriggerTest
 		{
 			pojo.bel.add("old fact");
 			pojo.bel.set(0, "new fact");
-		});		
+		}).get(TestHelper.TIMEOUT);
 		checkEventInfo(pojo.changed, "bel", Type.CHANGED, "old fact", "new fact", 0);
 	}
 
@@ -106,7 +106,7 @@ public class PlanTriggerTest
 		{
 			pojo.bel.add("new fact");
 			pojo.bel.remove(0);			
-		});
+		}).get(TestHelper.TIMEOUT);
 		checkEventInfo(pojo.removed, "bel", Type.REMOVED, null, "new fact", 0);
 	}
 	
@@ -115,7 +115,8 @@ public class PlanTriggerTest
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
 		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
+		agent.scheduleStep((IThrowingConsumer<IComponent>)ia ->
+			ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal())).get(TestHelper.TIMEOUT);
 		checkGoalInfo(pojo.goal, PlanTriggerTestAgent.MyGoal.class);
 	}
 
@@ -124,7 +125,8 @@ public class PlanTriggerTest
 	{
 		PlanTriggerTestAgent	pojo	= new PlanTriggerTestAgent();
 		IComponentHandle	agent	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal()));
+		agent.scheduleStep((IThrowingConsumer<IComponent>)ia ->
+			ia.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal())).get(TestHelper.TIMEOUT);
 		checkGoalEventInfo(pojo.goalfinished, PlanTriggerTestAgent.MyGoal.class);
 	}
 
