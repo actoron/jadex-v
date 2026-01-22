@@ -1380,7 +1380,7 @@ public class RequestManager
 					//writeResponse(e, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), null, null, request, response, true, null);
 					writeResponse(ri.setException(e).setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).setFinished(true));
 				}
-			});
+			}).catchEx(e -> writeResponse(ri.setException(e).setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).setFinished(true)));
 //		});
 	}
 	
