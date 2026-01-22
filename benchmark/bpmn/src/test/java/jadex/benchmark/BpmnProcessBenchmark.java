@@ -49,6 +49,11 @@ public class BpmnProcessBenchmark
 			agent.terminate().get();
 		});
 	}
+	
+	public static void main(String[] args)
+	{
+		new BpmnProcessBenchmark().benchmarkMemory();
+	}
 }
 
 

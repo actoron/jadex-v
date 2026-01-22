@@ -51,4 +51,9 @@ public class BTSharedCleanerBenchmark
 			return () -> agent.terminate().get();
 		});
 	}
+	
+	public static void main(String[] args)
+	{
+		new BTSharedCleanerBenchmark().benchmarkMemory();
+	}
 }
