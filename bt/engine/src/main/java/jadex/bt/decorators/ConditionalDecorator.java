@@ -12,24 +12,13 @@ import jadex.bt.impl.BTAgentFeatureProvider;
 import jadex.bt.impl.Event;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
-import jadex.common.ICommand;
 import jadex.common.ITriFunction;
 import jadex.core.ChangeEvent;
-import jadex.core.ChangeEvent.Type;
-import jadex.execution.IExecutionFeature;
-import jadex.execution.ITimerCreator;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ITerminableFuture;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.InjectionFeature;
 import jadex.injection.impl.InjectionModel;
-import jadex.rules.eca.EventType;
-import jadex.rules.eca.IAction;
-import jadex.rules.eca.ICondition;
-import jadex.rules.eca.IEvent;
-import jadex.rules.eca.IRule;
-import jadex.rules.eca.Rule;
 
 public class ConditionalDecorator<T> extends Decorator<T>
 {
@@ -221,101 +210,103 @@ public class ConditionalDecorator<T> extends Decorator<T>
 		return BTAgentFeature.get().getSelf().getId()+"_wait_#"+waitcnt++;
 	}
 	
-	public IFuture<Void> waitForCondition(final ICondition cond, final EventType[] events, long timeout, ExecutionContext<T> execontext)
-	{
-		final Future<Void> ret = new Future<Void>();
-		
-		ITimerCreator tc = execontext.getTimerCreator();
-		final IFuture<Void> timerfut = timeout>0? tc.createTimer(execontext, timeout): null;
-		
-		final String rulename = getRuleName();
-		final ResumeCommand<Void> rescom = new ResumeCommand<Void>(ret, rulename);
-		
-		Rule<Void> rule = new Rule<Void>(rulename, cond!=null? cond: ICondition.TRUE_CONDITION, new IAction<Void>()
-		{
-			public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
-			{
-				System.out.println("execute rule: "+cond);
-				rescom.execute(null);
-				return IFuture.DONE;
-			}
-		});
-		
-		// add temporary rule
-		if(events!=null)
-		{
-			for(EventType ev: events)
-				rule.addEvent(ev);
-		}
-		System.out.println("adding rule: "+rule.getName());
-		BTAgentFeature.get().getRuleSystem().getRulebase().addRule(rule);
-		
-		if(timerfut!=null)
-			timerfut.then(Void -> rescom.execute(null));
-		
-		return ret;
-	}
+	// TODO
+//	public IFuture<Void> waitForCondition(final ICondition cond, final EventType[] events, long timeout, ExecutionContext<T> execontext)
+//	{
+//		final Future<Void> ret = new Future<Void>();
+//		
+//		ITimerCreator tc = execontext.getTimerCreator();
+//		final IFuture<Void> timerfut = timeout>0? tc.createTimer(execontext, timeout): null;
+//		
+//		final String rulename = getRuleName();
+//		final ResumeCommand<Void> rescom = new ResumeCommand<Void>(ret, rulename);
+//		
+//		Rule<Void> rule = new Rule<Void>(rulename, cond!=null? cond: ICondition.TRUE_CONDITION, new IAction<Void>()
+//		{
+//			public IFuture<Void> execute(IEvent event, IRule<Void> rule, Object context, Object condresult)
+//			{
+//				System.out.println("execute rule: "+cond);
+//				rescom.execute(null);
+//				return IFuture.DONE;
+//			}
+//		});
+//		
+//		// add temporary rule
+//		if(events!=null)
+//		{
+//			for(EventType ev: events)
+//				rule.addEvent(ev);
+//		}
+//		System.out.println("adding rule: "+rule.getName());
+//		BTAgentFeature.get().getRuleSystem().getRulebase().addRule(rule);
+//		
+//		if(timerfut!=null)
+//			timerfut.then(Void -> rescom.execute(null));
+//		
+//		return ret;
+//	}
 	
-	public class ResumeCommand<T> implements ICommand<Object>
-	{
-		protected Future<T> waitfuture;
-		protected String rulename;
-		protected ITerminableFuture<Void> timer;
-		
-		public ResumeCommand(Future<T> waitfuture, String rulename)
-		{
-			this.waitfuture = waitfuture;
-			this.rulename = rulename;
-		}
-		
-		public void setTimer(ITerminableFuture<Void> timer)
-		{
-			this.timer = timer;
-		}
-
-		public void execute(Object args)
-		{
-			assert BTAgentFeature.get().getSelf().getFeature(IExecutionFeature.class).isComponentThread();
-
-			// Could happen when timer triggers after normal resume
-			if(waitfuture.isDone())
-				return;
-			
-//			System.out.println("exe: "+this+" "+BTAgentFeature.this.getId()+" "+this);
-
-			Exception ex = args instanceof Exception? (Exception)args: null;
-			
-			if(rulename!=null)
-			{
-				System.out.println("rem rule: "+rulename);
-				BTAgentFeature.get().getRuleSystem().getRulebase().removeRule(rulename);
-			}
-			if(timer!=null)
-				timer.terminate();
-			
-			if(ex!=null)
-			{
-				if(waitfuture instanceof ITerminableFuture)
-				{
-//					System.out.println("notify1: "+getId());
-					((ITerminableFuture<?>)waitfuture).terminate(ex);
-				}
-				else
-				{
-//					System.out.println("notify2: "+getId());
-					waitfuture.setExceptionIfUndone(ex);
-				}
-			}
-			else
-			{
-//				System.out.println("notify3: "+getId());
-				waitfuture.setResultIfUndone(null);
-			}
-		}
-
-		public Future<T> getWaitfuture()
-		{
-			return waitfuture;
-		}
-	}
+	// TODO
+//	public class ResumeCommand<T> implements ICommand<Object>
+//	{
+//		protected Future<T> waitfuture;
+//		protected String rulename;
+//		protected ITerminableFuture<Void> timer;
+//		
+//		public ResumeCommand(Future<T> waitfuture, String rulename)
+//		{
+//			this.waitfuture = waitfuture;
+//			this.rulename = rulename;
+//		}
+//		
+//		public void setTimer(ITerminableFuture<Void> timer)
+//		{
+//			this.timer = timer;
+//		}
+//
+//		public void execute(Object args)
+//		{
+//			assert BTAgentFeature.get().getSelf().getFeature(IExecutionFeature.class).isComponentThread();
+//
+//			// Could happen when timer triggers after normal resume
+//			if(waitfuture.isDone())
+//				return;
+//			
+////			System.out.println("exe: "+this+" "+BTAgentFeature.this.getId()+" "+this);
+//
+//			Exception ex = args instanceof Exception? (Exception)args: null;
+//			
+//			if(rulename!=null)
+//			{
+//				System.out.println("rem rule: "+rulename);
+//				BTAgentFeature.get().getRuleSystem().getRulebase().removeRule(rulename);
+//			}
+//			if(timer!=null)
+//				timer.terminate();
+//			
+//			if(ex!=null)
+//			{
+//				if(waitfuture instanceof ITerminableFuture)
+//				{
+////					System.out.println("notify1: "+getId());
+//					((ITerminableFuture<?>)waitfuture).terminate(ex);
+//				}
+//				else
+//				{
+////					System.out.println("notify2: "+getId());
+//					waitfuture.setExceptionIfUndone(ex);
+//				}
+//			}
+//			else
+//			{
+////				System.out.println("notify3: "+getId());
+//				waitfuture.setResultIfUndone(null);
+//			}
+//		}
+//
+//		public Future<T> getWaitfuture()
+//		{
+//			return waitfuture;
+//		}
+//	}
 }

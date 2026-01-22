@@ -22,7 +22,6 @@ import jadex.common.ITriFunction;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
-import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
@@ -30,10 +29,6 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.future.IFuture;
 import jadex.injection.impl.InjectionModel;
-import jadex.rules.eca.ChangeInfo;
-import jadex.rules.eca.Event;
-import jadex.rules.eca.EventType;
-import jadex.rules.eca.RuleSystem;
 
 public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFeature> implements IComponentLifecycleManager
 {
@@ -99,18 +94,6 @@ public class BTAgentFeatureProvider extends ComponentFeatureProvider<IBTAgentFea
 				
 				// Consider all fields as potentially dynamic values
 				model.addDynamicValues(null, false);
-				model.addChangeHandler(null, (comp, event, annos) ->
-				{
-					String	typename	=
-						event.type()==Type.ADDED ? 		BTAgentFeature.VALUEADDED :
-						event.type()==Type.REMOVED ?	BTAgentFeature.VALUEREMOVED :
-					/*	event.type()==Type.CHANGED ?*/	BTAgentFeature.PROPERTYCHANGED ;
-						
-					EventType	type	= new EventType(typename, event.name());
-					Event	ev	= new Event(type, new ChangeInfo<Object>(event.value(), event.oldvalue(), event.info()));
-					RuleSystem	rs	= ((BTAgentFeature) comp.getFeature(IBTAgentFeature.class)).getRuleSystem();
-					rs.addEvent(ev);
-				});
 				
 				model.addPostInject((self, pojos, context, oldval) ->
 				{

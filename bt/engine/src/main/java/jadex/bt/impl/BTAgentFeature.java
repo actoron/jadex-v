@@ -1,33 +1,19 @@
 package jadex.bt.impl;
 
 import java.lang.System.Logger.Level;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import jadex.bt.IBTAgentFeature;
 import jadex.bt.IBTProvider;
-import jadex.bt.decorators.ConditionalDecorator;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
-import jadex.common.ITriFunction;
-import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.ComponentTimerCreator;
-import jadex.execution.impl.IInternalExecutionFeature;
-import jadex.future.FutureHelper;
 import jadex.future.IFuture;
-import jadex.future.IIntermediateFuture;
-import jadex.injection.IInjectionFeature;
-import jadex.rules.eca.RuleEvent;
-import jadex.rules.eca.RuleSystem;
 
 public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 {
@@ -52,10 +38,6 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	/** The execution context. */
 	protected ExecutionContext<IComponent> context;
 	
-	/** The rule system. */
-	protected RuleSystem rulesystem;
-
-
 	
 	public static BTAgentFeature get()
 	{
@@ -86,20 +68,6 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		this.context = prov.createExecutionContext(self, bt);
 		//System.out.println("Created context: "+context.hashCode()+" "+getSelf().getId());
 		//new ExecutionContext<IComponent>(self, new ComponentTimerCreator());//createExecutionContext();
-		
-		this.rulesystem = new RuleSystem(self.getPojo(), true);
-		//System.out.println("createRuleSystem");
-		
-		// step listener not working for async steps
-		// now done additionally after action node actions
-		((IInternalExecutionFeature)self.getFeature(IExecutionFeature.class)).addStepListener(new BTStepListener());
-		//System.out.println("createStepLis");
-		
-		//initRulesystem(); is done in createExecutionContext now
-		
-		//System.out.println("init rule system: "+IExecutionFeature.get().getComponent());
-		
-		//System.out.println("init vals");
 		
 		// Done as postInject code in injection feature -> see BTAgentFeatureProvider.init()
 //		executeBehaviorTree(bt, null);
@@ -323,40 +291,6 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 		});
 	}*/
 	
-	protected static void executeRulesystem()
-	{
-		System.getLogger(BTAgentFeature.class.getName()).log(Level.INFO, "executeRulesystem");
-		//System.out.println("executeRulesystem");
-		BTAgentFeature btf = BTAgentFeature.get();
-		
-		//Set<Node<IComponent>> nodes = new HashSet<Node<IComponent>>();
-		while(btf.getRuleSystem()!=null && btf.getRuleSystem().isEventAvailable())
-		{
-			//System.out.println("executeCycle.PAE start: "+btf.getRuleSystem().getEventCount());
-			IIntermediateFuture<RuleEvent> res = btf.getRuleSystem().processEvent();
-			FutureHelper.notifyStackedListeners();
-			if(!res.isDone())
-			{
-				System.getLogger(BTAgentFeature.class.getName()).log(Level.ERROR, "No async actions allowed.");
-				//System.err.println("No async actions allowed.");
-			}
-			//res.get().stream().forEach(re -> nodes.add((Node<IComponent>)re.getResult()));*/
-			
-			//IFuture<Void> fut = btf.getRuleSystem().processAllEvents();
-			//if(!fut.isDone())
-			//	System.err.println("No async actions allowed.");
-		}
-		
-		/*Set<Node<IComponent>> parents = new HashSet<Node<IComponent>>();
-		if(!nodes.isEmpty())
-		{
-			nodes.stream().forEach(node ->
-			{
-				if(node.getParent()!=null && node.getParent().get)
-			});
-		}*/
-	}
-	
 	/*protected ExecutionContext<IComponent> createExecutionContext()
 	{
 		ExecutionContext<IComponent> ret = new ExecutionContext<IComponent>();
@@ -521,15 +455,6 @@ public class BTAgentFeature implements ILifecycle, IBTAgentFeature
 	    
 	    parent.reset(context, false);
 	    return true;
-	}
-	
-	/**
-	 *  Get the rulesystem.
-	 *  @return The rulesystem.
-	 */
-	public RuleSystem getRuleSystem()
-	{
-		return rulesystem;
 	}
 	
 	public Node<IComponent> getBehaviorTree() 
