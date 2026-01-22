@@ -705,6 +705,7 @@ public class Component implements IComponent
 	 *  Helper to skip NoCopy objects while cloning. 
 	 */
 	protected static List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
+	static
 	{
 		procs.add(procs.size()-1, new FilterProcessor(new IFilter<Object>()
 		{
