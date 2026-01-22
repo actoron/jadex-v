@@ -65,6 +65,7 @@ public class BpmnModelLoader extends AbstractModelLoader
 //		if (name != null && name.endsWith(".bpmn2"))
 //		{
 			MBpmnModel model = SBpmnModelReader.readModel(info.getInputStream(), info.getFilename(), null, classloader);
+			model.setLastModified(info.getLastModified());
 			//IResourceIdentifier rid = (IResourceIdentifier)((Object[])context)[0];
 			/*if(rid==null)
 			{
