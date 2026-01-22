@@ -161,6 +161,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								try
 								{
 									Object	result	= ((Callable<?>)pojo).call();
+									// Fail if no result feature available
 									Component.setResult(component, "result", result, getAnnos(pojo.getClass()));
 								}
 								catch(Exception e)
@@ -178,7 +179,8 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								{
 									@SuppressWarnings("unchecked")
 									IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
-									Object result	= itf.apply(component);							
+									Object result	= itf.apply(component);
+									// Fail if no result feature available
 									Component.setResult(component, "result", result);
 								}
 								catch(Exception e)
