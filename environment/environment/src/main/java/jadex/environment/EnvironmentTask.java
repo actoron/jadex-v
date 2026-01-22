@@ -83,6 +83,7 @@ public class EnvironmentTask
 //					System.out.println("env remove task: "+this+" "+ex);
 					env.removeTask(this);
 				});
+				// .catchEx() ignore when env component already terminated
 			});
 		}
 	}
