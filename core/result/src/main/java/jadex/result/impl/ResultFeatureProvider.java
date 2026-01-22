@@ -11,6 +11,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IResultManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.IResultListener;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.result.IResultFeature;
@@ -54,16 +55,27 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 			Future<Map<String, Object>>	ret	= new Future<>();
 			IFuture<Map<String, Object>>	fut	= comp.getComponentHandle().scheduleStep(()
 				-> doGetResults(comp));
-			fut.then(r -> ret.setResult(r)).catchEx(e ->
+			fut.addResultListener(new IResultListener<Map<String,Object>>()
 			{
-				if(e instanceof ComponentTerminatedException)
+				@Override
+				public void resultAvailable(Map<String, Object> result)
 				{
-					// When terminated, access directly.
-					ret.setResult(doGetResults(comp));
+					ret.setResult(result);
 				}
-				else
+				
+				@Override
+				public void exceptionOccurred(Exception e)
 				{
-					ret.setException(e);
+					if(e instanceof ComponentTerminatedException)
+					{
+						// When terminated, access directly.
+						ret.setResult(doGetResults(comp));
+					}
+					else
+					{
+						// Should not happen!?
+						ret.setException(e);
+					}
 				}
 			});
 			return ret;
@@ -94,10 +106,8 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 			IFuture<Void>	fut	= comp.getComponentHandle().scheduleStep(()
 				-> 
 			{
-				((ResultFeature) comp.getFeature(IResultFeature.class)).subscribeToResults()
-					.next(event -> ret.addIntermediateResult(event))
-					.finished(v -> ret.setFinished())
-					.catchEx(ex -> ret.setException(ex));
+				((ResultFeature) comp.getFeature(IResultFeature.class))
+					.subscribeToResults().delegateTo(ret);
 				return null;
 			});
 			
