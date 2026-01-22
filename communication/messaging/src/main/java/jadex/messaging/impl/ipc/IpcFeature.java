@@ -78,6 +78,7 @@ public class IpcFeature implements IIpcFeature
 			{
 				((MessageFeature) comp.getFeature(IMessageFeature.class)).externalMessageArrived(rmsg.origin(), rmsg.message);
 			});
+			// catchEx -> ignore when receiver is terminated
 		}
 		catch (Exception e)
 		{

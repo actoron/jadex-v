@@ -67,6 +67,7 @@ public class MessageFeature implements IMessageFeature
 					{
 						((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, message);
 					});
+					// catchEx -> ignore when receiver is ternminated
 				}
 				else
 				{
@@ -204,6 +205,7 @@ public class MessageFeature implements IMessageFeature
 			{
 				((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, tex);
 			});
+			// catchEx -> ignore when receiver is terminated
 		}
 		else
 		{
