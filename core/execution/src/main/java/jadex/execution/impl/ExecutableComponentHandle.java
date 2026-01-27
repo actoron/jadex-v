@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import jadex.common.SAccess;
+import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
@@ -141,26 +142,29 @@ public class ExecutableComponentHandle implements IComponentHandle
 						myargs.add(Component.copyVal(args[p], pannos[p]));
 					}
 					
-					FutureFunctionality func = new ComponentFutureFunctionality(caller)
-					{							
-						public Object handleResult(Object val) throws Exception
-						{
-							return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
-						}
+					Future<Object> ret = null;
+					if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
+					{
+						FutureFunctionality func = new ComponentFutureFunctionality(caller)
+						{							
+							public Object handleResult(Object val) throws Exception
+							{
+								return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
+							}
+							
+							public Object handleIntermediateResult(Object val) throws Exception
+							{
+								return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
+							}
+						};
 						
-						public Object handleIntermediateResult(Object val) throws Exception
-						{
-							return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
-						}
-					};
-					
-					Future<Object> ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
-					
+						ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
+					}
 					//final Object[] myargs = copyargs.toArray();
 					
 			        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
 			        {
-			        	//System.out.println("already on agent: "+getId());
+//			        	System.out.println("already on agent: "+getId());
 			        	if(ret instanceof IFuture)
 			        	{
 			        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method, next);
@@ -180,11 +184,13 @@ public class ExecutableComponentHandle implements IComponentHandle
 			        {
 			        	if(ret instanceof IFuture)
 			        	{
+							Future<Object> fret = ret;
+							
 				        	IFuture fut = scheduleAsyncStep(new ICallable<IFuture<Object>>() 
 			        		{
 			        			public Class<? extends IFuture<?>> getFutureReturnType() 
 			        			{
-			        				return (Class<? extends IFuture<?>>)ret.getClass();
+			        				return (Class<? extends IFuture<?>>)fret.getClass();
 			        			}
 			        			
 			        			public IFuture<Object> call() throws Exception
@@ -197,7 +203,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 			        	//System.out.println("scheduled on agent: "+getId());
 			        	else if(method.getReturnType().equals(void.class))
 			        	{
-			        		scheduleStep((Runnable)() -> invokeMethod(comp, pojo, myargs, method, next))
+			        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method, next))
 			        			.catchEx(ex -> comp.handleException(ex));
 			        	}
 			        	else 
