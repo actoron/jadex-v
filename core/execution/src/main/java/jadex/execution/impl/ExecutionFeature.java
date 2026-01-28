@@ -422,13 +422,17 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 								if(entries.size()==0)
 								{
 									entries	= null;
+									
+									// Hack!!! Remove cancelled timers to prevent memory leaks
+									// TODO: implement own timer with O(1) cancellation?
+									timer.purge();
 								}
 							}
 						});
 					}
 					catch(ComponentTerminatedException cte)
 					{
-						task.getTask().cancel();
+						// NOP -> timer is cancelled in cleanup()
 					}
 				});
 			});
@@ -898,6 +902,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				tti.getFuture().setExceptionIfUndone(ex);
 			}
 			entries	= null;
+			
+			// Hack!!! Remove cancelled timers to prevent memory leaks
+			// TODO: implement own timer with O(1) cancellation?
+			timer.purge();
 		}
 		
 		//System.out.println("terminate end");
