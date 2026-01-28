@@ -367,89 +367,77 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	}
 	
 	// Global on-demand timer shared by all components.
-	private static volatile Timer timer = new Timer(true);
-	//protected static volatile int	timer_entries;
-	protected static volatile Set<TimerTaskInfo> entries;
+	private static Timer timer = new Timer(true);
+
+	/** Timer entries to be cancelled on termination. */
+	protected Set<TimerTaskInfo> entries;
 	
 	@Override
 	public ITerminableFuture<Void> waitForDelay(long millis)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<>();
-		
-		if(self.isTerminated())
+				
+		try
 		{
-			ret.setException(new ComponentTerminatedException(getComponent().getId()));
-			return ret;
-		}
-		
-		synchronized(ExecutionFeature.class)
-		{
-			//if(timer==null)
-			//	timer = new Timer();
-			//timer_entries++;
-			
-			TimerTaskInfo task = new TimerTaskInfo(getComponent().getId(), ret);
-			task.setTask(new TimerTask()
+			scheduleStep(() ->
 			{
-				@Override
-				public void run()
+				TimerTaskInfo task = new TimerTaskInfo(getComponent().getId(), ret);
+				task.setTask(new TimerTask()
 				{
-					//if(!this.cancel())
-					//	return;
-					
-					try
+					@Override
+					public void run()
 					{
-						scheduleStep((Runnable)() -> ret.setResultIfUndone(null));
-					}
-					catch(ComponentTerminatedException e)
-					{
-						ret.setExceptionIfUndone(e);
-					}
-					
-					synchronized(ExecutionFeature.class)
-					{
-						if(entries==null)
-							return;
-
-						//timer_entries--;
-						entries.remove(task);
-						if(entries.size()==0)
+						try
 						{
-							entries	= null;
-							//timer.cancel();
-							//timer = null;
+							scheduleStep(() ->
+							{
+								entries.remove(task);
+								ret.setResultIfUndone(null);
+							});
+						}
+						catch(ComponentTerminatedException e)
+						{
+							ret.setExceptionIfUndone(e);
 						}
 					}
-				}
-			});
-			
-			if(entries==null)
-				entries	= new LinkedHashSet<>(2, 1);
-			
-			entries.add(task);
-			
-			timer.schedule(task.getTask(), millis);
-			
-			ret.setTerminationCommand(ex -> 
-			{
-				synchronized(ExecutionFeature.class)
+				});
+
+				if(entries==null)
+					entries	= new LinkedHashSet<>(2);
+				
+				entries.add(task);
+				
+				timer.schedule(task.getTask(), millis);
+				
+				ret.setTerminationCommand(ex -> 
 				{
-					//if(!task.getTask().cancel())
-					//	return;
-					if(entries==null)
-						return;
-					
-					entries.remove(task);
-					if(entries.size()==0)
+					try
 					{
-						entries	= null;
-						//timer.cancel();
-						//timer = null;
+						scheduleStep(()->
+						{
+							task.getTask().cancel();
+							if(entries!=null)
+							{
+								entries.remove(task);
+								if(entries.size()==0)
+								{
+									entries	= null;
+								}
+							}
+						});
 					}
-				}
+					catch(ComponentTerminatedException cte)
+					{
+						task.getTask().cancel();
+					}
+				});
 			});
 		}
-		
+		catch(ComponentTerminatedException cte)
+		{
+			ret.setException(cte);
+		}
+				
 		return  ret;
 	}
 	
@@ -900,35 +888,16 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		
 		// Drop queued timer tasks.
-		List<TimerTaskInfo> todo = null;
-		TimerTaskInfo[] ttis;
-		synchronized(ExecutionFeature.class)
+		if(entries!=null)
 		{
-			ttis = entries==null? new TimerTaskInfo[0]: entries.toArray(TimerTaskInfo[]::new);
-			
-			for(TimerTaskInfo tti: ttis)
+			for(TimerTaskInfo tti: entries)
 			{
-				if(getComponent().getId().equals(tti.getComponentId()))
-				{
-					if(todo==null)
-					{
-						todo	= new ArrayList<>(1);
-					}
-					todo.add(tti);
-					tti.getTask().cancel();
-//					entries.remove(tti);
-				}
-			}
-			entries	= null;
-		}
-		if(todo!=null)
-		{
-			for(TimerTaskInfo tti: todo)
-			{
+				tti.getTask().cancel();
 				if(ex==null)
 					ex	= new ComponentTerminatedException(getComponent().getId());
 				tti.getFuture().setExceptionIfUndone(ex);
 			}
+			entries	= null;
 		}
 		
 		//System.out.println("terminate end");
