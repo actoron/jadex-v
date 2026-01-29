@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
-import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
@@ -370,114 +369,81 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	private static Timer timer = new Timer(true);
 
 	/** Timer entries to be cancelled on termination. */
-	protected Set<TimerTaskInfo> entries;
+	protected Set<WaitTask> entries;
 	
 	@Override
 	public ITerminableFuture<Void> waitForDelay(long millis)
 	{
 		TerminableFuture<Void> ret = new TerminableFuture<>();
-				
-		try
+		
+		if(self.isTerminated())
 		{
-			scheduleStep(() ->
-			{
-				TimerTaskInfo task = new TimerTaskInfo(getComponent().getId(), ret);
-				task.setTask(new TimerTask()
-				{
-					@Override
-					public void run()
-					{
-						try
-						{
-							scheduleStep(() ->
-							{
-								entries.remove(task);
-								ret.setResultIfUndone(null);
-							});
-						}
-						catch(ComponentTerminatedException e)
-						{
-							ret.setExceptionIfUndone(e);
-						}
-					}
-				});
+			ret.setException(new ComponentTerminatedException(getComponent().getId()));
+			return ret;
+		}
+		
+		WaitTask task = new WaitTask(this, ret);
+		timer.schedule(task, millis);
 
-				if(entries==null)
-					entries	= new LinkedHashSet<>(2);
-				
-				entries.add(task);
-				
-				timer.schedule(task.getTask(), millis);
-				
-				ret.setTerminationCommand(ex -> 
-				{
-					try
-					{
-						scheduleStep(()->
-						{
-							task.getTask().cancel();
-							if(entries!=null)
-							{
-								entries.remove(task);
-								if(entries.size()==0)
-								{
-									entries	= null;
-									
-									// Hack!!! Remove cancelled timers to prevent memory leaks
-									// TODO: implement own timer with O(1) cancellation?
-									timer.purge();
-								}
-							}
-						});
-					}
-					catch(ComponentTerminatedException cte)
-					{
-						// NOP -> timer is cancelled in cleanup()
-					}
-				});
-			});
-		}
-		catch(ComponentTerminatedException cte)
+		if(entries==null)
+			entries	= new LinkedHashSet<>(2);
+		
+		entries.add(task);
+		
+		ret.setTerminationCommand(ex -> 
 		{
-			ret.setException(cte);
-		}
-				
+			entries.remove(task);
+			task.cancel();
+		});
+		
 		return  ret;
 	}
 	
-	class TimerTaskInfo
+	/**
+	 *  Task to notify future after delay.
+	 */
+	static class WaitTask	extends TimerTask
 	{
-		protected ComponentIdentifier cid;
-		protected TimerTask task;
+		protected ExecutionFeature	exe;
 		protected Future<?> future;
 		
-		public TimerTaskInfo(ComponentIdentifier cid, Future<?> future)
+		WaitTask(ExecutionFeature exe, Future<?> future)
 		{
-			this.cid = cid;
+			this.exe = exe;
 			this.future = future;
 		}
 
-		public ComponentIdentifier getComponentId() 
-		{
-			return cid;
-		}
-
-		public TimerTask getTask() 
-		{
-			return task;
-		}
-		
-		public void setTask(TimerTask task) 
-		{
-			this.task = task;
-		}
-
-		public Future<?> getFuture() 
+		Future<?> getFuture() 
 		{
 			return future;
 		}
+		
+		@Override
+		public void run()
+		{
+			try
+			{
+				exe.scheduleStep(() ->
+				{
+					exe.entries.remove(WaitTask.this);
+					future.setResultIfUndone(null);
+				});
+			}
+			catch(ComponentTerminatedException e)
+			{
+				future.setExceptionIfUndone(e);
+			}
+		}
+		
+		@Override
+		public boolean cancel()
+		{
+			// Remove references to avoid memory leak.
+			this.exe	= null;
+			this.future	= null;
+			return super.cancel();
+		}
 	}
-	
 	
 	@Override
 	public long getTime()
@@ -894,18 +860,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		// Drop queued timer tasks.
 		if(entries!=null)
 		{
-			for(TimerTaskInfo tti: entries)
+			for(WaitTask tti: entries)
 			{
-				tti.getTask().cancel();
 				if(ex==null)
 					ex	= new ComponentTerminatedException(getComponent().getId());
 				tti.getFuture().setExceptionIfUndone(ex);
+				tti.cancel();
 			}
 			entries	= null;
-			
-			// Hack!!! Remove cancelled timers to prevent memory leaks
-			// TODO: implement own timer with O(1) cancellation?
-			timer.purge();
 		}
 		
 		//System.out.println("terminate end");
