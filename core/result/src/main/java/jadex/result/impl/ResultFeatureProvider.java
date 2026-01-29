@@ -125,9 +125,16 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 				}
 			});
 		}
-		else
+		else if(comp.isTerminated())
 		{
 			doFinishedResultSubscription(comp, ret);
+		}
+		else
+		{
+			// Hack!!! Race condition when terminated from another thread
+			// -> future might never get finished.
+			((ResultFeature) comp.getFeature(IResultFeature.class))
+				.subscribeToResults().delegateTo(ret);
 		}
 		
 		return ret;
