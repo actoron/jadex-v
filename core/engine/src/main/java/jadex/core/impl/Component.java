@@ -227,7 +227,15 @@ public class Component implements IComponent
 					Class rtype	= type;
 					@SuppressWarnings("unchecked")
 					Class<IComponentFeature> otype	= (Class<IComponentFeature>)rtype;
-					features.put(otype, ret);
+					// Synchronized to avoid concurrent fetch of execution feature in ExecutableComponentHandle
+					synchronized(this)
+					{
+						if(features==null)
+						{
+							features	= new LinkedHashMap<>(1, 1);
+						}
+						features.put(otype, ret);
+					}
 					
 					if(ret instanceof ILifecycle)
 					{

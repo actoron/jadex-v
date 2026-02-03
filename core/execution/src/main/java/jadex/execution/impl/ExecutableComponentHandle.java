@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
+import jadex.core.ChangeEvent;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
@@ -20,7 +21,6 @@ import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
-import jadex.core.ChangeEvent;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
@@ -263,36 +263,72 @@ public class ExecutableComponentHandle implements IComponentHandle
 	@Override
 	public <T> IFuture<T> scheduleStep(Callable<T> step) 
 	{
-		return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
+		IExecutionFeature	exe;
+		// Synchronized to avoid concurrent addition of lazy feature
+		synchronized(comp)
+		{
+			exe	= comp.getFeature(IExecutionFeature.class);
+		}
+		return exe.scheduleStep(step);
 	}
 
 	@Override
 	public void scheduleStep_old(Runnable step) 
 	{
-		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
+		IExecutionFeature	exe;
+		// Synchronized to avoid concurrent addition of lazy feature
+		synchronized(comp)
+		{
+			exe	= comp.getFeature(IExecutionFeature.class);
+		}
+		exe.scheduleStep(step);
 	}
 
 	@Override
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
-		return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
+		IExecutionFeature	exe;
+		// Synchronized to avoid concurrent addition of lazy feature
+		synchronized(comp)
+		{
+			exe	= comp.getFeature(IExecutionFeature.class);
+		}
+		return exe.scheduleStep(step);
 	}
 
 	@Override
 	public void scheduleStep_old(IThrowingConsumer<IComponent> step)
 	{
-		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
+		IExecutionFeature	exe;
+		// Synchronized to avoid concurrent addition of lazy feature
+		synchronized(comp)
+		{
+			exe	= comp.getFeature(IExecutionFeature.class);
+		}
+		exe.scheduleStep(step);
 	}
 
 	@Override
 	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
 	{
-		return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
+		IExecutionFeature	exe;
+		// Synchronized to avoid concurrent addition of lazy feature
+		synchronized(comp)
+		{
+			exe	= comp.getFeature(IExecutionFeature.class);
+		}
+		return exe.scheduleAsyncStep(step);
 	}
 
 	@Override
 	public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
 	{
-		return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
+		IExecutionFeature	exe;
+		// Synchronized to avoid concurrent addition of lazy feature
+		synchronized(comp)
+		{
+			exe	= comp.getFeature(IExecutionFeature.class);
+		}
+		return exe.scheduleAsyncStep(step);
 	}
 }
