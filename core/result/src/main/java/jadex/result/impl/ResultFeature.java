@@ -75,6 +75,7 @@ public class ResultFeature implements IResultFeature, ILifecycle
 		}
 		SubscriptionIntermediateFuture<ChangeEvent>	sub	= new SubscriptionIntermediateFuture<>();
 		resultsubscribers.add(sub);
+		sub.setTerminationCommand(ex -> resultsubscribers.remove(sub));
 		
 		// Notify supplied results
 		if(resultsupplier!=null)

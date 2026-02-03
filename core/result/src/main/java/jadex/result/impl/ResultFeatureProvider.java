@@ -13,6 +13,8 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.IntermediateFuture;
+import jadex.future.SubscriptionIntermediateDelegationFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.result.IResultFeature;
 
@@ -97,11 +99,11 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 	@Override
 	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
 	{
-		// TODO: schedule future notifications back to caller thread
-		SubscriptionIntermediateFuture<ChangeEvent>	ret	= new SubscriptionIntermediateFuture<>();
-
 		if(Component.isExecutable())
 		{			
+			// TODO: schedule future notifications back to caller thread
+			SubscriptionIntermediateDelegationFuture<ChangeEvent>	ret	= new SubscriptionIntermediateDelegationFuture<>();
+
 			// When component is alive -> forward events to ret future.
 			IFuture<Void>	fut	= comp.getComponentHandle().scheduleStep(()
 				-> 
@@ -124,26 +126,28 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 					ret.setException(e);
 				}
 			});
+			
+			return ret;
 		}
 		else if(comp.isTerminated())
 		{
+			SubscriptionIntermediateFuture<ChangeEvent>	ret	= new SubscriptionIntermediateFuture<>();
 			doFinishedResultSubscription(comp, ret);
+			return ret;
 		}
 		else
 		{
 			// Hack!!! Race condition when terminated from another thread
 			// -> future might never get finished.
-			((ResultFeature) comp.getFeature(IResultFeature.class))
-				.subscribeToResults().delegateTo(ret);
+			return ((ResultFeature) comp.getFeature(IResultFeature.class))
+				.subscribeToResults();
 		}
-		
-		return ret;
 	}
 	
 	/**
 	 *  Send results for already terminated component.
 	 */
-	protected void	doFinishedResultSubscription(IComponent comp, SubscriptionIntermediateFuture<ChangeEvent> ret)
+	protected void	doFinishedResultSubscription(IComponent comp, IntermediateFuture<ChangeEvent> ret)
 	{
 		// Use doGetResult() to copy result values as results might be accessed by many components
 		// -> each caller gets its own copy.

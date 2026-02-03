@@ -20,6 +20,7 @@ import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingConsumer;
 import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -157,8 +158,7 @@ public class ResultTest
 		terminated[0]	= true;
 		assertEquals(expected, handle.getResults().get(TIMEOUT));
 	}
-
-
+	
 	/**
 	 *  Test result subscription.
 	 */
@@ -193,6 +193,24 @@ public class ResultTest
 		assertEquals(new ChangeEvent(Type.CHANGED, "end", "endvalue", null, null), res);
 		
 		assertFalse(sub.hasNextIntermediateResult(TIMEOUT, true));
+	}
+	
+	@Test
+	public void	testSubscriptionTermination()
+	{
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()).get(TIMEOUT);
+		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= handle.subscribeToResults();
+		
+		// Test that subscription works.
+		handle.scheduleStep((IThrowingConsumer<IComponent>)comp
+			-> comp.getFeature(IResultFeature.class).setResult("result", "value")).get(TIMEOUT);
+		ChangeEvent	res	= sub.getNextIntermediateResult(TIMEOUT);
+		assertEquals(new ChangeEvent(Type.CHANGED, "result", "value", null, null), res);
+		
+		// Test that no more results are published after termination.
+		sub.terminate(new Exception("Test"));
+		handle.scheduleStep((IThrowingConsumer<IComponent>)comp
+			-> comp.getFeature(IResultFeature.class).setResult("result", "newvalue")).get(TIMEOUT);
 	}
 	
 	/**
