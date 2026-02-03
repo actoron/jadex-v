@@ -119,9 +119,12 @@ public class ResultTest
 	{
 		SUtil.runWithoutOutErr(() ->
 		{
-			IComponentHandle	comp	= IComponentManager.get().create((Callable<String>)() -> {throw new RuntimeException("ex");}).get(TIMEOUT);
+			@SuppressWarnings("serial")
+			class TestException	extends RuntimeException {}
+			
+			IComponentHandle	comp	= IComponentManager.get().create((Callable<String>)() -> {throw new TestException();}).get(TIMEOUT);
 			ISubscriptionIntermediateFuture<ChangeEvent>	sub	= comp.subscribeToResults();
-			assertThrows(RuntimeException.class, () -> sub.getNextIntermediateResult(TIMEOUT).value());
+			assertThrows(TestException.class, () -> sub.getNextIntermediateResult(TIMEOUT).value());
 		});
 	}
 }
