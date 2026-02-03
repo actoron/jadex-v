@@ -181,7 +181,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
 									Object result	= itf.apply(component);
 									// Fail if no result feature available
-									Component.setResult(component, "result", result);
+									Component.setResult(component, "result", result, getAnnos(pojo.getClass()));
 								}
 								catch(Exception e)
 								{

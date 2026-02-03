@@ -41,6 +41,11 @@ public class ResultTest
 		List<String>	result	= IComponentManager.get().run(() -> value).get(TIMEOUT);
 		assertEquals(value, result);
 		assertNotSame(value, result);
+
+		IComponentHandle	comp	= IComponentManager.get().create((Callable<Object>) () -> value).get(TIMEOUT);
+		Object	res	= comp.subscribeToResults().getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value, res);
+		assertNotSame(value, res);
 	}
 	
 	@Test
@@ -58,6 +63,11 @@ public class ResultTest
 		List<String>	result	= IComponentManager.get().run(call).get(TIMEOUT);
 		assertEquals(value, result);
 		assertSame(value, result);
+
+		IComponentHandle	comp	= IComponentManager.get().create(call).get(TIMEOUT);
+		Object	res	= comp.subscribeToResults().getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value, res);
+		assertSame(value, res);
 	}
 
 	@Test
@@ -73,6 +83,11 @@ public class ResultTest
 		List<String>	result	= IComponentManager.get().run(comp -> value).get(TIMEOUT);
 		assertEquals(value, result);
 		assertNotSame(value, result);
+		
+		IComponentHandle	comp	= IComponentManager.get().create((IThrowingFunction<IComponent, Object>) c -> value).get(TIMEOUT);
+		Object	res	= comp.subscribeToResults().getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value, res);
+		assertNotSame(value, res);
 	}
 	
 	@Test
@@ -90,6 +105,11 @@ public class ResultTest
 		List<String>	result	= IComponentManager.get().run(func).get(TIMEOUT);
 		assertEquals(value, result);
 		assertSame(value, result);
+		
+		IComponentHandle	comp	= IComponentManager.get().create(func).get(TIMEOUT);
+		Object	res	= comp.subscribeToResults().getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value, res);
+		assertSame(value, res);
 	}
 	
 	@Test
