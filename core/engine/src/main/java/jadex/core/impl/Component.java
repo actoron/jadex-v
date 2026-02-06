@@ -219,32 +219,40 @@ public class Component implements IComponent
 			{
 				try
 				{
-					ComponentFeatureProvider<?>	provider	= providers.get(type);
-					assert provider.isLazyFeature();
-					@SuppressWarnings("unchecked")
-					T ret = (T)provider.createFeatureInstance(this);
-					@SuppressWarnings("rawtypes")
-					Class rtype	= type;
-					@SuppressWarnings("unchecked")
-					Class<IComponentFeature> otype	= (Class<IComponentFeature>)rtype;
 					// Synchronized to avoid concurrent fetch of execution feature in ExecutableComponentHandle
 					synchronized(this)
 					{
-						if(features==null)
+						if(features!=null && features.containsKey(type))
 						{
-							features	= new LinkedHashMap<>(1, 1);
+							@SuppressWarnings("unchecked")
+							T ret	= (T)features.get(type);
+							return ret;
 						}
-						features.put(otype, ret);
-					}
-					
-					if(ret instanceof ILifecycle)
-					{
-						ILifecycle lfeature = (ILifecycle)ret;
-						//System.out.println("starting: "+lfeature);
-						lfeature.init();
-					}
-
-					return ret;
+						
+						ComponentFeatureProvider<?>	provider	= providers.get(type);
+						assert provider.isLazyFeature();
+						@SuppressWarnings("unchecked")
+						T ret = (T)provider.createFeatureInstance(this);
+						@SuppressWarnings("rawtypes")
+						Class rtype	= type;
+						@SuppressWarnings("unchecked")
+						Class<IComponentFeature> otype	= (Class<IComponentFeature>)rtype;
+						
+						if(ret instanceof ILifecycle)
+						{
+							ILifecycle lfeature = (ILifecycle)ret;
+							//System.out.println("starting: "+lfeature);
+							lfeature.init();
+						}
+						
+						// Copy map to allow concurrent access to features via getFeatures() during init of lazy feature.
+						Map<Class<IComponentFeature>, IComponentFeature> newfeats
+							= features!=null ? new LinkedHashMap<>(features) : new LinkedHashMap<>(1, 1);
+						newfeats.put(otype, ret);
+						features	= newfeats;
+						
+						return ret;
+					}					
 				}
 				catch(Throwable t)
 				{

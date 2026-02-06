@@ -263,72 +263,36 @@ public class ExecutableComponentHandle implements IComponentHandle
 	@Override
 	public <T> IFuture<T> scheduleStep(Callable<T> step) 
 	{
-		IExecutionFeature	exe;
-		// Synchronized to avoid concurrent addition of lazy feature
-		synchronized(comp)
-		{
-			exe	= comp.getFeature(IExecutionFeature.class);
-		}
-		return exe.scheduleStep(step);
+		return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}
 
 	@Override
 	public void scheduleStep_old(Runnable step) 
 	{
-		IExecutionFeature	exe;
-		// Synchronized to avoid concurrent addition of lazy feature
-		synchronized(comp)
-		{
-			exe	= comp.getFeature(IExecutionFeature.class);
-		}
-		exe.scheduleStep(step);
+		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}
 
 	@Override
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
-		IExecutionFeature	exe;
-		// Synchronized to avoid concurrent addition of lazy feature
-		synchronized(comp)
-		{
-			exe	= comp.getFeature(IExecutionFeature.class);
-		}
-		return exe.scheduleStep(step);
+		return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}
 
 	@Override
 	public void scheduleStep_old(IThrowingConsumer<IComponent> step)
 	{
-		IExecutionFeature	exe;
-		// Synchronized to avoid concurrent addition of lazy feature
-		synchronized(comp)
-		{
-			exe	= comp.getFeature(IExecutionFeature.class);
-		}
-		exe.scheduleStep(step);
+		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}
 
 	@Override
 	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
 	{
-		IExecutionFeature	exe;
-		// Synchronized to avoid concurrent addition of lazy feature
-		synchronized(comp)
-		{
-			exe	= comp.getFeature(IExecutionFeature.class);
-		}
-		return exe.scheduleAsyncStep(step);
+		return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
 	}
 
 	@Override
 	public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
 	{
-		IExecutionFeature	exe;
-		// Synchronized to avoid concurrent addition of lazy feature
-		synchronized(comp)
-		{
-			exe	= comp.getFeature(IExecutionFeature.class);
-		}
-		return exe.scheduleAsyncStep(step);
+		return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
 	}
 }
