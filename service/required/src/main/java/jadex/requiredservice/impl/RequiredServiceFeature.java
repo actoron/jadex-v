@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
@@ -222,7 +223,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		ISubscriptionIntermediateFuture<T> tfut	= (ISubscriptionIntermediateFuture)FutureFunctionality
 			// Component functionality as local registry pushes results on arbitrary thread.
-			.getDelegationFuture(localresults, new ComponentFutureFunctionality(getComponent())
+			.getDelegationFuture(localresults, new ComponentFutureFunctionality(self.getFeature(IExecutionFeature.class))
 		{
 			protected int resultcnt = 0;
 			

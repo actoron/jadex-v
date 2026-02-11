@@ -9,7 +9,6 @@ import java.util.List;
 
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.core.IComponentManager;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;
@@ -100,7 +99,7 @@ public class ServiceInvocationHandler	implements InvocationHandler, ISwitchCall
 			
 			if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 			{
-				final Future<Object> fret = FutureFunctionality.createReturnFuture(method, args, IComponentManager.get().getClassLoader(), null);
+				final Future<Object> fret = FutureFunctionality.createReturnFuture(method, /*args, IComponentManager.get().getClassLoader(),*/ null);
 				ret = fret;
 				
 				sic.invoke(service, method, myargs).addResultListener(new ExceptionDelegationResultListener<Void, Object>(fret)

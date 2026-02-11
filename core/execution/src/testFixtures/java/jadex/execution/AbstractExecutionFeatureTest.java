@@ -6,17 +6,24 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.swing.SwingUtilities;
 
 import org.junit.jupiter.api.Test;
 
 import jadex.common.TimeoutException;
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ITerminableFuture;
+import jadex.future.TerminableFuture;
 
 public abstract class AbstractExecutionFeatureTest
 {
@@ -403,7 +410,66 @@ public abstract class AbstractExecutionFeatureTest
 		assertThrows(TimeoutException.class, () -> comp.scheduleStep(()
 			-> new Future<>().get(wait)).get(TIMEOUT));
 		long after	= comp.scheduleStep(
-				() -> IExecutionFeature.get().getTime()).get(TIMEOUT);
-			assertTrue(after >= before+wait, "Not enough time has passed.");
+			() -> IExecutionFeature.get().getTime()).get(TIMEOUT);
+		assertTrue(after >= before+wait, "Not enough time has passed.");
+	}
+	
+	@Test
+	public void	testResultScheduling() throws Exception
+	{
+		// Check that future result is scheduled on caller thread, if any.
+		
+		// Call from test -> check for global runner
+		IComponentHandle agent = IComponentManager.get().create(null).get();
+		Future<Void>	resfut	= new Future<>();
+		IFuture<Void>	iresfut	= agent.scheduleAsyncStep(() -> resfut); 
+		Future<ComponentIdentifier>	compfut	= new Future<>();
+		iresfut.then(res -> compfut.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		agent.scheduleStep(() -> resfut.setResult(null)).get(TIMEOUT);
+		assertEquals(ComponentManager.get().getGlobalRunner().getId(), compfut.get(TIMEOUT));
+		
+		// Call from other agent -> check for caller agent
+		IComponentHandle agent2 = IComponentManager.get().create(null).get();
+		Future<Void>	resfut2	= new Future<>();
+		Future<ComponentIdentifier>	compfut2	= new Future<>();
+		agent2.scheduleStep(() ->
+		{
+			IFuture<Void>	iresfut2	= agent.scheduleAsyncStep(() -> resfut2); 
+			iresfut2.then(res -> compfut2.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		}).get(TIMEOUT);
+		agent.scheduleStep(() -> resfut2.setResult(null)).get(TIMEOUT);
+		assertEquals(agent2.getId(), compfut2.get(TIMEOUT));
+		
+		// Call from swing -> check for swing thread
+		Future<Void>	resfut3	= new Future<>();
+		Future<Boolean>	swingfut	= new Future<>();
+		SwingUtilities.invokeAndWait(() ->
+		{
+			IFuture<Void>	iresfut3	= agent.scheduleAsyncStep(() -> resfut3); 
+			iresfut3.then(res -> swingfut.setResult(SwingUtilities.isEventDispatchThread()));
+		});
+		agent.scheduleStep(() -> resfut3.setResult(null)).get(TIMEOUT);
+		assertTrue(swingfut.get(TIMEOUT));
+	}
+	
+	@Test
+	public void	testTerminationScheduling()
+	{
+		// Check for termination command executed on component thread. 
+		Future<ComponentIdentifier>	compfut	= new Future<>();
+		IComponentHandle agent = IComponentManager.get().create(null).get();
+		ITerminableFuture<Object>	termfut	= agent.scheduleAsyncStep(new Callable<ITerminableFuture<Object>>()
+		{
+			@Override
+			public ITerminableFuture<Object> call() throws Exception
+			{
+				return new TerminableFuture<>(ex ->
+					compfut.setResult(IComponentManager.get().getCurrentComponent().getId()));
+			}
+		});
+		// Step to make sure inner future is created and connected to delegation future before terminate().
+		agent.scheduleStep(() -> null).get(TIMEOUT);
+		termfut.terminate();
+		assertEquals(agent.getId(), compfut.get(TIMEOUT));
 	}
 }
