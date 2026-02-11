@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import jadex.core.ChangeEvent;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 import jadex.core.impl.ILifecycle;
 import jadex.future.SubscriptionIntermediateFuture;
@@ -75,7 +76,11 @@ public class ResultFeature implements IResultFeature, ILifecycle
 		}
 		SubscriptionIntermediateFuture<ChangeEvent>	sub	= new SubscriptionIntermediateFuture<>();
 		resultsubscribers.add(sub);
-		sub.setTerminationCommand(ex -> resultsubscribers.remove(sub));
+		sub.setTerminationCommand(ex -> 
+		{
+			assert !Component.isExecutable() || IComponentManager.get().getCurrentComponent()==self : "Result subscription termination must be done on component thread.";
+			resultsubscribers.remove(sub);
+		});
 		
 		// Notify supplied results
 		if(resultsupplier!=null)

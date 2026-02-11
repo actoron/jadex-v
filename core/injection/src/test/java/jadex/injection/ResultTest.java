@@ -196,7 +196,7 @@ public class ResultTest
 		assertFalse(sub.hasNextIntermediateResult(TIMEOUT, true));
 	}
 	
-//	@Test
+	@Test
 	public void	testSubscriptionTermination()
 	{
 		IComponentHandle	handle	= IComponentManager.get().create(new Object()).get(TIMEOUT);
@@ -210,11 +210,12 @@ public class ResultTest
 		
 		// Test that no more results are published after termination.
 		sub.terminate(new Exception("Test"));
+		handle.scheduleStep(() -> null).get(TIMEOUT);	// Schedule step to ensure termination is processed.
 		handle.scheduleStep((IThrowingConsumer<IComponent>)comp
 			-> comp.getFeature(IResultFeature.class).setResult("result", "newvalue")).get(TIMEOUT);
 	}
 	
-//	@Test
+	@Test
 	public void	testSubscriptionThreading()
 	{
 		IComponentHandle	handle	= IComponentManager.get().create(new Object()).get(TIMEOUT);
