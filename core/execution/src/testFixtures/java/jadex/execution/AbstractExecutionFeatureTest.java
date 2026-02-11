@@ -413,9 +413,109 @@ public abstract class AbstractExecutionFeatureTest
 			() -> IExecutionFeature.get().getTime()).get(TIMEOUT);
 		assertTrue(after >= before+wait, "Not enough time has passed.");
 	}
+
+	@Test
+	public void	testSyncResultSchedulingCallable() throws Exception
+	{
+		// Check that future result is scheduled on caller thread, if any.
+		
+		// Call from test -> check for global runner
+		IComponentHandle agent = IComponentManager.get().create(null).get();
+		Future<Void>	resfut	= new Future<>();
+		IFuture<Void>	iresfut	= agent.scheduleStep(() -> 
+		{
+			resfut.get();
+			return null;
+		});
+		Future<ComponentIdentifier>	compfut	= new Future<>();
+		iresfut.then(res -> compfut.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		agent.scheduleStep(() -> resfut.setResult(null)).get(TIMEOUT);
+		assertEquals(ComponentManager.get().getGlobalRunner().getId(), compfut.get(TIMEOUT));
+
+		// Call from other agent -> check for caller agent
+		IComponentHandle agent2 = IComponentManager.get().create(null).get();
+		Future<Void>	resfut2	= new Future<>();
+		Future<ComponentIdentifier>	compfut2	= new Future<>();
+		agent2.scheduleStep(() ->
+		{
+			IFuture<Void>	iresfut2	= agent.scheduleStep(() -> 
+			{
+				resfut2.get();
+				return null;
+			});
+			iresfut2.then(res -> compfut2.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		}).get(TIMEOUT);
+		agent.scheduleStep(() -> resfut2.setResult(null)).get(TIMEOUT);
+		assertEquals(agent2.getId(), compfut2.get(TIMEOUT));
+		
+		// Call from swing -> check for swing thread
+		Future<Void>	resfut3	= new Future<>();
+		Future<Boolean>	swingfut	= new Future<>();
+		SwingUtilities.invokeAndWait(() ->
+		{
+			IFuture<Void>	iresfut3	= agent.scheduleStep(() -> 
+			{
+				resfut3.get();
+				return null;
+			});
+			iresfut3.then(res -> swingfut.setResult(SwingUtilities.isEventDispatchThread()));
+		});
+		agent.scheduleStep(() -> resfut3.setResult(null)).get(TIMEOUT);
+		assertTrue(swingfut.get(TIMEOUT));
+	}
 	
 	@Test
-	public void	testResultScheduling() throws Exception
+	public void	testSyncResultSchedulingFunction() throws Exception
+	{
+		// Check that future result is scheduled on caller thread, if any.
+		
+		// Call from test -> check for global runner
+		IComponentHandle agent = IComponentManager.get().create(null).get();
+		Future<Void>	resfut	= new Future<>();
+		IFuture<Void>	iresfut	= agent.scheduleStep(comp -> 
+		{
+			resfut.get();
+			return null;
+		});
+		Future<ComponentIdentifier>	compfut	= new Future<>();
+		iresfut.then(res -> compfut.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		agent.scheduleStep(() -> resfut.setResult(null)).get(TIMEOUT);
+		assertEquals(ComponentManager.get().getGlobalRunner().getId(), compfut.get(TIMEOUT));
+
+		// Call from other agent -> check for caller agent
+		IComponentHandle agent2 = IComponentManager.get().create(null).get();
+		Future<Void>	resfut2	= new Future<>();
+		Future<ComponentIdentifier>	compfut2	= new Future<>();
+		agent2.scheduleStep(() ->
+		{
+			IFuture<Void>	iresfut2	= agent.scheduleStep(comp -> 
+			{
+				resfut2.get();
+				return null;
+			});
+			iresfut2.then(res -> compfut2.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		}).get(TIMEOUT);
+		agent.scheduleStep(() -> resfut2.setResult(null)).get(TIMEOUT);
+		assertEquals(agent2.getId(), compfut2.get(TIMEOUT));
+		
+		// Call from swing -> check for swing thread
+		Future<Void>	resfut3	= new Future<>();
+		Future<Boolean>	swingfut	= new Future<>();
+		SwingUtilities.invokeAndWait(() ->
+		{
+			IFuture<Void>	iresfut3	= agent.scheduleStep(comp -> 
+			{
+				resfut3.get();
+				return null;
+			});
+			iresfut3.then(res -> swingfut.setResult(SwingUtilities.isEventDispatchThread()));
+		});
+		agent.scheduleStep(() -> resfut3.setResult(null)).get(TIMEOUT);
+		assertTrue(swingfut.get(TIMEOUT));
+	}
+	
+	@Test
+	public void	testAsyncResultSchedulingCallable() throws Exception
 	{
 		// Check that future result is scheduled on caller thread, if any.
 		
@@ -446,6 +546,44 @@ public abstract class AbstractExecutionFeatureTest
 		SwingUtilities.invokeAndWait(() ->
 		{
 			IFuture<Void>	iresfut3	= agent.scheduleAsyncStep(() -> resfut3); 
+			iresfut3.then(res -> swingfut.setResult(SwingUtilities.isEventDispatchThread()));
+		});
+		agent.scheduleStep(() -> resfut3.setResult(null)).get(TIMEOUT);
+		assertTrue(swingfut.get(TIMEOUT));
+	}
+	
+	@Test
+	public void	testAsyncResultSchedulingFunction() throws Exception
+	{
+		// Check that future result is scheduled on caller thread, if any.
+		
+		// Call from test -> check for global runner
+		IComponentHandle agent = IComponentManager.get().create(null).get();
+		Future<Void>	resfut	= new Future<>();
+		IFuture<Void>	iresfut	= agent.scheduleAsyncStep(comp -> resfut); 
+		Future<ComponentIdentifier>	compfut	= new Future<>();
+		iresfut.then(res -> compfut.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		agent.scheduleStep(() -> resfut.setResult(null)).get(TIMEOUT);
+		assertEquals(ComponentManager.get().getGlobalRunner().getId(), compfut.get(TIMEOUT));
+		
+		// Call from other agent -> check for caller agent
+		IComponentHandle agent2 = IComponentManager.get().create(null).get();
+		Future<Void>	resfut2	= new Future<>();
+		Future<ComponentIdentifier>	compfut2	= new Future<>();
+		agent2.scheduleStep(() ->
+		{
+			IFuture<Void>	iresfut2	= agent.scheduleAsyncStep(comp -> resfut2); 
+			iresfut2.then(res -> compfut2.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		}).get(TIMEOUT);
+		agent.scheduleStep(() -> resfut2.setResult(null)).get(TIMEOUT);
+		assertEquals(agent2.getId(), compfut2.get(TIMEOUT));
+		
+		// Call from swing -> check for swing thread
+		Future<Void>	resfut3	= new Future<>();
+		Future<Boolean>	swingfut	= new Future<>();
+		SwingUtilities.invokeAndWait(() ->
+		{
+			IFuture<Void>	iresfut3	= agent.scheduleAsyncStep(comp -> resfut3); 
 			iresfut3.then(res -> swingfut.setResult(SwingUtilities.isEventDispatchThread()));
 		});
 		agent.scheduleStep(() -> resfut3.setResult(null)).get(TIMEOUT);
