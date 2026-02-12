@@ -20,9 +20,9 @@ import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.core.impl.Component;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.future.FutureFunctionality;
-import jadex.execution.impl.ExecutionFeatureProvider;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -104,7 +104,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 			{
 				for(int i=0; i<args.length; i++)
 				{
-					copyargs.add(ExecutionFeatureProvider.copyVal(args[i], params[i].getAnnotations()));
+					copyargs.add(Component.copyVal(args[i], params[i].getAnnotations()));
 				}
 //				System.out.println("call: "+method.getName()+" "+notcopied+" "+SUtil.arrayToString(method.getParameterTypes()));//+" "+SUtil.arrayToString(args));
 				sic.setArguments(copyargs);
@@ -314,7 +314,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 						
 						if(ex!=null)
 							throw ex;
-						return sic.isRemoteCall() ? result : ExecutionFeatureProvider.copyVal(result, method.getAnnotatedReturnType().getAnnotations());
+						return sic.isRemoteCall() ? result : Component.copyVal(result, method.getAnnotatedReturnType().getAnnotations());
 					}
 					
 					@Override
@@ -329,7 +329,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 					{
 						if(ex!=null)
 							throw ex;
-						return sic.isRemoteCall() ? result : ExecutionFeatureProvider.copyVal(result, method.getAnnotatedReturnType().getAnnotations());
+						return sic.isRemoteCall() ? result : Component.copyVal(result, method.getAnnotatedReturnType().getAnnotations());
 					}
 					
 					@Override

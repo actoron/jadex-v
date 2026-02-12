@@ -26,9 +26,9 @@ dependencies
 	implementation 'org.activecomponents.jadex:common:'+v
 	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:nativetools:'+v
-	implementation 'org.ow2.asm:asm:9.1'
-	implementation 'org.ow2.asm:asm-tree:9.1'
-	implementation 'org.ow2.asm:asm-util:9.1'
+	implementation 'org.ow2.asm:asm:9.9'
+	implementation 'org.ow2.asm:asm-tree:9.9'
+	implementation 'org.ow2.asm:asm-util:9.9'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 

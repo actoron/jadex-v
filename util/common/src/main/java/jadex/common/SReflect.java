@@ -2056,6 +2056,23 @@ public class SReflect
 		
 		return ret;
 	}
+
+	public static Class<?> getRawClass(java.lang.reflect.Type type)
+	{
+		if(type instanceof Class<?>)
+		{
+			return (Class<?>)type;
+		}
+		else if(type instanceof ParameterizedType)
+		{
+			return (Class<?>)((ParameterizedType)type).getRawType();
+		}
+		else
+		{
+			// Fallback: return Object.class for unknown
+			return Object.class;
+		}
+	}
 	
 //	/**
 //	 *  Test if there is a gui available.

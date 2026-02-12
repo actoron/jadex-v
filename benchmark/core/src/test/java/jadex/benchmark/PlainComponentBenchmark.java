@@ -29,13 +29,13 @@ public class PlainComponentBenchmark
 		});
 	}
 
-	public static void	main(String[] args)
-	{
-		for(;;)
-		{
-			IComponentManager.get().create(null).get().terminate().get();
-		}
-	}
+//	public static void	main(String[] args)
+//	{
+//		for(;;)
+//		{
+//			IComponentManager.get().create(null).get().terminate().get();
+//		}
+//	}
 
 //	@Test
 //	void	benchmarkGetLoggerTime()
@@ -47,4 +47,9 @@ public class PlainComponentBenchmark
 //				comp.getLogger().log(java.lang.System.Logger.Level.DEBUG, "test");
 //		});
 //	}
+
+	public static void main(String[] args)
+	{
+		new PlainComponentBenchmark().benchmarkMemory();
+	}
 }

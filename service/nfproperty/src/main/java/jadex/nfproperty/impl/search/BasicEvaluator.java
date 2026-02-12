@@ -116,7 +116,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 					{
 						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getRequiredMethodNFPropertyValue(sid, methodinfo, propertyname, unit);
 						fut.delegateTo(ret);
-					});
+					}).catchEx(ex -> ret.setException(ex));
 				}
 				else
 				{
@@ -124,7 +124,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 					{
 						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getRequiredMethodNFPropertyValue(sid, methodinfo, propertyname);
 						fut.delegateTo(ret);
-					});
+					}).catchEx(ex -> ret.setException(ex));
 				}
 			}
 			else
@@ -135,7 +135,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 					{
 						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getRequiredNFPropertyValue(sid, propertyname, unit);
 						fut.delegateTo(ret);
-					});
+					}).catchEx(ex -> ret.setException(ex));
 				}
 				else
 				{
@@ -143,13 +143,12 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 					{
 						IFuture<T> fut = agent.getFeature(INFPropertyFeature.class).getRequiredNFPropertyValue(sid, propertyname);
 						fut.delegateTo(ret);
-					});
+					}).catchEx(ex -> ret.setException(ex));
 				}
 			}
 		}
 		else
 		{
-			
 			IComponentHandle exta = IComponentManager.get().getComponentHandle(sid.getProviderId());
 			exta.scheduleStep(agent ->
 			{
@@ -179,7 +178,7 @@ public abstract class BasicEvaluator<T> implements IServiceEvaluator
 						fut.delegateTo(ret);
 					}
 				}
-			});
+			}).catchEx(ex -> ret.setException(ex));
 		}
 
 		return ret;

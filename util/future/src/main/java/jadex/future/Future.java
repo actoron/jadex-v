@@ -19,6 +19,7 @@ import jadex.common.DebugException;
 import jadex.common.ErrorException;
 import jadex.common.ICommand;
 import jadex.common.IFilter;
+import jadex.common.MultiException;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.common.Tuple3;
@@ -716,6 +717,8 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
      */
 	protected static <T> void doStartScheduledNotifications()
 	{
+		Throwable	t	= null;
+		
 		Tuple3<Future<?>, IResultListener<?>, ICommand<IResultListener<?>>> next	= null;
 		do
 		{
@@ -742,7 +745,31 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				@SuppressWarnings({ "unchecked", "rawtypes" })
 				ICommand<IResultListener<T>> com = (ICommand)next.getThirdEntity();
 				
-				fut.executeNotification(lis, com);
+				try
+				{
+					fut.executeNotification(lis, com);
+				}
+				catch(Throwable tt)
+				{
+					if(t!=null)
+					{
+						if(t instanceof MultiException)
+						{
+							((MultiException)t).addCause(tt);
+						}
+						else
+						{
+							MultiException	me	= new MultiException("Multiple exceptions during future listener notifications.");
+							me.addCause(t);
+							me.addCause(tt);
+							t	= me;
+						}
+					}
+					else
+					{
+						t	= tt;
+					}
+				}
 
 				// Decrement notification count and reset notification thread for future/listener combination after last notification
 				synchronized(fut)
@@ -764,6 +791,11 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 			}
 		}
 		while(next!=null);	// repeat after execution (even when last notification was removed from queue) to check for new entries after execution
+		
+		if(t!=null)
+		{
+			SUtil.throwUnchecked(t);
+		}
 	}
     
     /**

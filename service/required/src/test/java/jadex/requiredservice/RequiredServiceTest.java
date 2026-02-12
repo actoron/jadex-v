@@ -22,7 +22,7 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.IThrowingFunction;
+import jadex.core.INoCopyStep;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -58,8 +58,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, IHelloService>	getservice
-				= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalService(IHelloService.class);
+			INoCopyStep<IHelloService>	getservice	= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalService(IHelloService.class);
 			
 			// Test that service is not found
 			assertThrows(ServiceNotFoundException.class, () -> caller.scheduleStep(getservice).get(TIMEOUT));
@@ -86,7 +85,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, IHelloService>	search
+			INoCopyStep<IHelloService>	search
 				= comp -> comp.getFeature(IRequiredServiceFeature.class).searchService(IHelloService.class).get(TIMEOUT);
 			
 			// Test that service is not found
@@ -115,8 +114,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, Collection<IHelloService>>	getservices
-				= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalServices(IHelloService.class);
+			INoCopyStep<Collection<IHelloService>>	getservices	= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalServices(IHelloService.class);
 			
 			// Test that services are not found
 			assertTrue(caller.scheduleStep(getservices).get(TIMEOUT).isEmpty());
@@ -150,7 +148,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, Collection<IHelloService>>	search
+			INoCopyStep<Collection<IHelloService>>	search
 				= comp -> comp.getFeature(IRequiredServiceFeature.class).searchServices(IHelloService.class).get(TIMEOUT);
 			
 			// Test that services are not found
@@ -236,7 +234,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, IHelloService>	getservice
+			INoCopyStep<IHelloService>	getservice
 				= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalService(IHelloService.class);
 			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
 			provider.scheduleStep(() -> null).get(TIMEOUT);
@@ -249,7 +247,7 @@ public class RequiredServiceTest
 				service.sayHello("world")
 					.then(hello -> fut.setResult(IComponentManager.get().getCurrentComponent().getId()))
 					.catchEx(e -> fut.setException(e));
-			});
+			}).get(TIMEOUT);
 			assertEquals(caller.getId(), fut.get(TIMEOUT));
 		}
 		finally

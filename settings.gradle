@@ -163,13 +163,22 @@ includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
 includeBuild('serialization/json') {}
 
-includeBuild('core/engine') {}
-includeBuild('core/featuretest') {}
-includeBuild('core/execution') {}
-includeBuild('core/simulation') {}
-includeBuild('core/injection'){name='injection'}
-//includeBuild('core/errorhandling') {}
-includeBuild('core/autostart'){name='autostart'}
+includeBuild('engine/core') {}
+includeBuild('engine/bdi') {}
+includeBuild('engine/bt') {}
+
+includeBuild('engine/bpmn/engine') {name='bpmn'}
+includeBuild('engine/bpmn/model') {name='modelbpmn'}
+includeBuild('engine/bpmn/providedservice') {name='providedservicebpmn'}
+includeBuild('engine/bpmn/requiredservice') {name='requiredservicebpmn'}
+
+includeBuild('feature/featuretest') {}
+includeBuild('feature/result') {}
+includeBuild('feature/execution') {}
+includeBuild('feature/simulation') {}
+includeBuild('feature/injection'){name='injection'}
+//includeBuild('feature/errorhandling') {}
+includeBuild('feature/autostart'){name='autostart'}
 
 includeBuild('service/provided') {}
 includeBuild('service/required') {}
@@ -185,18 +194,6 @@ includeBuild('communication/remoteservice') {}
 includeBuild('llm') {}
 
 includeBuild('micro/lib'){name='libmicro'}
-
-includeBuild('bdi/engine') {name='bdi'}
-
-includeBuild('model/model') {name='model'}
-
-includeBuild('bpmn/engine') {name='bpmn'}
-includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
-includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
-
-includeBuild('bt/engine') {name='bt'}
-
-includeBuild('rules/eca') {}
 
 includeBuild('monitoring/logbase') {}
 includeBuild('monitoring/graylog') {}
