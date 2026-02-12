@@ -182,6 +182,8 @@ includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
 includeBuild('communication/remoteservice') {}
 
+includeBuild('llm') {}
+
 includeBuild('micro/lib'){name='libmicro'}
 
 includeBuild('bdi/engine') {name='bdi'}

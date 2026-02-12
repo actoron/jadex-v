@@ -1,0 +1,70 @@
+plugins 
+{
+	id 'java-library'
+}
+
+description = 'Llm call support for Jadex micro agents'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.21'
+}
+
+repositories
+{
+	mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:collection:'+v
+	implementation 'org.activecomponents.jadex:classreader:'+v
+	implementation 'org.activecomponents.jadex:future:'+v
+    implementation 'org.activecomponents.jadex:autostart:'+v
+    implementation 'org.activecomponents.jadex:core:'+v
+    implementation 'org.activecomponents.jadex:execution:'+v
+    implementation 'org.activecomponents.jadex:injection:'+v
+    implementation 'org.activecomponents.jadex:logbase:'+v 
+    implementation 'org.activecomponents.jadex:providedservice:'+v
+    implementation 'org.activecomponents.jadex:requiredservice:'+v
+    implementation 'org.activecomponents.jadex:publishservice:'+v
+    implementation 'org.activecomponents.jadex:publishservicejetty:'+v
+    //implementation 'org.activecomponents.jadex:simulation:'+v
+
+    implementation 'dev.langchain4j:langchain4j:1.10.0'
+    implementation 'dev.langchain4j:langchain4j-ollama:1.10.0'
+    implementation 'dev.langchain4j:langchain4j-open-ai:1.10.0'
+    implementation 'org.testcontainers:testcontainers:2.0.3'
+    implementation 'org.testcontainers:testcontainers-ollama:2.0.3'
+    implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test 
+{
+	useJUnitPlatform()
+}
+
+processResources 
+{
+    from ('src/main/java') 
+    {
+        include '**/.system'
+    }
+}
+
+test {
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        showStandardStreams = true
+    }
+}
