@@ -193,8 +193,6 @@ includeBuild('communication/remoteservice') {}
 
 includeBuild('micro/lib'){name='libmicro'}
 
-includeBuild('rules/eca') {}
-
 includeBuild('monitoring/logbase') {}
 includeBuild('monitoring/graylog') {}
 includeBuild('monitoring/fluentd') {}
