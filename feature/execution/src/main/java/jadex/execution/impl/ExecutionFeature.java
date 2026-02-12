@@ -355,8 +355,18 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		
 		ret.setTerminationCommand(ex -> 
 		{
-			entries.remove(task);
-			task.cancel();
+			try
+			{
+				scheduleStep(() ->
+				{
+					entries.remove(task);
+					task.cancel();
+				});
+			}
+			catch(ComponentTerminatedException cte)
+			{
+				// Ignore -> already cancelled in terminate()
+			}
 		});
 		
 		return  ret;
@@ -386,15 +396,30 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		{
 			try
 			{
-				exe.scheduleStep(() ->
+				// Check for null -> cancel() might run in parallel
+				ExecutionFeature	exe	= this.exe;
+				if(exe!=null)
 				{
-					exe.entries.remove(WaitTask.this);
-					future.setResultIfUndone(null);
-				});
+					exe.scheduleStep(() ->
+					{
+						exe.entries.remove(WaitTask.this);
+						// Check for null -> cancel() might run interleaved
+						Future<?>	future	= this.future;
+						if(future!=null)
+						{
+							future.setResultIfUndone(null);
+						}
+					});
+				}
 			}
 			catch(ComponentTerminatedException e)
 			{
-				future.setExceptionIfUndone(e);
+				// Check for null -> cancel() might run in parallel
+				Future<?>	future	= this.future;
+				if(future!=null)
+				{
+					future.setExceptionIfUndone(e);
+				}
 			}
 		}
 		
