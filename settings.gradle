@@ -172,13 +172,13 @@ includeBuild('engine/bpmn/model') {name='modelbpmn'}
 includeBuild('engine/bpmn/providedservice') {name='providedservicebpmn'}
 includeBuild('engine/bpmn/requiredservice') {name='requiredservicebpmn'}
 
-includeBuild('core/featuretest') {}
-includeBuild('core/result') {}
-includeBuild('core/execution') {}
-includeBuild('core/simulation') {}
-includeBuild('core/injection'){name='injection'}
-//includeBuild('core/errorhandling') {}
-includeBuild('core/autostart'){name='autostart'}
+includeBuild('feature/featuretest') {}
+includeBuild('feature/result') {}
+includeBuild('feature/execution') {}
+includeBuild('feature/simulation') {}
+includeBuild('feature/injection'){name='injection'}
+//includeBuild('feature/errorhandling') {}
+includeBuild('feature/autostart'){name='autostart'}
 
 includeBuild('service/provided') {}
 includeBuild('service/required') {}
