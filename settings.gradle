@@ -163,7 +163,15 @@ includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
 includeBuild('serialization/json') {}
 
-includeBuild('core/engine') {}
+includeBuild('engine/core') {}
+includeBuild('engine/bdi') {}
+includeBuild('engine/bt') {}
+
+includeBuild('engine/bpmn/engine') {name='bpmn'}
+includeBuild('engine/bpmn/model') {name='modelbpmn'}
+includeBuild('engine/bpmn/providedservice') {name='providedservicebpmn'}
+includeBuild('engine/bpmn/requiredservice') {name='requiredservicebpmn'}
+
 includeBuild('core/featuretest') {}
 includeBuild('core/result') {}
 includeBuild('core/execution') {}
@@ -184,16 +192,6 @@ includeBuild('communication/messaging') {}
 includeBuild('communication/remoteservice') {}
 
 includeBuild('micro/lib'){name='libmicro'}
-
-includeBuild('bdi/engine') {name='bdi'}
-
-includeBuild('model/model') {name='model'}
-
-includeBuild('bpmn/engine') {name='bpmn'}
-includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
-includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
-
-includeBuild('bt/engine') {name='bt'}
 
 includeBuild('rules/eca') {}
 
