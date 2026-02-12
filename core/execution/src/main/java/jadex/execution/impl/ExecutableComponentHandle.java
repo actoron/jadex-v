@@ -1,5 +1,6 @@
 package jadex.execution.impl;
 
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -23,12 +24,9 @@ import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
-import jadex.core.impl.ComponentManager;
 import jadex.execution.Call;
 import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.future.ComponentFutureFunctionality;
-import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -138,32 +136,31 @@ public class ExecutableComponentHandle implements IComponentHandle
 					}
 					
 					Future<Object> ret = null;
-					if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
-					{
-						FutureFunctionality func = new ComponentFutureFunctionality(comp.getFeature(IExecutionFeature.class))
-						{							
-							public Object handleResult(Object val) throws Exception
-							{
-								return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
-							}
-							
-							public Object handleIntermediateResult(Object val) throws Exception
-							{
-								return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
-							}
-						};
-						
-						ret = FutureFunctionality.createReturnFuture(method, func);
-					}
-					//final Object[] myargs = copyargs.toArray();
+//					if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
+//					{
+//						FutureFunctionality func = new ComponentFutureFunctionality(comp.getFeature(IExecutionFeature.class))
+//						{							
+//							public Object handleResult(Object val) throws Exception
+//							{
+//								return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
+//							}
+//							
+//							public Object handleIntermediateResult(Object val) throws Exception
+//							{
+//								return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
+//							}
+//						};
+//						
+//						ret = FutureFunctionality.createReturnFuture(method, func);
+//					}
+//					//final Object[] myargs = copyargs.toArray();
 					
 			        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
 			        {
 //			        	System.out.println("already on agent: "+getId());
-			        	if(ret instanceof IFuture)
+			        	if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 			        	{
-			        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method, next);
-			        		fut.delegateTo(ret);
+			        		ret	= (Future<Object>) invokeMethod(comp, pojo, myargs, method, next);
 			        	}
 			        	else if(method.getReturnType().equals(void.class))
 			        	{
@@ -177,23 +174,22 @@ public class ExecutableComponentHandle implements IComponentHandle
 			        }
 			        else
 			        {
-			        	if(ret instanceof IFuture)
+			        	if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 			        	{
-							Future<Object> fret = ret;
-							
-				        	IFuture fut = scheduleAsyncStep(new ICallable<IFuture<Object>>() 
+							ret = scheduleAsyncStep(new ICallable<IFuture<Object>>() 
 			        		{
-			        			public Class<? extends IFuture<?>> getFutureReturnType() 
-			        			{
-			        				return (Class<? extends IFuture<?>>)fret.getClass();
-			        			}
+								@Override
+							    public AnnotatedType	getReturnType()
+							    {
+									return method.getAnnotatedReturnType();
+							    }
 			        			
+			        			@Override
 			        			public IFuture<Object> call() throws Exception
 			        			{
 			        				return (IFuture<Object>)invokeMethod(comp, pojo, myargs, method, next);
 			        			}
 							});
-				        	fut.delegateTo(ret);
 			        	}
 			        	//System.out.println("scheduled on agent: "+getId());
 			        	else if(method.getReturnType().equals(void.class))

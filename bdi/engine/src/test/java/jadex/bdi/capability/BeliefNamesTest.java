@@ -33,7 +33,7 @@ import jadex.injection.annotation.Inject;
 /**
  *  Check scoped belief naming.
  */
-public class TestBeliefNames
+public class BeliefNamesTest
 {
 	@Test
 	public void testGlobalBeliefListener()

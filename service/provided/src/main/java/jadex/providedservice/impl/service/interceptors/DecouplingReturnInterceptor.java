@@ -41,7 +41,8 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 		Future<Void> fut	= new Future<Void>();
 		
 		// Create func here to get correct caller thread.
-		FutureFunctionality	func	= new ComponentFutureFunctionality(ia.getFeature(IExecutionFeature.class));
+		// copy is already done by decoupling interceptor
+		FutureFunctionality	func	= new ComponentFutureFunctionality(ia.getFeature(IExecutionFeature.class), false);
 		
 		sic.invoke().addResultListener(new DelegationResultListener<Void>(fut)
 		{

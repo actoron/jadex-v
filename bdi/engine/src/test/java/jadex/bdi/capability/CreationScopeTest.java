@@ -17,14 +17,16 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.INoCopyStep;
 import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 
 /**
  *  Test if correct outer pojos are used.
  */
-public class TestCreationScope
+public class CreationScopeTest
 {
 	@Test
 	public void	testGoalCreation()
@@ -55,7 +57,7 @@ public class TestCreationScope
 		
 		MyAgent	pojo	= new MyAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		MyCapa	capa	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class)
+		MyCapa	capa	= handle.scheduleAsyncStep((INoCopyStep<IFuture<MyCapa>>)comp -> comp.getFeature(IBDIAgentFeature.class)
 			.dispatchTopLevelGoal(pojo.mycapa.new MyGoal())).get(TestHelper.TIMEOUT);
 		assertSame(pojo.mycapa, capa);
 	}

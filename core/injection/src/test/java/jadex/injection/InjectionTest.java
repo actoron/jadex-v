@@ -17,6 +17,7 @@ import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.INoCopyStep;
 import jadex.core.IThrowingConsumer;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
@@ -73,7 +74,7 @@ public class InjectionTest
 			{
 				compfut.setResult(comp);
 			}
-		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
+		}).get(TIMEOUT).scheduleStep((INoCopyStep<IComponent>) c -> c).get(TIMEOUT);
 		assertSame(agent1, compfut.get(TIMEOUT));
 		
 		// Check if execution feature is injected
@@ -85,7 +86,7 @@ public class InjectionTest
 			{
 				exefut.setResult(exe);
 			}
-		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
+		}).get(TIMEOUT).scheduleStep((INoCopyStep<IComponent>) c -> c).get(TIMEOUT);
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
 	}
 	
@@ -210,7 +211,7 @@ public class InjectionTest
 	
 	@Test
 	public void testFieldInjection()
-	{		
+	{
 		// Check if component is injected
 		Future<IComponent>	compfut	= new Future<>();
 		IComponent	agent1	= IComponentManager.get().create(new Object()
@@ -223,7 +224,7 @@ public class InjectionTest
 			{
 				compfut.setResult(comp);
 			}
-		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
+		}).get(TIMEOUT).scheduleStep((INoCopyStep<IComponent>) c -> c).get(TIMEOUT);
 		assertSame(agent1, compfut.get(TIMEOUT));
 		
 		// Check if execution feature is injected
@@ -238,7 +239,7 @@ public class InjectionTest
 			{
 				exefut.setResult(exe);
 			}
-		}).get(TIMEOUT).scheduleStep(comp -> comp).get(TIMEOUT);
+		}).get(TIMEOUT).scheduleStep((INoCopyStep<IComponent>) c -> c).get(TIMEOUT);
 		assertSame(agent2.getFeature(IExecutionFeature.class), exefut.get(TIMEOUT));
 	}
 

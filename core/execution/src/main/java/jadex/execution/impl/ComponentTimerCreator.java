@@ -35,19 +35,13 @@ public class ComponentTimerCreator implements ITimerCreator
 		{
 			// todo: support ITerminableFuture<Void> as more specialized return type
 			@Override
-			public IFuture<Void> apply(IComponent comp) throws Exception 
+			public ITerminableFuture<Void> apply(IComponent comp) throws Exception 
 			{
-				IFuture<Void> wait = comp.getFeature(IExecutionFeature.class).waitForDelay(timeout);
+				ITerminableFuture<Void> wait = comp.getFeature(IExecutionFeature.class).waitForDelay(timeout);
 				//wait.then(Void -> System.out.println("timer due")).catchEx(ex -> ex.printStackTrace());
 				return wait;
 			}
-			
-			@Override
-			public Class<? extends IFuture<?>> getFutureReturnType() 
-			{
-				// necessary for Java compiler, wtf :-(
-				return (Class<? extends IFuture<?>>)(Class<?>)ITerminableFuture.class;
-			}
+
 		});
 		ret.delegateFrom(fut);
 		

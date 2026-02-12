@@ -1107,7 +1107,7 @@ public class InjectionModel
 			{
 				ParameterizedType	generic	= (ParameterizedType)gtype;
 				gtype	= generic.getActualTypeArguments()[0];
-				ret	= getRawClass(gtype);
+				ret	= SReflect.getRawClass(gtype);
 			}
 			else
 			{
@@ -1120,7 +1120,7 @@ public class InjectionModel
 			if(gtype instanceof ParameterizedType)
 			{
 				ParameterizedType	generic	= (ParameterizedType)gtype;
-				ret	= getRawClass(generic.getActualTypeArguments()[0]);
+				ret	= SReflect.getRawClass(generic.getActualTypeArguments()[0]);
 			}
 			else
 			{
@@ -1132,7 +1132,7 @@ public class InjectionModel
 			if(gtype instanceof ParameterizedType)
 			{
 				ParameterizedType	generic	= (ParameterizedType)gtype;
-				ret	= getRawClass(generic.getActualTypeArguments()[1]);
+				ret	= SReflect.getRawClass(generic.getActualTypeArguments()[1]);
 			}
 			else
 			{
@@ -1158,7 +1158,7 @@ public class InjectionModel
 			{
 				ParameterizedType	generic	= (ParameterizedType)gtype;
 				gtype	= generic.getActualTypeArguments()[0];
-				ret	= getRawClass(gtype);
+				ret	= SReflect.getRawClass(gtype);
 			}
 			else
 			{
@@ -1168,22 +1168,6 @@ public class InjectionModel
 		
 		return  SReflect.isSupertype(Collection.class, ret)
 			||SReflect.isSupertype(Map.class, ret);
-	}
-	
-	protected static Class<?> getRawClass(java.lang.reflect.Type type)
-	{
-		if(type instanceof Class<?>)
-		{
-			return (Class<?>)type;
-		}
-		else if(type instanceof ParameterizedType)
-		{
-			return (Class<?>)((ParameterizedType)type).getRawType();
-		}
-		else
-		{
-			throw new RuntimeException("Cannot get raw class of type: "+type);
-		}
 	}
 	
 	/**

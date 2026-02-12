@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import jadex.core.ChangeEvent;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IResultManager;
@@ -57,8 +58,15 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 		if(Component.isExecutable())
 		{
 			Future<Map<String, Object>>	ret	= new Future<>();
-			IFuture<Map<String, Object>>	fut	= comp.getComponentHandle().scheduleStep(()
-				-> doGetResults(comp));
+			IFuture<Map<String, Object>>	fut	= comp.getComponentHandle().scheduleStep(new Callable<>()
+			{
+				@Override
+				// No copy as result feature already returns copies as needed.
+				public @NoCopy Map<String, Object> call() throws Exception
+				{
+					return doGetResults(comp);
+				}
+			});
 			fut.addResultListener(new IResultListener<Map<String,Object>>()
 			{
 				@Override
@@ -110,7 +118,8 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 			ISubscriptionIntermediateFuture<ChangeEvent>	fut	= comp.getComponentHandle().scheduleAsyncStep(new Callable<ISubscriptionIntermediateFuture<ChangeEvent>>()
 			{
 				@Override
-				public ISubscriptionIntermediateFuture<ChangeEvent> call()
+				// No copy as result feature already returns copies as needed.
+				public @NoCopy ISubscriptionIntermediateFuture<ChangeEvent> call()
 				{
 					return ((ResultFeature) comp.getFeature(IResultFeature.class)).subscribeToResults();
 				}
