@@ -47,7 +47,6 @@ import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
 import jadex.model.modelinfo.IModelInfo;
-import jadex.rules.eca.RuleSystem;
 
 public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnComponentFeature, ILifecycle
 {
@@ -128,9 +127,6 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 	}
 	
 	//-------- attributes --------
-	
-	/** The rule system. */
-	protected RuleSystem rulesystem;
 	
 	/** The activity handlers. */
 	protected Map<String, IActivityHandler> activityhandlers;
