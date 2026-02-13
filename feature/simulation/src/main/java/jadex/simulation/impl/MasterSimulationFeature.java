@@ -56,6 +56,8 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	
 	public void scheduleStep(ExecutionFeature exe, Runnable r)
 	{
+		if(exe.getComponent().isTerminated())
+			throw new ComponentTerminatedException(exe.getComponent().getId());
 		super.scheduleStep(new StepInfo(exe, r));
 	}
 	
