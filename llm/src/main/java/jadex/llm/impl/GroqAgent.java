@@ -3,10 +3,12 @@ package jadex.llm.impl;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.OnStart;
+import jadex.llm.ILlmFeature;
 import jadex.llm.ILlmService;
 
 public class GroqAgent implements ILlmService
@@ -43,6 +45,13 @@ public class GroqAgent implements ILlmService
     protected void start(IComponent agent) 
     {
         System.out.println("agent started: "+agent.getId());
+
+        if(apikey == null || apikey.isEmpty())
+        {
+            System.err.println("GROQ API key not set. Please set the GROQ_API_KEY environment variable.");
+            agent.terminate();
+            return;
+        }
      
         llm = OpenAiChatModel.builder()
             .apiKey(apikey)
@@ -60,7 +69,15 @@ public class GroqAgent implements ILlmService
 
     public static void main(String[] args) 
 	{
-		IComponentManager.get().create(new GroqAgent("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")).get();
+		IComponentHandle llm = IComponentManager.get().create(new GroqAgent()).get();
+        IComponentManager.get().getFeature(ILlmFeature.class)
+            .handle("What is the capital of France?")
+            .then(answer -> 
+            {
+                System.out.println("Final answer: " + answer);
+                llm.terminate();
+            }).catchEx(e -> e.printStackTrace());
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
+    
 }

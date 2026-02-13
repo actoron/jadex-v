@@ -7,7 +7,7 @@ import jadex.future.IFuture;
 
 public interface ILlmFeature extends IRuntimeFeature
 {
-    public IFuture<String> handle(String userInput);
+    public IFuture<String> handle(String input);
     
 
     public IFuture<Collection<ToolSchema>> listTools();
