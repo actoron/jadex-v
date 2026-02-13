@@ -149,7 +149,7 @@ public class TableAgent implements ITableService
 				PhilosophAgent pa = (PhilosophAgent)agent.getPojo();
 				//pa.notifyPhilosopher(100);
 				pa.notifyPhilosopher((long)(Math.random()*2000));
-			});
+			}).catchEx(ex -> ex.printStackTrace());
 		}
 	}
 

@@ -19,7 +19,6 @@ import jadex.core.ICallable;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
 import jadex.core.annotation.NoCopy;
@@ -258,21 +257,9 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public void scheduleStep_old(Runnable step) 
-	{
-		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-	}
-
-	@Override
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
 		return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-	}
-
-	@Override
-	public void scheduleStep_old(IThrowingConsumer<IComponent> step)
-	{
-		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}
 
 	@Override

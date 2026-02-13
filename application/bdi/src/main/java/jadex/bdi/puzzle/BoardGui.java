@@ -64,7 +64,8 @@ public class BoardGui extends JFrame
 		{
 			public void windowClosing(WindowEvent e)
 			{
-				agent.scheduleStep( (IThrowingConsumer<IComponent>)(a -> a.terminate()));
+				agent.scheduleStep( (IThrowingConsumer<IComponent>)(a -> a.terminate()))
+					.catchEx(ex -> ex.printStackTrace());
 			}
 		});
 		
