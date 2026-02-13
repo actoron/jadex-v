@@ -95,7 +95,7 @@ public class CreationScopeTest
 		
 		MyAgent	pojo	= new MyAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class)
+		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class)
 			.dispatchTopLevelGoal(pojo.mycapa1.new MyGoal())).get(TestHelper.TIMEOUT);
 		assertSame(pojo.mycapa2, pojo.mycapa2.result.get(TestHelper.TIMEOUT));
 	}

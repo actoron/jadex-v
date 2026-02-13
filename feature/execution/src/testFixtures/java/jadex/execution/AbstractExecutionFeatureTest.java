@@ -699,16 +699,14 @@ public abstract class AbstractExecutionFeatureTest
 		IComponentHandle	caller	= IComponentManager.get().create(null).get(TIMEOUT);
 		caller.scheduleStep(() -> 
 		{
-			ITerminableIntermediateFuture<String>	fut	=
-				provider.scheduleAsyncStep(new Callable<ITerminableIntermediateFuture<String>>()
+			provider.scheduleAsyncStep(new Callable<ITerminableIntermediateFuture<String>>()
 			{
 				@Override
 				public ITerminableIntermediateFuture<String> call()
 				{
 					return termfut;
 				}				
-			});
-			fut.next(s -> System.out.println("Result: "+s));
+			}).next(s -> System.out.println("Result: "+s));
 			return null;
 		}).get(TIMEOUT);
 		

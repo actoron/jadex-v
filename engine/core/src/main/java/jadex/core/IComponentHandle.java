@@ -86,8 +86,7 @@ public interface IComponentHandle
 	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
-	public default <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(Callable<T2> step)
+	public default <E, T extends IFuture<E>> T scheduleAsyncStep(Callable<T> step)
 	{
 		throw new UnsupportedOperationException("Missing execution feature");
 	}
@@ -97,8 +96,7 @@ public interface IComponentHandle
 	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
-	public default <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(IThrowingFunction<IComponent, T2> step)
+	public default <E, T extends IFuture<E>> T scheduleAsyncStep(IThrowingFunction<IComponent, T> step)
 	{
 		throw new UnsupportedOperationException("Missing execution feature");
 	}

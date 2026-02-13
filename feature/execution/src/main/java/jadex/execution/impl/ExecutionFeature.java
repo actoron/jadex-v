@@ -193,17 +193,16 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
 	@Override
-	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
-	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(Callable<T2> step)
+	public <E, T extends IFuture<E>> T scheduleAsyncStep(Callable<T> step)
 	{
 		@SuppressWarnings("unchecked")
-		T1	ret = (T1) createStepFuture(step, false);
+		T	ret = (T) createStepFuture(step, false);
 		
 		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
-				T2 res = step.call();
+				T res = step.call();
 				@SuppressWarnings("unchecked")
 				Future<E>	retfut	= (Future<E>)ret;
 				// Use generic connection method to avoid issues with different future types.
@@ -223,17 +222,16 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
 	@Override
-	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
-	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(IThrowingFunction<IComponent, T2> step)
+	public <E, T extends IFuture<E>> T scheduleAsyncStep(IThrowingFunction<IComponent, T> step)
 	{
 		@SuppressWarnings("unchecked")
-		T1	ret = (T1) createStepFuture(step, false);
+		T	ret = (T) createStepFuture(step, false);
 		
 		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
-				T2 res = step.apply(self);
+				T res = step.apply(self);
 				@SuppressWarnings("unchecked")
 				Future<E>	retfut	= (Future<E>)ret;
 				// Use generic connection method to avoid issues with different future types.
