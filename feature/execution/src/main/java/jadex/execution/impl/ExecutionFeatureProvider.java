@@ -1,12 +1,7 @@
 package jadex.execution.impl;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
-import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
