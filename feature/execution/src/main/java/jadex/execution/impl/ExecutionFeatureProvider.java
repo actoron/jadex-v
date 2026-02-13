@@ -109,8 +109,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						itc.accept(fself);							
 					}
 					
-					// TODO: unify with LambdaAgent result handle?
-					fself.result.setResult(Component.copyVal(result, getAnnos(pojo.getClass())));
+					fself.result.setResult(Component.copyVal(result, ExecutionFeature.getReturnAnnotations(pojo.getClass())));
 
 					if(!FastLambda.KEEPALIVE)
 					{
@@ -162,7 +161,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								{
 									Object	result	= ((Callable<?>)pojo).call();
 									// Fail if no result feature available
-									Component.setResult(component, "result", result, getAnnos(pojo.getClass()));
+									Component.setResult(component, "result", result, ExecutionFeature.getReturnAnnotations(pojo.getClass()));
 								}
 								catch(Exception e)
 								{
@@ -181,7 +180,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
 									Object result	= itf.apply(component);
 									// Fail if no result feature available
-									Component.setResult(component, "result", result, getAnnos(pojo.getClass()));
+									Component.setResult(component, "result", result, ExecutionFeature.getReturnAnnotations(pojo.getClass()));
 								}
 								catch(Exception e)
 								{
@@ -281,54 +280,6 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	
 		return ret;
 	}	
-	
-	protected static Map<Class<?>, Annotation[]>	ANNOS	= new LinkedHashMap<>();
-	
-	/**
-	 *  Get annotations from method return type to check for NoCopy.
-	 */
-	public static Annotation[]	getAnnos(Class<?> pojoclazz)
-	{
-		synchronized (ANNOS)
-		{
-			if(!ANNOS.containsKey(pojoclazz))
-			{
-				Method	m	= null;
-				
-				if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
-				{
-					// Can be also explicitly declared with component type or just implicit (lambda) as object type
-					try
-					{
-						m	= pojoclazz.getMethod("apply", IComponent.class);
-					}
-					catch(Exception e)
-					{
-						try
-						{
-							m	= pojoclazz.getMethod("apply", Object.class);
-						}
-						catch(Exception e2)
-						{
-						}
-					}
-				}
-				else	// Callable
-				{
-					try
-					{
-						m	= pojoclazz.getMethod("call");
-					}
-					catch(Exception e)
-					{
-					}
-				}
-				
-				ANNOS.put(pojoclazz, m!=null ? m.getAnnotatedReturnType().getAnnotations() : null);
-			}
-			return ANNOS.get(pojoclazz);
-		}
-	}
 	
 	@Override
 	public <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)

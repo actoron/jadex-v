@@ -20,6 +20,7 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -84,7 +85,7 @@ public class PlanInjectionTest
 		}
 		
 		IComponentHandle	handle	= IComponentManager.get().create(new GoalInjectionAgent()).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new GoalInjectionAgent.MyGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>) comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new GoalInjectionAgent.MyGoal())).get(TestHelper.TIMEOUT);
 	}
 	
 	/**
@@ -172,7 +173,7 @@ public class PlanInjectionTest
 		}
 		OnStartEndAgent	pojo	= new OnStartEndAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new OnStartEndAgent.MyGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new OnStartEndAgent.MyGoal())).get(TestHelper.TIMEOUT);
 		pojo.onstart.get(TestHelper.TIMEOUT);
 		pojo.body.get(TestHelper.TIMEOUT);
 		pojo.passed.get(TestHelper.TIMEOUT);

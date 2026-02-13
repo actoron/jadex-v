@@ -34,6 +34,7 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -341,7 +342,7 @@ public class GoalConditionTest
 		
 		GoalQueryAgent	pojo	= new GoalQueryAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		String value	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		String value	= handle.scheduleAsyncStep((IAsyncStep<String>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
 		assertEquals("value", value);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
@@ -388,7 +389,7 @@ public class GoalConditionTest
 		
 		GoalQueryAgent	pojo	= new GoalQueryAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		String value	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		String value	= handle.scheduleAsyncStep((IAsyncStep<String>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
 		assertEquals("value", value);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
@@ -431,7 +432,7 @@ public class GoalConditionTest
 		
 		GoalQueryAgent	pojo	= new GoalQueryAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		String value	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		String value	= handle.scheduleAsyncStep((IAsyncStep<String>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		assertEquals("value", value);
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
@@ -476,7 +477,7 @@ public class GoalConditionTest
 		
 		GoalTargetAgent	pojo	= new GoalTargetAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
 	}
@@ -526,7 +527,7 @@ public class GoalConditionTest
 		
 		GoalTargetResultAgent	pojo	= new GoalTargetResultAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		String	result	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		String	result	= handle.scheduleAsyncStep((IAsyncStep<String>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		assertEquals("value", result);
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
@@ -560,7 +561,7 @@ public class GoalConditionTest
 		
 		GoalMaintainAgent	pojo	= new GoalMaintainAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new StartGoal())).get(TestHelper.TIMEOUT);
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
 		handle.scheduleStep(() -> pojo.trigger.removeFirst()).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished

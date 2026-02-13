@@ -19,6 +19,7 @@ import jadex.common.TimeoutException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.ITerminableStep;
 import jadex.core.IThrowingFunction;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
@@ -76,13 +77,8 @@ public class PlanSubgoalTest
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		
 		// Dispatch top-level goal and check if sub plan is started.
-		ITerminableFuture<Void>	topfut	= (ITerminableFuture<Void>) handle.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Void>>()
-		{
-			public ITerminableFuture<Void> apply(IComponent comp)
-			{
-				return comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TopGoal());
-			}
-		});
+		ITerminableFuture<Void>	topfut	= (ITerminableFuture<Void>) handle.scheduleAsyncStep(
+			(ITerminableStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TopGoal()));
 		agent.started.get(TestHelper.TIMEOUT);
 		assertFalse(agent.aborted.isDone());
 		

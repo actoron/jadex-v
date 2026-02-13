@@ -127,7 +127,7 @@ public class DisplayPanel extends JComponent
 				//if(init[0] && init[1])
 				//	calcDefaultImage();
 			});
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 		
 		Timer timer = new Timer(10, a ->
 		{
@@ -226,7 +226,7 @@ public class DisplayPanel extends JComponent
 				if(startdrag!=null && enddrag!=null)
 				{
 //					System.out.println("dragged: "+startdrag+" "+enddrag);
-					agent.scheduleStep(() -> dragImage());
+					agent.scheduleStep(() -> dragImage()).catchEx(ex -> ex.printStackTrace());
 				}
 			}
 		};
@@ -252,7 +252,7 @@ public class DisplayPanel extends JComponent
 					{
 						factor	= 100/(100+percent);
 					}
-					agent.scheduleStep(() -> zoomImage(e.getX(), e.getY(), factor));
+					agent.scheduleStep(() -> zoomImage(e.getX(), e.getY(), factor)).catchEx(ex -> ex.printStackTrace());
 				}
 			}
 		});
@@ -264,7 +264,7 @@ public class DisplayPanel extends JComponent
 			{
 				if(SwingUtilities.isRightMouseButton(e))
 				{
-					agent.scheduleStep(() -> calcDefaultImage());
+					agent.scheduleStep(() -> calcDefaultImage()).catchEx(ex -> ex.printStackTrace());
 				}
 				
 				else if(!calculating && range!=null)
@@ -272,7 +272,7 @@ public class DisplayPanel extends JComponent
 					if(e.getX()>=range.x && e.getX()<=range.x+range.width
 						&& e.getY()>=range.y && e.getY()<=range.y+range.height)
 					{
-						agent.scheduleStep(() -> zoomIntoRange());
+						agent.scheduleStep(() -> zoomIntoRange()).catchEx(ex -> ex.printStackTrace());
 					}
 				}
 			}

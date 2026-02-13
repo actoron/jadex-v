@@ -44,7 +44,7 @@ public class BpmnProcessBenchmark
 			Future<ComponentIdentifier>	ret	= new Future<>();
 			RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
 			IComponentHandle	agent	= BpmnProcess.create(pojo).get();
-			// Use internal result subscription to not measure result copy overhead.
+			// Use internal result subscription to not measure result decoupling overhead.
 			IThrowingConsumer<IComponent>	step	= comp -> ((ResultFeature)comp.getFeature(IResultFeature.class))
 				.subscribeToResults().next(res -> ret.setResultIfUndone((ComponentIdentifier)res.value())).catchEx(ret);
 			agent.scheduleStep(step);			

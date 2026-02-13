@@ -196,7 +196,7 @@ public class HelplinePanel extends JPanel
 					agent.scheduleStep(ag ->
 					{
 						hl.addInformation(tfpname.getText(), tfpinfo.getText());
-					});
+					}).catchEx(ex -> ex.printStackTrace());
 				}
 			}
 		});
@@ -275,7 +275,7 @@ public class HelplinePanel extends JPanel
 			{
 				ex.printStackTrace();
 			});*/
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 	}
 	
 	/**
@@ -434,7 +434,7 @@ public class HelplinePanel extends JPanel
 					ret.setException(exception);
 				}
 			});
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 			
 		return ret;
 	}

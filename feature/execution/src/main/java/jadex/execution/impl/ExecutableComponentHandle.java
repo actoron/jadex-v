@@ -19,7 +19,6 @@ import jadex.core.ICallable;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.InvalidComponentAccessException;
 import jadex.core.annotation.NoCopy;
@@ -27,7 +26,6 @@ import jadex.core.impl.Component;
 import jadex.execution.Call;
 import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
-import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import net.bytebuddy.ByteBuddy;
@@ -135,7 +133,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 						myargs.add(Component.copyVal(args[p], pannos[p]));
 					}
 					
-					Future<Object> ret = null;
+					IFuture<Object> ret = null;
 //					if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 //					{
 //						FutureFunctionality func = new ComponentFutureFunctionality(comp.getFeature(IExecutionFeature.class))
@@ -160,7 +158,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 //			        	System.out.println("already on agent: "+getId());
 			        	if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 			        	{
-			        		ret	= (Future<Object>) invokeMethod(comp, pojo, myargs, method, next);
+			        		ret	= (IFuture<Object>) invokeMethod(comp, pojo, myargs, method, next);
 			        	}
 			        	else if(method.getReturnType().equals(void.class))
 			        	{
@@ -258,33 +256,19 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public void scheduleStep_old(Runnable step) 
-	{
-		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-	}
-
-	@Override
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
 		return comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}
 
 	@Override
-	public void scheduleStep_old(IThrowingConsumer<IComponent> step)
-	{
-		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
-	}
-
-	@Override
-	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
-	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(Callable<T2> step)
+	public <E, T extends IFuture<E>> T scheduleAsyncStep(Callable<T> step)
 	{
 		return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
 	}
 
 	@Override
-	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
-	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(IThrowingFunction<IComponent, T2> step)
+	public <E, T extends IFuture<E>> T scheduleAsyncStep(IThrowingFunction<IComponent, T> step)
 	{
 		return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
 	}

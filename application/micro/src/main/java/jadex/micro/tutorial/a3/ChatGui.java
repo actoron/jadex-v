@@ -68,7 +68,7 @@ public class ChatGui extends JFrame
 						IChatService cs = it.next();
 						cs.message(agent.getId()+"", text);
 					}
-				});
+				}).catchEx(ex -> ex.printStackTrace());
 			}
 		});
 		
@@ -79,7 +79,7 @@ public class ChatGui extends JFrame
 				access.scheduleStep(agent ->
 				{
 					agent.terminate();
-				});
+				}).catchEx(ex -> ex.printStackTrace());
 			}
 		});
 		

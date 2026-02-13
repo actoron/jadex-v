@@ -1,8 +1,6 @@
 package jadex.bpmn.runtime.impl;
 
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import jadex.bpmn.runtime.BpmnProcess;
@@ -11,7 +9,6 @@ import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;

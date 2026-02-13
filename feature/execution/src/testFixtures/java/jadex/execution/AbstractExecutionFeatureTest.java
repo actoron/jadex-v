@@ -23,6 +23,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.INoCopyStep;
+import jadex.core.ITerminableIntermediateStep;
 import jadex.core.IThrowingFunction;
 import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
@@ -31,6 +32,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.future.TerminableIntermediateFuture;
 
 public abstract class AbstractExecutionFeatureTest
 {
@@ -674,15 +676,49 @@ public abstract class AbstractExecutionFeatureTest
 				return new Future<List<String>>(value);
 			}
 		});
+		IFuture<List<String>>	nocopysync	= comp.scheduleStep((INoCopyStep<List<String>>)c -> value);
+		IFuture<List<String>>	nocopyasync	= comp.scheduleAsyncStep((INoCopyStep<IFuture<List<String>>>)c -> new Future<>(value));
 		
 		assertEquals(value, callsync.get(TIMEOUT));
 		assertEquals(value, funcsync.get(TIMEOUT));
 		assertEquals(value, callasync.get(TIMEOUT));
 		assertEquals(value, funcasync.get(TIMEOUT));
+		assertEquals(value, nocopysync.get(TIMEOUT));
+		assertEquals(value, nocopyasync.get(TIMEOUT));
 		
 		assertSame(value, callsync.get(TIMEOUT));
 		assertSame(value, funcsync.get(TIMEOUT));
 		assertSame(value, callasync.get(TIMEOUT));
 		assertSame(value, funcasync.get(TIMEOUT));
+		assertSame(value, nocopysync.get(TIMEOUT));
+		assertSame(value, nocopyasync.get(TIMEOUT));
+	}
+	
+	@Test
+	public void	testAutoTermination()
+	{
+		// Set up connection between provider and caller.
+		Future<ComponentIdentifier>	compfut	= new Future<>();
+		TerminableIntermediateFuture<String>	termfut	= new TerminableIntermediateFuture<>(
+			ex -> compfut.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		IComponentHandle	provider	= IComponentManager.get().create(null).get(TIMEOUT);
+		IComponentHandle	caller	= IComponentManager.get().create(null).get(TIMEOUT);
+		caller.scheduleStep(() -> 
+		{
+			provider.scheduleAsyncStep((ITerminableIntermediateStep<String>) comp -> termfut)
+				.next(s -> System.out.println("Result: "+s));
+			return null;
+		}).get(TIMEOUT);
+		
+		// When caller terminates -> provider future should be terminated on next result.
+		caller.terminate().get(TIMEOUT);
+		provider.scheduleStep(() -> null).get(TIMEOUT);
+		assertFalse(compfut.isDone());
+		provider.scheduleStep(() ->
+		{
+			termfut.addIntermediateResult("result");
+		}).get(TIMEOUT);
+		assertEquals(provider.getId(), compfut.get(TIMEOUT));
+		provider.terminate().get(TIMEOUT);
 	}
 }

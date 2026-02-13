@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import jadex.bdi.IBDIAgent;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 
@@ -20,6 +21,6 @@ public class BrokenGoalTest
 	{
 		IComponentHandle	handle	= IComponentManager.get().create(new IBDIAgent(){}).get(TestHelper.TIMEOUT);
 		assertThrows(IllegalArgumentException.class, () ->
-			handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal("dummy")).get(TestHelper.TIMEOUT));
+			handle.scheduleAsyncStep((IAsyncStep<Void>)(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal("dummy"))).get(TestHelper.TIMEOUT));
 	}
 }

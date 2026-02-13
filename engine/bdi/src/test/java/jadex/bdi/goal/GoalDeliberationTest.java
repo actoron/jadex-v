@@ -17,6 +17,7 @@ import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -84,7 +85,7 @@ public class GoalDeliberationTest
 		assertFalse(pojo.aborted.isDone());
 		
 		// Add other to goal abort plan.
-		handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new Inhibitor())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new Inhibitor())).get(TestHelper.TIMEOUT);
 		assertNull(pojo.aborted.get(TestHelper.TIMEOUT));
 		
 		// Check passed to see if goal gets reactivated after the other succeeds

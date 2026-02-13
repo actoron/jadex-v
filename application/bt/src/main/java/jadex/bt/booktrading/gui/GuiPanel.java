@@ -412,7 +412,7 @@ public class GuiPanel extends JPanel
 							order.setDeadline(deadline, iexe);
 							INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
 							ag.createOrder(order);
-						});
+						}).catchEx(ex -> ex.printStackTrace());
 						orders.add(order);
 						items.fireTableDataChanged();
 						break;
@@ -464,7 +464,7 @@ public class GuiPanel extends JPanel
 								break;
 							}
 						}
-					});
+					}).catchEx(ex -> ex.printStackTrace());
 				}
 			}
 		});
@@ -514,7 +514,7 @@ public class GuiPanel extends JPanel
 								}
 								
 								ag.createOrder(order);
-							});
+							}).catchEx(ex -> ex.printStackTrace());
 							break;
 						}
 						catch(NumberFormatException e1)

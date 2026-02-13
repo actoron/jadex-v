@@ -2,11 +2,15 @@ package jadex.micro.breakfast;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
+import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
+import jadex.injection.Val;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.annotation.ProvideResult;
+import jadex.result.IResultFeature;
 
 /**
  *  Example shows how concurrent functional programming is possible with actors.
@@ -17,6 +21,7 @@ public class Main
 	{
 		long start = System.currentTimeMillis();
 		
+		// Synchronous (i.e. blocking) lambda agent.
 		IFuture<String> eggs = IComponentManager.get().run(agent ->
 		{
 			// boil eggs
@@ -25,18 +30,29 @@ public class Main
 			return "Eggs ready";
 		});
 		
+		// Asynchronous lambda agent. (TODO)
+		/*IFuture<String>	hashbrown	= */
+		@SuppressWarnings("unused")
+		Object x	= (IThrowingFunction<IComponent, IFuture<String>>)
+			(agent ->
+		{
+			Future<String>	ret	= new Future<>();
+			agent.getFeature(IExecutionFeature.class).waitForDelay(7000).then(v ->
+			{					
+				System.out.println("Hashbrown ready");
+				ret.setResult("Hashbrown ready");
+			});
+			return ret;
+		});
+		
+		// Explicit class using manual result.
 		IFuture<String> coffee = IComponentManager.get().run(new CoffeeMaker());
-		
-		/*eggs.then(res -> 
-			System.out.println("bar: "+res)
-		);*/
-		
-		/*coffee.then(res -> 
-			System.out.println("bar: "+res)
-		);*/
-		
+				
+		// Explicit class using injection result.
+		IFuture<String> pancake = IComponentManager.get().run(new PancakeMaker());
+				
 		@SuppressWarnings("unchecked")
-		FutureBarrier<String> b = new FutureBarrier<String>(eggs, coffee);
+		FutureBarrier<String> b = new FutureBarrier<String>(eggs, coffee, pancake);
 		
 		b.waitFor().get();
 		
@@ -46,65 +62,35 @@ public class Main
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
-
-	/*public static class CoffeeMaker extends ResultProvider
-	{
-		@OnStart
-		public void start(IComponent agent)
-		{
-			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
-			System.out.println("Coffee ready");
-			addResult("result", "Coffee ready");
-		}
-	}*/
 	
-	/*public static class CoffeeMaker
+	/**
+	 *  Manual result setting using result feature.
+	 */
+	public static class CoffeeMaker
 	{
 		@OnStart
-		public void start(IComponent agent, IInjectionFeature injection)
+		public void start(IExecutionFeature executionfeature, IResultFeature resultfeature)
 		{
-			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
+			executionfeature.waitForDelay(3000).get();
 			System.out.println("Coffee ready");
-			injection.addResult("result", "Coffee ready");
-		}
-	}*/
-	
-	public static class CoffeeMaker 
-	{
-		@ProvideResult
-		protected String result;
-		
-		@OnStart
-		public void start(IComponent agent)
-		{
-			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
-			System.out.println("Coffee ready");
-			result = "Coffee ready";
-			agent.terminate();
+			resultfeature.setResult("result", "Coffee ready");
 		}
 	}
 	
-	/*public static class CoffeeMaker implements IResultProvider
+	/**
+	 *  Automatic result detection using injection feature.
+	 */
+	public static class PancakeMaker 
 	{
-		protected List<SubscriptionIntermediateFuture<NameValue>> resultsubscribers = new ArrayList<SubscriptionIntermediateFuture<NameValue>>();
-		protected Map<String, Object> results = new HashMap<String, Object>();
+		@ProvideResult
+		protected Val<String> result;
 		
 		@OnStart
-		public void start(IComponent agent)
+		public void start(IExecutionFeature executionfeature)
 		{
-			agent.getFeature(IExecutionFeature.class).waitForDelay(3000).get();
-			System.out.println("Coffee ready");
-			addResult("result", "Coffee ready");
+			executionfeature.waitForDelay(1000).get();
+			System.out.println("Pancake ready");
+			result.set("Pancake ready");
 		}
-		
-		public Map<String, Object> getResultMap()
-		{
-			return results;
-		}
-		
-		public List<SubscriptionIntermediateFuture<NameValue>> getResultSubscribers()
-		{
-			return resultsubscribers;
-		}
-	}*/
+	}
 }

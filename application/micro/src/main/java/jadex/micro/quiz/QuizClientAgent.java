@@ -21,7 +21,6 @@ import javax.swing.SwingUtilities;
 import jadex.common.SGUI;
 import jadex.core.IComponent;
 import jadex.core.IThrowingConsumer;
-import jadex.execution.IExecutionFeature;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
@@ -161,11 +160,11 @@ public class QuizClientAgent
 					b.addActionListener(a -> 
 					{
 						answered = true;
-						agent.getFeature(IExecutionFeature.class).scheduleStep(Void ->
+						agent.getComponentHandle().scheduleStep(Void ->
 						{
 							if(quizservice!=null)
 								quizservice.sendAnswer(fi, questioncnt);
-						});
+						}).catchEx(ex -> ex.printStackTrace());
 					});
 					bg.add(b);
 					bp.add(b);
@@ -202,7 +201,7 @@ public class QuizClientAgent
 					public void windowClosing(WindowEvent e)
 					{
 						agent.getComponentHandle().scheduleStep((IThrowingConsumer<IComponent>)comp ->
-							comp.terminate());
+							comp.terminate()).catchEx(ex -> ex.printStackTrace());
 					}
 				});
 				

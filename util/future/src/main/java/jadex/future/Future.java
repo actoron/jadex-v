@@ -1522,11 +1522,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		
 		if(ret==null)
 		{
-			if(ITuple2Future.class.isAssignableFrom(clazz))
-			{
-				ret = new Tuple2Future();
-			}
-			else if(IPullSubscriptionIntermediateFuture.class.isAssignableFrom(clazz))
+			if(IPullSubscriptionIntermediateFuture.class.isAssignableFrom(clazz))
 			{
 				ret = new PullSubscriptionIntermediateDelegationFuture();
 			}
