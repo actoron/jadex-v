@@ -13,11 +13,8 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jadex.common.SReflect;
@@ -49,15 +46,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	private Queue<Runnable> steps;
 	protected volatile boolean executing;
 	protected volatile int	do_switch;
-//	protected ThreadRunner runner = null;
 	protected Component	self = null;
-	protected Object endstep = null;
-	protected Future<Object> endfuture = null;
-	
-	// Debug Heisenbug
-	AtomicInteger	threadcount	= new AtomicInteger();
-	boolean	failed	= false;
-	
 	
 	/**
 	 *  Create a new execution feature.
@@ -124,27 +113,19 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public <T> IFuture<T> scheduleStep(Callable<T> step)
 	{
 		Future<T> ret = createStepFuture(step, true);
+		Exception stack	= SUtil.DEBUG ? new RuntimeException() : null;
 		
 		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
 				T res = step.call();
-				
-				if(!saveEndStep(res, (Future)ret))
+				if(res instanceof IFuture)
 				{
-					if(res instanceof Future)
-					{
-						@SuppressWarnings("unchecked")
-						Future<T>	resfut	= (Future<T>)res;
-						// Use generic connection method to avoid issues with different future types.
-						resfut.delegateTo(ret);
-					}
-					else
-					{
-						ret.setResult(res);
-					}
+					throw new UnsupportedOperationException("Use scheduleAsyncStep for steps returning futures: "+step,
+						stack!=null ? stack : new RuntimeException("Set SUtil.DEBUG to true for caller stack trace."));
 				}
+				ret.setResult(res);
 			}
 			catch(Throwable t)
 			{
@@ -184,27 +165,19 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
 		Future<T> ret = createStepFuture(step, true);
+		Exception stack	= SUtil.DEBUG ? new RuntimeException() : null;
 		
 		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
 				T res = step.apply(self);
-				
-				if(!saveEndStep(res, (Future)ret))
+				if(res instanceof IFuture)
 				{
-					if(res instanceof Future)
-					{
-						@SuppressWarnings("unchecked")
-						Future<T>	resfut	= (Future<T>)res;
-						// Use generic connection method to avoid issues with different future types.
-						resfut.delegateTo(ret);
-					}
-					else
-					{
-						ret.setResult(res);
-					}
+					throw new UnsupportedOperationException("Use scheduleAsyncStep for steps returning futures: "+step,
+						stack!=null ? stack : new RuntimeException("Set SUtil.DEBUG to true for caller stack trace."));
 				}
+				ret.setResult(res);
 			}
 			catch(Throwable t)
 			{
@@ -231,14 +204,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			try
 			{
 				T2 res = step.call();
-				
-				if(!saveEndStep(res, (Future<Object>)ret))
-				{
-					@SuppressWarnings("unchecked")
-					Future<E>	resfut	= (Future<E>)res;
-					// Use generic connection method to avoid issues with different future types.
-					resfut.delegateTo((Future<E>) ret);
-				}
+				@SuppressWarnings("unchecked")
+				Future<E>	retfut	= (Future<E>)ret;
+				// Use generic connection method to avoid issues with different future types.
+				res.delegateTo(retfut);
 			}
 			catch(Throwable t)
 			{
@@ -265,14 +234,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			try
 			{
 				T2 res = step.apply(self);
-				
-				if(!saveEndStep(res, (Future)ret))
-				{
-					@SuppressWarnings("unchecked")
-					Future<E> resfut = (Future<E>)res;
-					// Use generic connection method to avoid issues with different future types.
-					resfut.delegateTo((Future<E>) ret);
-				}
+				@SuppressWarnings("unchecked")
+				Future<E>	retfut	= (Future<E>)ret;
+				// Use generic connection method to avoid issues with different future types.
+				res.delegateTo(retfut);
 			}
 			catch(Throwable t)
 			{
@@ -505,21 +470,13 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 						}
 						
 						assert step!=null;
-						
-//						// for debugging only
-						StepAborted aborted	= null;
-						
 						try
 						{
-//							if(step!=null)	// TODO: why can be null?
-								doRun(step);
+							doRun(step);
 						}
 						catch(StepAborted d)
 						{
-							// ignore aborted steps.
-							
-							// for debugging only
-							aborted	= d;
+							// NOP -> continue main loop after abortion of a step.
 						}
 						
 						synchronized(ExecutionFeature.this)
@@ -539,13 +496,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 							// Stop this thread, because there are no more steps -> set executing=false
 							else if(!self.isTerminated() && steps==null)
 							{
-								// decrement only if not resume step (otherwise decremented already)
-								if(!failed && threadcount.decrementAndGet()<0)
-								{
-									failed	= true;
-									throw aborted!=null ? new IllegalStateException("Threadcount<0", aborted) : new IllegalStateException("Threadcount<0");
-								}
-								
 								hasnext	= false;
 								executing	= false;
 								idle();	// only call idle when not terminated
@@ -598,12 +548,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			
 			synchronized(ExecutionFeature.this)
 			{
-				if(!failed && threadcount.decrementAndGet()<0)
-				{
-					failed	= true;
-					throw new IllegalStateException("Threadcount<0");
-				}
-				
 				if(!(steps==null || steps.isEmpty()) && !aborted)
 				{
 					startnew	= true;
@@ -676,12 +620,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					{
 						throw new StepAborted(getComponent().getId());
 					}
-
-					if(!failed && threadcount.incrementAndGet()>1)
-					{
-						failed	= true;
-						throw new IllegalStateException("Threadcount>1");
-					}
 				}
 			}
 			finally
@@ -718,11 +656,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 									// Can be two resume() of different threads before any threads end,
 									// thus a counter is needed.
 									do_switch++;
-								}
-								if(!failed && threadcount.decrementAndGet()<0)
-								{
-									failed	= true;
-									throw new IllegalStateException("Threadcount<0");
 								}
 								wait.signal();
 								
@@ -807,8 +740,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	@Override
 	public void cleanup()
 	{
-		executeEndStep();
-		
 		//System.out.println("terminate start: "+getComponent().getId()+" "+steps.size());
 		
 		// Terminate blocked threads
@@ -1018,117 +949,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	protected void restart()
 	{
-//		if(runner==null)
-//			runner	= new ThreadRunner();
-		if(!failed && threadcount.incrementAndGet()>1)
-		{
-			failed	= true;
-			throw new IllegalStateException("Threadcount>1");
-		}
-//		SUtil.getExecutor().execute(runner);
 		SUtil.getExecutor().execute(new ThreadRunner());
-	}
-	
-	protected boolean saveEndStep(Object res, Future<Object> fut)
-	{
-		boolean ret = false;
-		
-		if(res instanceof IFuture) // Future is Supplier :(
-			return ret;
-		
-		if(res instanceof Function || res instanceof IThrowingFunction || 
-			res instanceof Consumer || res instanceof IThrowingConsumer ||
-			res instanceof Runnable || res instanceof Supplier)
-		{
-			if(endstep==null)
-			{
-				endstep = res;
-				endfuture = fut;
-				ret = true;
-				//System.out.println("endstep: "+getComponent().getId()+" "+this.hashCode());
-			}
-			else
-			{
-				throw new RuntimeException("Only one endstep allowed: "+endstep+" "+res);
-			}
-		}
-		return ret;
-	}
-	
-	protected void executeEndStep()
-	{
-		if(endstep!=null)
-		{
-			if(endstep instanceof IThrowingFunction)
-			{
-				try
-				{
-					Object ret = ((IThrowingFunction<IComponent, Object>)endstep).apply(getComponent());
-					endfuture.setResult(ret);
-				}
-				catch(Exception e)
-				{
-					endfuture.setException(e);
-				}
-			}
-			else if(endstep instanceof Function)
-			{
-				try
-				{
-					Object ret = ((Function<IComponent, Object>)endstep).apply(getComponent());
-					endfuture.setResult(ret);
-				}
-				catch(Exception e)
-				{
-					endfuture.setException(e);
-				}
-			}
-			else if(endstep instanceof IThrowingConsumer)
-			{
-				try
-				{
-					((IThrowingConsumer<IComponent>)endstep).accept(getComponent());
-				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-			else if(endstep instanceof Consumer)
-			{
-				try
-				{
-					((Consumer<IComponent>)endstep).accept(getComponent());
-				}
-				catch(Exception e)
-				{
-					e.printStackTrace();;
-				}
-			}
-			else if(endstep instanceof Runnable)
-			{
-				try
-				{
-					((Runnable)endstep).run();
-				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-			else if(endstep instanceof Supplier)
-			{
-				try
-				{
-					Object ret = ((Supplier)endstep).get();
-					endfuture.setResult(ret);
-				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
 	}
 
 	protected static Map<Class<?>, AnnotatedType>	RETURNTYPE	= new LinkedHashMap<>();
