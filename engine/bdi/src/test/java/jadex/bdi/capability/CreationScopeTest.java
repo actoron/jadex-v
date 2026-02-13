@@ -15,6 +15,7 @@ import jadex.bdi.annotation.Capability;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.INoCopyStep;
@@ -95,7 +96,7 @@ public class CreationScopeTest
 		
 		MyAgent	pojo	= new MyAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class)
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class)
 			.dispatchTopLevelGoal(pojo.mycapa1.new MyGoal())).get(TestHelper.TIMEOUT);
 		assertSame(pojo.mycapa2, pojo.mycapa2.result.get(TestHelper.TIMEOUT));
 	}

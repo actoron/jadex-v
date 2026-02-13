@@ -25,12 +25,11 @@ import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.goal.APL;
 import jadex.bdi.impl.goal.ICandidateInfo;
 import jadex.bdi.impl.plan.IPlanBody;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.INoCopyStep;
 import jadex.future.Future;
-import jadex.future.IFuture;
 
 /**
  *  Test manual APL building.
@@ -68,7 +67,7 @@ public class GoalAPLTest
 		
 		APLBuildAgent	agent	= new APLBuildAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(agent).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new APLBuildGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new APLBuildGoal())).get(TestHelper.TIMEOUT);
 		assertNull(agent.executed.get(TestHelper.TIMEOUT));
 	}
 
@@ -104,7 +103,7 @@ public class GoalAPLTest
 		
 		APLBuildAgent	agent	= new APLBuildAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(agent).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new APLBuildGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new APLBuildGoal())).get(TestHelper.TIMEOUT);
 		assertNull(agent.executed.get(TestHelper.TIMEOUT));
 	}
 
@@ -148,7 +147,7 @@ public class GoalAPLTest
 		
 		SelectCandidate	agent	= new SelectCandidate();
 		IComponentHandle	handle	= IComponentManager.get().create(agent).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new SelectGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new SelectGoal())).get(TestHelper.TIMEOUT);
 		assertEquals(Arrays.asList("result2", "result1"), agent.results);
 	}
 }

@@ -14,11 +14,10 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.INoCopyStep;
 import jadex.future.Future;
-import jadex.future.IFuture;
 import jadex.injection.Val;
 
 /**
@@ -52,7 +51,7 @@ public class ExternalPlanTest
 		ExtPlanAgent	agent	= new ExtPlanAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(agent).get(TestHelper.TIMEOUT);
 		assertFalse(agent.processed.isDone());
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TriggerGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TriggerGoal())).get(TestHelper.TIMEOUT);
 		assertTrue(agent.processed.isDone());
 	}
 

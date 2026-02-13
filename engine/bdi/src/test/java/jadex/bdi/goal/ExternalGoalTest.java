@@ -11,9 +11,10 @@ import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.bdi.goal.ExternalGoalTest.MyExtGoal;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.INoCopyStep;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -44,7 +45,7 @@ public class ExternalGoalTest
 		ExtGoalAgent	agent	= new ExtGoalAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(agent).get(TestHelper.TIMEOUT);
 		assertFalse(agent.processed.isDone());
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MyExtGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new MyExtGoal())).get(TestHelper.TIMEOUT);
 		assertTrue(agent.processed.isDone());
 	}
 

@@ -17,6 +17,7 @@ import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.INoCopyStep;
 import jadex.core.IThrowingFunction;
 import jadex.core.annotation.NoCopy;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -102,6 +103,22 @@ public class ResultTest
 				return value;
 			}
 		};
+		List<String>	result	= IComponentManager.get().run(func).get(TIMEOUT);
+		assertEquals(value, result);
+		assertSame(value, result);
+		
+		IComponentHandle	comp	= IComponentManager.get().create(func).get(TIMEOUT);
+		Object	res	= comp.subscribeToResults().getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value, res);
+		assertSame(value, res);
+	}
+	
+//	@Test
+	// TODO
+	public void	testNoCopyStep()
+	{
+		List<String>	value	= Collections.singletonList("hello");
+		INoCopyStep<List<String>>	func	= comp -> value;
 		List<String>	result	= IComponentManager.get().run(func).get(TIMEOUT);
 		assertEquals(value, result);
 		assertSame(value, result);

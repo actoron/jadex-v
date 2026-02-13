@@ -20,12 +20,11 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanContextCondition;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.INoCopyStep;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
-import jadex.future.IFuture;
 import jadex.injection.Val;
 
 /**
@@ -159,7 +158,7 @@ public class GoalFlickerTest
 		ContextAgent	pojo	= new ContextAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		assertThrows(GoalFailureException.class, () ->
-			handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class)
+			handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class)
 					.dispatchTopLevelGoal(pojo.new TopGoal())).get(TestHelper.TIMEOUT));
 		assertEquals(0, executions.size());
 	}

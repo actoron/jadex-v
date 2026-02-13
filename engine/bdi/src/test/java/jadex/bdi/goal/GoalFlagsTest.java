@@ -21,10 +21,9 @@ import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.INoCopyStep;
-import jadex.future.IFuture;
 import jadex.future.IntermediateFuture;
 import jadex.injection.Val;
 
@@ -64,7 +63,7 @@ public class GoalFlagsTest
 		
 		RecurAgent	pojo	= new RecurAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal())).get(TestHelper.TIMEOUT);
 		assertEquals(1, pojo.fut.getNextIntermediateResult());
 		assertEquals(2, pojo.fut.getNextIntermediateResult());
 		assertEquals(3, pojo.fut.getNextIntermediateResult());
@@ -102,7 +101,7 @@ public class GoalFlagsTest
 		
 		OrsuccessAgent	pojo	= new OrsuccessAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal())).get(TestHelper.TIMEOUT);
 		assertEquals(1, pojo.fut.getNextIntermediateResult());
 		assertEquals(2, pojo.fut.getNextIntermediateResult());
 		assertEquals(3, pojo.fut.getNextIntermediateResult());
@@ -165,7 +164,7 @@ public class GoalFlagsTest
 		
 		ExcludeNeverAgent	pojo	= new ExcludeNeverAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal())).get(TestHelper.TIMEOUT);
 		assertEquals(Arrays.asList("value", "value"), pojo.list);
 	}
 	
@@ -220,10 +219,10 @@ public class GoalFlagsTest
 		
 		// Check that first goal with failing plan fails.
 		assertThrows(PlanFailureException.class, 
-			() -> handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>) comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal1())).get(TestHelper.TIMEOUT));
+			() -> handle.scheduleAsyncStep((IAsyncStep<Void>) comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal1())).get(TestHelper.TIMEOUT));
 		
 		// Check that second goal with passing plan succeeds.
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal2())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal2())).get(TestHelper.TIMEOUT);
 		assertEquals(Arrays.asList("value", "value"), pojo.list2);
 	}
 
@@ -278,11 +277,11 @@ public class GoalFlagsTest
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
 		
 		// Check that first goal with failing plan succeeds.
-		handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal1())).get(TestHelper.TIMEOUT);
+		handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal1())).get(TestHelper.TIMEOUT);
 		assertEquals(Arrays.asList("value", "value"), pojo.list1);
 		
 		// Check that second goal with passing plan fails.
 		assertThrows(GoalFailureException.class,
-			() -> handle.scheduleAsyncStep((INoCopyStep<IFuture<Void>>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal2())).get(TestHelper.TIMEOUT));
+			() -> handle.scheduleAsyncStep((IAsyncStep<Void>)comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new MyGoal2())).get(TestHelper.TIMEOUT));
 	}
 }
