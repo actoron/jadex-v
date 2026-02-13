@@ -1,6 +1,7 @@
 package jadex.core.impl;
 
 import jadex.core.Application;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentHandle;
 import jadex.future.Future;
@@ -59,7 +60,11 @@ public interface IComponentLifecycleManager
 				.next(r -> 
 				{
 //					System.out.println("received: "+r);	
-					handle.terminate();
+					// When initial value -> only terminate when != null
+					if(r.type()!=Type.INITIAL || r.value()!=null)
+					{
+						handle.terminate();
+					}
 				});
 //				.catchEx(e -> {})	// NOP on unsupported operation exception
 		})
