@@ -29,6 +29,7 @@ public @interface Publish
 	
 	/**
 	 *  Target interface of the service to be published service.
+	 *  Needed when publish is used directly in agent class.
 	 */
 	public Class<?> publishtarget() default Object.class;
 	

@@ -223,9 +223,7 @@ public class AutostartFeature implements IAutostartFeature, ILifecycle
 					instance = clazz.getDeclaredConstructor().newInstance();
 				}
 
-				IComponentManager.get()
-						.create(instance, localName)
-						.get();
+				IComponentManager.get().create(instance, localName).get();
 			}
 			catch (Exception e)
 			{
