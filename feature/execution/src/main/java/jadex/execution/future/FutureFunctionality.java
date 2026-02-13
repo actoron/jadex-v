@@ -4,7 +4,6 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.logging.Logger;
 
-import jadex.common.DebugException;
 import jadex.common.ICommand;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
@@ -18,7 +17,6 @@ import jadex.future.IResultListener;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
-import jadex.future.ITuple2Future;
 import jadex.future.IntermediateDelegationResultListener;
 import jadex.future.IntermediateFuture;
 import jadex.future.PullIntermediateDelegationFuture;
@@ -26,8 +24,6 @@ import jadex.future.PullSubscriptionIntermediateDelegationFuture;
 import jadex.future.SubscriptionIntermediateDelegationFuture;
 import jadex.future.TerminableDelegationFuture;
 import jadex.future.TerminableIntermediateDelegationFuture;
-import jadex.future.Tuple2Future;
-import jadex.future.TupleResult;
 
 /**
  *  Default future functionality.
@@ -254,12 +250,6 @@ public class FutureFunctionality
 //			((Future<Object>)orig).addResultListener(new TerminableDelegationResultListener<Object>(fut, (ITerminableFuture)orig));
 			ret	= fut;
 		}
-		else if(orig instanceof ITuple2Future)
-		{
-			Tuple2Future<Object, Object> fut = new DelegatingTupleFuture(func);
-			((Tuple2Future<Object, Object>)orig).addResultListener(new IntermediateDelegationResultListener<TupleResult>(fut));
-			ret = fut;
-		}
 		else if(orig instanceof IIntermediateFuture)
 		{
 			IntermediateFuture<Object>	fut	= new DelegatingIntermediateFuture(func);
@@ -283,11 +273,7 @@ public class FutureFunctionality
 	{
 		Future<?> ret = null;
 		
-		if(ITuple2Future.class.isAssignableFrom(clazz))
-		{
-			ret = new DelegatingTupleFuture(func);
-		}
-		else if(IPullSubscriptionIntermediateFuture.class.isAssignableFrom(clazz))
+		if(IPullSubscriptionIntermediateFuture.class.isAssignableFrom(clazz))
 		{
 			ret = new DelegatingPullSubscriptionIntermediateDelegationFuture(func);
 		}
@@ -1274,107 +1260,3 @@ class DelegatingFuture extends Future<Object>
 
     }
 };
-
-/**
- * 
- */
-class DelegatingTupleFuture extends Tuple2Future<Object, Object>
-{
-	/** The future functionality. */
-	protected FutureFunctionality func;
-	
-	/** creation stack trace. */
-	protected Exception	creaex;
-	
-	/**
-	 * 
-	 */
-	public DelegatingTupleFuture(FutureFunctionality func)
-	{
-		if(func==null)
-			throw new IllegalArgumentException("Func must not null.");
-		this.func = func;
-		func.setFuture(this);
-		if(Future.DEBUG)
-		{
-			this.creaex	= new DebugException();
-		}
-	}
-	
-	/**
-	 *  Overwritten to change result, if necessary.
-	 */
-	@Override
-	protected boolean doSetResult(Collection<TupleResult> result, boolean undone)
-	{
-		try
-		{
-			result = (Collection<TupleResult>)func.handleResult(result);
-			return DelegatingTupleFuture.super.doSetResult(result, func.isUndone(undone));
-		}
-		catch(Exception e)
-		{
-			return doSetException(e, func.isUndone(undone));
-		}		
-	}
-	
-	/**
-	 *  Overwritten to change undone, if necessary.
-	 */
-	@Override
-	protected boolean	doSetException(Exception exception, boolean undone)
-	{
-		func.handleException(exception);
-		return DelegatingTupleFuture.super.doSetException(exception, func.isUndone(undone));
-	}
-	
-	/**
-	 *  Overwritten to change result, if necessary.
-	 */
-	@Override
-	protected boolean	doAddIntermediateResult(TupleResult result, boolean undone)
-	{
-		try
-		{
-			result = (TupleResult)func.handleIntermediateResult(result);
-			boolean ret = FutureFunctionality.DROP_INTERMEDIATE_RESULT.equals(result) ? false
-				: DelegatingTupleFuture.super.doAddIntermediateResult(result, func.isUndone(undone));
-			func.handleAfterIntermediateResult(result);
-			return ret;
-		}
-		catch(Exception e)
-		{
-			return doSetException(e, func.isUndone(undone));
-		}		
-	}
-
-	/**
-	 *  Overwritten to change result, if necessary.
-	 */
-	@Override
-	protected synchronized boolean doSetFinished(boolean undone)
-	{
-		try
-		{
-			Collection<?> results	= getIntermediateResults();
-			func.handleFinished((Collection<Object>)results);
-			return DelegatingTupleFuture.super.doSetFinished(func.isUndone(undone));
-		}
-		catch(Exception e)
-		{
-			return doSetException(e, func.isUndone(undone));
-		}		
-	}
-
-	/**
-     *  Execute a notification. Override for scheduling on other threads.
-     */
-	@Override
-    protected void	executeNotification(IResultListener<Collection<TupleResult>> listener, ICommand<IResultListener<Collection<TupleResult>>> command)
-    {
-		func.scheduleForward(command, listener);
-    }
-	
-	
-};
-
