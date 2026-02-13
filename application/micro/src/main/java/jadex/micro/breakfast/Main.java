@@ -45,11 +45,14 @@ public class Main
 				
 		// Explicit class using injection result.
 		IFuture<String> toast = IComponentManager.get().run(new Toaster());
-				
-		@SuppressWarnings("unchecked")
-		FutureBarrier<String> b = new FutureBarrier<String>(eggs, coffee, toast);
 		
-		b.waitFor().get();
+		
+		// Now put it all together
+		FutureBarrier<String> breakfast = new FutureBarrier<>();
+		breakfast.add(eggs);
+//		breakfast.add(bacon);
+		breakfast.add(coffee);		breakfast.add(toast);
+		breakfast.waitFor().get();
 		
 		long end = System.currentTimeMillis();
 		
