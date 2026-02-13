@@ -1088,7 +1088,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	
 	//-------- java8 extensions --------
 	
-	public IFuture<? extends E> then(Consumer<? super E> function)
+	public IFuture<E> then(Consumer<? super E> function)
     {
 		this.addResultListener(new IResultListener<E>()
         {
