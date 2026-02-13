@@ -113,8 +113,7 @@ public class ResultTest
 		assertSame(value, res);
 	}
 	
-//	@Test
-	// TODO
+	@Test
 	public void	testNoCopyStep()
 	{
 		List<String>	value	= Collections.singletonList("hello");

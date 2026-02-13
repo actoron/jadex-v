@@ -1,5 +1,6 @@
 package jadex.execution.impl;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
@@ -1008,5 +1009,14 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			return RETURNTYPE.get(pojoclazz);
 		}
+	}
+	
+	/**
+	 *  Get annotations, if any, from pojo method return type.
+	 */
+	public static Annotation[]	getReturnAnnotations(Class<?> pojoclazz)
+	{
+		AnnotatedType	atype	= getReturnType(pojoclazz);
+		return atype!=null ? atype.getAnnotations() : null;
 	}
 }
