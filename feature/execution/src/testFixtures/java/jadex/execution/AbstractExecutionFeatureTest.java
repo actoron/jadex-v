@@ -30,7 +30,9 @@ import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
+import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.TerminableFuture;
+import jadex.future.TerminableIntermediateFuture;
 
 public abstract class AbstractExecutionFeatureTest
 {
@@ -684,5 +686,41 @@ public abstract class AbstractExecutionFeatureTest
 		assertSame(value, funcsync.get(TIMEOUT));
 		assertSame(value, callasync.get(TIMEOUT));
 		assertSame(value, funcasync.get(TIMEOUT));
+	}
+	
+	@Test
+	public void	testAutoTermination()
+	{
+		// Set up connection between provider and caller.
+		Future<ComponentIdentifier>	compfut	= new Future<>();
+		TerminableIntermediateFuture<String>	termfut	= new TerminableIntermediateFuture<>(
+			ex -> compfut.setResult(IComponentManager.get().getCurrentComponent().getId()));
+		IComponentHandle	provider	= IComponentManager.get().create(null).get(TIMEOUT);
+		IComponentHandle	caller	= IComponentManager.get().create(null).get(TIMEOUT);
+		caller.scheduleStep(() -> 
+		{
+			ITerminableIntermediateFuture<String>	fut	=
+				provider.scheduleAsyncStep(new Callable<ITerminableIntermediateFuture<String>>()
+			{
+				@Override
+				public ITerminableIntermediateFuture<String> call()
+				{
+					return termfut;
+				}				
+			});
+			fut.next(s -> System.out.println("Result: "+s));
+			return null;
+		}).get(TIMEOUT);
+		
+		// When caller terminates -> provider future should be terminated on next result.
+		caller.terminate().get(TIMEOUT);
+		provider.scheduleStep(() -> null).get(TIMEOUT);
+		assertFalse(compfut.isDone());
+		provider.scheduleStep(() ->
+		{
+			termfut.addIntermediateResult("result");
+		}).get(TIMEOUT);
+		assertEquals(provider.getId(), compfut.get(TIMEOUT));
+		provider.terminate().get(TIMEOUT);
 	}
 }
