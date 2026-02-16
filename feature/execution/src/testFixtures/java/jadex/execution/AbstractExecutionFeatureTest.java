@@ -38,7 +38,7 @@ public abstract class AbstractExecutionFeatureTest
 {
 	// Timeout how long a test blocks on a future before giving up.
 	// Does not affect test execution time for successful tests.
-	protected long	TIMEOUT	= 10000;
+	protected static long	TIMEOUT	= 10000;
 	
 	@Test
 	public void	testFeatureAccess()

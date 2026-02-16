@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingConsumer;
 import jadex.core.impl.ComponentManager;
-import jadex.execution.LambdaAgent;
 import jadex.injection.annotation.OnStart;
 
 public class TestFeatureStart 
@@ -37,7 +37,7 @@ public class TestFeatureStart
     {
         latch = new CountDownLatch(2);
 
-        LambdaAgent.create(agent -> 
+        IComponentManager.get().run((IThrowingConsumer<IComponent>)agent -> 
         {
             System.out.println("Created agent: " + agent.getId());
         });

@@ -3,8 +3,8 @@ package jadex.benchmark;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.LambdaAgent;
 import jadex.future.Future;
 
 /**
@@ -17,14 +17,14 @@ public class BlockingLambdaAgentBenchmark
 	{
 		BenchmarkHelper.benchmarkTime(() -> 
 		{
-			Future<Void>	ret	= new Future<>();
-			IComponentHandle	agent	= LambdaAgent.create(comp ->
+			Future<IComponentHandle>	ret	= new Future<>();
+			IComponentManager.get().run(comp ->
 			{
-				comp.getFeature(IExecutionFeature.class).scheduleStep(() -> ret.setResult(null));
-				new Future<Void>().get();
-			}).get();
-			ret.get();
-			agent.terminate().get();
+				comp.getFeature(IExecutionFeature.class).scheduleStep(
+					() -> ret.setResult(comp.getComponentHandle()));
+				return new Future<Void>().get();
+			});
+			ret.get().terminate().get();
 		});
 	}
 
@@ -32,14 +32,14 @@ public class BlockingLambdaAgentBenchmark
 	{
 		for(;;) 
 		{
-			Future<Void>	ret	= new Future<>();
-			IComponentHandle	agent	= LambdaAgent.create(comp ->
+			Future<IComponentHandle>	ret	= new Future<>();
+			IComponentManager.get().run(comp ->
 			{
-				comp.getFeature(IExecutionFeature.class).scheduleStep(() -> ret.setResult(null));
-				new Future<Void>().get();
-			}).get();
-			ret.get();
-			agent.terminate().get();
+				comp.getFeature(IExecutionFeature.class).scheduleStep(
+					() -> ret.setResult(comp.getComponentHandle()));
+				return new Future<Void>().get();
+			});
+			ret.get().terminate().get();
 		}
 	}
 }

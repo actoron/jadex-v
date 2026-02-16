@@ -1,10 +1,13 @@
 package jadex.execution.impl;
 
+import java.lang.reflect.AnnotatedType;
 import java.util.concurrent.Callable;
 
+import jadex.common.ErrorException;
 import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
+import jadex.core.ICallable;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IThrowingConsumer;
@@ -17,7 +20,6 @@ import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
 import jadex.core.impl.StepAborted;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.LambdaAgent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -69,62 +71,85 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		// Fast Lambda Agent -> optimized lifecycle
 		if(component instanceof FastLambda)
 		{
+			@SuppressWarnings("unchecked")
+			FastLambda<Object> fself	= (FastLambda<Object>)component;
+			
 			ComponentManager.get().increaseCreating(component.getApplication());
+			
 //			System.out.println("Creating fast lambda agent: "+type);
-			exe.scheduleStep(() -> 
+			fself.setResult(exe.scheduleStep(new ICallable<Object>()
 			{
-				@SuppressWarnings("unchecked")
-				FastLambda<Object> fself	= (FastLambda<Object>)component;
-				try
+				@Override
+				public AnnotatedType getReturnType()
 				{
-					// Extra init so component doesn't get added when just created as object
-					fself.init();
-					
-					// run body and termination in same step as init
-					Object	result	= null;
-					Object	pojo	= fself.getPojo();
-					if(pojo instanceof Callable)
+					return ExecutionFeature.getReturnType(fself.getPojo().getClass());
+				}
+				
+				@Override
+				public Object call() throws Exception
+				{
+					try
 					{
-						result	= ((Callable<?>)pojo).call();							
+						// Extra init so component doesn't get added when just created as object
+						fself.init();
+						
+						// run body and termination in same step as init
+						Object	result	= null;
+						Object	pojo	= fself.getPojo();
+						if(pojo instanceof Callable)
+						{
+							result	= ((Callable<?>)pojo).call();							
+						}
+						else if(pojo instanceof IThrowingFunction)
+						{
+							@SuppressWarnings("unchecked")
+							IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
+							result	= itf.apply(fself);							
+						}
+						else if(pojo instanceof Runnable)
+						{
+							((Runnable)pojo).run();							
+						}
+						else //if(pojo instanceof IThrowingConsumer)
+						{
+							@SuppressWarnings("unchecked")
+							IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+							itc.accept(fself);							
+						}
+						
+						if(!FastLambda.KEEPALIVE)
+						{
+							exe.scheduleStep((Runnable)() -> fself.doTerminate());
+						}
+						
+						return result;
 					}
-					else if(pojo instanceof IThrowingFunction)
+					catch(Exception e)
 					{
-						@SuppressWarnings("unchecked")
-						IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
-						result	= itf.apply(fself);							
+						exe.scheduleStep((Runnable)() ->
+						{
+							fself.handleException(e);
+							// Terminate, if not terminated by exception handler (default terminate -> StepAborted)
+							fself.doTerminate();
+						});
+						throw e;
 					}
-					else if(pojo instanceof Runnable)
+					catch(Error e)
 					{
-						((Runnable)pojo).run();							
+						exe.scheduleStep((Runnable)() ->
+						{
+							fself.handleException(new ErrorException(e));
+							// Terminate, if not terminated by exception handler (default terminate -> StepAborted)
+							fself.doTerminate();
+						});
+						throw e;
 					}
-					else //if(pojo instanceof IThrowingConsumer)
+					finally
 					{
-						@SuppressWarnings("unchecked")
-						IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
-						itc.accept(fself);							
-					}
-					
-					fself.result.setResult(Component.copyVal(result, ExecutionFeature.getReturnAnnotations(pojo.getClass())));
-
-					if(!FastLambda.KEEPALIVE)
-					{
-						exe.scheduleStep((Runnable)() -> fself.doTerminate());
+						ComponentManager.get().decreaseCreating(fself.getId(), fself.getApplication());
 					}
 				}
-				catch(Exception e)
-				{
-					fself.result.setException(e);
-				}
-				catch(StepAborted e)
-				{
-					fself.result.setException(fself.getException()!=null ? fself.getException() : new RuntimeException(e));
-					throw e;
-				}
-				finally
-				{
-					ComponentManager.get().decreaseCreating(fself.getId(), fself.getApplication());
-				}
-			});
+			}));
 			
 			// No handle needed, because the user only waits for the run() result
 			return null;
@@ -246,34 +271,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	@Override
 	public IFuture<IComponentHandle>	create(Object pojo, ComponentIdentifier cid, Application app)
 	{
-		IFuture<IComponentHandle>	ret;
-		
-		if(pojo instanceof Runnable)
-		{
-			ret = LambdaAgent.create((Runnable)pojo, cid, app);
-		}
-		else if(pojo instanceof Callable)
-		{
-			ret = LambdaAgent.create((Callable<?>)pojo, cid, app);
-		}
-		else if(pojo instanceof IThrowingFunction)
-		{
-			@SuppressWarnings("unchecked")
-			IThrowingFunction<IComponent, ?>	itf	= (IThrowingFunction<IComponent, ?>)pojo;
-			ret = LambdaAgent.create(itf, cid, app);
-		}
-		else if(pojo instanceof IThrowingConsumer)
-		{
-			@SuppressWarnings("unchecked")
-			IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
-			ret = LambdaAgent.create(itc, cid, app);
-		}
-		else
-		{
-			throw new RuntimeException("Cannot create lambda agent from: "+pojo);
-		}
-	
-		return ret;
+		return Component.createComponent(new Component(pojo, cid, app));
 	}	
 	
 	@Override
@@ -284,9 +282,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		|| pojo instanceof Runnable
 		|| pojo instanceof IThrowingConsumer)
 		{
-			Future<T>	ret	= new Future<>();
-			Component.createComponent(new FastLambda<>(pojo, cid, app, ret));
-			return ret;
+			FastLambda<T>	comp	= new FastLambda<>(pojo, cid, app);
+			Component.createComponent(comp);
+			return comp.getResult();
 		}
 		else
 		{

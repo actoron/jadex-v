@@ -2,12 +2,8 @@ package jadex.micro.llmcall;
 
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.IRuntimeFeature;
-import jadex.execution.LambdaAgent;
 import jadex.llm.ILlmFeature;
-import jadex.llm.IMcpHostService;
 import jadex.llm.impl.GroqAgent;
-import jadex.requiredservice.IRequiredServiceFeature;
 
 public class Main 
 {
