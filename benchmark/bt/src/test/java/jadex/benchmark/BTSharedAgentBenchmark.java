@@ -12,6 +12,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.future.TerminableFuture;
 
 /**
@@ -57,9 +58,10 @@ public class BTSharedAgentBenchmark
 		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<Void> ret = new Future<>();
-			IComponentHandle agent = IComponentManager.get().create(new TestAgent(ret)).get();
+			// Only wait for ret future to avoid two blocking gets.
+			IFuture<IComponentHandle> agent = IComponentManager.get().create(new TestAgent(ret));
 			ret.get();
-			agent.terminate().get();
+			agent.get().terminate().get();
 		}, 40);	// TODO: why slower when handle returned only after features are started?
 	}
 
