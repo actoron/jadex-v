@@ -53,7 +53,7 @@ public abstract class Node<T> implements IDecorator<T>
 	
 	protected Node<T> parent;
 	
-	protected List<IDecorator<T>> decorators = new ArrayList<>();	
+	protected List<IDecorator<T>> decorators = new ArrayList<>(1);	
 	
 	public abstract IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context);
 	
