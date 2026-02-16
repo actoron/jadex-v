@@ -16,20 +16,18 @@ import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.common.ITriFunction;
 import jadex.common.Tuple2;
-import jadex.core.ChangeEvent;
+import jadex.core.IChangeListener;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.IChangeListener;
 import jadex.execution.ITimerCreator;
 import jadex.execution.impl.ITimerContext;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.injection.IInjectionFeature;
 
 
 public class ExecutionContext<T> implements ITimerContext
 {	
-	protected Map<Node<T>, NodeContext<T>> nodestates = new HashMap<Node<T>, NodeContext<T>>();
+	protected Map<Node<T>, NodeContext<T>> nodestates = new HashMap<Node<T>, NodeContext<T>>(4);
 
 	protected T context;
 	
