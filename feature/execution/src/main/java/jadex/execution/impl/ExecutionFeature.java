@@ -18,6 +18,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import jadex.common.ErrorException;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
@@ -880,7 +881,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		else
 		{
 			boolean handled	= false;
-			Exception ex	= t instanceof Exception ? (Exception) t : new RuntimeException("Error in step", t);
+			Exception ex	= t instanceof Exception ? (Exception) t : new ErrorException((Error) t);
 			
 			if(ret!=null)
 			{

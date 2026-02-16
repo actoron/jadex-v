@@ -148,7 +148,7 @@ public abstract class AbstractExecutionFeatureTest
 		IFuture<Boolean>	result	= comp.scheduleStep(() -> {
 			throw new InternalError("err");
 		});
-		assertThrows(RuntimeException.class, () -> result.get(TIMEOUT), "Wrong step error.");
+		assertThrows(InternalError.class, () -> result.get(TIMEOUT), "Wrong step error.");
 	}
 	
 	@Test
