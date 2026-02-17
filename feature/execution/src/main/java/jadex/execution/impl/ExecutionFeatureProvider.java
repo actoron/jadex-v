@@ -4,7 +4,6 @@ import java.lang.reflect.AnnotatedType;
 import java.util.concurrent.Callable;
 
 import jadex.common.ErrorException;
-import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
@@ -18,7 +17,6 @@ import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.core.impl.SComponentFeatureProvider;
-import jadex.core.impl.StepAborted;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -159,8 +157,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		else
 		{
 			ComponentManager.get().increaseCreating(component.getApplication());
-			Future<IComponentHandle>	ret	= new Future<>();
-			exe.scheduleStep(() -> 
+			return exe.scheduleStep(() -> 
 			{
 				try
 				{
@@ -233,28 +230,13 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						component.getFeature(IExecutionFeature.class).scheduleStep(step);
 					}
 					
-					// Make component available after init is complete
-					ret.setResult(component.getComponentHandle());
-				}
-				catch(Exception e)
-				{
-					if(!ret.setExceptionIfUndone(e))
-					{
-						SUtil.throwUnchecked(e);
-					}
-				}
-				catch(StepAborted e)
-				{
-					ret.setExceptionIfUndone(component.getException()!=null ? component.getException() : new RuntimeException(e));
-					throw e;
+					return component.getComponentHandle();
 				}
 				finally
 				{
 					ComponentManager.get().decreaseCreating(component.getId(), component.getApplication());
 				}
 			});
-			
-			return ret;
 		}
 	}
 	
