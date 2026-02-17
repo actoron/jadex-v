@@ -48,8 +48,10 @@ dependencies
     implementation 'org.testcontainers:testcontainers-ollama:2.0.3'
     implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	// required for gradle 9!? https://docs.gradle.org/8.7/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test 

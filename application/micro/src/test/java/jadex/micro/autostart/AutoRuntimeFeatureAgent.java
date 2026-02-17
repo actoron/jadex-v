@@ -1,5 +1,7 @@
 package jadex.micro.autostart;
 
+import org.junit.jupiter.api.Test;
+
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -37,5 +39,12 @@ public class AutoRuntimeFeatureAgent	implements IAutoRuntimeFeature
 		System.out.println("AutoRuntimeFeatureAgent main getting feature.");
 		String	name	= IComponentManager.get().getFeature(IAutoRuntimeFeature.class).getComponentName().get();
 		System.out.println("AutoRuntimeFeatureAgent main method end: " + name);
+	}
+	
+	@Test
+	public void	dummy()
+	{
+		// Required for Gradle 9
+		// TODO: fix and write actual test
 	}
 }

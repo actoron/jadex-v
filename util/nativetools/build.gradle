@@ -23,7 +23,6 @@ repositories
 dependencies
 {
 	implementation 'net.java.dev.jna:jna:5.8.0'
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 
 task copyDependencies {
