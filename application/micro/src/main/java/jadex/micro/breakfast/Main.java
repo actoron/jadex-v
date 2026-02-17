@@ -1,8 +1,7 @@
 package jadex.micro.breakfast;
 
-import jadex.core.IComponent;
+import jadex.core.IAsyncStep;
 import jadex.core.IComponentManager;
-import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -29,16 +28,12 @@ public class Main
 			return "Eggs ready";
 		});
 		
-		// Asynchronous lambda agent. (TODO)
-		/*IFuture<String>	bacon	= */
-		@SuppressWarnings("unused")
-		Object x		= (IThrowingFunction<IComponent, IFuture<String>>)
-			(agent ->
-				agent.getFeature(IExecutionFeature.class)
-					.waitForDelay(7000)
-					.thenApply(done -> "Bacon ready")
-					.then(System.out::println)
-			);
+		// Asynchronous lambda agent.
+		IFuture<String>	bacon	= IComponentManager.get().runAsync((IAsyncStep<String>)agent ->
+			agent.getFeature(IExecutionFeature.class)
+				.waitForDelay(7000)
+				.thenApply(done -> "Bacon ready")
+				.then(System.out::println));
 		
 		// Explicit class using manual result.
 		IFuture<String> coffee = IComponentManager.get().run(new CoffeeMaker());
@@ -50,7 +45,7 @@ public class Main
 		// Now put it all together
 		FutureBarrier<String> breakfast = new FutureBarrier<>();
 		breakfast.add(eggs);
-//		breakfast.add(bacon);
+		breakfast.add(bacon);
 		breakfast.add(coffee);		breakfast.add(toast);
 		breakfast.waitFor().get();
 		

@@ -4,6 +4,7 @@ import java.lang.reflect.AnnotatedType;
 import java.util.concurrent.Callable;
 
 import jadex.common.ErrorException;
+import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
@@ -71,16 +72,15 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			@SuppressWarnings("unchecked")
 			FastLambda<Object> fself	= (FastLambda<Object>)component;
-			
-			ComponentManager.get().increaseCreating(component.getApplication());
-			
-//			System.out.println("Creating fast lambda agent: "+type);
-			fself.setResult(exe.scheduleStep(new ICallable<Object>()
+			AnnotatedType	type	= ExecutionFeature.getReturnType(fself.getPojo().getClass());
+			boolean	async	= type!=null && SReflect.isSupertype(IFuture.class, SReflect.getRawClass(type.getType()));
+			@SuppressWarnings("rawtypes")
+			ICallable	step	= new ICallable()
 			{
 				@Override
 				public AnnotatedType getReturnType()
 				{
-					return ExecutionFeature.getReturnType(fself.getPojo().getClass());
+					return type;
 				}
 				
 				@Override
@@ -117,7 +117,22 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						
 						if(!FastLambda.KEEPALIVE)
 						{
-							exe.scheduleStep((Runnable)() -> fself.doTerminate());
+							if(async)
+							{
+								@SuppressWarnings("unchecked")
+								IFuture<Object>	resfut	= (IFuture<Object>) result;
+								resfut.then(v -> fself.doTerminate())
+									.catchEx(ex ->
+								{
+									fself.handleException(ex);
+									// Terminate, if not terminated by exception handler (default terminate -> StepAborted)
+									fself.doTerminate();									
+								});
+							}
+							else
+							{
+								exe.scheduleStep((Runnable)() -> fself.doTerminate());
+							}
 						}
 						
 						return result;
@@ -147,7 +162,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						ComponentManager.get().decreaseCreating(fself.getId(), fself.getApplication());
 					}
 				}
-			}));
+			};
+			ComponentManager.get().increaseCreating(component.getApplication());
+//			System.out.println("Creating fast lambda agent: "+type);
+			fself.setResultFuture(async ? exe.scheduleAsyncStep(step) :	exe.scheduleStep(step));
 			
 			// No handle needed, because the user only waits for the run() result
 			return null;
@@ -266,7 +284,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			FastLambda<T>	comp	= new FastLambda<>(pojo, cid, app);
 			Component.createComponent(comp);
-			return comp.getResult();
+			return comp.getResultFuture();
 		}
 		else
 		{

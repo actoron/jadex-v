@@ -26,7 +26,7 @@ public class FastLambda<T>	extends Component
 
 	/**
 	 *  Get the future result of the lambda step.	 */
-	public IFuture<T> getResult()
+	public IFuture<T> getResultFuture()
 	{
 		return result;
 	}
@@ -34,7 +34,7 @@ public class FastLambda<T>	extends Component
 	/**
 	 *  Set the future result of the lambda step.
 	 */
-	public void setResult(IFuture<T> result)
+	public void setResultFuture(IFuture<T> result)
 	{
 		this.result	= result;
 	}
