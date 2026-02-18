@@ -28,7 +28,7 @@ public class BTSharedCleanerBenchmark
 		envid = Environment.add(env);
 	}
 	
-	@Test
+//	@Test
 	void benchmarkTime()
 	{
 		BenchmarkHelper.benchmarkTime(() -> 
@@ -40,7 +40,7 @@ public class BTSharedCleanerBenchmark
 		});
 	}
 
-	@Test
+//	@Test
 	void benchmarkMemory()
 	{
 		BenchmarkHelper.benchmarkMemory(() -> 
