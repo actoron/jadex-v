@@ -16,21 +16,20 @@ import jadex.logger.ILoggingFeature;
  */
 public class BTSharedCleanerBenchmark
 {
-	static String envid;
 	static
 	{
 		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(Level.ERROR);
 		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(Level.WARNING);
-		
-		int fps = 0; // steps / frames per second: 0 -> disable steps
-		CleanerworldEnvironment env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
-		env.createWorld().get();
-		envid = Environment.add(env);
 	}
 	
 	@Test
 	void benchmarkTime()
 	{
+		int fps = 0; // steps / frames per second: 0 -> disable steps
+		IComponentHandle	env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get();
+		env.getPojoHandle(CleanerworldEnvironment.class).createWorld().get();
+		String envid = Environment.add(env.getPojoHandle(CleanerworldEnvironment.class));
+		
 		BenchmarkHelper.benchmarkTime(() -> 
 		{
 			Future<Void> ret = new Future<>();
@@ -38,11 +37,18 @@ public class BTSharedCleanerBenchmark
 			ret.get();
 			agent.terminate().get();
 		});
+		
+		env.terminate().get();
 	}
 
 	@Test
 	void benchmarkMemory()
 	{
+		int fps = 0; // steps / frames per second: 0 -> disable steps
+		IComponentHandle	env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get();
+		env.getPojoHandle(CleanerworldEnvironment.class).createWorld().get();
+		String envid = Environment.add(env.getPojoHandle(CleanerworldEnvironment.class));
+		
 		BenchmarkHelper.benchmarkMemory(() -> 
 		{
 			Future<Void> ret = new Future<>();
@@ -50,6 +56,8 @@ public class BTSharedCleanerBenchmark
 			ret.get();
 			return () -> agent.terminate().get();
 		});
+		
+		env.terminate().get();
 	}
 	
 	public static void main(String[] args)
