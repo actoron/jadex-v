@@ -3,12 +3,9 @@ package jadex.benchmark;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.IComponent;
-import jadex.core.IComponentHandle;
 import jadex.core.INoCopyStep;
-import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
 import jadex.execution.impl.FastLambda;
-import jadex.future.Future;
 import jadex.future.IFuture;
 
 /**
@@ -32,7 +29,7 @@ public class FastLambdaBenchmark
 			BenchmarkHelper.benchmarkMemory(() -> 
 			{
 				// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
-				FastLambda<IComponent>	res	= new FastLambda<>((INoCopyStep<IComponent>)comp -> comp, null, null);
+				FastLambda<IComponent>	res	= new FastLambda<>((INoCopyStep<IComponent>)comp -> comp, null, null, false);
 				Component.createComponent(res);
 				IComponent	thecomp	= res.getResultFuture().get();
 				return () -> thecomp.getComponentHandle().terminate().get();

@@ -905,11 +905,12 @@ public class ComponentManager implements IComponentManager
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
 	 *  @param pojo The pojo.
-	 *  @param localname The component id or null for auto-generationm.
+	 *  @param localname The component id or null for auto-generation.
 	 *  @param app The application context.
+	 *  @param async If true, the component is executed i.e. the result of the pojo is expected to be a future that needs unpacking.
 	 *  @return The execution result.
 	 */
-	public <T> IFuture<T> run(Object pojo, String localname, Application app)
+	public <T> IFuture<T> run(Object pojo, String localname, Application app, boolean async)
 	{
 		if (!(pojo instanceof IDaemonComponent))
 			initializeFeatures();
@@ -923,7 +924,7 @@ public class ComponentManager implements IComponentManager
 			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
 			if(creator!=null)
 			{
-				return creator.run(pojo, localname==null ? null : new ComponentIdentifier(localname), app);
+				return creator.run(pojo, localname==null ? null : new ComponentIdentifier(localname), app, async);
 			}
 			else
 			{

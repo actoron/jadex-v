@@ -4,7 +4,6 @@ import java.lang.reflect.AnnotatedType;
 import java.util.concurrent.Callable;
 
 import jadex.common.ErrorException;
-import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
@@ -72,8 +71,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		{
 			@SuppressWarnings("unchecked")
 			FastLambda<Object> fself	= (FastLambda<Object>)component;
-			AnnotatedType	type	= ExecutionFeature.getReturnType(fself.getPojo().getClass());
-			boolean	async	= type!=null && SReflect.isSupertype(IFuture.class, SReflect.getRawClass(type.getType()));
+			AnnotatedType	type	= ExecutionFeature.getReturnType(fself.getPojo());
 			@SuppressWarnings("rawtypes")
 			ICallable	step	= new ICallable()
 			{
@@ -117,7 +115,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 						
 						if(!FastLambda.KEEPALIVE)
 						{
-							if(async)
+							if(fself.isAsync())
 							{
 								@SuppressWarnings("unchecked")
 								IFuture<Object>	resfut	= (IFuture<Object>) result;
@@ -165,7 +163,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 			};
 			ComponentManager.get().increaseCreating(component.getApplication());
 //			System.out.println("Creating fast lambda agent: "+type);
-			fself.setResultFuture(async ? exe.scheduleAsyncStep(step) :	exe.scheduleStep(step));
+			@SuppressWarnings("unchecked")
+			IFuture<Object>	resfut	= fself.isAsync() ? exe.scheduleAsyncStep(step) : exe.scheduleStep(step);
+			fself.setResultFuture(resfut);
 			
 			// No handle needed, because the user only waits for the run() result
 			return null;
@@ -196,7 +196,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 								{
 									Object	result	= ((Callable<?>)pojo).call();
 									// Fail if no result feature available
-									Component.setResult(component, "result", result, ExecutionFeature.getReturnAnnotations(pojo.getClass()));
+									Component.setResult(component, "result", result, ExecutionFeature.getReturnAnnotations(pojo));
 								}
 								catch(Exception e)
 								{
@@ -215,7 +215,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
 									Object result	= itf.apply(component);
 									// Fail if no result feature available
-									Component.setResult(component, "result", result, ExecutionFeature.getReturnAnnotations(pojo.getClass()));
+									Component.setResult(component, "result", result, ExecutionFeature.getReturnAnnotations(pojo));
 								}
 								catch(Exception e)
 								{
@@ -275,14 +275,14 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	}	
 	
 	@Override
-	public <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
+	public <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app, boolean async)
 	{
 		if(pojo instanceof Callable
 		|| pojo instanceof IThrowingFunction
 		|| pojo instanceof Runnable
 		|| pojo instanceof IThrowingConsumer)
 		{
-			FastLambda<T>	comp	= new FastLambda<>(pojo, cid, app);
+			FastLambda<T>	comp	= new FastLambda<>(pojo, cid, app, async);
 			Component.createComponent(comp);
 			return comp.getResultFuture();
 		}

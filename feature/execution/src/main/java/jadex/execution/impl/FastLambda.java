@@ -17,11 +17,15 @@ public class FastLambda<T>	extends Component
 	
 	/** The future result of the lambda step. */
 	private IFuture<T>	result;
+	
+	/** The async flag. */
+	private boolean		async;
 
 	/** 	 *  Create a new fast lambda agent. 	 */
-	public FastLambda(Object body, ComponentIdentifier cid, Application app)
+	public FastLambda(Object body, ComponentIdentifier cid, Application app, boolean async)
 	{
 		super(body, cid, app);
+		this.async	= async;
 	}
 
 	/**
@@ -37,5 +41,13 @@ public class FastLambda<T>	extends Component
 	public void setResultFuture(IFuture<T> result)
 	{
 		this.result	= result;
+	}
+	
+	/**
+	 *  Check if the lambda should be executed asynchronously.
+	 */
+	public boolean isAsync()
+	{
+		return async;
 	}
 }

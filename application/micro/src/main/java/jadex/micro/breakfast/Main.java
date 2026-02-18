@@ -1,6 +1,5 @@
 package jadex.micro.breakfast;
 
-import jadex.core.IAsyncStep;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
@@ -29,7 +28,7 @@ public class Main
 		});
 		
 		// Asynchronous lambda agent.
-		IFuture<String>	bacon	= IComponentManager.get().runAsync((IAsyncStep<String>)agent ->
+		IFuture<String>	bacon	= IComponentManager.get().runAsync(agent ->
 			agent.getFeature(IExecutionFeature.class)
 				.waitForDelay(7000)
 				.thenApply(done -> "Bacon ready")
