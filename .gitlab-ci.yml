@@ -24,8 +24,7 @@ build:
 
 test:
   stage: test
-  #script: ./gradlew test
-  script: ./gradlew --version
+  script: ./gradlew test
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
@@ -36,8 +35,7 @@ test:
 benchmark:
   stage: benchmark
   script:
-  #  - ./benchmark.sh
-    - ./gradlew benchmark-bt:benchmark
+    - ./benchmark.sh
   #timeout: 48h
   # needs: ["build"]
   allow_failure: true

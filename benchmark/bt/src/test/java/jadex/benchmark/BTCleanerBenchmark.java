@@ -28,7 +28,7 @@ public class BTCleanerBenchmark
 		envid = Environment.add(env);
 	}
 	
-//	@Test
+	@Test
 	void benchmarkTime()
 	{
 		BenchmarkHelper.benchmarkTime(() -> 
@@ -40,7 +40,7 @@ public class BTCleanerBenchmark
 		});
 	}
 
-//	@Test
+	@Test
 	void benchmarkMemory()
 	{
 		BenchmarkHelper.benchmarkMemory(() -> 
