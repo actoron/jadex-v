@@ -11,7 +11,6 @@ import java.util.Set;
 import javax.swing.SwingUtilities;
 
 import jadex.bt.IBTProvider;
-import jadex.bt.Val;
 import jadex.bt.actions.TerminableUserAction;
 import jadex.bt.cleanerworld.environment.Chargingstation;
 import jadex.bt.cleanerworld.environment.Cleaner;
@@ -26,7 +25,6 @@ import jadex.bt.decorators.RepeatDecorator;
 import jadex.bt.decorators.RetryDecorator;
 import jadex.bt.decorators.SuccessDecorator;
 import jadex.bt.decorators.TriggerDecorator;
-import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.ActionNode;
 import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
@@ -47,12 +45,13 @@ import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.math.IVector2;
 import jadex.math.Vector2Double;
-import jadex.rules.eca.EventType;
 
 public class BTCleanerAgent implements IBTProvider
 {
@@ -80,7 +79,10 @@ public class BTCleanerAgent implements IBTProvider
 	protected Val<Cleaner> self = null;
 		
 	/** Day or night?. Use updaterate to re-check every second. */
-	protected Val<Boolean> daytime = new Val<Boolean>(() -> getEnvironment().isDaytime().get(), 1000);
+	protected Dyn<Boolean> daytime = new Dyn<Boolean>(() -> getEnvironment().isDaytime().get()).setUpdateRate(1000);
+	
+	/** Currently loading? .*/
+	protected boolean loading;
 	
 	//protected Val<Double> chargestate = new Val<Double>(() -> ((Cleaner)getEnvironment().getSpaceObject(getSelf().getId()).get()).getChargestate(), 1000);
 	
@@ -172,7 +174,8 @@ public class BTCleanerAgent implements IBTProvider
 		//findstation.setSuccessCondition((node, execontext) -> stations.size()>0, 
 		//	new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "stations")});
 		findstation.addDecorator(new SuccessDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).internalGetStations().size()>0)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "stations")}).setDetails("stations.size()>0"));
+//			.setEvents(new ChangeEvent(Type.ADDED, "stations"))
+			.setDetails("stations.size()>0"));
 		findstation.addDecorator(new RetryDecorator<IComponent>());
 		
 		// go to a charging station
@@ -198,9 +201,19 @@ public class BTCleanerAgent implements IBTProvider
 			Chargingstation station = (Chargingstation)findClosestElement(getPojo(agent).internalGetStations(), getPojo(agent).getSelf().getLocation());
 			//System.out.println("Load at station: "+agent.getId()+" "+getPojo(agent).getSelf().getCarriedWaste()+" "+station);
 			System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "Load at station: "+agent.getId()+" "+getPojo(agent).getSelf().getCarriedWaste()+" "+station);
+			getPojo(agent).setLoading(true);
 			ITerminableFuture<Void> fut = getPojo(agent).getEnvironment().loadBattery((Cleaner)getPojo(agent).getSelf(), station);
 			ret.setTerminationCommand(ex -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "terminate loadBattery"); fut.terminate();});
-			fut.then(Void -> {System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "loaded battery"); ret.setResultIfUndone(NodeState.SUCCEEDED);}).catchEx(ex -> ret.setResultIfUndone(NodeState.FAILED));
+			fut.then(Void ->
+			{
+				System.getLogger(BTCleanerAgent.class.getName()).log(Level.INFO, "loaded battery");
+				getPojo(agent).setLoading(false);
+				ret.setResultIfUndone(NodeState.SUCCEEDED);
+			}).catchEx(ex -> 
+			{
+				getPojo(agent).setLoading(false);
+				ret.setResultIfUndone(NodeState.FAILED);
+			});
 			return ret;
 		}));
 		
@@ -270,7 +283,8 @@ public class BTCleanerAgent implements IBTProvider
 		}));
 		
 		findwastebin.addDecorator(new SuccessDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).internalGetWastebins().size()>0)
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "wastebins")}).setDetails("wastebins.size()>0"));
+//			.setEvents(new ChangeEvent(Type.ADDED, "wastebins"))
+			.setDetails("wastebins.size()>0"));
 		//findwastebin.setSuccessCondition((node, execontext) -> wastebins.size()>0, 
 		//	new EventType[]{new EventType(BTAgentFeature.VALUEADDED, "wastebins")});
 		findwastebin.addDecorator(new RetryDecorator<IComponent>());
@@ -342,9 +356,11 @@ public class BTCleanerAgent implements IBTProvider
 		//patrolwalk.setTriggerCondition((node, execontext) -> !daytime.get(), new EventType[]{
 		//	new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		patrolwalk.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> !getPojo(context).internalIsDaytime())
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime")}).setDetails("!daytime.get()"));
+//			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"))
+			.setDetails("!daytime.get()"));
 		patrolwalk.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).internalIsDaytime())
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime")}).setDetails("daytime.get()"));
+//			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"))
+			.setDetails("daytime.get()"));
 		patrolwalk.addDecorator(new RepeatDecorator<IComponent>());
 					
 		// maintain battery loaded
@@ -354,10 +370,13 @@ public class BTCleanerAgent implements IBTProvider
 		loadbattery.addChild(loadatstation);
 		//loadbattery.setTriggerCondition((node, execontext) -> getSelf().getChargestate()<0.7, new EventType[]{	
 		//	new EventType(BTAgentFeature.PROPERTYCHANGED, "chargestate")});
-		loadbattery.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).getChargestate()>0.8).setDetails("getChargestate()>0.8"));
+		loadbattery.addDecorator(new FailureDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).getChargestate()>0.8)
+			.setEvents()	// Set events to [] for disabling event detection (condition should not be tracked)
+			.setDetails("getChargestate()>0.8"));
 		loadbattery.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> getPojo(context).getChargestate()<0.8)
 			//.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "chargestate")}));
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "self")}).setDetails("getChargestate()<0.8"));
+//			.setEvents(new ChangeEvent(Type.CHANGED, "self"))
+			.setDetails("getChargestate()<0.8"));
 			//.observeCondition(new EventType[]{new EventType(BTAgentFeature.PROPERTYCHANGED, "self", "chargestate")}));
 		
 		// || (nearStation() && chargestate<0.99)
@@ -376,8 +395,10 @@ public class BTCleanerAgent implements IBTProvider
 		//collectwaste.setTriggerCondition((node, execontext) -> wastes.size()>0 && (getSelf().getCarriedWaste()==null || daytime.get()), new EventType[]{
 		//	new EventType(BTAgentFeature.VALUEADDED, "wastes"), new EventType(BTAgentFeature.PROPERTYCHANGED, "daytime")});
 		collectwaste.addDecorator(new TriggerDecorator<IComponent>().setCondition((node, state, context) -> 
-			(getPojo(context).internalGetWastes().size()>0 || getPojo(context).getSelf().getCarriedWaste()!=null) && getPojo(context).internalIsDaytime())
-			.observeCondition(new EventType[]{new EventType(BTAgentFeature.VALUECHANGED, "daytime"), new EventType(BTAgentFeature.VALUEADDED, "wastes")})
+			(getPojo(context).internalGetWastes().size()>0 || getPojo(context).getSelf().getCarriedWaste()!=null)
+			&& getPojo(context).internalIsDaytime()
+			&& !getPojo(context).isLoading())
+//			.setEvents(new ChangeEvent(Type.CHANGED, "daytime"), new ChangeEvent(Type.ADDED, "wastes"))
 			.setDetails("(wastes.size()>0 || getSelf().getCarriedWaste()!=null) && daytime.get()"));
 		collectwaste.addDecorator(new RetryDecorator<IComponent>(0));
 		
@@ -419,7 +440,7 @@ public class BTCleanerAgent implements IBTProvider
 	{
 		Cleaner s = new Cleaner(new Vector2Double(Math.random()*0.4+0.3, Math.random()*0.4+0.3), getAgent().getId().getLocalName(), 0.1, 0.1, 0.8);  
 		s = (Cleaner)getEnvironment().addSpaceObject((SpaceObject)s).get();
-		self = new Val<>(s);
+		self.set(s);
 		//System.out.println("started: self set"+agent.getId());
 		
 		PerceptionProcessor pp = new PerceptionProcessor();
@@ -476,7 +497,7 @@ public class BTCleanerAgent implements IBTProvider
 		if(ui)
 		{
 			new SensorGui(agent.getComponentHandle()).setVisible(true);
-			SwingUtilities.invokeLater(() -> new BTViewer(agent.getComponentHandle()).setVisible(true));
+			SwingUtilities.invokeLater(() -> new BTViewer(agent.getComponentHandle(), 0).setVisible(true));
 		}
 	}
 	
@@ -552,6 +573,22 @@ public class BTCleanerAgent implements IBTProvider
 	public IFuture<IVector2> getTarget() 
 	{
 		return getEnvironment().getMoveTarget(getSelf());
+	}
+	
+	/**
+	 *  Check loading state , e.g. for inhibiting collect waste.
+	 */
+	public boolean isLoading()
+	{
+		return loading;
+	}
+
+	/**
+	 *  Set loading state , e.g. for inhibiting collect waste.
+	 */
+	public void setLoading(boolean loading)
+	{
+		this.loading	= loading;
 	}
 	
 	public static void main(String[] args)

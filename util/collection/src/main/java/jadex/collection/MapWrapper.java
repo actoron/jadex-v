@@ -14,9 +14,6 @@ public class MapWrapper<T, E> implements Map<T, E>
 	/** The delegate map. */
 	protected Map<T, E> delegate;
 	
-	/** The event publisher. */
-	protected IEventPublisher publisher;
-	
 	//-------- constructors --------
 	
 	/**
@@ -24,28 +21,14 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	public MapWrapper(Map<T, E> delegate)
 	{
-		this(delegate, null);
-	}
-	
-	/**
-	 *  Create a new collection wrapper.
-	 */
-	public MapWrapper(Map<T, E> delegate, IEventPublisher publisher)
-	{
 		this.delegate = delegate;
-		this.publisher = publisher;
 	}
 	
 	public Map<T, E> getDelegate()
 	{
 		return delegate;
 	}
-	
-	public IEventPublisher getPublisher()
-	{
-		return publisher;
-	}
-	
+		
 	//-------- Map interface --------
 	
 	/** 
@@ -97,7 +80,7 @@ public class MapWrapper<T, E> implements Map<T, E>
 		E ret = delegate.put(key, value);
 		if(contained)
 		{
-			entryChanged(key, ret, value);
+			entryChanged(key, value, ret);
 		}
 		else
 		{
@@ -207,23 +190,20 @@ public class MapWrapper<T, E> implements Map<T, E>
 	 */
 	protected void entryAdded(T key, E value)
 	{
-		publisher.entryAdded(key, value);
 	}
 	
 	/**
 	 *  An entry was removed from the map.
 	 */
 	protected void entryRemoved(T key, E value)
-	{
-		publisher.entryRemoved(key, value);
+	{		
 	}
 	
 	/**
 	 *  An entry was changed in the map.
 	 */
-	protected void entryChanged(T key, E oldvalue, E newvalue)
+	protected void entryChanged(T key, E value, E oldvalue)
 	{
-		publisher.entryChanged(key, oldvalue, newvalue);
 	}
 
 	/**

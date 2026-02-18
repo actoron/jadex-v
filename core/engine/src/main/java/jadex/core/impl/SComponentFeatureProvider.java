@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -172,7 +173,7 @@ public class SComponentFeatureProvider
 						}
 						else if(!prov1.replacesFeatureProvider(prov2))
 						{
-							throw new RuntimeException("Conflicting creators with priority "+prio+": "+ret+", "+creator);
+							throw new UnsupportedOperationException("Conflicting creators with priority "+prio+": "+ret+", "+creator);
 						}
 					}
 					else if(newprio>prio)
@@ -254,10 +255,17 @@ public class SComponentFeatureProvider
 //			}
 //		}
 		
-		Map<Class<?>, ComponentFeatureProvider<IComponentFeature>> provsmap = new HashMap<>();
+		Map<Class<?>, Set<ComponentFeatureProvider<IComponentFeature>>> provsmap = new HashMap<>();
 		for(ComponentFeatureProvider<IComponentFeature> prov: provs)
 		{
-			provsmap.put(prov.getFeatureType(), prov);
+			Set<ComponentFeatureProvider<IComponentFeature>> provs_of_type	= provsmap.get(prov.getFeatureType());
+			if(provs_of_type==null)
+			{
+				provs_of_type	= new LinkedHashSet<>();
+				provsmap.put(prov.getFeatureType(), provs_of_type);
+			}
+			provs_of_type.add(prov);
+			
 		}
 
 		Map<Class<?>, ComponentFeatureProvider<IComponentFeature>> odeps = new HashMap<>();
@@ -306,7 +314,13 @@ public class SComponentFeatureProvider
 				{
 					if(provsmap.get(pre)!=null && provsmap.get(prov.getFeatureType())!=null)
 					{
-						dr.addDependency(provsmap.get(prov.getFeatureType()), provsmap.get(pre));
+						for(ComponentFeatureProvider<IComponentFeature> postprov: provsmap.get(prov.getFeatureType()))
+						{
+							for(ComponentFeatureProvider<IComponentFeature> preprov: provsmap.get(pre))
+							{
+								dr.addDependency(postprov, preprov);								
+							}
+						}
 					}
 					else
 					{

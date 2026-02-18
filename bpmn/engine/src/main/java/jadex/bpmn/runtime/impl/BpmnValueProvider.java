@@ -29,10 +29,11 @@ public class BpmnValueProvider extends jadex.core.impl.ValueProvider
 		{
 			return proc.getArgument(name);
 		}
-		else if(proc.getResults().containsKey(name))
-		{
-			return proc.getResult(name);
-		}
+		// TODO: Read access to results!?
+//		else if(proc.getResults().containsKey(name))
+//		{
+//			return proc.getResult(name);
+//		}
 		/*else if(name!=null && name.startsWith(IPlatformConfiguration.PLATFORMARGS))
 		{
 			String valname = name.length()>13? name.substring(14): null;

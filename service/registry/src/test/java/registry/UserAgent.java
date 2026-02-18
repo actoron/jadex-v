@@ -4,14 +4,17 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.impl.ComponentManager;
 import jadex.execution.IExecutionFeature;
+import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
 import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.ServiceScope;
+import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jadex.requiredservice.ServiceNotFoundException;
 
 public class UserAgent 
 {
@@ -22,7 +25,19 @@ public class UserAgent
     protected void onStart()
 	{
 		System.out.println("UserAgent started with ID: " + agent.getId());
-		
+
+		ISubscriptionIntermediateFuture<ServiceEvent> query = agent.getFeature(IRequiredServiceFeature.class)
+			.addQuery(new ServiceQuery<ITestService>(ITestService.class)
+			.setScope(ServiceScope.HOST).setEventMode());
+
+		query.next(event -> 
+		{
+			System.out.println("Query received event: " + event);
+		}).catchEx(ex -> 
+		{
+			ex.printStackTrace();
+		});
+
 		while(true)
 		{
 			// default service scope is VM???
@@ -38,8 +53,11 @@ public class UserAgent
 				});
 			}).catchEx(ex -> 
 			{
-				ex.printStackTrace();
-				System.err.println("Error calling service: " + ex.getMessage());
+				//ex.printStackTrace();
+				if(!(ex instanceof ServiceNotFoundException))
+					System.err.println("Error calling service: " + ex.getMessage());
+				else
+					System.out.println("ITestService not found, retrying...");
 			});
 			
 			agent.getFeature(IExecutionFeature.class).waitForDelay(5000).get();

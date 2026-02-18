@@ -13,6 +13,7 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
+import jadex.common.OperatingSystemMXBeanFacade;
 import jadex.common.SUtil;
 import jadex.core.IComponentManager;
 import jadex.logger.ILoggingFeature;
@@ -27,6 +28,8 @@ public class BenchmarkHelper
 {
 	// Check execution environment
 	static final String	EXEC_ENV	= SUtil.isGradle() ? "gradle" : "ide";
+	
+	static final boolean	use_mxbean = OperatingSystemMXBeanFacade.getProcessCpuTime()>0;
 
 	static
 	{
@@ -79,9 +82,10 @@ public class BenchmarkHelper
 		int	sleep	= 1000;
 		int retries	= 10;
 		List<Long>	vals	= new ArrayList<>();
+		List<Long>	memvals	= new ArrayList<>();
 		try
 		{
-			for(int r=0; r<retries && !isStop(vals, limit); r++)
+			for(int r=0; r<retries && !isStop(vals, memvals, limit); r++)
 			{
 				List<Runnable>	teardowns	= new ArrayList<>();
 				
@@ -89,6 +93,11 @@ public class BenchmarkHelper
 				Thread.sleep(sleep);
 				System.gc();
 				long	start	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+				if(r>0)	// Skip before first run as static stuff is loaded once.
+				{
+					memvals.add(start);					
+				}
+
 //				System.out.println("Used at start: "+start);
 				
 				long	mstart	= System.currentTimeMillis();
@@ -128,6 +137,7 @@ public class BenchmarkHelper
 			// Use only best value
 			double pct	= addToDB(vals.get(0), limit, true);
 			System.out.println("Change(%): "+pct);
+			System.out.println();
 		}
 		catch(Exception e)
 		{
@@ -167,10 +177,10 @@ public class BenchmarkHelper
 		int	warmups	= 100; 	// How many warm-ups to run
 		int	runs	= 1000;	// How many runs for measurement 
 		List<Long>	vals	= new ArrayList<>();
-		long	basemem = 0;
+		List<Long>	memvals	= new ArrayList<>();
 		try
 		{
-			for(int j=0; j<retries && !isStop(vals, limit); j++)
+			for(int j=0; j<retries && !isStop(vals, memvals, limit); j++)
 			{
 				// skip first cooldown and ignore first result
 				if(j>0)
@@ -184,10 +194,10 @@ public class BenchmarkHelper
 				{
 					for(int i=0; i<warmups; i++)
 						code.run();
-					long	start	= System.nanoTime();
+					long	start	= use_mxbean ? OperatingSystemMXBeanFacade.getProcessCpuTime(): System.nanoTime();
 					for(int i=0; i<runs; i++)
 						code.run();
-					long	end	= System.nanoTime();
+					long	end	= use_mxbean ? OperatingSystemMXBeanFacade.getProcessCpuTime(): System.nanoTime();
 					
 					took	+= (end-start)/runs;
 
@@ -196,7 +206,7 @@ public class BenchmarkHelper
 				System.gc();
 				Thread.sleep(sleep);
 				System.gc();
-				long	usedmem	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+				memvals.add(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
 				// skip first cooldown and ignore first result
 				if(j>0)
@@ -209,14 +219,7 @@ public class BenchmarkHelper
 					System.out.println("Change(%): "+pct);
 					vals.add(took);
 					
-					System.out.println("Used memory: "+usedmem);
-					double mempct	= (usedmem - basemem)*100.0/basemem;
-					System.out.println("Mem change(%): "+mempct);
 					System.out.println();
-				}
-				else
-				{
-					basemem	= usedmem;
 				}
 			}
 			vals.sort((a,b) -> (int)(a-b));
@@ -241,11 +244,41 @@ public class BenchmarkHelper
 	 *  Check if the benchmark should stop.
 	 *  Stops when the lowest n values are in 10% of the limit.
 	 */
-	private static boolean isStop(List<Long> vals, double limit)	throws IOException 
+	private static boolean isStop(List<Long> vals, List<Long> memvals, double limit)	throws IOException 
 	{
-		if(vals.isEmpty())
+		// Do we have enough values to perform checks?
+		if(vals.isEmpty() || memvals.size()<2)
 			return false;
 		
+		// Check for memory leak
+		int numleaks	= 0;
+		List<Double>	pcts	= new ArrayList<>();	
+		for(int i=0; i<memvals.size()-1; i++)
+		{
+			long	prev	= memvals.get(i);
+			long	next	= memvals.get(i+1);
+			double	pct	= (next-prev)*100.0/prev;
+			pcts.add(pct);
+			if(pct>20)	// TODO: proper limit for memory leaks?
+			{
+				numleaks++;
+			}
+		}
+		// Require leak in all runs and at least two leaks
+		if(numleaks>1 && numleaks==memvals.size()-1)
+		{
+			throw new RuntimeException("Potential memory leak detected. Memory usage values: "+memvals+", pcts="+pcts);
+		}
+		else if(numleaks==1 && memvals.size()==2)
+		{
+			return false;	// Potential leak after two runs -> require another run to verify  
+		}
+//		else
+//		{
+//			System.out.println("numleaks="+numleaks+", memvals="+memvals+", pcts="+pcts);
+//		}
+		
+		// Check for benchmark performance compared to limit
 		vals.sort((a,b) -> (int)(a-b));
 		
 		// Stop if improved or same as best value

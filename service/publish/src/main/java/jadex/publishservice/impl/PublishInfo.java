@@ -23,6 +23,9 @@ public class PublishInfo
 	
 	/** The publish target. */
 	protected String publishtarget;
+
+	/** Method automapping flag */
+	protected boolean automapping;
 	
 	///** The publish target. */
 	//protected String publishtargetname;
@@ -65,7 +68,7 @@ public class PublishInfo
 	 */
 	public PublishInfo(String pid, String publishtype, String publishtaget,
 		//ServiceScope publishscope, boolean multi,
-		Class<?> mapping)
+		Class<?> mapping, boolean automapping)
 		//, UnparsedExpression[] properties)
 	{
 		this.pid = pid;
@@ -76,6 +79,7 @@ public class PublishInfo
 		this.mapping = mapping==null? null: new ClassInfo(mapping);
 		//if(properties!=null)
 		//	this.properties = SUtil.arrayToList(properties);
+		this.automapping = automapping;
 	}
 	
 	/**
@@ -114,6 +118,7 @@ public class PublishInfo
 		//this.publishscope = info.getPublishScope();
 		//this.multi = info.multi;
 		this.mapping = info.getMapping();
+		this.automapping = info.automapping;
 		//if(info.getProperties()!=null)
 		//	this.properties = new ArrayList<UnparsedExpression>(info.getProperties());
 	}
@@ -156,7 +161,23 @@ public class PublishInfo
 		this.publishtype = type;
 	}
 	
+	/**
+	 *  Gets the automapping flag.
+	 *  @return True, if automapping is enabled.
+	 */
+	public boolean isAutoMapping() 
+	{
+		return automapping;
+	}
 	
+	/**
+	 *  Sets the automapping flag.
+	 *  @param automapping The automapping to set.
+	 */
+	public void setAutoMapping(boolean automapping) 
+	{
+		this.automapping = automapping;
+	}
 	
 	/**
 	 *  Gets the publish scope.

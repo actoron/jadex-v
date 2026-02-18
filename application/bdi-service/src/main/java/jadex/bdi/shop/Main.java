@@ -34,5 +34,7 @@ public class Main
 			})));
 
 		IComponentManager.get().create(new CustomerAgent());
+		
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

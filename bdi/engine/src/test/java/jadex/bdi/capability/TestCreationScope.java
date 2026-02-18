@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
@@ -19,6 +18,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 
 /**

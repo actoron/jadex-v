@@ -6,24 +6,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jadex.bt.nodes.CompositeNode.IIndexContext;
 import jadex.bt.nodes.Node.AbortMode;
 import jadex.bt.nodes.Node.NodeState;
+import jadex.common.Tuple2;
+import jadex.core.IChangeListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 
-public class NodeContext<T>
+public final class NodeContext<T>
 {
 	protected NodeState state;
 	
+	protected NodeState abortstate;
+	
 	/** Flag indicating that node was finished in before state. In that case node and after decos must not be executed. */
 	protected boolean finishedinbefore;
-	
-	protected AbortMode aborted = null;
-	
+
 	protected Future<NodeState> callfuture;
-	
+
+	// the abort mode
+	protected AbortMode aborted = null;
+
+	// signals when abort is done
 	protected IFuture<Void> abortfuture;
 	
 	protected long timeout = 0;
@@ -37,6 +42,8 @@ public class NodeContext<T>
 	protected Map<String, Object> values;
 	
 	protected int nodeid;
+
+	protected List<List<Tuple2<String, IChangeListener>>> conditionlisteners;
 	
 	public boolean isFinishedInBefore() 
 	{
@@ -91,6 +98,7 @@ public class NodeContext<T>
 		finishedinbefore = false;
 		
 		aborted = null;
+		abortstate	= null;
 		if(all)
 		{
 			// This can be ok, if the future is held outside and finished afterwards
@@ -114,6 +122,8 @@ public class NodeContext<T>
 			resetValues();
 		else if(values!=null)
 			values.clear();
+
+		// condition listeners will not be removed on reset. Node removal removes condition listeners from IConditionObserver.
 	}
 	
 	public void resetValues()
@@ -136,6 +146,18 @@ public class NodeContext<T>
 	public void setState(NodeState state)
 	{
 		this.state = state;
+		this.abortstate	= null;
+	}
+
+	public NodeState getAbortState()
+	{
+		return abortstate;
+	}
+	
+	public void setAbortState(NodeState abortstate)
+	{
+		//System.out.println("abortstate of: "+nodeid+" "+abortstate);
+		this.abortstate = abortstate;
 	}
 
 	public AbortMode getAborted() 
@@ -228,23 +250,26 @@ public class NodeContext<T>
 	{
 		this.nodeid = nodeid;
 	}
-	
-	public List<String> getDetailsShort()
+
+	public List<List<Tuple2<String, IChangeListener>>> getConditionListeners() 
 	{
-		List<String> ret = new ArrayList<>();
-		
-		if(isFinishedInBefore())
-			ret.add("finished in before: true");
-		if(getAborted()!=null)
-		{
-			ret.add("aborted: "+getAborted());
-			ret.add("abort done: "+getAbortFuture().isDone());
-		}
-		if(this instanceof IIndexContext)
-			ret.add("index: "+((IIndexContext)this).getIndex());
-		if(callfuture!=null)
-			ret.add("call done: "+callfuture.isDone());
-		
-		return ret;
+		return conditionlisteners;
 	}
+
+	public void setConditionListeners(List<List<Tuple2<String, IChangeListener>>> conditionlisteners) 
+	{
+		this.conditionlisteners = conditionlisteners;
+	}
+
+	public void addConditionListeners(List<Tuple2<String, IChangeListener>> listeners) 
+	{
+		if(this.conditionlisteners==null)
+			this.conditionlisteners = new ArrayList<>();
+		this.conditionlisteners.add(listeners);
+	}
+
+	/*public void removeConditionListeners() 
+	{
+		this.conditionlisteners = null;
+	}*/
 }

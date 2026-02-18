@@ -3,7 +3,9 @@ package jadex.requiredservice.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import jadex.core.IComponent;
 import jadex.execution.future.ComponentFutureFunctionality;
@@ -18,6 +20,7 @@ import jadex.future.TerminableIntermediateFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.search.IServiceRegistry;
+import jadex.providedservice.impl.search.ServiceEvent;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceQuery.Multiplicity;
 import jadex.providedservice.impl.search.ServiceRegistry;
@@ -93,7 +96,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 	@Override
 	public <T> IFuture<T> searchService(ServiceQuery<T> query)
 	{
-		System.out.println("searchService: "+query);
+		//System.out.println("searchService: "+query);
 		
 		Future<T> ret = new Future<>();
 		
@@ -103,34 +106,34 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		{
 			if(getRemoteServiceHandler()!=null && isRemote(query))
 			{
-				System.out.println("searchService remote: "+query);
+				//System.out.println("searchService remote: "+query);
 				// Search remote service.
 				ITerminableFuture<IServiceIdentifier> fut = getRemoteServiceHandler().searchService(query);
 				fut.then(sid2 ->
 				{
 					if(sid2!=null)
 					{
-						System.out.println("searchService Found remote service: "+sid2);
+						//System.out.println("searchService Found remote service: "+sid2);
 						@SuppressWarnings("unchecked")
 						T service = (T)getRemoteServiceHandler().getRemoteServiceProxy(self, sid2).get();
 						ret.setResult(service);
 					}
 					else
 					{
-						System.out.println("searchService no service: "+sid2);
+						//System.out.println("searchService no service: "+sid2);
 						ret.setException(new ServiceNotFoundException(query));
 					}
 				}).catchEx(ret);
 			}
 			else
 			{
-				System.out.println("searchService no remote handler: "+query);
+				//System.out.println("searchService no remote handler: "+query);
 				ret.setException(new ServiceNotFoundException(query));
 			}
 		}
 		else
 		{
-			System.out.println("searchService found local service: "+query);
+			//System.out.println("searchService found local service: "+query);
 			@SuppressWarnings("unchecked")
 			T service = (T)ServiceRegistry.getRegistry().getLocalService(sid);
 			ret.setResult(service);
@@ -204,38 +207,69 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 	@Override
 	public <T> ISubscriptionIntermediateFuture<T> addQuery(ServiceQuery<T> query)
 	{
+		@SuppressWarnings("unchecked")
+		final ISubscriptionIntermediateFuture<T> ret[] = new ISubscriptionIntermediateFuture[2];
+		
 		enhanceQuery(query, true);
 		
-		// TODO: query remote
+		SlidingCuckooFilter filter = query.isEventMode() ? null : new SlidingCuckooFilter();
+		Set<IServiceIdentifier> results	= query.isEventMode() ? new LinkedHashSet<>() : null;
 		
 		// Query local registry
 		IServiceRegistry registry = ServiceRegistry.getRegistry();
 		ISubscriptionIntermediateFuture<Object> localresults = (ISubscriptionIntermediateFuture<Object>)registry.addQuery(query);
 		
-		final int[] resultcnt = new int[1];
-		@SuppressWarnings("rawtypes")
-		ISubscriptionIntermediateFuture[] ret = new ISubscriptionIntermediateFuture[1]; 
 		@SuppressWarnings({"unchecked", "rawtypes"})
-		ISubscriptionIntermediateFuture<T> ret0	= (ISubscriptionIntermediateFuture)FutureFunctionality
+		ISubscriptionIntermediateFuture<T> tfut	= (ISubscriptionIntermediateFuture)FutureFunctionality
 			// Component functionality as local registry pushes results on arbitrary thread.
 			.getDelegationFuture(localresults, new ComponentFutureFunctionality(getComponent())
 		{
+			protected int resultcnt = 0;
+			
 			@Override
 			public Object handleIntermediateResult(Object result) throws Exception
 			{
-				// check multiplicity constraints
-				resultcnt[0]++;
-				int max = query.getMultiplicity().getTo();
+				// New event result?
+				Object res = null;
 				
-				if(max<0 || resultcnt[0]<=max)
+				if(query.isEventMode())
 				{
-					return processResult(result);
+					// Forward event if consistent with current results.
+					ServiceEvent event = (ServiceEvent)result;
+					if(event.getType()==ServiceEvent.SERVICE_ADDED && results.add(event.getService())
+						|| event.getType()==ServiceEvent.SERVICE_CHANGED && results.contains(event.getService())
+						|| event.getType()==ServiceEvent.SERVICE_REMOVED && results.remove(event.getService()))
+					{
+//						System.out.println("Received SP event: "+result+"\n\t"+results);
+						res = result;
+					}
+				}
+				// New non-event result?
+				else if(!filter.contains(result.toString()))
+				{
+					filter.insert(result.toString());
+					res	= result;
+				}	
+			
+				if(res!=null)
+				{		
+					// check multiplicity constraints
+					resultcnt++;
+					int max = query.getMultiplicity().getTo();
+					
+					if(max<0 || resultcnt<=max)
+					{
+						return processResult(result);
+					}
+					else
+					{
+						return DROP_INTERMEDIATE_RESULT;
+					}
 				}
 				else
 				{
 					return DROP_INTERMEDIATE_RESULT;
 				}
-
 			}
 			
 			@Override
@@ -246,19 +280,49 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 				
 				int max = query.getMultiplicity().getTo();
 				// if next result is not allowed any more
-				if(max>0 && resultcnt[0]+1>max)
+				if(max>0 && resultcnt+1>max)
 				{
 					((IntermediateFuture)ret[0]).setFinishedIfUndone();
 					Exception reason = new RuntimeException("Max number of values received: "+max);
 					localresults.terminate(reason);
+					if(ret[1]!=null)
+						ret[1].terminate(reason);
 				}
 			}
+			
+			@Override
+			public void handleTerminated(Exception reason) 
+			{
+				if(ret[1]!=null)
+					ret[1].terminate(reason);
+			}
 		});
+		ret[0] = tfut;
 		
-		ret[0]	= ret0;
+		if(isRemote(query))
+		{
+			if(getRemoteServiceHandler()==null)
+			{
+				System.out.println("No remote service handler available for remote query: "+query);
+			}
+			else
+			{
+				ret[1] = getRemoteServiceHandler().addQuery(query);
+				
+				ret[1].next(
+					result->
+					{
+						@SuppressWarnings("unchecked")
+						IntermediateFuture<T> ifut = (IntermediateFuture<T>)ret[0];
+						ifut.addIntermediateResultIfUndone(result);
+					})
+				.catchEx(exception -> {}); 
+			}
+		}
 		
-		return ret0;
+		return ret[0];
 	}
+	
 
 	//-------- helper methods --------
 
@@ -304,8 +368,8 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 			}
 		}
 		
-		if(isRemote(query))
-			System.out.println("Query enhanced: "+query+" "+query.getGroupNames());
+		//if(isRemote(query))
+		//	System.out.println("Query enhanced: "+query+" "+query.getGroupNames());
 		
 	}
 	
@@ -327,14 +391,24 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 	 */
 	protected Object processResult(Object result)
 	{
-		if(result instanceof IServiceIdentifier)
+		if(result instanceof IService)
 		{
-			// TODO: remote services
-			return ServiceRegistry.getRegistry().getLocalService((IServiceIdentifier)result);
+			// If service object -> return it.
+			return result;
+		}
+		else if(result instanceof ServiceEvent)
+		{
+			// If service event -> return it.
+			return result;
+		}
+		else if(result instanceof IServiceIdentifier)
+		{
+			// If service identifier -> return service proxy.
+			return getServiceProxy((IServiceIdentifier)result);
 		}
 		else
 		{
-			throw new UnsupportedOperationException(result.getClass().getName());
+			throw new IllegalArgumentException("Cannot process result: "+result+" of type "+result.getClass());
 		}
 	}
 	
@@ -394,7 +468,6 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		
 		return ret;
 	}
-	
 	
 	public IRemoteServiceHandler getRemoteServiceHandler()
 	{

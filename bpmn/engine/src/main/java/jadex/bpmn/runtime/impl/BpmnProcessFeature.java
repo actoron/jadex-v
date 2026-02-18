@@ -42,6 +42,7 @@ import jadex.common.SUtil;
 import jadex.common.Tuple3;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.impl.Component;
 import jadex.core.impl.ILifecycle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
@@ -359,7 +360,10 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 	 */
 	public boolean hasContextVariable(String name)
 	{
-		return (topthread.hasParameterValue(name)) || getComponent().getPojo().getArgument(name)!=null  || getComponent().getPojo().getResult(name)!=null;
+		return topthread.hasParameterValue(name)
+			|| getComponent().getPojo().getArgument(name)!=null
+			// Hack!!! Shouldn't use .get()? depend on results feature instead?
+			|| Component.isResultsSupported() && Component.getResults(getComponent()).get().containsKey(name);
 //		return (variables!=null && variables.containsKey(name)) || getModel().getArgument(name)!=null  || getModel().getResult(name)!=null;
 	}
 	
@@ -379,9 +383,9 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 		{
 			ret = getComponent().getPojo().getArgument(name);
 		}
-		else if(getComponent().getPojo().getResult(name)!=null)
+		else if(Component.isResultsSupported() && Component.getResults(getComponent()).get().containsKey(name))
 		{
-			ret	= getComponent().getPojo().getResult(name);
+			ret	= Component.getResults(getComponent()).get().get(name);
 		}
 		else
 		{
@@ -427,7 +431,7 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 		{
 			if(isres)
 			{
-				getComponent().getPojo().addResult(name, value);
+				Component.setResult(self, name, value);
 			}
 			else
 			{
@@ -440,7 +444,8 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 			Object coll;
 			if(isres)
 			{
-				coll = getComponent().getPojo().getResult(name);
+				throw new UnsupportedOperationException("Setting indexed/keyed results is not supported: "+name);
+//				coll = getComponent().getPojo().getResult(name);
 			}
 			else
 			{
@@ -469,12 +474,12 @@ public class BpmnProcessFeature implements IInternalBpmnComponentFeature, IBpmnC
 				((Set)coll).add(value);
 			}
 //			System.out.println("coll: "+coll);
-			if(isres)
-			{
-				// Trigger event notification
-				//getComponent().getFeature(IArgumentsResultsFeature.class).getResults().put(name, coll);
-				getComponent().getPojo().addResult(name, coll);
-			}
+//			if(isres)
+//			{
+//				// Trigger event notification
+//				//getComponent().getFeature(IArgumentsResultsFeature.class).getResults().put(name, coll);
+//				getComponent().getPojo().setResult(name, coll);
+//			}
 //				else
 //				{
 //					throw new RuntimeException("Unsupported collection type: "+coll);

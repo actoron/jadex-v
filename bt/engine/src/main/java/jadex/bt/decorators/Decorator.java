@@ -106,13 +106,26 @@ public class Decorator<T> implements IDecorator<T>
 						
 		        		IFuture<NodeState> aret = afterAbort(event, istate, execontext);
 						if(aret != null)
+						{
 						    aret.delegateTo(ret);
+						}
 						else 
-						    ret.setResult(istate);
+						{
+							/*if(context.getAbortState()!=null)
+							{
+								System.out.println("decorator after abort execute using abort state: "+Decorator.this+" "+istate+" "+context.getAbortState());
+								ret.setResult(context.getAbortState());
+							}
+							else
+							{*/
+								//System.out.println("decorator after abort execute using internal state: "+Decorator.this+" "+istate);
+						    	ret.setResult(istate);
+							//}
+						}
 		        	}
 		        	else
 		        	{
-		        		//System.out.println("decorator after execute: "+Decorator.this+" "+istate);
+		        		//System.out.println("decorator after execute: "+Decorator.this+" "+Decorator.this.hashCode()+" "+istate);
 						
 		        		IFuture<NodeState> aret = afterExecute(event, istate, execontext);
 						if(aret != null)

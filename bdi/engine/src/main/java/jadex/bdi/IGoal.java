@@ -7,6 +7,10 @@ public interface IGoal //extends IParameterElement, IFinishableElement<Void>
 {
 	//-------- goal states --------
 	
+	/** 
+	 *  The base state of the goal,
+	 *  affected by goal conditions and deliberation.
+	 */
 	public static enum GoalLifecycleState
 	{
 		NEW, 
@@ -18,6 +22,10 @@ public interface IGoal //extends IParameterElement, IFinishableElement<Void>
 		DROPPED
 	};
 	
+	/**
+	 *  The state of goal processing,
+	 *  affected means end reasoning flags and by plans that execute for the goal.
+	 */
 	public static enum GoalProcessingState
 	{
 		IDLE, 
@@ -29,7 +37,7 @@ public interface IGoal //extends IParameterElement, IFinishableElement<Void>
 	};
 	
 	/**
-	 *  Get the id.
+	 *  Get the generated unique id of this goal instance.
 	 */
 	public String getId();
 	

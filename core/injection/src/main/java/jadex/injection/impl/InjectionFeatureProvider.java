@@ -1,22 +1,26 @@
 package jadex.injection.impl;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
+import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.IInjectionFeature;
+import jadex.injection.annotation.DynamicValue;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.InjectException;
+import jadex.injection.annotation.ProvideResult;
 
 /**
  *  Injection feature provider.
@@ -46,18 +50,6 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	public IFuture<IComponentHandle> create(Object pojo, ComponentIdentifier cid, Application app)
 	{
 		return Component.createComponent(new Component(pojo, cid, app));
-	}
-
-	@Override
-	public Map<String, Object> getResults(IComponent component)
-	{
-		return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).getResults();
-	}
-	
-	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
-	{
-		return ((InjectionFeature)component.getFeature(IInjectionFeature.class)).subscribeToResults();
 	}
 	
 	@Override
@@ -96,6 +88,80 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 			Class<IComponentFeature>	feature	= (Class<IComponentFeature>)valuetype;
 			return self.getFeature((Class<IComponentFeature>)feature);
 		}): null, Inject.class);
+
+		// Inject exception if matching
+		InjectionModel.addValueFetcher((comptypes, valuetype, anno) ->
+			(valuetype instanceof Class) && SReflect.isSupertype(Exception.class, (Class<?>) valuetype) ? ((self, pojo, context, oldval) ->
+		{
+			return self.getException()!=null && SReflect.isSupertype((Class<?>)valuetype, self.getException().getClass())
+				? self.getException() : null;
+		}) : null, Inject.class);
+		
+		// Add exception handler for @Inject methods with exception parameter
+		InjectionModel.addMethodInjection((model, method, anno) -> 
+		{
+			List<IInjectionHandle>	preparams	= new ArrayList<>();
+			Class<? extends Exception> type	= null;
+			for(int i=0; i<method.getParameterCount(); i++)
+			{
+				if(SReflect.isSupertype(Exception.class, method.getParameterTypes()[i]))
+				{
+					if(type!=null)
+					{
+						throw new UnsupportedOperationException("Only one exception parameter allowed: "+method);
+					}
+					preparams.add((self, pojos, context, oldval) -> context);
+					@SuppressWarnings("unchecked")
+					Class<? extends Exception> type0	= (Class<? extends Exception>) method.getParameterTypes()[i];
+					type	= type0;
+				}
+				else
+				{
+					preparams.add(null);
+				}
+			}
+			
+			if(type!=null)
+			{
+				boolean exactmatch	= anno instanceof InjectException && ((InjectException)anno).exactmatch();
+				Class<? extends Exception> ftype	= type;
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, model.getPojoClazzes(), model.getContextFetchers(), preparams);
+				return (comp, pojos, context, oldvale) ->
+				{
+					IErrorHandlingFeature	errh	= IComponentManager.get().getFeature(IErrorHandlingFeature.class);
+					errh.addExceptionHandler(comp.getId(), ftype, exactmatch, (exception, component) 					
+						-> invocation.apply(comp, pojos, exception, null));
+					return null;
+				};
+			}
+			return null;
+		}, Inject.class, InjectException.class);
+		
+		// Init dynamic values on component start.
+		InjectionModel.addExtraCode(model ->
+		{
+			model.addDynamicValues(DynamicValue.class, true);
+			model.addDynamicValues(ProvideResult.class, false);
+			
+			if(Component.isResultsSupported())
+			{
+				// Add handler for dynamic values marked with @ProvideResult.
+				if(model==model.getRootModel())
+				{
+					model.addChangeHandler(ProvideResult.class, (comp, event, annos)
+						-> Component.notifyResult(comp, event, annos));
+				}
+
+				model.addPostInject((self, pojos, context, oldval) ->
+				{
+					Component.setResultSupplier(self, () ->
+					{
+						return ((InjectionFeature) self.getFeature(IInjectionFeature.class)).getResults();
+					});
+					return null;
+				}); 
+			}
+		});		
 	}
 
 	/**
@@ -104,7 +170,7 @@ public class InjectionFeatureProvider extends ComponentFeatureProvider<IInjectio
 	 */
 	public Set<Class<?>> getPredecessors(Set<Class<?>> all)
 	{
-		// Make sure feature is last in liost, because it starts user code that might not return.
+		// Make sure feature is last in list, because it starts user code that might not return.
 		all.remove(getFeatureType());
 		return all;
 	}

@@ -1,27 +1,33 @@
 package jadex.injection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
-import jadex.common.NameValue;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingConsumer;
 import jadex.core.annotation.NoCopy;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.annotation.ProvideResult;
+import jadex.result.IResultFeature;
 
 /**
  *  Test handling of results in injection feature.
@@ -39,9 +45,9 @@ public class ResultTest
 		IFuture<String>	fut	= IComponentManager.get().run(new Object()
 		{
 			@OnStart
-			void start(IInjectionFeature feature)
+			void start(IResultFeature feature)
 			{
-				feature.addResult("result", "success");
+				feature.setResult("result", "success");
 			}
 		});
 		assertEquals("success", fut.get(TIMEOUT));
@@ -135,7 +141,6 @@ public class ResultTest
 			}
 		}).get(TIMEOUT);
 		
-		@SuppressWarnings("serial")
 		Map<String, Object>	expected	= new LinkedHashMap<>()
 		{
 			{
@@ -153,8 +158,7 @@ public class ResultTest
 		terminated[0]	= true;
 		assertEquals(expected, handle.getResults().get(TIMEOUT));
 	}
-
-
+	
 	/**
 	 *  Test result subscription.
 	 */
@@ -164,27 +168,49 @@ public class ResultTest
 		IComponentHandle	handle	= IComponentManager.get().create(new Object()
 		{
 			@OnStart
-			void start(IInjectionFeature feature)
+			void start(IResultFeature feature)
 			{
-				feature.addResult("start", "startvalue");
+				feature.setResult("start", "startvalue");
 			}
 			
 			@OnEnd
-			void end(IInjectionFeature feature)
+			void end(IResultFeature feature)
 			{
-				feature.addResult("end", "endvalue");
+				feature.setResult("end", "endvalue");
 			}
 		}).get(TIMEOUT);
 		
-		ISubscriptionIntermediateFuture<NameValue>	sub	= handle.subscribeToResults();
+		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= handle.subscribeToResults();
 		
-		NameValue	res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new NameValue("start", "startvalue"), res);
+		// Subscribe is executed after OnStart and thus gives event type INITIAL
+		ChangeEvent	res	= sub.getNextIntermediateResult(TIMEOUT);
+		assertEquals(new ChangeEvent(Type.INITIAL, "start", "startvalue", null, null), res);
+//		assertEquals(new ResultEvent("start", "startvalue"), res);
 		
 		handle.terminate().get(TIMEOUT);
 		
 		res	= sub.getNextIntermediateResult(TIMEOUT);
-		assertEquals(new NameValue("end", "endvalue"), res);
+		assertEquals(new ChangeEvent(Type.CHANGED, "end", "endvalue", null, null), res);
+		
+		assertFalse(sub.hasNextIntermediateResult(TIMEOUT, true));
+	}
+	
+	@Test
+	public void	testSubscriptionTermination()
+	{
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()).get(TIMEOUT);
+		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= handle.subscribeToResults();
+		
+		// Test that subscription works.
+		handle.scheduleStep((IThrowingConsumer<IComponent>)comp
+			-> comp.getFeature(IResultFeature.class).setResult("result", "value")).get(TIMEOUT);
+		ChangeEvent	res	= sub.getNextIntermediateResult(TIMEOUT);
+		assertEquals(new ChangeEvent(Type.CHANGED, "result", "value", null, null), res);
+		
+		// Test that no more results are published after termination.
+		sub.terminate(new Exception("Test"));
+		handle.scheduleStep((IThrowingConsumer<IComponent>)comp
+			-> comp.getFeature(IResultFeature.class).setResult("result", "newvalue")).get(TIMEOUT);
 	}
 	
 	/**
@@ -220,13 +246,12 @@ public class ResultTest
 	public void	testNoCopyGetResults()
 	{
 		List<String>	value	= Collections.singletonList("hello");
-		
-		IComponentHandle	handle	= IComponentManager.get().create(new Object()
+		class NoCopyPojo
 		{
 			@ProvideResult
 			@NoCopy
 			List<String>	field	= value;
-			
+
 			// Method annotation
 			@ProvideResult
 			@NoCopy
@@ -234,14 +259,17 @@ public class ResultTest
 			{
 				return value;
 			}
-			
+
 			// Return type annotation
 			@ProvideResult
 			protected	@NoCopy	List<String>	method2()
 			{
 				return value;
 			}
-		}).get(TIMEOUT);
+		}
+		
+		NoCopyPojo	pojo	= new NoCopyPojo();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TIMEOUT);
 		
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("field"));
 		assertSame(value, handle.getResults().get(TIMEOUT).get("field"));
@@ -249,5 +277,99 @@ public class ResultTest
 		assertSame(value, handle.getResults().get(TIMEOUT).get("method1"));
 		assertEquals(value, handle.getResults().get(TIMEOUT).get("method2"));
 		assertSame(value, handle.getResults().get(TIMEOUT).get("method2"));
+	}
+	
+	@Test
+	public void	testCopyDynamic()
+	{
+		List<String>	value1	= new ArrayList<>();
+		value1.add("Hello");
+		
+		class TestNoCopyDynamic
+		{
+			@ProvideResult
+			Val<List<String>>	result	= new Val<>(value1);
+		}
+		TestNoCopyDynamic	pojo	= new TestNoCopyDynamic();
+		IComponentHandle	comp	= IComponentManager.get().create(pojo).get(TIMEOUT);
+		
+		// Test initial value event
+		ISubscriptionIntermediateFuture<ChangeEvent>	fut	= comp.subscribeToResults();
+		Object	result1	= 	fut.getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value1, result1);
+		assertNotSame(value1, result1);
+		
+		// Test changed value event
+		List<String>	value2	= new ArrayList<>();
+		value2.add("world");
+		comp.scheduleStep(() -> pojo.result.set(value2)).get(TIMEOUT);
+		Object	result2	= 	fut.getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value2, result2);
+		assertNotSame(value2, result2);
+	}
+	
+	@Test
+	public void	testNoCopyDynamic()
+	{
+		List<String>	value1	= new ArrayList<>();
+		value1.add("Hello");
+		
+		class TestNoCopyDynamic
+		{
+			@ProvideResult
+			@NoCopy
+			// Also tests unwrapping val and wrapper
+			Val<List<String>>	result	= new Val<>(value1);
+		}
+		TestNoCopyDynamic	pojo	= new TestNoCopyDynamic();
+		IComponentHandle	comp	= IComponentManager.get().create(pojo).get(TIMEOUT);
+		
+		// Test initial value event
+		ISubscriptionIntermediateFuture<ChangeEvent>	fut	= comp.subscribeToResults();
+		Object	result1	= 	fut.getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value1, result1);
+		assertSame(value1, result1);
+		
+		// Test changed value event
+		List<String>	value2	= new ArrayList<>();
+		value2.add("world");
+		comp.scheduleStep(() -> pojo.result.set(value2)).get(TIMEOUT);
+		Object	result2	= 	fut.getNextIntermediateResult(TIMEOUT).value();
+		assertEquals(value2, result2);
+		assertSame(value2, result2);
+	}
+	
+	@Test
+	public void	testLambdaResult()
+	{
+		IComponentHandle	comp	= IComponentManager.get().create(new Callable<String>()
+		{
+			@ProvideResult
+			String	hello	= "Hello";
+			
+			@OnStart
+			void	start(IResultFeature res)
+			{
+				res.setResult("world", "world");
+			}
+			
+			@Override
+			public String call()
+			{
+				return "!";
+			}
+		}).get(TIMEOUT);
+		
+		ISubscriptionIntermediateFuture<ChangeEvent>	fut	= comp.subscribeToResults();
+		assertEquals("Hello", fut.getNextIntermediateResult(TIMEOUT).value());
+		assertEquals("world", fut.getNextIntermediateResult(TIMEOUT).value());
+		assertEquals("!", fut.getNextIntermediateResult(TIMEOUT).value());
+		
+		Map<String, Object>	results	= new LinkedHashMap<>();
+		results.put("hello", "Hello");
+		results.put("world", "world");
+		results.put("result", "!");
+		assertEquals(results, comp.getResults().get(TIMEOUT));
+		
 	}
 }

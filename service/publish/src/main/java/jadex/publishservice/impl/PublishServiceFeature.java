@@ -9,7 +9,7 @@ import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.publishservice.IPublishService;
 import jadex.publishservice.IPublishServiceFeature;
-import jadex.publishservice.impl.RequestManager.MappingInfo;
+import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
 import jadex.publishservice.publish.PathManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

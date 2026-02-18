@@ -5,7 +5,7 @@ import jadex.bdi.annotation.BDIAgent;
 /**
  *  Helper for inline BDI agent creation, .i.e. new IBDIAgent(){...}.
  */
- @BDIAgent
+@BDIAgent
 public interface IBDIAgent
 {
 }

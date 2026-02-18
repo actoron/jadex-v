@@ -55,7 +55,7 @@ public class ActionNode<T> extends Node<T>
     	try
     	{
 			IFuture<NodeState> fut = action.getAction().apply(event, context.getUserContext());
-			getNodeContext(context).setUsercall(fut);
+			setUsercall(fut, context);
 			
 			fut.then(res ->
 			{
@@ -67,14 +67,17 @@ public class ActionNode<T> extends Node<T>
 		   			//System.out.println("exception in action: "+e);
 		   			getLogger().log(Level.ERROR, "exception in action: "+e);
 		   		}
-		   		ret.setResultIfUndone(NodeState.FAILED);
+		   		
+		   		NodeState	abortstate	= context.getNodeContext(ActionNode.this).getAbortState();
+		   		ret.setResultIfUndone(abortstate!=null ? abortstate : NodeState.FAILED);
 			});
     	}
     	catch(Exception e)
     	{
      		//System.out.println("exception in action: "+e);
      		getLogger().log(Level.ERROR, "exception in action: "+e);
-    		ret.setResultIfUndone(NodeState.FAILED);
+	   		NodeState	abortstate	= context.getNodeContext(ActionNode.this).getAbortState();
+	   		ret.setResultIfUndone(abortstate!=null ? abortstate : NodeState.FAILED);
     	}
     	
     	//ret.then(ns -> System.out.println("action node fini: "+this+" "+ns)).printOnEx();
@@ -87,12 +90,12 @@ public class ActionNode<T> extends Node<T>
     {
     	//FutureBarrier<Void> ret = new FutureBarrier<>();
     	
-    	ActionNodeContext<T> context = getNodeContext(execontext);
+    	NodeContext<T> context = getNodeContext(execontext);
     	
      	if(context.getAborted()!=null || NodeState.RUNNING!=context.getState())
     		return IFuture.DONE;
  
-     	IFuture<NodeState> usercall = context.getUsercall();
+     	IFuture<NodeState> usercall = getUsercall(execontext);
      	
       	//ret.add(super.internalAbort(abortmode, state, execontext));
 
@@ -140,57 +143,39 @@ public class ActionNode<T> extends Node<T>
     	if(getNodeContext(context)!=null)
     	{
     		//System.out.println("removed call: "+getNodeContext(context).getUsercall());
-    		getNodeContext(context).setUsercall(null);
+    		setUsercall(null, context);
     	}
     }
     
-    @Override
-    public ActionNodeContext<T> getNodeContext(ExecutionContext<T> execontext) 
-    {
-    	return (ActionNodeContext<T>)super.getNodeContext(execontext);
-    }
-    
-    protected NodeContext<T> createNodeContext()
-    {
-    	return new ActionNodeContext<T>();
-    }
-    
-    @Override
+    /*@Override
     public NodeContext<T> copyNodeContext(NodeContext<T> src)
     {
     	ActionNodeContext<T> ret = (ActionNodeContext<T>)super.copyNodeContext(src);
     	//ret.setUsercall(((ActionNodeContext<T>)src).getUsercall());
 		return ret;
-    }
+    }*/
     
-    public static class ActionNodeContext<T> extends NodeContext<T>
-    {
-    	protected IFuture<NodeState> usercall;
+	public IFuture<NodeState> getUsercall(ExecutionContext<T> context) 
+	{
+		return (IFuture<NodeState>)getNodeContext(context).getValue("usercall");
+	}
 
-		public IFuture<NodeState> getUsercall() 
-		{
-			return usercall;
-		}
-
-		public void setUsercall(IFuture<NodeState> usercall) 
-		{
-			//System.out.println("usercall: "+usercall+" "+this);
-			this.usercall = usercall;
-		}
+	public void setUsercall(IFuture<NodeState> usercall, ExecutionContext<T> context) 
+	{
+		//System.out.println("usercall: "+usercall+" "+this);
+		getNodeContext(context).setValue("usercall", usercall);
+	}
+	
+	/*public List<String> getDetailsShort()
+	{
+		List<String> ret = super.getDetailsShort();
 		
-		public List<String> getDetailsShort()
-		{
-			List<String> ret = super.getDetailsShort();
-			
-			if(getUsercall()!=null)
-				ret.add("user call done: "+getUsercall().isDone());
-			
-			return ret;
-		}
-    }
-    
-   
-    
+		if(getUsercall()!=null)
+			ret.add("user call done: "+getUsercall().isDone());
+		
+		return ret;
+	}*/
+
 	/*@Override
 	public String toString() 
 	{

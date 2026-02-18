@@ -14,7 +14,9 @@ import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.Component;
 import jadex.core.impl.ILifecycle;
+import jadex.execution.IExecutionFeature;
 import jadex.execution.future.FutureFunctionality;
+import jadex.execution.impl.ExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.IIntermediateFutureCommandResultListener;
@@ -298,6 +300,8 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	 */
 	protected IFuture<Void> sendRxMessage(ComponentIdentifier receiver, final Object msg)
 	{
+		//System.out.println("Sending RX message: "+msg+" to "+receiver);
+
 		if (msg instanceof IIdSenderCommand)
 		{
 			IIdSenderCommand idc = (IIdSenderCommand) msg;
@@ -361,7 +365,7 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 		public void handleMessage(ISecurityInfo secinfos, Object msg)
 		{
 			final String rxid = ((IIdSenderCommand) msg).getId();
-			//System.out.println(component.getId() + " received remote command: "+msg+", rxid="+rxid);
+			System.out.println(component.getId() + " received remote command: "+msg+", rxid="+rxid);
 			
 			if(msg instanceof IRemoteCommand)
 			{
@@ -383,10 +387,11 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 //								nonfunc = new HashMap<String, Object>();
 							nonfunc.put(ServiceCall.SECURITY_INFOS, secinfos);
 							//TODO: REQUIRED IComponentIdentifier.LOCAL??
+
 							//IComponentIdentifier.LOCAL.set((IComponentIdentifier)header.getProperty(IMsgHeader.SENDER));
 
-							// Local is used to set the caller in the new service call context
-							sc = ServiceCall.getOrCreateNextInvocation(nonfunc);
+							// Set the caller in the new service call context
+							sc = ServiceCall.getOrCreateNextInvocation(cmd.getSender(), nonfunc);
 							// After call creation it can be reset
 							//TODO: REQUIRED IComponentIdentifier.LOCAL??
 							//IComponentIdentifier.LOCAL.set(getComponent().getId());

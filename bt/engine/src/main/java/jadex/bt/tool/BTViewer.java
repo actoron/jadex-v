@@ -1,12 +1,13 @@
 package jadex.bt.tool;
 
-import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import jadex.bt.IBTAgentFeature;
+import jadex.bt.NodeListener;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.Node;
 import jadex.bt.state.ExecutionContext;
@@ -24,6 +25,11 @@ public class BTViewer extends JFrame
 	
 	public BTViewer(IComponentHandle agent) 
 	{
+		this(agent, -1);
+	}
+
+	public BTViewer(IComponentHandle agent, long closedelay) 
+	{
 	    this.agent = agent;
 	    setTitle("Behavior Tree Viewer " + agent.getId().getLocalName());
 	    setSize(800, 600);
@@ -33,8 +39,47 @@ public class BTViewer extends JFrame
 	    this.root = new TreeNode(getRoot(), getExecutionContext());
 	    this.btpanel = new BehaviorTreePanel(root);
         add(btpanel);
-        
-	    startAutoRefresh();
+
+		/*getRoot().addNodeListener(new NodeListener()
+		{
+			public void onChildAdded(Node parent, Node child, ExecutionContext context)
+			{
+				System.out.println("child added: "+child+" to "+parent);
+
+				SwingUtilities.invokeLater(() -> refreshView(true));
+			}
+			
+			public void onChildRemoved(Node	parent, Node child, ExecutionContext context)
+			{
+				System.out.println("child removed: "+child+" from "+parent);
+
+				SwingUtilities.invokeLater(() -> refreshView(true));
+			}
+		});*/
+
+		Timer timer = startAutoRefresh();
+
+		if(closedelay >= 0)
+		{
+			Runnable dispose = () -> 
+			{
+				Timer t = new Timer(3000, e -> 
+				{
+					if(timer!=null)
+						timer.stop();
+					BTViewer.this.dispose();
+				});
+				t.setRepeats(false);
+				t.start();
+			};
+			agent.waitForTermination().then(found ->
+			{
+				dispose.run();
+			}).catchEx(ex -> 
+			{
+				dispose.run();
+			});
+		}
 	}
 	
 	private Node<?> getRoot()
@@ -47,27 +92,49 @@ public class BTViewer extends JFrame
 		return agent.scheduleStep((IThrowingFunction<IComponent, ExecutionContext<?>>)a -> ((BTAgentFeature)a.getFeature(IBTAgentFeature.class)).getExecutionContext()).get();
 	}
 	
-	private void startAutoRefresh() 
+	private Timer startAutoRefresh() 
     {
-        Timer timer = new Timer(true);
-        timer.scheduleAtFixedRate(new TimerTask() 
-        {
-            @Override
-            public void run() 
-            {
-                SwingUtilities.invokeLater(BTViewer.this::refreshView);
-            }
-        }, 0, 100);
+		Timer timer = new Timer(100, e -> 
+		{
+			try 
+			{
+				refreshView();
+			} 
+			catch (Exception ex) 
+			{
+				((Timer)e.getSource()).stop();
+			}
+		});
+		timer.setInitialDelay(0);
+		timer.start();
+
+		return timer;
     }
 	
-	private void refreshView()
+
+	private void refreshView(boolean treechanged)
 	{
-		ExecutionContext<?> context = getExecutionContext();
-		this.root = new TreeNode(getRoot(), context);
-		this.btpanel.addStep(this.root);
-		
+		//if(treechanged)
+		//{
+		try
+		{
+			ExecutionContext<?> context = getExecutionContext();
+			this.root = new TreeNode(getRoot(), context);
+			this.btpanel.addStep(this.root);
+		}
+		catch(Exception e)
+		{
+			//System.out.println("Exception during refresh: "+e);
+		}
+		//}
+	
 		btpanel.repaint();
 		//btpanel.paintComponent(getGraphics());
+	}
+
+	private void refreshView()
+	{
+		refreshView(false);
 	}
 	
     public static void main(String[] args) 

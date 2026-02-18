@@ -11,7 +11,6 @@ import javax.swing.SwingUtilities;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
 import jadex.bdi.PlanFailureException;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Deliberation;
@@ -44,6 +43,8 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
@@ -82,8 +83,8 @@ public class CleanerAgent
 	private Val<Cleaner> self = new Val<Cleaner>((Cleaner)null);
 	
 	/** Day or night?. Use updaterate to re-check every second. */
-	@Belief(updaterate=1000)
-	private Val<Boolean> daytime = new Val<>(() -> getEnvironment().isDaytime().get());
+	@Belief
+	private Dyn<Boolean> daytime = new Dyn<>(() -> getEnvironment().isDaytime().get()).setUpdateRate(1000);
 	
 	private boolean	sensorgui	= true;
 	

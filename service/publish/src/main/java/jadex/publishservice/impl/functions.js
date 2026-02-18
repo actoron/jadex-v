@@ -1,5 +1,3 @@
-<script type="text/javascript">
-	
 	function extract(form) 
 	{
 		var names = [];
@@ -284,6 +282,3 @@
 	    }
 	    return false;
 	}
-
-	
-</script>

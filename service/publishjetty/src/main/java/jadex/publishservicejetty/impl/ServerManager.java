@@ -29,9 +29,10 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.publishservice.impl.MappingEvaluator;
 import jadex.publishservice.impl.PublishInfo;
 import jadex.publishservice.impl.RequestManager;
-import jadex.publishservice.impl.RequestManager.MappingInfo;
+import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
 import jadex.publishservice.publish.PathManager;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
@@ -72,7 +73,7 @@ public class ServerManager
     {
     	//Future<Void> ret = new Future<>();
     	
-        PathManager<MappingInfo> pm = RequestManager.getInstance().evaluateMapping(service.getServiceId(), info, this.getClass().getClassLoader());
+        PathManager<MappingInfo> pm = MappingEvaluator.evaluateMapping(service.getServiceId(), info, this.getClass().getClassLoader());
                
 		try
 	    {
@@ -251,7 +252,7 @@ public class ServerManager
                     	}
                     	else
                     	{
-                    		System.out.println("default ignoring: "+target);
+                    		System.out.println("Default ignoring request: "+target);
                     	}
                     }
                 };
@@ -426,6 +427,14 @@ public class ServerManager
 		id = id != null ? id.replace("[", "").replace("]", "") : null;
 		id = id.replace("${componentid}", ""+component.getId().getLocalName());
 		id = id.replace("${cid}", ""+component.getId().getLocalName());
+	
+        // $host is defined by component identifier also :-(
+        String host = System.getProperty("host", System.getenv("host"));
+        if(host!=null && host.length()>0)
+        	id = id.replace("${host}", host);
+        String port = System.getProperty("port", System.getenv("port"));
+        if(port!=null && port.length()>0)
+        	id = id.replace("${port}", port);
 		
 		String[] vars = findVariables(id);
 		for(String var: vars)

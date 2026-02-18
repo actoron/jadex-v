@@ -1,300 +1,137 @@
 package jadex.bdi.belief;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IBeliefListener;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
-import jadex.bdi.impl.BDIAgentFeature;
-import jadex.bdi.impl.ChangeEvent;
-import jadex.common.Tuple2;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
+import jadex.core.IChangeListener;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.rules.eca.ChangeInfo;
-import jadex.rules.eca.EventType;
-import jadex.rules.eca.IEvent;
-import jadex.rules.eca.Rule;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IntermediateFuture;
+import jadex.injection.AbstractDynVal.ObservationMode;
+import jadex.injection.AbstractDynamicValueTest;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 
 /**
  *  Test events from all kinds of beliefs.
  */
-public class BeliefTest
+public class BeliefTest	extends AbstractDynamicValueTest
 {
 	@BDIAgent
-	static class BeliefTestAgent
+	static class BeliefTestAgent extends AbstractDynamicValueTest.AbstractDynamicValueTestAgent
 	{
-		public BeliefTestAgent() {
-			this(null);
-		}
-		
-		BeliefTestAgent(Object other)
-		{
-			
-		}
+		@Belief
+		Val<Integer>	val;
+		@Override
+		public Val<Integer> getVal() { return val; }
+		@Override
+		public void initVal(Val<Integer> ini) { val=ini; }
 		
 		@Belief
-		Val<Integer>	valbelief	= new Val<>(1);
+		Val<Bean>	valbean;
+		@Override
+		public Val<Bean> getValBean() { return valbean; }
+		@Override
+		public void initValBean(Val<Bean> ini) { valbean=ini; }
+		
+		// Test that nested generic types work
+		@Belief
+		Val<Supplier<String>>	valsupplier;
+		@Override
+		public Val<Supplier<String>> getValSupplier() { return valsupplier; }
+		
+		// Test that nested generic types work
+		@Belief
+		Val<List<Supplier<String>>>	vallistsupplier;
+		@Override
+		public Val<List<Supplier<String>>> getValListSupplier() { return vallistsupplier; }
 		
 		@Belief
-		Val<Bean>	valbeanbelief	= new Val<>(null);
+		Bean	bean;
+		@Override
+		public Bean getBean() { return bean; }
+		@Override
+		public void initBean(Bean ini) { bean=ini; }
 		
 		@Belief
-		Bean	beanbelief	= new Bean(1);
+		List<String>	list;
+		@Override
+		public List<String> getList() { return list; }
+		@Override
+		public void initList(List<String> ini) { list=ini; }
 		
 		@Belief
-		List<String>	listbelief	= new ArrayList<>(Arrays.asList(new String[]{"1", "2"}));
+		Val<List<String>>	vallist;
+		@Override
+		public Val<List<String>> getValList() { return vallist; }
+		@Override
+		public void initValList(Val<List<String>> ini) { vallist=ini; }
 		
 		@Belief
-		Set<String>	setbelief	= new LinkedHashSet<>(Arrays.asList(new String[]{"1", "3"}));
-
-		@SuppressWarnings("serial")
+		Val<List<Bean>>	vallistbean;
+		@Override
+		public Val<List<Bean>> getValListBean() { return vallistbean; }
+		@Override
+		public void initValListBean(Val<List<Bean>> ini) { vallistbean=ini; }
+		
 		@Belief
-		Map<String, String>	mapbelief	= new LinkedHashMap<>()
-		{{
-			put("1", "one");
-			put("2", "wto");
-		}};
+		List<Bean>	listbean;
+		@Override
+		public List<Bean> getListBean() { return listbean; }
+		@Override
+		public void initListBean(List<Bean> ini) { listbean=ini; }
 		
-		@Belief(beliefs="valbelief")
-//		Val<Integer>	dynamicbelief	= new Val<>(new Callable<Integer>()
-//		{
-//			@Override
-//			public Integer call() throws Exception
-//			{
-//				return valbelief.get()+1;
-//			}
-//		});
-		Val<Integer>	dynamicbelief	= new Val<>(()->valbelief.get()+1);
+		@Belief
+		Set<String>	set;
+		@Override
+		public Set<String> getSet() { return set; }
+		@Override
+		public void initSet(Set<String> ini) { set=ini; }
 
-		@Belief(updaterate = 1000)
-		Val<Long>	updatebelief	= new Val<>(()->System.currentTimeMillis());
-	}
-	
-	public static class Bean
-	{
-		int value;
+		@Belief
+		Map<String, String>	map;
+		@Override
+		public Map<String, String> getMap() { return map; }
+		@Override
+		public void initMap(Map<String, String> ini) { map=ini; }
 		
-		public Bean(int value)
+		@Belief
+		Dyn<Integer>	dynamic	= new Dyn<>(new Callable<Integer>()
 		{
-			this.value	= value;
-		}
-		
-		PropertyChangeSupport	pcs	= new PropertyChangeSupport(this);
-		public void	addPropertyChangeListener(PropertyChangeListener pcl)
-		{
-			pcs.addPropertyChangeListener(pcl);
-		}
-		
-		public void setValue(int value)
-		{
-			int	oldvalue	= this.value;
-			this.value = value;
-			pcs.firePropertyChange("value", oldvalue, value);
-		}
-	}
-	
-	@Test
-	public void testValBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		Future<IEvent>	fut	= new Future<>();
-		
-		exta.scheduleStep(() ->
-		{
-			addEventListenerRule(fut, ChangeEvent.FACTCHANGED, "valbelief");
-			pojo.valbelief.set(2);
-		});
-		
-		checkEventInfo(fut, 1, 2, null);
-	}
-
-	@Test
-	public void testBeanBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		Future<IEvent>	fut	= new Future<>();
-		
-		exta.scheduleStep(() ->
-		{
-			addEventListenerRule(fut, ChangeEvent.FACTCHANGED, "beanbelief");
-			pojo.beanbelief.setValue(2);
-		});
-		
-		checkEventInfo(fut, 1, 2, null);
-	}
-
-	@Test
-	public void testValBeanBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		// Test delayed set after init.
-		exta.scheduleStep(() ->
-		{
-			pojo.valbeanbelief.set(new Bean(1));
-			return null;
-		}).get(TestHelper.TIMEOUT);
-		
-		Future<IEvent>	fut	= new Future<>();
-		exta.scheduleStep(() ->
-		{
-			addEventListenerRule(fut, ChangeEvent.FACTCHANGED, "valbeanbelief");
-			pojo.valbeanbelief.get().setValue(2);
-		});
-		checkEventInfo(fut, null, pojo.valbeanbelief.get(), null);
-	}
-
-	@Test
-	public void testListBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		Future<IEvent>	changedfut	= new Future<>();
-		Future<IEvent>	addedfut	= new Future<>();
-		Future<IEvent>	removedfut	= new Future<>();
-		
-		exta.scheduleStep(() ->
-		{
-			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "listbelief");
-			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "listbelief");
-			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "listbelief");
-			pojo.listbelief.set(1, "3");
-			pojo.listbelief.add(1, "2");
-			pojo.listbelief.remove(1);
-
-		});
-		
-		checkEventInfo(changedfut, "2", "3", 1);
-		checkEventInfo(addedfut, null, "2", 1);
-		checkEventInfo(removedfut, null, "2", 1);
-	}
-
-	@Test
-	public void testSetBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		Future<IEvent>	addedfut	= new Future<>();
-		Future<IEvent>	removedfut	= new Future<>();
-		
-		exta.scheduleStep(() ->
-		{
-			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "setbelief");
-			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "setbelief");
-			pojo.setbelief.add("2");
-			pojo.setbelief.remove("2");
-
-		});
-		
-		checkEventInfo(addedfut, null, "2", null);
-		checkEventInfo(removedfut, null, "2", null);
-	}
-	
-	@Test
-	public void testMapBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		Future<IEvent>	changedfut	= new Future<>();
-		Future<IEvent>	addedfut	= new Future<>();
-		Future<IEvent>	removedfut	= new Future<>();
-		
-		exta.scheduleStep(() ->
-		{
-			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "mapbelief");
-			addEventListenerRule(addedfut, ChangeEvent.FACTADDED, "mapbelief");
-			addEventListenerRule(removedfut, ChangeEvent.FACTREMOVED, "mapbelief");
-			pojo.mapbelief.put("2", "two");
-			pojo.mapbelief.put("3", "three");
-			pojo.mapbelief.remove("2");
-
-		});
-		
-		checkEventInfo(changedfut, "wto", "two", "2");
-		checkEventInfo(addedfut, null, "three", "3");
-		checkEventInfo(removedfut, null, "two", "2");
-	}
-
-	@Test
-	public void testDynamicBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		Future<Integer>	firstfut	= new Future<>();
-		Future<IEvent>	changedfut	= new Future<>();
-		Future<Integer>	secondfut	= new Future<>();
-		Future<Void>	exfut	= new Future<>();
-		
-		exta.scheduleStep(() ->
-		{
-			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "dynamicbelief");
-			firstfut.setResult(pojo.dynamicbelief.get());
-			pojo.valbelief.set(2);
-			secondfut.setResult(pojo.dynamicbelief.get());
-			try
+			@Override
+			public Integer call() throws Exception
 			{
-				pojo.dynamicbelief.set(3);
-				exfut.setResult(null);
-			}
-			catch(Exception e)
-			{
-				exfut.setException(e);
+				return getVal().get()+1;
 			}
 		});
-		
-		assertEquals(2, firstfut.get(TestHelper.TIMEOUT));
-		assertEquals(3, secondfut.get(TestHelper.TIMEOUT));
-		assertThrows(IllegalStateException.class, ()->exfut.get(TestHelper.TIMEOUT));
-		checkEventInfo(changedfut, 2, 3, null);
-	}
-	
-	@Test
-	public void testUpdaterateBelief()
-	{
-		BeliefTestAgent	pojo	= new BeliefTestAgent();
-		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		Future<Long>	firstfut	= new Future<>();
-		Future<Long>	secondfut	= new Future<>();
-		Future<IEvent>	changedfut	= new Future<>();
-		Future<Long>	thirdfut	= new Future<>();
-		
-		exta.scheduleStep(() ->
-		{
-			addEventListenerRule(changedfut, ChangeEvent.FACTCHANGED, "updatebelief");
-			firstfut.setResult(pojo.updatebelief.get());
-			IExecutionFeature.get().waitForDelay(500).get();
-			secondfut.setResult(pojo.updatebelief.get());
-			IExecutionFeature.get().waitForDelay(1000).get();
-			thirdfut.setResult(pojo.updatebelief.get());
-		});
-		
-		assertNotNull(firstfut.get(TestHelper.TIMEOUT));
-		assertEquals(firstfut.get(TestHelper.TIMEOUT), secondfut.get(TestHelper.TIMEOUT));
-		assertNotEquals(firstfut.get(TestHelper.TIMEOUT), thirdfut.get(TestHelper.TIMEOUT));
-		changedfut.get(TestHelper.TIMEOUT);	// Check if event was generated
+		@Override
+		public Dyn<Integer> getDynamic() { return dynamic; }
+
+		@Belief
+		public Dyn<Long>	update	= new Dyn<>(()->System.currentTimeMillis())
+			.setUpdateRate(1000)
+			// Test if byte code can be analyzed when also calling setObservationMode
+			.setObservationMode(ObservationMode.ON_ALL_CHANGES);
+		@Override
+		public Dyn<Long> getUpdate() { return update; }
 	}
 	
 	@Test
@@ -307,18 +144,21 @@ public class BeliefTest
 		List<String>	facts	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("valbelief", new IBeliefListener<Integer>()
+				.addChangeListener("val", new IChangeListener()
 			{
 				@Override
-				public void factChanged(ChangeInfo<Integer> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					facts.add(info.getOldValue()+":"+info.getValue());
+					if(event.type()==Type.CHANGED)
+					{
+						facts.add(event.oldvalue()+":"+event.value());
+					}
 				}
 			});
 			
-			pojo.valbelief.set(1);
-			pojo.valbelief.set(2);
-			pojo.valbelief.set(3);
+			pojo.getVal().set(1);
+			pojo.getVal().set(2);
+			pojo.getVal().set(3);
 			
 			return null;
 		}).get(TestHelper.TIMEOUT);
@@ -328,24 +168,25 @@ public class BeliefTest
 		List<String>	changes	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("setbelief", new IBeliefListener<String>()
+				.addChangeListener("set", new IChangeListener()
 			{
 				@Override
-				public void	factAdded(ChangeInfo<String> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					changes.add("a:"+info.getValue());
-				}
-				
-				@Override
-				public void	factRemoved(ChangeInfo<String> info)
-				{
-					changes.add("r:"+info.getValue());
+					if(event.type()==Type.ADDED)
+					{
+						changes.add("a:"+event.value());
+					}
+					else if(event.type()==Type.REMOVED)
+					{
+						changes.add("r:"+event.value());
+					}
 				}
 			});
 			
-			pojo.setbelief.add("1");	// already contained
-			pojo.setbelief.add("2");
-			pojo.setbelief.remove("1");
+			pojo.getSet().add("1");	// already contained
+			pojo.getSet().add("2");
+			pojo.getSet().remove("1");
 			
 			return null;
 		}).get(TestHelper.TIMEOUT);
@@ -355,30 +196,29 @@ public class BeliefTest
 		List<String>	mchanges	= new ArrayList<>();
 		exta.scheduleStep(comp -> {
 			comp.getFeature(IBDIAgentFeature.class)
-				.addBeliefListener("mapbelief", new IBeliefListener<String>()
+				.addChangeListener("map", new IChangeListener()
 			{
 				@Override
-				public void	factChanged(ChangeInfo<String> info)
+				public void valueChanged(jadex.core.ChangeEvent event)
 				{
-					mchanges.add("c:"+info.getInfo()+";"+info.getValue());
-				}
-				
-				@Override
-				public void	factAdded(ChangeInfo<String> info)
-				{
-					mchanges.add("a:"+info.getInfo()+";"+info.getValue());
-				}
-					
-				@Override
-				public void	factRemoved(ChangeInfo<String> info)
-				{
-					mchanges.add("r:"+info.getInfo()+";"+info.getValue());
+					if(event.type()==Type.CHANGED)
+					{
+						mchanges.add("c:"+event.info()+";"+event.value());
+					}
+					else if(event.type()==Type.ADDED)
+					{
+						mchanges.add("a:"+event.info()+";"+event.value());
+					}
+					else if(event.type()==Type.REMOVED)
+					{
+						mchanges.add("r:"+event.info()+";"+event.value());
+					}
 				}
 			});
 			
-			pojo.mapbelief.put("2", "two");	// already contained
-			pojo.mapbelief.put("3", "three");
-			pojo.mapbelief.remove("1");
+			pojo.getMap().put("2", "two");	// already contained
+			pojo.getMap().put("3", "three");
+			pojo.getMap().remove("1");
 			
 			return null;
 		}).get(TestHelper.TIMEOUT);
@@ -387,32 +227,57 @@ public class BeliefTest
 	
 	//-------- helper methods --------
 	
-	/**
-	 *  Add a rule that sets the event into a future.
-	 *  Must be called on agent thread.
-	 */
-	public static void	addEventListenerRule(Future<IEvent> fut, String... events)
+	@Override
+	public AbstractDynamicValueTestAgent createAgent()
 	{
-		BDIAgentFeature	feat	= (BDIAgentFeature)IComponentManager.get().getCurrentComponent()
+		return new BeliefTestAgent();
+	}
+
+	static int	rulecnt	= 0;
+	
+	@Override
+	public void	addEventListener(Future<Object> fut, Type type, String name)
+	{
+		IBDIAgentFeature	feat	= IComponentManager.get().getCurrentComponent()
 			.getFeature(IBDIAgentFeature.class);
-		feat.getRuleSystem().getRulebase().addRule(new Rule<Void>(
-			"EventListenerRule"+Arrays.toString(events),	// Rule Name
-			event -> new Future<>(new Tuple2<Boolean, Object>(true, null)),	// Condition -> true
-			(event, rule, context, condresult) -> {fut.setResultIfUndone(event); return IFuture.DONE;}, // Action -> set future
-			new EventType[] {new EventType(events)}	// Trigger Event(s)
-		));
+		feat.addChangeListener(name, event ->
+		{
+			if(type==event.type())
+			{
+				fut.setResultIfUndone(event);
+			}
+		});
 	}
 	
-	/**
-	 *  Check if old/new value and info match expectations.
-	 */
-	public static void checkEventInfo(Future<IEvent> fut, Object oldval, Object newval, Object info)
+	@Override
+	public void	addEventListener(IntermediateFuture<Object> fut, Type type, String name)
 	{
-		IEvent	event	= fut.get(TestHelper.TIMEOUT);
-		@SuppressWarnings("unchecked")
-		ChangeInfo<Object>	ci	= (ChangeInfo<Object>)event.getContent();
-		assertEquals(oldval, ci.getOldValue(), "old value");
-		assertEquals(newval, ci.getValue(), "new value");
-		assertEquals(info, ci.getInfo(), "info");
+		IBDIAgentFeature	feat	= IComponentManager.get().getCurrentComponent()
+			.getFeature(IBDIAgentFeature.class);
+		feat.addChangeListener(name, event ->
+		{
+			if(type==event.type())
+			{
+				fut.addIntermediateResultIfUndone(event);
+			}
+		});
+	}
+	
+	@Override
+	public void checkEventInfo(IFuture<Object> fut, Object oldval, Object newval, Object info)
+	{
+		ChangeEvent	event	= (ChangeEvent) fut.get(TestHelper.TIMEOUT);
+		assertEquals(oldval, event.oldvalue(), "old value");
+		assertEquals(newval, event.value(), "new value");
+		assertEquals(info, event.info(), "info");
+	}
+	
+	@Override
+	public void checkEventInfo(IIntermediateFuture<Object> fut, Object oldval, Object newval, Object info)
+	{
+		ChangeEvent	event	= (ChangeEvent) fut.getNextIntermediateResult(TestHelper.TIMEOUT);
+		assertEquals(oldval, event.oldvalue(), "old value");
+		assertEquals(newval, event.value(), "new value");
+		assertEquals(info, event.info(), "info");
 	}
 }

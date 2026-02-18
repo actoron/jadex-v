@@ -20,6 +20,7 @@ import javax.swing.SwingUtilities;
 
 import jadex.common.SGUI;
 import jadex.core.IComponent;
+import jadex.core.IThrowingConsumer;
 import jadex.execution.IExecutionFeature;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
@@ -200,7 +201,8 @@ public class QuizClientAgent
 				{
 					public void windowClosing(WindowEvent e)
 					{
-						agent.terminate();
+						agent.getComponentHandle().scheduleStep((IThrowingConsumer<IComponent>)comp ->
+							comp.terminate());
 					}
 				});
 				

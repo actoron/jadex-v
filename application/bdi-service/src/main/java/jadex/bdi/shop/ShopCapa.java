@@ -3,11 +3,11 @@ package jadex.bdi.shop;
 import java.util.List;
 import java.util.function.Supplier;
 
-import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
+import jadex.injection.Val;
 import jadex.providedservice.annotation.ProvideService;
 
 /**

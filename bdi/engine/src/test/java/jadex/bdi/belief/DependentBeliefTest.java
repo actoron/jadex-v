@@ -3,12 +3,13 @@ package jadex.bdi.belief;
 import org.junit.jupiter.api.Test;
 
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
 import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.core.IComponentManager;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
 
 /**
  *  Test that belief dependencies are automatically detected.
@@ -26,9 +27,8 @@ public class DependentBeliefTest
 			return belief.get();
 		}
 		
-		// TODO: dynamic belief
 		@Belief
-		Val<Boolean> dynamicBelief = new Val<>(() -> belief.get());
+		Dyn<Boolean> dynamicBelief = new Dyn<>(() -> belief.get());
 		
 		@Goal
 		class MyGoal

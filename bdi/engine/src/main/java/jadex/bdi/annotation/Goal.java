@@ -18,15 +18,16 @@ import java.lang.annotation.Target;
  *  on the notion of an "applicable plans list" (APL). When the goal needs processing,
  *  the agent determines the applicable plans and stores them in the APL.
  *  By default the plans are tried sequentially in the given order.
- *  Several goal flags like {@link #randomselection() randomselection} and {@link #posttoall() posttoall} allow changing this behavior.
  */
+//*  Several goal flags like {@link #randomselection() randomselection} and {@link #posttoall() posttoall} allow changing this behavior.
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(Goals.class)
 public @interface Goal
 {
 	/**
-	 *  The goal class, when used inside a  {@link Goals} annotation.
+	 *  The goal class, when used to declare external goals.
+	 *  Unused for inner classes. 
 	 */
 	public Class<?> impl() default Object.class;
 //	
@@ -74,12 +75,12 @@ public @interface Goal
 	public long recurdelay() default 0;
 
 	/**
-	 *  Should a procedural goal succeed when first plan executed successfully
+	 *  Should a procedural goal (i.e. without target/maintain/query condition)
+	 *  succeed when first plan executed successfully
 	 *  or after all plans have been executed (with at least one passed plan). 
-	 *  Plan success flag. Determines when a goal is succeeded
-	 *  depending on plan success. Default a procedural goal 
-	 *  has succeeded when the first plan has passed.
-	 *  If not 'or' but 'and' mode is used the goal will
+	 *  By default a procedural goal 
+	 *  is succeeded when the first plan has passed.
+	 *  If set to false the goal will
 	 *  only succeed after execution of the last plan from the APL.
 	 */
 	public boolean orsuccess() default true;

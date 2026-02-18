@@ -13,9 +13,9 @@ import java.lang.annotation.Target;
 public @interface ParametersMapper
 {
 	/**
-	 *  The method name.
+	 *  The value as a class.
 	 */
-	public Value value() default @Value;
+	public Class<?> value() default Object.class;
 	
 	/**
 	 *  Flag if automapping should be provided.

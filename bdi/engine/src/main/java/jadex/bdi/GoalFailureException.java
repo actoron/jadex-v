@@ -37,9 +37,4 @@ public class GoalFailureException	extends BDIFailureException
 	{
 		super(message, cause);
 	}
-	
-	public void printStackTrace()
-	{
-		super.printStackTrace();
-	}
 }

@@ -19,7 +19,6 @@ import jadex.bdi.GoalDroppedException;
 import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.ExcludeMode;
@@ -39,6 +38,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.injection.Val;
 
 /**
  *  Test various goal conditions
@@ -173,6 +173,143 @@ public class GoalConditionTest
 		handle.scheduleStep(() -> pojo.trigger.add("wrong")).get(TestHelper.TIMEOUT);
 		assertFalse(pojo.created.isDone());
 		handle.scheduleStep(() -> pojo.trigger.add("value")).get(TestHelper.TIMEOUT);
+		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
+		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
+	}
+	
+	@Test
+	public void	testDependentMethodCreationCondition()
+	{
+		@BDIAgent
+		class GoalCreationAgent
+		{
+			Future<String>	created	= new Future<>();
+			Future<String>	processed	= new Future<>();
+			
+			@Belief
+			Val<String> trigger	= new Val<>("");
+			
+			@Goal
+			class StartGoal
+			{
+				String	param;
+				
+				@GoalCreationCondition
+				static StartGoal condition(GoalCreationAgent agent)
+				{
+					return "value".equals(agent.trigger.get())
+						? agent.new StartGoal(agent.trigger.get()) : null;
+				}
+				
+				public StartGoal(String param)
+				{
+					this.param	= param;
+					created.setResult(param);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				processed.setResult(goal.param);
+			}
+		}
+		
+		GoalCreationAgent	pojo	= new GoalCreationAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> {pojo.trigger.set("wrong"); return null;}).get(TestHelper.TIMEOUT);
+		assertFalse(pojo.created.isDone());
+		handle.scheduleStep(() -> {pojo.trigger.set("value"); return null;}).get(TestHelper.TIMEOUT);
+		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
+		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
+	}
+
+	@Test
+	public void	testDependentBooleanCreationCondition()
+	{
+		@BDIAgent
+		class GoalCreationAgent
+		{
+			Future<String>	created	= new Future<>();
+			Future<String>	processed	= new Future<>();
+			
+			@Belief
+			Val<String> trigger	= new Val<>("");
+			
+			@Goal
+			class StartGoal
+			{
+				String	param;
+				
+				@GoalCreationCondition
+				static boolean condition(GoalCreationAgent agent)
+				{
+					return "value".equals(agent.trigger.get());
+				}
+				
+				@SuppressWarnings("unused")
+				public StartGoal()
+				{
+					this.param	= trigger.get();
+					created.setResult(param);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				processed.setResult(goal.param);
+			}
+		}
+		
+		GoalCreationAgent	pojo	= new GoalCreationAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> {pojo.trigger.set("wrong"); return null;}).get(TestHelper.TIMEOUT);
+		assertFalse(pojo.created.isDone());
+		handle.scheduleStep(() -> {pojo.trigger.set("value"); return null;}).get(TestHelper.TIMEOUT);
+		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
+		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
+	}
+
+	@Test
+	public void	testDependentConstructorCreationCondition()
+	{
+		@BDIAgent
+		class GoalCreationAgent
+		{
+			Future<String>	created	= new Future<>();
+			Future<String>	processed	= new Future<>();
+			
+			@Belief
+			Val<String> trigger	= new Val<>("");
+			
+			@Goal
+			class StartGoal
+			{
+				String	param;
+				
+				@GoalCreationCondition
+				public StartGoal()
+				{
+					this.param	= trigger.get();
+					if(!"value".equals(param))
+						throw new IllegalArgumentException("Goal suppports only \"value\".");
+					created.setResult(param);
+				}
+			}
+			
+			@Plan(trigger=@Trigger(goals=StartGoal.class))
+			protected void	process(StartGoal goal)
+			{
+				processed.setResult(goal.param);
+			}
+		}
+		
+		GoalCreationAgent	pojo	= new GoalCreationAgent();
+		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> {pojo.trigger.set("wrong"); return null;}).get(TestHelper.TIMEOUT);
+		assertFalse(pojo.created.isDone());
+		handle.scheduleStep(() -> {pojo.trigger.set("value"); return null;}).get(TestHelper.TIMEOUT);
 		assertEquals("value", pojo.created.get(TestHelper.TIMEOUT));
 		assertEquals("value", pojo.processed.get(TestHelper.TIMEOUT));
 	}
@@ -427,6 +564,8 @@ public class GoalConditionTest
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
 		handle.scheduleStep(() -> pojo.trigger.removeFirst()).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		assertEquals(Collections.singletonList("value"), pojo.trigger);
 	}
 
@@ -611,13 +750,22 @@ public class GoalConditionTest
 		
 		GoalRecurAgent	pojo	= new GoalRecurAgent();
 		IComponentHandle	handle	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
-		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new RecurGoal()));
+		Future<Void>	goaldispatched	= new Future<>();
+		IFuture<Void>	goalfut	= handle.scheduleAsyncStep(comp ->
+		{
+			IFuture<Void> ret	= comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(pojo.new RecurGoal());
+			goaldispatched.setResult(null);
+			return ret;
+		});
+		goaldispatched.get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertFalse(goalfut.isDone()); // Should be paused
 		assertEquals(1, pojo.plancnt);
 		
 		handle.scheduleStep(() -> {pojo.recur.set(false); return null;}).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra step to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertFalse(goalfut.isDone()); // Should still be paused
@@ -626,7 +774,30 @@ public class GoalConditionTest
 		handle.scheduleStep(() -> {pojo.recur.set(true); return null;}).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);	// Extra steps to allow goal processing to be finished
 		assertFalse(goalfut.isDone()); // Should still be paused
 		assertEquals(2, pojo.plancnt);
+	}
+
+	public static void main(String[] args) throws Exception
+	{
+		for(;;)
+		{
+			GoalConditionTest	test	= new GoalConditionTest();
+			test.testConstructorCreationCondition();
+			test.testMethodCreationCondition();
+			test.testBooleanMethodCreationCondition();
+			test.testNoPlanProceduralQueryGoal();
+			test.testProceduralQueryGoal();
+			test.testQueryCondition();
+			test.testTargetCondition();
+			test.testTargetWithResult();
+			test.testMaintainCondition();
+			test.testMaintainTargetCondition();
+			test.testContextCondition();
+			test.testDropCondition();
+			test.testRecurCondition();
+//			System.out.println("----");
+		}
 	}
 }

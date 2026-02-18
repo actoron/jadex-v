@@ -1,7 +1,7 @@
 plugins 
 {
 	id 'java-library'
-    
+    id 'java-test-fixtures'
 }
 
 description = 'Basic feature to publish services as REST'
@@ -13,7 +13,7 @@ if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 
 java
 {
-	sourceCompatibility = '1.17'
+	sourceCompatibility = '1.21'
 }
 
 repositories
@@ -44,6 +44,27 @@ dependencies
 	//api 'org.javassist:javassist:3.28.0-GA'
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	testImplementation("io.rest-assured:rest-assured:5.5.6")
+	testImplementation("org.hamcrest:hamcrest:3.0")
+	
+
+	//testFixturesImplementation sourceSets.main.output
+
+	// Test-Files / Fixtures
+    testFixturesImplementation 'org.activecomponents.jadex:common:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:collection:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:traverser:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:javaparser:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:core:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:injection:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:execution:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:requiredservice:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:providedservice:'+v
+    testFixturesImplementation 'org.activecomponents.jadex:serialization:'+v
+
+	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+    testFixturesImplementation 'io.rest-assured:rest-assured:5.5.6'
+    testFixturesImplementation 'org.hamcrest:hamcrest:3.0'
 }
 
 processResources 

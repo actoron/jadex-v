@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
+import jadex.bdi.PlanFailureException;
 import jadex.bdi.TestHelper;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Goal;
@@ -14,7 +15,6 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanAborted;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.Trigger;
-import jadex.common.SUtil;
 import jadex.common.TimeoutException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
@@ -89,7 +89,7 @@ public class PlanSubgoalTest
 		// Drop top-level goal and check if sub plan is aborted.
 		@SuppressWarnings("serial")
 		class MyException extends RuntimeException{};
-		handle.scheduleStep(() -> topfut.terminate(new MyException()));
+		handle.scheduleStep(() -> topfut.terminate(new MyException())).get(TestHelper.TIMEOUT);
 		agent.aborted.get(TestHelper.TIMEOUT);
 		
 //		assertThrows(GoalDroppedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));
@@ -117,8 +117,15 @@ public class PlanSubgoalTest
 			@Plan(trigger=@Trigger(goals=TopGoal.class))
 			void	handleTopGoal(IPlan plan)
 			{
-				subfut	= plan.dispatchSubgoal(new Subgoal());
-				subfut.get(50);
+				try
+				{
+					subfut	= plan.dispatchSubgoal(new Subgoal());
+					subfut.get(50);
+				}
+				catch(TimeoutException te)
+				{
+					throw new PlanFailureException();
+				}
 			}
 			
 			@Plan(trigger=@Trigger(goals=Subgoal.class))
@@ -143,25 +150,22 @@ public class PlanSubgoalTest
 		IComponentHandle	handle	= IComponentManager.get().create(agent).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		
-		SUtil.runWithoutOutErr(() ->
+		// Dispatch top-level goal and check if sub plan is started.
+		ITerminableFuture<Void>	topfut	= (ITerminableFuture<Void>) handle.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Void>>()
 		{
-			// Dispatch top-level goal and check if sub plan is started.
-			ITerminableFuture<Void>	topfut	= (ITerminableFuture<Void>) handle.scheduleAsyncStep(new IThrowingFunction<IComponent, IFuture<Void>>()
+			public ITerminableFuture<Void> apply(IComponent comp)
 			{
-				public ITerminableFuture<Void> apply(IComponent comp)
-				{
-					return comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TopGoal());
-				}
-			});
-			agent.started.get(TestHelper.TIMEOUT);
-			assertFalse(agent.aborted.isDone());
-			
-			// Sub plan should be aborted after top-plan timeout
-			agent.aborted.get(TestHelper.TIMEOUT);
-			
-	//		assertThrows(GoalDroppedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));
-			assertThrows(FutureTerminatedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));
-			assertThrows(TimeoutException.class, () -> topfut.get(TestHelper.TIMEOUT));
+				return comp.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(agent.new TopGoal());
+			}
 		});
+		agent.started.get(TestHelper.TIMEOUT);
+		assertFalse(agent.aborted.isDone());
+		
+		// Sub plan should be aborted after top-plan timeout
+		agent.aborted.get(TestHelper.TIMEOUT);
+		
+//		assertThrows(GoalDroppedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));
+		assertThrows(FutureTerminatedException.class, () -> agent.subfut.get(TestHelper.TIMEOUT));
+		assertThrows(PlanFailureException.class, () -> topfut.get(TestHelper.TIMEOUT));
 	}
 }

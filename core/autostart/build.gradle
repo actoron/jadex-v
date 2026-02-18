@@ -12,7 +12,7 @@ if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 
 java
 {
-	sourceCompatibility = '1.17'
+	sourceCompatibility = '1.21'
 }
 
 repositories
@@ -27,6 +27,8 @@ dependencies
 	implementation 'org.activecomponents.jadex:execution:'+v
 	implementation 'org.activecomponents.jadex:injection:'+v
 	implementation 'org.activecomponents.jadex:common:'+v
+	implementation 'org.activecomponents.jadex:javaparser:'+v
+	implementation 'org.activecomponents.jadex:traverser:'+v
 	
 	implementation 'com.google.auto.service:auto-service:1.1.1';
 	annotationProcessor 'com.google.auto.service:auto-service:1.1.1'

@@ -1,1 +1,2 @@
 jadex.bdi.impl.BDIAgentFeatureProvider
+jadex.bdi.impl.BDIInjectionFeatureProvider

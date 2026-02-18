@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import jadex.common.NameValue;
 import jadex.common.SAccess;
+import jadex.common.SReflect;
 import jadex.common.SUtil;
+import jadex.core.ChangeEvent;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
@@ -72,7 +73,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults()
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults()
 	{
 		return Component.subscribeToResults(comp);
 	}
@@ -138,29 +139,32 @@ public class ExecutableComponentHandle implements IComponentHandle
 
 					for(int p = 0; p < ptypes.length; p++)
 					{
-						myargs.add(ExecutionFeatureProvider.copyVal(args[p], pannos[p]));
+						myargs.add(Component.copyVal(args[p], pannos[p]));
 					}
 					
-					FutureFunctionality func = new ComponentFutureFunctionality(caller)
-					{							
-						public Object handleResult(Object val) throws Exception
-						{
-							return ExecutionFeatureProvider.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
-						}
+					Future<Object> ret = null;
+					if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
+					{
+						FutureFunctionality func = new ComponentFutureFunctionality(caller)
+						{							
+							public Object handleResult(Object val) throws Exception
+							{
+								return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
+							}
+							
+							public Object handleIntermediateResult(Object val) throws Exception
+							{
+								return Component.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
+							}
+						};
 						
-						public Object handleIntermediateResult(Object val) throws Exception
-						{
-							return ExecutionFeatureProvider.copyVal(val, method.getAnnotatedReturnType().getAnnotations());
-						}
-					};
-					
-					Future<Object> ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
-					
+						ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
+					}
 					//final Object[] myargs = copyargs.toArray();
 					
 			        if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
 			        {
-			        	//System.out.println("already on agent: "+getId());
+//			        	System.out.println("already on agent: "+getId());
 			        	if(ret instanceof IFuture)
 			        	{
 			        		IFuture fut = (IFuture)invokeMethod(comp, pojo, myargs, method, next);
@@ -180,11 +184,13 @@ public class ExecutableComponentHandle implements IComponentHandle
 			        {
 			        	if(ret instanceof IFuture)
 			        	{
+							Future<Object> fret = ret;
+							
 				        	IFuture fut = scheduleAsyncStep(new ICallable<IFuture<Object>>() 
 			        		{
 			        			public Class<? extends IFuture<?>> getFutureReturnType() 
 			        			{
-			        				return (Class<? extends IFuture<?>>)ret.getClass();
+			        				return (Class<? extends IFuture<?>>)fret.getClass();
 			        			}
 			        			
 			        			public IFuture<Object> call() throws Exception
@@ -197,7 +203,8 @@ public class ExecutableComponentHandle implements IComponentHandle
 			        	//System.out.println("scheduled on agent: "+getId());
 			        	else if(method.getReturnType().equals(void.class))
 			        	{
-			        		scheduleStep((Runnable)() -> invokeMethod(comp, pojo, myargs, method, next));
+			        		scheduleStep(() -> invokeMethod(comp, pojo, myargs, method, next))
+			        			.catchEx(ex -> comp.handleException(ex));
 			        	}
 			        	else 
 			        	{
@@ -260,7 +267,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public void scheduleStep(Runnable step) 
+	public void scheduleStep_old(Runnable step) 
 	{
 		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}
@@ -272,7 +279,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public void scheduleStep(IThrowingConsumer<IComponent> step)
+	public void scheduleStep_old(IThrowingConsumer<IComponent> step)
 	{
 		comp.getFeature(IExecutionFeature.class).scheduleStep(step);
 	}

@@ -15,25 +15,15 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public ListWrapper(List<T> delegate)
 	{
-		this(delegate, null);
-	}
-	
-
-	/**
-	 *  Create a new wrapper.
-	 *  @param delegate The delegate.
-	 */
-	public ListWrapper(List<T> delegate, IEventPublisher publisher)
-	{
-		super(delegate, publisher);
+		super(delegate);
 	}
 	
 	/**
 	 * 
 	 */
-	public List<T> getList()
+	public List<T> getDelegate()
 	{
-		return (List<T>)delegate;
+		return (List<T>)super.getDelegate();
 	}
 	
 	/**
@@ -42,7 +32,7 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	public boolean addAll(int index, Collection<? extends T> c)
 	{
 		// todo? or calls internally add?
-		return getList().addAll(index, c);
+		return getDelegate().addAll(index, c);
 	}
 
 	/**
@@ -50,7 +40,7 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public T get(int index)
 	{
-		return getList().get(index);
+		return getDelegate().get(index);
 	}
 
 	/**
@@ -58,13 +48,8 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public T set(int index, T element)
 	{
-		T ret = getList().set(index, element);
-		entryChanged(ret, element, index);
-//		unobserveValue(ret);
-//		observeValue(element);
-//		getRuleSystem().addEvent(new Event(changeevent, new ChangeInfo<T>(element, ret, index)));
-////				new Object[]{ret, element, Integer.valueOf(index)}));
-//		publishToolBeliefEvent();
+		T ret = getDelegate().set(index, element);
+		entryChanged(element, ret, index);
 		return ret;
 	}
 
@@ -73,11 +58,8 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public void add(int index, T element)
 	{
-		getList().add(index, element);
+		getDelegate().add(index, element);
 		entryAdded(element, index);
-//		observeValue(element);
-//		getRuleSystem().addEvent(new Event(addevent, new ChangeInfo<T>(element, null, index)));
-//		publishToolBeliefEvent();
 	}
 
 	/**
@@ -85,11 +67,8 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public T remove(int index)
 	{
-		T ret = getList().remove(index);
+		T ret = getDelegate().remove(index);
 		entryRemoved(ret, index);
-//		unobserveValue(ret);
-//		getRuleSystem().addEvent(new Event(remevent, new ChangeInfo<T>(null, ret, index)));
-//		publishToolBeliefEvent();
 		return ret;
 	}
 
@@ -98,7 +77,7 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public int indexOf(Object o)
 	{
-		return getList().indexOf(o);
+		return getDelegate().indexOf(o);
 	}
 
 	/**
@@ -106,7 +85,7 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public int lastIndexOf(Object o)
 	{
-		return getList().lastIndexOf(o);
+		return getDelegate().lastIndexOf(o);
 	}
 
 	/**
@@ -114,7 +93,7 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public ListIterator<T> listIterator()
 	{
-		return getList().listIterator();
+		return getDelegate().listIterator();
 	}
 
 	/**
@@ -122,7 +101,7 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public ListIterator<T> listIterator(int index)
 	{
-		return getList().listIterator(index);
+		return getDelegate().listIterator(index);
 	}
 
 	/**
@@ -130,6 +109,6 @@ public class ListWrapper<T> extends CollectionWrapper<T> implements List<T>
 	 */
 	public List<T> subList(int fromIndex, int toIndex)
 	{
-		return getList().subList(fromIndex, toIndex);
+		return getDelegate().subList(fromIndex, toIndex);
 	}
 }

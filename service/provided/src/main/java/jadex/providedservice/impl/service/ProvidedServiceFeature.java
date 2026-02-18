@@ -211,7 +211,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 				
 				// TODO: name given (i.e. field/method) and multiple interfaces
 				String	thename	= name!=null ? name : type.getSimpleName();  
-				IService	service	= createProvidedServiceProxy(pojo, thename, type, ps!=null? ps.tags(): null, ps!=null? ps.scope(): null);
+				IService service = createProvidedServiceProxy(pojo, thename, type, ps!=null? ps.tags(): null, ps!=null? ps.scope(): null);
 				lservices.add(service);
 			}
 			
@@ -221,7 +221,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 			{
 				List<Object>	pojos	= new ArrayList<>(parents);
 				pojos.add(pojo);
-				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null, null, null);
+				((InjectionFeature)self.getFeature(IInjectionFeature.class)).addExtraObject(pojos, null);
 			}
 			
 			// Finally make the services publicly available

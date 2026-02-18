@@ -21,8 +21,8 @@ import jadex.bpmn.runtime.impl.ProcessThreadValueFetcher;
 import jadex.common.ClassInfo;
 import jadex.common.IResultCommand;
 import jadex.common.IValueFetcher;
-import jadex.common.NameValue;
 import jadex.common.SReflect;
+import jadex.core.ChangeEvent;
 import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
@@ -220,9 +220,9 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 
 			SubprocessResultHandler handler = new SubprocessResultHandler(thread, activity);	
 			
-			Consumer<NameValue> handleresult = new Consumer<>()
+			Consumer<ChangeEvent> handleresult = new Consumer<>()
 			{
-				public void accept(NameValue result)
+				public void accept(ChangeEvent result)
 				{
 					if(activity.getParameters()!=null && activity.getParameters().get(result.name())!=null)
 					{
@@ -252,29 +252,29 @@ public class SubProcessActivityHandler extends DefaultActivityHandler
 			
 			
 			RBpmnProcess sub = new RBpmnProcess(file);
-			sub.subscribeToResults().next(result -> handleresult.accept(result)
-			).finished(res -> finishedhandler.accept(res)
-			).catchEx(exception ->
-			{
-				//System.out.println("ex: "+exception);
-				// Hack!!! Ignore exception, when component already terminated.
-				if(!(exception instanceof ComponentTerminatedException)
-					|| !instance.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
+			BpmnProcess.create(sub).then(handle -> handle.subscribeToResults()
+				.next(result -> handleresult.accept(result)
+				).finished(res -> finishedhandler.accept(res)
+				).catchEx(exception ->
 				{
-//					System.out.println("end2: "+instance.getComponentIdentifier()+" "+file+" "+exception);
-//					exception.printStackTrace();
-					thread.setNonWaiting();
-					thread.setException(exception);
-					getBpmnFeature(instance).step(activity, instance, thread, null);
-				}
-			}).then(results ->
-			{
-				for(NameValue result: results)
-					handleresult.accept(result);
-				finishedhandler.accept(null);
-			});
+					//System.out.println("ex: "+exception);
+					// Hack!!! Ignore exception, when component already terminated.
+					if(!(exception instanceof ComponentTerminatedException)
+						|| !instance.getId().equals(((ComponentTerminatedException)exception).getComponentIdentifier()))
+					{
+	//					System.out.println("end2: "+instance.getComponentIdentifier()+" "+file+" "+exception);
+	//					exception.printStackTrace();
+						thread.setNonWaiting();
+						thread.setException(exception);
+						getBpmnFeature(instance).step(activity, instance, thread, null);
+					}
+				}).then(results ->
+				{
+					for(ChangeEvent result: results)
+						handleresult.accept(result);
+					finishedhandler.accept(null);
+				}));
 			
-			BpmnProcess.create(sub);
 			
 			/*creator.createComponentWithEvents(info)
 				.addResultListener(instance.getFeature(IExecutionFeature.class).createResultListener(new IntermediateEmptyResultListener<CMSStatusEvent>()

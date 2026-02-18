@@ -6,8 +6,7 @@ import java.util.concurrent.Callable;
 
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
-import jadex.core.impl.IComponentLifecycleManager;
-import jadex.core.impl.SComponentFeatureProvider;
+import jadex.core.impl.StepAborted;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -27,42 +26,12 @@ public interface IComponentFactory
 	/**
 	 *  Create a component based on a pojo.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generationm.
+	 *  @param localname The component id or null for auto-generationm.
 	 *  @return The external access of the running component.
 	 */
 	public default IFuture<IComponentHandle> create(Object pojo, String localname)
 	{		
-		return create(pojo, localname, null);
-	}
-	
-	/**
-	 *  Create a component based on a pojo.
-	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generation.
-	 *  @param app The application context.
-	 *  @return The external access of the running component.
-	 */
-	public default IFuture<IComponentHandle> create(Object pojo, String localname, Application app)
-	{		
-		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(localname);
-		if(pojo==null)
-		{
-			// Plain component for null pojo
-			//return Component.createComponent(Component.class, () -> new Component(pojo, cid, app));
-			return Component.createComponent(new Component(pojo, cid, app));
-		}
-		else
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
-			if(creator!=null)
-			{
-				return creator.create(pojo, cid, app);
-			}
-			else
-			{
-				return new Future<>(new RuntimeException("Could not create component: "+pojo));
-			}
-		}
+		return ComponentManager.get().create(pojo, localname, null);
 	}
 	
 	/**
@@ -95,49 +64,21 @@ public interface IComponentFactory
 	 */
 	public default <T> IFuture<T> run(Object pojo)
 	{
-		return run(pojo, null, null);
+		return run(pojo, null);
 	}
 	
 	/**
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generation.
+	 *  @param localname The component id or null for auto-generationm.
 	 *  @return The execution result.
 	 */
-	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid)
+	public default <T> IFuture<T> run(Object pojo, String localname)
 	{
-		return run(pojo, cid, null);
+		return ComponentManager.get().run(pojo, localname, null);
 	}
 
-	/**
-	 *  Usage of components as functions that terminate after execution.
-	 *  Create a component based on a function.
-	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generation.
-	 *  @param app The application context.
-	 *  @return The execution result.
-	 */
-	public default <T> IFuture<T> run(Object pojo, ComponentIdentifier cid, Application app)
-	{
-		if(pojo==null)
-		{
-			return new Future<>(new UnsupportedOperationException("No null pojo allowed for run()."));
-		}
-		else
-		{
-			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
-			if(creator!=null)
-			{
-				return creator.run(pojo, cid, app);
-			}
-			else
-			{
-				return new Future<>(new RuntimeException("Could not create component: "+pojo));
-			}
-		}
-	}
-	
 	/**
 	 *  Get all components.
 	 *  @return The component ids.
@@ -157,6 +98,10 @@ public interface IComponentFactory
 		{
 			iter	= getAllComponents();
 		}
+		else if(cids.length==1)
+		{
+			return doTerminate(cids[0]);
+		}
 		else
 		{
 			iter	= Arrays.asList(cids);
@@ -165,36 +110,50 @@ public interface IComponentFactory
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		for(ComponentIdentifier cid: iter)
 		{
-			try
-			{
-				IComponent comp = ComponentManager.get().getComponent(cid);
-				if(comp==null)
-				{
-					throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
-				}
-				IComponentHandle	exta = comp.getComponentHandle();
-				//ComponentManager.get().removeComponent(cid); // done in Component
-				if(Component.isExecutable())
-				{
-					// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
-					bar.add(exta.scheduleStep(icomp ->
-					{
-						icomp.terminate();
-						return (Void)null;
-					}));
-				}
-				else
-				{
-					// Hack!!! Concurrency issue?
-					comp.terminate();
-				}
-			}
-			catch(Exception e)
-			{
-				bar.add(new Future<>(e));
-			}
+			IFuture<Void>	fut	= doTerminate(cid);
+			bar.add(fut);
 		}
 		return bar.waitFor();
+	}
+
+	private static IFuture<Void>	doTerminate(ComponentIdentifier cid)
+	{
+		try
+		{
+			IComponent comp = ComponentManager.get().getComponent(cid);
+			if(comp==null)
+			{
+				throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
+			}
+			IComponentHandle	exta = comp.getComponentHandle();
+			//ComponentManager.get().removeComponent(cid); // done in Component
+			if(Component.isExecutable())
+			{
+				// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
+				return exta.scheduleStep(icomp ->
+				{
+					try
+					{
+						((Component)icomp).doTerminate();
+					}
+					catch(StepAborted e)
+					{
+						// Skip abortion of user code when called from outside.
+					}
+					return (Void)null;
+				});
+			}
+			else
+			{
+				// Hack!!! Concurrency issue?
+				((Component)comp).doTerminate();
+				return IFuture.DONE;
+			}
+		}
+		catch(Exception e)
+		{
+			return new Future<>(e);
+		}
 	}
 	
 	/**

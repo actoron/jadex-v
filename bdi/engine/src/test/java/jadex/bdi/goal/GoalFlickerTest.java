@@ -12,7 +12,6 @@ import jadex.bdi.GoalFailureException;
 import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Goal;
@@ -25,6 +24,7 @@ import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
+import jadex.injection.Val;
 
 /**
  *  Test means-end reasoning (i.e. plan action removal)
@@ -101,6 +101,7 @@ public class GoalFlickerTest
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
+		handle.scheduleStep(() -> null).get(TestHelper.TIMEOUT);
 		assertEquals(1, executions.size());
 //		System.out.println();
 
@@ -159,5 +160,16 @@ public class GoalFlickerTest
 			handle.scheduleAsyncStep(comp -> comp.getFeature(IBDIAgentFeature.class)
 					.dispatchTopLevelGoal(pojo.new TopGoal())).get(TestHelper.TIMEOUT));
 		assertEquals(0, executions.size());
+	}
+
+	public static void main(String[] args)
+	{
+		for(;;)
+		{
+//			System.out.println("Test run...");
+			GoalFlickerTest	test	= new GoalFlickerTest();
+			test.testContextFlickering();
+			test.testSubgoalFlickering();
+		}
 	}
 }

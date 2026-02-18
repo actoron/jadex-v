@@ -12,7 +12,7 @@ if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 
 java
 {
-	sourceCompatibility = '1.17'
+	sourceCompatibility = '1.21'
 }
 
 repositories
@@ -30,6 +30,8 @@ dependencies
 	implementation 'org.activecomponents.jadex:injection:'+v
 	implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation 'org.activecomponents.jadex:logbase:'+v 
+	
+	implementation 'net.cinnom:nano-cuckoo:1.0.0'	// required for sliding cuckoo filter
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 

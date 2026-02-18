@@ -21,13 +21,12 @@ public class BpmnProcessBenchmark
 		{
 			Future<ComponentIdentifier>	ret	= new Future<>();
 			RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
-			
-			pojo.subscribeToResults().next(res ->
+			IComponentHandle	agent	= BpmnProcess.create(pojo).get();
+			agent.subscribeToResults().next(res ->
 			{
 				ret.setResultIfUndone((ComponentIdentifier)res.value());
 			}).catchEx(ret);
-			
-			IComponentHandle	agent	= BpmnProcess.create(pojo).get();
+
 			ret.get();
 			return () -> agent.terminate().get();
 		});
@@ -40,16 +39,20 @@ public class BpmnProcessBenchmark
 		{
 			Future<ComponentIdentifier>	ret	= new Future<>();
 			RBpmnProcess pojo = new RBpmnProcess("jadex/benchmark/Benchmark.bpmn").declareResult("result");
-			
-			pojo.subscribeToResults().next(res ->
+			IComponentHandle	agent	= BpmnProcess.create(pojo).get();			
+			agent.subscribeToResults().next(res ->
 			{
 				ret.setResultIfUndone((ComponentIdentifier)res.value());
 			}).catchEx(ret);
 			
-			IComponentHandle	agent	= BpmnProcess.create(pojo).get();
 			ret.get();
 			agent.terminate().get();
 		});
+	}
+	
+	public static void main(String[] args)
+	{
+		new BpmnProcessBenchmark().benchmarkMemory();
 	}
 }
 

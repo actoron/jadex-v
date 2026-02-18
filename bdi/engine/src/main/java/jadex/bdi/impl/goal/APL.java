@@ -9,9 +9,11 @@ import jadex.bdi.IBDIAgentFeature;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.impl.BDIAgentFeature;
 import jadex.bdi.impl.BDIModel;
+import jadex.bdi.impl.RElement;
 import jadex.bdi.impl.plan.IPlanBody;
 import jadex.bdi.impl.plan.RPlan;
 import jadex.common.SUtil;
+import jadex.core.IComponent;
 
 /**
  *  The APL is the applicable plan list. It stores the
@@ -347,7 +349,7 @@ public class APL
 		if(cand.getBody().hasPrecondition())
 		{
 			// TODO: avoid duplicate RPlan creation
-			RPlan	rplan	= cand.createPlan(element);
+			RPlan	rplan	= cand.createPlan(element.getComponent(), element);
 			ret	= cand.getBody().checkPrecondition(rplan);
 		}
 		
@@ -1153,11 +1155,11 @@ public class APL
 		}
 		
 		@Override
-		public RPlan createPlan(RProcessableElement reason)
+		public RPlan createPlan(IComponent comp, Object reason)
 		{
-			List<Object>	parentpojos	= ((BDIAgentFeature)reason.getComponent()
+			List<Object>	parentpojos	= ((BDIAgentFeature)comp
 				.getFeature(IBDIAgentFeature.class)).getCapability(parentclazzes);
-			return new RPlan(this, name, reason, body, reason.getComponent(), parentpojos);
+			return new RPlan(this, name, reason, body, comp, parentpojos);
 		}
 
 		@Override
@@ -1194,10 +1196,10 @@ public class APL
 		}
 		
 		@Override
-		public RPlan createPlan(RProcessableElement reason)
+		public RPlan createPlan(IComponent comp, Object reason)
 		{
 			// TODO: reason parent pojos may be wrong for plan from other capability
-			RPlan	rplan	= new RPlan(this, pojo.getClass().getName(), reason, body, reason.getComponent(), reason.getParentPojos());
+			RPlan	rplan	= new RPlan(this, pojo.getClass().getName(), reason, body, comp, ((RElement) reason).getParentPojos());
 			rplan.setPojo(pojo);
 			return rplan;
 		}

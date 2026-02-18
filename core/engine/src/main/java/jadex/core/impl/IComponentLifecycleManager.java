@@ -1,16 +1,10 @@
 package jadex.core.impl;
 
-import java.util.Map;
-
-import jadex.common.NameValue;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.future.SubscriptionIntermediateFuture;
 
 /**
  *  Managing POJOs by creating/running/terminating corresponding components.
@@ -28,23 +22,6 @@ public interface IComponentLifecycleManager
 	 *  Create a component for a POJO
 	 */
 	public IFuture<IComponentHandle>	create(Object pojo, ComponentIdentifier cid, Application app);
-	
-	/**
-	 *  Fetch the result(s) of the POJO.
-	 */
-	public default Map<String, Object> getResults(IComponent component)
-	{
-		throw new UnsupportedOperationException();
-	}
-	
-	/**
-	 *  Listen to results of the pojo.
-	 *  @throws UnsupportedOperationException when subscription is not supported
-	 */
-	public default ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent component)
-	{
-		return new SubscriptionIntermediateFuture<NameValue>(new UnsupportedOperationException());
-	}
 
 	/**
 	 *  Usage of components as functions that terminate after execution.
@@ -60,6 +37,7 @@ public interface IComponentLifecycleManager
 		{
 			handle.waitForTermination().then(Void -> 
 			{
+//				System.out.println("terminated");	
 				handle.getResults().then(res->
 				{
 					if(res!=null && res.size()==1)

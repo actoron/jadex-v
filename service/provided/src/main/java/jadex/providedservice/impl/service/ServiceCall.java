@@ -105,23 +105,32 @@ public class ServiceCall
 	{
 		return getOrCreateNextInvocation(null);
 	}
-		
+
 	/**
-	 *  Get or create the next servicecall for the next invocation. 
+	 *  Get or create the next servicecall for the next invocation.
 	 *  @param props The properties.
 	 */
 	public static ServiceCall getOrCreateNextInvocation(Map<String, Object> props)
 	{
+		// Set id to global runner if called from non-component thread
+		ComponentIdentifier	id	= ExecutionFeature.LOCAL.get()!=null
+				? ExecutionFeature.LOCAL.get().getComponent().getId()
+				: ComponentManager.get().getGlobalRunner().getId();
+
+		return getOrCreateNextInvocation(id, props);
+	}
+		
+	/**
+	 *  Get or create the next servicecall for the next invocation.
+	 *  @param caller Caller of the next invocation.
+	 *  @param props The properties.
+	 */
+	public static ServiceCall getOrCreateNextInvocation(ComponentIdentifier	caller, Map<String, Object> props)
+	{
 		ServiceCall ret = NEXT.get();
 		if(ret==null)
 		{
-			// Set id to global runner if called from non-component thread
-			ComponentIdentifier	id	= ExecutionFeature.LOCAL.get()!=null
-				? ExecutionFeature.LOCAL.get().getComponent().getId()
-				: ComponentManager.get().getGlobalRunner().getId();
-			ret = new ServiceCall(id, props);
-			
-			
+			ret = new ServiceCall(caller, props);
 			NEXT.set(ret);
 		}
 		else if(props!=null)

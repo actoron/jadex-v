@@ -11,7 +11,7 @@ import java.util.Set;
 import jadex.common.SReflect;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
-import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
@@ -131,7 +131,7 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 		}, InjectService.class, Inject.class);
 		
 		// Single service method parameter.
-		InjectionModel.addMethodInjection((classes, method, contextfetchers) ->
+		InjectionModel.addMethodInjection((model, method, anno) ->
 		{
 			IInjectionHandle	ret	= null;
 			
@@ -165,12 +165,21 @@ public class RequiredServiceFeatureProvider extends ComponentFeatureProvider<IRe
 						preparams.add((self, pojos, context, oldval) -> context);
 					}
 				}
-				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, classes, contextfetchers, preparams);
+				IInjectionHandle	invocation	= InjectionModel.createMethodInvocation(method, model.getPojoClazzes(), model.getContextFetchers(), preparams);
 				
 				Class<?>	fservice	= service;
 				ret	= (self, pojos, context, oldval) ->
 				{
-					ISubscriptionIntermediateFuture<?> query	= self.getFeature(IRequiredServiceFeature.class).addQuery(new ServiceQuery<>(fservice));
+					ITerminableIntermediateFuture<?> query;
+					if(anno instanceof InjectService && ((InjectService)anno).mode()==Mode.SEARCH)
+					{
+						query = self.getFeature(IRequiredServiceFeature.class).searchServices(new ServiceQuery<>(fservice));
+					}
+					else
+					{
+						query	= self.getFeature(IRequiredServiceFeature.class).addQuery(new ServiceQuery<>(fservice));
+					}
+					
 					query.next(result ->
 					{
 						invocation.apply(self, pojos, result, null);

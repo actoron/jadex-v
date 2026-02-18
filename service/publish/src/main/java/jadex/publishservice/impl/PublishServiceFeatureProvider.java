@@ -3,13 +3,10 @@ package jadex.publishservice.impl;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.core.impl.ComponentFeatureProvider;
-import jadex.injection.impl.IInjectionHandle;
 import jadex.injection.impl.InjectionModel;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
@@ -30,20 +27,17 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 	@Override
 	public void init()
 	{
-		InjectionModel.addPostInject((pojoclazzes, path, contextfetchers) ->
+		InjectionModel.addExtraCode(model ->
 		{
-			List<IInjectionHandle>	ret	= new ArrayList<>();
-			Class<?>	pojoclazz	= pojoclazzes.get(pojoclazzes.size()-1);
-			
 			// Find class with publish annotation.
-			Class<?>	test	= pojoclazz;
+			Class<?>	test	= model.getPojoClazz();
 			while(test!=null)
 			{
 				if(test.isAnnotationPresent(Publish.class))
 				{
 					Publish	publish	= test.getAnnotation(Publish.class);
 					PublishInfo pi = getPublishInfo(publish);
-					ret.add((comp, pojos, context, oldval) ->
+					model.addPostInject((comp, pojos, context, oldval) ->
 					{
 						IProvidedServiceFeature	prov	= comp.getFeature(IProvidedServiceFeature.class);
 						Object	service	= prov.getProvidedService(publish.publishtarget());
@@ -60,7 +54,7 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 			}
 			
 			// Find fields with publish annotation.
-			for(Field f: InjectionModel.findFields(pojoclazz, Publish.class))
+			for(Field f: model.findFields(Publish.class))
 			{
 				try
 				{
@@ -68,7 +62,7 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 
 					f.setAccessible(true);
 					MethodHandle	fhandle	= MethodHandles.lookup().unreflectGetter(f);
-					ret.add((comp, pojos, context, oldval) ->
+					model.addPostInject((comp, pojos, context, oldval) ->
 					{
 						try
 						{
@@ -94,7 +88,6 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 					SUtil.throwUnchecked(e);
 				}
 			}
-			return ret;
 		});
 	}
 		
@@ -108,7 +101,8 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 		if(pt==null && !p.publishtarget().equals(Object.class))
 			pt = SReflect.getClassName(p.publishtarget());
 		
-		PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), pt, Object.class.equals(p.mapping())? null: p.mapping());
+		PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), pt, 
+			Object.class.equals(p.mapping())? null: p.mapping(), p.automapping());
 		return pi;
 	}
 }

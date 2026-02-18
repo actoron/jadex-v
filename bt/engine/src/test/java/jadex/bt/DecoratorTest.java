@@ -57,7 +57,7 @@ public class DecoratorTest
 	    an.addDecorator(rd);
 
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator());
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(an).setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 	    
@@ -92,7 +92,7 @@ public class DecoratorTest
 	    long start = System.currentTimeMillis();
 	    
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>().setTimerCreator(new TimerCreator());
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(an).setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 	    
@@ -160,7 +160,7 @@ public class DecoratorTest
 		TimeoutDecorator<IComponent> td = new TimeoutDecorator<>(1000);
 		an.addDecorator(td);
 		
-		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator());
+		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>(an).setUserContext(comp).setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    new Thread(() -> 
         {
@@ -170,7 +170,7 @@ public class DecoratorTest
 	    
         NodeState state = res.get();
         
-        System.out.println("state: "+state);
+        //System.out.println("state: "+state);
 		
 		assertEquals(NodeState.SUCCEEDED, state);
 	}
@@ -193,7 +193,7 @@ public class DecoratorTest
 		    new Thread(() -> 
 		    {
 		    	SUtil.sleep(1000);
-                ret.setResult(NodeState.SUCCEEDED);
+                ret.setResultIfUndone(NodeState.SUCCEEDED);
 		    }).start();
 		    return ret;
 		}));
@@ -201,9 +201,9 @@ public class DecoratorTest
 		TimeoutDecorator<IComponent> td = new TimeoutDecorator<>(500);
 		an.addDecorator(td);
 		
-		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>().setUserContext(comp).setTimerCreator(new TimerCreator());
+		ExecutionContext<IComponent> context = new ExecutionContext<IComponent>(an).setUserContext(comp).setTimerCreator(new TimerCreator());
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
-	    fut.setResult(null); // time elapsed
+	    fut.setResultIfUndone(null); // time elapsed
 	    
         NodeState state = res.get();
         
@@ -231,14 +231,16 @@ public class DecoratorTest
 		TimeoutDecorator<IComponentHandle> td = new TimeoutDecorator<>(1000);
 		an.addDecorator(td);
 		
-		ExecutionContext<IComponentHandle> context = new ExecutionContext<IComponentHandle>().setTimerCreator(new ComponentTimerCreator());
+		ExecutionContext<IComponentHandle> context = new ExecutionContext<IComponentHandle>(an).setTimerCreator(new ComponentTimerCreator());
 		context.setUserContext(comp);
 
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    
         NodeState state = res.get();
         
-        System.out.println("state: "+state);
+        //System.out.println("state: "+state);
+
+		comp.terminate().get();
 		
 		assertEquals(NodeState.SUCCEEDED, state);
 	}
@@ -254,7 +256,7 @@ public class DecoratorTest
 		    new Thread(() -> 
 		    {
 		    	SUtil.sleep(10000);
-                ret.setResult(NodeState.SUCCEEDED);
+                ret.setResultIfUndone(NodeState.SUCCEEDED);
 		    }).start();
 		    return ret;
 		}));
@@ -262,14 +264,16 @@ public class DecoratorTest
 		TimeoutDecorator<IComponentHandle> td = new TimeoutDecorator<>(500);
 		an.addDecorator(td);
 		
-		ExecutionContext<IComponentHandle> context = new ExecutionContext<IComponentHandle>().setTimerCreator(new ComponentTimerCreator());
+		ExecutionContext<IComponentHandle> context = new ExecutionContext<IComponentHandle>(an).setTimerCreator(new ComponentTimerCreator());
 		context.setUserContext(comp);
 		
 	    IFuture<NodeState> res = an.execute(new Event("start", null), context);
 	    
         NodeState state = res.get();
         
-        System.out.println("state: "+state);
+        //System.out.println("state: "+state);
+
+		comp.terminate().get();
 		
 		assertEquals(NodeState.FAILED, state);
 	}
@@ -289,7 +293,7 @@ public class DecoratorTest
 	    an.addDecorator(id);
 
 	    Event event = new Event("start", null);
-		ExecutionContext<Object> context = new ExecutionContext<Object>();
+		ExecutionContext<Object> context = new ExecutionContext<Object>(an);
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
 
@@ -311,7 +315,7 @@ public class DecoratorTest
 	    an.addDecorator(sd);
 
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(an);
 
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();
@@ -332,7 +336,7 @@ public class DecoratorTest
 	    an.addDecorator(sd);
 
 	    Event event = new Event("start", null);
-	    ExecutionContext<Object> context = new ExecutionContext<Object>();
+	    ExecutionContext<Object> context = new ExecutionContext<Object>(an);
 
 	    IFuture<NodeState> ret = an.execute(event, context);
 	    NodeState state = ret.get();

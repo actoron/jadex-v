@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import jadex.bdi.IPlan;
 import jadex.bdi.TestHelper;
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Plan;
@@ -21,6 +20,7 @@ import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
+import jadex.injection.Val;
 
 /**
  *  Test plan pre- and context conditions
@@ -91,15 +91,15 @@ public class PlanConditionTest
 		class ContextPlan
 		{
 			@PlanContextCondition
-			boolean context()
+			boolean context(/*PlanTriggerEvent mytrigger, String fact, ConditionTriggerEvent event*/)
 			{
 				return bel.get();
 			}
 			
 			@PlanBody
-			void body(IPlan plan, String fact)
+			void body(IPlan plan, String fact/*, PlanTriggerEvent mytrigger*/)
 			{
-				if("go".equals(fact))
+				if("go".equals(fact/*mytrigger.event().value()*/))
 				{
 					// Trigger self-abort
 					bel.set(false);

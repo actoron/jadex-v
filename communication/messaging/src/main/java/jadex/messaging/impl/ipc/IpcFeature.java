@@ -28,6 +28,7 @@ import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.IIpcFeature;
 import jadex.messaging.IMessageFeature;
 import jadex.messaging.impl.MessageFeature;
+import jadex.messaging.impl.SIOHelper;
 import jadex.serialization.SerializationServices;
 
 /**
@@ -69,12 +70,20 @@ public class IpcFeature implements IIpcFeature
 	
 	/** Handler dealing with received messages. */
 	private Consumer<ReceivedMessage> rcbmsghandler = (rmsg) ->
-	{
-		IComponentHandle exta = ComponentManager.get().getComponentHandle(rmsg.receiver());
-		exta.scheduleStep((comp) -> 
+	{	
+		try
 		{
-			((MessageFeature) comp.getFeature(IMessageFeature.class)).externalMessageArrived(rmsg.origin(), rmsg.message);
-		});
+			IComponentHandle exta = ComponentManager.get().getComponentHandle(rmsg.receiver());
+			exta.scheduleStep((comp) -> 
+			{
+				((MessageFeature) comp.getFeature(IMessageFeature.class)).externalMessageArrived(rmsg.origin(), rmsg.message);
+			});
+			// catchEx -> ignore when receiver is terminated
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	};
 	
 	/**
@@ -102,6 +111,8 @@ public class IpcFeature implements IIpcFeature
 	 */
 	public void sendMessage(ComponentIdentifier receiver, byte[] message)
 	{
+		//System.out.println("IPC sending message: "+message+" to "+receiver);
+
 		if (gpid.host().equals(receiver.getGlobalProcessIdentifier().host()))
 		{
 			ScheduledMessage smsg = new ScheduledMessage(receiver, message);
@@ -111,6 +122,7 @@ public class IpcFeature implements IIpcFeature
 				connection = connections.get(receiver.getGlobalProcessIdentifier().pid());
 				if (connection != null)
 				{
+					//System.out.println("IPC sending to1 "+receiver.getGlobalProcessIdentifier().pid());
 					connection.add(smsg);
 					return;
 				}
@@ -118,10 +130,12 @@ public class IpcFeature implements IIpcFeature
 			}
 			
 			connection = connect(receiver.getGlobalProcessIdentifier().pid());
+			//System.out.println("IPC sending to2 "+receiver.getGlobalProcessIdentifier().pid());
 			connection.add(smsg);
 		}
 		else
 		{
+			throw new UnsupportedOperationException("Remote messaging not supported yet.");
 			// TODO: Remote
 		}
 	}
@@ -146,7 +160,7 @@ public class IpcFeature implements IIpcFeature
 	
 	/**
 	 *  Sets the message handle for received security messages, overwriting the default.
-	 *  @param rcvmsghandler The new message handler.
+	 *  @param secmsghandler The new message handler.
 	 */
 	public void setSecurityMessageHandler(Consumer<byte[]> secmsghandler)
 	{
@@ -289,14 +303,15 @@ public class IpcFeature implements IIpcFeature
 					
 					while(true)
 					{
+						//System.out.println("IPC sending to "+remotepid);
 						ScheduledMessage smsg = fqueue.poll(connectiontimeout, TimeUnit.MILLISECONDS);
 						if (smsg != null)
 						{
 							ByteArrayOutputStream baos = new ByteArrayOutputStream();
 							SerializationServices.get().encode(baos, cl, smsg.receiver());
 							//byte[] encrec = ((Security) ComponentManager.get().getFeature(ISecurityFeatur
-							writeChunk(os, baos.toByteArray());
-							writeChunk(os, smsg.message());
+							SIOHelper.writeChunk(os, baos.toByteArray());
+							SIOHelper.writeChunk(os, smsg.message());
 							os.flush();
 						}
 						else
@@ -307,6 +322,7 @@ public class IpcFeature implements IIpcFeature
 				}
 				catch (Exception e)
 				{
+					e.printStackTrace();
 					connections.remove(remotepid, fqueue);
 					if (!fqueue.isEmpty())
 					{
@@ -360,13 +376,13 @@ public class IpcFeature implements IIpcFeature
 				
 				while (channel.isConnected())
 				{
-					byte[] recbytes = readChunk(is, sizebuf);
+					byte[] recbytes = SIOHelper.readChunk(is, sizebuf);
 					//recbytes = ((Security) ComponentManager.get().getFeature(ISecurityFeature.class)).decryptAndAuth(origin, recbytes).message();
 
 					Object o = serserv.decode(new ByteArrayInputStream(recbytes), cl);
 					ComponentIdentifier receiver = (ComponentIdentifier) o;
 
-					byte[] msg = readChunk(is, sizebuf);
+					byte[] msg = SIOHelper.readChunk(is, sizebuf);
 					
 					if (receiver.getLocalName() != null)
 					{
@@ -381,49 +397,12 @@ public class IpcFeature implements IIpcFeature
 			}
 			catch (Exception e)
 			{
+				e.printStackTrace();
 				SUtil.close(is);
 			}
 		});
 	}
 
-	/**
-	 *  Reads a size-prefixed chunk from stream.
-	 *
-	 *  @param is The input stream.
-	 *  @param sizebuf Buffer for storing the size value.
-	 *  @return The chunk.
-	 *  @throws IOException Thrown on IO error.
-	 */
-	private byte[] readChunk(InputStream is, byte[] sizebuf) throws IOException
-	{
-		int readbytes = 0;
-		while (readbytes < sizebuf.length)
-		{
-			readbytes += is.read(sizebuf, readbytes, sizebuf.length - readbytes);
-		}
-
-		readbytes = 0;
-		byte[] chunk = new byte[SBinConv.bytesToInt(sizebuf)];
-		while (readbytes < chunk.length)
-			readbytes += is.read(chunk, readbytes, chunk.length - readbytes);
-
-		return chunk;
-	}
-
-	/**
-	 *  Writes a size-prefixed chunk to output stream.
-	 *
-	 *  @param os The output stream.
-	 *  @param chunk The chunk.
-	 *  @throws IOException Thrown on write error.
-	 */
-	private void writeChunk(OutputStream os, byte[] chunk) throws IOException
-	{
-		os.write(SBinConv.intToBytes(chunk.length));
-		os.write(chunk);
-		os.flush();
-	}
-	
 	/**
 	 *  A message that has been scheduled for transfer.
 	 */

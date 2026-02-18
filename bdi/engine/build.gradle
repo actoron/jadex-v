@@ -1,6 +1,7 @@
 plugins 
 {
 	id 'java-library'
+	id 'eclipse'
 }
 
 description = 'BDI execution engine'
@@ -12,7 +13,7 @@ if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 
 java
 {
-	sourceCompatibility = '1.17'
+	sourceCompatibility = '1.21'
 }
 
 repositories
@@ -32,13 +33,8 @@ dependencies
 	implementation 'org.activecomponents.jadex:collection:'+v
 	implementation 'org.activecomponents.jadex:classreader:'+v
 	//implementation 'org.activecomponents.jadex:bytecode:'+v
-	implementation 'org.activecomponents.jadex:eca:'+v
 	
-	implementation 'org.ow2.asm:asm:9.8'
-	implementation 'org.ow2.asm:asm-tree:9.8'
-	implementation 'org.ow2.asm:asm-util:9.8'
-	implementation 'org.ow2.asm:asm-commons:9.8'
-	
+	testImplementation testFixtures('org.activecomponents.jadex:injection:'+v)
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
@@ -66,6 +62,16 @@ task copyDependencies {
     outputs.upToDateWhen { false }
 }
 build.dependsOn(copyDependencies)
+
+// Hack for broken test fixtures in eclipse
+// cf. https://github.com/eclipse/buildship/issues/1206#issuecomment-1367742986
+eclipse.classpath 
+{
+    file.whenMerged { classpath ->
+        classpath.entries.findAll { entry -> entry instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency && entry.entryAttributes.test }
+        	.each { it.entryAttributes['test'] = 'false' }
+	}
+}
 
 processResources 
 {

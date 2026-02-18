@@ -23,6 +23,7 @@ import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
+import jadex.providedservice.annotation.InjectServiceIdentifier;
 import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.annotation.Service;
 import jadex.providedservice.impl.search.ServiceQuery;
@@ -484,14 +485,6 @@ public class ProvidedServiceTest
 		handle.terminate().get(TIMEOUT);
 		
 		// Test broken no service injection.
-//		IComponentHandle	handle2	= IComponentManager.get().create(new Object()
-//		{
-//			@Inject
-//			IServiceIdentifier sid;
-//		}).get(TIMEOUT);
-//		
-//		SUtil.runWithoutOutErr(
-//			() -> assertThrows(ComponentTerminatedException.class, () -> handle2.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 		assertThrows(RuntimeException.class,
 			() -> IComponentManager.get().create(new Object()
 		{
@@ -500,20 +493,21 @@ public class ProvidedServiceTest
 		}).get(TIMEOUT));
 
 		// Test broken multi service injection.
-//		IComponentHandle	handle3	= IComponentManager.get().create(new MultiImpl()
-//		{
-//			@Inject
-//			IServiceIdentifier sid;
-//		}).get(TIMEOUT);
-//		
-//		SUtil.runWithoutOutErr(
-//			() -> assertThrows(ComponentTerminatedException.class, () -> handle3.scheduleStep(() -> {return null;}).get(TIMEOUT)));
 		assertThrows(RuntimeException.class,
 			() -> IComponentManager.get().create(new MultiImpl()
 		{
 			@Inject
 			IServiceIdentifier sid;
 		}).get(TIMEOUT));
+
+		// Test multi service injection.
+		handle	= IComponentManager.get().create(new MultiImpl()
+		{
+			@InjectServiceIdentifier(IMyService.class)
+			IServiceIdentifier sid;
+		}).get(TIMEOUT);
+		// cleanup
+		handle.terminate().get(TIMEOUT);
 	}
 	
 	//-------- helper methods --------

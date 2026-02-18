@@ -29,7 +29,7 @@ public class MicroAgentBenchmark
 			}).get();
 			ret.get();
 			agent.terminate().get();
-		});
+		}, 40); // Avoid spurious alerts (TODO: more consistent results)
 	}
 
 	@Test

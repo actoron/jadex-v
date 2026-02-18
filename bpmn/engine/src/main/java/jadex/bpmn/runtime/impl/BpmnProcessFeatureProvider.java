@@ -71,16 +71,4 @@ public class BpmnProcessFeatureProvider extends ComponentFeatureProvider<IBpmnCo
 		
 		return all;
 	}
-	
-	@Override
-	public Map<String, Object> getResults(IComponent comp)
-	{
-		Map<String, Object> ret = Collections.emptyMap();
-		if(comp.getPojo() instanceof RBpmnProcess)
-		{
-			RBpmnProcess p = (RBpmnProcess)comp.getPojo();
-			ret = p.getResults();
-		}
-		return ret;
-	}
 }

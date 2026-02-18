@@ -24,7 +24,7 @@ import jadex.bpmn.runtime.impl.ProcessThread;
 import jadex.collection.IndexMap;
 import jadex.common.SReflect;
 import jadex.core.IComponent;
-import jadex.execution.StepAborted;
+import jadex.core.impl.StepAborted;
 import jadex.future.DelegationResultListener;
 import jadex.future.ExceptionDelegationResultListener;
 import jadex.future.Future;

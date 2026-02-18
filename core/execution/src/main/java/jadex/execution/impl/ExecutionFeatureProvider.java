@@ -2,41 +2,29 @@ package jadex.execution.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import jadex.collection.WeakKeyValueMap;
-import jadex.common.IFilter;
-import jadex.common.NameValue;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
-import jadex.common.transformation.traverser.FilterProcessor;
-import jadex.common.transformation.traverser.ITraverseProcessor;
-import jadex.common.transformation.traverser.SCloner;
-import jadex.common.transformation.traverser.Traverser;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.IResultProvider;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
-import jadex.core.ResultProvider;
-import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
+import jadex.core.impl.SComponentFeatureProvider;
+import jadex.core.impl.StepAborted;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.LambdaAgent;
-import jadex.execution.StepAborted;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.future.ISubscriptionIntermediateFuture;
 
 public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
@@ -122,11 +110,11 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					
 					// TODO: unify with LambdaAgent result handle?
-					fself.result.setResult(copyVal(result, getAnnos(pojo.getClass())));
+					fself.result.setResult(Component.copyVal(result, getAnnos(pojo.getClass())));
 
 					if(!FastLambda.KEEPALIVE)
 					{
-						exe.scheduleStep((Runnable)() -> fself.terminate());
+						exe.scheduleStep((Runnable)() -> fself.doTerminate());
 					}
 				}
 				catch(Exception e)
@@ -159,6 +147,72 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				{
 					// Extra init so component doesn't get added when just created as object
 					component.init();
+					
+					// if lambda agent -> schedule body step before making the component handle available
+					// cf. ResultTest.testSubscriptionAfterTerminate()
+					Object	pojo		= component.getPojo();
+					if(pojo!=null && SComponentFeatureProvider.getCreator(pojo.getClass())==this)
+					{
+						Runnable	step;
+						if(pojo instanceof Callable)
+						{
+							step	= () ->
+							{
+								try
+								{
+									Object	result	= ((Callable<?>)pojo).call();
+									// Fail if no result feature available
+									Component.setResult(component, "result", result, getAnnos(pojo.getClass()));
+								}
+								catch(Exception e)
+								{
+									// Force exception handling inside component and not in scheduleStep() return future.
+									component.handleException(e);
+								}
+							};
+						}
+						else if(pojo instanceof IThrowingFunction)
+						{
+							step	= () ->
+							{
+								try
+								{
+									@SuppressWarnings("unchecked")
+									IThrowingFunction<IComponent, T>	itf	= (IThrowingFunction<IComponent, T>)pojo;
+									Object result	= itf.apply(component);
+									// Fail if no result feature available
+									Component.setResult(component, "result", result, getAnnos(pojo.getClass()));
+								}
+								catch(Exception e)
+								{
+									// Force exception handling inside component and not in scheduleStep() return future.
+									component.handleException(e);
+								}
+							};
+						}
+						else if(pojo instanceof Runnable)
+						{
+							step		= (Runnable) pojo;					
+						}
+						else //if(pojo instanceof IThrowingConsumer)
+						{
+							step	= () ->
+							{
+								try
+								{
+									@SuppressWarnings("unchecked")
+									IThrowingConsumer<IComponent>	itc	= (IThrowingConsumer<IComponent>)pojo;
+									itc.accept(component);							
+								}
+								catch(Exception e)
+								{
+									// Force exception handling inside component and not in scheduleStep() return future.
+									component.handleException(e);
+								}
+							};
+						}
+						component.getFeature(IExecutionFeature.class).scheduleStep(step);
+					}
 					
 					// Make component available after init is complete
 					ret.setResult(component.getComponentHandle());
@@ -226,107 +280,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		}
 	
 		return ret;
-	}
-	
-	protected static Map<ComponentIdentifier, IResultProvider>	results	= new WeakKeyValueMap<>();
-	
-	@Override
-	public Map<String, Object> getResults(IComponent comp)
-	{
-		IResultProvider	rp;
-		synchronized(results)
-		{
-			rp = results.get(comp.getId());
-		}
-		return rp==null ? null : rp.getResultMap();
-	}
-	
-	@Override
-	public ISubscriptionIntermediateFuture<NameValue> subscribeToResults(IComponent comp)
-	{
-		IResultProvider	rp;
-		synchronized(results)
-		{
-			rp = results.get(comp.getId());
-			if(rp==null)
-			{
-				rp	= new ResultProvider();
-				results.put(comp.getId(), rp);
-			}
-		}
-		return rp.subscribeToResults();
-	}
-
-	public static void	addResult(ComponentIdentifier id, String name, Object value)
-	{
-		IResultProvider	rp;
-		synchronized(results)
-		{
-			rp = results.get(id);
-			if(rp==null)
-			{
-				rp	= new ResultProvider();
-				results.put(id, rp);
-			}
-		}
-		rp.addResult(name, value);
-	}
-
-	public static void addResultHandler(ComponentIdentifier id, IResultProvider provider)
-	{
-		synchronized(results)
-		{
-			if(results.containsKey(id))
-			{
-				throw new IllegalStateException("Result provider already added: "+results.get(id)+", "+provider);
-			}
-			results.put(id, provider);
-		}
-	}
-
-	/**
-	 *  Helper to skip NoCopy objects while cloning. 
-	 */
-	protected static List<ITraverseProcessor> procs = new ArrayList<>(Traverser.getDefaultProcessors());
-	{
-		procs.add(procs.size()-1, new FilterProcessor(new IFilter<Object>()
-		{
-			public boolean filter(Object object)
-			{
-				return isNoCopy(object);
-			}
-		}));
-	}
-	
-	/**
-	 *  Helper method to check if a value doesn't need copying in component methods
-	 */
-	public static Object copyVal(Object val, Annotation... annos)
-	{
-		return isNoCopy(val, annos) ? val : SCloner.clone(val, procs);
-	}
-	
-	/**
-	 *  Helper method to check if a value doesn't need copying in component methods
-	 */
-	public static boolean isNoCopy(Object val, Annotation... annos)
-	{
-		if(val==null || val.getClass().isAnnotationPresent(NoCopy.class))
-		{
-			return true;
-		}
-		else
-		{
-			for(Annotation anno: annos)
-			{
-				if(anno instanceof NoCopy)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+	}	
 	
 	protected static Map<Class<?>, Annotation[]>	ANNOS	= new LinkedHashMap<>();
 	

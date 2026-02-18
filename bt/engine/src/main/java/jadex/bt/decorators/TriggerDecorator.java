@@ -9,35 +9,16 @@ import jadex.bt.nodes.Node.NodeState;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.state.NodeContext;
 import jadex.common.ITriFunction;
+import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
-import jadex.rules.eca.EventType;
 
 public class TriggerDecorator<T> extends ConditionalDecorator<T>
 {
-	protected ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition;
-	
-	public TriggerDecorator<T> setAsyncCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition)
+	public TriggerDecorator()
 	{
-		return (TriggerDecorator<T>)super.setAsyncCondition(condition);
-	}
-	
-	public TriggerDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
-	{
-		return (TriggerDecorator<T>)super.setCondition(condition);
-	}
-	
-	@Override
-	public IFuture<NodeState> beforeExecute(Event event, NodeState state, ExecutionContext<T> context) 
-	{
-		return null; // trigger is never checked on node execution (then it is already triggered)
-		// otherwise e.g. in cleaner it would stop loading shortly over trigger battery level
-	}
-	
-	public TriggerDecorator<T> observeCondition(EventType[] events)
-	{
-		super.observeCondition(events, (event, rule, context, condresult) -> // action
+		this.action	= event ->
 		{
 			System.getLogger(getClass().getName()).log(Level.INFO, "trigger condition triggered: "+event+" "+this);
 			//System.out.println("trigger condition triggered: "+event);
@@ -54,7 +35,7 @@ public class TriggerDecorator<T> extends ConditionalDecorator<T>
 			{
 				//System.out.println("node already active, ignoring: "+getNode());
 				System.getLogger(""+this.getClass()).log(Level.INFO, "node already active, ignoring: "+getNode());
-				return IFuture.DONE;
+				return;
 			}
 			
 			// todo: remove hack
@@ -67,14 +48,35 @@ public class TriggerDecorator<T> extends ConditionalDecorator<T>
 					//System.out.println("triggered complete tree reexecution");
 					System.getLogger(""+this.getClass()).log(Level.INFO, "triggered complete tree reexecution: "+getNode());
 					// todo: remove hack
-					BTAgentFeature.get().executeBehaviorTree((Node<IComponent>)getNode(), new Event(event.getType().toString(), event));
+					Event e = new Event(event.type().name()+"."+event.name(), event.value());
+					BTAgentFeature.get().executeBehaviorTree((Node<IComponent>)getNode(), e);
 				});
 			}
-			
-			return IFuture.DONE;
-		});
-		
-		return this;
+		};
+	}
+	
+	public TriggerDecorator<T> setAsyncCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, IFuture<Boolean>> condition)
+	{
+		return (TriggerDecorator<T>)super.setAsyncCondition(condition);
+	}
+	
+	public TriggerDecorator<T> setCondition(ITriFunction<Event, NodeState, ExecutionContext<T>, Boolean> condition) 
+	{
+		return (TriggerDecorator<T>)super.setCondition(condition);
+	}
+	
+	@Override
+	public TriggerDecorator<T> setEvents(ChangeEvent... events)
+	{
+		return (TriggerDecorator<T>) super.setEvents(events);
+	}
+	
+	
+	@Override
+	public IFuture<NodeState> beforeExecute(Event event, NodeState state, ExecutionContext<T> context) 
+	{
+		return null; // trigger is never checked on node execution (then it is already triggered)
+		// otherwise e.g. in cleaner it would stop loading shortly over trigger battery level
 	}
 	
 	@Override

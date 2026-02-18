@@ -33,16 +33,16 @@ public interface IBDIAgentFeature	extends IComponentFeature, ICapability
 //	public IGoal getGoal(Object goal);
 
 	/**
-	 *  Dispatch a pojo goal wait for its result.
+	 *  Dispatch a pojo goal and get the result.
 	 *  @param goal The pojo goal.
-	 *  @return The goal result.
+	 *  @return The goal result as future.
 	 */
 	public <T> ITerminableFuture<T> dispatchTopLevelGoal(Supplier<T> goal);
 
 	/**
-	 *  Dispatch a pojo goal wait for it to finish.
+	 *  Dispatch a pojo goal and be notified when it is finished.
 	 *  @param goal The pojo goal.
-	 *  @return The goal result.
+	 *  @return The future for checking when the goal is finished.
 	 */
 	public ITerminableFuture<Void> dispatchTopLevelGoal(Object goal);
 

@@ -1,9 +1,9 @@
 package jadex.bdi.shop;
 
-import jadex.bdi.Val;
 import jadex.bdi.annotation.BDIAgent;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.Capability;
+import jadex.injection.Val;
 
 /**
  *  Customer capability.

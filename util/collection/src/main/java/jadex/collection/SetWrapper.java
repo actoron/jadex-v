@@ -15,13 +15,4 @@ public class SetWrapper <T> extends CollectionWrapper<T> implements Set<T>
 	{
 		super(delegate);
 	}
-	
-	/**
-	 *  Create a new wrapper.
-	 *  @param delegate The delegate.
-	 */
-	public SetWrapper(Set<T> delegate, IEventPublisher publisher)
-	{
-		super(delegate, publisher);
-	}
 }

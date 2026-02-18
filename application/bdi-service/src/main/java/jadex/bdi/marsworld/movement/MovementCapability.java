@@ -3,7 +3,6 @@ package jadex.bdi.marsworld.movement;
 import java.util.ArrayList;
 import java.util.List;
 
-import jadex.bdi.Val;
 import jadex.bdi.annotation.Belief;
 import jadex.bdi.annotation.ExcludeMode;
 import jadex.bdi.annotation.Goal;
@@ -18,6 +17,8 @@ import jadex.bdi.marsworld.environment.Target;
 import jadex.core.IComponent;
 import jadex.environment.Environment;
 import jadex.environment.SpaceObject;
+import jadex.execution.IExecutionFeature;
+import jadex.injection.Dyn;
 import jadex.injection.annotation.Inject;
 import jadex.math.IVector2;
 
@@ -45,12 +46,13 @@ public class MovementCapability
 	
 	/** The mission end. */
 //	@Belief(dynamic=true, updaterate=1000) 
-	@Belief(updaterate=1000)
-	protected final Val<Boolean> missionend = new Val<Boolean>(() -> 
+	@Belief
+	protected final Dyn<Boolean> missionend = new Dyn<Boolean>(() -> 
 	{
 		//System.out.println("missionend: "+getHomebase()+" "+getHomebase().getMissionTime());
-		return getHomebase().getMissionTime()<=System.currentTimeMillis();
-	}); // todo: clock
+		IExecutionFeature exe = agent.getFeature(IExecutionFeature.class);
+		return getHomebase().getMissionTime()<=exe.getTime();
+	}).setUpdateRate(1000);
 	//protected boolean missionend = ((Long)env.getSpaceObjectsByType(Homebase.class).get(0).getProperty("missiontime")).longValue()<=getTime();
 
 	/** The targets. */
@@ -126,7 +128,7 @@ public class MovementCapability
 		/**
 		 *  Create a new Move. 
 		 */
-		@GoalCreationCondition(factchanged="missionend")
+		@GoalCreationCondition
 		public static boolean checkCreate(MovementCapability capa)
 		{
 			return capa.missionend.get();// && !capa.getMyself().getPosition().equals(capa.getHomebase().getPosition());

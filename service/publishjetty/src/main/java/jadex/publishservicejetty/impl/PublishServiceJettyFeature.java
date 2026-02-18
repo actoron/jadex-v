@@ -21,6 +21,7 @@ public class PublishServiceJettyFeature extends PublishServiceFeature implements
 	{
 		super(self);
 		this.ports = new HashSet<Integer>();
+		System.out.println("PublishServiceJettyFeature created for component: " + self.getId());
 	}
     
 	@Override

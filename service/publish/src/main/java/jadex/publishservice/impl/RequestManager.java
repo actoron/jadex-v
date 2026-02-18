@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -39,7 +40,7 @@ import jadex.common.transformation.IStringConverter;
 import jadex.common.transformation.STransformation;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.common.transformation.traverser.Traverser;
-import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
@@ -50,18 +51,15 @@ import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.providedservice.IService;
-import jadex.providedservice.IServiceIdentifier;
 import jadex.providedservice.impl.service.ServiceCall;
-import jadex.publishservice.impl.RequestManager.ResponseInfo;
-import jadex.publishservice.impl.RequestManager.MappingInfo.HttpMethod;
+import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
+import jadex.publishservice.impl.MappingEvaluator.MappingInfo.HttpMethod;
 import jadex.publishservice.publish.IAsyncContextInfo;
 import jadex.publishservice.publish.PathManager;
 import jadex.publishservice.publish.annotation.ParametersMapper;
 import jadex.publishservice.publish.annotation.ResultMapper;
 import jadex.publishservice.publish.clone.CloneResponseProcessor;
 import jadex.publishservice.publish.json.PublishJsonSerializer;
-import jadex.publishservice.publish.mapper.DefaultParameterMapper;
-import jadex.publishservice.publish.mapper.IParameterMapper;
 import jadex.publishservice.publish.mapper.IParameterMapper2;
 import jadex.publishservice.publish.mapper.IValueMapper;
 import jadex.transformation.jsonserializer.JsonTraverser;
@@ -72,18 +70,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.FormParam;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HEAD;
-import jakarta.ws.rs.OPTIONS;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -131,6 +121,9 @@ public class RequestManager
 	/** Http header for the Jadex version. */
 	public static final String HEADER_JADEX_VERSION = "x-jadex-version";
 
+	/** Client identifier. */
+	public static final String HEADER_JADEX_SESSIONID = "x-jadex-sessionid";
+	
 	/** Http header for the call id (req and resp). */
 	public static final String HEADER_JADEX_CALLID = "x-jadex-callid";
 
@@ -271,7 +264,7 @@ public class RequestManager
 		conversationinfos = new LinkedHashMap<String, ConversationInfo>();
 		sseevents = new ArrayList<SSEEvent>();
 		sseinfos = new HashMap<String, RequestManager.SSEInfo>();
-		//sessions = new LeaseTimeMap<String, Map<String,Object>>(1000*60*20); // 20 min session timeout
+		//ses = new LeaseTimeMap<String, Map<String,Object>>(1000*60*20); // 20 min session timeout
 		//sessions = new PassiveLeaseTimeMap<String, Map<String,Object>>(1000*60*1); // 20 min session timeout
 		sessions = new HashMap<String, Map<String,Object>>();
 		
@@ -358,7 +351,7 @@ public class RequestManager
 		{
 			public String convertObject(Object val, Object context)
 			{
-				System.out.println("write response in plain text (toString)");
+				//System.out.println("write response in plain text (toString)");
 				return val.toString();
 			}
 		};
@@ -503,6 +496,7 @@ public class RequestManager
 		
 		if(session==null && create)
 		{
+			System.out.println("created session: "+sessionid);
 			session = new HashMap<String, Object>();
 			sessions.put(sessionid, session);
 		}
@@ -519,14 +513,38 @@ public class RequestManager
 		return session!=null? (AsyncContext)session.get("sse"): null;
 	}
 	
-	public synchronized void putSSEContextInSession(String sessionid, AsyncContext context)
+	public synchronized AsyncContext putSSEContextInSession(String sessionid, AsyncContext context) 
 	{
-		setInSession(sessionid, "sse", context);
+		AsyncContext ret = null;
+		
+	    Object existing = getFromSession(sessionid, "sse");
+
+	    if (existing != null && existing instanceof AsyncContext) 
+	    {
+	        ret = (AsyncContext) existing;
+
+	        if (ret.getRequest().isAsyncStarted()) 
+	            System.out.println("Warning: Multiple active SSE connections for session: " + sessionid);
+	    }
+
+	    setInSession(sessionid, "sse", context);
+	    
+	    return ret;
+	}
+	
+	public synchronized Object getFromSession(String sessionid, String name)
+	{
+		Map<String, Object> session = sessions.get(sessionid);
+		if(session==null)
+			return null;
+		Object value = session.get(name);
+		return value;
 	}
 	
 	public synchronized void setInSession(String sessionid, String name, Object value)
 	{
 		getSession(sessionid, true).put(name, value);
+		System.out.println("setting in session: "+sessionid+" "+name+"="+value);
 	}
 	
 	public synchronized Map<String, Object> getSession(String sessionid)
@@ -536,7 +554,7 @@ public class RequestManager
 	
 	public synchronized void putSession(String sessionid, Map<String, Object> session)
 	{
-		if(SUtil.DEBUG)
+		//if(SUtil.DEBUG)
 			System.out.println("adding session: "+sessionid+" "+session);
 		sessions.put(sessionid, session);
 	}
@@ -548,35 +566,38 @@ public class RequestManager
 			System.out.println("removing session: "+sessionid+" "+session);
 	}
 	
-	/**
-	 *  Get a session id.
-	 *  @param request The request
-	 *  @return The session id.
-	 */
-	public static String getSessionId(HttpServletRequest request)
+	public static String getSessionId(HttpServletRequest request) 
 	{
-		String cookie = request.getHeader("cookie");
-		String id = null;
-		
-		if(cookie!=null)
-		{
-			StringTokenizer stok = new StringTokenizer(cookie, ";");
-			while(stok.hasMoreTokens())
-			{
-				String c = stok.nextToken();
-
-				int del = c.indexOf("=");
-				String name = c.substring(0, del).trim();
-				
-				if("jadex".equals(name))
-				{
-					id = c.substring(del+1, c.length()).trim();
-					break;
-				}
-			}
-		}
-		
-		return id;
+	    String id = null;
+	    
+	    // 1) Query-Param
+	    id = request.getParameter(HEADER_JADEX_SESSIONID);
+	    if (id != null && !id.isEmpty()) 
+	        return id;
+	    
+	    // 2) Header
+	    id = request.getHeader(HEADER_JADEX_SESSIONID);
+	    if (id != null && !id.isEmpty()) 
+	        return id;
+	    
+	    // 2) Cookie (cookies are not used currently)
+	    /*String cookie = request.getHeader("cookie");
+	    if (cookie != null) 
+	    {
+	        StringTokenizer stok = new StringTokenizer(cookie, ";");
+	        while (stok.hasMoreTokens()) 
+	        {
+	            String c = stok.nextToken();
+	            int del = c.indexOf("=");
+	            String name = c.substring(0, del).trim();
+	            if ("jadex".equals(name)) 
+	            {
+	                id = c.substring(del + 1).trim();
+	                break;
+	            }
+	        }
+	    }*/
+	    return id;
 	}
 		
 	/**
@@ -615,15 +636,24 @@ public class RequestManager
 		// https://stackoverflow.com/questions/14139753/httpservletrequest-getsessiontrue-thread-safe
 		// solution: always create on container thread and remember
 		//final Map<String, Object> session = getSession(request, true);
-		final String sessionid = getSessionId(request);
+		String sessionid = getSessionId(request);
 		
-		if(sessionid==null && request.getRequestURI().indexOf("jadex.js")==-1 && ri.isSSERequest())
-			System.out.println("Call has no jadex session id, Jadex cookie missing: "+request.getRequestURL());
+		if(sessionid==null && ri.isSSERequest() 
+			&& request.getRequestURI().indexOf(".js")==-1 
+			&& request.getRequestURI().indexOf(".css")==-1)
+		{
+			System.out.println("Call has no jadex session id: "+request.getRequestURI());
+		}
 		
-		// todo: if missing generate one?! as it is cookie it would be used by further requests
+		// sessionid can be missing if client just sends a REST request instead of a jadex.js request
 		
-		//if(request.getRequestURI().indexOf("jadex.js")!=-1)
-		//System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
+		// Session can be null if no header is provided by client
+		if(sessionid==null)
+			sessionid = SUtil.createUniqueId();
+		final String fsessionid = sessionid;
+		
+		//if(request.getRequestURI().indexOf("subscribe")!=-1)
+		//	System.out.println("handleRequest: "+request.getRequestURI()+" session: "+request.getSession().getId()+" "+request.getHeader(HEADER_JADEX_SSEALIVE));
 		//System.out.println("handleRequest: "+request.getRequestURI());
 		
 		getAsyncContextInfo(request); // ensure async request processing
@@ -828,411 +858,42 @@ public class RequestManager
 					methodname = methodname.substring(1);
 				if(methodname != null && methodname.endsWith("()"))
 					methodname = methodname.substring(0, methodname.length() - 2);
+				if(methodname != null && methodname.endsWith("/"))
+					methodname = methodname.substring(0, methodname.length() - 1);
 				final String fmn = methodname;
 
 				//if(methodname!=null && request.toString().indexOf("efault")!=-1)
 				//	System.out.println("INVOKE: " + methodname);
 				
 				Collection<MappingInfo> mis = pm!=null? pm.getElementsForPath(methodname): new ArrayList<MappingInfo>();
-				List<Map<String, String>> bindings = mis.stream().map(x -> pm.getBindingsForPath(fmn)).collect(Collectors.toList());
 				
-				if(methodname.endsWith("jadex.js"))
+				List<Map<String, String>> bindings = mis.stream().map(x -> pm.getBindingsForPath(fmn)).collect(Collectors.toList());
+
+				//System.out.println("handleRequest: "+request.getPathInfo()+" "+methodname+" "+mis.size()+" "+bindings);
+
+				if(methodname.endsWith(".js"))
 				{
-					loadJadexJS().then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
+					ri.addResultType("application/javascript");
+					loadResource(methodname).then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
 				}
+				else if(methodname.endsWith(".css"))
+				{
+					ri.addResultType("text/css");
+					loadResource(methodname).then(css -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(css)));
+				}
+				/*else if(methodname.endsWith(".html"))
+				{
+					ri.addResultType("text/html");
+					loadHTML(methodname).then(html -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(html)));
+				}
+				else if(methodname.endsWith(".js.map"))
+				{
+					ri.addResultType("application/javascript");
+					loadJS(methodname).then(js -> writeResponse(ri.setStatus(Response.Status.OK.getStatusCode()).setFinished(true).setResult(js)));
+				}*/
 				else if(mis!=null && mis.size()>0)
 				{
-					//if(request.toString().indexOf("gen")!=-1)
-					//	System.out.println("call 4: "+request);
-					
-					// convert and map parameters
-					Tuple2<MappingInfo, Object[]> tup = mapParameters(request, mis, bindings);
-					final MappingInfo mi = tup.getFirstEntity();
-					Object[] params = tup.getSecondEntity();
-					
-					//System.out.println("handleRequest: "+mi.getMethod());
-					
-					//if(mi.getMethod().toString().indexOf("Display")!=-1)
-					//	System.out.println("heeereeee");
-					
-					//if(mi.getMethod().toString().indexOf("isAvailable")!=-1)
-					//	System.out.println("params: "+Arrays.toString(params));
-	
-					//final ConversationInfo cinfo = new ConversationInfo(getSession(request, true));
-					final String fcallid = callid==null? SUtil.createUniqueId(fmn): callid;
-					final ConversationInfo mycinfo = new ConversationInfo(fcallid, sessionid);
-					addConversation(fcallid, mycinfo);
-					//conversationinfos.put(fcallid, mycinfo);
-	
-					// Check security
-					//if(request.toString().indexOf("suspend")!=-1)
-					//	System.out.println("call 2: "+request);
-
-					// Get provider of service and check access
-					IComponent comp = ComponentManager.get().getComponent(service.getServiceId().getProviderId());
-					
-					comp.getComponentHandle().scheduleStep(agent ->
-					{
-						// Inject caller meta info
-						Map<String, String> callerinfos = extractCallerValues(request);
-						ServiceCall.getOrCreateNextInvocation().setProperty("webcallerinfos", callerinfos);
-						
-						ServiceCall.getOrCreateNextInvocation().setProperty("callid", fcallid);
-						ri.setCallid(fcallid);
-					
-//						BasicService.isUnrestricted(service.getServiceId(), comp, mi.getMethod())
-//						.then((Boolean unres) ->
-//						{
-							//if(request.toString().indexOf("suspend")!=-1)
-							//	System.out.println("call 3: "+request);
-							try
-							{
-								if(loginsec /* && !unres */ && !isLoggedIn(request))
-								{
-									//writeResponse(new SecurityException("Access not allowed as not logged in"), Response.Status.UNAUTHORIZED.getStatusCode(), null, mi, request, response, true, null);
-									writeResponse(ri.setResult(new SecurityException("Access not allowed as not logged in")).setStatus(Response.Status.UNAUTHORIZED.getStatusCode()).setMappingInfo(mi).setFinished(true));
-								}
-								else
-								{
-									// *****
-									// invoke the service method
-									// *****
-	
-									final Method method = mi.getMethod();
-									
-									//System.out.println("request: "+request.getRequestURL()+" "+fcallid+" "+method.getName()+" "+Arrays.toString(params));
-									
-									//if(request.toString().indexOf("generateArea")!=-1)
-									//	System.out.println("call 4: "+request);
-									final Object ret = method.invoke(service, params);
-									ri.setMethod(method);
-	
-									if(ret instanceof IFuture)
-										mycinfo.setFuture((IFuture<?>)ret);
-	
-									// Call can already be terminated from client
-									if(mycinfo.isTerminated())
-									{
-										if(ret instanceof ITerminableFuture)
-											((ITerminableFuture)ret).terminate();
-										else
-											System.out.println("Call cannot be terminated, future not terminable: "+method+" "+callid);
-									}
-									
-									if(ret instanceof IIntermediateFuture)
-									{
-										writeResponse(ri.setResult("sse").setStatus(Response.Status.OK.getStatusCode()).setMappingInfo(mi).setFinished(true));
-	
-										/*if(session.getAttribute("sse")!=null)
-										{
-											writeResponse(ri.setResult("sse").setStatus(Response.Status.OK.getStatusCode()).setMappingInfo(mi).setFinished(true));
-										}
-										else
-										{	
-											//IAsyncContextInfo ctx = getAsyncContextInfo(request);
-											//saveRequestContext(fcallid, ctx);
-											rinfo = new ConversationInfo(mi, (IFuture)ret);
-											requestinfos.put(fcallid, rinfo);
-										}*/
-										
-										// System.out.println("added context: "+fcallid+""+ctx);
-				
-										((IIntermediateFuture<Object>)ret)
-											.addResultListener(
-											//createResultListener(
-											new IIntermediateFutureCommandResultListener<Object>()
-										{
-											public void resultAvailable(Collection<Object> result)
-											{
-												// Shouldn't be called?
-												for(Object res : result)
-												{
-													intermediateResultAvailable(res);
-												}
-												finished();
-											}
-			
-											public void exceptionOccurred(Exception exception)
-											{
-												handleResult(null, exception, null, null);
-											}
-			
-											public void intermediateResultAvailable(Object result)
-											{
-												//System.out.println("intermediate: "+result);
-												
-												handleResult(result, null, null, null);
-											}
-			
-											@Override
-											public void commandAvailable(Object command)
-											{
-												handleResult(null, null, command, null);
-											}
-			
-											public void finished()
-											{
-												// maps will be cleared when processing fin
-												// element in writeResponse
-												handleResult(FINISHED, null, null, null);
-											}
-											
-											public void maxResultCountAvailable(int max)
-											{											
-												handleResult(null, null, null, max);
-											}
-											
-											/**
-											 * Handle a final or intermediate
-											 * result/exception/command of a service call.
-											 */
-											protected void handleResult(Object result, Throwable exception, Object command, Integer max)
-											{
-												//if(result!=null)
-												//	System.out.println("handleResult: "+result);
-												
-												//if(max!=null)
-												//if(command==null)
-												//	System.out.println("handleResult:"+result+", "+exception+", "+command+", sse:"+(session.getAttribute("sse")!=null));
-												
-												//if(command!=null)
-												//	return; // skipping commands (e.g. updatetimer)
-												
-												/*if(exception instanceof FutureTerminatedException)
-												{
-													System.out.println("suppressed future terminated exception");
-													return;
-												}*/
-												
-												ResponseInfo ri = new ResponseInfo().setCallid(fcallid).setMappingInfo(mi).setMethod(method);
-												
-												if(FINISHED.equals(result))
-												{
-													ri.setFinished(true);
-												}
-												else if(exception!=null)
-												{
-													ri.setException((Exception)exception);
-													
-													int rescode = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
-													if(exception instanceof FutureTerminatedException)
-														rescode = Response.Status.OK.getStatusCode();
-													
-													ri.setStatus(rescode);
-												}
-												else if(command!=null)
-												{
-													// Command is just a enum type for updatetimer in IForwardCommandFuture
-													//System.out.println("received command: "+command);
-													ri.setResult(command);
-													ri.setStatus(202);
-												}
-												else
-												{
-													ri.setResult(result);
-												}
-												
-												if(max!=null)
-													ri.setMax(max);
-												
-												//final Map<String, Object> session = getSession(sessionid, true);
-												//AsyncContext ctx = (AsyncContext)session.get("sse");
-												AsyncContext ctx = getSSEContextFromSession(sessionid);
-												if(ctx!=null)
-												{
-													ri.setRequest((HttpServletRequest)ctx.getRequest());
-													ri.setResponse((HttpServletResponse)ctx.getResponse());
-												}
-												else
-												{
-													System.out.println("No sse connection, delay sending: "+result+" "+sessionid);
-													addSSEEvent(createSSEEvent(ri));
-													return;
-												}
-												
-												if(mycinfo!=null && mycinfo.isTerminated())
-												{
-													// nop -> ignore late results (i.e. when terminated due to browser offline).
-													//System.out.println("ignoring late result: "+result);
-												}
-												else
-												{
-													writeResponse(ri);
-												}
-												
-												// Browser waiting for result -> send immediately
-												/*else if(requestspercall.containsKey(fcallid) && requestspercall.get(fcallid).size() > 0)
-												{
-													Collection<IAsyncContextInfo> cls = requestspercall.get(fcallid);
-													
-													// System.out.println("direct answer to browser request, removed context:"+callid+" "+ctx);
-													if(command != null)
-													{
-														// Timer update (or other command???)
-														// HTTP 102 -> processing (not recognized by angular?)
-														// HTTP 202 -> accepted
-														IAsyncContextInfo ctx = cls.iterator().next();
-														cls.remove(ctx);
-														
-														if(!ctx.isComplete())
-														{
-															//writeResponse(null, 202, fcallid, mi, (HttpServletRequest)ctx.getRequest(), (HttpServletResponse)ctx.getResponse(), false, null);
-															writeResponse(new ResponseInfo().setStatus(202).setCallid(fcallid).setMappingInfo(mi)
-																.setRequest((HttpServletRequest)ctx.getAsyncContext().getRequest()).setResponse((HttpServletResponse)ctx.getAsyncContext().getResponse()).setFinished(false));
-														}
-													}
-													else if(exception != null)
-													{
-														// Service call (finally) failed.
-														result = mapResult(method, exception);
-														
-														int rescode = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
-														if(exception instanceof FutureTerminatedException)
-															rescode = Response.Status.OK.getStatusCode();
-														
-														//writeResponse(result, rescode, fcallid, mi, (HttpServletRequest)ctx.getRequest(),
-														//	(HttpServletResponse)ctx.getResponse(), true);
-														
-														// Answer ALL pending requests and so also remove waiting longpoll calls (e.g. when terminate arrives)
-														AsyncContext[] acs = cls.toArray(new AsyncContext[cls.size()]);
-														for(AsyncContext ac: acs)
-														{
-															//writeResponse(result, rescode, fcallid, mi, (HttpServletRequest)ac.getRequest(),
-															//	(HttpServletResponse)ac.getResponse(), true, null);
-															writeResponse(new ResponseInfo(result).setStatus(rescode).setCallid(fcallid).setMappingInfo(mi)
-																.setRequest((HttpServletRequest)ac.getRequest()).setResponse((HttpServletResponse)ac.getResponse()).setFinished(true));
-	
-															cls.remove(ac);
-														}
-													}
-													else
-													{
-														IAsyncContextInfo ctx = cls.iterator().next();
-														cls.remove(ctx);
-														// Normal result (or FINISHED as handled in writeResponse())
-														result = FINISHED.equals(result) ? result : mapResult(method, result);
-														//writeResponse(result, fcallid, mi, (HttpServletRequest)ctx.getRequest(), (HttpServletResponse)ctx.getResponse(), false, max);
-														// status?
-														writeResponse(new ResponseInfo(result).setStatus(202).setCallid(fcallid).setMappingInfo(mi)
-															.setRequest((HttpServletRequest)ctx.getAsyncContext().getRequest()).setResponse((HttpServletResponse)ctx.getAsyncContext().getResponse()).setFinished(true));
-													}
-													// ctx.complete();
-												}
-			
-												// Browser not waiting -> check for timeout
-												// and store or terminate
-												else
-												{
-													// Only check timeout when future not
-													// yet finished.
-													if(!FINISHED.equals(result) && exception == null)
-													{
-														// System.out.println("checking "+result);
-														// if timeout -> cancel future.
-														// TODO: which timeout? (client vs server).
-														if(System.currentTimeMillis() - rinfo.getTimestamp() > Starter.getDefaultTimeout(component.getId()))
-														{
-															// System.out.println("terminating due to timeout: "+exception);
-															rinfo.setTerminated();
-															if(ret instanceof ITerminableFuture< ? >)
-															{
-																((ITerminableFuture< ? >)ret).terminate(new TimeoutException());
-															}
-															else
-															{
-																// TODO: better handling of
-																// non-terminable futures?
-																throw new TimeoutException();
-															}
-														}
-													}
-			
-													// Exception -> store until requested.
-													if(!rinfo.isTerminated() && exception != null)
-													{
-														// System.out.println("storing
-														// exception till browser requests:
-														// "+exception);
-														rinfo.setException(exception);
-													}
-			
-													// Normal result -> store until
-													// requested. (check for command==null
-													// to also store null values as
-													// results).
-													else if(!rinfo.isTerminated() && command == null)
-													{
-														//System.out.println("storing result till browser requests: "+result);
-														rinfo.addResult(result);
-													}
-			
-													// else nop (no need to store timer
-													// updates). what about other commands?
-												}
-												//System.out.println("handleResult exit: "+callid+" "+rinfo.getResults());
-										*/	}
-										});//);
-									}
-									else if(ret instanceof IFuture)
-									{
-										//final IAsyncContextInfo ctx = getAsyncContextInfo(request);
-										//saveRequestContext(fcallid, ctx); // Only for having access to the request via callid from Jadex processing, e.g. for performing security checks with session
-				
-										// todo: use timeout listener
-										// TODO: allow also longcalls (requires intermediate
-										// command responses -> use only when requested by
-										// browser?)
-										((IFuture)ret).addResultListener(
-											//createResultListener(
-											new IResultListener<Object>()
-										{
-											public void resultAvailable(Object ret)
-											{
-												// System.out.println("one-shot call:
-												// "+method.getName()+" paramtypes:
-												// "+SUtil.arrayToString(method.getParameterTypes())+"
-												// on "+service+" "+Arrays.toString(params));
-												//ret = mapResult(method, ret);
-												//writeResponse(ret, fcallid, mi, request, response, true, null);
-												writeResponse(ri.setResult(ret).setCallid(fcallid).setMappingInfo(mi).setFinished(true));
-												// ctx.complete();
-											}
-				
-											public void exceptionOccurred(Exception exception)
-											{
-												//Object result = mapResult(method, exception);
-												//writeResponse(result, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), fcallid, mi, request, response, true, null);
-												writeResponse(ri.setException(exception).setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).setCallid(fcallid).setMappingInfo(mi).setFinished(true));
-												// ctx.complete();
-											}
-										});//);
-										// ret =
-										// ((IFuture<?>)ret).get(Starter.getDefaultTimeout(null));
-									}
-									else
-									{
-										// System.out.println("call finished:
-										// "+method.getName()+" paramtypes:
-										// "+SUtil.arrayToString(method.getParameterTypes())+"
-										// on "+service+" "+Arrays.toString(params));
-										// map the result by user defined mappers
-										//Object res = mapResult(method, ret);
-										// convert content and write result to servlet response
-										//writeResponse(res, fcallid, mi, request, response, true, null);
-										
-										// status?
-										writeResponse(ri.setResult(ret).setStatus(202).setCallid(fcallid).setMappingInfo(mi).setFinished(true));
-									}
-								}
-							}
-							catch(Exception e)
-							{
-								// System.out.println("call exception: "+e);
-								//writeResponse(e, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), null, null, request, response, true, null);
-								writeResponse(ri.setException(e).setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).setFinished(true));
-							}
-						});
-//					});
+					handleMethodCall(service, methodname, mis, bindings, callid, fsessionid, ri);
 				}
 				else
 				{
@@ -1245,28 +906,36 @@ public class RequestManager
 					String ah = request.getHeader("Accept");
 					if(ah!=null && ah.toLowerCase().indexOf(MediaType.SERVER_SENT_EVENTS)!=-1)
 					{
-						// todo: sessionid should be set by client! why created here?
-						
-						// Session can be null if no header is provided by client
-						String fsessionid = sessionid;
-						if(fsessionid==null)
-							fsessionid = SUtil.createUniqueId();
-						
 						// SSE flag in session 
 						//getSession(fsessionid, true).put("sse", request.getAsyncContext());
-						putSSEContextInSession(fsessionid, request.getAsyncContext());
+						
+						AsyncContext oldctx = putSSEContextInSession(fsessionid, request.getAsyncContext());
+						if (oldctx != null && oldctx.getRequest().isAsyncStarted()) 
+						{
+						    try 
+						    {
+						        oldctx.complete(); 
+						    } 
+						    catch (Exception e) 
+						    {
+						    	System.out.println("Error completing old SSE context: " + e.getMessage());
+						    }
+						}
+						
 						//setInSession(fsessionid, "sse", request.getAsyncContext());
 						response.addHeader(HEADER_JADEX_CALLID, ri.getCallid());
+						response.addHeader("Connection", "keep-alive"); 
 						response.setContentType(MediaType.SERVER_SENT_EVENTS+"; charset=utf-8");
 					    response.setCharacterEncoding("UTF-8");
 					    response.setStatus(HttpServletResponse.SC_OK);
 						//out.write("data: {'a': 'a'}\n\n");
 						response.flushBuffer();
-					    //System.out.println("sse connection saved: "+request.getAsyncContext()+" "+fsessionid+" "+getSessionId(request));
+					    
+						System.out.println("sse connection saved: "+request.getAsyncContext()+" "+fsessionid+" "+getSessionId(request));
 					    
 					    sendDelayedSSEEvents(getSession(fsessionid, true));
 					}
-					else
+					else if(service!=null)
 					{
 						response.setContentType(MediaType.TEXT_HTML+"; charset=utf-8");
 						String info = getServiceInfo(service, getServletUrl(request), pm);
@@ -1275,11 +944,444 @@ public class RequestManager
 						response.setStatus(HttpServletResponse.SC_OK);
 						complete(request, response);
 						
-						//System.out.println("info site sent");
+						System.out.println("info site sent: "+request.getPathInfo());
+					}
+					else
+					{
+						response.setContentType(MediaType.TEXT_PLAIN+"; charset=utf-8");
+						out.write("No service found for: "+methodname);
+						response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+						complete(request, response);
+						
+						System.out.println("No service found for: "+methodname);
 					}
 				}
 			}
 		}
+	}
+
+	/**
+	 *  Handle a request request for which method mappings exist.
+	 *  @param service The service.
+	 *  @param methodname The method name.
+	 *  @param mis The mapping infos.
+	 *  @param bindings The path bindings.
+	 *  @param callid The call id.
+	 *  @param sessionid The session id.
+	 *  @param ri The response info.
+	 */
+	protected void handleMethodCall(IService service, String methodname, Collection<MappingInfo> mis, List<Map<String, String>> bindings, String callid, String sessionid, ResponseInfo ri) 
+	{
+		//if(request.toString().indexOf("gen")!=-1)
+		//	System.out.println("call 4: "+request);
+
+		HttpServletRequest request = ri.getRequest();
+		
+		mis = mis.stream()
+			.filter(mi -> mi.getHttpMethod() != null
+				&& mi.getHttpMethod().toString().equalsIgnoreCase(request.getMethod()))
+			.collect(Collectors.toList());
+
+		if(mis.size()==0)
+		{
+			Exception e = new RuntimeException("HTTP method "+request.getMethod()+" not allowed");
+			writeResponse(ri.setStatus(Response.Status.BAD_REQUEST.getStatusCode()).setFinished(true).setException(e));
+			return;
+		}
+
+		// convert and map parameters
+		Tuple2<MappingInfo, Object[]> tup = mapParameters(request, mis, bindings);
+		final MappingInfo mi = tup.getFirstEntity();
+		Object[] params = tup.getSecondEntity();
+		
+		//System.out.println("handleRequest: "+mi.getMethod());
+		
+		//if(mi.getMethod().toString().indexOf("subscribe")!=-1)
+		//	System.out.println("subscribe");
+		
+		//if(mi.getMethod().toString().indexOf("isAvailable")!=-1)
+		//	System.out.println("params: "+Arrays.toString(params));
+
+		//final ConversationInfo cinfo = new ConversationInfo(getSession(request, true));
+		final String fcallid = callid==null? SUtil.createUniqueId(methodname): callid;
+		final ConversationInfo mycinfo = new ConversationInfo(fcallid, sessionid);
+		addConversation(fcallid, mycinfo);
+		//conversationinfos.put(fcallid, mycinfo);
+
+		// Check security
+		//if(request.toString().indexOf("suspend")!=-1)
+		//	System.out.println("call 2: "+request);
+
+		// Get provider of service and check access
+		IComponentHandle comp = ComponentManager.get().getComponentHandle(service.getServiceId().getProviderId());
+		
+		comp.scheduleStep(agent ->
+		{
+			// Inject caller meta info
+			Map<String, String> callerinfos = extractCallerValues(request);
+			ServiceCall.getOrCreateNextInvocation().setProperty("webcallerinfos", callerinfos);
+			
+			ServiceCall.getOrCreateNextInvocation().setProperty("callid", fcallid);
+			ri.setCallid(fcallid);
+		
+//				BasicService.isUnrestricted(service.getServiceId(), comp, mi.getMethod())
+//					.then((Boolean unres) ->
+//				{
+				//if(request.toString().indexOf("suspend")!=-1)
+				//	System.out.println("call 3: "+request);
+				try
+				{
+					if(loginsec /* && !unres */ && !isLoggedIn(request))
+					{
+						//writeResponse(new SecurityException("Access not allowed as not logged in"), Response.Status.UNAUTHORIZED.getStatusCode(), null, mi, request, response, true, null);
+						writeResponse(ri.setResult(new SecurityException("Access not allowed as not logged in")).setStatus(Response.Status.UNAUTHORIZED.getStatusCode()).setMappingInfo(mi).setFinished(true));
+					}
+					else
+					{
+						// *****
+						// invoke the service method
+						// *****
+
+						final Method method = mi.getMethod();
+						
+						System.out.println("request: "+request.getRequestURL()+" "+fcallid+" "+method.getName()+" "+Arrays.toString(params)+" "+service);
+						
+						//if(request.toString().indexOf("generateArea")!=-1)
+						//	System.out.println("call 4: "+request);
+						final Object ret = method.invoke(service, params);
+						ri.setMethod(method);
+
+						if(ret instanceof IFuture)
+							mycinfo.setFuture((IFuture<?>)ret);
+
+						// Call can already be terminated from client
+						if(mycinfo.isTerminated())
+						{
+							if(ret instanceof ITerminableFuture)
+								((ITerminableFuture)ret).terminate();
+							else
+								System.out.println("Call cannot be terminated, future not terminable: "+method+" "+callid);
+						}
+						
+						if(ret instanceof IIntermediateFuture)
+						{
+							writeResponse(ri.setResult("sse").setStatus(Response.Status.OK.getStatusCode()).setMappingInfo(mi).setFinished(true));
+
+							/*if(session.getAttribute("sse")!=null)
+							{
+								writeResponse(ri.setResult("sse").setStatus(Response.Status.OK.getStatusCode()).setMappingInfo(mi).setFinished(true));
+							}
+							else
+							{	
+								//IAsyncContextInfo ctx = getAsyncContextInfo(request);
+								//saveRequestContext(fcallid, ctx);
+								rinfo = new ConversationInfo(mi, (IFuture)ret);
+								requestinfos.put(fcallid, rinfo);
+							}*/
+							
+							// System.out.println("added context: "+fcallid+""+ctx);
+	
+							((IIntermediateFuture<Object>)ret)
+								.addResultListener(
+								//createResultListener(
+								new IIntermediateFutureCommandResultListener<Object>()
+							{
+								public void resultAvailable(Collection<Object> result)
+								{
+									// Shouldn't be called?
+									for(Object res : result)
+									{
+										intermediateResultAvailable(res);
+									}
+									finished();
+								}
+
+								public void exceptionOccurred(Exception exception)
+								{
+									handleResult(null, exception, null, null);
+								}
+
+								public void intermediateResultAvailable(Object result)
+								{
+									//System.out.println("intermediate: "+result);
+									
+									handleResult(result, null, null, null);
+								}
+
+								@Override
+								public void commandAvailable(Object command)
+								{
+									handleResult(null, null, command, null);
+								}
+
+								public void finished()
+								{
+									//System.out.println("intermediate finished");
+									// maps will be cleared when processing fin
+									// element in writeResponse
+									handleResult(FINISHED, null, null, null);
+								}
+								
+								public void maxResultCountAvailable(int max)
+								{											
+									handleResult(null, null, null, max);
+								}
+								
+								/**
+								 * Handle a final or intermediate
+								 * result/exception/command of a service call.
+								 */
+								protected void handleResult(Object result, Throwable exception, Object command, Integer max)
+								{
+									//if(result!=null)
+										//System.out.println("handleResult: "+result);
+									
+									//if(max!=null)
+									//if(command==null)
+									//	System.out.println("handleResult:"+result+", "+exception+", "+command+", sse:"+(session.getAttribute("sse")!=null));
+									
+									//if(command!=null)
+									//	return; // skipping commands (e.g. updatetimer)
+									
+									/*if(exception instanceof FutureTerminatedException)
+									{
+										System.out.println("suppressed future terminated exception");
+										return;
+									}*/
+									
+									ResponseInfo ri = new ResponseInfo().setCallid(fcallid).setMappingInfo(mi).setMethod(method);
+									
+									if(FINISHED.equals(result))
+									{
+										ri.setFinished(true);
+									}
+									else if(exception!=null)
+									{
+										ri.setException((Exception)exception);
+										
+										int rescode = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+										if(exception instanceof FutureTerminatedException)
+											rescode = Response.Status.OK.getStatusCode();
+										
+										ri.setStatus(rescode);
+									}
+									else if(command!=null)
+									{
+										// Command is just a enum type for updatetimer in IForwardCommandFuture
+										//System.out.println("received command: "+command);
+										ri.setResult(command);
+										ri.setStatus(202);
+									}
+									else
+									{
+										Object res = mapResult(method, result);
+										ri.setResult(res);
+									}
+									
+									if(max!=null)
+										ri.setMax(max);
+									
+									//final Map<String, Object> session = getSession(sessionid, true);
+									//AsyncContext ctx = (AsyncContext)session.get("sse");
+									
+									AsyncContext ctx = getSSEContextFromSession(sessionid);
+									//System.out.println("AsyncContext from session: "+ctx+" "+sessionid);
+
+									if(ctx!=null)
+									{
+										ri.setRequest((HttpServletRequest)ctx.getRequest());
+										ri.setResponse((HttpServletResponse)ctx.getResponse());
+									}
+									else
+									{
+										System.out.println("No sse connection, delay sending: "+result+" "+sessionid);
+										addSSEEvent(createSSEEvent(ri));
+										return;
+									}
+									
+									if(mycinfo!=null && mycinfo.isTerminated())
+									{
+										// nop -> ignore late results (i.e. when terminated due to browser offline).
+										System.out.println("ignoring late result: "+result);
+									}
+									else
+									{
+										//System.out.println("write response from handleRes: "+ri.getResult());
+										writeResponse(ri);
+									}
+									
+									// Browser waiting for result -> send immediately
+									/*else if(requestspercall.containsKey(fcallid) && requestspercall.get(fcallid).size() > 0)
+									{
+										Collection<IAsyncContextInfo> cls = requestspercall.get(fcallid);
+										
+										// System.out.println("direct answer to browser request, removed context:"+callid+" "+ctx);
+										if(command != null)
+										{
+											// Timer update (or other command???)
+											// HTTP 102 -> processing (not recognized by angular?)
+											// HTTP 202 -> accepted
+											IAsyncContextInfo ctx = cls.iterator().next();
+											cls.remove(ctx);
+											
+											if(!ctx.isComplete())
+											{
+												//writeResponse(null, 202, fcallid, mi, (HttpServletRequest)ctx.getRequest(), (HttpServletResponse)ctx.getResponse(), false, null);
+												writeResponse(new ResponseInfo().setStatus(202).setCallid(fcallid).setMappingInfo(mi)
+													.setRequest((HttpServletRequest)ctx.getAsyncContext().getRequest()).setResponse((HttpServletResponse)ctx.getAsyncContext().getResponse()).setFinished(false));
+											}
+										}
+										else if(exception != null)
+										{
+											// Service call (finally) failed.
+											result = mapResult(method, exception);
+											
+											int rescode = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+											if(exception instanceof FutureTerminatedException)
+												rescode = Response.Status.OK.getStatusCode();
+											
+											//writeResponse(result, rescode, fcallid, mi, (HttpServletRequest)ctx.getRequest(),
+											//	(HttpServletResponse)ctx.getResponse(), true);
+											
+											// Answer ALL pending requests and so also remove waiting longpoll calls (e.g. when terminate arrives)
+											AsyncContext[] acs = cls.toArray(new AsyncContext[cls.size()]);
+											for(AsyncContext ac: acs)
+											{
+												//writeResponse(result, rescode, fcallid, mi, (HttpServletRequest)ac.getRequest(),
+												//	(HttpServletResponse)ac.getResponse(), true, null);
+												writeResponse(new ResponseInfo(result).setStatus(rescode).setCallid(fcallid).setMappingInfo(mi)
+													.setRequest((HttpServletRequest)ac.getRequest()).setResponse((HttpServletResponse)ac.getResponse()).setFinished(true));
+
+												cls.remove(ac);
+											}
+										}
+										else
+										{
+											IAsyncContextInfo ctx = cls.iterator().next();
+											cls.remove(ctx);
+											// Normal result (or FINISHED as handled in writeResponse())
+											result = FINISHED.equals(result) ? result : mapResult(method, result);
+											//writeResponse(result, fcallid, mi, (HttpServletRequest)ctx.getRequest(), (HttpServletResponse)ctx.getResponse(), false, max);
+											// status?
+											writeResponse(new ResponseInfo(result).setStatus(202).setCallid(fcallid).setMappingInfo(mi)
+												.setRequest((HttpServletRequest)ctx.getAsyncContext().getRequest()).setResponse((HttpServletResponse)ctx.getAsyncContext().getResponse()).setFinished(true));
+										}
+										// ctx.complete();
+									}
+
+									// Browser not waiting -> check for timeout
+									// and store or terminate
+									else
+									{
+										// Only check timeout when future not
+										// yet finished.
+										if(!FINISHED.equals(result) && exception == null)
+										{
+											// System.out.println("checking "+result);
+											// if timeout -> cancel future.
+											// TODO: which timeout? (client vs server).
+											if(System.currentTimeMillis() - rinfo.getTimestamp() > Starter.getDefaultTimeout(component.getId()))
+											{
+												// System.out.println("terminating due to timeout: "+exception);
+												rinfo.setTerminated();
+												if(ret instanceof ITerminableFuture< ? >)
+												{
+													((ITerminableFuture< ? >)ret).terminate(new TimeoutException());
+												}
+												else
+												{
+													// TODO: better handling of
+													// non-terminable futures?
+													throw new TimeoutException();
+												}
+											}
+										}
+
+										// Exception -> store until requested.
+										if(!rinfo.isTerminated() && exception != null)
+										{
+											// System.out.println("storing
+											// exception till browser requests:
+											// "+exception);
+											rinfo.setException(exception);
+										}
+
+										// Normal result -> store until
+										// requested. (check for command==null
+										// to also store null values as
+										// results).
+										else if(!rinfo.isTerminated() && command == null)
+										{
+											//System.out.println("storing result till browser requests: "+result);
+											rinfo.addResult(result);
+										}
+
+										// else nop (no need to store timer
+										// updates). what about other commands?
+									}
+									//System.out.println("handleResult exit: "+callid+" "+rinfo.getResults());
+							*/	}
+							});//);
+						}
+						else if(ret instanceof IFuture)
+						{
+							//final IAsyncContextInfo ctx = getAsyncContextInfo(request);
+							//saveRequestContext(fcallid, ctx); // Only for having access to the request via callid from Jadex processing, e.g. for performing security checks with session
+	
+							// todo: use timeout listener
+							// TODO: allow also longcalls (requires intermediate
+							// command responses -> use only when requested by
+							// browser?)
+							((IFuture)ret).addResultListener(
+								//createResultListener(
+								new IResultListener<Object>()
+							{
+								public void resultAvailable(Object ret)
+								{
+									// System.out.println("one-shot call:
+									// "+method.getName()+" paramtypes:
+									// "+SUtil.arrayToString(method.getParameterTypes())+"
+									// on "+service+" "+Arrays.toString(params));
+									ret = mapResult(method, ret);
+									//writeResponse(ret, fcallid, mi, request, response, true, null);
+									writeResponse(ri.setResult(ret).setCallid(fcallid).setMappingInfo(mi).setFinished(true));
+									// ctx.complete();
+								}
+	
+								public void exceptionOccurred(Exception exception)
+								{
+									//Object result = mapResult(method, exception);
+									//writeResponse(result, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), fcallid, mi, request, response, true, null);
+									writeResponse(ri.setException(exception).setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).setCallid(fcallid).setMappingInfo(mi).setFinished(true));
+									// ctx.complete();
+								}
+							});//);
+							// ret =
+							// ((IFuture<?>)ret).get(Starter.getDefaultTimeout(null));
+						}
+						else
+						{
+							// System.out.println("call finished:
+							// "+method.getName()+" paramtypes:
+							// "+SUtil.arrayToString(method.getParameterTypes())+"
+							// on "+service+" "+Arrays.toString(params));
+							// map the result by user defined mappers
+							Object res = mapResult(method, ret);
+							// convert content and write result to servlet response
+							//writeResponse(res, fcallid, mi, request, response, true, null);
+							
+							writeResponse(ri.setResult(res).setStatus(Response.Status.OK.getStatusCode()).setCallid(fcallid).setMappingInfo(mi).setFinished(true));
+						}
+					}
+				}
+				catch(Exception e)
+				{
+					// System.out.println("call exception: "+e);
+					//writeResponse(e, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), null, null, request, response, true, null);
+					writeResponse(ri.setException(e).setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).setFinished(true));
+				}
+			}).catchEx(e -> writeResponse(ri.setException(e).setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).setFinished(true)));
+//		});
 	}
 	
 	/**
@@ -1297,7 +1399,8 @@ public class RequestManager
 			if(curtime - sseinfo.getLastCheck() > CONVERSATION_TIMEOUT)  
 			{ 
 				System.out.println("sse source does not respond, removing: "+sessionid);
-				List<ConversationInfo> cinfos = conversationinfos.values().stream().filter(info -> info.getSessionId()==sessionid).collect(Collectors.toList());
+				List<ConversationInfo> cinfos = conversationinfos.values().stream().filter(
+					info -> info.getSessionId().equals(sessionid)).collect(Collectors.toList());
 				cinfos.forEach(cinfo ->
 				{
 					System.out.println("Conversation timed out: "+cinfo.getCallId());
@@ -1363,9 +1466,10 @@ public class RequestManager
 	}
 	
 	/**
-	 * 
-	 * @param cinfo
-	 * @param ex
+	 *  Terminate a conversation and remove it from the map.
+	 *  @param cinfo The conversation info.
+	 *  @param ex The exception to set.
+	 *  @param clientterm True, if termination was requested from client.
 	 */
 	protected synchronized void terminateConversation(ConversationInfo cinfo, Exception ex, boolean clientterm)
 	{
@@ -1860,9 +1964,7 @@ public class RequestManager
 								}
 								else
 								{
-	//								if(type==null && i[0]<types.length)
-	//									type = types[i[0]];
-	//								else
+									inparamsmap.putAll((Map)convertJsonValue(str, Map.class, getClassLoader(), false));
 								}
 							}
 						}
@@ -1889,7 +1991,7 @@ public class RequestManager
 				ParametersMapper mm = method.getAnnotation(ParametersMapper.class);
 				if(!mm.automapping())
 				{
-					Class<?> pclazz = mm.value().clazz();
+					Class<?> pclazz = mm.value();
 					Object mapper;
 					if(!Object.class.equals(pclazz))
 					{
@@ -1897,12 +1999,10 @@ public class RequestManager
 					}
 					else
 					{
-						mapper = SJavaParser.evaluateExpression(mm.value().value(), null);
+						throw new RuntimeException("No valid mapper class specified in ParametersMapper annotation.");
 					}
-					if(mapper instanceof IValueMapper)
-						mapper = new DefaultParameterMapper((IValueMapper)mapper);
 					
-					if(mapper instanceof IParameterMapper)
+					if(mapper instanceof IValueMapper)
 					{
 						// The order of in parameters is corrected with respect to the
 						// target parameter order
@@ -1912,7 +2012,12 @@ public class RequestManager
 							if(inparams[i] instanceof String)
 								inparams[i] = convertParameter(sr, (String)inparams[i], types[i]);
 						}
-						targetparams = ((IParameterMapper)mapper).convertParameters(inparams, request);
+
+						targetparams = new Object[inparams.length];
+						for(int i=0; i<targetparams.length; i++)
+						{
+							targetparams[i] = ((IValueMapper)mapper).convertValue(inparams[i]);
+						}
 					}
 					else if(mapper instanceof IParameterMapper2)
 					{
@@ -2211,19 +2316,14 @@ public class RequestManager
 			try
 			{
 				ResultMapper mm = method.getAnnotation(ResultMapper.class);
-				Class< ? > pclazz = mm.value().clazz();
+				Class<?> pclazz = mm.value();
 				IValueMapper mapper;
 				// System.out.println("res mapper: "+clazz);
 				if(!Object.class.equals(pclazz))
 				{
 					mapper = (IValueMapper)pclazz.getDeclaredConstructor().newInstance();
+					ret = mapper.convertValue(ret);
 				}
-				else
-				{
-					mapper = (IValueMapper)SJavaParser.evaluateExpression(mm.value().value(), null);
-				}
-
-				ret = mapper.convertValue(ret);
 			}
 			catch(Exception e)
 			{
@@ -2264,32 +2364,39 @@ public class RequestManager
 				// should delete sse in session?!
 				System.out.println("SSE source is offline"+ri.callid);
 			}
+			else
+			{
+				System.out.println("Response already written: "+ri.getRequest().getRequestURI()+" "+ri.getCallid());
+			}
 			return;
 		}
 		
-		List<String> sr = writeResponseHeader(ri);
+		List<String> negotiatedtypes = writeResponseHeader(ri);
 		
-		writeResponseContent(ri.setResultTypes(sr));
+		writeResponseContent(ri.setResultTypes(negotiatedtypes));
 		
-		// remove conversation only  (otherwise ongoing)
+		// remove conversation only (otherwise ongoing)
 		if(ri.isFinished() && ri.getCallid()!=null && conversationinfos.get(ri.getCallid())!=null && !conversationinfos.get(ri.getCallid()).isIntermediateFuture())
 		{
 			conversationinfos.remove(ri.getCallid());
 			//System.out.println("remove conversation: "+ri.getCallid());
 		}
 	}
-
+	
 	/**
 	 *
-	 */
+	 * /
 	//protected List<String> writeResponseHeader(Object ret, int status, String callid, MappingInfo mi, 
 	//	HttpServletRequest request, HttpServletResponse response, boolean fin, Integer max)
 	protected List<String> writeResponseHeader(ResponseInfo ri)
 	{
+		// server indicated mimetypes
 		List<String> sr = ri.getResultTypes();
 		if(sr==null)
 			sr = new ArrayList<String>();
 		//List<String> sr = null;
+		
+		System.out.println("mimetypes start: "+sr);
 
 		if(ri.getResult() instanceof Response)
 		{
@@ -2338,7 +2445,7 @@ public class RequestManager
 			 * if(sr.size()==0) {
 			 * System.out.println("found no acceptable return types."); } else {
 			 * System.out.println("acceptable return types: "+sr+" ("+cl+")"); }
-			 */
+			 * /
 
 			if(ri.getCallid() != null)
 			{
@@ -2363,8 +2470,136 @@ public class RequestManager
 			//if(Boolean.TRUE.equals(Starter.getPlatformArgument(component.getId(), "showversion")))
 			//	ri.getResponse().addHeader(HEADER_JADEX_VERSION, VersionInfo.getInstance().toString());				
 		}
+		
+		System.out.println("mimetypes end: "+sr);
 
 		return sr;
+	}*/
+	
+	protected List<String> writeResponseHeader(ResponseInfo ri) 
+	{
+	    // Start with server preference / existing result types (ordered fallback)
+	    List<String> serverpref = ri.getResultTypes() != null
+	            ? new ArrayList<>(ri.getResultTypes())
+	            : new ArrayList<>();
+	    
+	    //System.out.println("mimetypes start: "+serverpref);
+
+	    // If the result is a JAX-RS Response, apply its headers/status and extract its media type
+	    if (ri.getResult() instanceof Response) 
+	    {
+	        Response resp = (Response)ri.getResult();
+	        ri.getResponse().setStatus(resp.getStatus());
+	        for (String name : resp.getStringHeaders().keySet()) 
+	        {
+	            ri.getResponse().addHeader(name, resp.getHeaderString(name));
+	        }
+	        ri.setResult(resp.getEntity());
+
+	        if (resp.getMediaType() != null) 
+			{
+	            // Prefer the explicitly set media type from Response
+	            String explicit = resp.getMediaType().toString();
+	            ri.getResultTypes().clear();
+	            ri.getResultTypes().add(explicit);
+	            ri.getResponse().setContentType(explicit);
+	            // still add other headers like CORS / callid below
+	        }
+	    } 
+	    else 
+	    {
+	        // status from ResponseInfo if provided
+	        if (ri.getStatus() > 0) 
+	        {
+	            ri.getResponse().setStatus(ri.getStatus());
+				//System.out.println("setting status: "+ri.getResponse().getStatus()+" "+ri.getRequest().getRequestURI());
+	        }
+			else if(ri.getException()!=null)
+			{
+				ri.getResponse().setStatus(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			}
+			else
+			{
+				//System.out.println("setting status for response: "+ri.getResponse().getStatus()+" "+ri.getRequest().getRequestURI());
+				ri.getResponse().setStatus(Response.Status.OK.getStatusCode());
+			}
+
+
+	        // Raw Accept header string
+	        String accept = ri.getRequest().getHeader(HttpHeaders.ACCEPT);
+			//if("*/*".equals(accept)) // ignore wildcard only
+			//	accept = null;
+
+	        // Mapping produced types (explicit capabilities)
+	        List<String> produced = ri.getMappingInfo() == null
+	            ? Collections.emptyList()
+	            : ri.getMappingInfo().getProducedMediaTypes();
+
+	        // Negotiate content type: prefer produced and∩ client Accept, then serverPreference
+	        Optional<String> chosen = ContentNegotiator.negotiate(accept, produced, serverpref);
+
+	        if (chosen.isPresent() && !chosen.get().equals("*/*")) 
+	        {
+	            String contenttype = chosen.get();
+	            ri.getResponse().setContentType(contenttype);
+	            ri.setResultTypes(List.of(contenttype));
+	        } 
+	        else 
+	        {
+				if(chosen.get().equals("*/*"))
+				{
+					if(ri.getResult() instanceof String && ri.getMethod().getReturnType().equals(String.class))
+					{
+						ri.getResponse().setContentType(MediaType.TEXT_PLAIN);
+						ri.setResultTypes(List.of(MediaType.TEXT_PLAIN));
+					}
+					else
+					{
+						ri.getResponse().setContentType(MediaType.APPLICATION_JSON);
+						ri.setResultTypes(List.of(MediaType.APPLICATION_JSON));
+					}
+				}
+				else
+				{
+	            	// No acceptable type: leave it to caller to handle 406 or default behavior
+	            	ri.setResultTypes(Collections.emptyList());
+				}
+	        }
+
+	        // Call ID headers
+	        if (ri.getCallid() != null) 
+	        {
+	            if (ri.isFinished()) 
+	            {
+	                ri.getResponse().addHeader(HEADER_JADEX_CALLFINISHED, ri.getCallid());
+	            } 
+	            else 
+	            {
+	                ri.getResponse().addHeader(HEADER_JADEX_CALLID, ri.getCallid());
+	            }
+	            if (ri.getMax() != null) 
+	            {
+	                ri.getResponse().addHeader(HEADER_JADEX_MAX, "" + ri.getMax());
+	            }
+	        }
+
+	        setCORSHeader(ri.getResponse());
+	        setNoCachingHeader(ri.getResponse());
+	    }
+	    
+	    // Version header etc. can be added here if needed
+
+	    // Return the (possibly updated) result types
+	    List<String> ret = ri.getResultTypes();
+	    if (ret == null || ret.isEmpty()) 
+		{
+	        // fallback: use what was negotiated earlier (e.g., from serverPreference) if present
+	        ret = serverpref;
+	    }
+	    
+	    //System.out.println("mimetypes end: "+ret);
+	    
+	    return ret;
 	}
 
 	/**
@@ -2401,6 +2636,7 @@ public class RequestManager
 				|| ((IAsyncContextInfo)ri.getRequest().getAttribute(IAsyncContextInfo.ASYNC_CONTEXT_INFO))==null // can null after timeout
 				|| ((IAsyncContextInfo)ri.getRequest().getAttribute(IAsyncContextInfo.ASYNC_CONTEXT_INFO)).isComplete())
 			{
+				//System.out.println("sse http result: "+ri.getRequest()+" "+ri.getResult());
 				//if(ri.getResult()!=null && ri.getResult().toString().indexOf("isTrusted")!=-1)
 				//	System.out.println("sse result: "+ri.isSSERequest()+" "+ri.getRequest()+" "+ri.getResult());
 				
@@ -2421,8 +2657,8 @@ public class RequestManager
 					PrintWriter out = ri.getResponse().getWriter();
 					String ret = createSSEJson(event);
 					out.write(ret);				
-					//System.out.println(ri.getResponse().getHeader("Content-Type"));
-					//System.out.println("used sse channel flush: "+ri.getRequest().getAsyncContext());
+					//System.out.println(ri.getResponse().getHeader(HttpHeaders.CONTENT_TYPE));
+					//System.out.println("used sse channel: "+ri.getRequest().getAsyncContext()+" "+ret);
 					ri.getResponse().getWriter().flush();
 					ri.getResponse().flushBuffer();
 					//System.out.println(ri.getResponse());
@@ -2440,13 +2676,13 @@ public class RequestManager
 			// Send normal http response
 			else
 			{
-				//System.out.println("http result: "+ri.getRequest()+" "+ri.getResult());
+				//System.out.println("normal http result: "+ri.getRequest()+" "+ri.getResult()+" "+ri.getResultTypes());
 				
 				// result is byte[] send directly
 				if(ri.getResult() instanceof byte[])
 				{
-					if(ri.getResponse().getHeader("Content-Type") == null && ri.getResultTypes()!=null && ri.getResultTypes().size()>0)
-						ri.getResponse().setHeader("Content-Type", ri.getResultTypes().get(0));
+					if(ri.getResponse().getHeader(HttpHeaders.CONTENT_TYPE) == null && ri.getResultTypes()!=null && ri.getResultTypes().size()>0)
+						ri.getResponse().setHeader(HttpHeaders.CONTENT_TYPE, ri.getResultTypes().get(0));
 					ri.getResponse().getOutputStream().write((byte[])ri.getResult());
 					complete(ri.getRequest(), ri.getResponse());
 				}
@@ -2491,7 +2727,7 @@ public class RequestManager
 							// Important: writer access must be deferred to happen after setting charset! Will be ignored otherwise
 							// https://stackoverflow.com/questions/51014481/setting-default-character-encoding-and-content-type-in-embedded-jetty
 							ri.getResponse().getWriter().write(ret);
-							//System.out.println("Response content1  res:"+ret+" ctx:"+ri.getRequest().getAsyncContext());
+							//System.out.println("Response content1  res:"+ret+" ctx:"+ri.getRequest().getAsyncContext()+" "+ret.length());
 						}
 						// else cannot convert result, write plain text
 						else 
@@ -3264,6 +3500,14 @@ public class RequestManager
 			return this;
 		}
 		
+		public ResponseInfo addResultType(String resulttype) 
+		{
+			if(this.resulttypes == null)
+				this.resulttypes = new ArrayList<>();
+			this.resulttypes.add(resulttype);
+			return this;
+		}
+		
 		/**
 		 *  Check if it is a SSE request.
 		 *  @return True, if is sse request.
@@ -3454,8 +3698,10 @@ public class RequestManager
 	 * page with css for style and javascript for ajax post requests. The
 	 * service info site contains a section for each published method.
 	 * 
-	 * @param params The parameters.
-	 * @return The result.
+	 * @param service The service.
+	 * @param baseuri The base uri.
+	 * @param mappings The mappings.
+	 * @return The string result.
 	 */
 	public String getServiceInfo(Object service, String baseuri, PathManager<MappingInfo> mappings)
 	{
@@ -3470,9 +3716,13 @@ public class RequestManager
 			ret.append("\n");
 			ret.append("<head>");
 			ret.append("\n");
+			ret.append("<style type=\"text/css\">>");
 			ret.append(stylecss);
+			ret.append("</style>");
 			ret.append("\n");
+			ret.append("<script type=\"text/javascript\">");
 			ret.append(functionsjs);
+			ret.append("</script>");
 			ret.append("\n");
 			ret.append("<script src=\"jadex.js\" type=\"text/javascript\"/></script>");
 			ret.append("</head>");
@@ -3509,7 +3759,7 @@ public class RequestManager
 				for(MappingInfo mi : mappings.getElements())
 				{
 					Method method = mi.getMethod();
-					HttpMethod restmethod = mi.getHttpMethod() != null ? mi.getHttpMethod() : guessRestType(method);
+					HttpMethod restmethod = mi.getHttpMethod() != null ? mi.getHttpMethod() : MappingEvaluator.guessRestType(method);
 
 					String path = mi.getPath() != null ? mi.getPath() : method.getName();
 					List<String> consumed = mi.getConsumedMediaTypes();
@@ -3690,7 +3940,7 @@ public class RequestManager
 
 			ret.append("<div id=\"result\"></div>");
 
-			ret.append("<div class=\"powered\"> <span class=\"powered\">powered by</span> <span class=\"jadex\">");
+			ret.append("<div class=\"powered stripes\"> <span class=\"powered\">powered by</span> <span class=\"jadex\">");
 			// Add Jadex version header, if enabled
 			/*if(Boolean.TRUE.equals(Starter.getPlatformArgument(component.getId(), "showversion")))
 			{
@@ -3698,9 +3948,9 @@ public class RequestManager
 			}
 			else
 			{*/
-				ret.append("Jadex Active Components");				
+				ret.append("Actoron");				
 			//}
-			ret.append("</span> <a class=\"jadexurl\" href=\"http://www.activecomponents.org\">http://www.activecomponents.org</a> </div>\n");
+			ret.append("</span> <a class=\"jadexurl\" href=\"http://www.actoron.com\">http://www.actoron.com</a> </div>\n");
 		}
 		catch(Exception e)
 		{
@@ -3714,7 +3964,8 @@ public class RequestManager
 	}
 
 	/**
-	 * 
+	 *  Load functions.js
+	 *  @return The text from the file.
 	 */
 	public String loadFunctionJS()
 	{
@@ -3745,7 +3996,8 @@ public class RequestManager
 	}
 
 	/**
-	 * 
+	 *  Load a css style sheet.
+	 *  @return The text from the file.
 	 */
 	public String loadStyleCSS()
 	{
@@ -3759,8 +4011,8 @@ public class RequestManager
 			sc = new Scanner(is);
 			stylecss = sc.useDelimiter("\\A").next();
 
-			String stripes = SUtil.loadBinary(getPath()+"jadex_stripes.png");
-			stylecss = stylecss.replace("$stripes", stripes);
+			//String stripes = SUtil.loadBinary(getPath()+"jadex_stripes.png");
+			//stylecss = stylecss.replace("$stripes", stripes);
 
 			// System.out.println(functionsjs);
 		}
@@ -3778,72 +4030,6 @@ public class RequestManager
 		}
 
 		return stylecss;
-	}
-
-	/**
-	 * Guess the http type (GET, POST, PUT, DELETE, ...) of a method.
-	 * 
-	 * @param method The method.
-	 * @return The rs annotation of the method type to use
-	 */
-	public HttpMethod guessRestType(Method method)
-	{
-		// Retrieve = GET (hasparams && hasret)
-		// Update = POST (hasparams && hasret)
-		// Create = PUT return is pointer to new resource (hasparams? && hasret)
-		// Delete = DELETE (hasparams? && hasret?)
-
-		HttpMethod ret = HttpMethod.GET;
-
-		Class< ? > rettype = SReflect.unwrapGenericType(method.getGenericReturnType());
-		Class< ? >[] paramtypes = method.getParameterTypes();
-
-		boolean hasparams = paramtypes.length > 0;
-		boolean hasret = rettype != null && !rettype.equals(Void.class) && !rettype.equals(void.class);
-
-		// GET or POST if has both
-		if(hasret)
-		{
-			if(hasparams)
-			{
-				if(hasStringConvertableParameters(method, rettype, paramtypes))
-				{
-					ret = HttpMethod.GET;
-				}
-				else
-				{
-					ret = HttpMethod.POST;
-				}
-			}
-		}
-
-		// todo: other types?
-
-		// System.out.println("rest-type: "+ret.getName()+" "+method.getName()+"
-		// "+hasparams+" "+hasret);
-
-		return ret;
-		// return GET.class;
-	}
-
-	/**
-	 * Test if a method has parameters that are all convertible from string.
-	 * 
-	 * @param method The method.
-	 * @param rettype The return types (possibly unwrapped from future type).
-	 * @param paramtypes The parameter types.
-	 * @return True, if is convertible.
-	 */
-	public boolean hasStringConvertableParameters(Method method, Class< ? > rettype, Class< ? >[] paramtypes)
-	{
-		boolean ret = true;
-
-		for(int i = 0; i < paramtypes.length && ret; i++)
-		{
-			ret = SReflect.isStringConvertableType(paramtypes[i]);
-		}
-
-		return ret;
 	}
 
 	/**
@@ -3884,11 +4070,21 @@ public class RequestManager
 	 *  Load jadex.js
 	 *  @return The text from the file.
 	 */
-	public IFuture<byte[]> loadJadexJS()
+	public IFuture<byte[]> loadResource(String name)
 	{
+		int fidx = name.lastIndexOf("/");
+		int lidx = name.lastIndexOf("/");
+		if(fidx!=lidx)
+		{
+			System.out.println("Loading resource: "+name+" "+getPath()+name);
+			name = name.substring(lidx);
+		}
+		
 		try
 		{
-			InputStream is = SUtil.getResource0(getPath()+"jadex.js", getClassLoader());
+			InputStream is = SUtil.getResource0(getPath()+name, getClassLoader());
+			//sc = new Scanner(is);
+			//functionsjs = sc.useDelimiter("\\A").next();
 			//String mt = SUtil.guessContentTypeByFilename(filename);
 			
 			byte[] data = SUtil.readStream(is);
@@ -3897,8 +4093,11 @@ public class RequestManager
 		}
 		catch(Exception e)
 		{
+			System.out.println("Error loading resource: "+getPath()+"  ---  "+name+" "+e);
+			//e.printStackTrace();
 			return new Future<byte[]>(e);
 		}
+		
 	}
 	
 	/**
@@ -3914,262 +4113,6 @@ public class RequestManager
 		return ret;
 	}
 
-	/**
-	 *
-	 */
-	public static class MappingInfo
-	{
-		public enum HttpMethod
-		{
-			GET, POST, PUT, DELETE, OPTIONS, HEAD
-		}
-
-		/** The http method. */
-		protected HttpMethod httpmethod;
-
-		/** The target method. */
-		protected Method method;
-
-		/** The url path. */
-		protected String path;
-
-		/** The accepted media types for the response. */
-		//private List<String> producedtypes = new ArrayList<String>();
-
-		/** The accepted media types for consumption. */
-		//private List<String> consumedtypes = new ArrayList<String>();
-
-		/**
-		 * Create a new mapping info.
-		 */
-		public MappingInfo()
-		{
-		}
-
-		/**
-		 * Create a new mapping info.
-		 */
-		public MappingInfo(HttpMethod httpMethod, Method method, String path)
-		{
-			this.httpmethod = httpMethod;
-			this.method = method;
-			this.path = path;
-		}
-
-		/**
-		 * Get the httpMethod.
-		 * 
-		 * @return The httpMethod
-		 */
-		public HttpMethod getHttpMethod()
-		{
-			return httpmethod;
-		}
-
-		/**
-		 * Set the httpMethod.
-		 * 
-		 * @param httpMethod The httpMethod to set
-		 */
-		public void setHttpMethod(HttpMethod httpMethod)
-		{
-			this.httpmethod = httpMethod;
-		}
-
-		/**
-		 * Get the method.
-		 * 
-		 * @return The method
-		 */
-		public Method getMethod()
-		{
-			return method;
-		}
-
-		/**
-		 * Set the method.
-		 * 
-		 * @param method The method to set
-		 */
-		public void setMethod(Method method)
-		{
-			this.method = method;
-		}
-
-		/**
-		 * Get the path.
-		 * 
-		 * @return The path
-		 */
-		public String getPath()
-		{
-			return path;
-		}
-
-		/**
-		 * Set the path.
-		 * 
-		 * @param path The path to set
-		 */
-		public void setPath(String path)
-		{
-			this.path = path;
-		}
-
-		/**
-		 * Get the respmediatypes.
-		 * 
-		 * @return The respmediatypes
-		 * /
-		public List<String> getProducedMediaTypes()
-		{
-			return new ArrayList<String>(producedtypes);
-		}*/
-
-		/**
-		 * Set the response mediatypes.
-		 * @param respmediatypes The response mediatypes to set
-		 * /
-		public void setProducedMediaTypes(List<String> mediatypes)
-		{
-			this.producedtypes = mediatypes;
-		}*/
-
-		/**
-		 *  Add a produced media type.
-		 *  @param type The type.
-		 * /
-		public void addProducedMediaType(String type)
-		{
-			/*if(producedtypes == null)
-			{
-				producedtypes = new ArrayList<String>();
-				if(method!=null && method.getParameterCount()==5)
-					System.out.println("prod null");
-			}* /
-			producedtypes.add(type);
-		}*/
-
-		/**
-		 *  Get the consumedmediatypes.
-		 *  @return The consumedtypes
-		 * /
-		public List<String> getConsumedMediaTypes()
-		{
-			return new ArrayList<String>(consumedtypes);
-		}*/
-
-		/**
-		 *  Set the respmediatypes.
-		 *  @param consumedtypes The consumedtypes to set
-		 * /
-		public void setConsumedMediaTypes(List<String> mediatypes)
-		{
-			this.consumedtypes = mediatypes;
-		}*/
-
-		/**
-		 *  Add a consumed media type.
-		 *  @param type The type.
-		 * /
-		public void addConsumedMediaType(String type)
-		{
-			//if(consumedtypes == null)
-			//	consumedtypes = new ArrayList<String>();
-			consumedtypes.add(type);
-		}*/
-
-		/**
-		 * Test if has no settings.
-		 */
-		public boolean isEmpty()
-		{
-			return path == null && method == null && httpmethod == null;
-		}
-		
-		/**
-		 *  Get the declared parameter names (via annotation ParameterInfo).
-		 *  @return The parameter names. 
-		 */
-		public List<String> getParameterNames()
-		{
-			List<String> ret = new ArrayList<String>();
-			Annotation[][] anns = method.getParameterAnnotations();
-			for(Annotation[] ans: anns)
-			{
-				for(Annotation an: ans)
-				{
-					/*if(an instanceof ParameterInfo)
-					{
-						ParameterInfo p = (ParameterInfo)an;
-						String name = p.value();
-						ret.add(name);
-						break;
-					}
-					else*/ if(an instanceof QueryParam)
-					{
-						QueryParam p = (QueryParam)an;
-						String name = p.value();
-						ret.add(name);
-						break;
-					}
-					else if(an instanceof PathParam)
-					{
-						PathParam p = (PathParam)an;
-						String name = p.value();
-						ret.add(name);
-						break;
-					}
-					else if(an instanceof FormParam)
-					{
-						FormParam p = (FormParam)an;
-						String name = p.value();
-						ret.add(name);
-						break;
-					}
-				}
-			}
-			return ret;
-		}
-		
-		/**
-		 *  Get the consumed media types.
-		 *  @return The types.
-		 */
-		//public void addConsumedMediaTypes()
-		public List<String> getConsumedMediaTypes()
-		{
-			if(method.isAnnotationPresent(Consumes.class))
-			{
-				Consumes con = (Consumes)method.getAnnotation(Consumes.class);
-				return Arrays.asList(con.value());
-				/*for(String type : types)
-				{
-					addConsumedMediaType(type);
-				}*/
-			}
-			return Collections.EMPTY_LIST;
-		}
-		
-		/**
-		 *  Get the produced media types.
-		 *  @return The types.
-		 */
-		public List<String> getProducedMediaTypes()
-		{
-			if(method.isAnnotationPresent(Produces.class))
-			{
-				Produces prod = (Produces)method.getAnnotation(Produces.class);
-				return Arrays.asList(prod.value());
-				/*for(String type : types)
-				{
-					addProducedMediaType(type);
-				}*/
-			}
-			return Collections.EMPTY_LIST;
-		}
-	}
-	
 	/**
 	 * Split the query and save the order.
 	 */
@@ -4339,113 +4282,5 @@ public class RequestManager
 	{
 		return request.isAsyncStarted()? request.getAsyncContext(): request.startAsync();
 	}*/
-	
-	/**
-	 *  Create a result listener that is executed on the
-	 *  component thread.
-	 * /
-	public <T> IResultListener<T> createResultListener(IResultListener<T> listener)
-	{
-		return new ComponentResultListener<T>(listener, getComponent());
-	}*/
-	
-	/**
-	 *  Create a result listener that is executed on the
-	 *  component thread.
-	 * /
-	public <T> IIntermediateResultListener<T> createResultListener(IIntermediateResultListener<T> listener)
-	{
-		return new IntermediateComponentResultListener<T>(listener, getComponent());
-	}*/
-	
-	/**
-	 * Evaluate the service interface and generate mappings. Return a
-	 * multicollection in which for each path name the possible methods are
-	 * contained (can be more than one due to different parameters).
-	 */
-	//public IFuture<MultiCollection<String, MappingInfo>> evaluateMapping(IServiceIdentifier sid, PublishInfo pi)
-	//public IFuture<PathManager<MappingInfo>> evaluateMapping(IServiceIdentifier sid, PublishInfo pi, ClassLoader cl)
-	public PathManager<MappingInfo> evaluateMapping(IServiceIdentifier sid, PublishInfo pi, ClassLoader cl)
-	{
-		Future<PathManager<MappingInfo>> reta = new Future<>();
 
-		//ComponentIdentifier cid = sid.getProviderId();
-
-		//IExternalAccess ea = getComponent().getExternalAccess(cid);
-
-		//ea.scheduleStep(new IComponentStep<MultiCollection<String, MappingInfo>>()
-		//ea.scheduleStep((IComponent ia) ->
-		//{
-			Class<?> mapcl = pi.getMapping() == null ? null : pi.getMapping().getType(cl);
-			if(mapcl == null)
-				mapcl = sid.getServiceType().getType(cl);
-	
-			PathManager<MappingInfo> ret = new PathManager<MappingInfo>();
-			PathManager<MappingInfo> natret = new PathManager<MappingInfo>();
-			
-			//MultiCollection<String, MappingInfo> ret = new MultiCollection<String, MappingInfo>();
-			//MultiCollection<String, MappingInfo> natret = new MultiCollection<String, MappingInfo>();
-	
-			for(Method m : SReflect.getAllMethods(mapcl))
-			{
-				MappingInfo mi = new MappingInfo();
-				if(m.isAnnotationPresent(GET.class))
-				{
-					mi.setHttpMethod(HttpMethod.GET);
-				}
-				else if(m.isAnnotationPresent(POST.class))
-				{
-					mi.setHttpMethod(HttpMethod.POST);
-				}
-				else if(m.isAnnotationPresent(PUT.class))
-				{
-					mi.setHttpMethod(HttpMethod.PUT);
-				}
-				else if(m.isAnnotationPresent(DELETE.class))
-				{
-					mi.setHttpMethod(HttpMethod.DELETE);
-				}
-				else if(m.isAnnotationPresent(OPTIONS.class))
-				{
-					mi.setHttpMethod(HttpMethod.OPTIONS);
-				}
-				else if(m.isAnnotationPresent(HEAD.class))
-				{
-					mi.setHttpMethod(HttpMethod.HEAD);
-				}
-	
-				if(m.isAnnotationPresent(Path.class))
-				{
-					Path path = m.getAnnotation(Path.class);
-					mi.setPath(path.value());
-				}
-				else if(!mi.isEmpty())
-				{
-					mi.setPath(m.getName());
-				}
-	
-				if(!mi.isEmpty())
-				{
-					//mi.addConsumedMediaTypes();
-					//mi.addProducedMediaTypes();
-					mi.setMethod(m);
-					ret.addPathElement(mi.getPath(), mi);
-					//ret.add(mi.getPath(), mi);
-				}
-	
-				// Natural mapping using simply all declared methods
-				MappingInfo mi2 = new MappingInfo(null, m, m.getName());
-				//mi2.addConsumedMediaTypes();
-				//mi2.addProducedMediaTypes();
-				natret.addPathElement(m.getName(), mi2); // httpmethod, method, path
-			}
-		//}
-			//return ret.size() > 0 ? ret : natret;
-		//}).addResultListener(new DelegationResultListener<PathManager<MappingInfo>>(reta));
-
-		reta.setResult(ret.size() > 0 ? ret : natret);
-			
-		//return reta;
-		return ret.size() > 0 ? ret : natret;
-	}
 }

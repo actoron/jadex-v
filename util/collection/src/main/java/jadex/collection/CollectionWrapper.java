@@ -10,9 +10,6 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 {
 	/** The delegate list. */
 	protected Collection<T> delegate;
-
-	/** The event publisher. */
-	protected IEventPublisher publisher;
 	
 	/**
 	 *  Create a new wrapper.
@@ -20,22 +17,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 	 */
 	public CollectionWrapper(Collection<T> delegate)
 	{
-		this(delegate, null);
-	}
-	
-	/**
-	 *  Create a new wrapper.
-	 *  @param delegate The delegate.
-	 */
-	public CollectionWrapper(Collection<T> delegate, IEventPublisher publisher)
-	{
 		this.delegate = delegate;
-		this.publisher = publisher;
-	}
-	
-	public IEventPublisher getEventPublisher()
-	{
-		return this.publisher;
 	}
 	
 	public Collection<T> getDelegate()
@@ -99,11 +81,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		boolean ret = delegate.add(e);
 		if(ret)
 		{
-			entryAdded(e, -1);
-//			observeValue(e);
-//			getRuleSystem().addEvent(new Event(addevent, new ChangeInfo<T>(e, null, delegate.size())));
-//			getRuleSystem().addEvent(new Event(addevent, new CollectionEntry<T>(e, null, delegate.size())));
-//			publishToolBeliefEvent();
+			entryAdded(e, null);
 		}
 		return ret;
 	}
@@ -116,10 +94,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		boolean ret = delegate.remove(o);
 		if(ret)
 		{
-			entryRemoved((T)o, -1);
-//			unobserveValue(o);
-//			getRuleSystem().addEvent(new Event(remevent, new ChangeInfo<T>(null, (T)o, null)));
-//			publishToolBeliefEvent();
+			entryRemoved((T)o, null);
 		}
 		return ret;
 	}
@@ -142,10 +117,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			for(T t: c)
 			{
-				entryAdded(t, -1);
-//				observeValue(t);
-//				getRuleSystem().addEvent(new Event(addevent, new ChangeInfo<T>(t, null, null)));
-//				publishToolBeliefEvent();
+				entryAdded(t, null);
 			}
 		}	
 		return ret;
@@ -161,10 +133,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		{
 			for(Object t: c)
 			{
-				entryRemoved((T)t, -1);
-//				unobserveValue(t);
-//				getRuleSystem().addEvent(new Event(remevent, new ChangeInfo<T>((T)t, null, null)));
-//				publishToolBeliefEvent();
+				entryRemoved((T)t, null);
 			}
 		}	
 		return ret;
@@ -188,10 +157,7 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		delegate.clear();
 		for(Object t: clone)
 		{
-			entryRemoved((T)t, -1);
-//			unobserveValue(t);
-//			getRuleSystem().addEvent(new Event(addevent, new ChangeInfo<Object>(null, t, null)));
-//			publishToolBeliefEvent();
+			entryRemoved((T)t, null);
 		}
 	}
 	
@@ -232,116 +198,25 @@ public abstract class CollectionWrapper <T> implements Collection<T>
 		return delegate.toString();
 	}
 	
-//	/**
-//	 *  Get the interpreter.
-//	 *  @return The interpreter.
-//	 */
-//	public BDIAgentInterpreter getInterpreter()
-//	{
-//		return interpreter;
-//	}
-//	
-//	/**
-//	 *  Get the rule system.
-//	 *  @return The rule system.
-//	 */
-//	public RuleSystem getRuleSystem()
-//	{
-//		return interpreter.getRuleSystem();
-//	}
-	
-//	/**
-//	 * 
-//	 */
-//	public void observeValue(final Object val)
-//	{
-//		if(val!=null)
-//		{
-//			getRuleSystem().observeObject(val, true, false, new IResultCommand<IFuture<Void>, PropertyChangeEvent>()
-//			{
-//				public IFuture<Void> execute(final PropertyChangeEvent event)
-//				{
-//					final Future<Void> ret = new Future<Void>();
-//					try
-//					{
-//						IFuture<Void> fut = getInterpreter().scheduleStep(new IComponentStep<Void>()
-//						{
-//							public IFuture<Void> execute(IInternalAccess ia)
-//							{
-//								publishToolBeliefEvent();
-//								Event ev = new Event(changeevent, new ChangeInfo<Object>(event.getNewValue(), event.getOldValue(), null));
-//								getRuleSystem().addEvent(ev);
-//								return IFuture.DONE;
-////								return new Future<IEvent>(ev);
-//							}
-//						});
-//						fut.addResultListener(new DelegationResultListener<Void>(ret)
-//						{
-//							public void exceptionOccurred(Exception exception)
-//							{
-//								if(exception instanceof ComponentTerminatedException)
-//								{
-////									System.out.println("Ex in observe: "+exception.getMessage());
-//									getRuleSystem().unobserveObject(val);
-//									ret.setResult(null);
-//								}
-//								else
-//								{
-//									super.exceptionOccurred(exception);
-//								}
-//							}
-//						});
-//					}
-//					catch(Exception e)
-//					{
-//						if(!(e instanceof ComponentTerminatedException))
-//							System.out.println("Ex in observe: "+e.getMessage());
-//						getRuleSystem().unobserveObject(val);
-//						ret.setResult(null);
-//					}
-//					return ret;
-//				}
-//			});
-//		}
-//	}
-	
-//	/**
-//	 * 
-//	 */
-//	public void unobserveValue(Object val)
-//	{
-//		getRuleSystem().unobserveObject(val);
-//	}
-//	
-//	/**
-//	 * 
-//	 */
-//	public void publishToolBeliefEvent()//String evtype)
-//	{
-//		((BDIAgent)getInterpreter().getAgent()).publishToolBeliefEvent(getInterpreter(), mbel);//, evtype);
-//	}
 
 	/**
 	 *  An entry was added to the collection.
 	 */
-	protected void entryAdded(T value, int index)
-	{
-		publisher.entryAdded(value, index);
+	protected void entryAdded(T value, Integer index)
+	{		
 	}
 	
 	/**
 	 *  An entry was removed from the collection.
 	 */
-	protected void entryRemoved(T value, int index)
-	{
-		publisher.entryRemoved(value, index);
+	protected void entryRemoved(T value, Integer index)
+	{		
 	}
 	
 	/**
 	 *  An entry was changed in the collection.
 	 */
-	protected void entryChanged(T oldvalue, T newvalue, int index)
+	protected void entryChanged(T value, T oldvalue, Integer index)
 	{
-		publisher.entryChanged(oldvalue, newvalue, index);
 	}
 }

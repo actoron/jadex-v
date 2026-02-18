@@ -7,16 +7,20 @@ import jadex.future.ITerminableFuture;
 /**
  *  User interface for plans.
  */
-public interface IPlan// extends IParameterElement, IFinishableElement<Object>  // todo: do not extend IParameterElement in case of non bdiv3x
+public interface IPlan
 {
 	/**
-	 *  Get the id.
+	 *  Plan reason when triggered for goal finished event.
+	 */
+	public static record GoalFinishedEvent(IGoal goal) {}
+	
+	/**
+	 *  Get the generated unique id of this plan instance.
 	 */
 	public String getId();
 	
 	/**
-	 *  Get the model name.
-	 *  @return The model name
+	 *  Get the name of the plan class or method.
 	 */
 	public String getModelName();
 
@@ -38,8 +42,7 @@ public interface IPlan// extends IParameterElement, IFinishableElement<Object>  
 //	public boolean isAborted();
 	
 	/**
-	 *  Get the reason.
-	 *  @return The reason.
+	 *  Get the triggering object, i.e. an IGoal, GoalFinishedEvent or ChangeEvent. 
 	 */
 	public Object getReason();
 	
@@ -55,12 +58,12 @@ public interface IPlan// extends IParameterElement, IFinishableElement<Object>  
 	public ITerminableFuture<Void> waitFor(long delay);
 	
 	/**
-	 *  Dispatch a goal wait for its result.
+	 *  Dispatch a goal and get notified when it succeeds.
 	 */
 	public ITerminableFuture<Void> dispatchSubgoal(Object goal);
 	
 	/**
-	 *  Dispatch a goal wait for its result.
+	 *  Dispatch a goal and get the result when it succeeds.
 	 */
 	public <T> ITerminableFuture<T> dispatchSubgoal(Supplier<T> goal);
 //	
@@ -139,10 +142,10 @@ public interface IPlan// extends IParameterElement, IFinishableElement<Object>  
 //	 */
 //	public IFuture<Void> waitForCondition(ICondition cond, String[] events, long timeout);
 //	
-	/**
-	 *  Check if currently inside Atomic block.
-	 */
-	public boolean	isAtomic();
+//	/**
+//	 *  Check if currently inside Atomic block.
+//	 */
+//	public boolean	isAtomic();
 	
 	/**
 	 *  When in atomic mode, plans will not be immediately aborted, e.g. when their goal succeeds or their context condition becomes false.

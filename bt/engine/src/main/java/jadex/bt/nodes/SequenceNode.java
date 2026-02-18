@@ -2,145 +2,100 @@ package jadex.bt.nodes;
 
 import java.lang.System.Logger.Level;
 
-import jadex.bt.decorators.Decorator;
+import jadex.bt.IChildTraversalStrategy;
 import jadex.bt.impl.Event;
 import jadex.bt.state.ExecutionContext;
-import jadex.bt.state.NodeContext;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
 /**
- * Execute nodes sequentially until all succeed or one fails.
+ *  Execute nodes sequentially until all succeed or one fails.
+ *  Traversal order is fully delegated to IChildTraversalStrategy.
  */
 public class SequenceNode<T> extends CompositeNode<T>
 {
-	public SequenceNode()
-	{
-	}
-	
-	public SequenceNode(String name)
-	{
-		super(name);
-	}
-	
-    @Override
-    public IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context) 
+    public SequenceNode()
     {
-    	//Thread.dumpStack();
-    	//System.out.println("seq node, internal exe: "+this+" "+state+" "+getNodeContext(context).getIndex());
-    	return executeNextChild(event, context);
+        this(null);
     }
-    
+
+    public SequenceNode(String name)
+    {
+        this(name, null);
+    }
+
+    public SequenceNode(String name, IChildTraversalStrategy<T> strategy)
+    {
+        super(name, strategy);
+    }
+
+    @Override
+    public IFuture<NodeState> internalExecute(Event event, NodeState state, ExecutionContext<T> context)
+    {
+        // Initialize traversal state (remaining children etc.)
+        getStrategy().init(this, context);
+
+        return executeNextChild(event, context);
+    }
+
     protected IFuture<NodeState> executeNextChild(Event event, ExecutionContext<T> context)
     {
-    	Future<NodeState> ret = new Future<>();
-    	
-    	getNodeContext(context).incIndex();
-    	//System.out.println("sequence executing child: "+getNodeContext(context).getIndex());
-  		getLogger().log(Level.INFO, "sequence executing child: "+this+" "+getNodeContext(context).getIndex());
+        Future<NodeState> ret = new Future<>();
 
-    	
-    	if(getNodeContext(context).getIndex() < getChildCount()) 
-    	{
-            getLogger().log(Level.INFO, "sequence child is: "+getChild(getNodeContext(context).getIndex()));
-            IFuture<NodeState> child = getChild(getNodeContext(context).getIndex()).execute(event, context);
-            
-            if(child.isDone())
-            {
-            	handleResult(event, child.get(), ret, context);
-            }
-            else
-            {
-            	child.then(res -> handleResult(event, res, ret, context)).catchEx(ex -> handleResult(event, NodeState.FAILED, ret, context));
-            }
+        Node<T> child = getStrategy().nextChild(this, context);
+
+        if(child == null)
+        {
+            getLogger().log(Level.INFO, "sequence succeeded: " + this);
+            ret.setResult(NodeState.SUCCEEDED);
+            return ret;
         }
-    	else if(getChildCount()==0 || getChildCount()==getNodeContext(context).getIndex())
-    	{
-    		//System.out.println("sequence succeeded: "+this);
-     		getLogger().log(Level.INFO, "sequence succeeded: "+this);
-    		ret.setResult(NodeState.SUCCEEDED);
-    	}
-    	else
-    	{
-    		//System.out.println("sequence failed: "+this);
-    		getLogger().log(Level.INFO, "sequence failed: "+this);
-    		ret.setResult(NodeState.FAILED);
-    	}
-    	
-    	return ret;
-    }
-    
-    protected void handleResult(Event event, NodeState state, Future<NodeState> ret, ExecutionContext<T> context) 
-    {
-    	//System.out.println("seq node, child finished with: "+this+" "+state);
-    	getLogger().log(Level.INFO, "seq node, child finished with: "+this+" "+state);
-    	
-    	if(state==NodeState.FAILED)
-    	{
-    		//if(this.toString().indexOf("load")!=-1 || toString().indexOf("findst")!=-1)
-    		//	System.out.println("seq node child failed: "+state);
 
-    		ret.setResult(NodeState.FAILED);
-    	}
-    	else if(state==NodeState.SUCCEEDED)
-    	{
-    		//System.out.println("seq node, child success, next: "+this+" "+state);
-    		getLogger().log(Level.INFO, "seq node, child success, next: "+this+" "+state);
-    		executeNextChild(event, context).delegateTo(ret);
-    	}
-    } 
-    
-    public int getCurrentChildCount(ExecutionContext<T> context)
-    {
-    	return getNodeContext(context).getIndex();
-    }
-    
-    @Override
-    public SequenceNodeContext<T> getNodeContext(ExecutionContext<T> execontext) 
-    {
-    	return (SequenceNodeContext<T>)super.getNodeContext(execontext);
-    }
-    
-    @Override
-    protected NodeContext<T> createNodeContext() 
-    {
-    	return new SequenceNodeContext<T>();
-    }
-    
-    @Override
-    public NodeContext<T> copyNodeContext(NodeContext<T> src)
-    {
-    	SequenceNodeContext<T> ret = (SequenceNodeContext<T>)super.copyNodeContext(src);
-    	ret.setIndex(((SequenceNodeContext<T>)src).getIndex());
-		return ret;
-    }
-    
-    @Override
-    public void reset(ExecutionContext<T> context, Boolean all) 
-    {
-    	super.reset(context, all);
-    	getNodeContext(context).setIndex(-1);
-    	//System.out.println("sequence node after reset = " + getNodeContext(context).getIndex()+" "+this);
-    	System.getLogger(SequenceNode.class.getName()).log(Level.INFO, "sequence node after reset = " + getNodeContext(context).getIndex()+" "+this);
-    }
-    
-    public static class SequenceNodeContext<T> extends NodeContext<T> implements IIndexContext
-    {
-    	protected int idx = -1;
+        getLogger().log(Level.INFO, "sequence executing child: " + this + " -> " + child);
 
-		public int getIndex() 
-		{
-			return idx;
-		}
+        IFuture<NodeState> fut = child.execute(event, context);
 
-		public void setIndex(int idx) 
-		{
-			this.idx = idx;
-		}
-		
-		public void incIndex()
-		{
-			idx++;
-		}
+        if(fut.isDone())
+        {
+            handleResult(event, fut.get(), ret, context);
+        }
+        else
+        {
+            fut.then(res -> handleResult(event, res, ret, context))
+               .catchEx(ex -> handleResult(event, NodeState.FAILED, ret, context));
+        }
+
+        return ret;
+    }
+
+    protected void handleResult(Event event, NodeState childState, 
+		Future<NodeState> ret, ExecutionContext<T> context)
+    {
+        if(ret.isDone())
+            return;
+
+        if(context.getNodeContext(this).getAbortState() != null)
+        {
+            ret.setResultIfUndone(
+                context.getNodeContext(this).getAbortState());
+            return;
+        }
+
+        if(childState == NodeState.FAILED)
+        {
+            getLogger().log(Level.INFO, "sequence failed: " + this);
+            ret.setResult(NodeState.FAILED);
+        }
+        else if(childState == NodeState.SUCCEEDED)
+        {
+            executeNextChild(event, context).delegateTo(ret);
+        }
+    }
+
+    @Override
+    public void reset(ExecutionContext<T> context, Boolean all)
+    {
+        super.reset(context, all);
+        getStrategy().reset(this, context);
     }
 }
