@@ -253,34 +253,34 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 */
 	protected <T> Future<T> createStepFuture(Object step, boolean sync)
 	{
-		if(sync && LOCAL.get()==this)
+//		if(sync && LOCAL.get()==this)
 		{
 			return new Future<>();
 		}
-		else
-		{
-			AnnotatedType	type	= null;
-			if(step instanceof ICallable)
-			{
-				type	= ((ICallable<?>) step).getReturnType();
-			}
-			else if(step instanceof IThrowingFunction)
-			{
-				type	= ((IThrowingFunction<?, ?>) step).getReturnType();
-			}
-			
-			// Default implementation of throwing function gives null type
-			if(type==null)
-			{
-				type = getReturnType(step.getClass());
-			}
-			
-			@SuppressWarnings("unchecked")
-			Future<T>	ret	= (Future<T>)FutureFunctionality.getDelegationFuture(type==null ? Object.class : SReflect.getRawClass(type.getType()),
-				LOCAL.get()==this ?	new FutureFunctionality()
-					: new ComponentFutureFunctionality(this, type==null || !Component.isNoCopy(type.getAnnotations())));
-			return ret;
-		}
+//		else
+//		{
+//			AnnotatedType	type	= null;
+//			if(step instanceof ICallable)
+//			{
+//				type	= ((ICallable<?>) step).getReturnType();
+//			}
+//			else if(step instanceof IThrowingFunction)
+//			{
+//				type	= ((IThrowingFunction<?, ?>) step).getReturnType();
+//			}
+//			
+//			// Default implementation of throwing function gives null type
+//			if(type==null)
+//			{
+//				type = getReturnType(step.getClass());
+//			}
+//			
+//			@SuppressWarnings("unchecked")
+//			Future<T>	ret	= (Future<T>)FutureFunctionality.getDelegationFuture(type==null ? Object.class : SReflect.getRawClass(type.getType()),
+//				LOCAL.get()==this ?	new FutureFunctionality()
+//					: new ComponentFutureFunctionality(this, type==null || !Component.isNoCopy(type.getAnnotations())));
+//			return ret;
+//		}
 	}
 	
 	/**
