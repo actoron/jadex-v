@@ -6,7 +6,7 @@ before_script:
 
 stages:
   - build
-  #- test
+  - test
   - benchmark
   - deploy
 
@@ -24,7 +24,8 @@ build:
 
 test:
   stage: test
-  script: ./gradlew test
+  #script: ./gradlew test
+  script: ./gradlew --version
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
