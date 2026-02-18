@@ -14,7 +14,7 @@ public class LambdaAgentBenchmark
 	{
 		BenchmarkHelper.benchmarkTime(() -> 
 		{
-			IComponentManager.get().run(comp ->{return comp.getId();}).get();
+			IComponentManager.get().run(comp -> comp.getId()).get();
 		});
 	}
 
@@ -22,7 +22,7 @@ public class LambdaAgentBenchmark
 	{
 		for(;;)
 		{
-			IComponentManager.get().run(comp ->{return comp.getId();}).get();
+			IComponentManager.get().run(comp -> comp.getId()).get();
 		}
 	}
 }

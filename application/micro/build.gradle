@@ -32,13 +32,24 @@ dependencies
     implementation 'org.activecomponents.jadex:core:'+v
     implementation 'org.activecomponents.jadex:execution:'+v
     implementation 'org.activecomponents.jadex:injection:'+v
+    implementation 'org.activecomponents.jadex:result:'+v
     implementation 'org.activecomponents.jadex:logbase:'+v 
     implementation 'org.activecomponents.jadex:providedservice:'+v
     implementation 'org.activecomponents.jadex:requiredservice:'+v
     implementation 'org.activecomponents.jadex:publishservice:'+v
     implementation 'org.activecomponents.jadex:publishservicejetty:'+v
     //implementation 'org.activecomponents.jadex:simulation:'+v
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+    implementation 'org.activecomponents.jadex:llm:'+v
+
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+	// required for gradle 9!? https://docs.gradle.org/8.7/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test 
+{
+	useJUnitPlatform()
 }
 
 processResources {

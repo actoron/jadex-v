@@ -48,7 +48,7 @@ public class TerminatorAgent
 				{
 					System.out.println("killing: "+victim);
 					agent.terminate();
-				});
+				}).catchEx(ex -> ex.printStackTrace());
 			}
 		}
 	}

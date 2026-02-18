@@ -39,7 +39,6 @@ import jadex.environment.EnvironmentEvent;
 import jadex.environment.PerceptionProcessor;
 import jadex.environment.SpaceObject;
 import jadex.execution.ComponentMethod;
-import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -476,10 +475,10 @@ public class BTCleanerAgent implements IBTProvider
 		envfut = getEnvironment().observeObject((Cleaner)getSelf());
 		envfut.next(e ->
 		{
-			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
+			agent.getComponentHandle().scheduleStep(() ->
 			{
 				pp.handleEvent(e);
-			});
+			}).catchEx(ex -> ex.printStackTrace());
 		});
 		
 		patrolpoints.add(new Vector2Double(0.1, 0.1));

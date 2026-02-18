@@ -1088,7 +1088,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	
 	//-------- java8 extensions --------
 	
-	public IFuture<? extends E> then(Consumer<? super E> function)
+	public IFuture<E> then(Consumer<? super E> function)
     {
 		this.addResultListener(new IResultListener<E>()
         {
@@ -1522,11 +1522,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 		
 		if(ret==null)
 		{
-			if(ITuple2Future.class.isAssignableFrom(clazz))
-			{
-				ret = new Tuple2Future();
-			}
-			else if(IPullSubscriptionIntermediateFuture.class.isAssignableFrom(clazz))
+			if(IPullSubscriptionIntermediateFuture.class.isAssignableFrom(clazz))
 			{
 				ret = new PullSubscriptionIntermediateDelegationFuture();
 			}

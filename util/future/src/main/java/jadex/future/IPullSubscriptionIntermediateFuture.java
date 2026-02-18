@@ -6,10 +6,6 @@ package jadex.future;
  *  In this way a pull intermediate future is 
  *  similar to an iterator.
  */
-public interface IPullSubscriptionIntermediateFuture<E> extends ISubscriptionIntermediateFuture<E> //IIntermediateFuture<E>
+public interface IPullSubscriptionIntermediateFuture<E> extends ISubscriptionIntermediateFuture<E>, IPullIntermediateFuture<E>
 {
-	/**
-	 *  Pull an intermediate result.
-	 */
-	public void pullIntermediateResult();
 }

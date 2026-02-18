@@ -160,7 +160,7 @@ public class CustomerPanel extends JPanel
 						money.setText(df.format(mon));
 					}
 				});
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 		money.setEditable(false);
 		
 		agent.getComponentHandle().scheduleStep(() ->
@@ -179,7 +179,7 @@ public class CustomerPanel extends JPanel
 					});
 				}
 			});
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 		
 		JPanel selpanel = new JPanel(new GridBagLayout());
 		selpanel.setBorder(new TitledBorder(new EtchedBorder(), "Properties"));
@@ -267,7 +267,7 @@ public class CustomerPanel extends JPanel
 			{
 				e.printStackTrace();
 			}
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 		
 		JPanel butpanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 //		butpanel.setBorder(new TitledBorder(new EtchedBorder(), "Actions"));
@@ -311,7 +311,7 @@ public class CustomerPanel extends JPanel
 									});
 								}
 							});
-					});
+					}).catchEx(ex -> ex.printStackTrace());
 				}
 			}
 		});

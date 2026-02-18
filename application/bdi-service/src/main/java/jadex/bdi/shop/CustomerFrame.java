@@ -32,7 +32,8 @@ public class CustomerFrame extends JFrame
 			public void windowClosing(WindowEvent e)
 			{
 //				agent.killComponent();
-				agent.getComponentHandle().scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.terminate());
+				agent.getComponentHandle().scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.terminate())
+					.catchEx(ex -> ex.printStackTrace());
 			}
 		});
 		

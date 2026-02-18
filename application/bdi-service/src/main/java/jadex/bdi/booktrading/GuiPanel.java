@@ -259,7 +259,7 @@ public class GuiPanel extends JPanel
 					refresh();
 				}
 			});
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 		
 		agent.scheduleStep(ia ->
 		{
@@ -271,7 +271,7 @@ public class GuiPanel extends JPanel
 					refreshDetails();
 				}
 			});
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 		table.addMouseListener(new MouseAdapter()
 		{
 			public void mouseClicked(MouseEvent e)
@@ -304,7 +304,7 @@ public class GuiPanel extends JPanel
 										INegotiationAgent ag = (INegotiationAgent)ia.getPojo();
 										ag.createGoal(order);
 									}
-								);
+								).catchEx(ex -> ex.printStackTrace());
 								orders.add(order);
 								items.fireTableDataChanged();
 								break;
@@ -358,7 +358,7 @@ public class GuiPanel extends JPanel
 								}
 							}
 						}
-					);
+					).catchEx(ex -> ex.printStackTrace());;
 				}
 			}
 		});
@@ -408,7 +408,7 @@ public class GuiPanel extends JPanel
 											
 											ag.createGoal(order);
 										}
-									);
+									).catchEx(ex -> ex.printStackTrace());
 									break;
 								}
 								catch(NumberFormatException e1)
@@ -477,7 +477,7 @@ public class GuiPanel extends JPanel
 						items.fireTableDataChanged();
 					}
 				});
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 	}
 	
 	/**
@@ -518,7 +518,7 @@ public class GuiPanel extends JPanel
 						}
 					});
 				}
-			);
+			).catchEx(ex -> ex.printStackTrace());
 		}
 	}
 

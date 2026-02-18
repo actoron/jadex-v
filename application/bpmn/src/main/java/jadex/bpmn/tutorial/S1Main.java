@@ -3,7 +3,7 @@ package jadex.bpmn.tutorial;
 import jadex.bpmn.runtime.RBpmnProcess;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.execution.LambdaAgent;
+import jadex.core.IThrowingConsumer;
 import jadex.injection.annotation.Inject;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -23,7 +23,7 @@ public class S1Main
 		// Bpmn end check must be improved
 		IComponentManager.get().create(new RBpmnProcess("jadex/bpmn/tutorial/S1_ProvidedServices.bpmn")).get();
 		
-		LambdaAgent.create(agent ->
+		IComponentManager.get().run((IThrowingConsumer<IComponent>)agent ->
 		{
 			//agent.getFeature(IExecutionFeature.class).waitForDelay(1000).get();
 			IRequiredServiceFeature rsf = agent.getFeature(IRequiredServiceFeature.class);
@@ -31,8 +31,7 @@ public class S1Main
 			IAService aser = rsf.searchService(new ServiceQuery<IAService>(IAService.class)).get();
 			String ret = aser.appendHello("hohoho").get();
 			System.out.println("terminating: "+ret+", "+agent.getId());
-			agent.terminate();
-		});
+		}).get();
 		
 		IComponentManager.get().create(new Object()
 		{

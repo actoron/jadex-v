@@ -183,7 +183,7 @@ public class DecouplingInterceptor extends AbstractMultiInterceptor
 			//ia.getFeature(IMjExecutionFeature.class).scheduleStep(IMjExecutionFeature.STEP_PRIORITY_UNSET, false, new InvokeMethodStep(sic))
 			//	.addResultListener(new CopyReturnValueResultListener(ret, sic));
 			
-			ia.getFeature(IExecutionFeature.class).scheduleStep(new InvokeMethodStep(sic))
+			ia.getFeature(IExecutionFeature.class).scheduleAsyncStep(new InvokeMethodStep(sic))
 				.addResultListener(new CopyReturnValueResultListener(ret, sic));
 
 		}
