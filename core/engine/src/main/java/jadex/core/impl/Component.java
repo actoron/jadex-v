@@ -754,18 +754,21 @@ public class Component implements IComponent
 	 */
 	public static boolean isNoCopy(Object val, Annotation... annos)
 	{
-		if(val==null || val.getClass().isAnnotationPresent(NoCopy.class))
+		return val==null
+			|| val.getClass().isAnnotationPresent(NoCopy.class)
+			|| isNoCopy(annos);
+	}
+	
+	/**
+	 *  Helper method to check if a value doesn't need copying in component methods
+	 */
+	public static boolean isNoCopy(Annotation... annos)
+	{
+		for(Annotation anno: annos)
 		{
-			return true;
-		}
-		else
-		{
-			for(Annotation anno: annos)
+			if(anno instanceof NoCopy)
 			{
-				if(anno instanceof NoCopy)
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 		return false;

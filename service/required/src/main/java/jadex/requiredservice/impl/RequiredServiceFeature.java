@@ -223,7 +223,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		ISubscriptionIntermediateFuture<T> tfut	= (ISubscriptionIntermediateFuture)FutureFunctionality
 			// Component functionality as local registry pushes results on arbitrary thread.
-			.getDelegationFuture(localresults, new ComponentFutureFunctionality(self.getFeature(IExecutionFeature.class))
+			.getDelegationFuture(localresults, new ComponentFutureFunctionality(self.getFeature(IExecutionFeature.class), false)
 		{
 			protected int resultcnt = 0;
 			

@@ -1,20 +1,23 @@
 package jadex.result.impl;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import jadex.core.ChangeEvent;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
+import jadex.core.annotation.NoCopy;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IResultManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.IIntermediateResultListener;
 import jadex.future.IResultListener;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.IntermediateFuture;
-import jadex.future.SubscriptionIntermediateDelegationFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.result.IResultFeature;
 
@@ -55,8 +58,15 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 		if(Component.isExecutable())
 		{
 			Future<Map<String, Object>>	ret	= new Future<>();
-			IFuture<Map<String, Object>>	fut	= comp.getComponentHandle().scheduleStep(()
-				-> doGetResults(comp));
+			IFuture<Map<String, Object>>	fut	= comp.getComponentHandle().scheduleStep(new Callable<>()
+			{
+				@Override
+				// No copy as result feature already returns copies as needed.
+				public @NoCopy Map<String, Object> call() throws Exception
+				{
+					return doGetResults(comp);
+				}
+			});
 			fut.addResultListener(new IResultListener<Map<String,Object>>()
 			{
 				@Override
@@ -68,7 +78,9 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 				@Override
 				public void exceptionOccurred(Exception e)
 				{
-					if(e instanceof ComponentTerminatedException)
+					// CTE is only thrown when step can't be scheduled -> provide finished results directly.
+					if(e instanceof ComponentTerminatedException
+						&& ((ComponentTerminatedException) e).getComponentIdentifier().equals(comp.getId()))
 					{
 						// When terminated, access directly.
 						ret.setResult(doGetResults(comp));
@@ -100,33 +112,63 @@ public class ResultFeatureProvider extends ComponentFeatureProvider<IResultFeatu
 	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToResults(IComponent comp)
 	{
 		if(Component.isExecutable())
-		{			
-			// TODO: schedule future notifications back to caller thread
-			SubscriptionIntermediateDelegationFuture<ChangeEvent>	ret	= new SubscriptionIntermediateDelegationFuture<>();
-
-			// When component is alive -> forward events to ret future.
-			IFuture<Void>	fut	= comp.getComponentHandle().scheduleStep(()
-				-> 
-			{
-				((ResultFeature) comp.getFeature(IResultFeature.class))
-					.subscribeToResults().delegateTo(ret);
-				return null;
-			});
+		{
+			SubscriptionIntermediateFuture<ChangeEvent>	ret	= new SubscriptionIntermediateFuture<>();
 			
-			// When component is terminated -> access directly.
-			fut.catchEx(e ->
+			ISubscriptionIntermediateFuture<ChangeEvent>	fut	= comp.getComponentHandle().scheduleAsyncStep(new Callable<ISubscriptionIntermediateFuture<ChangeEvent>>()
 			{
-				if(e instanceof ComponentTerminatedException)
+				@Override
+				// No copy as result feature already returns copies as needed.
+				public @NoCopy ISubscriptionIntermediateFuture<ChangeEvent> call()
 				{
-					doFinishedResultSubscription(comp, ret);
-				}
-				else
-				{
-					// Should not happen!?
-					ret.setException(e);
+					return ((ResultFeature) comp.getFeature(IResultFeature.class)).subscribeToResults();
 				}
 			});
-			
+			fut.addResultListener(new IIntermediateResultListener<ChangeEvent>()
+			{
+				@Override
+				public void intermediateResultAvailable(ChangeEvent result)
+				{
+					ret.addIntermediateResult(result);
+				}
+				
+				@Override
+				public void finished()
+				{
+					ret.setFinished();
+				}
+				
+				@Override
+				public void exceptionOccurred(Exception e)
+				{
+					// CTE is only thrown when step can't be scheduled -> provide finished results directly.
+					if(e instanceof ComponentTerminatedException
+						&& ((ComponentTerminatedException) e).getComponentIdentifier().equals(comp.getId()))
+					{
+						doFinishedResultSubscription(comp, ret);
+					}
+					else
+					{
+						// Thrown when subscription succeeds but component fails afterwards
+						// Also thrown on termination -> use undone to ignore duplicate exception
+						ret.setExceptionIfUndone(e);
+					}
+				}
+				
+				@Override
+				public void maxResultCountAvailable(int max)
+				{
+					// NOP
+				}
+				
+				@Override
+				public void resultAvailable(Collection<ChangeEvent> result)
+				{
+					// Should not be called
+				}
+			});
+			ret.setTerminationCommand(ex -> fut.terminate(ex));
+						
 			return ret;
 		}
 		else if(comp.isTerminated())

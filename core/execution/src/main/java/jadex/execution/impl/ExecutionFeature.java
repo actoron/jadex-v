@@ -1,5 +1,6 @@
 package jadex.execution.impl;
 
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import jadex.common.TimeoutException;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.ICallable;
 import jadex.core.IComponent;
+import jadex.core.INoCopyStep;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.core.impl.Component;
@@ -119,17 +121,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	}
 	
 	@Override
-	public <T> IFuture<T> scheduleStep(Callable<T> s)
+	public <T> IFuture<T> scheduleStep(Callable<T> step)
 	{
-		@SuppressWarnings("unchecked")
-		Future<T> ret = LOCAL.get()==this ? new Future<>() :
-			(Future<T>)FutureFunctionality.getDelegationFuture(IFuture.class, new ComponentFutureFunctionality(this));
+		Future<T> ret = createStepFuture(step, true);
 		
 		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
-				T res = s.call();
+				T res = step.call();
 				
 				if(!saveEndStep(res, (Future)ret))
 				{
@@ -183,9 +183,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	@Override
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
-		@SuppressWarnings("unchecked")
-		Future<T> ret = LOCAL.get()==this ? new Future<>() :
-			(Future<T>)FutureFunctionality.getDelegationFuture(IFuture.class, new ComponentFutureFunctionality(this));
+		Future<T> ret = createStepFuture(step, true);
 		
 		scheduleStep(new StepInfo(() ->
 		{
@@ -226,7 +224,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(Callable<T2> step)
 	{
 		@SuppressWarnings("unchecked")
-		T1 ret = (T1) createStepFuture(step);
+		T1	ret = (T1) createStepFuture(step, false);
 		
 		scheduleStep(new StepInfo(() ->
 		{
@@ -260,7 +258,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(IThrowingFunction<IComponent, T2> step)
 	{
 		@SuppressWarnings("unchecked")
-		T1 ret = (T1) createStepFuture(step);
+		T1	ret = (T1) createStepFuture(step, false);
 		
 		scheduleStep(new StepInfo(() ->
 		{
@@ -286,64 +284,38 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	}
 	
 	/**
-	 *  Create intermediate of direct future.
+	 *  Create future for step result depending on step type and potential annotations. 
 	 */
-	protected <T> Future<T> createStepFuture(Callable<?> step)
+	protected <T> Future<T> createStepFuture(Object step, boolean sync)
 	{
-		Future<T> ret;
-		try
+		if(sync && LOCAL.get()==this)
 		{
-			Class<?> clazz = step instanceof ICallable
-				? ((ICallable)step).getFutureReturnType()
-				: getReturnType(step.getClass());
-			
-			if(clazz==null || IFuture.class.equals(clazz))
-				ret = new Future<T>();
-			else
-				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz,
-					LOCAL.get()==this ?	new FutureFunctionality() : new ComponentFutureFunctionality(this));
+			return new Future<>();
 		}
-		catch(Exception e)
+		else
 		{
-			throw new RuntimeException(e);
-		}
-		
-		return ret;
-	}
-	
-	/**
-	 *  Create intermediate of direct future.
-	 */
-	protected <T> Future<T> createStepFuture(IThrowingFunction<IComponent, ?> step)
-	{
-		Future<T> ret;
-		try
-		{
-			// Check if return type is explicitly given
-			Class<?> clazz = step.getFutureReturnType();
-		
-			// TODO: use FutureFunctionaly.getReturnFuture
-			if(IFuture.class.equals(clazz))
+			AnnotatedType	type	= null;
+			if(step instanceof ICallable)
 			{
-				clazz	= getReturnType(step.getClass());
+				type	= ((ICallable<?>) step).getReturnType();
+			}
+			else if(step instanceof IThrowingFunction)
+			{
+				type	= ((IThrowingFunction<?, ?>) step).getReturnType();
 			}
 			
-			if(clazz==null || IFuture.class.equals(clazz))
+			// Default implementation of throwing function gives null type
+			if(type==null)
 			{
-				ret = new Future<T>();
+				type = getReturnType(step.getClass());
 			}
-			else
-			{
-				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz,
-					LOCAL.get()==this ?	new FutureFunctionality() : new ComponentFutureFunctionality(this));
-			}
+			
+			@SuppressWarnings("unchecked")
+			Future<T>	ret	= (Future<T>)FutureFunctionality.getDelegationFuture(type==null ? Object.class : SReflect.getRawClass(type.getType()),
+				LOCAL.get()==this ?	new FutureFunctionality()
+					: new ComponentFutureFunctionality(this, type==null || !Component.isNoCopy(type.getAnnotations())));
+			return ret;
 		}
-		catch(Exception e)
-		{
-			throw new RuntimeException(e);
-		}
-		
-		return ret;
 	}
 	
 	/**
@@ -1134,12 +1106,12 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 	}
 
-	protected static Map<Class<?>, Class<?>>	RETURNTYPE	= new LinkedHashMap<>();
+	protected static Map<Class<?>, AnnotatedType>	RETURNTYPE	= new LinkedHashMap<>();
 	
 	/**
 	 *  Get return type from pojo method.
 	 */
-	protected static Class<?>	getReturnType(Class<?> pojoclazz)
+	protected static AnnotatedType	getReturnType(Class<?> pojoclazz)
 	{
 		synchronized (RETURNTYPE)
 		{
@@ -1147,7 +1119,19 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			{
 				Method	m	= null;
 				
-				if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
+				if(SReflect.isSupertype(INoCopyStep.class, pojoclazz))
+				{
+					try
+					{
+						m	= INoCopyStep.class.getMethod("apply", IComponent.class);
+					}
+					catch(Exception e)
+					{
+						// Should not happen
+						SUtil.throwUnchecked(e);
+					}
+				}
+				else if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
 				{
 					// Can be also explicitly declared with component type or just implicit (lambda) as object type
 					try
@@ -1176,7 +1160,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					}
 				}
 				
-				RETURNTYPE.put(pojoclazz, m!=null ? m.getReturnType() : null);
+				RETURNTYPE.put(pojoclazz, m!=null ? m.getAnnotatedReturnType() : null);
 			}
 			return RETURNTYPE.get(pojoclazz);
 		}

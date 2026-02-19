@@ -1,6 +1,7 @@
 package jadex.execution.agentmethods;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,7 +22,9 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableFuture;
 import jadex.future.SubscriptionIntermediateFuture;
+import jadex.future.TerminableFuture;
 
 public class AgentMethodTest
 {
@@ -127,6 +130,18 @@ public class AgentMethodTest
         });
 		
 		agent.terminate();
+	}
+	
+	@Test
+	public void	testFutureTermination()
+	{
+		// Check for termination command executed on current thread. 
+		Future<ComponentIdentifier>	compfut	= new Future<>();
+		IComponentHandle agent = IComponentManager.get().create(new MyPojo()).get();
+		ITerminableFuture<Void>	fut	= agent.getPojoHandle(MyPojo.class).setTerminationCid(compfut);
+		agent.scheduleStep(() -> null).get(10000);
+		fut.terminate();
+		assertEquals(agent.getId(), compfut.get(10000));
 	}
 	
 	/*public static void main(String[] args) 
@@ -243,6 +258,12 @@ public class AgentMethodTest
 		public IFuture<String> getData()
 		{
 			return new Future<>("some data");
+		}
+		
+		@ComponentMethod
+		public ITerminableFuture<Void>	setTerminationCid(@NoCopy Future<ComponentIdentifier> compfut)
+		{
+			return new TerminableFuture<>(ex -> compfut.setResult(IComponentManager.get().getCurrentComponent().getId()));
 		}
 	}
 }

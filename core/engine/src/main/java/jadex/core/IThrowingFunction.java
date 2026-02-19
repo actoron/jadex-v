@@ -1,7 +1,10 @@
 package jadex.core;
 
-import jadex.future.IFuture;
+import java.lang.reflect.AnnotatedType;
 
+/**
+ *  Functional interface similar to {@link java.util.function.Function} but allowing to throw checked exceptions.
+ */
 @FunctionalInterface
 public interface IThrowingFunction<T, R> 
 {
@@ -13,16 +16,12 @@ public interface IThrowingFunction<T, R>
 	 */
 	public R apply(T t) throws Exception;
 	
-    /**
-     * Provides the return type of the future.
-     *
-     * @return the class type of the future result
-     */
-    default Class<? extends IFuture<?>> getFutureReturnType() 
+	/**
+	 *  Method to allow specifying alternative return type information,
+	 *  e.g. for generic invocation handlers delegating to concrete methods.
+	 */
+    public default AnnotatedType	getReturnType()
     {
-    	@SuppressWarnings("unchecked")
-    	// Double cast necessary for Java compiler, wtf :-(
-		Class<? extends IFuture<?>>	ret	= (Class<? extends IFuture<?>>)(Class<?>)IFuture.class;
-    	return  ret;
+    	return null;
     }
 }
