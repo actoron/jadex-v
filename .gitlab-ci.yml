@@ -35,7 +35,8 @@ test:
 benchmark:
   stage: benchmark
   script:
-    - ./benchmark.sh
+  #  - ./benchmark.sh
+    - ./gradlew benchmark-bt:benchmark
   #timeout: 48h
   # needs: ["build"]
   allow_failure: true
