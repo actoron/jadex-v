@@ -355,7 +355,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					{
 						exe.entries.remove(WaitTask.this);
 						// Check for null -> cancel() might run interleaved
-						Future<?>	future	= this.future;
 						if(future!=null)
 						{
 							future.setResultIfUndone(null);
