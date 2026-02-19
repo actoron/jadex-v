@@ -123,10 +123,10 @@ public class Environment
 	@OnStart
 	protected void start()
 	{
-		ComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (ex, comp) ->
-		{
-			ex.printStackTrace();
-		});
+//		ComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (ex, comp) ->
+//		{
+//			ex.printStackTrace();
+//		});
 		
 		addTask(new EnvironmentTask(getAgent().getComponentHandle(), null, "kdtree", this, null, Void ->
 		{
