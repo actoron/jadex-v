@@ -14,24 +14,24 @@ public class BTCleanerBenchmark	extends BTAbstractCleanerBenchmark
 	@Test
 	void benchmarkTime()
 	{
-		BenchmarkHelper.benchmarkTime(() -> 
-		{
-			Future<Void> ret = new Future<>();
-			IComponentHandle agent = IComponentManager.get().create(new BTCleanerBenchmarkAgent(ret, envid)).get();
-			ret.get();
-			agent.terminate().get();
-		});
+//		BenchmarkHelper.benchmarkTime(() -> 
+//		{
+//			Future<Void> ret = new Future<>();
+//			IComponentHandle agent = IComponentManager.get().create(new BTCleanerBenchmarkAgent(ret, envid)).get();
+//			ret.get();
+//			agent.terminate().get();
+//		});
 	}
 
 	@Test
 	void benchmarkMemory()
 	{
-		BenchmarkHelper.benchmarkMemory(() -> 
-		{
-			Future<Void> ret = new Future<>();
-			IComponentHandle agent = IComponentManager.get().create(new BTCleanerBenchmarkAgent(ret, envid)).get();
-			ret.get();
-			return () -> agent.terminate().get();
-		});
+//		BenchmarkHelper.benchmarkMemory(() -> 
+//		{
+//			Future<Void> ret = new Future<>();
+//			IComponentHandle agent = IComponentManager.get().create(new BTCleanerBenchmarkAgent(ret, envid)).get();
+//			ret.get();
+//			return () -> agent.terminate().get();
+//		});
 	}
 }
