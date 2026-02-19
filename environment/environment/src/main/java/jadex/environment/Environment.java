@@ -144,7 +144,10 @@ public class Environment
 	protected void end(Exception e)
 	{
 		System.out.println("end: "+agent.getId()+" "+e);
-		e.printStackTrace();
+		if(e!=null)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	//-------- The agent methods --------
