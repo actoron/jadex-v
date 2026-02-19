@@ -1,17 +1,13 @@
 package jadex.execution.future;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.List;
 import java.util.logging.Logger;
 
-import jadex.common.ClassInfo;
 import jadex.common.DebugException;
 import jadex.common.ICommand;
 import jadex.common.IResultCommand;
 import jadex.common.SReflect;
-import jadex.common.SUtil;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -323,36 +319,36 @@ public class FutureFunctionality
 		return ret;
 	}
 	
-	public static Future<Object> createReturnFuture(Method method, Object[] args, ClassLoader cl, FutureFunctionality func)
-	{
-		return createReturnFuture(method, args!=null? SUtil.arrayToList(args): null, cl, func);
-	}
+//	public static Future<Object> createReturnFuture(Method method, Object[] args, ClassLoader cl, FutureFunctionality func)
+//	{
+//		return createReturnFuture(method, args!=null? SUtil.arrayToList(args): null, cl, func);
+//	}
 	
-	public static Future<Object> createReturnFuture(Method method, List<Object> args, ClassLoader cl, FutureFunctionality func)
+	public static Future<Object> createReturnFuture(Method method, /*List<Object> args, ClassLoader cl,*/ FutureFunctionality func)
 	{
 		Future<Object> ret = null;
 		
 		if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 		{
 			Class<?> rettype = null;
-			Annotation[][] anss = method.getParameterAnnotations();
-			for(int i=0; i<anss.length; i++)
-			{
-				Annotation[] ans = anss[i];
-				for(Annotation an: ans)
-				{
-					if(an instanceof FutureReturnType)
-					{
-						Object t = args.get(i);
-						if(t instanceof Class)
-							rettype = (Class<?>)t;
-						else if(t instanceof ClassInfo)
-							rettype = ((ClassInfo)t).getType(cl);
-						if(rettype!=null)
-							break;
-					}
-				}
-			}
+//			Annotation[][] anss = method.getParameterAnnotations();
+//			for(int i=0; i<anss.length; i++)
+//			{
+//				Annotation[] ans = anss[i];
+//				for(Annotation an: ans)
+//				{
+//					if(an instanceof FutureReturnType)
+//					{
+//						Object t = args.get(i);
+//						if(t instanceof Class)
+//							rettype = (Class<?>)t;
+//						else if(t instanceof ClassInfo)
+//							rettype = ((ClassInfo)t).getType(cl);
+//						if(rettype!=null)
+//							break;
+//					}
+//				}
+//			}
 			/*if("invokeMethod".equals(method.getName()))
 			{
 				ClassInfo rtype = (ClassInfo)myargs.get(3);
@@ -360,7 +356,7 @@ public class FutureFunctionality
 					rettype = rtype.getType(comp.getClassLoader());
 			}*/
 			
-			if(rettype==null)
+//			if(rettype==null)
 				rettype = method.getReturnType();
 			
 			ret = (Future<Object>)FutureFunctionality.getDelegationFuture(rettype, 

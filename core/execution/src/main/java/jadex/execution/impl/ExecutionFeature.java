@@ -31,6 +31,7 @@ import jadex.core.impl.Component;
 import jadex.core.impl.ILifecycle;
 import jadex.core.impl.StepAborted;
 import jadex.execution.IExecutionFeature;
+import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -122,12 +123,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	{
 		Future<T> ret = new Future<>();
 		
-		if(self.isTerminated())
-		{
-			ret.setException(new ComponentTerminatedException(getComponent().getId()));
-			return ret;
-		}
-		
 		scheduleStep(new StepInfo(() ->
 		{
 			try
@@ -162,6 +157,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
+	@Override
 	public void scheduleStep(IThrowingConsumer<IComponent> step)
 	{
 		scheduleStep(() ->
@@ -182,15 +178,10 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
+	@Override
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
 		Future<T> ret = new Future<>();
-		
-		if(self.isTerminated())
-		{
-			ret.setException(new ComponentTerminatedException(getComponent().getId()));
-			return ret;
-		}
 		
 		scheduleStep(new StepInfo(() ->
 		{
@@ -226,35 +217,32 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
+	@Override
+	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
+	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(Callable<T2> step)
 	{
-		Future<T> ret = createStepFuture(step);
-		
-		if(self.isTerminated())
-		{
-			ret.setException(new ComponentTerminatedException(getComponent().getId()));
-			return ret;
-		}
+		@SuppressWarnings("unchecked")
+		T1 ret = (T1) createStepFuture(step);
 		
 		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
-				IFuture<T> res = step.call();
+				T2 res = step.call();
 				
-				if(!saveEndStep(res, (Future)ret))
+				if(!saveEndStep(res, (Future<Object>)ret))
 				{
 					@SuppressWarnings("unchecked")
-					Future<T>	resfut	= (Future<T>)res;
+					Future<E>	resfut	= (Future<E>)res;
 					// Use generic connection method to avoid issues with different future types.
-					resfut.delegateTo(ret);
+					resfut.delegateTo((Future<E>) ret);
 				}
 			}
 			catch(Throwable t)
 			{
-				handleStepException(t, ret);
+				handleStepException(t, (Future<?>) ret);
 			}
-		}, ret));
+		}, (Future<?>) ret));
 		return ret;
 	}
 	
@@ -263,35 +251,32 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
+	@Override
+	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
+	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(IThrowingFunction<IComponent, T2> step)
 	{
-		Future<T> ret = createStepFuture(step);
-		
-		if(self.isTerminated())
-		{
-			ret.setException(new ComponentTerminatedException(getComponent().getId()));
-			return ret;
-		}
+		@SuppressWarnings("unchecked")
+		T1 ret = (T1) createStepFuture(step);
 		
 		scheduleStep(new StepInfo(() ->
 		{
 			try
 			{
-				IFuture<T> res = step.apply(self);
+				T2 res = step.apply(self);
 				
 				if(!saveEndStep(res, (Future)ret))
 				{
 					@SuppressWarnings("unchecked")
-					Future<T> resfut = (Future<T>)res;
+					Future<E> resfut = (Future<E>)res;
 					// Use generic connection method to avoid issues with different future types.
-					resfut.delegateTo(ret);
+					resfut.delegateTo((Future<E>) ret);
 				}
 			}
 			catch(Throwable t)
 			{
-				handleStepException(t, ret);
+				handleStepException(t, (Future<?>) ret);
 			}
-		}, ret));
+		}, (Future<?>) ret));
 		
 		return ret;
 	}
@@ -311,7 +296,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			if(clazz==null || IFuture.class.equals(clazz))
 				ret = new Future<T>();
 			else
-				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
+				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz,
+					LOCAL.get()==this ?	new FutureFunctionality() : new ComponentFutureFunctionality(this));
 		}
 		catch(Exception e)
 		{
@@ -344,7 +330,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			}
 			else
 			{
-				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz, new FutureFunctionality());
+				ret = (Future<T>)FutureFunctionality.getDelegationFuture(clazz,
+					LOCAL.get()==this ?	new FutureFunctionality() : new ComponentFutureFunctionality(this));
 			}
 		}
 		catch(Exception e)

@@ -1,8 +1,7 @@
 package jadex.providedservice.impl.service.interceptors;
 
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
-import jadex.core.impl.ComponentManager;
+import jadex.execution.IExecutionFeature;
 import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.DelegationResultListener;
@@ -17,6 +16,21 @@ import jadex.providedservice.impl.service.ServiceInvocationContext;
  */
 public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 {
+	//-------- attributes --------
+	
+	/** The internal access. */
+	protected IComponent ia;	
+		
+	//-------- constructors --------
+	
+	/**
+	 *  Create a new invocation handler.
+	 */
+	public DecouplingReturnInterceptor(IComponent ia)
+	{
+		this.ia = ia;
+	}
+	
 	//-------- methods --------
 
 	/**
@@ -26,11 +40,9 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 	{
 		Future<Void> fut	= new Future<Void>();
 		
-		// Schedule back to global runner, when not called from any component.
-		final IComponent caller = IComponentManager.get().getCurrentComponent()!=null
-			? IComponentManager.get().getCurrentComponent()
-			: ComponentManager.get().getGlobalRunner();
-				
+		// Create func here to get correct caller thread.
+		FutureFunctionality	func	= new ComponentFutureFunctionality(ia.getFeature(IExecutionFeature.class));
+		
 		sic.invoke().addResultListener(new DelegationResultListener<Void>(fut)
 		{
 			public void customResultAvailable(Void result)
@@ -128,7 +140,7 @@ public class DecouplingReturnInterceptor extends AbstractApplicableInterceptor
 //					String resstring	= sic.getMethod().getName().equals("getRegisteredClients") ? res.toString() : null;	// string before connect to see storeforfirst results
 					
 					@SuppressWarnings({"unchecked"})
-					Future<Object> fut = (Future<Object>)FutureFunctionality.getDelegationFuture((IFuture<?>)res, new ComponentFutureFunctionality(caller));
+					Future<Object> fut = (Future<Object>)FutureFunctionality.getDelegationFuture((IFuture<?>)res, func);
 					sic.setResult(fut);
 					
 //					if(sic.getMethod().getName().equals("getRegisteredClients"))

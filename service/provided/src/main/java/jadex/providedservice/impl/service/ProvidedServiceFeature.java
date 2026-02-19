@@ -256,7 +256,7 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 		handler.addFirstServiceInterceptor(new MethodInvocationInterceptor());
 		handler.addFirstServiceInterceptor(new MethodCallListenerInterceptor(self, ret));
 		handler.addFirstServiceInterceptor(new DecouplingInterceptor(self));
-		handler.addFirstServiceInterceptor(new DecouplingReturnInterceptor());
+		handler.addFirstServiceInterceptor(new DecouplingReturnInterceptor(self));
 		
 		return ret;
 	}

@@ -125,11 +125,6 @@ public class ExecutableComponentHandle implements IComponentHandle
 				.method(ElementMatchers.isAnnotatedWith(ComponentMethod.class)) 
 				.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 				{
-					// Schedule back to global runner, when not called from any component.
-					final IComponent caller = IComponentManager.get().getCurrentComponent()!=null
-						? IComponentManager.get().getCurrentComponent()
-						: ComponentManager.get().getGlobalRunner();
-					
 					//Call next = Call.createCall(caller.getId(), null);
 					Call next = Call.getOrCreateNextInvocation();
 					
@@ -145,7 +140,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 					Future<Object> ret = null;
 					if(SReflect.isSupertype(IFuture.class, method.getReturnType()))
 					{
-						FutureFunctionality func = new ComponentFutureFunctionality(caller)
+						FutureFunctionality func = new ComponentFutureFunctionality(comp.getFeature(IExecutionFeature.class))
 						{							
 							public Object handleResult(Object val) throws Exception
 							{
@@ -158,7 +153,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 							}
 						};
 						
-						ret = FutureFunctionality.createReturnFuture(method, args, target.getClass().getClassLoader(), func);
+						ret = FutureFunctionality.createReturnFuture(method, func);
 					}
 					//final Object[] myargs = copyargs.toArray();
 					
@@ -285,13 +280,15 @@ public class ExecutableComponentHandle implements IComponentHandle
 	}
 
 	@Override
-	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step)
+	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
+	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(Callable<T2> step)
 	{
 		return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
 	}
 
 	@Override
-	public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step)
+	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
+	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(IThrowingFunction<IComponent, T2> step)
 	{
 		return comp.getFeature(IExecutionFeature.class).scheduleAsyncStep(step);
 	}

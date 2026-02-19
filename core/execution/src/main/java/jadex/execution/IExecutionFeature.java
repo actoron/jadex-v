@@ -7,6 +7,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentFeature;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
+import jadex.execution.future.IThreadManagerFactory.IThreadManager;
 import jadex.execution.impl.ExecutionFeature;
 import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
@@ -15,7 +16,7 @@ import jadex.future.ITerminableFuture;
  *  The execution feature controls how and when components execute their steps,
  *  e.g., single-threaded vs parallel steps, real-time vs. simulation time.
  */
-public interface IExecutionFeature extends IComponentFeature
+public interface IExecutionFeature extends IComponentFeature, IThreadManager
 {
 //	/** Constant for unset step level. */
 //	public static final int STEP_PRIORITY_UNSET = -1;
@@ -82,14 +83,16 @@ public interface IExecutionFeature extends IComponentFeature
 	 *  @param step	A step that is executed via the {@link Supplier#get()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public <T> IFuture<T> scheduleAsyncStep(Callable<IFuture<T>> step);
+	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
+	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(Callable<T2> step);
 	
 	/**
 	 *  Schedule a step that provides a result.
 	 *  @param step	A step that is executed via the {@link IThrowingFunction#apply()} method.
 	 *  @return	A future that provides access to the step result, once it is available.
 	 */
-	public <T> IFuture<T> scheduleAsyncStep(IThrowingFunction<IComponent, IFuture<T>> step);
+	// Hack!!! separate arg and return future types as type can't be fetched from lambda leading to class cast exception
+	public <E, T1 extends IFuture<E>, T2 extends IFuture<E>> T1 scheduleAsyncStep(IThrowingFunction<IComponent, T2> step);
 	
 	/**
 	 *  Schedule a step that provides potenitially multiple results.
