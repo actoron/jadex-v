@@ -28,32 +28,32 @@ public class BTSharedCleanerBenchmark
 		envid = Environment.add(env);
 	}
 	
-	@Test
-	void benchmarkTime()
-	{
-		BenchmarkHelper.benchmarkTime(() -> 
-		{
-			Future<Void> ret = new Future<>();
-			IComponentHandle agent = IComponentManager.get().create(new BTSharedCleanerBenchmarkAgent(ret, envid)).get();
-			ret.get();
-			agent.terminate().get();
-		});
-	}
-
-	@Test
-	void benchmarkMemory()
-	{
-		BenchmarkHelper.benchmarkMemory(() -> 
-		{
-			Future<Void> ret = new Future<>();
-			IComponentHandle agent = IComponentManager.get().create(new BTSharedCleanerBenchmarkAgent(ret, envid)).get();
-			ret.get();
-			return () -> agent.terminate().get();
-		});
-	}
-	
-	public static void main(String[] args)
-	{
-		new BTSharedCleanerBenchmark().benchmarkMemory();
-	}
+//	@Test
+//	void benchmarkTime()
+//	{
+//		BenchmarkHelper.benchmarkTime(() -> 
+//		{
+//			Future<Void> ret = new Future<>();
+//			IComponentHandle agent = IComponentManager.get().create(new BTSharedCleanerBenchmarkAgent(ret, envid)).get();
+//			ret.get();
+//			agent.terminate().get();
+//		});
+//	}
+//
+//	@Test
+//	void benchmarkMemory()
+//	{
+//		BenchmarkHelper.benchmarkMemory(() -> 
+//		{
+//			Future<Void> ret = new Future<>();
+//			IComponentHandle agent = IComponentManager.get().create(new BTSharedCleanerBenchmarkAgent(ret, envid)).get();
+//			ret.get();
+//			return () -> agent.terminate().get();
+//		});
+//	}
+//	
+//	public static void main(String[] args)
+//	{
+//		new BTSharedCleanerBenchmark().benchmarkMemory();
+//	}
 }

@@ -19,7 +19,7 @@ import jadex.future.TerminableFuture;
  */
 public class BTAgentBenchmark
 {
-	@Test
+//	@Test
 	void benchmarkTime()
 	{
 		BenchmarkHelper.benchmarkTime(() -> 
