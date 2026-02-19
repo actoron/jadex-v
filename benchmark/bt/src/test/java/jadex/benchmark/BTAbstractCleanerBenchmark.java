@@ -28,7 +28,7 @@ public class BTAbstractCleanerBenchmark
 		CleanerworldEnvironment	pojo	= new CleanerworldEnvironment(fps);
 		env = IComponentManager.get().create(pojo).get();
 		for (int i=0; i<1000; i++)
-			env.getPojoHandle(CleanerworldEnvironment.class).createWorld().get();
+			env.getPojoHandle(CleanerworldEnvironment.class).createWorld();
 //		envid = Environment.add(env.getPojoHandle(CleanerworldEnvironment.class));
 		
 		lsystem = IComponentManager.get().getFeature(ILoggingFeature.class).getSystemLoggingLevel();
