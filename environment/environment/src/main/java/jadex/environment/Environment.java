@@ -88,6 +88,18 @@ public class Environment
 		return environments.get(id);
 	}
 	
+	public static void remove(String id)
+	{
+		if(environments.containsKey(id))
+		{
+			environments.remove(id);
+		}
+		else
+		{
+			System.out.println("environment not found: "+id);
+		}
+	}
+	
 	public Environment() 
 	{
 		this(null, 30);

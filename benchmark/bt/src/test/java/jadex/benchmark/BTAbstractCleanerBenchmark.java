@@ -39,6 +39,7 @@ public class BTAbstractCleanerBenchmark
 	public void afterEach()
 	{
 		env.terminate().get();
+		Environment.remove(envid);
 		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(lsystem);
 		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(lapp);
 	}
