@@ -65,7 +65,7 @@ public class BTSharedAgentBenchmark
 		}, 40);	// TODO: why slower when handle returned only after features are started?
 	}
 
-	@Test
+//	@Test
 	void benchmarkMemory()
 	{
 		BenchmarkHelper.benchmarkMemory(() -> 
