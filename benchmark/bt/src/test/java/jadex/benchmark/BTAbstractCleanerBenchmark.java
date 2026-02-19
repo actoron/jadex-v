@@ -26,8 +26,8 @@ public class BTAbstractCleanerBenchmark
 	{
 		int fps = 0; // steps / frames per second: 0 -> disable steps
 		env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get();
-		env.getPojoHandle(CleanerworldEnvironment.class).createWorld().get();
-		envid = Environment.add(env.getPojoHandle(CleanerworldEnvironment.class));
+//		env.getPojoHandle(CleanerworldEnvironment.class).createWorld().get();
+//		envid = Environment.add(env.getPojoHandle(CleanerworldEnvironment.class));
 		
 //		lsystem = IComponentManager.get().getFeature(ILoggingFeature.class).getSystemLoggingLevel();
 //		lapp = IComponentManager.get().getFeature(ILoggingFeature.class).getAppLogginglevel();
