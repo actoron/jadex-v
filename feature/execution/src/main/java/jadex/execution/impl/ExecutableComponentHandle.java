@@ -216,7 +216,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 		}
 		catch(Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		return null;
 	}
@@ -244,7 +244,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 		}
 		catch(Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		return null;
 	}
