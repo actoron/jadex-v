@@ -12,7 +12,10 @@ public interface ITerminableFuture<E> extends IFuture<E>, IBackwardCommandFuture
 	 *  Terminate the future.
 	 *  The exception will be set to FutureTerminatedException.
 	 */
-	public void terminate();
+	public default void terminate()
+	{
+		terminate(new FutureTerminatedException());
+	}
 	
 	/**
 	 *  Terminate the future and supply a custom reason.
