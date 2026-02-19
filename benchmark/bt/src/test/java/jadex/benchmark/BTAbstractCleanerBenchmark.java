@@ -29,17 +29,17 @@ public class BTAbstractCleanerBenchmark
 		env.getPojoHandle(CleanerworldEnvironment.class).createWorld().get();
 		envid = Environment.add(env.getPojoHandle(CleanerworldEnvironment.class));
 		
-		lsystem = IComponentManager.get().getFeature(ILoggingFeature.class).getSystemLoggingLevel();
-		lapp = IComponentManager.get().getFeature(ILoggingFeature.class).getAppLogginglevel();
-		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(Level.ERROR);
-		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(Level.WARNING);
+//		lsystem = IComponentManager.get().getFeature(ILoggingFeature.class).getSystemLoggingLevel();
+//		lapp = IComponentManager.get().getFeature(ILoggingFeature.class).getAppLogginglevel();
+//		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(Level.ERROR);
+//		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(Level.WARNING);
 	}
 	
 	@AfterEach
 	public void afterEach()
 	{
 		env.terminate().get();
-		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(lsystem);
-		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(lapp);
+//		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(lsystem);
+//		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(lapp);
 	}
 }
