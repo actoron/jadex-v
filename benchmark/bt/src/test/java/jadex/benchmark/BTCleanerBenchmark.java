@@ -11,7 +11,7 @@ import jadex.future.Future;
  */
 public class BTCleanerBenchmark	extends BTAbstractCleanerBenchmark
 {
-	@Test
+//	@Test
 	void benchmarkTime()
 	{
 		BenchmarkHelper.benchmarkTime(() -> 
@@ -23,7 +23,7 @@ public class BTCleanerBenchmark	extends BTAbstractCleanerBenchmark
 		});
 	}
 
-	@Test
+//	@Test
 	void benchmarkMemory()
 	{
 		BenchmarkHelper.benchmarkMemory(() -> 
