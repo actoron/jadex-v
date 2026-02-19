@@ -121,7 +121,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	@Override
 	public <T> IFuture<T> scheduleStep(Callable<T> s)
 	{
-		Future<T> ret = new Future<>();
+		@SuppressWarnings("unchecked")
+		Future<T> ret = LOCAL.get()==this ? new Future<>() :
+			(Future<T>)FutureFunctionality.getDelegationFuture(IFuture.class, new ComponentFutureFunctionality(this));
 		
 		scheduleStep(new StepInfo(() ->
 		{
@@ -181,7 +183,9 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	@Override
 	public <T> IFuture<T> scheduleStep(IThrowingFunction<IComponent, T> step)
 	{
-		Future<T> ret = new Future<>();
+		@SuppressWarnings("unchecked")
+		Future<T> ret = LOCAL.get()==this ? new Future<>() :
+			(Future<T>)FutureFunctionality.getDelegationFuture(IFuture.class, new ComponentFutureFunctionality(this));
 		
 		scheduleStep(new StepInfo(() ->
 		{

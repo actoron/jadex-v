@@ -1253,7 +1253,7 @@ public class ComponentManager implements IComponentManager
 					{
 						public void handleException(Exception exception)
 						{
-							globalrunner.getLogger().log(Level.INFO, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
+							globalrunner.getLogger().log(Level.WARNING, "Exception on global runner: "+SUtil.getExceptionStacktrace(exception));
 						}
 					};
 					comp.init();

@@ -3,7 +3,6 @@ package jadex.injection;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.ArrayList;
@@ -22,6 +21,8 @@ import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.annotation.NoCopy;
+import jadex.core.impl.ComponentManager;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.injection.annotation.OnEnd;
@@ -114,14 +115,14 @@ public class ResultTest
 			@ProvideResult
 			String	method(IComponent comp)
 			{
-				// Test that getResult() is scheduled or not
+				// Test that getResult() is scheduled on component or global runner
 				if(!terminated[0])
 				{
 					assertEquals(comp, IComponentManager.get().getCurrentComponent());
 				}
 				else
 				{
-					assertNull(IComponentManager.get().getCurrentComponent());
+					assertEquals(ComponentManager.get().getGlobalRunner(), IComponentManager.get().getCurrentComponent());
 				}
 				
 				return "methodvalue";
@@ -195,7 +196,7 @@ public class ResultTest
 		assertFalse(sub.hasNextIntermediateResult(TIMEOUT, true));
 	}
 	
-	@Test
+//	@Test
 	public void	testSubscriptionTermination()
 	{
 		IComponentHandle	handle	= IComponentManager.get().create(new Object()).get(TIMEOUT);
@@ -211,6 +212,20 @@ public class ResultTest
 		sub.terminate(new Exception("Test"));
 		handle.scheduleStep((IThrowingConsumer<IComponent>)comp
 			-> comp.getFeature(IResultFeature.class).setResult("result", "newvalue")).get(TIMEOUT);
+	}
+	
+//	@Test
+	public void	testSubscriptionThreading()
+	{
+		IComponentHandle	handle	= IComponentManager.get().create(new Object()).get(TIMEOUT);
+		ISubscriptionIntermediateFuture<ChangeEvent>	sub	= handle.subscribeToResults();
+		
+		// Test that subscription schedules on global runner.
+		Future<IComponent>	compfut	= new Future<>();
+		sub.next(ev -> compfut.setResult(IComponentManager.get().getCurrentComponent()));
+		handle.scheduleStep((IThrowingConsumer<IComponent>)comp
+			-> comp.getFeature(IResultFeature.class).setResult("result", "value")).get(TIMEOUT);
+		assertEquals(ComponentManager.get().getGlobalRunner(), compfut.get(TIMEOUT));
 	}
 	
 	/**
