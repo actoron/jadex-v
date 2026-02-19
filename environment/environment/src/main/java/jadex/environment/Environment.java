@@ -74,7 +74,7 @@ public class Environment
 	{
 		String id = env.getId().get();
 		if(id!=null && environments.get(id)!=null)
-			System.out.println("replacing environment: "+env.getId());
+			System.out.println("replacing environment: "+id);
 		if(id==null)
 			env.setId(""+envcnt.getAndIncrement()).get();
 		id = env.getId().get();
