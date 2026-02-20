@@ -6,7 +6,6 @@ import java.util.Map;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.ComponentManager;
 import jadex.execution.impl.ExecutionFeature;
-import jadex.future.ThreadLocalTransferHelper;
 
 
 /**
@@ -33,13 +32,6 @@ public class ServiceCall
 	
 	/** The upcoming service invocations. */
 	protected static final ThreadLocal<ServiceCall> LAST = new ThreadLocal<ServiceCall>();
-	
-	static
-	{
-		ThreadLocalTransferHelper.addThreadLocal(CURRENT);
-		ThreadLocalTransferHelper.addThreadLocal(NEXT);
-		ThreadLocalTransferHelper.addThreadLocal(LAST);
-	}
 	
 	//-------- attributes --------
 	
