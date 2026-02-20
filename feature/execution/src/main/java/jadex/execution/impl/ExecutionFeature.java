@@ -115,7 +115,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public <T> IFuture<T> scheduleStep(Callable<T> step)
 	{
 		Future<T> ret = createStepFuture(step, true);
-		Exception stack	= SUtil.DEBUG ? new RuntimeException() : null;
+		Exception debug	= SUtil.DEBUG ? new UnsupportedOperationException("Use scheduleAsyncStep for steps returning futures: "+step) : null;
 		
 		scheduleStep(new StepInfo(() ->
 		{
@@ -124,8 +124,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				T res = step.call();
 				if(res instanceof IFuture)
 				{
-					throw new UnsupportedOperationException("Use scheduleAsyncStep for steps returning futures: "+step,
-						stack!=null ? stack : new RuntimeException("Set SUtil.DEBUG to true for caller stack trace."));
+					throw debug!=null ? debug : new UnsupportedOperationException("Use scheduleAsyncStep for steps returning futures: "+step
+						+"\n\tSet 'jadex.common.SUtil.DEBUG=true;' for caller stack trace.");
 				}
 				ret.setResult(res);
 			}

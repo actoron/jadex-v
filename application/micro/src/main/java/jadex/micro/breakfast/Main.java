@@ -21,7 +21,6 @@ public class Main
 		// Synchronous (i.e. blocking) lambda agent.
 		IFuture<String> eggs = IComponentManager.get().run(agent ->
 		{
-			// boil eggs
 			agent.getFeature(IExecutionFeature.class).waitForDelay(5000).get();
 			System.out.println("Eggs ready");
 			return "Eggs ready";
@@ -30,6 +29,7 @@ public class Main
 		// Asynchronous lambda agent.
 		IFuture<String>	bacon	= IComponentManager.get().runAsync(agent ->
 			agent.getFeature(IExecutionFeature.class)
+				// 
 				.waitForDelay(7000)
 				.thenApply(done -> "Bacon ready")
 				.then(System.out::println));
