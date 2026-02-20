@@ -29,7 +29,6 @@ public class Main
 		// Asynchronous lambda agent.
 		IFuture<String>	bacon	= IComponentManager.get().runAsync(agent ->
 			agent.getFeature(IExecutionFeature.class)
-				// 
 				.waitForDelay(7000)
 				.thenApply(done -> "Bacon ready")
 				.then(System.out::println));
