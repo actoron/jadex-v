@@ -105,7 +105,7 @@ public class FreeLlmAgent implements ILlmService
     {
         IComponentManager.get().create(new FreeLlmAgent()).get();
         IComponentManager.get().getFeature(ILlmFeature.class)
-            .handle("What is the capital of France?")
+            .handleToolCall("What is the capital of France?")
             .then(answer -> 
             {
                 System.out.println("Final answer: " + answer);

@@ -315,6 +315,22 @@ public class PublishJsonSerializer implements IStringConverter
 		//System.out.println("json: "+ret);
 		return ret;
 	}
+
+	/**
+	 *  Convert an object to a string.
+	 *  @param val The object.
+	 *  @param type The encoding type.
+	 *  @param context The context.
+	 *  @return The object.
+	 */
+	public String convertObject(Object val, Class<?> type, ClassLoader cl, Object context, boolean writeclass, boolean writeid)
+	{
+		// does not use type currently?!
+		String ret = JsonTraverser.objectToString(val, cl, writeclass, writeid, null, null, writeprocs, context, converter);
+		//if((""+val).indexOf("ChatEvent")!=-1)
+		//System.out.println("json: "+ret);
+		return ret;
+	}
 	
 	/**
 	 *  Get the type of string that can be processed (xml, json, plain).

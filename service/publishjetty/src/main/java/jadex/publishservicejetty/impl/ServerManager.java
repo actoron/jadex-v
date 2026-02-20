@@ -439,9 +439,29 @@ public class ServerManager
 		String[] vars = findVariables(id);
 		for(String var: vars)
 		{
-			String val = ""+component.getValueProvider().getFetcher().fetchValue(var);
-			id = id.replace("${"+var+"}", val);
-		}
+            try
+            {
+			    String val = ""+component.getValueProvider().getFetcher().fetchValue(var);
+			    id = id.replace("${"+var+"}", val);
+            }
+            catch(Exception e)
+            {
+                if("host".equals(var))
+                {
+                   id = id.replace("${"+var+"}", "localhost");
+                }
+                else if("port".equals(var))
+                {
+                   id = id.replace("${"+var+"}", "8080");
+                }
+                else
+                {
+                    //System.err.println("Failed to fetch value for variable: "+var+" in publish id: "+id);
+                    //e.printStackTrace();
+                    SUtil.rethrowAsUnchecked(e);
+                }
+            }
+        }
 		
 		return id;
 	}

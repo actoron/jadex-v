@@ -1,6 +1,7 @@
 package jadex.llm;
 
 import java.util.Collection;
+import java.util.Map;
 
 import jadex.future.IFuture;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -9,7 +10,63 @@ import jadex.future.Future;
 
 public class LlmFeature implements ILlmFeature
 {
-    public IFuture<String> handle(String input)
+    public IFuture<String> handleInput(String input)
+    {
+        // todo!!!
+
+        Future<String> ret = new Future<>();
+
+        LambdaAgent.create(agent -> 
+        {
+            Collection<ILlmService> services = agent.getFeature(IRequiredServiceFeature.class).getLocalServices(ILlmService.class);
+            if(services.isEmpty())
+            {
+                ret.setException(new RuntimeException("No LLM services available"));
+                agent.terminate();
+                return;
+            }
+
+            // select small llm 
+
+            // ask llm if it is a question or a command
+
+            // delegate to question or command handler
+
+            agent.terminate();
+        });
+
+        return ret;
+    }
+
+    public IFuture<String> handleChatQuestion(String input)
+    {
+        Future<String> ret = new Future<>();
+
+        LambdaAgent.create(agent -> 
+        {
+            ILlmService llm = agent.getFeature(IRequiredServiceFeature.class)
+                .getLocalService(ILlmService.class);
+            if (llm == null) 
+            {
+                ret.setException(new RuntimeException("No LLM service available"));
+                return;
+            }
+
+            IFuture<String> res = llm.callLlm(input);
+            res.then(answer -> 
+            {
+                agent.terminate();
+            }).catchEx(e -> 
+            {
+                agent.terminate();
+            });
+            res.delegateTo(ret);
+        });
+
+        return ret;
+    }
+
+    public IFuture<String> handleToolCall(String input)
     {
         Future<String> ret = new Future<>();
 
@@ -22,7 +79,7 @@ public class LlmFeature implements ILlmFeature
                 return;
             }
 
-            IFuture<String> res = mcp.handle(input);
+            IFuture<String> res = mcp.handleToolCall(input);
             res.then(answer -> 
             {
                 agent.terminate();
@@ -50,9 +107,9 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public IFuture<Collection<ToolSchema>> listTools()
+    public IFuture<Collection<McpToolSchema>> listTools()
     {
-        Future<Collection<ToolSchema>> ret = new Future<>();
+        Future<Collection<McpToolSchema>> ret = new Future<>();
 
         LambdaAgent.create(agent -> 
         {
@@ -63,7 +120,7 @@ public class LlmFeature implements ILlmFeature
                 return;
             }
 
-            IFuture<Collection<ToolSchema>> res = mcp.listTools();
+            IFuture<Collection<McpToolSchema>> res = mcp.listTools();
             res.then(answer -> 
             {
                 agent.terminate();
@@ -92,7 +149,7 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public IFuture<Void> addTool(ToolSchema tool)
+    public IFuture<Void> addTool(McpToolSchema tool)
     {
         Future<Void> ret = new Future<>();
 
@@ -174,9 +231,9 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public IFuture<ToolSchema> getTool(String name)
+    public IFuture<McpToolSchema> getTool(String name)
     {
-        Future<ToolSchema> ret = new Future<>();
+        Future<McpToolSchema> ret = new Future<>();
 
          LambdaAgent.create(agent -> 
         {
@@ -187,7 +244,7 @@ public class LlmFeature implements ILlmFeature
                 return;
             }
 
-            IFuture<ToolSchema> res = mcp.getTool(name);
+            IFuture<McpToolSchema> res = mcp.getTool(name);
             res.then(answer -> 
             {
                 agent.terminate();
@@ -215,9 +272,9 @@ public class LlmFeature implements ILlmFeature
     }
 
     @Override
-    public IFuture<String> invokeTool(String toolname, String argsstr) 
+    public IFuture<McpToolResult> invokeTool(String toolname, Map<String, Object> args) 
     {
-        Future<String> ret = new Future<>();
+        Future<McpToolResult> ret = new Future<>();
 
         LambdaAgent.create(agent -> 
         {
@@ -228,7 +285,7 @@ public class LlmFeature implements ILlmFeature
                 return;
             }
 
-            IFuture<String> res = mcp.invokeTool(toolname, argsstr);
+            IFuture<McpToolResult> res = mcp.invokeTool(toolname, args);
             res.then(answer -> 
             {
                 agent.terminate();

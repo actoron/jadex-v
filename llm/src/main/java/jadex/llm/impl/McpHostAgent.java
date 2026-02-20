@@ -1,6 +1,7 @@
 package jadex.llm.impl;
 
 import java.util.Collection;
+import java.util.Map;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
@@ -14,7 +15,9 @@ import jadex.injection.annotation.Inject;
 import jadex.llm.ILlmService;
 import jadex.llm.IMcpClientService;
 import jadex.llm.IMcpHostService;
-import jadex.llm.ToolSchema;
+import jadex.llm.McpToolResult;
+import jadex.llm.McpToolSchema;
+import jadex.llm.jsonmapping.JsonMapper;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 public class McpHostAgent implements IMcpHostService, IDaemonComponent
@@ -26,123 +29,142 @@ public class McpHostAgent implements IMcpHostService, IDaemonComponent
     {
     } 
 
-    public IFuture<String> handle(String input) 
-{
-    Future<String> ret = new Future<>();
-
-    IMcpClientService mcp = agent.getFeature(IRequiredServiceFeature.class)
-                                .getLocalService(IMcpClientService.class);
-    if (mcp == null) {
-        ret.setException(new RuntimeException("No MCP Client service available"));
-        return ret;
-    }
-
-    ILlmService llm = agent.getFeature(IRequiredServiceFeature.class)
-                            .getLocalService(ILlmService.class);
-    if (llm == null) {
-        ret.setException(new RuntimeException("No LLM service available"));
-        return ret;
-    }
-
-    Collection<ToolSchema> tools;
-    try {
-        tools = mcp.listTools().get();
-    } catch (Exception e) {
-        ret.setException(new RuntimeException("Failed to list MCP tools", e));
-        return ret;
-    }
-
-    String baseprompt = buildPrompt(input, tools);
-    String prompt = baseprompt;
-    int cnt = 0;
-
-    while (true) 
+    public IFuture<String> handleToolCall(String input) 
     {
-        System.out.println("Prompt:\n" + prompt);
+        Future<String> ret = new Future<>();
 
-        System.out.println("Call LLM: " + cnt++);
-        String raw;
-        try {
-            raw = llm.callLlm(prompt).get();
-        } catch (Exception e) {
-            ret.setException(new RuntimeException("LLM call failed", e));
+        IMcpClientService mcp = agent.getFeature(IRequiredServiceFeature.class)
+            .getLocalService(IMcpClientService.class);
+        if (mcp == null) 
+        {
+            ret.setException(new RuntimeException("No MCP Client service available"));
             return ret;
         }
 
-        System.out.println("LLM returned:\n" + raw);
-
-        // --- 1️⃣ JSON im Text extrahieren ---
-        String jsonText = null;
-        int idx = raw.indexOf("{\"type\":\"final\"");
-        if (idx != -1) {
-            jsonText = raw.substring(idx).trim();
-        } else {
-            idx = raw.indexOf("{\"type\":\"tool_call\"");
-            if (idx != -1) {
-                jsonText = raw.substring(idx).trim();
-            }
+        ILlmService llm = agent.getFeature(IRequiredServiceFeature.class)
+            .getLocalService(ILlmService.class);
+        if (llm == null) 
+        {
+            ret.setException(new RuntimeException("No LLM service available"));
+            return ret;
         }
 
-        if (jsonText == null) {
-            // Kein parsebares JSON gefunden → Rohtext zurückgeben
-            System.out.println("Kein LLM JSON gefunden, returning raw text.");
-            ret.setResult(raw);
-            break;
+        Collection<McpToolSchema> tools;
+        try 
+        {
+            tools = mcp.listTools().get();
+        } 
+        catch (Exception e) 
+        {
+            ret.setException(new RuntimeException("Failed to list MCP tools", e));
+            return ret;
         }
 
-        // --- 2️⃣ JSON parsen ---
-        JsonObject out = null;
-        try {
-            out = Json.parse(jsonText).asObject();
-        } catch (Exception e) {
-            System.out.println("Fehler beim Parsen von JSON: " + e.getMessage());
-            ret.setResult(raw); // Fallback auf Rohtext
-            break;
-        }
+        String baseprompt = buildPrompt(input, tools);
+        String prompt = baseprompt;
 
-        String type = out.getString("type", "final");
-        System.out.println("Parsed type: " + out);
+        int maxIterations = 8;
+        int iteration = 0;
 
-        if ("final".equals(type)) {
-            ret.setResult(out.getString("answer", raw));
-            break;
-        } else if ("tool_call".equals(type)) {
-            String tool = out.getString("name", null);
-            JsonObject args = null;
-            try {
-                args = out.get("args").asObject();
-            } catch (Exception e) {
-                System.out.println("Tool args not valid JSON: " + e.getMessage());
-                ret.setResult(raw); // Fallback
-                break;
+        while (iteration++ < maxIterations) 
+        {
+            System.out.println("Prompt:\n" + prompt);
+            System.out.println("Call LLM: " + iteration);
+
+            String raw;
+            try 
+            {
+                raw = llm.callLlm(prompt).get();
+            } 
+            catch (Exception e) 
+            {
+                ret.setException(new RuntimeException("LLM call failed", e));
+                return ret;
             }
 
-            try {
-                String resultstr = mcp.invokeTool(tool, args.toString()).get();
-                JsonValue result = null;
-                try {
-                    result = Json.parse(resultstr);
-                } catch (Exception e) {
-                    System.out.println("Tool result not valid JSON: " + e.getMessage());
-                    result = null;
+            System.out.println("LLM returned:\n" + raw);
+
+            // clean response (handle code blocks, trim, etc.)
+            String cleaned = raw.trim();
+
+            if (cleaned.startsWith("```"))
+            {
+                int firstBrace = cleaned.indexOf("{");
+                int lastBrace = cleaned.lastIndexOf("}");
+                if (firstBrace != -1 && lastBrace != -1)
+                    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+            }
+
+            JsonObject out;
+            try
+            {
+                out = Json.parse(cleaned).asObject();
+            }
+            catch (Exception e)
+            {
+                System.out.println("Error parsing JSON: " + e.getMessage());
+                ret.setResult(raw);
+                return ret;
+            }
+
+            String type = out.getString("type", "final");
+            System.out.println("Parsed JSON: " + out);
+
+            // fetch final answer
+            if ("final".equals(type)) 
+            {
+                ret.setResult(out.getString("answer", raw));
+                return ret;
+            }
+
+            // fetch tool call
+            if ("tool_call".equals(type)) 
+            {
+                String tool = out.getString("name", null);
+                if (tool == null)
+                {
+                    ret.setResult(raw);
+                    return ret;
                 }
 
-                prompt = buildFollowupPrompt(baseprompt, result);
-            } catch (Exception e) {
-                System.out.println("Tool invocation failed: " + e.getMessage());
-                ret.setResult(raw);
-                break;
-            }
-        } else {
-            // Unbekannter Typ → fallback
-            System.out.println("Unknown type: " + type + ", returning raw.");
-            ret.setResult(raw);
-            break;
-        }
-    }
+                JsonObject args = null;
+                try
+                {
+                    args = out.get("args").asObject();
+                }
+                catch (Exception e)
+                {
+                    System.out.println("Tool args not valid JSON: " + e.getMessage());
+                    ret.setResult(raw);
+                    return ret;
+                }
 
-    return ret;
-}
+                try 
+                {
+                    Map<String, Object> argsmap = JsonMapper.convertJsonObjectToMap(args);
+
+                    McpToolResult result =mcp.invokeTool(tool, argsmap).get();
+
+                    prompt = buildFollowupPrompt(baseprompt, result);
+                }
+                catch (Exception e) 
+                {
+                    System.out.println("Tool invocation failed: " + e.getMessage());
+                    ret.setResult(raw);
+                    return ret;
+                }
+            }
+            else
+            {
+                // Unknown type
+                ret.setResult(raw);
+                return ret;
+            }
+        }
+
+        ret.setException(new RuntimeException("Max tool iterations reached"));
+        return ret;
+    }
 
     //@ComponentMethod
     /*public IFuture<String> handle(String input) 
@@ -206,7 +228,7 @@ public class McpHostAgent implements IMcpHostService, IDaemonComponent
         return ret;
     }*/
 
-    protected String buildPrompt(String user, Collection<ToolSchema> tools) 
+    protected String buildPrompt(String user, Collection<McpToolSchema> tools) 
     {
         StringBuilder sb = new StringBuilder();
 
@@ -232,7 +254,7 @@ public class McpHostAgent implements IMcpHostService, IDaemonComponent
 
         sb.append("You have these tools:\n");
 
-        for (ToolSchema t : tools) 
+        for (McpToolSchema t : tools) 
         {
             sb.append("- ").append(t.name()).append(": ").append(t.description()).append("\n");
             sb.append("  input: ").append(t.inputSchema().toString()).append("\n");
@@ -260,8 +282,10 @@ public class McpHostAgent implements IMcpHostService, IDaemonComponent
         return sb.toString();
     }
 
-    protected String buildFollowupPrompt(String baseprompt, JsonValue result) 
+    protected String buildFollowupPrompt(String baseprompt, McpToolResult result) 
     {
+        JsonValue json = JsonMapper.toJsonObject(result);
+
         return """
         %s
 
@@ -269,7 +293,7 @@ public class McpHostAgent implements IMcpHostService, IDaemonComponent
         %s
 
         Continue. Return ONLY JSON in the same format.
-        """.formatted(baseprompt, result.toString());
+        """.formatted(baseprompt, json.toString());
     }
 }
 

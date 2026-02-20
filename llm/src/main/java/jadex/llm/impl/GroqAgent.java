@@ -55,7 +55,8 @@ public class GroqAgent implements ILlmService
      
         llm = OpenAiChatModel.builder()
             .apiKey(apikey)
-            .baseUrl("https://api.groq.com/openai/v1")
+            //.baseUrl("https://api.groq.com/openai/v1")
+            .baseUrl("https://api.x.ai/v1/chat/completions")
             .modelName(model) 
             .build();
 
@@ -71,7 +72,7 @@ public class GroqAgent implements ILlmService
 	{
 		IComponentHandle llm = IComponentManager.get().create(new GroqAgent()).get();
         IComponentManager.get().getFeature(ILlmFeature.class)
-            .handle("What is the capital of France?")
+            .handleToolCall("What is the capital of France?")
             .then(answer -> 
             {
                 System.out.println("Final answer: " + answer);

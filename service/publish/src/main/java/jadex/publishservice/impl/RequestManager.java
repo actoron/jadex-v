@@ -866,6 +866,22 @@ public class RequestManager
 				//	System.out.println("INVOKE: " + methodname);
 				
 				Collection<MappingInfo> mis = pm!=null? pm.getElementsForPath(methodname): new ArrayList<MappingInfo>();
+
+				// try to find with full path instead of method name
+				if(mis==null || mis.size()==0)
+				{
+					String path = request.getRequestURI(); 
+					String query = request.getQueryString(); 
+
+					if (path.startsWith("/")) 
+						path = path.substring(1);
+
+					if (query != null && !query.isEmpty()) 
+						path += "?" + query;
+
+					System.out.println(path);
+					mis = pm!=null? pm.getElementsForPath(path): new ArrayList<MappingInfo>();
+				}
 				
 				List<Map<String, String>> bindings = mis.stream().map(x -> pm.getBindingsForPath(fmn)).collect(Collectors.toList());
 
