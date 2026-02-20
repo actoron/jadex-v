@@ -14,14 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
 import jadex.common.Tuple2;
 import jadex.core.IComponent;
 import jadex.core.impl.IDaemonComponent;
-import jadex.execution.LambdaAgent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;

@@ -18,7 +18,7 @@ public class LlmFeature implements ILlmFeature
 
         Future<String> ret = new Future<>();
 
-        LambdaAgent.create(agent -> 
+        IComponentManager.get().create((IThrowingConsumer<IComponent>)agent -> 
         {
             Collection<ILlmService> services = agent.getFeature(IRequiredServiceFeature.class).getLocalServices(ILlmService.class);
             if(services.isEmpty())
@@ -44,7 +44,7 @@ public class LlmFeature implements ILlmFeature
     {
         Future<String> ret = new Future<>();
 
-        LambdaAgent.create(agent -> 
+        IComponentManager.get().create((IThrowingConsumer<IComponent>)agent -> 
         {
             ILlmService llm = agent.getFeature(IRequiredServiceFeature.class)
                 .getLocalService(ILlmService.class);
