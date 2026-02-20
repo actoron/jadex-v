@@ -18,6 +18,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import jadex.common.ErrorException;
 import jadex.common.SReflect;
 import jadex.common.SUtil;
 import jadex.common.TimeoutException;
@@ -114,7 +115,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	public <T> IFuture<T> scheduleStep(Callable<T> step)
 	{
 		Future<T> ret = createStepFuture(step, true);
-		Exception stack	= SUtil.DEBUG ? new RuntimeException() : null;
+		Exception debug	= SUtil.DEBUG ? new UnsupportedOperationException("Use scheduleAsyncStep for steps returning futures: "+step) : null;
 		
 		scheduleStep(new StepInfo(() ->
 		{
@@ -123,8 +124,8 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 				T res = step.call();
 				if(res instanceof IFuture)
 				{
-					throw new UnsupportedOperationException("Use scheduleAsyncStep for steps returning futures: "+step,
-						stack!=null ? stack : new RuntimeException("Set SUtil.DEBUG to true for caller stack trace."));
+					throw debug!=null ? debug : new UnsupportedOperationException("Use scheduleAsyncStep for steps returning futures: "+step
+						+"\n\tSet 'jadex.common.SUtil.DEBUG=true;' for caller stack trace.");
 				}
 				ret.setResult(res);
 			}
@@ -258,21 +259,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		}
 		else
 		{
-			AnnotatedType	type	= null;
-			if(step instanceof ICallable)
-			{
-				type	= ((ICallable<?>) step).getReturnType();
-			}
-			else if(step instanceof IThrowingFunction)
-			{
-				type	= ((IThrowingFunction<?, ?>) step).getReturnType();
-			}
-			
-			// Default implementation of throwing function gives null type
-			if(type==null)
-			{
-				type = getReturnType(step.getClass());
-			}
+			AnnotatedType	type	= getReturnType(step);
 			
 			@SuppressWarnings("unchecked")
 			Future<T>	ret	= (Future<T>)FutureFunctionality.getDelegationFuture(type==null ? Object.class : SReflect.getRawClass(type.getType()),
@@ -368,7 +355,6 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 					{
 						exe.entries.remove(WaitTask.this);
 						// Check for null -> cancel() might run interleaved
-						Future<?>	future	= this.future;
 						if(future!=null)
 						{
 							future.setResultIfUndone(null);
@@ -880,7 +866,7 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 		else
 		{
 			boolean handled	= false;
-			Exception ex	= t instanceof Exception ? (Exception) t : new RuntimeException("Error in step", t);
+			Exception ex	= t instanceof Exception ? (Exception) t : new ErrorException((Error) t);
 			
 			if(ret!=null)
 			{
@@ -954,69 +940,90 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 	protected static Map<Class<?>, AnnotatedType>	RETURNTYPE	= new LinkedHashMap<>();
 	
 	/**
-	 *  Get return type from pojo method.
+	 *  Get return type from pojo method, i.e. {@link Callable} or {@link IThrowingFunction}.
 	 */
-	protected static AnnotatedType	getReturnType(Class<?> pojoclazz)
+	protected static AnnotatedType	getReturnType(Object step)
 	{
-		synchronized (RETURNTYPE)
+		// Check instance level first
+		AnnotatedType	type	= null;
+		if(step instanceof ICallable)
 		{
-			if(!RETURNTYPE.containsKey(pojoclazz))
+			type	= ((ICallable<?>) step).getReturnType();
+		}
+		else if(step instanceof IThrowingFunction)
+		{
+			type	= ((IThrowingFunction<?, ?>) step).getReturnType();
+		}
+		
+		// Not found on instance level -> check method and cache result for future use.
+		if(type==null)
+		{
+			Class<?>	pojoclazz	= step.getClass();
+			synchronized (RETURNTYPE)
 			{
-				Method	m	= null;
-				
-				if(SReflect.isSupertype(INoCopyStep.class, pojoclazz))
+				if(RETURNTYPE.containsKey(pojoclazz))
 				{
-					try
-					{
-						m	= INoCopyStep.class.getMethod("apply", IComponent.class);
-					}
-					catch(Exception e)
-					{
-						// Should not happen
-						SUtil.throwUnchecked(e);
-					}
+					type	= RETURNTYPE.get(pojoclazz);
 				}
-				else if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
+				else
 				{
-					// Can be also explicitly declared with component type or just implicit (lambda) as object type
-					try
-					{
-						m	= pojoclazz.getMethod("apply", IComponent.class);
-					}
-					catch(Exception e)
+					Method	m	= null;
+					
+					if(SReflect.isSupertype(INoCopyStep.class, pojoclazz))
 					{
 						try
 						{
-							m	= pojoclazz.getMethod("apply", Object.class);
+							m	= INoCopyStep.class.getMethod("apply", IComponent.class);
 						}
-						catch(Exception e2)
+						catch(Exception e)
+						{
+							// Should not happen
+							SUtil.throwUnchecked(e);
+						}
+					}
+					else if(SReflect.isSupertype(IThrowingFunction.class, pojoclazz))
+					{
+						// Can be also explicitly declared with component type or just implicit (lambda) as object type
+						try
+						{
+							m	= pojoclazz.getMethod("apply", IComponent.class);
+						}
+						catch(Exception e)
+						{
+							try
+							{
+								m	= pojoclazz.getMethod("apply", Object.class);
+							}
+							catch(Exception e2)
+							{
+							}
+						}
+					}
+					else	// Callable
+					{
+						try
+						{
+							m	= pojoclazz.getMethod("call");
+						}
+						catch(Exception e)
 						{
 						}
 					}
+					
+					type	= m!=null ? m.getAnnotatedReturnType() : null;
+					RETURNTYPE.put(pojoclazz, type);
 				}
-				else	// Callable
-				{
-					try
-					{
-						m	= pojoclazz.getMethod("call");
-					}
-					catch(Exception e)
-					{
-					}
-				}
-				
-				RETURNTYPE.put(pojoclazz, m!=null ? m.getAnnotatedReturnType() : null);
 			}
-			return RETURNTYPE.get(pojoclazz);
 		}
+		return type;
 	}
 	
 	/**
 	 *  Get annotations, if any, from pojo method return type.
 	 */
-	public static Annotation[]	getReturnAnnotations(Class<?> pojoclazz)
+	public static Annotation[]	getReturnAnnotations(Object pojo)
 	{
-		AnnotatedType	atype	= getReturnType(pojoclazz);
+		AnnotatedType	atype	= getReturnType(pojo);
 		return atype!=null ? atype.getAnnotations() : null;
 	}
 }

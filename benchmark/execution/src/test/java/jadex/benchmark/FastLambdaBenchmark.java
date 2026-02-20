@@ -6,7 +6,6 @@ import jadex.core.IComponent;
 import jadex.core.INoCopyStep;
 import jadex.core.impl.Component;
 import jadex.execution.impl.FastLambda;
-import jadex.future.Future;
 import jadex.future.IFuture;
 
 /**
@@ -30,9 +29,9 @@ public class FastLambdaBenchmark
 			BenchmarkHelper.benchmarkMemory(() -> 
 			{
 				// No handle is returned when creating fast lambdas, so we need to use a Future to get the handle.
-				Future<IComponent>	res	= new Future<>();
-				Component.createComponent(new FastLambda<>((INoCopyStep<IComponent>) comp -> comp, null, null, res));
-				IComponent	thecomp	= res.get();
+				FastLambda<IComponent>	res	= new FastLambda<>((INoCopyStep<IComponent>)comp -> comp, null, null, false);
+				Component.createComponent(res);
+				IComponent	thecomp	= res.getResultFuture().get();
 				return () -> thecomp.getComponentHandle().terminate().get();
 			});
 		}

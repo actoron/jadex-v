@@ -3,6 +3,7 @@ package jadex.bt.state;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,20 +17,18 @@ import jadex.bt.nodes.Node;
 import jadex.bt.nodes.Node.NodeState;
 import jadex.common.ITriFunction;
 import jadex.common.Tuple2;
-import jadex.core.ChangeEvent;
+import jadex.core.IChangeListener;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.IChangeListener;
 import jadex.execution.ITimerCreator;
 import jadex.execution.impl.ITimerContext;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.injection.IInjectionFeature;
 
 
 public class ExecutionContext<T> implements ITimerContext
 {	
-	protected Map<Node<T>, NodeContext<T>> nodestates = new HashMap<Node<T>, NodeContext<T>>();
+	protected Map<Node<T>, NodeContext<T>> nodestates = new HashMap<Node<T>, NodeContext<T>>(4);
 
 	protected T context;
 	
@@ -41,7 +40,7 @@ public class ExecutionContext<T> implements ITimerContext
 	
 	protected Map<String, Object> values;
 
-	protected Map<String, List<INodeListener<T>>> listeners = new HashMap<>();
+	protected Map<String, List<INodeListener<T>>> listeners;
 
 	public ExecutionContext(Node<T> root)
 	{
@@ -163,7 +162,7 @@ public class ExecutionContext<T> implements ITimerContext
 		rootcall = null;
 		nodestates.clear();
 		values = null;
-		listeners.clear();
+		listeners	= null;
 		createNodeContexts(root);
 	}
 	
@@ -274,6 +273,8 @@ public class ExecutionContext<T> implements ITimerContext
 
 	public void addNodeListener(String nodename, INodeListener<T> listener) 
     {
+		if(listeners==null)
+			listeners	= new LinkedHashMap<>(2);
 		if(listeners.get(nodename)==null)
 			listeners.put(nodename, new ArrayList<>());
 		List<INodeListener<T>> lst = listeners.get(nodename);
@@ -282,9 +283,12 @@ public class ExecutionContext<T> implements ITimerContext
 
     public void removeNodeListener(String nodename, INodeListener<T> listener) 
     {
-		List<INodeListener<T>> lst = listeners.get(nodename);
-		if(lst!=null)
-        	lst.remove(listener);
+    	if(listeners!=null)
+    	{
+			List<INodeListener<T>> lst = listeners.get(nodename);
+			if(lst!=null)
+	        	lst.remove(listener);
+    	}
     }
 
 	public void notifyFinished(Node<T> node, NodeState state)

@@ -3,10 +3,12 @@ package jadex.llm;
 import java.util.Collection;
 import java.util.Map;
 
+import jadex.core.IComponent;
+import jadex.core.IComponentManager;
+import jadex.core.IThrowingConsumer;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.execution.LambdaAgent;
-import jadex.future.Future;
 
 public class LlmFeature implements ILlmFeature
 {
@@ -70,7 +72,7 @@ public class LlmFeature implements ILlmFeature
     {
         Future<String> ret = new Future<>();
 
-        LambdaAgent.create(agent -> 
+        IComponentManager.get().create((IThrowingConsumer<IComponent>)agent -> 
         {
             IMcpHostService mcp = agent.getFeature(IRequiredServiceFeature.class).getLocalService(IMcpHostService.class);
             if(mcp==null)
@@ -111,7 +113,7 @@ public class LlmFeature implements ILlmFeature
     {
         Future<Collection<McpToolSchema>> ret = new Future<>();
 
-        LambdaAgent.create(agent -> 
+        IComponentManager.get().create((IThrowingConsumer<IComponent>)agent -> 
         {
             IMcpClientService mcp = agent.getFeature(IRequiredServiceFeature.class).getLocalService(IMcpClientService.class);
             if(mcp==null)
@@ -153,7 +155,7 @@ public class LlmFeature implements ILlmFeature
     {
         Future<Void> ret = new Future<>();
 
-        LambdaAgent.create(agent -> 
+        IComponentManager.get().create((IThrowingConsumer<IComponent>)agent -> 
         {
             IMcpClientService mcp = agent.getFeature(IRequiredServiceFeature.class).getLocalService(IMcpClientService.class);
             if(mcp==null)
@@ -194,7 +196,7 @@ public class LlmFeature implements ILlmFeature
     {
         Future<Boolean> ret = new Future<>();
 
-        LambdaAgent.create(agent -> 
+        IComponentManager.get().create((IThrowingConsumer<IComponent>)agent -> 
         {
             IMcpClientService mcp = agent.getFeature(IRequiredServiceFeature.class).getLocalService(IMcpClientService.class);
             if(mcp==null)
@@ -235,7 +237,7 @@ public class LlmFeature implements ILlmFeature
     {
         Future<McpToolSchema> ret = new Future<>();
 
-         LambdaAgent.create(agent -> 
+        IComponentManager.get().create((IThrowingConsumer<IComponent>)agent -> 
         {
             IMcpClientService mcp = agent.getFeature(IRequiredServiceFeature.class).getLocalService(IMcpClientService.class);
             if(mcp==null)
@@ -276,7 +278,7 @@ public class LlmFeature implements ILlmFeature
     {
         Future<McpToolResult> ret = new Future<>();
 
-        LambdaAgent.create(agent -> 
+        IComponentManager.get().create((IThrowingConsumer<IComponent>)agent -> 
         {
             IMcpClientService mcp = agent.getFeature(IRequiredServiceFeature.class).getLocalService(IMcpClientService.class);
             if(mcp==null)

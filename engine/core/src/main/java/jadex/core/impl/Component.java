@@ -109,26 +109,28 @@ public class Component implements IComponent
 			try
 			{
 				features = new LinkedHashMap<>(providers.size(), 1);
+				List<ILifecycle>	to_be_inited	= new ArrayList<>(providers.size());
 				for(ComponentFeatureProvider<IComponentFeature> provider: providers)
 				{
 					if(!provider.isLazyFeature())
 					{
 						IComponentFeature	feature	= provider.createFeatureInstance(this);
 						features.put(provider.getFeatureType(), feature);
+						
+						// Initialize non-lazy features that implement ILifecycle.
+						// Use separate to avoid concurrent modification
+						// when some feature init depends on another lazy feature
+						if(feature instanceof ILifecycle)
+						{
+							to_be_inited.add((ILifecycle) feature);
+						}
 					}
 				}
 
-				// Initialize all features, i.e. non-lazy ones that implement ILifecycle.
-				// Use toArray() to avoid concurrent modification
-				// when some feature init depends on another lazy feature
-				for(Object feature:	getFeatures().toArray())
+				for(ILifecycle lfeature: to_be_inited)
 				{
-					if(feature instanceof ILifecycle)
-					{
-						ILifecycle lfeature = (ILifecycle)feature;
-						//System.out.println("starting: "+lfeature);
-						lfeature.init();
-					}
+					//System.out.println("starting: "+lfeature);
+					lfeature.init();
 				}
 			}
 			catch(Throwable t)

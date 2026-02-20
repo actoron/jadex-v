@@ -3,7 +3,7 @@ package jadex.execution.impl;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.Component;
-import jadex.future.Future;
+import jadex.future.IFuture;
 
 /**
  *  Marker class for Lambda Agent optimizations when started with run(),
@@ -15,12 +15,39 @@ public class FastLambda<T>	extends Component
 	// Set to true for memory benchmarking
 	public static boolean	KEEPALIVE	= false;
 	
-	/** The future to set the result on, if any. */
-	protected Future<T>	result;
+	/** The future result of the lambda step. */
+	private IFuture<T>	result;
 	
-	public FastLambda(Object body, ComponentIdentifier cid, Application app, Future<T> result)
+	/** The async flag. */
+	private boolean		async;
+
+	/** 	 *  Create a new fast lambda agent. 	 */
+	public FastLambda(Object body, ComponentIdentifier cid, Application app, boolean async)
 	{
 		super(body, cid, app);
+		this.async	= async;
+	}
+
+	/**
+	 *  Get the future result of the lambda step.	 */
+	public IFuture<T> getResultFuture()
+	{
+		return result;
+	}
+	
+	/**
+	 *  Set the future result of the lambda step.
+	 */
+	public void setResultFuture(IFuture<T> result)
+	{
 		this.result	= result;
+	}
+	
+	/**
+	 *  Check if the lambda should be executed asynchronously.
+	 */
+	public boolean isAsync()
+	{
+		return async;
 	}
 }

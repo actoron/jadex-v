@@ -131,7 +131,7 @@ public interface IFuture<E>	extends Supplier<E>
 	 */
 	//public <T> IFuture<T> then(final Function<? super E, ? extends T> function);
 	//public <T> IFuture<? extends T> then(Consumer<? super T> function);
-	public IFuture<? extends E> then(Consumer<? super E> function);
+	public IFuture<E> then(Consumer<? super E> function);
 	 	
 	/**
 	 *  Applies a function after the result is available, using the result of this Future as input.

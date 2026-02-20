@@ -38,7 +38,7 @@ public abstract class AbstractExecutionFeatureTest
 {
 	// Timeout how long a test blocks on a future before giving up.
 	// Does not affect test execution time for successful tests.
-	protected long	TIMEOUT	= 10000;
+	protected static long	TIMEOUT	= 10000;
 	
 	@Test
 	public void	testFeatureAccess()
@@ -148,7 +148,7 @@ public abstract class AbstractExecutionFeatureTest
 		IFuture<Boolean>	result	= comp.scheduleStep(() -> {
 			throw new InternalError("err");
 		});
-		assertThrows(RuntimeException.class, () -> result.get(TIMEOUT), "Wrong step error.");
+		assertThrows(InternalError.class, () -> result.get(TIMEOUT), "Wrong step error.");
 	}
 	
 	@Test

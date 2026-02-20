@@ -2,10 +2,10 @@ package jadex.micro.tutorial.a8;
 
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.core.IThrowingConsumer;
 import jadex.core.impl.ComponentManager;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.LambdaAgent;
 
 public class LambdaExceptions 
 {
@@ -21,7 +21,7 @@ public class LambdaExceptions
 			System.out.println("handler 2 for unsupported: "+ex);
 		});
 		
-		LambdaAgent.create(comp ->
+		IComponentManager.get().create((IThrowingConsumer<IComponent>)comp ->
 		{
 			final IComponent self = comp;
 			Runnable action = new Runnable()

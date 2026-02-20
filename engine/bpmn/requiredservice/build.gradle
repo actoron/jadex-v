@@ -35,7 +35,6 @@ dependencies
 	implementation 'org.activecomponents.jadex:serialization:'+v
 	implementation 'net.cinnom:nano-cuckoo:3.0.2'
 	implementation 'org.activecomponents.jadex:requiredservice:'+v
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 
 processResources 

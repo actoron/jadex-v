@@ -43,11 +43,6 @@ dependencies
 	
 	//api 'org.javassist:javassist:3.28.0-GA'
 	
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
-	testImplementation("io.rest-assured:rest-assured:5.5.6")
-	testImplementation("org.hamcrest:hamcrest:3.0")
-	
-
 	//testFixturesImplementation sourceSets.main.output
 
 	// Test-Files / Fixtures
@@ -62,7 +57,7 @@ dependencies
     testFixturesImplementation 'org.activecomponents.jadex:providedservice:'+v
     testFixturesImplementation 'org.activecomponents.jadex:serialization:'+v
 
-	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
     testFixturesImplementation 'io.rest-assured:rest-assured:5.5.6'
     testFixturesImplementation 'org.hamcrest:hamcrest:3.0'
 }

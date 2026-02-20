@@ -51,6 +51,32 @@ public interface IComponentFactory
 	 *  @param pojo The callable.
 	 *  @return The execution result.
 	 */
+	public default <E, T extends IFuture<E>> T runAsync(Callable<T> pojo)
+	{
+		@SuppressWarnings("unchecked")
+		T	ret	= (T) ComponentManager.get().run(pojo, null, null, true);
+		return ret;
+	}
+
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The function.
+	 *  @return The execution result.
+	 */
+	public default <E, T extends IFuture<E>> T runAsync(IThrowingFunction<IComponent, T> pojo)
+	{
+		@SuppressWarnings("unchecked")
+		T	ret	= (T) ComponentManager.get().run(pojo, null, null, true);
+		return ret;
+	}
+	
+	/**
+	 *  Usage of components as functions that terminate after execution.
+	 *  Create a component based on a function.
+	 *  @param pojo The callable.
+	 *  @return The execution result.
+	 */
 	public default <T> IFuture<T> run(Callable<T> pojo)
 	{
 		return run((Object)pojo);
@@ -76,7 +102,7 @@ public interface IComponentFactory
 	 */
 	public default <T> IFuture<T> run(Object pojo, String localname)
 	{
-		return ComponentManager.get().run(pojo, localname, null);
+		return ComponentManager.get().run(pojo, localname, null, false);
 	}
 
 	/**

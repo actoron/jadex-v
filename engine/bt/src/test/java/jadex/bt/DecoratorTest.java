@@ -23,10 +23,10 @@ import jadex.bt.state.ExecutionContext;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.core.IThrowingFunction;
 import jadex.execution.IExecutionFeature;
-import jadex.execution.LambdaAgent;
 import jadex.execution.impl.ComponentTimerCreator;
 import jadex.execution.impl.TimerCreator;
 import jadex.future.IFuture;
@@ -215,7 +215,7 @@ public class DecoratorTest
 	@Test
 	public void testRealComponentTimeoutDecoratorWithoutTimeout()
 	{
-		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId())).get();
+		IComponentHandle comp = IComponentManager.get().create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId())).get();
 		
 		Node<IComponentHandle> an = new ActionNode<>(new TerminableUserAction<>((event, compo) -> 
 		{
@@ -248,7 +248,7 @@ public class DecoratorTest
 	@Test
 	public void testRealComponentTimeoutDecoratorWithTimeout()
 	{
-		IComponentHandle comp = LambdaAgent.create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId())).get();
+		IComponentHandle comp = IComponentManager.get().create((IThrowingConsumer<IComponent>)a -> System.out.println("started: "+a.getId())).get();
 		
 		Node<IComponentHandle> an = new ActionNode<>(new TerminableUserAction<>((event, IComponent) -> 
 		{

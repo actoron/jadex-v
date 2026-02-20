@@ -74,7 +74,7 @@ public class Environment
 	{
 		String id = env.getId().get();
 		if(id!=null && environments.get(id)!=null)
-			System.out.println("replacing environment: "+env.getId());
+			System.out.println("replacing environment: "+id);
 		if(id==null)
 			env.setId(""+envcnt.getAndIncrement()).get();
 		id = env.getId().get();
@@ -86,6 +86,18 @@ public class Environment
 	public static Environment get(String id)
 	{
 		return environments.get(id);
+	}
+	
+	public static void remove(String id)
+	{
+		if(environments.containsKey(id))
+		{
+			environments.remove(id);
+		}
+		else
+		{
+			System.out.println("environment not found: "+id);
+		}
 	}
 	
 	public Environment() 
@@ -144,7 +156,10 @@ public class Environment
 	protected void end(Exception e)
 	{
 		System.out.println("end: "+agent.getId()+" "+e);
-		e.printStackTrace();
+		if(e!=null)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	//-------- The agent methods --------
