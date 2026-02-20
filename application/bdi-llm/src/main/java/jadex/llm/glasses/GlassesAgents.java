@@ -4,7 +4,7 @@ import com.google.common.collect.Ordering;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
 import jadex.bdi.llm.impl.LlmFeature;
-import jadex.bdi.Val;
+import jadex.injection.Val;
 import jadex.core.*;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.Description;
@@ -76,7 +76,7 @@ public class GlassesAgents
             agent.terminate();
         }
 
-        @GoalTargetCondition(beliefs = {"convDataSetString"})
+        @GoalTargetCondition()//beliefs = {"convDataSetString"})
         public boolean checkTarget()
         {
             System.out.println("--->Test Goal");

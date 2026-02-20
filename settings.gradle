@@ -191,7 +191,9 @@ includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
 includeBuild('communication/remoteservice') {}
 
-includeBuild('llm') {}
+includeBuild('bdi/llm') {name='llm'}
+
+includeBuild('apmn/engine'){name='apmn'}
 
 includeBuild('micro/lib'){name='libmicro'}
 
@@ -206,6 +208,7 @@ includeBuild('environment/environment'){name='environment'}
 includeBuild('application/micro'){name='application-micro'}
 includeBuild('application/micro-nfp'){name='application-micro-nfp'}
 includeBuild('application/bdi'){name='application-bdi'}
+includeBuild('application/bdi-llm'){name='application-bdi-llm'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
 includeBuild('application/bpmn'){name='application-bpmn'}
 includeBuild('application/bt'){name='application-bt'}

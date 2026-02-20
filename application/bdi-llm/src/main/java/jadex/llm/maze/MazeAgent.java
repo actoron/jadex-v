@@ -3,7 +3,7 @@ package jadex.llm.maze;
 import jadex.bdi.annotation.*;
 import jadex.bdi.llm.impl.LlmFeature;
 import jadex.bdi.llm.impl.inmemory.IPlanBody;
-import jadex.bdi.Val;
+import jadex.injection.Val;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.micro.annotation.Agent;
@@ -57,7 +57,7 @@ public class MazeAgent
             System.out.printf("Data: " + updatedCellJSONString.get());
         }
 
-        @GoalTargetCondition(beliefs ={"updatedCellJSONString"})
+        @GoalTargetCondition()//beliefs ={"updatedCellJSONString"})
         public boolean checkTarget() {
             System.out.println("-->Test Goal");
 

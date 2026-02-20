@@ -54,9 +54,6 @@ public class ProcessThread
         {
             for (int i = 0; i < children.size(); ++i)
             {
-                System.out.println("Parent: " + parent);
-                System.out.println("Children: " + children);
-                System.out.println("Child: " + children.get(i));
                 children.get(i).step();
             }
         }
@@ -65,16 +62,13 @@ public class ProcessThread
             if (!merged && current.getIncoming().size() > 1)
             {
                     List<ProcessThread> siblings = parent.getChildren();
-                    System.out.println("Siblings: " + siblings);
                     boolean merged = true;
 
                     for(ProcessThread sibling : siblings)
                     {
                         if (sibling.getCurrent() == null || !sibling.getCurrent().getId().equals(current.getId()))//new
                         {
-                            System.out.println("Sibling: " + sibling);
                             merged = false;
-                            System.out.println("Merge false");
                             break;
                         }
                     }

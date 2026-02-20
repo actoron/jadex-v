@@ -1,8 +1,10 @@
-package apmn.runtime;
+package jadex.apmn;
 
 import apmn.model.MApmnModel;
 import apmn.model.edge.MEdge;
+import apmn.model.node.MAgentStarterNode;
 import apmn.model.node.MPrintNode;
+import apmn.runtime.RApmnProcess;
 import jadex.common.SUtil;
 
 public class Test
@@ -10,7 +12,7 @@ public class Test
     public static void main(String[] args)
     {
         MApmnModel model = new MApmnModel();
-        MPrintNode node1 = new MPrintNode();
+        MAgentStarterNode node1 = new MAgentStarterNode(AgentActor.class);
         node1.setId("node1");
         model.addNode(node1);
         MPrintNode node2 = new MPrintNode();

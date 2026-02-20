@@ -13,7 +13,7 @@ if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 
 java
 {
-	sourceCompatibility = '1.17'
+	sourceCompatibility = '1.21'
 }
 
 repositories
@@ -60,6 +60,5 @@ test
 
 task runGlasses(type: JavaExec) {
 	classpath = sourceSets.main.runtimeClasspath
-	main = 'jadex.llm.glasses.Main'
+//	main = 'jadex.llm.glasses.Main'
 }
-

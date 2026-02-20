@@ -8,7 +8,10 @@ if(System.getProperty("PUBLISH_SCRIPT_PATH"))
 
 group = 'org.activecomponents.jadex'
 
-sourceCompatibility = 1.17
+java
+{
+    sourceCompatibility = '1.21'
+}
 
 repositories
 {
@@ -27,7 +30,8 @@ dependencies
     implementation 'org.activecomponents.jadex:micro:'+v
     implementation 'org.activecomponents.jadex:bdi:'+v
     implementation 'org.activecomponents.jadex:classreader:'+v
-    implementation 'org.activecomponents.jadex:bdi-llm:'+v
+    implementation 'org.activecomponents.jadex:llm:'+v
+    implementation 'org.activecomponents.jadex:apmn:'+v
     implementation 'org.activecomponents.jadex:injection:'+v
     implementation 'org.activecomponents.jadex:providedservice:'+v
     implementation 'org.activecomponents.jadex:requiredservice:'+v
@@ -57,4 +61,9 @@ task runGlasses(type: JavaExec) {
 task runWorkflow(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'jadex.llm.workflow.SensorAgent'
+}
+
+task runApmn(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'jadex.apmn.AgentActor'
 }

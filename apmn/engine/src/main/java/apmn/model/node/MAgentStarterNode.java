@@ -10,6 +10,10 @@ public class MAgentStarterNode extends MActorNode
 {
     private Class<?> agentclass;
 
+    public MAgentStarterNode(Class<?> agentclass)
+    {
+        this.agentclass=agentclass;
+    }
 
     @Override
     public void execute() {
