@@ -26,12 +26,12 @@ public class Call
 	/** The upcoming service invocations. */
 	protected static final ThreadLocal<Call> LAST = new ThreadLocal<Call>();
 	
-//	static
-//	{
-//		ThreadLocalTransferHelper.addThreadLocal(CURRENT);
-//		ThreadLocalTransferHelper.addThreadLocal(NEXT);
-//		ThreadLocalTransferHelper.addThreadLocal(LAST);
-//	}
+	static
+	{
+		ThreadLocalTransferHelper.addThreadLocal(CURRENT);
+		ThreadLocalTransferHelper.addThreadLocal(NEXT);
+		ThreadLocalTransferHelper.addThreadLocal(LAST);
+	}
 	
 	//-------- attributes --------
 	
