@@ -1,0 +1,7 @@
+{
+  "mission": {
+    "id": 1,
+    "belief": "private Val<String> startMission;",
+    "goal": "ProcessMission"
+  }
+}

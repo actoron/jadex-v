@@ -8,6 +8,9 @@ public class Starter
     {
         IComponentManager.get().create(new AgentActor());
         System.out.println("Hallo");
+        Mission aom = new Mission();
+        aom.getBelief();
+        aom.getGoal();
         IComponentManager.get().waitForLastComponentTerminated();
     }
 }

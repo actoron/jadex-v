@@ -9,9 +9,7 @@ import jadex.injection.annotation.OnStart;
 public class AgentActor
 {
     @Belief
-    private Val<String> helloProcess;
-    @Belief
-    private Class<?> agentclass;
+    private Val<String> startProcess;
 
     @Goal
     public class MissionGoal
@@ -19,7 +17,7 @@ public class AgentActor
         @GoalParameter
         protected Val<String> text;
 
-        @GoalCreationCondition(factchanged="helloProcess")
+        @GoalCreationCondition(factchanged="AgentStarter")
         public MissionGoal(String text)
         {
             this.text = new Val<>(text);
@@ -46,7 +44,7 @@ public class AgentActor
     @OnStart
     public void body()
     {
-        helloProcess.set("Hello Process");
+        startProcess.set("Hello AgentStarter");
         System.out.println("body end: " + getClass().getName());
     }
 
