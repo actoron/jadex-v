@@ -39,6 +39,7 @@ dependencies
     implementation 'org.activecomponents.jadex:publishservicejetty:'+v
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1' +v
     implementation group: 'org.json', name: 'json', version: '20240303'+v
+    implementation group: 'org.eclipse.parsson', name: 'jakarta.json', version: '1.1.7'+v
     implementation group: 'commons-io', name: 'commons-io', version: '2.16.1' +v
     implementation group: 'com.google.guava', name: 'guava', version: '33.4.0-jre' +v
     implementation group: 'com.github.javafaker', name: 'javafaker', version: '1.0.2' +v
