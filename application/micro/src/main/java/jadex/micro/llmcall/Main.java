@@ -3,15 +3,16 @@ package jadex.micro.llmcall;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.llm.ILlmFeature;
+import jadex.llm.impl.OllamaAgent;
 import jadex.llm.impl.OpenRouterAgent;
 
 public class Main 
 {
     public static void main(String[] args) 
     {
-        IComponentManager.get().create(new OpenRouterAgent()).get();
+        //IComponentManager.get().create(new OpenRouterAgent()).get();
         //IComponentManager.get().create(new GroqAgent()).get();
-        //IComponentManager.get().create(new OllamaAgent()).get();
+        IComponentManager.get().create(new OllamaAgent()).get();
         
         IComponentHandle user = IComponentManager.get().create(new UserAgent()).get();
 

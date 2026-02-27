@@ -20,14 +20,17 @@ import com.github.dockerjava.api.model.Image;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.injection.annotation.OnStart;
+import jadex.llm.ILlmFeature;
 import jadex.llm.ILlmService;
 
-public class OllamaAgent implements ILlmService
+public class OllamaAgent extends LlmBaseAgent implements ILlmService
 {
     public static final String PREFERRED_MODEL = "llama3.1";//:8b";
 
@@ -41,44 +44,57 @@ public class OllamaAgent implements ILlmService
 
     protected ChatModel llm;
 
+    public OllamaAgent()
+    {
+    }
+
+    public ChatModel createChatModel() 
+    {
+        this.llm = OllamaChatModel.builder()
+            .baseUrl(url)
+            .modelName(model)
+            .logRequests(true)
+            .build();
+        return llm;
+    }
+
+    public String resolveApiKey()
+    {
+        return System.getenv("OLLAMA_API_KEY");
+    }
+
     @OnStart
     protected void start(IComponent agent) 
     {
-        System.out.println("agent started: "+agent.getId());
+        if(model==null || model.isEmpty())
+            this.model = PREFERRED_MODEL;
+        if(url==null || url.isEmpty())
+            this.url = resolveOllamaBaseUrl();
+     
+        System.out.println("agent started: "+agent.getId()+" url: "+url+" preferred model: "+model);
         
-        String url = resolveOllamaBaseUrl();
+        //String url = resolveOllamaBaseUrl();
 
-        List<String> models = listLocalModels(url);
+        List<String> models = listModels(url);
 
-        String model = findPreferredModel(models, PREFERRED_MODEL);
+        model = findPreferredModel(models, model);
 
         if (model == null) 
         {
             System.out.println("No preferred model found, selecting random chat model...");
-            model = findAnyChatModel(url, models);
+            model = findAnyChatModel(url, models, true);
         }
 
-        if (model != null)
+        if(model==null)
         {
-            System.out.println("Selected model: " + model);
-
-            this.llm = OllamaChatModel.builder()
-                .baseUrl(url)
-                .modelName(model)
-                .logRequests(true)
-                .build();
-
-            /*String answer = llm.chat(
-                "Explain the difference between Jadex agent and llm agent in a single sentence."
-            );
-            System.out.println(answer);*/
+            System.out.println("No suitable chat model found.");
+            agent.terminate();
         }
         else
         {
-            System.out.println("No suitable chat model found.");
+            System.out.println("Using model: " + model);
+            super.start(agent);
         }
-
-        //agent.terminate();
     }
 
     @Override
@@ -109,7 +125,7 @@ public class OllamaAgent implements ILlmService
         return ollama.getEndpoint();
     }
 
-    public static String findAnyChatModel(String baseUrl, List<String> models) 
+    public static String findAnyChatModel(String baseUrl, List<String> models, boolean fast) 
     {
         List<String> cmodels = new ArrayList<>();
 
@@ -118,6 +134,8 @@ public class OllamaAgent implements ILlmService
             if (isChatModel(baseUrl, m)) 
             {
                 cmodels.add(m);
+                if(fast)
+                    break;
             }
         }
 
@@ -162,35 +180,73 @@ public class OllamaAgent implements ILlmService
         return name.toLowerCase();
     }
 
-    public static List<String> listLocalModels(String url) 
+    public List<String> listModels(String url)
     {
-        try 
+        HttpClient client = HttpClient.newHttpClient();
+
+        // Unterstützte Model-Endpoints
+        String[] endpoints = {
+            "/api/tags",     // Ollama
+            "/v1/models"     // OpenAI kompatibel
+        };
+
+        for (String endpoint : endpoints)
         {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(url + "/api/tags"))
-                .timeout(Duration.ofSeconds(2))
-                .GET()
-                .build();
-
-            HttpResponse<String> resp =
-                client.send(req, HttpResponse.BodyHandlers.ofString());
-
-            JsonObject root = Json.parse(resp.body()).asObject();
-            JsonArray arr = root.get("models").asArray();
-
-            List<String> models = new ArrayList<>();
-            for (Object o : arr) 
+            try
             {
-                JsonObject obj = (JsonObject) o;
-                models.add(obj.get("name").asString());
+                HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create(url + endpoint))
+                    .timeout(Duration.ofSeconds(3))
+                    .GET();
+
+                if (getApiKey() != null && !getApiKey().isBlank())
+                    builder.header("Authorization", "Bearer " + getApiKey());
+
+                HttpRequest request = builder.build();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() != 200)
+                    continue;
+
+                JsonObject root = Json.parse(response.body()).asObject();
+
+                // 🔹 OpenAI Format: { "data": [ { "id": ... } ] }
+                if (root.get("data") != null)
+                {
+                    JsonArray arr = root.get("data").asArray();
+                    List<String> models = new ArrayList<>();
+
+                    for (Object o : arr)
+                    {
+                        JsonObject obj = (JsonObject) o;
+                        models.add(obj.get("id").asString());
+                    }
+
+                    return models;
+                }
+
+                // 🔹 Ollama Format: { "models": [ { "name": ... } ] }
+                if (root.get("models") != null)
+                {
+                    JsonArray arr = root.get("models").asArray();
+                    List<String> models = new ArrayList<>();
+
+                    for (Object o : arr)
+                    {
+                        JsonObject obj = (JsonObject) o;
+                        models.add(obj.get("name").asString());
+                    }
+
+                    return models;
+                }
             }
-            return models;
-        } 
-        catch (Exception e) 
-        {
-            return List.of();
+            catch (Exception e)
+            {
+                // next endpoint
+            }
         }
+
+        return List.of();
     }
 
     public static boolean isChatModel(String baseUrl, String modelName) 
@@ -295,9 +351,22 @@ public class OllamaAgent implements ILlmService
         return DockerImageName.parse(image).asCompatibleSubstituteFor(base);
     }
 
-	public static void main(String[] args) 
+	/*public static void main(String[] args) 
 	{
 		IComponentManager.get().create(new OllamaAgent()).get();
+		IComponentManager.get().waitForLastComponentTerminated();
+	}*/
+
+    public static void main(String[] args) 
+	{
+		IComponentHandle llm = IComponentManager.get().create(new OllamaAgent()).get();
+        IComponentManager.get().getFeature(ILlmFeature.class)
+            .handleToolCall("What is the capital of France?")
+            .then(answer -> 
+            {
+                System.out.println("Final answer: " + answer);
+                llm.terminate();
+            }).catchEx(e -> e.printStackTrace());
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

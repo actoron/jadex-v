@@ -84,17 +84,30 @@ public class McpHostAgent implements IMcpHostService, IDaemonComponent
 
             System.out.println("LLM returned:\n" + raw);
 
-            // clean response (handle code blocks, trim, etc.)
+
+            // --- Clean response ---
             String cleaned = raw.trim();
 
+            // Remove <think>...</think> blocks (non-greedy, multiline safe)
+            cleaned = cleaned.replaceAll("(?s)<think>.*?</think>", "").trim();
+
+            // Remove markdown code fences if present
             if (cleaned.startsWith("```"))
             {
-                int firstBrace = cleaned.indexOf("{");
-                int lastBrace = cleaned.lastIndexOf("}");
-                if (firstBrace != -1 && lastBrace != -1)
-                    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+                cleaned = cleaned.replaceAll("```[a-zA-Z]*", "")
+                                .replace("```", "")
+                                .trim();
             }
 
+            // Extract first valid JSON object
+            int firstBrace = cleaned.indexOf('{');
+            int lastBrace  = cleaned.lastIndexOf('}');
+
+            if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace)
+            {
+                cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+            }
+          
             JsonObject out;
             try
             {

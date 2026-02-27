@@ -2,36 +2,31 @@ package jadex.llm.impl;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
-import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.injection.annotation.OnStart;
 import jadex.llm.ILlmFeature;
 import jadex.llm.ILlmService;
 
-public class GroqAgent implements ILlmService
+public class GroqAgent extends LlmBaseAgent implements ILlmService
 {
-    protected String apikey;
-    protected String model;
-
     protected ChatModel llm;
 
-    public GroqAgent()
+    public ChatModel createChatModel() 
     {
-        this(System.getenv("GROQ_API_KEY"));
+        llm = OpenAiChatModel.builder()
+            .apiKey(apikey)
+            //.baseUrl("https://api.groq.com/openai/v1")
+            .baseUrl("https://api.x.ai/v1/chat/completions")
+            .modelName(model) 
+            .build();
+        return llm;
     }
 
-    public GroqAgent(String apikey)
+    public String resolveApiKey()
     {
-        this(apikey, "llama-3.3-70b-versatile");
-    }
-
-    public GroqAgent(String apikey, String model)
-    {
-        this.apikey = apikey;
-        this.model = model;
+        return System.getenv("GROQ_API_KEY");
     }
 
     @Override
@@ -39,33 +34,6 @@ public class GroqAgent implements ILlmService
     {
         String answer = llm.chat(prompt);
         return new Future<>(answer);
-    }
-
-    @OnStart
-    protected void start(IComponent agent) 
-    {
-        System.out.println("agent started: "+agent.getId());
-
-        if(apikey == null || apikey.isEmpty())
-        {
-            System.err.println("GROQ API key not set. Please set the GROQ_API_KEY environment variable.");
-            agent.terminate();
-            return;
-        }
-     
-        llm = OpenAiChatModel.builder()
-            .apiKey(apikey)
-            //.baseUrl("https://api.groq.com/openai/v1")
-            .baseUrl("https://api.x.ai/v1/chat/completions")
-            .modelName(model) 
-            .build();
-
-        /*String answer = llm.chat(
-            "Explain the difference between Jadex agent and llm agent in a single sentence."
-        );
-        System.out.println(answer);*/
-
-        //agent.terminate();
     }
 
     public static void main(String[] args) 

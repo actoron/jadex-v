@@ -5,7 +5,6 @@ import java.util.Map;
 
 import jadex.future.IFuture;
 import jadex.providedservice.annotation.Service;
-import jadex.publishservice.publish.annotation.Publish;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;

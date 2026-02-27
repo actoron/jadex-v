@@ -17,11 +17,10 @@ import java.net.URL;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 
-public class FreeLlmAgent implements ILlmService 
+import dev.langchain4j.model.chat.ChatModel;
+
+public class FreeLlmAgent extends LlmBaseAgent implements ILlmService 
 {
-
-    protected String model = "tinyllama";
-
     @Override
     public IFuture<String> callLlm(String prompt) 
     {
@@ -32,14 +31,30 @@ public class FreeLlmAgent implements ILlmService
     @OnStart
     protected void start(IComponent agent) 
     {
-        System.out.println("agent started: " + agent.getId());
+        if(model == null || model.isEmpty())
+             model = "tinyllama";
+        if(url == null || url.isEmpty())
+            url = "https://mlvoca.com/api/generate";
+        super.start(agent);
+    }
+    
+    @Override
+    public ChatModel createChatModel() 
+    {
+        return null;
+    }
+
+    @Override
+    public String resolveApiKey() 
+    {
+        return null;
     }
 
     private String callMlvoca(String prompt) 
     {
         try 
         {
-            URL url = new URL("https://mlvoca.com/api/generate");
+            URL url = new URL(getUrl());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
