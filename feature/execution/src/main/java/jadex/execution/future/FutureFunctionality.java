@@ -351,6 +351,15 @@ public class FutureFunctionality
 		
 		return ret;
 	}
+	
+	/**
+	 *  Handle a to be added result listener.
+	 *  @return the listener to be actually added, or null, if the listener should not be added.
+	 */
+	public IResultListener<Object> handleAddResultListener(IResultListener<Object> listener)
+	{
+		return listener;
+	}
 }
 
 
@@ -507,7 +516,17 @@ class DelegatingPullSubscriptionIntermediateDelegationFuture<E> extends PullSubs
 				DelegatingPullSubscriptionIntermediateDelegationFuture.super.sendBackwardCommand(info);
 			}	
 		});
-	}	
+	}
+	
+	@Override
+	public void	addResultListener(IResultListener listener)
+	{
+		listener	= func.handleAddResultListener(listener);
+		if(listener!=null)
+		{
+			super.addResultListener(listener);
+		}
+	}
 };
 
 /**
@@ -664,7 +683,17 @@ class DelegatingPullIntermediateDelegationFuture<E> extends PullIntermediateDele
 				DelegatingPullIntermediateDelegationFuture.super.sendBackwardCommand(info);
 			}	
 		});
-	}	
+	}
+	
+	@Override
+	public void	addResultListener(IResultListener listener)
+	{
+		listener	= func.handleAddResultListener(listener);
+		if(listener!=null)
+		{
+			super.addResultListener(listener);
+		}
+	}
 };
 
 /**
@@ -841,7 +870,17 @@ class DelegatingSubscriptionIntermediateDelegationFuture<E> extends Subscription
 				DelegatingSubscriptionIntermediateDelegationFuture.super.sendBackwardCommand(info);
 			}	
 		});
-	}	
+	}
+	
+	@Override
+	public void	addResultListener(IResultListener listener)
+	{
+		listener	= func.handleAddResultListener(listener);
+		if(listener!=null)
+		{
+			super.addResultListener(listener);
+		}
+	}
 };
 
 
@@ -981,7 +1020,17 @@ class DelegatingTerminableIntermediateDelegationFuture<E> extends TerminableInte
 				DelegatingTerminableIntermediateDelegationFuture.super.sendBackwardCommand(info);
 			}	
 		});
-	}	
+	}
+	
+	@Override
+	public void	addResultListener(IResultListener listener)
+	{
+		listener	= func.handleAddResultListener(listener);
+		if(listener!=null)
+		{
+			super.addResultListener(listener);
+		}
+	}
 };
 
 /**
@@ -1081,7 +1130,17 @@ class DelegatingTerminableDelegationFuture<E> extends TerminableDelegationFuture
 				DelegatingTerminableDelegationFuture.super.sendBackwardCommand(info);
 			}	
 		});
-	}	
+	}
+	
+	@Override
+	public void	addResultListener(IResultListener listener)
+	{
+		listener	= func.handleAddResultListener(listener);
+		if(listener!=null)
+		{
+			super.addResultListener(listener);
+		}
+	}
 };
 
 /**
@@ -1189,6 +1248,16 @@ class DelegatingIntermediateFuture extends IntermediateFuture<Object>
     {
 		func.scheduleForward(command, listener);
     }
+	
+	@Override
+	public void	addResultListener(IResultListener listener)
+	{
+		listener	= func.handleAddResultListener(listener);
+		if(listener!=null)
+		{
+			super.addResultListener(listener);
+		}
+	}
 };
 
 /**
@@ -1257,6 +1326,15 @@ class DelegatingFuture extends Future<Object>
 				Thread.dumpStack();
 			}
 		}
-
     }
+	
+	@Override
+	public void	addResultListener(IResultListener<Object> listener)
+	{
+		listener	= func.handleAddResultListener(listener);
+		if(listener!=null)
+		{
+			super.addResultListener(listener);
+		}
+	}
 };

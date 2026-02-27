@@ -12,6 +12,7 @@ import jadex.core.impl.ComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.execution.future.IThreadManagerFactory.IThreadManager;
 import jadex.execution.impl.ExecutionFeature;
+import jadex.future.IResultListener;
 import jadex.future.ITerminableFuture;
 
 /**
@@ -30,10 +31,12 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 		FACTORIES.add(ExecutionFeature.LOCAL::get);
 		
 		// Register the swing thread manager factory.
-		FACTORIES.add(() -> SUtil.isGuiThread() ? SwingUtilities::invokeLater : null);
+		IThreadManager	swingmanager	= SwingUtilities::invokeLater;
+		FACTORIES.add(() -> SUtil.isGuiThread() ? swingmanager : null);
 		
 		// Register the global runner thread manager factory last as fallback, since it is always available.
-		FACTORIES.add(() -> ComponentManager.get().getGlobalRunner().getFeature(IExecutionFeature.class)); 
+		IThreadManager	globalmanager	= ComponentManager.get().getGlobalRunner().getFeature(IExecutionFeature.class);
+		FACTORIES.add(() -> globalmanager); 
 	}
 	
 	//-------- attributes --------
@@ -61,12 +64,6 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 	{
 		this.provider = provider;
 		this.copy = copy;
-		for(IThreadManagerFactory factory : FACTORIES)
-		{
-			caller = factory.getThreadManger();
-			if(caller!=null)
-				break;
-		}
 	}
 
 	//-------- FutureFunctionality methods --------
@@ -101,5 +98,21 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 	public Object handleIntermediateResult(Object val) throws Exception
 	{
 		return copy ? Component.copyVal(val) : val;
+	}
+	
+	@Override
+	public IResultListener<Object> handleAddResultListener(IResultListener<Object> listener)
+	{
+		if(caller==null)
+		{
+			for(IThreadManagerFactory factory : FACTORIES)
+			{
+				caller = factory.getThreadManger();
+				if(caller!=null)
+					break;
+			}
+		}
+
+		return super.handleAddResultListener(listener);
 	}
 }
