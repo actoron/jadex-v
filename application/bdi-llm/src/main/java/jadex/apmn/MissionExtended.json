@@ -4,11 +4,6 @@
     "id": 1,
     "belief": "private Val<String> startMission;",
     "goal": "ProcessMission"
-    },
-    {
-    "id": 2,
-    "belief": "private Val<String> startMission;",
-    "goal": "ProcessMission"
-  }
+    }
   ]
 }

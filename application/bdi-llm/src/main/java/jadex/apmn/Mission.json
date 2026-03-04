@@ -1,4 +1,8 @@
 {
-  "belief": "private Val<String> startMission;",
+  "belief": {
+    "name": "startProcess",
+    "type": "Val<String>",
+    "visibility": "private"
+  },
   "goal": "ProcessMission"
 }

@@ -6,23 +6,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 
-public class Starter
+public class AgentProperties
 {
-    private static String FILE = "application/bdi-llm/src/main/java/jadex/apmn/Mission.json";
-//    private static String FILE = "application/bdi-llm/src/main/java/jadex/apmn/MissionExtended.json";
+    private String file;
+    String belief;
+    String goal;
 
-    public static void main(String[] args)
+    public AgentProperties(String file)
     {
-//        AgentProperties ap = new AgentProperties(FILE);
-//        ap.getProperty();
+        this.file=file;
+    }
 
-        String belief;
-        String goal;
-
+    public void getProperty()
+    {
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try
         {
-            MissionList missionList = mapper.readValue(new File(FILE), MissionList.class);
+            MissionList missionList = mapper.readValue(new File(file), MissionList.class);
             for (Mission mission : missionList.getMissions())
             {
                 System.out.println("id: " + mission.getId());
@@ -37,8 +37,5 @@ public class Starter
         {
             throw new RuntimeException(e);
         }
-
-//        IComponentManager.get().create(new AgentActor());
-//        IComponentManager.get().waitForLastComponentTerminated();
     }
 }

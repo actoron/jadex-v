@@ -17,7 +17,7 @@ public class AgentActor
         @GoalParameter
         protected Val<String> text;
 
-        @GoalCreationCondition(factchanged="AgentStarter")
+        @GoalCreationCondition(factchanged="startProcess")
         public MissionGoal(String text)
         {
             this.text = new Val<>(text);
@@ -61,6 +61,4 @@ public class AgentActor
         System.out.println("finis: " + goal.getText());
         comp.terminate();
     }
-
-
 }
