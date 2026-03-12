@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import jadex.common.ClassInfo;
@@ -206,9 +205,10 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Set the providerid.
 	 *  @param providerid The providerid to set.
 	 */
-	public void setProviderId(ComponentIdentifier providerid)
+	public ServiceIdentifier	setProviderId(ComponentIdentifier providerid)
 	{
 		this.providerid = providerid;
+		return this;
 	}
 	
 	/**
@@ -260,9 +260,10 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Set the servicename.
 	 *  @param servicename The servicename to set.
 	 */
-	public void setServiceName(String servicename)
+	public ServiceIdentifier	setServiceName(String servicename)
 	{
 		this.servicename = servicename;
+		return this;
 	}
 
 	/**
@@ -602,5 +603,18 @@ public class ServiceIdentifier implements IServiceIdentifier
 //				+ ", servicename=" + servicename + ")";
 		}
 		return tostring;
+	}
+	
+	/**
+	 *  Create a service identifier from a string representation.
+	 */
+	public static ServiceIdentifier fromString(String str)
+	{
+		int index = str.indexOf("@");
+		if(index==-1)
+			throw new IllegalArgumentException("Invalid service identifier string: " + str);
+		String name = str.substring(0, index);
+		String provideridstr = str.substring(index+1);
+		return new ServiceIdentifier().setServiceName(name).setProviderId(ComponentIdentifier.fromString(provideridstr));
 	}
 }
