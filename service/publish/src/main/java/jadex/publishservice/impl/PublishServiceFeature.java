@@ -9,7 +9,12 @@ import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.publishservice.IPublishService;
 import jadex.publishservice.IPublishServiceFeature;
+import jadex.publishservice.IRequestManager.PublishContext;
 import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
+import jadex.publishservice.impl.v2.Request;
+import jadex.publishservice.impl.v2.Response;
+import jadex.publishservice.impl.v2.http.HttpRequest;
+import jadex.publishservice.impl.v2.http.HttpResponse;
 import jadex.publishservice.publish.PathManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,10 +60,10 @@ public abstract class PublishServiceFeature implements IPublishServiceFeature//,
 	 * @param request The request.
 	 * @param response The response.
 	 */
-	public void handleRequest(IService service, PathManager<MappingInfo> pm, final HttpServletRequest request, final HttpServletResponse response, Object[] others)
-		throws IOException, ServletException
+	public void handleRequest(final Request request, final Response response, PublishContext context)
+		throws Exception
 	{
-		RequestManager.getInstance().handleRequest(service, pm, request, response, others);
+		RequestManager.getInstance().handleRequest(request, response, context);//, others);
 	}
 
 	/**

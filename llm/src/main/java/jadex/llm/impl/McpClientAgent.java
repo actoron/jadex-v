@@ -35,9 +35,11 @@ import jadex.llm.jsonmapping.JsonMapper;
 import jadex.providedservice.IService;
 import jadex.publishservice.publish.annotation.Publish;
 import jadex.requiredservice.IRequiredServiceFeature;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
 
 //@Publish(publishid="http://localhost:${port}/${app}/mcp", publishtarget=IMcpClientService.class)
-@Publish(publishid="http://localhost:${port}/mcp", publishtarget=IMcpClientService.class)
+//@Publish(publishid="http://localhost:${port}/mcp", publishtarget=IMcpClientService.class)
 public class McpClientAgent implements IMcpClientService, IDaemonComponent 
 {
     protected Map<String, McpToolSchema> tools = new HashMap<>();
@@ -48,6 +50,13 @@ public class McpClientAgent implements IMcpClientService, IDaemonComponent
 
     @Inject
     protected IComponent agent;
+
+    @GET
+    @Path("mcp")
+    public IFuture<Void> connect()
+    {
+        return null; // todo!
+    }
 
     public IFuture<McpServerInfo> getClientInfo()
     {

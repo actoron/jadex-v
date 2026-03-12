@@ -38,6 +38,7 @@ dependencies
 	implementation 'org.activecomponents.jadex:json:'+v
 	implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 	
+    api 'jakarta.websocket:jakarta.websocket-api:2.3.0-M2'
 	api 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
 	api 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 	

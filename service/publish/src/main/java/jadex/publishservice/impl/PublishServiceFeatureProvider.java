@@ -95,7 +95,7 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 	 *  Convert annotation to info object.
 	 */
 	// TODO: Just use annotation?
-	protected static PublishInfo getPublishInfo(Publish p)
+	public static PublishInfo getPublishInfo(Publish p)
 	{
 		String pt = p.publishtagetname().length()>0? p.publishtagetname(): null;
 		if(pt==null && !p.publishtarget().equals(Object.class))
