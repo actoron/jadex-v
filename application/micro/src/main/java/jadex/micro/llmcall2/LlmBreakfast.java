@@ -1,5 +1,8 @@
 package jadex.micro.llmcall2;
 
+import java.util.Arrays;
+import java.util.List;
+
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.core.IComponentHandle;
@@ -14,12 +17,33 @@ public class LlmBreakfast
 	@Service
 	static interface IToaster extends IDaemonComponent
 	{
-		static class Toast
+		public static class Toast
 		{
 			static enum Flour { White, Wholegrain }
+			static List<String> TYPES = Arrays.asList("Rye", "Spelt", "Wheat");
 			
 			Flour flour;
 			String type;
+			
+			public void setFlour(Flour flour)
+			{
+				this.flour = flour;
+			}
+			
+			public void setType(String type)
+			{
+				this.type = type;
+			}
+			
+			public Flour getFlour()
+			{
+				return flour;
+			}
+			
+			public String getType()
+			{
+				return type;
+			}
 		}
 		@Tool("Toast bread slices of the given toast kind.")
 		IFuture<String> toast(Toast toast);
@@ -39,6 +63,12 @@ public class LlmBreakfast
 			IExecutionFeature.get().waitForDelay(3000)
 				.thenApply(v -> 
 		{
+			if(toast.flour==null)
+				throw new NullPointerException("Toast flour is required.");
+			if(toast.type==null)
+				throw new NullPointerException("Toast type is required.");
+			if(!IToaster.Toast.TYPES.contains(toast.type))
+				throw new IllegalArgumentException("Unsupported toast type: " + toast.type+". Use one of: " + IToaster.Toast.TYPES);
 			return "Toast done";
 		})).get();
 
