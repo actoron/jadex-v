@@ -156,7 +156,7 @@ public class McpHostAgent implements IMcpHostService, IDaemonComponent
                 {
                     Map<String, Object> argsmap = JsonMapper.convertJsonObjectToMap(args);
 
-                    McpToolResult result =mcp.invokeTool(tool, argsmap).get();
+                    McpToolResult result = mcp.invokeTool(tool, argsmap).get();
 
                     prompt = buildFollowupPrompt(baseprompt, result);
                 }
