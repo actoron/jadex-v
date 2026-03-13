@@ -13,6 +13,7 @@ import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.internal.Json;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -21,7 +22,9 @@ import dev.langchain4j.model.chat.response.PartialThinking;
 import dev.langchain4j.model.chat.response.PartialToolCall;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import jadex.common.SUtil;
+import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
@@ -32,7 +35,6 @@ import jadex.providedservice.IService;
 import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.transformation.jsonserializer.JsonTraverser;
 
 public class LlmResultAgent
 {
@@ -61,7 +63,12 @@ public class LlmResultAgent
 	@OnStart
 	public void	start(IComponent agent)
 	{
-		messages.add(SystemMessage.from("Use tools if possible."));
+		messages.add(SystemMessage.from(
+			"You are an agent that should use tools to complete tasks as instructed by the user.\n"
+		  + "In case of an Exception as tool response, do not respond to the user,\n"
+		  + "but directly try re-calling the tool with adjusted arguments.\n"
+		  + "Use argument names as given in the function properties.\n"
+		));
 		messages.add(UserMessage.from(prompt));
 		
 		sendRequest(agent);
@@ -98,17 +105,37 @@ public class LlmResultAgent
 		    @Override
 		    public void onPartialResponse(String partialResponse)
 		    {
-		    	agent.getComponentHandle().scheduleStep(
-		    		() -> response.add(partialResponse))
-		    		.printOnEx();
+		    	agent.getComponentHandle().scheduleStep(() -> 
+			    {
+			    	// Add line break after each sentence to keep lines reasonably short
+			    	if(partialResponse.startsWith(" ") && response.size()>0
+			    		&& (response.get(response.size()-1).endsWith(".") || response.get(response.size()-1).endsWith("?")))
+			    	{
+			    		response.add("\n"+partialResponse.stripLeading());
+			    	}
+			    	else
+			    	{
+			    		response.add(partialResponse);
+			    	}
+			    }).printOnEx();
 		    }
 
 		    @Override
 		    public void onPartialThinking(PartialThinking partialThinking)
 		    {
-		    	agent.getComponentHandle().scheduleStep(
-			    	() -> thinking.add(partialThinking.text()))
-			    	.printOnEx();
+		    	agent.getComponentHandle().scheduleStep(() -> 
+			    {
+			    	// Add line break after each sentence to keep lines reasonably short
+			    	if(partialThinking.text().startsWith(" ") && thinking.size()>0
+			    		&& (thinking.get(thinking.size()-1).endsWith(".") || thinking.get(thinking.size()-1).endsWith("?")))
+			    	{
+			    		thinking.add("\n"+partialThinking.text().stripLeading());
+			    	}
+			    	else
+			    	{
+			    		thinking.add(partialThinking.text());
+			    	}
+			    }).printOnEx();
 		    }
 		    
 		    @Override
@@ -168,35 +195,48 @@ public class LlmResultAgent
 		return all_tools;
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected IFuture<Void> callTool(IComponent agent, CompleteToolCall call)
 	{
-		// revert replace of "@" with ":" as required by google ai
-		String	name	= call.toolExecutionRequest().name().replace(".", "@");
-		int	index	= name.indexOf("@");
-		String	method	= name.substring(0, index);
-		ServiceIdentifier	sid	= ServiceIdentifier.fromString(name.substring(index+1));
-		IService	service	= agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(sid);
-		Map<String, Object>	args	= JsonTraverser.objectFromString(call.toolExecutionRequest().arguments(), getClass().getClassLoader(), Map.class);
-		
-		for(Method m: service.getServiceId().getServiceType().getType0().getMethods())
+		try
 		{
-			if(m.isAnnotationPresent(Tool.class))
+			// revert replace of "@" with ":" as required by google ai
+			String	name	= call.toolExecutionRequest().name().replace(".", "@");
+			int	index	= name.indexOf("@");
+			String	method	= name.substring(0, index);
+			ServiceIdentifier	sid	= ServiceIdentifier.fromString(name.substring(index+1));
+			IService	service	= agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(sid);
+			if(service==null)
+				throw new RuntimeException("Tool not found: " + sid);
+			
+			for(Method m: service.getServiceId().getServiceType().getType0().getMethods())
 			{
-				Tool t = m.getAnnotation(Tool.class);
-				if(t.name().equals(method) || t.name().isEmpty() && m.getName().equals(method))
+				if(m.isAnnotationPresent(Tool.class))
 				{
-//					System.out.println("\nCalling tool: " + m + " on service: " + service + " with args: " + args);
-					List<Object> param_values = new ArrayList<>();
-					for(int i=0; i<m.getParameters().length; i++)
+					Tool t = m.getAnnotation(Tool.class);
+					if(t.name().equals(method) || t.name().isEmpty() && m.getName().equals(method))
 					{
-						param_values.add(args.get(m.getParameters()[i].getName()));
-					}
-					try
-					{
+//						Map<String, Object>	args	= JsonTraverser.objectFromString(call.toolExecutionRequest().arguments(), getClass().getClassLoader(), Map.class);
+						@SuppressWarnings("unchecked")
+						Map<String, Object>	args	= Json.fromJson(call.toolExecutionRequest().arguments(), Map.class);
+	//					System.out.println("\nCalling tool: " + m + " on service: " + service + " with args: " + args);
+						List<Object> param_values = new ArrayList<>();
+						for(int i=0; i<m.getParameters().length; i++)
+						{
+							if(!args.containsKey(m.getParameters()[i].getName()))
+								throw new RuntimeException("Missing argument: " + m.getParameters()[i].getName());
+							Object	value = args.get(m.getParameters()[i].getName());
+							// convert value to parameter type if needed
+							if(value!=null && !m.getParameters()[i].getType().isAssignableFrom(value.getClass()))
+							{
+								value = Json.fromJson(Json.toJson(value), m.getParameters()[i].getType());
+							}
+							param_values.add(value);
+						}
+						
 						Object result = m.invoke(service, param_values.toArray());
 						if(result instanceof IFuture)
 						{
+							@SuppressWarnings("unchecked")
 							IFuture<Object>	resfut	= (IFuture<Object>) result;
 							return handleToolResult(call, resfut);
 						}
@@ -205,15 +245,15 @@ public class LlmResultAgent
 							return handleToolResult(call, new Future<>(result));
 						}
 					}
-					catch(Exception e)
-					{
-						return handleToolResult(call, new Future<>(e));
-					}
 				}
 			}
+			
+			return handleToolResult(call, new Future<>(new RuntimeException("Tool method not found: " + method)));
 		}
-		
-		return handleToolResult(call, new Future<>(new RuntimeException("Tool method not found: " + method)));
+		catch(Exception e)
+		{
+			return handleToolResult(call, new Future<>(e));
+		}
 	}
 
 	protected IFuture<Void>	handleToolResult(CompleteToolCall call, IFuture<Object> resfut)
@@ -221,15 +261,48 @@ public class LlmResultAgent
 		Future<Void>	ret	= new Future<>();
 		resfut.then(result -> 
 		{
-			messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(),
-				JsonTraverser.objectToString(result, getClass().getClassLoader())));
+			messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), Json.toJson(result)));
 			ret.setResult(null);
 		}).catchEx(ex -> 
 		{
-			messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(),
-				JsonTraverser.objectToString(ex, getClass().getClassLoader())));
+			messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), ex.toString())); // send exception message as result
 			ret.setResult(null);
 		});
 		return ret;
+	}
+
+	public static void printResults(IComponentHandle agent)
+	{
+		int[] last = new int[1];
+		agent.subscribeToResults().next(event ->
+		{
+			if(event.type()==Type.ADDED && event.name().equals("response"))
+			{
+				if(last[0]!=1)
+				{
+					System.out.println();
+					last[0]=1;
+				}
+				System.out.print(event.value());
+			}
+			else if(event.type()==Type.ADDED && event.name().equals("thinking"))
+			{
+				if(last[0]!=2)
+				{
+					System.out.println();
+					last[0]=2;
+				}
+				System.out.print("\033[3m"+event.value()+"\033[0m");
+			}
+			else if(event.type()==Type.ADDED && event.name().equals("toolcalls"))
+			{
+				if(last[0]!=3)
+				{
+					System.out.println();
+					last[0]=3;
+				}
+				System.out.println("\033[3;1m"+event.value()+"\033[0m");
+			}
+		}).printOnEx();
 	}
 }

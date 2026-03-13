@@ -1,0 +1,57 @@
+package jadex.micro.llmcall2;
+
+import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
+
+public class LlmHelper
+{
+	public static StreamingChatModel createChatModel()
+	{
+		System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
+		System.setProperty("org.slf4j.simpleLogger.log.dev.langchain4j", "debug");
+		System.setProperty("org.slf4j.simpleLogger.log.dev.langchain4j.model.ollama", "debug");
+		
+		StreamingChatModel llm =
+			
+//			GoogleAiGeminiStreamingChatModel.builder()
+//			.thinkingConfig(GeminiThinkingConfig.builder()
+//				.includeThoughts(true)
+//				.build())
+//			.apiKey(System.getenv("GOOGLE_API_KEY"))
+////			.modelName("gemini-3-flash-preview")
+////			.modelName("gemini-2.5-flash")
+//			.modelName("gemini-2.5-flash-lite")
+			
+			OllamaStreamingChatModel.builder()
+			.baseUrl("http://localhost:11434")
+//			.think(false)
+//			.modelName("nemotron-3-nano:30b")
+//			.modelName("gpt-oss:20b")
+			.modelName("qwen3.5:9b")
+			
+			// Fails on breakfast
+//			.modelName("mistral:7b-instruct")
+//			.modelName("qwen3:0.6b")
+//			.modelName("qwen3:4b")
+//			.modelName("qwen3.5:0.8b")
+			
+			// Fails also on calculator
+//			.modelName("llama3.2:1b-instruct-q4_K_M")
+//			.modelName("functiongemma:latest")
+//			.modelName("qwen2.5-coder:7b")
+//			.modelName("qwen2.5:latest")
+//			.modelName("lfm2.5-thinking:1.2b")
+//			.modelName("ministral-3:3b")
+//			.modelName("granite4:350m")
+//			.modelName("phi4-mini:3.8b")
+//			.modelName("cogito:3b")
+//			.modelName("command-r7b:latest")
+//			.modelName("rnj-1:8b")
+			
+			.returnThinking(true)
+			.logRequests(true)
+//			.logResponses(true)
+			.build();
+		return llm;
+	}
+}
