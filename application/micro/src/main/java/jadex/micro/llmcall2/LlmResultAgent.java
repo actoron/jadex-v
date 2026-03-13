@@ -270,7 +270,9 @@ public class LlmResultAgent
 				ret.setResult(null);
 			}).catchEx(ex -> 
 			{
-				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), ex.toString())); // send exception message as result
+				// send exception message as result
+				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(),
+					"Tool '"+call.toolExecutionRequest().name()+"' failed due to: " + ex.toString()));
 				ret.setResult(null);
 			}));
 		return ret;
