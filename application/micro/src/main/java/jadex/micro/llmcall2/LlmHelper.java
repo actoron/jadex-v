@@ -27,15 +27,15 @@ public class LlmHelper
 //			.think(false)
 //			.modelName("nemotron-3-nano:30b")
 //			.modelName("gpt-oss:20b")
-			.modelName("qwen3.5:9b")
+//			.modelName("qwen3.5:9b")
+			.modelName("qwen3:4b")
 			
 			// Fails on breakfast
 //			.modelName("mistral:7b-instruct")
 //			.modelName("qwen3:0.6b")
-//			.modelName("qwen3:4b")
 //			.modelName("qwen3.5:0.8b")
 			
-			// Fails also on calculator
+			// Fails due to wrong response format (missing "tool_calls" field)
 //			.modelName("llama3.2:1b-instruct-q4_K_M")
 //			.modelName("functiongemma:latest")
 //			.modelName("qwen2.5-coder:7b")

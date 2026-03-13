@@ -78,8 +78,8 @@ public class LlmBreakfast
 			IExecutionFeature.get().waitForDelay(3000)
 				.thenApply(v -> coffee+" ready.")).get();
 
-//		String prompt = "I'd like healthy breakfast.";
-		String prompt = "I'd like an unhealthy breakfast.";
+		String prompt = "I'd like healthy breakfast.";
+//		String prompt = "I'd like an unhealthy breakfast.";
 
 		StreamingChatModel llm = LlmHelper.createChatModel();
 

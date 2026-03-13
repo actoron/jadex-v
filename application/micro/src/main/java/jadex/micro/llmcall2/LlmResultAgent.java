@@ -50,6 +50,7 @@ public class LlmResultAgent
 	StreamingChatModel	llm;
 	String	prompt;
 
+	Future<Void> current_call = new Future<>();
 	List<ChatMessage> messages = new ArrayList<>();
 	List<IFuture<Void>> callfutures = new ArrayList<>();
 
@@ -65,6 +66,7 @@ public class LlmResultAgent
 	{
 		messages.add(SystemMessage.from(
 			"You are an agent that should use tools to complete tasks as instructed by the user.\n"
+		  + "If unsure about how to proceed, do not ask the user, but try to figure it out yourself.\n"
 		  + "In case of an Exception as tool response, do not respond to the user,\n"
 		  + "but directly try re-calling the tool with adjusted arguments.\n"
 		  + "Use argument names as given in the function properties.\n"
@@ -83,7 +85,7 @@ public class LlmResultAgent
 			.build();
 		
 //		System.out.println("Request: " + request);
-		
+		current_call = new Future<>();
 		llm.chat(request, new StreamingChatResponseHandler()
 		{
 			@Override
@@ -144,6 +146,7 @@ public class LlmResultAgent
 	    		agent.getComponentHandle().scheduleStep(() ->
 	    		{
 	    			messages.add(completeResponse.aiMessage());
+	    			current_call.setResult(null);
 			    	// Done?
 			    	if(callfutures.isEmpty())
 			    	{
@@ -259,15 +262,17 @@ public class LlmResultAgent
 	protected IFuture<Void>	handleToolResult(CompleteToolCall call, IFuture<Object> resfut)
 	{
 		Future<Void>	ret	= new Future<>();
-		resfut.then(result -> 
-		{
-			messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), Json.toJson(result)));
-			ret.setResult(null);
-		}).catchEx(ex -> 
-		{
-			messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), ex.toString())); // send exception message as result
-			ret.setResult(null);
-		});
+		// Wait for current call to complete to ensure messages are added in the correct order.
+		current_call.then(v ->
+			resfut.then(result -> 
+			{
+				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), Json.toJson(result)));
+				ret.setResult(null);
+			}).catchEx(ex -> 
+			{
+				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), ex.toString())); // send exception message as result
+				ret.setResult(null);
+			}));
 		return ret;
 	}
 
