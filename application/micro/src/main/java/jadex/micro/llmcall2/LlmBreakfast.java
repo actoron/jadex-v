@@ -17,7 +17,7 @@ public class LlmBreakfast
 	@Service
 	static interface IToaster extends IDaemonComponent
 	{
-		public static class Toast
+		static class Toast
 		{
 			static enum Flour { White, Wholegrain }
 			static List<String> TYPES = Arrays.asList("Rye", "Spelt", "Wheat");
@@ -52,16 +52,16 @@ public class LlmBreakfast
 	@Service
 	static interface ICoffeeMaker extends IDaemonComponent
 	{
+		record Coffee(String type, String size) {}
+		
 		@Tool("Brew coffee. Specify the type (espresso, americano, latte, cappuccino) and the size (small, medium, large).")
-		IFuture<String> brew(String type, String size);
+		IFuture<String> brew(Coffee coffee);
 	}
 
 	public static void main(String[] args)
 	{
 		// Register Toaster service
 		IComponentManager.get().create((IToaster) toast ->
-			IExecutionFeature.get().waitForDelay(3000)
-				.thenApply(v -> 
 		{
 			if(toast.flour==null)
 				throw new NullPointerException("Toast flour is required.");
@@ -69,15 +69,17 @@ public class LlmBreakfast
 				throw new NullPointerException("Toast type is required.");
 			if(!IToaster.Toast.TYPES.contains(toast.type))
 				throw new IllegalArgumentException("Unsupported toast type: " + toast.type+". Use one of: " + IToaster.Toast.TYPES);
-			return "Toast done";
-		})).get();
+			return IExecutionFeature.get().waitForDelay(3000)
+				.thenApply(v -> "Toast done");
+		}).get();
 
 		// Register CoffeeMaker service
-		IComponentManager.get().create((ICoffeeMaker) (type, size) ->
+		IComponentManager.get().create((ICoffeeMaker) coffee ->
 			IExecutionFeature.get().waitForDelay(3000)
-				.thenApply(v -> "Coffee done")).get();
+				.thenApply(v -> coffee+" ready.")).get();
 
-		String prompt = "I'd like healthy breakfast with toast and a large cappuccino.";
+//		String prompt = "I'd like healthy breakfast.";
+		String prompt = "I'd like an unhealthy breakfast.";
 
 		StreamingChatModel llm = LlmHelper.createChatModel();
 
