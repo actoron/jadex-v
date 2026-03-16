@@ -9,8 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
+import jadex.common.ClassInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
@@ -84,6 +91,34 @@ public class ProvidedServiceTest
 	
 	@ProvideService
 	public class BrokenAnnoImpl	{}
+
+	/** Custom annotation for testing annotation-based service search (on type). */
+	@Target(ElementType.TYPE)
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface MyTypeAnnotation {}
+
+	/** Custom annotation for testing annotation-based service search (on method). */
+	@Target(ElementType.METHOD)
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface MyMethodAnnotation {}
+
+	/** Service interface annotated at the type level. */
+	@Service
+	@MyTypeAnnotation
+	public interface IAnnotatedTypeService {}
+
+	/** Service interface with an annotated method. */
+	@Service
+	@FunctionalInterface
+	public interface IAnnotatedMethodService
+	{
+		@MyMethodAnnotation
+		public void annotatedMethod();
+	}
+
+	/** Service interface with no custom annotation (control). */
+	@Service
+	public interface IUnannotatedService {}
 	
 	//-------- test methods --------
 	
@@ -508,6 +543,58 @@ public class ProvidedServiceTest
 		}).get(TIMEOUT);
 		// cleanup
 		handle.terminate().get(TIMEOUT);
+	}
+
+	@Test
+	public void testAnnotationSearch()
+	{
+		// Register a service whose interface carries @MyTypeAnnotation at the type level.
+		IComponentHandle typehandle = IComponentManager.get().create(new IAnnotatedTypeService(){}).get(TIMEOUT);
+		// Register a service whose interface carries @MyMethodAnnotation on a method.
+		IComponentHandle methodhandle = IComponentManager.get().create((IAnnotatedMethodService)() -> {}).get(TIMEOUT);
+		// Register a service with no custom annotation (control).
+		IComponentHandle plainhandle = IComponentManager.get().create(new IUnannotatedService(){}).get(TIMEOUT);
+
+		try
+		{
+			// Search by type-level annotation: should find exactly the type-annotated service.
+			ServiceQuery<Object> typequery = new ServiceQuery<>((ClassInfo)null)
+				.setOwner(typehandle.getId()).setGroupNames()
+				.setServiceAnnotations(MyTypeAnnotation.class);
+			Set<IServiceIdentifier> typeResults = ServiceRegistry.getRegistry().searchServices(typequery);
+			assertTrue(typeResults.stream().anyMatch(sid -> sid.getServiceType().getType0() == IAnnotatedTypeService.class),
+				"Expected to find service with type-level annotation");
+			assertFalse(typeResults.stream().anyMatch(sid -> sid.getServiceType().getType0() == IUnannotatedService.class),
+				"Unannotated service must not be returned by type-annotation search");
+
+			// Search by method-level annotation: should find exactly the method-annotated service.
+			ServiceQuery<Object> methodquery = new ServiceQuery<>((ClassInfo)null)
+				.setOwner(methodhandle.getId()).setGroupNames()
+				.setServiceAnnotations(MyMethodAnnotation.class);
+			Set<IServiceIdentifier> methodResults = ServiceRegistry.getRegistry().searchServices(methodquery);
+			assertTrue(methodResults.stream().anyMatch(sid -> sid.getServiceType().getType0() == IAnnotatedMethodService.class),
+				"Expected to find service with method-level annotation");
+			assertFalse(methodResults.stream().anyMatch(sid -> sid.getServiceType().getType0() == IUnannotatedService.class),
+				"Unannotated service must not be returned by method-annotation search");
+
+			// Search with both annotations (OR semantics): should find both annotated services.
+			ServiceQuery<Object> bothquery = new ServiceQuery<>((ClassInfo)null)
+				.setOwner(typehandle.getId()).setGroupNames()
+				.setServiceAnnotations(MyTypeAnnotation.class, MyMethodAnnotation.class);
+			Set<IServiceIdentifier> bothResults = ServiceRegistry.getRegistry().searchServices(bothquery);
+			assertTrue(bothResults.stream().anyMatch(sid -> sid.getServiceType().getType0() == IAnnotatedTypeService.class),
+				"Expected to find type-annotated service with OR search");
+			assertTrue(bothResults.stream().anyMatch(sid -> sid.getServiceType().getType0() == IAnnotatedMethodService.class),
+				"Expected to find method-annotated service with OR search");
+			assertFalse(bothResults.stream().anyMatch(sid -> sid.getServiceType().getType0() == IUnannotatedService.class),
+				"Unannotated service must not be returned by OR annotation search");
+		}
+		finally
+		{
+			typehandle.terminate().get(TIMEOUT);
+			methodhandle.terminate().get(TIMEOUT);
+			plainhandle.terminate().get(TIMEOUT);
+		}
 	}
 	
 	//-------- helper methods --------

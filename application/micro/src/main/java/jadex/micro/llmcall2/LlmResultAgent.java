@@ -177,7 +177,7 @@ public class LlmResultAgent
 		List<ToolSpecification> all_tools = new ArrayList<>();
 		
 		Collection<?>	services	= agent.getFeature(IRequiredServiceFeature.class)
-			.getLocalServices(new ServiceQuery<>((Class<?>)null));
+			.getLocalServices(new ServiceQuery<>((Class<?>)null).setServiceAnnotations(Tool.class));
 		for(Object service : services)
 		{
 //			System.out.println("Found service: " + service);

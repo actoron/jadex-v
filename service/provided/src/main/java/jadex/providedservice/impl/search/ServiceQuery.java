@@ -1,5 +1,6 @@
 package jadex.providedservice.impl.search;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,8 +29,8 @@ public class ServiceQuery<T>
 	
 	/** Default matching modes set the elements with OR semantics. */
 	public static final Map<String, Boolean> DEFAULT_MATCHINGMODES = SUtil.createHashMap(
-		new String[]{ServiceKeyExtractor.KEY_TYPE_TAGS, ServiceKeyExtractor.KEY_TYPE_GROUPS}, 
-		new Boolean[]{Boolean.FALSE, Boolean.FALSE});
+		new String[]{ServiceKeyExtractor.KEY_TYPE_TAGS, ServiceKeyExtractor.KEY_TYPE_GROUPS, ServiceKeyExtractor.KEY_TYPE_ANNOTATIONS}, 
+		new Boolean[]{Boolean.FALSE, Boolean.FALSE, Boolean.FALSE});
 	
 	//-------- attributes --------
 	
@@ -38,6 +39,9 @@ public class ServiceQuery<T>
 	
 	/** Tags of the service. */
 	protected String[] servicetags;
+	
+	/** The annotation types to match on the service interface or its methods (OR semantics). */
+	protected ClassInfo[] annotations;
 	
 	/** The service provider. (rename serviceowner?) */
 	//protected IComponentIdentifier provider;
@@ -157,6 +161,7 @@ public class ServiceQuery<T>
 		//this.platform	= original.platform;
 		//this.searchstart	= original.searchstart;
 		this.unrestricted = original.unrestricted;
+		this.annotations = original.annotations;
 	}
 
 	/**
@@ -479,6 +484,14 @@ public class ServiceQuery<T>
 		if(serviceidentifier != null)
 			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_SID, new String[]{serviceidentifier.toString()}, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_SID)));
 		
+		if(annotations != null && annotations.length > 0)
+		{
+			String[] annotationNames = new String[annotations.length];
+			for(int i = 0; i < annotations.length; i++)
+				annotationNames[i] = annotations[i].getTypeName();
+			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_ANNOTATIONS, annotationNames, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_ANNOTATIONS)));
+		}
+		
 		assert !Arrays.equals(groupnames, GROUPS_NOT_SET) : "Problem: query not enhanced before processing.";
 	
 		if((unrestricted==null || Boolean.FALSE.equals(unrestricted)) && groupnames != null && groupnames.length > 0)
@@ -527,6 +540,46 @@ public class ServiceQuery<T>
 	public ServiceQuery<T> setUnrestricted(Boolean unrestricted)
 	{
 		this.unrestricted = unrestricted;
+		return this;
+	}
+
+	/**
+	 *  Gets the annotation types to match on the service interface or its methods.
+	 *  A service matches if it has any of the given annotations (OR semantics).
+	 *  
+	 *  @return The annotation types, or null if not set.
+	 */
+	public ClassInfo[] getServiceAnnotations()
+	{
+		return annotations;
+	}
+
+	/**
+	 *  Sets the annotation types to match on the service interface or its methods.
+	 *  A service matches if it has any of the given annotations (OR semantics).
+	 *  
+	 *  @param serviceAnnotations The annotation types to search for.
+	 *  @return This query (for chaining).
+	 */
+	@SafeVarargs
+	public final ServiceQuery<T> setServiceAnnotations(Class<? extends Annotation>... annotations)
+	{
+		this.annotations = new ClassInfo[annotations.length];
+		for(int i = 0; i < annotations.length; i++)
+			this.annotations[i] = new ClassInfo(annotations[i]);
+		return this;
+	}
+
+	/**
+	 *  Sets the annotation types to match on the service interface or its methods.
+	 *  A service matches if it has any of the given annotations (OR semantics).
+	 *  
+	 *  @param serviceAnnotations The annotation types to search for.
+	 *  @return This query (for chaining).
+	 */
+	public ServiceQuery<T> setServiceAnnotations(ClassInfo... annotations)
+	{
+		this.annotations = annotations;
 		return this;
 	}
 
@@ -730,6 +783,13 @@ public class ServiceQuery<T>
 			ret.append(ret.length()==13?"":", ");
 			ret.append("owner=");
 			ret.append(owner);
+		}
+
+		if(annotations!=null)
+		{
+			ret.append(ret.length()==13?"":", ");
+			ret.append("annotations=");
+			ret.append(Arrays.toString(annotations));
 		}
 			
 		ret.append(")");
