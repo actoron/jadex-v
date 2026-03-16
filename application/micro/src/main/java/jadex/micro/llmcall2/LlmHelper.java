@@ -26,6 +26,7 @@ public class LlmHelper
 			.baseUrl("http://localhost:11434")
 //			.think(false)
 //			.modelName("nemotron-3-nano:30b")
+			.modelName("devstral-small-2:24b")
 //			.modelName("gpt-oss:20b")
 //			.modelName("qwen3.5:9b")
 //			.modelName("qwen3:4b")
@@ -46,7 +47,8 @@ public class LlmHelper
 //			.modelName("nemotron-mini:4b")
 //			.modelName("llama3-groq-tool-use:8b")
 //			.modelName("mistral-nemo:12b-instruct-2407-q4_K_M")
-			.modelName("mistral-small3.2:24b")
+//			.modelName("mistral-small3.2:24b")
+//			.modelName("ministral-3:14b")
 			
 			// Fails due to wrong response format (missing "tool_calls" field)
 //			.modelName("llama3.1:8b-instruct-q4_K_M")
@@ -62,6 +64,7 @@ public class LlmHelper
 //			.modelName("command-r7b:latest")
 //			.modelName("rnj-1:8b")
 //			.modelName("patrickwarren2692/gemma-3-27b-it-abliterated-GGUF:latest")
+//			.modelName("lfm2:24b")
 			
 			.returnThinking(true)
 			.logRequests(true)
