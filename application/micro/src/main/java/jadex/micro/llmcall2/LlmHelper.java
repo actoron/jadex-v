@@ -25,19 +25,23 @@ public class LlmHelper
 			OllamaStreamingChatModel.builder()
 			.baseUrl("http://localhost:11434")
 //			.think(false)
-//			.modelName("nemotron-3-nano:30b")
-			.modelName("devstral-small-2:24b")
+//			.modelName("devstral-small-2:24b")
 //			.modelName("gpt-oss:20b")
+//			.modelName("qwen3:4b")	// no coffee :-(
+			.modelName("nemotron-3-nano:4b")
+			
+			// Succeeds sometimes on breakfast
+//			.modelName("nemotron-3-nano:30b")
+//			.modelName("mistral-small3.2:24b")
 //			.modelName("qwen3.5:9b")
-//			.modelName("qwen3:4b")
+//			.modelName("granite4:3b")
 //			.modelName("qwen3.5:2b-q4_K_M")
 //			.modelName("freakycoder123/phi4-fc:latest")
 			
 			// Fails on breakfast
+//			.modelName("qwen3.5:0.8b")
 //			.modelName("mistral:7b-instruct")
 //			.modelName("qwen3:0.6b")
-//			.modelName("qwen3.5:0.8b")
-//			.modelName("granite4:3b")
 //			.modelName("60MPH/astral3-tools:12b")
 //			.modelName("andrewmccall/gemma3-tools:latest")
 //			.modelName("comethrusws/sage-reasoning:8b")
@@ -47,7 +51,6 @@ public class LlmHelper
 //			.modelName("nemotron-mini:4b")
 //			.modelName("llama3-groq-tool-use:8b")
 //			.modelName("mistral-nemo:12b-instruct-2407-q4_K_M")
-//			.modelName("mistral-small3.2:24b")
 //			.modelName("ministral-3:14b")
 			
 			// Fails due to wrong response format (missing "tool_calls" field)
@@ -67,7 +70,7 @@ public class LlmHelper
 //			.modelName("lfm2:24b")
 			
 			.returnThinking(true)
-			.logRequests(true)
+//			.logRequests(true)
 //			.logResponses(true)
 			.build();
 		return llm;

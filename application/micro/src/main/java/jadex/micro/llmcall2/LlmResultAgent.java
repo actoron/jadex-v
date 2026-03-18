@@ -1,6 +1,7 @@
 package jadex.micro.llmcall2;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Map;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
@@ -145,7 +147,15 @@ public class LlmResultAgent
 		    {
 	    		agent.getComponentHandle().scheduleStep(() ->
 	    		{
-	    			messages.add(completeResponse.aiMessage());
+//	    			messages.add(completeResponse.aiMessage());
+	    			// Hack!!! currently thinking isn't passed back by ollama mapping (bug), so we add it manually here
+	    			messages.add(AiMessage.builder()
+	    				.text(
+	    					(completeResponse.aiMessage().thinking()!=null ? "<thinking>"+completeResponse.aiMessage().thinking()+"</thinking>" : "")
+	    					+(completeResponse.aiMessage().text()!=null ? completeResponse.aiMessage().text() : ""))
+	    				.toolExecutionRequests(completeResponse.aiMessage().toolExecutionRequests())
+	    				.attributes(completeResponse.aiMessage().attributes())
+	    				.build());
 	    			current_call.setResult(null);
 			    	// Done?
 			    	if(callfutures.isEmpty())
@@ -236,43 +246,60 @@ public class LlmResultAgent
 							param_values.add(value);
 						}
 						
+						boolean	isvoid	= m.getReturnType().equals(Void.TYPE);
 						Object result = m.invoke(service, param_values.toArray());
 						if(result instanceof IFuture)
 						{
+							if(m.getGenericReturnType() instanceof ParameterizedType)
+							{
+								ParameterizedType pt = (ParameterizedType) m.getGenericReturnType();
+								isvoid	=  pt.getActualTypeArguments()[0].equals(Void.class);
+							}
 							@SuppressWarnings("unchecked")
 							IFuture<Object>	resfut	= (IFuture<Object>) result;
-							return handleToolResult(call, resfut);
+							return handleToolResult(call, resfut, isvoid);
 						}
 						else
 						{
-							return handleToolResult(call, new Future<>(result));
+							return handleToolResult(call, new Future<>(result), isvoid);
 						}
 					}
 				}
 			}
 			
-			return handleToolResult(call, new Future<>(new RuntimeException("Tool method not found: " + method)));
+			return handleToolResult(call, new Future<>(new RuntimeException("Tool method not found: " + method)), false);
 		}
 		catch(Exception e)
 		{
-			return handleToolResult(call, new Future<>(e));
+			return handleToolResult(call, new Future<>(e), false);
 		}
 	}
 
-	protected IFuture<Void>	handleToolResult(CompleteToolCall call, IFuture<Object> resfut)
+	protected IFuture<Void>	handleToolResult(CompleteToolCall call, IFuture<Object> resfut, boolean isvoid)
 	{
 		Future<Void>	ret	= new Future<>();
 		// Wait for current call to complete to ensure messages are added in the correct order.
 		current_call.then(v ->
 			resfut.then(result -> 
 			{
-				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), Json.toJson(result)));
+				ToolExecutionResultMessage	msg	= ToolExecutionResultMessage.from(call.toolExecutionRequest(),
+					isvoid && result==null ? "done": result instanceof String ? (String) result : Json.toJson(result));
+//				messages.add(msg);
+				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
+				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
 				ret.setResult(null);
 			}).catchEx(ex -> 
 			{
 				// send exception message as result
-				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(),
-					"Tool '"+call.toolExecutionRequest().name()+"' failed due to: " + ex.toString()));
+				ToolExecutionResultMessage	msg	= ToolExecutionResultMessage.builder()
+					.id(call.toolExecutionRequest().id())
+					.toolName(call.toolExecutionRequest().name())
+					.isError(true)
+					.text(ex.toString())
+					.build();
+//				messages.add(msg);
+				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
+				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
 				ret.setResult(null);
 			}));
 		return ret;

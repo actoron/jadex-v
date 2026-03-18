@@ -46,7 +46,7 @@ public class LlmBreakfast
 			}
 		}
 		@Tool("Toast bread slices of the given toast kind.")
-		IFuture<String> toast(Toast toast);
+		IFuture<Void> toast(Toast toast);
 	}
 
 	@Service
@@ -69,8 +69,7 @@ public class LlmBreakfast
 				throw new NullPointerException("Toast type is required.");
 			if(!IToaster.Toast.TYPES.contains(toast.type))
 				throw new IllegalArgumentException("Unsupported toast type: " + toast.type+". Use one of: " + IToaster.Toast.TYPES);
-			return IExecutionFeature.get().waitForDelay(3000)
-				.thenApply(v -> "Toast done");
+			return IExecutionFeature.get().waitForDelay(3000);
 		}).get();
 
 		// Register CoffeeMaker service
