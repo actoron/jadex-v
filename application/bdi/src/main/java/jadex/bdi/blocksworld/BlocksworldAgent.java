@@ -194,7 +194,7 @@ public class BlocksworldAgent
 	public void agentCreated()
 	{
 		Block b0 = new Block(new Color(240, 16, 16), table);
-		Block b1 = new Block(new Color(16, 16, 240), table);
+		Block b1 = new Block(new Color(64, 96, 255), table);
 		Block b2 = new Block(new Color(240, 240, 16), b0);
 		blocks.add(b0);
 		blocks.add(b1);
