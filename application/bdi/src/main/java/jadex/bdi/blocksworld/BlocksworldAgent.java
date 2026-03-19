@@ -2,6 +2,7 @@ package jadex.bdi.blocksworld;
 
 import java.awt.Color;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.swing.SwingUtilities;
@@ -47,7 +48,7 @@ public class BlocksworldAgent
 	
 	/** The currently existing blocks. */
 	@Belief
-	protected Set<Block> blocks = new HashSet<Block>();
+	protected Set<Block> blocks = new LinkedHashSet<>();
 	
 	/** The future to communicate step events from gui to plan. */
 	protected SubscriptionIntermediateFuture<Void>	steps	= new SubscriptionIntermediateFuture<Void>();
