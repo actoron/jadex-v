@@ -2,14 +2,18 @@ package jadex.bdi.blocksworld;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 
 import javax.swing.JButton;
-import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.INoCopyStep;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.llmcall2.LlmHelper;
@@ -52,6 +56,8 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			throw new IllegalStateException("Block '"+block2+"' is not clear.");
 		if(b1.getLower()==null)	// table and bucket cannot be moved
 			throw new IllegalArgumentException("'"+block1+"' can not be moved.");
+		if(b2.getLower()==bucket)	// Cannot move on block in bucket
+			throw new IllegalArgumentException("'"+block2+"' is in the "+bucket);
 		if(b1==b2)
 			throw new IllegalArgumentException("Cannot move block '"+block1+"' on itself.");
 		b1.getLower().removeBlock(b1);
@@ -111,29 +117,41 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 
 	public static void main(String[] args)
 	{
-		IComponentManager.get().create(new LlmBlocksworldAgent()).get();
-
+		IComponentHandle	bwagent	= IComponentManager.get().create(new LlmBlocksworldAgent()).get();
+		BlocksworldGui	gui	= bwagent.scheduleAsyncStep(
+			(INoCopyStep<IFuture<BlocksworldGui>>) comp -> ((BlocksworldAgent)comp.getPojo()).gui).get();
+		
 		// Create simple gui to send a prompt
 		SwingUtilities.invokeLater(() ->
 		{
-			JFrame frame = new JFrame("LLM Blocksworld Agent");
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.getContentPane().add(new JTextArea("Move the red block on the green block."), BorderLayout.CENTER);
-			frame.getContentPane().add(new JButton("Send"), BorderLayout.SOUTH);
-			((JButton) frame.getContentPane().getComponent(1)).addActionListener(e ->
+			JTextArea	prompt	= new JTextArea("Move the red block on the green block.");
+			JButton		send	= new JButton("Send");
+			
+			JPanel	panel	= new JPanel(new BorderLayout());
+			panel.add(prompt, BorderLayout.CENTER);
+			panel.add(send, BorderLayout.SOUTH);
+			panel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "LLM Requests"));
+			
+			send.addActionListener(e ->
 			{
-				frame.getContentPane().getComponent(0).setEnabled(false);
-				frame.getContentPane().getComponent(1).setEnabled(false);
-				String prompt = ((JTextArea)frame.getContentPane().getComponent(0)).getText();
-				IComponentHandle agent = IComponentManager.get().create(new LlmResultAgent(LlmHelper.createChatModel(), prompt)).get();
-				LlmResultAgent.printResults(agent);
-				agent.waitForTermination()
-					.then(v -> {frame.getContentPane().getComponent(0).setEnabled(true);frame.getContentPane().getComponent(1).setEnabled(true);})
-					.catchEx(v -> {frame.getContentPane().getComponent(0).setEnabled(true);frame.getContentPane().getComponent(1).setEnabled(true);})
+				prompt.setEnabled(false);
+				send.setEnabled(false);
+				IComponentHandle llmagent = IComponentManager.get().create(
+					new LlmResultAgent(LlmHelper.createChatModel(), prompt.getText())).get();
+				LlmResultAgent.printResults(llmagent);
+				llmagent.waitForTermination()
+					.then(v -> {prompt.setEnabled(true); send.setEnabled(true);})
+					.catchEx(v -> {prompt.setEnabled(true); send.setEnabled(true);})
 					.printOnEx();
 			});
-			frame.setSize(400, 300);
-			frame.setVisible(true);
+			
+			Container	worlds	= (Container)gui.getContentPane().getComponent(0);
+			worlds.remove(worlds.getComponent(0));
+			worlds.add(panel, 0);
+			worlds.validate();
+			worlds.repaint();
 		});
+		
+		bwagent.waitForTermination().get();
 	}
 }

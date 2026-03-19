@@ -14,6 +14,7 @@ import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponent;
+import jadex.future.Future;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
@@ -51,9 +52,8 @@ public class BlocksworldAgent
 	/** The future to communicate step events from gui to plan. */
 	protected SubscriptionIntermediateFuture<Void>	steps	= new SubscriptionIntermediateFuture<Void>();
 	
-//	/** The gui (if any). */
-//	@Belief
-//	protected BlocksworldGui gui;
+	/** The gui (if any). */
+	protected Future<BlocksworldGui> gui	= new Future<>();
 	
 	/** The agent. */
 	@Inject
@@ -301,5 +301,4 @@ public class BlocksworldAgent
 	{
 		return agent;
 	}
-	
 }

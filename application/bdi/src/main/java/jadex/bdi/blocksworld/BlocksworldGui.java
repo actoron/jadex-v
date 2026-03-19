@@ -478,6 +478,8 @@ public class BlocksworldGui	extends JFrame
 								pack();
 								setLocation(SGUI.calculateMiddlePosition(BlocksworldGui.this));
 								setVisible(true);
+								
+								pag.gui.setResult(BlocksworldGui.this);
 //							}
 //							
 //							public void exceptionOccurred(Exception exception)
