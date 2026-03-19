@@ -3,14 +3,21 @@ package jadex.bdi.blocksworld;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
 
+import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.INoCopyStep;
@@ -115,6 +122,17 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 	    return (tone + vivid + base).trim();
 	}
 
+	protected static void	append(JTextPane pane, String value, Style style)
+	{
+		try {
+			pane.getStyledDocument().insertString(pane.getStyledDocument().getLength(), value, style);
+			pane.setCaretPosition(pane.getStyledDocument().getLength());
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	public static void main(String[] args)
 	{
 		IComponentHandle	bwagent	= IComponentManager.get().create(new LlmBlocksworldAgent()).get();
@@ -124,26 +142,72 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 		// Create simple gui to send a prompt
 		SwingUtilities.invokeLater(() ->
 		{
-			JTextArea	prompt	= new JTextArea("Move the red block on the green block.");
+			JTextPane	center	= new JTextPane();
+			center.setEditable(false);
+			JPanel	bottom	= new JPanel(new BorderLayout());
+			JTextField	prompt	= new JTextField("Move the red block on the green block.");
 			JButton		send	= new JButton("Send");
+			bottom.add(prompt, BorderLayout.CENTER);
+			bottom.add(send, BorderLayout.EAST);
 			
 			JPanel	panel	= new JPanel(new BorderLayout());
-			panel.add(prompt, BorderLayout.CENTER);
-			panel.add(send, BorderLayout.SOUTH);
+			panel.add(new JScrollPane(center), BorderLayout.CENTER);
+			panel.add(bottom, BorderLayout.SOUTH);
 			panel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "LLM Requests"));
 			
-			send.addActionListener(e ->
+			Style thinking = center.getStyledDocument().addStyle("thinking", null);
+			StyleConstants.setItalic(thinking, true);
+			Style toolcall = center.getStyledDocument().addStyle("toolcall", null);
+			StyleConstants.setBold(toolcall, true);
+			
+			ActionListener	al	= e ->
 			{
+				append(center, "User: "+prompt.getText()+"\n", null);
+				
 				prompt.setEnabled(false);
 				send.setEnabled(false);
 				IComponentHandle llmagent = IComponentManager.get().create(
 					new LlmResultAgent(LlmHelper.createChatModel(), prompt.getText())).get();
-				LlmResultAgent.printResults(llmagent);
+				
+				int[] last = new int[] {0};
+				llmagent.subscribeToResults().next(event ->
+				{
+					if(event.type()==Type.ADDED && event.name().equals("response"))
+					{
+						if(last[0]!=1)
+						{
+							append(center, "\n", null);
+							last[0]=1;
+						}
+						append(center, ""+event.value(), null);
+					}
+					else if(event.type()==Type.ADDED && event.name().equals("thinking"))
+					{
+						if(last[0]!=2)
+						{
+							append(center, "\n", thinking);
+							last[0]=2;
+						}
+						append(center, ""+event.value(), thinking);
+					}
+					else if(event.type()==Type.ADDED && event.name().equals("toolcalls"))
+					{
+						if(last[0]!=3)
+						{
+							append(center, "\n", toolcall);
+							last[0]=3;
+						}
+						append(center, ""+event.value(), toolcall);
+					}
+				}).printOnEx();
+				
 				llmagent.waitForTermination()
-					.then(v -> {prompt.setEnabled(true); send.setEnabled(true);})
-					.catchEx(v -> {prompt.setEnabled(true); send.setEnabled(true);})
+					.then(v -> {prompt.setEnabled(true); send.setEnabled(true); append(center, "\n==============\n", null);})
+					.catchEx(v -> {prompt.setEnabled(true); send.setEnabled(true); append(center, "\n==============\n", null);})
 					.printOnEx();
-			});
+			};
+			prompt.addActionListener(al);
+			send.addActionListener(al);
 			
 			Container	worlds	= (Container)gui.getContentPane().getComponent(0);
 			worlds.remove(worlds.getComponent(0));
