@@ -26,10 +26,10 @@ public class LlmHelper
 			.baseUrl("http://localhost:11434")
 //			.think(false)
 //			.modelName("devstral-small-2:24b")
-//			.modelName("gpt-oss:20b")
+			.modelName("gpt-oss:20b")
 //			.modelName("qwen3.5:9b")
 //			.modelName("qwen3:4b")	// no coffee :-(
-			.modelName("qwen3.5:2b-q4_K_M")
+//			.modelName("qwen3.5:2b-q4_K_M")
 			
 			// Succeeds sometimes on breakfast
 //			.modelName("nemotron-3-nano:30b")
@@ -70,7 +70,7 @@ public class LlmHelper
 //			.modelName("cogito:3b")
 			
 			.returnThinking(true)
-//			.logRequests(true)
+			.logRequests(true)
 //			.logResponses(true)
 			.build();
 		return llm;

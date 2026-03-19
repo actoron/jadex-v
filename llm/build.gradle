@@ -41,9 +41,9 @@ dependencies
     implementation 'org.activecomponents.jadex:publishservicejetty:'+v
     //implementation 'org.activecomponents.jadex:simulation:'+v
 
-    implementation 'dev.langchain4j:langchain4j:1.12.1'
-    implementation 'dev.langchain4j:langchain4j-ollama:1.12.1'
-    implementation 'dev.langchain4j:langchain4j-open-ai:1.12.1'
+    implementation 'dev.langchain4j:langchain4j:1.12.2'
+    implementation 'dev.langchain4j:langchain4j-ollama:1.12.2'
+    implementation 'dev.langchain4j:langchain4j-open-ai:1.12.2'
     implementation 'org.testcontainers:testcontainers:2.0.3'
     implementation 'org.testcontainers:testcontainers-ollama:2.0.3'
     implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
