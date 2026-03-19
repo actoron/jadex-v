@@ -33,7 +33,6 @@ import jadex.injection.annotation.OnStart;
 import jadex.providedservice.annotation.InjectServiceIdentifier;
 import jadex.providedservice.annotation.ProvideService;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceRegistry;
 
 /**

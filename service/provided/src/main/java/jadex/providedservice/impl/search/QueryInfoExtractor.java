@@ -10,6 +10,7 @@ import java.util.Set;
 import jadex.common.ClassInfo;
 import jadex.common.Tuple2;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceKeyExtractor.SetWrapper;
 
 /**

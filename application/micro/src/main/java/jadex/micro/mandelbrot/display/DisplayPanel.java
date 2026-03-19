@@ -39,7 +39,7 @@ import jadex.micro.mandelbrot.model.AreaData;
 import jadex.micro.mandelbrot.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.mandelbrot.model.ProgressData;
-import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**

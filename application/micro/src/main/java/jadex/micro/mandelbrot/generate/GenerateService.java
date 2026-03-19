@@ -23,7 +23,7 @@ import jadex.micro.mandelbrot.model.IFractalAlgorithm;
 import jadex.micro.mandelbrot.model.PartDataChunk;
 import jadex.micro.taskdistributor.IIntermediateTaskDistributor;
 import jadex.providedservice.IService;
-import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
 

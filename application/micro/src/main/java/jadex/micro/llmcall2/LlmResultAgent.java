@@ -35,7 +35,7 @@ import jadex.future.IFuture;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.annotation.ProvideResult;
 import jadex.providedservice.IService;
-import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 public class LlmResultAgent
