@@ -26,7 +26,7 @@ public class LlmHelper
 			.baseUrl("http://localhost:11434")
 //			.think(false)
 //			.modelName("devstral-small-2:24b")
-			.modelName("gpt-oss:20b")
+//			.modelName("gpt-oss:20b")
 //			.modelName("qwen3.5:9b")
 //			.modelName("qwen3:4b")	// no coffee :-(
 //			.modelName("qwen3.5:2b-q4_K_M")
@@ -38,6 +38,9 @@ public class LlmHelper
 //			.modelName("granite4:3b")
 //			.modelName("freakycoder123/phi4-fc:latest")
 			
+			// Fails on breakfast, but succeeds on blocksworld
+			.modelName("ministral-3:3b")
+			
 			// Fails on breakfast
 //			.modelName("qwen3.5:0.8b")
 //			.modelName("mistral:7b-instruct")
@@ -45,7 +48,6 @@ public class LlmHelper
 //			.modelName("60MPH/astral3-tools:12b")
 //			.modelName("andrewmccall/gemma3-tools:latest")
 //			.modelName("comethrusws/sage-reasoning:8b")
-//			.modelName("ministral-3:3b")
 //			.modelName("cogito:8b")
 //			.modelName("magistral:24b")
 //			.modelName("nemotron-mini:4b")
