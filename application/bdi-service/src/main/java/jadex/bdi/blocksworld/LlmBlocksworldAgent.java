@@ -199,6 +199,15 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 						}
 						append(center, ""+event.value(), toolcall);
 					}
+					else if(event.type()==Type.ADDED && event.name().equals("toolresults"))
+					{
+						if(last[0]!=4)
+						{
+							append(center, "\n", toolcall);
+							last[0]=4;
+						}
+						append(center, ""+event.value(), toolcall);
+					}
 				}).printOnEx();
 				
 				llmagent.waitForTermination()

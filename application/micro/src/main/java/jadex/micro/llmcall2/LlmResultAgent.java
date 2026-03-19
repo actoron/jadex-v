@@ -51,6 +51,9 @@ public class LlmResultAgent
 	@ProvideResult
 	List<String> toolcalls = new ArrayList<>();
 	
+	@ProvideResult
+	List<String> toolresults = new ArrayList<>();
+	
 	StreamingChatModel	llm;
 	String	prompt;
 
@@ -302,6 +305,7 @@ public class LlmResultAgent
 			{
 				ToolExecutionResultMessage	msg	= ToolExecutionResultMessage.from(call.toolExecutionRequest(),
 					isvoid && result==null ? "done": result instanceof String ? (String) result : Json.toJson(result));
+				toolresults.add(msg.toString());
 //				messages.add(msg);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
 				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
@@ -315,6 +319,7 @@ public class LlmResultAgent
 					.isError(true)
 					.text(ex.toString())
 					.build();
+				toolresults.add(msg.toString());
 //				messages.add(msg);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
 				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
@@ -352,6 +357,15 @@ public class LlmResultAgent
 				{
 					System.out.println();
 					last[0]=3;
+				}
+				System.out.println("\033[3;1m"+event.value()+"\033[0m");
+			}
+			else if(event.type()==Type.ADDED && event.name().equals("toolresults"))
+			{
+				if(last[0]!=4)
+				{
+					System.out.println();
+					last[0]=4;
 				}
 				System.out.println("\033[3;1m"+event.value()+"\033[0m");
 			}

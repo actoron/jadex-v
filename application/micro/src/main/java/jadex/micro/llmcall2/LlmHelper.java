@@ -70,7 +70,7 @@ public class LlmHelper
 //			.modelName("cogito:3b")
 			
 			.returnThinking(true)
-			.logRequests(true)
+//			.logRequests(true)
 //			.logResponses(true)
 			.build();
 		return llm;
