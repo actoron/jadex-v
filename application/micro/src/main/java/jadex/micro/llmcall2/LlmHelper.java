@@ -27,15 +27,15 @@ public class LlmHelper
 //			.think(false)
 //			.modelName("devstral-small-2:24b")
 //			.modelName("gpt-oss:20b")
+//			.modelName("qwen3.5:9b")
 //			.modelName("qwen3:4b")	// no coffee :-(
-			.modelName("nemotron-3-nano:4b")
+			.modelName("qwen3.5:2b-q4_K_M")
 			
 			// Succeeds sometimes on breakfast
 //			.modelName("nemotron-3-nano:30b")
 //			.modelName("mistral-small3.2:24b")
-//			.modelName("qwen3.5:9b")
+//			.modelName("nemotron-3-nano:4b")
 //			.modelName("granite4:3b")
-//			.modelName("qwen3.5:2b-q4_K_M")
 //			.modelName("freakycoder123/phi4-fc:latest")
 			
 			// Fails on breakfast
@@ -52,22 +52,22 @@ public class LlmHelper
 //			.modelName("llama3-groq-tool-use:8b")
 //			.modelName("mistral-nemo:12b-instruct-2407-q4_K_M")
 //			.modelName("ministral-3:14b")
-			
-			// Fails due to wrong response format (missing "tool_calls" field)
 //			.modelName("llama3.1:8b-instruct-q4_K_M")
-//			.modelName("hermes3:3b")
-//			.modelName("llama3.2:1b-instruct-q4_K_M")
 //			.modelName("functiongemma:latest")
-//			.modelName("qwen2.5-coder:7b")
-//			.modelName("qwen2.5:latest")
 //			.modelName("lfm2.5-thinking:1.2b")
 //			.modelName("granite4:350m")
 //			.modelName("phi4-mini:3.8b")
-//			.modelName("cogito:3b")
 //			.modelName("command-r7b:latest")
 //			.modelName("rnj-1:8b")
 //			.modelName("patrickwarren2692/gemma-3-27b-it-abliterated-GGUF:latest")
 //			.modelName("lfm2:24b")
+
+			// Fails due to wrong response format (missing "tool_calls" field)
+//			.modelName("hermes3:3b")
+//			.modelName("llama3.2:1b-instruct-q4_K_M")
+//			.modelName("qwen2.5-coder:7b")
+//			.modelName("qwen2.5:latest")
+//			.modelName("cogito:3b")
 			
 			.returnThinking(true)
 //			.logRequests(true)

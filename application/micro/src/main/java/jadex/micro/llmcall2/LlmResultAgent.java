@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,11 +36,12 @@ import jadex.injection.annotation.OnStart;
 import jadex.injection.annotation.ProvideResult;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.search.ServiceQuery;
-import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 public class LlmResultAgent
 {
+	static record ToolRef(Object service, Method method) {}
+	
 	@ProvideResult
 	List<String> thinking = new ArrayList<>();
 	
@@ -52,7 +54,8 @@ public class LlmResultAgent
 	StreamingChatModel	llm;
 	String	prompt;
 
-	Future<Void> current_call = new Future<>();
+	Map<String, ToolRef>	current_tools;
+	Future<Void> current_call;
 	List<ChatMessage> messages = new ArrayList<>();
 	List<IFuture<Void>> callfutures = new ArrayList<>();
 
@@ -184,90 +187,105 @@ public class LlmResultAgent
 
 	protected List<ToolSpecification>	findTools(IComponent agent)
 	{
-		List<ToolSpecification> all_tools = new ArrayList<>();
+		List<ToolSpecification> tool_specs = new ArrayList<>();
+		current_tools	= new LinkedHashMap<>();
 		
 		Collection<?>	services	= agent.getFeature(IRequiredServiceFeature.class)
 			.getLocalServices(new ServiceQuery<>((Class<?>)null).setServiceAnnotations(Tool.class));
 		for(Object service : services)
 		{
 //			System.out.println("Found service: " + service);
-			List<ToolSpecification>	tools	= ToolSpecifications.toolSpecificationsFrom(((IService)service).getServiceId().getServiceType().getType0());
-			tools.forEach(tool -> 
+			Class<?>	type	= ((IService)service).getServiceId().getServiceType().getType0();
+			for(Method m: type.getMethods())
 			{
-				tool	= ToolSpecification.builder()
-					// replace "@" with ":" as required by google ai
-					.name(tool.name()+"."+((IService)service).getServiceId().toString().replace("@", "."))
-					.description(tool.description())
-					.parameters(tool.parameters())
-					.metadata(tool.metadata())
-					.build();
-//				System.out.println("Tool: " + tool);
-				all_tools.add(tool);
-			});
+				if(m.isAnnotationPresent(Tool.class))
+				{
+					ToolSpecification	tool	= ToolSpecifications.toolSpecificationFrom(m);
+					String	name	= tool.name();
+					// Convert name to snake case if not explicitly set in annotation, as this is more common for tools (e.g. python function calls)
+					if(m.getAnnotation(Tool.class).name().isEmpty())
+					{
+						name = name.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
+					}
+					// append number to ensure unique name.
+					while(current_tools.containsKey(name))
+					{
+						// get current number suffix if exists
+						int suffix = 1;
+						int index = name.lastIndexOf("_");
+						if(index!=-1)
+						{
+							try
+							{
+								suffix = Integer.parseInt(name.substring(index+1))+1;
+								name = name.substring(0, index);
+							}
+							catch(NumberFormatException e)
+							{
+								// no number suffix
+							}
+						}
+						name = name+"_"+suffix;
+					}
+					
+					tool	= ToolSpecification.builder()
+						.name(name)
+						.description(tool.description())
+						.parameters(tool.parameters())
+						.metadata(tool.metadata())
+						.build();
+					
+					tool_specs.add(tool);
+					current_tools.put(name, new ToolRef(service, m));
+				}
+			}
 		}
-		return all_tools;
+		return tool_specs;
 	}
 	
 	protected IFuture<Void> callTool(IComponent agent, CompleteToolCall call)
 	{
 		try
 		{
-			// revert replace of "@" with ":" as required by google ai
-			String	name	= call.toolExecutionRequest().name().replace(".", "@");
-			int	index	= name.indexOf("@");
-			String	method	= name.substring(0, index);
-			ServiceIdentifier	sid	= ServiceIdentifier.fromString(name.substring(index+1));
-			IService	service	= agent.getFeature(IRequiredServiceFeature.class).getServiceProxy(sid);
+			IService	service	= (IService) current_tools.get(call.toolExecutionRequest().name()).service;
 			if(service==null)
-				throw new RuntimeException("Tool not found: " + sid);
+				throw new RuntimeException("Tool not found: " + call.toolExecutionRequest().name());
+			Method	m	= current_tools.get(call.toolExecutionRequest().name()).method;
 			
-			for(Method m: service.getServiceId().getServiceType().getType0().getMethods())
+			@SuppressWarnings("unchecked")
+			Map<String, Object>	args	= Json.fromJson(call.toolExecutionRequest().arguments(), Map.class);
+//			System.out.println("\nCalling tool: " + m + " on service: " + service + " with args: " + args);
+			List<Object> param_values = new ArrayList<>();
+			for(int i=0; i<m.getParameters().length; i++)
 			{
-				if(m.isAnnotationPresent(Tool.class))
+				if(!args.containsKey(m.getParameters()[i].getName()))
+					throw new RuntimeException("Missing argument: " + m.getParameters()[i].getName());
+				Object	value = args.get(m.getParameters()[i].getName());
+				// convert value to parameter type if needed
+				if(value!=null && !m.getParameters()[i].getType().isAssignableFrom(value.getClass()))
 				{
-					Tool t = m.getAnnotation(Tool.class);
-					if(t.name().equals(method) || t.name().isEmpty() && m.getName().equals(method))
-					{
-//						Map<String, Object>	args	= JsonTraverser.objectFromString(call.toolExecutionRequest().arguments(), getClass().getClassLoader(), Map.class);
-						@SuppressWarnings("unchecked")
-						Map<String, Object>	args	= Json.fromJson(call.toolExecutionRequest().arguments(), Map.class);
-	//					System.out.println("\nCalling tool: " + m + " on service: " + service + " with args: " + args);
-						List<Object> param_values = new ArrayList<>();
-						for(int i=0; i<m.getParameters().length; i++)
-						{
-							if(!args.containsKey(m.getParameters()[i].getName()))
-								throw new RuntimeException("Missing argument: " + m.getParameters()[i].getName());
-							Object	value = args.get(m.getParameters()[i].getName());
-							// convert value to parameter type if needed
-							if(value!=null && !m.getParameters()[i].getType().isAssignableFrom(value.getClass()))
-							{
-								value = Json.fromJson(Json.toJson(value), m.getParameters()[i].getType());
-							}
-							param_values.add(value);
-						}
-						
-						boolean	isvoid	= m.getReturnType().equals(Void.TYPE);
-						Object result = m.invoke(service, param_values.toArray());
-						if(result instanceof IFuture)
-						{
-							if(m.getGenericReturnType() instanceof ParameterizedType)
-							{
-								ParameterizedType pt = (ParameterizedType) m.getGenericReturnType();
-								isvoid	=  pt.getActualTypeArguments()[0].equals(Void.class);
-							}
-							@SuppressWarnings("unchecked")
-							IFuture<Object>	resfut	= (IFuture<Object>) result;
-							return handleToolResult(call, resfut, isvoid);
-						}
-						else
-						{
-							return handleToolResult(call, new Future<>(result), isvoid);
-						}
-					}
+					value = Json.fromJson(Json.toJson(value), m.getParameters()[i].getType());
 				}
+				param_values.add(value);
 			}
 			
-			return handleToolResult(call, new Future<>(new RuntimeException("Tool method not found: " + method)), false);
+			boolean	isvoid	= m.getReturnType().equals(Void.TYPE);
+			Object result = m.invoke(service, param_values.toArray());
+			if(result instanceof IFuture)
+			{
+				if(m.getGenericReturnType() instanceof ParameterizedType)
+				{
+					ParameterizedType pt = (ParameterizedType) m.getGenericReturnType();
+					isvoid	=  pt.getActualTypeArguments()[0].equals(Void.class);
+				}
+				@SuppressWarnings("unchecked")
+				IFuture<Object>	resfut	= (IFuture<Object>) result;
+				return handleToolResult(call, resfut, isvoid);
+			}
+			else
+			{
+				return handleToolResult(call, new Future<>(result), isvoid);
+			}
 		}
 		catch(Exception e)
 		{
