@@ -153,7 +153,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			JPanel	panel	= new JPanel(new BorderLayout());
 			panel.add(new JScrollPane(center), BorderLayout.CENTER);
 			panel.add(bottom, BorderLayout.SOUTH);
-			panel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "LLM Requests"));
+			panel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Chat with Agent"));
 			
 			Style thinking = center.getStyledDocument().addStyle("thinking", null);
 			StyleConstants.setItalic(thinking, true);
