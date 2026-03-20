@@ -436,7 +436,7 @@ public class BlocksworldGui	extends JFrame
 							public void	windowClosing(WindowEvent we)
 							{
 								we.getWindow().dispose();
-								agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.terminate())
+								agent.terminate()
 									.catchEx(e -> e.printStackTrace());
 							}
 						});
