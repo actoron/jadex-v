@@ -6,9 +6,9 @@ import java.awt.Container;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
@@ -145,7 +145,17 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			JTextPane	center	= new JTextPane();
 			center.setEditable(false);
 			JPanel	bottom	= new JPanel(new BorderLayout());
-			JTextField	prompt	= new JTextField("Move the red block on the green block.");
+			JComboBox<String>	prompt	= new JComboBox<>(new String[] {
+				"Move the red block on the green one.",
+				"Put all blocks in the bucket.",
+				"Where is the yellow block?",
+				"How many blocks are there?",
+				"What is the color of block 1?",
+				"Describe the current world state.",
+				"What do you think about the current world state?",
+				"Please move some blocks around and describe what you are doing and why."
+			});
+			prompt.setEditable(true);
 			JButton		send	= new JButton("Send");
 			bottom.add(prompt, BorderLayout.CENTER);
 			bottom.add(send, BorderLayout.EAST);
@@ -162,12 +172,15 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			
 			ActionListener	al	= e ->
 			{
-				append(center, "User: "+prompt.getText()+"\n", null);
+				if(!e.getActionCommand().equals("comboBoxEdited"))
+					return;// Only react to combo box edits, not selection changes
+				
+				append(center, "User: "+prompt.getSelectedItem()+"\n", null);
 				
 				prompt.setEnabled(false);
 				send.setEnabled(false);
 				IComponentHandle llmagent = IComponentManager.get().create(
-					new LlmResultAgent(LlmHelper.createChatModel(), prompt.getText())).get();
+					new LlmResultAgent(LlmHelper.createChatModel(), (String) prompt.getSelectedItem())).get();
 				
 				int[] last = new int[] {0};
 				llmagent.subscribeToResults().next(event ->
