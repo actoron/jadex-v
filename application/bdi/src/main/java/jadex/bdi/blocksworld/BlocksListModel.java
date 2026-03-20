@@ -5,6 +5,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.DefaultListModel;
+import javax.swing.SwingUtilities;
 
 
 /**
@@ -28,17 +29,20 @@ public class BlocksListModel	extends DefaultListModel
 		{
 			public void	propertyChange(PropertyChangeEvent pce)
 			{
-				if(pce.getPropertyName().equals("blocks"))
+				SwingUtilities.invokeLater(new Runnable()
 				{
-					if(pce.getOldValue()!=null)
+					public void run()
 					{
-						removeElement(pce.getOldValue());
+						if(pce.getOldValue()!=null)
+						{
+							removeElement(pce.getOldValue());
+						}
+						if(pce.getNewValue()!=null)
+						{
+							addElement(pce.getNewValue());
+						}
 					}
-					if(pce.getNewValue()!=null)
-					{
-						addElement(pce.getNewValue());
-					}
-				}
+				});
 			}
 		});
 	}
