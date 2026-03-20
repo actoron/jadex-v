@@ -172,7 +172,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			
 			ActionListener	al	= e ->
 			{
-				if(!e.getActionCommand().equals("comboBoxEdited"))
+				if(e.getSource()==prompt && !e.getActionCommand().equals("comboBoxEdited"))
 					return;// Only react to combo box edits, not selection changes
 				
 				append(center, "User: "+prompt.getSelectedItem()+"\n", null);
