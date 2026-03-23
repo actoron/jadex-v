@@ -19,9 +19,10 @@ public class LlmHelper
 //				.build())
 //			.apiKey(System.getenv("GOOGLE_API_KEY"))
 ////			.modelName("gemini-3-flash-preview")
-////			.modelName("gemini-2.5-flash")
-//			.modelName("gemini-2.5-flash-lite")
+//			.modelName("gemini-2.5-flash")
+////			.modelName("gemini-2.5-flash-lite")
 			
+				
 			OllamaStreamingChatModel.builder()
 			.baseUrl("http://localhost:11434")
 //			.think(false)
@@ -31,6 +32,10 @@ public class LlmHelper
 //			.modelName("qwen3:4b")	// no coffee :-(, fails on  blocksworld
 //			.modelName("qwen3.5:2b-q4_K_M")	// fails on blocksworld
 			.modelName("ministral-3:3b")
+//			.modelName("qwen3.5:9b-q8_0")
+//			.modelName("qwen3.5:4b-bf16")
+//			.modelName("nemotron-cascade-2:30b")
+//			.modelName("qwen3:4b-instruct")
 			
 			// Succeeds sometimes on breakfast
 //			.modelName("nemotron-3-nano:30b")
@@ -69,6 +74,18 @@ public class LlmHelper
 //			.modelName("qwen2.5:latest")
 //			.modelName("cogito:3b")
 			
+				
+//			OpenAiStreamingChatModel.builder()
+//				.baseUrl("https://openrouter.ai/api/v1")
+//				.apiKey(System.getenv("OPENAI_API_KEY"))
+////				.modelName("stepfun/step-3.5-flash:free")
+////				.modelName("nvidia/nemotron-3-super-120b-a12b:free")
+////				.modelName("arcee-ai/trinity-large-preview:free")	// slow, but works well on blocksworld, breakfast and calculator
+////				.modelName("z-ai/glm-4.5-air:free")
+////				.modelName("qwen/qwen3-next-80b-a3b-instruct:free")
+////				.modelName("meta-llama/llama-3.3-70b-instruct:free")
+				
+				
 			.returnThinking(true)
 //			.logRequests(true)
 //			.logResponses(true)
