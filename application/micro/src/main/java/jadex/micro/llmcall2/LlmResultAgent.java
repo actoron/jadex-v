@@ -73,11 +73,13 @@ public class LlmResultAgent
 	public void	start(IComponent agent)
 	{
 		messages.add(SystemMessage.from(
-			"You are an agent that should use tools to complete tasks as instructed by the user.\n"
-		  + "If unsure about how to proceed, do not ask the user, but try to figure it out yourself.\n"
-		  + "In case of an Exception as tool response, do not respond to the user,\n"
-		  + "but directly try re-calling the tool with adjusted arguments.\n"
+			"You are an agent that plans and performs a sequence of tool calls to complete a given task autonomously.\n"
+		  + "For missing information, take arbitrary decisions yourself and do not ask the user.\n"
+		  + "Experiment with the available tools to make progress, i.e., execute incomplete plans and try out tools to see what happens.\n"
+		  + "Execute tools directly without asking the user for confirmation or missing information.\n"
+		  + "Handle Exceptions by re-calling tools with adjusted arguments or calling a different tools.\n"
 		  + "Use argument names as given in the function properties.\n"
+//		  + "Make extra sure to use correct opening and closing brackets for thinking, tool calls etc.\n"
 		));
 		messages.add(UserMessage.from(prompt));
 		
