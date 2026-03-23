@@ -34,17 +34,34 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 		StringBuilder sb = new StringBuilder();
 		for(Block block : blocks)
 		{
-			sb.append(block)
+			sb
+				.append("'")
+				.append(block)
+				.append("'")
 				.append(
 					block.getLower()==table ? " is on the "
 					: block.getLower()==bucket ? " is in the "
 					: " is on ")
+				.append("'")
 				.append(block.getLower())
+				.append("'")
 				.append("\n");
 		}
+		if(table.getAllBlocks().length==0)
+		{
+			sb.append("The '"+table+"' is empty.\n");
+		}
+		if(bucket.getAllBlocks().length==0)
+		{
+			sb.append("The '"+bucket+"' is empty.\n");
+		}
+		
 		for(Block block : blocks)
 		{
-			sb.append(block)
+			sb
+				.append("'")
+				.append(block)
+				.append("'")
 				.append(" has color ")
 				.append(approximateColorName(block.getColor()))
 				.append("\n");
@@ -58,15 +75,15 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 		Block b1 = getBlock(block1);
 		Block b2 = getBlock(block2);
 		if(b1.getUpper()!=null)
-			throw new IllegalStateException("Block '"+block1+"' is not clear.");
+			throw new IllegalStateException("'"+block1+"' is not clear.");
 		if(b2.getUpper()!=null && b2!=table && b2!=bucket)
-			throw new IllegalStateException("Block '"+block2+"' is not clear.");
+			throw new IllegalStateException("'"+block2+"' is not clear.");
 		if(b1.getLower()==null)	// table and bucket cannot be moved
 			throw new IllegalArgumentException("'"+block1+"' can not be moved.");
 		if(b2.getLower()==bucket)	// Cannot move on block in bucket
 			throw new IllegalArgumentException("'"+block2+"' is in the "+bucket);
 		if(b1==b2)
-			throw new IllegalArgumentException("Cannot move block '"+block1+"' on itself.");
+			throw new IllegalArgumentException("Cannot move '"+block1+"' on itself.");
 		b1.getLower().removeBlock(b1);
 		b1.setLower(b2);
 		b2.addBlock(b1);
@@ -76,16 +93,16 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 	
 	protected Block	getBlock(String name)
 	{
-		if(name.equals(table.toString()))
+		if(name.toLowerCase().equals(table.toString().toLowerCase()))
 			return table;
-		if(name.equals(bucket.toString()))
+		if(name.toLowerCase().equals(bucket.toString().toLowerCase()))
 			return bucket;
 		for(Block block : blocks)
 		{
-			if(block.toString().equals(name))
+			if(name.toLowerCase().equals(block.toString().toLowerCase()))
 				return block;
 		}
-		throw new IllegalArgumentException("Block '"+name+"' not found.");
+		throw new IllegalArgumentException("No '"+name+"' in world state.");
 	}
 	
 	protected static String	approximateColorName(Color color)
@@ -146,7 +163,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			center.setEditable(false);
 			JPanel	bottom	= new JPanel(new BorderLayout());
 			JComboBox<String>	prompt	= new JComboBox<>(new String[] {
-				"Move the red block on the green one.",
+				"Move the red block onto the green one.",
 				"Put all blocks in the bucket.",
 				"Where is the yellow block?",
 				"How many blocks are there?",
