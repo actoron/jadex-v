@@ -172,6 +172,8 @@ public class LlmHelper
 			.modelName(model)
 			.returnThinking(true)
 //			.think(false)
+//			.logRequests(true)
+//			.logResponses(true)
 			.build();
 		return llm;
 	}
@@ -185,6 +187,8 @@ public class LlmHelper
 			.apiKey(System.getenv("GOOGLE_API_KEY"))
 			.modelName(model)
 			.returnThinking(true)
+//			.logRequests(true)
+//			.logResponses(true)
 			.build();
 	}
 	
