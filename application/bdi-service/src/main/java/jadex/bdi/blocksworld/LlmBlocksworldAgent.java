@@ -4,10 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -26,6 +30,7 @@ import jadex.core.INoCopyStep;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.llmcall2.LlmHelper;
+import jadex.micro.llmcall2.LlmHelper.Provider;
 import jadex.micro.llmcall2.LlmResultAgent;
 
 public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworldService
@@ -163,7 +168,9 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 		{
 			JTextPane	center	= new JTextPane();
 			center.setEditable(false);
-			JPanel	bottom	= new JPanel(new BorderLayout());
+			
+			JComboBox<Provider>	provider	= new JComboBox<>(Provider.values());
+			JComboBox<String>	model		= new JComboBox<>();
 			JComboBox<String>	prompt	= new JComboBox<>(new String[] {
 				"Move the red block onto the green one.",
 				"Put all blocks in the bucket.",
@@ -176,18 +183,78 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			});
 			prompt.setEditable(true);
 			JButton		send	= new JButton("Send");
-			bottom.add(prompt, BorderLayout.CENTER);
-			bottom.add(send, BorderLayout.EAST);
+			JButton		stop	= new JButton("Stop");
+
+			JPanel	options = new JPanel(new GridBagLayout());
+			GridBagConstraints gbc = new GridBagConstraints();
+			gbc.insets = new java.awt.Insets(4, 2, 4, 2);
+			gbc.fill = GridBagConstraints.HORIZONTAL;
+			gbc.anchor = GridBagConstraints.WEST;
+
+			// Row 0: Provider label + combo
+			gbc.gridx = 0;
+			gbc.gridy = 0;
+			gbc.weightx = 0;
+			options.add(new JLabel("Provider"), gbc);
+			gbc.gridx = 1;
+			gbc.weightx = 1;
+			gbc.gridwidth	= GridBagConstraints.REMAINDER;
+			options.add(provider, gbc);
+
+			// Row 1: Model label + combo
+			gbc.gridx = 0;
+			gbc.gridy = 1;
+			gbc.weightx = 0;
+			gbc.gridwidth	= 1;
+			options.add(new JLabel("Model"), gbc);
+			gbc.gridx = 1;
+			gbc.weightx = 1;
+			gbc.gridwidth	= GridBagConstraints.REMAINDER;
+			options.add(model, gbc);
+
+			// Row 2: Prompt expands, buttons stay compact
+			gbc.gridx = 0;
+			gbc.gridy = 2;
+			gbc.gridwidth = 2;
+			gbc.weightx = 1;
+			options.add(prompt, gbc);
+			gbc.gridx = 2;
+			gbc.weightx = 0;
+			gbc.gridwidth = 1;
+			options.add(send, gbc);
+			gbc.gridx = 3;
+			options.add(stop, gbc);
 			
 			JPanel	panel	= new JPanel(new BorderLayout());
 			panel.add(new JScrollPane(center), BorderLayout.CENTER);
-			panel.add(bottom, BorderLayout.SOUTH);
+			panel.add(options, BorderLayout.SOUTH);
 			panel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Chat with Agent"));
 			
 			Style thinking = center.getStyledDocument().addStyle("thinking", null);
 			StyleConstants.setItalic(thinking, true);
 			Style toolcall = center.getStyledDocument().addStyle("toolcall", null);
 			StyleConstants.setBold(toolcall, true);
+			
+			ActionListener	fetchmodels	= e ->
+			{
+				Cursor oldCursor = gui.getCursor();
+				try
+				{
+					gui.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));					
+					Provider selected = (Provider) provider.getSelectedItem();
+					model.removeAllItems();
+					for(String m : selected.getModels())
+						model.addItem(m);
+					
+					if(LlmHelper.DEFAULT_MODELS.get(selected)!=null)
+						model.setSelectedItem(LlmHelper.DEFAULT_MODELS.get(selected));
+				}
+				finally
+				{
+					gui.setCursor(oldCursor);					
+				}
+			};
+			provider.addActionListener(fetchmodels);
 			
 			ActionListener	al	= e ->
 			{
@@ -205,7 +272,12 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 				prompt.setEnabled(false);
 				send.setEnabled(false);
 				IComponentHandle llmagent = IComponentManager.get().create(
-					new LlmResultAgent(LlmHelper.createChatModel(), (String) prompt.getSelectedItem(), png)).get();
+					new LlmResultAgent(LlmHelper.createChatModel(
+							(Provider)provider.getSelectedItem(),
+							(String)model.getSelectedItem()),
+							(String)prompt.getSelectedItem()
+							, png	// Send image (or not)
+							)).get();
 				
 				int[] last = new int[] {0};
 				llmagent.subscribeToResults().next(event ->
@@ -233,7 +305,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 						if(last[0]!=3)
 						{
 							append(center, "\n", toolcall);
-							last[0]=3;
+						 last[0]=3;
 						}
 						append(center, ""+event.value(), toolcall);
 					}
@@ -261,6 +333,8 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			worlds.add(panel, 0);
 			worlds.validate();
 			worlds.repaint();
+			
+			SwingUtilities.invokeLater(() ->fetchmodels.actionPerformed(null));
 		});
 		
 		bwagent.waitForTermination().get();
