@@ -11,9 +11,13 @@ import java.util.Map;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
+import dev.langchain4j.data.image.Image;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.ImageContent;
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.internal.Json;
@@ -56,6 +60,7 @@ public class LlmResultAgent
 	
 	StreamingChatModel	llm;
 	String	prompt;
+	Image[]	images;
 
 	Map<String, ToolRef>	current_tools;
 	Future<Void> current_call;
@@ -63,10 +68,11 @@ public class LlmResultAgent
 	List<IFuture<Void>> callfutures = new ArrayList<>();
 
 	
-	public LlmResultAgent(StreamingChatModel llm, String prompt)
+	public LlmResultAgent(StreamingChatModel llm, String prompt, Image... images)
 	{
 		this.llm = llm;
 		this.prompt = prompt;
+		this.images = images;
 	}
 	
 	@OnStart
@@ -81,7 +87,17 @@ public class LlmResultAgent
 		  + "Use argument names as given in the function properties.\n"
 //		  + "Make extra sure to use correct opening and closing brackets for thinking, tool calls etc.\n"
 		));
-		messages.add(UserMessage.from(prompt));
+		
+		List<Content> content = new ArrayList<>();
+		content.add(TextContent.from(prompt));
+		if(images!=null)
+		{
+			for(Image img: images)
+			{
+				content.add(ImageContent.from(img));
+			}
+		}
+		messages.add(UserMessage.from(content));
 		
 		sendRequest(agent);
 	}

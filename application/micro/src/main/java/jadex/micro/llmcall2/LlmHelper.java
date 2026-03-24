@@ -1,5 +1,15 @@
 package jadex.micro.llmcall2;
 
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Base64;
+
+import javax.imageio.ImageIO;
+
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 
@@ -28,10 +38,10 @@ public class LlmHelper
 //			.think(false)
 //			.modelName("devstral-small-2:24b")
 //			.modelName("gpt-oss:20b")
-//			.modelName("qwen3.5:9b")	// needs several attempts on blocksworld
+			.modelName("qwen3.5:9b")	// needs several attempts on blocksworld
 //			.modelName("qwen3:4b")	// no coffee :-(, fails on  blocksworld
 //			.modelName("qwen3.5:2b-q4_K_M")	// fails on blocksworld
-			.modelName("ministral-3:3b")
+//			.modelName("ministral-3:3b")
 //			.modelName("qwen3.5:9b-q8_0")
 //			.modelName("qwen3.5:4b-bf16")
 //			.modelName("nemotron-cascade-2:30b")
@@ -91,5 +101,57 @@ public class LlmHelper
 //			.logResponses(true)
 			.build();
 		return llm;
+	}
+
+	/**
+	 *  Creates a PNG image from the given component and returns it as a base64-encoded string.
+	 */
+	public static String createPngFromComponent(Component world)
+	{
+		if(world==null)
+			throw new NullPointerException("Component must not be null.");
+
+		Dimension size = world.getSize();
+		if(size.width<=0 || size.height<=0)
+		{
+			Dimension preferred = world.getPreferredSize();
+			if(preferred!=null)
+				size = preferred;
+		}
+		if(size.width<=0 || size.height<=0)
+			throw new IllegalArgumentException("Component has invalid size: "+size.width+"x"+size.height);
+
+		BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = image.createGraphics();
+		try
+		{
+			world.setSize(size);
+			world.doLayout();
+			world.printAll(g2);
+		}
+		finally
+		{
+			g2.dispose();
+		}
+
+		try(ByteArrayOutputStream baos = new ByteArrayOutputStream())
+		{
+			boolean written = ImageIO.write(image, "png", baos);
+			if(!written)
+				throw new IllegalStateException("No PNG writer available.");
+			return Base64.getEncoder().encodeToString(baos.toByteArray());
+		}
+		catch(IOException e)
+		{
+			throw new RuntimeException("Failed to encode component image as PNG.", e);
+		}
+	}
+
+	/**
+	 *  Creates a PNG data URI from the given component.
+	 */
+	public static String createPngDataUriFromComponent(Component world)
+	{
+		return "data:image/png;base64," + createPngFromComponent(world);
 	}
 }

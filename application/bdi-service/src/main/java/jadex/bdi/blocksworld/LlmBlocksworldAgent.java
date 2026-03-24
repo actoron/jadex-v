@@ -2,6 +2,7 @@ package jadex.bdi.blocksworld;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ActionListener;
 
@@ -17,6 +18,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 
+import dev.langchain4j.data.image.Image;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
@@ -194,10 +196,16 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 				
 				append(center, "User: "+prompt.getSelectedItem()+"\n", null);
 				
+				// Generate base64 encoded image of current world state and add to prompt
+				Container	worlds	= (Container)gui.getContentPane().getComponent(0);
+				Component	world	= 	((Container) ((Container) ((Container) worlds.getComponent(1)).getComponent(0)).getComponent(0)).getComponent(0);
+				String image = LlmHelper.createPngFromComponent(world);
+				Image	png	= Image.builder().base64Data(image).mimeType("image/png").build();
+				
 				prompt.setEnabled(false);
 				send.setEnabled(false);
 				IComponentHandle llmagent = IComponentManager.get().create(
-					new LlmResultAgent(LlmHelper.createChatModel(), (String) prompt.getSelectedItem())).get();
+					new LlmResultAgent(LlmHelper.createChatModel(), (String) prompt.getSelectedItem(), png)).get();
 				
 				int[] last = new int[] {0};
 				llmagent.subscribeToResults().next(event ->
