@@ -174,7 +174,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			JComboBox<String>	model		= new JComboBox<>();
 			JCheckBox	think	= new JCheckBox("Think");
 			think.setToolTipText("Show the thinking process of the agent, if supported by the model.");
-			think.setSelected(true);
+			think.setSelected(false);
 			JCheckBox	sendimage	= new JCheckBox("Image");
 			sendimage.setToolTipText("Include an image of the current world state in the prompt.");
 			sendimage.setSelected(true);
