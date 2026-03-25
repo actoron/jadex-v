@@ -20,6 +20,7 @@ import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
+import dev.langchain4j.model.ollama.OllamaStreamingChatModel.OllamaStreamingChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 
 public class LlmHelper
@@ -69,7 +70,7 @@ public class LlmHelper
 			return name;
 		}
 		
-		public StreamingChatModel createChatModel(String model, boolean think)
+		public StreamingChatModel createChatModel(String model, Boolean think)
 		{
 			if(model==null)
 				model = DEFAULT_MODELS.get(this);
@@ -129,7 +130,7 @@ public class LlmHelper
 	
 	public static StreamingChatModel createChatModel()
 	{
-		return createChatModel(null, null, true);
+		return createChatModel(null, null, null);
 	}
 	
 	public static List<String>	fetchOllamaModels(String baseurl)
@@ -140,7 +141,7 @@ public class LlmHelper
 		return ollamaModels.availableModels().content().stream().map(m -> m.getModel()).toList();
 	}
 
-	public static StreamingChatModel createChatModel(Provider provider, String model, boolean think)
+	public static StreamingChatModel createChatModel(Provider provider, String model, Boolean think)
 	{
 		System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
 		System.setProperty("org.slf4j.simpleLogger.log.dev.langchain4j", "debug");
@@ -152,42 +153,42 @@ public class LlmHelper
 		return provider.createChatModel(model, think);
 	}
 	
-	protected static StreamingChatModel	createOpenAiChatModel(String model, boolean think)
+	protected static StreamingChatModel	createOpenAiChatModel(String model, Boolean think)
 	{
 		return OpenAiStreamingChatModel.builder()
 			.baseUrl("https://openrouter.ai/api/v1")
 			.apiKey(System.getenv("OPENAI_API_KEY"))
 			.modelName(model)
-			.returnThinking(think)
-			.sendThinking(think)
+			.returnThinking(think!=null? think: true)
+			.sendThinking(think!=null? think: true)
 //			.logRequests(true)
 //			.logResponses(true)
 			.build();
 	}
 	
-	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, boolean think)
+	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, Boolean think)
 	{
-		StreamingChatModel llm =
-			OllamaStreamingChatModel.builder()
+		OllamaStreamingChatModelBuilder	llm	= OllamaStreamingChatModel.builder()
 			.baseUrl(baseurl)
 			.modelName(model)
-			.returnThinking(think)
-			.think(think)
 //			.logRequests(true)
 //			.logResponses(true)
-			.build();
-		return llm;
+			.returnThinking(think!=null? think: true);
+			
+		if(think!=null)
+			llm.think(think);
+		return llm.build();
 	}
 	
-	protected static StreamingChatModel	createGoogleGeminiChatModel(String model, boolean think)
+	protected static StreamingChatModel	createGoogleGeminiChatModel(String model, Boolean think)
 	{
 		return GoogleAiGeminiStreamingChatModel.builder()
 			.thinkingConfig(GeminiThinkingConfig.builder()
-				.includeThoughts(think)
+				.includeThoughts(think!=null? think: true)
 				.build())
 			.apiKey(System.getenv("GOOGLE_API_KEY"))
 			.modelName(model)
-			.returnThinking(think)
+			.returnThinking(think!=null? think: true)
 //			.logRequests(true)
 //			.logResponses(true)
 			.build();
