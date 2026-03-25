@@ -175,6 +175,9 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			JCheckBox	think	= new JCheckBox("Think");
 			think.setToolTipText("Show the thinking process of the agent, if supported by the model.");
 			think.setSelected(true);
+			JCheckBox	sendimage	= new JCheckBox("Image");
+			sendimage.setToolTipText("Include an image of the current world state in the prompt.");
+			sendimage.setSelected(true);
 			JComboBox<String>	prompt	= new JComboBox<>(new String[] {
 				"Move the red block onto the green one.",
 				"Put all blocks in the bucket.",
@@ -188,9 +191,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			prompt.setEditable(true);
 			JButton		send	= new JButton("Send");
 			JButton		stop	= new JButton("Stop");
-			JCheckBox	sendimage	= new JCheckBox("Image");
-			sendimage.setToolTipText("Include an image of the current world state in the prompt.");
-			sendimage.setSelected(true);
+			stop.setEnabled(false);
 			// reduce width of buttons
 			send.setMargin(new java.awt.Insets(0,0,0,0));
 			stop.setMargin(new java.awt.Insets(0,0,0,0));
@@ -219,12 +220,12 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			options.add(new JLabel("Model"), gbc);
 			gbc.gridx = 1;
 			gbc.weightx = 1;
-			gbc.gridwidth	= 2;
 			options.add(model, gbc);
-			gbc.gridx = 3;
+			gbc.gridx = 2;
 			gbc.weightx = 0;
-			gbc.gridwidth	= 1;
 			options.add(think, gbc);
+			gbc.gridx = 3;
+			options.add(sendimage, gbc);
 
 			// Row 2: Prompt expands, buttons stay compact
 			gbc.gridx = 0;
@@ -237,7 +238,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			gbc.gridwidth = 1;
 			options.add(send, gbc);
 			gbc.gridx = 3;
-			options.add(sendimage, gbc);
+			options.add(stop, gbc);
 			
 			JPanel	panel	= new JPanel(new BorderLayout());
 			panel.add(new JScrollPane(center), BorderLayout.CENTER);
