@@ -10,7 +10,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
@@ -27,19 +27,19 @@ public class LlmHelper
 	public static enum Provider
 	{
 		OLLAMA_LOCAL("Ollama (local)",
-			model -> createOllamaChatModel("http://localhost:11434", model),
+			(model, think) -> createOllamaChatModel("http://localhost:11434", model, think),
 			() -> fetchOllamaModels("http://localhost:11434")),
 		OLLAMA_REMOTE("Ollama (remote)", 
-			model -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model),
+			(model, think) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
 			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL"))),
 		GOOGLE_GEMINI("Google Gemini",
-			model -> createGoogleGeminiChatModel(model),
+			(model, think) -> createGoogleGeminiChatModel(model, think),
 			() -> List.of(
 				"gemini-3-flash-preview",
 				"gemini-2.5-flash",
 				"gemini-2.5-flash-lite")),
 		OPEN_ROUTER("Open Router",
-			model -> createOpenAiChatModel(model),
+			(model, think) -> createOpenAiChatModel(model, think),
 			() -> List.of(
 				"openrouter/free",
 				"stepfun/step-3.5-flash:free",
@@ -54,9 +54,9 @@ public class LlmHelper
 		));
 		
 		private final String name;
-		private final Function<String, StreamingChatModel> creator;
+		private final BiFunction<String, Boolean, StreamingChatModel> creator;
 		private final Supplier<List<String>> modelfetcher;
-		private Provider(String name, Function<String, StreamingChatModel> creator, Supplier<List<String>> modelfetcher)
+		private Provider(String name, BiFunction<String, Boolean, StreamingChatModel> creator, Supplier<List<String>> modelfetcher)
 		{
 			this.name = name;
 			this.creator = creator;
@@ -69,13 +69,13 @@ public class LlmHelper
 			return name;
 		}
 		
-		public StreamingChatModel createChatModel(String model)
+		public StreamingChatModel createChatModel(String model, boolean think)
 		{
 			if(model==null)
 				model = DEFAULT_MODELS.get(this);
 			if(model==null)
 				model = getModels().get(0);
-			return creator.apply(model);
+			return creator.apply(model, think);
 		}
 		
 		public List<String> getModels()
@@ -129,7 +129,7 @@ public class LlmHelper
 	
 	public static StreamingChatModel createChatModel()
 	{
-		return createChatModel(null, null);
+		return createChatModel(null, null, true);
 	}
 	
 	public static List<String>	fetchOllamaModels(String baseurl)
@@ -140,7 +140,7 @@ public class LlmHelper
 		return ollamaModels.availableModels().content().stream().map(m -> m.getModel()).toList();
 	}
 
-	public static StreamingChatModel createChatModel(Provider provider, String model)
+	public static StreamingChatModel createChatModel(Provider provider, String model, boolean think)
 	{
 		System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
 		System.setProperty("org.slf4j.simpleLogger.log.dev.langchain4j", "debug");
@@ -149,44 +149,45 @@ public class LlmHelper
 		if(provider==null)
 			provider = Provider.values()[0];
 		
-		return provider.createChatModel(model);
+		return provider.createChatModel(model, think);
 	}
 	
-	protected static StreamingChatModel	createOpenAiChatModel(String model)
+	protected static StreamingChatModel	createOpenAiChatModel(String model, boolean think)
 	{
 		return OpenAiStreamingChatModel.builder()
 			.baseUrl("https://openrouter.ai/api/v1")
 			.apiKey(System.getenv("OPENAI_API_KEY"))
 			.modelName(model)
-			.returnThinking(true)
+			.returnThinking(think)
+			.sendThinking(think)
 //			.logRequests(true)
 //			.logResponses(true)
 			.build();
 	}
 	
-	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model)
+	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, boolean think)
 	{
 		StreamingChatModel llm =
 			OllamaStreamingChatModel.builder()
 			.baseUrl(baseurl)
 			.modelName(model)
-			.returnThinking(true)
-//			.think(false)
+			.returnThinking(think)
+			.think(think)
 //			.logRequests(true)
 //			.logResponses(true)
 			.build();
 		return llm;
 	}
 	
-	protected static StreamingChatModel	createGoogleGeminiChatModel(String model)
+	protected static StreamingChatModel	createGoogleGeminiChatModel(String model, boolean think)
 	{
 		return GoogleAiGeminiStreamingChatModel.builder()
 			.thinkingConfig(GeminiThinkingConfig.builder()
-				.includeThoughts(true)
+				.includeThoughts(think)
 				.build())
 			.apiKey(System.getenv("GOOGLE_API_KEY"))
 			.modelName(model)
-			.returnThinking(true)
+			.returnThinking(think)
 //			.logRequests(true)
 //			.logResponses(true)
 			.build();

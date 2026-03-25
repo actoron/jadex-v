@@ -10,6 +10,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -171,6 +172,9 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			
 			JComboBox<Provider>	provider	= new JComboBox<>(Provider.values());
 			JComboBox<String>	model		= new JComboBox<>();
+			JCheckBox	think	= new JCheckBox("Think");
+			think.setToolTipText("Show the thinking process of the agent, if supported by the model.");
+			think.setSelected(true);
 			JComboBox<String>	prompt	= new JComboBox<>(new String[] {
 				"Move the red block onto the green one.",
 				"Put all blocks in the bucket.",
@@ -184,6 +188,12 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			prompt.setEditable(true);
 			JButton		send	= new JButton("Send");
 			JButton		stop	= new JButton("Stop");
+			JCheckBox	sendimage	= new JCheckBox("Image");
+			sendimage.setToolTipText("Include an image of the current world state in the prompt.");
+			sendimage.setSelected(true);
+			// reduce width of buttons
+			send.setMargin(new java.awt.Insets(0,0,0,0));
+			stop.setMargin(new java.awt.Insets(0,0,0,0));
 
 			JPanel	options = new JPanel(new GridBagLayout());
 			GridBagConstraints gbc = new GridBagConstraints();
@@ -209,8 +219,12 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			options.add(new JLabel("Model"), gbc);
 			gbc.gridx = 1;
 			gbc.weightx = 1;
-			gbc.gridwidth	= GridBagConstraints.REMAINDER;
+			gbc.gridwidth	= 2;
 			options.add(model, gbc);
+			gbc.gridx = 3;
+			gbc.weightx = 0;
+			gbc.gridwidth	= 1;
+			options.add(think, gbc);
 
 			// Row 2: Prompt expands, buttons stay compact
 			gbc.gridx = 0;
@@ -223,7 +237,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			gbc.gridwidth = 1;
 			options.add(send, gbc);
 			gbc.gridx = 3;
-			options.add(stop, gbc);
+			options.add(sendimage, gbc);
 			
 			JPanel	panel	= new JPanel(new BorderLayout());
 			panel.add(new JScrollPane(center), BorderLayout.CENTER);
@@ -272,12 +286,14 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 				prompt.setEnabled(false);
 				send.setEnabled(false);
 				IComponentHandle llmagent = IComponentManager.get().create(
-					new LlmResultAgent(LlmHelper.createChatModel(
+					new LlmResultAgent(
+						LlmHelper.createChatModel(
 							(Provider)provider.getSelectedItem(),
-							(String)model.getSelectedItem()),
-							(String)prompt.getSelectedItem()
-							, png	// Send image (or not)
-							)).get();
+							(String)model.getSelectedItem(),
+							think.isSelected()),
+						(String)prompt.getSelectedItem()
+						, sendimage.isSelected() ? new Image[]{png} : new Image[0]
+					)).get();
 				
 				int[] last = new int[] {0};
 				llmagent.subscribeToResults().next(event ->
