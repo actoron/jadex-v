@@ -15,12 +15,16 @@ import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
 
+import dev.langchain4j.model.catalog.ModelCatalog;
+import dev.langchain4j.model.catalog.ModelType;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
+import dev.langchain4j.model.googleai.GoogleAiGeminiModelCatalog;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel.OllamaStreamingChatModelBuilder;
+import dev.langchain4j.model.openai.OpenAiModelCatalog;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 
 public class LlmHelper
@@ -35,24 +39,13 @@ public class LlmHelper
 			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL"))),
 		GOOGLE_GEMINI("Google Gemini",
 			(model, think) -> createGoogleGeminiChatModel(model, think),
-			() -> List.of(
-				"gemini-3-flash-preview",
-				"gemini-2.5-flash",
-				"gemini-2.5-flash-lite")),
+			() -> fetchGeminiModels()),
 		OPEN_ROUTER("Open Router",
-			(model, think) -> createOpenAiChatModel(model, think),
-			() -> List.of(
-				"openrouter/free",
-				"stepfun/step-3.5-flash:free",
-				"nvidia/nemotron-nano-12b-v2-vl:free",
-				"mistralai/mistral-small-3.1-24b-instruct:free",
-				"google/gemma-3-27b-it:free",
-				"nvidia/nemotron-3-super-120b-a12b:free",
-				"arcee-ai/trinity-large-preview:free",	// slow, but works well on blocksworld, breakfast and calculator
-				"z-ai/glm-4.5-air:free",
-				"qwen/qwen3-next-80b-a3b-instruct:free",
-				"meta-llama/llama-3.3-70b-instruct:free"
-		));
+			(model, think) -> createOpenAiChatModel("https://openrouter.ai/api/v1", model, think),
+			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", true)),
+		OLLAMA_OPENAI("Ollama (local, via OpenAI API)",
+				(model, think) -> createOpenAiChatModel("http://localhost:11434/v1", model, think),
+				() -> fetchOpenAiModels("http://localhost:11434/v1", false));
 		
 		private final String name;
 		private final BiFunction<String, Boolean, StreamingChatModel> creator;
@@ -133,7 +126,7 @@ public class LlmHelper
 		return createChatModel(null, null, null);
 	}
 	
-	public static List<String>	fetchOllamaModels(String baseurl)
+	protected static List<String>	fetchOllamaModels(String baseurl)
 	{
 		OllamaModels ollamaModels = OllamaModels.builder()
 			.baseUrl(baseurl)
@@ -153,10 +146,10 @@ public class LlmHelper
 		return provider.createChatModel(model, think);
 	}
 	
-	protected static StreamingChatModel	createOpenAiChatModel(String model, Boolean think)
+	protected static StreamingChatModel	createOpenAiChatModel(String baseurl, String model, Boolean think)
 	{
 		return OpenAiStreamingChatModel.builder()
-			.baseUrl("https://openrouter.ai/api/v1")
+			.baseUrl(baseurl)
 			.apiKey(System.getenv("OPENAI_API_KEY"))
 			.modelName(model)
 			.returnThinking(think!=null? think: true)
@@ -164,6 +157,16 @@ public class LlmHelper
 //			.logRequests(true)
 //			.logResponses(true)
 			.build();
+	}
+	
+	protected static List<String>	fetchOpenAiModels(String baseurl, boolean free)
+	{
+		ModelCatalog	cat	= OpenAiModelCatalog.builder()
+			.baseUrl(baseurl)
+			.apiKey(System.getenv("OPENAI_API_KEY"))
+			.build();
+		return cat.listModels().stream().filter(m -> m.type()==ModelType.CHAT)
+			.map(m -> m.name()).filter(name -> !free || name.endsWith(":free")).sorted().toList();
 	}
 	
 	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, Boolean think)
@@ -180,6 +183,14 @@ public class LlmHelper
 		return llm.build();
 	}
 	
+	protected static List<String>	fetchGeminiModels()
+	{
+		ModelCatalog cat = GoogleAiGeminiModelCatalog.builder()
+			.apiKey(System.getenv("GOOGLE_API_KEY"))
+			.build();
+		return cat.listModels().stream().filter(m -> m.type()==ModelType.CHAT).map(m -> m.name()).sorted().toList();
+	}
+	
 	protected static StreamingChatModel	createGoogleGeminiChatModel(String model, Boolean think)
 	{
 		return GoogleAiGeminiStreamingChatModel.builder()
@@ -189,6 +200,7 @@ public class LlmHelper
 			.apiKey(System.getenv("GOOGLE_API_KEY"))
 			.modelName(model)
 			.returnThinking(think!=null? think: true)
+			.sendThinking(think!=null? think: true)
 //			.logRequests(true)
 //			.logResponses(true)
 			.build();
