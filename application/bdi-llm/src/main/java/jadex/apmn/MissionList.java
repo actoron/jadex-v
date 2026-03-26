@@ -4,21 +4,44 @@ import java.util.List;
 
 public class MissionList
 {
-    private List<Mission> missions;
+    List<Mission> missions;
+//
+//    static class MissionData
+//    {
+        int id;
+        String belief;
+        String goal;
 
-    public List<Mission> getMissions()
-    {
-        for(Mission mission : missions)
+        public MissionList() {}
+
+        public int getId()
         {
-            System.out.println(mission.getId());
-            mission.getGoal();
-            mission.getBelief();
+            return id;
         }
-        return missions;
-    }
 
-    public void setMissions(List<Mission> missions)
-    {
-        this.missions = missions;
-    }
+        public String getBelief()
+        {
+            return belief;
+        }
+
+        public String getGoal()
+        {
+            return goal;
+        }
+
+        public void setId(int id)
+        {
+            this.id = id;
+        }
+
+        public void setBelief(String belief)
+        {
+            this.belief = belief;
+        }
+
+        public void setGoal(String goal)
+        {
+            this.goal = goal;
+        }
+//    }
 }
