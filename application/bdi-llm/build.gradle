@@ -37,6 +37,8 @@ dependencies
     implementation 'org.activecomponents.jadex:requiredservice:'+v
     implementation 'org.activecomponents.jadex:publishservice:'+v
     implementation 'org.activecomponents.jadex:publishservicejetty:'+v
+    implementation 'org.activecomponents.jadex:traverser:'+v
+    implementation 'org.activecomponents.jadex:json:'+v
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1' +v
     implementation group: 'org.json', name: 'json', version: '20240303'+v
     implementation group: 'org.eclipse.parsson', name: 'jakarta.json', version: '1.1.7'+v
@@ -66,4 +68,9 @@ task runWorkflow(type: JavaExec) {
 task runApmn(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'jadex.apmn.AgentActor'
+}
+
+task runStarter(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'jadex.apmn.Starter'
 }

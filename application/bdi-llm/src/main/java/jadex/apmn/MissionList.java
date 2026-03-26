@@ -8,6 +8,12 @@ public class MissionList
 
     public List<Mission> getMissions()
     {
+        for(Mission mission : missions)
+        {
+            System.out.println(mission.getId());
+            mission.getGoal();
+            mission.getBelief();
+        }
         return missions;
     }
 
