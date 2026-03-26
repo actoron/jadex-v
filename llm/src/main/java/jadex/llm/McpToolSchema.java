@@ -1,7 +1,7 @@
 package jadex.llm;
 
 
-public record ToolSchema(
+public record McpToolSchema(
     String name,
     Class<?> service,
     String methodName,

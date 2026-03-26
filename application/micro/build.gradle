@@ -40,6 +40,12 @@ dependencies
     implementation 'org.activecomponents.jadex:publishservicejetty:'+v
     //implementation 'org.activecomponents.jadex:simulation:'+v
     implementation 'org.activecomponents.jadex:llm:'+v
+    
+    implementation 'dev.langchain4j:langchain4j:1.12.2'
+    implementation 'dev.langchain4j:langchain4j-ollama:1.12.2'
+	implementation 'dev.langchain4j:langchain4j-google-ai-gemini:1.12.2'
+    implementation 'dev.langchain4j:langchain4j-open-ai:1.12.2'
+	runtimeOnly 'org.slf4j:slf4j-simple:2.0.13'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'

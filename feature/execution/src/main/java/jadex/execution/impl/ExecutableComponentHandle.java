@@ -104,6 +104,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 	            	@Override
 	            	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable 
 	                {
+//	            		System.out.println("non-component method called: "+method.getName()+" on "+comp.getId());
 	            		if(IComponentManager.get().getCurrentComponent()!=null && IComponentManager.get().getCurrentComponent().getId().equals(getId()))
 	            		{   
 	            			return invokeMethod(comp, pojo, SUtil.arrayToList(args), method, null);
@@ -121,6 +122,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 				.method(ElementMatchers.isAnnotatedWith(ComponentMethod.class)) 
 				.intercept(InvocationHandlerAdapter.of((Object target, Method method, Object[] args)->
 				{
+//					System.out.println("component method called: "+method.getName()+" on "+comp.getId());
 					//Call next = Call.createCall(caller.getId(), null);
 					Call next = Call.getOrCreateNextInvocation();
 					
@@ -216,7 +218,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 		}
 		catch(Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		return null;
 	}
@@ -244,7 +246,7 @@ public class ExecutableComponentHandle implements IComponentHandle
 		}
 		catch(Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		return null;
 	}

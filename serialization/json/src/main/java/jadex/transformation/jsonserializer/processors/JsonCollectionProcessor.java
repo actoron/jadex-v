@@ -88,7 +88,11 @@ public class JsonCollectionProcessor extends AbstractJsonProcessor
 		for(int i=0; i<array.size(); i++)
 		{
 			Object val = array.get(i);
-			Type sot = val instanceof JsonObject?JsonTraverser.findClazzOfJsonObject((JsonObject) val, targetcl):compclazz!=null? compclazz: val.getClass();
+			Type sot = val instanceof JsonObject?JsonTraverser.findClazzOfJsonObject((JsonObject) val, targetcl) : null;
+			if(sot == null)
+			{
+				sot = compclazz!=null? compclazz: val.getClass();
+			}
 //			Object newval = traverser.doTraverse(val, compclazz!=null? compclazz: val.getClass(), traversed, preprocessors, processors, postprocessors, clone, targetcl, context);
 			Object newval = traverser.doTraverse(val, sot, conversionprocessors, processors, converter, mode, targetcl, context);
 			

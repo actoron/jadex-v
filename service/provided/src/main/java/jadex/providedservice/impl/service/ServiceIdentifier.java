@@ -1,11 +1,11 @@
 package jadex.providedservice.impl.service;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import jadex.common.ClassInfo;
@@ -54,6 +54,9 @@ public class ServiceIdentifier implements IServiceIdentifier
 	
 	/** The tags. */
 	protected Collection<String> tags;
+	
+	/** The annotation type names present on the service interface and its methods. */
+	protected ClassInfo[] annotations;
 	
 	//-------- constructors --------
 	
@@ -134,8 +137,10 @@ public class ServiceIdentifier implements IServiceIdentifier
 		
 		//System.out.println("Groups for service "+servicename+" "+getGroups(roles));
 		
-		return new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope, getGroups(roles),
+		ServiceIdentifier sid = new ServiceIdentifier(provider, servicetype, servicename!=null? servicename: generateServiceName(servicetype), scope, getGroups(roles),
 			roles!=null && roles.contains(Security.UNRESTRICTED), tags);
+		sid.annotations = collectAnnotations(servicetype);
+		return sid;
 	}
 	
 	protected static Set<String> getGroups(Set<String> roles)
@@ -173,7 +178,29 @@ public class ServiceIdentifier implements IServiceIdentifier
 	public static ServiceIdentifier	createServiceIdentifier(ComponentIdentifier providerid, Class<?> type, ClassInfo[] supertypes, 
 		String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted, Collection<String> tags)
 	{
-		return new ServiceIdentifier(providerid, new ClassInfo(type), supertypes, servicename, scope, networknames, unrestricted, tags);
+		ServiceIdentifier sid = new ServiceIdentifier(providerid, new ClassInfo(type), supertypes, servicename, scope, networknames, unrestricted, tags);
+		sid.annotations = collectAnnotations(type);
+		return sid;
+	}
+	
+	/**
+	 *  Collect annotation type names present on the given class (type-level and method-level).
+	 *  Uses {@link Class#getMethods()} to include inherited public methods, matching the
+	 *  behaviour of the previous reflection-based annotation check in ServiceRegistry.
+	 *  @param type The class to inspect.
+	 *  @return The set of fully-qualified annotation class names, never null.
+	 */
+	public static ClassInfo[] collectAnnotations(Class<?> type)
+	{
+		List<ClassInfo> names = new ArrayList<>();
+		for(Annotation ann : type.getAnnotations())
+			names.add(new ClassInfo(ann.annotationType()));
+		for(Method method : type.getMethods())
+		{
+			for(Annotation ann : method.getAnnotations())
+				names.add(new ClassInfo(ann.annotationType()));
+		}
+		return names.toArray(new ClassInfo[names.size()]);
 	}
 	
 	/** The id counter. */
@@ -206,9 +233,10 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Set the providerid.
 	 *  @param providerid The providerid to set.
 	 */
-	public void setProviderId(ComponentIdentifier providerid)
+	public ServiceIdentifier	setProviderId(ComponentIdentifier providerid)
 	{
 		this.providerid = providerid;
+		return this;
 	}
 	
 	/**
@@ -260,9 +288,10 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 *  Set the servicename.
 	 *  @param servicename The servicename to set.
 	 */
-	public void setServiceName(String servicename)
+	public ServiceIdentifier	setServiceName(String servicename)
 	{
 		this.servicename = servicename;
+		return this;
 	}
 
 	/**
@@ -345,6 +374,25 @@ public class ServiceIdentifier implements IServiceIdentifier
 	public void setTags(Set<String> tags)
 	{
 		this.tags = tags;
+	}
+	
+	/**
+	 *  Get the annotation type names present on the service interface and its methods.
+	 *  @return The annotation type names.
+	 */
+	@Override
+	public ClassInfo[] getAnnotations()
+	{
+		return annotations;
+	}
+	
+	/**
+	 *  Set the annotation type names.
+	 *  @param annotations The annotation type names to set.
+	 */
+	public void setAnnotations(ClassInfo[] annotations)
+	{
+		this.annotations = annotations;
 	}
 	
 //	/**
@@ -602,5 +650,18 @@ public class ServiceIdentifier implements IServiceIdentifier
 //				+ ", servicename=" + servicename + ")";
 		}
 		return tostring;
+	}
+	
+	/**
+	 *  Create a service identifier from a string representation.
+	 */
+	public static ServiceIdentifier fromString(String str)
+	{
+		int index = str.indexOf("@");
+		if(index==-1)
+			throw new IllegalArgumentException("Invalid service identifier string: " + str);
+		String name = str.substring(0, index);
+		String provideridstr = str.substring(index+1);
+		return new ServiceIdentifier().setServiceName(name).setProviderId(ComponentIdentifier.fromString(provideridstr));
 	}
 }

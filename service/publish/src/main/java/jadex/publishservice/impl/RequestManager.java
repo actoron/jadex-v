@@ -52,11 +52,14 @@ import jadex.future.ITerminableFuture;
 import jadex.javaparser.SJavaParser;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.service.ServiceCall;
+import jadex.publishservice.IRequestManager;
 import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
 import jadex.publishservice.impl.MappingEvaluator.MappingInfo.HttpMethod;
+import jadex.publishservice.impl.v2.Request;
 import jadex.publishservice.publish.IAsyncContextInfo;
 import jadex.publishservice.publish.PathManager;
 import jadex.publishservice.publish.annotation.ParametersMapper;
+import jadex.publishservice.publish.annotation.Publish;
 import jadex.publishservice.publish.annotation.ResultMapper;
 import jadex.publishservice.publish.clone.CloneResponseProcessor;
 import jadex.publishservice.publish.json.PublishJsonSerializer;
@@ -98,7 +101,7 @@ import jakarta.ws.rs.core.Response;
  *  the request manager.
  *  
  */
-public class RequestManager 
+public class RequestManager implements jadex.publishservice.IRequestManager
 {
 	/** The default host name. */
 	public static final String DEFAULT_HOST = "DEFAULTHOST";
@@ -184,7 +187,6 @@ public class RequestManager
 			
 	/** State end */
 
-	
 	/** The media type converters. */
 	protected MultiCollection<String, IObjectStringConverter> converters;
 	
@@ -208,7 +210,7 @@ public class RequestManager
 			instance = new RequestManager();
 	}
 	
-	public static synchronized RequestManager getInstance()
+	public static synchronized IRequestManager getInstance()
 	{
 		if(instance==null)
 			throw new RuntimeException("request manager was not created");
@@ -608,9 +610,16 @@ public class RequestManager
 	 * @param request The request.
 	 * @param response The response.
 	 */
-	public void handleRequest(IService service, PathManager<MappingInfo> pm, final HttpServletRequest request, final HttpServletResponse response, Object[] others)
-		throws IOException, ServletException
+	//public void handleRequest(IService service, PathManager<MappingInfo> pm, final HttpServletRequest request, 
+	//	final HttpServletResponse response)//, Object[] others)
+	//	throws IOException, ServletException
+	public void handleRequest(Request req, jadex.publishservice.impl.v2.Response resp, PublishContext context) throws Exception
 	{
+		HttpServletRequest request = (HttpServletRequest)req.getRawRequest();
+		HttpServletResponse response = (HttpServletResponse)resp.getRawResponse();
+		PathManager<MappingInfo> pm = (PathManager<MappingInfo>)context.mapping();
+		IService service = context.service();
+
 		ResponseInfo ri = new ResponseInfo().setRequest(request).setResponse(response);
 		
 		/*if(!getComponent().getFeature(IMjExecutionFeature.class).isComponentThread())
@@ -866,6 +875,22 @@ public class RequestManager
 				//	System.out.println("INVOKE: " + methodname);
 				
 				Collection<MappingInfo> mis = pm!=null? pm.getElementsForPath(methodname): new ArrayList<MappingInfo>();
+
+				// try to find with full path instead of method name
+				if(mis==null || mis.size()==0)
+				{
+					String path = request.getRequestURI(); 
+					String query = request.getQueryString(); 
+
+					if (path.startsWith("/")) 
+						path = path.substring(1);
+
+					if (query != null && !query.isEmpty()) 
+						path += "?" + query;
+
+					System.out.println(path);
+					mis = pm!=null? pm.getElementsForPath(path): new ArrayList<MappingInfo>();
+				}
 				
 				List<Map<String, String>> bindings = mis.stream().map(x -> pm.getBindingsForPath(fmn)).collect(Collectors.toList());
 

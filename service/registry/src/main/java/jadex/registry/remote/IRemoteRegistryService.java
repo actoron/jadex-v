@@ -6,8 +6,8 @@ import jadex.core.ComponentIdentifier;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.impl.search.ServiceQuery;
 
 //@Security(roles=Security.UNRESTRICTED)	// Allow invocation and check in impl.
 @Service

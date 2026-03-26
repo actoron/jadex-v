@@ -54,7 +54,7 @@ public interface IComponentFactory
 	public default <E, T extends IFuture<E>> T runAsync(Callable<T> pojo)
 	{
 		@SuppressWarnings("unchecked")
-		T	ret	= (T) run((Object)pojo);
+		T	ret	= (T) ComponentManager.get().run(pojo, null, null, true);
 		return ret;
 	}
 
@@ -67,7 +67,7 @@ public interface IComponentFactory
 	public default <E, T extends IFuture<E>> T runAsync(IThrowingFunction<IComponent, T> pojo)
 	{
 		@SuppressWarnings("unchecked")
-		T	ret	= (T) run((Object)pojo);
+		T	ret	= (T) ComponentManager.get().run(pojo, null, null, true);
 		return ret;
 	}
 	
@@ -102,7 +102,7 @@ public interface IComponentFactory
 	 */
 	public default <T> IFuture<T> run(Object pojo, String localname)
 	{
-		return ComponentManager.get().run(pojo, localname, null);
+		return ComponentManager.get().run(pojo, localname, null, false);
 	}
 
 	/**

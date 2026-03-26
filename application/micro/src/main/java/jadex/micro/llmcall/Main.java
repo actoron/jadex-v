@@ -3,14 +3,16 @@ package jadex.micro.llmcall;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.llm.ILlmFeature;
-import jadex.llm.impl.GroqAgent;
+import jadex.llm.impl.OllamaAgent;
+import jadex.llm.impl.OpenRouterAgent;
 
 public class Main 
 {
     public static void main(String[] args) 
     {
-        IComponentManager.get().create(new GroqAgent("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")).get();
-        //IComponentManager.get().create(new OllamaAgent()).get();
+        //IComponentManager.get().create(new OpenRouterAgent()).get();
+        //IComponentManager.get().create(new GroqAgent()).get();
+        IComponentManager.get().create(new OllamaAgent()).get();
         
         IComponentHandle user = IComponentManager.get().create(new UserAgent()).get();
 
@@ -27,7 +29,7 @@ public class Main
         });*/
 
         IComponentManager.get().getFeature(ILlmFeature.class)
-            .handle("What is the name of the person with ID 1?")
+            .handleToolCall("What is the name of the person with ID 1?")
             .then(answer -> 
             {
                 System.out.println("Final answer: " + answer);

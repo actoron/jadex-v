@@ -28,12 +28,20 @@ public interface IComponentLifecycleManager
 	 *  Usage of components as functions that terminate after execution.
 	 *  Create a component based on a function.
 	 *  @param pojo The pojo.
-	 *  @param cid The component id or null for auto-generationm.
+	 *  @param cid The component id or null for auto-generation.
+	 *  @param app The application context.
+	 *  @param async If true, the component is executed i.e. the result of the pojo is expected to be a future that needs unpacking.
 	 *  @return The execution result.
 	 */
-	public default <T> IFuture<T>	run(Object pojo, ComponentIdentifier cid, Application app)
+	public default <T> IFuture<T>	run(Object pojo, ComponentIdentifier cid, Application app, boolean async)
 	{
 		Future<T> ret = new Future<>();
+		if(async)
+		{
+			ret.setException(new UnsupportedOperationException("Async execution not supported for pojo: "+pojo));
+			return ret;
+		}
+		
 		create(pojo, cid, app).then(handle -> 
 		{
 			handle.waitForTermination().then(Void -> 

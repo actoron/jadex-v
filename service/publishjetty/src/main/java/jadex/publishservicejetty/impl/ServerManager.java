@@ -29,10 +29,13 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.publishservice.IRequestManager.PublishContext;
 import jadex.publishservice.impl.MappingEvaluator;
 import jadex.publishservice.impl.PublishInfo;
 import jadex.publishservice.impl.RequestManager;
 import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
+import jadex.publishservice.impl.v2.http.HttpRequest;
+import jadex.publishservice.impl.v2.http.HttpResponse;
 import jadex.publishservice.publish.PathManager;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
@@ -99,7 +102,14 @@ public class ServerManager
 	                	baseRequest.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, MULTI_PART_CONFIG);
 	            	
 	            	//handleRequest(service, pm, request, response, new Object[]{target, baseRequest});
-	               	RequestManager.getInstance().handleRequest(service, pm, request, response, new Object[]{target, baseRequest});
+                    try
+                    {
+                        RequestManager.getInstance().handleRequest(new HttpRequest(request), new HttpResponse(response), new PublishContext(info, service, pm));// new Object[]{target, baseRequest});
+                    }
+                    catch(Exception e)
+                    {
+                        throw new ServletException(e);
+                    }
 	            	
 	            	baseRequest.setHandled(true);
 
@@ -237,7 +247,8 @@ public class ServerManager
                 DefaultHandler dh = new DefaultHandler()
                 {
                     @Override
-                    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException 
+                    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) 
+                        throws IOException, ServletException 
                     {
                     	if(baseRequest.isHandled())
                     		return;
@@ -246,7 +257,17 @@ public class ServerManager
 
                     	if(target.indexOf("jadex.js")!=-1 || target.endsWith("events") || target.endsWith("ssealive"))
                     	{
-                    		RequestManager.getInstance().handleRequest(null, null, request, response, new Object[]{target, baseRequest});
+                    		//RequestManager.getInstance().handleRequest(null, null, request, response, new Object[]{target, baseRequest});
+
+                            try
+                            {
+                                RequestManager.getInstance().handleRequest(new HttpRequest(request), new HttpResponse(response), new PublishContext(info, null, null));// new Object[]{target, baseRequest});
+                            }
+                            catch(Exception e)
+                            {
+                                throw new ServletException(e);
+                            }
+
                     		//handleRequest(null, null, request, response, new Object[]{target, baseRequest});
                     		baseRequest.setHandled(true);
                     	}
@@ -439,9 +460,29 @@ public class ServerManager
 		String[] vars = findVariables(id);
 		for(String var: vars)
 		{
-			String val = ""+component.getValueProvider().getFetcher().fetchValue(var);
-			id = id.replace("${"+var+"}", val);
-		}
+            try
+            {
+			    String val = ""+component.getValueProvider().getFetcher().fetchValue(var);
+			    id = id.replace("${"+var+"}", val);
+            }
+            catch(Exception e)
+            {
+                if("host".equals(var))
+                {
+                   id = id.replace("${"+var+"}", "localhost");
+                }
+                else if("port".equals(var))
+                {
+                   id = id.replace("${"+var+"}", "8080");
+                }
+                else
+                {
+                    //System.err.println("Failed to fetch value for variable: "+var+" in publish id: "+id);
+                    //e.printStackTrace();
+                    SUtil.rethrowAsUnchecked(e);
+                }
+            }
+        }
 		
 		return id;
 	}

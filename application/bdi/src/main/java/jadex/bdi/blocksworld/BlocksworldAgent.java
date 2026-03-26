@@ -2,6 +2,7 @@ package jadex.bdi.blocksworld;
 
 import java.awt.Color;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.swing.SwingUtilities;
@@ -14,6 +15,7 @@ import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponent;
+import jadex.future.Future;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
@@ -46,14 +48,13 @@ public class BlocksworldAgent
 	
 	/** The currently existing blocks. */
 	@Belief
-	protected Set<Block> blocks = new HashSet<Block>();
+	protected Set<Block> blocks = new LinkedHashSet<>();
 	
 	/** The future to communicate step events from gui to plan. */
 	protected SubscriptionIntermediateFuture<Void>	steps	= new SubscriptionIntermediateFuture<Void>();
 	
-//	/** The gui (if any). */
-//	@Belief
-//	protected BlocksworldGui gui;
+	/** The gui (if any). */
+	protected Future<BlocksworldGui> gui	= new Future<>();
 	
 	/** The agent. */
 	@Inject
@@ -194,7 +195,7 @@ public class BlocksworldAgent
 	public void agentCreated()
 	{
 		Block b0 = new Block(new Color(240, 16, 16), table);
-		Block b1 = new Block(new Color(16, 16, 240), table);
+		Block b1 = new Block(new Color(64, 96, 255), table);
 		Block b2 = new Block(new Color(240, 240, 16), b0);
 		blocks.add(b0);
 		blocks.add(b1);
@@ -301,5 +302,4 @@ public class BlocksworldAgent
 	{
 		return agent;
 	}
-	
 }

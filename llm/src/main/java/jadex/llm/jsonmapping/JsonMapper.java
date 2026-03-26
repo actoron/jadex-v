@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -318,13 +319,18 @@ public class JsonMapper
 
 	public static JsonValue toJsonObject(Object value)
 	{
+		return toJsonObject(value, false, false);
+	}
+
+	public static JsonValue toJsonObject(Object value, boolean writeclass, boolean writeid)
+	{
 		if(value == null)
 			return Json.NULL;
 
 		try
 		{
 			// Serialize Java object → JSON string
-			String json = PublishJsonSerializer.get().convertObject(value, null, getClassLoader(), null).toString();
+			String json = PublishJsonSerializer.get().convertObject(value, null, getClassLoader(), null, writeclass, writeid);
 
 			// Parse JSON string → JsonObject (MinimalJSON)
 			return Json.parse(json);
@@ -498,6 +504,45 @@ public class JsonMapper
 			ret[i] = ann != null ? ann.required() : true; // default: required
 		}
 
+		return ret;
+	}
+
+	public static Map<String, Object> convertJsonObjectToMap(JsonObject args)
+	{
+		Map<String, Object> ret = new LinkedHashMap<>();
+
+        for(String key : args.names()) 
+        {
+            Object value = args.get(key);
+
+            if (value instanceof JsonValue jsonVal) 
+            {
+                if (jsonVal.isNull()) 
+                {
+                    value = null;
+                } 
+                else if (jsonVal.isNumber()) 
+                {
+                    value = jsonVal.asInt(); // oder asLong/asDouble je nach Zieltyp
+                } 
+                else if (jsonVal.isBoolean()) 
+                {
+                    value = jsonVal.asBoolean();
+                } 
+                else if(jsonVal.isString()) 
+                {
+                    value = jsonVal.asString(); // !!! no extra quotes, just the raw string
+                }
+                else 
+                {
+                    value = jsonVal.toString();
+                }
+            }
+
+            //System.out.println("Param: " + key + " -> " + value);
+            ret.
+			put(key, value);
+        }
 		return ret;
 	}
 

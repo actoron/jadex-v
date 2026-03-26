@@ -6,5 +6,5 @@ import jadex.providedservice.annotation.Service;
 @Service
 public interface IMcpHostService 
 {
-     public IFuture<String> handle(String userInput);
+     public IFuture<String> handleToolCall(String input);
 }

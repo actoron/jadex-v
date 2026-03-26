@@ -5,7 +5,6 @@ import java.util.Map;
 
 import jadex.core.ComponentIdentifier;
 import jadex.execution.impl.ExecutionFeature;
-import jadex.future.ThreadLocalTransferHelper;
 
 /**
  *  Information about a current call.
@@ -25,13 +24,6 @@ public class Call
 	
 	/** The upcoming service invocations. */
 	protected static final ThreadLocal<Call> LAST = new ThreadLocal<Call>();
-	
-	static
-	{
-		ThreadLocalTransferHelper.addThreadLocal(CURRENT);
-		ThreadLocalTransferHelper.addThreadLocal(NEXT);
-		ThreadLocalTransferHelper.addThreadLocal(LAST);
-	}
 	
 	//-------- attributes --------
 	

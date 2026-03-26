@@ -2,6 +2,7 @@ package jadex.core;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import jadex.core.impl.ComponentManager;
@@ -57,10 +58,25 @@ public class Application implements IComponentFactory
 	@Override
 	public <T> IFuture<T> run(Object pojo, String localname)
 	{
-		return ComponentManager.get().run(pojo, localname, this);
+		return ComponentManager.get().run(pojo, localname, this, false);
 	}
 
-	
+	@Override
+	public <E, T extends IFuture<E>> T runAsync(Callable<T> pojo)
+	{
+		@SuppressWarnings("unchecked")
+		T	ret	= (T) ComponentManager.get().run(pojo, null, this, true);
+		return ret;
+	}
+
+	@Override
+	public <E, T extends IFuture<E>> T runAsync(IThrowingFunction<IComponent, T> pojo)
+	{
+		@SuppressWarnings("unchecked")
+		T	ret	= (T) ComponentManager.get().run(pojo, null, this, true);
+		return ret;
+	}
+
 	@Override
 	public Set<ComponentIdentifier> getAllComponents()
 	{

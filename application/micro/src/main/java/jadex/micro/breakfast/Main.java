@@ -1,6 +1,5 @@
 package jadex.micro.breakfast;
 
-import jadex.core.IAsyncStep;
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
@@ -22,16 +21,14 @@ public class Main
 		// Synchronous (i.e. blocking) lambda agent.
 		IFuture<String> eggs = IComponentManager.get().run(agent ->
 		{
-			// boil eggs
 			agent.getFeature(IExecutionFeature.class).waitForDelay(5000).get();
 			System.out.println("Eggs ready");
 			return "Eggs ready";
 		});
 		
 		// Asynchronous lambda agent.
-		IFuture<String>	bacon	= IComponentManager.get().runAsync((IAsyncStep<String>)agent ->
-			agent.getFeature(IExecutionFeature.class)
-				.waitForDelay(7000)
+		IFuture<String>	bacon	= IComponentManager.get().runAsync(agent ->
+			agent.getFeature(IExecutionFeature.class).waitForDelay(7000)
 				.thenApply(done -> "Bacon ready")
 				.then(System.out::println));
 		

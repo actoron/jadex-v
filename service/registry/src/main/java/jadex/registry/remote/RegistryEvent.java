@@ -1,9 +1,9 @@
 package jadex.registry.remote;
 
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.impl.search.QueryEvent;
 import jadex.providedservice.impl.search.ServiceEvent;
-import jadex.providedservice.impl.search.ServiceQuery;
 
 public class RegistryEvent 
 {

@@ -20,8 +20,8 @@ public class BTSharedCleanerBenchmarkAgent extends BTCleanerAgent
 	{
 		super(envid, false);
 		this.future = future;
-		// no update for easier debugging -> TODO: why hangs with update rate 0?
-		this.daytime.setUpdateRate(1000000);
+//		// no update for easier debugging -> TODO: why hangs with update rate 0?
+//		this.daytime.setUpdateRate(1000000);
 	}
 	
 	public Node<IComponent> createBehaviorTree() 	
