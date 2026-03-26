@@ -1,11 +1,5 @@
 package jadex.common;
 
-import java.awt.GraphicsEnvironment;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -19,12 +13,10 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,8 +28,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /*import jadex.commons.SClassReader.ClassFileInfo;
 import jadex.commons.SClassReader.ClassInfo;
@@ -51,7 +41,31 @@ import jadex.commons.collection.WeakValueMap;
 public class SReflect
 {
 	//-------- attributes --------
-	
+
+	/**
+	 * 
+	 */
+	public record ParameterizedTypeImpl(Type owner, Type raw, Type[] actual) implements ParameterizedType
+	{
+		@Override
+		public Type getOwnerType()
+		{
+			return owner;
+		}
+		
+		@Override
+		public Type[] getActualTypeArguments()
+		{
+			return actual;
+		}
+		
+		@Override
+		public Type getRawType()
+		{
+			return raw;
+		}
+	}
+
 	/** Class lookup cache (classloader(weak)->Map([name, import]->class)). */
 //	protected static final Map classcache	= Collections.synchronizedMap(new WeakHashMap());
 	//protected static final Map<Tuple2<String, Integer>, Class<?>> classcache	

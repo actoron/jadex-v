@@ -1,7 +1,9 @@
 package jadex.transformation.jsonserializer.processors;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +77,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 		
 		try
 		{
-			readProperties(object, clazz, conversionprocessors, processors, converter, mode, traverser, targetcl, ret, context, intro);
+			readProperties(object, type, conversionprocessors, processors, converter, mode, traverser, targetcl, ret, context, intro);
 		}
 		catch(Exception e)
 		{
@@ -146,7 +148,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 		{
 			try
 			{
-				BeanProperty prop = (BeanProperty)props.get(name);
+				BeanProperty prop = props.get(name);
 				if(prop!=null && prop.isReadable() && prop.isWritable())
 				{
 					JsonValue val = jval.get(name);
@@ -157,6 +159,44 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 							sot = JsonTraverser.findClazzOfJsonObject((JsonObject)val, targetcl);
 						if(sot==null)
 							sot = prop.getGenericType();
+						
+						if(sot instanceof TypeVariable)
+						{
+							TypeVariable<?> tv = (TypeVariable<?>)sot;
+							Type[] typeargs = ((ParameterizedType)type).getActualTypeArguments();
+							TypeVariable<?>[] typevars = SReflect.getClass(type).getTypeParameters();
+							for(int i=0; i<typevars.length; i++)
+							{
+								if(typevars[i].getName().equals(tv.getName()))
+								{
+									sot = typeargs[i];
+									break;
+								}
+							}
+						}
+						if(sot instanceof ParameterizedType)
+						{
+							ParameterizedType pt = (ParameterizedType)sot;
+							Type[]	typeargs	= pt.getActualTypeArguments();
+							for(int i=0; i<typeargs.length; i++)
+							{
+								Type arg = typeargs[i];
+								if(arg instanceof TypeVariable)
+								{
+									TypeVariable<?> tv = (TypeVariable<?>)arg;
+									Type[] typeargs2 = ((ParameterizedType)type).getActualTypeArguments();
+									TypeVariable<?>[] typevars2 = SReflect.getClass(type).getTypeParameters();
+									for(int j=0; j<typevars2.length; j++)
+									{
+										if(typevars2[j].getName().equals(tv.getName()))
+										{
+											typeargs[i] = typeargs2[j];
+										}
+									}
+								}
+							}
+							sot = new SReflect.ParameterizedTypeImpl(pt.getOwnerType(), pt.getRawType(), typeargs);
+						}
 						
 //						System.out.println("VAL " + ((JsonObject) val).toString());
 //						System.out.println("CL " + ((JsonObject) val).getString(JsonTraverser.CLASSNAME_MARKER, null));
@@ -170,7 +210,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 //							if ("result".equals(prop.getName()))
 //								System.out.println("PROP SET CALLED");
 							
-							prop.setPropertyValue(ret, traverser.convertBasicType(converter, newval, prop.getType(), targetcl, context));
+							prop.setPropertyValue(ret, Traverser.convertBasicType(converter, newval, prop.getType(), targetcl, context));
 							//prop.setPropertyValue(ret, convertBasicType(newval, prop.getType()));
 						}
 					}

@@ -108,7 +108,8 @@ public class JsonMapProcessor extends AbstractJsonProcessor
 //				Object newval = traverser.doTraverse(val, valclazz, traversed, preprocessors, processors, postprocessors, clone, targetcl, context);
 				if(newval!=Traverser.IGNORE_RESULT)
 				{
-					ret.put(name, newval);
+					if(newval!=val)
+						ret.put(name, newval);
 				}
 			}
 		}
