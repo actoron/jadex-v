@@ -73,7 +73,7 @@ public class JsonOptionalProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return (clazz != null) && OPTIONAL_CLASSNAME.equals(clazz.getName());
 	}
 	
@@ -86,7 +86,7 @@ public class JsonOptionalProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return (clazz != null) && OPTIONAL_CLASSNAME.equals(clazz.getName());
 	}
 	

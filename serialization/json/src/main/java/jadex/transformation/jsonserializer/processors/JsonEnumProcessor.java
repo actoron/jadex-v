@@ -24,7 +24,7 @@ public class JsonEnumProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return (object instanceof JsonObject || object instanceof JsonValue) && clazz!=null && clazz.isEnum();
 	}
 	
@@ -37,8 +37,8 @@ public class JsonEnumProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
-		return clazz.isEnum();
+		Class<?> clazz = SReflect.getClass0(type);
+		return clazz!=null && clazz.isEnum();
 	}
 	
 	/**

@@ -38,7 +38,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return object instanceof JsonObject && (clazz!=null && !SReflect.isSupertype(Map.class, clazz));
 	}
 	

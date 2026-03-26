@@ -159,16 +159,6 @@ public class SReflect
 	 *  @param type The generic type.
 	 *  @return The unwrapped class.
 	 */
-	public static Class<?> unwrapGenericType(Type type)
-	{
-		return getClass(getInnerGenericType(type));
-	}
-	
-	/**
-	 *  Unwrap a generic type.
-	 *  @param type The generic type.
-	 *  @return The unwrapped class.
-	 */
 	public static Type getInnerGenericType(Type type)
 	{
 		Type ret = null;
@@ -183,20 +173,28 @@ public class SReflect
 		
 		return ret;
 	}
-	
+
 	/**
 	 *  Get the class for a type.
 	 */
-	public static Class<?> getClass(Type type)
+	public static Class<?> getClass0(Type type)
 	{
 		Class<?> ret = null;
 		if(type instanceof Class)
 			ret = (Class<?>)type;
 		else if(type instanceof ParameterizedType)
 			ret = (Class<?>)((ParameterizedType)type).getRawType();
-		else if(type!=null)
+		return ret;
+	}
+
+	/**
+	 *  Get the class for a type.
+	 */
+	public static Class<?> getClass(Type type)
+	{
+		Class<?> ret = getClass0(type);
+		if(ret==null)
 			throw new RuntimeException("Cannot unwrap: "+type);
-		
 		return ret;
 	}
 	
