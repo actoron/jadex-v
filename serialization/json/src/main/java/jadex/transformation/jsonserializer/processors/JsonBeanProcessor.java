@@ -195,7 +195,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 									}
 								}
 							}
-							sot = new SReflect.ParameterizedTypeImpl(pt.getOwnerType(), pt.getRawType(), typeargs);
+							sot = new SReflect.ParameterizedTypeImpl(pt.getRawType(), typeargs);
 						}
 						
 //						System.out.println("VAL " + ((JsonObject) val).toString());

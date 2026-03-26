@@ -43,14 +43,16 @@ public class SReflect
 	//-------- attributes --------
 
 	/**
-	 * 
+	 *  Helper class for creating parameterized types.
+	 * @param raw	The base type (e.g. List.class).
+	 * @param actual	The actual type parameters (e.g. String.class -> List&lt;String>).
 	 */
-	public record ParameterizedTypeImpl(Type owner, Type raw, Type[] actual) implements ParameterizedType
+	public static record ParameterizedTypeImpl(Type raw, Type... actual) implements ParameterizedType
 	{
 		@Override
 		public Type getOwnerType()
 		{
-			return owner;
+			return getClass0(raw)!=null ? getClass0(raw).getDeclaringClass() : null;
 		}
 		
 		@Override
