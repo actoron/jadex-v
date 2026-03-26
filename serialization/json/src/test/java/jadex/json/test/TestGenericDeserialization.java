@@ -169,15 +169,15 @@ public class TestGenericDeserialization
 		assertEquals(Data.class.getName(), result.value.value.getClass().getName());
 	}
 	
-	static class NestedBean<T>
+	static class NestedBean<E>
 	{
 		String	name;
-		MyBean<T>	value;
+		MyBean<E>	value;
 		
 		public String getName(){return name;}
 		public void setName(String name){this.name = name;}
-		public MyBean<T> getValue(){return value;}
-		public void setValue(MyBean<T> value){this.value = value;}
+		public MyBean<E> getValue(){return value;}
+		public void setValue(MyBean<E> value){this.value = value;}
 	}
 	@Test
 	public void testGenericNestedBean() throws Exception
@@ -199,5 +199,32 @@ public class TestGenericDeserialization
 		Type	type	= new ParameterizedTypeImpl(NestedBean.class, Data.class);
 		NestedBean<?>	result	= (NestedBean<?>) JsonTraverser.objectFromString(json, getClass().getClassLoader(), type);
 		assertEquals(Data.class.getName(), result.value.value.getClass().getName());
+	}
+	
+	@Test
+	public void testGenericNestedBeanBean() throws Exception
+	{
+		String	json = """
+		{
+			"name":"test", 
+			"value":
+			{
+				"name":"test", 
+				"value":
+				{
+					"name":"test", 
+					"value":
+					{
+						"name":"test", 
+						"value":42
+					}
+				}
+			}
+		}
+		""";
+		Type	type	= new ParameterizedTypeImpl(NestedBean.class, new ParameterizedTypeImpl(MyBean.class, Data.class));
+		@SuppressWarnings("unchecked")
+		NestedBean<MyBean<Data>>	result	= (NestedBean<MyBean<Data>>) JsonTraverser.objectFromString(json, getClass().getClassLoader(), type);
+		assertEquals(Data.class.getName(), result.value.value.value.getClass().getName());
 	}
 }

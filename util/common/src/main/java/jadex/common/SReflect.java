@@ -58,7 +58,8 @@ public class SReflect
 		@Override
 		public Type[] getActualTypeArguments()
 		{
-			return actual;
+			// Create copy of actual types, because the array is mutable and we do not want to allow changes from outside.
+			return actual!=null ? Arrays.copyOf(actual, actual.length) : null;
 		}
 		
 		@Override

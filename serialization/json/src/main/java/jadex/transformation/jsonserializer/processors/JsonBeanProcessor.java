@@ -13,6 +13,7 @@ import com.eclipsesource.json.JsonValue;
 
 import jadex.common.SAccess;
 import jadex.common.SReflect;
+import jadex.common.SReflect.ParameterizedTypeImpl;
 import jadex.common.SUtil;
 import jadex.common.transformation.BeanIntrospectorFactory;
 import jadex.common.transformation.IStringConverter;
@@ -195,7 +196,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 									}
 								}
 							}
-							sot = new SReflect.ParameterizedTypeImpl(pt.getRawType(), typeargs);
+							sot = new ParameterizedTypeImpl(pt.getRawType(), typeargs);
 						}
 						
 //						System.out.println("VAL " + ((JsonObject) val).toString());
