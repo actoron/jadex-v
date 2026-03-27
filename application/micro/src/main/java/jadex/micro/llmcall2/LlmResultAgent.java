@@ -32,10 +32,13 @@ import jadex.common.SUtil;
 import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
+import jadex.core.annotation.NoCopy;
+import jadex.execution.ComponentMethod;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
+import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.injection.annotation.ProvideResult;
 import jadex.providedservice.IService;
@@ -58,16 +61,42 @@ public class LlmResultAgent
 	@ProvideResult
 	List<String> toolresults = new ArrayList<>();
 	
+	@Inject
+	IComponent agent;
+	
 	StreamingChatModel	llm;
 	String	prompt;
 	Image[]	images;
 
 	Map<String, ToolRef>	current_tools;
+	Future<Void> current_loop;
 	Future<Void> current_call;
 	List<ChatMessage> messages = new ArrayList<>();
 	List<IFuture<Void>> callfutures = new ArrayList<>();
 
+	/**
+	 *  For byte buddy / pojo handle.
+	 */
+	protected LlmResultAgent()
+	{
+	}
 	
+	/**
+	 *  Create agent with LLM. Prompt and images can be sent later via chat method.
+	 *  Agent stays alive until explicitly terminated.
+	 *  When the LLM doesn't call any tools anymore and doesn't give any further response,
+	 *  the agent will just wait for further prompts via the chat method.
+	 */
+	public LlmResultAgent(StreamingChatModel llm)
+	{
+		this.llm = llm;
+	}
+	
+	/**
+	 *  Create agent with initial prompt and optional images.
+	 *  Agent terminates when task is completed, i.e. when the LLM doesn't call any tools anymore
+	 *  and doesn't give any further response.
+	 */
 	public LlmResultAgent(StreamingChatModel llm, String prompt, Image... images)
 	{
 		this.llm = llm;
@@ -88,6 +117,19 @@ public class LlmResultAgent
 //		  + "Make extra sure to use correct opening and closing brackets for thinking, tool calls etc.\n"
 		));
 		
+		if(prompt!=null)
+		{
+			chat(prompt, images);
+		}
+	}
+	
+	/**
+	 *  Send a prompt to the agent.
+	 *  This can be used to send an initial prompt at the start or follow-up prompts later on.
+	 */
+	@ComponentMethod
+	public IFuture<Void>	chat(String prompt, @NoCopy Image... images)
+	{
 		List<Content> content = new ArrayList<>();
 		content.add(TextContent.from(prompt));
 		if(images!=null)
@@ -99,10 +141,12 @@ public class LlmResultAgent
 		}
 		messages.add(UserMessage.from(content));
 		
-		sendRequest(agent);
+		current_loop = new Future<>();
+		sendRequest();
+		return current_loop;
 	}
 	
-	protected void sendRequest(IComponent agent)
+	protected void	sendRequest()
 	{	
 		List<ToolSpecification> tools = findTools(agent);
 		ChatRequest request	= ChatRequest.builder()
@@ -184,7 +228,15 @@ public class LlmResultAgent
 			    	// Done?
 			    	if(callfutures.isEmpty())
 			    	{
-			    		agent.terminate();
+			    		// When started with a prompt, terminate when done.
+			    		if(prompt!=null)
+			    		{
+			    			agent.terminate();
+			    		}
+			    		else
+			    		{
+			    			current_loop.setResult(null);
+			    		}
 			    	}
 			    	else
 			    	{
@@ -192,7 +244,7 @@ public class LlmResultAgent
 						IFuture<Object>[]	calls	= callfutures.toArray(new IFuture[0]);
 			    		callfutures.clear();
 			    		new FutureBarrier<>(calls)
-						   	.waitFor().then(v -> sendRequest(agent))
+						   	.waitFor().then(v -> sendRequest())
 						   	.printOnEx();
 			    	}
 	    		});
@@ -380,10 +432,10 @@ public class LlmResultAgent
 			}
 			else if(event.type()==Type.ADDED && event.name().equals("toolresults"))
 			{
-				if(last[0]!=4)
+				if(last[0]!=3)
 				{
 					System.out.println();
-					last[0]=4;
+					last[0]=3;
 				}
 				System.out.println("\033[3;1m"+event.value()+"\033[0m");
 			}

@@ -83,10 +83,10 @@ public class LlmHelper
 			Provider.OLLAMA_LOCAL, 
 				
 				// Best models for blocksworld and breakfast
-				"ministral-3:3b"	// fast and efficient, but no thinking
+//				"ministral-3:3b"	// fast and efficient, but no thinking
 //				"devstral-small-2:24b"
 //				"gpt-oss:20b"	// no image input
-//				"qwen3.5:9b"
+				"qwen3.5:9b"
 //				"qwen3:4b"	// no coffee :-(, fails on  blocksworld
 //				"nemotron-cascade-2:30b"	// slow
 				
