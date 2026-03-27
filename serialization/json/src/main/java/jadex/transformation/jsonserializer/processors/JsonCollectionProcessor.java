@@ -96,6 +96,11 @@ public class JsonCollectionProcessor extends AbstractJsonProcessor
 //			Object newval = traverser.doTraverse(val, compclazz!=null? compclazz: val.getClass(), traversed, preprocessors, processors, postprocessors, clone, targetcl, context);
 			Object newval = traverser.doTraverse(val, sot, conversionprocessors, processors, converter, mode, targetcl, context);
 			
+			if(sot!=null && newval!=null && !SReflect.isSupertype(SReflect.getClass(sot), newval.getClass()))
+			{
+				throw new ClassCastException("Incompatible type: "+newval.getClass()+" is not compatible with "+sot);
+			}
+			
 			if(newval != Traverser.IGNORE_RESULT)
 			{
 				ret.add(newval);

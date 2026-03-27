@@ -200,7 +200,7 @@ public class SReflect
 		if(type instanceof Class)
 			ret = (Class<?>)type;
 		else if(type instanceof ParameterizedType)
-			ret = (Class<?>)((ParameterizedType)type).getRawType();
+			ret = getClass0(((ParameterizedType)type).getRawType());
 		return ret;
 	}
 

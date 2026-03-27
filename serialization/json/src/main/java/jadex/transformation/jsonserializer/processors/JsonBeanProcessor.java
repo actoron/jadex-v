@@ -163,40 +163,11 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 						
 						if(sot instanceof TypeVariable)
 						{
-							TypeVariable<?> tv = (TypeVariable<?>)sot;
-							Type[] typeargs = ((ParameterizedType)type).getActualTypeArguments();
-							TypeVariable<?>[] typevars = SReflect.getClass(type).getTypeParameters();
-							for(int i=0; i<typevars.length; i++)
-							{
-								if(typevars[i].getName().equals(tv.getName()))
-								{
-									sot = typeargs[i];
-									break;
-								}
-							}
+							sot = resolveTypeVar((ParameterizedType)type, (TypeVariable<?>)sot);
 						}
-						if(sot instanceof ParameterizedType)
+						else if(sot instanceof ParameterizedType)
 						{
-							ParameterizedType pt = (ParameterizedType)sot;
-							Type[]	typeargs	= pt.getActualTypeArguments();
-							for(int i=0; i<typeargs.length; i++)
-							{
-								Type arg = typeargs[i];
-								if(arg instanceof TypeVariable)
-								{
-									TypeVariable<?> tv = (TypeVariable<?>)arg;
-									Type[] typeargs2 = ((ParameterizedType)type).getActualTypeArguments();
-									TypeVariable<?>[] typevars2 = SReflect.getClass(type).getTypeParameters();
-									for(int j=0; j<typevars2.length; j++)
-									{
-										if(typevars2[j].getName().equals(tv.getName()))
-										{
-											typeargs[i] = typeargs2[j];
-										}
-									}
-								}
-							}
-							sot = new ParameterizedTypeImpl(pt.getRawType(), typeargs);
+							sot = resolveTypeVars((ParameterizedType)type, (ParameterizedType)sot);
 						}
 						
 //						System.out.println("VAL " + ((JsonObject) val).toString());
@@ -223,7 +194,45 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 			}
 		}
 	}
+
+	/**
+	 *  Resolve type variables in a parameterized type.
+	 * 	@param outertype	The declaring type that contains the actual type information.
+	 *  @param valuetype	The inner type, e.g. field type, that may contain type variables that need to be resolved.
+	 *  @return The inner type with resolved type variables.
+	 */
+	protected static Type resolveTypeVars(ParameterizedType outertype, ParameterizedType valuetype)
+	{
+		Type[]	typeargs	= valuetype.getActualTypeArguments();
+		for(int i=0; i<typeargs.length; i++)
+		{
+			Type arg = typeargs[i];
+			if(arg instanceof TypeVariable)
+			{
+				typeargs[i]	= resolveTypeVar(outertype, (TypeVariable<?>)arg);
+			}
+			else if(arg instanceof ParameterizedType)
+			{
+				typeargs[i] = resolveTypeVars(outertype, (ParameterizedType)arg);
+			}
+		}
+		return new ParameterizedTypeImpl(valuetype.getRawType(), typeargs);
+	}
 	
+	protected static Type resolveTypeVar(ParameterizedType outertype, TypeVariable<?> tv)
+	{
+		Type[] typeargs2 = outertype.getActualTypeArguments();
+		TypeVariable<?>[] typevars2 = SReflect.getClass(outertype).getTypeParameters();
+		for(int j=0; j<typevars2.length; j++)
+		{
+			if(typevars2[j].getName().equals(tv.getName()))
+			{
+				return typeargs2[j];
+			}
+		}
+		throw new RuntimeException("Cannot resolve type variable " + tv.getName() + " in type " + outertype);
+	}
+
 	/**
 	 *  Clone all properties of an object.
 	 */

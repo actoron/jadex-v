@@ -103,6 +103,12 @@ public class JsonMapProcessor extends AbstractJsonProcessor
 				}
 				
 				Object newval = traverser.doTraverse(val, valtype, conversionprocessors, processors, converter, mode, targetcl, context);
+				
+				if(valtype!=null && newval!=null && !SReflect.isSupertype(SReflect.getClass(valtype), newval.getClass()))
+				{
+					throw new ClassCastException("Incompatible type: "+newval.getClass()+" is not compatible with "+valtype);
+				}
+				
 //				Object newval = traverser.doTraverse(val, null, traversed, preprocessors, processors, postprocessors, clone, targetcl, context);
 //				Class<?> valclazz = val!=null? val.getClass(): null;
 //				Object newval = traverser.doTraverse(val, valclazz, traversed, preprocessors, processors, postprocessors, clone, targetcl, context);
@@ -247,8 +253,8 @@ public class JsonMapProcessor extends AbstractJsonProcessor
 	 */
 	protected Class<?> getValueClass(Object val, Object context)
 	{
-		Class<?> valclazz = val!=null && !(val instanceof JsonObject)? val.getClass(): null;
-		return valclazz;
+//		Class<?> valclazz = val!=null && !(val instanceof JsonObject)? val.getClass(): null;
+		return null;
 	}
 	
 	/**

@@ -250,6 +250,10 @@ public class BeanProperty
 	public void setField(Field field)
 	{
 		this.field = field;
+		
+		if(gentype == null)
+			gentype = field.getGenericType();
+		
 		try
 		{
 			if (!field.isAccessible())
