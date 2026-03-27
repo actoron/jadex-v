@@ -165,8 +165,11 @@ public class LlmHelper
 			.baseUrl(baseurl)
 			.apiKey(System.getenv("OPENAI_API_KEY"))
 			.build();
-		return cat.listModels().stream().filter(m -> m.type()==ModelType.CHAT)
-			.map(m -> m.name()).filter(name -> !free || name.endsWith(":free")).sorted().toList();
+		return cat.listModels().stream()
+			.filter(m -> m.type()==null || m.type()==ModelType.CHAT)
+			.map(m -> m.name())
+			.filter(name -> !free || name.endsWith(":free"))
+			.sorted().toList();
 	}
 	
 	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, Boolean think)
