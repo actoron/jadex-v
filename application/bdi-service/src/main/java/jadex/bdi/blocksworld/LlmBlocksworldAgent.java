@@ -8,6 +8,7 @@ import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -304,9 +305,9 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			worlds.validate();
 			worlds.repaint();
 			
-			model.addItemListener(e ->
+			ItemListener	il	= e ->
 			{
-				if(e.getStateChange()==java.awt.event.ItemEvent.SELECTED)
+				if(e.getStateChange()==java.awt.event.ItemEvent.SELECTED || e.getSource()==think)
 				{
 					center.setText("");
 					IComponentHandle llmagent = IComponentManager.get().create(
@@ -357,7 +358,9 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 						}
 					}).printOnEx();
 				}
-			});
+			};
+			model.addItemListener(il);
+			think.addItemListener(il);
 			
 			SwingUtilities.invokeLater(() ->fetchmodels.actionPerformed(null));
 		});
