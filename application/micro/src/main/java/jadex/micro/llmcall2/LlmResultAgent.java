@@ -45,8 +45,13 @@ import jadex.providedservice.IService;
 import jadex.providedservice.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
+/**
+ *  An agent using an LLM to autonomously plan and execute tool calls for completing given tasks.
+ *  Tools are found by looking for services / service methods annotated with {@link Tool}. 
+ */
 public class LlmResultAgent
 {
+	/** Helper record for lookup through simple service naming. */
 	static record ToolRef(Object service, Method method) {}
 	
 	@ProvideResult
@@ -64,15 +69,32 @@ public class LlmResultAgent
 	@Inject
 	IComponent agent;
 	
+	/** Chat model (required). */
 	StreamingChatModel	llm;
+	
+	/** Initial prompt for the agent, if any. */
 	String	prompt;
+	
+	/** Initial images for the agent, if any. */
 	Image[]	images;
-
-	Map<String, ToolRef>	current_tools;
+	
+	/** Outer future for current user chat() call. */
 	Future<Void> current_loop;
+	
+	/** Inner future for current LLM call. */
 	Future<Void> current_call;
-	List<ChatMessage> messages = new ArrayList<>();
+	
+	/** Map for looking up discovered tools by name. */
+	Map<String, ToolRef>	current_tools;
+	
+	/** 
+	 *  List of currently executing tool calls.
+	 *  Reply to LLM is only sent after all tools are done.
+	 */
 	List<IFuture<Void>> callfutures = new ArrayList<>();
+	
+	/** List of all messages in the conversation, including system, user, LLM messages and tool results. */
+	List<ChatMessage> messages = new ArrayList<>();
 
 	/**
 	 *  For byte buddy / pojo handle.
@@ -104,9 +126,11 @@ public class LlmResultAgent
 		this.images = images;
 	}
 	
+	/** Start the agent. */
 	@OnStart
 	public void	start(IComponent agent)
 	{
+		// Add system prompt once.
 		messages.add(SystemMessage.from(
 			"You are an agent that plans and performs a sequence of tool calls to complete a given task autonomously.\n"
 		  + "For missing information, take arbitrary decisions yourself and do not ask the user.\n"
@@ -117,6 +141,7 @@ public class LlmResultAgent
 //		  + "Make extra sure to use correct opening and closing brackets for thinking, tool calls etc.\n"
 		));
 		
+		// Start with initial prompt if given, otherwise wait for prompts via chat method.
 		if(prompt!=null)
 		{
 			chat(prompt, images);
@@ -142,13 +167,17 @@ public class LlmResultAgent
 		messages.add(UserMessage.from(content));
 		
 		current_loop = new Future<>();
-		sendRequest();
+		sendRequestToLLM();
 		return current_loop;
 	}
 	
-	protected void	sendRequest()
+	/**
+	 *  Send the current conversation messages and available tools to the LLM
+	 *  and handle the response
+	 */
+	protected void	sendRequestToLLM()
 	{	
-		List<ToolSpecification> tools = findTools(agent);
+		List<ToolSpecification> tools = findTools();
 		ChatRequest request	= ChatRequest.builder()
 			.messages(messages)
 			.toolSpecifications(tools)
@@ -244,7 +273,7 @@ public class LlmResultAgent
 						IFuture<Object>[]	calls	= callfutures.toArray(new IFuture[0]);
 			    		callfutures.clear();
 			    		new FutureBarrier<>(calls)
-						   	.waitFor().then(v -> sendRequest())
+						   	.waitFor().then(v -> sendRequestToLLM())
 						   	.printOnEx();
 			    	}
 	    		});
@@ -257,8 +286,12 @@ public class LlmResultAgent
 		    }
 		});
 	}
-
-	protected List<ToolSpecification>	findTools(IComponent agent)
+	
+	/**
+	 *  Find tools by looking for services / service methods annotated with {@link Tool}.
+	 *  Create a lookup table for calling the tools later by name.
+	 */
+	protected List<ToolSpecification>	findTools()
 	{
 		List<ToolSpecification> tool_specs = new ArrayList<>();
 		current_tools	= new LinkedHashMap<>();
@@ -316,6 +349,11 @@ public class LlmResultAgent
 		return tool_specs;
 	}
 	
+	/**
+	 *  Perform a single tool call as requested by the LLM.
+	 *  @return Future that indicates when the tool call is done
+	 *  		and the result/error has been added to the conversation messages.
+	 */
 	protected IFuture<Void> callTool(IComponent agent, CompleteToolCall call)
 	{
 		try
@@ -365,7 +403,11 @@ public class LlmResultAgent
 			return handleToolResult(call, new Future<>(e), false);
 		}
 	}
-
+	
+	/**
+	 *  Handle the result of a tool call, i.e. add the result or exception to the conversation messages
+	 *  so that it can be sent back to the LLM.
+	 */
 	protected IFuture<Void>	handleToolResult(CompleteToolCall call, IFuture<Object> resfut, boolean isvoid)
 	{
 		Future<Void>	ret	= new Future<>();
@@ -397,7 +439,10 @@ public class LlmResultAgent
 			}));
 		return ret;
 	}
-
+	
+	/**
+	 *  Helper method to print results to console.
+	 */
 	public static void printResults(IComponentHandle agent)
 	{
 		int[] last = new int[1];
