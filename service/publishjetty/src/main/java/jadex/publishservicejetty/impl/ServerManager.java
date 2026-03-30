@@ -127,7 +127,7 @@ public class ServerManager
 	    }
 	    catch(Exception e)
 	    {
-	    	SUtil.rethrowAsUnchecked(e);
+	    	SUtil.throwUnchecked(e);
 	    	//ret.setException(e);
 	    }
 		
@@ -479,7 +479,7 @@ public class ServerManager
                 {
                     //System.err.println("Failed to fetch value for variable: "+var+" in publish id: "+id);
                     //e.printStackTrace();
-                    SUtil.rethrowAsUnchecked(e);
+                    SUtil.throwUnchecked(e);
                 }
             }
         }

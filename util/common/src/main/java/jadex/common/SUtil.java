@@ -1678,7 +1678,7 @@ public class SUtil
 			}
 			catch(Exception e)
 			{
-				rethrowAsUnchecked(e);
+				throwUnchecked(e);
 			}
 			
 			stok = new StringTokenizer(cp, "/!"); // Exclamation mark to support
@@ -2647,7 +2647,7 @@ public class SUtil
 			return new URI(scheme, null, address.getHostAddress(), port, null, null, null);
 		} catch (URISyntaxException e) {
 //			e.printStackTrace();
-			rethrowAsUnchecked(e);
+			throwUnchecked(e);
 		}
 		return null;
 	}
@@ -2696,12 +2696,12 @@ public class SUtil
 				catch (URISyntaxException e1) 
 				{
 					e1.printStackTrace();
-					rethrowAsUnchecked(e);
+					throwUnchecked(e);
 				}
 			} 
 			else 
 			{
-				rethrowAsUnchecked(e);
+				throwUnchecked(e);
 			}
 		}
 		return ret;
@@ -2767,6 +2767,8 @@ public class SUtil
 	/**
 	 *  Converts an exception to RuntimeException, returns original
 	 *  if already a RuntimeException.
+	 *  Wraps Errors in an ErrorException to avoid them being caught as RuntimeExceptions.
+	 *  InvocationTargetException is unwrapped and its target exception is converted.
 	 *  
 	 *  @param e The throwable to be returned as RuntimeException
 	 *  @return RuntimeException.
@@ -2776,6 +2778,14 @@ public class SUtil
 		if (e instanceof RuntimeException)
 		{
 			return ((RuntimeException) e);
+		}
+		else if (e instanceof Error)
+		{
+			return new ErrorException((Error) e);
+		}
+		else if(e instanceof InvocationTargetException)
+		{
+			return convertToRuntimeException(((InvocationTargetException)e).getTargetException());
 		}
 		return new RuntimeException(e);
 	}
@@ -2790,9 +2800,7 @@ public class SUtil
 	 */
 	public static final void rethrowAsUnchecked(Throwable e)
 	{
-		if (e instanceof Error)
-			throw ((Error)e);
-		throw convertToRuntimeException(e);
+		throwUnchecked(e);
 	}
 
 	/*public static void main(String[] args)
@@ -4715,7 +4723,7 @@ public class SUtil
 		}
 		catch (Exception e)
 		{
-			rethrowAsUnchecked(e);
+			throwUnchecked(e);
 		}
 	}
 	

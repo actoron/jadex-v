@@ -5,7 +5,7 @@ package jadex.common;
  *  Will be thrown as errors on get(), but passed as wrapped exception in
  *  exceptionOccurred().
  */
-public class ErrorException extends Exception
+public class ErrorException extends RuntimeException
 {
 	// Hack for XML reader
 	private ErrorException() {}

@@ -98,7 +98,7 @@ public class JsonLocalDateTimeProcessor extends AbstractJsonProcessor
 		}
 		catch (Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		
 		return ret;

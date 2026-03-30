@@ -421,7 +421,7 @@ public class Traverser
 					}
 					catch(Exception e)
 					{
-						SUtil.rethrowAsUnchecked(e);
+						SUtil.throwUnchecked(e);
 					}
 				}
 			}
@@ -439,7 +439,7 @@ public class Traverser
 					}
 					catch(Exception e)
 					{
-						SUtil.rethrowAsUnchecked(e);
+						SUtil.throwUnchecked(e);
 					}
 				}
 			}

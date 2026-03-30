@@ -945,11 +945,11 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 							}
 						} catch (IOException e)
 						{
-							SUtil.rethrowAsUnchecked(e);
+							SUtil.throwUnchecked(e);
 						}
 					} catch (IOException e)
 					{
-						SUtil.rethrowAsUnchecked(e);
+						SUtil.throwUnchecked(e);
 					}
 				}
 			}
