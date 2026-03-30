@@ -1,15 +1,11 @@
 package jadex.apmn;
 
 import jadex.common.SUtil;
+import jadex.core.IComponentManager;
 import jadex.transformation.jsonserializer.JsonTraverser;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Starter
@@ -19,8 +15,6 @@ public class Starter
 
     public static void main(String[] args)
     {
-//        AgentProperties ap = new AgentProperties(FILE);
-//        ap.getProperty();
 
         try
         {
@@ -30,10 +24,11 @@ public class Starter
             Type	type	= MissionList.class.getDeclaredField("missions").getGenericType();
             List<?>	result	= (List<?>) JsonTraverser.objectFromString(jsonContent, MissionList.class.getClassLoader(), type);
             for (Object item : result) {
-                if (item instanceof MissionList missions) {
-                    System.out.println("ID: " + missions.getId() );
-                    System.out.println("Belief: " + missions.getBelief());
-                    System.out.println("Goal: " + missions.getGoal());
+                if (item instanceof Mission mission) {
+                    System.out.println("A Mission");
+                    System.out.println("Id: " + mission.getId());
+                    System.out.println("Belief: " + mission.getBelief());
+                    System.out.println("Goal: " + mission.getGoal());
                     System.out.println("---");
                 } else {
                     System.out.println("Not a Mission: " + item);
@@ -45,7 +40,7 @@ public class Starter
             throw new RuntimeException(e);
         }
 
-//        IComponentManager.get().create(new AgentActor());
-//        IComponentManager.get().waitForLastComponentTerminated();
+        IComponentManager.get().create(new AgentActor());
+        IComponentManager.get().waitForLastComponentTerminated();
     }
 }

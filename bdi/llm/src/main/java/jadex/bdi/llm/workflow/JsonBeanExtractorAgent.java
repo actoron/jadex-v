@@ -6,7 +6,7 @@ import jadex.common.transformation.traverser.IBeanIntrospector;
 import jadex.core.IComponent;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
-import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 import java.lang.invoke.MethodHandle;
