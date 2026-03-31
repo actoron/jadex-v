@@ -20,6 +20,7 @@ import jadex.core.impl.SComponentFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
 
 public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutionFeature>	implements IBootstrapping, IComponentLifecycleManager
 {
@@ -119,13 +120,33 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 							{
 								@SuppressWarnings("unchecked")
 								IFuture<Object>	resfut	= (IFuture<Object>) result;
-								resfut.then(v -> fself.doTerminate())
-									.catchEx(ex ->
+								if(resfut instanceof IIntermediateFuture)
 								{
-									fself.handleException(ex);
-									// Terminate, if not terminated by exception handler (default terminate -> StepAborted)
-									fself.doTerminate();									
-								});
+									IIntermediateFuture<?>	iresfut	= (IIntermediateFuture) resfut;
+									iresfut.finished(v ->
+									{
+										fself.doTerminate();
+									})
+										.catchEx(ex ->
+									{
+										fself.handleException(ex);
+										// Terminate, if not terminated by exception handler (default terminate -> StepAborted)
+										fself.doTerminate();									
+									});
+								}
+								else
+								{
+									resfut.then(v ->
+									{
+										fself.doTerminate();
+									})
+										.catchEx(ex ->
+									{
+										fself.handleException(ex);
+										// Terminate, if not terminated by exception handler (default terminate -> StepAborted)
+										fself.doTerminate();									
+									});
+								}
 							}
 							else
 							{

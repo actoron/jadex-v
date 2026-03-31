@@ -25,15 +25,16 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 
 import dev.langchain4j.data.image.Image;
-import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.INoCopyStep;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.micro.llmcall2.ChatFragment;
+import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.micro.llmcall2.LlmHelper;
 import jadex.micro.llmcall2.LlmHelper.Provider;
-import jadex.micro.llmcall2.LlmResultAgent;
 
 public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworldService
 {
@@ -271,7 +272,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 			};
 			provider.addActionListener(fetchmodels);
 			
-			LlmResultAgent[] llmagentpojo = new LlmResultAgent[1];
+			LlmChatAgent[] llmagentpojo = new LlmChatAgent[1];
 
 			ActionListener	al	= e ->
 			{
@@ -289,10 +290,17 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 				prompt.setEnabled(false);
 				send.setEnabled(false);
 				
-				IFuture<Void>	done	= llmagentpojo[0].chat((String)prompt.getSelectedItem(),
+				IIntermediateFuture<ChatFragment> chat	= llmagentpojo[0].chat((String)prompt.getSelectedItem(),
 					sendimage.isSelected() ? new Image[]{png} : new Image[0]);
 				
-				done.then(v -> {prompt.setEnabled(true); send.setEnabled(true); append(center, "\n==============\n", null);})
+				chat.next(fragment ->
+				{
+					Style style = fragment.type()==ChatFragment.Type.THINKING ? thinking
+						: fragment.type()==ChatFragment.Type.TOOL_CALL || fragment.type()==ChatFragment.Type.TOOL_RESULT ? toolcall
+						: null;
+					append(center, fragment.text(), style);
+				})
+					.finished(v -> {prompt.setEnabled(true); send.setEnabled(true); append(center, "\n==============\n", null);})
 					.catchEx(v -> {prompt.setEnabled(true); send.setEnabled(true); append(center, "\n==============\n", null);})
 					.printOnEx();
 			};
@@ -311,52 +319,12 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 				{
 					center.setText("");
 					IComponentHandle llmagent = IComponentManager.get().create(
-							new LlmResultAgent(LlmHelper.createChatModel(
-								(Provider)provider.getSelectedItem(),
-								(String)model.getSelectedItem(),
-								think.isSelected())
-							)).get();
-					llmagentpojo[0] = llmagent.getPojoHandle(LlmResultAgent.class);
-					int[] last = new int[] {0};
-					llmagent.subscribeToResults().next(event ->
-					{
-						if(event.type()==Type.ADDED && event.name().equals("response"))
-						{
-							if(last[0]!=1)
-							{
-								append(center, "\n", null);
-								last[0]=1;
-							}
-							append(center, ""+event.value(), null);
-						}
-						else if(event.type()==Type.ADDED && event.name().equals("thinking"))
-						{
-							if(last[0]!=2)
-							{
-								append(center, "\n", thinking);
-								last[0]=2;
-							}
-							append(center, ""+event.value(), thinking);
-						}
-						else if(event.type()==Type.ADDED && event.name().equals("toolcalls"))
-						{
-							if(last[0]!=3)
-							{
-								append(center, "\n", toolcall);
-								last[0]=3;
-							}
-							append(center, event.value()+"\n", toolcall);
-						}
-						else if(event.type()==Type.ADDED && event.name().equals("toolresults"))
-						{
-							if(last[0]!=3)
-							{
-								append(center, "\n", toolcall);
-								last[0]=3;
-							}
-							append(center, event.value()+"\n", toolcall);
-						}
-					}).printOnEx();
+						new LlmChatAgent(LlmHelper.createChatModel(
+							(Provider)provider.getSelectedItem(),
+							(String)model.getSelectedItem(),
+							think.isSelected())
+						)).get();
+					llmagentpojo[0] = llmagent.getPojoHandle(LlmChatAgent.class);
 				}
 			};
 			model.addItemListener(il);

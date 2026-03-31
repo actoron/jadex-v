@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -25,47 +26,42 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.CompleteToolCall;
+import dev.langchain4j.model.chat.response.PartialResponse;
+import dev.langchain4j.model.chat.response.PartialResponseContext;
 import dev.langchain4j.model.chat.response.PartialThinking;
+import dev.langchain4j.model.chat.response.PartialThinkingContext;
 import dev.langchain4j.model.chat.response.PartialToolCall;
+import dev.langchain4j.model.chat.response.PartialToolCallContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
+import dev.langchain4j.model.chat.response.StreamingHandle;
 import jadex.common.SUtil;
-import jadex.core.ChangeEvent.Type;
 import jadex.core.IComponent;
-import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
 import jadex.core.annotation.NoCopy;
 import jadex.execution.ComponentMethod;
-import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
+import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.TerminableIntermediateFuture;
 import jadex.injection.annotation.Inject;
-import jadex.injection.annotation.OnStart;
-import jadex.injection.annotation.ProvideResult;
 import jadex.providedservice.IService;
 import jadex.providedservice.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
- *  An agent using an LLM to autonomously plan and execute tool calls for completing given tasks.
+ *  An agent that allows for multi-turn conversations with an LLM including tool calls.
+ *  The agent motivates the LLM to autonomously plan and execute tool calls for completing given tasks.
  *  Tools are found by looking for services / service methods annotated with {@link Tool}. 
  */
-public class LlmResultAgent
+public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>
 {
 	/** Helper record for lookup through simple service naming. */
 	static record ToolRef(Object service, Method method) {}
 	
-	@ProvideResult
-	List<String> thinking = new ArrayList<>();
+	//-------- attributes --------
 	
-	@ProvideResult
-	List<String> response = new ArrayList<>();
-	
-	@ProvideResult
-	List<String> toolcalls = new ArrayList<>();
-	
-	@ProvideResult
-	List<String> toolresults = new ArrayList<>();
-	
+	/** Reference to the agent component itself for scheduling steps and looking up tools. */
 	@Inject
 	IComponent agent;
 	
@@ -79,7 +75,7 @@ public class LlmResultAgent
 	Image[]	images;
 	
 	/** Outer future for current user chat() call. */
-	Future<Void> current_loop;
+	TerminableIntermediateFuture<ChatFragment> current_loop;
 	
 	/** Inner future for current LLM call. */
 	Future<Void> current_call;
@@ -94,42 +90,25 @@ public class LlmResultAgent
 	List<IFuture<Void>> callfutures = new ArrayList<>();
 	
 	/** List of all messages in the conversation, including system, user, LLM messages and tool results. */
+	// TODO: context management: for long conversations, we might want to remove old messages or summarize them to stay within token limits.
 	List<ChatMessage> messages = new ArrayList<>();
+	
+	//-------- constructors --------
 
 	/**
 	 *  For byte buddy / pojo handle.
 	 */
-	protected LlmResultAgent()
+	protected LlmChatAgent()
 	{
 	}
 	
 	/**
-	 *  Create agent with LLM. Prompt and images can be sent later via chat method.
-	 *  Agent stays alive until explicitly terminated.
-	 *  When the LLM doesn't call any tools anymore and doesn't give any further response,
-	 *  the agent will just wait for further prompts via the chat method.
+	 *  Create agent with LLM. Prompt and images can be sent repeatedly via chat method.
 	 */
-	public LlmResultAgent(StreamingChatModel llm)
+	public LlmChatAgent(StreamingChatModel llm)
 	{
 		this.llm = llm;
-	}
-	
-	/**
-	 *  Create agent with initial prompt and optional images.
-	 *  Agent terminates when task is completed, i.e. when the LLM doesn't call any tools anymore
-	 *  and doesn't give any further response.
-	 */
-	public LlmResultAgent(StreamingChatModel llm, String prompt, Image... images)
-	{
-		this.llm = llm;
-		this.prompt = prompt;
-		this.images = images;
-	}
-	
-	/** Start the agent. */
-	@OnStart
-	public void	start(IComponent agent)
-	{
+		
 		// Add system prompt once.
 		messages.add(SystemMessage.from(
 			"You are an agent that plans and performs a sequence of tool calls to complete a given task autonomously.\n"
@@ -140,20 +119,50 @@ public class LlmResultAgent
 		  + "Use argument names as given in the function properties.\n"
 //		  + "Make extra sure to use correct opening and closing brackets for thinking, tool calls etc.\n"
 		));
-		
-		// Start with initial prompt if given, otherwise wait for prompts via chat method.
+	}
+	
+	/**
+	 *  Create agent with initial prompt and optional images.
+	 *  When prompt is not null, the agent will terminate when the task is complete.
+	 *  Useful for executing one-shot tasks with {@link IComponentManager#runAsync}.
+	 */
+	public LlmChatAgent(StreamingChatModel llm, String prompt, Image... images)
+	{
+		this(llm);
+		this.prompt = prompt;
+		this.images = images;
+	}
+	
+	//-------- Callable interface --------
+	
+	@Override
+	public ITerminableIntermediateFuture<ChatFragment> call() throws Exception
+	{
 		if(prompt!=null)
 		{
 			chat(prompt, images);
+			
+			// Clear prompt and images to free memory, as they are now part of the conversation messages and not needed anymore.
+			prompt = null;
+			images = null;
+			
+			return current_loop;
+		}
+		else
+		{
+			// Don't terminate, but wait for prompts via chat method.
+			return new TerminableIntermediateFuture<>();
 		}
 	}
+	
+	//-------- component (i.e. user-facing) methods --------
 	
 	/**
 	 *  Send a prompt to the agent.
 	 *  This can be used to send an initial prompt at the start or follow-up prompts later on.
 	 */
 	@ComponentMethod
-	public IFuture<Void>	chat(String prompt, @NoCopy Image... images)
+	public ITerminableIntermediateFuture<ChatFragment>	chat(String prompt, @NoCopy Image... images)
 	{
 		List<Content> content = new ArrayList<>();
 		content.add(TextContent.from(prompt));
@@ -166,10 +175,12 @@ public class LlmResultAgent
 		}
 		messages.add(UserMessage.from(content));
 		
-		current_loop = new Future<>();
+		current_loop = new TerminableIntermediateFuture<>();
 		sendRequestToLLM();
 		return current_loop;
 	}
+	
+	//-------- internal methods --------
 	
 	/**
 	 *  Send the current conversation messages and available tools to the LLM
@@ -185,12 +196,19 @@ public class LlmResultAgent
 		
 //		System.out.println("Request: " + request);
 		current_call = new Future<>();
+		
 		llm.chat(request, new StreamingChatResponseHandler()
 		{
 			@Override
-			public void onPartialToolCall(PartialToolCall partialToolCall)
+			public void onPartialToolCall(PartialToolCall partialToolCall, PartialToolCallContext ctx)
 			{
-//				System.out.println("onPartialToolCall: " + partialToolCall);
+				agent.getComponentHandle().scheduleStep(() ->
+				{
+					if(current_loop.isDone())
+					{
+						ctx.streamingHandle().cancel();
+					}
+				}).printOnEx();
 			}
 			
 			@Override
@@ -198,44 +216,32 @@ public class LlmResultAgent
 			{
 				agent.getComponentHandle().scheduleStep(() ->
 				{
-					toolcalls.add(completeToolCall.toolExecutionRequest().toString());
+					addChatFragment(ChatFragment.Type.TOOL_CALL, completeToolCall.toolExecutionRequest().toString(), null);
 					callfutures.add(callTool(agent, completeToolCall));
 				}).printOnEx();
 			}
 			
 		    @Override
-		    public void onPartialResponse(String partialResponse)
+		    public void onPartialResponse(PartialResponse partialResponse, PartialResponseContext ctx)
 		    {
 		    	agent.getComponentHandle().scheduleStep(() -> 
 			    {
-			    	// Add line break after each sentence to keep lines reasonably short
-			    	if(partialResponse.startsWith(" ") && response.size()>0
-			    		&& (response.get(response.size()-1).endsWith(".") || response.get(response.size()-1).endsWith("?")))
-			    	{
-			    		response.add("\n"+partialResponse.stripLeading());
-			    	}
-			    	else
-			    	{
-			    		response.add(partialResponse);
-			    	}
+			    	ChatFragment.Type	type = ChatFragment.Type.RESPONSE;
+			    	String	text	= partialResponse.text();
+					StreamingHandle handle = ctx.streamingHandle();
+					addChatFragment(type, text, handle);
 			    }).printOnEx();
 		    }
 
 		    @Override
-		    public void onPartialThinking(PartialThinking partialThinking)
+		    public void onPartialThinking(PartialThinking partialThinking, PartialThinkingContext ctx)
 		    {
 		    	agent.getComponentHandle().scheduleStep(() -> 
 			    {
-			    	// Add line break after each sentence to keep lines reasonably short
-			    	if(partialThinking.text().startsWith(" ") && thinking.size()>0
-			    		&& (thinking.get(thinking.size()-1).endsWith(".") || thinking.get(thinking.size()-1).endsWith("?")))
-			    	{
-			    		thinking.add("\n"+partialThinking.text().stripLeading());
-			    	}
-			    	else
-			    	{
-			    		thinking.add(partialThinking.text());
-			    	}
+			    	ChatFragment.Type	type = ChatFragment.Type.THINKING;
+			    	String	text	= partialThinking.text();
+					StreamingHandle handle = ctx.streamingHandle();
+					addChatFragment(type, text, handle);
 			    }).printOnEx();
 		    }
 		    
@@ -254,19 +260,20 @@ public class LlmResultAgent
 	    				.attributes(completeResponse.aiMessage().attributes())
 	    				.build());
 	    			current_call.setResult(null);
-			    	// Done?
+			    	// When done, i.e. LLM doesn't request more tool calls -> end current loop
 			    	if(callfutures.isEmpty())
 			    	{
-			    		// When started with a prompt, terminate when done.
-			    		if(prompt!=null)
+		    			// Add line break after last fragment
+			    		List<ChatFragment>	fragments	= current_loop.getIntermediateResults();
+			    		if(!fragments.isEmpty())
 			    		{
-			    			agent.terminate();
+			    			ChatFragment	last	= fragments.get(fragments.size()-1);
+		    				current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n"));
 			    		}
-			    		else
-			    		{
-			    			current_loop.setResult(null);
-			    		}
+			    		current_loop.setFinishedIfUndone();
 			    	}
+			    	
+			    	// Otherwise, wait for all tool calls to complete before sending next request to LLM with all tool results.
 			    	else
 			    	{
 			    		@SuppressWarnings("unchecked")
@@ -282,7 +289,7 @@ public class LlmResultAgent
 		    @Override
 		    public void onError(Throwable error)
 		    {
-		    	agent.getFeature(IExecutionFeature.class).scheduleStep((Runnable)() -> SUtil.throwUnchecked(error));
+		    	current_loop.setException(SUtil.convertToRuntimeException(error));
 		    }
 		});
 	}
@@ -417,7 +424,7 @@ public class LlmResultAgent
 			{
 				ToolExecutionResultMessage	msg	= ToolExecutionResultMessage.from(call.toolExecutionRequest(),
 					isvoid && result==null ? "done": result instanceof String ? (String) result : Json.toJson(result));
-				toolresults.add(msg.toString());
+				addChatFragment(ChatFragment.Type.TOOL_RESULT, msg.toString(), null);
 //				messages.add(msg);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
 				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
@@ -431,7 +438,7 @@ public class LlmResultAgent
 					.isError(true)
 					.text(ex.toString())
 					.build();
-				toolresults.add(msg.toString());
+				addChatFragment(ChatFragment.Type.TOOL_RESULT, msg.toString(), null);
 //				messages.add(msg);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
 				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
@@ -441,49 +448,61 @@ public class LlmResultAgent
 	}
 	
 	/**
+	 *  Add a new fragment to the current loop results and cancel the LLM request if the loop is already done.
+	 */
+	protected void addChatFragment(ChatFragment.Type type, String text, StreamingHandle handle)
+	{
+		if(current_loop.isDone())
+		{
+			if(handle!=null)
+			{
+				handle.cancel();
+			}
+		}
+		else
+		{
+			List<ChatFragment>	fragments	= current_loop.getIntermediateResults();
+			if(!fragments.isEmpty())
+			{
+				ChatFragment	last	= fragments.get(fragments.size()-1);
+				
+				// Add line break after changed type, e.g. from thinking to response
+				if(last.type()!=type)
+				{
+					current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n"));
+				}
+				
+		    	// Add line break after each sentence to keep lines reasonably short
+				else if(text.startsWith(" ") && (last.text().endsWith(".")
+		    		|| last.text().endsWith("?") || last.text().endsWith("!")))
+		    	{
+		    		text	= "\n"+text.stripLeading();
+		    	}
+			}
+			current_loop.addIntermediateResult(new ChatFragment(type, text));
+		}
+	}
+
+	/**
 	 *  Helper method to print results to console.
 	 */
-	public static void printResults(IComponentHandle agent)
+	public static void printResults(ITerminableIntermediateFuture<ChatFragment> results)
 	{
-		int[] last = new int[1];
-		agent.subscribeToResults().next(event ->
+		results.next(fragment ->
 		{
-			if(event.type()==Type.ADDED && event.name().equals("response"))
+			if(fragment.type()==ChatFragment.Type.RESPONSE)
 			{
-				if(last[0]!=1)
-				{
-					System.out.println();
-					last[0]=1;
-				}
-				System.out.print(event.value());
+				System.out.print(fragment.text());
 			}
-			else if(event.type()==Type.ADDED && event.name().equals("thinking"))
+			else if(fragment.type()==ChatFragment.Type.THINKING)
 			{
-				if(last[0]!=2)
-				{
-					System.out.println();
-					last[0]=2;
-				}
-				System.out.print("\033[3m"+event.value()+"\033[0m");
+				System.out.print("\033[3m"+fragment.text()+"\033[0m");
 			}
-			else if(event.type()==Type.ADDED && event.name().equals("toolcalls"))
+			else if(fragment.type()==ChatFragment.Type.TOOL_CALL || fragment.type()==ChatFragment.Type.TOOL_RESULT)
 			{
-				if(last[0]!=3)
-				{
-					System.out.println();
-					last[0]=3;
-				}
-				System.out.println("\033[3;1m"+event.value()+"\033[0m");
-			}
-			else if(event.type()==Type.ADDED && event.name().equals("toolresults"))
-			{
-				if(last[0]!=3)
-				{
-					System.out.println();
-					last[0]=3;
-				}
-				System.out.println("\033[3;1m"+event.value()+"\033[0m");
+				System.out.println("\033[3;1m"+fragment.text()+"\033[0m");
 			}
 		}).printOnEx();
+		
 	}
 }

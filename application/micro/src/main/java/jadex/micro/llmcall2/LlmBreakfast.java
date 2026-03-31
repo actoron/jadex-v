@@ -5,11 +5,11 @@ import java.util.List;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.impl.IDaemonComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.IFuture;
+import jadex.future.ITerminableIntermediateFuture;
 import jadex.providedservice.annotation.Service;
 
 public class LlmBreakfast
@@ -82,10 +82,11 @@ public class LlmBreakfast
 
 		StreamingChatModel llm = LlmHelper.createChatModel();
 
-		IComponentHandle agent = IComponentManager.get().create(new LlmResultAgent(llm, prompt)).get();
-		LlmResultAgent.printResults(agent);
-
-		agent.waitForTermination().get();
+		ITerminableIntermediateFuture<ChatFragment>	results	= IComponentManager.get()
+			.runAsync(new LlmChatAgent(llm, prompt));
+		LlmChatAgent.printResults(results);
+			
+		results.get();
 		IComponentManager.get().waitForLastComponentTerminated();
 		System.exit(0);
 	}
