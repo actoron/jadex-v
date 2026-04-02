@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
@@ -21,6 +22,8 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GoogleAiGeminiModelCatalog;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
+import dev.langchain4j.model.mistralai.MistralAiModelCatalog;
+import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel.OllamaStreamingChatModelBuilder;
@@ -33,28 +36,40 @@ public class LlmHelper
 	{
 		OLLAMA_LOCAL("Ollama (local)",
 			(model, think) -> createOllamaChatModel("http://localhost:11434", model, think),
-			() -> fetchOllamaModels("http://localhost:11434")),
+			() -> fetchOllamaModels("http://localhost:11434"),
+			(model) -> fetchOllamaContextSize("http://localhost:11434", model)),
 		OLLAMA_REMOTE("Ollama (remote)", 
 			(model, think) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
-			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL"))),
+			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL")),
+			(model) -> fetchOllamaContextSize(System.getenv("OLLAMA_BASE_URL"), model)),
 		GOOGLE_GEMINI("Google Gemini",
 			(model, think) -> createGoogleGeminiChatModel(model, think),
-			() -> fetchGeminiModels()),
+			() -> fetchGeminiModels(),
+			(model) -> fetchGeminiContextSize(model)),
+		MISTRAL_AI("Mistral AI",
+				(model, think) -> createMistralChatModel(model, think),
+				() -> fetchMistralModels(),
+				(model) -> fetchMistralContextSize(model)),
 		OPEN_ROUTER("Open Router",
 			(model, think) -> createOpenAiChatModel("https://openrouter.ai/api/v1", model, think),
-			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", true)),
+			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", true),
+			(model) -> fetchOpenAiContextSize("https://openrouter.ai/api/v1", model)),
 		OLLAMA_OPENAI("Ollama (local, via OpenAI API)",
-				(model, think) -> createOpenAiChatModel("http://localhost:11434/v1", model, think),
-				() -> fetchOpenAiModels("http://localhost:11434/v1", false));
+			(model, think) -> createOpenAiChatModel("http://localhost:11434/v1", model, think),
+			() -> fetchOpenAiModels("http://localhost:11434/v1", false),
+			(model) -> fetchOpenAiContextSize("http://localhost:11434/v1", model));
 		
 		private final String name;
 		private final BiFunction<String, Boolean, StreamingChatModel> creator;
 		private final Supplier<List<String>> modelfetcher;
-		private Provider(String name, BiFunction<String, Boolean, StreamingChatModel> creator, Supplier<List<String>> modelfetcher)
+		private final Function<String, Integer> contextfetcher;
+		private Provider(String name, BiFunction<String, Boolean, StreamingChatModel> creator,
+			Supplier<List<String>> modelfetcher, Function<String, Integer> contextfetcher)
 		{
 			this.name = name;
 			this.creator = creator;
 			this.modelfetcher = modelfetcher;
+			this.contextfetcher = contextfetcher;
 		}
 		
 		@Override
@@ -75,6 +90,11 @@ public class LlmHelper
 		public List<String> getModels()
 		{
 			return modelfetcher.get().stream().sorted().toList();
+		}
+		
+		public int getContextSize(String model)
+		{
+			return contextfetcher.apply(model);
 		}
 	}
 	
@@ -102,7 +122,6 @@ public class LlmHelper
 //				.modelName("mistral:7b-instruct")
 //				.modelName("qwen3:0.6b")
 //				.modelName("60MPH/astral3-tools:12b")
-//				.modelName("andrewmccall/gemma3-tools:latest")
 //				.modelName("comethrusws/sage-reasoning:8b")
 //				.modelName("cogito:8b")
 //				.modelName("magistral:24b")
@@ -116,7 +135,6 @@ public class LlmHelper
 //				.modelName("granite4:350m")
 //				.modelName("phi4-mini:3.8b")
 //				.modelName("command-r7b:latest")
-//				.modelName("rnj-1:8b")
 //				.modelName("patrickwarren2692/gemma-3-27b-it-abliterated-GGUF:latest")
 //				.modelName("lfm2:24b")
 			));
@@ -126,12 +144,65 @@ public class LlmHelper
 		return createChatModel(null, null, null);
 	}
 	
+	protected static int	fetchMistralContextSize(String model)
+	{
+		MistralAiModelCatalog	catalog	= MistralAiModelCatalog.builder()
+			.apiKey(System.getenv("MISTRAL_API_KEY"))
+			.build();
+		return catalog.listModels().stream()
+			.filter(m -> m.name().equals(model))
+			.findFirst()
+			.map(m -> m.maxInputTokens()!=null ? m.maxInputTokens() : -1)
+			.orElse(-1);
+	}
+
+	protected static List<String>	fetchMistralModels()
+	{
+		MistralAiModelCatalog	catalog	= MistralAiModelCatalog.builder()
+			.apiKey(System.getenv("MISTRAL_API_KEY"))
+			.build();
+		return catalog.listModels().stream().filter(m -> m.type()==null || m.type()==ModelType.CHAT).map(m -> m.name()).sorted().toList();
+	}
+
+	protected static StreamingChatModel createMistralChatModel(String model, Boolean think)
+	{
+		return MistralAiStreamingChatModel.builder()
+			.apiKey(System.getenv("MISTRAL_API_KEY"))
+			.modelName(model)
+			.returnThinking(think!=null? think: true)
+			.sendThinking(think!=null? think: true)
+			.build();
+	}
+
 	protected static List<String>	fetchOllamaModels(String baseurl)
 	{
 		OllamaModels ollamaModels = OllamaModels.builder()
 			.baseUrl(baseurl)
 			.build();
-		return ollamaModels.availableModels().content().stream().map(m -> m.getModel()).toList();
+		return ollamaModels.availableModels().content().stream()
+//			.filter(m ->
+//		{
+////			System.out.println("Ollama model: "+m.getName());
+//			OllamaModelCard	card	= ollamaModels.modelCard(m).content();
+////			System.out.println("  capabilities: "+card.getCapabilities());
+//			return card.getCapabilities().contains("completion") && card.getCapabilities().contains("tools");
+//		})
+			.map(m -> m.getName()).sorted().toList();
+	}
+	
+	protected static int fetchOllamaContextSize(String baseurl, String model)
+	{
+		OllamaModels ollamaModels = OllamaModels.builder()
+			.baseUrl(baseurl)
+			.build();
+		return ollamaModels.runningModels().content().stream()
+			.filter(m -> m.getName().equals(model))
+			.findFirst().map(m ->
+		{
+			System.out.println("Ollama model: "+m.getName());
+			return -1;
+		})
+			.orElse(-1);
 	}
 
 	public static StreamingChatModel createChatModel(Provider provider, String model, Boolean think)
@@ -172,6 +243,17 @@ public class LlmHelper
 			.sorted().toList();
 	}
 	
+	protected static int fetchOpenAiContextSize(String baseurl, String model)
+	{
+		ModelCatalog	cat	= OpenAiModelCatalog.builder()
+			.baseUrl(baseurl)
+			.apiKey(System.getenv("OPENAI_API_KEY"))
+			.build();
+		return cat.listModels().stream()
+			.filter(m -> m.name().equals(model))
+			.findFirst().map(m -> m.maxInputTokens()!=null ? m.maxInputTokens() : -1).orElse(-1);
+	}
+	
 	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, Boolean think)
 	{
 		OllamaStreamingChatModelBuilder	llm	= OllamaStreamingChatModel.builder()
@@ -192,6 +274,15 @@ public class LlmHelper
 			.apiKey(System.getenv("GOOGLE_API_KEY"))
 			.build();
 		return cat.listModels().stream().filter(m -> m.type()==ModelType.CHAT).map(m -> m.name()).sorted().toList();
+	}
+	
+	protected static int fetchGeminiContextSize(String model)
+	{
+		ModelCatalog cat = GoogleAiGeminiModelCatalog.builder()
+			.apiKey(System.getenv("GOOGLE_API_KEY"))
+			.build();
+		return cat.listModels().stream().filter(m -> m.name().equals(model)).findFirst()
+			.map(m -> m.maxInputTokens()!=null ? m.maxInputTokens() : -1).orElse(-1);
 	}
 	
 	protected static StreamingChatModel	createGoogleGeminiChatModel(String model, Boolean think)

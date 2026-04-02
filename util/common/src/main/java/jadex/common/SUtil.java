@@ -6348,4 +6348,13 @@ public class SUtil
 			System.setErr(err);
 		}
 	}
+
+	/**
+	 *  Convert a CamelCase name to snake_case.
+	 */
+	public static String toSnakeCase(String name)
+	{
+		name = name.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
+		return name;
+	}
 }

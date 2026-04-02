@@ -208,7 +208,10 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 					{
 						ctx.streamingHandle().cancel();
 					}
-				}).printOnEx();
+				}).catchEx(es -> 
+				{
+					ctx.streamingHandle().cancel();
+				});
 			}
 			
 			@Override
@@ -218,7 +221,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				{
 					addChatFragment(ChatFragment.Type.TOOL_CALL, completeToolCall.toolExecutionRequest().toString(), null);
 					callfutures.add(callTool(agent, completeToolCall));
-				}).printOnEx();
+				});
 			}
 			
 		    @Override
@@ -230,7 +233,10 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			    	String	text	= partialResponse.text();
 					StreamingHandle handle = ctx.streamingHandle();
 					addChatFragment(type, text, handle);
-			    }).printOnEx();
+			    }).catchEx(es -> 
+				{
+					ctx.streamingHandle().cancel();
+				});
 		    }
 
 		    @Override
@@ -242,12 +248,16 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			    	String	text	= partialThinking.text();
 					StreamingHandle handle = ctx.streamingHandle();
 					addChatFragment(type, text, handle);
-			    }).printOnEx();
+			    }).catchEx(es -> 
+				{
+					ctx.streamingHandle().cancel();
+				});
 		    }
 		    
 		    @Override
 		    public void onCompleteResponse(ChatResponse completeResponse)
 		    {
+//		    	System.out.println("Input/output tokens: " + completeResponse.tokenUsage());
 	    		agent.getComponentHandle().scheduleStep(() ->
 	    		{
 //	    			messages.add(completeResponse.aiMessage());
@@ -289,7 +299,10 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		    @Override
 		    public void onError(Throwable error)
 		    {
-		    	current_loop.setException(SUtil.convertToRuntimeException(error));
+		    	agent.getComponentHandle().scheduleStep(() ->
+	    		{
+	    			current_loop.setException(SUtil.convertToRuntimeException(error));
+	    		});
 		    }
 		});
 	}
@@ -318,7 +331,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 					// Convert name to snake case if not explicitly set in annotation, as this is more common for tools (e.g. python function calls)
 					if(m.getAnnotation(Tool.class).name().isEmpty())
 					{
-						name = name.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
+						name = SUtil.toSnakeCase(name);
 					}
 					// append number to ensure unique name.
 					while(current_tools.containsKey(name))
@@ -355,7 +368,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		}
 		return tool_specs;
 	}
-	
+
 	/**
 	 *  Perform a single tool call as requested by the LLM.
 	 *  @return Future that indicates when the tool call is done
@@ -503,6 +516,16 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				System.out.println("\033[3;1m"+fragment.text()+"\033[0m");
 			}
 		}).printOnEx();
-		
+	}
+	
+	/**
+	 *  Helper method to get the complete response as unified text.
+	 *  Blocks until the response is complete, i.e. the future is done.
+	 */
+	public static String	getResponse(ITerminableIntermediateFuture<ChatFragment> results)
+	{
+		StringBuilder	sb	= new StringBuilder();
+		results.get().stream().filter(f -> f.type()==ChatFragment.Type.RESPONSE).forEach(f -> sb.append(f.text()));
+		return sb.toString();
 	}
 }

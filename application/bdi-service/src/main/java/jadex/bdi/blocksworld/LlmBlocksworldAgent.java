@@ -290,6 +290,9 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 				prompt.setEnabled(false);
 				send.setEnabled(false);
 				
+				System.out.println("Context size: "+
+					((Provider)provider.getSelectedItem()).getContextSize((String) model.getSelectedItem()));
+				
 				IIntermediateFuture<ChatFragment> chat	= llmagentpojo[0].chat((String)prompt.getSelectedItem(),
 					sendimage.isSelected() ? new Image[]{png} : new Image[0]);
 				

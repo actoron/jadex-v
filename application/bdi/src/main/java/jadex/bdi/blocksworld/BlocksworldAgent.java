@@ -1,7 +1,6 @@
 package jadex.bdi.blocksworld;
 
 import java.awt.Color;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -18,6 +17,7 @@ import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 
 /**
@@ -238,6 +238,12 @@ public class BlocksworldAgent
 //			quiet = true;
 //			agent.getFeature(IBDIAgentFeature.class).adoptPlan(new BenchmarkPlan(10, 500));
 //		}
+	}
+	
+	@OnEnd
+	public void agentTerminated()
+	{
+		gui.get().dispose();
 	}
 	
 	/**
