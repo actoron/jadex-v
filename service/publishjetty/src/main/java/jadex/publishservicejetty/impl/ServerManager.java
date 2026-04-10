@@ -1,12 +1,16 @@
 package jadex.publishservicejetty.impl;
 
 import java.io.IOException;
+import java.lang.System.Logger.Level;
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,7 +24,11 @@ import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
+import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer;
 
 import jadex.common.SUtil;
 import jadex.common.Tuple2;
@@ -29,13 +37,17 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.publishservice.IRequestManager;
+import jadex.publishservice.PublishType;
 import jadex.publishservice.IRequestManager.PublishContext;
 import jadex.publishservice.impl.MappingEvaluator;
 import jadex.publishservice.impl.PublishInfo;
 import jadex.publishservice.impl.RequestManager;
+import jadex.publishservice.impl.RequestManagerFactory;
 import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
 import jadex.publishservice.impl.v2.http.HttpRequest;
 import jadex.publishservice.impl.v2.http.HttpResponse;
+import jadex.publishservice.publish.IRequestHandler;
 import jadex.publishservice.publish.PathManager;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
@@ -52,9 +64,12 @@ public class ServerManager
 
     /** The servers per port. */
     protected Map<Integer, Server> portservers;
+
+    /** The ws service registries per server aka port. */
+    protected Map<Integer, WsServiceRegistry> registries = new HashMap<>();
     
     /** Infos for unpublishing. */
-    protected Map<IServiceIdentifier, Tuple2<Server, ContextHandler>> unpublishinfos = new HashMap<IServiceIdentifier, Tuple2<Server,ContextHandler>>();
+    protected Map<IServiceIdentifier, Runnable> unpublishinfos = new HashMap<>();
 	
     protected static ServerManager instance;
     
@@ -62,10 +77,10 @@ public class ServerManager
     {
     	if(instance==null)
     		instance = new ServerManager();
-    	return instance;
+        return instance;
     }
     
-	/**
+    /**
      *  Publish a service.
      *  @param cl The classloader.
      *  @param service The original service.
@@ -73,6 +88,34 @@ public class ServerManager
      */
     //public synchronized IFuture<Void> publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
     public synchronized void publishService(final IService service, final PublishInfo info, IComponent component)
+    {
+        if(PublishType.REST.getId().equals(info.getPublishType()))
+        {
+            publishRestService(service, info, component);
+        }
+        else if(PublishType.WS.getId().equals(info.getPublishType()))
+        {
+            publishWsService(service, info, component);
+        }
+        else if(PublishType.SSE.getId().equals(info.getPublishType()))
+        {
+            throw new RuntimeException("todo!");
+            //publishSseService(service, info, component);
+        }
+        else
+        {
+            throw new RuntimeException("Unknown publish type: "+info.getPublishType());
+        }
+    }
+
+    /**
+     *  Publish a service.
+     *  @param cl The classloader.
+     *  @param service The original service.
+     *  @param pid The publish id (e.g. url or name).
+     */
+    //public synchronized IFuture<Void> publishService(final IServiceIdentifier serviceid, final PublishInfo info, IComponent component)
+    public synchronized void publishRestService(final IService service, final PublishInfo info, IComponent component)
     {
     	//Future<Void> ret = new Future<>();
     	
@@ -83,7 +126,7 @@ public class ServerManager
 	    	//final IService service = (IService) component.getComponentFeature(IRequiredServicesFeature.class).searchService(new ServiceQuery<>( serviceid)).get();
 	    	
 	        final URI uri = new URI(getCleanPublishId(info.getPublishId(), component));
-	        Server server = (Server)getHttpServer(uri, info).get();
+	        Server server = (Server)getHttpServer(uri).get();
 	        System.out.println("Adding http handler to server (jetty): "+uri.getPath());
 	
 	        //ContextHandlerCollection collhandler = (ContextHandlerCollection)server.getHandler();
@@ -104,7 +147,10 @@ public class ServerManager
 	            	//handleRequest(service, pm, request, response, new Object[]{target, baseRequest});
                     try
                     {
-                        RequestManager.getInstance().handleRequest(new HttpRequest(request), new HttpResponse(response), new PublishContext(info, service, pm));// new Object[]{target, baseRequest});
+                        //RequestManager.getInstance().handleRequest(new HttpRequest(request), new HttpResponse(response), new PublishContext(info, service, pm));// new Object[]{target, baseRequest});
+                        IRequestManager man = RequestManagerFactory.getInstance();
+                        //System.out.println("Request manager: "+man);
+                        man.handleRequest(new HttpRequest(request), new HttpResponse(response), new PublishContext(info, service, pm));// new Object[]{target, baseRequest});
                     }
                     catch(Exception e)
                     {
@@ -118,9 +164,10 @@ public class ServerManager
 	        };
 	        ch.setContextPath(uri.getPath());
 	        collhandler.prependHandler(ch);
-	        addUnpublishInfo(service.getServiceId(), server, ch);
-	        //unpublishinfos.put(serviceid, new Tuple2<Server,ContextHandler>(server, ch));
-	        ch.start(); // must be started explicitly :-(((
+         
+            addUnpublishInfo(service.getServiceId(), () -> ((ContextHandlerCollection)server.getHandler()).removeHandler(ch));
+
+	        ch.start(); // must be started explicitly :-((( PublishInfo info
 	        System.out.println("added handler: "+uri.getPath());
 	
 	        addSidServer(service.getServiceId(), server);
@@ -134,182 +181,154 @@ public class ServerManager
 		//return ret;
     }
 
-    /**
-     *  Get or start an api to the http server.
+	/**
+     *  Publish a service.e
+     *  @param cl The classloader.
+     *  @param service The original service.
+     *  @param pid The publish id (e.g. url or name).
      */
-    public synchronized IFuture<Object> getHttpServer(URI uri, PublishInfo info)
+    public synchronized void publishWsService(final IService service, final PublishInfo info, IComponent component)
     {
-    	Future<Object> ret = new Future<Object>();
-    	
-    	//System.out.println("in: "+Thread.currentThread()+" "+this.hashCode());
+		try
+	    {
+	        final URI uri = new URI(getCleanPublishId(info.getPublishId(), component));
+
+            if (uri.getPath().length() > 1) 
+                System.getLogger(ServerManager.class.getName()).log(Level.WARNING, "Path in publishid: "+uri+" is ignored for WS, using fixed /ws endpoint");
+                
+            // fetch server to ensure that ws endpoint is created
+            Server server = (Server) getHttpServer(uri).get(); 
+
+            WsServiceRegistry registry = registries.get(uri.getPort());
+            registry.add(info.getPublishName(), service);
+            registry.addServiceInfo(service.getServiceId(), info);
+
+            addUnpublishInfo(service.getServiceId(), () -> 
+            {
+                registry.remove(service.getServiceId());
+                registry.removeServiceInfo(service.getServiceId());
+            });
+
+	        System.out.println("Adding service to ws registry (jetty): "+uri.getPath());
+	    }
+	    catch(Exception e)
+	    {
+	    	SUtil.rethrowAsUnchecked(e);
+	    }
+    }
+
+    public synchronized IFuture<Object> getHttpServer(URI uri)//, PublishInfo info)
+    {
+        Future<Object> ret = new Future<>();
         Server server = null;
 
         try
         {
-//	        URI baseuri = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), null, null, null);
             server = getServer(uri.getPort());
 
-            if(server==null)
+            if (server == null)
             {
-                System.out.println("Starting new server: "+uri.getPort());
-                server = new Server(uri.getPort());
-                
-                // Activate forward module
-                // https://stackoverflow.com/questions/26333846/configuring-embedded-jetty-9-for-x-forwarded-proto-with-spring-boot
-                HttpConfiguration httpConfig = new HttpConfiguration();
-                // Add support for X-Forwarded headers
-                httpConfig.addCustomizer(new org.eclipse.jetty.server.ForwardedRequestCustomizer());
-                // Create the http connector
-                HttpConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
-                ServerConnector connector = new ServerConnector(server, connectionFactory);
-                // Make sure you set the port on the connector, the port in the Server constructor is overridden by the new connector
+                System.out.println("Starting new server: " + uri.getPort());
+
+                // WS Registry 
+                WsServiceRegistry registry = new WsServiceRegistry();
+                registries.put(uri.getPort(), registry);
+
+                //server = new Server();
+
+                QueuedThreadPool pool = new QueuedThreadPool(50, 2, 60000);
+                pool.setDaemon(true);
+                server = new Server(pool);
+                ScheduledExecutorScheduler scheduler = new ScheduledExecutorScheduler("Session-Scheduler-Daemon", true);
+                scheduler.start();
+                server.addBean(scheduler);
+
+                // Connector einrichten
+                HttpConfiguration httpconfig = new HttpConfiguration();
+                httpconfig.addCustomizer(new org.eclipse.jetty.server.ForwardedRequestCustomizer());
+                ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(httpconfig));
                 connector.setPort(uri.getPort());
-                // Add the connector to the server
                 server.setConnectors(new ServerConnector[]{connector});
-                
-                // todo: http2, browser only support with tls?!
-                //ServerConnector connector = new ServerConnector(server, ssl, alpn, http2, http1);
-                //connector.setPort(webProperties.getPort());
-                //server.addConnector(connector);
-                
-                //server.dumpStdErr();
 
-                // https://stackoverflow.com/questions/62199102/sessionhandler-becomes-null-in-jetty-v9-4-5
-                HandlerCollection collhandler = new HandlerCollection(new org.eclipse.jetty.server.session.SessionHandler());
-                
-                //ContextHandlerCollection collhandler = new ContextHandlerCollection();
+                // ContextHandlerCollection for WS + REST + Default
+                ContextHandlerCollection contexts = new ContextHandlerCollection();
+                server.setHandler(contexts);
 
-/*                WebSocketHandler wsh = new WebSocketHandler()
+                // WebSocket Context MUST BE FIRST
+                ServletContextHandler wscontext = new ServletContextHandler(ServletContextHandler.SESSIONS);
+                wscontext.setContextPath("/ws");
+                JettyWebSocketServletContainerInitializer.configure(wscontext, (servletContext, wscontainer) -> 
                 {
-                	@Override
-                	public void configure(WebSocketServletFactory factory)
-                	{
-                		factory.register(RestWebSocket.class);
-                	}
-                };
-                ContextHandler context = new ContextHandler();
-                //context.setContextPath("/wswebapi");
-                context.setContextPath("/ws");
-                context.setHandler(wsh);
-                //server.addHandler(context);
-                collhandler.addHandler(wsh);
-                */
-                     
-                // todo: websocket is still in ts :-(
-                /*textPath("/wswebapi");
-                ch.setAllowNullPathInfo(true); // disable redirect from /ws to /ws/
-                final JettyWebSocketCreator wsc = new JettyWebSocketCreator() 
+                    wscontainer.setMaxTextMessageSize(1024 * 1024);
+                    wscontainer.setIdleTimeout(Duration.ZERO);
+                    wscontainer.addMapping("/*", (req, resp) -> new WebSocketAdapter(registries.get(uri.getPort())));
+                });
+                contexts.addHandler(wscontext);
+                wscontext.setAllowNullPathInfo(true);
+                wscontext.start();
+
+                // REST / HTTP Context
+                ContextHandler restcontext = new ContextHandler();
+                restcontext.setContextPath("/");
+                restcontext.setHandler(new org.eclipse.jetty.server.handler.AbstractHandler()
                 {
-                	public Object createWebSocket(JettyServerUpgradeRequest request, JettyServerUpgradeResponse response) 
-                	{
-                		return new JettyWebsocketServer(getComponent());
-                	}
-                };
-                Handler wsh = new WebSocketUpgradeHandler() 
+                    @Override
+                    public void handle(String target, Request baserequest, HttpServletRequest request, HttpServletResponse response)
+                        throws IOException, ServletException
+                    {
+                        if (baserequest.isHandled()) return;
+
+                        try
+                        {
+                            IRequestManager man = RequestManagerFactory.getInstance();
+                            man.handleRequest(new HttpRequest(request), new HttpResponse(response),
+                                new PublishContext(null, null, null));
+                            baserequest.setHandled(true);
+                        }
+                        catch(Exception e)
+                        {
+                            throw new ServletException(e);
+                        }
+                    }
+                });
+                contexts.addHandler(restcontext);
+                restcontext.start();
+
+                DefaultHandler dh = new DefaultHandler()
                 {
-                	//public void configure(WebSocketServletFactory factory) 
-                	public void configure(JettyWebSocketServletFactory factory) 
-                	{
-                		factory.setCreator(wsc);
-                		//factory.register(RestWebSocket.class);
-                	}
+                    @Override
+                    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+                            throws IOException, ServletException
+                    {
+                        if (baseRequest.isHandled()) return;
+                        System.out.println("Default ignoring request: " + target);
+                    }
                 };
-                ch.setHandler(wsh);
-                collhandler.addHandler(ch);*/
-                
-                // add session support
-                /*ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-                context.setContextPath("/");
-                context.setResourceBase(System.getProperty("java.io.tmpdir"));
-                //server.setHandler(context);
-               
-                SessionHandler sessions = context.getSessionHandler();
-                SessionCache cache = new DefaultSessionCache(sessions);
-                cache.setSessionDataStore(new NullSessionDataStore());
-                sessions.setSessionCache(cache);
-                collhandler.addHandler(new DefaultHandler());
-                collhandler.addHandler(context);*/
-                
-                server.setHandler(collhandler);
-                
+                contexts.addHandler(dh);
+                dh.start();
+
                 final Server fserver = server;
                 server.addEventListener(new LifeCycle.Listener()
                 {
-                	public void lifeCycleStarted(LifeCycle event)
+                    public void lifeCycleStarted(LifeCycle event)
                     {
-                		ret.setResult(fserver);
+                        ret.setResult(fserver);
                     }
                 });
 
                 server.start();
-                //server.join();
-                
-                DefaultHandler dh = new DefaultHandler()
-                {
-                    @Override
-                    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) 
-                        throws IOException, ServletException 
-                    {
-                    	if(baseRequest.isHandled())
-                    		return;
-                    	
-                    	//System.out.println("handler is: "+request.getRequestURI());
-
-                    	if(target.indexOf("jadex.js")!=-1 || target.endsWith("events") || target.endsWith("ssealive"))
-                    	{
-                    		//RequestManager.getInstance().handleRequest(null, null, request, response, new Object[]{target, baseRequest});
-
-                            try
-                            {
-                                RequestManager.getInstance().handleRequest(new HttpRequest(request), new HttpResponse(response), new PublishContext(info, null, null));// new Object[]{target, baseRequest});
-                            }
-                            catch(Exception e)
-                            {
-                                throw new ServletException(e);
-                            }
-
-                    		//handleRequest(null, null, request, response, new Object[]{target, baseRequest});
-                    		baseRequest.setHandled(true);
-                    	}
-                    	else
-                    	{
-                    		System.out.println("Default ignoring request: "+target);
-                    	}
-                    }
-                };
-                
-                /*ContextHandler ch = new ContextHandler()
-                {
-                    public void doHandle(String target, Request baseRequest, final HttpServletRequest request, final HttpServletResponse response)
-                        throws IOException, ServletException
-                    {
-                    	//System.out.println("handler is: "+request.getRequestURI());
-
-                    	RequestManager.getInstance().handleRequest(null, null, request, response, new Object[]{target, baseRequest});
-                    	//handleRequest(null, null, request, response, new Object[]{target, baseRequest});
-                    	
-                        baseRequest.setHandled(true);
-                    }
-                };
-                ch.setContextPath("/webapi");*/
-                
-                collhandler.addHandler(dh);
-                dh.start();
-                
                 addPortServer(uri.getPort(), server);
             }
             else
             {
-            	ret.setResult(server);
+                ret.setResult(server);
             }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             ret.setException(e);
         }
 
-        //System.out.println("out: "+Thread.currentThread()+" "+this.hashCode());
-        
         return ret;
     }
     
@@ -319,11 +338,37 @@ public class ServerManager
      */
     public synchronized void unpublishService(IServiceIdentifier sid)
     {
-    	Tuple2<Server,ContextHandler> unpublish = removeUnpublishInfo(sid); //unpublishinfos.remove(sid);
-    	if(unpublish != null)
-    		((ContextHandlerCollection)unpublish.getFirstEntity().getHandler()).removeHandler(unpublish.getSecondEntity());
-//	        throw new UnsupportedOperationException();
+        Runnable unpublish = removeUnpublishInfo(sid);
+
+        if(unpublish!=null)
+        {
+            System.out.println("Unpublishing: "+sid);
+            unpublish.run();
+        }
     }
+
+    /**
+     *  Unpublish a service.
+     *  @param sid The service identifier.
+     * /
+    public synchronized void unpublishRestService(Server server, ContextHandler ch)
+    {
+    	//Tuple2<Server,ContextHandler> unpublish = removeUnpublishInfo(sid); //unpublishinfos.remove(sid);
+    	//if(unpublish != null)
+        ((ContextHandlerCollection)server.getHandler()).removeHandler(ch);
+    	//((ContextHandlerCollection)unpublish.getFirstEntity().getHandler()).removeHandler(unpublish.getSecondEntity());
+//	        throw new UnsupportedOperationException();
+    }*/
+
+    /**
+     *  Unpublish a service.
+     *  @param sid The service identifier.
+     * /
+    public synchronized void unpublishWsService(IServiceIdentifier sid, int port)
+    {
+    	WsServiceRegistry registry = registries.get(port));
+        registry.remove(sid);
+    }*/
 
     /**
      *  Publish a static page (without ressources).
@@ -335,7 +380,7 @@ public class ServerManager
     		final URI uri = new URI(getCleanPublishId(pid, component));
         	//final IService service = (IService) component.getComponentFeature(IRequiredServicesFeature.class).searchService(new ServiceQuery<>( serviceid)).get();
         	
-            Server server = (Server)getHttpServer(uri, null).get();
+            Server server = (Server)getHttpServer(uri).get();
             System.out.println("Adding http handler to server (jetty): "+uri.getPath());
 
             HandlerCollection collhandler = (HandlerCollection)server.getHandler();
@@ -384,7 +429,7 @@ public class ServerManager
 						final URI uri = new URI(getCleanPublishId(pid, component));
 			        	//final IService service = (IService) component.getComponentFeature(IRequiredServicesFeature.class).searchService(new ServiceQuery<>( serviceid)).get();
 			        	
-			            Server server = (Server)getHttpServer(uri, null).get();
+			            Server server = (Server)getHttpServer(uri).get();
 			            System.out.println("Adding http handler to server (jetty): "+uri.getPath()+" rootpath: "+rootpath);
 
 			            HandlerCollection collhandler = (HandlerCollection)server.getHandler();
@@ -524,8 +569,19 @@ public class ServerManager
              sidservers = new HashMap<IServiceIdentifier, Server>();
          sidservers.put(sid, server);
 	}
+
+    public synchronized void addUnpublishInfo(IServiceIdentifier serviceid, Runnable unpublish)
+	{
+		unpublishinfos.put(serviceid, unpublish);
+	}
 	
-	public synchronized void addUnpublishInfo(IServiceIdentifier serviceid, Server server, ContextHandler ch)
+	public synchronized Runnable removeUnpublishInfo(IServiceIdentifier serviceid)
+	{
+		Runnable unpublish = unpublishinfos.remove(serviceid);
+		return unpublish;
+	}
+	
+	/*public synchronized void addUnpublishInfo(IServiceIdentifier serviceid, Server server, ContextHandler ch)
 	{
 		unpublishinfos.put(serviceid, new Tuple2<Server,ContextHandler>(server, ch));
 	}
@@ -534,5 +590,5 @@ public class ServerManager
 	{
 		Tuple2<Server,ContextHandler> unpublish = unpublishinfos.remove(serviceid);
 		return unpublish;
-	}
+	}*/
 }

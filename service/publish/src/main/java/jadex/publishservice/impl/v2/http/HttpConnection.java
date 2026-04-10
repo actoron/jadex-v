@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,6 +31,7 @@ import jadex.publishservice.publish.json.PublishJsonSerializer;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -261,9 +263,6 @@ public class HttpConnection extends Connection
 
         public void setContentType(String contentType) 
         {
-            if(!contentType.contains("charset"))
-                contentType = contentType + "; charset=utf-8";
-
             this.contentType = contentType;
         }
 
@@ -309,13 +308,14 @@ public class HttpConnection extends Connection
     @Override
     public boolean send(Message message) throws Exception
     {
+        System.out.println("Sending http response: "+message);
+
         boolean ret = false;
         SendData details = getSendDetails(message);
 
         try
         {
-            HttpServletResponse resp =
-                (HttpServletResponse) getAsyncContext().getResponse();
+            HttpServletResponse resp = (HttpServletResponse) getAsyncContext().getResponse();
 
             writeResponse(resp, details);
             ret = true;
@@ -348,8 +348,15 @@ public class HttpConnection extends Connection
         }
 
         // Content-Type
+        String ct = details.getContentType();
         if(details.getContentType() != null)
-            resp.setContentType(details.getContentType());
+        {
+            // Hack?
+            if(!ct.contains("charset"))
+                ct = ct + "; charset=utf-8";
+
+            resp.setContentType(ct);
+        }
 
         // Write payload
         if(details.getPayload() != null)
@@ -379,6 +386,9 @@ public class HttpConnection extends Connection
 
     protected SendData getSendDetails(Message message) throws Exception
     {
+        if (message.getResult().getException() != null || message.isError())
+            return handleException(message);
+
         SendData details = new SendData();
 
         Request req = message.getRequest();
@@ -499,6 +509,10 @@ public class HttpConnection extends Connection
                         Object input = payload instanceof Response ? ((Response)payload).getEntity() : payload;
                         ret = convs.iterator().next().convertObject(input, null);
                     }
+                    else
+                    {
+                        details.setPayload(payload);
+                    }
 
                     details.setPayload(ret);
                 }
@@ -517,6 +531,53 @@ public class HttpConnection extends Connection
                 }
             }  
         }
+
+        return details;
+    }
+
+    protected SendData handleException(Message msg)
+    {
+        SendData details = new SendData();
+
+        Exception ex = msg.getResult().getException();
+
+        //Throwable t = ex instanceof Throwable ? (Throwable) ex : new RuntimeException(String.valueOf(ex));
+
+        int status = 500;
+        String message = "Internal Server Error";
+
+        if (ex instanceof IllegalArgumentException)
+        {
+            status = 400;
+            message = ex.getMessage();
+        }
+        else if (ex instanceof SecurityException)
+        {
+            status = 403;
+            message = "Forbidden";
+        }
+        else if (ex instanceof NoSuchElementException)
+        {
+            status = 404;
+            message = "Not Found";
+        }
+        // Optional: eigene Exceptions
+        else if (ex instanceof WebApplicationException)
+        {
+            status = ((WebApplicationException)ex).getResponse().getStatus();
+            message = ex.getMessage();
+        }
+
+        details.setStatus(status);
+        details.setContentType(MediaType.APPLICATION_JSON);
+
+        String json = String.format(
+            "{\"error\":\"%s\",\"type\":\"%s\"}",
+            message,
+            ex.getClass().getSimpleName()
+        );
+
+        details.setPayload(json);
 
         return details;
     }

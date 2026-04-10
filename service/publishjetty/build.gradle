@@ -38,6 +38,7 @@ dependencies
 	
 	api 'org.eclipse.jetty:jetty-server:11.0.26'
 	api 'org.eclipse.jetty.websocket:websocket-jetty-server:11.0.26'
+    api 'org.glassfish.tyrus:tyrus-client:2.2.2'
 	
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     implementation 'com.fasterxml.jackson.core:jackson-core:2.15.2'

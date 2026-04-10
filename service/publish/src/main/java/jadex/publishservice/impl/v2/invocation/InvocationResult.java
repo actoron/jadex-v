@@ -41,9 +41,10 @@ public class InvocationResult
         return payload; 
     }
 
-    public void setPayload(Object payload) 
+    public InvocationResult setPayload(Object payload) 
     {
         this.payload = payload;
+        return this;
     }
 
     public Exception getException()
@@ -51,9 +52,10 @@ public class InvocationResult
         return exception;
     }
 
-    public void setException(Exception exception) 
+    public InvocationResult setException(Exception exception) 
     {
         this.exception = exception;
+        return this;
     }
     
     public InvocationResult addMetaInfo(String key, Object value)
@@ -87,5 +89,11 @@ public class InvocationResult
     public Integer getMax() 
     {
         return max;
+    }
+
+    @Override
+    public String toString() 
+    {
+        return "InvocationResult(" + "payload " + payload + ", exception " + exception+")";
     }
 }

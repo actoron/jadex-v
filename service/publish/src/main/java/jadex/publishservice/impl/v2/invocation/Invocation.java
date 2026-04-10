@@ -5,6 +5,7 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.publishservice.IRequestManager.PublishContext;
 import jadex.publishservice.impl.v2.Request;
+import jadex.publishservice.impl.v2.Session;
 import jadex.publishservice.impl.v2.SessionManager;
 
 public class Invocation 
@@ -29,14 +30,18 @@ public class Invocation
         this.res = res;
     }
 
-    public ISubscriptionIntermediateFuture<InvocationResult> invoke(SessionManager sesman)
+    public ISubscriptionIntermediateFuture<InvocationResult> invoke(Session sesman)
     {
         SubscriptionIntermediateFuture<InvocationResult> ret = new SubscriptionIntermediateFuture<>();
 
-        if(res!=null)
+        if(res!=null && res.getException()!=null)
         {
             ret.addIntermediateResult(res);
             ret.setFinished();
+        }
+        else if(res!=null)
+        {
+            ret.setException(res.getException());
         }
         else
         {

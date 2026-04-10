@@ -545,6 +545,43 @@ public class JsonMapper
 		return ret;
 	}
 
+	public static String getString(JsonObject obj, String key, boolean required) 
+    {
+        JsonValue val = null;
+
+        for (String k : obj.names()) 
+        {
+            if (k.equalsIgnoreCase(key)) 
+            {
+                val = obj.get(k);
+                break;
+            }
+        }
+
+        if (val == null || val.isNull()) 
+        {
+            if (required) 
+                throw new RuntimeException("Missing field: " + key);
+            return null;
+        }
+
+        return val.asString();
+    }
+
+    /*public static String getString(JsonObject obj, String key, boolean required)
+    {
+        JsonValue val = obj.get(key);
+
+        if(val == null || val.isNull())
+        {
+            if(required)
+                throw new RuntimeException("Missing field: " + key);
+            return null;
+        }
+
+        return val.asString();
+    }*/
+
     protected static ClassLoader getClassLoader()
 	{
 		return ComponentManager.get().getClassLoader();

@@ -45,14 +45,14 @@ public class FutureFunctionality
 	protected Future<?> future;
 	
 	/**
-	 * 
+	 *  Create a new future functionality.
 	 */
 	public FutureFunctionality()
 	{
 	}
 	
 	/**
-	 * 
+	 *  Create a new future functionality.
 	 */
 	public FutureFunctionality(Logger logger)
 	{
@@ -60,14 +60,12 @@ public class FutureFunctionality
 	}
 	
 	/**
-	 * 
+	 *  Create a new future functionality.
 	 */
 	public FutureFunctionality(IResultCommand<Logger, Void> loggerfetcher)
 	{
 		this.loggerfetcher = loggerfetcher;
 	}
-	
-	
 	
 	public Future<?> getFuture() 
 	{

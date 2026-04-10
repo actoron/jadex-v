@@ -18,7 +18,7 @@ import jadex.publishservice.publish.annotation.Publish;
 //@RequiredServices({
 //	@RequiredService(name="generateservice", type=IGenerateService.class),
 //})
-@Publish(publishid="http://localhost:${port}/${app}/mandelbrotdisplay", publishtarget = IDisplayService.class)
+@Publish(publishid="http://localhost:${port}/${app}/mandelbrotdisplay", publishinterface = IDisplayService.class)
 public class DisplayWebAgent
 {
 	//-------- attributes --------

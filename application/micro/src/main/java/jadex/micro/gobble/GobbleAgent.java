@@ -16,7 +16,7 @@ import jadex.micro.gobble.Board.Move;
 import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
 
-@Publish(publishid="http://localhost:8081/${cid}/gobbleapi", publishtarget = IGobbleGuiService.class)
+@Publish(publishid="http://localhost:8081/${cid}/gobbleapi", publishinterface = IGobbleGuiService.class)
 public class GobbleAgent implements IGobbleGuiService
 {
 	@Inject
@@ -155,8 +155,6 @@ public class GobbleAgent implements IGobbleGuiService
 				}
 			}
 		}
-		
-		
 		
 		return moves;
 	}

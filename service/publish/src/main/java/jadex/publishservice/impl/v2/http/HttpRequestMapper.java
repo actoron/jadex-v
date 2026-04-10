@@ -30,7 +30,6 @@ import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.traverser.ITraverseProcessor;
 import jadex.core.impl.ComponentManager;
-import jadex.providedservice.IService;
 import jadex.publishservice.IRequestManager.PublishContext;
 import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
 import jadex.publishservice.impl.v2.JsonMapper;
@@ -147,7 +146,7 @@ public class HttpRequestMapper implements IRequestMapper
 
             if(mis.size()==0)
             {
-                Exception e = new RuntimeException("HTTP method "+request.getMethod()+" not allowed");
+                Exception e = new IllegalArgumentException("HTTP method "+request.getMethod()+" not allowed");
                 //writeResponse(ri.setStatus(Response.Status.BAD_REQUEST.getStatusCode()).setFinished(true).setException(e));
                 ret = new Invocation(req, context, new InvocationResult(e));
             }
@@ -178,7 +177,7 @@ public class HttpRequestMapper implements IRequestMapper
             }
             else
             {
-                ret = new Invocation(req, context, new InvocationResult(new RuntimeException("No service found for: "+methodname)));
+                ret = new Invocation(req, context, new InvocationResult(new IllegalArgumentException("No service found for: "+methodname)));
                 System.out.println("No service found for: "+methodname);
             }
         }
