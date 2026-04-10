@@ -1,6 +1,9 @@
 package jadex.future;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  *  The subscription intermediate future does not save the results but
@@ -29,5 +32,40 @@ public interface ISubscriptionIntermediateFuture<E> extends ITerminableIntermedi
      *  2) Also <i>blocking</i> access from same thread: All results since the first blocking access
      *  	that have not yet been consumed by getNextIntermediateResult().
      */
-	public Collection<E> getIntermediateResults();
+	public List<E> getIntermediateResults();
+	
+	@Override
+	default IFuture<Collection<E>> then(Consumer<? super Collection<E>> function)
+	{
+		// then makes no sense as results are not stored and most futures will never complete.
+		throw new UnsupportedOperationException("then() is not supported for subscription futures.");
+	}
+	
+	@Override
+	default <T> IFuture<T> thenApply(Function<? super Collection<E>, ? extends T> function)
+	{
+		// then makes no sense as results are not stored and most futures will never complete.
+		throw new UnsupportedOperationException("then() is not supported for subscription futures.");
+	}
+	
+	@Override
+	default <T> IFuture<T> thenApply(Function<? super Collection<E>, ? extends T> function, Class<?> futuretype)
+	{
+		// then makes no sense as results are not stored and most futures will never complete.
+		throw new UnsupportedOperationException("then() is not supported for subscription futures.");
+	}
+	
+	@Override
+	default <T> IFuture<T> thenCompose(Function<? super Collection<E>, IFuture<T>> function)
+	{
+		// then makes no sense as results are not stored and most futures will never complete.
+		throw new UnsupportedOperationException("then() is not supported for subscription futures.");
+	}
+	
+	@Override
+	default <T> IFuture<T> thenCompose(Function<? super Collection<E>, IFuture<T>> function, Class<?> futuretype)
+	{
+		// then makes no sense as results are not stored and most futures will never complete.
+		throw new UnsupportedOperationException("then() is not supported for subscription futures.");
+	}
 }

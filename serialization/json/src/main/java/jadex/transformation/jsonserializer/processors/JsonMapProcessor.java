@@ -1,6 +1,7 @@
 package jadex.transformation.jsonserializer.processors;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,7 +33,7 @@ public class JsonMapProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 //		return object instanceof JsonObject && (clazz==null || SReflect.isSupertype(Map.class, clazz));
 		return object instanceof JsonObject && SReflect.isSupertype(Map.class, clazz);
 	}
@@ -46,7 +47,7 @@ public class JsonMapProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return SReflect.isSupertype(Map.class, clazz);
 	}
 	
@@ -60,9 +61,8 @@ public class JsonMapProcessor extends AbstractJsonProcessor
 	@SuppressWarnings("unchecked")
 	protected Object readObject(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
 		@SuppressWarnings("rawtypes")
-		Map ret = (Map)getReturnObject(object, clazz);
+		Map ret = (Map)getReturnObject(object, SReflect.getClass(type));
 		JsonObject obj = (JsonObject)object;
 //		traversed.put(object, ret);
 //		rc.addKnownObject(ret);
@@ -86,13 +86,33 @@ public class JsonMapProcessor extends AbstractJsonProcessor
 			{
 				if(JsonTraverser.CLASSNAME_MARKER.equals(name) || JsonTraverser.ID_MARKER.equals(name))
 					continue;
+				
+				Type valtype = null;
+				if(type instanceof ParameterizedType)
+				{
+					valtype	= ((ParameterizedType)type).getActualTypeArguments()[1];
+				}
+				
 				Object val = obj.get(name);
+				
+				// TODO: do we need this!?
 				Class<?> valclazz = getValueClass(val, context);
-				Object newval = traverser.doTraverse(val, valclazz, conversionprocessors, processors, converter, mode, targetcl, context);
+				if(valclazz!=null)
+				{
+					valtype = valclazz;
+				}
+				
+				Object newval = traverser.doTraverse(val, valtype, conversionprocessors, processors, converter, mode, targetcl, context);
+				
+				if(valtype!=null && newval!=null && !SReflect.isSupertype(SReflect.getClass(valtype), newval.getClass()))
+				{
+					throw new ClassCastException("Incompatible type: "+newval.getClass()+" is not compatible with "+valtype);
+				}
+				
 //				Object newval = traverser.doTraverse(val, null, traversed, preprocessors, processors, postprocessors, clone, targetcl, context);
 //				Class<?> valclazz = val!=null? val.getClass(): null;
 //				Object newval = traverser.doTraverse(val, valclazz, traversed, preprocessors, processors, postprocessors, clone, targetcl, context);
-				if(newval != Traverser.IGNORE_RESULT)
+				if(newval!=Traverser.IGNORE_RESULT)
 				{
 					if(newval!=val)
 						ret.put(name, newval);
@@ -233,8 +253,8 @@ public class JsonMapProcessor extends AbstractJsonProcessor
 	 */
 	protected Class<?> getValueClass(Object val, Object context)
 	{
-		Class<?> valclazz = val!=null && !(val instanceof JsonObject)? val.getClass(): null;
-		return valclazz;
+//		Class<?> valclazz = val!=null && !(val instanceof JsonObject)? val.getClass(): null;
+		return null;
 	}
 	
 	/**

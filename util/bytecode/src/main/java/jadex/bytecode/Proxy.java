@@ -74,7 +74,7 @@ public class Proxy
     	}
     	catch(Exception e)
     	{
-    		SUtil.rethrowAsUnchecked(e);
+    		SUtil.throwUnchecked(e);
     		return null;
     	}
     }
@@ -108,7 +108,7 @@ public class Proxy
 		}
 		catch(Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 			return null;
 		}
 	}
@@ -144,7 +144,7 @@ public class Proxy
 			}
 			catch(Exception e)
 			{
-				SUtil.rethrowAsUnchecked(e);
+				SUtil.throwUnchecked(e);
 			}
 		}
 		
@@ -287,7 +287,7 @@ public class Proxy
 			TraceClassVisitor tcv = new TraceClassVisitor(cw, new ASMifier(), new PrintWriter(System.out));
 			cn.accept(tcv);
 			
-			SUtil.rethrowAsUnchecked(t);
+			SUtil.throwUnchecked(t);
 			return null;
 		}
 	}

@@ -319,7 +319,12 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	 */
 	public static RuntimeException	throwException(Throwable t)
 	{
-		if(t instanceof RuntimeException
+		if(t instanceof ErrorException)
+		{
+			// Special case to allow errors being set as exception result and thrown as errors.
+			throw throwException(((ErrorException)t).getError());
+		}
+		else if(t instanceof RuntimeException
 			|| t instanceof Error)
 		{
 			// Combine exception and current stack trace with filler in between.
@@ -343,11 +348,6 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				throw (RuntimeException)t;
 			else
 				throw (Error)t;
-		}
-		else if(t instanceof ErrorException)
-		{
-			// Special case to allow errors being set as exception result and thrown as errors.
-			throw throwException(((ErrorException)t).getError());
 		}
 		else
 		{

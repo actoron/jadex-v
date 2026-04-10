@@ -10,9 +10,9 @@ import jadex.injection.annotation.OnStart;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
 import jadex.messaging.impl.security.authentication.KeySecret;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.ServiceEvent;
-import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
 

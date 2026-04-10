@@ -33,7 +33,7 @@ public class JsonCollectionProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return (object instanceof JsonArray && SReflect.isSupertype(Collection.class, clazz) || 
 			(object instanceof JsonObject && ((JsonObject)object).get(JsonTraverser.COLLECTION_MARKER)!=null));
 	}
@@ -47,7 +47,7 @@ public class JsonCollectionProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return SReflect.isSupertype(Collection.class, clazz);
 	}
 	
@@ -62,9 +62,9 @@ public class JsonCollectionProcessor extends AbstractJsonProcessor
 	protected Object readObject(Object object, Type type, Traverser traverser, List<ITraverseProcessor> conversionprocessors, List<ITraverseProcessor> processors, IStringConverter converter, MODE mode, ClassLoader targetcl, JsonReadContext context)
 	{
 		JsonArray array;
-		JsonValue idx = null;
-		Class<?> clazz = SReflect.getClass(type);
-		Class<?> compclazz = SReflect.unwrapGenericType(type);
+		JsonValue idx	= null;
+		Class<?> clazz	= SReflect.getClass(type);
+		Type comptype	= SReflect.getInnerGenericType(type);
 		if(((JsonValue)object).isArray())
 		{
 			array = (JsonArray)object;
@@ -88,9 +88,18 @@ public class JsonCollectionProcessor extends AbstractJsonProcessor
 		for(int i=0; i<array.size(); i++)
 		{
 			Object val = array.get(i);
-			Type sot = val instanceof JsonObject?JsonTraverser.findClazzOfJsonObject((JsonObject) val, targetcl):compclazz!=null? compclazz: val.getClass();
+			Type sot = val instanceof JsonObject?JsonTraverser.findClazzOfJsonObject((JsonObject) val, targetcl) : null;
+			if(sot == null)
+			{
+				sot = comptype!=null? comptype: val.getClass();
+			}
 //			Object newval = traverser.doTraverse(val, compclazz!=null? compclazz: val.getClass(), traversed, preprocessors, processors, postprocessors, clone, targetcl, context);
 			Object newval = traverser.doTraverse(val, sot, conversionprocessors, processors, converter, mode, targetcl, context);
+			
+			if(sot!=null && newval!=null && !SReflect.isSupertype(SReflect.getClass(sot), newval.getClass()))
+			{
+				throw new ClassCastException("Incompatible type: "+newval.getClass()+" is not compatible with "+sot);
+			}
 			
 			if(newval != Traverser.IGNORE_RESULT)
 			{

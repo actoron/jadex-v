@@ -8,7 +8,7 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
-import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.ServiceQuery;
 
 /**
  *  Required service feature allows to inject, search and query services.

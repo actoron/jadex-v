@@ -4,8 +4,8 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.annotation.Service;
-import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRemoteServiceHandler;
 
 /**

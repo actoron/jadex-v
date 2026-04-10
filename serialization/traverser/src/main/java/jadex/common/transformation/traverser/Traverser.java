@@ -248,7 +248,6 @@ public class Traverser
 			}
 			
 			ret = object;
-			Class<?> clazz = SReflect.getClass(type);
 			
 			if(object!=null)
 			{
@@ -263,9 +262,15 @@ public class Traverser
 //					fin = true;
 //					handleDuplicate(orig, clazz, match, processors, clone, context);
 //				}
+				
+				// Use type from input (e.g. __classname__) when required type is unknown or supertype
 				Class<?> oclazz = findClazz(object, targetcl);
-				if(clazz==null || SReflect.isSupertype(clazz, oclazz))
-					clazz = oclazz;
+				if(oclazz!=null)
+				{
+					Class<?> clazz = type!=null? SReflect.getClass0(type): null;
+					if(clazz==null || SReflect.isSupertype(clazz, oclazz))
+						type = oclazz;
+				}
 					
 				// Todo: apply all or only first matching processor!?
 				Object	processed	= object;
@@ -273,12 +278,12 @@ public class Traverser
 				for(int i=0; i<processors.size(); i++)
 				{
 					ITraverseProcessor proc = processors.get(i);
-					if(proc.isApplicable(processed, clazz, targetcl, context))
+					if(proc.isApplicable(processed, type, targetcl, context))
 					{
 	//					if(object.getClass().getName().indexOf("awt")!=-1)
 	//						System.out.println("traverse: "+object+" "+proc.getClass());
 						usedproc = proc;
-						processed = proc.process(processed, clazz, this, conversionprocessors, processors, converter, mode, targetcl, context);
+						processed = proc.process(processed, type, this, conversionprocessors, processors, converter, mode, targetcl, context);
 						ret	= processed;
 						break;
 						//processorcache.put(clazz, proc);
@@ -296,10 +301,10 @@ public class Traverser
 			{
 				for (ITraverseProcessor postprocessor : conversionprocessors)
 				{
-					if (postprocessor.isApplicable(ret, ret!=null?ret.getClass():clazz, targetcl, context))
+					if (postprocessor.isApplicable(ret, ret!=null?ret.getClass():type, targetcl, context))
 					{
 						usedconvproc = postprocessor;
-						ret = postprocessor.process(ret,  ret!=null?ret.getClass():clazz, this, conversionprocessors, processors, converter, mode, targetcl, context);
+						ret = postprocessor.process(ret,  ret!=null?ret.getClass():type, this, conversionprocessors, processors, converter, mode, targetcl, context);
 						break;
 					}
 				}
@@ -416,7 +421,7 @@ public class Traverser
 					}
 					catch(Exception e)
 					{
-						SUtil.rethrowAsUnchecked(e);
+						SUtil.throwUnchecked(e);
 					}
 				}
 			}
@@ -434,7 +439,7 @@ public class Traverser
 					}
 					catch(Exception e)
 					{
-						SUtil.rethrowAsUnchecked(e);
+						SUtil.throwUnchecked(e);
 					}
 				}
 			}

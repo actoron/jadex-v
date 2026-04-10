@@ -436,7 +436,7 @@ public class BlocksworldGui	extends JFrame
 							public void	windowClosing(WindowEvent we)
 							{
 								we.getWindow().dispose();
-								agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.terminate())
+								agent.terminate()
 									.catchEx(e -> e.printStackTrace());
 							}
 						});
@@ -478,6 +478,8 @@ public class BlocksworldGui	extends JFrame
 								pack();
 								setLocation(SGUI.calculateMiddlePosition(BlocksworldGui.this));
 								setVisible(true);
+								
+								pag.gui.setResult(BlocksworldGui.this);
 //							}
 //							
 //							public void exceptionOccurred(Exception exception)

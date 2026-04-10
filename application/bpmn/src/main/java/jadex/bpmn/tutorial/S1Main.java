@@ -5,7 +5,7 @@ import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.core.IThrowingConsumer;
 import jadex.injection.annotation.Inject;
-import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
