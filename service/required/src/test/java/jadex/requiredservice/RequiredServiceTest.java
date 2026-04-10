@@ -353,7 +353,7 @@ public class RequiredServiceTest
 				
 				ret.terminate();
 
-				ret.then(hello -> fut.setException(new RuntimeException("Expected terminated exception.")))
+				ret.finished(hello -> fut.setException(new RuntimeException("Expected terminated exception.")))
 					.catchEx(e -> 
 					{
 						if(e instanceof FutureTerminatedException)
@@ -365,7 +365,21 @@ public class RequiredServiceTest
 						{
 							fut.setException(new RuntimeException("Expected terminated exception, got: "+e.getMessage(), e));
 						}
-					});
+					});	
+
+				/*ret.then(hello -> fut.setException(new RuntimeException("Expected terminated exception.")))
+					.catchEx(e -> 
+					{
+						if(e instanceof FutureTerminatedException)
+						{
+							System.out.println("Component terminated: "+e);
+							fut.setResult(IComponentManager.get().getCurrentComponent().getId());
+						}
+						else
+						{
+							fut.setException(new RuntimeException("Expected terminated exception, got: "+e.getMessage(), e));
+						}
+					});*/
 			}).get(TIMEOUT);
 
 			assertEquals(caller.getId(), fut.get(TIMEOUT));
