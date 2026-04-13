@@ -34,6 +34,7 @@ import dev.langchain4j.model.chat.response.PartialToolCall;
 import dev.langchain4j.model.chat.response.PartialToolCallContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.chat.response.StreamingHandle;
+import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
@@ -260,15 +261,22 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 //		    	System.out.println("Input/output tokens: " + completeResponse.tokenUsage());
 	    		agent.getComponentHandle().scheduleStep(() ->
 	    		{
-//	    			messages.add(completeResponse.aiMessage());
 	    			// Hack!!! currently thinking isn't passed back by ollama mapping (bug), so we add it manually here
-	    			messages.add(AiMessage.builder()
-	    				.text(
-	    					(completeResponse.aiMessage().thinking()!=null ? "<thinking>"+completeResponse.aiMessage().thinking()+"</thinking>" : "")
-	    					+(completeResponse.aiMessage().text()!=null ? completeResponse.aiMessage().text() : ""))
-	    				.toolExecutionRequests(completeResponse.aiMessage().toolExecutionRequests())
-	    				.attributes(completeResponse.aiMessage().attributes())
-	    				.build());
+	    			if(llm instanceof OllamaStreamingChatModel)
+	    			{
+		    			messages.add(AiMessage.builder()
+		    				.text(
+		    					(completeResponse.aiMessage().thinking()!=null ? "<thinking>"+completeResponse.aiMessage().thinking()+"</thinking>" : "")
+		    					+(completeResponse.aiMessage().text()!=null ? completeResponse.aiMessage().text() : ""))
+		    				.toolExecutionRequests(completeResponse.aiMessage().toolExecutionRequests())
+		    				.attributes(completeResponse.aiMessage().attributes())
+		    				.build());
+	    			}
+	    			else
+	    			{
+		    			messages.add(completeResponse.aiMessage());
+	    			}
+
 	    			current_call.setResult(null);
 			    	// When done, i.e. LLM doesn't request more tool calls -> end current loop
 			    	if(callfutures.isEmpty())
@@ -438,9 +446,15 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				ToolExecutionResultMessage	msg	= ToolExecutionResultMessage.from(call.toolExecutionRequest(),
 					isvoid && result==null ? "done": result instanceof String ? (String) result : Json.toJson(result));
 				addChatFragment(ChatFragment.Type.TOOL_RESULT, msg.toString(), null);
-//				messages.add(msg);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
-				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
+				if(llm instanceof OllamaStreamingChatModel)
+				{
+					messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
+				}
+				else
+				{
+					messages.add(msg);
+				}
 				ret.setResult(null);
 			}).catchEx(ex -> 
 			{
@@ -452,9 +466,15 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 					.text(ex.toString())
 					.build();
 				addChatFragment(ChatFragment.Type.TOOL_RESULT, msg.toString(), null);
-//				messages.add(msg);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
-				messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
+				if(llm instanceof OllamaStreamingChatModel)
+				{
+					messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
+				}
+				else
+				{
+					messages.add(msg);
+				}
 				ret.setResult(null);
 			}));
 		return ret;
@@ -526,6 +546,17 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	{
 		StringBuilder	sb	= new StringBuilder();
 		results.get().stream().filter(f -> f.type()==ChatFragment.Type.RESPONSE).forEach(f -> sb.append(f.text()));
+		return sb.toString();
+	}
+	
+	/**
+	 *  Helper method to get the complete thinking as unified text.
+	 *  Blocks until the response is complete, i.e. the future is done.
+	 */
+	public static String	getThinking(ITerminableIntermediateFuture<ChatFragment> results)
+	{
+		StringBuilder	sb	= new StringBuilder();
+		results.get().stream().filter(f -> f.type()==ChatFragment.Type.THINKING).forEach(f -> sb.append(f.text()));
 		return sb.toString();
 	}
 }
