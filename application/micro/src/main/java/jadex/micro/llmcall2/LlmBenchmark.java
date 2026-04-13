@@ -7,8 +7,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import dev.langchain4j.exception.InternalServerException;
 import dev.langchain4j.exception.RateLimitException;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentManager;
@@ -53,7 +55,7 @@ public class LlmBenchmark
 		{
 			try(FileWriter	writer	= new FileWriter(out))	
 			{
-				writer.write("Benchmark;Model;Thinking;Vision;Success Rate;Avg Time;Min Time;Max Time\n");
+				writer.write("Benchmark;Model;Provider;Thinking;Success Rate;Avg Time;Min Time;Max Time\n");
 			}
 			catch(Exception e)
 			{
@@ -77,23 +79,28 @@ public class LlmBenchmark
 //					.baseUrl("http://localhost:11434")
 //					.modelName(model.getName())
 //					.think(false)
+//					.returnThinking(true)
 //					.build();
 //				
-//				benchmark(benchmark_name, prompt, setup, success, teardown, model_name, llm, false);
+//				benchmark(benchmark_name, prompt, setup, success, teardown, model_name, "Ollama (local)", llm, false);
 //				if(thinking)
 //				{
 //					llm = OllamaStreamingChatModel.builder()
 //						.baseUrl("http://localhost:11434")
 //						.modelName(model.getName())
 //						.think(true)
+//						.returnThinking(true)
 //						.build();
-//					benchmark(benchmark_name, prompt, setup, success, teardown, model_name, llm, true);
+//					benchmark(benchmark_name, prompt, setup, success, teardown, model_name, "Ollama (local)", llm, true);
 //				}
 //			}
 //		}
 		
+		// Run benchmarks for local Ollama models
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.OLLAMA_LOCAL, true);
+		
 		// Run benchmarks for available Google Gemini models
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.GOOGLE_GEMINI, false);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.GOOGLE_GEMINI, true);
 		
 		// Run benchmarks for available Mistral AI models
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.MISTRAL_AI, true);
@@ -109,38 +116,37 @@ public class LlmBenchmark
 		{
 			if(!skip_models.contains(model_name) && !(skip_latest && model_name.endsWith("latest")))
 			{
+				// non-thinking
 				try
 				{
-					// Run a quick prompt to check if model can be used
-					StreamingChatModel llm = provider.createChatModel(model_name, false);
-					LlmChatAgent.getResponse(IComponentManager.get().runAsync(
-						new LlmChatAgent(llm, "What are your capabilities?")));
-//					System.out.println(model_name+" capabilities: "+capabilities);
-					
-					// non-thinking
-					benchmark(benchmark_name, prompt, setup, success, teardown, model_name, llm, false);
-					
-//					// thinking
-//					try
-//					{
-//						// Run a quick prompt to check if model can be used
-//						llm = provider.createChatModel(model_name, true);
-//						LlmChatAgent.getResponse(IComponentManager.get().runAsync(
-//							new LlmChatAgent(llm, "What are your capabilities?")));
-////						System.out.println(model_name+" capabilities: "+capabilities);						
-//						benchmark(benchmark_name, prompt, setup, success, teardown, model_name, llm, true);
-//					}
-//					catch(Exception e)
-//					{
-//						if(!(e instanceof RateLimitException))
-//						{
-//							System.out.println("Failed to get capabilities for model "+model_name+": "+e);
-//						}
-//						else
-//						{
-//							System.out.println("Rate limit reached for model "+model_name+", skipping benchmark.");
-//						}
-//					}
+					StreamingChatModel	llm = provider.createChatModel(model_name, false);
+					boolean	nothink	= !LlmHelper.isThinking(llm);										
+					if(nothink)
+					{
+						benchmark(benchmark_name, prompt, setup, success, teardown, model_name, provider.toString(), llm, false);
+					}
+				}
+				catch(Exception e)
+				{
+					if(!(e instanceof RateLimitException))
+					{
+						System.out.println("Failed to get capabilities for model "+model_name+": "+e);
+					}
+					else
+					{
+						System.out.println("Rate limit reached for model "+model_name+", skipping benchmark.");
+					}
+				}
+
+				// thinking
+				try
+				{
+					StreamingChatModel	llm = provider.createChatModel(model_name, true);
+					boolean	think	= LlmHelper.isThinking(llm);
+					if(think)
+					{
+						benchmark(benchmark_name, prompt, setup, success, teardown, model_name, provider.toString(), llm, true);
+					}
 				}
 				catch(Exception e)
 				{
@@ -161,7 +167,7 @@ public class LlmBenchmark
 	 *  Run the benchmark for the given model and prompt, and write results to CSV file.
 	 */
 	protected static void benchmark(String benchmark_name, String prompt, Runnable setup,
-		Function<String, Boolean> success, Runnable teardown, String model_name, StreamingChatModel llm, boolean dothink)
+		Function<String, Boolean> success, Runnable teardown, String model_name, String provider, StreamingChatModel llm, boolean dothink)
 	{
 		int runs	= 10;
 		long[] times	= new long[runs-1];
@@ -179,8 +185,16 @@ public class LlmBenchmark
 			LlmChatAgent.printResults(results);
 			try
 			{
-				results.get(60000);	// Wait for max 60 sec, otherwise consider it a failure.
-//				results.get(300000);	// Wait for max 5 minutes, otherwise consider it a failure.
+				// Local models -> wait for max 5 minutes, otherwise consider it a failure.
+				if(llm instanceof OllamaStreamingChatModel)
+				{
+					results.get(300000);
+				}
+				// Cloud models -> wait for max 1 minute, otherwise consider it a failure.
+				else
+				{
+					results.get(60000);
+				}
 				long	end	= System.currentTimeMillis();
 				if(i>0)
 				{
@@ -201,12 +215,30 @@ public class LlmBenchmark
 				catch(ComponentTerminatedException cte)
 				{
 				}
-				if(i>0)
+				
+				if(e instanceof RateLimitException || e instanceof InternalServerException)
 				{
-					times[i-1]	= end-start;
+					// Some mistral models have rate limits below 1/s
+					// Try to wait for a while and retry once, otherwise skip the model.
+					try
+					{
+						System.out.println("Rate limit reached for model "+model_name+", retrying in 1 min...");
+						Thread.sleep(60000);
+					}
+					catch(InterruptedException ie)
+					{
+					}
+					i--;
 				}
-				successes[i]	= false;
-				System.out.println(e+" ("+(end-start)/1000+" s)");
+				else
+				{
+					if(i>0)
+					{
+						times[i-1]	= end-start;
+					}
+					successes[i]	= false;
+					System.out.println(e+" ("+(end-start)/1000+" s)");
+				}				
 			}
 			finally
 			{
@@ -223,12 +255,66 @@ public class LlmBenchmark
 		
 		try(FileWriter	writer	= new FileWriter(SUtil.toSnakeCase(benchmark_name)+".csv", true))
 		{
-			writer.write(benchmark_name+";"+model_name+";"+dothink+";false;"+rate+"%;"+avg+";"+min+";"+max+"\n");
+			writer.write(benchmark_name+";"+model_name+";"+provider+";"+dothink+";"+rate+"%;"+avg+";"+min+";"+max+"\n");
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
 			System.exit(1);
+		}
+	}
+	
+	/**
+	 *  Check thinking for all models.
+	 */
+	public static void main(String[] args)
+	{
+//		String baseurl	= "http://localhost:11434";
+//		OllamaModels ollama = OllamaModels.builder().baseUrl(baseurl).build();
+//		for(OllamaModel model: ollama.availableModels().content())
+//		{
+//			List<String>	capas	= ollama.modelCard(model).content().getCapabilities();
+////			System.out.println(model.getName()+" "+capas);
+//			boolean		tools	= capas.contains("tools");
+//			boolean		thinking	= capas.contains("thinking");
+//			
+//			if(tools)
+//			{
+//				try
+//				{
+//					System.out.println("Model: "+model.getName());
+//					boolean	nothink	= !LlmHelper.isThinking(LlmHelper.createOllamaChatModel(baseurl, model.getName(), false));
+//					System.out.println("  No-think: "+nothink);
+//					if(thinking)
+//					{
+//						boolean	think	= LlmHelper.isThinking(LlmHelper.createOllamaChatModel(baseurl, model.getName(), true));
+//						System.out.println("  Think: "+think);
+//					}
+//				}
+//				catch(InvalidRequestException e)
+//				{
+//					System.out.println("  Failed to check thinking for model "+model+": "+e);
+//				}
+//			}
+//		}
+		
+		Provider provider = Provider.MISTRAL_AI;
+		for(String model_name: provider.getModels())
+		{
+			try
+			{
+				StreamingChatModel llm = provider.createChatModel(model_name, false);
+				boolean	nothink	= !LlmHelper.isThinking(llm);
+				System.out.println("Model: "+model_name+" No-think: "+nothink);
+				
+				llm = provider.createChatModel(model_name, true);
+				boolean	think	= LlmHelper.isThinking(llm);
+				System.out.println("  Think: "+think);
+			}
+			catch(Exception e)
+			{
+				System.out.println("  Failed to check thinking for model "+model_name+": "+e);
+			}
 		}
 	}
 }

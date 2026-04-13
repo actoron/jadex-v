@@ -3,7 +3,6 @@ package jadex.bdi.blocksworld;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.micro.llmcall2.LlmBenchmark;
-import jadex.micro.llmcall2.LlmCalculatorBenchmark;
 
 public class LlmBlocksworldBenchmark
 {

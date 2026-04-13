@@ -20,6 +20,7 @@ import dev.langchain4j.model.catalog.ModelCatalog;
 import dev.langchain4j.model.catalog.ModelType;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
+import dev.langchain4j.model.googleai.GeminiThinkingConfig.GeminiThinkingLevel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiModelCatalog;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import dev.langchain4j.model.mistralai.MistralAiModelCatalog;
@@ -29,6 +30,9 @@ import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel.OllamaStreamingChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiModelCatalog;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder;
+import jadex.core.IComponentManager;
+import jadex.future.ITerminableIntermediateFuture;
 
 public class LlmHelper
 {
@@ -106,9 +110,10 @@ public class LlmHelper
 //				"ministral-3:3b"	// fast and efficient, but no thinking
 //				"devstral-small-2:24b"
 //				"gpt-oss:20b"	// no image input
-				"qwen3.5:9b"
+//				"qwen3.5:9b"
 //				"qwen3:4b"	// no coffee :-(, fails on  blocksworld
 //				"nemotron-cascade-2:30b"	// slow
+				"gemma4:31b"
 				
 				// Succeeds sometimes on breakfast
 //				.modelName("nemotron-3-nano:30b")
@@ -169,8 +174,9 @@ public class LlmHelper
 		return MistralAiStreamingChatModel.builder()
 			.apiKey(System.getenv("MISTRAL_API_KEY"))
 			.modelName(model)
-			.returnThinking(think!=null? think: true)
-			.sendThinking(think!=null? think: true)
+			// No way to enable/disable thinking in Mistral?
+			.returnThinking(true)
+			.sendThinking(true)
 			.build();
 	}
 
@@ -219,15 +225,25 @@ public class LlmHelper
 	
 	protected static StreamingChatModel	createOpenAiChatModel(String baseurl, String model, Boolean think)
 	{
-		return OpenAiStreamingChatModel.builder()
+		OpenAiStreamingChatModelBuilder	oscmb	= OpenAiStreamingChatModel.builder()
 			.baseUrl(baseurl)
 			.apiKey(System.getenv("OPENAI_API_KEY"))
 			.modelName(model)
+			// If there is thinking -> always use it.
 			.returnThinking(think!=null? think: true)
 			.sendThinking(think!=null? think: true)
 //			.logRequests(true)
 //			.logResponses(true)
-			.build();
+			;
+		
+		if(think!=null)
+		{
+			// cf. https://developers.openai.com/api/docs/guides/reasoning
+			// TODO: support other levels?
+			oscmb.reasoningEffort(think ? "high" : "none");
+		}
+		
+		return oscmb.build();
 	}
 	
 	protected static List<String>	fetchOpenAiModels(String baseurl, boolean free)
@@ -261,7 +277,8 @@ public class LlmHelper
 			.modelName(model)
 //			.logRequests(true)
 //			.logResponses(true)
-			.returnThinking(think!=null? think: true);
+			// If there is thinking -> always use it.
+			.returnThinking(true);
 			
 		if(think!=null)
 			llm.think(think);
@@ -287,17 +304,47 @@ public class LlmHelper
 	
 	protected static StreamingChatModel	createGoogleGeminiChatModel(String model, Boolean think)
 	{
+		GeminiThinkingConfig.Builder	gtcb	= GeminiThinkingConfig.builder()
+			// If there is thinking -> always use it.
+			.includeThoughts(true);
+		
+		// Not supported for 2.x models
+		if(think!=null && model.startsWith("gemini-3"))
+		{
+			// TODO: support other levels?
+			gtcb.thinkingLevel(think ? GeminiThinkingLevel.HIGH
+				: GeminiThinkingLevel.MINIMAL);
+		}
+		else if(think!=null && !think && model.startsWith("gemini-2"))
+		{
+			gtcb.thinkingBudget(0);
+		}
+		
 		return GoogleAiGeminiStreamingChatModel.builder()
-			.thinkingConfig(GeminiThinkingConfig.builder()
-				.includeThoughts(think!=null? think: true)
-				.build())
 			.apiKey(System.getenv("GOOGLE_API_KEY"))
 			.modelName(model)
-			.returnThinking(think!=null? think: true)
-			.sendThinking(think!=null? think: true)
+			.thinkingConfig(gtcb.build())
+			// If there is thinking -> always use it.
+			.returnThinking(true)
+			.sendThinking(true)
 //			.logRequests(true)
 //			.logResponses(true)
 			.build();
+	}
+	
+	/**
+	 *  Is the model thinking?
+	 */
+	public static boolean isThinking(StreamingChatModel llm)
+	{
+		ITerminableIntermediateFuture<ChatFragment>	fut	= IComponentManager.get()
+			.runAsync(new LlmChatAgent(llm, "Are you thinking?"));
+//		LlmChatAgent.printResults(fut);
+		String response = LlmChatAgent.getResponse(fut);
+		String thinking = LlmChatAgent.getThinking(fut);
+		System.out.println("Thinking: "+thinking);
+		System.out.println("Response: "+response);
+		return thinking!=null && !thinking.isEmpty();
 	}
 	
 	/**
