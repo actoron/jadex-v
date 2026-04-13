@@ -41,11 +41,11 @@ dependencies
     //implementation 'org.activecomponents.jadex:simulation:'+v
     implementation 'org.activecomponents.jadex:llm:'+v
     
-    implementation 'dev.langchain4j:langchain4j:1.12.2'
-    implementation 'dev.langchain4j:langchain4j-ollama:1.12.2'
-	implementation 'dev.langchain4j:langchain4j-google-ai-gemini:1.12.2'
-	implementation 'dev.langchain4j:langchain4j-mistral-ai:1.12.2'
-    implementation 'dev.langchain4j:langchain4j-open-ai:1.12.2'
+    implementation 'dev.langchain4j:langchain4j:1.13.0'
+    implementation 'dev.langchain4j:langchain4j-ollama:1.13.0'
+	implementation 'dev.langchain4j:langchain4j-google-ai-gemini:1.13.0'
+	implementation 'dev.langchain4j:langchain4j-mistral-ai:1.13.0'
+    implementation 'dev.langchain4j:langchain4j-open-ai:1.13.0'
 	runtimeOnly 'org.slf4j:slf4j-simple:2.0.13'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
