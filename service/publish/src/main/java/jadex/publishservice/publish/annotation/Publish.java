@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import jadex.publishservice.PublishType;
+
 /**
  *  The name (for referencing/overriding).
  */
@@ -25,18 +27,18 @@ public @interface Publish
 	/**
 	 *  The publishing type, e.g. web service.
 	 */
-	public String publishtype() default "";
+	public String publishtype() default "rest";//PublishType.REST.getId();
 	
 	/**
 	 *  Target interface of the service to be published service.
 	 *  Needed when publish is used directly in agent class.
 	 */
-	public Class<?> publishtarget() default Object.class;
+	public Class<?> publishinterface() default Object.class;
 	
 	/**
-	 *  Target name of the provided service.
+	 *  Target publish name of the provided service.
 	 */
-	public String publishtagetname() default "";
+	public String publishname() default "";
 	
 	/**
 	 * The mapping information (e.g. annotated interface). 

@@ -18,7 +18,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
 //	@RequiredService(name="calculateservice", type=ICalculateService.class, scope=ServiceScope.GLOBAL), 
 //	@RequiredService(name="generateservice", type=IGenerateService.class)
 //})
-@Publish(publishid="http://localhost:${port}/${app}/mandelbrotgenerate", publishtarget = IGenerateService.class)
+@Publish(publishid="http://localhost:${port}/${app}/mandelbrotgenerate", publishinterface = IGenerateService.class)
 public class GenerateWebAgent
 {
 	@Inject

@@ -47,7 +47,7 @@ import jakarta.ws.rs.GET;
 /**
  *  Registry collects services from client and answers search requests and queries.
  */
-@Publish(publishid="http://${host}:${port}/${cid}/api", publishtarget = IRemoteRegistryGuiService.class)
+@Publish(publishid="http://${host}:${port}/${cid}/api", publishinterface = IRemoteRegistryGuiService.class)
 public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegistryGuiService, IDaemonComponent
 {
 	/** Connection delay*/
